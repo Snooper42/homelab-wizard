@@ -8,6 +8,7 @@ TV organizer: shrinks the series library through Tdarr and files new episodes.
   python3 tv_organizer.py collect          put Tdarr's finished copies in place (the homelab runs it)
   python3 tv_organizer.py file <paths>     file new episodes and season packs
   python3 tv_organizer.py genre-counts     how many shows are in each genre (Jellyfin's, or tvshow.nfo's); changes nothing
+  python3 tv_organizer.py dedupe           put the extra copies of an episode the scan found in the Trash (it asks)
 
 Episodes are filed as Show/Season 01/Show - S01E01.mkv. A file with two episodes in it
 (S01E01-E02, S01E01E02, 1x01-02) keeps both numbers: Show - S01E01-E02.mkv, which Plex,
@@ -135,6 +136,34 @@ class TV(ve.VideoEngine):
 
     noun = ("show", "shows")
 
+    def scan_more(self, files):
+        """Episodes missing from a season: a gap in its numbering (S02E01, E02, E05: E03 and E04),
+        read from the files alone. One missing after a season's last is past what files can tell."""
+        have = {}
+        for p in files:
+            ep = parse_episode(p.name, p.parent)
+            if not ep or not ep["episodes"] or ep["season"] == 0:
+                continue
+            show = p.relative_to(self.lib).parts[0]
+            have.setdefault((show, ep["season"]), set()).update(ep["episodes"])
+        gaps = []
+        for (show, season), eps in sorted(have.items(), key=lambda kv: (mc.name_key(kv[0][0]), kv[0][1] or 0)):
+            missing = sorted(set(range(1, max(eps) + 1)) - eps)
+            if missing:
+                gaps.append({"show": show, "season": season, "episodes": missing})
+        n = sum(len(g["episodes"]) for g in gaps)
+        if n:
+            shows = len({g["show"] for g in gaps})
+            mc.ui.kv("Episodes missing", "%s, in %s show%s" % (mc.fmt_n(n), mc.fmt_n(shows), "" if shows == 1 else "s"))
+        return {"missing": n, "missing_list": gaps[:50], **self.scan_posters()}
+
+    def dup_key(self, path):
+        ep = parse_episode(path.name, path.parent)
+        if not ep or not ep["episodes"]:
+            return None
+        show = path.relative_to(self.lib).parts[0]
+        return (mc.name_key(show), ep.get("season"), tuple(sorted(ep["episodes"])), bool(ep["absolute"]))
+
     def items(self):
         return [p for p in sorted(self.lib.iterdir()) if p.is_dir() and not mc.is_hidden(p) and mc.walk_files(p, mc.VIDEO_EXT)]
 
@@ -157,7 +186,7 @@ class TV(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts"])
+    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe", "posters"])
     args = ap.parse_args()
     eng = TV()
     if args.action == "status":
@@ -174,6 +203,10 @@ def main():
         return eng.collect()
     if args.action == "genre-counts":
         return eng.genre_counts()
+    if args.action == "dedupe":
+        return eng.dedupe()
+    if args.action == "posters":
+        return eng.posters()
     if not args.paths:
         mc.die("Which files?", "tv_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):

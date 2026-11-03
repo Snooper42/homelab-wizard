@@ -232,6 +232,27 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     if (!scan) out.push({ kind: k, title: `Look at your ${k === 'tv' ? 'TV' : 'films'} first`, sub: 'A scan finds what wastes space and changes nothing', go: { label: 'Scan', run: () => act.run(k, 'scan') } });
     else if (bloated && !d.tdarr?.[k]) out.push({ kind: k, title: `Set up Tdarr to shrink ${things(k, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n(scan.saving), go: { label: 'Set up Tdarr', run: () => act.run('tdarr', 'setup', ['--apply']) } });
     else if (bloated) out.push({ kind: k, title: `Shrink ${things(k, bloated)}`, sub: `They look the same after${reasons ? ' · ' + lead(reasons) : ''}`, gain: n(scan.saving), go: { label: 'Shrink', run: () => act.run(k, 'run') } });
+    // The same film or episode twice, as the last scan found (until the extras are removed).
+    const dupes = n(scan?.duplicates), dd = last(l, 'dedupe'), scanned = last(l, 'scan');
+    if (dupes && !(dd?.ok && scanned && dd.at > scanned.at)) {
+      const list = ((scan?.duplicate_list || []) as { keep: string; extra: string[] }[]);
+      const extras = list.reduce((t, x) => t + x.extra.length, 0) || dupes;
+      const file = (p: string) => p.split(/[\\/]/).pop() || p;
+      out.push({ kind: k, title: `${lead(things(k, dupes))} ${dupes === 1 ? 'is' : 'are'} in the library twice`, sub: 'The copy with the best picture stays; the extra ones go', gain: n(scan?.duplicate_bytes),
+        go: { label: 'Remove extras…', run: () => act.ask({
+          title: 'Put the extra copies in the Trash?', action: 'Put them in the Trash',
+          lead: `${count(extras, 'copy', 'copies')}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d.trash}, never straight away.`,
+          steps: [...list.slice(0, 4).map((x) => `${x.extra.map(file).join(' and ')} ${x.extra.length === 1 ? 'goes' : 'go'}; ${file(x.keep)} stays`), ...(list.length > 4 ? [`And ${things(k, list.length - 4)} more`] : [])],
+          go: () => act.run(k, 'dedupe', [], true),
+        }) } });
+    }
+    // What Jellyfin shows with no poster (the scan asks it), until it's been asked to look again.
+    const bare = n(scan?.posterless), asked = last(l, 'posters');
+    if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
+      const names = ((scan?.posterless_list || []) as string[]);
+      out.push({ kind: k, title: `${count(bare, k === 'tv' ? 'show' : 'film')} ${bare === 1 ? 'has' : 'have'} no poster in Jellyfin`, sub: names.slice(0, 3).join(', ') + (bare > 3 ? `, and ${bare - 3} more` : ''),
+        go: { label: 'Fetch posters', quiet: true, run: () => act.run(k, 'posters') } });
+    }
     if (withTdarr) out.push({ kind: k, title: "Collect what Tdarr has finished", sub: `${things(k, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');
@@ -362,6 +383,11 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
     if (i === swapIdx && (music.stage === 'swapped' || music.stage === 'verified')) {
       return () => act.ask({ title: 'Put the old library back?', action: 'Put it back', lead: 'Navidrome is paused while the folders swap back, exactly as they were.', go: () => act.run('music', 'undo', [], true) });
     }
+    // Anything else that put things in the Trash: put them back.
+    if (d.activity[i].undo) {
+      const run = d.activity[i].undo!;
+      return () => act.ask({ title: 'Put it all back?', action: 'Put it back', lead: `What this put in ${d.trash} goes back where it was. Anything since moved, replaced, or emptied from ${d.trash} stays as it is.`, go: () => act.run('trash', 'restore', [run], true) });
+    }
     const ap = last(books, 'apply'), un = last(books, 'undo');
     if (i === applyIdx && ap?.ok && (!un || un.at < ap.at)) {
       return () => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) });
@@ -423,6 +449,13 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
     if ((l.stage === 'swapped' || l.stage === 'verified' || l.stage === 'freed') && !last(l, 'navidrome-cleanup')?.ok) extra.push({ kind: 'music', title: 'Tidy Navidrome after the swap', sub: 'A full scan, and the old paths it still lists removed', go: { label: 'Tidy Navidrome', run: () => act.run('music', 'navidrome-cleanup'), quiet: true } });
     if (!last(l, 'playlists')?.ok) extra.push({ kind: 'music', title: 'A smart playlist for each of your genres', sub: 'Navidrome fills them by itself as music is added', go: { label: 'Make playlists', run: () => act.run('music', 'playlists'), quiet: true } });
     if (!last(l, 'lyrics')) extra.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+  }
+  // Episodes missing from a season (a gap in its numbering, as the scan read it): said, with nothing to press.
+  const gaps = kind === 'tv' && l.found ? n(last(l, 'scan')?.result?.missing) : 0;
+  if (gaps) {
+    const list = (last(l, 'scan')?.result?.missing_list || []) as { show: string; season: number | null; episodes: number[] }[];
+    const where = list.slice(0, 3).map((g) => `${g.show}${g.season ? ' season ' + g.season : ''}: ${g.episodes.slice(0, 6).join(', ')}${g.episodes.length > 6 ? '…' : ''}`).join(' · ');
+    extra.push({ kind: 'tv', title: `${count(gaps, 'episode')} ${gaps === 1 ? 'is' : 'are'} missing from ${count(new Set(list.map((g) => g.show)).size, 'show')}`, sub: where + (list.length > 3 ? ` · and ${count(list.length - 3, 'season')} more` : '') });
   }
   // Until the download apps are handed over (that leaves a line in what was done), it's offered here.
   if ((kind === 'movies' || kind === 'tv') && l.found && !d.activity.some((a) => a.kind === 'arr')) {

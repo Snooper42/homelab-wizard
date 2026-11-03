@@ -63,6 +63,8 @@ var actions = map[string]map[string]Action{
 		"collect":      {Script: "movies_organizer.py", Lock: true},
 		"file":         {Script: "movies_organizer.py", Lock: true},
 		"genre-counts": {Script: "movies_organizer.py"},
+		"dedupe":       {Script: "movies_organizer.py", Lock: true, Confirm: true},
+		"posters":      {Script: "movies_organizer.py"},
 	},
 	"tv": {
 		"status":       {Script: "tv_organizer.py"},
@@ -71,6 +73,8 @@ var actions = map[string]map[string]Action{
 		"collect":      {Script: "tv_organizer.py", Lock: true},
 		"file":         {Script: "tv_organizer.py", Lock: true},
 		"genre-counts": {Script: "tv_organizer.py"},
+		"dedupe":       {Script: "tv_organizer.py", Lock: true, Confirm: true},
+		"posters":      {Script: "tv_organizer.py"},
 	},
 	"audiobooks": {
 		"status": {Script: "audiobook_organizer.py"},
@@ -82,6 +86,8 @@ var actions = map[string]map[string]Action{
 	"inbox":    {"scan": {Script: "inbox.py", Lock: true}},
 	"scrubber": {"scan": {Script: "scrubber.py", Lock: true}},
 	"tdarr":    {"setup": {Script: "tdarr_setup.py"}},
+	// Undo: what a run put in the Trash goes back where it was.
+	"trash": {"restore": {Script: "trash_restore.py", Lock: true, Confirm: true}},
 }
 
 // Lookup is the action kind/name, or an error that lists the ones there are.

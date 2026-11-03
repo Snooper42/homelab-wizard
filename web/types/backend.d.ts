@@ -788,6 +788,7 @@ declare namespace media {
     kind: string;
     text: string;
     sub?: string;
+    undo?: string;
   }
   interface Check {
     id: string;
@@ -810,6 +811,8 @@ declare namespace media {
     exit: number;
     at: string;
     result?: Record<string, unknown>;
+    id?: string;
+    back?: number;
   }
 }
 

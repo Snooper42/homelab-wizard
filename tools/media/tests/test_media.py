@@ -27,6 +27,7 @@ import scrubber  # noqa: E402
 import inbox  # noqa: E402
 import music_tidy  # noqa: E402
 import books_tidy  # noqa: E402
+import trash_restore  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
 # The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
@@ -394,6 +395,18 @@ class Scrubber(Base):
         self.assertTrue((b / "Author" / "Gone (1)").exists(), "Calibre's folders are Calibre's")
 
 
+    def test_a_films_own_subtitles_stay(self):
+        # Subs/2_English.srt beside its film, and a subtitle in other capitals (made on Windows): the film's.
+        m = self.lib["movies"]
+        self.touch(m / "A (2000)" / "A (2000).mkv")
+        keep = [self.touch(m / "A (2000)" / "Subs" / "2_English.srt"), self.touch(m / "A (2000)" / "a (2000).EN.srt"),
+                self.touch(m / "A (2000)" / "SUBS" / "3_French.srt")]
+        scrubber.scrub(scrubber.roots_from_settings(), apply=True)
+        self.assertEqual(self.trashed, [])
+        for p in keep:
+            self.assertTrue(p.exists(), p)
+
+
 class VideoGenres(Base):
     """How many films and shows are in each genre: Jellyfin's when it answers, else the .nfo files'."""
 
@@ -484,6 +497,200 @@ class BookGenres(Base):
             books_tidy.genre_counts()
 
 
+class Duplicates(Base):
+    """The same film or episode twice: the scan finds it, dedupe puts the extra copy in the Trash."""
+
+    def setUp(self):
+        super().setUp()
+        self.probe = FakeProbe({})
+        mock.patch.object(mc, "ffprobe", side_effect=self.probe).start()
+        mock.patch.object(mc.mo, "YES", True).start()
+
+    def films(self):
+        m = self.lib["movies"]
+        self.probe.table = {
+            "Heat (1995).mkv": facts_info(codec="hevc", height=1080, duration=10200),
+            "x264": facts_info(codec="h264", height=1080, duration=10230),
+            "Director": facts_info(codec="h264", height=1080, duration=10200),
+            "Extended": facts_info(codec="hevc", height=1080, duration=12000),
+            "Ronin (1998).mkv": facts_info(codec="hevc", height=720, duration=7300),
+            "2160p": facts_info(codec="h264", height=2160, duration=7300),
+            "Up (2009)": facts_info(codec="hevc", height=1080, duration=5800)}
+        return {
+            "heat": self.touch(m / "Heat (1995)" / "Heat (1995).mkv", size=3000),
+            "heat264": self.touch(m / "Heat (1995)" / "Heat.1995.1080p.BluRay.x264.mkv", size=9000),
+            "cut": self.touch(m / "Heat (1995)" / "Heat (1995) - Director's Cut.mkv", size=9000),
+            "extended": self.touch(m / "Heat.1995.Extended" / "Heat.1995.Extended.mkv", size=5000),
+            "ronin720": self.touch(m / "Ronin (1998)" / "Ronin (1998).mkv", size=4000),
+            "ronin4k": self.touch(m / "Ronin (1998)" / "Ronin.1998.2160p.mkv", size=20000),
+            "up": self.touch(m / "Up (2009)" / "Up (2009).mkv", size=2000)}
+
+    def test_the_scan_finds_each_film_twice_and_keeps_the_best_picture(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        res = self.results()[-1]
+        self.assertEqual(res["duplicates"], 2)
+        self.assertEqual(res["duplicate_bytes"], 9000 + 4000)
+        got = {Path(d["keep"]).name: [Path(x).name for x in d["extra"]] for d in res["duplicate_list"]}
+        self.assertEqual(got, {"Heat (1995).mkv": ["Heat.1995.1080p.BluRay.x264.mkv"],
+                               "Ronin.1998.2160p.mkv": ["Ronin (1998).mkv"]},
+                         "the leaner HEVC at the same height; the taller copy over the leaner; never another cut or a version kept on purpose")
+        self.assertEqual(self.trashed, [], "a scan changes nothing")
+        self.assertTrue(all(p.exists() for p in f.values()))
+
+    def test_dedupe_trashes_the_extra_copies_only(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        self.assertTrue(movies_organizer.Movies().dedupe())
+        self.assertEqual(sorted(self.trashed), sorted([str(f["heat264"]), str(f["ronin720"])]))
+        res = self.results()[-1]
+        self.assertEqual((res["removed"], res["freed"]), (2, 13000))
+        for k in ("heat", "cut", "extended", "ronin4k", "up"):
+            self.assertTrue(f[k].exists(), k)
+        self.assertEqual(mc.load_state("movies")["freed"], 13000)
+
+    def test_a_copy_changed_since_the_scan_is_kept(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        f["heat264"].write_bytes(b"x" * 9500)  # re-downloaded, say
+        movies_organizer.Movies().dedupe()
+        self.assertEqual(self.trashed, [str(f["ronin720"])])
+        self.assertTrue(f["heat264"].exists())
+
+    def test_a_kept_copy_that_no_longer_reads_keeps_its_copies(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        del self.probe.table["2160p"]
+        self.assertFalse(movies_organizer.Movies().dedupe())
+        self.assertNotIn(str(f["ronin720"]), self.trashed)
+
+    def test_an_episode_twice(self):
+        t = self.lib["tv"]
+        self.probe.table = {"S01E01.720p": facts_info(codec="h264", height=720, duration=1500),
+                            "S01E01": facts_info(codec="hevc", height=1080, duration=1500),
+                            "S01E02": facts_info(codec="hevc", height=1080, duration=1500)}
+        keep = self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E01.mkv", size=1000)
+        extra = self.touch(t / "The Office (US)" / "Season 01" / "The.Office.US.S01E01.720p.mkv", size=800)
+        other = self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E02.mkv", size=1000)
+        tv_organizer.TV().scan()
+        self.assertEqual(self.results()[-1]["duplicates"], 1)
+        tv_organizer.TV().dedupe()
+        self.assertEqual(self.trashed, [str(extra)])
+        self.assertTrue(keep.exists() and other.exists())
+
+    def test_nothing_twice(self):
+        self.films()
+        for k in ("Heat.1995.1080p.BluRay.x264.mkv",):
+            (self.lib["movies"] / "Heat (1995)" / k).unlink()
+        (self.lib["movies"] / "Ronin (1998)" / "Ronin (1998).mkv").unlink()
+        movies_organizer.Movies().scan()
+        self.assertEqual(self.results()[-1]["duplicates"], 0)
+        self.assertTrue(movies_organizer.Movies().dedupe())
+        self.assertEqual(self.results()[-1]["removed"], 0)
+
+
+class MissingEpisodes(Base):
+    def test_gaps_in_a_seasons_numbering(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        t = self.lib["tv"]
+        for name in ("The Office (US) - S02E01.mkv", "The Office (US) - S02E02.mkv", "The Office (US) - S02E05-E06.mkv"):
+            self.touch(t / "The Office (US)" / "Season 02" / name)
+        self.touch(t / "The Office (US)" / "Season 00" / "The Office (US) - S00E07.mkv")  # specials: never counted
+        self.touch(t / "Frieren" / "Frieren - 001.mkv")
+        self.touch(t / "Frieren" / "Frieren - 003.mkv")
+        self.touch(t / "Whole" / "Season 01" / "Whole - S01E01.mkv")
+        self.touch(t / "Whole" / "Season 01" / "Whole - S01E02.mkv")
+        tv_organizer.TV().scan()
+        res = self.results()[-1]
+        self.assertEqual(res["missing"], 3)
+        self.assertEqual(res["missing_list"], [{"show": "Frieren", "season": None, "episodes": [2]},
+                                               {"show": "The Office (US)", "season": 2, "episodes": [3, 4]}])
+
+
+class Posters(Base):
+    """What Jellyfin shows with no poster, in this library only; Fetch posters asks it to look again."""
+
+    ITEMS = {"Items": [
+        {"Id": "a1", "Name": "Heat", "Path": "/media/movies/Heat (1995)/Heat (1995).mkv", "ImageTags": {"Primary": "x"}},
+        {"Id": "b2", "Name": "Ronin", "Path": "/media/movies/Ronin (1998)/Ronin (1998).mkv", "ImageTags": {}},
+        {"Id": "c3", "Name": "Alien", "Path": "/media/movies/Alien (1979).mkv"},
+        {"Id": "d4", "Name": "Home video", "Path": "/media/home/Birthday.mkv"}]}  # another library
+
+    def test_the_scan_counts_films_without_a_poster(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.http_mock.return_value = self.ITEMS
+        movies_organizer.Movies().scan()
+        res = self.results()[-1]
+        self.assertEqual((res["posterless"], res["posterless_list"]), (2, ["Alien", "Ronin"]))
+
+    def test_fetch_asks_jellyfin_for_those_alone_and_replaces_nothing(self):
+        self.http_mock.return_value = self.ITEMS
+        self.assertTrue(movies_organizer.Movies().posters())
+        posts = [c[0][1] for c in self.http_mock.call_args_list if c[0][0] == "POST"]
+        self.assertEqual(len(posts), 2)
+        self.assertTrue(posts[0].startswith("http://jf:8096/Items/c3/Refresh?") and "replaceAllImages=false" in posts[0], posts[0])
+        self.assertIn("/Items/b2/Refresh?", posts[1])
+        self.assertEqual(self.results()[-1]["asked"], 2)
+
+    def test_without_jellyfin_the_scan_says_nothing_of_posters(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": ""}):
+            movies_organizer.Movies().scan()
+            self.assertNotIn("posterless", self.results()[-1])
+            with self.assertRaises(SystemExit):
+                movies_organizer.Movies().posters()
+
+
+class UndoTrash(Base):
+    """What a run puts in the Trash is noted under its id, and Undo puts it back where it was."""
+
+    def setUp(self):
+        super().setUp()
+        if mc.IS_WINDOWS:
+            self.skipTest("the Recycle Bin doesn't say where a file went; those are named, not put back")
+        self.trash.stop()  # the real Trash, in this test's home
+        self.log = self.tmp / "data" / "media-trash.jsonl"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "scrubber-scan-1", "HOMELAB_MEDIA_TRASH_LOG": str(self.log)}).start()
+        mock.patch.object(mc.mo, "YES", True).start()
+
+    def test_a_run_put_back(self):
+        a = self.touch(self.lib["movies"] / "Gone (2001)" / "poster.jpg")
+        b = self.touch(self.lib["movies"] / "Gone (2001)" / "movie.nfo")
+        mc.trash(a)
+        mc.trash(b)
+        self.assertFalse(a.exists() or b.exists())
+        notes = [json.loads(l) for l in self.log.read_text().splitlines()]
+        self.assertEqual([(n["run"], n["from"]) for n in notes], [("scrubber-scan-1", str(a)), ("scrubber-scan-1", str(b))])
+        self.assertTrue(all(Path(n["to"]).exists() for n in notes))
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "trash-restore-2"}):
+            self.assertTrue(trash_restore.restore("scrubber-scan-1", str(self.log)))
+        self.assertTrue(a.exists() and b.exists())
+        self.assertEqual(self.results()[-1]["restored"], 2)
+        self.assertFalse(any(Path(n["to"]).exists() for n in notes), "out of the Trash")
+        if not mc.IS_MAC:
+            self.assertEqual(list((self.home / ".local" / "share" / "Trash" / "info").glob("*.trashinfo")), [], "nor listed in it")
+
+    def test_only_this_runs_and_never_over_something_new(self):
+        a = self.touch(self.lib["movies"] / "A.nfo")
+        b = self.touch(self.lib["movies"] / "B.nfo")
+        mc.trash(a)
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "other-run"}):
+            mc.trash(b)
+        a.write_text("a new one")  # something in its place since
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        res = self.results()[-1]
+        self.assertEqual(res["restored"], 0)
+        self.assertEqual(a.read_text(), "a new one", "the new one stays")
+        self.assertIn("A.nfo: something else is in its place", res["stayed"])
+        self.assertFalse(b.exists(), "another run's stays in the Trash")
+
+    def test_without_a_run_nothing_is_noted(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": ""}):
+            mc.trash(self.touch(self.lib["movies"] / "A.nfo"))
+        self.assertFalse(self.log.exists())
+
+
 class FakeProbe:
     """ffprobe answers by file name."""
 
@@ -532,6 +739,37 @@ class Movies(Base):
         movies_organizer.Movies().file([dl])
         self.assertEqual(self.trashed, [str(dl)])
         self.assertTrue(have.exists())
+
+    def test_a_library_copy_that_cannot_be_read_is_not_replaced(self):
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.probe.table = {"Heat.1995": facts_info(codec="hevc", size=3_000_000_000)}  # the library's: unreadable
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.1080p.x265.mkv")
+        self.assertFalse(movies_organizer.Movies().file([dl]), "it says there's something to look at")
+        self.assertEqual(self.trashed, [])
+        self.assertTrue(have.exists())
+        self.assertTrue(dl.exists(), "the download stays where it is")
+
+    def test_another_cut_is_neither_a_duplicate_nor_a_replacement(self):
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.probe.table = {"Heat (1995).mkv": facts_info(codec="h264", duration=10200, size=9_000_000_000),
+                            "Heat.1995": facts_info(codec="hevc", duration=12000, size=3_000_000_000)}
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.Extended.x265.mkv")
+        self.assertFalse(movies_organizer.Movies().file([dl]))
+        self.assertEqual(self.trashed, [], "neither the library's copy nor the download goes")
+        self.assertTrue(have.exists())
+        self.assertTrue(dl.exists())
+
+    def test_a_second_version_kept_on_purpose_stays(self):
+        # Jellyfin's and Plex's way of keeping two: Heat (1995) - Director's Cut.mkv beside Heat (1995).mkv.
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        cut = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995) - Director's Cut.mkv")
+        self.probe.table = {"Heat (1995).mkv": facts_info(codec="h264", size=9_000_000_000),
+                            "Director": facts_info(codec="h264", size=9_000_000_000),
+                            "Heat.1995": facts_info(codec="hevc", size=3_000_000_000)}
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.1080p.x265.mkv")
+        self.assertTrue(movies_organizer.Movies().file([dl]))
+        self.assertEqual(self.trashed, [str(have)], "the leaner download replaces its own version only")
+        self.assertTrue(cut.exists())
 
     def test_a_leaner_duplicate_replaces_the_library_copy(self):
         have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
@@ -705,6 +943,21 @@ class Inbox(Base):
         waiting = sorted(Path(w["path"]).name for w in res["waiting"])
         self.assertEqual(waiting, ["Album", "Fresh.2024.mkv"])
         self.assertTrue((d / "setup.dmg").exists(), "not media: left alone")
+
+    def test_a_download_still_being_written_beside_its_placeholder_waits(self):
+        # Firefox makes an empty Heat.1995.mkv as it starts, then fills Heat.1995.mkv.part; aria2 fills
+        # the file itself beside a .aria2. Neither's own time moves, so only the sibling says so.
+        d = self.tmp / "Downloads"
+        self.touch(d / "Heat.1995.mkv", size=0, age=600)
+        self.touch(d / "Heat.1995.mkv.part", age=600)
+        self.touch(d / "Ronin.1998.mkv", age=600)
+        self.touch(d / "Ronin.1998.mkv.aria2", age=600)
+        calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda k, p, a: (calls.append(k), (True, {"filed": ["x"]}))[1]).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(calls, [])
+        waiting = sorted(Path(w["path"]).name for w in self.results()[-1]["waiting"])
+        self.assertEqual(waiting, ["Heat.1995.mkv", "Heat.1995.mkv.part", "Ronin.1998.mkv", "Ronin.1998.mkv.aria2"])
 
     def test_zip_is_unpacked_filed_and_removed(self):
         d = self.tmp / "Downloads"

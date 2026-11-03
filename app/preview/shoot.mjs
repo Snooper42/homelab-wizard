@@ -510,6 +510,55 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'genre-counts', [], false])) throw new Error(JSON.stringify(runs));
   } },
+  // The same film twice: a row with what the extra copies take, a sheet that names them, and the run only after the yes.
+  { name: 'Tidy Up: a film in the library twice asks, then removes the extra copy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, scan: { ...l.last.scan, result: { ...l.last.scan.result, duplicates: 2, duplicate_bytes: 13e9,
+    duplicate_list: [{ keep: '/Volumes/Hobbies/movies/Heat (1995)/Heat (1995).mkv', extra: ['/Volumes/Hobbies/movies/Heat (1995)/Heat.1995.1080p.x264.mkv'], bytes: 9e9 }, { keep: '/Volumes/Hobbies/movies/Ronin (1998)/Ronin.1998.2160p.mkv', extra: ['/Volumes/Hobbies/movies/Ronin (1998)/Ronin (1998).mkv'], bytes: 4e9 }] } } } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("2 films are in the library twice")';
+    if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '12 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
+    await page.click(`${row} button:text-is("Remove extras…")`);
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the extra copies in the Trash?")', { timeout: 5000 });
+    await page.waitForSelector('#tidySheet li:text-is("Heat.1995.1080p.x264.mkv goes; Heat (1995).mkv stays")', { timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
+    await page.click('#tidySheet button:text-is("Put them in the Trash")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['movies', 'dedupe', [], true])) throw new Error(JSON.stringify(runs));
+  } },
+  { name: 'Tidy Up: once the extra copies are gone, the row is too', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, scan: { ...l.last.scan, result: { ...l.last.scan.result, duplicates: 2, duplicate_bytes: 13e9 } }, dedupe: tidyRun('dedupe', 1, { removed: 2, freed: 13e9 }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("Shrink 42 films")', { timeout: 3000 });
+    if (await page.$('#tidy .tidyneeds li:has-text("in the library twice")')) throw new Error('the row stayed after the extras went');
+  } },
+  // Episodes missing from a season, said on TV's tab with where, and nothing to press.
+  { name: 'Tidy Up: TV says which episodes are missing', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, missing: 3, missing_list: [{ show: 'Frieren', season: null, episodes: [2] }, { show: 'The Office (US)', season: 2, episodes: [3, 4] }] }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("3 episodes are missing from 2 shows")';
+    const t = await page.textContent(row, { timeout: 3000 });
+    if (!t.includes('Frieren: 2 · The Office (US) season 2: 3, 4')) throw new Error('the row says ' + t);
+    if (await page.$(`${row} button`)) throw new Error('a button on a row with nothing to do');
+  } },
+  // What Jellyfin shows with no poster: named, and one button asks it to look again.
+  { name: 'Tidy Up: shows with no poster in Jellyfin can fetch them', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, posterless: 2, posterless_list: ['Frieren', 'Severance'] }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("2 shows have no poster in Jellyfin")';
+    if (!(await page.textContent(row, { timeout: 3000 })).includes('Frieren, Severance')) throw new Error('the row does not name them');
+    await page.click(`${row} button:text-is("Fetch posters")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'posters', [], false])) throw new Error(JSON.stringify(runs));
+  } },
+  // Whatever a run put in the Trash, its line can put back: it asks, then runs the restore with that run.
+  { name: 'Tidy Up: Undo on a sweep puts it back, after asking', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity, { at: tidyAt(0.5), kind: 'scrubber', text: 'Leftovers swept', sub: '14 leftovers and 3 empty folders in the Trash', undo: 'scrubber-scan-1793' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.click('#tidy .tidydone li:has-text("Leftovers swept") button:text-is("Undo")', { timeout: 3000 });
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put it all back?")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
+    await page.click('#tidySheet button:text-is("Put it back")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['trash', 'restore', ['scrubber-scan-1793'], true])) throw new Error(JSON.stringify(runs));
+  } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
@@ -5067,7 +5116,10 @@ if (process.argv.includes('--smoke')) {
         console.log('ok  ', `${s.name} (${scheme})`);
       } catch (e) {
         failed++;
-        console.log('FAIL', `${s.name} (${scheme}):`, String(e.message || e).split('\n')[0]);
+        // The first line, and what it was waiting for (Playwright's call log), so a timeout says which step.
+        const lines = String(e.message || e).split('\n');
+        const waiting = lines.find((l) => /waiting for/.test(l));
+        console.log('FAIL', `${s.name} (${scheme}):`, lines[0] + (waiting ? ` (${waiting.trim()})` : ''));
         await keep(page, `${scheme}-${s.name}`);
       }
       await ctx.close();

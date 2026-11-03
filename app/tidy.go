@@ -319,6 +319,8 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 		cli = []string{"media", "tdarr", "setup"}
 	case "arr":
 		return []string{"media", "arr", "--apply"}, nil
+	case "trash":
+		cli = []string{"media", "restore"}
 	default:
 		if _, err := media.Lookup(kind, action); err != nil {
 			return nil, err

@@ -63,6 +63,10 @@ def settled(item, minutes):
                     return False, "changing"
     elif item.suffix.lower() in mc.PARTIAL_EXT:
         return False, "still downloading"
+    elif item.stat().st_size == 0 or any(item.with_name(item.name + e).exists() for e in mc.PARTIAL_EXT):
+        # Firefox keeps an empty Movie.mkv beside Movie.mkv.part, aria2 a Movie.mkv.aria2 beside the
+        # file it fills; neither file's own time changes while it downloads.
+        return False, "still downloading"
     age = time.time() - newest
     if age < minutes * 60:
         return False, "waiting (%d min without changes needed)" % minutes

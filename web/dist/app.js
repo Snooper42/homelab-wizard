@@ -11966,6 +11966,35 @@
       if (!scan) out.push({ kind: k3, title: `Look at your ${k3 === "tv" ? "TV" : "films"} first`, sub: "A scan finds what wastes space and changes nothing", go: { label: "Scan", run: () => act.run(k3, "scan") } });
       else if (bloated && !d3.tdarr?.[k3]) out.push({ kind: k3, title: `Set up Tdarr to shrink ${things(k3, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n2(scan.saving), go: { label: "Set up Tdarr", run: () => act.run("tdarr", "setup", ["--apply"]) } });
       else if (bloated) out.push({ kind: k3, title: `Shrink ${things(k3, bloated)}`, sub: `They look the same after${reasons ? " · " + lead(reasons) : ""}`, gain: n2(scan.saving), go: { label: "Shrink", run: () => act.run(k3, "run") } });
+      const dupes = n2(scan?.duplicates), dd = last(l3, "dedupe"), scanned = last(l3, "scan");
+      if (dupes && !(dd?.ok && scanned && dd.at > scanned.at)) {
+        const list = scan?.duplicate_list || [];
+        const extras = list.reduce((t3, x3) => t3 + x3.extra.length, 0) || dupes;
+        const file = (p3) => p3.split(/[\\/]/).pop() || p3;
+        out.push({
+          kind: k3,
+          title: `${lead(things(k3, dupes))} ${dupes === 1 ? "is" : "are"} in the library twice`,
+          sub: "The copy with the best picture stays; the extra ones go",
+          gain: n2(scan?.duplicate_bytes),
+          go: { label: "Remove extras…", run: () => act.ask({
+            title: "Put the extra copies in the Trash?",
+            action: "Put them in the Trash",
+            lead: `${count(extras, "copy", "copies")}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d3.trash}, never straight away.`,
+            steps: [...list.slice(0, 4).map((x3) => `${x3.extra.map(file).join(" and ")} ${x3.extra.length === 1 ? "goes" : "go"}; ${file(x3.keep)} stays`), ...list.length > 4 ? [`And ${things(k3, list.length - 4)} more`] : []],
+            go: () => act.run(k3, "dedupe", [], true)
+          }) }
+        });
+      }
+      const bare = n2(scan?.posterless), asked = last(l3, "posters");
+      if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
+        const names3 = scan?.posterless_list || [];
+        out.push({
+          kind: k3,
+          title: `${count(bare, k3 === "tv" ? "show" : "film")} ${bare === 1 ? "has" : "have"} no poster in Jellyfin`,
+          sub: names3.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
+          go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
+        });
+      }
       if (withTdarr) out.push({ kind: k3, title: "Collect what Tdarr has finished", sub: `${things(k3, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
     } else if (k3 === "books") {
       const rv = last(l3, "review");
@@ -12095,6 +12124,10 @@
       if (i3 === swapIdx && (music.stage === "swapped" || music.stage === "verified")) {
         return () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) });
       }
+      if (d3.activity[i3].undo) {
+        const run2 = d3.activity[i3].undo;
+        return () => act.ask({ title: "Put it all back?", action: "Put it back", lead: `What this put in ${d3.trash} goes back where it was. Anything since moved, replaced, or emptied from ${d3.trash} stays as it is.`, go: () => act.run("trash", "restore", [run2], true) });
+      }
       const ap = last(books, "apply"), un = last(books, "undo");
       if (i3 === applyIdx && ap?.ok && (!un || un.at < ap.at)) {
         return () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) });
@@ -12154,6 +12187,12 @@
       if ((l3.stage === "swapped" || l3.stage === "verified" || l3.stage === "freed") && !last(l3, "navidrome-cleanup")?.ok) extra.push({ kind: "music", title: "Tidy Navidrome after the swap", sub: "A full scan, and the old paths it still lists removed", go: { label: "Tidy Navidrome", run: () => act.run("music", "navidrome-cleanup"), quiet: true } });
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
       if (!last(l3, "lyrics")) extra.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+    }
+    const gaps = kind === "tv" && l3.found ? n2(last(l3, "scan")?.result?.missing) : 0;
+    if (gaps) {
+      const list = last(l3, "scan")?.result?.missing_list || [];
+      const where = list.slice(0, 3).map((g2) => `${g2.show}${g2.season ? " season " + g2.season : ""}: ${g2.episodes.slice(0, 6).join(", ")}${g2.episodes.length > 6 ? "…" : ""}`).join(" · ");
+      extra.push({ kind: "tv", title: `${count(gaps, "episode")} ${gaps === 1 ? "is" : "are"} missing from ${count(new Set(list.map((g2) => g2.show)).size, "show")}`, sub: where + (list.length > 3 ? ` · and ${count(list.length - 3, "season")} more` : "") });
     }
     if ((kind === "movies" || kind === "tv") && l3.found && !d3.activity.some((a3) => a3.kind === "arr")) {
       extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
@@ -12269,6 +12308,11 @@
     "movies run": "Handing films to Tdarr",
     "movies collect": "Collecting Tdarr's work",
     "tv scan": "Scanning your TV",
+    "movies dedupe": "Removing the extra copies",
+    "trash restore": "Putting it back",
+    "movies posters": "Asking Jellyfin for posters",
+    "tv posters": "Asking Jellyfin for posters",
+    "tv dedupe": "Removing the extra copies",
     "tv run": "Handing episodes to Tdarr",
     "tv collect": "Collecting Tdarr's work",
     "audiobooks scan": "Scanning your audiobooks",

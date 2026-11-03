@@ -21,6 +21,18 @@ func TestMain(m *testing.M) {
 				fmt.Println(l)
 			}
 		}
+		// TIDY_FAKE_THROW: notes that many things put in the Trash under this run, as trash() does.
+		var n int
+		fmt.Sscan(os.Getenv("TIDY_FAKE_THROW"), &n)
+		for i := 0; i < n; i++ {
+			f, _ := os.OpenFile(os.Getenv("HOMELAB_MEDIA_TRASH_LOG"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+			to := fmt.Sprintf("/trash/%d", i)
+			if i == n-1 && n > 1 {
+				to = "" // the Recycle Bin's: not put back from here
+			}
+			fmt.Fprintf(f, "{\"run\":%q,\"from\":\"/lib/%d\",\"to\":%q}\n", os.Getenv("HOMELAB_MEDIA_RUN"), i, to)
+			f.Close()
+		}
 		if hold := os.Getenv("TIDY_FAKE_HOLD"); hold != "" {
 			time.Sleep(5 * time.Second)
 		}

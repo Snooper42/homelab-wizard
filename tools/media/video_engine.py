@@ -14,6 +14,7 @@ is smaller. Tdarr's own queue and its nodes' worker limits decide how many trans
 import os
 import re
 import time
+import urllib.parse
 from pathlib import Path
 
 import media_common as mc
@@ -117,16 +118,77 @@ class VideoEngine:
         ui.result(action="genre-counts", ok=True, items=len(items), genres=shown, unplaced=unplaced, source=where)
         return True
 
-    def jellyfin_genres(self):
-        """{the item's folder as Jellyfin sees it: its first genre}, or None without Jellyfin."""
+    def jellyfin(self):
+        """(url, headers) for Jellyfin when it serves this library and has its key, else None."""
         c = mc.Servers().conf.get("jellyfin") or {}
         key = mc.secret(c.get("key_env") or "JELLYFIN_API_KEY")
         if not c.get("url") or self.kind not in (c.get("kinds") or []) or not key:
             return None
+        return c["url"].rstrip("/"), {"Authorization": 'MediaBrowser Token="%s"' % key, "X-Emby-Token": key}
+
+    def without_posters(self):
+        """The films or shows in this library Jellyfin shows with no poster: [{id, name}], or None
+        without Jellyfin. Only those under this library's folder, as Jellyfin sees it."""
+        jf = self.jellyfin()
+        if not jf:
+            return None
+        c = mc.Servers().conf.get("jellyfin") or {}
+        root = _path_key(mc.Servers.server_path(self.lib, c.get("path_map")))
         kind = "Movie" if self.kind == "movies" else "Series"
         try:
-            got = mc.http_json("GET", c["url"].rstrip("/") + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Genres,Path" % kind,
-                               headers={"Authorization": 'MediaBrowser Token="%s"' % key, "X-Emby-Token": key}, timeout=60)
+            got = mc.http_json("GET", jf[0] + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Path" % kind, headers=jf[1], timeout=60)
+        except RuntimeError as e:
+            ui.warn("Jellyfin didn't answer (%s); posters not checked" % e)
+            return None
+        out = []
+        for i in (got or {}).get("Items") or []:
+            p = _path_key(i.get("Path") or "")
+            if i.get("Id") and not (i.get("ImageTags") or {}).get("Primary") and (p == root or p.startswith(root + "/")):
+                out.append({"id": i["Id"], "name": i.get("Name") or Path(p).name})
+        return sorted(out, key=lambda x: x["name"].casefold())
+
+    def scan_posters(self):
+        """For the scan: how many have no poster in Jellyfin (nothing when it isn't set up)."""
+        bare = self.without_posters()
+        if bare is None:
+            return {}
+        if bare:
+            ui.kv("No poster in Jellyfin", mc.fmt_n(len(bare)))
+        return {"posterless": len(bare), "posterless_list": [b["name"] for b in bare[:50]]}
+
+    def posters(self):
+        """Ask Jellyfin to look again for the posters it's missing: images only added, never replaced."""
+        self.load()
+        ui.title("%s library" % self.kind.title(), "posters Jellyfin is missing")
+        bare = self.without_posters()
+        if bare is None:
+            mc.die("Jellyfin isn't set up for %s here (its address and JELLYFIN_API_KEY)." % self.kind)
+        jf = self.jellyfin()
+        asked, failed = 0, []
+        with ui.progress(len(bare), "Asking Jellyfin") as bar:
+            for b in bare:
+                bar.update(note=b["name"])
+                try:
+                    mc.http_json("POST", jf[0] + "/Items/%s/Refresh?metadataRefreshMode=Default&imageRefreshMode=FullRefresh"
+                                 "&replaceAllMetadata=false&replaceAllImages=false" % urllib.parse.quote(b["id"]), headers=jf[1])
+                    asked += 1
+                except RuntimeError as e:
+                    failed.append(b["name"])
+                    ui.to_log("NOTE   %s: %s" % (b["name"], e))
+        ui.ok("Jellyfin is looking for %s posters; they show in a few minutes" % mc.fmt_n(asked))
+        if failed:
+            ui.warn("Jellyfin didn't take %s of them" % mc.fmt_n(len(failed)))
+        ui.result(action="posters", ok=not failed, asked=asked, failed=failed[:20])
+        return not failed
+
+    def jellyfin_genres(self):
+        """{the item's folder as Jellyfin sees it: its first genre}, or None without Jellyfin."""
+        jf = self.jellyfin()
+        if not jf:
+            return None
+        kind = "Movie" if self.kind == "movies" else "Series"
+        try:
+            got = mc.http_json("GET", jf[0] + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Genres,Path" % kind, headers=jf[1], timeout=60)
         except RuntimeError as e:
             ui.warn("Jellyfin didn't answer (%s): reading the .nfo files instead" % e)
             return None
@@ -196,8 +258,84 @@ class VideoEngine:
                 why[key] = why.get(key, 0) + 1
         for r, n in sorted(why.items(), key=lambda kv: -kv[1]):
             ui.kv("  " + r, mc.fmt_n(n))
+        dupes = self.duplicates(files, known)
+        if dupes:
+            ui.kv("Twice in the library", "%s (%s in the extra copies)" % (mc.fmt_n(len(dupes)), human(sum(d["bytes"] for d in dupes))))
         ui.result(action="scan", ok=True, media=self.kind, files=len(files), bytes=total, bloated=len(bloated),
-                  saving=saving, unreadable=unreadable, reasons=why)
+                  saving=saving, unreadable=unreadable, reasons=why, duplicates=len(dupes),
+                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50], **self.scan_more(files))
+
+    def scan_more(self, files):
+        """More a scan says: the posters Jellyfin is missing, and what a kind adds (TV: the episodes missing)."""
+        return self.scan_posters()
+
+    # ------------------------------------------------------------------ the same film or episode twice
+    def dup_key(self, path):
+        """What makes two videos the same film or episode; None when that can't be told."""
+        raise NotImplementedError
+
+    def duplicates(self, files, known):
+        """Each film or episode the library has more than once, as read by the last scan: the copy kept
+        (the best picture: tallest, then the newer codec, then the smaller) and the copies of the same
+        length that could go. A copy of another length (another cut) or a taller one is never one."""
+        groups = {}
+        for p in files:
+            k = self.dup_key(p)
+            rec = known.get(str(p))
+            if k and rec and rec.get("duration") and rec.get("size"):
+                groups.setdefault(k, []).append((p, rec))
+        out = []
+        for k in sorted(groups, key=str):
+            recs = groups[k]
+            if len(recs) < 2:
+                continue
+            recs.sort(key=lambda pr: (-(pr[1].get("height") or 0), -mc.VIDEO_RANK.get(pr[1].get("codec") or "", 0), pr[1]["size"], str(pr[0])))
+            keep, kr = recs[0]
+            extra = [(p, r) for p, r in recs[1:] if mc.same_cut(_facts(r), _facts(kr))]
+            if extra:
+                out.append({"keep": str(keep), "extra": [str(p) for p, _ in extra], "bytes": sum(r["size"] for _, r in extra)})
+        return out
+
+    def dedupe(self):
+        """Put the extra copies the last scan found in the Trash, each checked again first."""
+        self.load()
+        ui.title("%s library" % self.kind.title(), "the extra copies, to %s" % mc.trash_words("%TRASH%"))
+        known = self.state["files"]
+        files = [Path(k) for k in known if Path(k).exists()]
+        dupes = self.duplicates(files, known)
+        if not dupes:
+            ui.ok("Nothing is in the library twice")
+            ui.result(action="dedupe", ok=True, removed=0, freed=0)
+            return True
+        if not mc.mo.confirm("Put %s extra copies in %s?" % (mc.fmt_n(sum(len(d["extra"]) for d in dupes)), mc.trash_words("%TRASH%"))):
+            raise SystemExit(1)
+        servers = mc.Servers()
+        removed, freed, kept = 0, 0, []
+        for d in dupes:
+            keep = Path(d["keep"])
+            try:
+                kf = self.probe(keep)  # the copy kept still plays, as long as before
+            except RuntimeError as e:
+                ui.warn("%s: %s; its copies are kept" % (keep.name, e))
+                kept.append(d["keep"])
+                continue
+            for x in d["extra"]:
+                xp = Path(x)
+                rec = known.get(x) or {}
+                if not xp.exists() or xp.stat().st_size != rec.get("size") or not mc.same_cut(kf, _facts(rec)):
+                    ui.warn("%s changed since the scan; kept" % xp.name)
+                    continue
+                mc.trash(xp)
+                known.pop(x, None)
+                removed += 1
+                freed += rec["size"]
+                self.note("duplicate", path=x, kept=d["keep"])
+            servers.ping(keep, self.kind)
+        self.state["freed"] = self.state.get("freed", 0) + freed
+        self.save()
+        ui.ok(mc.trash_words("%s extra copies went to %TRASH% · %s freed") % (mc.fmt_n(removed), human(freed)))
+        ui.result(action="dedupe", ok=not kept, removed=removed, freed=freed, kept=kept, told=servers.sent)
+        return not kept
 
     # ------------------------------------------------------------------ run: hand the bloated ones to Tdarr
     def run(self):
@@ -352,9 +490,20 @@ class VideoEngine:
                 try:
                     best = max(existing, key=lambda e: e.stat().st_size)
                     old = self.probe(best)
-                except RuntimeError:
+                except (RuntimeError, OSError):
                     old = None
-                if old and not mc.video_more_efficient(facts, old):
+                # Nothing is replaced on a guess: a copy that can't be read, or a download of another
+                # length (another cut), is left for a person to look at.
+                if old is None:
+                    unknown.append(str(v))
+                    ui.warn("%s: the library's copy can't be read, so it isn't replaced; the download is left where it is" % dest.name)
+                    continue
+                if not mc.same_cut(facts, old):
+                    unknown.append(str(v))
+                    ui.warn("%s: the download is %s long and the library's copy %s (another cut?); the download is left where it is"
+                            % (dest.name, minutes(facts["duration"]), minutes(old["duration"])))
+                    continue
+                if not mc.video_more_efficient(facts, old):
                     ui.ok(mc.trash_words("%s: the library's copy is leaner; the download went to %TRASH%") % dest.name)
                     mc.trash(v, dry_run=not apply)
                     discarded += 1
@@ -483,6 +632,16 @@ def estimate_saving(facts, size, target):
     if len(facts["audio_codecs"]) > 1:
         share += 0.03
     return int(size * min(share, 0.75))
+
+
+def minutes(seconds):
+    return "%d min" % round((seconds or 0) / 60)
+
+
+def _facts(rec):
+    """A scan's record of a video, as media_facts gives it."""
+    return {"duration": rec.get("duration") or 0, "height": rec.get("height") or 0,
+            "video_codec": rec.get("codec") or "", "size": rec.get("size") or 0}
 
 
 def _path_key(p):

@@ -117,7 +117,7 @@ func TestJobPathAndCurrent(t *testing.T) {
 	if p := For("darwin").JobPath(home); !strings.HasPrefix(p, filepath.Join(home, ".orbstack", "bin")+":/opt/homebrew/bin:") || !strings.HasSuffix(p, ":/sbin") {
 		t.Errorf("darwin: %s", p)
 	}
-	if p := For("linux").JobPath(home); !strings.HasPrefix(p, filepath.Join(home, ".local", "bin")+":/usr/local/bin") {
+	if p := For("linux").JobPath(home); !strings.HasPrefix(p, filepath.Join(home, ".local", "bin")+":/usr/local/bin") || !strings.Contains(p, ":/sbin:"+filepath.Join(home, ".nix-profile", "bin")+":") || !strings.HasSuffix(p, ":/home/linuxbrew/.linuxbrew/bin") {
 		t.Errorf("linux: %s", p)
 	}
 	if p := For("windows").JobPath(home); p != "" {

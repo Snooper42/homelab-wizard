@@ -364,6 +364,21 @@ def _trash_beside(p):
     return dest
 
 
+def note_thrown(src, dest):
+    """Note what went to the Trash under this run (the app's HOMELAB_MEDIA_RUN), for Undo: where it
+    was, and where it is now (none for the Recycle Bin, which doesn't say)."""
+    run, log = os.environ.get("HOMELAB_MEDIA_RUN"), os.environ.get("HOMELAB_MEDIA_TRASH_LOG")
+    if not run or not log:
+        return
+    try:
+        Path(log).parent.mkdir(parents=True, exist_ok=True)
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"run": run, "from": str(src), "to": str(dest) if dest else "",
+                                "at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}) + "\n")
+    except OSError as e:
+        ui.to_log("NOTE   couldn't note %s for Undo: %s" % (src, e))
+
+
 def trash(p, dry_run=False):
     """Move a file or folder to the system Trash (Recycle Bin on Windows). Never deletes outright.
     Returns where it went. Everything the engines throw away goes through here."""
@@ -372,6 +387,13 @@ def trash(p, dry_run=False):
         return None
     if dry_run:
         return p
+    src = Path(os.path.abspath(str(p)))
+    dest = _trash(p)
+    note_thrown(src, None if IS_WINDOWS and dest and dest.name == "$Recycle.Bin" else dest)
+    return dest
+
+
+def _trash(p):
     if IS_WINDOWS:
         if _windows_drive_kind(p) in (DRIVE_REMOVABLE, DRIVE_REMOTE):
             return _trash_beside(p)
@@ -425,7 +447,9 @@ def which(name, setting=None):
     found = shutil.which(name)
     if found:
         return found
-    extra = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", str(Path.home() / ".local" / "bin")]
+    extra = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", str(Path.home() / ".local" / "bin"),
+             # Homebrew and Nix on Linux: how a SteamOS Deck, whose / is read-only, gets ffmpeg.
+             str(Path.home() / ".nix-profile" / "bin"), "/nix/var/nix/profiles/default/bin", "/home/linuxbrew/.linuxbrew/bin"]
     if IS_WINDOWS:
         extra += [r"C:\ffmpeg\bin", str(Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Links")]
     for d in extra:
@@ -524,10 +548,15 @@ def bloat_reasons(facts, keep_langs=None, target="hevc"):
     return reasons
 
 
+def same_cut(new, old):
+    """The same film or episode by its length: within two minutes, or 5% (not another cut, or a sample)."""
+    return not (old["duration"] and new["duration"] and abs(new["duration"] - old["duration"]) > max(120, 0.05 * old["duration"]))
+
+
 def video_more_efficient(new, old):
     """Shrink & Strip: True when the inbound copy of the same film/episode costs less space for at
     least the same picture: a newer codec (AV1 > HEVC > H.264), or the same codec and smaller."""
-    if old["duration"] and new["duration"] and abs(new["duration"] - old["duration"]) > max(120, 0.05 * old["duration"]):
+    if not same_cut(new, old):
         return False  # a different cut, or a sample: not the same thing
     if new["height"] and old["height"] and new["height"] < old["height"] * 0.7:
         return False  # 720p is smaller than 2160p, but it isn't better
