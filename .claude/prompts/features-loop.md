@@ -51,6 +51,8 @@ Finish these in order, one PR at a time, before **The order** below. Each is don
 
 Then continue **The order** from item 8 (Finances on the phone, F17).
 
+**Where the Finances loop left off** (its branch, `claude/homelab-finances-improvements-2v5ec9`, was deleted on Nov 3, 2026, with all its work already on main): its backlog in `.claude/prompts/finances-loop.md` is done up to F24 except F17 (phone, item 8 here), F18 (export, item 10), F19 (polish, a little each Finances round), and F21 (card charges, item 6). Those are the Finances work still to do; tick each in that file too when it ships. When they are done, read that file's **MoneyMatter, redone** and backlog for anything still unstruck before adding new Finances items to the roadmap.
+
 ## Your job
 
 You build out Homelab Wizard's features from [docs/Feature Roadmap.md](<../../docs/Feature Roadmap.md>), on your own, one finished feature per round, for as long as this loop runs. The owner asked for exactly this (November 2026): "on a loop in the background, always improving and pushing requests and merging". So never stop to ask. When a decision is theirs, take the most conservative choice that keeps the app working, write it under **Decisions to look at** in the PR, and carry on.
