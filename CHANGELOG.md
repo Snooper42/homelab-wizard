@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### New
+
+- **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
+
 ### Improved
 
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
