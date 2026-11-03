@@ -309,7 +309,8 @@ const tidy = {
       size: 520e9 },
     { kind: 'books', folder: '/Volumes/Hobbies/Books', found: true, stage: 'reviewed', freed: 0, size: 12e9, last: { review: tidyRun('review', 1, { books: 412, changes: 3, held: [77] }) } },
     { kind: 'movies', folder: '/Volumes/Hobbies/movies', found: true, stage: 'scanned', freed: 412e9, counts: { lean: 310, bloated: 42, queued: 3 }, waiting: 1, size: 1.4e12,
-      last: { scan: tidyRun('scan', 3, { files: 355, bloated: 45, saving: 380e9, reasons: { 'video is H264': 41, 'uncompressed or lossless audio': 12, '2 extra audio tracks': 9 } }) } },
+      last: { scan: tidyRun('scan', 3, { files: 355, bloated: 45, saving: 380e9, reasons: { 'video is H264': 41, 'uncompressed or lossless audio': 12, '2 extra audio tracks': 9 } }),
+        'genre-counts': tidyRun('genre-counts', 3, { items: 352, unplaced: 0, source: 'Jellyfin', genres: { Drama: 88, Action: 71, Comedy: 60, Thriller: 52, 'Science Fiction': 38, Animation: 24, Horror: 12, Documentary: 7 } }) } },
     { kind: 'tv', folder: '/Volumes/Hobbies/tv', found: true, stage: 'new', freed: 0, size: 820e9 },
     { kind: 'audiobooks', folder: '/Volumes/Hobbies/audiobooks', found: false, stage: 'new', freed: 0 },
   ],
@@ -481,11 +482,33 @@ const smokes = [
     for (const w of ['13,932', 'Rock', '22%', '8 more']) if (!legend.includes(w)) throw new Error(`the chart has no “${w}”: ${legend}`);
   } },
   { name: 'Tidy Up: with no genres counted, the chart’s button counts them', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'genre-counts')) } : l)) } }, run: async (page) => {
+    // Overview shows what is counted (the films); Music offers its own count.
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidygenres:has-text("Drama")', { timeout: 3000 });
+    await page.click('#tidy .seg button:text-is("Music")');
     await page.click('#tidy .tidygenres button:text-is("Count genres")', { timeout: 5000 });
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['music', 'genre-counts', [], false])) throw new Error(JSON.stringify(runs));
+  } },
+  // With more than one library counted, a dropdown picks whose genres the chart shows.
+  { name: 'Tidy Up: the genre chart’s dropdown picks the library', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const options = await page.$$eval('#tidy .tidygenres select[aria-label="Genres of"] option', (os) => os.map((o) => o.textContent));
+    if (JSON.stringify(options) !== JSON.stringify(['Music', 'Movies'])) throw new Error('options: ' + JSON.stringify(options));
+    await page.selectOption('#tidy .tidygenres select', 'movies');
+    await page.waitForSelector('#tidy .tidygenres:has-text("One genre each, from Jellyfin")', { timeout: 3000 });
+    const t = await page.textContent('#tidy .tidygenres');
+    for (const w of ['352', 'films', 'Drama', '25%', '2 more']) if (!t.includes(w)) throw new Error(`no “${w}”: ${t}`);
+  } },
+  // A library not counted yet offers it on its own tab, and runs its own count.
+  { name: 'Tidy Up: TV’s genres are counted from its tab', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidygenres:has-text("how your shows split")', { timeout: 3000 });
+    await page.click('#tidy .tidygenres button:text-is("Count genres")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'genre-counts', [], false])) throw new Error(JSON.stringify(runs));
   } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {

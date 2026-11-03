@@ -11995,19 +11995,27 @@
       t3.kind + i3
     )) });
   }
+  var GENRED = ["music", "movies", "tv", "books"];
+  var genreUnit = { music: "songs", movies: "films", tv: "shows", books: "books" };
+  var genreAsk = {
+    music: "See how your music splits across your 14 genres. Counting reads every song's tags and changes nothing.",
+    movies: "See how your films split by genre, from Jellyfin or the .nfo files beside them. Counting changes nothing.",
+    tv: "See how your shows split by genre, from Jellyfin or each show's .nfo. Counting changes nothing.",
+    books: "See how your books split by genre: each book's first tag in Calibre. Counting only reads Calibre's database."
+  };
   function genresOf(d3) {
     const out = {};
-    const r3 = last(lib(d3, "music"), "genre-counts")?.result;
-    if (r3?.genres) {
-      const g2 = Object.entries(r3.genres).sort((a3, b2) => b2[1] - a3[1]);
-      out.music = { total: g2.reduce((t3, [, v3]) => t3 + v3, 0), genres: g2 };
+    for (const k3 of GENRED) {
+      const r3 = last(lib(d3, k3), "genre-counts")?.result;
+      const g2 = Object.entries(r3?.genres || {}).sort((a3, b2) => b2[1] - a3[1]);
+      if (g2.length) out[k3] = { total: g2.reduce((t3, [, v3]) => t3 + v3, 0), genres: g2, source: String(r3?.source || "") };
     }
     return out;
   }
   var hues = [7, 1, 8, 2, 3, 5, 6, 4];
   function GenresWidget({ d: d3, job: job2, act, only }) {
     const all = genresOf(d3);
-    const kinds = only ? [only] : LIBRARIES.filter((k4) => all[k4]);
+    const kinds = only ? [only] : GENRED.filter((k4) => all[k4]);
     const [picked, setPicked] = d2(kinds[0] || "music");
     const k3 = kinds.includes(picked) ? picked : kinds[0] || "music";
     const g2 = all[k3];
@@ -12016,10 +12024,11 @@
     const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
     const picker = kinds.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names2[x3] }, x3)) });
     if (!g2) {
-      if (k3 !== "music" || !lib(d3, "music").found) return null;
+      const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);
+      if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;
       return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", children: [
-        /* @__PURE__ */ u3(Empty, { children: "See how your music splits across your 14 genres. Counting reads every song's tags and changes nothing." }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Count genres", job: job2, onClick: () => act.run("music", "genre-counts") }) })
+        /* @__PURE__ */ u3(Empty, { children: genreAsk[ask] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Count genres", job: job2, onClick: () => act.run(ask, "genre-counts") }) })
       ] });
     }
     return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", actions: picker || void 0, children: [
@@ -12027,13 +12036,13 @@
         g2.total.toLocaleString(),
         /* @__PURE__ */ u3("small", { children: [
           " ",
-          unit[k3][1]
+          genreUnit[k3]
         ] })
-      ] }), caption: k3 === "music" ? "In your 14 genres" : "One main genre each" }),
+      ] }), caption: k3 === "music" ? "In your 14 genres" : g2.source ? `One genre each, from ${g2.source === "Calibre" ? "Calibre's tags" : g2.source}` : "One genre each" }),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
         /* @__PURE__ */ u3(Donut, { slices, label: `${names2[k3]} by genre`, center: /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("strong", { children: g2.total.toLocaleString() }),
-          unit[k3][1]
+          genreUnit[k3]
         ] }) }),
         /* @__PURE__ */ u3(Legend, { items: slices.map((s3) => ({ label: s3.label, color: s3.color, value: `${Math.round(s3.value / g2.total * 100)}%` })) })
       ] })
@@ -12165,7 +12174,7 @@
           review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Every book already looks tidy." }),
           last(l3, "apply")?.ok && /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) }) })
         ] }),
-        kind === "music" && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: "music" }),
+        kind in genreAsk && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
         (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
         kind !== "music" && kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: bytes(l3.size) }), caption: l3.freed ? bytes(l3.freed) + " won back so far" : "On the drive" }) }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
@@ -12250,6 +12259,9 @@
     "music lyrics": "Adding lyrics",
     "music genres": "Checking genres",
     "music genre-counts": "Counting your genres",
+    "movies genre-counts": "Counting your films' genres",
+    "tv genre-counts": "Counting your shows' genres",
+    "books genre-counts": "Counting your books' genres",
     "books review": "Reviewing your books",
     "books apply": "Tidying your books",
     "books undo": "Undoing the last apply",
