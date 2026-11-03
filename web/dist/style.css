@@ -2139,6 +2139,7 @@ tr.menued > td { background:var(--accent-soft); }
 .tidysteps li.done .num { background:var(--ok); color:var(--white); }
 .tidysteps li.now { border-color:var(--link); background:var(--accent-soft); }
 .tidysteps li.now .num { background:var(--primary); color:var(--primary-text); }
+.tidysteps li.now .muted { color:var(--text); }
 .card.tidyjob { margin:0 0 14px; }
 .tidystep { margin:2px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
 .tidynow { margin:0 0 8px; overflow-wrap:anywhere; }

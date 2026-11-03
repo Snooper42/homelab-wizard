@@ -72,7 +72,9 @@ func (p Probe) Python(ctx context.Context) ([]string, string) {
 		cands = [][]string{{"python3"}, {"python"}}
 	}
 	for _, c := range cands {
-		if !filepath.IsAbs(c[0]) {
+		// A full path was found by Stat already; /opt/... is one on a Mac
+		// even when this runs elsewhere (Windows calls it relative).
+		if !filepath.IsAbs(c[0]) && !strings.HasPrefix(c[0], "/") {
 			if _, err := p.LookPath(c[0]); err != nil {
 				continue
 			}
