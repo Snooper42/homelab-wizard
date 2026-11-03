@@ -6,6 +6,7 @@ import io
 import json
 import os
 import shutil
+import sqlite3
 import sys
 import tempfile
 import time
@@ -25,6 +26,7 @@ import audiobook_organizer  # noqa: E402
 import scrubber  # noqa: E402
 import inbox  # noqa: E402
 import music_tidy  # noqa: E402
+import books_tidy  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
 # The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
@@ -402,6 +404,96 @@ class Scrubber(Base):
         self.assertEqual(self.trashed, [])
         for p in keep:
             self.assertTrue(p.exists(), p)
+
+
+class VideoGenres(Base):
+    """How many films and shows are in each genre: Jellyfin's when it answers, else the .nfo files'."""
+
+    def nfo(self, path, root, *genres):
+        self.touch(path)
+        Path(path).write_text("<?xml version='1.0'?><%s><title>x</title>%s</%s>" % (root, "".join("<genre>%s</genre>" % g for g in genres), root))
+
+    def test_films_from_their_nfo_files(self):
+        m = self.lib["movies"]
+        self.touch(m / "Heat (1995)" / "Heat (1995).mkv")
+        self.nfo(m / "Heat (1995)" / "movie.nfo", "movie", "Crime", "Thriller")
+        self.touch(m / "Up (2009)" / "Up (2009).mp4")
+        self.nfo(m / "Up (2009)" / "Up (2009).nfo", "movie", "Animation / Family")  # Kodi's way: two in one
+        self.touch(m / "Alien (1979).mkv")  # loose in the library
+        self.nfo(m / "Alien (1979).nfo", "movie", "Horror")
+        self.touch(m / "Unknown (2020)" / "Unknown (2020).mkv")  # no .nfo
+        self.touch(m / "Empty folder" / "poster.jpg")  # no film: not counted
+        self.touch(m / ".tdarr-output" / "x.mkv")
+        self.http_mock.return_value = {}
+        self.assertTrue(movies_organizer.Movies().genre_counts())
+        res = self.results()[-1]
+        self.assertEqual(res["genres"], {"Animation": 1, "Crime": 1, "Horror": 1})
+        self.assertEqual((res["items"], res["unplaced"], res["source"]), (4, 1, "the .nfo files"))
+
+    def test_jellyfin_first_then_the_nfo(self):
+        m = self.lib["movies"]
+        self.touch(m / "Heat (1995)" / "Heat (1995).mkv")
+        self.nfo(m / "Heat (1995)" / "movie.nfo", "movie", "Crime")
+        self.touch(m / "Up (2009)" / "Up (2009).mkv")
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": "k"}):
+            self.http_mock.return_value = {"Items": [
+                {"Path": "/media/movies/Heat (1995)/Heat (1995).mkv", "Genres": ["Action", "Crime"]},
+                {"Path": "/media/movies/Elsewhere/Other.mkv", "Genres": ["Drama"]}]}
+            movies_organizer.Movies().genre_counts()
+        res = self.results()[-1]
+        self.assertEqual(res["genres"], {"Action": 1}, "Jellyfin's genre wins; a film it doesn't know has none here")
+        self.assertEqual((res["unplaced"], res["source"]), (1, "Jellyfin"))
+        self.assertIn("IncludeItemTypes=Movie", self.http_mock.call_args[0][1])
+
+    def test_jellyfin_not_answering_falls_back_to_the_nfo(self):
+        m = self.lib["movies"]
+        self.touch(m / "Heat (1995)" / "Heat (1995).mkv")
+        self.nfo(m / "Heat (1995)" / "movie.nfo", "movie", "Crime")
+        self.http_mock.side_effect = RuntimeError("connection refused")
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": "k"}):
+            movies_organizer.Movies().genre_counts()
+        self.assertEqual(self.results()[-1]["genres"], {"Crime": 1})
+
+    def test_shows_from_tvshow_nfo(self):
+        t = self.lib["tv"]
+        self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E01.mkv")
+        self.nfo(t / "The Office (US)" / "tvshow.nfo", "tvshow", "Comedy")
+        self.touch(t / "Frieren" / "Frieren - 001.mkv")
+        self.nfo(t / "Frieren" / "tvshow.nfo", "tvshow", "Animation", "Fantasy")
+        (t / "Broken").mkdir()
+        (t / "Broken" / "tvshow.nfo").write_text("<tvshow><genre>Drama")  # cut short: no genre, no crash
+        self.touch(t / "Broken" / "Broken - S01E01.mkv")
+        tv_organizer.TV().genre_counts()
+        res = self.results()[-1]
+        self.assertEqual(res["genres"], {"Animation": 1, "Comedy": 1})
+        self.assertEqual((res["items"], res["unplaced"]), (3, 1))
+
+
+class BookGenres(Base):
+    def test_each_books_first_tag_from_calibre(self):
+        db = self.lib["books"] / "metadata.db"
+        con = sqlite3.connect(str(db))
+        con.executescript("""
+            CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT);
+            CREATE TABLE tags (id INTEGER PRIMARY KEY, name TEXT);
+            CREATE TABLE books_tags_link (id INTEGER PRIMARY KEY, book INTEGER, tag INTEGER);
+            INSERT INTO books VALUES (1, 'Dune'), (2, 'Emma'), (3, 'Untitled'), (4, 'Foundation');
+            INSERT INTO tags VALUES (1, 'Science Fiction'), (2, 'Classics'), (3, 'Romance');
+            INSERT INTO books_tags_link VALUES (1, 1, 1), (2, 2, 2), (3, 2, 3), (4, 4, 1);
+        """)
+        con.commit()
+        con.close()
+        before = db.read_bytes()
+        mc.ui.events = True
+        self.assertTrue(books_tidy.genre_counts())
+        res = self.results()[-1]
+        self.assertEqual(res["genres"], {"Science Fiction": 2, "Classics": 1})
+        self.assertEqual((res["items"], res["unplaced"]), (4, 1))
+        self.assertEqual(db.read_bytes(), before, "Calibre's database is only read")
+
+    def test_not_a_calibre_library(self):
+        with self.assertRaises(SystemExit):
+            books_tidy.genre_counts()
 
 
 class FakeProbe:

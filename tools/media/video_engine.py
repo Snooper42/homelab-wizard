@@ -75,6 +75,72 @@ class VideoEngine:
         h.append(dict(when=time.strftime("%Y-%m-%dT%H:%M:%S"), what=what, **data))
         del h[:-200]
 
+    # ------------------------------------------------------------------ genres
+    noun = ("item", "items")
+
+    def items(self):
+        """What the library holds, one entry per film or show (its folder, or a film's loose file)."""
+        raise NotImplementedError
+
+    def nfo_genre(self, item):
+        """The first genre in the item's .nfo (what Radarr, Sonarr, Jellyfin, and Kodi write), or None."""
+        raise NotImplementedError
+
+    def genre_counts(self):
+        """How many films or shows are in each genre: from Jellyfin when it's set up here (it has every
+        genre TMDB gives), else from the .nfo files beside them. One genre each, its first. Changes nothing."""
+        self.load()
+        ui.title("Genres", "how many %s are in each" % self.noun[1])
+        items = self.items()
+        jf = self.jellyfin_genres() or {}
+        counts, unplaced, used = {}, 0, set()
+        conf = mc.Servers().conf.get("jellyfin") or {}
+        with ui.progress(len(items), "Reading genres") as bar:
+            for it in items:
+                bar.update(note=it.name)
+                g = jf.get(_path_key(mc.Servers.server_path(it, conf.get("path_map"))))
+                if g:
+                    used.add("Jellyfin")
+                else:
+                    g = self.nfo_genre(it)
+                    if g:
+                        used.add("the .nfo files")
+                if g:
+                    counts[g] = counts.get(g, 0) + 1
+                else:
+                    unplaced += 1
+        shown = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
+        where = " and ".join(w for w in ("Jellyfin", "the .nfo files") if w in used) or "nowhere yet"
+        ui.ok("%s %s in %d genres, from %s" % (mc.fmt_n(len(items) - unplaced), self.noun[1], len(shown), where))
+        if unplaced:
+            ui.say("%s %s have no genre yet" % (mc.fmt_n(unplaced), self.noun[1]))
+        ui.result(action="genre-counts", ok=True, items=len(items), genres=shown, unplaced=unplaced, source=where)
+        return True
+
+    def jellyfin_genres(self):
+        """{the item's folder as Jellyfin sees it: its first genre}, or None without Jellyfin."""
+        c = mc.Servers().conf.get("jellyfin") or {}
+        key = mc.secret(c.get("key_env") or "JELLYFIN_API_KEY")
+        if not c.get("url") or self.kind not in (c.get("kinds") or []) or not key:
+            return None
+        kind = "Movie" if self.kind == "movies" else "Series"
+        try:
+            got = mc.http_json("GET", c["url"].rstrip("/") + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Genres,Path" % kind,
+                               headers={"Authorization": 'MediaBrowser Token="%s"' % key, "X-Emby-Token": key}, timeout=60)
+        except RuntimeError as e:
+            ui.warn("Jellyfin didn't answer (%s): reading the .nfo files instead" % e)
+            return None
+        out = {}
+        for i in (got or {}).get("Items") or []:
+            p, g = i.get("Path") or "", [x for x in (i.get("Genres") or []) if x]
+            if not p or not g:
+                continue
+            p = p.replace("\\", "/")
+            # A film's path is its file; its folder is what's counted, unless it sits loose in the library.
+            for k in {p, p.rsplit("/", 1)[0]} if kind == "Movie" else {p}:
+                out.setdefault(_path_key(k), g[0])
+        return out
+
     # ------------------------------------------------------------------ scan
     def probe(self, p):
         return mc.media_facts(mc.ffprobe(p))
@@ -432,6 +498,27 @@ def estimate_saving(facts, size, target):
 
 def minutes(seconds):
     return "%d min" % round((seconds or 0) / 60)
+
+
+def _path_key(p):
+    import unicodedata
+    s = unicodedata.normalize("NFC", str(p).replace("\\", "/").rstrip("/"))
+    return s.casefold() if mc.IS_WINDOWS else s
+
+
+def nfo_genres(path):
+    """The genres an .nfo lists, in order; a Kodi-style "Action / Adventure" is two."""
+    import xml.etree.ElementTree as ET
+    try:
+        root = ET.parse(str(path)).getroot()
+    except (ET.ParseError, OSError):
+        return []
+    out = []
+    for g in root.findall("genre"):
+        for part in re.split(r"\s*/\s*", (g.text or "").strip()):
+            if part and part not in out:
+                out.append(part)
+    return out
 
 
 def human(n):

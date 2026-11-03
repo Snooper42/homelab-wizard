@@ -7,6 +7,7 @@ Movies organizer: shrinks the film library through Tdarr and files new films.
   python3 movies_organizer.py run              hand them to Tdarr's queue, collect what's done
   python3 movies_organizer.py collect          put Tdarr's finished copies in place (the homelab runs it)
   python3 movies_organizer.py file <paths>     file new downloads as Title (Year)/Title (Year).mkv
+  python3 movies_organizer.py genre-counts     how many films are in each genre (Jellyfin's, or the .nfo files'); changes nothing
 
 A film wastes space when its video is H.264 or older (HEVC or AV1 is about half the size), its
 audio is uncompressed or lossless, or it carries audio and subtitle tracks in languages you don't
@@ -67,6 +68,30 @@ class Movies(ve.VideoEngine):
             pass
         return name
 
+    noun = ("film", "films")
+
+    def items(self):
+        out = []
+        for p in sorted(self.lib.iterdir()):
+            if mc.is_hidden(p):
+                continue
+            if p.is_dir() and mc.walk_files(p, mc.VIDEO_EXT):
+                out.append(p)
+            elif p.is_file() and p.suffix.lower() in mc.VIDEO_EXT and not ve.SAMPLE_RE.search(p.stem):
+                out.append(p)
+        return out
+
+    def nfo_genre(self, item):
+        if item.is_file():
+            nfos = [item.with_suffix(".nfo")]
+        else:
+            nfos = [item / "movie.nfo"] + [v.with_suffix(".nfo") for v in mc.walk_files(item, mc.VIDEO_EXT)]
+        for n in nfos:
+            g = ve.nfo_genres(n)
+            if g:
+                return g[0]
+        return None
+
     def same_item(self, dest):
         folder = dest.parent
         if not folder.is_dir():
@@ -79,7 +104,7 @@ class Movies(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file"])
+    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts"])
     args = ap.parse_args()
     eng = Movies()
     if args.action == "status":
@@ -94,6 +119,8 @@ def main():
         return eng.run()
     if args.action == "collect":
         return eng.collect()
+    if args.action == "genre-counts":
+        return eng.genre_counts()
     if not args.paths:
         mc.die("Which files?", "movies_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):

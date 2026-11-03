@@ -261,13 +261,23 @@ function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
 
 // ------------------------------------------------------------ genres, space, the drive, what was done
 
-/** What each library's genre chart reads: music from its genre count. */
-function genresOf(d: app.TidyUp): Record<string, { total: number; genres: [string, number][] }> {
-  const out: Record<string, { total: number; genres: [string, number][] }> = {};
-  const r = last(lib(d, 'music'), 'genre-counts')?.result;
-  if (r?.genres) {
-    const g = Object.entries(r.genres as Record<string, number>).sort((a, b) => b[1] - a[1]);
-    out.music = { total: g.reduce((t, [, v]) => t + v, 0), genres: g };
+/** The libraries with genres, and what each counts: songs, films, shows, books. */
+const GENRED = ['music', 'movies', 'tv', 'books'] as const;
+const genreUnit: Record<string, string> = { music: 'songs', movies: 'films', tv: 'shows', books: 'books' };
+const genreAsk: Record<string, string> = {
+  music: "See how your music splits across your 14 genres. Counting reads every song's tags and changes nothing.",
+  movies: 'See how your films split by genre, from Jellyfin or the .nfo files beside them. Counting changes nothing.',
+  tv: "See how your shows split by genre, from Jellyfin or each show's .nfo. Counting changes nothing.",
+  books: "See how your books split by genre: each book's first tag in Calibre. Counting only reads Calibre's database.",
+};
+
+/** What each library's genre chart reads: its last genre count. */
+function genresOf(d: app.TidyUp): Record<string, { total: number; genres: [string, number][]; source: string }> {
+  const out: Record<string, { total: number; genres: [string, number][]; source: string }> = {};
+  for (const k of GENRED) {
+    const r = last(lib(d, k), 'genre-counts')?.result;
+    const g = Object.entries((r?.genres || {}) as Record<string, number>).sort((a, b) => b[1] - a[1]);
+    if (g.length) out[k] = { total: g.reduce((t, [, v]) => t + v, 0), genres: g, source: String(r?.source || '') };
   }
   return out;
 }
@@ -277,7 +287,7 @@ const hues: Hue[] = [7, 1, 8, 2, 3, 5, 6, 4];
 /** One genre chart; a dropdown picks the library when more than one has genres. */
 function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; only?: string }) {
   const all = genresOf(d);
-  const kinds = only ? [only] : LIBRARIES.filter((k) => all[k]);
+  const kinds = only ? [only] : GENRED.filter((k) => all[k]) as string[];
   const [picked, setPicked] = useState(kinds[0] || 'music');
   const k = kinds.includes(picked) ? picked : kinds[0] || 'music';
   const g = all[k];
@@ -290,19 +300,21 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     </select>
   );
   if (!g) {
-    if (k !== 'music' || !lib(d, 'music').found) return null;
+    // None counted yet: on Overview, music's (or the first library there's to count); on a tab, its own.
+    const ask = only || GENRED.find((x) => lib(d, x)?.found);
+    if (!ask || !genreAsk[ask] || !lib(d, ask)?.found) return null;
     return (
       <Widget title="Genres" kind="fx-spend tidygenres">
-        <Empty>See how your music splits across your 14 genres. Counting reads every song's tags and changes nothing.</Empty>
-        <div class="actions"><Go label="Count genres" job={job} onClick={() => act.run('music', 'genre-counts')} /></div>
+        <Empty>{genreAsk[ask]}</Empty>
+        <div class="actions"><Go label="Count genres" job={job} onClick={() => act.run(ask, 'genre-counts')} /></div>
       </Widget>
     );
   }
   return (
     <Widget title="Genres" kind="fx-spend tidygenres" actions={picker || undefined}>
-      <Stat value={<span class="fx-amount">{g.total.toLocaleString()}<small> {unit[k][1]}</small></span>} caption={k === 'music' ? 'In your 14 genres' : 'One main genre each'} />
+      <Stat value={<span class="fx-amount">{g.total.toLocaleString()}<small> {genreUnit[k]}</small></span>} caption={k === 'music' ? 'In your 14 genres' : g.source ? `One genre each, from ${g.source === 'Calibre' ? "Calibre's tags" : g.source}` : 'One genre each'} />
       <div class="fx-donutrow">
-        <Donut slices={slices} label={`${names[k]} by genre`} center={<><strong>{g.total.toLocaleString()}</strong>{unit[k][1]}</>} />
+        <Donut slices={slices} label={`${names[k]} by genre`} center={<><strong>{g.total.toLocaleString()}</strong>{genreUnit[k]}</>} />
         <Legend items={slices.map((s) => ({ label: s.label, color: s.color, value: `${Math.round((s.value / g.total) * 100)}%` }))} />
       </div>
     </Widget>
@@ -440,7 +452,7 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
             {last(l, 'apply')?.ok && <div class="actions"><Go label="Undo the last apply" job={job} onClick={() => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) })} /></div>}
           </Widget>
         )}
-        {kind === 'music' && <GenresWidget d={d} job={job} act={act} only="music" />}
+        {kind in genreAsk && <GenresWidget d={d} job={job} act={act} only={kind} />}
         {(kind === 'movies' || kind === 'tv') && <SpaceWidget l={l} d={d} />}
         {kind !== 'music' && kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
           <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{bytes(l.size)}</span>} caption={l.freed ? bytes(l.freed) + ' won back so far' : 'On the drive'} /></Widget>

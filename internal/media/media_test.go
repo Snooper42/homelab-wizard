@@ -39,7 +39,7 @@ func TestLookup(t *testing.T) {
 	if a, _ := Lookup("movies", "run"); a.Lock || !a.Power {
 		t.Errorf("movies run hands files to Tdarr's queue: no lock, but it waits for power: %+v", a)
 	}
-	if _, err := Lookup("books", "run"); err == nil || !strings.Contains(err.Error(), "apply, init, review, status, undo") {
+	if _, err := Lookup("books", "run"); err == nil || !strings.Contains(err.Error(), "apply, genre-counts, init, review, status, undo") {
 		t.Errorf("books run: %v", err)
 	}
 	if _, err := Lookup("films", "scan"); err == nil {
