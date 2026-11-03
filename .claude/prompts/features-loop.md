@@ -56,7 +56,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
    - mark it *Built* in `docs/Feature Roadmap.md` and in this file;
    - open the PR.
    - Decision to flag: "each account its own history" is a band per account in one group chart, not a page per account.
-2. **`claude/feature-calendar-cards`** (item 6, F21). Its new work is one commit (`8ee8d43`, card charges on the calendar); the rest of the branch is calendar-ahead history already on main as #373, plus an old roadmap note about holding the media cleanup:
+2. **`claude/feature-calendar-cards`** (item 6, F21): done, #380. Its new work is one commit (`8ee8d43`, card charges on the calendar); the rest of the branch is calendar-ahead history already on main as #373, plus an old roadmap note about holding the media cleanup:
    - merge main in, and take main's side of that roadmap note;
    - make sure it has a CHANGELOG line;
    - failing-before proof: `TestCardChargesOnTheirDay` fails with `project.go` reverted;
@@ -115,7 +115,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 3. **Right-click an app's row** on Status: Open, Open on a phone, Copy address, Restart, Stop, Stop for a while ▸, Logs, Back up now, Tell me if it stops. Shift+F10 and the context-menu key open it too. A right-click on a group's heading opens the group menu. Reuse `GroupMenu`'s menu: its styles and keyboard.
 4. **Calendar, further ahead** (F20): the calendar reads only the chart's 93 days. Read payments past them from `View.Next` and `Plan.Dates` (no balance), so a yearly renewal shows in its month, a year ahead.
 5. **Undo**: after Stop, Stop all, or Restart all, a note for 10 seconds: "Stopped 6 Media apps · Undo".
-6. **Calendar, card charges** (F21): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
+6. **Calendar, card charges** (F21, *Built*, #380): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
 7. **A balance opens its own group**: a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status**, then the **command palette** (⌘K).
