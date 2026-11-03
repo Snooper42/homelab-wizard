@@ -2287,6 +2287,24 @@ const smokes = [
     if (await page.$$eval('#installApps li:not(.done)', (l) => l.length)) throw new Error('an app row did not finish');
     if (await page.$$eval('#installProgress .step', (e) => e[0].textContent) !== 'Done') throw new Error('the bar did not end on Done');
   } },
+  // A finished install can be put away: Close takes the bar, the rows, the details, and Ready to open away, and the
+  // focus goes to the search, to pick what is next.
+  { name: 'A finished install closes', screen: 'choose', run: async (page) => {
+    await page.click('#starters .starter:has-text("Files")');
+    await page.waitForSelector('#installBtn:not([disabled])', { timeout: 5000 });
+    await page.click('#installBtn');
+    await page.waitForSelector('#started #installClose', { timeout: 10000 });
+    await page.click('#installClose');
+    await page.waitForSelector('#started h2', { state: 'detached', timeout: 2000 });
+    const left = await page.evaluate(() => ({
+      bar: !document.getElementById('installProgress').hidden,
+      rows: document.querySelectorAll('#installApps li').length,
+      details: !document.getElementById('installDetails').hidden,
+      focus: document.activeElement?.id,
+    }));
+    if (left.bar || left.rows || left.details) throw new Error(`left behind: ${JSON.stringify(left)}`);
+    if (left.focus !== 'search') throw new Error(`the focus went to ${left.focus}`);
+  } },
   { name: 'Update shows what is new first', screen: 'app:vikunja', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
     { tag: 'v0.24.6', when: '2026-10-12T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.6', notes: 'Fixes\n- Reminders are sent once again' },
     { tag: 'v0.24.5', name: 'Security release', when: '2026-09-30T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.5', notes: '- Link shares respect their expiry' },

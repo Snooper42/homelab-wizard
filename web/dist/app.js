@@ -3880,10 +3880,11 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open2 }) {
+  function Started({ started, open: open2, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
@@ -3905,10 +3906,10 @@
     ] });
   }
   function mountStarted(el, props) {
-    R(/* @__PURE__ */ u3(Started, { ...props }), el);
+    R(props && /* @__PURE__ */ u3(Started, { ...props }), el);
   }
   function mountWiring(el, props) {
-    R(/* @__PURE__ */ u3(Wiring, { ...props }), el);
+    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el);
   }
   function mountCategories(el, categories2) {
     R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
@@ -4099,6 +4100,14 @@
   }
   var planSeq = 0;
   var replanTimer = 0;
+  function clearInstall() {
+    $2("installProgress").hidden = true;
+    mountJobApps($2("installApps"), []);
+    mountStarted($2("started"), null);
+    mountWiring($2("wiring"), null);
+    $2("installLog").textContent = "";
+    $2("installDetails").hidden = true;
+  }
   function replan() {
     clearTimeout(replanTimer);
     replanTimer = setTimeout(doPlan, 250);
@@ -4107,14 +4116,7 @@
   async function doPlan() {
     const seq = ++planSeq;
     const tokens = [...selected];
-    if (tokens.length && !installing) {
-      $2("installProgress").hidden = true;
-      mountJobApps($2("installApps"), []);
-      $2("started").replaceChildren();
-      $2("wiring").replaceChildren();
-      $2("installLog").textContent = "";
-      $2("installDetails").hidden = true;
-    }
+    if (tokens.length && !installing) clearInstall();
     const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
       plan(null);
@@ -4164,8 +4166,8 @@
     btn.disabled = true;
     btn.textContent = "Installing…";
     startJob("install");
-    $2("started").replaceChildren();
-    $2("wiring").replaceChildren();
+    mountStarted($2("started"), null);
+    mountWiring($2("wiring"), null);
     const words3 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
@@ -4183,7 +4185,10 @@
     try {
       const started = await go().Install([...selected], filled());
       cliProgress("done");
-      mountStarted($2("started"), { started, open: (url) => go().Open(url) });
+      mountStarted($2("started"), { started, open: (url) => go().Open(url), close: () => {
+        clearInstall();
+        $2("search").focus();
+      } });
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       settingsData.stale();
