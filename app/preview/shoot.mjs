@@ -1611,14 +1611,17 @@ const smokes = [
     if ((await heads()).length !== 1) throw new Error('groups shown: ' + (await heads()).join(', '));
     // Its heading still counts the whole group, and says it is open.
     if ((await page.getAttribute('#statusRows tr.grouphead .foldbtn', 'aria-expanded')) !== 'true') throw new Error('the group is not open');
-    if (!/^1 of \d+ apps$/.test(await page.textContent('.filterbox .filtercount'))) throw new Error('the count says ' + (await page.textContent('.filterbox .filtercount')));
+    // The count follows the list a moment later (the list says how many it kept): wait for it, then read it.
+    await page.waitForFunction(() => /^1 of \d+ apps$/.test(document.querySelector('.filterbox .filtercount')?.textContent || ''), null, { timeout: 3000 })
+      .catch(async () => { throw new Error('the count says ' + (await page.textContent('.filterbox .filtercount'))); });
     // Another name, typed into the box.
     await page.fill('.filterbox input', 'vault');
     if (!(await rows()).includes('Vaultwarden')) throw new Error('vault does not find Vaultwarden');
     // A name nothing has: said across the table, with a way back.
     await page.fill('.filterbox input', 'zzzz');
     await page.waitForSelector('#statusRows tr.nomatch:has-text("No app’s name has “zzzz”")', { timeout: 3000 });
-    if ((await page.textContent('.filterbox .filtercount')) !== 'No app has that name') throw new Error('the count does not say so');
+    await page.waitForSelector('.filterbox .filtercount:text-is("No app has that name")', { timeout: 3000 })
+      .catch(async () => { throw new Error('the count does not say so: ' + (await page.textContent('.filterbox .filtercount'))); });
     await page.click('#statusRows tr.nomatch button:text-is("Show every app")');
     await page.waitForSelector('#statusAll', { timeout: 3000 });
     if ((await heads()).length !== before) throw new Error('every group did not come back');
