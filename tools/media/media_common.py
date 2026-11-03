@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -143,13 +144,37 @@ def walk_files(root, exts=None, skip_hidden=True):
     return out
 
 
+# Windows' device names: a file named one of them, with any extension after it (nul.mkv,
+# CON.Air (1997)), can't be made or opened there.
+_RESERVED = re.compile(r"(?i)(CON|PRN|AUX|NUL|COM[0-9\u00b9\u00b2\u00b3]|LPT[0-9\u00b9\u00b2\u00b3])\s*(\..*)?")
+
+
+def nfc(s):
+    """One spelling for a name: a Mac writes é as e + accent (NFD), most else as one letter (NFC).
+    Linux's file systems and Windows keep both, as two different names, so the engines write NFC."""
+    return unicodedata.normalize("NFC", str(s))
+
+
+def name_key(s):
+    """How two names are compared as one: the same letters, whatever the case, punctuation, or spelling."""
+    return re.sub(r"\W+", "", nfc(s)).casefold()
+
+
 def safe_name(s, limit=180):
-    """A file or folder name every file system takes (exFAT, NTFS, APFS, ext4)."""
-    s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', " ", str(s))
+    """A file or folder name every file system takes (exFAT, NTFS, APFS, ext4): no characters any of
+    them refuse, no Windows device name, no dot or space at the end, and at most limit bytes (ext4
+    and APFS count a name's bytes, 255 at most, and one Chinese or Japanese letter is three)."""
+    s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', " ", nfc(s))
     s = re.sub(r"\s+", " ", s).strip().rstrip(".").strip()
-    if s.upper() in {"CON", "PRN", "AUX", "NUL"} or re.fullmatch(r"(?i)(COM|LPT)\d", s):
+    if _RESERVED.fullmatch(s):
         s = "_" + s
-    return (s or "Unknown")[:limit].rstrip()
+    s = s or "Unknown"
+    if len(s.encode("utf-8")) > limit:
+        s = s.encode("utf-8")[:limit].decode("utf-8", "ignore")
+        # A letter's accent cut from it is dropped with it.
+        while s and unicodedata.combining(s[-1]):
+            s = s[:-1]
+    return s.rstrip(" .") or "Unknown"
 
 
 def same_volume(a, b):
@@ -164,6 +189,13 @@ def move_file(src, dst):
     src, dst = Path(src), Path(dst)
     dst.parent.mkdir(parents=True, exist_ok=True)
     if dst.exists():
+        if str(src) != str(dst) and _same_file(src, dst):
+            # A new spelling of the same name (heat → Heat, or é spelled another way) on a drive that
+            # treats them as one (a Mac's, Windows'): through a name of its own, so the new one shows.
+            step = unique_path(dst.with_name(dst.name + ".tidy-rename"))
+            os.rename(str(src), str(step))
+            os.rename(str(step), str(dst))
+            return dst
         raise FileExistsError(str(dst))
     try:
         os.rename(str(src), str(dst))
@@ -178,6 +210,13 @@ def move_file(src, dst):
     os.replace(str(tmp), str(dst))
     src.unlink()
     return dst
+
+
+def _same_file(a, b):
+    try:
+        return os.path.samefile(str(a), str(b))
+    except OSError:
+        return False
 
 
 def unique_path(p):

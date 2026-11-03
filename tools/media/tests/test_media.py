@@ -178,6 +178,45 @@ class Names(unittest.TestCase):
         self.assertEqual(mc.safe_name("CON"), "_CON")
         self.assertEqual(mc.safe_name("Title."), "Title")
 
+    def test_windows_device_names_with_an_extension(self):
+        # Windows can't make nul.mkv, or a folder named CON.Air (1997): the name before the dot counts.
+        self.assertEqual(mc.safe_name("CON.Air (1997)"), "_CON.Air (1997)")
+        self.assertEqual(mc.safe_name("nul.mkv"), "_nul.mkv")
+        self.assertEqual(mc.safe_name("COM1"), "_COM1")
+        self.assertEqual(mc.safe_name("Console"), "Console")
+        self.assertEqual(mc.safe_name("Aux Cord (2020)"), "Aux Cord (2020)")
+
+    def test_a_long_name_fits_in_bytes(self):
+        # ext4 and APFS take 255 bytes a name; a Japanese letter is three of them.
+        title = "千と千尋の神隠し" * 20
+        name = mc.safe_name(title)
+        self.assertLessEqual(len(name.encode("utf-8")), 180)
+        self.assertTrue(title.startswith(name), "cut between letters, never inside one")
+        self.assertEqual(mc.safe_name("a" * 179 + " b"), "a" * 179, "no space left at the end")
+        self.assertEqual(mc.safe_name("a" * 179 + ".b"), "a" * 179, "nor a dot, which Windows drops")
+        self.assertEqual(mc.safe_name("a" * 179 + "e\u0301x"), "a" * 179, "an accent goes with its letter")
+
+    def test_one_spelling_for_accents(self):
+        # A Mac writes é as e and an accent; the engines write it as one letter.
+        self.assertEqual(mc.safe_name("Ame\u0301lie (2001)"), "Am\u00e9lie (2001)")
+        self.assertEqual(mc.name_key("AME\u0301LIE"), mc.name_key("Amélie"))
+
+
+class MoveFile(Base):
+    def test_a_new_spelling_of_the_same_name(self):
+        # On a Mac's or Windows' drive heat.mkv and Heat.mkv are one file: the rename still happens.
+        a = self.touch(self.tmp / "Hobbies" / "movies" / "heat.mkv")
+        b = a.with_name("Heat.mkv")
+        self.assertEqual(mc.move_file(a, b), b)
+        self.assertEqual([p.name for p in b.parent.iterdir()], ["Heat.mkv"])
+
+    def test_another_file_there_is_never_replaced(self):
+        a = self.touch(self.tmp / "a.mkv")
+        b = self.touch(self.tmp / "b.mkv")
+        with self.assertRaises(FileExistsError):
+            mc.move_file(a, b)
+        self.assertTrue(a.exists())
+
 
 class Bloat(unittest.TestCase):
     def facts(self, **kw):
@@ -347,6 +386,15 @@ class Movies(Base):
         method, url, body = self.http_mock.call_args[0][:3]
         self.assertEqual((method, url), ("POST", "http://jf:8096/Library/Media/Updated"))
         self.assertEqual(body["Updates"][0]["Path"], "/media/movies/Heat (1995)/Heat (1995).mkv")
+
+    def test_a_film_already_there_with_its_accent_spelled_the_mac_way(self):
+        # Copied from a Mac: Ame + accent + lie. On Linux or Windows a second folder would sit beside it.
+        self.probe.table["Amelie"] = facts_info(codec="hevc", size=3_000_000_000)
+        self.probe.table["Am\u00e9lie"] = facts_info(codec="hevc", size=3_000_000_000)
+        (self.lib["movies"] / "Ame\u0301lie (2001)").mkdir()
+        dl = self.touch(self.tmp / "Downloads" / "Am\u00e9lie.2001.1080p.mkv")
+        self.assertTrue(movies_organizer.Movies().file([dl]))
+        self.assertEqual([d.name for d in self.lib["movies"].iterdir() if not d.name.startswith(".")], ["Ame\u0301lie (2001)"])
 
     def test_a_duplicate_that_is_no_leaner_goes_to_the_trash(self):
         have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
