@@ -1669,6 +1669,15 @@
     ] });
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
+  function Lines({ text: text2 }) {
+    const [all, setAll] = d2(false);
+    const lines = text2.split("\n").filter((l3) => l3.trim());
+    const cut = !all && lines.length > 4;
+    return /* @__PURE__ */ u3(S, { children: [
+      (cut ? lines.slice(0, 3) : lines).map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
+      lines.length > 4 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn morelines", "aria-expanded": all, onClick: () => setAll(!all), children: all ? "Show less" : `Show ${lines.length - 3} more` })
+    ] });
+  }
   function Alerts({ events, problem, openSetup, refresh }) {
     const [checking, setChecking] = d2(false);
     const again = () => {
@@ -1703,7 +1712,7 @@
         {
           dot: tone(e3),
           title: e3.title || e3.message,
-          sub: e3.title && e3.message && e3.message.split("\n").map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
+          sub: e3.title && e3.message && /* @__PURE__ */ u3(Lines, { text: e3.message }),
           end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
           when: ago(e3.time)
         },
@@ -1727,7 +1736,7 @@
   }
   function Bars({ rows }) {
     const most = rows[0].bytes;
-    return /* @__PURE__ */ u3(Rows, { kind: "usage", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
+    return /* @__PURE__ */ u3(Rows, { kind: "usage sizes", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
   }
   var storageShown = (rec) => (rec?.photos || []).some((p3) => p3.bytes > 0) || (rec?.apps || []).some((f4) => f4.bytes > 0);
   function Storage({ rec, nameOf }) {
