@@ -4,11 +4,54 @@ The master prompt for a session that keeps building the [Feature Roadmap](<../..
 
     /loop Read .claude/prompts/features-loop.md and do the next round.
 
-With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it, commit and push it to main, and the next round follows.
+With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it, commit and push it to main, and the next round follows. The standing rules and the queue live here too, so the command stays one plain line (the app will not send a slash command followed by formatted text).
 
 **Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
 
 ---
+
+## Standing rules
+
+These come before everything below; where they disagree with a later section, these win.
+
+- **State:** GitHub is the only source of truth: open PRs, remote branches, this file's order, the roadmap's *Built* marks. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs, and `git ls-remote origin 'refs/heads/claude/*'`.
+- **Lanes:** you own `claude/feature-*` branches and the roadmap's features. `claude/fix-*` is the maintenance account's lane, and the Library cleanup ("Tidy Up") branch belongs to its own session. Never push to, merge, or rebase a branch outside your lane. Library cleanup is not yours: leave its roadmap section and its files alone.
+- **Merging:** maintenance (`claude/fix-*`) PRs go first; if one is green, don't race it. Before squash-merging, if main moved since your last CI run, merge main in and let CI run again. Always pin `expectedHeadSha`. Each merge is one release, so merge one PR at a time.
+- **Hot files** (merging main into a branch):
+  - `web/dist/*`: never hand-merge. Take either side, run `make frontend`, commit.
+  - `CHANGELOG.md`: your lines go only under `## [Unreleased]`. After every merge, check none slid into a released version.
+  - `app/preview/shoot.mjs` and `docs/Testing.md`: conflicts are both sides adding lines. Keep both.
+  - `docs/Feature Roadmap.md` and this file: change only your own items.
+- **Spend less:**
+  - One feature per round. Work in the main checkout, no extra worktrees.
+  - Locally, run only the Go tests and `SMOKE_ONLY` cases you touched. CI runs the rest.
+  - Don't poll CI. Call `subscribe_pr_activity` on each PR you open and end the turn, or `ScheduleWakeup` at least 900 s.
+  - Read files by line range. Don't re-read what is already in context. Keep PR bodies to the template.
+  - Ask the owner only about real product decisions. Otherwise pick, and put it under **Decisions to look at**.
+- **Save before you stop:** push before any long wait and at the end of every round. Nothing stays only in the container.
+
+## Queue first
+
+Finish these in order, one PR at a time, before **The order** below. Each is done when GitHub shows it done (merged, released, or PR open); skip what is already done, and strike an item from this list in your next PR once it is.
+
+1. **Release for #373 (v0.17.2):** check it published. If it did, tell the owner to try Update now in the app.
+2. **#372:** if CI is green and main hasn't moved, squash-merge with `expectedHeadSha` pinned.
+3. **#374, then #375:** merge origin/main in, fix hot files (above), push, wait for green, squash-merge.
+4. **`claude/feature-balance-group`** (item 7 of **The order**):
+   - failing-before proof: put main's `web/dist` files in place, run `SMOKE_ONLY="A sidebar balance opens Net worth on its own group"` (expect FAIL), then restore;
+   - mark it *Built* in `docs/Feature Roadmap.md` and in this file;
+   - open the PR.
+   - Decision to flag: "each account its own history" is a band per account in one group chart, not a page per account.
+5. **`claude/feature-calendar-cards`** (item 6, F21):
+   - merge main in;
+   - make sure it has a CHANGELOG line;
+   - failing-before proof: `TestCardChargesOnTheirDay` fails with `project.go` reverted;
+   - mark it *Built*;
+   - open the PR.
+
+Then continue **The order** from item 8 (Finances on the phone, F17).
+
+**Where the Finances loop left off** (its branch, `claude/homelab-finances-improvements-2v5ec9`, was deleted on Nov 3, 2026, with all its work already on main): its backlog in `.claude/prompts/finances-loop.md` is done up to F24 except F17 (phone, item 8 here), F18 (export, item 10), F19 (polish, a little each Finances round), and F21 (card charges, item 6). Those are the Finances work still to do; tick each in that file too when it ships. When they are done, read that file's **MoneyMatter, redone** and backlog for anything still unstruck before adding new Finances items to the roadmap.
 
 ## Your job
 
@@ -20,17 +63,17 @@ When the roadmap's list runs out, look the app over as a demanding user would (e
 
 ## Sharing the repo
 
-No cleanup session runs any more (the owner, Nov 1): each loop merges its own pull requests. The owner's own sessions also work here, and the Finances and audit loops may run again.
+Each loop merges its own pull requests. The maintenance account works on `claude/fix-*` branches, the Library cleanup ("Tidy Up") has its own session, and the owner's own sessions also work here; see **Standing rules** for the lanes.
 
-- **What is yours:** everything the roadmap covers, the Finances screen included. The Finances loop is retired (the owner can no longer run it), and its unfinished items are in **The order** below. For a Finances round, read its file's **How Finances works** and **Rules that never bend** first (`.claude/prompts/finances-loop.md`) and keep to them: money stays on this machine, old `finance.json` files keep loading, logos only from simple-icons or selfh.st, and the preview data regenerated (`go test ./internal/finance -run TestPreview -update`). Each Finances round also does a little of item 19 (polish) on what it touched.
+- **What is yours:** everything the roadmap covers except Library cleanup, the Finances screen included. The Finances loop is retired (the owner can no longer run it), and its unfinished items are in **The order** below. For a Finances round, read its file's **How Finances works** and **Rules that never bend** first (`.claude/prompts/finances-loop.md`) and keep to them: money stays on this machine, old `finance.json` files keep loading, logos only from simple-icons or selfh.st, and the preview data regenerated (`go test ./internal/finance -run TestPreview -update`). Each Finances round also does a little of item 19 (polish) on what it touched.
 - **Never** touch `VERSION`, cut a release, or merge, close, or push to a pull request that is not yours.
 - **One open pull request of yours at a time.** While its CI runs, you may start the next feature on a new branch from main; once the first is merged, merge main into the new branch (never rebase a pushed branch) before opening its PR.
-- **Conflicts:** in `web/dist/*`, never merge by hand: resolve the sources, then `make frontend`. In `CHANGELOG.md`, keep both sides' lines. Generated docs: run `./homelab docs`.
+- **Conflicts:** follow **Hot files** in the standing rules. Generated docs: run `./homelab docs`.
 - **Main's CI red** for a reason that is not yours: note it in your PR. Fix it in a small PR of its own, merged the same way, only when the cause and the fix are clear; otherwise leave it for the owner.
 
 ## Each round
 
-1. `git fetch origin` and `git checkout main && git pull`. Re-read this file; if **Paused** is yes, say so and stop the round.
+1. `git fetch origin`, list the open PRs, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read this file; if **Paused** is yes, say so and stop the round. Work through **Queue first** before anything else.
 2. **Your open pull request first**, if there is one: read its head's CI, its mergeability, and any review comments.
    - Green on every check and mergeable: squash-merge it with a title ending in its number (pin the head SHA), then tick its item in the roadmap (below) in the next PR.
    - Red: find out why. Yours: fix the cause and push. Not yours (red on main too): as **Sharing the repo** says. A job may be re-run once to tell a flaky runner from a real failure; a second failure is real.
@@ -63,7 +106,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.
 
-**Held:** the roadmap's *Media library cleanup* (the owner's two scripts, wrapped). Planned with the owner on Nov 2, 2026, and held: leave it until they say to begin.
+**Not yours:** the roadmap's *Media library cleanup* ("Tidy Up"). It has its own session and branch; leave its roadmap section and its files alone.
 
 ## What the last sessions learned
 
