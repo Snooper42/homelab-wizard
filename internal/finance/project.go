@@ -31,6 +31,10 @@ type View struct {
 	Paydays []Payday `json:"paydays"`
 	// Days are checking at the end of each day from today, for the chart.
 	Days []Day `json:"days"`
+	// Later are the days after Days, up to a year from today, that a
+	// paycheck or payment falls on, with those events but no balance
+	// (Balance is 0): the calendar shows a yearly renewal in its month.
+	Later []Day `json:"later,omitempty"`
 	// Worth is net worth each day from the first balance kept (Account.History)
 	// through today, as typed in: what is there less what is owed, an
 	// account before its first kept balance at that one (or at its balance,
@@ -448,6 +452,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	v.Next = nextDays(p, today)
 	v.Last = lastDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
+	yearOn := today.AddDate(1, 0, 0) // the calendar reads this far (Later)
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
 		k := dateOf(d)
@@ -537,7 +542,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			if per != nil && into {
 				per.In += pd.Amount
 			}
-			if per == nil && len(v.Days) >= chartDays && len(v.Paydays) >= periods {
+			if per == nil && len(v.Days) >= chartDays && len(v.Paydays) >= periods && !d.Before(yearOn) {
 				break
 			}
 		}
@@ -582,8 +587,13 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365
 			}
 		}
-		if ahead && len(v.Days) < chartDays {
-			v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev})
+		if ahead && len(v.Days) >= chartDays && d.Before(yearOn) && len(ev) > 0 {
+			v.Later = append(v.Later, Day{Date: k, Events: ev})
+		}
+		if ahead && (len(v.Days) < chartDays || d.Before(yearOn)) {
+			if len(v.Days) < chartDays {
+				v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev})
+			}
 			if h := HolidayIn(d, p.Holidays); h != "" {
 				if v.Holidays == nil {
 					v.Holidays = map[string]string{}

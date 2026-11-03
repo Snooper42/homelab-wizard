@@ -3,6 +3,8 @@
 // and the phone's report.
 import { ago } from '../format';
 import { mountTiles, troubled } from '../status/Tiles';
+import { mountUndoNote } from '../status/UndoNote';
+import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
 import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
@@ -373,6 +375,7 @@ const appListActions: AppListActions = {
 // for a while: each starts again then.
 async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) {
   setAppsBusy(true);
+  const done: api.AppStatus[] = [];
   try {
     for (const [i, a] of apps.entries()) {
       progress(i);
@@ -381,12 +384,37 @@ async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'resta
         setPending(a.id, { action, failed: errorText(err) });
         break;
       }
+      done.push(a);
     }
   } finally {
     setAppsBusy(false);
   }
   await loadStatus();
   for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
+  if (action === 'stop' && done.length) offerUndo(done, until);
+}
+
+// Undo, after apps were stopped: a note for 10 seconds that starts the ones
+// that stopped again (which also forgets they were stopped on purpose).
+// Restart has nothing to undo.
+let undoing: { apps: api.AppStatus[] } | null = null;
+function offerUndo(apps: api.AppStatus[], until?: string) {
+  const catOf = (id: string) => catalog?.apps.find((c) => c.id === id)?.category;
+  const cats = new Set(apps.map((a) => catOf(a.id)));
+  const label = cats.size === 1 ? catalog?.categories.find((c) => c.id === [...cats][0])?.label : '';
+  const what = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + ' ' : ''}apps`;
+  const words = `Stopped ${what}` + (until ? ' ' + stoppedWords({ since: '', until }).replace(/^Stopped /, '') : '');
+  undoing = { apps };
+  mountUndoNote($('undoNote'), { words, undo: undoNow, close: dropUndo });
+}
+function dropUndo() { undoing = null; mountUndoNote($('undoNote'), null); }
+/** Undoes the last stop while its note shows (Undo, or ⌘Z); false when there is none. */
+export function undoNow(): boolean {
+  if (!undoing || appsBusy) return false;
+  const { apps } = undoing;
+  dropUndo();
+  groupAct(apps, 'start', () => {});
+  return true;
 }
 // An app's page (screens/apppage.ts) runs the rows' actions with its own
 // buttons and follows what they do; it sets how a row opens it.
@@ -478,6 +506,7 @@ async function runAppAction(a, action, until?: string) {
   // the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed });
   setAppsBusy(false);
+  if (!failed && action === 'stop') offerUndo([a], until);
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;

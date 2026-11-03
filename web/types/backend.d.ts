@@ -674,6 +674,7 @@ declare namespace finance {
     periods: finance.Period[];
     paydays: finance.Payday[];
     days: finance.Day[];
+    later?: finance.Day[];
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;

@@ -105,6 +105,16 @@ export function renderApps() {
 
 let planSeq = 0;
 let replanTimer = 0;
+/** Takes the last install's bar, rows, details, and links away (Close, or a new choice). */
+function clearInstall() {
+  $('installProgress').hidden = true;
+  mountJobApps($('installApps'), []);
+  mountStarted($('started'), null);
+  mountWiring($('wiring'), null);
+  $('installLog').textContent = '';
+  $('installDetails').hidden = true;
+}
+
 export function replan() { clearTimeout(replanTimer); replanTimer = setTimeout(doPlan, 250); }
 const filled = () => Object.fromEntries(Object.entries(settings).filter(([, v]) => v !== ''));
 
@@ -112,14 +122,7 @@ async function doPlan() {
   const seq = ++planSeq;
   const tokens = [...selected];
   // A new choice after an install: its steps belonged to the last plan.
-  if (tokens.length && !installing) {
-    $('installProgress').hidden = true;
-    mountJobApps($('installApps'), []);
-    $('started').replaceChildren();
-    $('wiring').replaceChildren();
-    $('installLog').textContent = '';
-    $('installDetails').hidden = true;
-  }
+  if (tokens.length && !installing) clearInstall();
   const plan = (p: api.Plan | string | null) => mountPlan($('plan'), { plan: p, appName, reason: friendlyReason });
   if (!tokens.length) {
     plan(null);
@@ -165,8 +168,8 @@ $('installBtn').onclick = async () => {
   btn.disabled = true;
   btn.textContent = 'Installing…';
   startJob('install');
-  $('started').replaceChildren();
-  $('wiring').replaceChildren();
+  mountStarted($('started'), null);
+  mountWiring($('wiring'), null);
   // The plan's steps, in plain words, on the bar; each app's own row comes
   // from what Compose prints (job:app).
   const words = { env: 'Saving your settings', folders: 'Making the folders', networks: 'Getting the network ready' };
@@ -186,7 +189,7 @@ $('installBtn').onclick = async () => {
   try {
     const started = await go().Install([...selected], filled());
     cliProgress('done');
-    mountStarted($('started'), { started, open: (url) => go().Open(url) });
+    mountStarted($('started'), { started, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
     if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
     selected.clear();
     // New apps: Settings has their settings, and Status (with the ticks here) changed.
