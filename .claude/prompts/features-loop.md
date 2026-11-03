@@ -30,24 +30,41 @@ These come before everything below; where they disagree with a later section, th
   - Ask the owner only about real product decisions. Otherwise pick, and put it under **Decisions to look at**.
 - **Save before you stop:** push before any long wait and at the end of every round. Nothing stays only in the container.
 
-## Queue first
+## Open items first
 
-Finish these in order, one PR at a time, before **The order** below. Each is done when GitHub shows it done (merged, released, or PR open); skip what is already done, and strike an item from this list in your next PR once it is.
+The owner's rule (Nov 3, 2026): **every round begins by clearing what is still open, and nothing new starts until it is all cleared.** "Open" is anything GitHub shows unfinished:
 
-1. **Release for #373 (v0.17.2):** check it published. If it did, tell the owner to try Update now in the app.
-2. **#372:** if CI is green and main hasn't moved, squash-merge with `expectedHeadSha` pinned.
-3. **#374, then #375:** merge origin/main in, fix hot files (above), push, wait for green, squash-merge.
-4. **`claude/feature-balance-group`** (item 7 of **The order**):
+- an open pull request in your lane;
+- a remote `claude/feature-*` branch that main has not taken (`git ls-remote origin 'refs/heads/claude/*'`, then `git log origin/main..origin/<branch>`).
+
+For each, oldest first, one at a time:
+
+- **Its work is already on main** (every commit's change is in main, as after a squash-merge): nothing to ship. Tell the owner to delete the branch (your tools can't), and list it in your report until it is gone.
+- **An open PR:** take it to merged, as **Each round** step 2 says (merge main in, fix the hot files, green, squash-merge with `expectedHeadSha` pinned).
+- **A branch with work and no PR:**
+  - merge main into it (never rebase a pushed branch);
+  - finish what it started, with its CHANGELOG line, its failing-before proof, and *Built* in the roadmap;
+  - open its PR, and take it to merged.
+- **Stale, or half done beyond saving:** don't delete it. Ask the owner, once, in your report, and go on to the next open item.
+
+The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
+
+**Open on Nov 3, 2026, in this order:**
+
+1. **`claude/feature-balance-group`** (item 7 of **The order**):
    - failing-before proof: put main's `web/dist` files in place, run `SMOKE_ONLY="A sidebar balance opens Net worth on its own group"` (expect FAIL), then restore;
    - mark it *Built* in `docs/Feature Roadmap.md` and in this file;
    - open the PR.
    - Decision to flag: "each account its own history" is a band per account in one group chart, not a page per account.
-5. **`claude/feature-calendar-cards`** (item 6, F21):
-   - merge main in;
+2. **`claude/feature-calendar-cards`** (item 6, F21). Its new work is one commit (`8ee8d43`, card charges on the calendar); the rest of the branch is calendar-ahead history already on main as #373, plus an old roadmap note about holding the media cleanup:
+   - merge main in, and take main's side of that roadmap note;
    - make sure it has a CHANGELOG line;
    - failing-before proof: `TestCardChargesOnTheirDay` fails with `project.go` reverted;
    - mark it *Built*;
    - open the PR.
+3. **`claude/feature-tidy-up`** (#376) is not yours (Library cleanup). Don't touch it; it counts as cleared once it is merged or the owner says so. Until then, it doesn't hold back the two above.
+
+Done already, so not in this list: #372, #374, #375, #377, and the v0.17.2 release (v0.17.5 is out).
 
 Then continue **The order** from item 8 (Finances on the phone, F17).
 
@@ -73,7 +90,7 @@ Each loop merges its own pull requests. The maintenance account works on `claude
 
 ## Each round
 
-1. `git fetch origin`, list the open PRs, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read this file; if **Paused** is yes, say so and stop the round. Work through **Queue first** before anything else.
+1. `git fetch origin`, list the open PRs, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read this file; if **Paused** is yes, say so and stop the round. Clear **Open items first** before anything else.
 2. **Your open pull request first**, if there is one: read its head's CI, its mergeability, and any review comments.
    - Green on every check and mergeable: squash-merge it with a title ending in its number (pin the head SHA), then tick its item in the roadmap (below) in the next PR.
    - Red: find out why. Yours: fix the cause and push. Not yours (red on main too): as **Sharing the repo** says. A job may be re-run once to tell a flaky runner from a real failure; a second failure is real.
