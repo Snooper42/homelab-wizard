@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up, smoother:** each library's name on Overview opens its tab; a library whose drive is unplugged says so on its tab and runs nothing until it is back; every card's heading lines up; New downloads shows its six steps in two even rows; and the words read right (*Nothing went missing* in green, *1 download … before it's filed*, *English only* for the languages kept, *H.264* written one way, *Ready to review* for the books).
 - **Finances on the phone, what is coming up first:** on a paired phone, Finances opens with **Coming up**: every bill of the next two weeks with its day and how soon (today's and tomorrow's in amber), a bill charged to a card marked with its card, and what leaves checking in all. Under it, the goals, each with what it needs a paycheck and **See all**; **Calendar** opens the whole month.
 - **Finances, card charges on the calendar:** a bill you charge to a card moves no checking money, so the calendar left it out. It now shows on its day, marked with its card and the day that card is next paid ("on Chase Freedom, due Nov 21"), apart from what checking holds.
 - **Finances, a sidebar balance opens its own group:** Cash, Investments, or another group's balance in the sidebar opens Net worth on that group alone: its total, each of its accounts month by month as a band of its own, and only its accounts listed. **Show everything** goes back to the whole page.
