@@ -13,6 +13,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Lyrics that scroll:** time-synced lyrics from LRCLIB for every song, replacing plain ones when synced ones are found, instrumentals skipped; and a Navidrome smart playlist for each of your genres.
 - **The nightly sweep:** at 03:00, posters, .nfo and subtitle files whose film, episode, song, or book is gone, and empty folders, go to the Trash.
 - **Tidy Up waits its turn:** one job moves files at a time; while one does, the nightly update leaves the media apps for the next night and Duplicati waits, and the heavy jobs wait for power and pause when the laptop goes on battery. `homelab media` does it all from a terminal too, on a Mac, Windows (Docker Desktop, any drive letter), and Linux.
+- **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
 
 ### Improved
 
@@ -20,6 +21,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
 - **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
 

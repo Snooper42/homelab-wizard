@@ -1504,6 +1504,50 @@ const smokes = [
     const m = await page.locator('.rowmenu').boundingBox();
     if (m.y + m.height > vh || m.x + m.width > (await page.evaluate(() => innerWidth))) throw new Error('the menu runs past the window');
   } },
+  // Undo: after a group's Stop all, a note says what stopped, and Undo starts those same apps again; nothing for Restart.
+  { name: 'Undo: after Stop all, the note starts them again', screen: 'status', mock: { usage }, run: async (page) => {
+    const head = 'tr.grouphead:has(.foldbtn:has-text("Media"))';
+    await page.waitForSelector(`${head} .groupcount`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    await page.locator(head).scrollIntoViewIfNeeded();
+    const n = Number((await page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`).textContent()).match(/\d+/)?.[0] || 1);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`);
+    await page.waitForFunction((k) => (window.__MOCK.calls.AppAction || 0) >= k, n, { timeout: 8000 });
+    await page.waitForTimeout(300);
+    if (await page.isVisible('.undonote')) throw new Error('a note to undo a restart');
+    await page.waitForSelector(`${head} .groupcount:not([disabled])`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:not(.stoplater):has-text("Stop")`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Click again")`);
+    await page.waitForSelector(`.undonote .undowords:text-is("Stopped ${n} Media apps")`, { timeout: 8000 });
+    const before = await page.evaluate(() => window.__MOCK.calls.AppAction);
+    await page.click('.undonote .undobtn');
+    await page.waitForFunction(([b, k]) => window.__MOCK.calls.AppAction >= b + k, [before, n], { timeout: 8000 });
+    if (await page.isVisible('.undonote')) throw new Error('the note stayed after Undo');
+  } },
+  // ⌘Z (Ctrl+Z) undoes too while the note shows, as Undo does; the note goes by itself after 10 seconds, but not while the
+  // pointer is on it.
+  { name: 'Undo: ⌘Z after a Stop, and the note’s 10 seconds', screen: 'app:vikunja', run: async (page) => {
+    await page.click('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    await page.waitForSelector('.undonote .undowords:text-is("Stopped Vikunja")', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 });
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    await page.keyboard.press(mac ? 'Meta+z' : 'Control+z');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 2, null, { timeout: 5000 });
+    if (await page.isVisible('.undonote')) throw new Error('the note stayed after ⌘Z');
+    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 }).catch(() => {});
+    await page.waitForSelector('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app .pagehead .btngroup button:text-is("Stop")');
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    const note = page.locator('.undonote');
+    await note.waitFor({ timeout: 5000 });
+    await note.hover();
+    await page.waitForTimeout(10600);
+    if (!(await note.isVisible())) throw new Error('the note went while the pointer was on it');
+    await page.mouse.move(5, 5);
+    await note.waitFor({ state: 'detached', timeout: 11000 });
+  } },
   { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
@@ -2324,6 +2368,24 @@ const smokes = [
     await page.waitForSelector('#started h2:text-is("Ready to open")', { timeout: 10000 });
     if (await page.$$eval('#installApps li:not(.done)', (l) => l.length)) throw new Error('an app row did not finish');
     if (await page.$$eval('#installProgress .step', (e) => e[0].textContent) !== 'Done') throw new Error('the bar did not end on Done');
+  } },
+  // A finished install can be put away: Close takes the bar, the rows, the details, and Ready to open away, and the
+  // focus goes to the search, to pick what is next.
+  { name: 'A finished install closes', screen: 'choose', run: async (page) => {
+    await page.click('#starters .starter:has-text("Files")');
+    await page.waitForSelector('#installBtn:not([disabled])', { timeout: 5000 });
+    await page.click('#installBtn');
+    await page.waitForSelector('#started #installClose', { timeout: 10000 });
+    await page.click('#installClose');
+    await page.waitForSelector('#started h2', { state: 'detached', timeout: 2000 });
+    const left = await page.evaluate(() => ({
+      bar: !document.getElementById('installProgress').hidden,
+      rows: document.querySelectorAll('#installApps li').length,
+      details: !document.getElementById('installDetails').hidden,
+      focus: document.activeElement?.id,
+    }));
+    if (left.bar || left.rows || left.details) throw new Error(`left behind: ${JSON.stringify(left)}`);
+    if (left.focus !== 'search') throw new Error(`the focus went to ${left.focus}`);
   } },
   { name: 'Update shows what is new first', screen: 'app:vikunja', mock: { releaseNotes: { vikunja: { app: 'vikunja', repo: 'go-vikunja/vikunja', running: 'v0.24.4', placed: true, page: 'https://github.com/go-vikunja/vikunja/releases', releases: [
     { tag: 'v0.24.6', when: '2026-10-12T09:00:00Z', url: 'https://github.com/go-vikunja/vikunja/releases/tag/v0.24.6', notes: 'Fixes\n- Reminders are sent once again' },
