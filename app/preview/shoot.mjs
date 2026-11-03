@@ -3901,6 +3901,29 @@ const smokes = [
     await page.click('#finNav .fx-balance:has-text("Investments")');
     await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
   } },
+  // A balance opens its own group: Net worth on Investments alone, each of its accounts a band of its own month by month
+  // (its history), only its accounts listed, and Show everything back to all of them; another view forgets it.
+  { name: 'A sidebar balance opens Net worth on its own group, each account month by month', screen: 'status', run: async (page) => {
+    await page.click('#finNav .fx-balance:has-text("Investments")', { timeout: 5000 });
+    const card = page.locator('#finRoot .fx-groupcard');
+    await card.waitFor({ timeout: 5000 });
+    if (!(await card.locator('h2').textContent()).startsWith('Investments')) throw new Error(`the card: ${await card.locator('h2').textContent()}`);
+    const legend = (await card.locator('.fx-legend li').allTextContents()).map((t) => t.trim());
+    for (const name of ['Robinhood', 'Roth IRA', 'Fidelity 401(k)']) if (!legend.includes(name)) throw new Error(`no ${name} in the legend: ${legend}`);
+    if (legend.some((n) => /Checking|Savings|Amex|Mortgage/.test(n))) throw new Error(`another group's account in it: ${legend}`);
+    const listed = await page.$$eval('#finRoot .fx-ownlist li strong', (s) => s.map((e) => e.textContent.trim()));
+    if (listed.some((n) => /Checking|Savings/.test(n)) || !listed.includes('Robinhood')) throw new Error(`listed: ${listed}`);
+    if (await page.isVisible('#finRoot .fx-owelist')) throw new Error('What you owe shows for Investments');
+    await card.locator('button:text-is("Show everything")').click();
+    await card.waitFor({ state: 'detached', timeout: 2000 });
+    if (!(await page.$$eval('#finRoot .fx-ownlist li strong', (s) => s.map((e) => e.textContent))).some((n) => /Checking/.test(n))) throw new Error('Show everything left the list narrowed');
+    await page.click('#finNav .fx-balance:has-text("Loans")');
+    await page.waitForSelector('#finRoot .fx-groupcard h2:has-text("Loans")', { timeout: 3000 });
+    if (await page.isVisible('#finRoot .fx-ownlist')) throw new Error('What you own shows for Loans');
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    if (await page.isVisible('#finRoot .fx-groupcard')) throw new Error('another view did not forget the group');
+  } },
   // Collectibles: a tile of their own in the pay period card, a group in the sidebar, and in net worth.
   { name: 'Finances: collectibles in the pay period card, the sidebar, and net worth', screen: 'finances', mock: { finances: collected }, run: async (page) => {
     await page.waitForSelector('.fx-acctrow li:has(.fx-acctname:has-text("Collectibles")) .fx-amount:text-is("$2,400.00")', { timeout: 5000 });
