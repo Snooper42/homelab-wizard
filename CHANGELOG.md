@@ -6,6 +6,10 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ## [Unreleased]
 
+### Improved
+
+- **Finances, a sidebar balance opens its own group:** Cash, Investments, or another group's balance in the sidebar opens Net worth on that group alone: its total, each of its accounts month by month as a band of its own, and only its accounts listed. **Show everything** goes back to the whole page.
+
 ### Fixed
 
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.

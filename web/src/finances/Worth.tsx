@@ -13,14 +13,14 @@ import { Row, Rows } from '../parts/Row';
 import { Segmented } from '../parts/Segmented';
 import { Amount, Delta, Stat } from './ui/Amount';
 import { StackedBars } from './ui/charts';
-import { Dot, Legend } from './ui/Legend';
+import { Dot, type Hue, Legend } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { AcctMark, Mark } from './Mark';
 import { PostPayWidget } from './widgets/Ledger';
 import { FireWidget } from './widgets/Fire';
 import { GoalsWidget } from './widgets/Goals';
 import { LoansWidget } from './widgets/Loans';
-import { firstKept, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
+import { firstKept, grouped, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
 interface WorthProps {
@@ -35,6 +35,9 @@ interface WorthProps {
   update?: () => void;
   /** Keeps the plan as it is given (the FIRE estimate's assumptions); none on a phone allowed only to look. */
   keep?: (plan: finance.Plan) => Promise<boolean>;
+  /** One group of accounts shown on its own (a sidebar balance opens it): its accounts month by month, and only them listed. */
+  group?: string;
+  setGroup?: (group: string) => void;
 }
 
 /** How far back the chart goes: months. */
@@ -49,7 +52,7 @@ function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
+export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup }: WorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -71,6 +74,9 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
   const start = months[0];
   const now = netWorth(v);
   // A card or loan paid off is still owed, at $0, as the chart counts it.
+  // A group opened from the sidebar: only its accounts are listed.
+  const focus = group ? grouped(v).find((g) => g.key === group) : undefined;
+  const inFocus = (a: finance.Account) => !focus || focus.accounts.includes(a);
   const owned = accounts.filter((a) => !owed(a.kind));
   const debts = accounts.filter((a) => owed(a.kind));
   const owes = debts.reduce((t, a) => t - worthOf(v, a), 0);
@@ -121,6 +127,7 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
           <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{loans.length ? <>{onLoans > owes / 2 ? ', most of it on loans. They are' : '. Your loans are'} <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</> : '.'}</p>
         </Widget>
 
+        {focus && <GroupCard v={v} focus={focus} months={months} range={range} setRange={setRange} clear={() => setGroup?.('')} />}
         <Widget title="Net worth by month" span="all" kind="fx-worthchart"
           actions={<>
             {hasHome && <Segmented label="What it counts" value={counted} pick={setCounted} options={[['all', 'Everything'], ['liquid', 'Without Home & Car']]} />}
@@ -153,17 +160,64 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep }: WorthProps) {
           ]} />
         </Widget>
 
-        <Widget title={<>What you own <span class="fx-sub"><Amount value={owned.reduce((t, a) => t + worthOf(v, a), 0)} form="whole" /></span></>} kind="fx-ownlist" span={2}>
-          <Rows kind="fx-rows">{sorted(owned).map(row)}</Rows>
-        </Widget>
-        <Widget title={<>What you owe <span class="fx-sub"><Amount value={owes} form="whole" /></span></>} kind="fx-owelist">
-          {debts.length ? <Rows kind="fx-rows">{sorted(debts).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
-        </Widget>
+        {(!focus || focus.accounts.some((a) => !owed(a.kind))) && (
+          <Widget title={<>What you own <span class="fx-sub"><Amount value={owned.filter(inFocus).reduce((t, a) => t + worthOf(v, a), 0)} form="whole" /></span></>} kind="fx-ownlist" span={focus && !focus.accounts.some((a) => owed(a.kind)) ? 'all' : 2}>
+            <Rows kind="fx-rows">{sorted(owned.filter(inFocus)).map(row)}</Rows>
+          </Widget>
+        )}
+        {(!focus || focus.accounts.some((a) => owed(a.kind))) && (
+          <Widget title={<>What you owe <span class="fx-sub"><Amount value={focus ? debts.filter(inFocus).reduce((t, a) => t - worthOf(v, a), 0) : owes} form="whole" /></span></>} kind="fx-owelist" span={focus ? 'all' : undefined}>
+            {debts.filter(inFocus).length ? <Rows kind="fx-rows">{sorted(debts.filter(inFocus)).map(row)}</Rows> : <Empty>Nothing owed.</Empty>}
+          </Widget>
+        )}
         <LoansWidget v={v} L={L} edit={edit} />
         <GoalsWidget v={v} L={L} edit={edit} />
         <FireWidget v={v} L={L} keep={keep} />
         <PostPayWidget v={v} L={L} sel={Math.min(sel, v.periods.length - 1)} pick={pick} update={update} />
       </div>
     </div>
+  );
+}
+
+/** A group of accounts opened on its own (a sidebar balance): its total, each of its accounts month by month as a band
+ * of its own (each account's history), and Show everything back to all of them. */
+function GroupCard({ v, focus, months, range, setRange, clear }: {
+  v: finance.View;
+  focus: { key: string; name: string; accounts: finance.Account[]; total: number };
+  months: WorthMonth[];
+  range: string;
+  setRange: (r: string) => void;
+  clear: () => void;
+}) {
+  const list = [...focus.accounts].sort((a, b) => Math.abs(worthOf(v, b)) - Math.abs(worthOf(v, a)));
+  const debt = list.every((a) => owed(a.kind));
+  // Each account its own colour, as the legend says; what is owed drawn as what it comes to.
+  const color = (i: number) => ((i % 7) + 1) as Hue;
+  const at = (a: finance.Account, m: WorthMonth) => Math.abs(m.date === v.today ? worthOf(v, a) : worthOn(v, a, m.date));
+  return (
+    <Widget title={<>{focus.name} <span class="fx-sub"><Amount value={Math.abs(focus.total)} form="whole" />{debt ? ' owed' : ''}</span></>} span="all" kind="fx-groupcard"
+      actions={<>
+        <Segmented label="How far back" value={range} pick={setRange} options={ranges.map(([k, t]) => [k, t])} />
+        <button type="button" class="small" onClick={clear}>Show everything</button>
+      </>}>
+      <StackedBars format={tick} height={220} lineless
+        label={`${focus.name} at each month's end, each account a band of its own: ${months.map((m) => `${month(m.date)} ${list.map((a) => `${a.name} ${money(at(a, m))}`).join(', ')}`).join('; ')}.`}
+        columns={months.map((m) => ({
+          label: m.date === v.today ? 'Now' : month(m.date),
+          up: list.map((a, i) => ({ value: at(a, m), color: color(i) })),
+          down: [],
+          line: list.reduce((t, a) => t + at(a, m), 0),
+          ahead: m.ahead,
+        }))}
+        tip={(i) => {
+          const m = months[i];
+          return <>
+            <div class="fx-caption">{m.date === v.today ? 'Today' : `${dayShort(m.date)}${m.ahead ? ', ahead' : ''}`}</div>
+            {list.map((a, k) => <div key={a.id} class="fx-tiprow"><Dot color={color(k)} /><span>{a.name}</span><Amount value={at(a, m)} form="full" /></div>)}
+            <div class="fx-tiptotal"><span>{focus.name}</span><Amount value={list.reduce((t, a) => t + at(a, m), 0)} form="full" /></div>
+          </>;
+        }} />
+      <Legend layout="inline" items={list.map((a, i) => ({ label: a.name, color: color(i) }))} />
+    </Widget>
   );
 }
