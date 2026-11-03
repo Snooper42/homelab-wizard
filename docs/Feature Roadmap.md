@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Tidy Up | Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers ([Tidy Up](<Tidy Up.md>)) | this pull request |
+| Tidy Up | Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers ([Tidy Up](<Tidy Up.md>)) | #376 |
 | The calendar a year ahead | Past the three months checking is read for, each payday and payment on its day to a year out, so a yearly renewal shows in its month | #373 |
 | Right-click an app's row | Open, Open on a phone, Copy address, Restart, Stop, Stop for a while, Logs, Back up now, and Tell me if it stops, where you click; Shift+F10 too | #369 |
 | Hide amounts, and the money card | ⌘⇧H or the eye writes every amount as $•••, on the phones too; a wall screen picked for it shows the next payday, what is left, and the next 3 bills | #368 |
@@ -170,7 +170,7 @@ The household's phones as a second screen.
 
 Begun by the owner on Nov 3, 2026, with the two scripts and a wider brief (films, TV, audiobooks, the Downloads inbox, lyrics, a nightly sweep, and space reclaimed by itself): built as [Tidy Up](<Tidy Up.md>). The plan below was its starting point; where the brief changed it (reports in `reports/media`; Windows too; duplicates and verified backups to the Trash by themselves rather than kept for review), Tidy Up's page says how it works now.
 
-- **Library cleanup** (L, *Built*, this pull request): the owner's tested engine, two stdlib Python scripts added unchanged at `tools/media/` (`music_organizer.py`: init, status, scan, run, finalize, verify, undo, delete-backup; `books_organizer.py`: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:
+- **Library cleanup** (L, *Built*, #376): the owner's tested engine, two stdlib Python scripts added unchanged at `tools/media/` (`music_organizer.py`: init, status, scan, run, finalize, verify, undo, delete-backup; `books_organizer.py`: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:
   1. **Settings from the homelab:** `homelab media` writes `data/homelab_media.json` before each run (libraries from `MEDIA_ROOT`, `pause_containers` as the containers that mount each library, the beets container's image, `engine: container`) and always passes `--config`.
   2. **CLI:** `homelab media music|books <action> [flags]` runs the script with `--events json`, prints the events as ordinary CLI lines, forwards flags, and never adds `--yes` itself.
   3. **Background and lock:** `--background` runs the job detached (it outlives the window and the app), holding `data/media.lock` (pid, script, action, start) and writing `logs/media/<job>.jsonl`; one media job at a time; a stale lock (its process gone) offers to run the same action again, which the scripts resume.
