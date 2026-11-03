@@ -92,6 +92,8 @@ The parity audit of October 2026 ([Roadmap](<Roadmap.md#012-the-same-on-every-sy
 
 *Proven by* says what shows it today. "Unit tests" run on all three systems' runners on every pull request (CI's `check` and `test` jobs) but against fakes of the system's tools; "click-through" is `make app-smoke`, which draws the app as each system on Ubuntu's Chromium. "The real-Docker run" is `test/realdocker` against a real Docker Engine on Ubuntu, every night and on each pull request that changes the catalog. No cell is proven on a real machine yet; those steps are in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>), and *on the machine* names them (M for the Mac, W for the Windows PC, S for the Steam Machine). A row without it is shown by CI on each system already (free space, the jobs' logs, the homelab files), or has nothing to show yet (signed builds).
 
+Each *on the machine* step is marked in [Testing › Waiting for real hardware](<Testing.md#waiting-for-real-hardware>). On the Mac, M1–M4, M6, M8, M9, and M12–M17 passed on Nov 3, 2026; M5, M7, M10, M11, and M18 are still to run. None of the Windows PC's or the Steam Machine's has been run one by one yet.
+
 ### Setting up
 
 | Feature | macOS | Windows | Linux | SteamOS | Proven by |
