@@ -27,9 +27,11 @@ import inbox  # noqa: E402
 import music_tidy  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
+# The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
+# Nov 3, 2026 (pausing the apps under Docker Desktop, beets on this machine): change them only so.
 VENDORED = {
-    "music_organizer.py": "aede95cb1c6e19f101c2c951f13e6fad1340b0998e20a20ed142951260bbb3a0",
-    "books_organizer.py": "3d9af447cce3fcf047710a6cb70ce863dffa2b81f17a2b30a4102a0809ea6c58",
+    "music_organizer.py": "81a431693b506b5e5ae708e15dcb0a6d44cddaf458c5df9699f5ad0853587db9",
+    "books_organizer.py": "6ca72b3a2a411b7099305a3dcfd4e219190718484bc75643536d01292ef6a79e",
 }
 
 
@@ -136,6 +138,40 @@ class Vendored(unittest.TestCase):
         self.assertEqual(len(mc.mo.GENRES), 14)
         self.assertEqual(mc.mo.map_genre(["Stoner Rock"]), "Rock & Metal")
         self.assertEqual(mc.mo.map_genre(["Hip Hop/Rap"]), "Hip-Hop & Rap")
+
+
+class DockerDesktopOnWindows(unittest.TestCase):
+    """Docker Desktop names M:\\music /run/desktop/mnt/host/m/music; the organizers pause the apps
+    whose folders hold the library, so they have to see the two as one."""
+
+    def test_mount_sources_read_as_drive_letters(self):
+        import books_organizer as bo
+        for mod in (mc.mo, bo):
+            self.assertEqual(mod.unhost("/run/desktop/mnt/host/m/music", windows=True), "M:/music")
+            self.assertEqual(mod.unhost("/host_mnt/c/Users/you/Music", windows=True), "C:/Users/you/Music")
+            self.assertEqual(mod.unhost("/run/desktop/mnt/host/m", windows=True), "M:/")
+            self.assertEqual(mod.unhost("/var/lib/docker/volumes/x", windows=True), "/var/lib/docker/volumes/x")
+            self.assertEqual(mod.unhost("/host_mnt/Users/you", windows=False), "/Users/you", "a Mac's, as before")
+            self.assertEqual(mod.unhost("/mnt/m/music", windows=False), "/mnt/m/music", "Linux's /mnt is its own")
+
+    def test_a_library_and_its_mount_overlap(self):
+        import books_organizer as bo
+        for mod in (mc.mo, bo):
+            self.assertTrue(mod.overlaps("M:/music", "M:\\Music", windows=True))
+            self.assertTrue(mod.overlaps(mod.unhost("/run/desktop/mnt/host/m", windows=True), "M:\\music", windows=True))
+            self.assertFalse(mod.overlaps("M:/musical", "M:\\music", windows=True))
+            self.assertFalse(mod.overlaps("/Volumes/Music", "/Volumes/music", windows=False), "case counts off Windows")
+
+    def test_beets_runs_on_this_machine_on_windows(self):
+        with mock.patch.object(mc.mo.os, "name", "nt"), mock.patch.object(mc.mo, "beets_image", return_value="lscr.io/linuxserver/beets"):
+            self.assertEqual(mc.mo.choose_engine("auto"), ("local", ""))
+            with mock.patch.object(mc.mo.ui, "warn") as warn:
+                self.assertEqual(mc.mo.choose_engine("container"), ("local", ""))
+                warn.assert_called_once()
+        with mock.patch.object(mc.mo, "beets_image", return_value="lscr.io/linuxserver/beets"), \
+                mock.patch.dict(os.environ, {"HOMELAB_MEDIA_IN_CONTAINER": ""}):
+            if os.name != "nt":
+                self.assertEqual(mc.mo.choose_engine("auto"), ("container", "lscr.io/linuxserver/beets"), "elsewhere, as before")
 
 
 class Names(unittest.TestCase):

@@ -562,8 +562,15 @@ def list_containers():
     return rows
 
 
-def unhost(p):
-    return re.sub(r"^/host_mnt(?=/)", "", p or "")  # Docker Desktop on a Mac sometimes reports this
+def unhost(p, windows=os.name == "nt"):
+    """A mount's folder as this machine names it. Docker Desktop on a Mac sometimes reports
+    /host_mnt/Users/...; on Windows it reports M:\\music as /run/desktop/mnt/host/m/music (or
+    /host_mnt/m/music), which never matched the library, so nothing was paused."""
+    p = p or ""
+    if windows:
+        m = re.match(r"^(?:/run/desktop/mnt/host|/host_mnt|/mnt)/([a-zA-Z])(/.*)?$", p)
+        return "%s:%s" % (m.group(1).upper(), m.group(2) or "/") if m else p
+    return re.sub(r"^/host_mnt(?=/)", "", p)
 
 
 def inspect_container(name):
@@ -586,8 +593,10 @@ def host_path(info, inside):
     return Path(best[0] + inside[len(best[1]):])
 
 
-def overlaps(a, b):
+def overlaps(a, b, windows=os.name == "nt"):
     a, b = str(a).rstrip("/"), str(b).rstrip("/")
+    if windows:  # M:\Music and m:/music are one folder there
+        a, b = a.replace("\\", "/").rstrip("/").lower(), b.replace("\\", "/").rstrip("/").lower()
     return a == b or a.startswith(b + "/") or b.startswith(a + "/")
 
 
@@ -2362,6 +2371,12 @@ def choose_engine(override=None):
         return "local", ""
     mode = override or CFG["music"].get("engine") or "auto"
     if mode == "local":
+        return "local", ""
+    if os.name == "nt":
+        # The engine's container sees each folder at the same path as here, and M:\music can't be a
+        # path in a Linux container: on Windows, beets runs on this machine.
+        if mode == "container":
+            ui.warn("beets' container can't open Windows folders; running beets on this machine instead.")
         return "local", ""
     img = beets_image()
     if img:

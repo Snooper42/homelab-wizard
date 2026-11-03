@@ -12,8 +12,8 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 
 | Script | What it does |
 |---|---|
-| `music_organizer.py` | The owner's music organizer, vendored unchanged: scan, build a cleaned copy with beets (MusicBrainz, your 14 genres, artwork), swap it in with Navidrome paused and backed up, verify, undo |
-| `books_organizer.py` | The owner's books organizer, vendored unchanged: review (titles, series, publishers, genres, covers, misfiled books), apply with Calibre-Web paused, undo |
+| `music_organizer.py` | The owner's music organizer, vendored with their two Windows fixes: scan, build a cleaned copy with beets (MusicBrainz, your 14 genres, artwork), swap it in with Navidrome paused and backed up, verify, undo |
+| `books_organizer.py` | The owner's books organizer, vendored with their Windows fix: review (titles, series, publishers, genres, covers, misfiled books), apply with Calibre-Web paused, undo |
 | `music_tidy.py` | What Tidy Up adds around the organizer: free the space once verify says every song is there, Navidrome's full scan and missing entries, a smart playlist (`.nsp`) a genre, LRCLIB lyrics, and new music from Downloads |
 | `movies_organizer.py`, `tv_organizer.py`, `video_engine.py` | Find the videos that waste space, hand them to Tdarr, and swap each checked result in; file new films as `Title (Year)/Title (Year).mkv` and episodes as `Show/Season 01/Show - S01E01.mkv` (`S01E01-E02` for two in one file, `Show - 112` for anime numbered from its first episode) |
 | `audiobook_organizer.py` | Merge a book in many files into one `.m4b` with a chapter a file and one cover (m4b-tool, else ffmpeg) |
@@ -21,7 +21,7 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 | `scrubber.py` | The nightly sweep of leftovers |
 | `tdarr_setup.py` | Tidy Up's two libraries in Tdarr, with the space-saving plugins |
 
-`media_common.py` holds what they share: the Trash on each system, ffprobe, Tdarr's API, and the media servers' refreshes. The vendored scripts are never edited: `tools/media/tests` fails if either changes.
+`media_common.py` holds what they share: the Trash on each system, ffprobe, Tdarr's API, and the media servers' refreshes. The vendored scripts are otherwise never edited: `tools/media/tests` fails if either changes. The owner agreed to two fixes on Nov 3, 2026: on Windows, Docker Desktop's names for a mounted folder (`/run/desktop/mnt/host/m/music` for `M:\music`) are read as drive letters, so Navidrome and Calibre-Web are paused while files move; and beets runs on this machine there, since its container can't open Windows folders.
 
 ## Settings
 
