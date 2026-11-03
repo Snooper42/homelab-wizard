@@ -11966,6 +11966,25 @@
       if (!scan) out.push({ kind: k3, title: `Look at your ${k3 === "tv" ? "TV" : "films"} first`, sub: "A scan finds what wastes space and changes nothing", go: { label: "Scan", run: () => act.run(k3, "scan") } });
       else if (bloated && !d3.tdarr?.[k3]) out.push({ kind: k3, title: `Set up Tdarr to shrink ${things(k3, bloated)}`, sub: "Tidy Up makes Tdarr's library with the space-saving settings", gain: n2(scan.saving), go: { label: "Set up Tdarr", run: () => act.run("tdarr", "setup", ["--apply"]) } });
       else if (bloated) out.push({ kind: k3, title: `Shrink ${things(k3, bloated)}`, sub: `They look the same after${reasons ? " · " + lead(reasons) : ""}`, gain: n2(scan.saving), go: { label: "Shrink", run: () => act.run(k3, "run") } });
+      const dupes = n2(scan?.duplicates), dd = last(l3, "dedupe"), scanned = last(l3, "scan");
+      if (dupes && !(dd?.ok && scanned && dd.at > scanned.at)) {
+        const list = scan?.duplicate_list || [];
+        const extras = list.reduce((t3, x3) => t3 + x3.extra.length, 0) || dupes;
+        const file = (p3) => p3.split(/[\\/]/).pop() || p3;
+        out.push({
+          kind: k3,
+          title: `${lead(things(k3, dupes))} ${dupes === 1 ? "is" : "are"} in the library twice`,
+          sub: "The copy with the best picture stays; the extra ones go",
+          gain: n2(scan?.duplicate_bytes),
+          go: { label: "Remove extras…", run: () => act.ask({
+            title: "Put the extra copies in the Trash?",
+            action: "Put them in the Trash",
+            lead: `${count(extras, "copy", "copies")}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d3.trash}, never straight away.`,
+            steps: [...list.slice(0, 4).map((x3) => `${x3.extra.map(file).join(" and ")} ${x3.extra.length === 1 ? "goes" : "go"}; ${file(x3.keep)} stays`), ...list.length > 4 ? [`And ${things(k3, list.length - 4)} more`] : []],
+            go: () => act.run(k3, "dedupe", [], true)
+          }) }
+        });
+      }
       if (withTdarr) out.push({ kind: k3, title: "Collect what Tdarr has finished", sub: `${things(k3, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
     } else if (k3 === "books") {
       const rv = last(l3, "review");
@@ -12269,6 +12288,8 @@
     "movies run": "Handing films to Tdarr",
     "movies collect": "Collecting Tdarr's work",
     "tv scan": "Scanning your TV",
+    "movies dedupe": "Removing the extra copies",
+    "tv dedupe": "Removing the extra copies",
     "tv run": "Handing episodes to Tdarr",
     "tv collect": "Collecting Tdarr's work",
     "audiobooks scan": "Scanning your audiobooks",

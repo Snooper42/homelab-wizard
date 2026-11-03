@@ -8,6 +8,7 @@ Movies organizer: shrinks the film library through Tdarr and files new films.
   python3 movies_organizer.py collect          put Tdarr's finished copies in place (the homelab runs it)
   python3 movies_organizer.py file <paths>     file new downloads as Title (Year)/Title (Year).mkv
   python3 movies_organizer.py genre-counts     how many films are in each genre (Jellyfin's, or the .nfo files'); changes nothing
+  python3 movies_organizer.py dedupe           put the extra copies of a film the scan found in the Trash (it asks)
 
 A film wastes space when its video is H.264 or older (HEVC or AV1 is about half the size), its
 audio is uncompressed or lossless, or it carries audio and subtitle tracks in languages you don't
@@ -70,6 +71,15 @@ class Movies(ve.VideoEngine):
 
     noun = ("film", "films")
 
+    def dup_key(self, path):
+        # A version kept on purpose (Heat (1995) - Director's Cut, - 4K) is its own film.
+        if re.search(r"\((?:19|20)\d{2}\)\s+-\s+\S", path.stem) or ve.SAMPLE_RE.search(path.stem):
+            return None
+        title, year = parse_movie(path.stem)
+        if (not year or not title) and path.parent != self.lib:
+            title, year = parse_movie(path.parent.name)
+        return (mc.name_key(title), year) if title and year else None
+
     def items(self):
         out = []
         for p in sorted(self.lib.iterdir()):
@@ -104,7 +114,7 @@ class Movies(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts"])
+    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe"])
     args = ap.parse_args()
     eng = Movies()
     if args.action == "status":
@@ -121,6 +131,8 @@ def main():
         return eng.collect()
     if args.action == "genre-counts":
         return eng.genre_counts()
+    if args.action == "dedupe":
+        return eng.dedupe()
     if not args.paths:
         mc.die("Which files?", "movies_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):

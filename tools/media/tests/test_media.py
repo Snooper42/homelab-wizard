@@ -496,6 +496,98 @@ class BookGenres(Base):
             books_tidy.genre_counts()
 
 
+class Duplicates(Base):
+    """The same film or episode twice: the scan finds it, dedupe puts the extra copy in the Trash."""
+
+    def setUp(self):
+        super().setUp()
+        self.probe = FakeProbe({})
+        mock.patch.object(mc, "ffprobe", side_effect=self.probe).start()
+        mock.patch.object(mc.mo, "YES", True).start()
+
+    def films(self):
+        m = self.lib["movies"]
+        self.probe.table = {
+            "Heat (1995).mkv": facts_info(codec="hevc", height=1080, duration=10200),
+            "x264": facts_info(codec="h264", height=1080, duration=10230),
+            "Director": facts_info(codec="h264", height=1080, duration=10200),
+            "Extended": facts_info(codec="hevc", height=1080, duration=12000),
+            "Ronin (1998).mkv": facts_info(codec="hevc", height=720, duration=7300),
+            "2160p": facts_info(codec="h264", height=2160, duration=7300),
+            "Up (2009)": facts_info(codec="hevc", height=1080, duration=5800)}
+        return {
+            "heat": self.touch(m / "Heat (1995)" / "Heat (1995).mkv", size=3000),
+            "heat264": self.touch(m / "Heat (1995)" / "Heat.1995.1080p.BluRay.x264.mkv", size=9000),
+            "cut": self.touch(m / "Heat (1995)" / "Heat (1995) - Director's Cut.mkv", size=9000),
+            "extended": self.touch(m / "Heat.1995.Extended" / "Heat.1995.Extended.mkv", size=5000),
+            "ronin720": self.touch(m / "Ronin (1998)" / "Ronin (1998).mkv", size=4000),
+            "ronin4k": self.touch(m / "Ronin (1998)" / "Ronin.1998.2160p.mkv", size=20000),
+            "up": self.touch(m / "Up (2009)" / "Up (2009).mkv", size=2000)}
+
+    def test_the_scan_finds_each_film_twice_and_keeps_the_best_picture(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        res = self.results()[-1]
+        self.assertEqual(res["duplicates"], 2)
+        self.assertEqual(res["duplicate_bytes"], 9000 + 4000)
+        got = {Path(d["keep"]).name: [Path(x).name for x in d["extra"]] for d in res["duplicate_list"]}
+        self.assertEqual(got, {"Heat (1995).mkv": ["Heat.1995.1080p.BluRay.x264.mkv"],
+                               "Ronin.1998.2160p.mkv": ["Ronin (1998).mkv"]},
+                         "the leaner HEVC at the same height; the taller copy over the leaner; never another cut or a version kept on purpose")
+        self.assertEqual(self.trashed, [], "a scan changes nothing")
+        self.assertTrue(all(p.exists() for p in f.values()))
+
+    def test_dedupe_trashes_the_extra_copies_only(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        self.assertTrue(movies_organizer.Movies().dedupe())
+        self.assertEqual(sorted(self.trashed), sorted([str(f["heat264"]), str(f["ronin720"])]))
+        res = self.results()[-1]
+        self.assertEqual((res["removed"], res["freed"]), (2, 13000))
+        for k in ("heat", "cut", "extended", "ronin4k", "up"):
+            self.assertTrue(f[k].exists(), k)
+        self.assertEqual(mc.load_state("movies")["freed"], 13000)
+
+    def test_a_copy_changed_since_the_scan_is_kept(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        f["heat264"].write_bytes(b"x" * 9500)  # re-downloaded, say
+        movies_organizer.Movies().dedupe()
+        self.assertEqual(self.trashed, [str(f["ronin720"])])
+        self.assertTrue(f["heat264"].exists())
+
+    def test_a_kept_copy_that_no_longer_reads_keeps_its_copies(self):
+        f = self.films()
+        movies_organizer.Movies().scan()
+        del self.probe.table["2160p"]
+        self.assertFalse(movies_organizer.Movies().dedupe())
+        self.assertNotIn(str(f["ronin720"]), self.trashed)
+
+    def test_an_episode_twice(self):
+        t = self.lib["tv"]
+        self.probe.table = {"S01E01.720p": facts_info(codec="h264", height=720, duration=1500),
+                            "S01E01": facts_info(codec="hevc", height=1080, duration=1500),
+                            "S01E02": facts_info(codec="hevc", height=1080, duration=1500)}
+        keep = self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E01.mkv", size=1000)
+        extra = self.touch(t / "The Office (US)" / "Season 01" / "The.Office.US.S01E01.720p.mkv", size=800)
+        other = self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E02.mkv", size=1000)
+        tv_organizer.TV().scan()
+        self.assertEqual(self.results()[-1]["duplicates"], 1)
+        tv_organizer.TV().dedupe()
+        self.assertEqual(self.trashed, [str(extra)])
+        self.assertTrue(keep.exists() and other.exists())
+
+    def test_nothing_twice(self):
+        self.films()
+        for k in ("Heat.1995.1080p.BluRay.x264.mkv",):
+            (self.lib["movies"] / "Heat (1995)" / k).unlink()
+        (self.lib["movies"] / "Ronin (1998)" / "Ronin (1998).mkv").unlink()
+        movies_organizer.Movies().scan()
+        self.assertEqual(self.results()[-1]["duplicates"], 0)
+        self.assertTrue(movies_organizer.Movies().dedupe())
+        self.assertEqual(self.results()[-1]["removed"], 0)
+
+
 class FakeProbe:
     """ffprobe answers by file name."""
 

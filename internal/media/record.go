@@ -138,6 +138,11 @@ func Describe(kind string, run Run) (text, sub string) {
 			return "", ""
 		}
 		return title(kind) + " shrunk", plural(num(res["replaced"]), "file") + " replaced · " + Bytes(num(res["freed"])) + " freed"
+	case "movies dedupe", "tv dedupe":
+		if num(res["removed"]) == 0 {
+			return "", ""
+		}
+		return "Extra copies in the Trash", plural(num(res["removed"]), "copy") + " · " + Bytes(num(res["freed"])) + " freed"
 	case "audiobooks run":
 		return "Audiobooks merged", plural(num(res["merged"]), "book") + " into one .m4b each · " + Bytes(num(res["freed"])) + " freed"
 	case "scrubber scan":

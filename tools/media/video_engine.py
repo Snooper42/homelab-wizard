@@ -196,8 +196,80 @@ class VideoEngine:
                 why[key] = why.get(key, 0) + 1
         for r, n in sorted(why.items(), key=lambda kv: -kv[1]):
             ui.kv("  " + r, mc.fmt_n(n))
+        dupes = self.duplicates(files, known)
+        if dupes:
+            ui.kv("Twice in the library", "%s (%s in the extra copies)" % (mc.fmt_n(len(dupes)), human(sum(d["bytes"] for d in dupes))))
         ui.result(action="scan", ok=True, media=self.kind, files=len(files), bytes=total, bloated=len(bloated),
-                  saving=saving, unreadable=unreadable, reasons=why)
+                  saving=saving, unreadable=unreadable, reasons=why, duplicates=len(dupes),
+                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50])
+
+    # ------------------------------------------------------------------ the same film or episode twice
+    def dup_key(self, path):
+        """What makes two videos the same film or episode; None when that can't be told."""
+        raise NotImplementedError
+
+    def duplicates(self, files, known):
+        """Each film or episode the library has more than once, as read by the last scan: the copy kept
+        (the best picture: tallest, then the newer codec, then the smaller) and the copies of the same
+        length that could go. A copy of another length (another cut) or a taller one is never one."""
+        groups = {}
+        for p in files:
+            k = self.dup_key(p)
+            rec = known.get(str(p))
+            if k and rec and rec.get("duration") and rec.get("size"):
+                groups.setdefault(k, []).append((p, rec))
+        out = []
+        for k in sorted(groups, key=str):
+            recs = groups[k]
+            if len(recs) < 2:
+                continue
+            recs.sort(key=lambda pr: (-(pr[1].get("height") or 0), -mc.VIDEO_RANK.get(pr[1].get("codec") or "", 0), pr[1]["size"], str(pr[0])))
+            keep, kr = recs[0]
+            extra = [(p, r) for p, r in recs[1:] if mc.same_cut(_facts(r), _facts(kr))]
+            if extra:
+                out.append({"keep": str(keep), "extra": [str(p) for p, _ in extra], "bytes": sum(r["size"] for _, r in extra)})
+        return out
+
+    def dedupe(self):
+        """Put the extra copies the last scan found in the Trash, each checked again first."""
+        self.load()
+        ui.title("%s library" % self.kind.title(), "the extra copies, to %s" % mc.trash_words("%TRASH%"))
+        known = self.state["files"]
+        files = [Path(k) for k in known if Path(k).exists()]
+        dupes = self.duplicates(files, known)
+        if not dupes:
+            ui.ok("Nothing is in the library twice")
+            ui.result(action="dedupe", ok=True, removed=0, freed=0)
+            return True
+        if not mc.mo.confirm("Put %s extra copies in %s?" % (mc.fmt_n(sum(len(d["extra"]) for d in dupes)), mc.trash_words("%TRASH%"))):
+            raise SystemExit(1)
+        servers = mc.Servers()
+        removed, freed, kept = 0, 0, []
+        for d in dupes:
+            keep = Path(d["keep"])
+            try:
+                kf = self.probe(keep)  # the copy kept still plays, as long as before
+            except RuntimeError as e:
+                ui.warn("%s: %s; its copies are kept" % (keep.name, e))
+                kept.append(d["keep"])
+                continue
+            for x in d["extra"]:
+                xp = Path(x)
+                rec = known.get(x) or {}
+                if not xp.exists() or xp.stat().st_size != rec.get("size") or not mc.same_cut(kf, _facts(rec)):
+                    ui.warn("%s changed since the scan; kept" % xp.name)
+                    continue
+                mc.trash(xp)
+                known.pop(x, None)
+                removed += 1
+                freed += rec["size"]
+                self.note("duplicate", path=x, kept=d["keep"])
+            servers.ping(keep, self.kind)
+        self.state["freed"] = self.state.get("freed", 0) + freed
+        self.save()
+        ui.ok(mc.trash_words("%s extra copies went to %TRASH% · %s freed") % (mc.fmt_n(removed), human(freed)))
+        ui.result(action="dedupe", ok=not kept, removed=removed, freed=freed, kept=kept, told=servers.sent)
+        return not kept
 
     # ------------------------------------------------------------------ run: hand the bloated ones to Tdarr
     def run(self):
@@ -498,6 +570,12 @@ def estimate_saving(facts, size, target):
 
 def minutes(seconds):
     return "%d min" % round((seconds or 0) / 60)
+
+
+def _facts(rec):
+    """A scan's record of a video, as media_facts gives it."""
+    return {"duration": rec.get("duration") or 0, "height": rec.get("height") or 0,
+            "video_codec": rec.get("codec") or "", "size": rec.get("size") or 0}
 
 
 def _path_key(p):

@@ -29,7 +29,7 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
                   lyrics [--check], genres [--apply], genre-counts, undo, delete-backup,
                   file <paths>, status
       books       review [--skip 12,34], apply, undo, genre-counts, status
-      movies, tv  scan, run (into Tdarr's queue), collect, file <paths>, genre-counts, status
+      movies, tv  scan, run (into Tdarr's queue), collect, dedupe, file <paths>, genre-counts, status
       audiobooks  scan, run (one .m4b a book), file <paths>, status
   homelab media inbox [--apply]            file what's finished downloading in Downloads
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone

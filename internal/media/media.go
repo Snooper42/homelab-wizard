@@ -63,6 +63,7 @@ var actions = map[string]map[string]Action{
 		"collect":      {Script: "movies_organizer.py", Lock: true},
 		"file":         {Script: "movies_organizer.py", Lock: true},
 		"genre-counts": {Script: "movies_organizer.py"},
+		"dedupe":       {Script: "movies_organizer.py", Lock: true, Confirm: true},
 	},
 	"tv": {
 		"status":       {Script: "tv_organizer.py"},
@@ -71,6 +72,7 @@ var actions = map[string]map[string]Action{
 		"collect":      {Script: "tv_organizer.py", Lock: true},
 		"file":         {Script: "tv_organizer.py", Lock: true},
 		"genre-counts": {Script: "tv_organizer.py"},
+		"dedupe":       {Script: "tv_organizer.py", Lock: true, Confirm: true},
 	},
 	"audiobooks": {
 		"status": {Script: "audiobook_organizer.py"},
