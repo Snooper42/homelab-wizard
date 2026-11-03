@@ -22,6 +22,7 @@
 </nav>
 <main>
   <div id="updateLine" class="updateline" role="status" aria-live="polite" hidden></div>
+  <div id="undoNote"></div>
   <section id="choose" class="screen active">
     <div class="cols">
       <div class="pick">
@@ -91,11 +92,13 @@
     <table class="grouped"><thead><tr><th>App</th><th>State</th><th>Address</th><th></th></tr></thead><tbody id="statusRows"></tbody></table>
     <div id="watchCard" class="card alerts" hidden></div>
     <div class="duo">
-      <div id="protectCard" class="card alerts" hidden></div>
+      <div class="stack">
+        <div id="protectCard" class="card alerts" hidden></div>
+        <div id="storageCard" class="card alerts" hidden></div>
+        <div id="usageCard" class="card alerts" hidden></div>
+      </div>
       <div id="alertsCard" class="card alerts" hidden></div>
     </div>
-    <div id="storageCard" class="card alerts" hidden></div>
-    <div id="usageCard" class="card alerts" hidden></div>
     <div id="weekCard" class="card alerts" hidden></div>
   </section>
   <section id="app" class="screen" aria-label="An app"><div id="appPage"></div></section>

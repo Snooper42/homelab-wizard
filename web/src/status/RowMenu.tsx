@@ -53,7 +53,8 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
     setAt({ left: Math.max(8, Math.min(x, innerWidth - m.width - 8)), top: y + m.height > innerHeight - 8 ? Math.max(8, y - m.height) : y });
   }, [x, y, later]);
   useEffect(() => {
-    requestAnimationFrame(() => items()[0]?.focus());
+    // At once, as the menu is drawn: a key pressed right after the one that opened it lands in the menu.
+    items()[0]?.focus();
     const outside = (e: Event) => { if (!box.current?.contains(e.target as Node)) close(); };
     const gone = () => close();
     document.addEventListener('mousedown', outside, true);

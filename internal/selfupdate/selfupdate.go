@@ -327,7 +327,10 @@ func Swap(staged string, reopen bool) error {
 // instead, the desktop app's too.
 var StartHelper = (*exec.Cmd).Start
 
-// swapScript waits for the app to quit, stops its menu bar helper, puts
+// swapScript waits for the app to quit (a minute, then it asks it to stop,
+// as Windows' helper does; one still open is left alone, with an ERROR,
+// rather than moved under the running app, whose open would only bring it
+// forward), stops its menu bar helper, puts
 // the new app in place (keeping the old one until that worked), and opens
 // it or restarts the menu bar helper. $1 is the app's process, $2 the
 // bundle, $3 the new one, $4 1 to open it, $5 the log (LogPath), whose
@@ -335,7 +338,9 @@ var StartHelper = (*exec.Cmd).Start
 const swapScript = `pid="$1"; app="$2"; new="$3"; reopen="$4"; log="$5"
 note() { [ -n "$log" ] && echo "$(date +%Y-%m-%dT%H:%M:%S) $*" >>"$log"; }
 [ -n "$log" ] && mkdir -p "$(dirname "$log")" && echo "$(date +%Y-%m-%dT%H:%M:%S) update: $new into $app" >"$log"
-i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 300 ]; do sleep 0.2; i=$((i+1)); done
+i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt "${HW_SWAP_WAIT:-300}" ]; do sleep 0.2; i=$((i+1)); done
+if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null; i=0; while kill -0 "$pid" 2>/dev/null && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done; fi
+if kill -0 "$pid" 2>/dev/null; then note "ERROR: the app was still open after it was asked to quit, so the new build was not put in place: quit it, then update again"; exit 0; fi
 tray=0; pgrep -f "$app/Contents/Helpers/" >/dev/null 2>&1 && tray=1
 pkill -f "$app/Contents/Helpers/" 2>/dev/null
 rm -rf "$app.old"

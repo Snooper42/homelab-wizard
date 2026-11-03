@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| The calendar a year ahead | Past the three months checking is read for, each payday and payment on its day to a year out, so a yearly renewal shows in its month | #373 |
 | Right-click an app's row | Open, Open on a phone, Copy address, Restart, Stop, Stop for a while, Logs, Back up now, and Tell me if it stops, where you click; Shift+F10 too | #369 |
 | Hide amounts, and the money card | ⌘⇧H or the eye writes every amount as $•••, on the phones too; a wall screen picked for it shows the next payday, what is left, and the next 3 bills | #368 |
 | Stopped on purpose, and Stop for a while | An app stopped from its group's menu or its page stays stopped: nothing starts it by itself, and its row says *Stopped by you*. Stop for a while stops it for an hour, until tonight, or until tomorrow, then it starts again | #367 |
@@ -35,7 +36,7 @@ The first batch, chosen because each makes the group menu safer or quicker. A lo
 1. Right-click an app's row (Everyday control): *Built*
 2. Stopped on purpose (Everyday control): *Built*
 3. Stop for a while (Memory): *Built*
-4. Undo (Everyday control)
+4. Undo (Everyday control): *Built*
 
 ## Everyday control
 
@@ -43,7 +44,7 @@ The things you do many times a day, made one click shorter.
 
 - **Right-click an app's row** (M, *Built*, #369): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
 - **Stopped on purpose** (M, *Built*, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.
-- **Undo** (S, *Next*): after Stop all, Restart all, or Stop, a note for 10 seconds: "Stopped 6 Media apps · Undo".
+- **Undo** (S, *Built*, #375): after Stop, Stop all, or Stop for a while, a note for 10 seconds: "Stopped 6 Media apps · Undo", and ⌘Z. Restart all has none (nothing to take back).
 - **Right-click the sidebar** (S, *Idea*): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
 - **Command palette** (M, *Idea*): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
 - **Type to filter Status** (S, *Idea*): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it.
@@ -190,7 +191,7 @@ Held by the owner (Nov 2, 2026): planned, not started. The loop leaves it until 
 The Finances loop's unfinished items, built by the features loop now, with their numbers from its backlog. The rest of its backlog (items 1 to 15, 22 to 24, and the MoneyMatter list) is in the app.
 
 - **Hide amounts and a wall-screen card** (S, *Built*, #368; F16): every money figure as $••• on ⌘⇧H, View › Hide Amounts, or the eye on Finances, kept in the plan so the phones follow; and a money card with the next payday, what is left after it, and the next 3 bills, on a wall screen allowed it in Settings › Phones.
-- **The calendar, further ahead** (S, *Idea*; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead.
+- **The calendar, further ahead** (S, *Built*, #373; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead, without a balance.
 - **Card charges on the calendar** (S, *Idea*; F21): a bill charged to a card shows on its day, marked "on Chase Freedom", with the card's due day.
 - **Finances on the phone** (M, *Idea*; F17): the calendar, upcoming bills, subscriptions, and goals on the phone, and Update balances in one quick sheet.
 - **Export** (S, *Idea*; F18): the plan and its projection as CSV and JSON, and a printable month.

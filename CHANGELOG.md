@@ -8,6 +8,26 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
+
+### Improved
+
+- **Finances, card charges on the calendar:** a bill you charge to a card moves no checking money, so the calendar left it out. It now shows on its day, marked with its card and the day that card is next paid ("on Chase Freedom, due Nov 21"), apart from what checking holds.
+- **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
+- **Status, tighter:** the short cards (Protection, What the apps keep, what is using power) stack in one column beside Recent alerts instead of one sitting alone beside a long list; an alert with a long list shows its first 3 lines and **Show N more**; and each app's size takes one line, its name, bar, and size side by side.
+
+### Fixed
+
+- **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
+- **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
+- **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
+
+## [0.17.0] - 2026-11-02
+
+**Apps you stop stay stopped, money hides at a keypress, and a right-click on any app.** Stop an app for good or for a while and nothing starts it behind your back; ⌘⇧H hides every amount, on your phones too, and a wall screen can show the next payday and bills; a right-click on an app on Status offers everything its page does. From this version each release is the next number (0.17.0, 0.17.1, … 0.17.10, then 0.18.0).
+
+### New
+
 - **Right-click an app on Status:** its row's own menu opens where you click, with Open, Open on a phone, Copy address, Start or Restart, Stop (it asks twice), Stop for a while, Logs, Back up now, and Tell me if it stops, without opening its page. Shift+F10 or the menu key opens it from the keyboard, and a right-click on a group's heading opens that group's menu.
 - **The money card on a wall screen:** pick **Money card only** beside a paired screen in Settings › Phones, and its Status shows the next payday and who is paid, what checking holds once its bills are paid, and the next 3 bills, with their logos. The screen is sent only those few things, never your plan, and no amount at all while Finances hides them. A screen still pairs without Finances, as before.
 - **Finances, hide amounts:** ⌘⇧H (Ctrl+Shift+H on Windows and Linux), View › Hide Amounts, or the eye on Finances and beside the sidebar's Accounts writes every amount as $•••, the sidebar's balances and the charts included, for a screenshot or a screen others can see. It is kept with your finances, so your phones hide them too, and it stays until you show them again. The forms you type in and the exports keep the numbers.
@@ -49,8 +69,6 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
-- **Finances, card charges on the calendar:** a bill you charge to a card moves no checking money, so the calendar left it out. It now shows on its day, marked with its card and the day that card is next paid ("on Chase Freedom, due Nov 21"), apart from what checking holds.
-- **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
 - **A menu on each group in Status:** click a group's count ("Media · 7 running ✓ · 2.1 GB") for what its apps hold in memory now, each one's share biggest first, and Start, Restart, or Stop them all; Stop asks for a second click. "What's using power" also says how much memory the apps hold in all, so you can see what to stop when the container runtime is using a lot.
 - **Your balances on every screen:** the sidebar's Accounts (each group's total and net worth) now shows whatever screen is open, not only Finances, and clicking a group opens Finances › Net worth.
 - **Click outside to close:** a click on the dimmed screen around a panel (a command's progress, a log, a form) closes it, as its Close or Cancel would; a form with something typed asks first.

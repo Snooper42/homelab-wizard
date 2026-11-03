@@ -91,6 +91,19 @@ export interface AlertsProps {
   refresh: () => Promise<void>;
 }
 
+/** An alert's message, one line each: a long list (eleven apps that came back) shows its first 3 lines and Show the N more. */
+function Lines({ text }: { text: string }) {
+  const [all, setAll] = useState(false);
+  const lines = text.split('\n').filter((l) => l.trim());
+  const cut = !all && lines.length > 4;
+  return (
+    <>
+      {(cut ? lines.slice(0, 3) : lines).map((line, i) => <div key={i}>{line}</div>)}
+      {lines.length > 4 && <button type="button" class="linkbtn morelines" aria-expanded={all} onClick={() => setAll(!all)}>{all ? 'Show less' : `Show ${lines.length - 3} more`}</button>}
+    </>
+  );
+}
+
 /**
  * Recent alerts: what the nightly updates, Duplicati, Uptime Kuma, and the
  * watchdog sent to ntfy in the last 12 hours, less those whose problem has
@@ -118,7 +131,7 @@ export function Alerts({ events, problem, openSetup, refresh }: AlertsProps) {
       <Head title="Recent alerts"><span><span class="muted">{events.length} in the last 12 hours</span> {check}</span></Head>
       <Rows>
         {shown.map((e) => (
-          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && e.message.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+          <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && <Lines text={e.message} />}
             end={<span class="badge">{topicName[e.topic] || e.topic}</span>} when={ago(e.time)} />
         ))}
       </Rows>
@@ -138,7 +151,7 @@ export function bytesText(n: number): string {
 function Bars({ rows }: { rows: { label: string; bytes: number }[] }) {
   const most = rows[0].bytes;
   return (
-    <Rows kind="usage">
+    <Rows kind="usage sizes">
       {rows.map((r) => (
         <Row key={r.label} title={r.label} when={bytesText(r.bytes)} whenPlain>
           <div class="bar"><span style={`width:${Math.max(2, Math.round((r.bytes / most) * 100))}%`} /></div>

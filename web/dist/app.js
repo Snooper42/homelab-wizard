@@ -1,5 +1,5 @@
 (() => {
-  // node_modules/preact/dist/preact.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -256,7 +256,7 @@
     return n2.__v.__b - l3.__v.__b;
   }, H.__r = 0, f = Math.random().toString(8), c = "__d" + f, a = "__a" + f, s = /(PointerCapture)$|Capture$/i, h = 0, p = V(false), v = V(true), y = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -401,7 +401,7 @@
     return "function" == typeof t3 ? t3(n2) : t3;
   }
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../../../../../../home/user/homelab-wizard/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e3, t3, n2, o3, i3, u4) {
     t3 || (t3 = {});
@@ -675,6 +675,58 @@
   }
   function mountTiles(el, props) {
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
+  }
+
+  // web/src/status/UndoNote.tsx
+  var undoFor = 1e4;
+  function UndoNote({ words: words3, undo, close: close3 }) {
+    const [held3, setHeld] = d2(false);
+    const box = A2(null);
+    h2(() => {
+      if (held3) return;
+      const t3 = setTimeout(close3, undoFor);
+      return () => clearTimeout(t3);
+    }, [held3, words3]);
+    return /* @__PURE__ */ u3(
+      "div",
+      {
+        ref: box,
+        class: "undonote",
+        role: "status",
+        onMouseEnter: () => setHeld(true),
+        onMouseLeave: () => setHeld(!!box.current?.contains(document.activeElement)),
+        onFocusIn: () => setHeld(true),
+        onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
+        children: [
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words3 }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
+        ]
+      }
+    );
+  }
+  var mountUndoNote = (el, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el);
+
+  // web/src/status/stopFor.ts
+  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
+  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
+  function stopChoices(now = /* @__PURE__ */ new Date()) {
+    const hour = new Date(now.getTime() + 36e5);
+    hour.setSeconds(0, 0);
+    const out = [{ label: "For an hour", until: iso(hour) }];
+    const tonight = at(now, 0, 21);
+    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
+    const early = now.getHours() < 6;
+    const morning = at(now, early ? 0 : 1, 8);
+    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
+    return out;
+  }
+  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
+    if (!s3.until) return "Stopped by you";
+    const t3 = new Date(s3.until);
+    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
+    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
+    return `Stopped until ${day3}${clockText(t3)}`;
   }
 
   // web/src/finances/payees.ts
@@ -1617,6 +1669,15 @@
     ] });
   }
   var topicName = { watchtower: "Updates", "duplicati-alerts": "Backups", "uptime-kuma": "Uptime Kuma", "tunnel-watchdog": "Watchdog" };
+  function Lines({ text: text2 }) {
+    const [all, setAll] = d2(false);
+    const lines = text2.split("\n").filter((l3) => l3.trim());
+    const cut = !all && lines.length > 4;
+    return /* @__PURE__ */ u3(S, { children: [
+      (cut ? lines.slice(0, 3) : lines).map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
+      lines.length > 4 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn morelines", "aria-expanded": all, onClick: () => setAll(!all), children: all ? "Show less" : `Show ${lines.length - 3} more` })
+    ] });
+  }
   function Alerts({ events, problem, openSetup, refresh }) {
     const [checking, setChecking] = d2(false);
     const again = () => {
@@ -1651,7 +1712,7 @@
         {
           dot: tone(e3),
           title: e3.title || e3.message,
-          sub: e3.title && e3.message && e3.message.split("\n").map((line, i3) => /* @__PURE__ */ u3("div", { children: line }, i3)),
+          sub: e3.title && e3.message && /* @__PURE__ */ u3(Lines, { text: e3.message }),
           end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[e3.topic] || e3.topic }),
           when: ago(e3.time)
         },
@@ -1675,7 +1736,7 @@
   }
   function Bars({ rows }) {
     const most = rows[0].bytes;
-    return /* @__PURE__ */ u3(Rows, { kind: "usage", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
+    return /* @__PURE__ */ u3(Rows, { kind: "usage sizes", children: rows.map((r3) => /* @__PURE__ */ u3(Row, { title: r3.label, when: bytesText(r3.bytes), whenPlain: true, children: /* @__PURE__ */ u3("div", { class: "bar", children: /* @__PURE__ */ u3("span", { style: `width:${Math.max(2, Math.round(r3.bytes / most * 100))}%` }) }) }, r3.label)) });
   }
   var storageShown = (rec) => (rec?.photos || []).some((p3) => p3.bytes > 0) || (rec?.apps || []).some((f4) => f4.bytes > 0);
   function Storage({ rec, nameOf }) {
@@ -1756,28 +1817,6 @@
     return out;
   }
 
-  // web/src/status/stopFor.ts
-  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
-  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
-  function stopChoices(now = /* @__PURE__ */ new Date()) {
-    const hour = new Date(now.getTime() + 36e5);
-    hour.setSeconds(0, 0);
-    const out = [{ label: "For an hour", until: iso(hour) }];
-    const tonight = at(now, 0, 21);
-    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
-    const early = now.getHours() < 6;
-    const morning = at(now, early ? 0 : 1, 8);
-    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
-    return out;
-  }
-  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
-    if (!s3.until) return "Stopped by you";
-    const t3 = new Date(s3.until);
-    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
-    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
-    return `Stopped until ${day3}${clockText(t3)}`;
-  }
-
   // web/src/status/RowMenu.tsx
   function RowMenu({ a: a3, x: x2, y: y3, native, busy, companion: companion2, on, close: close3, said }) {
     const box = A2(null);
@@ -1791,7 +1830,7 @@
       setAt({ left: Math.max(8, Math.min(x2, innerWidth - m3.width - 8)), top: y3 + m3.height > innerHeight - 8 ? Math.max(8, y3 - m3.height) : y3 });
     }, [x2, y3, later2]);
     h2(() => {
-      requestAnimationFrame(() => items()[0]?.focus());
+      items()[0]?.focus();
       const outside = (e3) => {
         if (!box.current?.contains(e3.target)) close3();
       };
@@ -3841,10 +3880,11 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open2 }) {
+  function Started({ started, open: open2, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." })
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
   var marks = { done: ["✓", "ok"], already: ["✓", "ok"], manual: ["!", "warn"], failed: ["✗", "bad"] };
@@ -3866,10 +3906,10 @@
     ] });
   }
   function mountStarted(el, props) {
-    R(/* @__PURE__ */ u3(Started, { ...props }), el);
+    R(props && /* @__PURE__ */ u3(Started, { ...props }), el);
   }
   function mountWiring(el, props) {
-    R(/* @__PURE__ */ u3(Wiring, { ...props }), el);
+    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el);
   }
   function mountCategories(el, categories2) {
     R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
@@ -4060,6 +4100,14 @@
   }
   var planSeq = 0;
   var replanTimer = 0;
+  function clearInstall() {
+    $2("installProgress").hidden = true;
+    mountJobApps($2("installApps"), []);
+    mountStarted($2("started"), null);
+    mountWiring($2("wiring"), null);
+    $2("installLog").textContent = "";
+    $2("installDetails").hidden = true;
+  }
   function replan() {
     clearTimeout(replanTimer);
     replanTimer = setTimeout(doPlan, 250);
@@ -4068,14 +4116,7 @@
   async function doPlan() {
     const seq = ++planSeq;
     const tokens = [...selected];
-    if (tokens.length && !installing) {
-      $2("installProgress").hidden = true;
-      mountJobApps($2("installApps"), []);
-      $2("started").replaceChildren();
-      $2("wiring").replaceChildren();
-      $2("installLog").textContent = "";
-      $2("installDetails").hidden = true;
-    }
+    if (tokens.length && !installing) clearInstall();
     const plan = (p4) => mountPlan($2("plan"), { plan: p4, appName, reason: friendlyReason });
     if (!tokens.length) {
       plan(null);
@@ -4125,8 +4166,8 @@
     btn.disabled = true;
     btn.textContent = "Installing…";
     startJob("install");
-    $2("started").replaceChildren();
-    $2("wiring").replaceChildren();
+    mountStarted($2("started"), null);
+    mountWiring($2("wiring"), null);
     const words3 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
@@ -4144,7 +4185,10 @@
     try {
       const started = await go().Install([...selected], filled());
       cliProgress("done");
-      mountStarted($2("started"), { started, open: (url) => go().Open(url) });
+      mountStarted($2("started"), { started, open: (url) => go().Open(url), close: () => {
+        clearInstall();
+        $2("search").focus();
+      } });
       if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
       selected.clear();
       settingsData.stale();
@@ -4217,7 +4261,7 @@
       sub = s3.notInstalled;
       end = /* @__PURE__ */ u3(S, { children: [
         s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }),
-        s3.state === "ready" && /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" }),
+        /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small primary", onClick: update, children: "Try again" }),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
     } else if (s3.updated && (step2?.step === "done" || s3.state !== "ready")) {
@@ -4316,7 +4360,8 @@
     const hidden2 = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
     const shown5 = lineShown(state, step) && !hidden2;
     box.hidden = !shown5;
-    box.className = "updateline" + (step?.step === "failed" ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
+    const failed = step?.step === "failed" || !!state.notInstalled && !step && !state.updated;
+    box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
     mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
     drawFoot({ update: running2() ? "finishing" : ready() && hidden2 ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
@@ -5687,6 +5732,7 @@
   };
   async function groupAct(apps, action, progress2, until) {
     setAppsBusy(true);
+    const done = [];
     try {
       for (const [i3, a3] of apps.entries()) {
         progress2(i3);
@@ -5697,12 +5743,36 @@
           setPending(a3.id, { action, failed: errorText(err) });
           break;
         }
+        done.push(a3);
       }
     } finally {
       setAppsBusy(false);
     }
     await loadStatus();
     for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
+    if (action === "stop" && done.length) offerUndo(done, until);
+  }
+  var undoing = null;
+  function offerUndo(apps, until) {
+    const catOf = (id2) => catalog?.apps.find((c3) => c3.id === id2)?.category;
+    const cats = new Set(apps.map((a3) => catOf(a3.id)));
+    const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
+    const what = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
+    const words3 = `Stopped ${what}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    undoing = { apps };
+    mountUndoNote($2("undoNote"), { words: words3, undo: undoNow, close: dropUndo });
+  }
+  function dropUndo() {
+    undoing = null;
+    mountUndoNote($2("undoNote"), null);
+  }
+  function undoNow() {
+    if (!undoing || appsBusy) return false;
+    const { apps } = undoing;
+    dropUndo();
+    groupAct(apps, "start", () => {
+    });
+    return true;
   }
   var pageOpener = { open: (_id) => {
   } };
@@ -5802,6 +5872,7 @@
     }
     if (failed) setPending(a3.id, { action, failed });
     setAppsBusy(false);
+    if (!failed && action === "stop") offerUndo([a3], until);
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
@@ -11562,6 +11633,10 @@
     if (e3.shiftKey && e3.key.toLowerCase() === "h") {
       e3.preventDefault();
       toggleHideAmounts();
+      return;
+    }
+    if (!e3.shiftKey && e3.key.toLowerCase() === "z" && !target.closest?.("input, textarea, select, [contenteditable]") && undoNow()) {
+      e3.preventDefault();
       return;
     }
     if (e3.shiftKey) return;
