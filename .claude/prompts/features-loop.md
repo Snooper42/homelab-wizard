@@ -49,9 +49,11 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 3, 2026, evening): #392 (the Windows test pipes' names, test-only) and #393 (the rest of Tidy Up: the engines' logic fixes and Calibre on a Steam Deck, which were #391, then duplicates, missing episodes, posters, and Undo). Merge each when green, as **Merging** says. Still list what is open at the start of each round, as above: other sessions add to it.
+**Open now:** nothing of this loop's. Cleared on Nov 3, 2026: #385 through #393 were merged (#391 folded into #393). Still list what is open at the start of each round, as above: other sessions add to it.
 
-**Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390 (#391 was folded into #393). With #393 merged, all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
+**A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; never on main, another PR, or locally. Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
+
+**Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390, #393 (#391 folded into it): all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
 
 Then continue **The order** from item 9's command palette (⌘K).
 
