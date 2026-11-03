@@ -524,10 +524,15 @@ def bloat_reasons(facts, keep_langs=None, target="hevc"):
     return reasons
 
 
+def same_cut(new, old):
+    """The same film or episode by its length: within two minutes, or 5% (not another cut, or a sample)."""
+    return not (old["duration"] and new["duration"] and abs(new["duration"] - old["duration"]) > max(120, 0.05 * old["duration"]))
+
+
 def video_more_efficient(new, old):
     """Shrink & Strip: True when the inbound copy of the same film/episode costs less space for at
     least the same picture: a newer codec (AV1 > HEVC > H.264), or the same codec and smaller."""
-    if old["duration"] and new["duration"] and abs(new["duration"] - old["duration"]) > max(120, 0.05 * old["duration"]):
+    if not same_cut(new, old):
         return False  # a different cut, or a sample: not the same thing
     if new["height"] and old["height"] and new["height"] < old["height"] * 0.7:
         return False  # 720p is smaller than 2160p, but it isn't better

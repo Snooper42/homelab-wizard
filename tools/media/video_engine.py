@@ -352,9 +352,20 @@ class VideoEngine:
                 try:
                     best = max(existing, key=lambda e: e.stat().st_size)
                     old = self.probe(best)
-                except RuntimeError:
+                except (RuntimeError, OSError):
                     old = None
-                if old and not mc.video_more_efficient(facts, old):
+                # Nothing is replaced on a guess: a copy that can't be read, or a download of another
+                # length (another cut), is left for a person to look at.
+                if old is None:
+                    unknown.append(str(v))
+                    ui.warn("%s: the library's copy can't be read, so it isn't replaced; the download is left where it is" % dest.name)
+                    continue
+                if not mc.same_cut(facts, old):
+                    unknown.append(str(v))
+                    ui.warn("%s: the download is %s long and the library's copy %s (another cut?); the download is left where it is"
+                            % (dest.name, minutes(facts["duration"]), minutes(old["duration"])))
+                    continue
+                if not mc.video_more_efficient(facts, old):
                     ui.ok(mc.trash_words("%s: the library's copy is leaner; the download went to %TRASH%") % dest.name)
                     mc.trash(v, dry_run=not apply)
                     discarded += 1
@@ -483,6 +494,10 @@ def estimate_saving(facts, size, target):
     if len(facts["audio_codecs"]) > 1:
         share += 0.03
     return int(size * min(share, 0.75))
+
+
+def minutes(seconds):
+    return "%d min" % round((seconds or 0) / 60)
 
 
 def _path_key(p):

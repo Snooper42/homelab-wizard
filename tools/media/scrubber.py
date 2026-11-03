@@ -37,9 +37,18 @@ PER_FILE_RE = re.compile(r"(?i)(-thumb|-poster|-fanart|-landscape|-banner|-clear
 LANG_TAIL_RE = re.compile(r"(?i)(\.(forced|sdh|cc|default|hi|\d+|[a-z]{2,3}(-[a-z]{2,4})?))+$")
 
 
+SUBS_DIRS = {"subs", "subtitles", "sub"}
+
+
+def _key(s):
+    # Movie.EN.srt made on Windows beside movie.mkv, or a name spelled the Mac way: still the film's.
+    return mc.nfc(s).casefold()
+
+
 def anchored_stem(sidecar, stems):
-    """Is this sidecar named after one of the folder's media files?"""
-    base = sidecar.stem
+    """Is this sidecar named after one of the folder's media files (whatever the case)?"""
+    base = _key(sidecar.stem)
+    stems = {_key(s) for s in stems}
     for s in stems:
         if base == s or base.startswith(s + ".") or base.startswith(s + "-") or base.startswith(s + " -"):
             return True
@@ -65,6 +74,8 @@ def orphans(root):
         has_anchor[d] = here
         if calibre:
             continue
+        if d != root and d.name.casefold() in SUBS_DIRS and _has_anchor_file(d.parent):
+            continue  # Movie/Subs/2_English.srt: the film's subtitles, named for their language, not the film
         stems = {f.stem for f in anchors}
         for f in files:
             if f.suffix.lower() not in SIDECAR_EXT:
@@ -75,6 +86,13 @@ def orphans(root):
                     (f.suffix.lower() in mc.SUB_EXT | {".lrc", ".nfo"} or PER_FILE_RE.search(f.stem)):
                 found.append(f)  # named after a film or episode that's gone
     return found
+
+
+def _has_anchor_file(d):
+    try:
+        return any(f.is_file() and f.suffix.lower() in ANCHOR_EXT for f in d.iterdir())
+    except OSError:
+        return True  # can't tell: keep
 
 
 def scrub(roots, apply):

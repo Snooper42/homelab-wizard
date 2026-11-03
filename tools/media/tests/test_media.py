@@ -394,6 +394,18 @@ class Scrubber(Base):
         self.assertTrue((b / "Author" / "Gone (1)").exists(), "Calibre's folders are Calibre's")
 
 
+    def test_a_films_own_subtitles_stay(self):
+        # Subs/2_English.srt beside its film, and a subtitle in other capitals (made on Windows): the film's.
+        m = self.lib["movies"]
+        self.touch(m / "A (2000)" / "A (2000).mkv")
+        keep = [self.touch(m / "A (2000)" / "Subs" / "2_English.srt"), self.touch(m / "A (2000)" / "a (2000).EN.srt"),
+                self.touch(m / "A (2000)" / "SUBS" / "3_French.srt")]
+        scrubber.scrub(scrubber.roots_from_settings(), apply=True)
+        self.assertEqual(self.trashed, [])
+        for p in keep:
+            self.assertTrue(p.exists(), p)
+
+
 class VideoGenres(Base):
     """How many films and shows are in each genre: Jellyfin's when it answers, else the .nfo files'."""
 
@@ -532,6 +544,37 @@ class Movies(Base):
         movies_organizer.Movies().file([dl])
         self.assertEqual(self.trashed, [str(dl)])
         self.assertTrue(have.exists())
+
+    def test_a_library_copy_that_cannot_be_read_is_not_replaced(self):
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.probe.table = {"Heat.1995": facts_info(codec="hevc", size=3_000_000_000)}  # the library's: unreadable
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.1080p.x265.mkv")
+        self.assertFalse(movies_organizer.Movies().file([dl]), "it says there's something to look at")
+        self.assertEqual(self.trashed, [])
+        self.assertTrue(have.exists())
+        self.assertTrue(dl.exists(), "the download stays where it is")
+
+    def test_another_cut_is_neither_a_duplicate_nor_a_replacement(self):
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.probe.table = {"Heat (1995).mkv": facts_info(codec="h264", duration=10200, size=9_000_000_000),
+                            "Heat.1995": facts_info(codec="hevc", duration=12000, size=3_000_000_000)}
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.Extended.x265.mkv")
+        self.assertFalse(movies_organizer.Movies().file([dl]))
+        self.assertEqual(self.trashed, [], "neither the library's copy nor the download goes")
+        self.assertTrue(have.exists())
+        self.assertTrue(dl.exists())
+
+    def test_a_second_version_kept_on_purpose_stays(self):
+        # Jellyfin's and Plex's way of keeping two: Heat (1995) - Director's Cut.mkv beside Heat (1995).mkv.
+        have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        cut = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995) - Director's Cut.mkv")
+        self.probe.table = {"Heat (1995).mkv": facts_info(codec="h264", size=9_000_000_000),
+                            "Director": facts_info(codec="h264", size=9_000_000_000),
+                            "Heat.1995": facts_info(codec="hevc", size=3_000_000_000)}
+        dl = self.touch(self.tmp / "Downloads" / "Heat.1995.1080p.x265.mkv")
+        self.assertTrue(movies_organizer.Movies().file([dl]))
+        self.assertEqual(self.trashed, [str(have)], "the leaner download replaces its own version only")
+        self.assertTrue(cut.exists())
 
     def test_a_leaner_duplicate_replaces_the_library_copy(self):
         have = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
@@ -705,6 +748,21 @@ class Inbox(Base):
         waiting = sorted(Path(w["path"]).name for w in res["waiting"])
         self.assertEqual(waiting, ["Album", "Fresh.2024.mkv"])
         self.assertTrue((d / "setup.dmg").exists(), "not media: left alone")
+
+    def test_a_download_still_being_written_beside_its_placeholder_waits(self):
+        # Firefox makes an empty Heat.1995.mkv as it starts, then fills Heat.1995.mkv.part; aria2 fills
+        # the file itself beside a .aria2. Neither's own time moves, so only the sibling says so.
+        d = self.tmp / "Downloads"
+        self.touch(d / "Heat.1995.mkv", size=0, age=600)
+        self.touch(d / "Heat.1995.mkv.part", age=600)
+        self.touch(d / "Ronin.1998.mkv", age=600)
+        self.touch(d / "Ronin.1998.mkv.aria2", age=600)
+        calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda k, p, a: (calls.append(k), (True, {"filed": ["x"]}))[1]).start()
+        inbox.sweep(apply=True)
+        self.assertEqual(calls, [])
+        waiting = sorted(Path(w["path"]).name for w in self.results()[-1]["waiting"])
+        self.assertEqual(waiting, ["Heat.1995.mkv", "Heat.1995.mkv.part", "Ronin.1998.mkv", "Ronin.1998.mkv.aria2"])
 
     def test_zip_is_unpacked_filed_and_removed(self):
         d = self.tmp / "Downloads"

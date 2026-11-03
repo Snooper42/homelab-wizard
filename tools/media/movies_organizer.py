@@ -96,8 +96,11 @@ class Movies(ve.VideoEngine):
         folder = dest.parent
         if not folder.is_dir():
             return []
+        # Another version kept on purpose (Heat (1995) - Director's Cut.mkv, as Jellyfin and Plex name
+        # them) is not this one.
+        version = mc.nfc(dest.stem).casefold() + " - "
         return [p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in mc.VIDEO_EXT
-                and not ve.SAMPLE_RE.search(p.stem)]
+                and not ve.SAMPLE_RE.search(p.stem) and not mc.nfc(p.stem).casefold().startswith(version)]
 
 
 def main():
