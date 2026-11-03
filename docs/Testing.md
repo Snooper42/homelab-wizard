@@ -80,7 +80,7 @@ cd ~/Homelab
 | Status › Vaultwarden's page › **Open on a phone** | A QR code of its address; the phone's camera opens it (with Tailscale on in Home mode); the panel says what the phone needs and names Bitwarden |
 | Status › Nginx Proxy Manager's page › **Sign-in details** | The user name the homelab made, and **Copy** puts the password on the clipboard (cleared after 90 seconds); the password is never shown |
 | Status › **This week** | The same lines as `./homelab digest` (apps, backups, restore test, attacks caught, disk space), with ✓ All well or what needs a look marked |
-| Status › **What the apps keep** (after a nightly backup) | Up to six app folders with their sizes, largest first, beside **Photos per person** when Immich runs |
+| Status › **What the apps keep** (after a nightly backup) | Up to six app folders with their sizes, largest first, under **Photos per person** when Immich runs, each on one line (name, bar, size); with Protection, in one column beside Recent alerts. A long alert (eleven apps down) shows 3 lines and **Show 8 more** |
 | Status, after an app was down for a while this week | Its row has a badge such as *96.2% up this week*; apps up over 99% have none |
 | Choose stacks › tick Memos › Install (with a domain, after Set up the domain has run) | The install log ends with `domain setup --auto` and `https://notes.example.com`, which opens with a padlock without running anything else |
 | `./homelab stop navidrome`, then Status | **Fix it** appears; it shows the plan (start the baseline apps that are down), and **Fix these** brings Navidrome back. After a watchdog run that saw it down, the **Watchdog** card has **Fix it** too |

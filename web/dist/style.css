@@ -238,6 +238,10 @@ dl { margin:0; }
 /* Two cards side by side on a wide window; one alone takes the row. */
 .duo { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0 14px; align-items:start; }
 .duo:has(> [hidden]) { grid-template-columns:1fr; }
+/* Status: the short cards stacked in one column beside Recent alerts, which runs long, rather than one card alone
+   beside it; one column when either side has nothing to show. */
+.duo > .stack { min-width:0; }
+#status .duo:not(:has(> .stack > :not([hidden]))) { grid-template-columns:1fr; }
 .alertlist { list-style:none; margin:0; padding:0; }
 .alertlist li { display:flex; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
 .alertlist li:first-child { border-top:0; }
@@ -246,6 +250,13 @@ dl { margin:0; }
 .alertlist .when { font-size:12px; white-space:nowrap; }
 .usage .bar { height:6px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
 .usage .bar span { display:block; height:100%; background:var(--accent); border-radius:3px; }
+/* What the apps keep, photos per person: each on one line, its name, its bar, its size. */
+.alertlist.sizes li { align-items:center; padding-top:6px; padding-bottom:6px; }
+.sizes .grow { display:flex; align-items:center; gap:14px; }
+.sizes .grow strong { flex:0 0 9.5em; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sizes .bar { flex:1; margin-top:0; }
+.alertlist.sizes .when { min-width:5.5em; }
+.alerts .linkbtn.morelines { display:block; margin-top:2px; font-size:12px; }
 /* The figures in one right-aligned column, so every bar ends at the same place. */
 .alertlist.usage .when { min-width:7.5em; text-align:right; }
 .alerts .more { font-size:12px; padding-top:4px; }

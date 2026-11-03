@@ -18,6 +18,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Improved
 
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
+- **Status, tighter:** the short cards (Protection, What the apps keep, what is using power) stack in one column beside Recent alerts instead of one sitting alone beside a long list; an alert with a long list shows its first 3 lines and **Show N more**; and each app's size takes one line, its name, bar, and size side by side.
 
 ### Fixed
 
