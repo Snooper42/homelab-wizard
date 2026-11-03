@@ -51,7 +51,9 @@ class Base(unittest.TestCase):
     """A temporary home with a settings file, the Trash recorded instead of used, quiet output."""
 
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="tidy-test-"))
+        # The real path, as the engines see it: a Mac's temp folder is /var behind /private/var,
+        # and Windows' can be a short name (RUNNER~1).
+        self.tmp = Path(os.path.realpath(tempfile.mkdtemp(prefix="tidy-test-")))
         self.home = self.tmp / "home"
         self.home.mkdir()
         self.env = mock.patch.dict(os.environ, {"HOME": str(self.home), "USERPROFILE": str(self.home),
@@ -651,6 +653,33 @@ class Lyrics(Base):
             with self.assertRaises(RuntimeError):
                 music_tidy.write_lyrics(song, "[00:01.00] x", "embed")
         self.assertEqual(order, ["ape", "write"])
+
+
+class LinkedLibrary(Base):
+    """A library set in the settings through a link (~/Media → the drive): the engines work with
+    real paths, so the path a server sees, and Tdarr's finished copy, are still found."""
+
+    def setUp(self):
+        super().setUp()
+        if mc.IS_WINDOWS:
+            self.skipTest("symlinks need an administrator or developer mode on Windows")
+        self.link = self.tmp / "Media"
+        os.symlink(str(self.tmp / "Hobbies"), str(self.link))
+
+    def test_server_path_through_a_link(self):
+        real = self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv"
+        via = [[str(self.link / "movies"), "/media/movies"]]
+        self.assertEqual(mc.Servers.server_path(real, via), "/media/movies/Heat (1995)/Heat (1995).mkv")
+        self.assertEqual(mc.Servers.server_path(self.link / "movies" / "a.mkv", [[str(self.lib["movies"]), "/media/movies"]]),
+                         "/media/movies/a.mkv", "and the other way round")
+
+    def test_tdarr_output_found_for_a_path_recorded_through_a_link(self):
+        eng = movies_organizer.Movies()
+        eng.lib = self.lib["movies"]
+        self.touch(self.lib["movies"] / ve.OUTPUT_DIR / "X (2001)" / "X (2001).mkv")
+        out = eng.output_for(str(self.link / "movies" / "X (2001)" / "X (2001).mkv"))
+        self.assertIsNotNone(out)
+        self.assertEqual(out.name, "X (2001).mkv")
 
 
 class Servers(Base):

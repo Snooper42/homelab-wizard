@@ -116,6 +116,14 @@ def save_state(name, data):
 
 
 # ============================================================== files
+def _real(p):
+    """A path with its links, and Windows' short names, resolved: how the engines compare folders."""
+    try:
+        return os.path.realpath(str(p))
+    except (OSError, ValueError):
+        return str(p)
+
+
 def is_hidden(p):
     return p.name.startswith(".") or p.name.startswith("._") or p.name in WORK_DIRS
 
@@ -628,15 +636,25 @@ class Servers:
 
     @staticmethod
     def server_path(path, path_map):
-        """This machine's path as the server sees it (its container's mounts), longest prefix first."""
+        """This machine's path as the server sees it (its container's mounts), longest prefix first.
+        A folder in the settings may be written through a link (~/Media for /Volumes/Hobbies, a
+        Windows short name like RUNNER~1) while the engines work with real paths: each is tried
+        both as written and as it resolves, on both sides."""
         s = str(path)
-        norm = s.replace("\\", "/")
-        for host, inside in sorted(path_map or [], key=lambda m: -len(m[0])):
-            h = str(host).replace("\\", "/").rstrip("/")
-            a, b = (norm.lower(), h.lower()) if IS_WINDOWS else (norm, h)  # E:\ and e:\ are one drive
-            if a == b or a.startswith(b + "/"):
-                return inside.rstrip("/") + norm[len(h):]
-        return norm if not IS_WINDOWS else s
+        forms = [s.replace("\\", "/")]
+        real = _real(path).replace("\\", "/")
+        if real != forms[0]:
+            forms.append(real)
+        pairs = []
+        for host, inside in path_map or []:
+            for h in {str(host).replace("\\", "/").rstrip("/"), _real(host).replace("\\", "/").rstrip("/")}:
+                pairs.append((h, inside))
+        for h, inside in sorted(pairs, key=lambda m: -len(m[0])):
+            for norm in forms:
+                a, b = (norm.lower(), h.lower()) if IS_WINDOWS else (norm, h)  # E:\ and e:\ are one drive
+                if a == b or a.startswith(b + "/"):
+                    return inside.rstrip("/") + norm[len(h):]
+        return forms[0] if not IS_WINDOWS else s
 
     def ping(self, path, kind):
         """kind: music, movies, tv, audiobooks, books. Returns the servers told."""
