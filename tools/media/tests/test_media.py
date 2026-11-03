@@ -27,6 +27,7 @@ import scrubber  # noqa: E402
 import inbox  # noqa: E402
 import music_tidy  # noqa: E402
 import books_tidy  # noqa: E402
+import trash_restore  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
 # The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
@@ -639,6 +640,55 @@ class Posters(Base):
             self.assertNotIn("posterless", self.results()[-1])
             with self.assertRaises(SystemExit):
                 movies_organizer.Movies().posters()
+
+
+class UndoTrash(Base):
+    """What a run puts in the Trash is noted under its id, and Undo puts it back where it was."""
+
+    def setUp(self):
+        super().setUp()
+        if mc.IS_WINDOWS:
+            self.skipTest("the Recycle Bin doesn't say where a file went; those are named, not put back")
+        self.trash.stop()  # the real Trash, in this test's home
+        self.log = self.tmp / "data" / "media-trash.jsonl"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "scrubber-scan-1", "HOMELAB_MEDIA_TRASH_LOG": str(self.log)}).start()
+        mock.patch.object(mc.mo, "YES", True).start()
+
+    def test_a_run_put_back(self):
+        a = self.touch(self.lib["movies"] / "Gone (2001)" / "poster.jpg")
+        b = self.touch(self.lib["movies"] / "Gone (2001)" / "movie.nfo")
+        mc.trash(a)
+        mc.trash(b)
+        self.assertFalse(a.exists() or b.exists())
+        notes = [json.loads(l) for l in self.log.read_text().splitlines()]
+        self.assertEqual([(n["run"], n["from"]) for n in notes], [("scrubber-scan-1", str(a)), ("scrubber-scan-1", str(b))])
+        self.assertTrue(all(Path(n["to"]).exists() for n in notes))
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "trash-restore-2"}):
+            self.assertTrue(trash_restore.restore("scrubber-scan-1", str(self.log)))
+        self.assertTrue(a.exists() and b.exists())
+        self.assertEqual(self.results()[-1]["restored"], 2)
+        self.assertFalse(any(Path(n["to"]).exists() for n in notes), "out of the Trash")
+        if not mc.IS_MAC:
+            self.assertEqual(list((self.home / ".local" / "share" / "Trash" / "info").glob("*.trashinfo")), [], "nor listed in it")
+
+    def test_only_this_runs_and_never_over_something_new(self):
+        a = self.touch(self.lib["movies"] / "A.nfo")
+        b = self.touch(self.lib["movies"] / "B.nfo")
+        mc.trash(a)
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": "other-run"}):
+            mc.trash(b)
+        a.write_text("a new one")  # something in its place since
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        res = self.results()[-1]
+        self.assertEqual(res["restored"], 0)
+        self.assertEqual(a.read_text(), "a new one", "the new one stays")
+        self.assertIn("A.nfo: something else is in its place", res["stayed"])
+        self.assertFalse(b.exists(), "another run's stays in the Trash")
+
+    def test_without_a_run_nothing_is_noted(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": ""}):
+            mc.trash(self.touch(self.lib["movies"] / "A.nfo"))
+        self.assertFalse(self.log.exists())
 
 
 class FakeProbe:

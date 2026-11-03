@@ -383,6 +383,11 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
     if (i === swapIdx && (music.stage === 'swapped' || music.stage === 'verified')) {
       return () => act.ask({ title: 'Put the old library back?', action: 'Put it back', lead: 'Navidrome is paused while the folders swap back, exactly as they were.', go: () => act.run('music', 'undo', [], true) });
     }
+    // Anything else that put things in the Trash: put them back.
+    if (d.activity[i].undo) {
+      const run = d.activity[i].undo!;
+      return () => act.ask({ title: 'Put it all back?', action: 'Put it back', lead: `What this put in ${d.trash} goes back where it was. Anything since moved, replaced, or emptied from ${d.trash} stays as it is.`, go: () => act.run('trash', 'restore', [run], true) });
+    }
     const ap = last(books, 'apply'), un = last(books, 'undo');
     if (i === applyIdx && ap?.ok && (!un || un.at < ap.at)) {
       return () => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) });

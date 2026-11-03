@@ -34,6 +34,7 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
   homelab media inbox [--apply]            file what's finished downloading in Downloads
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone
   homelab media tdarr setup [--apply]      Tdarr's space-saving libraries for films and TV
+  homelab media restore <run> [--yes]      put back what one run put in %[1]s (Undo on Tidy Up)
   homelab media arr [--apply]              Sonarr, Radarr and Lidarr stop renaming and importing:
                                            Tidy Up files their downloads instead
 
@@ -41,7 +42,7 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
   --yes           the step that asks (finalize, undo, apply) goes ahead: only after you agreed
   --background    run it detached; it outlives this window (scripts/logs/media)
 
-Whatever is thrown away goes to %s, never straight away. One job moves files at a time
+Whatever is thrown away goes to %[1]s, never straight away. One job moves files at a time
 (homelab.media.lock); while it does, the nightly updates leave the media apps and Duplicati waits.
 `
 
@@ -67,6 +68,11 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 		return h.mediaEngine(ctx, "tdarr", "setup", args[2:])
 	case "arr":
 		return h.mediaArr(ctx, args[1:])
+	case "restore":
+		if len(args) < 2 || strings.HasPrefix(args[1], "-") {
+			return errors.New("homelab media restore <run> [--yes]: the run is in Tidy Up's record (data/media.json)")
+		}
+		return h.mediaEngine(ctx, "trash", "restore", args[1:])
 	case "tick":
 		return h.mediaTick(ctx)
 	}
@@ -290,6 +296,8 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 		full = append(full, map[string]string{"inbox": "inbox", "scrubber": "scrub"}[kind])
 	case "tdarr":
 		full = append(full, "tdarr", "setup")
+	case "trash":
+		full = append(full, "restore")
 	default:
 		full = append(full, kind, action)
 	}

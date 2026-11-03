@@ -12124,6 +12124,10 @@
       if (i3 === swapIdx && (music.stage === "swapped" || music.stage === "verified")) {
         return () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) });
       }
+      if (d3.activity[i3].undo) {
+        const run2 = d3.activity[i3].undo;
+        return () => act.ask({ title: "Put it all back?", action: "Put it back", lead: `What this put in ${d3.trash} goes back where it was. Anything since moved, replaced, or emptied from ${d3.trash} stays as it is.`, go: () => act.run("trash", "restore", [run2], true) });
+      }
       const ap = last(books, "apply"), un = last(books, "undo");
       if (i3 === applyIdx && ap?.ok && (!un || un.at < ap.at)) {
         return () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) });
@@ -12305,6 +12309,7 @@
     "movies collect": "Collecting Tdarr's work",
     "tv scan": "Scanning your TV",
     "movies dedupe": "Removing the extra copies",
+    "trash restore": "Putting it back",
     "movies posters": "Asking Jellyfin for posters",
     "tv posters": "Asking Jellyfin for posters",
     "tv dedupe": "Removing the extra copies",

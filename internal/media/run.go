@@ -137,6 +137,7 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 		return Run{}, err
 	}
 	run := Run{Action: j.Action, At: time.Now().UTC()}
+	run.ID = fmt.Sprintf("%s-%s-%d", j.Kind, j.Action, run.At.UnixNano())
 	if a.Power && onBattery() {
 		return run, ErrOnBattery
 	}
@@ -144,7 +145,8 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 	defer cancel(nil)
 	c := procattr.Hide(exec.CommandContext(ctx, argv[0], argv[1:]...))
 	c.Dir = ToolsDir(j.Root)
-	c.Env = Environ(j.Env)
+	// The engines note what they put in the Trash under this run, for Undo.
+	c.Env = append(Environ(j.Env), "HOMELAB_MEDIA_RUN="+run.ID, "HOMELAB_MEDIA_TRASH_LOG="+TrashLogPath(j.Root))
 	c.Stderr = os.Stderr
 	// Stopped (Ctrl-C, the app's Stop, the battery): an interrupt, so the
 	// engine says where it stopped and saves its progress; then a kill.
@@ -211,6 +213,7 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 		}
 	}
 	err = c.Wait()
+	_, run.Back = Thrown(j.Root, run.ID)
 	if cause := context.Cause(ctx); errors.Is(cause, ErrOnBattery) {
 		run.Exit = 130
 		return run, ErrOnBattery

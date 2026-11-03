@@ -14,6 +14,10 @@ type Run struct {
 	Exit   int            `json:"exit"`
 	At     time.Time      `json:"at"`
 	Result map[string]any `json:"result,omitempty"`
+	// ID names the run in the trash log; Back is how many things it put in
+	// the Trash that Undo can put back.
+	ID   string `json:"id,omitempty"`
+	Back int    `json:"back,omitempty"`
 }
 
 // Record is data/media.json: what Tidy Up knows without running Python,
@@ -43,6 +47,8 @@ type Activity struct {
 	Kind string    `json:"kind"`
 	Text string    `json:"text"`
 	Sub  string    `json:"sub,omitempty"`
+	// Undo is the run whose Trash it can put back ("trash restore <it>").
+	Undo string `json:"undo,omitempty"`
 }
 
 // RecordPath is where the record lives.
@@ -86,8 +92,22 @@ func (r *Record) Note(kind string, run Run) {
 		}
 		r.Freed[kind] += freed
 	}
+	if kind == "trash" && run.Action == "restore" && run.OK {
+		// Put back: its line no longer offers Undo.
+		if id, _ := run.Result["run"].(string); id != "" {
+			for i := range r.Activity {
+				if r.Activity[i].Undo == id {
+					r.Activity[i].Undo = ""
+				}
+			}
+		}
+	}
 	if text, sub := Describe(kind, run); text != "" {
-		r.Activity = append(r.Activity, Activity{At: run.At, Kind: kind, Text: text, Sub: sub})
+		a := Activity{At: run.At, Kind: kind, Text: text, Sub: sub}
+		if run.Back > 0 && run.OK && undoable(kind, run.Action) {
+			a.Undo = run.ID
+		}
+		r.Activity = append(r.Activity, a)
 		if len(r.Activity) > 40 {
 			r.Activity = r.Activity[len(r.Activity)-40:]
 		}
@@ -148,6 +168,11 @@ func Describe(kind string, run Run) (text, sub string) {
 			return "", ""
 		}
 		return "Posters asked of Jellyfin", plural(num(res["asked"]), map[string]string{"movies": "film", "tv": "show"}[kind]) + " · they show as Jellyfin finds them"
+	case "trash restore":
+		if num(res["restored"]) == 0 {
+			return "", ""
+		}
+		return "Put back from the Trash", plural(num(res["restored"]), "thing") + " where they were"
 	case "audiobooks run":
 		return "Audiobooks merged", plural(num(res["merged"]), "book") + " into one .m4b each · " + Bytes(num(res["freed"])) + " freed"
 	case "scrubber scan":

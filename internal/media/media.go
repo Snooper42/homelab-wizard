@@ -86,6 +86,8 @@ var actions = map[string]map[string]Action{
 	"inbox":    {"scan": {Script: "inbox.py", Lock: true}},
 	"scrubber": {"scan": {Script: "scrubber.py", Lock: true}},
 	"tdarr":    {"setup": {Script: "tdarr_setup.py"}},
+	// Undo: what a run put in the Trash goes back where it was.
+	"trash": {"restore": {Script: "trash_restore.py", Lock: true, Confirm: true}},
 }
 
 // Lookup is the action kind/name, or an error that lists the ones there are.

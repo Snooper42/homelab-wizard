@@ -548,6 +548,17 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'posters', [], false])) throw new Error(JSON.stringify(runs));
   } },
+  // Whatever a run put in the Trash, its line can put back: it asks, then runs the restore with that run.
+  { name: 'Tidy Up: Undo on a sweep puts it back, after asking', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity, { at: tidyAt(0.5), kind: 'scrubber', text: 'Leftovers swept', sub: '14 leftovers and 3 empty folders in the Trash', undo: 'scrubber-scan-1793' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.click('#tidy .tidydone li:has-text("Leftovers swept") button:text-is("Undo")', { timeout: 3000 });
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put it all back?")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
+    await page.click('#tidySheet button:text-is("Put it back")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['trash', 'restore', ['scrubber-scan-1793'], true])) throw new Error(JSON.stringify(runs));
+  } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
