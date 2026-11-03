@@ -13,6 +13,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Lyrics that scroll:** time-synced lyrics from LRCLIB for every song, replacing plain ones when synced ones are found, instrumentals skipped; and a Navidrome smart playlist for each of your genres.
 - **The nightly sweep:** at 03:00, posters, .nfo and subtitle files whose film, episode, song, or book is gone, and empty folders, go to the Trash.
 - **Tidy Up waits its turn:** one job moves files at a time; while one does, the nightly update leaves the media apps for the next night and Duplicati waits, and the heavy jobs wait for power and pause when the laptop goes on battery. `homelab media` does it all from a terminal too, on a Mac, Windows (Docker Desktop, any drive letter), and Linux.
+- **Type to find an app on Status:** start typing an app's name anywhere on Status and the list keeps only the apps that have it, in a box beside the list that says how many; Return opens the first one's page, and Escape brings every app back.
 - **Undo a stop:** after Stop, Stop all, or Stop for a while, a note at the bottom of the window says what stopped ("Stopped 6 Media apps") with **Undo**, which starts them again. It stays 10 seconds, and longer while your pointer is on it; ⌘Z (Ctrl+Z on Windows and Linux) undoes too.
 
 ### Improved

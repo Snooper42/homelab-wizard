@@ -2268,6 +2268,115 @@
     }, []);
     return f4;
   }
+  var filter = { text: "", on: false };
+  var filters = [];
+  var before = null;
+  var focusBox = false;
+  function setFilter(f4) {
+    filter = f4;
+    filters.forEach((fn) => fn(f4));
+  }
+  function useFilter() {
+    const [f4, set2] = d2(filter);
+    h2(() => {
+      filters.push(set2);
+      set2(filter);
+      return () => {
+        filters.splice(filters.indexOf(set2), 1);
+      };
+    }, []);
+    return f4;
+  }
+  var plain = (s3) => s3.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  function matches(a3, text2) {
+    const q2 = plain(text2.trim());
+    return !q2 || plain(a3.name).includes(q2) || plain(a3.id).includes(q2);
+  }
+  var found = { n: 0, of: 0, first: null };
+  var founds = [];
+  function setFound(f4) {
+    if (f4.n === found.n && f4.of === found.of && f4.first === found.first) return;
+    found = f4;
+    founds.forEach((fn) => fn(f4));
+  }
+  function clearFilter() {
+    setFilter({ text: "", on: false });
+    const back = before;
+    before = null;
+    requestAnimationFrame(() => {
+      if (back?.isConnected && back.checkVisibility()) back.focus();
+      else document.getElementById("statusAll")?.focus();
+    });
+  }
+  document.addEventListener("keydown", (e3) => {
+    const status = document.getElementById("status");
+    if (!status?.classList.contains("active") || e3.defaultPrevented) return;
+    const html = document.documentElement.classList;
+    if (html.contains("sheet-open") || html.contains("kiosk") || !document.querySelector("#statusRows tr")) return;
+    const t3 = e3.target;
+    if (status.querySelector(".menu:not([hidden])")) return;
+    if (e3.key === "Escape" && filter.on && !t3.closest?.(".filterbox")) {
+      clearFilter();
+      return;
+    }
+    if (e3.metaKey || e3.ctrlKey || e3.altKey || e3.key.length !== 1 || e3.key === " ") return;
+    if (t3.closest?.("input, textarea, select, [contenteditable], [role=menu], dialog, .sheet")) return;
+    e3.preventDefault();
+    if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    focusBox = true;
+    setFilter({ text: filter.text + e3.key, on: true });
+  });
+  function FilterBox() {
+    const f4 = useFilter();
+    const [n3, setN] = d2(found);
+    h2(() => {
+      founds.push(setN);
+      setN(found);
+      return () => {
+        founds.splice(founds.indexOf(setN), 1);
+      };
+    }, []);
+    const box = A2(null);
+    _2(() => {
+      if (!focusBox || !box.current) return;
+      focusBox = false;
+      const el = box.current;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    });
+    if (!f4.on) return null;
+    const said = !f4.text.trim() ? "" : n3.n ? `${n3.n} of ${n3.of} ${n3.of === 1 ? "app" : "apps"}` : "No app has that name";
+    return /* @__PURE__ */ u3("span", { class: "filterbox", children: [
+      /* @__PURE__ */ u3(
+        "input",
+        {
+          ref: box,
+          type: "search",
+          "aria-label": "Filter apps by name",
+          placeholder: "Filter apps",
+          value: f4.text,
+          autocomplete: "off",
+          spellcheck: false,
+          onInput: (e3) => setFilter({ text: e3.target.value, on: true }),
+          onKeyDown: (e3) => {
+            if (e3.key === "Escape") {
+              e3.preventDefault();
+              e3.stopPropagation();
+              clearFilter();
+            }
+            if (e3.key === "Enter" && n3.first) {
+              e3.preventDefault();
+              n3.first();
+            }
+          },
+          onBlur: (e3) => {
+            if (!e3.target.value.trim()) setFilter({ text: "", on: false });
+          }
+        }
+      ),
+      /* @__PURE__ */ u3("span", { class: "muted filtercount", role: "status", children: said })
+    ] });
+  }
   function openGroups(groups3, f4, held3) {
     const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id]);
     return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
@@ -2282,16 +2391,38 @@
       return () => clearTimeout(t3);
     }, [said]);
     const say = (id2, words3) => setSaid({ id: id2, words: words3 });
+    const q2 = useFilter().text;
     const open2 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open2 : f4.picked, [label]: !open2[label] } });
-    return /* @__PURE__ */ u3(S, { children: p3.groups.flatMap((g2) => [
+    const kept = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x2) => x2.apps.length) : null;
+    const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
+    const first = kept?.[0]?.apps.find((a3) => a3.state !== "missing");
+    const openFirst = A2(() => {
+    });
+    openFirst.current = () => {
+      if (first) p3.on.page(first);
+    };
+    const opener = A2(() => openFirst.current());
+    h2(() => setFound({ n: kept ? kept.reduce((t3, x2) => t3 + x2.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
+    if (kept && !kept.length) {
+      return /* @__PURE__ */ u3("tr", { class: "nomatch", children: /* @__PURE__ */ u3("td", { colSpan: 4, children: [
+        "No app’s name has “",
+        q2.trim(),
+        "”. ",
+        /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: clearFilter, children: "Show every app" })
+      ] }) });
+    }
+    const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said?.id === a3.id ? said.words : void 0, say }, a3.id);
+    return /* @__PURE__ */ u3(S, { children: kept ? kept.flatMap(({ g: g2, apps }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
+    }, p: p3 }, "g:" + g2.label), ...apps.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open2[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open2[g2.label] ? g2.apps.map((a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said?.id === a3.id ? said.words : void 0, say }, a3.id)) : []
+      ...open2[g2.label] ? g2.apps.map(row) : []
     ]) });
   }
   function ShowAll() {
     const f4 = useFold();
-    return /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" });
+    const on = useFilter().on;
+    return /* @__PURE__ */ u3(S, { children: on ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
   }
   function mountAppList(el, props) {
     R(/* @__PURE__ */ u3(AppList, { ...props }), el);
@@ -2487,18 +2618,18 @@
     _2(() => {
       keys();
       const panel = ref.current;
-      let before = null;
+      let before2 = null;
       const seen = new MutationObserver(() => {
         document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
         if (!panel.hidden) {
-          if (!panel.contains(document.activeElement)) before = document.activeElement;
+          if (!panel.contains(document.activeElement)) before2 = document.activeElement;
           requestAnimationFrame(() => {
             panel.scrollTop = 0;
             (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
           });
         } else {
-          if (before && document.contains(before)) before.focus();
-          before = null;
+          if (before2 && document.contains(before2)) before2.focus();
+          before2 = null;
           if (!openSheets().length) onClose?.();
         }
       });
@@ -3122,8 +3253,8 @@
   }
   function Nav({ groups: groups3, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
-    const matches2 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
-    const isOpen = (f4) => counts ? matches2(f4) : picked[f4.label] ?? f4.pages.includes(active2);
+    const matches3 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
+    const isOpen = (f4) => counts ? matches3(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(PagePicker, { groups: groups3, active: active2, counts, pick }),
       groups3.filter((g2) => g2.items.length).map((g2) => [
@@ -3682,7 +3813,7 @@
   function Bundles({ presets, selected: selected2, toggle }) {
     return /* @__PURE__ */ u3(S, { children: presets.map((p3) => /* @__PURE__ */ u3("button", { class: "chip" + (lit(p3, selected2) ? " on" : ""), title: p3.description || "", onClick: () => toggle(p3), children: p3.name }, p3.id)) });
   }
-  var matches = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
+  var matches2 = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
   function AppRow({ a: a3, p: p3 }) {
     const native = a3.kind === "native";
@@ -3716,7 +3847,7 @@
   }
   function Groups(p3) {
     const byCategory2 = {};
-    for (const a3 of p3.catalog.apps) if (a3.kind !== "helper" && matches(a3, p3.query)) (byCategory2[a3.category] ??= []).push(a3);
+    for (const a3 of p3.catalog.apps) if (a3.kind !== "helper" && matches2(a3, p3.query)) (byCategory2[a3.category] ??= []).push(a3);
     if (p3.query && !Object.keys(byCategory2).length) return /* @__PURE__ */ u3(Empty, { children: [
       "No app matches “",
       p3.query,
@@ -4054,9 +4185,9 @@
       log2.textContent += line + "\n";
     });
     try {
-      const before = new Set(catalog.apps.map((a3) => a3.id));
+      const before2 = new Set(catalog.apps.map((a3) => a3.id));
       catalog = await go().AddCustom(spec);
-      const added = catalog.apps.find((a3) => !before.has(a3.id));
+      const added = catalog.apps.find((a3) => !before2.has(a3.id));
       renderApps();
       if (added) {
         selected.add(added.id);
@@ -6177,9 +6308,9 @@
     }) });
   }
   function Vault({ o: o3 }) {
-    const plain = o3.plainExports || [];
-    const [tone, said] = plain.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
-    return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain.length, children: [
+    const plain2 = o3.plainExports || [];
+    const [tone, said] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
+    return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain2.length, children: [
       /* @__PURE__ */ u3("summary", { children: [
         /* @__PURE__ */ u3("span", { class: "dot " + tone }),
         /* @__PURE__ */ u3("span", { class: "grow", children: [
@@ -6192,8 +6323,8 @@
         ] }),
         /* @__PURE__ */ u3("span", { class: "btn small", children: "How" })
       ] }),
-      !!plain.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
-        plain.join(", "),
+      !!plain2.length && /* @__PURE__ */ u3("p", { class: "bad", children: [
+        plain2.join(", "),
         " in recovery-staging/secrets holds every password readable. Delete it, then export again encrypted."
       ] }),
       /* @__PURE__ */ u3("p", { children: [
@@ -8307,11 +8438,11 @@
     const fromApp = async (app) => {
       setPulled({ busy: app.name });
       try {
-        const found = await app.read();
+        const found2 = await app.read();
         const name = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
         const next = { ...typed };
         const filled2 = [], left = [];
-        for (const f4 of found) {
+        for (const f4 of found2) {
           const n3 = name(f4.name);
           const a3 = accounts.find((q2) => name(q2.name) === n3) || accounts.find((q2) => n3 && (name(q2.name).includes(n3) || n3.includes(name(q2.name))));
           const code2 = (a3?.currency || currencyCode()).toUpperCase();
@@ -8688,18 +8819,18 @@
       setCols(isOfx(t3) ? null : guessColumns(csvRows(t3)[0] || []));
     };
     const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
-    const found = read_.map((t3) => {
+    const found2 = read_.map((t3) => {
       const payee = cleanPayee(t3.payee);
       return { ...t3, payee, raw: t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0 };
     });
     const have = ledger?.transactions || [];
-    const fresh = found.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
+    const fresh = found2.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const bring = async (e3) => {
       e3.preventDefault();
       if (!fresh.length) {
-        setProblem(found.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
+        setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
       const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
@@ -8732,11 +8863,11 @@
       ] }),
       !!text2 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
-          found.length ? `${fresh.length} to bring in` : "Nothing found yet",
+          found2.length ? `${fresh.length} to bring in` : "Nothing found yet",
           " ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : "" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: found2.length - fresh.length ? `${found2.length - fresh.length} already in, skipped` : "" })
         ] }),
-        /* @__PURE__ */ u3("ul", { class: "importlist", children: found.slice(0, 60).map((t3, i3) => {
+        /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
           const dup = !fresh.includes(t3);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
@@ -8751,9 +8882,9 @@
             /* @__PURE__ */ u3("span", { class: t3.amount > 0 ? "fx-in" : "", children: signed(t3.amount) })
           ] }, i3);
         }) }),
-        found.length > 60 && /* @__PURE__ */ u3("p", { class: "muted", children: [
+        found2.length > 60 && /* @__PURE__ */ u3("p", { class: "muted", children: [
           "And ",
-          found.length - 60,
+          found2.length - 60,
           " more."
         ] })
       ] }),
@@ -10198,8 +10329,8 @@
     return out;
   }
   var opening = "";
-  var openOn = (filter) => {
-    opening = filter;
+  var openOn = (filter2) => {
+    opening = filter2;
   };
   var kindFromCategory = (cat, cats) => {
     const c3 = (cats || []).find((q2) => q2.name.toLowerCase() === (cat || "").toLowerCase());
@@ -10232,7 +10363,7 @@
     ] });
   }
   function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) {
-    const [filter, setFilter] = d2(() => {
+    const [filter2, setFilter2] = d2(() => {
       const f4 = opening || "all";
       opening = "";
       return f4;
@@ -10242,7 +10373,7 @@
     const m3 = month(v3, L2);
     const share2 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
     const onCard2 = (x2) => L2.account[x2.from || ""]?.kind === "card";
-    const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
+    const list = payments.filter((x2) => groups2[filter2](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count2 = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
     const paidLine = (x2) => {
       const pd = (v3.paid || []).filter((q2) => q2.payment === x2.id && daysBetween(q2.date, v3.today) <= 42).sort((a3, b2) => b2.date.localeCompare(a3.date))[0];
@@ -10308,8 +10439,8 @@
           title: "Payments",
           span: "all",
           kind: "fx-payments",
-          actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter, pick: setFilter, options: [["all", `All ${count2("all")}`], ["bills", `Bills ${count2("bills")}`], ["cards", `Cards ${count2("cards")}`], ["subscriptions", `Subscriptions ${count2("subscriptions")}`], ["spending", `Spending ${count2("spending")}`], ["saving", `Saving ${count2("saving")}`]] }),
-          children: filter === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+          actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter2, pick: setFilter2, options: [["all", `All ${count2("all")}`], ["bills", `Bills ${count2("bills")}`], ["cards", `Cards ${count2("cards")}`], ["subscriptions", `Subscriptions ${count2("subscriptions")}`], ["spending", `Spending ${count2("spending")}`], ["saving", `Saving ${count2("saving")}`]] }),
+          children: filter2 === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
             list.map((x2) => {
               const n3 = next[x2.id];
               const later2 = n3 ? "" : v3.next?.[x2.id] || "";
@@ -10542,7 +10673,7 @@
     return out;
   }
   function tiles(v3, L2, i3) {
-    const p3 = v3.periods[i3], before = v3.periods[i3 - 1];
+    const p3 = v3.periods[i3], before2 = v3.periods[i3 - 1];
     const went = into(v3, L2, p3);
     const at2 = (a3, q2) => q2 ? q2.accounts?.[a3.id] ?? todayOf(v3, a3) : todayOf(v3, a3);
     const accounts = v3.plan.accounts || [];
@@ -10551,14 +10682,14 @@
       name: a3.name,
       lead: /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
       after: at2(a3, p3),
-      was: at2(a3, before),
+      was: at2(a3, before2),
       owes: false,
       in: went[a3.id] || 0
     }));
     const held3 = accounts.filter((a3) => a3.kind === "collectible");
     const heldTile = () => {
       const sum = (q2) => held3.reduce((t3, a3) => t3 + at2(a3, q2), 0);
-      return { key: "collectibles", name: "Collectibles", owes: false, after: sum(p3), was: sum(before), in: held3.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0), lead: /* @__PURE__ */ u3(Mark, { kind: "collectible", name: "Collectibles", size: "sm" }) };
+      return { key: "collectibles", name: "Collectibles", owes: false, after: sum(p3), was: sum(before2), in: held3.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0), lead: /* @__PURE__ */ u3(Mark, { kind: "collectible", name: "Collectibles", size: "sm" }) };
     };
     const cards = accounts.filter((a3) => a3.kind === "card");
     if (cards.length) {
@@ -10568,7 +10699,7 @@
         name: cards.length === 1 ? cards[0].name : "Cards",
         owes: true,
         after: sum(p3),
-        was: sum(before),
+        was: sum(before2),
         in: cards.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0) + p3.rows.filter((r3) => cards.some((a3) => L2.payment[r3.payment]?.card === a3.id)).reduce((t3, r3) => t3 + r3.amount, 0),
         lead: cards.length === 1 ? /* @__PURE__ */ u3(AcctMark, { a: cards[0], size: "sm" }) : /* @__PURE__ */ u3(Mark, { kind: "card", name: "Cards", size: "sm" })
       });

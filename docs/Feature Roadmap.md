@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Type to filter Status | Typing an app's name on Status keeps only the apps that have it; Return opens the first, Escape brings every app back | #383 |
 | Finances on the phone | A phone's Finances opens with the next two weeks of bills, card charges on their cards, and the goals with what each needs a paycheck | #381 |
 | Card charges on the calendar | A bill charged to a card shows on its day, on its card with the card's due day, never as checking money; on the phone too | #380 |
 | Tidy Up | Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers ([Tidy Up](<Tidy Up.md>)) | #376 |
@@ -51,7 +52,7 @@ The things you do many times a day, made one click shorter.
 - **Undo** (S, *Built*, #375): after Stop, Stop all, or Stop for a while, a note for 10 seconds: "Stopped 6 Media apps · Undo", and ⌘Z. Restart all has none (nothing to take back).
 - **Right-click the sidebar** (S, *Idea*): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
 - **Command palette** (M, *Idea*): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
-- **Type to filter Status** (S, *Idea*): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it.
+- **Type to filter Status** (S, *Built*, #383): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it, and Return opens the first one's page.
 - **A quick peek** (M, *Idea*): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.
 - **Pinned apps** (S, *Idea*): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
 - **Open, your way** (S, *Idea*): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
