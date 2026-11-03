@@ -677,6 +677,58 @@
     R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
   }
 
+  // web/src/status/UndoNote.tsx
+  var undoFor = 1e4;
+  function UndoNote({ words: words3, undo, close: close3 }) {
+    const [held3, setHeld] = d2(false);
+    const box = A2(null);
+    h2(() => {
+      if (held3) return;
+      const t3 = setTimeout(close3, undoFor);
+      return () => clearTimeout(t3);
+    }, [held3, words3]);
+    return /* @__PURE__ */ u3(
+      "div",
+      {
+        ref: box,
+        class: "undonote",
+        role: "status",
+        onMouseEnter: () => setHeld(true),
+        onMouseLeave: () => setHeld(!!box.current?.contains(document.activeElement)),
+        onFocusIn: () => setHeld(true),
+        onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
+        children: [
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words3 }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
+        ]
+      }
+    );
+  }
+  var mountUndoNote = (el, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el);
+
+  // web/src/status/stopFor.ts
+  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
+  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
+  function stopChoices(now = /* @__PURE__ */ new Date()) {
+    const hour = new Date(now.getTime() + 36e5);
+    hour.setSeconds(0, 0);
+    const out = [{ label: "For an hour", until: iso(hour) }];
+    const tonight = at(now, 0, 21);
+    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
+    const early = now.getHours() < 6;
+    const morning = at(now, early ? 0 : 1, 8);
+    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
+    return out;
+  }
+  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
+    if (!s3.until) return "Stopped by you";
+    const t3 = new Date(s3.until);
+    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
+    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
+    return `Stopped until ${day3}${clockText(t3)}`;
+  }
+
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
   var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
@@ -1763,28 +1815,6 @@
       if (bytes2.has(a3.id) || n2) out[a3.id] = n2;
     }
     return out;
-  }
-
-  // web/src/status/stopFor.ts
-  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
-  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
-  function stopChoices(now = /* @__PURE__ */ new Date()) {
-    const hour = new Date(now.getTime() + 36e5);
-    hour.setSeconds(0, 0);
-    const out = [{ label: "For an hour", until: iso(hour) }];
-    const tonight = at(now, 0, 21);
-    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
-    const early = now.getHours() < 6;
-    const morning = at(now, early ? 0 : 1, 8);
-    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
-    return out;
-  }
-  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
-    if (!s3.until) return "Stopped by you";
-    const t3 = new Date(s3.until);
-    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
-    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
-    return `Stopped until ${day3}${clockText(t3)}`;
   }
 
   // web/src/status/RowMenu.tsx
@@ -5697,6 +5727,7 @@
   };
   async function groupAct(apps, action, progress2, until) {
     setAppsBusy(true);
+    const done = [];
     try {
       for (const [i3, a3] of apps.entries()) {
         progress2(i3);
@@ -5707,12 +5738,36 @@
           setPending(a3.id, { action, failed: errorText(err) });
           break;
         }
+        done.push(a3);
       }
     } finally {
       setAppsBusy(false);
     }
     await loadStatus();
     for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
+    if (action === "stop" && done.length) offerUndo(done, until);
+  }
+  var undoing = null;
+  function offerUndo(apps, until) {
+    const catOf = (id2) => catalog?.apps.find((c3) => c3.id === id2)?.category;
+    const cats = new Set(apps.map((a3) => catOf(a3.id)));
+    const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
+    const what = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
+    const words3 = `Stopped ${what}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    undoing = { apps };
+    mountUndoNote($2("undoNote"), { words: words3, undo: undoNow, close: dropUndo });
+  }
+  function dropUndo() {
+    undoing = null;
+    mountUndoNote($2("undoNote"), null);
+  }
+  function undoNow() {
+    if (!undoing || appsBusy) return false;
+    const { apps } = undoing;
+    dropUndo();
+    groupAct(apps, "start", () => {
+    });
+    return true;
   }
   var pageOpener = { open: (_id) => {
   } };
@@ -5812,6 +5867,7 @@
     }
     if (failed) setPending(a3.id, { action, failed });
     setAppsBusy(false);
+    if (!failed && action === "stop") offerUndo([a3], until);
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
@@ -8827,6 +8883,15 @@
     for (const p3 of v3.paydays || []) if (p3.moved?.length) moved[p3.date] = p3.moved;
     const out = {};
     for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
+    const later2 = v3.later || [];
+    const ahead = Object.fromEntries(later2.map((d3) => [d3.date, d3]));
+    const lastDay = (v3.days || []).at(-1)?.date;
+    if (lastDay) {
+      const end = isoDay(new Date(parseDay(v3.today).getFullYear() + 1, parseDay(v3.today).getMonth(), parseDay(v3.today).getDate() - 1));
+      for (let d3 = addDays(lastDay, 1); d3 <= end; d3 = addDays(d3, 1)) {
+        out[d3] = { date: d3, balance: 0, events: ahead[d3]?.events || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true };
+      }
+    }
     return out;
   }
   var named4 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
@@ -8841,13 +8906,14 @@
     return [
       dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
       said.length ? said.join(", ") : "nothing comes or goes",
-      `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
+      d3.later ? "planned, past where checking is read ahead" : `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
     ].join(". ");
   }
   function Calendar({ v: v3, L: L2, edit }) {
     const days = daysOf(v3);
     const dates = Object.keys(days).sort();
     const first = dates[0] || v3.today, last = dates[dates.length - 1] || v3.today;
+    const read = (v3.days || []).at(-1)?.date || last;
     const [month3, setMonth] = d2(monthOf(first));
     const [sel2, setSel] = d2(first);
     const focusing = A2("");
@@ -8908,7 +8974,7 @@
             /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The month after", onClick: () => turn(1), disabled: month3 >= monthOf(last) })
           ] }),
           children: [
-            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last)}.` : `From today to ${dayShort(last)}, as far as Finances reads ahead.` }),
             /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
               /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
               /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
@@ -8927,7 +8993,7 @@
                 ] }, k3);
                 const pays = info.events.filter((e3) => e3.people?.length), bills = info.events.filter((e3) => !e3.people?.length);
                 const marks2 = [...pays, ...bills];
-                return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : ""), children: /* @__PURE__ */ u3(
+                return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : "") + (info.later ? " fx-later" : ""), children: /* @__PURE__ */ u3(
                   "button",
                   {
                     type: "button",
@@ -8951,7 +9017,7 @@
                           marks2.length - shownMarks
                         ] })
                       ] }),
-                      /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), "aria-hidden": "true", children: compact(info.balance) })
+                      !info.later && /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), "aria-hidden": "true", children: compact(info.balance) })
                     ]
                   }
                 ) }, k3);
@@ -8975,12 +9041,16 @@
           ]
         }
       ),
-      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit })
+      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit, read })
     ] }) });
   }
-  function DayCard({ v: v3, L: L2, d: d3, cushion, edit }) {
+  function DayCard({ v: v3, L: L2, d: d3, cushion, edit, read }) {
     return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date) + (d3.date === v3.today ? ", today" : ""), kind: "fx-dayone", children: [
-      /* @__PURE__ */ u3(
+      d3.later ? /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
+        "What is planned for the day. Checking is read ahead to ",
+        dayShort(read),
+        ", so its balance is not shown."
+      ] }) : /* @__PURE__ */ u3(
         Stat,
         {
           value: /* @__PURE__ */ u3(Amount, { value: d3.balance, tone: d3.balance < 0 ? "out" : d3.low ? "warn" : "" }),
@@ -9041,7 +9111,7 @@
               d3 === v3.today ? ", today" : "",
               info.holiday ? ` · ${info.holiday}` : ""
             ] }),
-            /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), children: [
+            !info.later && /* @__PURE__ */ u3("span", { class: "fx-daybal" + (info.low ? " fx-out" : ""), children: [
               money(info.balance),
               /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
                 " after",
@@ -11541,6 +11611,10 @@
     if (e3.shiftKey && e3.key.toLowerCase() === "h") {
       e3.preventDefault();
       toggleHideAmounts();
+      return;
+    }
+    if (!e3.shiftKey && e3.key.toLowerCase() === "z" && !target.closest?.("input, textarea, select, [contenteditable]") && undoNow()) {
+      e3.preventDefault();
       return;
     }
     if (e3.shiftKey) return;

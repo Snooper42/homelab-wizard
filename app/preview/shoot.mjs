@@ -1422,6 +1422,50 @@ const smokes = [
     const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
     if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
   } },
+  // Undo: after a group's Stop all, a note says what stopped, and Undo starts those same apps again; nothing for Restart.
+  { name: 'Undo: after Stop all, the note starts them again', screen: 'status', mock: { usage }, run: async (page) => {
+    const head = 'tr.grouphead:has(.foldbtn:has-text("Media"))';
+    await page.waitForSelector(`${head} .groupcount`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    await page.locator(head).scrollIntoViewIfNeeded();
+    const n = Number((await page.locator(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`).textContent()).match(/\d+/)?.[0] || 1);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Restart")`);
+    await page.waitForFunction((k) => (window.__MOCK.calls.AppAction || 0) >= k, n, { timeout: 8000 });
+    await page.waitForTimeout(300);
+    if (await page.isVisible('.undonote')) throw new Error('a note to undo a restart');
+    await page.waitForSelector(`${head} .groupcount:not([disabled])`, { timeout: 8000 });
+    await page.click(`${head} .groupcount`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:not(.stoplater):has-text("Stop")`);
+    await page.click(`${head} .groupmenulist [role=menuitem]:has-text("Click again")`);
+    await page.waitForSelector(`.undonote .undowords:text-is("Stopped ${n} Media apps")`, { timeout: 8000 });
+    const before = await page.evaluate(() => window.__MOCK.calls.AppAction);
+    await page.click('.undonote .undobtn');
+    await page.waitForFunction(([b, k]) => window.__MOCK.calls.AppAction >= b + k, [before, n], { timeout: 8000 });
+    if (await page.isVisible('.undonote')) throw new Error('the note stayed after Undo');
+  } },
+  // ⌘Z (Ctrl+Z) undoes too while the note shows, as Undo does; the note goes by itself after 10 seconds, but not while the
+  // pointer is on it.
+  { name: 'Undo: ⌘Z after a Stop, and the note’s 10 seconds', screen: 'app:vikunja', run: async (page) => {
+    await page.click('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    await page.waitForSelector('.undonote .undowords:text-is("Stopped Vikunja")', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 });
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    await page.keyboard.press(mac ? 'Meta+z' : 'Control+z');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 2, null, { timeout: 5000 });
+    if (await page.isVisible('.undonote')) throw new Error('the note stayed after ⌘Z');
+    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 }).catch(() => {});
+    await page.waitForSelector('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
+    await page.click('#app .pagehead .btngroup button:text-is("Stop")');
+    await page.click('#app .pagehead button:text-is("Click again to stop")');
+    const note = page.locator('.undonote');
+    await note.waitFor({ timeout: 5000 });
+    await note.hover();
+    await page.waitForTimeout(10600);
+    if (!(await note.isVisible())) throw new Error('the note went while the pointer was on it');
+    await page.mouse.move(5, 5);
+    await note.waitFor({ state: 'detached', timeout: 11000 });
+  } },
   { name: 'Waiting for a drive', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '', waitingFor: '/Volumes/Hobbies' } : a)) } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Waiting for the Hobbies drive")', { timeout: 5000 });
     await page.waitForSelector('#statusNote:has-text("Plug in Hobbies")');
@@ -3547,6 +3591,31 @@ const smokes = [
     await page.click('.fx-month button[data-day="2026-11-03"]');
     await page.click('.fx-dayone li:has-text("Netflix") button');
     await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Netflix")', { timeout: 5000 });
+  } },
+  // Further ahead: past the chart's days, a year of what is planned, with no balance; Claude Pro, yearly on Oct 23, shows
+  // in October 2027, and the calendar goes no further.
+  { name: 'Finances: the calendar reads a year ahead, a yearly renewal in its month', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    for (let i = 0; i < 12; i++) await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2027")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month after"]'))) throw new Error('the calendar goes past a year');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("What is planned this month")');
+    if (await page.$('.fx-month .fx-daybal')) throw new Error('a balance shows past where checking is read');
+    await page.click('.fx-month button[data-day="2027-10-23"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Claude Pro"):has-text("$200.00")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone .fx-daynote:has-text("its balance is not shown")');
+    if (await page.$('.fx-dayone .fx-stat')) throw new Error('the day card shows a balance it did not read');
+    const label = await page.textContent('.fx-month button[data-day="2027-10-23"] .fx-hidden');
+    if (!label.includes('Claude Pro') || label.includes('checking $')) throw new Error(`Oct 23 reads out as: ${label}`);
+    // A month in between: the mortgage on the 1st, and the July 4th holiday on its day.
+    for (let i = 0; i < 3; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("July 2027")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-01"] .fmark', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2027-07-05"] .fx-hol', { timeout: 5000 });
+    // January 2027 holds both: checking each day to Jan 30, then what is planned.
+    for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
   } },
   { name: 'The phone, the calendar is a list of the days something happens', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
