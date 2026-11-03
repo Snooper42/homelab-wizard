@@ -266,7 +266,7 @@ def stragglers(folder, minutes):
 def sweep(apply):
     minutes = float(mc.cfg("inbox", "settle_minutes") or 5)
     ui.title("Inbox", ", ".join(mc.pretty_path(f) for f in inbox_folders()) + ("" if apply else " (preview)"))
-    if apply and mc.on_battery() and os.environ.get("HOMELAB_MEDIA_ALLOW_BATTERY") != "1":
+    if apply and os.environ.get("HOMELAB_MEDIA_ALLOW_BATTERY") != "1" and mc.on_battery():
         ui.say("On battery: new downloads wait until this computer is plugged in.")
         ui.result(action="inbox", ok=True, paused="battery", filed={}, waiting=[])
         return

@@ -53,7 +53,9 @@ class Base(unittest.TestCase):
     """A temporary home with a settings file, the Trash recorded instead of used, quiet output."""
 
     def setUp(self):
-        self.tmp = Path(tempfile.mkdtemp(prefix="tidy-test-"))
+        # The real path, as the engines see it: a Mac's temp folder is /var behind /private/var,
+        # and Windows' can be a short name (RUNNER~1).
+        self.tmp = Path(os.path.realpath(tempfile.mkdtemp(prefix="tidy-test-")))
         self.home = self.tmp / "home"
         self.home.mkdir()
         self.env = mock.patch.dict(os.environ, {"HOME": str(self.home), "USERPROFILE": str(self.home),
@@ -278,6 +280,35 @@ class Trash(Base):
         self.assertEqual(cmd[0], "powershell.exe")
         self.assertIn("SendToRecycleBin", cmd[-1])
         self.assertEqual(env["TIDY_TRASH"], str(f), "the path travels in the environment, not the command")
+
+    def test_windows_drives_without_a_recycle_bin_keep_what_goes(self):
+        # A USB stick or a network share has no Recycle Bin: Explorer's call would delete for
+        # good there, so it goes to a hidden .tidy-trash on the same drive instead.
+        self.trash.stop()
+        drive = self.tmp / "M"
+        f = self.touch(drive / "Movies" / "Heat (1995)" / "Heat (1995).en.srt")
+        g = self.touch(drive / "Movies" / "Alien (1979)" / "Heat (1995).en.srt")
+        for kind in (mc.DRIVE_REMOVABLE, mc.DRIVE_REMOTE):
+            with mock.patch.object(mc, "IS_WINDOWS", True), mock.patch.object(mc, "_drive_root", return_value=drive), \
+                    mock.patch.object(mc, "_windows_drive_kind", return_value=kind), \
+                    mock.patch.object(mc, "_trash_windows") as bin_:
+                d = mc.trash(f if kind == mc.DRIVE_REMOVABLE else g)
+            bin_.assert_not_called()
+            self.assertEqual(d.parent.parent, drive / ".tidy-trash")
+            self.assertTrue(d.exists(), "kept, not deleted")
+        self.assertFalse(f.exists() or g.exists())
+        self.assertEqual(len(list((drive / ".tidy-trash").rglob("*.srt"))), 2, "two files of one name both kept")
+        self.assertIn(".tidy-trash", mc.WORK_DIRS, "never scanned or swept itself")
+        self.trash.start()
+
+    def test_windows_fixed_drives_use_the_recycle_bin(self):
+        self.trash.stop()
+        f = self.touch(self.tmp / "D" / "film.mkv")
+        with mock.patch.object(mc, "IS_WINDOWS", True), mock.patch.object(mc, "_windows_drive_kind", return_value=3), \
+                mock.patch.object(mc, "_trash_windows", return_value=Path("C:/$Recycle.Bin")) as bin_:
+            mc.trash(f)
+        bin_.assert_called_once_with(f)
+        self.trash.start()
 
     def test_remove_empty_dirs(self):
         root = self.tmp / "r"
@@ -658,6 +689,33 @@ class Lyrics(Base):
             with self.assertRaises(RuntimeError):
                 music_tidy.write_lyrics(song, "[00:01.00] x", "embed")
         self.assertEqual(order, ["ape", "write"])
+
+
+class LinkedLibrary(Base):
+    """A library set in the settings through a link (~/Media → the drive): the engines work with
+    real paths, so the path a server sees, and Tdarr's finished copy, are still found."""
+
+    def setUp(self):
+        super().setUp()
+        if mc.IS_WINDOWS:
+            self.skipTest("symlinks need an administrator or developer mode on Windows")
+        self.link = self.tmp / "Media"
+        os.symlink(str(self.tmp / "Hobbies"), str(self.link))
+
+    def test_server_path_through_a_link(self):
+        real = self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv"
+        via = [[str(self.link / "movies"), "/media/movies"]]
+        self.assertEqual(mc.Servers.server_path(real, via), "/media/movies/Heat (1995)/Heat (1995).mkv")
+        self.assertEqual(mc.Servers.server_path(self.link / "movies" / "a.mkv", [[str(self.lib["movies"]), "/media/movies"]]),
+                         "/media/movies/a.mkv", "and the other way round")
+
+    def test_tdarr_output_found_for_a_path_recorded_through_a_link(self):
+        eng = movies_organizer.Movies()
+        eng.lib = self.lib["movies"]
+        self.touch(self.lib["movies"] / ve.OUTPUT_DIR / "X (2001)" / "X (2001).mkv")
+        out = eng.output_for(str(self.link / "movies" / "X (2001)" / "X (2001).mkv"))
+        self.assertIsNotNone(out)
+        self.assertEqual(out.name, "X (2001).mkv")
 
 
 class Servers(Base):
