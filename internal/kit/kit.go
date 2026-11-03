@@ -51,7 +51,7 @@ var excluded = []string{"app/", "assets/", "docs/images/", ".github/", ".claude/
 
 // Keep are the paths an update never writes or removes: settings, data,
 // your own apps, and what the homelab makes as it runs.
-var Keep = []string{".env", "data/", "appdata/", "recovery-staging/", "backups/", "scripts/logs/", "bin/", "stacks/custom/", "build/", "dist/"}
+var Keep = []string{".env", "data/", "appdata/", "recovery-staging/", "backups/", "scripts/logs/", "bin/", "stacks/custom/", "build/", "dist/", "reports/"}
 
 func kept(p string) bool {
 	for _, k := range Keep {

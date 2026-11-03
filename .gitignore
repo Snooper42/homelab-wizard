@@ -9,6 +9,9 @@
 /recovery-staging/
 /backups/
 /scripts/logs/
+# Tidy Up's reports (homelab media) and Python's compiled files
+/reports/
+__pycache__/
 
 # Your own apps (homelab custom add): personal, like .env. Duplicati's
 # Infrastructure job still backs the folder up.

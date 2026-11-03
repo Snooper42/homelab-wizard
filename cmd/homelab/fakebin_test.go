@@ -25,14 +25,20 @@ const fakeBinDir = "HOMELAB_FAKE_BIN"
 // reports false when it is the test binary itself.
 func asFakeCommand() bool {
 	dir := os.Getenv(fakeBinDir)
-	if dir == "" {
-		return false
-	}
 	switch strings.TrimSuffix(strings.ToLower(filepath.Base(os.Args[0])), ".exe") {
 	case "docker":
-		os.Exit(fakeDockerMain(dir, os.Args[1:]))
+		if dir != "" {
+			os.Exit(fakeDockerMain(dir, os.Args[1:]))
+		}
 	case "systemctl", "loginctl", "launchctl":
-		os.Exit(0)
+		if dir != "" {
+			os.Exit(0)
+		}
+	default:
+		// The engines' Python (media_test.go): this binary under its own name.
+		if fixture := os.Getenv(fakePython); fixture != "" {
+			os.Exit(fakePythonMain(fixture, os.Args[1:]))
+		}
 	}
 	return false
 }

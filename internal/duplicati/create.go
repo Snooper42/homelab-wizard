@@ -127,3 +127,14 @@ func (c *Client) List(ctx context.Context, folder string) ([]string, error) {
 	}
 	return names, nil
 }
+
+// Pause holds every scheduled backup until Resume (Duplicati's own Pause in
+// its menu): Tidy Up pauses it while it moves files in the libraries.
+func (c *Client) Pause(ctx context.Context) error {
+	return c.call(ctx, http.MethodPost, "/api/v1/serverstate/pause", nil, nil)
+}
+
+// Resume lets the scheduled backups run again.
+func (c *Client) Resume(ctx context.Context) error {
+	return c.call(ctx, http.MethodPost, "/api/v1/serverstate/resume", nil, nil)
+}

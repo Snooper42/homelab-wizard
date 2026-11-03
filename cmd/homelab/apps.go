@@ -22,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
+	"github.com/Snooper42/homelab-wizard/internal/media"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
@@ -811,6 +812,13 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 		if err != nil {
 			return err
 		}
+		if action == "update" && !all && media.Held(h.root) {
+			for _, a := range sel.Apps {
+				if sel.Requested[a.ID] && media.IsApp(a.ID) {
+					return fmt.Errorf("Tidy Up is moving files in the libraries %s reads: update it once that's done", a.Name())
+				}
+			}
+		}
 		// Only act on what was asked for; dependencies keep running.
 		var apps []*catalog.App
 		for _, a := range sel.Apps {
@@ -1004,15 +1012,27 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	}
 	report := detect.Analyze(h.catalog, containers)
 	held := updates.Held(h.envMap())
-	var ids []string
+	tidying := media.Held(h.root)
+	var ids, waiting []string
 	for _, a := range h.catalog.Apps {
 		how, _ := a.UpdatePolicy()
 		if how != "nightly" && how != "built" || slices.Contains(held, a.ID) {
 			continue
 		}
+		// Tidy Up is moving files: the apps that read the libraries wait
+		// for the next night, so none restarts in the middle of a swap.
+		if tidying && media.IsApp(a.ID) {
+			if _, running := runningContainer(report, a.ID); running {
+				waiting = append(waiting, a.ID)
+			}
+			continue
+		}
 		if _, running := runningContainer(report, a.ID); running {
 			ids = append(ids, a.ID)
 		}
+	}
+	if len(waiting) > 0 {
+		h.ui.Printf("Tidy Up is moving files, so these wait for the next update: %s.\n", strings.Join(waiting, ", "))
 	}
 	return ids, nil
 }

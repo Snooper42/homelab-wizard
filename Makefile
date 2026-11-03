@@ -10,11 +10,13 @@ build:
 
 test:
 	go test ./...
+	python3 -m unittest discover -s tools/media/tests
 
 lint:
 	@test -z "$$(gofmt -l cmd internal)" || (gofmt -l cmd internal; exit 1)
 	go vet ./...
 	go vet -tags forreal ./...
+	python3 -m py_compile tools/media/*.py
 	bash -n homelab dockerfiles/npm-crowdsec/homelab-init.sh app/packaging/appimage.sh app/packaging/appimage-smoke.sh
 	sh -n install.sh
 
