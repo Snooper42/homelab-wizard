@@ -118,17 +118,17 @@ class TV(ve.VideoEngine):
     def existing_show(lib, show):
         """A show already in the library keeps its folder's name ('The Office (US)'), matched
         without punctuation, case, or a year the download left out."""
-        key = re.sub(r"\W+", "", show).casefold()
-        bare = re.sub(r"\W+", "", re.sub(r"\s*\((?:19|20)\d{2}\)$", "", show)).casefold()
+        key = mc.name_key(show)
+        bare = mc.name_key(re.sub(r"\s*\((?:19|20)\d{2}\)$", "", show))
         try:
             dirs = [d.name for d in lib.iterdir() if d.is_dir() and not d.name.startswith(".")]
         except OSError:
             return show
         for d in dirs:
-            if re.sub(r"\W+", "", d).casefold() == key:
+            if mc.name_key(d) == key:
                 return d
         for d in dirs:
-            if re.sub(r"\W+", "", re.sub(r"\s*\((?:19|20)\d{2}\)$", "", d)).casefold() == bare:
+            if mc.name_key(re.sub(r"\s*\((?:19|20)\d{2}\)$", "", d)) == bare:
                 return d
         return show
 

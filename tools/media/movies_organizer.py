@@ -58,10 +58,10 @@ class Movies(ve.VideoEngine):
 
     @staticmethod
     def existing_folder(lib, name):
-        key = re.sub(r"\W+", "", name).casefold()
+        key = mc.name_key(name)
         try:
             for d in lib.iterdir():
-                if d.is_dir() and re.sub(r"\W+", "", d.name).casefold() == key:
+                if d.is_dir() and mc.name_key(d.name) == key:
                     return d.name
         except OSError:
             pass
