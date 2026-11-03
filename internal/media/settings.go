@@ -26,6 +26,8 @@ type Inputs struct {
 	// Python: Python can make a venv here, so beets runs on this machine
 	// (faster) rather than in the beets container.
 	LocalEngine bool
+	// CalibreDir: where Calibre's tools are, when not on PATH (CalibreDir).
+	CalibreDir string
 }
 
 // Library is the folder for kind: TIDY_<KIND>_LIBRARY, else its folder on
@@ -92,7 +94,7 @@ func Settings(in Inputs) map[string]any {
 			"shrink_bitrate":   or(env["TIDY_SHRINK_BITRATE"], "256k"),
 		},
 		"books": map[string]any{"library": lib("books"), "pause_containers": "auto", "workers": 4,
-			"calibre_bin_dir": env["CALIBRE_BIN_DIR"]},
+			"calibre_bin_dir": or(in.CalibreDir, env["CALIBRE_BIN_DIR"])},
 		"movies":     map[string]any{"library": lib("movies")},
 		"tv":         map[string]any{"library": lib("tv")},
 		"audiobooks": map[string]any{"library": lib("audiobooks"), "bitrate": or(env["TIDY_AUDIOBOOK_BITRATE"], "64k")},

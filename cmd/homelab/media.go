@@ -154,6 +154,7 @@ func (h *homelab) mediaSettings(ctx context.Context, py []string) error {
 	in := media.Inputs{Root: h.root, Env: env, Home: homeDir(), Installed: func(id string) bool { return installed[id] },
 		NativeJellyfin: !installed["jellyfin-container"] && portAnswers(or(env["JELLYFIN_PORT"], "8096")),
 		GPU:            gpu, Record: media.LoadRecord(h.root), LocalEngine: probe.LocalEngine(ctx, py)}
+	in.CalibreDir, _ = media.CalibreDir(probe, env, homeDir())
 	_, err := media.Write(h.root, media.Settings(in))
 	return err
 }

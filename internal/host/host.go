@@ -144,7 +144,10 @@ func (p Profile) JobPath(home string) string {
 	case "darwin":
 		dirs = append([]string{filepath.Join(home, ".orbstack", "bin"), "/opt/homebrew/bin"}, dirs...)
 	case "linux":
+		// After the system's own: where Homebrew and Nix put what they install, the usual way to
+		// add ffmpeg and the like on a system whose / is read-only (SteamOS).
 		dirs = append([]string{filepath.Join(home, ".local", "bin")}, dirs...)
+		dirs = append(dirs, filepath.Join(home, ".nix-profile", "bin"), "/nix/var/nix/profiles/default/bin", "/home/linuxbrew/.linuxbrew/bin")
 	}
 	return strings.Join(dirs, ":")
 }
