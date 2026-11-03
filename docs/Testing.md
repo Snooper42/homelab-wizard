@@ -315,79 +315,83 @@ Upgrades are proven on every pull request: `testdata/upgrades` keeps the files a
 
 ## Waiting for real hardware
 
-What only the Mac, the Windows PC, or the Steam Machine can prove: each row of the parity table in [Host](<Host.md#the-same-on-every-system>) that CI shows only against fakes, and each change made since without the machine to run it on. Work down a machine's list in one session; each step says what to do and what you should see. When a step does not match, make a report (`homelab report`), note the step's number, and go on to the next. Tick the row in Host when a step passes.
+What only the Mac, the Windows PC, or the Steam Machine can prove: each row of the parity table in [Host](<Host.md#the-same-on-every-system>) that CI shows only against fakes, and each change made since without the machine to run it on. Work down a machine's list in one session; each step says what to do and what you should see. When a step does not match, make a report (`homelab report`), note the step's number, and go on to the next. When a step passes, write *Passed* and the day in its Result column; Host's *Proven by* names the steps, and this column is where they are marked.
 
 ### The Mac
 
-| # | Do | You should see |
-|---|---|---|
-| M1 | Steps 1–6 of this page | Each as written; this closes the first-install item of the [Roadmap](<Roadmap.md#still-open-from-the-first-months>) |
-| M2 | Unplug the MacBook (or pull the Mac mini's power cable on a UPS), wait 2 minutes, `pmset -g assertions` | No `PreventUserIdleSystemSleep` from `caffeinate` while on battery; plugged in again, it is back within a minute |
-| M3 | Quit OrbStack, then `launchctl kickstart -k gui/$(id -u)/com.homelab.agent` | OrbStack opens by itself within a minute and the apps start |
-| M4 | Stop Jellyfin, restart the Mac, log in | Jellyfin opens by itself after the drives are there (`scripts/logs/startup.log` says "opened Jellyfin") |
-| M5 | `./homelab notify test` with the app closed | A notification titled *Homelab* in Notification Center, and the same on the phone through ntfy |
-| M6 | With a domain: Setup › **This Mac finds its apps by name**; afterwards `./homelab domain resolver --undo` | The password window says "Homelab needs to look up your … apps"; `cat /etc/resolver/<domain>` shows the address; after the undo (the password window again) the file is gone and `scutil --dns` no longer lists the domain |
-| M7 | `brew install smartmontools`, then `./homelab doctor` | A drive health line for the Mac's disk and the media drive |
-| M8 | With the tray icon running and an older build of the app installed: the line's **Update now** (it shows by itself within 15 minutes) | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty |
-| M9 | From the menu bar item: **Update apps now** with an app behind | The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time |
-| M10 | `./homelab install paperless-ai` (with its token in Settings) and Ollama stopped (`brew services stop ollama`), then Setup | The step *Ollama answers on this machine* says to `brew install ollama && brew services start ollama`; once started it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
-| M11 | A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing) | Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on |
-| M12 | Quit Jellyfin, then Status › Jellyfin › **Open** | Jellyfin opens, and within a few seconds its row says it is running |
-| M13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's Dock icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
-| M14 | The app in light, then dark (System Settings › Appearance) | The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either |
-| M15 | Log out and back in | The menu bar item appears once, and its menu opens |
-| M16 | On a MacBook with Immich installed: unplug it and wait up to 15 minutes (the watchdog's next run), then `docker ps` | Immich's machine learning is stopped and `scripts/logs/watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes |
-| M17 | With a domain and no AdGuard Home: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping -c1 ntfy.<domain>`; afterwards `./homelab domain resolver --undo` | One password window; the name answers from this Mac's address; after the undo, `/etc/hosts` has no homelab line and is otherwise as it was |
-| M18 | `./homelab install beszel`, then Beszel's page | One system, *homelab*, with OrbStack's Linux machine's memory and CPUs (not the Mac's own), as Host says |
+Run by the owner on their Mac, where the homelab runs day to day: 13 of 18 passed on Nov 3, 2026. Still to run: M5, M7, M10, M11, and M18.
+
+| # | Do | You should see | Result |
+|---|---|---|---|
+| M1 | Steps 1–6 of this page | Each as written; this closes the first-install item of the [Roadmap](<Roadmap.md#still-open-from-the-first-months>) | Passed, Nov 3, 2026 |
+| M2 | Unplug the MacBook (or pull the Mac mini's power cable on a UPS), wait 2 minutes, `pmset -g assertions` | No `PreventUserIdleSystemSleep` from `caffeinate` while on battery; plugged in again, it is back within a minute | Passed, Nov 3, 2026 |
+| M3 | Quit OrbStack, then `launchctl kickstart -k gui/$(id -u)/com.homelab.agent` | OrbStack opens by itself within a minute and the apps start | Passed, Nov 3, 2026 |
+| M4 | Stop Jellyfin, restart the Mac, log in | Jellyfin opens by itself after the drives are there (`scripts/logs/startup.log` says "opened Jellyfin") | Passed, Nov 3, 2026 |
+| M5 | `./homelab notify test` with the app closed | A notification titled *Homelab* in Notification Center, and the same on the phone through ntfy | Not yet |
+| M6 | With a domain: Setup › **This Mac finds its apps by name**; afterwards `./homelab domain resolver --undo` | The password window says "Homelab needs to look up your … apps"; `cat /etc/resolver/<domain>` shows the address; after the undo (the password window again) the file is gone and `scutil --dns` no longer lists the domain | Passed, Nov 3, 2026 |
+| M7 | `brew install smartmontools`, then `./homelab doctor` | A drive health line for the Mac's disk and the media drive | Not yet |
+| M8 | With the tray icon running and an older build of the app installed: the line's **Update now** (it shows by itself within 15 minutes) | The app quits and opens again on the new build within a minute (Settings shows its version), the tray icon comes back, and `~/Library/Caches/Homelab Wizard/update` is empty | Passed, Nov 3, 2026 |
+| M9 | From the menu bar item: **Update apps now** with an app behind | The item's title names the step and the app ("Updating Vikunja · 1 of 2: Vikunja downloading · 54%"), then "done" with the time | Passed, Nov 3, 2026 |
+| M10 | `./homelab install paperless-ai` (with its token in Settings) and Ollama stopped (`brew services stop ollama`), then Setup | The step *Ollama answers on this machine* says to `brew install ollama && brew services start ollama`; once started it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` | Not yet |
+| M11 | A camera with an RTSP stream added to Frigate (its note, Setup), then Home Assistant paired (Pairing) | Frigate shows the camera live and lists a person who walks past; Home Assistant has the camera and a person sensor that turns on | Not yet |
+| M12 | Quit Jellyfin, then Status › Jellyfin › **Open** | Jellyfin opens, and within a few seconds its row says it is running | Passed, Nov 3, 2026 |
+| M13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's Dock icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again | Passed, Nov 3, 2026 |
+| M14 | The app in light, then dark (System Settings › Appearance) | The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either | Passed, Nov 3, 2026 |
+| M15 | Log out and back in | The menu bar item appears once, and its menu opens | Passed, Nov 3, 2026 |
+| M16 | On a MacBook with Immich installed: unplug it and wait up to 15 minutes (the watchdog's next run), then `docker ps` | Immich's machine learning is stopped and `scripts/logs/watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes | Passed, Nov 3, 2026 |
+| M17 | With a domain and no AdGuard Home: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping -c1 ntfy.<domain>`; afterwards `./homelab domain resolver --undo` | One password window; the name answers from this Mac's address; after the undo, `/etc/hosts` has no homelab line and is otherwise as it was | Passed, Nov 3, 2026 |
+| M18 | `./homelab install beszel`, then Beszel's page | One system, *homelab*, with OrbStack's Linux machine's memory and CPUs (not the Mac's own), as Host says | Not yet |
 
 ### The Windows PC
 
-| # | Do | You should see |
-|---|---|---|
-| W1 | [ISSUE-0013](<Known Issues.md#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc>)'s Verify and Also check lists, and [ISSUE-0021](<Known Issues.md#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere>)'s | Each as written |
-| W2 | On a laptop: unplug it, wait 2 minutes, then in an administrator's PowerShell `powercfg /requests` | No `homelab` request under SYSTEM while on battery; plugged in again, it is back within a minute |
-| W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | Docker Desktop opens by itself within a minute of signing in, and `scripts\logs\startup.log` shows the apps starting |
-| W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* |
-| W5 | Choose stacks with Immich and Paperless picked | The plan's memory line names the PC's memory, and warns when the picks do not fit |
-| W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | The PC's time zone in its IANA form (for example `TZ=Europe/Berlin` for *W. Europe Standard Time*) |
-| W7 | With a domain: Setup › **This PC finds its apps by name**; afterwards `homelab domain resolver --undo` | One approval prompt; `Get-DnsClientNrptRule` lists the domain with the address; after the undo (one more prompt) it lists nothing for it |
-| W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Doctor finds `smartctl` and lists each drive: without administrator rights each says smartctl's own reason (no permission); in an administrator's terminal, a health line per drive |
-| W9 | From the tray icon: **Update apps now** with an app behind | The item's title names the step and the app as it goes, then "done" with the time |
-| W10 | `homelab install paperless-ai` (with its token in Settings) with Ollama not installed, then Setup | The step *Ollama answers on this machine* says `winget install Ollama.Ollama`; once installed it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
-| W11 | As M11, with Frigate on the PC, and with an NVIDIA card: the `-tensorrt` image and its detector (Frigate's note) | The camera is live and a person is listed; with the card, Frigate's System page shows the detector on the GPU |
-| W12 | Stop Jellyfin (its tray app, or the `JellyfinServer` service), then Status › Jellyfin › **Start** | One approval prompt for the service (none for the tray app); Jellyfin starts and its row says it is running |
-| W13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | An orange dot on the tray icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
-| W14 | The app in light, then dark (Settings › Personalization › Colors), on Windows 11 | Mica behind the sidebar, Segoe UI Variable, and nothing is hard to read in either |
-| W15 | Sign out and back in | The tray icon appears once in the notification area, and its menu opens |
-| W16 | On a laptop with Immich installed: unplug it and wait up to 15 minutes, then `docker ps` | Immich's machine learning is stopped and `scripts\logs\watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes |
-| W17 | With a domain and no AdGuard Home: `homelab.cmd domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping ntfy.<domain>`; afterwards `homelab.cmd domain resolver --undo` | One approval prompt; the name answers from this PC's address; after the undo, `C:\Windows\System32\drivers\etc\hosts` has no homelab line |
-| W18 | With Jellyfin installed as a service: restart the PC and wait at the sign-in screen for two minutes, then sign in | Jellyfin answered before you signed in (its own log's start time), and Status shows it running |
-| W19 | `homelab.cmd install beszel`, then Beszel's page | One system, *homelab*, with Docker Desktop's WSL machine's memory and CPUs (not the PC's own), as Host says |
-| W20 | A USB drive plugged in, then Setup's step *A second copy with Kopia* (with Kopia installed) | A **Use the … drive** button for the USB drive's letter, never for Duplicati's or the media's; once used, Kopia's page lists the repository at `Homelab Kopia` on it |
-| W21 | With an older build installed by the installer (in Program Files): the line's **Update now** | One approval prompt (no SmartScreen), then the app opens again on the new build (Settings shows its version). `%LOCALAPPDATA%\Homelab Wizard\update.log` ends with `done`. With the portable copy in a folder of your own, no prompt at all |
-| W22 | Make the update fail (deny the approval prompt) | The app opens on the old build, and the line says the update did not go in place and why, with the release page; it does not offer the same update again. `update.log` has an `ERROR:` line |
+The owner ran the homelab on Windows for a while in autumn 2026, before the Mac setup went further; these steps have not been run one by one yet, so none is marked.
+
+| # | Do | You should see | Result |
+|---|---|---|---|
+| W1 | [ISSUE-0013](<Known Issues.md#issue-0013-windows-host-profile-not-yet-run-on-the-windows-pc>)'s Verify and Also check lists, and [ISSUE-0021](<Known Issues.md#issue-0021-installing-and-updating-the-app-on-windows-and-linux-not-yet-run-everywhere>)'s | Each as written | Not yet |
+| W2 | On a laptop: unplug it, wait 2 minutes, then in an administrator's PowerShell `powercfg /requests` | No `homelab` request under SYSTEM while on battery; plugged in again, it is back within a minute | Not yet |
+| W3 | Turn off Docker Desktop's *Start when you sign in*, sign out and back in | Docker Desktop opens by itself within a minute of signing in, and `scripts\logs\startup.log` shows the apps starting | Not yet |
+| W4 | `homelab.cmd notify test` | A toast from *Homelab Wizard* titled *Homelab test*, and Settings › System › Notifications lists *Homelab Wizard* | Not yet |
+| W5 | Choose stacks with Immich and Paperless picked | The plan's memory line names the PC's memory, and warns when the picks do not fit | Not yet |
+| W6 | A new `.env` (`homelab.cmd up` in a fresh folder), then `findstr TZ .env` | The PC's time zone in its IANA form (for example `TZ=Europe/Berlin` for *W. Europe Standard Time*) | Not yet |
+| W7 | With a domain: Setup › **This PC finds its apps by name**; afterwards `homelab domain resolver --undo` | One approval prompt; `Get-DnsClientNrptRule` lists the domain with the address; after the undo (one more prompt) it lists nothing for it | Not yet |
+| W8 | Install smartmontools from smartmontools.org, then `homelab.cmd doctor` | Doctor finds `smartctl` and lists each drive: without administrator rights each says smartctl's own reason (no permission); in an administrator's terminal, a health line per drive | Not yet |
+| W9 | From the tray icon: **Update apps now** with an app behind | The item's title names the step and the app as it goes, then "done" with the time | Not yet |
+| W10 | `homelab install paperless-ai` (with its token in Settings) with Ollama not installed, then Setup | The step *Ollama answers on this machine* says `winget install Ollama.Ollama`; once installed it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` | Not yet |
+| W11 | As M11, with Frigate on the PC, and with an NVIDIA card: the `-tensorrt` image and its detector (Frigate's note) | The camera is live and a person is listed; with the card, Frigate's System page shows the detector on the GPU | Not yet |
+| W12 | Stop Jellyfin (its tray app, or the `JellyfinServer` service), then Status › Jellyfin › **Start** | One approval prompt for the service (none for the tray app); Jellyfin starts and its row says it is running | Not yet |
+| W13 | `docker stop homelab_security-ntfy-1`, then wait for Status to check again | An orange dot on the tray icon; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again | Not yet |
+| W14 | The app in light, then dark (Settings › Personalization › Colors), on Windows 11 | Mica behind the sidebar, Segoe UI Variable, and nothing is hard to read in either | Not yet |
+| W15 | Sign out and back in | The tray icon appears once in the notification area, and its menu opens | Not yet |
+| W16 | On a laptop with Immich installed: unplug it and wait up to 15 minutes, then `docker ps` | Immich's machine learning is stopped and `scripts\logs\watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes | Not yet |
+| W17 | With a domain and no AdGuard Home: `homelab.cmd domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping ntfy.<domain>`; afterwards `homelab.cmd domain resolver --undo` | One approval prompt; the name answers from this PC's address; after the undo, `C:\Windows\System32\drivers\etc\hosts` has no homelab line | Not yet |
+| W18 | With Jellyfin installed as a service: restart the PC and wait at the sign-in screen for two minutes, then sign in | Jellyfin answered before you signed in (its own log's start time), and Status shows it running | Not yet |
+| W19 | `homelab.cmd install beszel`, then Beszel's page | One system, *homelab*, with Docker Desktop's WSL machine's memory and CPUs (not the PC's own), as Host says | Not yet |
+| W20 | A USB drive plugged in, then Setup's step *A second copy with Kopia* (with Kopia installed) | A **Use the … drive** button for the USB drive's letter, never for Duplicati's or the media's; once used, Kopia's page lists the repository at `Homelab Kopia` on it | Not yet |
+| W21 | With an older build installed by the installer (in Program Files): the line's **Update now** | One approval prompt (no SmartScreen), then the app opens again on the new build (Settings shows its version). `%LOCALAPPDATA%\Homelab Wizard\update.log` ends with `done`. With the portable copy in a folder of your own, no prompt at all | Not yet |
+| W22 | Make the update fail (deny the approval prompt) | The app opens on the old build, and the line says the update did not go in place and why, with the release page; it does not offer the same update again. `update.log` has an `ERROR:` line | Not yet |
 
 ### The Steam Machine
 
-| # | Do | You should see |
-|---|---|---|
-| S1 | [ISSUE-0012](<Known Issues.md#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine>)'s Verify and Also check lists, and [ISSUE-0014](<Known Issues.md#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos>)'s | Each as written |
-| S2 | In desktop mode: the tray icon after a reboot | It appears once in Plasma's tray, its menu opens, and **Open Homelab Wizard** opens the app |
-| S3 | `./homelab notify test` | A Plasma notification titled *Homelab* (if `notify-send` is missing, note it) |
-| S4 | System Settings › Power Management › *Suspend session* after 15 minutes on AC, then `./homelab doctor` | Doctor says the machine is set to sleep after 15 minutes, and that the awake job keeps it up while plugged in |
-| S5 | `systemctl is-active systemd-resolved; ls /run/systemd/resolve` | Note both: they decide whether *This machine finds its apps by name* can work here |
-| S6 | `which smartctl` | Note whether SteamOS has it |
-| S7 | A drive or SD card plugged in, then Setup's backup step | It offers `/run/media/deck/<name>` |
-| S8 | Switch to Game Mode for an hour, then back | The apps kept answering (`./homelab status`), and the agent's watchdog ran (`scripts/logs/watchdog.log`) |
-| S9 | `./homelab install paperless-ai` (with its token in Settings) with Ollama not running, then Setup | The step *Ollama answers on this machine* names the standalone build and `OLLAMA_HOST=0.0.0.0 ollama serve`; once running it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` |
-| S10 | As M11, with Frigate on the Steam Machine, then the `-rocm` image with `/dev/dri` passed through | The camera is live and a person is listed; with `-rocm`, Frigate's System page shows the detector on the GPU |
-| S11 | In desktop mode: `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's button in Plasma's taskbar; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again |
-| S12 | In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors & Themes) | Breeze's look and font, and nothing is hard to read in either |
-| S13 | Setup › **This machine stays awake while plugged in** › **Allow it** (if it is listed), then `systemd-inhibit --list` | One password prompt; within a minute the list has a `homelab` line blocking `sleep`, and `./homelab doctor` no longer warns about sleep |
-| S14 | `systemctl --user stop docker`, then Setup | The runtime step says Docker is not running with **Start**; after it, the apps answer again within a minute, with no password asked |
-| S15 | With a domain: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then a SteamOS update and a reboot, then `getent hosts ntfy.<domain>` | One password prompt; the name still answers from this machine after the update (SteamOS keeps `/etc/hosts`) |
-| S16 | With Kopia installed: a drive or SD card plugged in, then Setup's step *A second copy with Kopia* | A **Use the … drive** button for `/run/media/deck/<name>`; once used, Kopia's page lists the repository at `Homelab Kopia` there |
-| S17 | `./homelab install jellyfin`, then Status, then a restart | It installs **Jellyfin in a container** (not a native app); its page opens at http://localhost:8096 and plays a film from the media folder; after the restart Status shows it running again. With `devices: ["/dev/dri:/dev/dri"]` added (its note), Dashboard › Activity shows a transcode using VA-API |
+| # | Do | You should see | Result |
+|---|---|---|---|
+| S1 | [ISSUE-0012](<Known Issues.md#issue-0012-linux-host-profile-not-yet-run-on-the-steam-machine>)'s Verify and Also check lists, and [ISSUE-0014](<Known Issues.md#issue-0014-release-builds-not-yet-opened-on-a-mac-a-windows-pc-or-steamos>)'s | Each as written | Not yet |
+| S2 | In desktop mode: the tray icon after a reboot | It appears once in Plasma's tray, its menu opens, and **Open Homelab Wizard** opens the app | Not yet |
+| S3 | `./homelab notify test` | A Plasma notification titled *Homelab* (if `notify-send` is missing, note it) | Not yet |
+| S4 | System Settings › Power Management › *Suspend session* after 15 minutes on AC, then `./homelab doctor` | Doctor says the machine is set to sleep after 15 minutes, and that the awake job keeps it up while plugged in | Not yet |
+| S5 | `systemctl is-active systemd-resolved; ls /run/systemd/resolve` | Note both: they decide whether *This machine finds its apps by name* can work here | Not yet |
+| S6 | `which smartctl` | Note whether SteamOS has it | Not yet |
+| S7 | A drive or SD card plugged in, then Setup's backup step | It offers `/run/media/deck/<name>` | Not yet |
+| S8 | Switch to Game Mode for an hour, then back | The apps kept answering (`./homelab status`), and the agent's watchdog ran (`scripts/logs/watchdog.log`) | Not yet |
+| S9 | `./homelab install paperless-ai` (with its token in Settings) with Ollama not running, then Setup | The step *Ollama answers on this machine* names the standalone build and `OLLAMA_HOST=0.0.0.0 ollama serve`; once running it turns done, and Paperless-AI's setup page accepts Ollama at `http://host.docker.internal:11434` | Not yet |
+| S10 | As M11, with Frigate on the Steam Machine, then the `-rocm` image with `/dev/dri` passed through | The camera is live and a person is listed; with `-rocm`, Frigate's System page shows the detector on the GPU | Not yet |
+| S11 | In desktop mode: `docker stop homelab_security-ntfy-1`, then wait for Status to check again | A count on the app's button in Plasma's taskbar; it goes away once `docker start homelab_security-ntfy-1` has run and Status has checked again | Not yet |
+| S12 | In desktop mode: the app in Breeze light, then Breeze dark (System Settings › Colors & Themes) | Breeze's look and font, and nothing is hard to read in either | Not yet |
+| S13 | Setup › **This machine stays awake while plugged in** › **Allow it** (if it is listed), then `systemd-inhibit --list` | One password prompt; within a minute the list has a `homelab` line blocking `sleep`, and `./homelab doctor` no longer warns about sleep | Not yet |
+| S14 | `systemctl --user stop docker`, then Setup | The runtime step says Docker is not running with **Start**; after it, the apps answer again within a minute, with no password asked | Not yet |
+| S15 | With a domain: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then a SteamOS update and a reboot, then `getent hosts ntfy.<domain>` | One password prompt; the name still answers from this machine after the update (SteamOS keeps `/etc/hosts`) | Not yet |
+| S16 | With Kopia installed: a drive or SD card plugged in, then Setup's step *A second copy with Kopia* | A **Use the … drive** button for `/run/media/deck/<name>`; once used, Kopia's page lists the repository at `Homelab Kopia` there | Not yet |
+| S17 | `./homelab install jellyfin`, then Status, then a restart | It installs **Jellyfin in a container** (not a native app); its page opens at http://localhost:8096 and plays a film from the media folder; after the restart Status shows it running again. With `devices: ["/dev/dri:/dev/dri"]` added (its note), Dashboard › Activity shows a transcode using VA-API | Not yet |
 
 ## After testing
 

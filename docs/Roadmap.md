@@ -58,6 +58,7 @@ These need the real machines, accounts, or money, not code. 0.11 proves in CI wh
 
 - [ ] The first real install, finished on the Mac: Vaultwarden accounts then sign-ups off, the tunnel, Duplicati jobs on Proton Drive and each run once, alerts on the phone, the jobs, and the first restore test
   - **Done when:** [Testing](<Testing.md>) steps 1–6 pass on the Mac, and ISSUE-0001, ISSUE-0003, ISSUE-0005, ISSUE-0015, ISSUE-0016, and ISSUE-0017 are closed or accepted with a reason
+  - Progress in November 2026: steps 1–6 passed on the owner's Mac (M1, Nov 3, 2026), as did the update from the app (M8). Left: each of the six issues closed or accepted against its own *Verify* list in [Known Issues](<Known Issues.md>)
 - [ ] Tailscale verified from the phone on mobile data, two-factor sign-in for Vaultwarden and the proxy admin, CrowdSec console enrollment
   - **Done when:** an app and an ntfy alert open on the phone with Wi-Fi off (closes ISSUE-0011), and both admin sign-ins ask for a second factor
 - [ ] The Windows PC and the Steam Machine through their checklists (ISSUE-0012, ISSUE-0013, ISSUE-0014, ISSUE-0021)
