@@ -219,6 +219,11 @@ declare namespace app {
     new: string;
     reason?: string;
   }
+  interface TidyDrive {
+    name?: string;
+    free: number;
+    total: number;
+  }
   interface TidyInbox {
     folders: string[];
     watching: boolean;
@@ -233,6 +238,7 @@ declare namespace app {
     freed: number;
     counts?: Record<string, number>;
     waiting?: number;
+    size?: number;
   }
   interface TidyUp {
     libraries: app.TidyLibrary[];
@@ -246,6 +252,7 @@ declare namespace app {
     reports: string;
     trash: string;
     tdarr?: Record<string, string>;
+    drive?: app.TidyDrive | null;
   }
   interface UninstallOptions {
     data: boolean;

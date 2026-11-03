@@ -1648,11 +1648,11 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
    --text, --muted, --line, and the series --cat-N). A widget never styles
    another's insides; a screen only lays widgets on the board. */
 /* Finances in its own accent: its buttons, picks, links, focus, and the column picked, violet as its charts are. */
-#finances { --accent:var(--fin-accent); --accent-soft:var(--fin-accent-soft); --primary:var(--fin-accent); --primary-text:var(--fin-accent-text); --link:var(--fin-accent-ink); }
+:is(#finances, #tidy) { --accent:var(--fin-accent); --accent-soft:var(--fin-accent-soft); --primary:var(--fin-accent); --primary-text:var(--fin-accent-text); --link:var(--fin-accent-ink); }
 .fx-board { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap:var(--fin-gap); align-items:stretch; }
-#finRoot .card.fx-widget { display:flex; flex-direction:column; gap:14px; padding:var(--fin-pad) calc(var(--fin-pad) + 2px); margin:0; border-radius:var(--fin-radius); min-width:0; }
-#finRoot .card.fx-widget > .row, #finRoot .card.fx-widget > h2 { margin:0; }
-#finRoot .card.fx-widget > .row h2, #finRoot .card.fx-widget > h2 { font-size:16px; font-weight:600; letter-spacing:-.01em; margin:0; }
+:is(#finRoot, #tidyRoot) .card.fx-widget { display:flex; flex-direction:column; gap:14px; padding:var(--fin-pad) calc(var(--fin-pad) + 2px); margin:0; border-radius:var(--fin-radius); min-width:0; }
+:is(#finRoot, #tidyRoot) .card.fx-widget > .row, :is(#finRoot, #tidyRoot) .card.fx-widget > h2 { margin:0; }
+:is(#finRoot, #tidyRoot) .card.fx-widget > .row h2, :is(#finRoot, #tidyRoot) .card.fx-widget > h2 { font-size:16px; font-weight:600; letter-spacing:-.01em; margin:0; }
 .fx-widget.span2 { grid-column:span 2; }
 .fx-widget.spanall { grid-column:1 / -1; }
 @container (max-width: 760px) { .fx-widget.span2 { grid-column:auto; } }
@@ -1836,12 +1836,12 @@ html.os-mac .fx-balance { padding:4px 8px; }
 /* A person's card as tall as what it holds, not its row. */
 .fx-board > .fx-person { align-self:start; }
 @container (max-width: 560px) { .fx-next { display:none; } }
-#finRoot .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
+:is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they
    don't fit beside it, and a long pick scrolls sideways in the card rather than past its edge. */
 @container (max-width: 480px) {
-  #finRoot .card.fx-widget > .row { flex-wrap:wrap; row-gap:10px; }
-  #finRoot .fx-widget .fx-actions { max-width:100%; min-width:0; }
+  :is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:wrap; row-gap:10px; }
+  :is(#finRoot, #tidyRoot) .fx-widget .fx-actions { max-width:100%; min-width:0; }
   #finRoot .fx-widget .fx-actions .seg { max-width:100%; overflow-x:auto; }
   /* A chart's card across the plot, not beside the point, where beside it would run past the card's edge. */
   #finRoot .fx-plot > .fx-tip { left:0 !important; right:0 !important; min-width:0; max-width:none; }
@@ -2139,6 +2139,15 @@ tr.menued > td { background:var(--accent-soft); }
 @media (max-width: 700px) { .card.wallcard { grid-template-columns:minmax(0, 1fr); } }
 
 /* Tidy Up (web/src/tidy): the libraries' steps, the job at hand, the books review. */
+/* The redesign: each library's mark in its chart colour, the board as Finances' (its widgets), and the all-tidy line. */
+.fmark.tidyicon { background:var(--fx-hue); color:var(--white); box-shadow:none; }
+.fmark.tidyicon svg { width:54%; height:54%; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+#tidyRoot > .seg { margin:0 0 16px; }
+.tidytodo .tidygain { font-weight:700; font-size:15px; white-space:nowrap; margin-right:6px; }
+.tidydone .tidywhen { font-size:12px; white-space:nowrap; margin-right:4px; }
+.tidyclear { display:flex; align-items:center; gap:14px; padding:6px 0 2px; }
+.tidyclear strong { font-size:15px; }
+select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8px; }
 #tidy .seg { margin:0 0 16px; flex-wrap:wrap; }
 .tidycols { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; align-items:start; }
 .tidycols > div > .card { margin-bottom:14px; }

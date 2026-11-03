@@ -1,6 +1,8 @@
 // Status shows every app in the previews and tests unless a shot asks
 // for the folded view (statusOpen: '').
 try { localStorage.setItem('homelab.statusOpen', (window.__MOCK || {}).statusOpen ?? 'all'); } catch { /* none */ }
+// Tidy Up's tab kept from an earlier run, when a test gives one.
+try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab', window.__MOCK.tidyTab); } catch { /* none */ }
 // A stand-in for the Go backend, so the frontend can run in a plain browser
 // for screenshots and quick checks. shoot.mjs fills window.__MOCK with the
 // real catalog (from `homelab apps --json`) and example state; every method

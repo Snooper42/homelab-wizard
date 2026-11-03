@@ -6,6 +6,10 @@ version: 0.17.0
 
 Tidy Up keeps the libraries on the media drive (`MEDIA_ROOT`) sorted, tagged, and lean: music, books, films, TV, and audiobooks. It has its own screen in the app, and `homelab media` does the same from a terminal. Everything it throws away goes to the Trash (the Recycle Bin on Windows), never straight away.
 
+## The screen
+
+**Overview** is one list, **Needs your OK**: the next thing each library waits on (a scan, a swap, films to shrink, books to look over), what it wins back, and its one button. Beside it, a ring of your music's genres (`homelab media music genre-counts`), the media drive with what each library takes and what is free (measured in the background, at most every six hours, into `~/.homelab-media/sizes.json`), and **Recently done**, with **Undo** on the music swap until the space is freed, and on the books' last apply. Each library has its own tab: what could be tidier, its space, and its history.
+
 ## The engines
 
 The work is done by Python scripts in `tools/media`, run by the homelab with Python 3.8 or newer:

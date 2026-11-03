@@ -1,13 +1,14 @@
 // Tidy Up: reads TidyUp, runs the screen's jobs through TidyRun, and keeps
 // the running job's events (media:event) for the job panel.
-import { mountTidy, mountTidySheet, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
+import { mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
 import { store } from '../store';
 import { navigate } from '../app';
 import { $, errorText, go, showError } from '../core';
 
 export const tidyData = store(() => go().TidyUp());
 let tab: TidyTab = 'overview';
-try { tab = (localStorage.getItem('homelab.tidyTab') as TidyTab) || 'overview'; } catch { /* none */ }
+// A tab kept from before the tabs changed (New downloads, Lyrics) opens where those things are now.
+try { tab = tabNow(localStorage.getItem('homelab.tidyTab') || 'overview'); } catch { /* none */ }
 let job: TidyJob | null = null;
 let review: app.TidyBook[] | null = null;
 const skip = new Set<number>();
@@ -17,7 +18,7 @@ const titles: Record<string, string> = {
   'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
   'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
   'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply',
   'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
   'tv scan': 'Scanning your TV', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
   'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
@@ -49,7 +50,7 @@ function draw() {
 function drawSheet() { mountTidySheet($('tidySheetBox'), confirm, () => { const s = $('tidySheet'); if (!s.hidden) s.hidden = true; }); }
 
 tidyData.watch(draw);
-export function loadTidy() { return tidyData.load(); }
+export function loadTidy() { if (tab === 'books' && !review) loadReview(); return tidyData.load(); }
 async function loadReview() {
   try { review = await go().TidyReview(); } catch (e) { showError(e); review = []; }
   draw();

@@ -8,6 +8,7 @@ changing it. Its genre map, tag helpers and APE handling are the organizer's own
   python3 music_tidy.py navidrome-cleanup   full scan, wait for it, remove the missing entries
   python3 music_tidy.py playlists           a Navidrome smart playlist (.nsp) for each of your genres
   python3 music_tidy.py lyrics [--check]    time-synced lyrics from LRCLIB (--check only counts)
+  python3 music_tidy.py genre-counts        how many songs are in each of your genres (changes nothing)
   python3 music_tidy.py file <paths>        file new music: shrink, compare, match with beets, genre, lyrics
 
 For apps: --events json prints one JSON object per line; exit codes 0 ok, 1 error, 2 verify found
@@ -220,6 +221,40 @@ def playlists(args):
     ui.ok("%d smart playlists in %s" % (len(written), mc.pretty_path(folder)))
     told = mc.Servers().ping(folder, "music")
     ui.result(action="playlists", ok=True, folder=str(folder), playlists=written, told=told)
+
+
+# ============================================================== genre counts (for Tidy Up's chart)
+def genre_counts(args):
+    """How many songs are in each of your genres, read from the songs' own tags (what Navidrome
+    shows), each folded into one of yours as the organizer would. Changes nothing."""
+    need(["mutagen"])
+    lib = music_lib(args)
+    files = mc.walk_files(lib, mo.AUDIO_EXT)
+    ui.title("Genres", "how many songs are in each of yours")
+    counts = {name: 0 for name, _ in mo.GENRES}
+    other = 0
+    with ui.progress(len(files), "Reading genres") as bar:
+        for f in files:
+            bar.update(note=f.name)
+            g = genre_of(f)
+            if g in counts:
+                counts[g] += 1
+            else:
+                other += 1
+    shown = {g: n for g, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])) if n}
+    ui.ok("%s songs in %d of your genres" % (mc.fmt_n(len(files) - other), len(shown)))
+    if other:
+        ui.say("%s songs have no genre the organizer can place" % mc.fmt_n(other))
+    ui.result(action="genre-counts", ok=True, songs=len(files), genres=shown, unplaced=other)
+
+
+def genre_of(path):
+    """A song's genre, folded into one of yours; None when its tags name none."""
+    try:
+        vals = mo.read_genre_fields(str(path)) or []
+    except Exception:
+        return None
+    return mo.map_genre(vals)
 
 
 # ============================================================== lyrics (LRCLIB)
@@ -537,7 +572,8 @@ def human(n):
 
 
 def main():
-    ap = mc.base_parser("music_tidy.py", __doc__, ["free-space", "navidrome-cleanup", "playlists", "lyrics", "file"])
+    ap = mc.base_parser("music_tidy.py", __doc__, ["free-space", "navidrome-cleanup", "playlists", "lyrics",
+                                                   "genre-counts", "file"])
     ap.add_argument("--check", action="store_true", help="lyrics: count only, change nothing")
     args = ap.parse_args()
     mc.begin(args, "music", "music %s" % args.action)
@@ -551,6 +587,8 @@ def main():
         return playlists(args)
     if args.action == "lyrics":
         return lyrics(args)
+    if args.action == "genre-counts":
+        return genre_counts(args)
     if not args.paths:
         mc.die("Which files?", "music_tidy.py file <file or folder>...")
     return file_music(args)
