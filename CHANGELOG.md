@@ -17,6 +17,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances on the phone, what is coming up first:** on a paired phone, Finances opens with **Coming up**: every bill of the next two weeks with its day and how soon (today's and tomorrow's in amber), a bill charged to a card marked with its card, and what leaves checking in all. Under it, the goals, each with what it needs a paycheck and **See all**; **Calendar** opens the whole month.
 - **Finances, card charges on the calendar:** a bill you charge to a card moves no checking money, so the calendar left it out. It now shows on its day, marked with its card and the day that card is next paid ("on Chase Freedom, due Nov 21"), apart from what checking holds.
 - **Finances, a sidebar balance opens its own group:** Cash, Investments, or another group's balance in the sidebar opens Net worth on that group alone: its total, each of its accounts month by month as a band of its own, and only its accounts listed. **Show everything** goes back to the whole page.
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.

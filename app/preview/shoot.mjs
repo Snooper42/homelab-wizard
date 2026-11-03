@@ -2289,8 +2289,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's and Budgets to watch's See all, a paycheck's column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, and Open Net worth.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -3147,6 +3147,9 @@ const smokes = [
     if (plan.goals.some((g) => g.id === 'japan')) throw new Error('the trip was not deleted');
   } },
   { name: 'The phone, view only: goals shown, none added or opened', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    // The Dashboard's goals: none opened, only See all.
+    await page.waitForSelector('.fx-board > .fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
+    if (await page.$('.fx-goals li button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can open or type into a goal on the Dashboard');
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.waitForSelector('.fx-goals li:has-text("Emergency fund")', { timeout: 5000 });
     if (await page.$('.fx-goals button, .fx-goals input, .fx-goals select')) throw new Error('a phone allowed only to look can add, open, or type into a goal');
@@ -3763,6 +3766,40 @@ const smokes = [
     await page.waitForSelector('.fx-weeks .fx-weekday:has(h3:has-text("Nov 6")) li:has-text("Alex\'s paycheck")', { timeout: 5000 });
     if (await page.isVisible('.fx-month')) throw new Error('the month grid shows on a phone');
     if (await page.$('.fx-weeks li button')) throw new Error('a phone allowed only to look can open a payment');
+  } },
+  // The phone's Dashboard opens with the next two weeks of bills (a card's charge on its card, not counted as checking
+  // money; savings and paychecks left out), then the goals, short, with See all; the computer's Dashboard is as it was.
+  ...[[true, 'The phone: Finances opens with the bills coming up and the goals'], [false, 'Finances: the computer’s Dashboard has no Coming up']].map(([phone, name]) => ({ name, screen: 'finances', ...(phone ? { phone: ['companion', 'finances'] } : {}),
+    mock: { finances: { ...finances, days: finances.days.map((d) => (d.date === '2026-11-05' ? { ...d, charges: [{ payment: 'spotify', amount: -11.99, card: 'visa', due: '2026-11-21' }] } : d)) } }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
+    if (!phone) {
+      if (await page.$('#finances .fx-comingup')) throw new Error('Coming up shows on the computer');
+      if (await page.$('#finances .fx-board > .fx-goals')) throw new Error('the goals show on the computer’s Dashboard');
+      return;
+    }
+    const first = await page.evaluate(() => [...document.querySelectorAll('#finances .fx-board > .card')].slice(0, 2).map((e) => e.querySelector('h2')?.textContent));
+    if (first.join() !== 'Coming up,Goals') throw new Error('the Dashboard opens with ' + first.join(', '));
+    const rows = await page.$$eval('.fx-comingup li', (ls) => ls.map((l) => l.textContent));
+    if (!rows.some((r) => r.includes('Mortgage') && r.includes('In 2 days, Sun, Nov 1') && r.includes('$1,845.00'))) throw new Error('no Mortgage in 2 days: ' + rows.join(' | '));
+    if (!rows[0].includes('Tomorrow, Sat, Oct 31')) throw new Error('the first is not tomorrow’s: ' + rows[0]);
+    if (!rows.some((r) => r.includes('Spotify') && r.includes('on Chase Freedom, due Nov 21') && r.includes('$11.99'))) throw new Error('the card’s charge is not on its card: ' + rows.join(' | '));
+    if (rows.some((r) => /Savings|paycheck/.test(r))) throw new Error('savings or a paycheck is listed as a bill');
+    if (rows.some((r) => r.includes('Nov 13'))) throw new Error('a bill past the two weeks is listed');
+    // The charge is paid with the card, so the total out of checking is the other bills'.
+    const stat = await page.textContent('.fx-comingup .fx-stat');
+    if (!stat.includes('$2,958.64') || !stat.includes('1 charge on cards')) throw new Error('the total reads ' + stat);
+    if (await page.$('.fx-board > .fx-goals .fx-whatif, .fx-board > .fx-goals .fx-goalsshort, .fx-board > .fx-goals button:text-is("Add a goal")')) throw new Error('the Dashboard’s goals ask What if, or add');
+    if (!(await page.textContent('.fx-goals li:has-text("Emergency fund")')).includes('$90.16 a paycheck, by Jun 30, 2028')) throw new Error('the goal does not say what it needs a paycheck');
+    await page.click('.fx-goals button:text-is("See all")');
+    await page.waitForSelector('.fx-whatif', { timeout: 3000 });
+    await page.click('#finRoot > .seg button:text-is("Dashboard")');
+    await page.click('.fx-comingup button:text-is("Calendar")');
+    await page.waitForSelector('.fx-calendar', { timeout: 3000 });
+  } })),
+  // Nothing due in two weeks, and no goals: it says so, and draws no empty Goals.
+  { name: 'The phone: Coming up with nothing due', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, goals: [], days: finances.days.map((d) => ({ ...d, events: (d.events || []).filter((e) => e.people?.length), charges: [] })) } }, run: async (page) => {
+    await page.waitForSelector('.fx-comingup:has-text("Nothing due in the next 14 days.")', { timeout: 5000 });
+    if (await page.$('#finances .fx-board > .fx-goals')) throw new Error('an empty Goals shows on the Dashboard');
   } },
   // The homelab's own bills show their logos from their names, as typed.
   { name: 'Finances: the homelab\'s bills show their logos', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, ...['Plex Pass', 'Tailscale', 'Cloudflare', 'Hetzner', 'DigitalOcean', 'AWS', 'Namecheap', 'Porkbun', 'Bitwarden', 'Mullvad', 'GitHub Copilot', 'Docker Hub', 'Synology C2', 'Twitch Turbo', 'Discord Nitro'].map((name, i) => ({ id: 'hl' + i, name, amount: 5, kind: 'subscriptions', schedule: { every: 'month', start: '2026-01-02' } }))] } } }, run: async (page) => {

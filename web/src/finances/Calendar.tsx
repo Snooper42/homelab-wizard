@@ -77,7 +77,7 @@ function Lead({ e, L, size }: { e: finance.Event; L: Lookup; size?: 'sm' }) {
 }
 
 /** Where a charge goes, in words: "on Chase Freedom, due Nov 21". */
-const onCard = (e: finance.Event, L: Lookup) => `on ${L.account[e.card || '']?.name || 'a card'}` + (e.due ? `, due ${dayShort(e.due)}` : '');
+export const onCard = (e: finance.Event, L: Lookup) => `on ${L.account[e.card || '']?.name || 'a card'}` + (e.due ? `, due ${dayShort(e.due)}` : '');
 
 /** Why a payday moved, in words: "Moved from Sat, Nov 7: the weekend". */
 const movedText = (m: finance.Moved, L: Lookup) => `${L.person[m.person]?.name || m.person}'s payday moved from ${dayLong(m.from)}: ${m.why}`;

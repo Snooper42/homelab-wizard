@@ -30,6 +30,14 @@ export function goalWords(g: finance.GoalNow): string {
   return [needs, pace].filter(Boolean).join('; ') || 'No day set';
 }
 
+/** What a goal needs, short, for the phone's Dashboard: "$90.16 a paycheck, by Jun 30, 2028". */
+export function goalBrief(g: finance.GoalNow): string {
+  if (g.left <= 0) return 'Reached';
+  if (g.needsPaycheck) return `${money(g.needsPaycheck)} a paycheck, by ${byDay(g.date!)}`;
+  if (g.needsMonth) return `${money(g.needsMonth)} a month, by ${byDay(g.date!)}`;
+  return g.date ? `Wanted by ${byDay(g.date)}` : g.paced && g.pace > 0 ? `There by ${monthOf(g.reaches!)} at this pace` : 'No day set';
+}
+
 /** How many paydays a month, from those read ahead (none read, none). */
 export function paydaysAMonth(v: finance.View): number {
   const last = v.paydays.at(-1)?.date;
@@ -77,19 +85,24 @@ function WhatIf({ v, goals }: { v: finance.View; goals: finance.GoalNow[] }) {
   );
 }
 
-export function GoalsWidget({ v, L, edit }: { v: finance.View; L: Lookup; edit?: (what: 'goal', id?: string) => void }) {
+/**
+ * The goals; with all (the phone's Dashboard), only how each stands, and
+ * See all for Net worth, where goals are added and What if is asked.
+ */
+export function GoalsWidget({ v, L, edit, all }: { v: finance.View; L: Lookup; edit?: (what: 'goal', id?: string) => void; all?: () => void }) {
   const goals = v.goals || [];
+  if (all && !goals.length) return null;
   // What the goals with a day need a month together, against what the plan puts by a month.
   const need = goals.reduce((t, g) => t + (g.needsMonth || 0), 0);
   const saved = goals.length ? month(v, L).saved : 0;
   return (
-    <Widget title="Goals" span="all" kind="fx-goals" actions={edit && <button type="button" class="small" onClick={() => edit('goal')}>Add a goal</button>}>
-      {need > saved + 0.005 && <p class="fx-goalsshort fx-warn" role="note">Together the goals need {money(need)} a month to be there in time; the plan puts by {money(saved)} a month, {money(need - saved)} short.</p>}
+    <Widget title="Goals" span="all" kind="fx-goals" actions={all ? <button type="button" class="small" onClick={all}>See all</button> : edit && <button type="button" class="small" onClick={() => edit('goal')}>Add a goal</button>}>
+      {!all && need > saved + 0.005 && <p class="fx-goalsshort fx-warn" role="note">Together the goals need {money(need)} a month to be there in time; the plan puts by {money(saved)} a month, {money(need - saved)} short.</p>}
       {goals.length ? <Rows kind="fx-rows">
         {goals.map((g) => {
           const share = g.target > 0 ? Math.min(100, (g.saved / g.target) * 100) : 0;
           const tone = g.left <= 0 ? 'done' : g.behind ? 'warn' : '';
-          return <Row key={g.id} title={g.name} sub={<span class={tone === 'warn' ? 'fx-warn' : ''}>{goalWords(g)}{tone === 'warn' && <span class="sr"> (behind)</span>}</span>}
+          return <Row key={g.id} title={g.name} sub={<span class={tone === 'warn' ? 'fx-warn' : ''}>{all ? goalBrief(g) : goalWords(g)}{tone === 'warn' && <span class="sr"> (behind)</span>}</span>}
             when={<span class="fx-goalleft">{g.left <= 0 ? <Amount value={g.target} form="full" /> : <><Amount value={g.left} form="full" /> left</>}</span>} whenPlain
             onOpen={edit ? () => edit('goal', g.id) : undefined} openLabel={edit ? 'edit' : undefined}>
             <span class={'fx-budgetbar' + (tone === 'warn' ? ' warn' : '')} role="img" aria-label={`${g.name}: ${money(g.saved)} of ${money(g.target)}`}>
@@ -99,7 +112,7 @@ export function GoalsWidget({ v, L, edit }: { v: finance.View; L: Lookup; edit?:
           </Row>;
         })}
       </Rows> : <Empty>{edit ? 'No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck.' : 'No goals yet.'}</Empty>}
-      {edit && <WhatIf v={v} goals={goals} />}
+      {edit && !all && <WhatIf v={v} goals={goals} />}
     </Widget>
   );
 }

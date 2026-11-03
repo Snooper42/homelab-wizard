@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Finances on the phone | A phone's Finances opens with the next two weeks of bills, card charges on their cards, and the goals with what each needs a paycheck | #381 |
 | Card charges on the calendar | A bill charged to a card shows on its day, on its card with the card's due day, never as checking money; on the phone too | #380 |
 | Tidy Up | Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers ([Tidy Up](<Tidy Up.md>)) | #376 |
 | A balance opens its own group | A sidebar balance opens Net worth on that group alone: its total, and each of its accounts month by month | #379 |
@@ -196,7 +197,7 @@ The Finances loop's unfinished items, built by the features loop now, with their
 - **Hide amounts and a wall-screen card** (S, *Built*, #368; F16): every money figure as $••• on ⌘⇧H, View › Hide Amounts, or the eye on Finances, kept in the plan so the phones follow; and a money card with the next payday, what is left after it, and the next 3 bills, on a wall screen allowed it in Settings › Phones.
 - **The calendar, further ahead** (S, *Built*, #373; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead, without a balance.
 - **Card charges on the calendar** (S, *Built*, #380; F21): a bill charged to a card shows on its day, marked "on Chase Freedom", with the card's due day.
-- **Finances on the phone** (M, *Idea*; F17): the calendar, upcoming bills, subscriptions, and goals on the phone, and Update balances in one quick sheet.
+- **Finances on the phone** (M, *Built*, #381; F17): the phone's Dashboard opens with Coming up (the next two weeks of bills, card charges on their cards) and the goals; the calendar (a list of days), Renewing soon, and Update balances (one sheet, every account) were already there.
 - **Export** (S, *Idea*; F18): the plan and its projection as CSV and JSON, and a printable month.
 - **Polish, all along** (S, *Idea*; F19): empty states for a new plan, alignment, 860px and phone widths, contrast themes, focus order, labels; a little in each Finances round.
 

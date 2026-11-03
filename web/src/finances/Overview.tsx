@@ -3,7 +3,8 @@
 // month's cash flow (its bills pick the paycheck), where the spending goes,
 // and net worth; what the balances are taken to hold, when anything is;
 // and every account after each paycheck. A new household starts with the
-// three things to type in.
+// three things to type in. On a phone it opens with what is coming up (the
+// next two weeks of bills) and the goals, then the paycheck.
 import { Card } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
@@ -17,6 +18,8 @@ import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
 import { NetWorthWidget } from './widgets/Worth';
 import { SinceWidget } from './widgets/Ledger';
+import { ComingUpWidget } from './widgets/ComingUp';
+import { GoalsWidget } from './widgets/Goals';
 
 /** What the dashboard draws; add, edit, and setWaiting are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
@@ -26,8 +29,8 @@ export interface OverviewProps {
   sel: number;
   pick: (i: number) => void;
   add?: (what: 'account' | 'person' | 'payment', kind?: string) => void;
-  /** Opens a payment's form. */
-  edit?: (what: 'payment', id: string) => void;
+  /** Opens a payment's form, or a goal's (the phone's Goals). */
+  edit?: (what: 'payment' | 'goal', id: string) => void;
   /** Says whether a paycheck or payment taken as done has not happened yet (true: it waits, and comes today). */
   setWaiting?: (key: string, waiting: boolean) => Promise<boolean>;
   /** Shows Net worth. */
@@ -36,9 +39,13 @@ export interface OverviewProps {
   openSubscriptions?: () => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
+  /** Shows the Calendar. */
+  openCalendar?: () => void;
+  /** Drawn on a phone (the companion): what is coming up first, and the goals. */
+  phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth, openSubscriptions, openTransactions }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -63,6 +70,8 @@ export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth, op
       )}
       <div class="fx-board">
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setWaiting} />}
+        {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
+        {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
         <CheckingWidget v={v} L={L} sel={picked} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />

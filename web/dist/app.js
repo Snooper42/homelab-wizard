@@ -9557,6 +9557,12 @@
     const pace = g2.paced ? g2.pace > 0 ? `at ${money(g2.pace)} a month, there by ${monthOf2(g2.reaches)}` : "not growing lately" : "";
     return [needs, pace].filter(Boolean).join("; ") || "No day set";
   }
+  function goalBrief(g2) {
+    if (g2.left <= 0) return "Reached";
+    if (g2.needsPaycheck) return `${money(g2.needsPaycheck)} a paycheck, by ${byDay(g2.date)}`;
+    if (g2.needsMonth) return `${money(g2.needsMonth)} a month, by ${byDay(g2.date)}`;
+    return g2.date ? `Wanted by ${byDay(g2.date)}` : g2.paced && g2.pace > 0 ? `There by ${monthOf2(g2.reaches)} at this pace` : "No day set";
+  }
   function paydaysAMonth(v3) {
     const last2 = v3.paydays.at(-1)?.date;
     const days = last2 ? daysBetween(v3.today, last2) : 0;
@@ -9624,12 +9630,13 @@
       ] })
     ] });
   }
-  function GoalsWidget({ v: v3, L: L2, edit }) {
+  function GoalsWidget({ v: v3, L: L2, edit, all }) {
     const goals = v3.goals || [];
+    if (all && !goals.length) return null;
     const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
     const saved = goals.length ? month(v3, L2).saved : 0;
-    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
-      need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: all ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }) : edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
+      !all && need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
         "Together the goals need ",
         money(need),
         " a month to be there in time; the plan puts by ",
@@ -9646,7 +9653,7 @@
           {
             title: g2.name,
             sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
-              goalWords(g2),
+              all ? goalBrief(g2) : goalWords(g2),
               tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
             ] }),
             when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
@@ -9668,7 +9675,7 @@
           g2.id
         );
       }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
-      edit && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
+      edit && !all && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
     ] });
   }
 
@@ -9970,9 +9977,9 @@
     if (!subs.length) return /* @__PURE__ */ u3(Empty, { children: edit ? "No subscriptions yet: add one with Add a payment, its category Subscriptions." : "No subscriptions yet." });
     const sum = (list) => list.reduce((t3, s3) => t3 + s3.year, 0);
     const total = sum(subs);
-    const soon = (n3) => subs.filter((s3) => s3.due.days >= 0 && s3.due.days <= n3);
+    const soon2 = (n3) => subs.filter((s3) => s3.due.days >= 0 && s3.due.days <= n3);
     const yearly = subs.filter((s3) => s3.x.schedule.every === "year");
-    const week2 = soon(7), month3 = soon(30);
+    const week2 = soon2(7), month3 = soon2(30);
     const charge = (list) => list.reduce((t3, s3) => t3 + s3.x.amount, 0);
     const order2 = subTypes.map(([k3]) => k3);
     const types = Object.entries(subs.reduce((m3, s3) => {
@@ -10829,8 +10836,59 @@
     );
   }
 
+  // web/src/finances/widgets/ComingUp.tsx
+  var comingDays = 14;
+  function billsAhead(v3, L2) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const d3 of [...v3.days || [], ...v3.later || []]) {
+      const n3 = daysBetween(v3.today, d3.date);
+      if (n3 < 0 || n3 >= comingDays || seen.has(d3.date)) continue;
+      seen.add(d3.date);
+      const bill = (e3) => !!e3.payment && !e3.people?.length && !saving(L2.payment[e3.payment]?.kind);
+      const day3 = [
+        ...(d3.events || []).filter((e3) => bill(e3) && e3.amount < 0).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: false })),
+        ...(d3.charges || []).filter(bill).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: true }))
+      ];
+      out.push(...day3);
+    }
+    return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
+  }
+  var soon = (today, day3) => {
+    const n3 = daysBetween(today, day3);
+    return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
+  };
+  function ComingUpWidget({ v: v3, L: L2, calendar }) {
+    const bills = billsAhead(v3, L2);
+    const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
+    const charged = bills.filter((b2) => b2.charge).length;
+    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
+        const x2 = L2.payment[b2.e.payment || ""];
+        const near = daysBetween(v3.today, b2.date) <= 1;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(PayMark, { x: x2 }),
+            title: x2?.name || b2.e.payment,
+            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
+            subTone: near ? "warn" : "",
+            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
+            whenPlain: true
+          },
+          b2.date + i3
+        );
+      }) })
+    ] }) : /* @__PURE__ */ u3(Empty, { children: [
+      "Nothing due in the next ",
+      comingDays,
+      " days."
+    ] }) });
+  }
+
   // web/src/finances/Overview.tsx
-  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions }) {
+  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 }) {
     const picked = Math.min(sel2, v3.periods.length - 1);
     if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
     if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
@@ -10851,6 +10909,8 @@
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
+        phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
+        phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
         /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
@@ -11403,17 +11463,17 @@
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions") }) })
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, exportFile: exportFile2, readReceipt, running: running3, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions });
+  function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running3, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
   }
   function mountFinances(el, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
