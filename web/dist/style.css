@@ -2148,6 +2148,15 @@ tr.menued > td { background:var(--accent-soft); }
 .card.tidylib, .card.tidyjob { padding:14px 18px 12px; }
 .card.tidylib > .row:first-child, .card.tidyjob > .row:first-child { min-height:28px; }
 .card.tidylib > .row:first-child h2, .card.tidylib > h2:first-child, .card.tidyjob > .row:first-child h2 { margin:0; }
+/* A card whose heading stands alone (Checks, Rules, Recent activity) lines up with one beside a button, and a button under a list has room. */
+#tidy .card > h2:first-child { margin:0; min-height:28px; display:flex; align-items:center; }
+#tidy .card > h2:first-child + * { margin-top:4px; }
+#tidy .card.alerts > .actions { margin-top:10px; }
+/* A library's name on Overview opens its tab: the heading's own look, with a chevron. */
+.tidyopen { background:none; border:0; padding:0; margin:0; font:inherit; color:inherit; letter-spacing:inherit; text-transform:inherit; display:inline-flex; align-items:center; gap:6px; cursor:default; border-radius:4px; }
+.tidyopen .chev { color:var(--muted); font-weight:400; }
+.tidyopen:hover, .tidyopen:hover .chev { color:var(--link); }
+.tidysteps.three { grid-template-columns:repeat(3, minmax(0, 1fr)); }
 .tidyfolder { font-size:12px; overflow-wrap:anywhere; }
 .card.tidylib.missing .tidyfolder { color:var(--warn); }
 .card.tidylib p { margin:6px 0 10px; }
@@ -2173,7 +2182,7 @@ label.switch { display:inline-flex; align-items:center; gap:6px; font-size:13px;
   .tidycols { grid-template-columns:minmax(0, 1fr); }
 }
 @media (max-width: 600px) {
-  .tidysteps { grid-template-columns:minmax(0, 1fr); }
+  .tidysteps, .tidysteps.three { grid-template-columns:minmax(0, 1fr); }
 }
 /* Undo, after apps were stopped (status/UndoNote.tsx): a note at the bottom of the window, over everything. */
 #undoNote { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:40; max-width:calc(100vw - 32px); }

@@ -382,7 +382,7 @@ const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new 
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs; and its tiles keep a gap above what follows them.
-  { name: 'Tidy Up: every card keeps its contents off its edges, and the tiles off the cards', screen: 'tidy', mock: { tidyHold: true, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
+  { name: 'Tidy Up: every card keeps its contents off its edges, and the tiles off the cards', screen: 'tidy', mock: { tidyHold: true, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true } : l)) }, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
     await page.waitForSelector('#tidy .tidycols', { timeout: 5000 });
     const bad = [];
     const look = async (where) => bad.push(...(await page.evaluate((where) => {
@@ -415,6 +415,58 @@ const smokes = [
     await page.waitForSelector('#tidyJob .progress', { timeout: 5000 });
     await look('A job running');
     if (bad.length) throw new Error(bad.slice(0, 4).join('; ') + (bad.length > 4 ? ` and ${bad.length - 4} more` : ''));
+  } },
+  // Every card's heading sits at the same height, whether it stands alone (Checks, Rules) or beside a button.
+  { name: 'Tidy Up: every card’s heading sits at the same height', screen: 'tidy', run: async (page) => {
+    await page.waitForSelector('#tidy .tidycols', { timeout: 5000 });
+    const bad = [];
+    for (const tab of ['Overview', 'Music', 'Books', 'Movies', 'TV', 'Audiobooks', 'New downloads', 'Lyrics']) {
+      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      await page.waitForTimeout(120);
+      bad.push(...(await page.evaluate((tab) => [...document.querySelectorAll('#tidy .card:not(.tile):not(.notice)')].filter((c) => c.checkVisibility()).flatMap((c) => {
+        const h = c.querySelector('h2');
+        if (!h) return [];
+        const top = h.getBoundingClientRect().top - c.getBoundingClientRect().top;
+        return top > 24 ? [`${tab}: ${h.textContent.trim()} starts ${Math.round(top)}px down its card`] : [];
+      }), tab)));
+    }
+    if (bad.length) throw new Error(bad.slice(0, 4).join('; ') + (bad.length > 4 ? ` and ${bad.length - 4} more` : ''));
+  } },
+  // A library's name on Overview opens its tab.
+  { name: 'Tidy Up: a library’s name on Overview opens its tab', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.click('#tidy button.tidyopen[aria-label="Open Movies"]');
+    await page.waitForSelector('#tidy .tile:has-text("Lean already")', { timeout: 3000 });
+    if ((await page.textContent('#tidy .seg [aria-checked="true"], #tidy .seg [aria-pressed="true"], #tidy .seg .on')).trim() !== 'Movies') throw new Error('the Movies tab is not the one picked');
+  } },
+  // A library whose folder is not there (the fixture's audiobooks) says so on its tab, and runs nothing until it is back.
+  { name: 'Tidy Up: a library whose folder is gone says so, and runs nothing', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .notice:has-text("Audiobooks: its folder isn\'t there")', { timeout: 3000 });
+    if (!(await page.isDisabled('#tidy .tidylib button:text-is("Scan")'))) throw new Error('Scan can run on a folder that is not there');
+    await page.click('#tidy .seg button:text-is("Movies")');
+    await page.waitForSelector('#tidy .tidylib', { timeout: 3000 });
+    if (await page.$('#tidy .notice:has-text("folder isn\'t there")')) throw new Error('a library that is there says it is not');
+    if (await page.isDisabled('#tidy .tidylib button:text-is("Scan again")')) throw new Error('Movies cannot scan');
+  } },
+  // The words: good news reads as good, one download as one, a language by its name, and H.264 written one way.
+  { name: 'Tidy Up: good news in green, one download, languages by name', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.waitForSelector('#tidyActivity li:has-text("Nothing went missing")', { timeout: 3000 });
+    if (!(await page.$('#tidyActivity li:has-text("Nothing went missing") .dot.ok'))) throw new Error('Nothing went missing is not marked good');
+    if (!(await page.textContent('#tidy .tile:has-text("Books and audiobooks")')).includes('Ready to review')) throw new Error('the books tile does not say Ready to review');
+    await page.click('#tidy .seg button:text-is("Movies")');
+    await page.waitForSelector('#tidy .tile:has-text("1 download shrinking before it\'s filed")', { timeout: 3000 });
+    if (!(await page.textContent('#tidy .tidysteps')).includes('Tdarr: HEVC, English only')) throw new Error('the language is not named: ' + (await page.textContent('#tidy .tidysteps')));
+    if (await page.$('#tidy li:has-text("H264")')) throw new Error('H264 is written without its dot');
+  } },
+  // New downloads: its six steps in two rows of three, and the download apps' row lined up with the folders above it.
+  { name: 'Tidy Up: New downloads’ steps in two even rows', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("New downloads")', { timeout: 5000 });
+    const tops = await page.$$eval('#tidy .tidysteps li', (ls) => ls.map((l) => Math.round(l.getBoundingClientRect().top)));
+    if (tops.length !== 6 || new Set(tops.slice(0, 3)).size !== 1 || new Set(tops.slice(3)).size !== 1 || tops[3] <= tops[0]) throw new Error('the steps sit at ' + tops.join(', '));
+    const left = await page.$$eval('#tidy .card:has(h2:text-is("Where new things come from")) li .grow', (gs) => gs.map((g) => Math.round(g.getBoundingClientRect().left)));
+    if (new Set(left).size !== 1) throw new Error('the rows start at ' + left.join(', '));
   } },
   { name: 'Tidy Up: Swap in asks first, then runs with its yes, and the job shows its step and bar', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'built' } : l)) },
     tidyEvents: { 'music finalize': [{ type: 'step', n: 1, total: 2, text: 'Swapping the folders' }, { type: 'progress', label: 'Folders', done: 3, total: 4, note: 'Navidrome' }, { type: 'ok', text: 'Swapped' }, { type: 'result', action: 'finalize', ok: true }] } }, run: async (page) => {
@@ -458,7 +510,7 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['books', 'apply', ['--skip', '12'], true])) throw new Error(JSON.stringify(runs));
   } },
-  { name: 'Tidy Up: a running job shows its step, bar, and what it is on; Stop asks the engine to stop, and every button waits meanwhile', screen: 'tidy', mock: { tidyHold: true, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
+  { name: 'Tidy Up: a running job shows its step, bar, and what it is on; Stop asks the engine to stop, and every button waits meanwhile', screen: 'tidy', mock: { tidyHold: true, tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true } : l)) }, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
     await page.click('#tidy .tidylib button:text-is("Scan")');
     await page.waitForSelector('#tidyJob .tidystep:text-is("Step 1 of 2 · Reading")', { timeout: 5000 });
