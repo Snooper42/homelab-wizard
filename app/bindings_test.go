@@ -50,6 +50,7 @@ var events = []struct {
 	{"app:download", Download{}},
 	{"update:state", UpdateState{}},
 	{"update:step", UpdateStep{}},
+	{"media:event", map[string]any{}},
 }
 
 func TestBindings(t *testing.T) {

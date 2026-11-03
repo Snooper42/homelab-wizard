@@ -47,6 +47,8 @@ export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all
 // is picked, the next paycheck (the first stretch when it lands today and
 // is still to come).
 let tab = 'overview';
+// The group of accounts Net worth opens on (a sidebar balance), "" for all of them.
+let group = '';
 let sel: number | null = null;
 let opened = 0;
 // The form open in the sheet, drawn again over each plan read while it is.
@@ -63,7 +65,9 @@ function draw() {
     v, ledger: ledgerData.value || null, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
     error: financesData.error ? errorText(financesData.error) : undefined,
     retry: () => { financesData.load(); },
-    setTab: (t) => { tab = t; draw(); },
+    setTab: (t) => { tab = t; group = ''; draw(); },
+    group,
+    setGroup: (g) => { group = g; draw(); },
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setWaiting,
@@ -81,7 +85,7 @@ function draw() {
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
-  mountBalances($('finNav'), v, () => { tab = 'worth'; navigate('finances'); draw(); }, v && !v.readOnly ? toggleHideAmounts : undefined);
+  mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
   const low = v ? v.periods.filter((p) => p.left < (v.plan.cushion || 0)).length : 0;
   $('financesCount').textContent = low ? String(low) : '';

@@ -20,6 +20,8 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Card charges on the calendar | A bill charged to a card shows on its day, on its card with the card's due day, never as checking money; on the phone too | #380 |
+| Tidy Up | Music, books, films, TV, and audiobooks sorted, tagged, and shrunk; new downloads filed by themselves, lyrics, and a nightly sweep of leftovers ([Tidy Up](<Tidy Up.md>)) | #376 |
+| A balance opens its own group | A sidebar balance opens Net worth on that group alone: its total, and each of its accounts month by month | #379 |
 | The calendar a year ahead | Past the three months checking is read for, each payday and payment on its day to a year out, so a yearly renewal shows in its month | #373 |
 | Right-click an app's row | Open, Open on a phone, Copy address, Restart, Stop, Stop for a while, Logs, Back up now, and Tell me if it stops, where you click; Shift+F10 too | #369 |
 | Hide amounts, and the money card | ⌘⇧H or the eye writes every amount as $•••, on the phones too; a wall screen picked for it shows the next payday, what is left, and the next 3 bills | #368 |
@@ -62,7 +64,7 @@ Questions the screen can answer without a click.
 
 - **Why it restarted** (S, *Idea*): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.
 - **The week's outages** (S, *Idea*): hover "94% up this week" for a strip of the week with each time it was down, and why.
-- **A balance opens its own group** (S, *Idea*): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
+- **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Idea*): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.
 - **A backup's contents** (S, *Idea*): hover a backup's time on Backups for its size, what it holds, and how long it took.
 - **An update's notes** (S, *Idea*): hover "updates held" or an update waiting for the release's first lines.
@@ -168,9 +170,9 @@ The household's phones as a second screen.
 
 ## Media library cleanup
 
-Held by the owner (Nov 2, 2026): planned, not started. The loop leaves it until the owner says to begin; the owner adds the two scripts.
+Begun by the owner on Nov 3, 2026, with the two scripts and a wider brief (films, TV, audiobooks, the Downloads inbox, lyrics, a nightly sweep, and space reclaimed by itself): built as [Tidy Up](<Tidy Up.md>). The plan below was its starting point; where the brief changed it (reports in `reports/media`; Windows too; duplicates and verified backups to the Trash by themselves rather than kept for review), Tidy Up's page says how it works now.
 
-- **Library cleanup** (L, *Held*): the owner's tested engine, two stdlib Python scripts added unchanged at `tools/media/` (`music_organizer.py`: init, status, scan, run, finalize, verify, undo, delete-backup; `books_organizer.py`: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:
+- **Library cleanup** (L, *Built*, #376): the owner's tested engine, two stdlib Python scripts added unchanged at `tools/media/` (`music_organizer.py`: init, status, scan, run, finalize, verify, undo, delete-backup; `books_organizer.py`: init, status, review, apply, undo), wrapped, not rewritten. The plan, agreed in outline:
   1. **Settings from the homelab:** `homelab media` writes `data/homelab_media.json` before each run (libraries from `MEDIA_ROOT`, `pause_containers` as the containers that mount each library, the beets container's image, `engine: container`) and always passes `--config`.
   2. **CLI:** `homelab media music|books <action> [flags]` runs the script with `--events json`, prints the events as ordinary CLI lines, forwards flags, and never adds `--yes` itself.
   3. **Background and lock:** `--background` runs the job detached (it outlives the window and the app), holding `data/media.lock` (pid, script, action, start) and writing `logs/media/<job>.jsonl`; one media job at a time; a stale lock (its process gone) offers to run the same action again, which the scripts resume.

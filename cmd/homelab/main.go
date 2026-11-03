@@ -113,6 +113,12 @@ Phones:
                                        card (a wall screen), show them, or let it change them
   homelab phone remove <id>            unpair a phone; its token stops working
 
+Tidy Up (homelab media help for more):
+  homelab media [status]               your music, books, films, TV, and audiobooks: each library
+  homelab media <library> <action>     music|books|movies|tv|audiobooks scan, run, file, ...
+  homelab media inbox|scrub [--apply]  file finished downloads; sweep leftovers to the Trash
+  homelab media arr [--apply]          the *arr apps stop renaming and importing: Tidy Up files
+
 Maintenance:
   homelab setup                        the first-time setup checklist, with live checks
   homelab upgrade                      get the newest homelab files from GitHub (with what is new
@@ -279,6 +285,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"migrate":      h.migrate,
 		"tailnet":      h.tailnetCmd,
 		"adguard":      h.adguardCmd,
+		"media":        h.media,
 	}
 	fn, ok := commands[cmd]
 	if !ok {

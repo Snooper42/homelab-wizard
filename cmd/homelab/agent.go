@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
@@ -138,8 +139,19 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	lastWatch := time.Time{}
 	tick := time.NewTicker(time.Minute)
 	defer tick.Stop()
+	// Tidy Up's minute (homelab media tick): the inbox, Tdarr's finished
+	// work, and the 03:00 scrubber, beside the timetable, never holding it up.
+	var tidying atomic.Bool
 	for {
 		now := time.Now()
+		if tidying.CompareAndSwap(false, true) {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer tidying.Store(false)
+				_ = run("media", "media", "tick")
+			}()
+		}
 		if now.Sub(lastWatch) >= watchdogEvery {
 			lastWatch = now
 			_ = run("watchdog", "watchdog", "--quiet")

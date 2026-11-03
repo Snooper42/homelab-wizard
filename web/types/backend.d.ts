@@ -206,6 +206,47 @@ declare namespace app {
     qr: string;
     off: boolean;
   }
+  interface TidyBook {
+    id: number;
+    title: string;
+    changes: app.TidyChange[];
+    cover: boolean;
+    held: boolean;
+  }
+  interface TidyChange {
+    field: string;
+    old: string;
+    new: string;
+    reason?: string;
+  }
+  interface TidyInbox {
+    folders: string[];
+    watching: boolean;
+    last?: media.Run | null;
+  }
+  interface TidyLibrary {
+    kind: string;
+    folder: string;
+    found: boolean;
+    stage: string;
+    last?: Record<string, media.Run>;
+    freed: number;
+    counts?: Record<string, number>;
+    waiting?: number;
+  }
+  interface TidyUp {
+    libraries: app.TidyLibrary[];
+    lock?: media.Lock | null;
+    stale?: media.Lock | null;
+    activity: media.Activity[];
+    freed: number;
+    checks: media.Check[];
+    inbox: app.TidyInbox;
+    settings: Record<string, string>;
+    reports: string;
+    trash: string;
+    tdarr?: Record<string, string>;
+  }
   interface UninstallOptions {
     data: boolean;
     folder: boolean;
@@ -734,6 +775,37 @@ declare namespace install {
   }
 }
 
+declare namespace media {
+  interface Activity {
+    at: string;
+    kind: string;
+    text: string;
+    sub?: string;
+  }
+  interface Check {
+    id: string;
+    name: string;
+    ok: boolean;
+    note?: string;
+    fix?: string;
+    needs?: string;
+  }
+  interface Lock {
+    pid: number;
+    kind: string;
+    action: string;
+    start: string;
+    log?: string;
+  }
+  interface Run {
+    action: string;
+    ok: boolean;
+    exit: number;
+    at: string;
+    result?: Record<string, unknown>;
+  }
+}
+
 declare namespace notify {
   interface Event {
     id: string;
@@ -990,6 +1062,12 @@ interface Backend {
     StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
     TestSetting(arg1: string): Promise<setup.Result>;
+    TidyCover(arg1: number, arg2: string): Promise<string>;
+    TidyReveal(arg1: string): Promise<void>;
+    TidyReview(): Promise<app.TidyBook[]>;
+    TidyRun(arg1: string, arg2: string, arg3: string[], arg4: boolean): Promise<void>;
+    TidyStop(): Promise<void>;
+    TidyUp(): Promise<app.TidyUp>;
     TrayAtLogin(): Promise<boolean>;
     Uninstall(arg1: app.UninstallOptions): Promise<void>;
     UninstallPlan(arg1: app.UninstallOptions): Promise<string>;
@@ -1020,4 +1098,5 @@ interface BackendEvents {
     "app:download": app.Download;
     "update:state": app.UpdateState;
     "update:step": app.UpdateStep;
+    "media:event": Record<string, unknown>;
 }
