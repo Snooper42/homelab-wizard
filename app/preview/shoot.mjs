@@ -1654,6 +1654,63 @@ const smokes = [
   } },
   // Status's cards leave no dead space: the short ones (Protection, What the apps keep) stacked in one column beside Recent
   // alerts; a long alert shows its first 3 lines and Show the rest; each app's size on one line with its bar.
+  // Type to filter: letters typed on Status (nothing focused) open the filter box with them and keep only the apps whose
+  // name has them, each group open with its whole count; Escape brings every app back and the focus to where it was;
+  // a name nothing has says so; Return opens the first one's page.
+  { name: 'Status: type an app’s name and the list narrows; Escape brings it back', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
+    const rows = () => page.$$eval('#statusRows tr:not(.grouphead)', (rs) => rs.filter((r) => r.checkVisibility()).map((r) => r.querySelector('strong')?.textContent || r.textContent.trim()));
+    const heads = () => page.$$eval('#statusRows tr.grouphead', (rs) => rs.map((r) => r.querySelector('.foldbtn').textContent.replace(/^[▾▸]/, '')));
+    const before = (await heads()).length;
+    await page.keyboard.type('NAVI');
+    await page.waitForSelector('#statusAllBox .filterbox input', { timeout: 3000 });
+    if ((await page.inputValue('#statusAllBox .filterbox input')) !== 'NAVI') throw new Error('the box does not hold what was typed');
+    if (!(await page.evaluate(() => document.activeElement?.matches('.filterbox input')))) throw new Error('the box does not have the focus');
+    const kept = await rows();
+    if (kept.join() !== 'Navidrome') throw new Error('kept: ' + kept.join(', '));
+    if ((await heads()).length !== 1) throw new Error('groups shown: ' + (await heads()).join(', '));
+    // Its heading still counts the whole group, and says it is open.
+    if ((await page.getAttribute('#statusRows tr.grouphead .foldbtn', 'aria-expanded')) !== 'true') throw new Error('the group is not open');
+    // The count follows the list a moment later (the list says how many it kept): wait for it, then read it.
+    await page.waitForFunction(() => /^1 of \d+ apps$/.test(document.querySelector('.filterbox .filtercount')?.textContent || ''), null, { timeout: 3000 })
+      .catch(async () => { throw new Error('the count says ' + (await page.textContent('.filterbox .filtercount'))); });
+    // Another name, typed into the box.
+    await page.fill('.filterbox input', 'vault');
+    if (!(await rows()).includes('Vaultwarden')) throw new Error('vault does not find Vaultwarden');
+    // A name nothing has: said across the table, with a way back.
+    await page.fill('.filterbox input', 'zzzz');
+    await page.waitForSelector('#statusRows tr.nomatch:has-text("No app’s name has “zzzz”")', { timeout: 3000 });
+    await page.waitForSelector('.filterbox .filtercount:text-is("No app has that name")', { timeout: 3000 })
+      .catch(async () => { throw new Error('the count does not say so: ' + (await page.textContent('.filterbox .filtercount'))); });
+    await page.click('#statusRows tr.nomatch button:text-is("Show every app")');
+    await page.waitForSelector('#statusAll', { timeout: 3000 });
+    if ((await heads()).length !== before) throw new Error('every group did not come back');
+    // Escape from the box: every app back, the focus where it was.
+    await page.focus('#statusAll');
+    await page.evaluate(() => document.activeElement.blur());
+    await page.keyboard.type('mea');
+    await page.waitForSelector('.filterbox input', { timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#statusAll', { timeout: 3000 });
+    if (await page.$('.filterbox')) throw new Error('the box stays after Escape');
+    if ((await heads()).length !== before) throw new Error('Escape did not bring every group back');
+    // Return opens the first one's page.
+    await page.keyboard.type('vikun');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#app h1:text-is("Vikunja")', { timeout: 5000 });
+  } },
+  // Not while typing in a field, with ⌘ or Ctrl held, or with a menu open: those keys are theirs.
+  { name: 'Status: a key that is not typing a name does not filter', screen: 'status', run: async (page) => {
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
+    await page.keyboard.press('Meta+a');
+    await page.keyboard.press('Control+a');
+    await page.keyboard.press(' ');
+    if (await page.$('.filterbox')) throw new Error('a shortcut or Space opened the filter');
+    await page.click('#statusRows tr.grouphead button.groupcount');
+    await page.waitForSelector('.groupmenulist', { timeout: 3000 });
+    await page.keyboard.type('s');
+    if (await page.$('.filterbox')) throw new Error('typing in an open menu opened the filter');
+  } },
   { name: 'Status’s cards: short ones stacked beside the alerts, a long alert folded', screen: 'status', mock: { alerts: [
     { id: 'down', time: new Date(Date.now() - 3 * 36e5).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: ['filebrowser', 'syncthing', 'freshrss', 'prowlarr', 'sonarr', 'radarr', 'lidarr', 'bazarr', 'flaresolverr', 'seerr', 'lazylibrarian'].map((a) => a + ': not running').join('\n'), priority: 4 },
     ...alerts] }, run: async (page) => {
@@ -4839,6 +4896,7 @@ const phoneSize = { width: 390, height: 844 };
 const screens = [
   { name: 'Status', screen: 'status' },
   { name: 'Status, every app open', screen: 'status', mock: { statusOpen: 'all' } },
+  { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
   { name: 'Choose stacks', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },

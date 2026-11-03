@@ -423,6 +423,11 @@ table.grouped tr.grouphead .startall { margin-left:12px; text-transform:none; le
 table.grouped tr.grouphead .chev { display:inline-block; width:14px; color:var(--muted); }
 table.grouped tr.grouphead .names { display:block; margin:4px 0 0 14px; font-weight:400; text-transform:none; letter-spacing:0; color:var(--muted); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .statusbar { display:flex; align-items:baseline; gap:12px; justify-content:space-between; }
+/* Type to filter: the box in Show every app's place, what it keeps beside it; no row matching says so across the table. */
+.filterbox { display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.filterbox input { width:13em; max-width:100%; font-size:13px; padding:3px 8px; }
+.filterbox .filtercount { font-size:12px; }
+table.grouped tr.nomatch td { padding:14px 12px; color:var(--muted); }
 .linkbtn { background:none; border:0; padding:4px 0; color:var(--link); font:inherit; font-size:13px; cursor:default; }
 #status > #watchCard { margin-top:16px; }
 /* A row: its one button (Open, or Start), and the chevron to its page, as a list's disclosure; a click anywhere else on it opens the page too. */

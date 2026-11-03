@@ -3,7 +3,8 @@
 // app's state, address, and buttons. Preact updates only what changed, so
 // a live change leaves the focus and an open tooltip where they were.
 // Which categories are open is the list's own: a click folds or opens one
-// without app.ts or the backend.
+// without app.ts or the backend. Typing on Status narrows it to the apps
+// whose name has what is typed, as Finder does (Filter, below).
 import { render, type JSX } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
@@ -382,6 +383,110 @@ function useFold(): Fold {
   return f;
 }
 
+// Type to filter: a letter typed anywhere on Status (not in a field, a
+// menu, or a sheet) opens a filter box beside Show every app with it, and
+// the list keeps only the apps whose name (or ID) has what is typed, each
+// group open. Return opens the first one's page; Escape clears it and the
+// whole list comes back. Shared by the list and the box.
+interface Filter { text: string; on: boolean }
+let filter: Filter = { text: '', on: false };
+const filters: ((f: Filter) => void)[] = [];
+/** Where the focus was when typing started: it goes back there on Escape. */
+let before: HTMLElement | null = null;
+/** The box takes the focus once it is drawn (typing began outside it). */
+let focusBox = false;
+export function setFilter(f: Filter) {
+  filter = f;
+  filters.forEach((fn) => fn(f));
+}
+function useFilter(): Filter {
+  const [f, set] = useState(filter);
+  useEffect(() => {
+    filters.push(set);
+    set(filter);
+    return () => { filters.splice(filters.indexOf(set), 1); };
+  }, []);
+  return f;
+}
+
+/** Without case or accents: "é" matches "E". */
+const plain = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Whether an app is one the filter keeps: what is typed in its name or ID. */
+export function matches(a: api.AppStatus, text: string): boolean {
+  const q = plain(text.trim());
+  return !q || plain(a.name).includes(q) || plain(a.id).includes(q);
+}
+
+// What the box says and does from the list: how many apps it keeps, and
+// opening the first one's page.
+let found = { n: 0, of: 0, first: null as (() => void) | null };
+const founds: ((f: typeof found) => void)[] = [];
+function setFound(f: typeof found) {
+  if (f.n === found.n && f.of === found.of && f.first === found.first) return;
+  found = f;
+  founds.forEach((fn) => fn(f));
+}
+
+/** Clears the filter, and the focus goes back where it was before typing (or the box's place in the page). */
+function clearFilter() {
+  setFilter({ text: '', on: false });
+  const back = before;
+  before = null;
+  requestAnimationFrame(() => { if (back?.isConnected && back.checkVisibility()) back.focus(); else document.getElementById('statusAll')?.focus(); });
+}
+
+// A letter typed on Status starts the filter (or adds to it); Escape on
+// Status clears it while no menu is open.
+document.addEventListener('keydown', (e) => {
+  const status = document.getElementById('status');
+  if (!status?.classList.contains('active') || e.defaultPrevented) return;
+  const html = document.documentElement.classList;
+  if (html.contains('sheet-open') || html.contains('kiosk') || !document.querySelector('#statusRows tr')) return;
+  const t = e.target as Element;
+  if (status.querySelector('.menu:not([hidden])')) return;
+  if (e.key === 'Escape' && filter.on && !t.closest?.('.filterbox')) { clearFilter(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
+  e.preventDefault();
+  if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+  focusBox = true;
+  setFilter({ text: filter.text + e.key, on: true });
+});
+
+/** The filter box: shown once typing starts, with what is typed and how many apps it keeps (the field's own clear button empties it). */
+export function FilterBox() {
+  const f = useFilter();
+  const [n, setN] = useState(found);
+  useEffect(() => {
+    founds.push(setN);
+    setN(found);
+    return () => { founds.splice(founds.indexOf(setN), 1); };
+  }, []);
+  const box = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    if (!focusBox || !box.current) return;
+    focusBox = false;
+    const el = box.current;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  });
+  if (!f.on) return null;
+  const said = !f.text.trim() ? '' : n.n ? `${n.n} of ${n.of} ${n.of === 1 ? 'app' : 'apps'}` : 'No app has that name';
+  return (
+    <span class="filterbox">
+      <input ref={box} type="search" aria-label="Filter apps by name" placeholder="Filter apps" value={f.text} autocomplete="off" spellcheck={false}
+        onInput={(e) => setFilter({ text: (e.target as HTMLInputElement).value, on: true })}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); clearFilter(); }
+          if (e.key === 'Enter' && n.first) { e.preventDefault(); n.first(); }
+        }}
+        onBlur={(e) => { if (!(e.target as HTMLInputElement).value.trim()) setFilter({ text: '', on: false }); }} />
+      <span class="muted filtercount" role="status">{said}</span>
+    </span>
+  );
+}
+
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
 function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
   const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
@@ -395,21 +500,37 @@ export function AppList(p: AppListProps) {
   const [said, setSaid] = useState<{ id: string; words: string } | null>(null);
   useEffect(() => { if (!said) return; const t = setTimeout(() => setSaid(null), 3000); return () => clearTimeout(t); }, [said]);
   const say = (id: string, words: string) => setSaid({ id, words });
+  const q = useFilter().text;
   const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.
   const toggle = (label: string) => setFold({ all: false, picked: { ...(f.all ? open : f.picked), [label]: !open[label] } });
+  // Filtered: each group with an app kept, open, with only those; its heading's count and menu still the whole group's.
+  // An app in Needs a look is in no other group, so none shows twice.
+  const kept = q.trim() ? p.groups.map((g) => ({ g, apps: g.apps.filter((a) => matches(a, q)) })).filter((x) => x.apps.length) : null;
+  const all = p.groups.reduce((t, g) => t + g.apps.length, 0);
+  const first = kept?.[0]?.apps.find((a) => a.state !== 'missing');
+  const openFirst = useRef<() => void>(() => {});
+  openFirst.current = () => { if (first) p.on.page(first); };
+  const opener = useRef(() => openFirst.current());
+  useEffect(() => setFound({ n: kept ? kept.reduce((t, x) => t + x.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
+  if (kept && !kept.length) {
+    return <tr class="nomatch"><td colSpan={4}>No app’s name has “{q.trim()}”. <button type="button" class="linkbtn" onClick={clearFilter}>Show every app</button></td></tr>;
+  }
+  const row = (a: api.AppStatus) => <Row key={a.id} a={a} p={p} menu={menu} setMenu={setMenu} said={said?.id === a.id ? said.words : undefined} say={say} />;
   return (
     <>
-      {p.groups.flatMap((g) => [<GroupHead key={'g:' + g.label} g={g} open={open[g.label]} toggle={() => toggle(g.label)} p={p} />,
-        ...(open[g.label] ? g.apps.map((a) => <Row key={a.id} a={a} p={p} menu={menu} setMenu={setMenu} said={said?.id === a.id ? said.words : undefined} say={say} />) : [])])}
+      {kept ? kept.flatMap(({ g, apps }) => [<GroupHead key={'g:' + g.label} g={g} open toggle={() => {}} p={p} />, ...apps.map(row)])
+        : p.groups.flatMap((g) => [<GroupHead key={'g:' + g.label} g={g} open={open[g.label]} toggle={() => toggle(g.label)} p={p} />,
+          ...(open[g.label] ? g.apps.map(row) : [])])}
     </>
   );
 }
 
-/** Show every app, or fold them again. */
+/** Show every app, or fold them again; while the list is filtered, the filter box in its place. */
 export function ShowAll() {
   const f = useFold();
-  return <button id="statusAll" class="linkbtn" onClick={() => setFold({ all: !f.all, picked: {} })}>{f.all ? 'Fold them again' : 'Show every app'}</button>;
+  const on = useFilter().on;
+  return <>{on ? <FilterBox /> : <button id="statusAll" class="linkbtn" onClick={() => setFold({ all: !f.all, picked: {} })}>{f.all ? 'Fold them again' : 'Show every app'}</button>}</>;
 }
 
 /** Renders the list into the table body el. */
