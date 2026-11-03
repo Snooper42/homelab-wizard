@@ -26,6 +26,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up never deletes outright on a USB stick or network drive (Windows):** those drives keep no Recycle Bin, so what Tidy Up threw away there was gone for good. It now goes to a hidden `.tidy-trash` folder on the same drive, a folder a day, to restore from or empty yourself.
 - **Tidy Up's cards have room again:** each library's card, the books' card, and a running job's card had their words and buttons pressed against the card's edge, and the row of numbers on Overview, Movies, TV, and Lyrics touched the cards under it. They now sit inside the card with the same margin as Status's, with a gap under the numbers.
 - **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.

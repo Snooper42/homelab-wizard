@@ -243,6 +243,35 @@ class Trash(Base):
         self.assertIn("SendToRecycleBin", cmd[-1])
         self.assertEqual(env["TIDY_TRASH"], str(f), "the path travels in the environment, not the command")
 
+    def test_windows_drives_without_a_recycle_bin_keep_what_goes(self):
+        # A USB stick or a network share has no Recycle Bin: Explorer's call would delete for
+        # good there, so it goes to a hidden .tidy-trash on the same drive instead.
+        self.trash.stop()
+        drive = self.tmp / "M"
+        f = self.touch(drive / "Movies" / "Heat (1995)" / "Heat (1995).en.srt")
+        g = self.touch(drive / "Movies" / "Alien (1979)" / "Heat (1995).en.srt")
+        for kind in (mc.DRIVE_REMOVABLE, mc.DRIVE_REMOTE):
+            with mock.patch.object(mc, "IS_WINDOWS", True), mock.patch.object(mc, "_drive_root", return_value=drive), \
+                    mock.patch.object(mc, "_windows_drive_kind", return_value=kind), \
+                    mock.patch.object(mc, "_trash_windows") as bin_:
+                d = mc.trash(f if kind == mc.DRIVE_REMOVABLE else g)
+            bin_.assert_not_called()
+            self.assertEqual(d.parent.parent, drive / ".tidy-trash")
+            self.assertTrue(d.exists(), "kept, not deleted")
+        self.assertFalse(f.exists() or g.exists())
+        self.assertEqual(len(list((drive / ".tidy-trash").rglob("*.srt"))), 2, "two files of one name both kept")
+        self.assertIn(".tidy-trash", mc.WORK_DIRS, "never scanned or swept itself")
+        self.trash.start()
+
+    def test_windows_fixed_drives_use_the_recycle_bin(self):
+        self.trash.stop()
+        f = self.touch(self.tmp / "D" / "film.mkv")
+        with mock.patch.object(mc, "IS_WINDOWS", True), mock.patch.object(mc, "_windows_drive_kind", return_value=3), \
+                mock.patch.object(mc, "_trash_windows", return_value=Path("C:/$Recycle.Bin")) as bin_:
+            mc.trash(f)
+        bin_.assert_called_once_with(f)
+        self.trash.start()
+
     def test_remove_empty_dirs(self):
         root = self.tmp / "r"
         self.touch(root / "a" / "b" / ".DS_Store")

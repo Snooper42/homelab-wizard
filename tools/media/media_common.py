@@ -50,7 +50,7 @@ SUB_EXT = {".srt", ".ass", ".ssa", ".sub", ".idx", ".vtt", ".sup"}
 PARTIAL_EXT = {".part", ".crdownload", ".download", ".!qb", ".partial", ".tmp", ".aria2", ".opdownload"}
 
 # Folders the engines keep their own working files in; never scanned, never scrubbed.
-WORK_DIRS = {".music-cleanup", ".tdarr-output", ".tidy-staging", ".tidy-unzip", ".Trashes", ".Trash",
+WORK_DIRS = {".music-cleanup", ".tdarr-output", ".tidy-staging", ".tidy-unzip", ".tidy-trash", ".Trashes", ".Trash",
              "$RECYCLE.BIN", "System Volume Information", "@eaDir", "lost+found", ".stfolder"}
 
 
@@ -275,6 +275,48 @@ def _trash_windows(p):
     return Path(os.environ.get("SystemDrive", "C:") + "\\$Recycle.Bin")
 
 
+# What Windows' GetDriveTypeW says a drive is: a USB stick or SD card (removable) and a network
+# share keep no Recycle Bin, so sending a file there deletes it for good, without a word.
+DRIVE_REMOVABLE, DRIVE_REMOTE = 2, 4
+
+
+def _drive_root(p):
+    """The drive (M:\\) or network share (\\\\server\\share\\) p is on."""
+    return Path(Path(p).resolve().anchor)
+
+
+def _windows_drive_kind(p):
+    root = str(_drive_root(p))
+    if root.startswith("\\\\"):
+        return DRIVE_REMOTE
+    try:
+        import ctypes
+        return ctypes.windll.kernel32.GetDriveTypeW(root)
+    except (ImportError, AttributeError, OSError):
+        return 0
+
+
+def _trash_beside(p):
+    """A drive with no Recycle Bin: Tidy Up's own hidden trash at the top of that drive, a dated
+    folder a day, so nothing is ever deleted outright. (Still a rename: nothing is copied.)"""
+    top = _drive_root(p) / ".tidy-trash"
+    day = top / datetime.now().strftime("%Y-%m-%d")
+    day.mkdir(parents=True, exist_ok=True)
+    if IS_WINDOWS:
+        try:
+            import ctypes
+            ctypes.windll.kernel32.SetFileAttributesW(str(top), 0x2)  # hidden, as $RECYCLE.BIN is
+        except (ImportError, AttributeError, OSError):
+            pass
+    dest = day / p.name
+    n = 1
+    while dest.exists():
+        n += 1
+        dest = day / ("%s %d%s" % (p.stem if p.is_file() else p.name, n, p.suffix if p.is_file() else ""))
+    os.rename(str(p), str(dest))
+    return dest
+
+
 def trash(p, dry_run=False):
     """Move a file or folder to the system Trash (Recycle Bin on Windows). Never deletes outright.
     Returns where it went. Everything the engines throw away goes through here."""
@@ -284,6 +326,8 @@ def trash(p, dry_run=False):
     if dry_run:
         return p
     if IS_WINDOWS:
+        if _windows_drive_kind(p) in (DRIVE_REMOVABLE, DRIVE_REMOTE):
+            return _trash_beside(p)
         return _trash_windows(p)
     files, info = _trash_dir(p)
     files.mkdir(parents=True, exist_ok=True)

@@ -136,6 +136,13 @@ jobs:
       - name: The desktop app
         working-directory: app
         run: go test ./...
+      # Tidy Up's Python engines on each system's own file system: case-insensitive APFS and
+      # NTFS, drive letters, and the Recycle Bin are only real here (make check runs them on Ubuntu).
+      - name: Tidy Up's engines
+        shell: bash
+        run: |
+          if command -v py >/dev/null; then py -3 -m unittest discover -s tools/media/tests -v
+          else python3 -m unittest discover -s tools/media/tests -v; fi
       - name: The tray started at login, turned on, started as at login (launchd on macOS, the Run value on Windows), and turned off, for real
         working-directory: app
         run: go test -tags forreal -run TrayAtLoginForReal -count=1 -v .
