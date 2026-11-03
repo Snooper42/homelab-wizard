@@ -51,7 +51,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
 
 **Open on Nov 3, 2026, in this order:**
 
-1. **`claude/feature-balance-group`** (item 7 of **The order**):
+1. **`claude/feature-balance-group`** (item 7 of **The order**): done, #379.
    - failing-before proof: put main's `web/dist` files in place, run `SMOKE_ONLY="A sidebar balance opens Net worth on its own group"` (expect FAIL), then restore;
    - mark it *Built* in `docs/Feature Roadmap.md` and in this file;
    - open the PR.
@@ -116,7 +116,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 4. **Calendar, further ahead** (F20): the calendar reads only the chart's 93 days. Read payments past them from `View.Next` and `Plan.Dates` (no balance), so a yearly renewal shows in its month, a year ahead.
 5. **Undo**: after Stop, Stop all, or Restart all, a note for 10 seconds: "Stopped 6 Media apps · Undo".
 6. **Calendar, card charges** (F21): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
-7. **A balance opens its own group**: a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
+7. **A balance opens its own group** (*Built*, #379): a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status**, then the **command palette** (⌘K).
 10. **Export** (F18): the plan and its projection as CSV and JSON, and a printable month.
