@@ -380,6 +380,42 @@ const shots = [
 // A crash of the background agent yesterday, as LastCrash returns it.
 const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
 const smokes = [
+  // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
+  // on every tab and while a job runs; and its tiles keep a gap above what follows them.
+  { name: 'Tidy Up: every card keeps its contents off its edges, and the tiles off the cards', screen: 'tidy', mock: { tidyHold: true, tidyEvents: { 'audiobooks scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Books', done: 5, total: 20, note: 'Dune' }] } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidycols', { timeout: 5000 });
+    const bad = [];
+    const look = async (where) => bad.push(...(await page.evaluate((where) => {
+      const out = [];
+      for (const card of document.querySelectorAll('#tidy .card')) {
+        if (!card.checkVisibility() || card.matches('.tile')) continue;
+        const c = card.getBoundingClientRect();
+        const name = card.querySelector('h2')?.textContent || card.className;
+        for (const e of card.children) {
+          if (!e.checkVisibility()) continue;
+          const r = e.getBoundingClientRect();
+          if (!r.width || !r.height) continue;
+          if (r.left - c.left < 12 || c.right - r.right < 12 && r.width > 40 && e.tagName !== 'DETAILS' || r.top - c.top < 10 && e === card.firstElementChild) out.push(`${where}: ${name}: ${e.tagName.toLowerCase()}.${e.className} sits ${Math.round(r.left - c.left)}px from the left, ${Math.round(r.top - c.top)}px from the top`);
+        }
+      }
+      for (const t of document.querySelectorAll('#tidy .tidytiles')) {
+        const next = t.nextElementSibling;
+        if (next?.checkVisibility() && next.getBoundingClientRect().top - t.getBoundingClientRect().bottom < 10) out.push(`${where}: the tiles touch what follows them`);
+      }
+      return out;
+    }, where)));
+    for (const tab of ['Overview', 'Music', 'Books', 'Movies', 'TV', 'Audiobooks', 'New downloads', 'Lyrics']) {
+      await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+      await page.waitForTimeout(120);
+      await look(tab);
+    }
+    // A job's card, at the top of the tab.
+    await page.click('#tidy .seg button:text-is("Audiobooks")');
+    await page.click('#tidy .tidylib button:text-is("Scan")');
+    await page.waitForSelector('#tidyJob .progress', { timeout: 5000 });
+    await look('A job running');
+    if (bad.length) throw new Error(bad.slice(0, 4).join('; ') + (bad.length > 4 ? ` and ${bad.length - 4} more` : ''));
+  } },
   { name: 'Tidy Up: Swap in asks first, then runs with its yes, and the job shows its step and bar', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'built' } : l)) },
     tidyEvents: { 'music finalize': [{ type: 'step', n: 1, total: 2, text: 'Swapping the folders' }, { type: 'progress', label: 'Folders', done: 3, total: 4, note: 'Navidrome' }, { type: 'ok', text: 'Swapped' }, { type: 'result', action: 'finalize', ok: true }] } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
