@@ -11976,7 +11976,8 @@
   }
   function drawSheet() {
     mountTidySheet($2("tidySheetBox"), confirm, () => {
-      $2("tidySheet").hidden = true;
+      const s3 = $2("tidySheet");
+      if (!s3.hidden) s3.hidden = true;
     });
   }
   tidyData.watch(draw4);

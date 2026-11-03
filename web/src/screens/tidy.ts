@@ -44,7 +44,9 @@ function draw() {
   const looks = (d?.checks || []).filter((c) => !c.ok && c.needs === 'all').length + (d?.libraries || []).filter((l) => l.stage === 'swapped').length;
   $('tidyCount').textContent = looks ? String(looks) : '';
 }
-function drawSheet() { mountTidySheet($('tidySheetBox'), confirm, () => { $('tidySheet').hidden = true; }); }
+// Closing sets hidden only on an open sheet: the sheet calls this again once
+// it is hidden (its onClose), and setting hidden again would call it again.
+function drawSheet() { mountTidySheet($('tidySheetBox'), confirm, () => { const s = $('tidySheet'); if (!s.hidden) s.hidden = true; }); }
 
 tidyData.watch(draw);
 export function loadTidy() { return tidyData.load(); }
