@@ -538,6 +538,16 @@ const smokes = [
     if (!t.includes('Frieren: 2 · The Office (US) season 2: 3, 4')) throw new Error('the row says ' + t);
     if (await page.$(`${row} button`)) throw new Error('a button on a row with nothing to do');
   } },
+  // What Jellyfin shows with no poster: named, and one button asks it to look again.
+  { name: 'Tidy Up: shows with no poster in Jellyfin can fetch them', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'tv' ? { ...l, stage: 'scanned', last: { scan: tidyRun('scan', 2, { files: 800, bloated: 0, posterless: 2, posterless_list: ['Frieren', 'Severance'] }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("2 shows have no poster in Jellyfin")';
+    if (!(await page.textContent(row, { timeout: 3000 })).includes('Frieren, Severance')) throw new Error('the row does not name them');
+    await page.click(`${row} button:text-is("Fetch posters")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'posters', [], false])) throw new Error(JSON.stringify(runs));
+  } },
   // The drive: its name, what is free, and each library's size.
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });

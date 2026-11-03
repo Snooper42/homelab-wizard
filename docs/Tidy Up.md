@@ -50,6 +50,8 @@ A film or episode already in the library twice (the same title and year, or the 
 
 TV's scan also says which episodes are missing: a gap in a season's numbering (*S02E01, E02, E05*: E03 and E04), read from the files alone, specials (season 0) left out. One missing after a season's last episode is past what the files can tell.
 
+With Jellyfin set up here (its address and `JELLYFIN_API_KEY`), the films' and TV's scan also asks it which films or shows in that library it shows with no poster. **Fetch posters** (`homelab media movies posters`, `tv posters`) asks Jellyfin to look for those alone again; images are only added, never replaced.
+
 ## The download apps
 
 `homelab media arr --apply` (or **Hand over** on the screen) turns Sonarr's, Radarr's, and Lidarr's renaming off, and their Completed Download Handling, which is what moves finished downloads into the libraries. They keep finding and downloading; the downloads stay in their folder, where the inbox files them. LazyLibrarian is told how by hand: turn its post-processing off.

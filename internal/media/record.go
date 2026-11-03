@@ -143,6 +143,11 @@ func Describe(kind string, run Run) (text, sub string) {
 			return "", ""
 		}
 		return "Extra copies in the Trash", plural(num(res["removed"]), "copy") + " · " + Bytes(num(res["freed"])) + " freed"
+	case "movies posters", "tv posters":
+		if num(res["asked"]) == 0 {
+			return "", ""
+		}
+		return "Posters asked of Jellyfin", plural(num(res["asked"]), map[string]string{"movies": "film", "tv": "show"}[kind]) + " · they show as Jellyfin finds them"
 	case "audiobooks run":
 		return "Audiobooks merged", plural(num(res["merged"]), "book") + " into one .m4b each · " + Bytes(num(res["freed"])) + " freed"
 	case "scrubber scan":

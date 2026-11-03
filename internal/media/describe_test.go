@@ -11,4 +11,7 @@ func TestDescribeDedupe(t *testing.T) {
 	if text, _ := Describe("tv", Run{Action: "dedupe", OK: true, Result: map[string]any{"removed": float64(0)}}); text != "" {
 		t.Errorf("nothing removed: %q", text)
 	}
+	if text, sub := Describe("tv", Run{Action: "posters", OK: true, Result: map[string]any{"asked": float64(2)}}); text != "Posters asked of Jellyfin" || sub != "2 shows · they show as Jellyfin finds them" {
+		t.Errorf("posters: %q, %q", text, sub)
+	}
 }

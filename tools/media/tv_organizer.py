@@ -155,7 +155,7 @@ class TV(ve.VideoEngine):
         if n:
             shows = len({g["show"] for g in gaps})
             mc.ui.kv("Episodes missing", "%s, in %s show%s" % (mc.fmt_n(n), mc.fmt_n(shows), "" if shows == 1 else "s"))
-        return {"missing": n, "missing_list": gaps[:50]}
+        return {"missing": n, "missing_list": gaps[:50], **self.scan_posters()}
 
     def dup_key(self, path):
         ep = parse_episode(path.name, path.parent)
@@ -186,7 +186,7 @@ class TV(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe"])
+    ap = mc.base_parser("tv_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe", "posters"])
     args = ap.parse_args()
     eng = TV()
     if args.action == "status":
@@ -205,6 +205,8 @@ def main():
         return eng.genre_counts()
     if args.action == "dedupe":
         return eng.dedupe()
+    if args.action == "posters":
+        return eng.posters()
     if not args.paths:
         mc.die("Which files?", "tv_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):

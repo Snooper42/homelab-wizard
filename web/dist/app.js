@@ -11985,6 +11985,16 @@
           }) }
         });
       }
+      const bare = n2(scan?.posterless), asked = last(l3, "posters");
+      if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
+        const names3 = scan?.posterless_list || [];
+        out.push({
+          kind: k3,
+          title: `${count(bare, k3 === "tv" ? "show" : "film")} ${bare === 1 ? "has" : "have"} no poster in Jellyfin`,
+          sub: names3.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
+          go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
+        });
+      }
       if (withTdarr) out.push({ kind: k3, title: "Collect what Tdarr has finished", sub: `${things(k3, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
     } else if (k3 === "books") {
       const rv = last(l3, "review");
@@ -12295,6 +12305,8 @@
     "movies collect": "Collecting Tdarr's work",
     "tv scan": "Scanning your TV",
     "movies dedupe": "Removing the extra copies",
+    "movies posters": "Asking Jellyfin for posters",
+    "tv posters": "Asking Jellyfin for posters",
     "tv dedupe": "Removing the extra copies",
     "tv run": "Handing episodes to Tdarr",
     "tv collect": "Collecting Tdarr's work",

@@ -14,6 +14,7 @@ is smaller. Tdarr's own queue and its nodes' worker limits decide how many trans
 import os
 import re
 import time
+import urllib.parse
 from pathlib import Path
 
 import media_common as mc
@@ -117,16 +118,77 @@ class VideoEngine:
         ui.result(action="genre-counts", ok=True, items=len(items), genres=shown, unplaced=unplaced, source=where)
         return True
 
-    def jellyfin_genres(self):
-        """{the item's folder as Jellyfin sees it: its first genre}, or None without Jellyfin."""
+    def jellyfin(self):
+        """(url, headers) for Jellyfin when it serves this library and has its key, else None."""
         c = mc.Servers().conf.get("jellyfin") or {}
         key = mc.secret(c.get("key_env") or "JELLYFIN_API_KEY")
         if not c.get("url") or self.kind not in (c.get("kinds") or []) or not key:
             return None
+        return c["url"].rstrip("/"), {"Authorization": 'MediaBrowser Token="%s"' % key, "X-Emby-Token": key}
+
+    def without_posters(self):
+        """The films or shows in this library Jellyfin shows with no poster: [{id, name}], or None
+        without Jellyfin. Only those under this library's folder, as Jellyfin sees it."""
+        jf = self.jellyfin()
+        if not jf:
+            return None
+        c = mc.Servers().conf.get("jellyfin") or {}
+        root = _path_key(mc.Servers.server_path(self.lib, c.get("path_map")))
         kind = "Movie" if self.kind == "movies" else "Series"
         try:
-            got = mc.http_json("GET", c["url"].rstrip("/") + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Genres,Path" % kind,
-                               headers={"Authorization": 'MediaBrowser Token="%s"' % key, "X-Emby-Token": key}, timeout=60)
+            got = mc.http_json("GET", jf[0] + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Path" % kind, headers=jf[1], timeout=60)
+        except RuntimeError as e:
+            ui.warn("Jellyfin didn't answer (%s); posters not checked" % e)
+            return None
+        out = []
+        for i in (got or {}).get("Items") or []:
+            p = _path_key(i.get("Path") or "")
+            if i.get("Id") and not (i.get("ImageTags") or {}).get("Primary") and (p == root or p.startswith(root + "/")):
+                out.append({"id": i["Id"], "name": i.get("Name") or Path(p).name})
+        return sorted(out, key=lambda x: x["name"].casefold())
+
+    def scan_posters(self):
+        """For the scan: how many have no poster in Jellyfin (nothing when it isn't set up)."""
+        bare = self.without_posters()
+        if bare is None:
+            return {}
+        if bare:
+            ui.kv("No poster in Jellyfin", mc.fmt_n(len(bare)))
+        return {"posterless": len(bare), "posterless_list": [b["name"] for b in bare[:50]]}
+
+    def posters(self):
+        """Ask Jellyfin to look again for the posters it's missing: images only added, never replaced."""
+        self.load()
+        ui.title("%s library" % self.kind.title(), "posters Jellyfin is missing")
+        bare = self.without_posters()
+        if bare is None:
+            mc.die("Jellyfin isn't set up for %s here (its address and JELLYFIN_API_KEY)." % self.kind)
+        jf = self.jellyfin()
+        asked, failed = 0, []
+        with ui.progress(len(bare), "Asking Jellyfin") as bar:
+            for b in bare:
+                bar.update(note=b["name"])
+                try:
+                    mc.http_json("POST", jf[0] + "/Items/%s/Refresh?metadataRefreshMode=Default&imageRefreshMode=FullRefresh"
+                                 "&replaceAllMetadata=false&replaceAllImages=false" % urllib.parse.quote(b["id"]), headers=jf[1])
+                    asked += 1
+                except RuntimeError as e:
+                    failed.append(b["name"])
+                    ui.to_log("NOTE   %s: %s" % (b["name"], e))
+        ui.ok("Jellyfin is looking for %s posters; they show in a few minutes" % mc.fmt_n(asked))
+        if failed:
+            ui.warn("Jellyfin didn't take %s of them" % mc.fmt_n(len(failed)))
+        ui.result(action="posters", ok=not failed, asked=asked, failed=failed[:20])
+        return not failed
+
+    def jellyfin_genres(self):
+        """{the item's folder as Jellyfin sees it: its first genre}, or None without Jellyfin."""
+        jf = self.jellyfin()
+        if not jf:
+            return None
+        kind = "Movie" if self.kind == "movies" else "Series"
+        try:
+            got = mc.http_json("GET", jf[0] + "/Items?Recursive=true&IncludeItemTypes=%s&Fields=Genres,Path" % kind, headers=jf[1], timeout=60)
         except RuntimeError as e:
             ui.warn("Jellyfin didn't answer (%s): reading the .nfo files instead" % e)
             return None
@@ -204,8 +266,8 @@ class VideoEngine:
                   duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50], **self.scan_more(files))
 
     def scan_more(self, files):
-        """More a scan says, for a library of its own kind (TV: the episodes missing)."""
-        return {}
+        """More a scan says: the posters Jellyfin is missing, and what a kind adds (TV: the episodes missing)."""
+        return self.scan_posters()
 
     # ------------------------------------------------------------------ the same film or episode twice
     def dup_key(self, path):

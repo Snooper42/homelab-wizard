@@ -246,6 +246,13 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
           go: () => act.run(k, 'dedupe', [], true),
         }) } });
     }
+    // What Jellyfin shows with no poster (the scan asks it), until it's been asked to look again.
+    const bare = n(scan?.posterless), asked = last(l, 'posters');
+    if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
+      const names = ((scan?.posterless_list || []) as string[]);
+      out.push({ kind: k, title: `${count(bare, k === 'tv' ? 'show' : 'film')} ${bare === 1 ? 'has' : 'have'} no poster in Jellyfin`, sub: names.slice(0, 3).join(', ') + (bare > 3 ? `, and ${bare - 3} more` : ''),
+        go: { label: 'Fetch posters', quiet: true, run: () => act.run(k, 'posters') } });
+    }
     if (withTdarr) out.push({ kind: k, title: "Collect what Tdarr has finished", sub: `${things(k, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');

@@ -114,7 +114,7 @@ class Movies(ve.VideoEngine):
 
 
 def main():
-    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe"])
+    ap = mc.base_parser("movies_organizer.py", __doc__, ["status", "scan", "run", "collect", "file", "genre-counts", "dedupe", "posters"])
     args = ap.parse_args()
     eng = Movies()
     if args.action == "status":
@@ -133,6 +133,8 @@ def main():
         return eng.genre_counts()
     if args.action == "dedupe":
         return eng.dedupe()
+    if args.action == "posters":
+        return eng.posters()
     if not args.paths:
         mc.die("Which files?", "movies_organizer.py file <file or folder>...")
     if not eng.file(args.paths, apply=args.apply or args.yes):

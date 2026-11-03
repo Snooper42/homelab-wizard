@@ -606,6 +606,41 @@ class MissingEpisodes(Base):
                                                {"show": "The Office (US)", "season": 2, "episodes": [3, 4]}])
 
 
+class Posters(Base):
+    """What Jellyfin shows with no poster, in this library only; Fetch posters asks it to look again."""
+
+    ITEMS = {"Items": [
+        {"Id": "a1", "Name": "Heat", "Path": "/media/movies/Heat (1995)/Heat (1995).mkv", "ImageTags": {"Primary": "x"}},
+        {"Id": "b2", "Name": "Ronin", "Path": "/media/movies/Ronin (1998)/Ronin (1998).mkv", "ImageTags": {}},
+        {"Id": "c3", "Name": "Alien", "Path": "/media/movies/Alien (1979).mkv"},
+        {"Id": "d4", "Name": "Home video", "Path": "/media/home/Birthday.mkv"}]}  # another library
+
+    def test_the_scan_counts_films_without_a_poster(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.http_mock.return_value = self.ITEMS
+        movies_organizer.Movies().scan()
+        res = self.results()[-1]
+        self.assertEqual((res["posterless"], res["posterless_list"]), (2, ["Alien", "Ronin"]))
+
+    def test_fetch_asks_jellyfin_for_those_alone_and_replaces_nothing(self):
+        self.http_mock.return_value = self.ITEMS
+        self.assertTrue(movies_organizer.Movies().posters())
+        posts = [c[0][1] for c in self.http_mock.call_args_list if c[0][0] == "POST"]
+        self.assertEqual(len(posts), 2)
+        self.assertTrue(posts[0].startswith("http://jf:8096/Items/c3/Refresh?") and "replaceAllImages=false" in posts[0], posts[0])
+        self.assertIn("/Items/b2/Refresh?", posts[1])
+        self.assertEqual(self.results()[-1]["asked"], 2)
+
+    def test_without_jellyfin_the_scan_says_nothing_of_posters(self):
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="hevc")).start()
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": ""}):
+            movies_organizer.Movies().scan()
+            self.assertNotIn("posterless", self.results()[-1])
+            with self.assertRaises(SystemExit):
+                movies_organizer.Movies().posters()
+
+
 class FakeProbe:
     """ffprobe answers by file name."""
 
