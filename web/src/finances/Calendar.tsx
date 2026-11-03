@@ -28,6 +28,8 @@ interface DayInfo {
   date: string;
   balance: number;
   events: finance.Event[];
+  /** Bills charged to a card that day: no checking money moves. */
+  charges: finance.Event[];
   holiday?: string;
   moved: finance.Moved[];
   low: boolean;
@@ -50,7 +52,7 @@ function daysOf(v: finance.View): Record<string, DayInfo> {
   const moved: Record<string, finance.Moved[]> = {};
   for (const p of v.paydays || []) if (p.moved?.length) moved[p.date] = p.moved;
   const out: Record<string, DayInfo> = {};
-  for (const d of v.days || []) out[d.date] = { date: d.date, balance: d.balance, events: d.events || [], holiday: v.holidays?.[d.date], moved: moved[d.date] || [], low: !!cushion && d.balance < cushion };
+  for (const d of v.days || []) out[d.date] = { date: d.date, balance: d.balance, events: d.events || [], charges: d.charges || [], holiday: v.holidays?.[d.date], moved: moved[d.date] || [], low: !!cushion && d.balance < cushion };
   // Further ahead, every day to a year from today: what falls on it, or nothing.
   const later = v.later || [];
   const ahead = Object.fromEntries(later.map((d) => [d.date, d]));
@@ -58,7 +60,7 @@ function daysOf(v: finance.View): Record<string, DayInfo> {
   if (lastDay) {
     const end = isoDay(new Date(parseDay(v.today).getFullYear() + 1, parseDay(v.today).getMonth(), parseDay(v.today).getDate() - 1));
     for (let d = addDays(lastDay, 1); d <= end; d = addDays(d, 1)) {
-      out[d] = { date: d, balance: 0, events: ahead[d]?.events || [], holiday: v.holidays?.[d], moved: [], low: false, later: true };
+      out[d] = { date: d, balance: 0, events: ahead[d]?.events || [], charges: ahead[d]?.charges || [], holiday: v.holidays?.[d], moved: [], low: false, later: true };
     }
   }
   return out;
@@ -74,12 +76,15 @@ function Lead({ e, L, size }: { e: finance.Event; L: Lookup; size?: 'sm' }) {
   return <PayMark x={x} size={size} />;
 }
 
+/** Where a charge goes, in words: "on Chase Freedom, due Nov 21". */
+const onCard = (e: finance.Event, L: Lookup) => `on ${L.account[e.card || '']?.name || 'a card'}` + (e.due ? `, due ${dayShort(e.due)}` : '');
+
 /** Why a payday moved, in words: "Moved from Sat, Nov 7: the weekend". */
 const movedText = (m: finance.Moved, L: Lookup) => `${L.person[m.person]?.name || m.person}'s payday moved from ${dayLong(m.from)}: ${m.why}`;
 
 /** A day read out: what moves and what checking holds after. */
 function dayLabel(d: DayInfo, L: Lookup, cushion: number) {
-  const said = d.events.map((e) => `${named(e, L)} ${signed(e.amount)}`);
+  const said = [...d.events.map((e) => `${named(e, L)} ${signed(e.amount)}`), ...d.charges.map((e) => `${named(e, L)} ${money(-e.amount)} ${onCard(e, L)}`)];
   return [dayLong(d.date) + (d.holiday ? `, ${d.holiday}` : ''), said.length ? said.join(', ') : 'nothing comes or goes',
     d.later ? 'planned, past where checking is read ahead' : `checking ${money(d.balance)} after` + (d.low ? `, under your ${compact(cushion)} cushion` : '')].join('. ');
 }
@@ -162,7 +167,7 @@ export function Calendar({ v, L, edit }: CalendarProps) {
                 const n = Number(d.slice(8));
                 if (!info) return <td key={k} class="fx-off"><span class="fx-daynum"><span class="fx-hidden">{dayLong(d)}, before today or past what Finances reads ahead</span><span aria-hidden="true">{n}</span></span>{v.holidays?.[d] && <span class="fx-hol">{v.holidays[d]}</span>}</td>;
                 const pays = info.events.filter((e) => e.people?.length), bills = info.events.filter((e) => !e.people?.length);
-                const marks = [...pays, ...bills];
+                const marks = [...pays, ...bills, ...info.charges];
                 return (
                   <td key={k} class={(info.low ? 'fx-low' : '') + (d === v.today ? ' fx-today' : '') + (info.later ? ' fx-later' : '')}>
                     {/* The day in words is its name; what it draws says the same, so it is hidden from a screen reader. */}
@@ -218,14 +223,20 @@ function DayRows({ L, d, edit }: { L: Lookup; d: DayInfo; edit?: CalendarProps['
           when={<Amount value={e.amount} sign tone={e.amount > 0 ? 'in' : ''} form="full" />} whenPlain
           onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x && edit ? 'edit' : undefined} />;
       })}
-      {!d.events.length && <li><Empty>Nothing comes or goes.</Empty></li>}
+      {d.charges.map((e, i) => {
+        const x = L.payment[e.payment || ''];
+        return <Row key={'c' + i} lead={<Lead e={e} L={L} />} title={named(e, L)} sub={onCard(e, L).replace(/^on/, 'On')}
+          when={<Amount value={-e.amount} form="full" tone="muted" />} whenPlain
+          onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x && edit ? 'edit' : undefined} />;
+      })}
+      {!d.events.length && !d.charges.length && <li><Empty>Nothing comes or goes.</Empty></li>}
     </Rows>
   );
 }
 
 /** Narrow: the month week by week, each day something happens with what moves and checking after. */
 function WeekList({ v, L, days, inMonth, col, cushion, edit }: { v: finance.View; L: Lookup; days: Record<string, DayInfo>; inMonth: string[]; col: (day: string) => number; cushion: number; edit?: CalendarProps['edit'] }) {
-  const busy = inMonth.filter((d) => days[d] && (days[d].events.length || days[d].holiday || days[d].low));
+  const busy = inMonth.filter((d) => days[d] && (days[d].events.length || days[d].charges.length || days[d].holiday || days[d].low));
   // Each busy day under the first day of its week.
   const weeks: string[][] = [];
   let from = '';
@@ -245,7 +256,7 @@ function WeekList({ v, L, days, inMonth, col, cushion, edit }: { v: finance.View
                 <h3><span>{dayLong(d)}{d === v.today ? ', today' : ''}{info.holiday ? ` · ${info.holiday}` : ''}</span>
                   {!info.later && <span class={'fx-daybal' + (info.low ? ' fx-out' : '')}>{money(info.balance)}<span class="fx-sub"> after{info.low ? `, under ${compact(cushion)}` : ''}</span></span>}</h3>
                 {!!info.moved.length && <p class="fx-sub fx-daynote">{info.moved.map((m) => movedText(m, L)).join('. ')}.</p>}
-                {!!info.events.length && <DayRows L={L} d={info} edit={edit} />}
+                {!!(info.events.length || info.charges.length) && <DayRows L={L} d={info} edit={edit} />}
               </div>
             );
           })}

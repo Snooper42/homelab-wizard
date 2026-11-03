@@ -49,22 +49,7 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open on Nov 3, 2026, in this order:**
-
-1. **`claude/feature-balance-group`** (item 7 of **The order**): done, #379.
-   - failing-before proof: put main's `web/dist` files in place, run `SMOKE_ONLY="A sidebar balance opens Net worth on its own group"` (expect FAIL), then restore;
-   - mark it *Built* in `docs/Feature Roadmap.md` and in this file;
-   - open the PR.
-   - Decision to flag: "each account its own history" is a band per account in one group chart, not a page per account.
-2. **`claude/feature-calendar-cards`** (item 6, F21). Its new work is one commit (`8ee8d43`, card charges on the calendar); the rest of the branch is calendar-ahead history already on main as #373, plus an old roadmap note about holding the media cleanup:
-   - merge main in, and take main's side of that roadmap note;
-   - make sure it has a CHANGELOG line;
-   - failing-before proof: `TestCardChargesOnTheirDay` fails with `project.go` reverted;
-   - mark it *Built*;
-   - open the PR.
-3. **`claude/feature-tidy-up`** (#376) is not yours (Library cleanup). Don't touch it; it counts as cleared once it is merged or the owner says so. Until then, it doesn't hold back the two above.
-
-Done already, so not in this list: #372, #374, #375, #377, and the v0.17.2 release (v0.17.5 is out).
+**Open now:** nothing. Cleared on Nov 3, 2026: #376 (Tidy Up), #379 (a balance opens its own group), and #380 (card charges on the calendar) were merged, after #372, #374, #375, #377, and #378. Only `main` was left. Still list what is open at the start of each round, as above: other sessions add to it.
 
 Then continue **The order** from item 8 (Finances on the phone, F17).
 
@@ -115,7 +100,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 3. **Right-click an app's row** on Status: Open, Open on a phone, Copy address, Restart, Stop, Stop for a while ▸, Logs, Back up now, Tell me if it stops. Shift+F10 and the context-menu key open it too. A right-click on a group's heading opens the group menu. Reuse `GroupMenu`'s menu: its styles and keyboard.
 4. **Calendar, further ahead** (F20): the calendar reads only the chart's 93 days. Read payments past them from `View.Next` and `Plan.Dates` (no balance), so a yearly renewal shows in its month, a year ahead.
 5. **Undo**: after Stop, Stop all, or Restart all, a note for 10 seconds: "Stopped 6 Media apps · Undo".
-6. **Calendar, card charges** (F21): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
+6. **Calendar, card charges** (F21, *Built*, #380): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
 7. **A balance opens its own group** (*Built*, #379): a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status**, then the **command palette** (⌘K).

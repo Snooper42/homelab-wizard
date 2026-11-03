@@ -170,6 +170,10 @@ type Day struct {
 	Date    string  `json:"date"`
 	Balance float64 `json:"balance"`
 	Events  []Event `json:"events,omitempty"`
+	// Charges are the bills charged to a card that day (a payment From a
+	// card): no checking money moves, so they are apart from Events, each
+	// with its card and the day the card is next paid.
+	Charges []Event `json:"charges,omitempty"`
 }
 
 // Event is a paycheck (its people, a positive amount), a payment (its ID,
@@ -179,6 +183,10 @@ type Event struct {
 	Payment string   `json:"payment,omitempty"`
 	People  []string `json:"people,omitempty"`
 	Amount  float64  `json:"amount"`
+	// Card is the card a charge goes on (Day.Charges), and Due the day
+	// that card is next paid from then (YYYY-MM-DD), when the plan pays it.
+	Card string `json:"card,omitempty"`
+	Due  string `json:"due,omitempty"`
 }
 
 // horizon is how far ahead paychecks and payments are read, and how far
@@ -453,6 +461,21 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	v.Last = lastDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	yearOn := today.AddDate(1, 0, 0) // the calendar reads this far (Later)
+	// cardDue is the day a card is next paid from d on: the first day of a
+	// payment that pays its balance (a card paid each paycheck's included),
+	// "" when the plan pays it with none.
+	cardDue := func(card string, d time.Time) string {
+		due := ""
+		for _, x := range p.Payments {
+			if x.Card != card {
+				continue
+			}
+			if ds := p.Dates(x.Schedule, d, d.AddDate(0, 0, 62)); len(ds) > 0 && (due == "" || dateOf(ds[0]) < due) {
+				due = dateOf(ds[0])
+			}
+		}
+		return due
+	}
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
 		k := dateOf(d)
@@ -527,7 +550,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				}
 			}
 		}
-		var ev []Event
+		var ev, charges []Event
 		if ahead {
 			if into {
 				if len(v.Periods) <= periods {
@@ -564,7 +587,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				continue
 			}
 			r.Late = e.waiting && e.was.Before(today)
-			if event != nil {
+			if event != nil && event.Card != "" {
+				event.Due = cardDue(event.Card, d)
+				charges = append(charges, *event)
+			} else if event != nil {
 				ev = append(ev, *event)
 			}
 			if per == nil {
@@ -587,12 +613,12 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365
 			}
 		}
-		if ahead && len(v.Days) >= chartDays && d.Before(yearOn) && len(ev) > 0 {
-			v.Later = append(v.Later, Day{Date: k, Events: ev})
+		if ahead && len(v.Days) >= chartDays && d.Before(yearOn) && len(ev)+len(charges) > 0 {
+			v.Later = append(v.Later, Day{Date: k, Events: ev, Charges: charges})
 		}
 		if ahead && (len(v.Days) < chartDays || d.Before(yearOn)) {
 			if len(v.Days) < chartDays {
-				v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev})
+				v.Days = append(v.Days, Day{Date: k, Balance: cents(bal[v.Checking]), Events: ev, Charges: charges})
 			}
 			if h := HolidayIn(d, p.Holidays); h != "" {
 				if v.Holidays == nil {
@@ -737,6 +763,10 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 		return r, &Event{Payment: e.pay.ID, Amount: r.Amount}, counted
 	}
 	r.Outside, r.After = true, 0
+	if kind[from] == Card {
+		// Charged to a card: a charge on its day, apart from checking's events.
+		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount, Card: from}, counted
+	}
 	return r, nil, counted
 }
 

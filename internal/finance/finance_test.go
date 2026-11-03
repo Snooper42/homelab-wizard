@@ -981,3 +981,57 @@ func TestLaterDays(t *testing.T) {
 		t.Errorf("no bank holiday read a year ahead: %v", len(v.Holidays))
 	}
 }
+
+// A bill charged to a card shows on its day as a charge, apart from
+// checking's events, with its card and the day the card is next paid;
+// checking does not move for it that day.
+func TestCardChargesOnTheirDay(t *testing.T) {
+	p := household()
+	without, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Payments = append(p.Payments, Payment{ID: "netflix", Name: "Netflix", Amount: 15.49, From: "visa", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}})
+	p, err = Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	today := date("2026-10-31")
+	v, base := Project(p, today, 4), Project(without, today, 4)
+	found := 0
+	for i, d := range v.Days {
+		for _, e := range d.Events {
+			if e.Payment == "netflix" {
+				t.Fatalf("%s: a card's charge among checking's events", d.Date)
+			}
+		}
+		for _, c := range d.Charges {
+			if c.Payment != "netflix" {
+				continue
+			}
+			found++
+			if d.Date[8:] != "03" || c.Card != "visa" || c.Amount != -15.49 || c.Due != d.Date[:8]+"21" {
+				t.Errorf("charge %+v on %s", c, d.Date)
+			}
+		}
+		// On a charge's own day checking changes as it would without it (the
+		// card's payment later is what grows).
+		if i > 0 && len(d.Charges) > 0 && math.Abs((d.Balance-v.Days[i-1].Balance)-(base.Days[i].Balance-base.Days[i-1].Balance)) > 0.005 {
+			t.Errorf("%s: checking moved for a charge", d.Date)
+		}
+	}
+	if found != 3 {
+		t.Errorf("%d charges in the chart's days, want 3 (Nov 3, Dec 3, Jan 3)", found)
+	}
+	later := 0
+	for _, d := range v.Later {
+		for _, c := range d.Charges {
+			if c.Payment == "netflix" {
+				later++
+			}
+		}
+	}
+	if later < 8 {
+		t.Errorf("%d charges a year ahead", later)
+	}
+}

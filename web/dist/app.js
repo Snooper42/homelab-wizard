@@ -7147,8 +7147,8 @@
     const payments = allPayments(v3.plan);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
     const kept = (id2) => saving(L2.account[id2 || ""]?.kind);
-    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
-    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard(x2)) && !(x2.to && x2.to === v3.checking));
+    const onCard2 = (x2) => L2.account[x2.from || ""]?.kind === "card";
+    const fromPay = payments.filter((x2) => (!x2.from || x2.from === v3.checking || onCard2(x2)) && !(x2.to && x2.to === v3.checking));
     const each = (x2) => x2.amount * perMonth(x2.schedule, people, v3.checking);
     const spentList = fromPay.filter((x2) => !kept(x2.to));
     const spent = spentList.reduce((t3, x2) => t3 + each(x2), 0);
@@ -8887,14 +8887,14 @@
     const moved = {};
     for (const p3 of v3.paydays || []) if (p3.moved?.length) moved[p3.date] = p3.moved;
     const out = {};
-    for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
+    for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], charges: d3.charges || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion };
     const later2 = v3.later || [];
     const ahead = Object.fromEntries(later2.map((d3) => [d3.date, d3]));
     const lastDay = (v3.days || []).at(-1)?.date;
     if (lastDay) {
       const end = isoDay(new Date(parseDay(v3.today).getFullYear() + 1, parseDay(v3.today).getMonth(), parseDay(v3.today).getDate() - 1));
       for (let d3 = addDays(lastDay, 1); d3 <= end; d3 = addDays(d3, 1)) {
-        out[d3] = { date: d3, balance: 0, events: ahead[d3]?.events || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true };
+        out[d3] = { date: d3, balance: 0, events: ahead[d3]?.events || [], charges: ahead[d3]?.charges || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true };
       }
     }
     return out;
@@ -8905,9 +8905,10 @@
     const x2 = L2.payment[e3.payment || ""];
     return /* @__PURE__ */ u3(PayMark, { x: x2, size });
   }
+  var onCard = (e3, L2) => `on ${L2.account[e3.card || ""]?.name || "a card"}` + (e3.due ? `, due ${dayShort(e3.due)}` : "");
   var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
   function dayLabel(d3, L2, cushion) {
-    const said = d3.events.map((e3) => `${named4(e3, L2)} ${signed(e3.amount)}`);
+    const said = [...d3.events.map((e3) => `${named4(e3, L2)} ${signed(e3.amount)}`), ...d3.charges.map((e3) => `${named4(e3, L2)} ${money(-e3.amount)} ${onCard(e3, L2)}`)];
     return [
       dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
       said.length ? said.join(", ") : "nothing comes or goes",
@@ -8997,7 +8998,7 @@
                   v3.holidays?.[d3] && /* @__PURE__ */ u3("span", { class: "fx-hol", children: v3.holidays[d3] })
                 ] }, k3);
                 const pays = info.events.filter((e3) => e3.people?.length), bills = info.events.filter((e3) => !e3.people?.length);
-                const marks2 = [...pays, ...bills];
+                const marks2 = [...pays, ...bills, ...info.charges];
                 return /* @__PURE__ */ u3("td", { class: (info.low ? "fx-low" : "") + (d3 === v3.today ? " fx-today" : "") + (info.later ? " fx-later" : ""), children: /* @__PURE__ */ u3(
                   "button",
                   {
@@ -9091,11 +9092,27 @@
           i3
         );
       }),
-      !d3.events.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes." }) })
+      d3.charges.map((e3, i3) => {
+        const x2 = L2.payment[e3.payment || ""];
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Lead, { e: e3, L: L2 }),
+            title: named4(e3, L2),
+            sub: onCard(e3, L2).replace(/^on/, "On"),
+            when: /* @__PURE__ */ u3(Amount, { value: -e3.amount, form: "full", tone: "muted" }),
+            whenPlain: true,
+            onOpen: edit && x2 ? () => edit("payment", x2.id) : void 0,
+            openLabel: x2 && edit ? "edit" : void 0
+          },
+          "c" + i3
+        );
+      }),
+      !d3.events.length && !d3.charges.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes." }) })
     ] });
   }
   function WeekList({ v: v3, L: L2, days, inMonth, col, cushion, edit }) {
-    const busy2 = inMonth.filter((d3) => days[d3] && (days[d3].events.length || days[d3].holiday || days[d3].low));
+    const busy2 = inMonth.filter((d3) => days[d3] && (days[d3].events.length || days[d3].charges.length || days[d3].holiday || days[d3].low));
     const weeks = [];
     let from = "";
     for (const d3 of busy2) {
@@ -9128,7 +9145,7 @@
             info.moved.map((m3) => movedText(m3, L2)).join(". "),
             "."
           ] }),
-          !!info.events.length && /* @__PURE__ */ u3(DayRows, { L: L2, d: info, edit })
+          !!(info.events.length || info.charges.length) && /* @__PURE__ */ u3(DayRows, { L: L2, d: info, edit })
         ] }, d3);
       }) }, w3[0])),
       !busy2.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
@@ -10217,7 +10234,7 @@
     const next = nextOf(v3);
     const m3 = month(v3, L2);
     const share2 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
-    const onCard = (x2) => L2.account[x2.from || ""]?.kind === "card";
+    const onCard2 = (x2) => L2.account[x2.from || ""]?.kind === "card";
     const list = payments.filter((x2) => groups2[filter](x2.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count2 = (g2) => payments.filter((x2) => groups2[g2](x2.kind)).length;
     const paidLine = (x2) => {
@@ -10289,7 +10306,7 @@
             list.map((x2) => {
               const n3 = next[x2.id];
               const later2 = n3 ? "" : v3.next?.[x2.id] || "";
-              const from = n3 && (x2.to && x2.to === v3.checking ? "into checking" : onCard(x2) ? "on " + L2.account[x2.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
+              const from = n3 && (x2.to && x2.to === v3.checking ? "into checking" : onCard2(x2) ? "on " + L2.account[x2.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
               const into2 = x2.to ? " → " + (L2.account[x2.to]?.name || x2.to) : "";
               return /* @__PURE__ */ u3(
                 Row,

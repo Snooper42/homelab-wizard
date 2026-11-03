@@ -578,9 +578,9 @@ own. Tick items off here as they land, and add new ones as you find them.
 20. ~~**Calendar, further ahead**: it reads only the chart's 93 days. Read
     payments past them from View.Next and Plan.Dates (no balance), so a
     yearly renewal shows in its month, a year ahead.~~ *Built by the features loop (View.Later).*
-21. **Calendar, card charges**: a bill charged to a card (From a card) moves
+21. ~~**Calendar, card charges**: a bill charged to a card (From a card) moves
     no checking money, so it is not in Days' events. Show it on its day too,
-    marked "on Chase Freedom", with the card's due day.
+    marked "on Chase Freedom", with the card's due day.~~ *Built by the features loop (Day.Charges).*
 
 22. ~~**Payee logos from a bank's wording**~~ (Round 49: payees.ts
     (cleanPayee: processor prefixes, the merchant's own reference, numbers,
