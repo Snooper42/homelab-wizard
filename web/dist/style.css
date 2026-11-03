@@ -2138,7 +2138,11 @@ tr.menued > td { background:var(--accent-soft); }
 .tidycols { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; align-items:start; }
 .tidycols > div > .card { margin-bottom:14px; }
 .tidybody > .card { margin-bottom:14px; }
-.tidytiles { margin-bottom:14px; }
+/* Its tiles keep their gap above the cards (.tiles.facts sets none), and its own cards are inset as Status's alerts are. */
+.tiles.facts.tidytiles { margin:0 0 14px; }
+.card.tidylib, .card.tidyjob { padding:14px 18px 12px; }
+.card.tidylib > .row:first-child, .card.tidyjob > .row:first-child { min-height:28px; }
+.card.tidylib > .row:first-child h2, .card.tidylib > h2:first-child, .card.tidyjob > .row:first-child h2 { margin:0; }
 .tidyfolder { font-size:12px; overflow-wrap:anywhere; }
 .card.tidylib.missing .tidyfolder { color:var(--warn); }
 .card.tidylib p { margin:6px 0 10px; }
