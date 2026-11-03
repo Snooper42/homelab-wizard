@@ -161,7 +161,8 @@ class VideoEngine:
 
     # ------------------------------------------------------------------ collect: put Tdarr's results in place
     def output_for(self, original):
-        rel = Path(original).relative_to(self.lib)
+        # The record may hold the path as written then (through a link, or a Windows short name).
+        rel = Path(mc._real(original)).relative_to(Path(mc._real(self.lib)))
         folder = self.lib / OUTPUT_DIR / rel.parent
         if not folder.is_dir():
             return None
