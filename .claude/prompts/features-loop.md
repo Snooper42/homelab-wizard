@@ -107,7 +107,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 6. **Calendar, card charges** (F21, *Built*, #380): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
 7. **A balance opens its own group** (*Built*, #379): a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
-9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #PR).
+9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
 10. **Export** (F18): the plan and its projection as CSV and JSON, and a printable month.
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.
