@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -289,19 +290,28 @@ func (a *App) TidyRun(kind, action string, args []string, yes bool) error {
 	if err != nil {
 		return err
 	}
-	var tail tailLines
+	var tail, failed tailLines
 	c.Stderr = &tail
 	if err := c.Start(); err != nil {
 		return err
 	}
-	readEvents(out, func(ev map[string]any) { emitEvent(a.ctx, "media:event", ev) })
+	readEvents(out, func(ev map[string]any) {
+		// What the command said went wrong, on its own output (ffmpeg not installed): the reason, if it fails.
+		if ev["type"] == "fail" {
+			failed.Write([]byte(fmt.Sprint(ev["text"]) + "\n"))
+		}
+		emitEvent(a.ctx, "media:event", ev)
+	})
 	err = c.Wait()
 	if ctx.Err() != nil && a.ctx.Err() == nil {
 		return errors.New("stopped: run it again to carry on where it left off")
 	}
 	if err != nil {
-		if why := tail.last(); why != "" {
-			return errors.New(why)
+		// Its reason, not "exit status 1": what it wrote last on its errors, or the last line it marked ✗.
+		for _, t := range []*tailLines{&tail, &failed} {
+			if why := t.last(); why != "" {
+				return errors.New(why)
+			}
 		}
 	}
 	return err
@@ -355,7 +365,12 @@ func readEvents(r io.Reader, send func(map[string]any)) {
 			send(ev)
 			continue
 		}
-		send(map[string]any{"type": "info", "text": strings.TrimLeft(line, " ✓!✗•")})
+		// A line the command marked ✗ is a failure (red on the screen); the rest are what it says.
+		typ := "info"
+		if strings.HasPrefix(line, "✗") {
+			typ = "fail"
+		}
+		send(map[string]any{"type": typ, "text": strings.TrimSpace(strings.TrimLeft(line, " ✓!✗•"))})
 	}
 }
 
