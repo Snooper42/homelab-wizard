@@ -30,6 +30,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **An update installed by hand counts:** after an update didn't go in place and you installed a newer release by hand, the app still said the update didn't install, and **Try again** stopped with *no update is ready*. A build as new as the one it was updating to, or newer, now counts as updated, and **Try again** with nothing newer simply closes the line.
 - **Tidy Up says why a job stopped:** when a scan couldn't start (ffmpeg not installed, say), it said only *exit status 1*, with the reason hidden under Show details. It now says the reason itself, the line is red in the details, and the fix names only your system's way to install ffmpeg (*brew install ffmpeg* on a Mac).
 - **Tidy Up on Windows pauses the apps first:** with Docker Desktop, Navidrome and Calibre-Web kept running while your music or books moved, because Docker names `M:\music` another way. They're paused now, as on a Mac. And music is tidied with beets on this machine, since beets' container can't open Windows folders.
 - **Tidy Up finds Calibre and ffmpeg on a Steam Deck:** Calibre from Discover (a Flatpak) or installed in your home folder, and ffmpeg from Homebrew or Nix, said *Not installed*. They're found now, and the books are tidied with them.
