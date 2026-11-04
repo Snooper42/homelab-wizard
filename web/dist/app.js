@@ -5444,6 +5444,9 @@
     SPEEDTEST_SCHEDULE: "When the speed test runs",
     OLLAMA_MODEL: "Model that explains logs",
     UPDATES_HELD: "Apps with updates held",
+    // Whichever Jellyfin runs, the Mac's own or the container: not named after the container's catalog entry.
+    JELLYFIN_API_KEY: "Jellyfin API key",
+    JELLYFIN_PORT: "Jellyfin port",
     NTFY_PUBLISH_AUTH: "ntfy publish token, as a link",
     NTFY_READ_TOKEN: "ntfy read-only token",
     MONEYMATTER_FRONTEND_IMAGE: "MoneyMatter frontend image"
