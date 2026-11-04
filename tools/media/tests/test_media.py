@@ -1183,5 +1183,56 @@ class Tdarr(Base):
         self.assertEqual(self.http_mock.call_args[0][3], {"x-api-key": "k"})
 
 
+
+class TdarrSignIn(unittest.TestCase):
+    """Tdarr's accounts: a 401 signs in with the homelab's login and asks again; without one, it says
+    where the login goes, plainly."""
+
+    def tdarr(self, answers, user="homelab", password="pw"):
+        calls = []
+        def http_json(method, url, body=None, headers=None, timeout=30, **kw):
+            calls.append((method, url.split("8265")[1], dict(headers or {}), body))
+            ans = answers.pop(0)
+            if isinstance(ans, Exception):
+                raise ans
+            return ans
+        mock.patch.object(mc, "http_json", side_effect=http_json).start()
+        self.addCleanup(mock.patch.stopall)
+        return mc.Tdarr("http://localhost:8265", "", user, password), calls
+
+    def test_signs_in_and_asks_again(self):
+        td, calls = self.tdarr([RuntimeError("POST http://localhost:8265/api/v2/cruddb answered 401"), {"token": "tok"}, [{"name": "Films"}]])
+        self.assertEqual(td.libraries(), [{"name": "Films"}])
+        self.assertEqual([c[1] for c in calls], ["/api/v2/cruddb", "/api/v2/public/auth/login", "/api/v2/cruddb"])
+        self.assertEqual(calls[1][3], {"username": "homelab", "password": "pw"})
+        self.assertEqual(calls[2][2].get("Authorization"), "Bearer tok")
+
+    def test_without_a_login_it_says_where_it_goes(self):
+        td, calls = self.tdarr([RuntimeError("POST http://localhost:8265/api/v2/cruddb answered 401")], user="", password="")
+        with self.assertRaises(mc.Expected) as e:
+            td.libraries()
+        self.assertIn("TDARR_USER and TDARR_PASSWORD", str(e.exception))
+        self.assertEqual(len(calls), 1)
+
+    def test_a_refused_login_is_said(self):
+        td, _ = self.tdarr([RuntimeError("POST http://localhost:8265/api/v2/cruddb answered 401"),
+                            RuntimeError("POST http://localhost:8265/api/v2/public/auth/login answered 401")])
+        with self.assertRaises(mc.Expected) as e:
+            td.libraries()
+        self.assertIn("refused TDARR_USER", str(e.exception))
+
+    def test_asking_for_a_sign_in_is_answering(self):
+        td, _ = self.tdarr([RuntimeError("GET http://localhost:8265/api/v2/status answered 401")])
+        self.assertTrue(td.ok())
+        td, _ = self.tdarr([RuntimeError("can't reach http://localhost:8265/api/v2/status (refused)")])
+        self.assertFalse(td.ok())
+
+    def test_an_expected_stop_is_said_plainly(self):
+        out = io.StringIO()
+        with mock.patch.object(sys, "stdout", out), self.assertRaises(SystemExit):
+            mc.run_main(lambda: (_ for _ in ()).throw(mc.Expected(mc.Tdarr.SIGN_IN)))
+        self.assertIn("Tdarr asks for a sign-in", out.getvalue())
+        self.assertNotIn("Something unexpected", out.getvalue())
+
 if __name__ == "__main__":
     unittest.main()

@@ -55,7 +55,7 @@ class VideoEngine:
         url = mc.cfg("tdarr", "url")
         if not url:
             return None
-        return mc.Tdarr(url, mc.secret("TDARR_API_KEY"))
+        return mc.tdarr(url)
 
     def tdarr_library(self):
         return (mc.cfg("tdarr", "libraries") or {}).get(self.kind) or ""
