@@ -681,6 +681,10 @@ class Tdarr:
             try:
                 return http_json(method, self.url + path, body, self.headers, timeout=timeout)
             except RuntimeError as e:
+                if str(e).startswith("can't reach"):
+                    # Tdarr isn't running (stopped, paused on battery, or out of memory): said plainly.
+                    raise Expected("Tdarr isn't answering at %s: start it from Status (Tdarr), then try again. "
+                                   "What's with it stays in its queue" % self.url)
                 if "answered 401" not in str(e):
                     raise
                 if attempt == 0 and self.user and self.password and "Authorization" not in self.headers:

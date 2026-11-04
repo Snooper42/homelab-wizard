@@ -1327,6 +1327,12 @@ class TdarrSignIn(unittest.TestCase):
         self.assertEqual(td.give_workers(gpu=False, apply=False), ["homelab"])
         self.assertEqual(len(calls), 1, "a preview changes nothing")
 
+    def test_tdarr_not_running_is_said_plainly(self):
+        td, _ = self.tdarr([RuntimeError("can't reach http://localhost:8265/api/v2/cruddb ([Errno 61] Connection refused)")], user="", password="")
+        with self.assertRaises(mc.Expected) as e:
+            td.status("/media/tv/x.mkv")
+        self.assertIn("Tdarr isn't answering at http://localhost:8265: start it from Status", str(e.exception))
+
     def test_an_expected_stop_is_said_plainly(self):
         out = io.StringIO()
         with mock.patch.object(sys, "stdout", out), self.assertRaises(SystemExit):
