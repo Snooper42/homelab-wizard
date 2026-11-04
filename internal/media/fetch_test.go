@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -88,7 +89,8 @@ func TestFetchKeepsOnlyTheCheckedBuild(t *testing.T) {
 		p := filepath.Join(dir, name)
 		b, _ := os.ReadFile(p)
 		fi, _ := os.Stat(p)
-		if string(b) != want || fi == nil || fi.Mode()&0o100 == 0 {
+		// Runnable: Windows keeps no such bit (an .exe runs by its name).
+		if string(b) != want || fi == nil || runtime.GOOS != "windows" && fi.Mode()&0o100 == 0 {
 			t.Errorf("%s: %q %v", name, b, fi)
 		}
 	}
