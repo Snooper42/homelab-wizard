@@ -22,6 +22,8 @@ export interface AppPageActions {
   back: () => void;
   /** start, stop, restart, or rollback. */
   act: (action: string) => void;
+  /** The output of its last command, in a sheet (after a failure). */
+  details: () => void;
   /** Stop for a while: it starts again by itself at until. */
   stopFor: (until: string) => void;
   /** Update: what it brings first, then Update. */
@@ -239,7 +241,7 @@ function AppMark({ name, icon }: { name: string; icon: string }) {
 
 function Header({ p }: { p: AppPageProps }) {
   const { a, entry, pending, busy, on } = p;
-  const [tone, words] = pending && !pending.failed ? ['warn', doing[pending.action] || 'Working…'] : p.state;
+  const [tone, words] = pending && !pending.failed ? ['warn', pending.note || doing[pending.action] || 'Working…'] : p.state;
   const up = a.state === 'running' && !pending ? uptime(a.since) : '';
   const url = a.address ? 'https://' + a.address : a.url || '';
   const run = (action: string, label: string, title: string, danger = false) => (
@@ -271,7 +273,7 @@ function Header({ p }: { p: AppPageProps }) {
             <span class={'pill ' + tone}><span class={'dot ' + tone} />{words}{up && ` · ${up}`}</span>
           </div>
           {entry?.description && <p class="lead">{entry.description}</p>}
-          {pending?.failed && <p class="rowerr" role="status">Could not {pending.action === 'rollback' ? 'roll back' : pending.action}: {pending.failed}</p>}
+          {pending?.failed && <p class="rowerr" role="status">Could not {pending.action === 'rollback' ? 'roll back' : pending.action}: {pending.failed}{pending.log && <> <button type="button" class="linkbtn" onClick={on.details}>Details</button></>}</p>}
         </div>
       </div>
       <div class="toolbar">

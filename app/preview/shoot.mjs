@@ -1958,6 +1958,29 @@ const smokes = [
     const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
     if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
   } },
+  // Start, Stop, and Restart run quietly: the row says what it is doing (an image coming down first included) and
+  // Status shows the result, with no sheet of Docker's output to close. A failure says why under the row, and
+  // Details shows that output.
+  { name: 'Status: Start runs quietly, a download said on the row, and Details after a failure', screen: 'status', mock: { statusOpen: 'all', actionDelay: 700,
+    actionLog: { ...actionLog, start: [' %s Pulling', ' 4f4fb700ef54 Downloading [=====>     ]  12.5MB/50MB', ' Container %s  Starting', ' Container %s  Started'] } }, run: async (page) => {
+    const row = '#statusRows tr:has(strong:text-is("Mealie"))';
+    await page.click(`${row} button:text-is("Start")`, { timeout: 5000 });
+    await page.waitForSelector(`${row} td.state:has-text("Downloading the app…")`, { timeout: 3000 })
+      .catch(async () => { throw new Error('the row says ' + (await page.textContent(`${row} td.state`))); });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for Start');
+    await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 8000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened after Start');
+    // A failure: why, under the row, and Details for what Docker said.
+    await page.evaluate(() => { window.__MOCK.actionError = 'port 9925 is taken by another program'; window.__MOCK.actionDelay = 0; });
+    await page.click(`${row} button:text-is("Restart")`).catch(async () => {
+      await page.click(`${row}`, { button: 'right' });
+      await page.click('.rowmenu [role=menuitem]:text-is("Restart")');
+    });
+    await page.waitForSelector(`${row} .rowerr:has-text("Could not restart: port 9925 is taken by another program")`, { timeout: 5000 });
+    await page.click(`${row} .rowerr button:text-is("Details")`);
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Mealie: what happened")', { timeout: 3000 });
+    if (!(await page.textContent('#cliLog')).includes('$ homelab restart mealie')) throw new Error('Details: ' + (await page.textContent('#cliLog')));
+  } },
   // Undo: after a group's Stop all, a note says what stopped, and Undo starts those same apps again; nothing for Restart.
   { name: 'Undo: after Stop all, the note starts them again', screen: 'status', mock: { usage }, run: async (page) => {
     const head = 'tr.grouphead:has(.foldbtn:has-text("Media"))';

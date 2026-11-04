@@ -38,6 +38,8 @@ export interface AppListActions {
   groupAct: (apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) => Promise<void>;
   /** What a row's own menu does (a right-click, Shift+F10, or the context-menu key). */
   menu: RowMenuActions;
+  /** The output of its last command (Start, Stop, Restart), in a sheet: after a failure. */
+  details: (a: api.AppStatus) => void;
 }
 
 /** A row's action the runtime has not confirmed yet, or why it failed. */
@@ -46,6 +48,10 @@ export interface Pending {
   action: string;
   /** Why it failed: the row is back as it was, with this under it. */
   failed?: string;
+  /** What it is doing within the action, in place of "Starting…" ("Downloading the app…"). */
+  note?: string;
+  /** Its command's output is kept: Details shows it (after a failure). */
+  log?: boolean;
 }
 
 export interface AppListProps {
@@ -147,7 +153,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
     if (refocus && from?.isConnected && from !== document.body) from.focus();
   };
   // Clicked and not confirmed yet: what it is doing, at once.
-  const [cls, words] = pend && !pend.failed ? ['warn', doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+  const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
@@ -168,7 +174,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
           : <Uptime a={a} week={p.weekUp[a.id]} />}
-        {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}</span>}
+        {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}{pend.log && <> <button type="button" class="linkbtn" onClick={() => p.on.details(a)}>Details</button></>}</span>}
         {said && <span class="rowsaid" role="status">{said}</span>}
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
