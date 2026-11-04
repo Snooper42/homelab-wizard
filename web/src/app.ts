@@ -15,6 +15,7 @@ import { updateFromMenu } from './screens/updates';
 import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './screens/finances';
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
+import { openPalette } from './palette/Palette';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
 export function show(name) {
@@ -45,6 +46,8 @@ function freshen(name) {
   else if (!onPhone()) financesData.fresh(5 * minute);
 }
 // Checking the screen again (⌘R, F5, the engine's refresh): its data read now.
+/** Checks the screen that shows again (the palette's Check again). */
+export function reloadScreen() { const current = document.querySelector('.screen.active')?.id; if (current) reload(current); }
 function reload(name) {
   if (name === 'status') { loadStatus(); healthData.load(); }
   if (name === 'app') { loadStatus(); refreshApp(); }
@@ -55,7 +58,7 @@ function reload(name) {
   if (name === 'tidy') loadTidy();
 }
 // After picking a screen, VoiceOver and the keyboard start at its heading.
-function focusScreen(name) {
+export function focusScreen(name) {
   const h1 = $1(`#${name} h1`);
   if (!h1) return;
   h1.tabIndex = -1;
@@ -78,7 +81,8 @@ $$('nav button').forEach((b) => {
 });
 
 // Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
-// Settings, R refreshes, F finds (Choose stacks, Settings); Escape clears a
+// Settings, R refreshes, F finds (Choose stacks, Settings), K opens the
+// command palette (palette/Palette.tsx); Escape clears a
 // search. On the Mac the View menu has the same shortcuts and sends them as
 // navigate and refresh events.
 // Text size, kept per machine: the whole app scales, 80% to 200%.
@@ -123,6 +127,12 @@ document.addEventListener('keydown', (e) => {
     toggleHideAmounts();
     return;
   }
+  // ⌘K (Ctrl+K) opens the command palette on any screen.
+  if (!e.shiftKey && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openPalette();
+    return;
+  }
   // ⌘Z (Ctrl+Z) undoes the last stop while its note shows; in a field, it is the field's own undo.
   if (!e.shiftKey && e.key.toLowerCase() === 'z' && !target.closest?.('input, textarea, select, [contenteditable]') && undoNow()) {
     e.preventDefault();
@@ -148,10 +158,11 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('load', async () => {
   window.runtime.EventsOn('navigate', (screen) => { navigate(screen); });
   window.runtime.EventsOn('hideAmounts', () => toggleHideAmounts());
+  window.runtime.EventsOn('palette', () => openPalette());
   window.runtime.EventsOn('status:changed', refreshStatus);
   window.runtime.EventsOn('cli:step', cliProgress);
   window.runtime.EventsOn('job:app', jobApp);
-  window.runtime.EventsOn('refresh', () => { const current = document.querySelector('.screen.active')?.id; if (current) reload(current); });
+  window.runtime.EventsOn('refresh', reloadScreen);
   await loadAppearance(); // before the first paint of the screens
   // Asked beside the machine, so the last Status is drawn without waiting for Docker.
   // An older agent or phone companion has none (drawRemembered draws nothing).

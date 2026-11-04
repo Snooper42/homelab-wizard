@@ -2200,3 +2200,19 @@ label.switch { display:inline-flex; align-items:center; gap:6px; font-size:13px;
 .undonote .undobtn { border:0; background:none; padding:4px 8px; border-radius:6px; font:inherit; font-weight:600; color:var(--link); }
 .undonote .undobtn:hover, .undonote .undobtn:focus-visible { background:var(--accent-soft); }
 .undonote .iconbtn { width:26px; height:26px; font-size:16px; }
+/* The command palette (palette/Palette.tsx): over every screen, near the top, as Spotlight sits; the screen behind dimmed a little. */
+html.palette-open #palette::before { content:""; position:fixed; inset:0; z-index:44; background:var(--shade-12); }
+@media (prefers-color-scheme: dark) { html.palette-open #palette::before { background:var(--shade-3); } }
+.palette { position:fixed; z-index:45; top:max(12vh, 48px); left:50%; transform:translateX(-50%); width:min(600px, calc(100vw - 32px)); display:flex; flex-direction:column; max-height:min(480px, 76vh); background:var(--panel); border-radius:14px; box-shadow:0 0 0 1px var(--line), 0 18px 50px var(--shade-25); overflow:hidden; font-size:14px; }
+.palette .palfield { width:100%; box-sizing:border-box; padding:14px 16px; border:0; border-bottom:1px solid var(--line); border-radius:0; background:none; color:var(--text); font:inherit; font-size:17px; outline:none; }
+.palette .pallist { list-style:none; margin:0; padding:6px; overflow-y:auto; }
+.palette .pallist:empty { display:none; }
+.palette .pallist li { display:flex; align-items:baseline; gap:12px; padding:8px 10px; border-radius:8px; cursor:default; }
+.palette .pallist li.picked { background:var(--accent-soft); color:var(--link); }
+.palette .pallist li.danger, .palette .pallist li.danger.picked { color:var(--bad); }
+.palette .pallabel { flex:1; min-width:0; overflow-wrap:anywhere; }
+.palette .palhint { flex:none; font-size:12px; }
+.palette .pallist li.picked .palhint { color:inherit; }
+.palette .palfoot { margin:0; padding:0 16px; font-size:13px; }
+.palette .palfoot:not(:empty) { padding:10px 16px; border-top:1px solid var(--line); }
+@media (forced-colors: active) { .palette { border:1px solid CanvasText; } .palette .pallist li.picked { outline:2px solid Highlight; } }

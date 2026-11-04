@@ -1095,6 +1095,7 @@ interface BackendEvents {
     "navigate": string;
     "refresh": void;
     "hideAmounts": void;
+    "palette": void;
     "progress": install.Event;
     "link": wiring.Link;
     "install:log": string;
