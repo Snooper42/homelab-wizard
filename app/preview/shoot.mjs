@@ -479,6 +479,24 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.opened === 'https://calibre-ebook.com/download', null, { timeout: 3000 })
       .catch(async () => { throw new Error('opened ' + (await page.evaluate(() => window.__MOCK.opened))); });
   } },
+  // A genre count that found nothing says what it counted and why (no Jellyfin key, no .nfo files), with Count again,
+  // not the first ask as if nothing ran.
+  { name: 'Tidy Up: a genre count with nothing to read says why', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, 'genre-counts': tidyRun('genre-counts', 1, { items: 4, genres: {}, unplaced: 4, source: 'nowhere yet',
+      why: "Jellyfin's API key isn't set: make one in Jellyfin › Dashboard › API Keys, and put it in Settings › Jellyfin (Jellyfin API key); and none has an .nfo file beside it" }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    const box = '#tidy .tidygenres';
+    await page.waitForSelector(`${box} button:text-is("Count again")`, { timeout: 5000 });
+    const text = await page.textContent(box);
+    if (!text.includes('Counted 4 films: none has a genre yet.') || !text.includes('Jellyfin › Dashboard › API Keys')) throw new Error('the box says ' + text);
+    await page.click(`${box} button:text-is("Count again")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).some((r) => r[0] === 'movies' && r[1] === 'genre-counts'), null, { timeout: 5000 });
+    // The key's own field, one click away: Settings opens on Jellyfin's page at it.
+    await page.click(`${box} button:text-is("Add Jellyfin’s API key")`);
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.waitForFunction(() => document.getElementById('setting-JELLYFIN_API_KEY')?.checkVisibility(), null, { timeout: 3000 })
+      .catch(() => { throw new Error('Settings did not open at the Jellyfin API key'); });
+  } },
   // Lyrics: the card says what came of every song, the ones that kept theirs on grey lines; Overview counts only the songs
   // still worth asking LRCLIB about, and says how many it had nothing for.
   { name: 'Tidy Up: lyrics say what came of every song, and Overview counts only those still to ask', screen: 'tidy', mock: {
