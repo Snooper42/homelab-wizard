@@ -165,7 +165,7 @@ func Write(root string, s map[string]any) (string, error) {
 // SecretKeys are the .env keys the engines read from their environment
 // (never from a command line or the settings file).
 var SecretKeys = []string{"JELLYFIN_API_KEY", "NAVIDROME_ADMIN_USER", "NAVIDROME_ADMIN_PASSWORD", "PLEX_TOKEN",
-	"AUDIOBOOKSHELF_API_KEY", "TDARR_API_KEY"}
+	"AUDIOBOOKSHELF_API_KEY", "TDARR_API_KEY", "TDARR_USER", "TDARR_PASSWORD"}
 
 // Environ is the engines' environment: this one, with their keys from .env.
 func Environ(env map[string]string) []string {

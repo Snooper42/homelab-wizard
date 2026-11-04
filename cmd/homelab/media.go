@@ -202,6 +202,9 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		return err
 	}
 	env := h.envMap()
+	if tdarrJob(kind, action) {
+		h.tdarrAccount(ctx, env)
+	}
 	// Python was found above (HOMELAB_PYTHON, or the probe): the other checks.
 	checks := slices.DeleteFunc(media.Preflight(ctx, mediaProbe(), env, homeDir()), func(c media.Check) bool { return c.ID == "python" })
 	if c := media.Blocking(checks, kind, act.Power); c != nil {
