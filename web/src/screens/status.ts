@@ -351,6 +351,7 @@ const appListActions: AppListActions = {
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
   groupAct: (apps, action, progress, until) => groupAct(apps, action, progress, until),
+  details: (a) => showDetails(a),
   // A row's own menu: what the app's page offers, from Status.
   menu: {
     open: (url) => go().Open(url),
@@ -423,7 +424,7 @@ export function undoNow(): boolean {
 // An app's page (screens/apppage.ts) runs the rows' actions with its own
 // buttons and follows what they do; it sets how a row opens it.
 export const pageOpener = { open: (_id: string) => {} };
-export const appActions = { act: (a: api.AppStatus, action: string) => appListActions.act(a, action), stopFor: (a: api.AppStatus, until: string) => runAppAction(a, 'stop', until), phone: showQR, signIn: showSignIn, update: showUpdate };
+export const appActions = { act: (a: api.AppStatus, action: string) => appListActions.act(a, action), stopFor: (a: api.AppStatus, until: string) => runAppAction(a, 'stop', until), phone: showQR, signIn: showSignIn, update: showUpdate, details: (a: api.AppStatus) => showDetails(a) };
 /** The apps stopped on purpose, from the last Status. */
 export const heldNow = () => held;
 export const pendingOf = (id: string): Pending | undefined => pending[id];
@@ -491,7 +492,17 @@ async function showSignIn(a, keys) {
 }
 
 const actionTitle = { start: 'Starting', stop: 'Stopping', restart: 'Restarting', update: 'Updating', rollback: 'Rolling back' };
+// Start, stop, and restart run quietly: the row (and the app's page) says
+// what it is doing, an image coming down first included ("Downloading the
+// app…"), and Status shows the result; no sheet of Docker's output to
+// close. A failure says why under the row, with Details for that output.
+// Update and roll back keep their sheet: their notes and steps are worth
+// reading.
+const quiet = new Set(['start', 'stop', 'restart']);
+const lastLog: Record<string, string> = {}; // each app's last command's output, for Details
+const downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
 async function runAppAction(a, action, until?: string) {
+  if (quiet.has(action)) return runQuietly(a, action, until);
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -517,6 +528,40 @@ async function runAppAction(a, action, until?: string) {
   cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
   if (!failed) setPending(a.id, null);
+}
+
+async function runQuietly(a, action, until?: string) {
+  let log = `$ homelab ${action} ${a.id}${until ? ' --until ' + until : ''}\n`;
+  setPending(a.id, { action });
+  setAppsBusy(true);
+  const off = window.runtime.EventsOn('cli:log', (line: string) => {
+    log += line + '\n';
+    // An image coming down before the app can start: said in place of "Starting…".
+    if (downloading.test(line) && !pending[a.id]?.note) setPending(a.id, { action, note: 'Downloading the app…' });
+  });
+  let failed = '';
+  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); }
+  if (typeof off === 'function') off();
+  lastLog[a.id] = log;
+  // A failure puts the row back at once, saying why, with Details; a
+  // success waits for the runtime to confirm it.
+  if (failed) setPending(a.id, { action, failed, log: true });
+  setAppsBusy(false);
+  if (!failed && action === 'stop') offerUndo([a], until);
+  await loadStatus();
+  if (!failed) setPending(a.id, null);
+}
+
+// Details: the last command's output for an app, in the command sheet.
+function showDetails(a) {
+  const panel = $('cliPanel'), log = $('cliLog');
+  if (cliStop) cliStop();
+  panel.hidden = false;
+  $('cliTitle').textContent = `${a.name}: what happened`;
+  log.hidden = false;
+  log.textContent = lastLog[a.id] || 'Nothing was kept.';
+  cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
+  panel.scrollIntoView({ block: 'nearest' });
 }
 
 // Update: what it brings first (its newer releases' notes), then Update

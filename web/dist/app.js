@@ -2011,7 +2011,7 @@
       setMenu(null);
       if (refocus && from?.isConnected && from !== document.body) from.focus();
     };
-    const [cls, words4] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+    const [cls, words4] = pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
@@ -2051,7 +2051,11 @@
                 "Could not ",
                 verb[pend.action] || pend.action,
                 ": ",
-                pend.failed
+                pend.failed,
+                pend.log && /* @__PURE__ */ u3(S, { children: [
+                  " ",
+                  /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: () => p3.on.details(a3), children: "Details" })
+                ] })
               ] }),
               said && /* @__PURE__ */ u3("span", { class: "rowsaid", role: "status", children: said })
             ] }),
@@ -3847,14 +3851,14 @@
     const st = p3.status[a3.id];
     const [stateText, stateCls] = st && stateBadge[st.state] || [];
     const target = st?.state === "running" ? st.address ? "https://" + st.address : st.url : "";
-    const quiet = (fn) => (e3) => {
+    const quiet2 = (fn) => (e3) => {
       e3.preventDefault();
       e3.stopPropagation();
       fn();
     };
     const links = [
-      target && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.open(target)), children: "Open" }),
-      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet(() => p3.settings(a3.inputs)), children: "Settings" })
+      target && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.open(target)), children: "Open" }),
+      !!a3.inputs?.length && /* @__PURE__ */ u3("a", { onClick: quiet2(() => p3.settings(a3.inputs)), children: "Settings" })
     ].filter(Boolean);
     return /* @__PURE__ */ u3("label", { class: "app", children: [
       /* @__PURE__ */ u3("input", { type: "checkbox", checked: p3.selected.has(a3.id), disabled: native, onChange: (e3) => p3.tick(a3.id, e3.currentTarget.checked) }),
@@ -3911,9 +3915,9 @@
     const picked = p3.start.filter((id2) => !p3.added[id2]);
     const helpers = p3.start.filter((id2) => p3.added[id2]);
     const running3 = p3.skips.filter((s3) => /^already running/.test(s3.reason));
-    const quiet = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
+    const quiet2 = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
-    const needs = p3.skips.filter((s3) => !running3.includes(s3) && !quiet.includes(s3) && !outside.includes(s3));
+    const needs = p3.skips.filter((s3) => !running3.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
     const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
     const details = [
       { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
@@ -5860,6 +5864,7 @@
     page: (a3) => pageOpener.open(a3.id),
     startAll: (apps, progress2) => groupAct(apps, "start", progress2),
     groupAct: (apps, action, progress2, until) => groupAct(apps, action, progress2, until),
+    details: (a3) => showDetails(a3),
     // A row's own menu: what the app's page offers, from Status.
     menu: {
       open: (url) => go().Open(url),
@@ -5939,7 +5944,7 @@
   }
   var pageOpener = { open: (_id) => {
   } };
-  var appActions = { act: (a3, action) => appListActions.act(a3, action), stopFor: (a3, until) => runAppAction(a3, "stop", until), phone: showQR, signIn: showSignIn, update: showUpdate };
+  var appActions = { act: (a3, action) => appListActions.act(a3, action), stopFor: (a3, until) => runAppAction(a3, "stop", until), phone: showQR, signIn: showSignIn, update: showUpdate, details: (a3) => showDetails(a3) };
   var heldNow = () => held;
   var pendingOf = (id2) => pending[id2];
   var appsBusyNow = () => appsBusy;
@@ -6011,7 +6016,11 @@
     panel.scrollIntoView({ block: "nearest" });
   }
   var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
+  var quiet = /* @__PURE__ */ new Set(["start", "stop", "restart"]);
+  var lastLog = {};
+  var downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
   async function runAppAction(a3, action, until) {
+    if (quiet.has(action)) return runQuietly(a3, action, until);
     const panel = $2("cliPanel"), log2 = $2("cliLog");
     log2.hidden = false;
     if (cliStop) cliStop();
@@ -6045,6 +6054,41 @@
     } }]);
     await loadStatus();
     if (!failed) setPending(a3.id, null);
+  }
+  async function runQuietly(a3, action, until) {
+    let log2 = `$ homelab ${action} ${a3.id}${until ? " --until " + until : ""}
+`;
+    setPending(a3.id, { action });
+    setAppsBusy(true);
+    const off = window.runtime.EventsOn("cli:log", (line) => {
+      log2 += line + "\n";
+      if (downloading.test(line) && !pending[a3.id]?.note) setPending(a3.id, { action, note: "Downloading the app…" });
+    });
+    let failed = "";
+    try {
+      await (until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
+    } catch (e3) {
+      failed = errorText(e3);
+    }
+    if (typeof off === "function") off();
+    lastLog[a3.id] = log2;
+    if (failed) setPending(a3.id, { action, failed, log: true });
+    setAppsBusy(false);
+    if (!failed && action === "stop") offerUndo([a3], until);
+    await loadStatus();
+    if (!failed) setPending(a3.id, null);
+  }
+  function showDetails(a3) {
+    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = `${a3.name}: what happened`;
+    log2.hidden = false;
+    log2.textContent = lastLog[a3.id] || "Nothing was kept.";
+    cliButtons([{ label: "Close", onClick: () => {
+      panel.hidden = true;
+    } }]);
+    panel.scrollIntoView({ block: "nearest" });
   }
   function showUpdate(a3) {
     const panel = $2("cliPanel");
@@ -6783,7 +6827,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on } = p3;
-    const [tone, words4] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words4] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on.act(action), children: label });
@@ -6829,7 +6873,11 @@
             "Could not ",
             pending2.action === "rollback" ? "roll back" : pending2.action,
             ": ",
-            pending2.failed
+            pending2.failed,
+            pending2.log && /* @__PURE__ */ u3(S, { children: [
+              " ",
+              /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: on.details, children: "Details" })
+            ] })
           ] })
         ] })
       ] }),
@@ -7172,6 +7220,7 @@
       on: {
         back: () => navigate("status"),
         act: (action) => appActions.act(a3, action),
+        details: () => appActions.details(a3),
         stopFor: (until) => appActions.stopFor(a3, until),
         update: () => appActions.update(a3),
         open: (url) => go().Open(url),
@@ -10291,10 +10340,10 @@
       await save2({ rates: v3.plan.rates, quiet: v3.plan.quiet, calendarKey: v3.plan.calendarKey, calendarAmounts: v3.plan.calendarAmounts, ...s3 });
       setBusy(false);
     };
-    const quiet = v3.plan.quiet || [];
+    const quiet2 = v3.plan.quiet || [];
     const remind = (kind) => (e3) => {
       const on = e3.currentTarget.checked;
-      keep2({ currency, holidays, quiet: on ? quiet.filter((k3) => k3 !== kind) : [...quiet, kind] });
+      keep2({ currency, holidays, quiet: on ? quiet2.filter((k3) => k3 !== kind) : [...quiet2, kind] });
     };
     const others2 = [...new Set((v3.plan.accounts || []).map((a3) => a3.currency || "").filter((c3) => c3 && c3 !== currency))].sort();
     const setRate = (code2, text2) => {
@@ -10335,7 +10384,7 @@
       /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
         /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
         reminders.map(([kind, words4]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet.includes(kind), onClick: remind(kind) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet2.includes(kind), onClick: remind(kind) }),
           " ",
           words4
         ] }, kind))

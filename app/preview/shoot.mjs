@@ -1763,7 +1763,7 @@ const smokes = [
     if ((await page.evaluate(() => document.activeElement.textContent)) !== 'Restart') throw new Error('the arrows did not reach Restart');
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 3000 });
-    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Restart: it runs on the row now');
     const mealie = page.locator('tr:has(strong:text-is("Mealie"))');
     await mealie.scrollIntoViewIfNeeded();
     const box = await mealie.locator('td.state').boundingBox();
@@ -1976,6 +1976,29 @@ const smokes = [
     const [name, bar] = [await size.locator('strong').boundingBox(), await size.locator('.bar').boundingBox()];
     if (bar.y > name.y + name.height || bar.x < name.x + name.width) throw new Error('an app’s size takes two lines');
   } },
+  // Start, Stop, and Restart run quietly: the row says what it is doing (an image coming down first included) and
+  // Status shows the result, with no sheet of Docker's output to close. A failure says why under the row, and
+  // Details shows that output.
+  { name: 'Status: Start runs quietly, a download said on the row, and Details after a failure', screen: 'status', mock: { statusOpen: 'all', actionDelay: 700,
+    actionLog: { ...actionLog, start: [' %s Pulling', ' 4f4fb700ef54 Downloading [=====>     ]  12.5MB/50MB', ' Container %s  Starting', ' Container %s  Started'] } }, run: async (page) => {
+    const row = '#statusRows tr:has(strong:text-is("Mealie"))';
+    await page.click(`${row} button:text-is("Start")`, { timeout: 5000 });
+    await page.waitForSelector(`${row} td.state:has-text("Downloading the app…")`, { timeout: 3000 })
+      .catch(async () => { throw new Error('the row says ' + (await page.textContent(`${row} td.state`))); });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for Start');
+    await page.waitForSelector(`${row} td.state:has-text("Running")`, { timeout: 8000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened after Start');
+    // A failure: why, under the row, and Details for what Docker said.
+    await page.evaluate(() => { window.__MOCK.actionError = 'port 9925 is taken by another program'; window.__MOCK.actionDelay = 0; });
+    await page.click(`${row} button:text-is("Restart")`).catch(async () => {
+      await page.click(`${row}`, { button: 'right' });
+      await page.click('.rowmenu [role=menuitem]:text-is("Restart")');
+    });
+    await page.waitForSelector(`${row} .rowerr:has-text("Could not restart: port 9925 is taken by another program")`, { timeout: 5000 });
+    await page.click(`${row} .rowerr button:text-is("Details")`);
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Mealie: what happened")', { timeout: 3000 });
+    if (!(await page.textContent('#cliLog')).includes('$ homelab restart mealie')) throw new Error('Details: ' + (await page.textContent('#cliLog')));
+  } },
   // Undo: after a group's Stop all, a note says what stopped, and Undo starts those same apps again; nothing for Restart.
   { name: 'Undo: after Stop all, the note starts them again', screen: 'status', mock: { usage }, run: async (page) => {
     const head = 'tr.grouphead:has(.foldbtn:has-text("Media"))';
@@ -2003,12 +2026,11 @@ const smokes = [
     await page.click('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
     await page.click('#app .pagehead button:text-is("Click again to stop")');
     await page.waitForSelector('.undonote .undowords:text-is("Stopped Vikunja")', { timeout: 5000 });
-    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Stop: it runs on the row now');
     const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
     await page.keyboard.press(mac ? 'Meta+z' : 'Control+z');
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 2, null, { timeout: 5000 });
     if (await page.isVisible('.undonote')) throw new Error('the note stayed after ⌘Z');
-    await page.click('#cliActions button:has-text("Close")', { timeout: 5000 }).catch(() => {});
     await page.waitForSelector('#app .pagehead .btngroup button:text-is("Stop")', { timeout: 5000 });
     await page.click('#app .pagehead .btngroup button:text-is("Stop")');
     await page.click('#app .pagehead button:text-is("Click again to stop")');
@@ -2674,7 +2696,8 @@ const smokes = [
   } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
-    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Restart: it runs on the row now');
     if (await page.isVisible('#app button:has-text("Remove")')) throw new Error('Remove shows on a phone');
   } },
   // With no https link yet (no domain, no Tailscale), a phone pairs over the
@@ -3070,7 +3093,7 @@ const smokes = [
     await page.waitForSelector('#app .rowerr:has-text("Could not stop: the container runtime stopped answering")', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .rowerr:has-text("Could not stop")', { state: 'attached', timeout: 2000 });
     if (!(await page.isVisible('#app .pill.ok:has-text("Running")'))) throw new Error('the page did not go back to Running');
-    await page.click('#cliActions button:has-text("Close")', { timeout: 2000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Stop: it runs on the row now');
     await page.click('#app button:text-is("Restart")', { timeout: 2000 });
     await page.waitForSelector('#app .rowerr:has-text("Could not restart")', { timeout: 5000 });
     if (await page.isVisible('#app .rowerr:has-text("Could not stop")')) throw new Error('the old failure stayed after another action');
@@ -3088,12 +3111,19 @@ const smokes = [
     const onPage = await page.evaluate(movingNow);
     if (onPage.length) throw new Error(`an app's page: ${onPage.slice(0, 4).join('; ')}`);
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Restarting…")', { timeout: 2000 });
+    const restarting = await page.evaluate(movingNow);
+    if (restarting.length) throw new Error(`a restart on its page: ${restarting.slice(0, 4).join('; ')}`);
+    // A sheet and its job: Update apps (Start, Stop, and Restart open none now).
+    await page.click('nav button[data-screen="status"]');
+    await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
     const moving = await page.evaluate(movingNow);
     if (moving.length) throw new Error(`an open sheet and a job: ${moving.slice(0, 4).join('; ')}`);
   } },
   { name: 'Motion Less: the sheet and the job bar stop moving, colours still fade', screen: 'status', mock: { look: { motion: 'less' }, actionDelay: 1500 }, run: async (page) => {
-    await page.click('tr:has(strong:text-is("Mealie")) button.rowmain:has-text("Start")', { timeout: 5000 });
+    // A sheet and its job bar: Update apps (Start, Stop, and Restart open none now).
+    await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 2000 });
     const anims = await page.evaluate(() => document.getAnimations().map((a) => a.animationName || a.transitionProperty));
     if (anims.length) throw new Error('still animating: ' + anims.join(', '));
@@ -3158,7 +3188,7 @@ const smokes = [
   { name: "Restart from an app's page, which says so at once", screen: 'app:vikunja', mock: { actionDelay: 600 }, run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForSelector('#app .pill:has-text("Restarting…")', { timeout: 2000 });
-    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Restart: it runs on the page now');
     await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
   } },
   { name: "An app's page copies its address and explains its log", screen: 'app:vikunja', mock: { explainer: 'llama3.2:latest', explained: { vikunja: 'Vikunja is fine.' } }, run: async (page) => {
@@ -3248,9 +3278,11 @@ const smokes = [
     await page.click('#app button:text-is("Start")');
     await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
   } },
-  { name: 'Restart an app', screen: 'app:vikunja', run: async (page) => {
+  { name: 'Restart an app', screen: 'app:vikunja', mock: { actionDelay: 600 }, run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
-    await page.waitForSelector('#cliPanel:not([hidden])', { timeout: 5000 });
+    await page.waitForSelector('#app .pill:has-text("Restarting…")', { timeout: 2000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a sheet opened for a Restart: it runs on the row now');
+    await page.waitForSelector('#app .pill.ok:has-text("Running")', { timeout: 5000 });
   } },
   // Finances: post-pay checking for the next paycheck first; picking another changes it.
   // Hide amounts: Ctrl+Shift+H (⌘⇧H on a Mac) writes every amount as $••• on every view and in the sidebar, labels and

@@ -125,6 +125,7 @@ function draw() {
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),
+      details: () => appActions.details(a),
       stopFor: (until) => appActions.stopFor(a, until),
       update: () => appActions.update(a),
       open: (url) => go().Open(url),
