@@ -271,3 +271,50 @@ func FetchedRecord(home string) (Fetched, bool) {
 	data, err := os.ReadFile(filepath.Join(BinDir(home), "ffmpeg.json"))
 	return f, err == nil && json.Unmarshal(data, &f) == nil
 }
+
+// Manager is a package manager already on this machine that installs
+// ffmpeg without a terminal or a password: Homebrew (a Mac, or Linux), or
+// winget (Windows, as a per-user package). Its ffmpeg is updated with it.
+type Manager struct {
+	Name string
+	// Shown is the command as a person would type it: "brew install ffmpeg".
+	Shown string
+	// Command installs ffmpeg, answering nothing on the way.
+	Command []string
+}
+
+// FFmpegManager is the package manager Install uses for ffmpeg, when one is here.
+func FFmpegManager(p Probe) (Manager, bool) {
+	switch p.GOOS {
+	case "windows":
+		if w, err := p.LookPath("winget"); err == nil {
+			return Manager{Name: "winget", Shown: "winget install Gyan.FFmpeg", Command: []string{w, "install", "--id", "Gyan.FFmpeg", "--exact", "--silent",
+				"--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity"}}, true
+		}
+	case "darwin", "linux":
+		cands := []string{"/opt/homebrew/bin/brew", "/usr/local/bin/brew"}
+		if p.GOOS == "linux" {
+			cands = []string{"/home/linuxbrew/.linuxbrew/bin/brew"}
+		}
+		if b, err := p.LookPath("brew"); err == nil {
+			cands = append([]string{b}, cands...)
+		}
+		for _, b := range cands {
+			if _, err := p.Stat(b); err == nil {
+				return Manager{Name: "Homebrew", Shown: "brew install ffmpeg", Command: []string{b, "install", "ffmpeg"}}, true
+			}
+		}
+	}
+	return Manager{}, false
+}
+
+// ffmpegElsewhere is where a package manager puts ffmpeg off PATH for a
+// window opened before it ran: winget's links folder.
+func ffmpegElsewhere(goos string) []string {
+	if goos == "windows" {
+		if l := os.Getenv("LOCALAPPDATA"); l != "" {
+			return []string{filepath.Join(l, "Microsoft", "WinGet", "Links")}
+		}
+	}
+	return nil
+}

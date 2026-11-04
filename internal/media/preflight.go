@@ -196,7 +196,14 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 		note := "Installed"
 		install := ""
 		if t.id == "ffmpeg" {
-			// The copy Install fetched, after one on PATH; none: Install, where a build is pinned.
+			// After one on PATH: winget's links (a window opened before winget ran), then the copy Install fetched.
+			for _, d := range ffmpegElsewhere(p.GOOS) {
+				if err != nil {
+					if _, e := p.Stat(filepath.Join(d, exe(p.GOOS, "ffprobe"))); e == nil {
+						_, err = p.Stat(filepath.Join(d, exe(p.GOOS, "ffmpeg")))
+					}
+				}
+			}
 			if err != nil {
 				if _, e := p.Stat(filepath.Join(BinDir(home), exe(p.GOOS, "ffprobe"))); e == nil {
 					if _, err = p.Stat(filepath.Join(BinDir(home), exe(p.GOOS, "ffmpeg"))); err == nil {
@@ -204,7 +211,11 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 					}
 				}
 			}
-			if pin, ok := FFmpegPin(p.GOOS, p.GOARCH); ok && err != nil {
+			// None: Install, with the package manager that's here (it keeps ffmpeg updated), or else a pinned build.
+			if m, ok := FFmpegManager(p); ok && err != nil {
+				install = "ffmpeg"
+				t.fix = fmt.Sprintf("Install runs %s for you (%s is installed here), no terminal needed", m.Shown, m.Name)
+			} else if pin, ok := FFmpegPin(p.GOOS, p.GOARCH); ok && err != nil {
 				install = "ffmpeg"
 				t.fix = fmt.Sprintf("Install gets ffmpeg %s from %s (about %d MB, %s), checked before it runs; or %s", pin.Version, pin.Source, (pin.Size()+(1<<19))>>20, pin.Licence, lowerFirst(t.fix))
 			}

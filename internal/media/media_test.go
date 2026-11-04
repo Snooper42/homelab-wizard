@@ -399,6 +399,26 @@ func TestPreflight(t *testing.T) {
 	}
 	delete(files, filepath.Join(BinDir("/Users/me"), "ffmpeg"))
 	delete(files, filepath.Join(BinDir("/Users/me"), "ffprobe"))
+	// Homebrew here: Install runs it, ahead of the pinned build (Homebrew keeps it updated).
+	files["/opt/homebrew/bin/brew"] = true
+	if c := ffOf(mac); c.Install != "ffmpeg" || c.Fix != "Install runs brew install ffmpeg for you (Homebrew is installed here), no terminal needed" {
+		t.Errorf("with Homebrew: %+v", c)
+	}
+	if m, ok := FFmpegManager(mac); !ok || strings.Join(m.Command, " ") != "/opt/homebrew/bin/brew install ffmpeg" {
+		t.Errorf("Homebrew's command: %+v", m)
+	}
+	delete(files, "/opt/homebrew/bin/brew")
+	FFmpegPins = saved
+	if c := ffOf(mac); c.Install != "" {
+		t.Errorf("no Homebrew and no pin: no Install: %+v", c)
+	}
+	winMac := mac
+	winMac.GOOS = "windows"
+	have["winget"] = true
+	if m, ok := FFmpegManager(winMac); !ok || m.Name != "winget" || !strings.Contains(strings.Join(m.Command, " "), "install --id Gyan.FFmpeg --exact --silent") {
+		t.Errorf("winget: %+v", m)
+	}
+	delete(have, "winget")
 	have["ffmpeg"] = true
 	files["/opt/homebrew/bin/python3"] = true
 	if py, v := p.Python(context.Background()); len(py) != 1 || py[0] != "/opt/homebrew/bin/python3" || v != "3.12" {

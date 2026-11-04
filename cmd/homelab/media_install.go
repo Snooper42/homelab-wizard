@@ -1,17 +1,21 @@
 package main
 
-// homelab media install ffmpeg: Tidy Up's Install button. Without --yes (or
-// --apply) it says what it would fetch, from whom, and how big; with it, it
-// fetches the pinned build into ~/.homelab-media/bin (internal/media/fetch.go).
+// homelab media install ffmpeg: Tidy Up's Install button. With Homebrew or
+// winget here it runs that (which keeps ffmpeg updated); otherwise it fetches
+// the pinned build into ~/.homelab-media/bin (internal/media/fetch.go).
+// Without --yes (or --apply) it only says which, and what.
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/media"
@@ -55,6 +59,14 @@ func (h *homelab) mediaInstall(ctx context.Context, args []string) error {
 		line, _ := json.Marshal(ev)
 		fmt.Fprintln(h.ui.Out, string(line))
 	}
+	// A package manager already here first: no download of ours, and it keeps ffmpeg updated.
+	if m, ok := media.FFmpegManager(mediaProbe()); ok {
+		if !f.yes && !f.apply {
+			h.ui.Info("Install would run %s (%s is installed here).", m.Shown, m.Name)
+			return errPreview
+		}
+		return h.mediaInstallWith(ctx, m, say)
+	}
 	pin, ok := mediaPin()
 	if !ok {
 		return fmt.Errorf("no ffmpeg build is pinned for %s/%s: install it yourself (%s)", runtime.GOOS, runtime.GOARCH, "homelab media preflight says how")
@@ -83,6 +95,41 @@ func (h *homelab) mediaInstall(ctx context.Context, args []string) error {
 	}
 	say("step", "Checked, and it runs", "n", 2, "total", 2)
 	say("ok", fmt.Sprintf("ffmpeg %s is ready: Tidy Up uses it from now on", pin.Version))
+	return nil
+}
+
+// mediaInstallWith runs the package manager's install, each line it writes
+// said as it comes, then checks ffmpeg is found where Tidy Up looks.
+func (h *homelab) mediaInstallWith(ctx context.Context, m media.Manager, say func(typ, text string, kv ...any)) error {
+	say("step", "Installing ffmpeg with "+m.Name+": "+m.Shown, "n", 1, "total", 2)
+	c := procattr.Hide(exec.CommandContext(ctx, m.Command[0], m.Command[1:]...))
+	c.Env = append(os.Environ(), "NONINTERACTIVE=1", "HOMEBREW_NO_ENV_HINTS=1")
+	out, err := c.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	c.Stderr = c.Stdout
+	if err := c.Start(); err != nil {
+		return err
+	}
+	var last string
+	sc := bufio.NewScanner(out)
+	for sc.Scan() {
+		if line := strings.TrimSpace(sc.Text()); line != "" {
+			last = line
+			say("info", line)
+		}
+	}
+	if err := c.Wait(); err != nil {
+		return fmt.Errorf("%s stopped (%v): %s", m.Shown, err, last)
+	}
+	say("step", "Checking Tidy Up finds it", "n", 2, "total", 2)
+	for _, ch := range media.Preflight(ctx, mediaProbe(), h.envMap(), homeDir()) {
+		if ch.ID == "ffmpeg" && !ch.OK {
+			return fmt.Errorf("%s finished, but ffmpeg isn't where Tidy Up looks: open Tidy Up again", m.Shown)
+		}
+	}
+	say("ok", "ffmpeg is ready: Tidy Up uses it from now on")
 	return nil
 }
 
