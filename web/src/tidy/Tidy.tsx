@@ -336,10 +336,13 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     // None counted yet: on Overview, music's (or the first library there's to count); on a tab, its own.
     const ask = only || GENRED.find((x) => lib(d, x)?.found);
     if (!ask || !genreAsk[ask] || !lib(d, ask)?.found) return null;
+    // Counted, and nothing had a genre: what was counted and why, not the first ask again.
+    const tried = last(lib(d, ask), 'genre-counts')?.result;
+    const none = tried && n(tried.items) > 0 ? `Counted ${count(n(tried.items), genreUnit[ask].replace(/s$/, ''), genreUnit[ask])}: none has a genre yet.${tried.why ? ' ' + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + '.' : ''}` : '';
     return (
       <Widget title="Genres" kind="fx-spend tidygenres">
-        <Empty>{genreAsk[ask]}</Empty>
-        <div class="actions"><Go label="Count genres" job={job} onClick={() => act.run(ask, 'genre-counts')} /></div>
+        <Empty>{none || genreAsk[ask]}</Empty>
+        <div class="actions"><Go label={none ? 'Count again' : 'Count genres'} job={job} onClick={() => act.run(ask, 'genre-counts')} /></div>
       </Widget>
     );
   }

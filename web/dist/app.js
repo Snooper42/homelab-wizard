@@ -12068,9 +12068,11 @@
     if (!g2) {
       const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);
       if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;
+      const tried = last(lib(d3, ask), "genre-counts")?.result;
+      const none2 = tried && n2(tried.items) > 0 ? `Counted ${count(n2(tried.items), genreUnit[ask].replace(/s$/, ""), genreUnit[ask])}: none has a genre yet.${tried.why ? " " + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + "." : ""}` : "";
       return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", children: [
-        /* @__PURE__ */ u3(Empty, { children: genreAsk[ask] }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Count genres", job: job2, onClick: () => act.run(ask, "genre-counts") }) })
+        /* @__PURE__ */ u3(Empty, { children: none2 || genreAsk[ask] }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: none2 ? "Count again" : "Count genres", job: job2, onClick: () => act.run(ask, "genre-counts") }) })
       ] });
     }
     return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", actions: picker || void 0, children: [

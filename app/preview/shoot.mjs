@@ -479,6 +479,19 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.opened === 'https://calibre-ebook.com/download', null, { timeout: 3000 })
       .catch(async () => { throw new Error('opened ' + (await page.evaluate(() => window.__MOCK.opened))); });
   } },
+  // A genre count that found nothing says what it counted and why (no Jellyfin key, no .nfo files), with Count again,
+  // not the first ask as if nothing ran.
+  { name: 'Tidy Up: a genre count with nothing to read says why', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, 'genre-counts': tidyRun('genre-counts', 1, { items: 4, genres: {}, unplaced: 4, source: 'nowhere yet',
+      why: "Jellyfin's API key isn't set: make one in Jellyfin › Dashboard › API Keys, and put it in Settings › Tidy Up (Jellyfin API key); and none has an .nfo file beside it" }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    const box = '#tidy .tidygenres';
+    await page.waitForSelector(`${box} button:text-is("Count again")`, { timeout: 5000 });
+    const text = await page.textContent(box);
+    if (!text.includes('Counted 4 films: none has a genre yet.') || !text.includes('Jellyfin › Dashboard › API Keys')) throw new Error('the box says ' + text);
+    await page.click(`${box} button:text-is("Count again")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).some((r) => r[0] === 'movies' && r[1] === 'genre-counts'), null, { timeout: 5000 });
+  } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
     { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },

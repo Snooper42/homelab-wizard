@@ -467,6 +467,25 @@ class VideoGenres(Base):
             movies_organizer.Movies().genre_counts()
         self.assertEqual(self.results()[-1]["genres"], {"Crime": 1})
 
+    def test_nothing_to_read_a_genre_from_says_why(self):
+        m = self.lib["movies"]
+        self.touch(m / "Heat (1995)" / "Heat (1995).mkv")
+        self.touch(m / "Up (2009)" / "Up (2009).mkv")
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": ""}):
+            movies_organizer.Movies().genre_counts()
+        res = self.results()[-1]
+        self.assertEqual((res["genres"], res["items"]), ({}, 2))
+        self.assertIn("Jellyfin's API key isn't set", res["why"])
+        self.assertIn("Dashboard › API Keys", res["why"])
+        out = self.out.getvalue()
+        self.assertIn("No genres for your films", out)
+        self.assertNotIn("from nowhere yet", out, "not a cheerful 0 in 0 genres")
+        # With the key, Jellyfin answering with nothing for them: said so.
+        self.http_mock.return_value = {"Items": []}
+        with mock.patch.dict(os.environ, {"JELLYFIN_API_KEY": "k"}):
+            movies_organizer.Movies().genre_counts()
+        self.assertIn("Jellyfin has no genres for them", self.results()[-1]["why"])
+
     def test_shows_from_tvshow_nfo(self):
         t = self.lib["tv"]
         self.touch(t / "The Office (US)" / "Season 01" / "The Office (US) - S01E01.mkv")
