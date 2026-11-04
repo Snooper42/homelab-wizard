@@ -334,19 +334,83 @@ def song_info(path):
             "duration": int(round(getattr(f.info, "length", 0) or 0))}
 
 
+def _lrclib_get(path, q):
+    """One question to LRCLIB: its answer, None when it has nothing (404), and once more after a pause
+    when it asks to slow down (429)."""
+    url = LRCLIB + path + "?" + urllib.parse.urlencode(q)
+    for attempt in (0, 1):
+        try:
+            return mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=20)
+        except RuntimeError as e:
+            if "answered 404" in str(e):
+                return None
+            if "answered 429" in str(e) and attempt == 0:
+                time.sleep(5)
+                continue
+            raise
+
+
+def _plain_title(s):
+    """A title as LRCLIB and a tag can both write it: lower case, accents off, without (Remastered 2011),
+    [Live], - 2009 Remaster, or feat. someone."""
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+    s = re.sub(r"\s*[\(\[][^\)\]]*[\)\]]", "", s)
+    s = re.sub(r"\s+-\s+.*(remaster|live|version|edit|mono|stereo|mix).*$", "", s)
+    s = re.sub(r"\s+(feat|ft)\.?\s.*$", "", s)
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
 def lrclib(info):
-    q = {"track_name": info["title"], "artist_name": info["artist"]}
-    if info["album"]:
-        q["album_name"] = info["album"]
-    if info["duration"]:
-        q["duration"] = info["duration"]
+    """LRCLIB's lyrics for a song: first its exact record (title, artist, album, and length, all four as
+    /api/get asks), then, when that has nothing or the tags lack the album or length, a search by title
+    and artist, taking the closest record: the same title, the artist named, and a length within 3
+    seconds when the song's is known, time-synced ones first."""
+    if info["title"] and info["artist"] and info["album"] and info["duration"]:
+        found = _lrclib_get("/api/get", {"track_name": info["title"], "artist_name": info["artist"],
+                                         "album_name": info["album"], "duration": info["duration"]})
+        if found:
+            return found
+    hits = _lrclib_get("/api/search", {"track_name": info["title"], "artist_name": info["artist"]}) or []
+    want, artist = _plain_title(info["title"]), _plain_title(info["artist"])
+    best = None
+    for h in hits if isinstance(hits, list) else []:
+        if _plain_title(h.get("trackName")) != want:
+            continue
+        theirs = _plain_title(h.get("artistName"))
+        if artist and artist not in theirs and theirs not in artist:
+            continue
+        if info["duration"] and h.get("duration") and abs(float(h["duration"]) - info["duration"]) > 3:
+            continue
+        rank = (bool(h.get("syncedLyrics")), bool(h.get("plainLyrics") or h.get("instrumental")),
+                -abs(float(h.get("duration") or 0) - (info["duration"] or 0)))
+        if best is None or rank > best[0]:
+            best = (rank, h)
+    return best[1] if best else None
+
+
+# Songs LRCLIB had nothing for, by path, with when it was asked: not asked again for a month (its
+# library grows), so a second run is quick, and Overview counts only the songs still worth asking about.
+NOT_FOUND_DAYS = 30
+
+
+def _not_found_path():
+    return mo.state_dir() / "lyrics-not-found.json"
+
+
+def _load_not_found():
     try:
-        return mc.http_json("GET", LRCLIB + "/api/get?" + urllib.parse.urlencode(q), headers={"User-Agent": USER_AGENT},
-                            timeout=20)
-    except RuntimeError as e:
-        if "404" in str(e):
-            return None
-        raise
+        data = json.loads(_not_found_path().read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_not_found(seen):
+    try:
+        _not_found_path().write_text(json.dumps(seen, indent=0, sort_keys=True) + "\n", encoding="utf-8")
+    except OSError as e:
+        ui.to_log("NOTE   couldn't keep the songs LRCLIB has no lyrics for: %s" % e)
 
 
 def lyrics(args, files=None):
@@ -358,14 +422,19 @@ def lyrics(args, files=None):
     check = getattr(args, "check", False)
     files = files if files is not None else [p for p in mc.walk_files(lib, mo.AUDIO_EXT)]
     ui.title("Lyrics", "coverage" if check else "time-synced from LRCLIB")
-    counts = {"synced": 0, "plain": 0, "none": 0, "instrumental": 0}
-    added = upgraded = failed = 0
+    # none: songs still worth asking LRCLIB about. not_found: asked, and it had nothing (asked again after
+    # a month). plain: plain lyrics LRCLIB has no time-synced ones for. untagged: no title to ask with.
+    counts = {"synced": 0, "plain": 0, "none": 0, "instrumental": 0, "not_found": 0, "untagged": 0}
+    added = upgraded = failed = already = 0
+    seen = _load_not_found()
+    now = time.time()
+    fresh = lambda p: now - float(seen.get(str(p), 0)) < NOT_FOUND_DAYS * 86400
     with ui.progress(len(files), "Checking" if check else "Lyrics") as bar:
         for p in files:
             bar.update(note=p.name)
             info = song_info(p)
             if not info or not info["title"]:
-                counts["none"] += 1
+                counts["untagged"] += 1
                 continue
             if skip_instr and INSTRUMENTAL_RE.search(info["title"]):
                 counts["instrumental"] += 1
@@ -373,6 +442,10 @@ def lyrics(args, files=None):
             text, synced = read_lyrics(p)
             if synced:
                 counts["synced"] += 1
+                already += 1
+                continue
+            if fresh(p):
+                counts["plain" if text.strip() else "not_found"] += 1
                 continue
             if check:
                 counts["plain" if text.strip() else "none"] += 1
@@ -391,7 +464,8 @@ def lyrics(args, files=None):
             new = (found or {}).get("syncedLyrics") if prefer_synced else None
             new = new or (None if text.strip() else (found or {}).get("plainLyrics"))
             if not new:
-                counts["plain" if text.strip() else "none"] += 1
+                seen[str(p)] = now
+                counts["plain" if text.strip() else "not_found"] += 1
                 continue
             try:
                 write_lyrics(p, new, where)
@@ -399,6 +473,7 @@ def lyrics(args, files=None):
                 ui.to_log("NOTE   couldn't write lyrics to %s: %s" % (p, e))
                 failed += 1
                 continue
+            seen.pop(str(p), None)
             is_synced = bool(SYNCED_RE.search(new))
             counts["synced" if is_synced else "plain"] += 1
             if text.strip():
@@ -406,7 +481,19 @@ def lyrics(args, files=None):
             else:
                 added += 1
     if not check:
+        _save_not_found(seen)
         ui.ok("Lyrics added to %s songs; %s plain ones replaced by time-synced" % (mc.fmt_n(added), mc.fmt_n(upgraded)))
+        # Every other song, said: why it has none, or why it kept what it had.
+        for n, words in ((already, "already had time-synced lyrics"),
+                         (counts["plain"], "keep plain lyrics: LRCLIB has no time-synced ones for them"),
+                         (counts["instrumental"], "are instrumentals"),
+                         (counts["not_found"], "aren't on LRCLIB yet: asked again in a month"),
+                         (counts["untagged"], "have no title tag to look them up by")):
+            if n > 0:
+                text = "%s %s" % (mc.fmt_n(n), words)
+                ui.line("  " + text, "NOTE   " + text, kind="note", text=text)
+        if failed:
+            ui.warn("LRCLIB didn't answer for %s songs: run it again later" % mc.fmt_n(failed))
     if not check and (added or upgraded):
         mc.Servers().ping(lib, "music")
     ui.result(action="lyrics", ok=True, check=check, songs=len(files), added=added, upgraded=upgraded,
