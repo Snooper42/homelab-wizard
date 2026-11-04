@@ -29,7 +29,11 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 
 ## Settings
 
-`homelab media` writes `data/homelab_media.json` from `.env` before every run (the **Tidy Up** section of Settings): the libraries under `MEDIA_ROOT`, the folders to watch, the languages to keep, Tdarr's codec, where lyrics go, and the address of each media server that is installed. Keys and passwords (`JELLYFIN_API_KEY`, `NAVIDROME_ADMIN_PASSWORD`, `PLEX_TOKEN`, `AUDIOBOOKSHELF_API_KEY`, `TDARR_API_KEY`) reach the engines in their environment, never on a command line or in that file. Reports go to `reports/media` in the homelab folder, not Downloads, which the inbox watches.
+`homelab media` writes `data/homelab_media.json` from `.env` before every run (the **Tidy Up** section of Settings): the libraries under `MEDIA_ROOT`, the folders to watch, the languages to keep, Tdarr's codec, where lyrics go, and the address of each media server that is installed. Keys and passwords (`JELLYFIN_API_KEY`, `NAVIDROME_ADMIN_PASSWORD`, `PLEX_TOKEN`, `AUDIOBOOKSHELF_API_KEY`, `TDARR_API_KEY`, `TDARR_USER`, `TDARR_PASSWORD`) reach the engines in their environment, never on a command line or in that file.
+
+Tdarr asks for a sign-in (its accounts are on since 2.4x). Before a job that talks to it (**Set up Tdarr**, a films' or TV's **Shrink** or **Collect**), a Tdarr with no account yet gets one made for Tidy Up through its own sign-up: user `homelab`, a generated password, both kept in `.env` (`TDARR_USER`, `TDARR_PASSWORD`; Settings › Tidy Up), which also sign you in to Tdarr's own page. If you made an account in Tdarr first, put its user name and password there; the engines sign in with them and send its token (`TDARR_API_KEY` still works where Tdarr gives one). Without either, the job says so, plainly.
+
+A new Tdarr's node has no transcode worker, and a node without one takes nothing from its queue: **Set up Tdarr**, a films' or TV's **Shrink**, and **Collect** give each node with none one worker (`/api/v2/alter-worker-limit`; on the graphics card when there is one, else the processor). More can be given on Tdarr's own page; a node that has any is left as it is. Reports go to `reports/media` in the homelab folder, not Downloads, which the inbox watches.
 
 ## How it keeps out of the way
 

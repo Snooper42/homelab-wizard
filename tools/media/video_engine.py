@@ -55,7 +55,7 @@ class VideoEngine:
         url = mc.cfg("tdarr", "url")
         if not url:
             return None
-        return mc.Tdarr(url, mc.secret("TDARR_API_KEY"))
+        return mc.tdarr(url)
 
     def tdarr_library(self):
         return (mc.cfg("tdarr", "libraries") or {}).get(self.kind) or ""
@@ -93,7 +93,8 @@ class VideoEngine:
         self.load()
         ui.title("Genres", "how many %s are in each" % self.noun[1])
         items = self.items()
-        jf = self.jellyfin_genres() or {}
+        from_jf = self.jellyfin_genres()  # None: Jellyfin can't be asked (or didn't answer)
+        jf = from_jf or {}
         counts, unplaced, used = {}, 0, set()
         conf = mc.Servers().conf.get("jellyfin") or {}
         with ui.progress(len(items), "Reading genres") as bar:
@@ -112,11 +113,32 @@ class VideoEngine:
                     unplaced += 1
         shown = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
         where = " and ".join(w for w in ("Jellyfin", "the .nfo files") if w in used) or "nowhere yet"
-        ui.ok("%s %s in %d genres, from %s" % (mc.fmt_n(len(items) - unplaced), self.noun[1], len(shown), where))
-        if unplaced:
+        why = ""
+        if not items:
+            ui.warn("No %s in the library yet to count" % self.noun[1])
+        elif not shown:
+            # Nothing to read a genre from: said, with what would give them one.
+            jf_why = (self.jellyfin_why() or "Jellyfin didn't answer") if from_jf is None else "Jellyfin has no genres for them"
+            why = "%s; and none has an .nfo file beside it" % jf_why
+            ui.warn("No genres for your %s: %s" % (self.noun[1], why))
+        else:
+            ui.ok("%s %s in %d genres, from %s" % (mc.fmt_n(len(items) - unplaced), self.noun[1], len(shown), where))
+        if unplaced and shown:
             ui.say("%s %s have no genre yet" % (mc.fmt_n(unplaced), self.noun[1]))
-        ui.result(action="genre-counts", ok=True, items=len(items), genres=shown, unplaced=unplaced, source=where)
+        ui.result(action="genre-counts", ok=True, items=len(items), genres=shown, unplaced=unplaced, source=where, why=why)
         return True
+
+    def jellyfin_why(self):
+        """Why Tidy Up can't ask Jellyfin about this library, in words with the fix; "" when it can."""
+        c = mc.Servers().conf.get("jellyfin") or {}
+        if not c.get("url"):
+            return "Jellyfin isn't installed here (it reads genres from the internet for every film and show)"
+        if not mc.secret(c.get("key_env") or "JELLYFIN_API_KEY"):
+            return ("Jellyfin's API key isn't set: make one in Jellyfin › Dashboard › API Keys, "
+                    "and put it in Settings › Jellyfin (Jellyfin API key)")
+        if self.kind not in (c.get("kinds") or []):
+            return "Jellyfin has no library on this folder"
+        return ""
 
     def jellyfin(self):
         """(url, headers) for Jellyfin when it serves this library and has its key, else None."""
@@ -348,6 +370,9 @@ class VideoEngine:
             mc.die("Tdarr isn't set up for %s yet." % self.kind, "Run: homelab media tdarr setup --apply")
         if not td.ok():
             mc.die("Tdarr isn't answering at %s." % td.url, "Start it from Status, then run this again.")
+        # A node with no worker would leave everything in Tdarr's queue: given one first.
+        for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
+            ui.ok("Tdarr's node %s had no worker: it has one now (raise it on Tdarr's page)" % name)
         todo = [k for k, r in self.state["files"].items() if r.get("status") == "bloated" and Path(k).exists()]
         if not todo:
             ui.ok("Nothing waiting: every video is already lean, or with Tdarr.")
@@ -380,6 +405,9 @@ class VideoEngine:
         td = self.tdarr()
         files = self.state["files"]
         queued = [k for k, r in files.items() if r.get("status") == "queued"]
+        if td and queued and not inner:
+            for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
+                ui.ok("Tdarr's node %s had no worker, so nothing was being shrunk: it has one now" % name)
         replaced, failed, waiting, freed = 0, 0, 0, 0
         servers = mc.Servers()
         for k in queued:

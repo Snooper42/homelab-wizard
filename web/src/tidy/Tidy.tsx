@@ -43,7 +43,8 @@ export interface TidyActions {
   stop: () => void;
   ask: (c: TidyConfirm) => void;
   reveal: (path: string) => void;
-  settings: () => void;
+  /** Settings; with keys, opened at those settings (Jellyfin's API key). */
+  settings: (keys?: string[]) => void;
   review: () => void;
   cover: (id: number, which: 'current' | 'new') => Promise<string>;
   /** Fetches ffmpeg (the check's Install); after: the job to run again once it's in. */
@@ -337,10 +338,16 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     // None counted yet: on Overview, music's (or the first library there's to count); on a tab, its own.
     const ask = only || GENRED.find((x) => lib(d, x)?.found);
     if (!ask || !genreAsk[ask] || !lib(d, ask)?.found) return null;
+    // Counted, and nothing had a genre: what was counted and why, not the first ask again.
+    const tried = last(lib(d, ask), 'genre-counts')?.result;
+    const none = tried && n(tried.items) > 0 ? `Counted ${count(n(tried.items), genreUnit[ask].replace(/s$/, ''), genreUnit[ask])}: none has a genre yet.${tried.why ? ' ' + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + '.' : ''}` : '';
     return (
       <Widget title="Genres" kind="fx-spend tidygenres">
-        <Empty>{genreAsk[ask]}</Empty>
-        <div class="actions"><Go label="Count genres" job={job} onClick={() => act.run(ask, 'genre-counts')} /></div>
+        <Empty>{none || genreAsk[ask]}</Empty>
+        <div class="actions">
+          {none && /API key isn't set/.test(String(tried.why)) && <button class="small primary" onClick={() => act.settings(['JELLYFIN_API_KEY'])}>Add Jellyfin’s API key</button>}
+          <Go label={none ? 'Count again' : 'Count genres'} job={job} onClick={() => act.run(ask, 'genre-counts')} />
+        </div>
       </Widget>
     );
   }
@@ -538,7 +545,7 @@ export function TidyScreen(p: TidyProps) {
     <>
       <div class="row header">
         <div><h1>Tidy Up</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
-        <div class="toolbar"><button class="btn" onClick={act.settings}>Settings…</button></div>
+        <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
       </div>
       <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Overview'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
       {d?.lock && !job && <Card kind="notice" role="status"><strong>{names[d.lock.kind] || d.lock.kind}: {d.lock.action} is running</strong><span class="muted">Since {ago(d.lock.start)}. It carries on with this window closed.</span></Card>}

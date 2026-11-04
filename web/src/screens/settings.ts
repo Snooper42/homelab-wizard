@@ -311,6 +311,8 @@ const settingLabels = {
   AUTO_ROLLBACK: 'Undo an update that breaks an app', AUTO_HEAL: 'Restart an app that stops answering', UPDATE_CHANNEL: 'Homelab update channel',
   WATCHTOWER_SCHEDULE: 'When apps update', SPEEDTEST_SCHEDULE: 'When the speed test runs', OLLAMA_MODEL: 'Model that explains logs',
   UPDATES_HELD: 'Apps with updates held',
+  // Whichever Jellyfin runs, the Mac's own or the container: not named after the container's catalog entry.
+  JELLYFIN_API_KEY: 'Jellyfin API key', JELLYFIN_PORT: 'Jellyfin port',
   NTFY_PUBLISH_AUTH: 'ntfy publish token, as a link', NTFY_READ_TOKEN: 'ntfy read-only token', MONEYMATTER_FRONTEND_IMAGE: 'MoneyMatter frontend image',
 };
 const upper = new Set(['API', 'URL', 'DNS', 'IP', 'HTTP', 'HTTPS', 'ID', 'PDF', 'AI', 'IGDB', 'SSL', 'UI', 'OCR', 'JWT', 'SSO', 'VPN']);

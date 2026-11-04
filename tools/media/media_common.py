@@ -33,7 +33,21 @@ import music_organizer as mo  # noqa: E402  (vendored; only its screen, settings
 
 ui = mo.ui
 die = mo.die
-run_main = mo.run_main
+
+
+class Expected(RuntimeError):
+    """A stop that isn't a fault (Tdarr wants a sign-in): said as it is, without "Something unexpected
+    went wrong" or a traceback."""
+
+
+def run_main(main):
+    """The organizers' run_main, with an Expected stop said plainly."""
+    def guarded():
+        try:
+            main()
+        except Expected as e:
+            die(str(e))
+    mo.run_main(guarded)
 fmt_n = mo.fmt_n
 fmt_time = mo.fmt_time
 pretty_path = mo.pretty_path
@@ -626,6 +640,11 @@ def secret(name):
 
 
 # ============================================================== Tdarr
+def tdarr(url):
+    """Tdarr at url, with the homelab's key or login for it (from the environment, never a command line)."""
+    return Tdarr(url, secret("TDARR_API_KEY"), secret("TDARR_USER"), secret("TDARR_PASSWORD"))
+
+
 class Tdarr:
     """Tdarr's server API. The engines hand it files and read back its verdicts; Tdarr's own queue
     and its nodes' worker limits decide how many transcode at once."""
@@ -633,28 +652,87 @@ class Tdarr:
     FAILED = {"Transcode error", "Error"}
     SKIPPED = {"Not required"}
 
-    def __init__(self, url, api_key=""):
+    # Tdarr asks for a sign-in (its accounts, on since 2.4x): said plainly, with where the login goes.
+    SIGN_IN = ("Tdarr asks for a sign-in: put your Tdarr user name and password in Settings › Tidy Up "
+               "(TDARR_USER and TDARR_PASSWORD), then try again")
+
+    def __init__(self, url, api_key="", user="", password=""):
         self.url = (url or "").rstrip("/")
         self.headers = {"x-api-key": api_key} if api_key else {}
+        self.user, self.password = user, password
+
+    def _sign_in(self):
+        """Signs in with the homelab's Tdarr login; its token goes with every call after."""
+        try:
+            got = http_json("POST", self.url + "/api/v2/public/auth/login",
+                            {"username": self.user, "password": self.password}, timeout=15)
+        except RuntimeError as e:
+            if "answered 4" in str(e):
+                raise Expected("Tdarr refused TDARR_USER and TDARR_PASSWORD: check them in Settings › Tidy Up")
+            raise
+        token = got.get("token") if isinstance(got, dict) else None
+        if not token:
+            raise Expected("Tdarr's sign-in gave no token: check TDARR_USER and TDARR_PASSWORD in Settings › Tidy Up")
+        self.headers["Authorization"] = "Bearer " + token
+
+    def _call(self, method, path, body=None, timeout=60):
+        """One call to Tdarr, signed in first when it asks and the homelab has a login for it."""
+        for attempt in (0, 1):
+            try:
+                return http_json(method, self.url + path, body, self.headers, timeout=timeout)
+            except RuntimeError as e:
+                if str(e).startswith("can't reach"):
+                    # Tdarr isn't running (stopped, paused on battery, or out of memory): said plainly.
+                    raise Expected("Tdarr isn't answering at %s: start it from Status (Tdarr), then try again. "
+                                   "What's with it stays in its queue" % self.url)
+                if "answered 401" not in str(e):
+                    raise
+                if attempt == 0 and self.user and self.password and "Authorization" not in self.headers:
+                    self._sign_in()
+                    continue
+                raise Expected(self.SIGN_IN)
 
     def _post(self, path, data, timeout=60):
-        return http_json("POST", self.url + path, {"data": data}, self.headers, timeout=timeout)
+        return self._call("POST", path, {"data": data}, timeout=timeout)
 
     def ok(self):
+        """Whether Tdarr answers at all: one asking for a sign-in is there."""
         try:
             http_json("GET", self.url + "/api/v2/status", headers=self.headers, timeout=10)
             return True
-        except RuntimeError:
-            return False
+        except RuntimeError as e:
+            return "answered 401" in str(e) or "answered 403" in str(e)
 
     def libraries(self):
         return self._post("/api/v2/cruddb", {"collection": "LibrarySettingsJSONDB", "mode": "getAll"}) or []
 
     def nodes(self):
         try:
-            return http_json("GET", self.url + "/api/v2/get-nodes", headers=self.headers, timeout=15) or {}
+            return self._call("GET", "/api/v2/get-nodes", timeout=15) or {}
+        except Expected:
+            raise
         except RuntimeError:
             return {}
+
+    def give_workers(self, gpu, apply=True):
+        """A node with no transcode worker does nothing, and a new Tdarr's node starts with none: each
+        such node gets one (on the graphics card when there is one, else the processor), which
+        Tdarr's own page can raise. The names of the nodes that had none."""
+        kind = "transcodegpu" if gpu else "transcodecpu"
+        idle = []
+        nodes = self.nodes()
+        for nid, node in (nodes.items() if isinstance(nodes, dict) else ()):
+            if not isinstance(node, dict):
+                continue
+            limits = node.get("workerLimits") or {}
+            if not isinstance(limits, dict):
+                continue
+            if int(limits.get("transcodecpu") or 0) + int(limits.get("transcodegpu") or 0) > 0:
+                continue
+            idle.append(node.get("nodeName") or nid)
+            if apply:
+                self._post("/api/v2/alter-worker-limit", {"nodeID": nid, "process": "increase", "workerType": kind})
+        return idle
 
     def queue(self, library_id, paths):
         """Add files to a library's queue (Tdarr runs its plugin stack on each, in its own order)."""
@@ -744,7 +822,7 @@ class Servers:
     def _jellyfin(self, c, path, kind):
         key = secret(c.get("key_env") or "JELLYFIN_API_KEY")
         if not key:
-            raise RuntimeError("no API key (JELLYFIN_API_KEY)")
+            raise RuntimeError("no API key: make one in Jellyfin › Dashboard › API Keys, and put it in Settings › Jellyfin")
         p = self.server_path(path, c.get("path_map"))
         http_json("POST", c["url"].rstrip("/") + "/Library/Media/Updated",
                   {"Updates": [{"Path": p, "UpdateType": "Modified"}]},
@@ -773,7 +851,7 @@ class Servers:
         # whose contents changed, which is the path we just touched.
         user, pw = secret("NAVIDROME_ADMIN_USER"), secret("NAVIDROME_ADMIN_PASSWORD")
         if not (user and pw):
-            raise RuntimeError("no admin login (NAVIDROME_ADMIN_USER)")
+            raise RuntimeError("no admin login: put a Navidrome administrator's user name and password in Settings › Navidrome")
         q = navidrome_auth(user, pw)
         r = http_json("GET", c["url"].rstrip("/") + "/rest/startScan?" + q)
         st = ((r or {}).get("subsonic-response") or {}).get("status") if isinstance(r, dict) else None
