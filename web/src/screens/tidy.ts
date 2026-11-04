@@ -3,6 +3,7 @@
 import { mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
 import { store } from '../store';
 import { navigate } from '../app';
+import { showSettings } from './settings';
 import { $, errorText, go, showError } from '../core';
 
 export const tidyData = store(() => go().TidyUp());
@@ -36,7 +37,7 @@ function draw() {
       run, stop: () => { go().TidyStop(); },
       ask: (c) => { confirm = c; drawSheet(); $('tidySheet').hidden = false; },
       reveal: (path) => { Promise.resolve(go().TidyReveal(path)).catch(showError); },
-      settings: () => navigate('settings'),
+      settings: (keys) => (keys?.length ? showSettings(keys) : navigate('settings')),
       review: () => { tab = 'books'; draw(); if (!review) loadReview(); },
       cover: (id, which) => go().TidyCover(id, which),
       // Fetches ffmpeg; once it's in, the job that wanted it runs again.

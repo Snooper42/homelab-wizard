@@ -43,7 +43,8 @@ export interface TidyActions {
   stop: () => void;
   ask: (c: TidyConfirm) => void;
   reveal: (path: string) => void;
-  settings: () => void;
+  /** Settings; with keys, opened at those settings (Jellyfin's API key). */
+  settings: (keys?: string[]) => void;
   review: () => void;
   cover: (id: number, which: 'current' | 'new') => Promise<string>;
   /** Fetches ffmpeg (the check's Install); after: the job to run again once it's in. */
@@ -342,7 +343,10 @@ function GenresWidget({ d, job, act, only }: { d: app.TidyUp; job: TidyJob | nul
     return (
       <Widget title="Genres" kind="fx-spend tidygenres">
         <Empty>{none || genreAsk[ask]}</Empty>
-        <div class="actions"><Go label={none ? 'Count again' : 'Count genres'} job={job} onClick={() => act.run(ask, 'genre-counts')} /></div>
+        <div class="actions">
+          {none && /API key isn't set/.test(String(tried.why)) && <button class="small primary" onClick={() => act.settings(['JELLYFIN_API_KEY'])}>Add Jellyfin’s API key</button>}
+          <Go label={none ? 'Count again' : 'Count genres'} job={job} onClick={() => act.run(ask, 'genre-counts')} />
+        </div>
       </Widget>
     );
   }
@@ -540,7 +544,7 @@ export function TidyScreen(p: TidyProps) {
     <>
       <div class="row header">
         <div><h1>Tidy Up</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
-        <div class="toolbar"><button class="btn" onClick={act.settings}>Settings…</button></div>
+        <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
       </div>
       <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Overview'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
       {d?.lock && !job && <Card kind="notice" role="status"><strong>{names[d.lock.kind] || d.lock.kind}: {d.lock.action} is running</strong><span class="muted">Since {ago(d.lock.start)}. It carries on with this window closed.</span></Card>}

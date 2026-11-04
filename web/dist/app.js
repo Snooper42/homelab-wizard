@@ -12072,7 +12072,10 @@
       const none2 = tried && n2(tried.items) > 0 ? `Counted ${count(n2(tried.items), genreUnit[ask].replace(/s$/, ""), genreUnit[ask])}: none has a genre yet.${tried.why ? " " + String(tried.why).charAt(0).toUpperCase() + String(tried.why).slice(1) + "." : ""}` : "";
       return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", children: [
         /* @__PURE__ */ u3(Empty, { children: none2 || genreAsk[ask] }),
-        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: none2 ? "Count again" : "Count genres", job: job2, onClick: () => act.run(ask, "genre-counts") }) })
+        /* @__PURE__ */ u3("div", { class: "actions", children: [
+          none2 && /API key isn't set/.test(String(tried.why)) && /* @__PURE__ */ u3("button", { class: "small primary", onClick: () => act.settings(["JELLYFIN_API_KEY"]), children: "Add Jellyfin’s API key" }),
+          /* @__PURE__ */ u3(Go, { label: none2 ? "Count again" : "Count genres", job: job2, onClick: () => act.run(ask, "genre-counts") })
+        ] })
       ] });
     }
     return /* @__PURE__ */ u3(Widget, { title: "Genres", kind: "fx-spend tidygenres", actions: picker || void 0, children: [
@@ -12253,7 +12256,7 @@
           /* @__PURE__ */ u3("h1", { children: "Tidy Up" }),
           /* @__PURE__ */ u3("p", { class: "lead", children: say || "Your music, films, TV, books, and audiobooks: sorted, tagged, and lean" })
         ] }),
-        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: act.settings, children: "Settings…" }) })
+        /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names2[k3]])] }),
       d3?.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
@@ -12383,7 +12386,7 @@
         reveal: (path) => {
           Promise.resolve(go().TidyReveal(path)).catch(showError);
         },
-        settings: () => navigate("settings"),
+        settings: (keys2) => keys2?.length ? showSettings(keys2) : navigate("settings"),
         review: () => {
           tab2 = "books";
           draw4();

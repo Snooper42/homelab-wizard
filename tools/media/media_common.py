@@ -744,7 +744,7 @@ class Servers:
     def _jellyfin(self, c, path, kind):
         key = secret(c.get("key_env") or "JELLYFIN_API_KEY")
         if not key:
-            raise RuntimeError("no API key (JELLYFIN_API_KEY)")
+            raise RuntimeError("no API key: make one in Jellyfin › Dashboard › API Keys, and put it in Settings › Jellyfin")
         p = self.server_path(path, c.get("path_map"))
         http_json("POST", c["url"].rstrip("/") + "/Library/Media/Updated",
                   {"Updates": [{"Path": p, "UpdateType": "Modified"}]},
@@ -773,7 +773,7 @@ class Servers:
         # whose contents changed, which is the path we just touched.
         user, pw = secret("NAVIDROME_ADMIN_USER"), secret("NAVIDROME_ADMIN_PASSWORD")
         if not (user and pw):
-            raise RuntimeError("no admin login (NAVIDROME_ADMIN_USER)")
+            raise RuntimeError("no admin login: put a Navidrome administrator's user name and password in Settings › Navidrome")
         q = navidrome_auth(user, pw)
         r = http_json("GET", c["url"].rstrip("/") + "/rest/startScan?" + q)
         st = ((r or {}).get("subsonic-response") or {}).get("status") if isinstance(r, dict) else None

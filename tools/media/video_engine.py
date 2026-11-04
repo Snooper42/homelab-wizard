@@ -135,7 +135,7 @@ class VideoEngine:
             return "Jellyfin isn't installed here (it reads genres from the internet for every film and show)"
         if not mc.secret(c.get("key_env") or "JELLYFIN_API_KEY"):
             return ("Jellyfin's API key isn't set: make one in Jellyfin › Dashboard › API Keys, "
-                    "and put it in Settings › Tidy Up (Jellyfin API key)")
+                    "and put it in Settings › Jellyfin (Jellyfin API key)")
         if self.kind not in (c.get("kinds") or []):
             return "Jellyfin has no library on this folder"
         return ""
