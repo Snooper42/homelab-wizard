@@ -11860,7 +11860,7 @@
         " ",
         /* @__PURE__ */ u3("span", { class: "muted", children: "Then it carries on by itself." })
       ] }),
-      !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-6).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: l3.text }, i3)) }),
+      !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-9).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: l3.text }, i3)) }),
       /* @__PURE__ */ u3("details", { class: "jobdetails", children: [
         /* @__PURE__ */ u3("summary", { children: "Show details" }),
         /* @__PURE__ */ u3("pre", { role: "log", children: job2.log.join("\n") })
@@ -11975,7 +11975,7 @@
       };
       if (step2[l3.stage]) out.push(step2[l3.stage]);
       const lyr = last(l3, "lyrics")?.result;
-      if (lyr && n2(lyr.none) > 0) out.push({ kind: "lyrics", title: `${count(n2(lyr.none), "song")} could get lyrics`, sub: "Synced from LRCLIB where it has them, so they scroll along in Navidrome", go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (lyr && n2(lyr.none) > 0) out.push({ kind: "lyrics", title: `${count(n2(lyr.none), "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${n2(lyr.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : ""}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
       const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
@@ -12452,6 +12452,10 @@
         break;
       case "fail":
         job.lines.push({ tone: "bad", text: text2 });
+        break;
+      // What else came of it, said plainly (the lyrics' songs that kept theirs, and why): a grey dot.
+      case "note":
+        job.lines.push({ tone: "", text: text2 });
         break;
       case "result":
         job.result = ev;

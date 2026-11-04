@@ -45,7 +45,7 @@ def setup(apply):
     url = td_conf.get("url")
     if not url:
         mc.die("Tdarr isn't installed.", "Install it from Choose stacks (Media automation), then run this again.")
-    td = mc.Tdarr(url, mc.secret("TDARR_API_KEY"))
+    td = mc.tdarr(url)
     ui.title("Tdarr", "Tidy Up's libraries" + ("" if apply else " (preview)"))
     if not td.ok():
         mc.die("Tdarr isn't answering at %s." % url, "Start it from Status, then run this again.")
@@ -71,7 +71,15 @@ def setup(apply):
                                         "obj": doc})
             ui.ok("%s made" % NAMES[kind])
         ids[kind] = doc["_id"]
-    ui.result(action="tdarr-setup", ok=True, applied=apply, libraries=ids, codec=codec, gpu=gpu)
+    # Without a worker, Tdarr's node takes nothing from its queue.
+    idle = td.give_workers(gpu, apply)
+    where = "graphics card" if gpu else "processor"
+    for name in idle:
+        if apply:
+            ui.ok("Tdarr's node %s had no worker: it has one on the %s now (raise it on Tdarr's page)" % (name, where))
+        else:
+            ui.kv("Workers", "%s has none: it gets one on the %s" % (name, where))
+    ui.result(action="tdarr-setup", ok=True, applied=apply, libraries=ids, codec=codec, gpu=gpu, workers_given=idle)
 
 
 def main():

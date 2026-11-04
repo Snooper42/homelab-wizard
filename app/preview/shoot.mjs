@@ -497,6 +497,24 @@ const smokes = [
     await page.waitForFunction(() => document.getElementById('setting-JELLYFIN_API_KEY')?.checkVisibility(), null, { timeout: 3000 })
       .catch(() => { throw new Error('Settings did not open at the Jellyfin API key'); });
   } },
+  // Lyrics: the card says what came of every song, the ones that kept theirs on grey lines; Overview counts only the songs
+  // still worth asking LRCLIB about, and says how many it had nothing for.
+  { name: 'Tidy Up: lyrics say what came of every song, and Overview counts only those still to ask', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 9120, plain: 2210, none: 40, not_found: 2362, instrumental: 200 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 3,348 songs; 1,181 plain ones replaced by time-synced' }, { type: 'note', text: '2,362 aren’t on LRCLIB yet: asked again in a month' },
+      { type: 'note', text: '200 are instrumentals' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("could get lyrics")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const text = await page.textContent(row);
+    if (!text.includes('40 songs could get lyrics') || !text.includes('2,362 songs not on LRCLIB yet')) throw new Error('the row says ' + text);
+    await page.click(`${row} button:text-is("Add lyrics")`);
+    await page.waitForSelector('#tidyJob h2:text-is("Adding lyrics: done")', { timeout: 5000 });
+    const lines = await page.$$eval('#tidyJob .tidylines li', (ls) => ls.map((l) => [l.querySelector('.dot')?.className.trim(), l.textContent.trim()]));
+    const note = lines.find((l) => l[1].includes('aren’t on LRCLIB yet'));
+    if (!note || note[0] !== 'dot') throw new Error('the note line: ' + JSON.stringify(lines));
+    if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
+  } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
     { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },

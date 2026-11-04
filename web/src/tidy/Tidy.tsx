@@ -119,7 +119,7 @@ export function JobPanel({ job, stop, done, fix }: { job: TidyJob; stop: () => v
       {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
       {!!job.lines.length && (
         <Rows kind="tidylines">
-          {job.lines.slice(-6).map((l, i) => <Row key={i} dot={l.tone} title={l.text} />)}
+          {job.lines.slice(-9).map((l, i) => <Row key={i} dot={l.tone} title={l.text} />)}
         </Rows>
       )}
       <details class="jobdetails"><summary>Show details</summary><pre role="log">{job.log.join('\n')}</pre></details>
@@ -238,7 +238,8 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     };
     if (step[l.stage]) out.push(step[l.stage]);
     const lyr = last(l, 'lyrics')?.result;
-    if (lyr && n(lyr.none) > 0) out.push({ kind: 'lyrics', title: `${count(n(lyr.none), 'song')} could get lyrics`, sub: 'Synced from LRCLIB where it has them, so they scroll along in Navidrome', go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
+    // Only songs not yet asked about: those LRCLIB had nothing for wait a month before they're asked again.
+    if (lyr && n(lyr.none) > 0) out.push({ kind: 'lyrics', title: `${count(n(lyr.none), 'song')} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${n(lyr.not_found) ? ` · ${count(n(lyr.not_found), 'song')} not on LRCLIB yet` : ''}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
   } else if (k === 'movies' || k === 'tv') {
     const c = l.counts || {}, bloated = n(c.bloated), withTdarr = n(c.queued) + n(l.waiting);
     const reasons = Object.keys((scan?.reasons || {}) as Record<string, number>).slice(0, 2).map((r) => r.replace(/\b([Hh])\.?26([45])\b/g, 'H.26$2')).join(', ');
