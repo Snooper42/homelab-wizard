@@ -348,6 +348,9 @@ class VideoEngine:
             mc.die("Tdarr isn't set up for %s yet." % self.kind, "Run: homelab media tdarr setup --apply")
         if not td.ok():
             mc.die("Tdarr isn't answering at %s." % td.url, "Start it from Status, then run this again.")
+        # A node with no worker would leave everything in Tdarr's queue: given one first.
+        for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
+            ui.ok("Tdarr's node %s had no worker: it has one now (raise it on Tdarr's page)" % name)
         todo = [k for k, r in self.state["files"].items() if r.get("status") == "bloated" and Path(k).exists()]
         if not todo:
             ui.ok("Nothing waiting: every video is already lean, or with Tdarr.")
@@ -380,6 +383,9 @@ class VideoEngine:
         td = self.tdarr()
         files = self.state["files"]
         queued = [k for k, r in files.items() if r.get("status") == "queued"]
+        if td and queued and not inner:
+            for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
+                ui.ok("Tdarr's node %s had no worker, so nothing was being shrunk: it has one now" % name)
         replaced, failed, waiting, freed = 0, 0, 0, 0
         servers = mc.Servers()
         for k in queued:

@@ -1064,7 +1064,47 @@ func seedTdarr(l *lab) error {
 	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "insert", "docID": "nightly", "obj": library}}, nil, "Authorization", tok); err != nil {
 		return fmt.Errorf("adding a library: %w", err)
 	}
-	return checkTdarr(l)
+	if err := checkTdarr(l); err != nil {
+		return err
+	}
+	return tdarrWorker(l, tok)
+}
+
+// tdarrWorker raises the node's transcode workers by one through the call
+// Tidy Up makes for an idle node (media_common.Tdarr.give_workers), and
+// reads the new limit back: a node with none takes nothing from its queue.
+func tdarrWorker(l *lab, tok string) error {
+	type node struct {
+		NodeName     string         `json:"nodeName"`
+		WorkerLimits map[string]int `json:"workerLimits"`
+	}
+	read := func() (string, int, error) {
+		var nodes map[string]node
+		if err := request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "Authorization", tok); err != nil {
+			return "", 0, err
+		}
+		for id, n := range nodes {
+			if n.NodeName == "homelab" {
+				return id, n.WorkerLimits["transcodecpu"], nil
+			}
+		}
+		return "", 0, errors.New("its node is not connected")
+	}
+	id, before, err := read()
+	if err != nil {
+		return err
+	}
+	if err := request("POST", l.url("tdarr")+"/api/v2/alter-worker-limit", map[string]any{"data": map[string]any{"nodeID": id, "process": "increase", "workerType": "transcodecpu"}}, nil, "Authorization", tok); err != nil {
+		return fmt.Errorf("giving its node a worker: %w", err)
+	}
+	for range 10 {
+		if _, after, err := read(); err == nil && after == before+1 {
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
+	_, after, _ := read()
+	return fmt.Errorf("its node's transcode workers went from %d to %d, not one more", before, after)
 }
 
 func checkTdarr(l *lab) error {

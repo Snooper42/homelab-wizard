@@ -710,6 +710,26 @@ class Tdarr:
         except RuntimeError:
             return {}
 
+    def give_workers(self, gpu, apply=True):
+        """A node with no transcode worker does nothing, and a new Tdarr's node starts with none: each
+        such node gets one (on the graphics card when there is one, else the processor), which
+        Tdarr's own page can raise. The names of the nodes that had none."""
+        kind = "transcodegpu" if gpu else "transcodecpu"
+        idle = []
+        nodes = self.nodes()
+        for nid, node in (nodes.items() if isinstance(nodes, dict) else ()):
+            if not isinstance(node, dict):
+                continue
+            limits = node.get("workerLimits") or {}
+            if not isinstance(limits, dict):
+                continue
+            if int(limits.get("transcodecpu") or 0) + int(limits.get("transcodegpu") or 0) > 0:
+                continue
+            idle.append(node.get("nodeName") or nid)
+            if apply:
+                self._post("/api/v2/alter-worker-limit", {"nodeID": nid, "process": "increase", "workerType": kind})
+        return idle
+
     def queue(self, library_id, paths):
         """Add files to a library's queue (Tdarr runs its plugin stack on each, in its own order)."""
         return self._post("/api/v2/scan-files", {"scanConfig": {"dbID": library_id, "arrayOrPath": list(paths),

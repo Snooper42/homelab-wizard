@@ -1227,6 +1227,20 @@ class TdarrSignIn(unittest.TestCase):
         td, _ = self.tdarr([RuntimeError("can't reach http://localhost:8265/api/v2/status (refused)")])
         self.assertFalse(td.ok())
 
+    def test_an_idle_node_gets_a_worker(self):
+        nodes = {"n1": {"nodeName": "homelab", "workerLimits": {"transcodecpu": 0, "transcodegpu": 0, "healthcheckcpu": 1}},
+                 "n2": {"nodeName": "busy", "workerLimits": {"transcodecpu": 2}}}
+        td, calls = self.tdarr([nodes, None], user="", password="")
+        self.assertEqual(td.give_workers(gpu=False), ["homelab"])
+        self.assertEqual(calls[1][1], "/api/v2/alter-worker-limit")
+        self.assertEqual(calls[1][3], {"data": {"nodeID": "n1", "process": "increase", "workerType": "transcodecpu"}})
+        td, calls = self.tdarr([nodes, None], user="", password="")
+        td.give_workers(gpu=True)
+        self.assertEqual(calls[1][3]["data"]["workerType"], "transcodegpu", "on the graphics card when there is one")
+        td, calls = self.tdarr([nodes], user="", password="")
+        self.assertEqual(td.give_workers(gpu=False, apply=False), ["homelab"])
+        self.assertEqual(len(calls), 1, "a preview changes nothing")
+
     def test_an_expected_stop_is_said_plainly(self):
         out = io.StringIO()
         with mock.patch.object(sys, "stdout", out), self.assertRaises(SystemExit):
