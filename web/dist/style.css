@@ -531,7 +531,7 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
-.fx-export { display:inline-flex; align-items:center; gap:8px; }
+.fx-export { display:inline-flex; align-items:center; gap:8px; margin-left:auto; flex-wrap:wrap; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
 html.unpaired nav, html.unpaired main { display:none; }

@@ -11769,12 +11769,9 @@ ${pays}
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead2 })
         ] }),
-        ro && v3 && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
-          v3.plan.hideAmounts && /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }),
-          /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth })
-        ] }),
+        v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
+        ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
         !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
-          v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
           toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
           !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
           /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [

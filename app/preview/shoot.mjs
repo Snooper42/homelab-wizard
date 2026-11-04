@@ -2763,8 +2763,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, and Export (which saves a copy and changes nothing).
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -4719,7 +4719,7 @@ const smokes = [
   // checking after), and this month or the next on a page that prints itself; each says where it went.
   { name: 'Finances: Export the plan, the year ahead, and a month to print', screen: 'finances', run: async (page) => {
     const menu = async (item) => {
-      await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+      await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
       await page.click(`#finances .header [role=menuitem]:has-text("${item}")`, { timeout: 3000 });
     };
     await menu('The plan, as JSON');
@@ -4738,7 +4738,7 @@ const smokes = [
     if (dates.join() !== [...dates].sort().join()) throw new Error('not oldest first');
     const months = new Set(dates.map((d) => d.slice(0, 7)));
     if (months.size < 12) throw new Error(`only ${months.size} months ahead`);
-    await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")');
+    await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")');
     const printItems = await page.$$eval('#finances .header [role=menuitem]', (b) => b.map((x) => x.textContent).filter((t) => t.endsWith(', to print')));
     if (printItems.length !== 2) throw new Error('print items: ' + printItems.join(', '));
     await page.click(`#finances .header [role=menuitem]:text-is("${printItems[0]}")`);
@@ -4749,7 +4749,7 @@ const smokes = [
   } },
   // A phone allowed only to look exports too (it changes nothing): the plan downloads.
   { name: 'The phone, view only: Export downloads the plan', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
-    await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+    await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
     const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#finances .header [role=menuitem]:has-text("The plan, as JSON")')]);
     if (!/^finances-plan-.*\.json$/.test(file.suggestedFilename())) throw new Error('downloaded ' + file.suggestedFilename());
   } },

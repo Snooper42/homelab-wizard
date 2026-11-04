@@ -108,8 +108,10 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
     <>
       <div class="row header">
         <div><h1>Finances</h1><p class={'lead' + (age >= 7 ? ' warn' : '')}>{lead}</p></div>
-        {ro && v && <div class="toolbar">{v.plan.hideAmounts && <span class="pill">Amounts hidden</span>}<ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} /></div>}
-        {!ro && <div class="toolbar">{v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
+        {/* Export on its own, before the toolbar's capsule: it wraps by itself on a narrow screen, and the capsule keeps to what fits. */}
+        {v && <ExportMenu v={v} exportFile={exportFile} printMonth={printMonth} />}
+        {ro && v?.plan.hideAmounts && <div class="toolbar"><span class="pill">Amounts hidden</span></div>}
+        {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
       </div>
       <Segmented label="View" value={tab} pick={setTab} options={tabs} />
       <div class="finbody">
