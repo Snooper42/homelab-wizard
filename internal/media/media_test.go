@@ -349,6 +349,28 @@ func TestPreflight(t *testing.T) {
 	if c := Blocking(checks, "movies", false); c == nil || c.ID != "python" {
 		t.Errorf("blocking: %+v", c)
 	}
+	// Without ffmpeg, each system says its own way to install it, and only that.
+	delete(have, "ffmpeg")
+	for goos, want := range map[string]string{"darwin": "brew install ffmpeg", "windows": "winget install Gyan.FFmpeg", "linux": "apt install ffmpeg"} {
+		q := p
+		q.GOOS = goos
+		var ff Check
+		for _, c := range Preflight(context.Background(), q, map[string]string{"MEDIA_ROOT": "/Volumes/Hobbies"}, "/Users/me") {
+			if c.ID == "ffmpeg" {
+				ff = c
+			}
+		}
+		others := 0
+		for _, w := range []string{"brew install", "winget", "apt install"} {
+			if strings.Contains(ff.Fix, w) {
+				others++
+			}
+		}
+		if ff.OK || !strings.Contains(ff.Fix, want) || others != 1 {
+			t.Errorf("%s: ffmpeg's fix says %q", goos, ff.Fix)
+		}
+	}
+	have["ffmpeg"] = true
 	files["/opt/homebrew/bin/python3"] = true
 	if py, v := p.Python(context.Background()); len(py) != 1 || py[0] != "/opt/homebrew/bin/python3" || v != "3.12" {
 		t.Errorf("Homebrew's Python: %v %s", py, v)

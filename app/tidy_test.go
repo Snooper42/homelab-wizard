@@ -139,6 +139,22 @@ func TestTidyRunSendsTheEngineEvents(t *testing.T) {
 	a.TidyStop() // nothing running: nothing to stop
 }
 
+// A job that stops says why, as the command said it, not "exit status 1"; the line is red on the screen too.
+func TestTidyRunSaysWhyItStopped(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("the Windows launcher's echo can't write ✗")
+	}
+	a, w := testApp(t)
+	err := a.TidyRun("movies", "scan", []string{"unready"}, false)
+	if err == nil || err.Error() != "ffmpeg and ffprobe: Not installed. Install ffmpeg: brew install ffmpeg in Terminal" {
+		t.Fatalf("the error: %v", err)
+	}
+	evs := w.sent("media:event")
+	if last := evs[len(evs)-1].(map[string]any); last["type"] != "fail" || !strings.HasPrefix(last["text"].(string), "ffmpeg and ffprobe") {
+		t.Errorf("the line as a failure: %v", last)
+	}
+}
+
 func TestReadEventsAndTail(t *testing.T) {
 	var got []map[string]any
 	readEvents(strings.NewReader("{\"type\":\"ok\",\"text\":\"Done\"}\n  ✓ Sonarr stops renaming files\n\n{not json\n"), func(e map[string]any) { got = append(got, e) })

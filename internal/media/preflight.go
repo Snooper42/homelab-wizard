@@ -174,8 +174,16 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 			Fix: ifs(onBat, "Plug in: big jobs wait for power, and stop on battery", ""), Needs: "heavy"})
 	}
 
+	// ffmpeg the way this system installs it, not every system's way at once.
+	ffFix := map[string]string{
+		"darwin":  "Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh), then Check again",
+		"windows": "Install ffmpeg: winget install Gyan.FFmpeg in a terminal, then Check again",
+	}[p.GOOS]
+	if ffFix == "" {
+		ffFix = "Install ffmpeg with your package manager (sudo apt install ffmpeg; on a Steam Deck, Homebrew or Nix), then Check again"
+	}
 	for _, t := range []struct{ id, bin, name, fix, needs string }{
-		{"ffmpeg", "ffmpeg", "ffmpeg and ffprobe", "Install ffmpeg (brew install ffmpeg, winget install Gyan.FFmpeg, or apt install ffmpeg)", "video"},
+		{"ffmpeg", "ffmpeg", "ffmpeg and ffprobe", ffFix, "video"},
 		{"ffsubsync", "ffsubsync", "ffsubsync (subtitle timing)", "pip install ffsubsync: subtitles are kept either way, aligned only with it", ""},
 		{"m4b-tool", "m4b-tool", "m4b-tool", "Optional: ffmpeg merges audiobooks without it", ""},
 		{"calibredb", "calibredb", "Calibre's tools", "Install the Calibre app (Calibre-Web doesn't include its tools)", "books"},

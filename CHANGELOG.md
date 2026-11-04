@@ -29,6 +29,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up says why a job stopped:** when a scan couldn't start (ffmpeg not installed, say), it said only *exit status 1*, with the reason hidden under Show details. It now says the reason itself, the line is red in the details, and the fix names only your system's way to install ffmpeg (*brew install ffmpeg* on a Mac).
 - **Tidy Up on Windows pauses the apps first:** with Docker Desktop, Navidrome and Calibre-Web kept running while your music or books moved, because Docker names `M:\music` another way. They're paused now, as on a Mac. And music is tidied with beets on this machine, since beets' container can't open Windows folders.
 - **Tidy Up finds Calibre and ffmpeg on a Steam Deck:** Calibre from Discover (a Flatpak) or installed in your home folder, and ffmpeg from Homebrew or Nix, said *Not installed*. They're found now, and the books are tidied with them.
 - **Tidy Up never replaces on a guess:** a download whose library copy couldn't be read replaced it unchecked, and another cut of a film (an extended one) was put in the Trash as a duplicate. Both are now left where they are for you to look at, and a second version kept on purpose (*Heat (1995) - Director's Cut*) is never counted as a duplicate. The nightly sweep keeps a film's *Subs* folder and its subtitles in other capitals, and a Firefox download still being written beside its empty placeholder waits.
