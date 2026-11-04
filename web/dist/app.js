@@ -557,7 +557,7 @@
       showDone && done.map((s3, i3) => row(s3, i3 + 1))
     ] });
   }
-  var mountChecklist = (el, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el);
+  var mountChecklist = (el2, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el2);
 
   // web/src/format.ts
   var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
@@ -700,20 +700,20 @@
       )
     ] });
   }
-  function mountTiles(el, props) {
-    R(/* @__PURE__ */ u3(Tiles, { ...props }), el);
+  function mountTiles(el2, props) {
+    R(/* @__PURE__ */ u3(Tiles, { ...props }), el2);
   }
 
   // web/src/status/UndoNote.tsx
   var undoFor = 1e4;
-  function UndoNote({ words: words3, undo, close: close3 }) {
+  function UndoNote({ words: words4, undo, close: close3 }) {
     const [held3, setHeld] = d2(false);
     const box = A2(null);
     h2(() => {
       if (held3) return;
       const t3 = setTimeout(close3, undoFor);
       return () => clearTimeout(t3);
-    }, [held3, words3]);
+    }, [held3, words4]);
     return /* @__PURE__ */ u3(
       "div",
       {
@@ -725,14 +725,14 @@
         onFocusIn: () => setHeld(true),
         onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
         children: [
-          /* @__PURE__ */ u3("span", { class: "undowords", children: words3 }),
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words4 }),
           /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
           /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
         ]
       }
     );
   }
-  var mountUndoNote = (el, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el);
+  var mountUndoNote = (el2, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el2);
 
   // web/src/status/stopFor.ts
   var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
@@ -1595,8 +1595,8 @@
       ] }, b2.date + b2.name)) })
     ] });
   }
-  function mountWallCard(el, w3) {
-    R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el);
+  function mountWallCard(el2, w3) {
+    R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el2);
   }
 
   // web/src/parts/Row.tsx
@@ -1799,11 +1799,11 @@
       /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
     ] });
   }
-  var mountWatchdog = (el, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el);
-  var mountProtection = (el, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el);
-  var mountAlerts = (el, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el);
-  var mountStorage = (el, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el);
-  var mountWeek = (el, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el);
+  var mountWatchdog = (el2, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el2);
+  var mountProtection = (el2, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el2);
+  var mountAlerts = (el2, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el2);
+  var mountStorage = (el2, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el2);
+  var mountWeek = (el2, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el2);
 
   // web/src/parts/Address.tsx
   function Address({ text: text2 }) {
@@ -1957,8 +1957,8 @@
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
-    const words3 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
-    return words3[a3.state] || ["", a3.state];
+    const words4 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words4[a3.state] || ["", a3.state];
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
@@ -2011,7 +2011,7 @@
       setMenu(null);
       if (refocus && from?.isConnected && from !== document.body) from.focus();
     };
-    const [cls, words3] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+    const [cls, words4] = pend && !pend.failed ? ["warn", doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
@@ -2039,7 +2039,7 @@
             /* @__PURE__ */ u3("td", { children: /* @__PURE__ */ u3("strong", { children: a3.name }) }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words3,
+              words4,
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -2367,9 +2367,9 @@
     _2(() => {
       if (!focusBox || !box.current) return;
       focusBox = false;
-      const el = box.current;
-      el.focus();
-      el.setSelectionRange(el.value.length, el.value.length);
+      const el2 = box.current;
+      el2.focus();
+      el2.setSelectionRange(el2.value.length, el2.value.length);
     });
     if (!f4.on) return null;
     const said = !f4.text.trim() ? "" : n3.n ? `${n3.n} of ${n3.of} ${n3.of === 1 ? "app" : "apps"}` : "No app has that name";
@@ -2417,7 +2417,7 @@
       const t3 = setTimeout(() => setSaid(null), 3e3);
       return () => clearTimeout(t3);
     }, [said]);
-    const say = (id2, words3) => setSaid({ id: id2, words: words3 });
+    const say = (id2, words4) => setSaid({ id: id2, words: words4 });
     const q2 = useFilter().text;
     const open2 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open2 : f4.picked, [label]: !open2[label] } });
@@ -2451,14 +2451,14 @@
     const on = useFilter().on;
     return /* @__PURE__ */ u3(S, { children: on ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
   }
-  function mountAppList(el, props) {
-    R(/* @__PURE__ */ u3(AppList, { ...props }), el);
+  function mountAppList(el2, props) {
+    R(/* @__PURE__ */ u3(AppList, { ...props }), el2);
   }
-  function mountShowAll(el) {
-    R(/* @__PURE__ */ u3(ShowAll, {}), el);
+  function mountShowAll(el2) {
+    R(/* @__PURE__ */ u3(ShowAll, {}), el2);
   }
-  function clearAppList(el) {
-    R(null, el);
+  function clearAppList(el2) {
+    R(null, el2);
   }
 
   // web/src/store.ts
@@ -2589,11 +2589,11 @@
       /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
     ] });
   }
-  function mountStatusNote(el, props) {
-    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el);
+  function mountStatusNote(el2, props) {
+    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el2);
   }
-  function mountReportActions(el, props) {
-    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el);
+  function mountReportActions(el2, props) {
+    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el2);
   }
 
   // web/src/parts/Sheet.tsx
@@ -2645,18 +2645,18 @@
     _2(() => {
       keys();
       const panel = ref.current;
-      let before2 = null;
+      let before3 = null;
       const seen = new MutationObserver(() => {
         document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
         if (!panel.hidden) {
-          if (!panel.contains(document.activeElement)) before2 = document.activeElement;
+          if (!panel.contains(document.activeElement)) before3 = document.activeElement;
           requestAnimationFrame(() => {
             panel.scrollTop = 0;
             (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
           });
         } else {
-          if (before2 && document.contains(before2)) before2.focus();
-          before2 = null;
+          if (before3 && document.contains(before3)) before3.focus();
+          before3 = null;
           if (!openSheets().length) onClose?.();
         }
       });
@@ -2682,8 +2682,8 @@
       /* @__PURE__ */ u3("div", { id: "cliActions", class: "actions" })
     ] });
   }
-  function mountSheets(el, closed) {
-    R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el);
+  function mountSheets(el2, closed) {
+    R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el2);
   }
   function Buttons({ buttons }) {
     const [running3, setRunning] = d2(-1);
@@ -2741,8 +2741,8 @@
       /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
     ] });
   }
-  function mountSheet(el, node) {
-    R(/* @__PURE__ */ u3(S, { children: node }), el);
+  function mountSheet(el2, node) {
+    R(/* @__PURE__ */ u3(S, { children: node }), el2);
   }
 
   // web/src/status/CrashNote.tsx
@@ -2775,9 +2775,9 @@
       ] })
     ] });
   }
-  function mountCrashNote(el, props) {
-    el.hidden = !props.crash;
-    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el);
+  function mountCrashNote(el2, props) {
+    el2.hidden = !props.crash;
+    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el2);
   }
 
   // web/src/status/Usage.tsx
@@ -2828,15 +2828,15 @@
       /* @__PURE__ */ u3("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
     ] });
   }
-  function mountUsage(el, props) {
-    el.hidden = !props.stats.some((s3) => s3.cpu >= 1);
-    R(el.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el);
+  function mountUsage(el2, props) {
+    el2.hidden = !props.stats.some((s3) => s3.cpu >= 1);
+    R(el2.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el2);
   }
 
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
   function shown(pages, view, wanted, label, checks) {
-    const words3 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words4 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
       const here = pg.name === view.page;
@@ -2845,8 +2845,8 @@
         if (here && more) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match = words3.length ? words3.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
-        if (match) {
+        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
+        if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
         }
@@ -2855,9 +2855,9 @@
     return out;
   }
   function plainHelp(help, toggle) {
-    const words3 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
-    if (!toggle) return words3;
-    return words3.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+    const words4 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words4;
+    return words4.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
   function Row3({ s: s3, p: p3, value, hidden: hidden2, edit }) {
     const [result, setResult] = d2(null);
@@ -2932,11 +2932,11 @@
       pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show2.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
-  function mountForm(el, props, version) {
-    R(/* @__PURE__ */ u3(Form, { ...props }, version), el);
+  function mountForm(el2, props, version) {
+    R(/* @__PURE__ */ u3(Form, { ...props }, version), el2);
   }
-  function formProblem(el, problem) {
-    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
+  function formProblem(el2, problem) {
+    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el2);
   }
 
   // web/src/settings/People.tsx
@@ -3056,7 +3056,7 @@
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });
   }
-  var mountPeople = (el, props) => R(/* @__PURE__ */ u3(People, { ...props }), el);
+  var mountPeople = (el2, props) => R(/* @__PURE__ */ u3(People, { ...props }), el2);
 
   // web/src/settings/Phones.tsx
   var financesChoices = [["", "No Finances"], ["view", "Sees Finances"], ["edit", "Changes Finances"]];
@@ -3153,7 +3153,7 @@
       } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })
     ] });
   }
-  var mountPhones = (el, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el);
+  var mountPhones = (el2, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el2);
 
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
@@ -3252,7 +3252,7 @@
       result === "failed" && /* @__PURE__ */ u3("p", { id: "uninstallFailed", class: "bad", children: "Some of it could not be removed: the log says which. Fix that, then run it again; what already went stays gone." })
     ] });
   }
-  var mountUninstall = (el, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el);
+  var mountUninstall = (el2, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el2);
 
   // web/src/settings/Nav.tsx
   function PageButton({ name, active: active2, counts, pick, inFold }) {
@@ -3281,14 +3281,14 @@
   function Nav({ groups: groups3, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches3 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
-    const isOpen = (f4) => counts ? matches3(f4) : picked[f4.label] ?? f4.pages.includes(active2);
+    const isOpen2 = (f4) => counts ? matches3(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(PagePicker, { groups: groups3, active: active2, counts, pick }),
       groups3.filter((g2) => g2.items.length).map((g2) => [
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
-          const f4 = item, open2 = isOpen(f4);
+          const f4 = item, open2 = isOpen2(f4);
           const n3 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
             /* @__PURE__ */ u3(
@@ -3313,8 +3313,8 @@
       ])
     ] });
   }
-  function mountNav(el, props) {
-    R(/* @__PURE__ */ u3(Nav, { ...props }), el);
+  function mountNav(el2, props) {
+    R(/* @__PURE__ */ u3(Nav, { ...props }), el2);
   }
 
   // web/src/parts/Segmented.tsx
@@ -3412,8 +3412,8 @@
       /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
     ] });
   }
-  function mountAppearance(el, props) {
-    R(/* @__PURE__ */ u3(Appearance, { ...props }), el);
+  function mountAppearance(el2, props) {
+    R(/* @__PURE__ */ u3(Appearance, { ...props }), el2);
   }
 
   // web/src/differs.ts
@@ -3729,9 +3729,9 @@
       ] })
     ] });
   }
-  var mountHost = (el, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el);
-  var mountRuntime = (el, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el);
-  var mountNewHomelab = (el, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el);
+  var mountHost = (el2, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el2);
+  var mountRuntime = (el2, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el2);
+  var mountNewHomelab = (el2, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el2);
 
   // web/src/setup/Health.tsx
   function facts({ h: h3, i: i3, machine }) {
@@ -3799,8 +3799,8 @@
       stopped && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
     ] });
   }
-  var mountHealthTiles = (el, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el);
-  var mountHealthLine = (el, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el);
+  var mountHealthTiles = (el2, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el2);
+  var mountHealthLine = (el2, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el2);
 
   // web/src/parts/Foot.tsx
   function Foot({ system, version, update, openSetup }) {
@@ -3813,8 +3813,8 @@
       update && /* @__PURE__ */ u3(ActionLink, { id: "footUpdate", cls: "update", title: update === "ready" ? "Show the update" : "The line at the top follows it", onClick: openSetup, children: update === "ready" ? "● Update ready" : "● Updating…" })
     ] });
   }
-  function mountFoot(el, props) {
-    R(/* @__PURE__ */ u3(Foot, { ...props }), el);
+  function mountFoot(el2, props) {
+    R(/* @__PURE__ */ u3(Foot, { ...props }), el2);
   }
 
   // web/src/parts/Empty.tsx
@@ -3971,19 +3971,19 @@
       })
     ] });
   }
-  var mountStarters = (el, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el);
-  var mountBundles = (el, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el);
-  var mountGroups = (el, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el);
+  var mountStarters = (el2, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el2);
+  var mountBundles = (el2, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el2);
+  var mountGroups = (el2, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el2);
   var planned = /* @__PURE__ */ new WeakSet();
-  var mountPlan = (el, props) => {
-    if (!planned.has(el)) {
-      el.replaceChildren();
-      planned.add(el);
+  var mountPlan = (el2, props) => {
+    if (!planned.has(el2)) {
+      el2.replaceChildren();
+      planned.add(el2);
     }
-    R(/* @__PURE__ */ u3(Plan, { ...props }), el);
+    R(/* @__PURE__ */ u3(Plan, { ...props }), el2);
   };
-  var mountInputs = (el, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el);
-  var catalogProblem = (el, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el);
+  var mountInputs = (el2, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el2);
+  var catalogProblem = (el2, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el2);
 
   // web/src/job/Apps.tsx
   var reached = {
@@ -4033,8 +4033,8 @@
       )
     ] }, u4.app)) });
   }
-  function mountJobApps(el, apps) {
-    R(/* @__PURE__ */ u3(JobApps, { apps }), el);
+  function mountJobApps(el2, apps) {
+    R(/* @__PURE__ */ u3(JobApps, { apps }), el2);
   }
 
   // web/src/choose/Started.tsx
@@ -4063,14 +4063,14 @@
       }) })
     ] });
   }
-  function mountStarted(el, props) {
-    R(props && /* @__PURE__ */ u3(Started, { ...props }), el);
+  function mountStarted(el2, props) {
+    R(props && /* @__PURE__ */ u3(Started, { ...props }), el2);
   }
-  function mountWiring(el, props) {
-    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el);
+  function mountWiring(el2, props) {
+    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el2);
   }
-  function mountCategories(el, categories2) {
-    R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el);
+  function mountCategories(el2, categories2) {
+    R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el2);
   }
 
   // web/src/core.ts
@@ -4082,11 +4082,11 @@
   var $1 = (sel2, root = document) => root.querySelector(sel2);
   var errorTimer = 0;
   function showError(e3) {
-    const el = $2("error");
-    el.textContent = String(e3 && e3.message || e3);
-    el.hidden = false;
+    const el2 = $2("error");
+    el2.textContent = String(e3 && e3.message || e3);
+    el2.hidden = false;
     clearTimeout(errorTimer);
-    errorTimer = setTimeout(() => el.hidden = true, 6e3);
+    errorTimer = setTimeout(() => el2.hidden = true, 6e3);
   }
   var platform = navigator.platform || navigator.userAgent;
   var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
@@ -4212,9 +4212,9 @@
       log2.textContent += line + "\n";
     });
     try {
-      const before2 = new Set(catalog.apps.map((a3) => a3.id));
+      const before3 = new Set(catalog.apps.map((a3) => a3.id));
       catalog = await go().AddCustom(spec);
-      const added = catalog.apps.find((a3) => !before2.has(a3.id));
+      const added = catalog.apps.find((a3) => !before3.has(a3.id));
       renderApps();
       if (added) {
         selected.add(added.id);
@@ -4326,7 +4326,7 @@
     startJob("install");
     mountStarted($2("started"), null);
     mountWiring($2("wiring"), null);
-    const words3 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
+    const words4 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
@@ -4337,7 +4337,7 @@
     });
     const off = window.runtime.EventsOn("progress", (ev) => {
       if (ev.error) return;
-      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words3[ev.name];
+      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words4[ev.name];
       cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
     });
     try {
@@ -4493,8 +4493,8 @@
       )
     ] });
   }
-  var mountUpdateLine = (el, props) => R(props && /* @__PURE__ */ u3(UpdateLine, { ...props }), el);
-  var mountUpdateSettings = (el, props) => R(props && /* @__PURE__ */ u3(UpdateSettings, { ...props }), el);
+  var mountUpdateLine = (el2, props) => R(props && /* @__PURE__ */ u3(UpdateLine, { ...props }), el2);
+  var mountUpdateSettings = (el2, props) => R(props && /* @__PURE__ */ u3(UpdateSettings, { ...props }), el2);
 
   // web/src/screens/updates.ts
   var state = null;
@@ -5470,9 +5470,9 @@
   function settingLabel(key2) {
     if (settingLabels[key2]) return settingLabels[key2];
     const app = keyApp(key2);
-    const words3 = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
-    if (app) return [app[0], ...words3].join(" ");
-    const text2 = words3.join(" ");
+    const words4 = (app ? app[1] : key2).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words4].join(" ");
+    const text2 = words4.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
@@ -5747,18 +5747,18 @@
   }
   var wallAt = 0;
   async function showWall() {
-    const el = $2("wallCard");
+    const el2 = $2("wallCard");
     if (!document.documentElement.classList.contains("wallcard")) {
-      el.hidden = true;
+      el2.hidden = true;
       return;
     }
-    if (!el.hidden && Date.now() - wallAt < 5 * 6e4) return;
+    if (!el2.hidden && Date.now() - wallAt < 5 * 6e4) return;
     wallAt = Date.now();
     try {
-      mountWallCard(el, await go().FinancesWall());
-      el.hidden = false;
+      mountWallCard(el2, await go().FinancesWall());
+      el2.hidden = false;
     } catch {
-      el.hidden = true;
+      el2.hidden = true;
     }
   }
   setInterval(() => {
@@ -5888,6 +5888,8 @@
       }
     }
   };
+  var rowActions = appListActions;
+  var batteryPausedNow = () => batteryPaused;
   async function groupAct(apps, action, progress2, until) {
     setAppsBusy(true);
     const done = [];
@@ -5916,9 +5918,9 @@
     const cats = new Set(apps.map((a3) => catOf(a3.id)));
     const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
     const what = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
-    const words3 = `Stopped ${what}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    const words4 = `Stopped ${what}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
     undoing = { apps };
-    mountUndoNote($2("undoNote"), { words: words3, undo: undoNow, close: dropUndo });
+    mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
   }
   function dropUndo() {
     undoing = null;
@@ -5935,6 +5937,7 @@
   var pageOpener = { open: (_id) => {
   } };
   var appActions = { act: (a3, action) => appListActions.act(a3, action), stopFor: (a3, until) => runAppAction(a3, "stop", until), phone: showQR, signIn: showSignIn, update: showUpdate };
+  var heldNow = () => held;
   var pendingOf = (id2) => pending[id2];
   var appsBusyNow = () => appsBusy;
   var rowWatchers = [];
@@ -6428,11 +6431,11 @@
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
     ] });
   }
-  var mountKopia = (el, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el);
-  var mountBackupTiles = (el, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el);
-  var mountCopyRows = (el, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el);
-  var mountVault = (el, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el);
-  var mountJobs = (el, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el);
+  var mountKopia = (el2, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el2);
+  var mountBackupTiles = (el2, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el2);
+  var mountCopyRows = (el2, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el2);
+  var mountVault = (el2, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el2);
+  var mountJobs = (el2, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el2);
 
   // web/src/screens/backups.ts
   var backupsData = store(() => go().Backups());
@@ -6777,7 +6780,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on } = p3;
-    const [tone, words3] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words4] = pending2 && !pending2.failed ? ["warn", doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on.act(action), children: label });
@@ -6814,7 +6817,7 @@
             /* @__PURE__ */ u3("h1", { children: a3.name }),
             /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
               /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-              words3,
+              words4,
               up && ` · ${up}`
             ] })
           ] }),
@@ -7034,8 +7037,8 @@
       ] })
     ] });
   }
-  function mountAppPage(el, props) {
-    R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el);
+  function mountAppPage(el2, props) {
+    R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el2);
   }
 
   // web/src/screens/apppage.ts
@@ -7235,7 +7238,7 @@
     return rows.map((r3) => r3.map((x3) => x3.trim()));
   }
   function guessColumns(header) {
-    const find = (...words3) => header.findIndex((h3) => words3.some((w3) => h3.toLowerCase().includes(w3)));
+    const find = (...words4) => header.findIndex((h3) => words4.some((w3) => h3.toLowerCase().includes(w3)));
     return {
       date: find("date", "posted", "day", "datum"),
       amount: find("amount", "value", "betrag"),
@@ -9003,8 +9006,8 @@
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }
-  function mountFinanceSheet(el, edit) {
-    R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el);
+  function mountFinanceSheet(el2, edit) {
+    R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el2);
   }
 
   // web/src/finances/ui/HideAmounts.tsx
@@ -9447,9 +9450,9 @@
     return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size}px`, height: `${size}px` }, children: [
       /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
         const len = Math.max(0, s3.value) / total * c3;
-        const el = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
+        const el2 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
         run2 += len;
-        return el;
+        return el2;
       }) }),
       /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
     ] });
@@ -10328,10 +10331,10 @@
       ] }),
       /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
         /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
-        reminders.map(([kind, words3]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+        reminders.map(([kind, words4]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet.includes(kind), onClick: remind(kind) }),
           " ",
-          words3
+          words4
         ] }, kind))
       ] }),
       calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key2, amounts) => keep2({ currency, holidays, calendarKey: key2, calendarAmounts: amounts }) })
@@ -10700,7 +10703,7 @@
     return out;
   }
   function tiles(v3, L2, i3) {
-    const p3 = v3.periods[i3], before2 = v3.periods[i3 - 1];
+    const p3 = v3.periods[i3], before3 = v3.periods[i3 - 1];
     const went = into(v3, L2, p3);
     const at2 = (a3, q2) => q2 ? q2.accounts?.[a3.id] ?? todayOf(v3, a3) : todayOf(v3, a3);
     const accounts = v3.plan.accounts || [];
@@ -10709,14 +10712,14 @@
       name: a3.name,
       lead: /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
       after: at2(a3, p3),
-      was: at2(a3, before2),
+      was: at2(a3, before3),
       owes: false,
       in: went[a3.id] || 0
     }));
     const held3 = accounts.filter((a3) => a3.kind === "collectible");
     const heldTile = () => {
       const sum = (q2) => held3.reduce((t3, a3) => t3 + at2(a3, q2), 0);
-      return { key: "collectibles", name: "Collectibles", owes: false, after: sum(p3), was: sum(before2), in: held3.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0), lead: /* @__PURE__ */ u3(Mark, { kind: "collectible", name: "Collectibles", size: "sm" }) };
+      return { key: "collectibles", name: "Collectibles", owes: false, after: sum(p3), was: sum(before3), in: held3.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0), lead: /* @__PURE__ */ u3(Mark, { kind: "collectible", name: "Collectibles", size: "sm" }) };
     };
     const cards = accounts.filter((a3) => a3.kind === "card");
     if (cards.length) {
@@ -10726,7 +10729,7 @@
         name: cards.length === 1 ? cards[0].name : "Cards",
         owes: true,
         after: sum(p3),
-        was: sum(before2),
+        was: sum(before3),
         in: cards.reduce((t3, a3) => t3 + (went[a3.id] || 0), 0) + p3.rows.filter((r3) => cards.some((a3) => L2.payment[r3.payment]?.card === a3.id)).reduce((t3, r3) => t3 + r3.amount, 0),
         lead: cards.length === 1 ? /* @__PURE__ */ u3(AcctMark, { a: cards[0], size: "sm" }) : /* @__PURE__ */ u3(Mark, { kind: "card", name: "Cards", size: "sm" })
       });
@@ -10885,8 +10888,8 @@
       ] })
     ] });
   }
-  function mountBalances(el, v3, open2, toggle) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el);
+  function mountBalances(el2, v3, open2, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el2);
   }
 
   // web/src/finances/widgets/Ledger.tsx
@@ -11633,8 +11636,8 @@
   function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running3, group: group2, setGroup }) {
     return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
   }
-  function mountFinances(el, props) {
-    R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el);
+  function mountFinances(el2, props) {
+    R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el2);
   }
 
   // web/src/screens/finances.ts
@@ -12268,11 +12271,11 @@
       !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) })
     ] });
   }
-  function mountTidy(el, props) {
-    R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el);
+  function mountTidy(el2, props) {
+    R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el2);
   }
-  function mountTidySheet(el, c3, close3) {
-    R(/* @__PURE__ */ u3(ConfirmSheet, { c: c3, close: close3 }), el);
+  function mountTidySheet(el2, c3, close3) {
+    R(/* @__PURE__ */ u3(ConfirmSheet, { c: c3, close: close3 }), el2);
   }
 
   // web/src/screens/tidy.ts
@@ -12447,6 +12450,252 @@
   }
   drawSheet();
 
+  // web/src/palette/commands.ts
+  var words3 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  function match(list, query3) {
+    const want = words3(query3);
+    if (!want.length) return list;
+    const scored = [];
+    list.forEach((c3, i3) => {
+      const own2 = words3(c3.label), other = [...own2, ...words3(c3.also || "")];
+      if (!want.every((w3) => other.some((o3) => o3.startsWith(w3)))) return;
+      let score = want.filter((w3) => own2.some((o3) => o3.startsWith(w3))).length * 2;
+      if (own2.join(" ") === want.join(" ")) score += 4;
+      scored.push({ c: c3, score, i: i3 });
+    });
+    return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
+  }
+  var screenList = [
+    ["choose", "Choose stacks", "1", "install add apps"],
+    ["status", "Status", "2", "apps running"],
+    ["backups", "Backups", "3", "backup restore"],
+    ["setup", "Setup", "4", ""],
+    ["settings", "Settings", ",", "preferences options"],
+    ["finances", "Finances", "6", "money budget bills"],
+    ["tidy", "Tidy Up", "7", "media library music books films"]
+  ];
+  var onStatus = (fn) => () => {
+    navigate("status");
+    fn();
+  };
+  function commands() {
+    const phone2 = onPhone();
+    const list = [];
+    const add = (c3) => list.push(c3);
+    add({ id: "reload", label: "Check again", hint: mod + "R", also: "reload refresh", run: () => reloadScreen() });
+    if (!phone2) {
+      add({ id: "updateall", label: "Update all apps", also: "upgrade everything", run: onStatus(() => $2("updateAll").click()) });
+      add({ id: "backupnow", label: "Back up now", also: "backup", run: () => {
+        navigate("backups");
+        $2("backupNow").click();
+      } });
+    }
+    if (!$2("fixIt").hidden) add({ id: "fixit", label: "Fix it", also: "repair what is wrong", run: onStatus(() => $2("fixIt").click()) });
+    const fin = financesData.value;
+    if (fin && !fin.readOnly) add({ id: "hide", label: fin.plan.hideAmounts ? "Show amounts" : "Hide amounts", hint: isMac ? "⌘⇧H" : "Ctrl+Shift+H", also: "money privacy blur", run: toggleHideAmounts });
+    for (const [id2, label, key2, also] of screenList) {
+      if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
+      add({ id: "screen:" + id2, label, hint: mod + key2, also: "screen go " + also, run: () => navigate(id2) });
+    }
+    const apps = Object.values(statusById);
+    if (!apps.length) return list;
+    const entry = (id2) => catalog?.apps.find((c3) => c3.id === id2);
+    const busy2 = appsBusyNow(), held3 = heldNow(), paused = batteryPausedNow();
+    const container = (a3) => entry(a3.id)?.kind !== "native";
+    const startable2 = (a3) => a3.state === "stopped" && !a3.waitingFor && !paused.has(a3.id) && !held3[a3.id];
+    const m3 = rowActions.menu;
+    if (!phone2 && !busy2) {
+      for (const g2 of catalog?.categories || []) {
+        const mine = apps.filter((a3) => entry(a3.id)?.category === g2.id && container(a3));
+        const running3 = mine.filter((a3) => a3.state === "running"), stopped = mine.filter(startable2);
+        const n3 = (k3) => k3 === 1 ? `the 1 ${g2.label} app` : `the ${k3} ${g2.label} apps`;
+        const act = (action, of) => onStatus(() => {
+          rowActions.groupAct(of, action, () => {
+          });
+        });
+        if (stopped.length) add({ id: `group:${g2.id}:start`, label: `Start ${n3(stopped.length)} stopped`, hint: g2.label, run: act("start", stopped) });
+        if (running3.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running3.length)}`, hint: g2.label, run: act("restart", running3) });
+        if (running3.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running3.length)}`, hint: g2.label, danger: `stop ${n3(running3.length)}`, run: act("stop", running3) });
+      }
+    }
+    for (const a3 of apps.sort((x3, y3) => x3.name.localeCompare(y3.name))) {
+      const g2 = catalog?.categories.find((c3) => c3.id === entry(a3.id)?.category)?.label || "";
+      const also = `${a3.id} ${g2}`;
+      const url = a3.address ? "https://" + a3.address : a3.url || "";
+      const running3 = a3.state === "running";
+      const own2 = (verb2, label, run2, danger) => add({ id: `app:${a3.id}:${verb2}`, label, hint: g2, also, danger, run: run2 });
+      if (running3 && url) own2("open", `Open ${a3.name}`, () => m3.open(url));
+      own2("page", `${a3.name}’s page`, () => pageOpener.open(a3.id));
+      if (container(a3) && !phone2 && !busy2) {
+        if (a3.state === "stopped") own2("start", `Start ${a3.name}`, onStatus(() => m3.act(a3, "start")));
+        if (running3) own2("restart", `Restart ${a3.name}`, onStatus(() => m3.act(a3, "restart")));
+        if (running3) own2("stop", `Stop ${a3.name}`, onStatus(() => m3.act(a3, "stop")), `stop ${a3.name}`);
+      }
+      if (container(a3)) own2("logs", `${a3.name}’s logs`, () => m3.logs(a3));
+      if (url) own2("copy", `Copy ${a3.name}’s address`, () => m3.copy(url).then(() => "Address copied", () => "Could not copy the address"));
+    }
+    return list;
+  }
+
+  // web/src/palette/Palette.tsx
+  function Palette({ list, close: close3 }) {
+    const box = A2(null);
+    const field2 = A2(null);
+    const shown5 = A2(null);
+    const [query3, setQuery] = d2("");
+    const [at2, setAt] = d2(0);
+    const [sure, setSure] = d2(null);
+    const [said, setSaid] = d2("");
+    const all = T2(list, []);
+    const found2 = T2(() => match(all, query3), [all, query3]);
+    const picked = found2[Math.min(at2, found2.length - 1)];
+    _2(() => {
+      field2.current?.focus();
+      const outside = (e3) => {
+        if (!box.current?.contains(e3.target)) close3("none");
+      };
+      document.addEventListener("mousedown", outside, true);
+      return () => document.removeEventListener("mousedown", outside, true);
+    }, []);
+    _2(() => {
+      shown5.current?.querySelector("[aria-selected=true]")?.scrollIntoView({ block: "nearest" });
+    }, [at2, query3]);
+    const run2 = (c3, by) => {
+      if (!c3) return;
+      if (c3.danger && sure?.id !== c3.id) {
+        setSure({ id: c3.id, by });
+        return;
+      }
+      const out = c3.run();
+      if (out instanceof Promise) {
+        out.then((w3) => {
+          setSaid(w3);
+          setTimeout(() => close3("back"), 1200);
+        });
+        return;
+      }
+      close3("back");
+    };
+    const move = (to) => {
+      if (!found2.length) return;
+      setAt((to + found2.length) % found2.length);
+      setSure(null);
+    };
+    const label = (c3) => sure?.id === c3.id ? `${sure.by === "key" ? "Press Return" : "Click"} again to ${c3.danger}` : c3.label;
+    const optId = (c3) => "pal-" + c3.id.replace(/[^a-z0-9-]/gi, "-");
+    return (
+      // Not a sheet (no Close, nothing behind it waits): a field and its list, as a search field's suggestions are.
+      /* @__PURE__ */ u3(
+        "div",
+        {
+          ref: box,
+          class: "palette",
+          onKeyDown: (e3) => {
+            if (e3.key === "Escape") {
+              e3.preventDefault();
+              e3.stopPropagation();
+              close3("back");
+              return;
+            }
+            if (e3.key === "Tab") {
+              e3.preventDefault();
+              return;
+            }
+            if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
+              e3.preventDefault();
+              move(at2 + (e3.key === "ArrowDown" ? 1 : -1));
+              return;
+            }
+            if (e3.key === "Enter" && !e3.isComposing) {
+              e3.preventDefault();
+              run2(picked, "key");
+            }
+          },
+          children: [
+            /* @__PURE__ */ u3(
+              "input",
+              {
+                ref: field2,
+                class: "palfield",
+                type: "text",
+                role: "combobox",
+                "aria-expanded": "true",
+                "aria-controls": "palList",
+                "aria-autocomplete": "list",
+                "aria-activedescendant": picked ? optId(picked) : void 0,
+                "aria-label": "Find a command or an app",
+                placeholder: "Type an app or a command: immich, stop media, back up now…",
+                autocomplete: "off",
+                spellcheck: false,
+                value: query3,
+                onInput: (e3) => {
+                  setQuery(e3.target.value);
+                  setAt(0);
+                  setSure(null);
+                  setSaid("");
+                }
+              }
+            ),
+            /* @__PURE__ */ u3("ul", { ref: shown5, id: "palList", class: "pallist", role: "listbox", "aria-label": "Commands", children: found2.map((c3, i3) => /* @__PURE__ */ u3(
+              "li",
+              {
+                id: optId(c3),
+                role: "option",
+                "aria-selected": c3 === picked,
+                class: (c3 === picked ? "picked" : "") + (sure?.id === c3.id ? " danger" : ""),
+                onMouseMove: () => {
+                  if (i3 !== at2) {
+                    setAt(i3);
+                    setSure(null);
+                  }
+                },
+                onMouseDown: (e3) => e3.preventDefault(),
+                onClick: () => run2(c3, "click"),
+                children: [
+                  /* @__PURE__ */ u3("span", { class: "pallabel", children: label(c3) }),
+                  c3.hint && /* @__PURE__ */ u3("span", { class: "palhint muted", children: c3.hint })
+                ]
+              },
+              c3.id
+            )) }),
+            /* @__PURE__ */ u3("p", { class: "palfoot muted", role: "status", children: said || (found2.length ? "" : `Nothing has “${query3.trim()}”`) })
+          ]
+        }
+      )
+    );
+  }
+  var el = null;
+  var before2 = null;
+  var isOpen = () => !!el?.firstChild;
+  function shut(focus) {
+    if (!el) return;
+    R(null, el);
+    document.documentElement.classList.remove("palette-open");
+    if (focus === "none") return;
+    requestAnimationFrame(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      if (before2?.isConnected && before2.checkVisibility()) before2.focus();
+      else {
+        const s3 = document.querySelector(".screen.active");
+        if (s3) focusScreen(s3.id);
+      }
+    });
+  }
+  function openPalette() {
+    const html = document.documentElement.classList;
+    if (html.contains("sheet-open") || html.contains("kiosk")) return;
+    el ||= document.getElementById("palette");
+    if (!el) return;
+    if (isOpen()) {
+      el.querySelector(".palfield")?.select();
+      return;
+    }
+    before2 = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
+    document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    html.add("palette-open");
+    R(/* @__PURE__ */ u3(Palette, { list: commands, close: shut }), el);
+  }
+
   // web/src/app.ts
   function show(name) {
     const picked = name === "app" ? "status" : name;
@@ -12487,6 +12736,10 @@
       financesData.fresh(minute);
       ledgerData.fresh(minute);
     } else if (!onPhone()) financesData.fresh(5 * minute);
+  }
+  function reloadScreen() {
+    const current = document.querySelector(".screen.active")?.id;
+    if (current) reload(current);
   }
   function reload(name) {
     if (name === "status") {
@@ -12578,6 +12831,11 @@
       toggleHideAmounts();
       return;
     }
+    if (!e3.shiftKey && e3.key.toLowerCase() === "k") {
+      e3.preventDefault();
+      openPalette();
+      return;
+    }
     if (!e3.shiftKey && e3.key.toLowerCase() === "z" && !target.closest?.("input, textarea, select, [contenteditable]") && undoNow()) {
       e3.preventDefault();
       return;
@@ -12607,13 +12865,11 @@
       navigate(screen);
     });
     window.runtime.EventsOn("hideAmounts", () => toggleHideAmounts());
+    window.runtime.EventsOn("palette", () => openPalette());
     window.runtime.EventsOn("status:changed", refreshStatus);
     window.runtime.EventsOn("cli:step", cliProgress);
     window.runtime.EventsOn("job:app", jobApp);
-    window.runtime.EventsOn("refresh", () => {
-      const current = document.querySelector(".screen.active")?.id;
-      if (current) reload(current);
-    });
+    window.runtime.EventsOn("refresh", reloadScreen);
     await loadAppearance();
     const last2 = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
     try {

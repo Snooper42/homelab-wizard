@@ -369,6 +369,10 @@ const appListActions: AppListActions = {
     },
   },
 };
+/** The rows' actions, for the command palette. */
+export const rowActions = appListActions;
+/** The apps the battery saver paused, from the last Status. */
+export const batteryPausedNow = () => batteryPaused;
 // A group's apps started, stopped, or restarted one after another, each
 // row showing its action until the runtime confirms it; the first that
 // fails stops the rest and says why under its row. A stop with until is

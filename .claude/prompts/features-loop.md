@@ -49,13 +49,13 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now:** nothing of this loop's. Cleared on Nov 3, 2026: #385 through #393 were merged (#391 folded into #393). Still list what is open at the start of each round, as above: other sessions add to it.
+**Open now:** nothing of this loop's to ship. Cleared on Nov 3, 2026: #385 through #393 were merged (#391 folded into #393). Three remote branches are left whose work is all on main (older copies of what #393 merged): `claude/feature-media-logic`, `claude/feature-tidy-duplicates`, `claude/feature-tidy-episodes`. The owner deletes them; list them in each report until they are gone. Still list what is open at the start of each round, as above: other sessions add to it.
 
 **A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; never on main, another PR, or locally. Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
 
 **Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390, #393 (#391 folded into it): all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
 
-Then continue **The order** from item 9's command palette (⌘K).
+Then continue **The order** from item 10, Export (F18).
 
 **Where the Finances loop left off** (its branch, `claude/homelab-finances-improvements-2v5ec9`, was deleted on Nov 3, 2026, with all its work already on main): its backlog in `.claude/prompts/finances-loop.md` is done up to F24 except F18 (export, item 10) and F19 (polish, a little each Finances round). Those are the Finances work still to do; tick each in that file too when it ships. When they are done, read that file's **MoneyMatter, redone** and backlog for anything still unstruck before adding new Finances items to the roadmap.
 
@@ -107,7 +107,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 6. **Calendar, card charges** (F21, *Built*, #380): a bill charged to a card (From a card) moves no checking money, so it is not in Days' events. Show it on its day too, marked "on Chase Freedom", with the card's due day.
 7. **A balance opens its own group** (*Built*, #379): a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
-9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K).
+9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #PR).
 10. **Export** (F18): the plan and its projection as CSV and JSON, and a printable month.
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.

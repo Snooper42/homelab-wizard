@@ -1783,6 +1783,113 @@ const smokes = [
     await page.keyboard.type('s');
     if (await page.$('.filterbox')) throw new Error('typing in an open menu opened the filter');
   } },
+  // The command palette: ⌘K (Ctrl+K) on any screen opens a field over it; an app's name lists its Open, page, Restart,
+  // Stop, and Logs, the arrows pick, Return runs, a name nothing has says so, and Escape closes it with the focus back
+  // where it was. Its field is a combobox whose active option follows the arrows (VoiceOver reads it).
+  { name: 'Command palette: ⌘K, an app’s name, the arrows, and Escape', screen: 'backups', run: async (page) => {
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    const palette = () => page.keyboard.press(mac ? 'Meta+k' : 'Control+k');
+    const options = () => page.$$eval('.palette [role=option]', (os) => os.map((o) => o.querySelector('.pallabel').textContent));
+    const picked = () => page.evaluate(() => {
+      const f = document.querySelector('.palette .palfield'), on = document.querySelectorAll('.palette [role=option][aria-selected=true]');
+      return on.length === 1 && f.getAttribute('aria-activedescendant') === on[0].id ? on[0].querySelector('.pallabel').textContent : `${on.length} picked, the field says ${f.getAttribute('aria-activedescendant')}`;
+    });
+    await page.waitForSelector('#recoveryKit', { timeout: 5000 });
+    await page.focus('#recoveryKit');
+    await palette();
+    await page.waitForSelector('.palette .palfield', { timeout: 3000 });
+    if (!(await page.evaluate(() => document.activeElement?.matches('.palette .palfield')))) throw new Error('the field does not have the focus');
+    if (!(await options()).includes('Back up now')) throw new Error('with nothing typed it offers: ' + (await options()).join(', '));
+    await page.keyboard.type('navid');
+    const nav = await options();
+    for (const want of ['Open Navidrome', 'Navidrome’s page', 'Restart Navidrome', 'Stop Navidrome', 'Navidrome’s logs']) if (!nav.includes(want)) throw new Error(`"navid" offers no ${want}: ${nav.join(', ')}`);
+    if (nav.some((o) => !/Navidrome/.test(o))) throw new Error('"navid" offers others too: ' + nav.join(', '));
+    if (nav[0] !== 'Open Navidrome') throw new Error('Open is not first: ' + nav.join(', '));
+    if ((await picked()) !== nav[0]) throw new Error('the first is not picked: ' + (await picked()));
+    await page.keyboard.press('ArrowDown');
+    if ((await picked()) !== nav[1]) throw new Error('Down did not pick the second: ' + (await picked()));
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowUp');
+    if ((await picked()) !== nav[nav.length - 1]) throw new Error('Up from the first did not go round to the last: ' + (await picked()));
+    // A name nothing has: said, with nothing to pick.
+    await page.fill('.palette .palfield', 'zzzz');
+    await page.waitForSelector('.palette .palfoot:text-is("Nothing has “zzzz”")', { timeout: 3000 });
+    if ((await options()).length) throw new Error('zzzz offers something');
+    await page.keyboard.press('Enter');
+    // Escape: closed, the focus where it was.
+    await page.keyboard.press('Escape');
+    if (await page.$('.palette')) throw new Error('Escape did not close it');
+    await page.waitForFunction(() => document.activeElement?.id === 'recoveryKit', null, { timeout: 2000 })
+      .catch(async () => { throw new Error('the focus went to ' + (await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80)))); });
+    // Return runs the picked one: an app's page, from another screen.
+    await palette();
+    await page.keyboard.type('vikunja page');
+    if ((await picked()) !== 'Vikunja’s page') throw new Error('"vikunja page" picks ' + (await picked()));
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#app.active h1:text-is("Vikunja")', { timeout: 5000 });
+    if (await page.$('.palette')) throw new Error('it stayed open after Return');
+  } },
+  // Stop from the palette asks for a second press, as the row's menu does (Return again, or a click again); "stop media"
+  // finds the group's Stop first, which stops each of its apps and offers Undo.
+  { name: 'Command palette: Stop asks twice, and stop media stops the group', screen: 'status', mock: { usage }, run: async (page) => {
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    const palette = () => page.keyboard.press(mac ? 'Meta+k' : 'Control+k');
+    const calls = () => page.evaluate(() => window.__MOCK.calls.AppAction || 0);
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 8000 });
+    await palette();
+    await page.waitForSelector('.palette .palfield', { timeout: 3000 });
+    await page.keyboard.type('stop media');
+    const first = await page.textContent('.palette [role=option][aria-selected=true] .pallabel');
+    const n = Number(first.match(/^Stop the (\d+) Media apps$/)?.[1]);
+    if (!n) throw new Error('"stop media" picks ' + first);
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`.palette [role=option].danger .pallabel:text-is("Press Return again to stop the ${n} Media apps")`, { timeout: 2000 });
+    if (await calls()) throw new Error('one Return stopped them');
+    await page.keyboard.press('Enter');
+    if (await page.$('.palette')) throw new Error('it stayed open');
+    await page.waitForFunction((k) => (window.__MOCK.calls.AppAction || 0) >= k, n, { timeout: 8000 });
+    await page.waitForSelector(`.undonote .undowords:text-is("Stopped ${n} Media apps")`, { timeout: 8000 });
+    // One app, by clicks: the first click asks, the second stops it.
+    await page.waitForSelector('#statusRows tr.grouphead .groupcount:not([disabled])', { timeout: 8000 });
+    await palette();
+    await page.waitForSelector('.palette .palfield', { timeout: 3000 });
+    await page.keyboard.type('stop vikunja');
+    const stop = page.locator('.palette [role=option]', { hasText: 'Stop Vikunja' });
+    await stop.click();
+    await page.waitForSelector('.palette [role=option].danger .pallabel:text-is("Click again to stop Vikunja")', { timeout: 2000 });
+    if ((await calls()) !== n) throw new Error('one click stopped Vikunja');
+    await stop.click();
+    await page.waitForFunction((k) => window.__MOCK.calls.AppAction === k + 1, n, { timeout: 5000 });
+  } },
+  // The commands used now and then: Back up now starts the backup on Backups, Update all shows its list first (nothing
+  // applied), ⌘K does nothing while that sheet is open, and a press outside closes the palette.
+  { name: 'Command palette: back up now, update all, and a press outside', screen: 'status', run: async (page) => {
+    const mac = await page.evaluate(() => /Mac/.test(navigator.platform));
+    const palette = async () => { await page.keyboard.press(mac ? 'Meta+k' : 'Control+k'); await page.waitForSelector('.palette .palfield', { timeout: 3000 }); };
+    await page.waitForSelector('#statusRows tr.grouphead', { timeout: 8000 });
+    // A press outside it closes it, as WebKit sends one (no focus moves).
+    await palette();
+    await page.dispatchEvent('#status h1', 'mousedown', { detail: 1 });
+    if (await page.$('.palette')) throw new Error('a press outside did not close it');
+    await palette();
+    await page.keyboard.type('back up now');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#backups.active #backupPanel:not([hidden])', { timeout: 5000 });
+    if (!/Backing up|Backup done/.test(await page.textContent('#backupTitle'))) throw new Error('the backup did not start: ' + (await page.textContent('#backupTitle')));
+    await palette();
+    await page.keyboard.type('update all');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#status.active', { timeout: 5000 });
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Update all apps now")', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:text-is("Update them")', { timeout: 5000 });
+    // Its list, once: nothing applied until Update them.
+    const ran = (await page.evaluate(() => window.__MOCK.homelabRan || [])).filter((r) => r !== 'backup');
+    if (ran.join() !== 'update-all') throw new Error('ran: ' + ran.join());
+    // A sheet owns the window: ⌘K leaves it be.
+    await page.keyboard.press(mac ? 'Meta+k' : 'Control+k');
+    await page.waitForTimeout(200);
+    if (await page.$('.palette')) throw new Error('it opened over a sheet');
+  } },
   { name: 'Status’s cards: short ones stacked beside the alerts, a long alert folded', screen: 'status', mock: { alerts: [
     { id: 'down', time: new Date(Date.now() - 3 * 36e5).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: something is down', message: ['filebrowser', 'syncthing', 'freshrss', 'prowlarr', 'sonarr', 'radarr', 'lidarr', 'bazarr', 'flaresolverr', 'seerr', 'lazylibrarian'].map((a) => a + ': not running').join('\n'), priority: 4 },
     ...alerts] }, run: async (page) => {
@@ -4969,6 +5076,7 @@ const screens = [
   { name: 'Status', screen: 'status' },
   { name: 'Status, every app open', screen: 'status', mock: { statusOpen: 'all' } },
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
+  { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
   { name: 'Choose stacks', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
