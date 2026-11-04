@@ -79,6 +79,8 @@ function onEvent(ev: Record<string, any>) {
     case 'ok': job.lines.push({ tone: 'ok', text }); break;
     case 'warn': job.lines.push({ tone: 'warn', text }); break;
     case 'fail': job.lines.push({ tone: 'bad', text }); break;
+    // What else came of it, said plainly (the lyrics' songs that kept theirs, and why): a grey dot.
+    case 'note': job.lines.push({ tone: '', text }); break;
     case 'result': job.result = ev; break;
   }
   const line = ev.type === 'kv' ? `${ev.label}: ${ev.value}` : ev.type === 'step' ? `[${ev.n}/${ev.total}] ${text}` : ev.type === 'progress' ? '' : text;
