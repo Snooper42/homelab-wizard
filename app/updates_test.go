@@ -88,9 +88,21 @@ func TestUpdateState(t *testing.T) {
 // window stays, and says what it was once.
 func TestUpdateNowFiles(t *testing.T) {
 	a, w := testApp(t)
-	if err := a.UpdateNow(); err == nil {
-		t.Fatal("an update with nothing waiting")
+	// Nothing waiting (Try again after the update went in by hand): no
+	// failure to show, and what an earlier update left is cleared.
+	saveUpdated(Updated{Version: "0.13.0", Commit: "old"})
+	if err := a.UpdateNow(); err != nil {
+		t.Fatalf("an update with nothing waiting: %v", err)
 	}
+	if evs := w.sent("update:step"); len(evs) != 1 || evs[0].(UpdateStep).Step != "done" {
+		t.Fatalf("nothing waiting says: %v", evs)
+	}
+	if _, err := os.Stat(updatedPath()); err == nil {
+		t.Error("the earlier update's record stayed")
+	}
+	w.mu.Lock()
+	delete(w.events, "update:step")
+	w.mu.Unlock()
 	a.upgradeMu.Lock()
 	a.lastUpgrade = &upgrade.Check{Behind: 2, Version: "0.14.0", NewVersion: "0.15.0", Notes: []string{"Backups, tidied."}}
 	a.upgradeMu.Unlock()
@@ -176,6 +188,34 @@ func TestNotInstalled(t *testing.T) {
 	}
 	if _, failed := notInstalled(Updated{Version: "0.15.10"}, "c7752f1", "x"); failed {
 		t.Error("an update of the files only (no commit) counts as not installed")
+	}
+}
+
+// A build newer than the one the update was going to (installed by hand
+// from a later release, after the update failed) counts as updated, to
+// this version: no "did not install", no Try again.
+func TestUpdatedByHandToANewerBuild(t *testing.T) {
+	a, _ := testApp(t)
+	savedV, savedC := version, commit
+	t.Cleanup(func() { version, commit = savedV, savedC })
+	version, commit = "0.18.8", "c8888888"
+	saveUpdated(Updated{Version: "0.18.7", Commit: "c7777777", Notes: []string{"x"}, At: time.Now()})
+	s := a.UpdateState()
+	if s.NotInstalled != "" || s.Updated == nil || s.Updated.Version != "0.18.8" {
+		t.Fatalf("a newer build by hand: %+v %+v", s.NotInstalled, s.Updated)
+	}
+	version = "0.18.6"
+	if s := a.UpdateState(); s.NotInstalled == "" {
+		t.Error("an older build is still not installed")
+	}
+	for _, c := range []struct {
+		have, want string
+		ok         bool
+	}{{"0.18.8", "0.18.7", true}, {"v0.18.10", "0.18.9", true}, {"0.18.7", "0.18.7", true}, {"0.18.6", "0.18.7", false},
+		{"0.19.0", "0.18.10", true}, {"1.0.0", "0.99.99", true}, {"dev", "0.18.7", false}, {"0.18.8", "", false}} {
+		if versionAtLeast(c.have, c.want) != c.ok {
+			t.Errorf("versionAtLeast(%q, %q) = %v", c.have, c.want, !c.ok)
+		}
 	}
 }
 

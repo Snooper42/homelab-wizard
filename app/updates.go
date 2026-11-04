@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -145,6 +146,11 @@ func (a *App) UpdateState() UpdateState {
 		s.InstallOnQuit, s.CanInstallOnQuit = installOnQuit(), !selfupdate.Current().AsksPermission()
 	}
 	if u, ok := loadUpdated(time.Now()); ok {
+		// A newer build than the one it was updating to (installed by hand
+		// from a later release): updated, to this one.
+		if u.Commit != "" && versionAtLeast(version, u.Version) {
+			u.Version, u.Commit = strings.TrimPrefix(version, "v"), commit
+		}
 		if why, failed := notInstalled(u, commit, selfupdate.Failure()); failed {
 			s.NotInstalled = why
 			if r := a.pendingRelease(); r != nil && r.Page != "" {
@@ -232,8 +238,15 @@ type UpdateStep struct {
 // files, the window stays and says it is done.
 func (a *App) UpdateNow() error {
 	s := a.UpdateState()
+	if s.State == "blocked" && s.Blocked != "" {
+		return errors.New(s.Blocked)
+	}
 	if s.State != "ready" {
-		return errors.New("no update is ready")
+		// Nothing newer (Try again after the update went in by hand): this
+		// is the newest, so the line goes, with no failure to show.
+		_ = os.Remove(updatedPath())
+		emitEvent(a.ctx, "update:step", UpdateStep{Step: "done", Percent: 100})
+		return nil
 	}
 	step := func(name string, pct int) { emitEvent(a.ctx, "update:step", UpdateStep{Step: name, Percent: pct}) }
 	fail := func(err error) error {
@@ -320,4 +333,42 @@ func writeJSON(path string, v any) {
 	}
 	data, _ := json.MarshalIndent(v, "", "  ")
 	_ = os.WriteFile(path, data, 0o644)
+}
+
+// versionAtLeast is whether release version have (this build, "0.18.8" or
+// "v0.18.8") is want or newer, by its numbers; "dev" or a blank is neither.
+func versionAtLeast(have, want string) bool {
+	parse := func(v string) ([]int, bool) {
+		v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+		if i := strings.IndexAny(v, "-+ "); i >= 0 {
+			v = v[:i]
+		}
+		parts := strings.Split(v, ".")
+		if len(parts) < 2 {
+			return nil, false
+		}
+		out := make([]int, 3)
+		for i, p := range parts {
+			if i > 2 {
+				break
+			}
+			n, err := strconv.Atoi(p)
+			if err != nil {
+				return nil, false
+			}
+			out[i] = n
+		}
+		return out, true
+	}
+	h, ok1 := parse(have)
+	w, ok2 := parse(want)
+	if !ok1 || !ok2 {
+		return false
+	}
+	for i := range h {
+		if h[i] != w[i] {
+			return h[i] > w[i]
+		}
+	}
+	return true
 }
