@@ -572,7 +572,7 @@ own. Tick items off here as they land, and add new ones as you find them.
     *Built by the features loop (#368): bullets, ⌘⇧H, and a money card a screen gets only when picked for it.*
 17. ~~**Phone**: the calendar, upcoming bills, subscriptions, and goals on the
     phone, and Update balances in one quick sheet.~~ *Built by the features loop (#381): Coming up and the goals open the phone's Dashboard.*
-18. **Export**: the plan and projection as CSV and JSON, and a printable month.
+18. ~~**Export**~~ (done, #PR: the Finances header's Export menu, `web/src/finances/exportData.ts`, `App.PrintFinances`): the plan and projection as CSV and JSON, and a printable month.
 19. **Polish, all along**: empty states for a new plan, alignment, 860px and
     phone widths, contrast themes, focus order, labels.
 20. ~~**Calendar, further ahead**: it reads only the chart's 93 days. Read

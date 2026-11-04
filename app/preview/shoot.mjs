@@ -4715,6 +4715,44 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.exported.length === 3, null, { timeout: 5000 });
     await page.waitForFunction(() => document.querySelector('.fx-exported').textContent === '', null, { timeout: 5000 });
   } },
+  // Export (F18): the plan as JSON (finance.json's own shape), the year ahead as a CSV (each payday and payment with
+  // checking after), and this month or the next on a page that prints itself; each says where it went.
+  { name: 'Finances: Export the plan, the year ahead, and a month to print', screen: 'finances', run: async (page) => {
+    const menu = async (item) => {
+      await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+      await page.click(`#finances .header [role=menuitem]:has-text("${item}")`, { timeout: 3000 });
+    };
+    await menu('The plan, as JSON');
+    await page.waitForSelector('.fx-exportsaid:has-text("Saved to /Users/alex/Downloads/finances-plan-")', { timeout: 5000 });
+    let x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    if (!/^finances-plan-\d{4}-\d\d-\d\d\.json$/.test(x.name)) throw new Error('named ' + x.name);
+    const plan = JSON.parse(x.text);
+    if (!plan.accounts?.length || !plan.payments?.length || !plan.people?.length) throw new Error('the plan exported: ' + Object.keys(plan).join(', '));
+    await menu('The year ahead');
+    await page.waitForFunction(() => /^finances-ahead-.*\.csv$/.test(window.__MOCK.exported.at(-1).name), null, { timeout: 5000 });
+    x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    const lines = x.text.split('\r\n');
+    if (lines[0] !== 'Date,What,Kind,Amount,Account,Checking after') throw new Error('header ' + lines[0]);
+    if (!lines.some((l) => /,Payday,\d+\.\d\d,/.test(l)) || !lines.some((l) => /,Payment,-\d+\.\d\d,/.test(l))) throw new Error('no payday or payment: ' + lines.slice(0, 6).join(' | '));
+    const dates = lines.slice(1, -1).map((l) => l.slice(0, 10));
+    if (dates.join() !== [...dates].sort().join()) throw new Error('not oldest first');
+    const months = new Set(dates.map((d) => d.slice(0, 7)));
+    if (months.size < 12) throw new Error(`only ${months.size} months ahead`);
+    await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")');
+    const printItems = await page.$$eval('#finances .header [role=menuitem]', (b) => b.map((x) => x.textContent).filter((t) => t.endsWith(', to print')));
+    if (printItems.length !== 2) throw new Error('print items: ' + printItems.join(', '));
+    await page.click(`#finances .header [role=menuitem]:text-is("${printItems[0]}")`);
+    await page.waitForSelector('.fx-exportsaid:has-text("Opened /Users/alex/Homelab/reports/finances/finances-")', { timeout: 5000 });
+    const p = await page.evaluate(() => window.__MOCK.printed.at(-1));
+    if (!/^finances-\d{4}-\d\d\.html$/.test(p.name) || !p.html.includes('<body onload="print()">') || !p.html.includes('<h1>Finances: ')) throw new Error('the page: ' + p.name);
+    if (/<script|https?:\/\//.test(p.html)) throw new Error('the printed page loads something from elsewhere');
+  } },
+  // A phone allowed only to look exports too (it changes nothing): the plan downloads.
+  { name: 'The phone, view only: Export downloads the plan', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finances .header .toolbar button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#finances .header [role=menuitem]:has-text("The plan, as JSON")')]);
+    if (!/^finances-plan-.*\.json$/.test(file.suggestedFilename())) throw new Error('downloaded ' + file.suggestedFilename());
+  } },
   { name: 'The phone, view only: Reports exports as a download', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
     const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('.fx-reportsum button:text-is("Export CSV")')]);

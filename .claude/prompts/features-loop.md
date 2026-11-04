@@ -64,7 +64,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
 
 **The owner's own Mac, to finish by hand:** Jellyfin's API key (Settings › Jellyfin) for genres and refreshes, Navidrome's admin login (Settings › Navidrome) for lyrics' refresh, and a worker on Tdarr's node until #399 is in. Ask them what `~/Library/Caches/Homelab Wizard/update.log`'s `ERROR:` line said, for why the in-app update failed.
 
-Then continue **The order** from item 10, Export (F18).
+Then continue **The order** from item 11, Answers on hover.
 
 **Where the Finances loop left off** (its branch, `claude/homelab-finances-improvements-2v5ec9`, was deleted on Nov 3, 2026, with all its work already on main): its backlog in `.claude/prompts/finances-loop.md` is done up to F24 except F18 (export, item 10) and F19 (polish, a little each Finances round). Those are the Finances work still to do; tick each in that file too when it ships. When they are done, read that file's **MoneyMatter, redone** and backlog for anything still unstruck before adding new Finances items to the roadmap.
 
@@ -117,7 +117,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 7. **A balance opens its own group** (*Built*, #379): a sidebar balance opens Net worth on that group's accounts (the click already passes the group: `mountBalances` in `web/src/screens/finances.ts`), and each account its own history.
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
-10. **Export** (F18): the plan and its projection as CSV and JSON, and a printable month.
+10. **Export** (F18, *Built*, #PR): the plan and its projection as CSV and JSON, and a printable month.
 11. **Answers on hover**: why an app restarted, the week's outages, a balance's accounts and how long since each was updated.
 12. **Right-click the sidebar**, then **pinned apps**.
 
