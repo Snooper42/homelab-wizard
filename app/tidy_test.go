@@ -109,6 +109,7 @@ func TestTidyArgs(t *testing.T) {
 		{"scrubber", "scan", nil, false, "media scrub --events json"},
 		{"tdarr", "setup", []string{"--apply"}, false, "media tdarr setup --apply --events json"},
 		{"arr", "apply", nil, false, "media arr --apply"},
+		{"install", "ffmpeg", nil, true, "media install ffmpeg --events json --yes"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, c.yes)
 		if err != nil || strings.Join(got, " ") != c.want {
@@ -117,6 +118,9 @@ func TestTidyArgs(t *testing.T) {
 	}
 	if _, err := tidyArgs("music", "rm-rf", nil, false); err == nil {
 		t.Error("an action the engines don't have")
+	}
+	if _, err := tidyArgs("install", "anything", nil, true); err == nil {
+		t.Error("Install fetches ffmpeg alone")
 	}
 }
 

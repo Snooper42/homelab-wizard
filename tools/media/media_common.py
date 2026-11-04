@@ -441,13 +441,15 @@ def run(cmd, timeout=None, check=False, env=None):
 
 
 def which(name, setting=None):
-    """A tool from the settings, from PATH, or from the usual install places (Homebrew, winget)."""
+    """A tool from the settings, from PATH, or from the usual install places (Homebrew, winget, Tidy Up's Install)."""
     if setting and Path(os.path.expanduser(setting)).exists():
         return str(Path(os.path.expanduser(setting)))
     found = shutil.which(name)
     if found:
         return found
     extra = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", str(Path.home() / ".local" / "bin"),
+             # What Tidy Up's Install fetched (ffmpeg, ffprobe): after PATH, so one installed another way comes first.
+             str(Path.home() / ".homelab-media" / "bin"),
              # Homebrew and Nix on Linux: how a SteamOS Deck, whose / is read-only, gets ffmpeg.
              str(Path.home() / ".nix-profile" / "bin"), "/nix/var/nix/profiles/default/bin", "/home/linuxbrew/.linuxbrew/bin"]
     if IS_WINDOWS:

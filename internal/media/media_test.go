@@ -370,6 +370,35 @@ func TestPreflight(t *testing.T) {
 			t.Errorf("%s: ffmpeg's fix says %q", goos, ff.Fix)
 		}
 	}
+	// With a build pinned here, Install offers it, saying what and from whom; once fetched, it's found.
+	saved := FFmpegPins
+	defer func() { FFmpegPins = saved }()
+	sha := strings.Repeat("a", 64)
+	FFmpegPins = map[string]Pin{"darwin/arm64": {Version: "7.1", Source: "builds.example.org", Licence: "GPL",
+		Assets: []Asset{{URL: "https://builds.example.org/f.zip", SHA256: sha, Size: 50 << 20, Take: []string{"ffmpeg", "ffprobe"}}}}}
+	mac := p
+	mac.GOARCH = "arm64"
+	ffOf := func(q Probe) Check {
+		for _, c := range Preflight(context.Background(), q, map[string]string{"MEDIA_ROOT": "/Volumes/Hobbies"}, "/Users/me") {
+			if c.ID == "ffmpeg" {
+				return c
+			}
+		}
+		return Check{}
+	}
+	if c := ffOf(mac); c.OK || c.Install != "ffmpeg" || !strings.HasPrefix(c.Fix, "Install gets ffmpeg 7.1 from builds.example.org (about 50 MB, GPL)") || !strings.Contains(c.Fix, "brew install ffmpeg") {
+		t.Errorf("Install offered: %+v", c)
+	}
+	if c := ffOf(p); c.Install != "" {
+		t.Errorf("no build pinned for this machine's processor: no Install: %+v", c)
+	}
+	files[filepath.Join(BinDir("/Users/me"), "ffmpeg")] = true
+	files[filepath.Join(BinDir("/Users/me"), "ffprobe")] = true
+	if c := ffOf(mac); !c.OK || c.Note != "Installed by Homelab Wizard" || c.Install != "" {
+		t.Errorf("what Install fetched: %+v", c)
+	}
+	delete(files, filepath.Join(BinDir("/Users/me"), "ffmpeg"))
+	delete(files, filepath.Join(BinDir("/Users/me"), "ffprobe"))
 	have["ffmpeg"] = true
 	files["/opt/homebrew/bin/python3"] = true
 	if py, v := p.Python(context.Background()); len(py) != 1 || py[0] != "/opt/homebrew/bin/python3" || v != "3.12" {

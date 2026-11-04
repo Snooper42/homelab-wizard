@@ -2,6 +2,7 @@ package media
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,11 +22,14 @@ type Check struct {
 	Note  string `json:"note,omitempty"`
 	Fix   string `json:"fix,omitempty"`
 	Needs string `json:"needs,omitempty"` // which kinds can't run without it: "all", "video", "books"...
+	// Install is what the screen's Install button fetches for it here ("ffmpeg"), when it can.
+	Install string `json:"install,omitempty"`
 }
 
 // Probe is how preflight looks at this machine; tests replace its parts.
 type Probe struct {
 	GOOS     string
+	GOARCH   string
 	LookPath func(string) (string, error)
 	Output   func(ctx context.Context, name string, args ...string) (string, error)
 	Stat     func(string) (os.FileInfo, error)
@@ -37,7 +41,7 @@ type Probe struct {
 
 // DefaultProbe looks at this machine.
 func DefaultProbe() Probe {
-	return Probe{GOOS: runtime.GOOS, LookPath: exec.LookPath, Stat: os.Stat,
+	return Probe{GOOS: runtime.GOOS, GOARCH: runtime.GOARCH, LookPath: exec.LookPath, Stat: os.Stat,
 		Output: func(ctx context.Context, name string, args ...string) (string, error) {
 			ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 			defer cancel()
@@ -176,11 +180,11 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 
 	// ffmpeg the way this system installs it, not every system's way at once.
 	ffFix := map[string]string{
-		"darwin":  "Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh), then Check again",
-		"windows": "Install ffmpeg: winget install Gyan.FFmpeg in a terminal, then Check again",
+		"darwin":  "Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh)",
+		"windows": "Install ffmpeg: winget install Gyan.FFmpeg in a terminal",
 	}[p.GOOS]
 	if ffFix == "" {
-		ffFix = "Install ffmpeg with your package manager (sudo apt install ffmpeg; on a Steam Deck, Homebrew or Nix), then Check again"
+		ffFix = "Install ffmpeg with your package manager (sudo apt install ffmpeg; on a Steam Deck, Homebrew or Nix)"
 	}
 	for _, t := range []struct{ id, bin, name, fix, needs string }{
 		{"ffmpeg", "ffmpeg", "ffmpeg and ffprobe", ffFix, "video"},
@@ -189,14 +193,30 @@ func Preflight(ctx context.Context, p Probe, env map[string]string, home string)
 		{"calibredb", "calibredb", "Calibre's tools", "Install the Calibre app (Calibre-Web doesn't include its tools)", "books"},
 	} {
 		_, err := p.LookPath(t.bin)
+		note := "Installed"
+		install := ""
+		if t.id == "ffmpeg" {
+			// The copy Install fetched, after one on PATH; none: Install, where a build is pinned.
+			if err != nil {
+				if _, e := p.Stat(filepath.Join(BinDir(home), exe(p.GOOS, "ffprobe"))); e == nil {
+					if _, err = p.Stat(filepath.Join(BinDir(home), exe(p.GOOS, "ffmpeg"))); err == nil {
+						note = "Installed by Homelab Wizard"
+					}
+				}
+			}
+			if pin, ok := FFmpegPin(p.GOOS, p.GOARCH); ok && err != nil {
+				install = "ffmpeg"
+				t.fix = fmt.Sprintf("Install gets ffmpeg %s from %s (about %d MB, %s), checked before it runs; or %s", pin.Version, pin.Source, (pin.Size()+(1<<19))>>20, pin.Licence, lowerFirst(t.fix))
+			}
+		}
 		if t.id == "calibredb" {
 			err = nil
 			if _, ok := CalibreDir(p, env, home); !ok {
 				err = os.ErrNotExist
 			}
 		}
-		out = append(out, Check{ID: t.id, Name: t.name, OK: err == nil, Note: ifs(err == nil, "Installed", "Not installed"),
-			Fix: ifs(err != nil, t.fix, ""), Needs: t.needs})
+		out = append(out, Check{ID: t.id, Name: t.name, OK: err == nil, Note: ifs(err == nil, note, "Not installed"),
+			Fix: ifs(err != nil, t.fix, ""), Needs: t.needs, Install: install})
 	}
 	return out
 }
@@ -227,6 +247,13 @@ func Blocking(checks []Check, kind string, heavy bool) *Check {
 		return &checks[i]
 	}
 	return nil
+}
+
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToLower(s[:1]) + s[1:]
 }
 
 func ifs(c bool, a, b string) string {

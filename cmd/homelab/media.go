@@ -24,6 +24,8 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
 
   homelab media [status] [--json]          each library, the lock, and the last runs
   homelab media preflight [--json]         what Tidy Up needs on this machine, with the fixes
+  homelab media install ffmpeg [--yes]     fetch ffmpeg and ffprobe for Tidy Up alone (a pinned,
+                                           checked build in ~/.homelab-media/bin): no Terminal
   homelab media <library> <action> [...]   run an engine; library is music, books, movies, tv, or audiobooks
       music       scan, run, finalize, verify, free-space, navidrome-cleanup, playlists,
                   lyrics [--check], genres [--apply], genre-counts, undo, delete-backup,
@@ -57,6 +59,8 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 		return nil
 	case "preflight":
 		return h.mediaPreflight(ctx, args[1:])
+	case "install":
+		return h.mediaInstall(ctx, args[1:])
 	case "inbox":
 		return h.mediaEngine(ctx, "inbox", "scan", args[1:])
 	case "scrub":

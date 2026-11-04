@@ -11829,7 +11829,7 @@
     const gone = x2(FolderGone);
     return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone, title: gone ? "Its folder isn't there: plug in its drive" : title, onClick, children: label });
   }
-  function JobPanel({ job: job2, stop, done }) {
+  function JobPanel({ job: job2, stop, done, fix }) {
     const p3 = job2.progress;
     const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
@@ -11852,12 +11852,22 @@
         p3.note
       ] }),
       job2.ended && !job2.ended.ok && job2.ended.why && /* @__PURE__ */ u3("p", { class: "bad", children: job2.ended.why }),
+      fix && /* @__PURE__ */ u3("p", { class: "tidyfix", children: [
+        /* @__PURE__ */ u3("button", { class: "primary small", onClick: fix.run, children: fix.label }),
+        " ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: "Then it carries on by itself." })
+      ] }),
       !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-6).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: l3.text }, i3)) }),
       /* @__PURE__ */ u3("details", { class: "jobdetails", children: [
         /* @__PURE__ */ u3("summary", { children: "Show details" }),
         /* @__PURE__ */ u3("pre", { role: "log", children: job2.log.join("\n") })
       ] })
     ] });
+  }
+  function installFix(job2, d3, act) {
+    const ff = d3?.checks.find((c3) => c3.id === "ffmpeg" && !c3.ok && c3.install);
+    if (!job2.ended || job2.ended.ok || !ff || !["movies", "tv", "audiobooks"].includes(job2.kind)) return void 0;
+    return { label: "Install ffmpeg", run: () => act.install({ kind: job2.kind, action: job2.action }) };
   }
   function ConfirmSheet({ c: c3, close: close3 }) {
     const [sure, setSure] = d2(false);
@@ -12158,7 +12168,13 @@
   }
   function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
     const gone = d3.libraries.filter((l3) => !l3.found).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
-    const machine = d3.checks.filter((c3) => !c3.ok && c3.needs).map((c3) => ({ kind: "machine", title: c3.name, sub: `${c3.note}. ${c3.fix}`, warn: true }));
+    const machine = d3.checks.filter((c3) => !c3.ok && c3.needs).map((c3) => ({
+      kind: "machine",
+      title: c3.name,
+      sub: `${c3.note}. ${c3.fix}`,
+      warn: true,
+      go: c3.install ? { label: "Install", run: () => act.install() } : c3.id === "calibredb" ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
+    }));
     const todos = [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
     const waiting = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
@@ -12263,7 +12279,7 @@
           /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.run(d3.stale.kind, d3.stale.action), children: "Carry on" })
         ] })
       ] }),
-      job2 && /* @__PURE__ */ u3(JobPanel, { job: job2, stop: act.stop, done: p3.closeJob }),
+      job2 && /* @__PURE__ */ u3(JobPanel, { job: job2, stop: act.stop, done: p3.closeJob, fix: installFix(job2, p3.d, act) }),
       p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
         /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: p3.error })
@@ -12321,6 +12337,7 @@
     "audiobooks scan": "Scanning your audiobooks",
     "audiobooks run": "Merging your audiobooks",
     "inbox scan": "Checking Downloads",
+    "install ffmpeg": "Getting ffmpeg",
     "tdarr setup": "Setting up Tdarr",
     "arr apply": "Handing the downloads over"
   };
@@ -12370,7 +12387,15 @@
           draw4();
           if (!review) loadReview();
         },
-        cover: (id2, which) => go().TidyCover(id2, which)
+        cover: (id2, which) => go().TidyCover(id2, which),
+        // Fetches ffmpeg; once it's in, the job that wanted it runs again.
+        install: async (after2) => {
+          await run("install", "ffmpeg", [], true);
+          if (after2 && job?.ended?.ok) run(after2.kind, after2.action);
+        },
+        open: (url) => {
+          Promise.resolve(go().Open(url)).catch(showError);
+        }
       }
     });
     const looks2 = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
@@ -12383,6 +12408,9 @@
     });
   }
   tidyData.watch(draw4);
+  window.addEventListener("focus", () => {
+    if ($2("tidy").classList.contains("active") && (!job || job.ended) && (tidyData.value?.checks || []).some((c3) => !c3.ok && c3.needs)) tidyData.load();
+  });
   function loadTidy() {
     if (tab2 === "books" && !review) loadReview();
     return tidyData.load();

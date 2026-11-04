@@ -46,6 +46,10 @@ export interface TidyActions {
   settings: () => void;
   review: () => void;
   cover: (id: number, which: 'current' | 'new') => Promise<string>;
+  /** Fetches ffmpeg (the check's Install); after: the job to run again once it's in. */
+  install: (after?: { kind: string; action: string }) => void;
+  /** Opens a page in the browser (Calibre's download). */
+  open: (url: string) => void;
 }
 
 /** A question before a step that changes something. */
@@ -93,7 +97,7 @@ function Go({ label, primary, job, title, onClick }: { label: string; primary?: 
 }
 
 /** The job at hand: its step, its bar, what it's on, its notes, and its log. */
-export function JobPanel({ job, stop, done }: { job: TidyJob; stop: () => void; done: () => void }) {
+export function JobPanel({ job, stop, done, fix }: { job: TidyJob; stop: () => void; done: () => void; fix?: { label: string; run: () => void } }) {
   const p = job.progress;
   const pct = p && p.total ? Math.min(100, Math.round((p.done / p.total) * 100)) : undefined;
   const left = p?.eta ? (p.eta > 3600 ? `~${Math.floor(p.eta / 3600)}h ${Math.round((p.eta % 3600) / 60)}m left` : `~${Math.max(1, Math.round(p.eta / 60))}m left`) : '';
@@ -111,6 +115,7 @@ export function JobPanel({ job, stop, done }: { job: TidyJob; stop: () => void; 
       )}
       {p?.note && !job.ended && <p class="muted tidynow">Now: {p.note}</p>}
       {job.ended && !job.ended.ok && job.ended.why && <p class="bad">{job.ended.why}</p>}
+      {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
       {!!job.lines.length && (
         <Rows kind="tidylines">
           {job.lines.slice(-6).map((l, i) => <Row key={i} dot={l.tone} title={l.text} />)}
@@ -119,6 +124,13 @@ export function JobPanel({ job, stop, done }: { job: TidyJob; stop: () => void; 
       <details class="jobdetails"><summary>Show details</summary><pre role="log">{job.log.join('\n')}</pre></details>
     </Card>
   );
+}
+
+/** A films', TV's, or audiobooks' job stopped for want of ffmpeg, where the app can fetch it: Install, then the job again. */
+function installFix(job: TidyJob, d: app.TidyUp | null | undefined, act: TidyActions) {
+  const ff = d?.checks.find((c) => c.id === 'ffmpeg' && !c.ok && c.install);
+  if (!job.ended || job.ended.ok || !ff || !['movies', 'tv', 'audiobooks'].includes(job.kind)) return undefined;
+  return { label: 'Install ffmpeg', run: () => act.install({ kind: job.kind, action: job.action }) };
 }
 
 /** The question before a step that changes something, in a sheet. */
@@ -414,7 +426,9 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
 
 function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
   const gone: Todo[] = d.libraries.filter((l) => !l.found).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
-  const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true }));
+  // A tool missing: Install when the app can fetch it (ffmpeg), Calibre's download page for Calibre.
+  const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true,
+    go: c.install ? { label: 'Install', run: () => act.install() } : c.id === 'calibredb' ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }));
   const todos = [...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
   // What waits on you: the things with a button (a drive away or a tool missing is said, not counted), as the heading counts.
   const waiting = todos.filter((t) => t.go).length;
@@ -528,7 +542,7 @@ export function TidyScreen(p: TidyProps) {
       <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Overview'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
       {d?.lock && !job && <Card kind="notice" role="status"><strong>{names[d.lock.kind] || d.lock.kind}: {d.lock.action} is running</strong><span class="muted">Since {ago(d.lock.start)}. It carries on with this window closed.</span></Card>}
       {d?.stale && !d.lock && !job && <Card kind="notice"><strong>{names[d.stale.kind] || d.stale.kind}: {d.stale.action} stopped part-way</strong><span class="muted">Run it again to carry on where it left off. <button class="small" onClick={() => act.run(d.stale!.kind, d.stale!.action)}>Carry on</button></span></Card>}
-      {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} />}
+      {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)} />}
       {p.error && !d && <Card kind="notice"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}</span></Card>}
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
         <div class="finbody tidybody">

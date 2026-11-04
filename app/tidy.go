@@ -331,6 +331,12 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 		return []string{"media", "arr", "--apply"}, nil
 	case "trash":
 		cli = []string{"media", "restore"}
+	case "install":
+		// The Install button beside a missing tool: ffmpeg is the one it fetches.
+		if action != "ffmpeg" {
+			return nil, fmt.Errorf("no install of %q in Tidy Up", action)
+		}
+		cli = []string{"media", "install", "ffmpeg"}
 	default:
 		if _, err := media.Lookup(kind, action); err != nil {
 			return nil, err

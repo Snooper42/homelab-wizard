@@ -448,6 +448,37 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['tv', 'scan', [], false])) throw new Error(JSON.stringify(runs));
   } },
+  // ffmpeg missing, where the app can fetch it: Overview's row has Install; a TV scan that stops for want of it says
+  // why (not "exit status 1") with Install ffmpeg, which fetches it and then runs the scan again by itself.
+  { name: 'Tidy Up: ffmpeg missing: Install fetches it, and the scan that stopped carries on', screen: 'tidy', mock: (() => {
+    const fix = 'Install gets ffmpeg 7.1 from ffmpeg.martin-riedl.de (about 52 MB, GPL), checked before it runs; or install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh)';
+    const missing = { ...tidy, checks: tidy.checks.map((c) => (c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix, install: 'ffmpeg' } : c)) };
+    return { tidy: missing, tidyFails: { 'tv scan': `ffmpeg and ffprobe: Not installed. ${fix}` },
+      tidyEvents: { 'install ffmpeg': [{ type: 'step', n: 1, total: 2, text: 'Downloading ffmpeg 7.1' }, { type: 'progress', label: 'MB', done: 52, total: 52 }, { type: 'ok', text: 'ffmpeg 7.1 is ready: Tidy Up uses it from now on' }] },
+      tidyAfter: { 'install ffmpeg': { tidy, tidyFails: {} } } };
+  })(), run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("ffmpeg and ffprobe")';
+    await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
+    if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
+    await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: stopped")', { timeout: 5000 });
+    const why = (await page.textContent('#tidyJob p.bad')).trim();
+    if (!why.startsWith('ffmpeg and ffprobe: Not installed.')) throw new Error('the card says ' + why);
+    await page.click('#tidyJob .tidyfix button:text-is("Install ffmpeg")');
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: done")', { timeout: 8000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns.map((r) => r.slice(0, 2).join(' ')));
+    if (runs.join() !== 'tv scan,install ffmpeg,tv scan') throw new Error('ran: ' + runs.join());
+    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('ffmpeg and ffprobe'), null, { timeout: 5000 })
+      .catch(() => { throw new Error('the Install row stayed after ffmpeg was fetched'); });
+  } },
+  // Calibre missing: its row opens Calibre's download page (it's a whole app, so the app doesn't fetch it).
+  { name: 'Tidy Up: Calibre missing: its row opens Calibre’s download page', screen: 'tidy', mock: { tidy: { ...tidy, checks: tidy.checks.map((c) => (c.id === 'calibredb' ? { ...c, ok: false, note: 'Not installed', fix: "Install the Calibre app (Calibre-Web doesn't include its tools)" } : c)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    await page.click('#tidy .tidyneeds li:has-text("Calibre’s tools") button:text-is("Get Calibre"), #tidy .tidyneeds li:has-text("Calibre\'s tools") button:text-is("Get Calibre")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.opened === 'https://calibre-ebook.com/download', null, { timeout: 3000 })
+      .catch(async () => { throw new Error('opened ' + (await page.evaluate(() => window.__MOCK.opened))); });
+  } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
     { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },
