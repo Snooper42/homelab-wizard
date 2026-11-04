@@ -1104,6 +1104,38 @@ class Lyrics(Base):
         writes2, _ = self.run_lyrics(("old words", False), {"syncedLyrics": None, "plainLyrics": "new words"})
         self.assertEqual(len(writes2), 0, "plain never replaces plain")
 
+    def test_songs_lrclib_has_nothing_for_are_asked_again_only_after_a_month(self):
+        asked = []
+        def run():
+            song = self.lib["music"] / "A" / "B" / "01 Song.mp3"
+            if not song.exists():
+                self.touch(song)
+            mock.patch.object(music_tidy, "need").start()
+            mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+            mock.patch.object(music_tidy, "read_lyrics", return_value=("", False)).start()
+            mock.patch.object(music_tidy, "lrclib", side_effect=lambda info: asked.append(info) or None).start()
+            mock.patch.object(music_tidy.time, "sleep").start()
+            music_tidy.lyrics(mock.Mock(library=None, check=False), files=[song])
+            return self.results()[-1]
+        res = run()
+        self.assertEqual((res["not_found"], res["none"], len(asked)), (1, 0, 1), "asked once, and it is not counted as still to ask")
+        self.assertIn("aren't on LRCLIB yet: asked again in a month", self.out.getvalue())
+        res = run()
+        self.assertEqual((res["not_found"], len(asked)), (1, 1), "a second run doesn't ask again")
+        later = music_tidy.time.time() + 31 * 86400
+        with mock.patch.object(music_tidy.time, "time", return_value=later):
+            run()
+        self.assertEqual(len(asked), 2, "after a month it is asked again")
+
+    def test_untagged_songs_are_counted_apart(self):
+        song = self.touch(self.lib["music"] / "x.mp3")
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value=None).start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False), files=[song])
+        res = self.results()[-1]
+        self.assertEqual((res["untagged"], res["none"]), (1, 0), "no title to ask with: not a song that could get lyrics")
+
+
     def test_ape_pass_before_writing(self):
         song = self.touch(self.lib["music"] / "x.mp3")
         order = []
@@ -1115,6 +1147,60 @@ class Lyrics(Base):
             with self.assertRaises(RuntimeError):
                 music_tidy.write_lyrics(song, "[00:01.00] x", "embed")
         self.assertEqual(order, ["ape", "write"])
+
+
+
+class LrclibLookup(unittest.TestCase):
+    def answer(self, routes):
+        calls = []
+        def http_json(method, url, **kw):
+            calls.append(url)
+            for path, ans in routes.items():
+                if "/api/" + path + "?" in url:
+                    if isinstance(ans, tuple):  # one answer after another
+                        ans, routes[path] = ans[0], ans[1:]
+                    if isinstance(ans, Exception):
+                        raise ans
+                    return ans
+            raise AssertionError(url)
+        mock.patch.object(mc, "http_json", side_effect=http_json).start()
+        mock.patch.object(music_tidy.time, "sleep").start()
+        self.addCleanup(mock.patch.stopall)
+        return calls
+
+    def test_exact_record_first(self):
+        calls = self.answer({"get": {"syncedLyrics": "[00:01.00] x"}})
+        got = music_tidy.lrclib({"title": "Song", "artist": "A", "album": "B", "duration": 200})
+        self.assertEqual(got["syncedLyrics"], "[00:01.00] x")
+        self.assertEqual(len(calls), 1)
+
+    def test_search_when_the_exact_record_isnt_there(self):
+        hits = [
+            {"trackName": "Paranoid Android", "artistName": "Radiohead", "duration": 500, "syncedLyrics": "[00:01.00] far"},
+            {"trackName": "Paranoid Android (Remastered 2017)", "artistName": "Radiohead", "duration": 384, "plainLyrics": "plain"},
+            {"trackName": "Paranoid Android - 2009 Remaster", "artistName": "Radiohead", "duration": 385, "syncedLyrics": "[00:01.00] near"},
+            {"trackName": "Paranoid Android", "artistName": "Someone Else", "duration": 383, "syncedLyrics": "[00:01.00] cover"},
+        ]
+        calls = self.answer({"get": RuntimeError("GET https://lrclib.net/api/get answered 404"), "search": hits})
+        got = music_tidy.lrclib({"title": "Paranoid Android", "artist": "Radiohead", "album": "OK Computer OKNOTOK", "duration": 383})
+        self.assertEqual(got["syncedLyrics"], "[00:01.00] near", "the same title and artist, within 3 seconds, time-synced first")
+        self.assertEqual(len(calls), 2)
+
+    def test_no_album_or_length_goes_straight_to_search(self):
+        calls = self.answer({"search": [{"trackName": "Hey Jude", "artistName": "The Beatles", "duration": 431, "plainLyrics": "Hey Jude"}]})
+        got = music_tidy.lrclib({"title": "Hey Jude", "artist": "The Beatles", "album": "", "duration": 0})
+        self.assertEqual(got["plainLyrics"], "Hey Jude")
+        self.assertTrue(all("/api/search?" in c for c in calls), "/api/get needs all four: never asked without them")
+
+    def test_nothing_close_is_nothing(self):
+        self.answer({"get": RuntimeError("GET https://lrclib.net/api/get answered 404"),
+                     "search": [{"trackName": "Song", "artistName": "A", "duration": 290, "syncedLyrics": "x"}]})
+        self.assertIsNone(music_tidy.lrclib({"title": "Song", "artist": "A", "album": "B", "duration": 200}))
+
+    def test_slow_down_is_answered_once(self):
+        calls = self.answer({"get": (RuntimeError("GET https://lrclib.net/api/get answered 429"), {"syncedLyrics": "[00:01.00] x"})})
+        self.assertEqual(music_tidy.lrclib({"title": "Song", "artist": "A", "album": "B", "duration": 200})["syncedLyrics"], "[00:01.00] x")
+        self.assertEqual(len(calls), 2)
 
 
 class LinkedLibrary(Base):
