@@ -797,6 +797,7 @@ declare namespace media {
     note?: string;
     fix?: string;
     needs?: string;
+    install?: string;
   }
   interface Lock {
     pid: number;

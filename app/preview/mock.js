@@ -306,6 +306,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       (M.tidyRuns ??= []).push([kind, action, args, yes]);
       for (const ev of M.tidyEvents?.[`${kind} ${action}`] || [{ type: 'ok', text: 'Done' }, { type: 'result', action, ok: true }]) { await later(null, 60); emit('media:event', ev); }
       if (M.tidyFails?.[`${kind} ${action}`]) throw new Error(M.tidyFails[`${kind} ${action}`]);
+      // M.tidyAfter: what a job changes once it's done (Install: ffmpeg found, the scan that wanted it no longer fails).
+      if (M.tidyAfter?.[`${kind} ${action}`]) Object.assign(M, M.tidyAfter[`${kind} ${action}`]);
       // M.tidyHold: a job still running (until TidyStop).
       if (M.tidyHold) await new Promise((r) => { const t = setInterval(() => { if (M.tidyStopped) { clearInterval(t); r(); } }, 50); });
       return later(null);

@@ -365,6 +365,18 @@ class Trash(Base):
         self.assertEqual(len(gone), 3)
 
 
+class Which(Base):
+    def test_what_install_fetched_is_found_after_path(self):
+        name = "ffprobe-fetched-test"  # on no PATH
+        self.assertIsNone(mc.which(name))
+        bin_dir = self.home / ".homelab-media" / "bin"
+        bin_dir.mkdir(parents=True)
+        tool = bin_dir / (name + (".exe" if mc.IS_WINDOWS else ""))
+        tool.write_text("")
+        tool.chmod(0o755)
+        self.assertEqual(mc.which(name), str(tool))
+
+
 class Scrubber(Base):
     def test_orphans(self):
         m, t, mu, b = self.lib["movies"], self.lib["tv"], self.lib["music"], self.lib["books"]
