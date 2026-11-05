@@ -1,6 +1,9 @@
 import Foundation
 import Observation
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 /// Owns the app's security state: paired or not, locked or not.
 ///
@@ -71,7 +74,43 @@ final class AppCoordinator {
         api = APIClient(keychain: keychain)
         liveEvents = LiveEventManager(api: api)
         liveEvents.onUnauthorized = { [weak self] in self?.handleUnauthorized() }
+        #if os(macOS)
+        installMacLockTriggers()
+        #endif
     }
+
+    #if os(macOS)
+    /// The observers stay for the app's lifetime, and so does the coordinator.
+    @ObservationIgnored private var macObservers: [NSObjectProtocol] = []
+
+    /// A Mac can be walked away from without the app going to the
+    /// background, and with only the menu bar item open. So these are
+    /// installed here, not on a window, and they work while no window is open:
+    /// - the app is hidden
+    /// - the screen locks
+    /// - the screens or the Mac sleep
+    /// - fast user switching
+    private func installMacLockTriggers() {
+        let workspace = NSWorkspace.shared.notificationCenter
+        let distributed = DistributedNotificationCenter.default()
+        func on(_ center: NotificationCenter, _ name: Notification.Name, _ action: @escaping @MainActor @Sendable (AppCoordinator) -> Void) {
+            let token = center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    action(self)
+                }
+            }
+            macObservers.append(token)
+        }
+        on(NotificationCenter.default, NSApplication.didHideNotification) { $0.lock(promptOnReturn: true) }
+        on(workspace, NSWorkspace.willSleepNotification) { $0.lock() }
+        on(workspace, NSWorkspace.screensDidSleepNotification) { $0.lock() }
+        on(workspace, NSWorkspace.sessionDidResignActiveNotification) { $0.lock() }
+        on(distributed, Notification.Name("com.apple.screenIsLocked")) { $0.lock() }
+        on(distributed, Notification.Name("com.apple.screenIsUnlocked")) { $0.rearmAndRequestUnlock() }
+        on(workspace, NSWorkspace.screensDidWakeNotification) { $0.rearmAndRequestUnlock() }
+    }
+    #endif
 
     // MARK: Launch
 

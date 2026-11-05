@@ -4,10 +4,12 @@ import SwiftUI
 /// Multiplatform template creates with this one.
 @main
 struct HomelabClientApp: App {
+    static let mainWindowID = "main"
+
     @State private var coordinator = AppCoordinator()
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: Self.mainWindowID) {
             AppCoordinatorView()
                 .environment(coordinator)
         }
@@ -18,6 +20,17 @@ struct HomelabClientApp: App {
         .commands {
             HomelabCommands(coordinator: coordinator)
         }
+
+        #if os(macOS)
+        MenuBarExtra {
+            MenuBarView()
+                .environment(coordinator)
+        } label: {
+            MenuBarIcon()
+                .environment(coordinator)
+        }
+        .menuBarExtraStyle(.menu)
+        #endif
     }
 }
 

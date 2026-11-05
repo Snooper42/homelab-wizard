@@ -7,7 +7,7 @@ the Xcode project yourself (steps below).
 ```
 apple-client/
 ├── Shared/
-│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L)
+│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L), the Mac menu bar item
 │   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), AppAction, PairingCode, ServerEndpoint, DeviceCredential
 │   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel, AppActionsViewModel
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
@@ -65,7 +65,8 @@ hash. The client receives the token itself, once.
 | Token extracted from the device or backups | Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, `kSecAttrSynchronizable=false`, and the data-protection keychain on macOS. The accessibility attribute is checked again on every read, and a mismatched item is deleted. | `KeychainManager` |
 | Stale pairing after a reinstall | Keychain items survive app deletion on iOS, so the first launch after an install deletes them. | `AppCoordinator.purgeKeychainIfFreshInstall` |
 | Someone else picks up the unlocked device | Face ID / Touch ID / passcode (`.deviceOwnerAuthentication`) at launch and on every return from the background. A new `LAContext` each time, with no reuse window. With no passcode set, the app refuses to open. | `BiometricAuthManager`, `AppCoordinator` |
-| Mac left unattended | Also locks when the app is hidden, on screen lock, when the screens or the system sleep, and on fast user switching. ⌘L locks by hand. | `MacLockTriggers` |
+| Mac left unattended | Also locks when the app is hidden, on screen lock, when the screens or the system sleep, on fast user switching, and when its window closes. These triggers are installed in the coordinator, so they work with only the menu bar item open. ⌘L locks by hand. | `AppCoordinator.installMacLockTriggers` |
+| Menu bar item showing the homelab | It shows only what the unlocked app holds. Locked (including with its window closed), it says so and nothing else. | `MenuBarView` |
 | App switcher snapshot | An opaque shield covers the app whenever the scene isn't active (iOS). | `PrivacyShieldView` |
 | Data left in memory while locked | Locking stops the SSE stream and clears every reading. Late answers that arrive after the lock are dropped. | `LiveEventManager.clear` |
 | Secrets in logs | `os.Logger` only. Tokens and codes are never interpolated. Hosts and server text are `.private`. Error log lines use payload-free `logName`. The secret types print as `<redacted>` even through `print` or `dump`. | `SecureLog`, `APIError.logName` |
