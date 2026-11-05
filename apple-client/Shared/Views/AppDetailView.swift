@@ -23,18 +23,19 @@ struct AppDetailView: View {
                     .padding(.vertical, 4)
                 }
 
-                aboutSection(for: app)
-
-                actionsSection(for: app)
-
-                weekSection(for: app)
-
+                // What's wrong first, then what can be done, then the rest.
                 if let problem = app.notAnswering, !problem.isEmpty {
                     Section("Problem") {
                         Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
                             .foregroundStyle(.orange)
                     }
                 }
+
+                actionsSection(for: app)
+
+                weekSection(for: app)
+
+                aboutSection(for: app)
 
                 Section("Details") {
                     LabeledContent("State", value: app.stateLabel)
