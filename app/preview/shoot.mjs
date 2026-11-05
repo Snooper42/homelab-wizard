@@ -5189,11 +5189,11 @@ const smokes = [
   // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
   { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
-    await page.fill('#finSheet label:has-text("Amount") input', '12');
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("Save")');
-    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Give it a name.")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Type how much it is.")', { timeout: 5000 });
     // And Cancel asks again before it drops what was typed.
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
