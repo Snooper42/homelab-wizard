@@ -161,3 +161,63 @@ func (h *homelab) openMacApps(ctx context.Context) []string {
 	}
 	return opened
 }
+
+// drivesEvery is how often resumeDrives asks Docker again which drives
+// apps are waiting for; between, it looks at those drives alone.
+var drivesEvery = 10 * time.Minute
+
+// drivesWaitedFor are the external drives the homelab's apps wait for:
+// those Docker could not start because a folder they mount was not there,
+// with that folder on a drive that is unplugged now.
+func drivesWaitedFor(containers []docker.Container, missing func([]string) string) []string {
+	var out []string
+	for _, c := range containers {
+		if !failedToStart(c, true) {
+			continue
+		}
+		if d := missing(c.Binds); d != "" && !slices.Contains(out, d) {
+			out = append(out, d)
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// driveBack reports whether any of the drives waited for is there again.
+func driveBack(waiting []string, mounted func(string) bool) bool {
+	return slices.ContainsFunc(waiting, mounted)
+}
+
+// resumeDrives starts the apps that were waiting for a drive within a
+// minute of it coming back, rather than at the watchdog's next run: every
+// powerEvery it looks only at the drives waited for (no Docker call), and
+// asks Docker which those are every drivesEvery. The awake job runs it.
+func (h *homelab) resumeDrives(ctx context.Context) {
+	var waiting []string
+	var asked time.Time
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(powerEvery):
+		}
+		back := driveBack(waiting, diskspace.Mounted)
+		if !back && time.Since(asked) < drivesEvery {
+			continue
+		}
+		if back {
+			if started := h.startFailed(ctx, true); len(started) > 0 {
+				h.ui.Info("its drive is back: started %s", strings.Join(started, ", "))
+			}
+		}
+		client, err := h.docker(ctx)
+		if err != nil {
+			continue
+		}
+		containers, err := client.Containers(ctx)
+		if err != nil {
+			continue
+		}
+		waiting, asked = drivesWaitedFor(containers, diskspace.MissingDrive), time.Now()
+	}
+}

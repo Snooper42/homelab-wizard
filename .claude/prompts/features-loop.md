@@ -52,13 +52,12 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 5, 2026, 13:10 UTC, as Account 1's first session handed off):
-- #423 *A drive comes back*: open, main's #412 merged in, CI running on its head. Take it to merged first.
+**Open now** (Nov 5, 2026, 13:45 UTC):
+- #427 *A restart that keeps failing* (`claude/feature-restart-loop`): open, main's #423 merged in. This file's update rides it. Take it to merged first; maintenance's #426 (`claude/fix-lanes`) goes before it if green.
 - Then these branches, which have work and no PR, one at a time in this order. Each has its CHANGELOG line, tests with the failing-before proof, docs, and a `#PRn` placeholder for its number:
-  - `claude/feature-restart-loop` (#PR14): the watchdog stops an app Docker restarted 3 times in an hour. This file's update rides it.
   - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5).
   - `claude/feature-phones-expire` (#PR16): a phone's changes and Finances end after a day, a week, or a month.
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422.
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423.
 - Three remote branches whose work is all on main: `claude/feature-media-logic`, `claude/feature-tidy-duplicates`, `claude/feature-tidy-episodes`. The owner deletes them; list them in each report until they are gone.
 
 Still list what is open at the start of each round, as above: other sessions add to it.
