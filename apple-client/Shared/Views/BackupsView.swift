@@ -1,0 +1,236 @@
+import SwiftUI
+
+/// Backups, read-only: where they go, whether each app's copy is fresh,
+/// Duplicati's jobs, and the restore tests that prove they work.
+struct BackupsView: View {
+    let backups: BackupsViewModel
+
+    var body: some View {
+        Form {
+            if let overview = backups.overview {
+                summary(overview)
+                restore(overview)
+                vault(overview)
+            } else if let error = backups.overviewError {
+                Section {
+                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
+                }
+            }
+            jobs
+            if let copies = backups.overview?.copies, !copies.isEmpty {
+                Section("Each App's Copy") {
+                    ForEach(copies) { copy in
+                        CopyRow(copy: copy)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .overlay {
+            if backups.overview == nil, backups.overviewError == nil, backups.isLoading {
+                ProgressView("Reading the backups…")
+            }
+        }
+        .task { await backups.load() }
+        .refreshable { await backups.load() }
+        .navigationTitle("Backups")
+    }
+
+    // MARK: Sections
+
+    private func summary(_ o: BackupOverview) -> some View {
+        Section {
+            if o.stale > 0 {
+                Label("\(o.stale) \(o.stale == 1 ? "copy is" : "copies are") out of date", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+            } else if o.copies.isEmpty {
+                Label("No backups yet", systemImage: "externaldrive.badge.questionmark")
+                    .foregroundStyle(.secondary)
+            } else {
+                Label("Every copy is fresh", systemImage: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            }
+            if o.paused > 0 {
+                Label("\(o.paused) waiting for a drive", systemImage: "externaldrive.badge.timemachine")
+                    .foregroundStyle(.secondary)
+            }
+            if let last = o.lastRun {
+                LabeledContent("Last backup") { Text(last, format: .relative(presentation: .named)) }
+            }
+            LabeledContent("Goes to") {
+                Text(o.destination).textSelection(.enabled).multilineTextAlignment(.trailing)
+            }
+            if !o.destinationOK {
+                Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(.orange)
+            }
+        } header: {
+            Text("Nightly Backup")
+        } footer: {
+            if o.staleAfterHours > 0 {
+                Text("A copy counts as out of date after \(o.staleAfterHours) hours.")
+            }
+        }
+    }
+
+    private func restore(_ o: BackupOverview) -> some View {
+        Section("Restore Tests") {
+            if let tested = o.restoreTest.lastTest {
+                LabeledContent("Last passed") { Text(tested, format: .relative(presentation: .named)) }
+                if let summary = o.restoreTest.lastSummary, !summary.isEmpty {
+                    Text(summary).font(.callout).foregroundStyle(.secondary)
+                }
+            } else {
+                Text("No restore test has passed yet.").foregroundStyle(.secondary)
+            }
+            if o.restoreDue {
+                Label("A restore test is due. Run one on the computer (Backups › Test a restore).", systemImage: "calendar.badge.exclamationmark")
+                    .foregroundStyle(.orange)
+            }
+            if let kopia = o.kopia {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kopia").fontWeight(.semibold)
+                    if let failed = kopia.failed, !failed.isEmpty {
+                        Text("Last test failed: \(failed)").foregroundStyle(.red)
+                    } else if let tested = kopia.lastTest {
+                        Text("Last passed \(tested, format: .relative(presentation: .named))").foregroundStyle(.secondary)
+                    }
+                    if kopia.due {
+                        Text("A Kopia restore test is due.").foregroundStyle(.orange)
+                    }
+                }
+                .font(.callout)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func vault(_ o: BackupOverview) -> some View {
+        if o.vaultExport != nil || o.vaultDue || !o.plainExports.isEmpty {
+            Section("Password Vault Export") {
+                if let exported = o.vaultExport {
+                    LabeledContent("Last encrypted export") { Text(exported, format: .relative(presentation: .named)) }
+                }
+                if o.vaultDue {
+                    Label("An encrypted export is due.", systemImage: "key.horizontal")
+                        .foregroundStyle(.orange)
+                }
+                if !o.plainExports.isEmpty {
+                    Label("Unencrypted exports are lying in recovery-staging. Delete them on the computer:", systemImage: "exclamationmark.lock.fill")
+                        .foregroundStyle(.red)
+                    ForEach(o.plainExports, id: \.self) { name in
+                        Text(verbatim: name).font(.caption.monospaced()).textSelection(.enabled)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var jobs: some View {
+        if let jobs = backups.jobs, !jobs.isEmpty {
+            Section("Duplicati") {
+                ForEach(jobs) { job in
+                    JobRow(job: job)
+                }
+            }
+        } else if let error = backups.jobsError {
+            Section("Duplicati") {
+                Text(error).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct JobRow: View {
+    let job: DuplicatiJob
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack {
+                Image(systemName: icon).foregroundStyle(tint)
+                Text(job.name).fontWeight(.semibold)
+                Spacer()
+                if let size = job.size { Text(size).font(.caption).foregroundStyle(.secondary) }
+            }
+            if let finished = job.lastFinished {
+                Text("Finished \(finished, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)
+            } else {
+                Text("Hasn't run yet").font(.caption).foregroundStyle(.secondary)
+            }
+            if job.state == "failed", let message = job.errorMessage, !message.isEmpty {
+                Text(message).font(.caption).foregroundStyle(.red).lineLimit(4)
+            }
+            if let next = job.nextRun {
+                Text("Next \(next, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var icon: String {
+        switch job.state {
+        case "ok": "checkmark.circle.fill"
+        case "failed": "xmark.octagon.fill"
+        case "stale": "exclamationmark.triangle.fill"
+        default: "circle.dashed"
+        }
+    }
+
+    private var tint: Color {
+        switch job.state {
+        case "ok": .green
+        case "failed": .red
+        case "stale": .orange
+        default: .secondary
+        }
+    }
+}
+
+private struct CopyRow: View {
+    let copy: BackupCopy
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(copy.name)
+                Group {
+                    if let drive = copy.waitingFor, !drive.isEmpty {
+                        Text("Waiting for \(drive)")
+                    } else if let newest = copy.newest {
+                        Text("\(newest, format: .relative(presentation: .named)) · \(copy.count) \(copy.count == 1 ? "copy" : "copies")")
+                    } else {
+                        Text("No copy yet")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            if copy.size > 0 {
+                Text(copy.size, format: .byteCount(style: .file))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var icon: String {
+        switch copy.state {
+        case "fresh": "checkmark.circle.fill"
+        case "stale": "exclamationmark.triangle.fill"
+        case "paused": "pause.circle.fill"
+        default: "circle.dashed"
+        }
+    }
+
+    private var tint: Color {
+        switch copy.state {
+        case "fresh": .green
+        case "stale": .orange
+        default: .secondary
+        }
+    }
+}

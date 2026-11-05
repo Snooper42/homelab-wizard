@@ -368,3 +368,29 @@ struct IconTests {
         #expect(IconDecoder.thumbnail(from: bytes) == nil)
     }
 }
+
+@Suite("Backups")
+struct BackupsTests {
+    @Test func overviewFromTheComputer() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"destination":"/Volumes/Backup/homelab","destinationOK":true,"lastRun":"2026-11-05T03:12:00Z","envCopied":"0001-01-01T00:00:00Z",
+         "copies":[{"id":"immich","name":"Immich","newest":"2026-11-05T03:10:00Z","size":1073741824,"count":7,"state":"fresh"},
+                   {"id":"plex","name":"Plex","newest":"0001-01-01T00:00:00Z","size":0,"count":0,"state":"paused","waitingFor":"/Volumes/Media"}],
+         "stale":0,"paused":1,"restoreTest":{"lastTest":"2026-10-20T10:00:00Z","lastSummary":"restored 3 files","lastReminder":"0001-01-01T00:00:00Z"},
+         "restoreDue":false,"staleAfterHours":36,"vaultExport":"0001-01-01T00:00:00Z","vaultDue":true,"plainExports":["bitwarden_export.json"]}
+        """#.utf8))
+        #expect(o.envCopied == nil)
+        #expect(o.copies[1].newest == nil && o.copies[1].waitingFor == "/Volumes/Media")
+        #expect(o.restoreTest.lastSummary == "restored 3 files")
+        #expect(o.vaultExport == nil && o.vaultDue)
+        #expect(o.kopia == nil)
+    }
+
+    @Test func duplicatiJobs() throws {
+        let jobs = try JSONDecoder.homelab().decode([DuplicatiJob].self, from: Data(#"""
+        [{"id":"1","name":"Nightly","lastFinished":"2026-11-05T02:00:00Z","lastError":"0001-01-01T00:00:00Z","state":"ok","nextRun":"2026-11-06T02:00:00Z","size":"12.3 GB"}]
+        """#.utf8))
+        #expect(jobs[0].lastError == nil)
+        #expect(jobs[0].nextRun != nil)
+    }
+}

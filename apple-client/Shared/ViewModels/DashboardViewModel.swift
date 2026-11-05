@@ -40,6 +40,7 @@ final class DashboardViewModel {
     /// What the sidebar can show (Mac and iPad).
     enum SidebarItem: Hashable {
         case overview
+        case backups
         case apps(Filter)
     }
 
@@ -53,11 +54,13 @@ final class DashboardViewModel {
     let liveEvents: LiveEventManager
     let cards: CardsViewModel
     let icons: IconStore
+    let backups: BackupsViewModel
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.liveEvents = liveEvents
         cards = CardsViewModel(api: api, liveEvents: liveEvents)
         icons = IconStore(api: api)
+        backups = BackupsViewModel(api: api)
     }
 
     var hasLoaded: Bool { liveEvents.status != nil }

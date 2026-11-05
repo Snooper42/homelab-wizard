@@ -75,6 +75,12 @@ private struct PhoneDashboard: View {
                         Label("Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
                             .badge(model.failingChecks)
                     }
+                    NavigationLink {
+                        BackupsView(backups: model.backups)
+                    } label: {
+                        Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                            .badge(model.backups.needsAttention)
+                    }
                 }
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
                     let apps = model.apps(for: filter)
@@ -122,6 +128,9 @@ private struct SplitDashboard: View {
                     Label("Overview", systemImage: "gauge.with.dots.needle.33percent")
                         .badge(model.failingChecks)
                         .tag(DashboardViewModel.SidebarItem.overview)
+                    Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                        .badge(model.backups.needsAttention)
+                        .tag(DashboardViewModel.SidebarItem.backups)
                 }
                 Section("Apps") {
                     ForEach(DashboardViewModel.Filter.allCases) { filter in
@@ -139,11 +148,16 @@ private struct SplitDashboard: View {
                     .padding()
             }
         } content: {
-            if model.sidebar == .overview {
+            switch model.sidebar {
+            case .overview?:
                 OverviewView(cards: model.cards)
                     .navigationSplitViewColumnWidth(min: 300, ideal: 380)
                     .toolbar { toolbarItems }
-            } else {
+            case .backups?:
+                BackupsView(backups: model.backups)
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            default:
                 appList
             }
         } detail: {
