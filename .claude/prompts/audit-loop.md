@@ -354,7 +354,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
 20. (done: round 16) **Tidy Up's Undo from a crafted trash log** (data/media-trash.jsonl,
     `homelab media restore`): what the engine moves where when a line's
     `from` or `to` is a path outside the libraries, or a link.
-21. **Tidy Up's page-sent arguments** (app/tidy.go `TidyRun`'s `args`):
+21. (done: round 17) **Tidy Up's page-sent arguments** (app/tidy.go `TidyRun`'s `args`):
     passed to the CLI as they come; list which flags the media commands
     take and whether any of them reaches outside the libraries.
 
@@ -504,3 +504,14 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   `test_a_crafted_log_moves_nothing_that_is_not_in_the_trash` failed
   before (2 planted); `test_undo_takes_back_only_from_where_things_are_thrown`
   holds the Windows branch.
+- **Round 17 (item 21, the screen's arguments):** N12, Low. `TidyRun`
+  passed the page's `args` to `homelab media` as they came: `--library`
+  pointed a job at any folder, and `file` took any path (`--config` alone
+  was safe: Go's comes last, and argparse keeps the last). Only the app's
+  own page calls it, so it needs a bug there first (as L3). Now
+  `tidyScreenArgs` takes only what the screen sends (`--apply`, `--check`,
+  `--skip` ids, one Undo run). `TestTidyArgsTakesOnlyWhatTheScreenSends`
+  failed before (9 of 9 went through). The fake launcher's ffmpeg failure
+  now answers `movies scan --check`, since `unready` is refused before it
+  runs; `TestTidyRunSaysWhyItStopped` checks the same thing as before.
+  Items 19–21 done: the next come from what is added from here on.
