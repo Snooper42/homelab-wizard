@@ -110,7 +110,7 @@ The homelab looks after itself, and says what it did.
 - **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
 - **A restart that keeps failing** (S, *Built*, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Built*, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
-- **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#PR17).
+- **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#428).
 - **What happened overnight** (S, *Built*, #420): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."
 
 ## Security and privacy
