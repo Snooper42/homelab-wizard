@@ -37,17 +37,25 @@ final class DashboardViewModel {
         }
     }
 
+    /// What the sidebar can show (Mac and iPad).
+    enum SidebarItem: Hashable {
+        case overview
+        case apps(Filter)
+    }
+
     /// The selection in the sidebar (Mac and iPad).
-    var selectedFilter: Filter? = .all
+    var sidebar: SidebarItem? = .apps(.all)
     /// The selected app (Mac and iPad). Stored by id, so the detail follows live updates.
     var selectedAppID: AppStatus.ID?
     /// The app whose log is open in a sheet.
     var logsApp: AppStatus?
 
     let liveEvents: LiveEventManager
+    let cards: CardsViewModel
 
-    init(liveEvents: LiveEventManager) {
+    init(api: APIClient, liveEvents: LiveEventManager) {
         self.liveEvents = liveEvents
+        cards = CardsViewModel(api: api, liveEvents: liveEvents)
     }
 
     var hasLoaded: Bool { liveEvents.status != nil }
@@ -87,7 +95,13 @@ final class DashboardViewModel {
         return savings
     }
 
+    /// Status and the cards together, in one StatusBoard request. If that
+    /// fails, it falls back to Status alone.
     func refresh() async {
-        await liveEvents.refreshNow()
+        await cards.load()
+        if cards.error != nil { await liveEvents.refreshNow() }
     }
+
+    /// For the sidebar badge and the phone's overview row: failing checks.
+    var failingChecks: Int { cards.watchdog?.failing.count ?? 0 }
 }

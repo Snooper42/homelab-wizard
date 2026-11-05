@@ -85,6 +85,14 @@ final class LiveEventManager {
         refreshError = nil
     }
 
+    /// A Status read by some other call (StatusBoard), so it isn't read twice.
+    func ingest(_ fresh: HomelabStatus) {
+        guard streamTask != nil else { return } // stopped or locked: keep nothing
+        status = fresh
+        statusReadAt = Date()
+        refreshError = nil
+    }
+
     /// A fresh Status now (pull to refresh, ⌘R).
     func refreshNow() async {
         scheduleRefresh()

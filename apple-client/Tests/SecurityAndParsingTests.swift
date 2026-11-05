@@ -266,3 +266,62 @@ struct LogsTests {
         #expect(!native.hasLogs)
     }
 }
+
+@Suite("Cards")
+struct CardTests {
+    private func line(_ json: String) throws -> StatusCard {
+        try JSONDecoder.homelab().decode(StatusCard.self, from: Data(json.utf8))
+    }
+
+    @Test func watchdogBeforeItsFirstRun() throws {
+        let card = try line(#"{"board":1,"name":"watchdog","data":{"lastRun":"0001-01-01T00:00:00Z","checks":0,"failing":[],"pending":0,"week":{}}}"#)
+        guard case .watchdog(let w)? = card.data else { Issue.record("not a watchdog card"); return }
+        #expect(w.lastRun == nil)
+        #expect(w.weekUptime == nil)
+    }
+
+    @Test func watchdogWithFailures() throws {
+        let card = try line(#"""
+        {"board":2,"name":"watchdog","data":{"lastRun":"2026-11-05T10:00:00.123456789Z","checks":12,
+         "failing":[{"name":"immich","problem":"HTTP 502","since":"2026-11-05T09:00:00Z"}],"pending":1,"week":{"immich":0.5,"plex":1}}}
+        """#)
+        guard case .watchdog(let w)? = card.data else { Issue.record("not a watchdog card"); return }
+        #expect(w.failing.map(\.name) == ["immich"])
+        #expect(w.weekUptime == 0.75)
+    }
+
+    @Test func nullListsAreEmpty() throws {
+        let alerts = try line(#"{"board":1,"name":"alerts","data":null}"#)
+        #expect(alerts.data == .alerts([]))
+        let savings = try line(#"{"board":1,"name":"savings","data":null}"#)
+        #expect(savings.data == .savings([]))
+    }
+
+    @Test func errorsAndNotHere() throws {
+        let notHere = try line(#"{"board":1,"name":"usage","error":"not read here"}"#)
+        #expect(notHere.isNotHere)
+        let token = try line(#"{"board":1,"name":"alerts","error":"no NTFY_READ_TOKEN yet"}"#)
+        #expect(token.data == nil && token.error == "no NTFY_READ_TOKEN yet")
+    }
+
+    @Test func aBadPayloadOnlyCostsItsCard() throws {
+        let card = try line(#"{"board":1,"name":"protection","data":{"recent":[{"scenario":"x"}]}}"#)
+        #expect(card.data == nil)
+        #expect(card.error != nil)
+    }
+
+    @Test func attackPresentation() throws {
+        let card = try line(#"""
+        {"board":1,"name":"protection","data":{"enforced":true,"bouncer":"ok","week":3,"bannedNow":1,
+         "recent":[{"scenario":"http-probing","ip":"203.0.113.9","country":"de","when":"2026-11-05T08:00:00Z","banned":true}]}}
+        """#)
+        guard case .protection(let p)? = card.data else { Issue.record("not a protection card"); return }
+        #expect(p.recent.first?.scenarioWords == "Http probing")
+        #expect(p.recent.first?.flag == "🇩🇪")
+    }
+
+    @Test func savingsDays() {
+        #expect(SavingsPoint(date: "2026-11-05", annual: 1).day != nil)
+        #expect(SavingsPoint(date: "bad", annual: 1).day == nil)
+    }
+}

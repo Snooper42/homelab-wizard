@@ -17,7 +17,7 @@ struct DashboardView: View {
 
     init(coordinator: AppCoordinator) {
         api = coordinator.api
-        _model = State(initialValue: DashboardViewModel(liveEvents: coordinator.liveEvents))
+        _model = State(initialValue: DashboardViewModel(api: coordinator.api, liveEvents: coordinator.liveEvents))
         _actions = State(initialValue: AppActionsViewModel(
             api: coordinator.api,
             liveEvents: coordinator.liveEvents,
@@ -48,6 +48,13 @@ struct DashboardView: View {
         }
         .environment(actions)
         .environment(model)
+        // The cards change slowly: read them now, then every 5 minutes while unlocked.
+        .task {
+            while !Task.isCancelled {
+                await model.cards.load()
+                try? await Task.sleep(for: .seconds(300))
+            }
+        }
     }
 }
 
@@ -61,6 +68,12 @@ private struct PhoneDashboard: View {
             List {
                 Section {
                     OverviewHeader(model: model)
+                    NavigationLink {
+                        OverviewView(cards: model.cards)
+                    } label: {
+                        Label("Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
+                            .badge(model.failingChecks)
+                    }
                 }
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
                     let apps = model.apps(for: filter)
@@ -103,11 +116,17 @@ private struct SplitDashboard: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
-            List(selection: $model.selectedFilter) {
+            List(selection: $model.sidebar) {
                 Section {
+                    Label("Overview", systemImage: "gauge.with.dots.needle.33percent")
+                        .badge(model.failingChecks)
+                        .tag(DashboardViewModel.SidebarItem.overview)
+                }
+                Section("Apps") {
                     ForEach(DashboardViewModel.Filter.allCases) { filter in
                         Label(filter.title, systemImage: filter.systemImage)
                             .badge(model.count(for: filter))
+                            .tag(DashboardViewModel.SidebarItem.apps(filter))
                     }
                 }
             }
@@ -119,37 +138,12 @@ private struct SplitDashboard: View {
                     .padding()
             }
         } content: {
-            let filter = model.selectedFilter ?? .all
-            let apps = model.apps(for: filter)
-            List(apps, selection: $model.selectedAppID) { app in
-                AppRowView(app: app)
-                    .appActionControls(for: app)
-            }
-            .overlay {
-                if !model.hasLoaded {
-                    ProgressView("Loading…")
-                } else if apps.isEmpty {
-                    ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage)
-                }
-            }
-            .navigationTitle(filter.title)
-            #if os(macOS)
-            .navigationSubtitle(model.summary)
-            #endif
-            .navigationSplitViewColumnWidth(min: 260, ideal: 320)
-            .refreshable { await model.refresh() }
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        Task { await model.refresh() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .disabled(model.liveEvents.isRefreshing)
-                    .help("Read the status again (⌘R)")
-
-                    DeviceMenu()
-                }
+            if model.sidebar == .overview {
+                OverviewView(cards: model.cards)
+                    .navigationSplitViewColumnWidth(min: 300, ideal: 380)
+                    .toolbar { toolbarItems }
+            } else {
+                appList
             }
         } detail: {
             if let app = model.app(id: model.selectedAppID) {
@@ -161,6 +155,45 @@ private struct SplitDashboard: View {
                     description: Text("Choose an app to see its details.")
                 )
             }
+        }
+    }
+
+    private var appList: some View {
+        let filter: DashboardViewModel.Filter
+        if case .apps(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
+        let apps = model.apps(for: filter)
+        return List(apps, selection: $model.selectedAppID) { app in
+            AppRowView(app: app)
+                .appActionControls(for: app)
+        }
+        .overlay {
+            if !model.hasLoaded {
+                ProgressView("Loading…")
+            } else if apps.isEmpty {
+                ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage)
+            }
+        }
+        .navigationTitle(filter.title)
+        #if os(macOS)
+        .navigationSubtitle(model.summary)
+        #endif
+        .navigationSplitViewColumnWidth(min: 260, ideal: 320)
+        .refreshable { await model.refresh() }
+        .toolbar { toolbarItems }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            Button {
+                Task { await model.refresh() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .disabled(model.liveEvents.isRefreshing || model.cards.isLoading)
+            .help("Read the status and cards again")
+
+            DeviceMenu()
         }
     }
 }
