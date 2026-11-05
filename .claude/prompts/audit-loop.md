@@ -565,4 +565,8 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   hung); a move now leaves them behind, and a ticket from another machine
   is cleared. `TestAChangeWaitsForAnotherProcesssTurn`,
   `TestWatchdogWaitsOutAJob`, and `TestPackLeavesThisMachinesJobsBehind`
-  failed before.
+  failed before. CI's real agent test then hung: the startup's `up
+  --wait-media 15m` took the turn before waiting for the drive, so every
+  change (removing the agent, a phone's Restart) waited up to 15 minutes
+  behind it. It now waits for the drive first and takes its turn after
+  (`TestUpWaitsForTheDriveBeforeItsTurn` failed before).

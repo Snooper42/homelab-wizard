@@ -27,12 +27,27 @@ func changes(cmd string, args []string) bool {
 		return !hasArg(args, "--all") || applied(args)
 	case "restore-test":
 		return hasArg(args, "--auto") || applied(args)
+	case "up":
+		// The startup's up waits for the drive first, then takes its turn
+		// (runInstall): waiting for a drive changes nothing.
+		if waitsForMedia(args) {
+			return false
+		}
 	}
 	return applied(args)
 }
 
 func applied(args []string) bool {
 	return hasArg(args, "--apply") || hasArg(args, "--yes") || hasArg(args, "-y") || hasArg(args, "--apply=true")
+}
+
+func waitsForMedia(args []string) bool {
+	for _, x := range args {
+		if x == "--wait-media" || strings.HasPrefix(x, "--wait-media=") {
+			return true
+		}
+	}
+	return false
 }
 
 func hasArg(args []string, a string) bool {

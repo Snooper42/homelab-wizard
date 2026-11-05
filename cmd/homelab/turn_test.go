@@ -109,6 +109,9 @@ func TestTurnWhat(t *testing.T) {
 		{"status", nil, false},
 		{"media", []string{"inbox", "--apply"}, false},
 		{"agent", nil, false},
+		{"up", []string{"--apply"}, true},
+		{"up", []string{"--apply", "--wait-media", "15m"}, false},
+		{"up", []string{"--apply", "--wait-media=15m"}, false},
 	} {
 		if got := changes(c.cmd, c.args); got != c.want {
 			t.Errorf("changes(%s %v) = %v, want %v", c.cmd, c.args, got, c.want)
@@ -143,6 +146,48 @@ func TestWatchdogWaitsOutAJob(t *testing.T) {
 	homelabCmd(t, root, "", "watchdog")
 	if n := restarts(); n != 1 {
 		t.Errorf("not healed once the job ended (%d)", n)
+	}
+}
+
+// At sign-in the agent's up waits up to 15 minutes for the media drive.
+// It takes its turn once the drive is there, not before: waiting for a
+// drive changes nothing, and every other change (a phone's Restart,
+// removing the agent) would wait behind it.
+func TestUpWaitsForTheDriveBeforeItsTurn(t *testing.T) {
+	fakeDocker(t, nil)
+	media := filepath.Join(t.TempDir(), "not-mounted")
+	root, _ := repoCopy(t, "MEDIA_ROOT="+filepath.ToSlash(media))
+	t.Setenv(turn.Env, "")
+	type result struct {
+		out  string
+		code int
+	}
+	done := make(chan result, 1)
+	go func() {
+		out, code := homelabCmd(t, root, "", "up", "--apply", "--wait-media", "30s")
+		done <- result{out, code}
+	}()
+	select {
+	case r := <-done:
+		t.Fatalf("up did not wait for the drive (exit %d):\n%s", r.code, r.out)
+	case <-time.After(1500 * time.Millisecond):
+	}
+	if q := turn.Queue(root); len(q) != 0 {
+		t.Errorf("the turn is held while only waiting for the drive: %+v", q)
+	}
+	if err := os.MkdirAll(media, 0o755); err != nil { // the drive comes
+		t.Fatal(err)
+	}
+	select {
+	case r := <-done:
+		if r.code != 0 {
+			t.Fatalf("up (exit %d):\n%s", r.code, r.out)
+		}
+	case <-time.After(20 * time.Second):
+		t.Fatal("up did not go on once the drive was there")
+	}
+	if q := turn.Queue(root); len(q) != 0 {
+		t.Errorf("tickets left: %+v", q)
 	}
 }
 
