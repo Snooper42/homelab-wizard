@@ -1167,12 +1167,12 @@ class Lyrics(Base):
                 music_tidy.write_lyrics(song, "[00:01.00] x", "embed")
         self.assertEqual(order, ["ape", "write"])
 
-    def test_a_translation_after_each_caret_is_taken_off_synced_lyrics(self):
+    def test_a_translation_after_each_caret_gets_a_line_of_its_own(self):
         have = "[ar:Bad Bunny]\n[00:01.00]¡NUEVAYoL!^NEW YORK!\n[00:04.50]Si te quieres divertir^If you want to have fun\n[00:08.00]\n"
         writes, res = self.run_lyrics((have, True), None)
         self.assertEqual(len(writes), 1, "rewritten without asking LRCLIB")
         self.assertEqual((res["cleaned"], res["synced"], res["added"]), (1, 1, 0))
-        self.assertIn("taken off, so they read as lyrics", self.out.getvalue())
+        self.assertIn("each is on its own line under its original now", self.out.getvalue())
 
     def test_lyrics_without_carets_are_left_alone(self):
         writes, res = self.run_lyrics(("[00:01.00] one ^ two\n[00:02.00] three\n[00:03.00] four", True), None)
@@ -1209,8 +1209,11 @@ class LyricsText(Base):
 
     def test_normalize_keeps_times_and_tags(self):
         got = music_tidy.normalize_lyrics("\ufeff[ar:A]\r\n[00:01.00]Hola^Hello\r\n[00:02.00]\r\n[00:03.00]Adiós^Bye")
-        self.assertEqual(got, "[ar:A]\n[00:01.00]Hola\n[00:02.00]\n[00:03.00]Adiós")
-        self.assertEqual(music_tidy.normalize_lyrics("Hola^Hello\nAdiós^Bye"), "Hola\nAdiós")
+        self.assertEqual(got, "[ar:A]\n[00:01.00]Hola\n[00:01.00]Hello\n[00:02.00]\n[00:03.00]Adiós\n[00:03.00]Bye",
+                         "both languages, the translation under its original at the same time")
+        self.assertEqual(music_tidy.normalize_lyrics("Hola^Hello\nAdiós^Bye"), "Hola\nHello\nAdiós\nBye")
+        self.assertEqual(music_tidy.normalize_lyrics("[00:01.00][00:09.00]Hola^Hello\n[00:02.00]Sí^"),
+                         "[00:01.00][00:09.00]Hola\n[00:01.00][00:09.00]Hello\n[00:02.00]Sí", "a line's every time; no empty translation")
 
     def test_a_lyrics_file_beside_the_song_comes_first_as_in_navidrome(self):
         song = self.touch(self.lib["music"] / "A" / "B" / "01 NUEVAYoL.m4a")
@@ -1226,7 +1229,7 @@ class LyricsText(Base):
         with mock.patch.dict(sys.modules, {"mutagen": fake}):
             music_tidy.write_lyrics(song, "[00:01.00]¡NUEVAYoL!^NEW YORK!\r\n[00:02.00]Si^If", "embed")
         fake.File.assert_not_called()
-        self.assertEqual(song.with_suffix(".lrc").read_text(encoding="utf-8"), "[00:01.00]¡NUEVAYoL!\n[00:02.00]Si")
+        self.assertEqual(song.with_suffix(".lrc").read_text(encoding="utf-8"), "[00:01.00]¡NUEVAYoL!\n[00:01.00]NEW YORK!\n[00:02.00]Si\n[00:02.00]If")
         self.assertTrue(music_tidy.read_lyrics(song)[1])
 
 
@@ -1279,7 +1282,7 @@ class LrclibLookup(unittest.TestCase):
                 {"trackName": "NUEVAYoL", "artistName": "Bad Bunny", "duration": 184, "syncedLyrics": "[00:01.00]¡NUEVAYoL!"}]
         calls = self.answer({"get": exact, "search": hits})
         got = music_tidy.lrclib({"title": "NUEVAYoL", "artist": "Bad Bunny", "album": "DeBÍ TiRAR MáS FOToS", "duration": 183})
-        self.assertEqual(got["syncedLyrics"], "[00:01.00]¡NUEVAYoL!", "synced, and the one without a translation in it")
+        self.assertEqual(got["syncedLyrics"], "[00:01.00]¡NUEVAYoL!^NEW YORK!", "synced, the closest length; a translation is kept")
         self.assertEqual(len(calls), 2)
 
     def test_an_exact_record_with_plain_lyrics_is_kept_when_none_are_synced(self):

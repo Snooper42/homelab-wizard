@@ -33,8 +33,8 @@ USER_AGENT = "Homelab Wizard Tidy Up (https://github.com/Snooper42/homelab-wizar
 # carriage return before it is the file's, not the line's).
 SYNCED_RE = re.compile(r"^[\s\ufeff]*\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\]", re.M)
 # Lyrics that carry a translation on each line, after a caret ("¡NUEVAYoL!^NEW YORK!"): players show
-# the caret and both languages on one line, and a line like that isn't read as time-synced by some.
-CARET_RE = re.compile(r"\^[^\n]*")
+# the caret and both languages run together on one line. A line's times, before its words.
+TIMES_RE = re.compile(r"^((?:\s*\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\])*)(.*)$")
 INSTRUMENTAL_RE = re.compile(r"(?i)[\(\[\-–\s]instrumental[\)\]\s]*$|^instrumental$")
 LOSSLESS_EXT = {".flac", ".wav", ".aiff", ".aif", ".alac", ".ape", ".wv"}
 
@@ -264,20 +264,31 @@ def genre_of(path):
 
 # ============================================================== lyrics (LRCLIB)
 def normalize_lyrics(text):
-    """Lyrics as players read them best: one kind of line ending, no byte-order mark, and no translation
-    after a caret on each line when most lines carry one (the original words stay, with their times)."""
+    """Lyrics as players read them best: one kind of line ending, no byte-order mark, and, when most lines
+    carry a translation after a caret, each translation on a line of its own under its original, with
+    the same time, so a player shows the two together as the song reaches them."""
     text = (text or "").replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n")
     # The words of each line: not its times, and not the file's own tags ([ar:...], [offset:...]).
     words = [re.sub(r"\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\]|<\d{1,3}:\d{2}(?:[.:,]\d{1,3})?>", "", l).strip()
              for l in text.split("\n") if not re.match(r"^\s*\[[a-z#]+:", l, re.I)]
     lines = [w for w in words if w]
     if lines and sum("^" in l for l in lines) * 2 >= len(lines):
-        text = "\n".join(CARET_RE.sub("", l).rstrip() for l in text.split("\n"))
+        out = []
+        for l in text.split("\n"):
+            times, words = TIMES_RE.match(l).groups()
+            if "^" not in words:
+                out.append(l)
+                continue
+            first, _, second = words.partition("^")
+            out.append(times + first.strip())
+            if second.strip():
+                out.append(times + second.strip())
+        text = "\n".join(out)
     return text
 
 
 def has_translation(text):
-    """Lyrics with a translation after a caret on most lines: normalize_lyrics takes it off."""
+    """Lyrics with a translation after a caret on most lines: normalize_lyrics puts each on its own line."""
     return bool(text) and normalize_lyrics(text) != (text or "").replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n")
 
 
@@ -422,9 +433,8 @@ def lrclib(info):
             continue
         if info["duration"] and h.get("duration") and abs(float(h["duration"]) - info["duration"]) > 3:
             continue
-        words = h.get("syncedLyrics") or h.get("plainLyrics") or ""
         rank = (bool(h.get("syncedLyrics")), bool(h.get("plainLyrics") or h.get("instrumental")),
-                not has_translation(words), -abs(float(h.get("duration") or 0) - (info["duration"] or 0)))
+                -abs(float(h.get("duration") or 0) - (info["duration"] or 0)))
         if best is None or rank > best[0]:
             best = (rank, h)
     if exact and (best is None or not best[1].get("syncedLyrics")):
@@ -480,7 +490,7 @@ def lyrics(args, files=None):
     seen = _load_not_found()
 
     def tidy(p, text):
-        """The song's own lyrics, with the translation after each caret taken off. Whether it was."""
+        """The song's own lyrics, each translation after a caret on a line of its own. Whether it was."""
         nonlocal cleaned, failed
         if check or not has_translation(text):
             return False
@@ -553,7 +563,7 @@ def lyrics(args, files=None):
         ui.ok("Lyrics added to %s songs; %s plain ones replaced by time-synced" % (mc.fmt_n(added), mc.fmt_n(upgraded)))
         # Every other song, said: why it has none, or why it kept what it had.
         for n, words in ((already, "already had time-synced lyrics"),
-                         (cleaned, "had a translation after a caret on each line: taken off, so they read as lyrics"),
+                         (cleaned, "had a translation after a caret on each line: each is on its own line under its original now"),
                          (counts["plain"], "keep plain lyrics: LRCLIB has no time-synced ones for them"),
                          (counts["instrumental"], "are instrumentals"),
                          (counts["not_found"], "aren't on LRCLIB yet: asked again in a month"),
