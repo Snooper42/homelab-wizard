@@ -3157,6 +3157,35 @@ const smokes = [
     await page.evaluate(() => document.documentElement.classList.add('companion'));
     await page.waitForSelector('#phoneReport', { state: 'visible', timeout: 2000 });
   } },
+  // An update's notes: hover "updates held" for why it is held, how to put it back, and its newest release's first lines,
+  // read from GitHub only when the card opens (and once); a release that cannot be read says why.
+  { name: 'Hover “updates held” for why, and what its newest release says', screen: 'status', mock: { releaseNotes: { dozzle: { app: 'dozzle', repo: 'amir20/dozzle', running: 'v8.4.2', placed: true, releases: [
+    { tag: 'v8.5.0', name: 'v8.5.0', when: '2026-10-30T12:00:00Z', url: 'https://github.com/amir20/dozzle/releases/tag/v8.5.0', notes: "## What's Changed\n- Logs from **every host** in one view by [@amir20](https://github.com/amir20)\n* Faster search\n- Fixed a crash" },
+  ] } } }, run: async (page) => {
+    const held = '#statusRows tr:has-text("Dozzle") .badge.hovers:has-text("updates held")';
+    await page.waitForSelector(held, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.calls.ReleaseNotes)) throw new Error('GitHub was asked before any hover');
+    await page.hover(held);
+    const card = page.locator(`${held} [role=tooltip]`);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    await card.locator(':text("Newest: v8.5.0")').waitFor({ timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    for (const want of [/Left out of the nightly updates after a rollback/, /Nightly updates on its page puts it back/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
+      if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
+    }
+    if (/What's Changed|Fixed a crash|\*\*|\]\(/.test(said)) throw new Error('more than its first lines, or its marks: ' + said);
+    await page.mouse.move(5, 5);
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    await page.hover(held);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.calls.ReleaseNotes)) !== 1) throw new Error('read again: ' + await page.evaluate(() => window.__MOCK.calls.ReleaseNotes));
+  } },
+  { name: 'Hover “updates held”: a release that cannot be read says why', screen: 'status', run: async (page) => {
+    const held = '#statusRows tr:has-text("Dozzle") .badge.hovers:has-text("updates held")';
+    await page.waitForSelector(held, { timeout: 5000 });
+    await page.focus(held);
+    await page.locator(`${held} [role=tooltip] :text("Could not read its releases: GitHub answered 503 Service Unavailable")`).waitFor({ timeout: 3000 });
+  } },
   { name: 'Roll back an update, from its page', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Dozzle") .badge:has-text("updates held")', { timeout: 5000 });
     await page.click('#statusRows tr:has(strong:text-is("Navidrome")) button.topage');

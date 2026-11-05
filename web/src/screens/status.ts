@@ -376,6 +376,7 @@ const appListActions: AppListActions = {
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
   install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
+  releaseNotes: (id) => go().ReleaseNotes(id),
   open: (url) => go().Open(url),
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),

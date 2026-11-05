@@ -34,6 +34,8 @@ export interface AppListActions {
   install: (a: api.AppStatus) => void;
   adopt: (a: api.AppStatus) => void;
   open: (url: string) => void;
+  /** Its project's releases newer than what it runs (GitHub), for "updates held" on hover. */
+  releaseNotes: (id: string) => Promise<releases.Preview>;
   /** Opens the app's page. */
   page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
@@ -152,6 +154,40 @@ export function WeekOutages({ outages = [], now = Date.now() }: { outages?: heal
   );
 }
 
+/** The first lines of a release's notes, as plain words: no headings' #, no list marks, no links' addresses. */
+export function firstLines(notes = '', n = 2): string[] {
+  return notes.split('\n').map((l) => l.replace(/^\s*(#+|[-*+]|\d+\.)\s+/, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim())
+    .filter((l) => l && !/^(what'?s changed|changelog|release notes?)$/i.test(l)).slice(0, n);
+}
+
+/** Each app's newest release, once read, for this run of the app. */
+const newest: Record<string, Promise<releases.Preview>> = {};
+
+/** "updates held" on hover: why, how to put it back, and what its newest release says, read when the card opens. */
+function HeldNotes({ a, load }: { a: api.AppStatus; load: (id: string) => Promise<releases.Preview> }) {
+  const [p, setP] = useState<releases.Preview | null>(null);
+  const [problem, setProblem] = useState('');
+  useEffect(() => {
+    let live = true;
+    (newest[a.id] ||= load(a.id)).then((v) => live && setP(v), (e) => { delete newest[a.id]; if (live) setProblem(String(e?.message || e)); });
+    return () => { live = false; };
+  }, [a.id]);
+  const r = p?.releases?.[0];
+  const when = r && new Date(r.when);
+  return (
+    <>
+      <span class="outline">Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back.</span>
+      {problem ? <span class="outline muted">Could not read its releases: {problem}</span>
+        : !p ? <span class="outline muted">Reading its newest release…</span>
+        : !r ? <span class="outline muted">Its project has published no releases{p.repo ? '' : ' that its image names'}.</span>
+        : <>
+          <span class="outline"><strong>Newest: {r.name && r.name !== r.tag ? `${r.tag}, ${r.name}` : r.tag}</strong>{when && !isNaN(when.getTime()) ? ` · ${when.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}{p.running ? ` (it runs ${p.running})` : ''}</span>
+          {firstLines(r.notes).map((l, i) => <span key={i} class="outline muted">{l}</span>)}
+        </>}
+    </>
+  );
+}
+
 /** Why an app last started, for "up 9 minutes" on hover (AppStatus.startedBy). */
 export const startedWords: Record<string, string> = {
   you: 'You started it',
@@ -167,7 +203,7 @@ export const startedWords: Record<string, string> = {
 };
 
 /** How long a running app has been up, and badges for what to know about it. */
-function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages?: health.Outage[] }) {
+function Uptime({ a, week, outages, load }: { a: api.AppStatus; week?: number; outages?: health.Outage[]; load: (id: string) => Promise<releases.Preview> }) {
   if (a.state !== 'running' || !a.since) return null;
   const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
@@ -177,7 +213,7 @@ function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages
         ? <Hover cls="local" label={up} tip={<><span class="outline">{startedWords[a.startedBy]}</span><span class="outfoot">{weekday(new Date(a.since))} {clock(new Date(a.since))}</span></>} />
         : <span class="local">{up}</span>}
       {!!a.restarts && <span class="badge warn" title="Docker restarted it after it stopped on its own; its log says why">restarted {a.restarts}×</span>}
-      {a.held && <span class="badge" title={`Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back`}>updates held</span>}
+      {a.held && <Hover cls="badge" wide lazy label="updates held" tip={<HeldNotes a={a} load={load} />} />}
       {a.settingsChanged && <span class="badge warn" title="Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones">settings changed</span>}
       {week !== undefined && week < 0.99 && <Hover cls="badge warn" wide label={`${Math.floor(week * 1000) / 10}% up this week`} tip={<WeekOutages outages={outages} />} />}
     </>
@@ -244,7 +280,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         <span class={'dot ' + cls} />{words}
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
-          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} />}
+          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} load={p.on.releaseNotes} />}
         {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}{pend.log && <> <button type="button" class="linkbtn" onClick={() => p.on.details(a)}>Details</button></>}</span>}
         {said && <span class="rowsaid" role="status">{said}</span>}
       </td>
