@@ -6,6 +6,7 @@ import SwiftUI
 /// at the computer.
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
+    @State private var editing: FinanceAccount?
 
     var body: some View {
         Form {
@@ -27,9 +28,9 @@ struct FinancesView: View {
                 Section {
                     EmptyView()
                 } footer: {
-                    Text(view.readOnly || finances.level < .edit
-                         ? "Read-only on this device. Change the plan on the computer."
-                         : "Change the plan on the computer. Editing from here isn't built yet.")
+                    Text(finances.canEdit
+                         ? "Balances can be typed in here. Change the rest of the plan on the computer."
+                         : "Read-only on this device. Change the plan on the computer.")
                 }
             } else if let error = finances.planError {
                 Section { Text(error).foregroundStyle(.secondary) }
@@ -43,6 +44,10 @@ struct FinancesView: View {
         }
         .task { await finances.loadPlan() }
         .refreshable { await finances.loadPlan() }
+        .sheet(item: $editing) { account in
+            BalanceEditor(account: account, finances: finances)
+        }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -149,22 +154,17 @@ struct FinancesView: View {
         }
         return Section {
             ForEach(sorted) { account in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(account.name)
-                        Text([account.kindTitle, account.institution].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                if finances.canEdit {
+                    Button {
+                        editing = account
+                    } label: {
+                        accountRow(account, view)
                     }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Money(value: view.start[account.id] ?? 0, currency: account.currency ?? view.plan.currency, finances: finances)
-                        if account.isOwed {
-                            Text("owed").font(.caption2).foregroundStyle(.secondary)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Update its balance")
+                } else {
+                    accountRow(account, view)
                 }
-                .accessibilityElement(children: .combine)
             }
             LabeledContent("Net worth") {
                 Money(value: view.netWorth, currency: view.plan.currency, finances: finances)
@@ -173,10 +173,35 @@ struct FinancesView: View {
         } header: {
             Text("Accounts Today")
         } footer: {
-            if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
-                Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
+            VStack(alignment: .leading, spacing: 4) {
+                if finances.canEdit {
+                    Text("Tap an account to type in its balance.")
+                }
+                if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
+                    Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
+                }
             }
         }
+    }
+
+    private func accountRow(_ account: FinanceAccount, _ view: FinancesPlanView) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(account.name)
+                Text([account.kindTitle, account.institution].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Money(value: view.start[account.id] ?? 0, currency: account.currency ?? view.plan.currency, finances: finances)
+                if account.isOwed {
+                    Text("owed").font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -253,6 +278,77 @@ private struct RowLine: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Types in one account's balance, as the computer's Edit screen does.
+private struct BalanceEditor: View {
+    let account: FinanceAccount
+    let finances: FinancesViewModel
+    @State private var text = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var value: Double? { FinancePlanEdit.parseAmount(text) }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Balance", text: $text)
+                        #if os(iOS)
+                        .keyboardType(.numbersAndPunctuation)
+                        #endif
+                        .font(.title2.monospacedDigit())
+                        .privacySensitive()
+                        .onSubmit(save)
+                } header: {
+                    Text(account.name)
+                } footer: {
+                    Text(account.isOwed
+                         ? "What it owes today, as the bank shows it, including what's pending."
+                         : "What's in it today, as the bank shows it.")
+                }
+                if let error = finances.saveError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Update Balance")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if finances.isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save", action: save).disabled(value == nil)
+                    }
+                }
+            }
+        }
+        #if os(macOS)
+        .frame(minWidth: 380, minHeight: 240)
+        #endif
+        .onAppear {
+            // Filled in only when amounts are already showing here.
+            if finances.amountsShown, !finances.amountsHiddenByPlan,
+               let current = finances.plan?.start[account.id] {
+                text = current.formatted(.number.precision(.fractionLength(0...2)).grouping(.never))
+            }
+        }
+    }
+
+    private func save() {
+        guard let value else { return }
+        Task {
+            if await finances.setBalance(of: account, to: value) { dismiss() }
+        }
     }
 }
 

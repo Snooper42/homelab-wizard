@@ -587,3 +587,60 @@ struct FinanceExtrasTests {
         #expect(LocalDay.parseMonth(nil) == nil)
     }
 }
+
+@Suite("Editing the Finances plan")
+struct FinancePlanEditTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"abc123","updated":"2026-10-01","cushion":500,"logos":{"chase":"data:image/png;base64,AAAA"},
+     "accounts":[{"id":"chk","name":"Everyday","kind":"checking","balance":2400,"updated":"2026-10-01","history":[{"date":"2026-10-01","annual":2400}]},
+                 {"id":"visa","name":"Visa","kind":"card","balance":350,"pending":20,"paidEach":true}],
+     "payments":[{"id":"rent","name":"Rent","amount":1200,"schedule":{"every":"month","day":1}}]}
+    """#.utf8))
+
+    @Test func setsOnlyTheBalanceAndTheDays() throws {
+        let edited = try #require(FinancePlanEdit.settingBalance(of: "visa", to: 412.345, today: "2026-11-05", in: plan))
+        guard case .array(let accounts)? = edited["accounts"] else { Issue.record("no accounts"); return }
+        #expect(accounts[1]["balance"] == .number(412.35))
+        #expect(accounts[1]["updated"] == .string("2026-11-05"))
+        #expect(accounts[1]["pending"] == .number(20))      // untouched
+        #expect(accounts[1]["paidEach"] == .bool(true))     // untouched
+        #expect(accounts[0] == plan["accounts"].flatMap { if case .array(let a) = $0 { return a[0] } else { return nil } })
+        #expect(edited["updated"] == .string("2026-11-05"))
+        // Everything the phone doesn't show goes back as it came, the rev included.
+        #expect(edited["rev"] == .string("abc123"))
+        #expect(edited["logos"] == plan["logos"])
+        #expect(edited["payments"] == plan["payments"])
+        #expect(edited["cushion"] == plan["cushion"])
+    }
+
+    @Test func refusesWhatItCannotSave() {
+        #expect(FinancePlanEdit.settingBalance(of: "nope", to: 1, today: "2026-11-05", in: plan) == nil)
+        #expect(FinancePlanEdit.settingBalance(of: "chk", to: .infinity, today: "2026-11-05", in: plan) == nil)
+        #expect(FinancePlanEdit.settingBalance(of: "chk", to: .nan, today: "2026-11-05", in: plan) == nil)
+        #expect(FinancePlanEdit.settingBalance(of: "chk", to: 2e12, today: "2026-11-05", in: plan) == nil)
+        #expect(FinancePlanEdit.settingBalance(of: "chk", to: 1, today: "today", in: plan) == nil)
+        #expect(FinancePlanEdit.settingBalance(of: "chk", to: 1, today: "2026-11-05", in: .array([])) == nil)
+    }
+
+    @Test func parsesAmountsAsTyped() {
+        let us = Locale(identifier: "en_US")
+        #expect(FinancePlanEdit.parseAmount("1,234.56", locale: us) == 1234.56)
+        #expect(FinancePlanEdit.parseAmount("$1,200", locale: us) == 1200)
+        #expect(FinancePlanEdit.parseAmount("-35.10", locale: us) == -35.1)
+        #expect(FinancePlanEdit.parseAmount("abc", locale: us) == nil)
+        #expect(FinancePlanEdit.parseAmount("", locale: us) == nil)
+        #expect(FinancePlanEdit.parseAmount("1.234,56", locale: Locale(identifier: "de_DE")) == 1234.56)
+    }
+
+    @Test func today() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        #expect(FinancePlanEdit.todayString(GoTime.parse("2026-11-05T23:30:00Z")!, calendar: calendar) == "2026-11-05")
+    }
+
+    @Test func rawPlanRoundTripsThroughJSON() throws {
+        let encoded = try JSONEncoder().encode(plan)
+        let back = try JSONDecoder().decode(JSONValue.self, from: encoded)
+        #expect(back == plan)
+    }
+}

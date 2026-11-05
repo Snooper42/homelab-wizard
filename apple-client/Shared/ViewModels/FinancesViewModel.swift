@@ -12,6 +12,11 @@ final class FinancesViewModel {
     private(set) var error: String?
     private(set) var isLoading = false
     private(set) var plan: FinancesPlanView?
+    /// The plan as the computer sent it, for an edit to send back whole.
+    @ObservationIgnored private var rawPlan: JSONValue?
+    private(set) var isSaving = false
+    private(set) var saveError: String?
+    private(set) var savedCount = 0
     private(set) var planError: String?
     private(set) var isLoadingPlan = false
     private(set) var ledger: FinanceLedger?
@@ -22,10 +27,46 @@ final class FinancesViewModel {
 
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private let device: @MainActor () -> DeviceInfo?
+    @ObservationIgnored private let authorize: @MainActor (String) async -> Bool
 
-    init(api: APIClient, device: @escaping @MainActor () -> DeviceInfo?) {
+    init(
+        api: APIClient,
+        device: @escaping @MainActor () -> DeviceInfo?,
+        authorize: @escaping @MainActor (String) async -> Bool
+    ) {
         self.api = api
         self.device = device
+        self.authorize = authorize
+    }
+
+    /// The edit level, and a plan the computer didn't mark read-only.
+    var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil }
+
+    /// Types in an account's balance, as on the computer. Returns whether it saved.
+    func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.settingBalance(of: account.id, to: value, today: FinancePlanEdit.todayString(), in: raw) else {
+            saveError = "That isn't an amount the plan can take."
+            return false
+        }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Update \(account.name)'s balance.") else { return false }
+        do {
+            let read = try await api.saveFinances(edited)
+            plan = read.view
+            rawPlan = read.rawPlan
+            saveError = nil
+            savedCount += 1
+            return true
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SaveFinances failed: \(apiError.logName, privacy: .public)")
+            saveError = apiError.errorDescription
+            // Another device saved first (or the save was refused): show the latest.
+            await loadPlan()
+            return false
+        }
     }
 
     var level: FinancesLevel { FinancesLevel(device()?.finances) }
@@ -61,11 +102,16 @@ final class FinancesViewModel {
         isLoadingPlan = true
         defer { isLoadingPlan = false }
         do {
-            plan = try await api.financesPlan()
+            let read = try await api.financesPlan()
+            plan = read.view
+            rawPlan = read.rawPlan
             planError = nil
         } catch {
             let apiError = APIError.from(error)
-            if case .forbidden = apiError { plan = nil }
+            if case .forbidden = apiError {
+                plan = nil
+                rawPlan = nil
+            }
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
             planError = apiError.errorDescription
         }

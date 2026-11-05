@@ -194,10 +194,37 @@ actor APIClient {
         try await call("FinancesWall", as: MoneyCard.self)
     }
 
-    /// The plan read forward: accounts today and the pay periods ahead.
+    /// The plan read forward: accounts today and the pay periods ahead,
+    /// with the plan itself as raw JSON, so an edit can send it back whole.
     /// It needs the view or edit level.
-    func financesPlan() async throws -> FinancesPlanView {
-        try await call("Finances", as: FinancesPlanView.self)
+    func financesPlan() async throws -> FinancesRead {
+        let (request, endpoint) = try callRequest("Finances", [])
+        return try Self.financesRead(from: try await send(request, to: endpoint))
+    }
+
+    /// Saves the plan, which must be the raw plan as read, edited, with its
+    /// `rev`. The computer refuses it if another device saved since. It
+    /// needs the edit level, and it's never retried.
+    func saveFinances(_ plan: JSONValue) async throws -> FinancesRead {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.withoutEscapingSlashes]
+        let body = try encoder.encode([plan])
+        guard body.count <= 4 << 20 else { throw APIError.responseTooLarge } // the companion's MaxCall
+        let (request, endpoint) = try authorizedRequest(path: "/api/call/SaveFinances", method: "POST", body: body)
+        Log.network.notice("SaveFinances, \(body.count, privacy: .public) bytes")
+        return try Self.financesRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
+    private static func financesRead(from data: Data) throws -> FinancesRead {
+        do {
+            let decoder = JSONDecoder.homelab()
+            let view = try decoder.decode(CallEnvelope<FinancesPlanView>.self, from: data).result
+            let raw = try decoder.decode(CallEnvelope<RawFinancesView>.self, from: data).result
+            return FinancesRead(view: view, rawPlan: raw.plan)
+        } catch {
+            Log.network.error("The Finances answer couldn't be decoded")
+            throw APIError.decoding
+        }
     }
 
     /// The transactions on record. It needs the view or edit level.
@@ -389,6 +416,11 @@ private struct CallEnvelope<Value: Decodable>: Decodable {
 private struct ErrorBody: Decodable {
     let error: String?
     let log: [String]?
+}
+
+/// A Finances view with only its plan kept, as raw JSON.
+private struct RawFinancesView: Decodable {
+    let plan: JSONValue
 }
 
 /// The `log` of a call's answer. `result` is ignored (AppAction answers null).

@@ -83,6 +83,13 @@ struct MoneyBill: Decodable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// One read of Finances: what the screens show, and the plan exactly as
+/// sent, for an edit to send back (see `FinancePlanEdit`).
+struct FinancesRead: Sendable {
+    let view: FinancesPlanView
+    let rawPlan: JSONValue
+}
+
 // MARK: - The plan, read forward (`finance.View`, the `Finances` call)
 
 /// The parts of the computer's Finances view the phone shows: the

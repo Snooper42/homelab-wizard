@@ -44,7 +44,7 @@ struct DashboardView: View {
                 }
             }
         ))
-        _finances = State(initialValue: FinancesViewModel(api: coordinator.api, device: device))
+        _finances = State(initialValue: FinancesViewModel(api: coordinator.api, device: device, authorize: authorize))
         _computer = State(initialValue: ComputerViewModel(
             api: coordinator.api,
             liveEvents: coordinator.liveEvents,
