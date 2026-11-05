@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 /// The companion server's address (`homelab serve`, port 8099).
 ///
@@ -60,7 +61,10 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
         var clean = URLComponents()
         clean.scheme = "https"
         if host.contains(":") {
-            // IPv6: the brackets must be in the URL, or the port can't be told apart.
+            // IPv6: the brackets must be in the URL, or the port can't be told
+            // apart. Only a real IPv6 address gets here, since an invalid
+            // percent-encoded host would raise.
+            guard IPv6Address(host) != nil else { throw ValidationError.notAURL }
             clean.percentEncodedHost = "[\(host)]"
         } else {
             clean.host = host

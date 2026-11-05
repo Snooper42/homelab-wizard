@@ -70,6 +70,8 @@ struct ServerEndpointTests {
         #expect(endpoint.url(path: "/api/me").absoluteString == "https://[fd7a:115c:a1e0::1]:8099/api/me")
         #expect(endpoint.owns(URL(string: "https://[FD7A:115C:A1E0::1]:8099/api/events")))
         #expect(!endpoint.owns(URL(string: "https://[fd7a:115c:a1e0::2]:8099/api/me")))
+        // Not an IPv6 address, though it has colons: refused, never built.
+        #expect(throws: (any Error).self) { try ServerEndpoint.parse("https://[not:an:address]:8099") }
     }
 
     @Test func ownsOnlyItsOwnOrigin() throws {
