@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #PR21 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -233,4 +234,4 @@ What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
 - **Health in one line** (S, *Idea*): "All well", or the one thing that needs you, at the top of every screen.
-- **Savings over time** (S, *Idea*): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>).
+- **Savings over time** (S, *Built*, #PR21): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.

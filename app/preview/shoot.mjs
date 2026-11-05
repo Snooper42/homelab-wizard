@@ -945,6 +945,26 @@ const smokes = [
   } },
   // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
+  // first record, month by month, newest first, and the card is not cut off.
+  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    await page.hover(tile);
+    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
+    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
+    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
+    const now = new Date().toLocaleString('en-US', { month: 'long' });
+    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    await page.focus(tile);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+  } },
   { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
     const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
     await page.waitForSelector(when, { timeout: 5000 });
