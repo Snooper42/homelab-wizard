@@ -11,6 +11,13 @@ struct FinancesView: View {
         Form {
             if let view = finances.plan {
                 accounts(view)
+                Section {
+                    NavigationLink {
+                        TransactionsView(finances: finances)
+                    } label: {
+                        Label("Transactions", systemImage: "list.bullet.rectangle")
+                    }
+                }
                 ForEach(view.periods.prefix(8)) { period in
                     PeriodSection(period: period, view: view, finances: finances)
                 }
@@ -158,6 +165,97 @@ private struct RowLine: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// What happened, newest first, by month, with a search.
+struct TransactionsView: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var search = ""
+
+    private var months: [(month: Date, items: [FinanceTransaction])] {
+        guard let ledger = finances.ledger else { return [] }
+        let calendar = Calendar.current
+        var out: [(month: Date, items: [FinanceTransaction])] = []
+        for t in ledger.newestFirst where t.matches(search) {
+            let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
+            if out.last?.month == month {
+                out[out.count - 1].items.append(t)
+            } else {
+                out.append((month, [t]))
+            }
+        }
+        return out
+    }
+
+    var body: some View {
+        List {
+            ForEach(months, id: \.month) { group in
+                Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
+                    ForEach(group.items) { t in
+                        TransactionRow(transaction: t, finances: finances)
+                    }
+                }
+            }
+        }
+        .overlay {
+            if finances.ledger == nil {
+                if let error = finances.ledgerError {
+                    ContentUnavailableView("Couldn't Read the Transactions", systemImage: "list.bullet.rectangle", description: Text(error))
+                } else {
+                    ProgressView("Reading the transactions…")
+                }
+            } else if months.isEmpty {
+                if search.isEmpty {
+                    ContentUnavailableView("No Transactions", systemImage: "list.bullet.rectangle")
+                } else {
+                    ContentUnavailableView.search(text: search)
+                }
+            }
+        }
+        .searchable(text: $search, prompt: "Payee, category, note or tag")
+        .task { await finances.loadLedger() }
+        .refreshable { await finances.loadLedger() }
+        .navigationTitle("Transactions")
+    }
+}
+
+private struct TransactionRow: View {
+    let transaction: FinanceTransaction
+    let finances: FinancesViewModel
+
+    var body: some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(transaction.payee.isEmpty ? "Transaction" : transaction.payee)
+                    if transaction.hasReceipt {
+                        Image(systemName: "paperclip").font(.caption2).foregroundStyle(.secondary)
+                            .accessibilityLabel("Receipt kept")
+                    }
+                }
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Spacer()
+            Money(value: transaction.amount, currency: finances.currency, finances: finances)
+                .foregroundStyle(transaction.amount > 0 ? .green : .primary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var detail: String {
+        var parts: [String] = []
+        if let date = transaction.date { parts.append(date.formatted(.dateTime.month(.abbreviated).day())) }
+        if let to = transaction.to, !to.isEmpty {
+            parts.append("\(finances.accountName(transaction.account) ?? "Account") → \(finances.accountName(to) ?? "Account")")
+        } else if let account = finances.accountName(transaction.account) {
+            parts.append(account)
+        }
+        if !transaction.category.isEmpty { parts.append(transaction.category) }
+        return parts.joined(separator: " · ")
     }
 }
 

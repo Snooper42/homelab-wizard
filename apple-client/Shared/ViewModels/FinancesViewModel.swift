@@ -14,6 +14,9 @@ final class FinancesViewModel {
     private(set) var plan: FinancesPlanView?
     private(set) var planError: String?
     private(set) var isLoadingPlan = false
+    private(set) var ledger: FinanceLedger?
+    private(set) var ledgerError: String?
+    private(set) var isLoadingLedger = false
     /// Amounts show only after a tap, and hide again on lock.
     var amountsShown = false
 
@@ -31,6 +34,27 @@ final class FinancesViewModel {
 
     /// Hide amounts in the plan: every device follows it.
     var amountsHiddenByPlan: Bool { plan?.plan.hideAmounts ?? money?.hidden ?? false }
+
+    func loadLedger() async {
+        guard canSeePlan, !isLoadingLedger else { return }
+        isLoadingLedger = true
+        defer { isLoadingLedger = false }
+        do {
+            ledger = try await api.financesLedger()
+            ledgerError = nil
+        } catch {
+            let apiError = APIError.from(error)
+            if case .forbidden = apiError { ledger = nil }
+            Log.ui.error("Ledger failed: \(apiError.logName, privacy: .public)")
+            ledgerError = apiError.errorDescription
+        }
+    }
+
+    func accountName(_ id: String) -> String? {
+        plan?.plan.accounts.first { $0.id == id }?.name
+    }
+
+    var currency: String { plan?.plan.currency ?? money?.currency ?? "USD" }
 
     func loadPlan() async {
         guard canSeePlan, !isLoadingPlan else { return }

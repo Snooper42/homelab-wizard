@@ -528,3 +528,33 @@ struct CatalogTests {
         #expect(catalog.entry("nope") == nil)
     }
 }
+
+@Suite("Ledger")
+struct LedgerTests {
+    private let json = #"""
+    {"transactions":[
+      {"id":"a","date":"2026-10-30","account":"chk","amount":-12.99,"payee":"Netflix","category":"Streaming","tags":["tv"]},
+      {"id":"c","date":"2026-11-02","account":"chk","amount":3000,"payee":"Sam's paycheck","category":"Paycheck"},
+      {"id":"b","date":"2026-11-02","account":"chk","amount":-500,"to":"sav","payee":"","note":"rainy day","receipt":"r1.jpg"}
+    ],"rev":"x"}
+    """#
+
+    @Test func newestFirstStable() throws {
+        let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(json.utf8))
+        #expect(ledger.newestFirst.map(\.id) == ["c", "b", "a"])
+        #expect(ledger.transactions.first { $0.id == "b" }?.hasReceipt == true)
+        #expect(ledger.transactions.first { $0.id == "b" }?.to == "sav")
+    }
+
+    @Test func search() throws {
+        let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(json.utf8))
+        #expect(ledger.transactions.filter { $0.matches("TV") }.map(\.id) == ["a"])
+        #expect(ledger.transactions.filter { $0.matches("rainy") }.map(\.id) == ["b"])
+        #expect(ledger.transactions.filter { $0.matches(" ") }.count == 3)
+    }
+
+    @Test func nullTransactions() throws {
+        let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"{"transactions":null}"#.utf8))
+        #expect(ledger.transactions.isEmpty)
+    }
+}

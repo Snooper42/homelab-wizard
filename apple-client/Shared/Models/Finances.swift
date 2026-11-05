@@ -279,3 +279,69 @@ struct FinanceRow: Decodable, Sendable, Equatable, Identifiable {
         saved = try c.decodeIfPresent(Bool.self, forKey: .saved) ?? false
     }
 }
+
+// MARK: - The ledger (`finance.Ledger`, the `FinancesLedger` call)
+
+/// What actually happened, as the household recorded it or brought it in.
+struct FinanceLedger: Decodable, Sendable, Equatable {
+    let transactions: [FinanceTransaction]
+
+    enum CodingKeys: String, CodingKey { case transactions }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        transactions = try c.decodeIfPresent([FinanceTransaction].self, forKey: .transactions) ?? []
+    }
+
+    /// Newest first, and by id when two share a day, so the order holds still.
+    var newestFirst: [FinanceTransaction] {
+        transactions.sorted { a, b in
+            switch (a.date, b.date) {
+            case let (x?, y?) where x != y: return x > y
+            case (nil, _?): return false
+            case (_?, nil): return true
+            default: return a.id > b.id
+            }
+        }
+    }
+}
+
+struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let date: Date?
+    /// The plan's account it happened on, by id.
+    let account: String
+    /// Signed as the account sees it: money in is plus, money out minus.
+    let amount: Double
+    let payee: String
+    let category: String
+    let note: String
+    /// For a transfer, the account the money went into.
+    let to: String?
+    let tags: [String]
+    /// A receipt is kept with it on the computer.
+    let hasReceipt: Bool
+
+    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, category, note, to, tags, receipt }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        account = try c.decodeIfPresent(String.self, forKey: .account) ?? ""
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+        payee = try c.decodeIfPresent(String.self, forKey: .payee) ?? ""
+        category = try c.decodeIfPresent(String.self, forKey: .category) ?? ""
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        to = try c.decodeIfPresent(String.self, forKey: .to)
+        tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
+        hasReceipt = !(try c.decodeIfPresent(String.self, forKey: .receipt) ?? "").isEmpty
+    }
+
+    /// Whether `text` is in the payee, the category, the note or a tag.
+    func matches(_ text: String) -> Bool {
+        let needle = text.trimmingCharacters(in: .whitespaces)
+        guard !needle.isEmpty else { return true }
+        return ([payee, category, note] + tags).contains { $0.localizedCaseInsensitiveContains(needle) }
+    }
+}

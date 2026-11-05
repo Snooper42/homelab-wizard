@@ -200,6 +200,11 @@ actor APIClient {
         try await call("Finances", as: FinancesPlanView.self)
     }
 
+    /// The transactions on record. It needs the view or edit level.
+    func financesLedger() async throws -> FinanceLedger {
+        try await call("FinancesLedger", as: FinanceLedger.self)
+    }
+
     // MARK: Changes
 
     /// Starts, stops or restarts an app on the computer (the `AppAction`
