@@ -226,6 +226,15 @@ final class AppCoordinator {
         pairingNotice = nil
         self.device = device
         serverName = (try? keychain.loadCredential())?.endpoint.displayName
+        // The app left the screen while the pairing request was out: it is
+        // paired now, but it opens locked, like any return from the background.
+        guard scenePhase == .active else {
+            serverName = nil
+            self.device = nil
+            autoPromptArmed = true
+            route = .locked
+            return
+        }
         // The person just entered a one-time code from the computer, which
         // proves presence for this session.
         route = .unlocked
