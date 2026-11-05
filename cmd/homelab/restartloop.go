@@ -16,7 +16,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
-	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -79,7 +78,7 @@ func (h *homelab) stopRestartLoops(ctx context.Context, client *docker.Client, c
 	}
 	// Another job changing the homelab has the turn (an update takes an app
 	// down and up again): its apps are its own until it ends, as in heal.
-	if _, busy := turn.First(h.root); busy && os.Getenv(turn.Env) == "" {
+	if h.jobRunning() {
 		return nil, nil
 	}
 	path := restartsPath(h.root)

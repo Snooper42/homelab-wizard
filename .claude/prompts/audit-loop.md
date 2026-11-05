@@ -381,7 +381,7 @@ Added after round 27 (the backlog was empty; worst first):
     domain), `data/phones.json` (their paired phones, able to change
     things), and sso. What does move in say before it applies them, and
     should it unpair phones and ask before keeping a tunnel?
-25. **Apps started without a turn** (#425's decision): a drive coming
+25. (done: round 30) **Apps started without a turn** (#425's decision): a drive coming
     back (#423), the battery saver, and the stop timer start apps while an
     update or backup may have them down on purpose. Show one starting an
     app mid-backup (its database stopped for the dump), then decide.
@@ -671,6 +671,14 @@ Added after round 27 (the backlog was empty; worst first):
   and warns to move in only a file you made, before it asks.
   `TestMoveInNamesWhatReachesIn` failed before. Kept, not dropped: a move
   between your own machines needs them (a decision for the owner).
+
+- **Round 30 (item 25, apps started without a turn):** N17, Low. The
+  battery saver, unplugged mid-update, could stop an app the update had
+  just started (which the update then rolls back), and the stop timer and
+  a drive coming back could start apps a job had down. Each now leaves
+  the apps to a job that has the turn (`jobRunning`, the watchdog's rule)
+  and looks again on its next run. `TestStartersWaitOutAJob` failed
+  before (the saver stopped sonarr, the timer started radarr, mid-job).
 
 ## For Account 2
 
