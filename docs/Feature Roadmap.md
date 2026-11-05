@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #PR18 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -125,7 +126,7 @@ Safe by default, and easy to check.
 - **Tailnet devices** (S, *Idea*): every device on the household's tailnet, when it was last seen, and Remove for a lost phone.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
-- **What CrowdSec stopped** (S, *Idea*): the addresses banned today, where from, and what they tried, on the proxy's page.
+- **What CrowdSec stopped** (S, *Built*, #PR18): the addresses banned today, where from, and what they tried, on the proxy's page (and CrowdSec's): Status › Nginx Proxy Manager.
 - **Two-step sign-in, nudged** (S, *Idea*): Setup and the weekly summary name each admin app without a second factor until it has one.
 
 ## Backups and data

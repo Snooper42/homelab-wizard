@@ -229,6 +229,7 @@ With a domain (in a copy, or once you are ready: Settings › `HOMELAB_DOMAIN` =
 - `update` rebuilds the proxy image with CrowdSec AppSec; `logs` shows no Lua errors (ISSUE-0001).
 - `bouncers list` shows `nginx_proxy_manager` with a recent last pull, and `./homelab doctor` says *the proxy's bouncer pulled decisions … seconds ago*.
 - With a domain, the ban test in [Runbooks](<Runbooks.md>) returns 403 on the phone, then loads again once lifted. Within a minute the app's Status › **Protection** lists it as a manual ban.
+- Status › Nginx Proxy Manager (or CrowdSec) › **What CrowdSec stopped today**: after the ban test, its row says *manual 'ban' from 'localhost'* with the address, **Banned**, and the time; the heading counts today's and those banned now. With nothing since midnight it says *Nothing yet today* and the week's count; with CrowdSec stopped it says it can't be read. Other apps' pages have no such card.
 - With a domain, open any app from a phone on Wi-Fi, then check which address the proxy logged (ISSUE-0002):
 
   ```sh
