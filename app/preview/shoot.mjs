@@ -191,6 +191,12 @@ const protection = {
     { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
     { scenario: 'http-bad-user-agent', ip: '192.0.2.150', country: 'SG', network: 'Example Transit', when: hoursAgo(19) },
   ],
+  // Today's, for the proxy's page: the first two of five (the rest are past MaxToday in this picture).
+  today: [
+    { scenario: 'vpatch-CVE-2017-9841', ip: '203.0.113.7', country: 'NL', network: 'Example Hosting B.V.', when: hoursAgo(0.8), banned: true },
+    { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
+  ],
+  todayCount: 5,
 };
 // Savings recorded nightly: apps added over two months.
 const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
@@ -1199,6 +1205,28 @@ const smokes = [
     const [act] = await page.evaluate(() => window.__MOCK.personActions);
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
+  } },
+  // What CrowdSec stopped: the proxy's page lists today's with where each came from and what it tried, says how
+  // many more there were, and other apps' pages have no such card.
+  { name: 'The proxy’s page: what CrowdSec stopped today', screen: 'app:nginx-proxy-manager', run: async (page) => {
+    const card = page.locator('#appStopped');
+    await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
+    await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
+    const first = card.locator('li').first();
+    for (const want of ['vpatch-CVE-2017-9841', '203.0.113.7 · NL · Example Hosting B.V.', 'Banned']) {
+      if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
+    }
+    await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
+  } },
+  { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
+    await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
+  } },
+  { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
   } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
