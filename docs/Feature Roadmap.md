@@ -19,7 +19,8 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #PR9 |
+| A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #418 |
+| Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #417 |
 | What changed since you looked | A dot beside each app on Status that restarted, updated, stopped, or started since your last visit, cleared once you leave | #416 |
 | Open, your way | Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer | #415 |
 | Pinned apps | Right-click › Pin to the top keeps an app in a Pinned group at the top of Status, and first in the menu bar's Open an app | #414 |
@@ -67,7 +68,7 @@ The things you do many times a day, made one click shorter.
 - **Pinned apps** (S, *Built*, #414): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
 - **Open, your way** (S, *Built*, #415): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
 - **What changed since you looked** (S, *Built*, #416): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.
-- **Remember where you were** (S, *Idea*): each screen keeps its scroll position and open sections between visits and restarts.
+- **Remember where you were** (S, *Built*, #417): each screen keeps its scroll position and open sections between visits and restarts.
 - **Drop files onto an app** (M, *Idea*): drop a PDF on Paperless's row and it goes into its import folder; an album folder on beets lands in its downloads; photos on Immich go to an album named for the day.
 
 ## Answers on hover
@@ -78,7 +79,7 @@ Questions the screen can answer without a click.
 - **The week's outages** (S, *Built*, #406): hover "94% up this week" for a strip of the week with each time it was down, and why.
 - **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Built*, #409): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.
-- **A backup's contents** (S, *Built*, #PR9): hover a backup's time on Backups for its size, what it holds, and how long it took.
+- **A backup's contents** (S, *Built*, #418): hover a backup's time on Backups for its size, what it holds, and how long it took.
 - **An update's notes** (S, *Idea*): hover "updates held" or an update waiting for the release's first lines.
 
 ## Memory and performance

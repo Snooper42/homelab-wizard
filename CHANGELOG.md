@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.
+- **Remember where you were:** each screen keeps how far down you were and which of its sections were open, between visits and after quitting. Picking another screen opens it at its own place, no longer partway down where the last one was.
 - **What changed since you looked:** each app on Status that restarted, updated, stopped, or started since you were last there has a dot beside its name saying which, until you leave Status again.
 - **Open, your way:** on Status, Alt-click (⌥-click on a Mac) an app's address to copy it, and Shift-click (⇧-click) **Open** to use its address on this computer when the domain does not answer.
 - **Pinned apps:** right-click an app on Status and pick **Pin to the top** to keep the apps you open most in a Pinned group at the top, in the order you pinned them, and first in the menu bar's Open an app. `homelab pin <app>` does it from the Terminal.
