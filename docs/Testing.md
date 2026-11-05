@@ -357,6 +357,7 @@ Run by the owner on their Mac, where the homelab runs day to day: 13 of 18 passe
 | M14 | The app in light, then dark (System Settings › Appearance) | The sidebar is translucent, the app menu has the app's items, and nothing is hard to read in either | Passed, Nov 3, 2026 |
 | M15 | Log out and back in | The menu bar item appears once, and its menu opens | Passed, Nov 3, 2026 |
 | M16 | On a MacBook with Immich installed: unplug it and wait up to 15 minutes (the watchdog's next run), then `docker ps` | Immich's machine learning is stopped and `scripts/logs/watchdog.log` says "on battery: paused … until it is plugged in"; plugged in again, it runs within 15 minutes | Passed, Nov 3, 2026 |
+| M16b | With the media drive unplugged and its apps waiting for it (Status says *Waiting for Hobbies*), plug the drive back in and wait a minute | Komga, Kavita, and the rest that waited start by themselves within about a minute, not at the watchdog's next run; the awake job's log says *its drive is back: started …* |
 | M17 | With a domain and no AdGuard Home: `./homelab domain setup <domain> --dns hosts --no-tunnel --apply`, then `ping -c1 ntfy.<domain>`; afterwards `./homelab domain resolver --undo` | One password window; the name answers from this Mac's address; after the undo, `/etc/hosts` has no homelab line and is otherwise as it was | Passed, Nov 3, 2026 |
 | M18 | `./homelab install beszel`, then Beszel's page | One system, *homelab*, with OrbStack's Linux machine's memory and CPUs (not the Mac's own), as Host says | Not yet |
 
