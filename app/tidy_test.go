@@ -124,6 +124,45 @@ func TestTidyArgs(t *testing.T) {
 	}
 }
 
+// The screen's arguments are the few the screen sends: never one that
+// points an engine at another folder (--library), other settings
+// (--config), or files of the page's choosing, so a bug in the page can't
+// have Tidy Up sort, rename, or throw away anything but the libraries.
+func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
+	for _, c := range []struct {
+		kind, action string
+		args         []string
+		want         string
+	}{
+		{"music", "lyrics", []string{"--check"}, "media music lyrics --check --events json"},
+		{"trash", "restore", []string{"scrubber-scan-1730770000000000000"}, "media restore scrubber-scan-1730770000000000000 --events json"},
+		{"books", "apply", []string{"--skip", "1049"}, "media books apply --skip 1049 --events json"},
+	} {
+		got, err := tidyArgs(c.kind, c.action, c.args, false)
+		if err != nil || strings.Join(got, " ") != c.want {
+			t.Errorf("%s %s %v: %v %v", c.kind, c.action, c.args, got, err)
+		}
+	}
+	for _, c := range []struct {
+		kind, action string
+		args         []string
+	}{
+		{"music", "run", []string{"--library", "/home/anna"}},
+		{"music", "run", []string{"--library=/home/anna"}},
+		{"movies", "scan", []string{"--config", "/tmp/other.json"}},
+		{"movies", "file", []string{"/home/anna/.ssh/id_ed25519"}},
+		{"books", "apply", []string{"--skip", "1,../2"}},
+		{"books", "apply", []string{"--skip"}},
+		{"trash", "restore", []string{"../../x"}},
+		{"trash", "restore", []string{"a-b-1", "a-b-2"}},
+		{"trash", "restore", nil},
+	} {
+		if got, err := tidyArgs(c.kind, c.action, c.args, false); err == nil {
+			t.Errorf("%s %s %v went through: %v", c.kind, c.action, c.args, got)
+		}
+	}
+}
+
 func TestTidyRunSendsTheEngineEvents(t *testing.T) {
 	a, w := testApp(t)
 	if err := a.TidyRun("movies", "scan", nil, false); err != nil {
@@ -149,7 +188,7 @@ func TestTidyRunSaysWhyItStopped(t *testing.T) {
 		t.Skip("the Windows launcher's echo can't write ✗")
 	}
 	a, w := testApp(t)
-	err := a.TidyRun("movies", "scan", []string{"unready"}, false)
+	err := a.TidyRun("movies", "scan", []string{"--check"}, false)
 	if err == nil || err.Error() != "ffmpeg and ffprobe: Not installed. Install ffmpeg: brew install ffmpeg in Terminal" {
 		t.Fatalf("the error: %v", err)
 	}

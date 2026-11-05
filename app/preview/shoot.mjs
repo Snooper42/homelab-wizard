@@ -4606,6 +4606,53 @@ const smokes = [
     await page.click('#finNav .fx-balance:has-text("Investments")');
     await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
   } },
+  // Resting on a group in the sidebar (or Tab to it) shows its accounts beside it: each balance, how long since it was
+  // updated, and a dot on one older than a month; the click still opens Net worth, and hidden amounts stay hidden there.
+  { name: 'A sidebar balance shows its accounts on hover, and how long since each was updated', screen: 'status',
+    mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'k401' ? { ...a, updated: '2026-09-10' } : a)) } } }, run: async (page) => {
+    const inv = '#finNav .fx-balance:has-text("Investments")';
+    await page.waitForSelector(inv, { state: 'visible', timeout: 5000 });
+    const tipOf = (sel) => page.$eval(sel, (b) => b.getAttribute('aria-describedby'));
+    const id = await tipOf(inv);
+    if (await page.isVisible(`#${id}`)) throw new Error('a card shows before any hover');
+    await page.hover(inv);
+    const card = page.locator(`#${id}[role=tooltip]`);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    const rows = (await card.locator('.fx-hoveracct').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim());
+    if (rows.length !== 3) throw new Error(`rows: ${rows.join(' | ')}`);
+    if (!rows.some((r) => r.startsWith('Robinhood') && /\$[\d,]+ updated 2 days ago$/.test(r))) throw new Error(`Robinhood: ${rows.join(' | ')}`);
+    if (!rows.some((r) => r.startsWith('Fidelity 401(k)') && /updated Sep 10, over a month ago$/.test(r))) throw new Error(`Fidelity: ${rows.join(' | ')}`);
+    if (await card.locator('.fx-hoveracct.stale .fx-staledot').count() !== 1) throw new Error('not one account marked as old');
+    if (!/One is over a month old/.test(await card.innerText())) throw new Error('no word on the old one: ' + await card.innerText());
+    if (/Checking|Savings|Mortgage/.test(await card.innerText())) throw new Error('another group’s account in it');
+    // Beside the button, in the window, and nothing over it; the button's name is still its own.
+    const placed = await page.evaluate((c) => {
+      const r = document.querySelector(`[aria-describedby="${c}"]`).getBoundingClientRect(), k = document.getElementById(c).getBoundingClientRect();
+      const hit = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2);
+      return k.left >= r.right && k.right <= innerWidth && k.bottom <= innerHeight && document.getElementById(c).contains(hit);
+    }, id);
+    if (!placed) throw new Error('the card is not beside the button, or is cut off or covered');
+    if (/updated/.test(await page.textContent(inv))) throw new Error('the card is in the button’s name');
+    await page.mouse.move(600, 400);
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    // Tab reaches it; Escape closes it.
+    await page.focus(inv);
+    await card.waitFor({ state: 'visible', timeout: 2000 });
+    await page.keyboard.press('Escape');
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    // The click still opens Net worth.
+    await page.click(inv);
+    await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
+  } },
+  { name: 'With amounts hidden, a balance’s hover hides them too', screen: 'status', mock: { finances: { ...finances, plan: { ...finances.plan, hideAmounts: true } } }, run: async (page) => {
+    const cash = '#finNav .fx-balance:has-text("Cash")';
+    await page.waitForSelector(cash, { state: 'visible', timeout: 5000 });
+    await page.hover(cash);
+    const id = await page.$eval(cash, (b) => b.getAttribute('aria-describedby'));
+    await page.waitForSelector(`#${id}`, { state: 'visible', timeout: 3000 });
+    const shown = await page.$$eval(`#${id} .fx-amount`, (a) => a.map((e) => [e.classList.contains('fx-masked'), e.textContent]));
+    if (!shown.length || shown.some(([m, t]) => !m || /\d/.test(t))) throw new Error('amounts show: ' + JSON.stringify(shown));
+  } },
   // A balance opens its own group: Net worth on Investments alone, each of its accounts a band of its own month by month
   // (its history), only its accounts listed, and Show everything back to all of them; another view forgets it.
   { name: 'A sidebar balance opens Net worth on its own group, each account month by month', screen: 'status', run: async (page) => {

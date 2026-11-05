@@ -9,7 +9,9 @@ import { Dot } from '../ui/Legend';
 import { IconButton, Widget } from '../ui/Widget';
 import { HideAmounts } from '../ui/HideAmounts';
 import { grouped, netWorth, worthOf, worthByMonth } from '../model';
-import { compact, dayShort, money, tick } from '../money';
+import { compact, daysBetween, dayShort, money, tick } from '../money';
+import { ago } from '../Worth';
+import { useHoverCard } from '../../parts/Hover';
 
 export function NetWorthWidget({ v, open }: { v: finance.View; open: () => void }) {
   if (!(v.plan.accounts || []).length) return null;
@@ -42,15 +44,53 @@ function Balances({ v, open, toggle }: { v: finance.View; open: (group: string) 
   return (
     <div class="fx-balances" role="group" aria-label="Balances">
       <div class="fx-caption fx-balhead">Accounts{toggle && <HideAmounts small hidden={!!v.plan.hideAmounts} toggle={toggle} />}</div>
-      {list.map((g) => (
-        <button key={g.key} type="button" class="fx-balance" onClick={() => open(g.key)}>
-          <Dot color={g.color} />
-          <span class="fx-legendlabel">{g.name}</span>
-          <Amount value={g.total} form="compact" tone={g.total < 0 ? 'out' : ''} />
-        </button>
-      ))}
+      {list.map((g) => <Balance key={g.key} v={v} g={g} open={open} />)}
       <div class="fx-balance total"><span class="fx-legendlabel">Net worth</span><span class="fx-amount">{compact(netWorth(v))}</span></div>
     </div>
+  );
+}
+
+/** When an account was last typed in: its own date, else its last kept balance's. */
+const updatedOn = (a: finance.Account): string | undefined => a.updated || (a.history || []).at(-1)?.date;
+
+/** Older than this (days), an account's balance is marked on the hover. */
+export const staleDays = 30;
+
+/** A group's accounts on hover: each with its balance and how long since it was updated, a dot on one older than a month. */
+export function GroupAccounts({ v, accounts }: { v: finance.View; accounts: finance.Account[] }) {
+  const stale = (a: finance.Account) => { const d = updatedOn(a); return !!d && daysBetween(d, v.today) > staleDays; };
+  const old = accounts.filter(stale);
+  return (
+    <>
+      <span class="fx-hoveraccts">
+        {accounts.map((a) => {
+          const d = updatedOn(a), late = stale(a);
+          return (
+            <span key={a.id} class={'fx-hoveracct' + (late ? ' stale' : '')}>
+              <span class="fx-hovername">{late && <span class="fx-staledot" aria-hidden="true" />}{a.name}</span>
+              <Amount value={worthOf(v, a)} form="whole" />
+              <span class="fx-hoverwhen">{ago(d, v.today)}{late ? ', over a month ago' : ''}</span>
+            </span>
+          );
+        })}
+      </span>
+      {!!old.length && <span class="outfoot">{old.length === 1 ? 'One is' : `${old.length} are`} over a month old: Update balances on Finances</span>}
+    </>
+  );
+}
+
+/** One group in the sidebar: a click opens Net worth on it; resting on it, or Tab, shows its accounts. */
+function Balance({ v, g, open }: { v: finance.View; g: ReturnType<typeof grouped>[number]; open: (group: string) => void }) {
+  const { on, card } = useHoverCard<HTMLButtonElement>(<GroupAccounts v={v} accounts={g.accounts} />, { side: 'right' });
+  return (
+    <>
+      <button type="button" class="fx-balance" {...on} onClick={() => open(g.key)}>
+        <Dot color={g.color} />
+        <span class="fx-legendlabel">{g.name}</span>
+        <Amount value={g.total} form="compact" tone={g.total < 0 ? 'out' : ''} />
+      </button>
+      {card}
+    </>
   );
 }
 
