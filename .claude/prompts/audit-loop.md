@@ -523,3 +523,8 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   formula. Neither method is a phone method: a phone builds its files
   itself. The week's outages (#406) keep only what the checks already
   said, drawn by Preact. No code change needed.
+- **Round 19 (#409, read through):** the sidebar balances' hover lists
+  each account and how old its balance is; account names (a bank
+  file's too) are drawn by Preact, with no raw HTML anywhere in the
+  change, and nothing new reaches a phone or the Go side. No code
+  change needed.
