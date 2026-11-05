@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #PR25 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -184,7 +185,7 @@ The household's phones as a second screen.
 
 - **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
-- **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
+- **Quick actions** (S, *Built*, #PR25): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).
 
 ## Media library cleanup
 

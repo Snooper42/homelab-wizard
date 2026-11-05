@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Quick actions on the phone:** on a phone that may make changes, hold an app's row on Status for its menu: Open, Start, Restart, Stop, Stop for a while, and Logs. A phone that only looks, and a wall screen, have none.
 - **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
 - **A restart that keeps failing:** an app Docker restarted 3 times within an hour is stopped instead of restarting forever, and the alert carries its last log lines. Its row on Status says so with a red dot until you start it again.
 - **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
