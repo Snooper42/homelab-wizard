@@ -68,6 +68,14 @@ struct BackupsView: View {
             if let last = o.lastRun {
                 LabeledContent("Last backup") { Text(last, format: .relative(presentation: .named)) }
             }
+            // The settings file (.env) goes with the nightly backup, as the computer says.
+            LabeledContent("Settings file") {
+                if let copied = o.envCopied {
+                    Text("Copied \(copied, format: .relative(presentation: .named))")
+                } else {
+                    Text("Not copied yet").foregroundStyle(.orange)
+                }
+            }
             LabeledContent("Goes to") {
                 Text(o.destination).textSelection(.enabled).multilineTextAlignment(.trailing)
             }
@@ -101,6 +109,11 @@ struct BackupsView: View {
             if let kopia = o.kopia {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kopia").fontWeight(.semibold)
+                    if !kopia.repository.isEmpty {
+                        Text("A second copy of the same folders, apart from Duplicati's, in \(kopia.repository)")
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
                     if let failed = kopia.failed, !failed.isEmpty {
                         Text("Last test failed: \(failed)").foregroundStyle(.red)
                     } else if let tested = kopia.lastTest {
