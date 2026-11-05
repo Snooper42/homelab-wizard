@@ -569,4 +569,11 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   --wait-media 15m` took the turn before waiting for the drive, so every
   change (removing the agent, a phone's Restart) waited up to 15 minutes
   behind it. It now waits for the drive first and takes its turn after
-  (`TestUpWaitsForTheDriveBeforeItsTurn` failed before).
+  (`TestUpWaitsForTheDriveBeforeItsTurn` failed before). Attacking the
+  queue itself: a move file someone else made could hold a ticket for
+  PID 1 (always running) dated in the future, never too old, first in
+  line for good, so every change, the nightly backup included, would
+  wait forever. Unpack now leaves out what Pack does (tickets, locks,
+  half-made saves), and a ticket over 10 minutes ahead of the clock holds
+  no one up. `TestUnpackLeavesOutAnotherMachinesJobs` and
+  `TestATicketFromTheFutureHoldsNoOneUp` failed before.

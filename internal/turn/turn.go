@@ -54,6 +54,10 @@ var (
 	alive  = processAlive
 	poll   = 250 * time.Millisecond
 	MaxAge = 12 * time.Hour
+	// Ahead is how far a ticket's time may be ahead of this clock (another
+	// process's clock read a moment later) before it is taken for one that
+	// holds no one up.
+	Ahead = 10 * time.Minute
 )
 
 // Take waits for this process's turn to change the homelab and holds it
@@ -133,7 +137,11 @@ func Queue(root string) []Ticket {
 		if err != nil {
 			continue // its job ended as we looked
 		}
-		if json.Unmarshal(data, &t) != nil || t.PID <= 0 || t.Host != hostname() || !alive(t.PID) || time.Since(t.At) > MaxAge {
+		// A ticket dated ahead of now (a clock set back, or a file someone
+		// else made) would never grow too old: it holds no one up either.
+		bad := json.Unmarshal(data, &t) != nil
+		age := time.Since(t.At)
+		if bad || t.PID <= 0 || t.Host != hostname() || !alive(t.PID) || age > MaxAge || age < -Ahead {
 			_ = os.Remove(file)
 			continue
 		}

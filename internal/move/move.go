@@ -245,6 +245,12 @@ func Unpack(path, root string) (Manifest, int, error) {
 		if !filepath.IsLocal(name) {
 			return m, n, fmt.Errorf("the move file holds %q, outside the homelab folder", h.Name)
 		}
+		// What Pack leaves out, a move file someone else made can hold: a
+		// ticket or a lock would stand for a job that is not running here
+		// and hold this machine's jobs up.
+		if skip(name) {
+			continue
+		}
 		switch h.Typeflag {
 		case tar.TypeDir:
 			err = r.MkdirAll(name, fs.FileMode(h.Mode)&fs.ModePerm|0o700) // #nosec G115 -- masked to the permission bits

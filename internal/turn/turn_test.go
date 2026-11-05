@@ -120,6 +120,38 @@ func TestTicketsLeftBehindHoldNoOneUp(t *testing.T) {
 	}
 }
 
+// A ticket dated ahead of now (a clock set back, or a move file someone
+// else made) never grows older than MaxAge, so it would stand first for
+// good: it is taken for one left behind, whoever holds it.
+func TestATicketFromTheFutureHoldsNoOneUp(t *testing.T) {
+	fakes(t, map[int]bool{1: true})
+	root := t.TempDir()
+	ahead := filepath.Join(Dir(root), fmt.Sprintf("%020d-%d.json", 0, 1))
+	if err := os.MkdirAll(Dir(root), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := json.Marshal(Ticket{PID: 1, What: "a job", At: time.Now().Add(24 * time.Hour), Host: hostname()})
+	if err := os.WriteFile(ahead, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	release, err := Take(ctx, root, "a backup", nil)
+	if err != nil {
+		t.Fatalf("waited behind a ticket from the future: %v", err)
+	}
+	release()
+	if _, err := os.Stat(ahead); !os.IsNotExist(err) {
+		t.Errorf("the ticket from the future was kept: %v", err)
+	}
+	// A clock a little ahead on the machine that made it is still a job.
+	near := someone(t, root, 1, "a job", time.Now().Add(time.Minute))
+	if q := Queue(root); len(q) != 1 {
+		t.Errorf("a ticket a minute ahead was cleared: %v", q)
+	}
+	_ = os.Remove(near)
+}
+
 // A job that gives up while it waits (the app quit, Ctrl-C) leaves the queue.
 func TestTakeGivesUpItsPlace(t *testing.T) {
 	fakes(t, map[int]bool{200: true})
