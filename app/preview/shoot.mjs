@@ -153,7 +153,10 @@ const backups = {
 const duplicatiJobs = [
   ['Homelab AppData', 6.7, '3.311 GiB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
   ['Homelab Photos', 11, '286 GB'], ['Homelab Secrets', 7.1, '1.20 MB'], ['Homelab Stack Data', 6.6, '96.2 MB'],
-].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok' }));
+].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok',
+  // What its last run was (Duplicati's metadata): Photos' is the long one.
+  ...(name === 'Homelab Photos' ? { took: 2460, holds: '301.2 GB', files: 48211, versions: 9, sources: ['/source/photos/library/', '/source/photos/upload/'] }
+    : name === 'Homelab AppData' ? { took: 212, holds: '3.6 GB', files: 18342, versions: 14, sources: ['/source/appdata/'] } : {}) }));
 const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
@@ -939,6 +942,27 @@ const smokes = [
     await page.click('label.app:has-text("Vikunja") input');
     await page.waitForSelector('#nothingToInstall:has-text("already running")', { timeout: 5000 });
     if (!(await page.isDisabled('#installBtn'))) throw new Error('Install should be greyed out');
+  } },
+  // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
+  // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
+    const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
+    await page.waitForSelector(when, { timeout: 5000 });
+    await page.hover(when);
+    const card = await page.waitForSelector(`${when} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    for (const want of [/^Last ran .+, in 41 minutes/, /Holds 301\.2 GB of yours, 48,211 files/, /286 GB where it is kept, 9 versions to go back to/, /Copies library, upload/, /Next run /]) {
+      if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
+    }
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${when} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    // Tab reaches another; one Duplicati says little about says only what it knows.
+    const secrets = '#dupCard li:has-text("Homelab Secrets") .when .hovers';
+    await page.focus(secrets);
+    const small = (await (await page.waitForSelector(`${secrets} [role=tooltip]`, { state: 'visible', timeout: 2000 })).innerText()).replace(/\s+/g, ' ');
+    if (!/^Last ran /.test(small) || /, in |Holds|versions|Copies/.test(small)) throw new Error('Secrets says: ' + small);
   } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });

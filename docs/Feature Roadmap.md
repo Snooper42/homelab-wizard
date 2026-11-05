@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #418 |
 | Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #417 |
 | What changed since you looked | A dot beside each app on Status that restarted, updated, stopped, or started since your last visit, cleared once you leave | #416 |
 | Open, your way | Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer | #415 |
@@ -78,7 +79,7 @@ Questions the screen can answer without a click.
 - **The week's outages** (S, *Built*, #406): hover "94% up this week" for a strip of the week with each time it was down, and why.
 - **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Built*, #409): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.
-- **A backup's contents** (S, *Idea*): hover a backup's time on Backups for its size, what it holds, and how long it took.
+- **A backup's contents** (S, *Built*, #418): hover a backup's time on Backups for its size, what it holds, and how long it took.
 - **An update's notes** (S, *Idea*): hover "updates held" or an update waiting for the release's first lines.
 
 ## Memory and performance

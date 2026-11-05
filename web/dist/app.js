@@ -6548,6 +6548,17 @@
       }
     );
   }
+  var sourceNames = (sources) => sources.map((s3) => s3.split("/").filter(Boolean).pop() || s3).join(", ");
+  function JobRun({ j: j3 }) {
+    const line = (text2, cls = "outline") => /* @__PURE__ */ u3("span", { class: cls, children: text2 });
+    return /* @__PURE__ */ u3(S, { children: [
+      line(never(j3.lastFinished) ? "Never ran" : `Last ran ${dateTimeText(new Date(j3.lastFinished))}` + (j3.took ? `, in ${tookText(j3.took)}` : "")),
+      j3.holds && line(`Holds ${j3.holds} of yours` + (j3.files ? `, ${j3.files.toLocaleString("en-US")} ${j3.files === 1 ? "file" : "files"}` : "")),
+      (j3.size || j3.versions) && line([j3.size && `${sizeText(j3.size)} where it is kept`, j3.versions && `${j3.versions} ${j3.versions === 1 ? "version" : "versions"} to go back to`].filter(Boolean).join(", ")),
+      !!j3.sources?.length && line(`Copies ${sourceNames(j3.sources)}`),
+      !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
+    ] });
+  }
   var drivesOf = (copies) => [...new Set(copies.map((c3) => driveName(c3.waitingFor || "")))].join(" and ");
   function BackupTiles({ o: o3, os, test }) {
     const copies = sortedCopies(o3);
@@ -6708,11 +6719,10 @@
             sub: j3.errorMessage || j3.state !== "ok" && word,
             subTone: j3.errorMessage ? "bad" : void 0,
             end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
-            whenTitle: (never(j3.lastFinished) ? "Never ran" : "Last ran " + dateTimeText(new Date(j3.lastFinished))) + (never(j3.nextRun) ? "" : "\nNext run " + dateTimeText(new Date(j3.nextRun))),
-            when: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
+            when: /* @__PURE__ */ u3(Hover, { label: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
               "next ",
               untilText(j3.nextRun)
-            ] })
+            ] }), tip: /* @__PURE__ */ u3(JobRun, { j: j3 }) })
           },
           j3.id
         );

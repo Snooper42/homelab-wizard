@@ -6,6 +6,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago, bytes, dateTimeText, dayText, never, untilText } from '../format';
 import { CardHead } from '../parts/Card';
+import { Hover } from '../parts/Hover';
 import { Row, Rows, type Tone } from '../parts/Row';
 import { Tile } from '../status/Tiles';
 
@@ -57,6 +58,23 @@ function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; tes
       {sub}
       {test && <span class="tileaction"><button id="restoreTest" class="small" title="Duplicati restores a dozen files from last night's Homelab AppData backup, and each is compared with the live file" onClick={test}>Test a restore</button></span>}
     </>} />;
+}
+
+/** A job's folders, by name: /source/appdata/immich/ is "immich". */
+const sourceNames = (sources: string[]) => sources.map((s) => s.split('/').filter(Boolean).pop() || s).join(', ');
+
+/** A job's last run on hover: when, how long it took, what it holds, the versions kept, its folders, and its next run. */
+export function JobRun({ j }: { j: duplicati.Job }) {
+  const line = (text: string, cls = 'outline') => <span class={cls}>{text}</span>;
+  return (
+    <>
+      {line(never(j.lastFinished) ? 'Never ran' : `Last ran ${dateTimeText(new Date(j.lastFinished))}` + (j.took ? `, in ${tookText(j.took)}` : ''))}
+      {j.holds && line(`Holds ${j.holds} of yours` + (j.files ? `, ${j.files.toLocaleString('en-US')} ${j.files === 1 ? 'file' : 'files'}` : ''))}
+      {(j.size || j.versions) && line([j.size && `${sizeText(j.size)} where it is kept`, j.versions && `${j.versions} ${j.versions === 1 ? 'version' : 'versions'} to go back to`].filter(Boolean).join(', '))}
+      {!!j.sources?.length && line(`Copies ${sourceNames(j.sources)}`)}
+      {!never(j.nextRun) && line(`Next run ${dateTimeText(new Date(j.nextRun))}`, 'outfoot')}
+    </>
+  );
 }
 
 /** The drives the paused copies' apps wait for, in words. */
@@ -200,8 +218,7 @@ export function Jobs({ jobs, place, problem, waitingFor, create }: JobsProps) {
           return (
             <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || (j.state !== 'ok' && word)} subTone={j.errorMessage ? 'bad' : undefined}
               end={j.size && <span class="size muted">{sizeText(j.size)}</span>}
-              whenTitle={(never(j.lastFinished) ? 'Never ran' : 'Last ran ' + dateTimeText(new Date(j.lastFinished))) + (never(j.nextRun) ? '' : '\nNext run ' + dateTimeText(new Date(j.nextRun)))}
-              when={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} />
+              when={<Hover label={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} tip={<JobRun j={j} />} />} />
           );
         })}
       </Rows>
