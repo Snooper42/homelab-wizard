@@ -529,6 +529,12 @@ html:not(.companion) .companion-only { display:none; }
    buttons this phone may use (html.can-change). */
 html.companion #choose, html.companion:not(.finances) #finances, html.companion:not(.finances) nav button[data-screen="finances"], html.companion nav button[data-screen="choose"], html.companion nav button[data-screen="setup"], html.companion nav button[data-screen="settings"], html.companion nav button[data-screen="tidy"], html.companion #tidy { display:none; }
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
+/* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
+html.companion .fx-export .menuwrap { display:inline-block; }
+.fx-export { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+/* Export and the toolbar's capsule at the header's top, as the capsule is elsewhere, level by their middles. */
+.header .fx-headtools { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-left:auto; align-self:flex-start; }
+html:is(.os-mac, .os-windows, .os-linux) .header .fx-headtools > .toolbar:not(:has(input)) { align-self:auto; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
 html.unpaired nav, html.unpaired main { display:none; }
