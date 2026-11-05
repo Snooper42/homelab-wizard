@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import Observation
 
 /// Follows `/api/events` and keeps the newest `HomelabStatus` for the screens.
@@ -61,6 +62,9 @@ final class LiveEventManager {
 
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private var streamTask: Task<Void, Never>?
+    /// The wait before the next reconnect, cut short when the network comes back.
+    @ObservationIgnored private var backoffWait: Task<Void, Never>?
+    @ObservationIgnored private var pathMonitor: NWPathMonitor?
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
     @ObservationIgnored private var lastReadingTask: Task<Void, Never>?
     @ObservationIgnored private var refreshAgain = false
@@ -75,12 +79,17 @@ final class LiveEventManager {
         guard streamTask == nil else { return }
         Log.events.info("Following live events")
         if status == nil { loadLastReading() }
+        watchNetwork()
         streamTask = Task { [weak self] in await self?.run() }
     }
 
     func stop() {
         streamTask?.cancel()
         streamTask = nil
+        backoffWait?.cancel()
+        backoffWait = nil
+        pathMonitor?.cancel()
+        pathMonitor = nil
         refreshTask?.cancel()
         refreshTask = nil
         lastReadingTask?.cancel()
@@ -158,12 +167,33 @@ final class LiveEventManager {
             attempt += 1
             let delay = Self.backoff(attempt: attempt)
             connection = .reconnecting(attempt: attempt, at: Date().addingTimeInterval(delay))
-            do {
-                try await Task.sleep(for: .seconds(delay))
-            } catch {
-                return // cancelled
-            }
+            // A wait of its own, so the network coming back can cut it short.
+            let wait = Task { try? await Task.sleep(for: .seconds(delay)) }
+            backoffWait = wait
+            await wait.value
+            backoffWait = nil
+            if Task.isCancelled { return }
         }
+    }
+
+    /// Reconnects at once when the network comes back (Wi-Fi to cellular,
+    /// Tailscale up again) instead of waiting out the backoff. Nothing
+    /// changes while the stream is live.
+    private func watchNetwork() {
+        guard pathMonitor == nil else { return }
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied, let self else { return }
+            Task { @MainActor in self.networkCameBack() }
+        }
+        monitor.start(queue: DispatchQueue(label: "homelab.live-events.path"))
+        pathMonitor = monitor
+    }
+
+    private func networkCameBack() {
+        guard case .reconnecting = connection, let wait = backoffWait else { return }
+        Log.events.info("The network is back; reconnecting now")
+        wait.cancel()
     }
 
     private enum StreamItem: Sendable {
