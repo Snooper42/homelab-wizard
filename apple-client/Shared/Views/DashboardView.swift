@@ -129,8 +129,20 @@ private struct PhoneDashboard: View {
                         Label("Computer", systemImage: "desktopcomputer")
                     }
                 }
+                let pinned = model.pinnedApps
+                if !pinned.isEmpty {
+                    Section("Pinned") {
+                        ForEach(pinned) { app in
+                            NavigationLink(value: app.id) {
+                                AppRowView(app: app)
+                            }
+                            .appActionControls(for: app)
+                        }
+                    }
+                }
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
-                    let apps = model.apps(for: filter)
+                    // Pinned apps are listed once, at the top.
+                    let apps = model.apps(for: filter).filter { $0.pinned != true }
                     if !apps.isEmpty {
                         Section {
                             ForEach(apps) { app in

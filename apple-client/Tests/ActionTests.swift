@@ -124,8 +124,8 @@ struct AppSettingTests {
 
     @Test func nativeAppsHaveOnlyAlerts() throws {
         let native = try app(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#)
-        #expect(AppSetting.available(for: native) == [.alerts])
-        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts"]) // what SetAppSetting takes
+        #expect(AppSetting.available(for: native) == [.alerts, .pinned])
+        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts", "pinned"]) // what SetAppSetting takes
     }
 }
 
@@ -147,5 +147,28 @@ struct GroupActionTests {
     @Test func progressLabel() {
         let p = AppActionsViewModel.GroupProgress(action: .restart, at: 1, of: 5)
         #expect(p.label == "Restarting 2 of 5…")
+    }
+}
+
+@Suite("Pinned apps and why they started")
+struct PinnedTests {
+    @Test func decodesPinnedAndStartedBy() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"running","startedBy":"watchdog","pinned":true},
+                 {"id":"b","name":"B","state":"running","pinned":true},{"id":"c","name":"C","state":"running"}],
+         "pinned":["b","a"]}
+        """#.utf8))
+        #expect(status.pinned == ["b", "a"])
+        #expect(status.apps[0].pinned == true && AppSetting.pinned.isOn(for: status.apps[0]))
+        #expect(status.apps[0].startedWords?.hasPrefix("The watchdog") == true)
+        #expect(status.apps[2].startedWords == nil)
+    }
+
+    @Test @MainActor func pinnedComeFirstInTheirOrder() async throws {
+        let live = LiveEventManager(api: APIClient(keychain: FakeCredentialStore(), protocolClasses: [StubProtocol.self]))
+        let model = DashboardViewModel(api: APIClient(keychain: FakeCredentialStore()), liveEvents: live)
+        // No status yet: nothing pinned, nothing listed.
+        #expect(model.pinnedApps.isEmpty)
+        #expect(model.apps(for: .all).isEmpty)
     }
 }

@@ -116,6 +116,23 @@ struct ConnectionBadge: View {
 // MARK: - Presentation
 
 extension AppStatus {
+    /// Why it last started, in the computer's words (web/src/status/AppList.tsx).
+    var startedWords: String? {
+        switch startedBy {
+        case "you": "You started it"
+        case "updated": "You updated it, so it started on its new version"
+        case "nightly": "The nightly update moved it to its new version"
+        case "update": "It was updated, and started on its new version"
+        case "fix": "Fix it restarted it"
+        case "watchdog": "The watchdog restarted it: it was unwell on two checks in a row"
+        case "battery": "It started again when the power came back (the battery saver had paused it)"
+        case "drive": "It started once its drive was plugged in again"
+        case "timer": "It started again at the time you set when you stopped it"
+        case "docker": "Docker started it again after it stopped on its own; its log says why"
+        default: nil
+        }
+    }
+
     var stateLabel: String {
         switch state {
         case "running": "Running"

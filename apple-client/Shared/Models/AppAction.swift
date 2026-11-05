@@ -126,6 +126,8 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     case updates
     /// On: the watchdog alerts when it stops (`homelab notify on`).
     case alerts
+    /// On: at the top of Status and the menu bar (`homelab pin`).
+    case pinned
 
     var id: Self { self }
 
@@ -133,6 +135,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         switch self {
         case .updates: "Update nightly"
         case .alerts: "Tell me if it stops"
+        case .pinned: "Pin to the top"
         }
     }
 
@@ -141,6 +144,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         switch self {
         case .updates: app.held != true
         case .alerts: app.quiet != true
+        case .pinned: app.pinned == true
         }
     }
 
@@ -148,13 +152,14 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     /// as on the computer.
     static func available(for app: AppStatus) -> [AppSetting] {
         guard AppStatus.isValidID(app.id) else { return [] }
-        return app.isNative ? [.alerts] : [.updates, .alerts]
+        return app.isNative ? [.alerts, .pinned] : [.updates, .alerts, .pinned]
     }
 
     func reason(on: Bool, app: AppStatus) -> String {
         switch self {
         case .updates: on ? "Let \(app.name) update nightly again." : "Hold \(app.name)'s updates."
         case .alerts: on ? "Alert when \(app.name) stops." : "Stop alerts about \(app.name)."
+        case .pinned: on ? "Pin \(app.name) to the top." : "Unpin \(app.name)."
         }
     }
 }

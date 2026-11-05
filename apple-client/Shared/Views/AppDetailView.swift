@@ -45,6 +45,9 @@ struct AppDetailView: View {
                         LabeledContent("Started") {
                             Text(started, format: .relative(presentation: .named))
                         }
+                        if let why = app.startedWords {
+                            Text(why).font(.callout).foregroundStyle(.secondary)
+                        }
                     }
                     if let updated = app.updatedAt.flatMap(GoTime.parse) {
                         LabeledContent("Updated") {

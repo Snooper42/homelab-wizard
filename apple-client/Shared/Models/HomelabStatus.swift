@@ -18,9 +18,11 @@ struct HomelabStatus: Codable, Sendable, Equatable {
     var stopped: [String: StopRecord]
     /// Whether nightly image updates run, and when.
     var updates: UpdatesState?
+    /// The apps pinned to the top, in the order they were pinned.
+    var pinned: [String]
 
     enum CodingKeys: String, CodingKey {
-        case apps, missing, unmatched, savings, batteryPaused, checking, stopped, updates
+        case apps, missing, unmatched, savings, batteryPaused, checking, stopped, updates, pinned
     }
 
     init(from decoder: Decoder) throws {
@@ -32,6 +34,7 @@ struct HomelabStatus: Codable, Sendable, Equatable {
         batteryPaused = try c.decodeIfPresent([String].self, forKey: .batteryPaused) ?? []
         checking = try c.decodeIfPresent(Bool.self, forKey: .checking) ?? false
         updates = try? c.decodeIfPresent(UpdatesState.self, forKey: .updates)
+        pinned = ((try? c.decodeIfPresent([String].self, forKey: .pinned)) ?? nil) ?? []
         // One entry that doesn't read shouldn't cost the whole status.
         let stopped = ((try? c.decodeIfPresent([String: StopRecord].self, forKey: .stopped)) ?? nil) ?? [:]
         self.stopped = stopped
@@ -59,9 +62,14 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     /// When it last started (RFC 3339), while running.
     let since: String?
     let restarts: Int?
+    /// Why it last started, while running: you, updated, nightly, update,
+    /// fix, watchdog, battery, drive, timer, or docker (internal/started).
+    let startedBy: String?
     let updatedAt: String?
     let held: Bool?
     let quiet: Bool?
+    /// At the top of Status (homelab pin).
+    let pinned: Bool?
     let waitingFor: String?
     let notAnswering: String?
     let settingsChanged: Bool?
@@ -69,8 +77,8 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     var stoppedOnPurpose: StopRecord?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, state, health, container, url, address, since, restarts
-        case updatedAt, held, quiet, waitingFor, notAnswering, settingsChanged
+        case id, name, state, health, container, url, address, since, restarts, startedBy
+        case updatedAt, held, quiet, pinned, waitingFor, notAnswering, settingsChanged
     }
 
     var isRunning: Bool { state == "running" }

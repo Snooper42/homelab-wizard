@@ -22,6 +22,16 @@ struct AppActionControls: ViewModifier {
                 if available.contains(.stop) {
                     StopForAWhileMenu(app: app)
                 }
+                if actions.canChange {
+                    Divider()
+                    let pinned = actions.value(of: .pinned, for: app)
+                    Button {
+                        Task { await actions.set(.pinned, on: !pinned, for: app) }
+                    } label: {
+                        Label(pinned ? "Unpin" : "Pin to the Top", systemImage: pinned ? "pin.slash" : "pin")
+                    }
+                    .disabled(actions.isBusy)
+                }
                 if app.hasLogs {
                     Divider()
                     Button {

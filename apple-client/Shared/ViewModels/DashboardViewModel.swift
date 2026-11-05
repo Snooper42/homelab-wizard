@@ -78,8 +78,30 @@ final class DashboardViewModel {
         }
     }
 
+    /// The apps a filter shows, pinned ones first in their pinned order.
     func apps(for filter: Filter) -> [AppStatus] {
-        allApps.filter(filter.includes)
+        let order = pinnedOrder
+        return allApps.filter(filter.includes).sorted { a, b in
+            switch (order[a.id], order[b.id]) {
+            case let (x?, y?): x < y
+            case (_?, nil): true
+            default: false
+            }
+        }
+    }
+
+    /// The pinned apps, in the order they were pinned.
+    var pinnedApps: [AppStatus] {
+        let order = pinnedOrder
+        return allApps.filter { order[$0.id] != nil }.sorted { order[$0.id]! < order[$1.id]! }
+    }
+
+    private var pinnedOrder: [String: Int] {
+        var order: [String: Int] = [:]
+        for (i, id) in (liveEvents.status?.pinned ?? []).enumerated() where order[id] == nil { order[id] = i }
+        // An app marked pinned that the list doesn't name goes after the rest.
+        for app in liveEvents.status?.apps ?? [] where app.pinned == true && order[app.id] == nil { order[app.id] = order.count }
+        return order
     }
 
     func count(for filter: Filter) -> Int {
