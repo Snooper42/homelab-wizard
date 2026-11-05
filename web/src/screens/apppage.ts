@@ -2,6 +2,7 @@
 // what it shows beside the Status already read (its usage, the watchdog's
 // week, the last backup, who uses it), and its buttons run the rows'
 // actions (screens/status.ts), so a row and the page say the same.
+import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
 import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
@@ -24,7 +25,7 @@ const switching: Record<string, Record<string, boolean>> = {};
 async function setSetting(appId: string, setting: string, on: boolean) {
   switching[appId] = { ...switching[appId], [setting]: on };
   draw();
-  try { await go().SetAppSetting(appId, setting, on); } catch (e) { showError(e); }
+  try { await inTurn(`${statusById[appId]?.name || appId}: ${setting}`, () => go().SetAppSetting(appId, setting, on)); } catch (e) { showError(e); }
   await statusData.load().catch(() => {});
   const { [setting]: _, ...rest } = switching[appId] || {};
   switching[appId] = rest;

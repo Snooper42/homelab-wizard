@@ -1,5 +1,6 @@
 // Settings: .env as a form in pages, with Appearance, People, and Phones
 // beside it.
+import { inTurn, waitWords } from '../job/queue';
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
@@ -60,10 +61,13 @@ const peopleActions: PeopleActions = {
   act: async (action, who, mail = '', apps = []) => {
     peopleLog = '';
     renderPeople();
-    const off = window.runtime.EventsOn('cli:log', (line) => { peopleLog += line + '\n'; renderPeople(); });
     let ok = true;
-    try { await go().PersonAction(action, who, mail, apps); } catch (e) { ok = false; showError(e); }
-    if (typeof off === 'function') off();
+    // In its turn (job/queue.ts): the log says what it waits for meanwhile.
+    await inTurn(`${action === 'add' ? 'Adding' : action === 'remove' ? 'Removing' : 'Changing'} ${who}`, async () => {
+      peopleLog = '';
+      const off = window.runtime.EventsOn('cli:log', (line) => { peopleLog += line + '\n'; renderPeople(); });
+      try { await go().PersonAction(action, who, mail, apps); } catch (e) { ok = false; showError(e); } finally { if (typeof off === 'function') off(); }
+    }, (behind) => { peopleLog = `${waitWords(behind)}…\n`; renderPeople(); });
     return ok;
   },
   openWelcome: (username) => { go().OpenWelcome(username).catch(showError); },
@@ -80,8 +84,12 @@ const peopleActions: PeopleActions = {
 const uninstallActions: UninstallActions = {
   plan: async (o) => { try { return await go().UninstallPlan(o); } catch (e) { showError(e); throw e; } },
   run: async (o, onLine) => {
-    const off = window.runtime.EventsOn('cli:log', onLine);
-    try { await go().Uninstall(o); } catch (e) { showError(e); throw e; } finally { if (typeof off === 'function') off(); }
+    try {
+      await inTurn('Taking the homelab off this machine', async () => {
+        const off = window.runtime.EventsOn('cli:log', onLine);
+        try { await go().Uninstall(o); } finally { if (typeof off === 'function') off(); }
+      }, (behind) => onLine(`${waitWords(behind)}…`));
+    } catch (e) { showError(e); throw e; }
   },
 };
 mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions });
