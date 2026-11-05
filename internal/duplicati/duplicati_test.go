@@ -26,7 +26,7 @@ func TestJobs(t *testing.T) {
 				return
 			}
 			w.Write([]byte(`[
-			 {"Backup":{"ID":"1","Name":"Homelab Secrets","Metadata":{"LastBackupFinished":"20261010T050212Z","TargetSizeString":"1.20 MB"}},"Schedule":null},
+			 {"Backup":{"ID":"1","Name":"Homelab Secrets","Sources":["/source/secrets/"],"Metadata":{"LastBackupStarted":"20261010T050010Z","LastBackupFinished":"20261010T050212Z","TargetSizeString":"1.20 MB","SourceSizeString":"812.40 KB","SourceFilesCount":"37","BackupListCount":"14"}},"Schedule":null},
 			 {"Backup":{"ID":"2","Name":"Homelab Databases","Metadata":{"LastBackupFinished":"20261009T050212Z","LastErrorDate":"20261010T050100Z","LastErrorMessage":"The folder does not exist"}},"Schedule":null},
 			 {"Backup":{"ID":"3","Name":"Homelab Jellyfin","Metadata":{"LastBackupFinished":"20260920T050212Z"}},"Schedule":null},
 			 {"Backup":{"ID":"4","Name":"Homelab Photos","Metadata":{}},"Schedule":null}
@@ -58,6 +58,14 @@ func TestJobs(t *testing.T) {
 	}
 	if !jobs[3].LastFinished.Equal(time.Date(2026, 10, 10, 5, 2, 12, 0, time.UTC)) {
 		t.Errorf("date: %v", jobs[3].LastFinished)
+	}
+	// What its last run was, for the hover: 2 minutes 2 seconds, what it holds, the versions kept, its folders.
+	if s := jobs[3]; s.Took != 122 || s.Holds != "812.40 KB" || s.Files != 37 || s.Versions != 14 || len(s.Sources) != 1 || s.Sources[0] != "/source/secrets/" {
+		t.Errorf("the last run: %+v", s)
+	}
+	// None of it said: nothing made up.
+	if s := jobs[2]; s.Took != 0 || s.Holds != "" || s.Files != 0 || s.Versions != 0 || s.Sources != nil {
+		t.Errorf("a job that says nothing: %+v", s)
 	}
 	if _, err := Jobs(context.Background(), srv.URL, "wrong", now); err == nil || err.Error() != "Duplicati refused DUPLICATI_PASSWORD" {
 		t.Errorf("wrong password: %v", err)

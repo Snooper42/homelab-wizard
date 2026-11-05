@@ -5,7 +5,7 @@
 // starts the app; each screen's code is in web/src/screens, drawn by Preact
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { progress } from './setup/Checklist';
-import { drawRemembered, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
@@ -16,16 +16,26 @@ import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './scr
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
+import { arrivePlace, leavePlace } from './place';
+import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
+let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
   // An app's page belongs to Status: its button stays the one picked.
   const picked = name === 'app' ? 'status' : name;
+  const was = document.querySelector('.screen.active')?.id;
+  // Where the screen being left was (place.ts); not the one the page starts on, before any is shown.
+  if (placed && was !== name) leavePlace(was);
+  // Leaving Status (an app's page is part of it): what changed there is seen.
+  if ((was === 'status' || was === 'app') && picked !== 'status') leftStatus();
   $$('nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.screen === picked);
     if (b.dataset.screen === picked) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === name));
+  if (!placed || was !== name) arrivePlace(name);
+  placed = true;
   setupNav();
   freshen(name);
 }
@@ -75,10 +85,18 @@ export function navigate(name) {
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
 // always were, Finances after them, then Tidy Up.
 const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
+// Quitting: where the screen showing was, for next time. Opening: the screen it starts on is put back at once,
+// not only once the app picks it.
+addEventListener('pagehide', () => leavePlace(document.querySelector('.screen.active')?.id));
+{ const first = document.querySelector('.screen.active')?.id; if (first) { arrivePlace(first); placed = true; } }
+// Closing the app on Status: what it showed is what was seen.
+addEventListener('pagehide', () => { const on = document.querySelector('.screen.active')?.id; if (on === 'status' || on === 'app') leftStatus(); });
 $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });
+// A right-click on a screen in the sidebar: its own menu (palette/navMenu.tsx).
+wireNavMenus();
 
 // Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
 // Settings, R refreshes, F finds (Choose stacks, Settings), K opens the

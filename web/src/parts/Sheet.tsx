@@ -2,7 +2,7 @@
 // app's log, a form), with the focus in it while it is open (a form's in its
 // first field) and back where it was after, Tab going round its own controls
 // only, and Escape or a click on the dimmed screen around it closing it
-// through its own Close or Cancel (a command still running has neither). The screens open and close it by its hidden
+// through its own Close or Cancel (a command still running has Hide instead). The screens open and close it by its hidden
 // attribute, and fill it by the IDs inside.
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef } from 'preact/hooks';
@@ -14,8 +14,9 @@ const openSheets = () => [...document.querySelectorAll<HTMLElement>('.panel.shee
 const stops = (sheet: HTMLElement) => [...sheet.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
   .filter((e) => e.getClientRects().length > 0);
 
-// The sheet's own Close or Cancel, which Escape and the dimmed screen press.
-const closer = (sheet: HTMLElement) => [...sheet.querySelectorAll<HTMLButtonElement>('button:not([disabled])')].find((b) => /^(Close|Cancel)$/.test(b.textContent!.trim()));
+// The sheet's own Close or Cancel (or Hide, for a command that carries on
+// behind it), which Escape and the dimmed screen press.
+const closer = (sheet: HTMLElement) => [...sheet.querySelectorAll<HTMLButtonElement>('button:not([disabled])')].find((b) => /^(Close|Cancel|Hide)$/.test(b.textContent!.trim()));
 
 let listening = false;
 function keys() {

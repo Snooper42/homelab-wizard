@@ -51,7 +51,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
 
 **Open now:** nothing of this loop's to ship. Cleared on Nov 3, 2026: #385 through #393 were merged (#391 folded into #393); on Nov 4–5, #395 through #402 and Export (#405). Three remote branches are left whose work is all on main (older copies of what #393 merged): `claude/feature-media-logic`, `claude/feature-tidy-duplicates`, `claude/feature-tidy-episodes`. The owner deletes them; list them in each report until they are gone. Still list what is open at the start of each round, as above: other sessions add to it.
 
-**A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; never on main, another PR, or locally. Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
+**A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; then once on #414's (Nov 5, dark only, waiting for `#finSheet` to be hidden after a Save: it has three such waits, so name each one's step before chasing it). Never on main or locally (24 of 24 runs, four at a time, on #414's head). Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
 
 **Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390, #393 (#391 folded into it): all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
 
@@ -118,8 +118,8 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
 10. **Export** (F18, *Built*, #405): the plan and its projection as CSV and JSON, and a printable month.
-11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round), then why an app restarted (needs a record of who restarted it: an update, a crash, the battery saver, the watchdog, or you).
-12. **Right-click the sidebar**, then **pinned apps**.
+11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round, *Built*, #409), then why an app restarted (*Built*, #411: `internal/started`, data/started.json, noted wherever the homelab starts an app).
+12. **Right-click the sidebar** (*Built*, #413: `web/src/palette/navMenu.tsx`, a shared `parts/ContextMenu.tsx`), then **pinned apps** (*Built*, #414: APPS_PINNED in .env, `homelab pin|unpin`).
 
 **Not yours:** the roadmap's *Media library cleanup* ("Tidy Up"). It has its own session and branch; leave its roadmap section and its files alone.
 

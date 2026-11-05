@@ -44,7 +44,7 @@ interface WorthProps {
 const ranges: [string, string, number][] = [['3', '3 months', 3], ['6', '6 months', 6], ['12', '1 year', 12], ['all', 'All', 600]];
 
 /** "updated today", "updated 3 days ago", "updated Oct 2". */
-function ago(day: string | undefined, today: string): string {
+export function ago(day: string | undefined, today: string): string {
   if (!day) return 'not typed in yet';
   const n = daysBetween(day, today);
   return n <= 0 ? 'updated today' : n === 1 ? 'updated yesterday' : n < 14 ? `updated ${n} days ago` : `updated ${dayShort(day)}`;

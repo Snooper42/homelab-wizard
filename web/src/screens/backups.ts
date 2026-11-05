@@ -4,6 +4,7 @@ import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, pla
 import { store } from '../store';
 import { statusById } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
+import { waitForBg } from '../job/Background';
 import { $, go, osName, showError } from '../core';
 
 // Backups: the newest copy of each database and volume, the destination,
@@ -55,6 +56,7 @@ function drawJobs() {
 
 // Runs a backup-screen command, streaming its output into the panel.
 async function backupTask(action, busy, done, failed) {
+  if (waitForBg()) return;
   // Test a restore is in its tile, drawn again while this runs: look it up each time.
   const panel = $('backupPanel'), log = $('backupLog');
   const btns = () => [$('backupNow'), document.getElementById('restoreTest')].filter(Boolean) as HTMLButtonElement[];
