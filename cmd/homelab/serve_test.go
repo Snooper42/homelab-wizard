@@ -52,6 +52,21 @@ func TestPhoneCommands(t *testing.T) {
 	if out, code := homelabCmd(t, root, "", "phone", "finances", "Anna's iPhone"); code == 0 || !strings.Contains(out, "usage") {
 		t.Errorf("finances without a level (exit %d):\n%s", code, out)
 	}
+
+	// Until a time: listed with it, and taken off with never.
+	homelabCmd(t, root, "", "phone", "allow", "Anna's iPhone")
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "7d"); code != 0 || !strings.Contains(out, "may do more than look until") {
+		t.Errorf("until 7d (exit %d):\n%s", code, out)
+	}
+	if out, _ := homelabCmd(t, root, "", "phone", "list"); !strings.Contains(out, "can make changes until") {
+		t.Errorf("list does not say until when:\n%s", out)
+	}
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "never"); code != 0 || !strings.Contains(out, "until you change it") {
+		t.Errorf("until never (exit %d):\n%s", code, out)
+	}
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "soon"); code == 0 || !strings.Contains(out, "not a length of time") {
+		t.Errorf("until soon (exit %d):\n%s", code, out)
+	}
 }
 
 // The phone's Finances are the computer's plan: a phone allowed to look

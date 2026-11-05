@@ -1176,6 +1176,18 @@ func (a *App) SetPhoneFinances(id, level string) ([]companion.Phone, error) {
 	return store.Phones(), err
 }
 
+// SetPhoneUntil ends what a phone may do beyond looking (changes, and
+// Finances) in hours from now; 0 keeps it until you change it.
+func (a *App) SetPhoneUntil(id string, hours int) ([]companion.Phone, error) {
+	store := companion.NewStore(companion.StorePath(a.root))
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	_, err := store.SetUntil(id, until)
+	return store.Phones(), err
+}
+
 // RemovePhone unpairs a phone: its token stops working at once.
 func (a *App) RemovePhone(id string) ([]companion.Phone, error) {
 	store := companion.NewStore(companion.StorePath(a.root))

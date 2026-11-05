@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Phones that expire:** beside a phone in Settings › Phones, **For a day**, **For a week**, or **For a month** ends its changes and Finances then, and it only looks; its row says until when. For a guest's phone, or one lent for a while (`homelab phone until <phone> 7d`).
 - **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
 - **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
 - **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.

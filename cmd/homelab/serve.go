@@ -484,6 +484,9 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 				seen = d.LastSeen.Local().Format("2 Jan 15:04")
 			}
 			money := map[string]string{"": "no finances", companion.FinancesView: "sees finances", companion.FinancesEdit: "edits finances"}[d.Finances]
+			if !d.Until.IsZero() {
+				can += " until " + d.Until.Local().Format("2 Jan 15:04")
+			}
 			rows = append(rows, []string{d.ID, d.Name, can, money, "paired " + d.Paired.Local().Format("2 Jan 2006"), "last seen " + seen})
 		}
 		u.Table(nil, rows)
@@ -523,6 +526,42 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			u.OK("%s no longer sees Finances", d.Name)
 		}
 		return err
+	case "until":
+		// homelab phone until <phone> 7d: its changes and Finances end in a
+		// week, and it only looks; never takes the end off.
+		if len(args) != 2 {
+			return fmt.Errorf("usage: homelab phone until <id or name> 12h|7d|2w|never")
+		}
+		var until time.Time
+		if args[1] != "never" {
+			d, err := parseFor(args[1])
+			if err != nil {
+				return err
+			}
+			until = time.Now().Add(d)
+		}
+		d, err := store.SetUntil(args[0], until)
+		switch {
+		case err != nil:
+		case until.IsZero():
+			u.OK("%s keeps what it may do until you change it", d.Name)
+		default:
+			u.OK("%s may do more than look until %s; then it only looks", d.Name, until.Local().Format("Mon 2 Jan 15:04"))
+		}
+		return err
 	}
-	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|remove")
+	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|until|remove")
+}
+
+// parseFor reads how long, as homelab phone until takes it: 12h, 7d, 2w.
+func parseFor(s string) (time.Duration, error) {
+	unit := map[byte]time.Duration{'h': time.Hour, 'd': 24 * time.Hour, 'w': 7 * 24 * time.Hour}
+	if len(s) >= 2 {
+		if u, ok := unit[s[len(s)-1]]; ok {
+			if n, err := strconv.Atoi(s[:len(s)-1]); err == nil && n > 0 {
+				return time.Duration(n) * u, nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("%q is not a length of time: 12h, 7d, or 2w", s)
 }
