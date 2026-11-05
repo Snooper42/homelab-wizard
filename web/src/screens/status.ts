@@ -13,6 +13,7 @@ import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
+import { bgEnd, bgHide, bgRunning, bgStart } from '../job/Background';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
@@ -454,6 +455,7 @@ function setPending(id: string, p: Pending | null) {
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
 async function showQR(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), url = 'https://' + a.address;
   if (cliStop) cliStop();
   let img;
@@ -467,11 +469,24 @@ async function showQR(a) {
 // Closes the command sheet, its log ready for the next command.
 function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
 // The command sheet's buttons, in place of what it showed.
-const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons }));
+// A new set is a new row (its key): a button that replaced a running one is not taken for it.
+const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
+// A command running in the sheet can be hidden: it carries on, its bar in
+// the sidebar (job/Background.tsx), and the sheet comes back from there.
+const hideButton: SheetButton = { label: 'Hide', title: 'It carries on, its bar in the sidebar', onClick: () => { bgHide(); $('cliPanel').hidden = true; } };
+const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidden = false; });
+// While one runs, nothing else takes the sheet (its log and bar are the
+// running one's): it says to wait instead.
+function sheetBusy() {
+  const running = bgRunning();
+  if (running) showError(`Wait for “${running}” to finish: it is still running`);
+  return !!running;
+}
 
 // Sign in: the user name the homelab set up the app with, and the password
 // copied (it never reaches the page), from .env.
 async function showSignIn(a, keys) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   let list = [];
@@ -505,6 +520,7 @@ const lastLog: Record<string, string> = {}; // each app's last command's output,
 const downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
 async function runAppAction(a, action, until?: string) {
   if (quiet.has(action)) return runQuietly(a, action, until);
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -512,7 +528,8 @@ async function runAppAction(a, action, until?: string) {
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
   startJob('cli');
-  cliButtons([]);
+  runInSheet(`${actionTitle[action]} ${a.name}`);
+  cliButtons([hideButton]);
   setPending(a.id, { action });
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
@@ -526,6 +543,7 @@ async function runAppAction(a, action, until?: string) {
   if (!failed && action === 'stop') offerUndo([a], until);
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
+  bgEnd(!!failed);
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
@@ -556,6 +574,7 @@ async function runQuietly(a, action, until?: string) {
 
 // Details: the last command's output for an app, in the command sheet.
 function showDetails(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -569,6 +588,7 @@ function showDetails(a) {
 // Update: what it brings first (its newer releases' notes), then Update
 // runs it in the same panel.
 function showUpdate(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -594,6 +614,7 @@ mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
 export async function cliFlow(title, action, target, confirmLabel) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -620,11 +641,13 @@ export async function cliFlow(title, action, target, confirmLabel) {
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
-      // Running, it can no longer be cancelled: no buttons until it ends.
-      cliButtons([]);
+      // Running, it can no longer be cancelled, but it can be hidden: it carries on.
+      runInSheet(title);
+      cliButtons([hideButton]);
       let failed = false;
       try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
       cliProgress(failed ? 'failed' : 'done');
+      bgEnd(failed);
       stop();
       cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();
