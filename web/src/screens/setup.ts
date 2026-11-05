@@ -15,7 +15,7 @@ import { cliFlow, statusData } from './status';
 import { drawSettings, form, showSettings } from './settings';
 import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
-import { waitForBg } from '../job/Background';
+import { inTurn, waitWords } from '../job/queue';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { lookForUpdates } from './updates';
@@ -139,16 +139,18 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
-    if (waitForBg()) return;
     navigate('setup'); // from Settings › This Mac: its progress shows on Setup
-    setupJob();
     const log = $('setupLog');
     log.hidden = false;
     log.textContent = 'Going back…\n';
-    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-    try { await go().Homelab('upgrade-back', '', true); } catch (e) { showError(e); }
-    if (typeof off === 'function') off();
-    setupJobEnded();
+    try {
+      await inTurn('Going back', async () => {
+        setupJob();
+        log.textContent = 'Going back…\n';
+        const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+        try { await go().Homelab('upgrade-back', '', true); } finally { if (typeof off === 'function') off(); setupJobEnded(); }
+      }, (behind) => { log.textContent = `${waitWords(behind)}, then: going back…\n`; });
+    } catch (e) { showError(e); }
     loadUpgrade(true);
   },
 };
@@ -206,10 +208,12 @@ $('report').onclick = async () => {
   mountReportActions($('reportActions'), null);
   log.hidden = false;
   log.textContent = 'Making the report (about a minute)…\n';
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
-  try { await go().Homelab('report', '', false); } catch (e) { ok = false; showError(e); }
-  if (typeof off === 'function') off();
+  await inTurn('Making the report', async () => {
+    log.textContent = 'Making the report (about a minute)…\n';
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { await go().Homelab('report', '', false); } catch (e) { ok = false; showError(e); } finally { if (typeof off === 'function') off(); }
+  }, (behind) => { log.textContent = `${waitWords(behind)}, then: making the report…\n`; });
   btn.disabled = false;
   if (ok) {
     const reveal = hostOS.startsWith('macOS') ? 'Show in Finder' : hostOS.startsWith('Windows') ? 'Show in Explorer' : 'Show the file';
@@ -285,9 +289,12 @@ const checklistActions: ChecklistActions = {
   closeSignups: async () => {
     const log = $('setupLog');
     log.hidden = false;
-    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
-    try { await go().Homelab('signups-close', '', true); } catch (e) { showError(e); }
-    if (typeof off === 'function') off();
+    try {
+      await inTurn('Closing sign-ups', async () => {
+        const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
+        try { await go().Homelab('signups-close', '', true); } finally { if (typeof off === 'function') off(); }
+      }, (behind) => { log.textContent += `${waitWords(behind)}, then: closing sign-ups…\n`; });
+    } catch (e) { showError(e); }
   },
   markDone: async (s, done) => { try { stepsData.set(await go().MarkSetupDone(s.id, done)); } catch (err) { showError(err); } },
   toggleDone: () => { showDoneSteps = !showDoneSteps; renderSetup(lastSteps); },
@@ -321,63 +328,69 @@ function runnable(steps) {
 // none is left or one fails.
 let runningAll = false;
 $('runAll').onclick = async () => {
-  if (waitForBg()) return;
-  setupJob();
   const log = $('setupLog'), btn = $('runAll');
   runningAll = true;
   btn.disabled = true;
   log.hidden = false;
   log.textContent = '';
-  const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-  const tried = new Set();
-  let failing: setup.Step | null = null;
-  try {
-    for (;;) {
-      const next = runnable(lastSteps || []).find((s) => !tried.has(s.id));
-      if (!next) break;
-      tried.add(next.id);
-      failing = next;
-      delete failedSteps[next.id];
-      btn.textContent = `Doing: ${next.title}…`;
-      log.textContent += `\n— ${next.title}\n`;
-      stepsData.set(await go().RunSetup(next.id));
+  // In its turn (job/queue.ts), all the steps as one: the log says what it waits for meanwhile.
+  await inTurn('Doing the setup steps', async () => {
+    setupJob();
+    log.textContent = '';
+    const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    const tried = new Set();
+    let failing: setup.Step | null = null;
+    try {
+      for (;;) {
+        const next = runnable(lastSteps || []).find((s) => !tried.has(s.id));
+        if (!next) break;
+        tried.add(next.id);
+        failing = next;
+        delete failedSteps[next.id];
+        btn.textContent = `Doing: ${next.title}…`;
+        log.textContent += `\n— ${next.title}\n`;
+        stepsData.set(await go().RunSetup(next.id));
+      }
+      log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
+    } catch (e) {
+      if (failing) failStep(failing, e);
+      showError(e);
+      log.textContent += '\nStopped at a step that failed: the log above says why.\n';
+    } finally {
+      if (typeof off === 'function') off();
+      setupJobEnded();
     }
-    log.textContent += '\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n';
-  } catch (e) {
-    if (failing) failStep(failing, e);
-    showError(e);
-    log.textContent += '\nStopped at a step that failed: the log above says why.\n';
-  } finally {
-    if (typeof off === 'function') off();
-    setupJobEnded();
-    runningAll = false;
-    btn.disabled = false;
-    loadSetup();
-  }
+  }, (behind) => { log.textContent = `${waitWords(behind)}, then: the steps I can do…\n`; });
+  runningAll = false;
+  btn.disabled = false;
+  loadSetup();
 };
 
 async function runStep(step: setup.Step, choice?: number) {
-  if (waitForBg()) return;
-  setupJob();
   const log = $('setupLog');
   log.hidden = false;
   log.textContent = '';
   runningStep = step.id;
   delete failedSteps[step.id];
   renderSetup(lastSteps);
-  const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
-  try {
-    const steps = await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
-    runningStep = null;
-    stepsData.set(steps);
-  } catch (e) {
-    runningStep = null;
-    failStep(step, e, choice);
-    showError(e);
-    loadSetup();
-  } finally {
-    runningStep = null;
-    if (typeof off === 'function') off();
-    setupJobEnded();
-  }
+  // In its turn (job/queue.ts): the log says what it waits for meanwhile.
+  await inTurn(step.title, async () => {
+    setupJob();
+    log.textContent = '';
+    const off = window.runtime.EventsOn('setup:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try {
+      const steps = await (choice === undefined ? go().RunSetup(step.id) : go().RunSetupChoice(step.id, choice));
+      runningStep = null;
+      stepsData.set(steps);
+    } catch (e) {
+      runningStep = null;
+      failStep(step, e, choice);
+      showError(e);
+      loadSetup();
+    } finally {
+      runningStep = null;
+      if (typeof off === 'function') off();
+      setupJobEnded();
+    }
+  }, (behind) => { log.textContent = `${waitWords(behind)}, then: ${step.title}…\n`; });
 }

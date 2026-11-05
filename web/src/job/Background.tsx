@@ -7,6 +7,7 @@
 // it went until it is opened or dismissed.
 import { render } from 'preact';
 import { $, showError } from '../core';
+import { jobsWaiting, watchJobs } from './queue';
 
 interface Bg {
   title: string;
@@ -68,6 +69,7 @@ function open() {
 function dismiss() { bg = null; hidden = false; draw(); }
 
 function Chip({ b }: { b: Bg }) {
+  const next = jobsWaiting();
   const words = b.state === 'done' ? 'Done' : b.state === 'failed' ? 'Stopped with a problem' : b.step || 'Working…';
   return (
     <div class={'bgjob ' + b.state}>
@@ -77,11 +79,15 @@ function Chip({ b }: { b: Bg }) {
           <span class="bgfill" style={{ width: `${b.state === 'running' ? b.pct : 100}%` }}></span>
         </span>
         <span class="bgstep" role="status" aria-live="polite">{words}</span>
+        {!!next.length && <span class="bgnext">Then: {next[0]}{next.length > 1 ? ` (+${next.length - 1})` : ''}</span>}
       </button>
       {b.state !== 'running' && <button class="bgdismiss" onClick={dismiss} aria-label={`Dismiss ${b.title}`}>×</button>}
     </div>
   );
 }
+
+// What waits after it shows on the chip as it changes.
+watchJobs(() => { if (hidden && bg) draw(); });
 
 function draw() {
   const el = $('bgJob');
