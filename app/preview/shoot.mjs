@@ -951,6 +951,20 @@ const smokes = [
   } },
   // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
+  // copy less than half the night before's warned about on its row.
+  { name: 'Backups: a copy beside the night before’s, and one that shrank', screen: 'backups', mock: { backups: { ...backups, shrank: 1, copies: backups.copies.map((c) =>
+    c.id === 'immich-database' ? { ...c, size: 9e6, before: 61e6, shrank: true }
+    : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
+    : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
+    const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
+    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
+    // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
+    await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
+    if (await row('Vikunja').locator('td.size .was').count()) throw new Error('a copy within a tenth of the night before\'s says was');
+    if ((await row('Vikunja').locator('td.size').getAttribute('title')) !== 'The night before: 396 KB') throw new Error(`Vikunja's hover: ${await row('Vikunja').locator('td.size').getAttribute('title')}`);
+  } },
   { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
     const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
     await page.waitForSelector(when, { timeout: 5000 });
