@@ -13,7 +13,7 @@ apple-client/
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
-└── Tests/              Swift Testing unit tests for parsing and validation
+└── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
 ```
 
 ## Check it first, without Xcode

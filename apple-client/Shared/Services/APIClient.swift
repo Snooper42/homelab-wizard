@@ -32,7 +32,7 @@ actor APIClient {
     /// The most this client reads from one REST answer.
     static let maxResponseBytes = 8 << 20
 
-    private let keychain: KeychainManager
+    private let keychain: any CredentialStore
     private let session: URLSession
     /// For `/api/events`. A request times out after 75 seconds without
     /// bytes (the companion sends a heartbeat every 30), so a dead
@@ -43,7 +43,7 @@ actor APIClient {
     /// 30 minutes.
     private let actionSession: URLSession
 
-    init(keychain: KeychainManager = KeychainManager()) {
+    init(keychain: any CredentialStore = KeychainManager()) {
         self.keychain = keychain
         let delegate = RedirectRefusal()
         session = URLSession(configuration: .hardened(idleTimeout: 30, resourceTimeout: 120), delegate: delegate, delegateQueue: nil)

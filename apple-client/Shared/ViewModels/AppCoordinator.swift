@@ -55,8 +55,9 @@ final class AppCoordinator {
     let api: APIClient
     let liveEvents: LiveEventManager
 
-    @ObservationIgnored private let keychain: KeychainManager
-    @ObservationIgnored private let biometrics: BiometricAuthManager
+    @ObservationIgnored private let keychain: any CredentialStore
+    @ObservationIgnored private let biometrics: any OwnerAuthenticator
+    @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var scenePhase: ScenePhase = .active
     @ObservationIgnored private var autoPromptArmed = true
     /// When the owner last authenticated. This uses the monotonic clock, so
@@ -68,9 +69,14 @@ final class AppCoordinator {
 
     private static let installMarkerKey = "installMarker.v1"
 
-    init(keychain: KeychainManager = KeychainManager(), biometrics: BiometricAuthManager = BiometricAuthManager()) {
+    init(
+        keychain: any CredentialStore = KeychainManager(),
+        biometrics: any OwnerAuthenticator = BiometricAuthManager(),
+        defaults: UserDefaults = .standard
+    ) {
         self.keychain = keychain
         self.biometrics = biometrics
+        self.defaults = defaults
         api = APIClient(keychain: keychain)
         liveEvents = LiveEventManager(api: api)
         liveEvents.onUnauthorized = { [weak self] in self?.handleUnauthorized() }
@@ -134,7 +140,6 @@ final class AppCoordinator {
     /// not quietly resume a pairing left behind on this device, so the
     /// first launch after an install deletes everything this app stored.
     private func purgeKeychainIfFreshInstall() {
-        let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.installMarkerKey) else { return }
         do {
             try keychain.deleteAll()
