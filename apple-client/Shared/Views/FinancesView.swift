@@ -11,6 +11,7 @@ struct FinancesView: View {
     @State private var editingBudget: FinanceBudget?
     @State private var editingGoal: FinanceGoal?
     @State private var editingPayment: FinancePayment?
+    @State private var editingCushion = false
 
     var body: some View {
         Form {
@@ -37,7 +38,7 @@ struct FinancesView: View {
                     EmptyView()
                 } footer: {
                     Text(finances.canEdit
-                         ? "Balances, budgets, goals and what a payment costs can be changed here, and transactions added. Change the rest of the plan on the computer."
+                         ? "Balances, the cushion, budgets, goals and what a payment costs can be changed here, and transactions added. Change the rest of the plan on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
                 }
             } else if let error = finances.planError {
@@ -72,6 +73,14 @@ struct FinancesView: View {
                 footer: "How much it needs in all. What's put by toward it stays as it is.",
                 finances: finances
             ) { amount in await finances.setGoal(goal, target: amount) }
+        }
+        .sheet(isPresented: $editingCushion) {
+            AmountEditor(
+                title: "Change Cushion", heading: "The least checking should hold",
+                footer: "A pay period that leaves less is flagged. Type 0 to turn that off.",
+                allowsZero: true,
+                finances: finances
+            ) { amount in await finances.setCushion(amount) }
         }
         .sheet(item: $editingPayment) { payment in
             AmountEditor(
@@ -257,6 +266,18 @@ struct FinancesView: View {
                 Money(value: view.netWorth, currency: view.plan.currency, finances: finances)
                     .fontWeight(.semibold)
             }
+            if finances.canEdit {
+                Button {
+                    finances.clearSaveError()
+                    editingCushion = true
+                } label: {
+                    cushionRow(view)
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Change the least checking should hold")
+            } else if view.plan.cushion > 0 {
+                cushionRow(view)
+            }
         } header: {
             Text("Accounts Today")
         } footer: {
@@ -269,6 +290,17 @@ struct FinancesView: View {
                 }
             }
         }
+    }
+
+    private func cushionRow(_ view: FinancesPlanView) -> some View {
+        LabeledContent("Cushion") {
+            if view.plan.cushion > 0 {
+                Money(value: view.plan.cushion, currency: view.plan.currency, finances: finances)
+            } else {
+                Text("None")
+            }
+        }
+        .contentShape(Rectangle())
     }
 
     private func accountRow(_ account: FinanceAccount, _ view: FinancesPlanView) -> some View {
@@ -447,13 +479,17 @@ private struct AmountEditor: View {
     let title: String
     let heading: String
     let footer: String
+    /// Nothing (0) is a value here: the cushion, where it turns the warning off.
+    var allowsZero = false
     let finances: FinancesViewModel
     let save: @MainActor (Double) async -> Bool
     @State private var text = ""
     @Environment(\.dismiss) private var dismiss
 
     private var value: Double? {
-        guard let v = FinancePlanEdit.parseAmount(text), FinancePlanEdit.roundedToCents(v) > 0 else { return nil }
+        guard let v = FinancePlanEdit.parseAmount(text) else { return nil }
+        let cents = FinancePlanEdit.roundedToCents(v)
+        guard allowsZero ? cents >= 0 : cents > 0 else { return nil }
         return v
     }
 

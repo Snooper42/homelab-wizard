@@ -87,6 +87,16 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Change what \(payment.name) costs.")
     }
 
+    /// Changes the least checking should hold (0 turns the warning off). Returns whether it saved.
+    func setCushion(_ amount: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.settingCushion(amount, in: raw) else {
+            saveError = "The cushion is an amount, or nothing."
+            return false
+        }
+        return await savePlan(edited, reason: "Change the cushion.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

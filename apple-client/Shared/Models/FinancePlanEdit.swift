@@ -109,6 +109,16 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with the cushion, the least checking should hold, set to
+    /// `amount`. A pay period that leaves less is flagged. Nothing (0)
+    /// turns the warning off. Nil for a negative or nonsense amount.
+    static func settingCushion(_ amount: Double, in plan: JSONValue) -> JSONValue? {
+        let cents = roundedToCents(amount)
+        guard amount.isFinite, cents >= 0, cents <= maxBalance, case .object(var root) = plan else { return nil }
+        root["cushion"] = .number(cents == 0 ? 0 : cents)
+        return .object(root)
+    }
+
     /// `plan` with Hide amounts on or off, which every device follows (the
     /// computer's ⌘⇧H). Omitted when off, as the computer writes it.
     static func settingHideAmounts(_ hide: Bool, in plan: JSONValue) -> JSONValue? {

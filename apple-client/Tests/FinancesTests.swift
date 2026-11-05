@@ -528,3 +528,29 @@ struct PaymentEditTests {
         #expect(payments[2].canChangeAmount && payments[2].amount == nil)
     }
 }
+
+@Suite("Changing the cushion")
+struct CushionEditTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r2","cushion":500,"accounts":[{"id":"chk","name":"Checking","kind":"checking","balance":1200}]}
+    """#.utf8))
+
+    @Test func setsTheCushionAndKeepsTheRest() throws {
+        let edited = try #require(FinancePlanEdit.settingCushion(750.004, in: plan))
+        #expect(edited["cushion"] == .number(750))
+        #expect(edited["accounts"] == plan["accounts"])
+        #expect(edited["rev"] == .string("r2"))
+    }
+
+    @Test func nothingTurnsItOff() throws {
+        let edited = try #require(FinancePlanEdit.settingCushion(-0.001, in: plan))
+        #expect(edited["cushion"] == .number(0))
+    }
+
+    @Test func refusesNegativeAndNonsense() {
+        #expect(FinancePlanEdit.settingCushion(-10, in: plan) == nil)
+        #expect(FinancePlanEdit.settingCushion(.nan, in: plan) == nil)
+        #expect(FinancePlanEdit.settingCushion(FinancePlanEdit.maxBalance * 2, in: plan) == nil)
+        #expect(FinancePlanEdit.settingCushion(10, in: .array([])) == nil)
+    }
+}

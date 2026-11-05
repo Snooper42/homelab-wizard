@@ -28,7 +28,7 @@ apple-client/
 | **Overview** | The money card, watchdog, protection, alerts, savings | Overview in the sidebar |
 | **Backups** | Each app's copy, Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
 | **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device, Unpair | Computer in the sidebar |
-| **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar |
+| **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, the cushion, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar |
 
 ## Check it first, without Xcode
 
@@ -119,7 +119,7 @@ hash. The client receives the token itself, once.
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
 - Finances editing beyond balances, budgets, goal targets, payment amounts and transactions: a payment's schedule and accounts, adding or removing payments, accounts, goal shares, transfers and split transactions. What's built:
   - turning the plan's Hide amounts on or off for every device (as ⌘⇧H on the computer);
-  - typing in an account's balance, changing a budget's amount, a goal's target or what a planned payment costs (not a card payoff, whose amount means the card's other spending), and marking a paycheck or payment as not in the balances yet (Taken as done) (`SaveFinances`, edit level). This edits the plan as the raw JSON the computer sent and sends it back whole, with its `rev`. Nothing the phone doesn't show is lost, and the computer refuses the save if another device saved first;
+  - typing in an account's balance or the cushion (the least checking should hold), changing a budget's amount, a goal's target or what a planned payment costs (not a card payoff, whose amount means the card's other spending), and marking a paycheck or payment as not in the balances yet (Taken as done) (`SaveFinances`, edit level). This edits the plan as the raw JSON the computer sent and sends it back whole, with its `rev`. Nothing the phone doesn't show is lost, and the computer refuses the save if another device saved first;
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;
   - budgets, goals and loans from the same view;
