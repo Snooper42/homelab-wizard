@@ -840,7 +840,9 @@ struct UptimeTests {
 
     @Test func labelAsTheComputerWordsIt() throws {
         let s = try summary(#"{"immich":0.96299,"plex":0.995,"x":0.5}"#)
-        #expect(s.uptimeLabel(for: "immich")?.hasPrefix("96.2") == true)   // cut, not rounded to 96.3
+        let label = try #require(s.uptimeLabel(for: "immich"))
+        // Cut, not rounded: 96.2 (in this locale's own decimal mark), never 96.3.
+        #expect(label.hasPrefix("96") && label.contains("2%") && !label.contains("3%"))
         #expect(s.uptimeLabel(for: "plex") == nil)                         // 99% and up isn't flagged
         #expect(s.uptimeLabel(for: "x")?.hasPrefix("50") == true)
         #expect(s.uptimeLabel(for: "none") == nil)
