@@ -116,10 +116,12 @@ struct LockStateMachineTests {
         await c.unlock()
         #expect(c.route == .unlocked)
         #expect(auth.prompts == 1)
+        c.requestedAppID = "jellyfin"
         c.scenePhaseChanged(to: .background)
         #expect(c.route == .locked)
         #expect(c.liveEvents.status == nil)
         #expect(c.serverName == nil)
+        #expect(c.requestedAppID == nil)
         // Locked: no change is authorized, and no prompt is shown for one.
         #expect(await c.authorizeChange(reason: "test") == false)
         #expect(auth.prompts == 1)

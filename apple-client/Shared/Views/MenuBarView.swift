@@ -21,6 +21,8 @@ struct MenuBarView: View {
                 Section("Needs attention") {
                     ForEach(attention.prefix(6)) { app in
                         Button {
+                            // Opens on this app's page.
+                            coordinator.requestedAppID = app.id
                             open()
                         } label: {
                             Text(verbatim: "\(app.name): \(app.detailLine)")

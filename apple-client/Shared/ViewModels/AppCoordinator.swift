@@ -51,6 +51,10 @@ final class AppCoordinator {
     private(set) var pairingNotice: String?
     private(set) var isAuthenticating = false
     private(set) var unlockMethod: BiometricAuthManager.Method = .passcode
+    /// An app to show, asked for from outside the window (the Mac menu bar's
+    /// Needs attention list). The dashboard selects it and clears this.
+    /// Only an id, and cleared on lock.
+    var requestedAppID: String?
 
     let api: APIClient
     let liveEvents: LiveEventManager
@@ -210,6 +214,7 @@ final class AppCoordinator {
         liveEvents.clear()
         device = nil
         serverName = nil
+        requestedAppID = nil
         route = .locked
         Log.security.notice("Locked")
     }
