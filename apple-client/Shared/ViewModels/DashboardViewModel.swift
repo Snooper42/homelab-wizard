@@ -133,7 +133,7 @@ final class DashboardViewModel {
     /// The pinned apps, in the order they were pinned.
     var pinnedApps: [AppStatus] {
         let order = pinnedOrder
-        return allApps.filter { order[$0.id] != nil }.sorted { order[$0.id]! < order[$1.id]! }
+        return allApps.filter { order[$0.id] != nil }.sorted { (order[$0.id] ?? 0) < (order[$1.id] ?? 0) }
     }
 
     private var pinnedOrder: [String: Int] {

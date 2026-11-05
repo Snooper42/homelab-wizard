@@ -215,7 +215,7 @@ struct SavedSoFar: Equatable, Sendable {
 
     static func from(_ points: [SavingsPoint]) -> SavedSoFar {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.timeZone = .gmt
         func day(_ text: String) -> Date? {
             let f = text.split(separator: "-")
             guard f.count == 3, let y = Int(f[0]), let m = Int(f[1]), let d = Int(f[2]),
@@ -231,7 +231,8 @@ struct SavedSoFar: Equatable, Sendable {
         var total = 0.0
         var counted = 0
         for (i, p) in dated.enumerated() {
-            let next = i + 1 < dated.count ? dated[i + 1].date : calendar.date(byAdding: .day, value: 1, to: p.date)!
+            guard let next = i + 1 < dated.count ? dated[i + 1].date : calendar.date(byAdding: .day, value: 1, to: p.date)
+            else { continue }
             var d = p.date
             while d < next, counted < maxDays {
                 let c = calendar.dateComponents([.year, .month], from: d)
@@ -239,7 +240,8 @@ struct SavedSoFar: Equatable, Sendable {
                 byMonth[key, default: 0] += p.annual / 365
                 total += p.annual / 365
                 counted += 1
-                d = calendar.date(byAdding: .day, value: 1, to: d)!
+                guard let following = calendar.date(byAdding: .day, value: 1, to: d) else { break }
+                d = following
             }
         }
         let months = byMonth.map { Month(month: $0.key, amount: $0.value) }.sorted { $0.month > $1.month }
