@@ -85,7 +85,8 @@ function Actions({ busy, exists, remove, close, problem, touched, uses, removeAl
       </> : <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>)}
       <span class="grow" />
       <button type="button" class="small" onClick={cancel} disabled={busy}>Cancel</button>
-      <button type="submit" class="primary small" disabled={busy}>Save</button>
+      {/* Save (a click, or Enter in a box) ends a Cancel or Delete asked about, so what stops the save is what shows. */}
+      <button type="submit" class="primary small" disabled={busy} onClick={() => { setLeaving(false); setSure(false); }}>Save</button>
     </div>
     </>
   );

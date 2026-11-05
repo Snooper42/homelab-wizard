@@ -88,6 +88,10 @@ func TestSettings(t *testing.T) {
 	if get("tdarr", "url") != "http://localhost:8265" || get("tdarr", "gpu") != true || get("tdarr", "libraries").(map[string]string)["movies"] != "LIBM" {
 		t.Errorf("tdarr: %v", get("tdarr"))
 	}
+	// Tdarr's container mounts the media drive's movies and tv folders alone.
+	if pm := fmt.Sprint(get("tdarr", "path_map")); pm != "[["+filepath.Join("/Volumes/Hobbies", "movies")+" /media/movies] ["+filepath.Join("/Volumes/Hobbies", "tv")+" /media/tv]]" {
+		t.Errorf("tdarr path_map: %s", pm)
+	}
 	servers := get("servers").(map[string]any)
 	if len(servers) != 4 {
 		t.Errorf("servers: %v", servers)

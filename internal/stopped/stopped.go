@@ -42,7 +42,12 @@ func Load(path string) Record {
 	return r
 }
 
-// Save writes the record, or removes it when it holds nothing.
+// Save writes the record, or removes it when it holds nothing. It writes a
+// new file beside it and renames it in, so a process reading the record at
+// that moment (the watchdog, the battery saver) reads the old one or the new
+// one whole, never half a file that reads as "nothing stopped". To change
+// the record, use Update, which also keeps two writers from losing each
+// other's change.
 func (r Record) Save(path string) error {
 	if len(r) == 0 {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
@@ -54,7 +59,78 @@ func (r Record) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(r, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	_, werr := f.Write(append(data, '\n'))
+	if cerr := f.Close(); werr == nil {
+		werr = cerr
+	}
+	if werr == nil {
+		werr = os.Chmod(tmp, 0o600)
+	}
+	// On Windows a rename over a file another process is reading fails
+	// for that moment: try again briefly.
+	if werr == nil {
+		for range 20 {
+			if werr = os.Rename(tmp, path); werr == nil {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+	if werr != nil {
+		_ = os.Remove(tmp)
+	}
+	return werr
+}
+
+// lockWait is how long Update waits for another writer; a lock older than
+// lockStale was left by a writer that died, and is taken over. A writer
+// holds it only to read, change, and write a few lines.
+var (
+	lockWait  = 5 * time.Second
+	lockStale = 30 * time.Second
+)
+
+// Update reads the record, lets change change it, and saves it when change
+// says it did, holding a lock beside the record the whole time, so a change
+// made at the same moment by another homelab process (the awake job, a
+// phone's Stop for a while, homelab stop) is never saved over.
+func Update(path string, change func(Record) bool) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	lock := path + ".lock"
+	deadline := time.Now().Add(lockWait)
+	for {
+		f, err := os.OpenFile(lock, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if err == nil {
+			_ = f.Close()
+			break
+		}
+		// Windows says "access is denied" for a lock another writer is
+		// removing at that moment: it is busy, as one that is there.
+		if !os.IsExist(err) && !os.IsPermission(err) {
+			return err
+		}
+		if fi, serr := os.Stat(lock); serr == nil && time.Since(fi.ModTime()) > lockStale {
+			_ = os.Remove(lock)
+			continue
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("another homelab is changing %s: try again", filepath.Base(path))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	defer os.Remove(lock)
+	r := Load(path)
+	if !change(r) {
+		return nil
+	}
+	return r.Save(path)
 }
 
 // Has says whether id was stopped on purpose.

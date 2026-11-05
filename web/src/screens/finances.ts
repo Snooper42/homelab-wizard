@@ -174,6 +174,9 @@ export function toggleHideAmounts() {
   save(plan);
 }
 
+/** Opens a Finances form (Add a transaction, Update balances), as the screen's own buttons do; nothing on a phone that may only look. */
+export function openFinanceForm(what: What, id?: string, kind?: string) { open(what, id, kind); }
+
 function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;

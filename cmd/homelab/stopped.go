@@ -21,12 +21,15 @@ func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, conta
 	if len(r) == 0 {
 		return
 	}
+	// What to forget is worked out from this copy, while the starts take
+	// their seconds; the record is changed afterwards under its lock, and
+	// only for entries no one has changed since, so a stop made meanwhile
+	// (a phone's Stop for a while) is kept.
+	forget := map[string]stopped.Stop{}
 	report := detect.Analyze(h.catalog, containers)
-	changed := false
 	for _, id := range r.IDs() {
 		if st, _ := report.State(id); st == detect.Running {
-			delete(r, id)
-			changed = true
+			forget[id] = r[id]
 		}
 	}
 	var apps []*catalog.App
@@ -34,8 +37,7 @@ func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, conta
 		a, ok := h.catalog.Get(id)
 		if st, _ := report.State(id); !ok || st != detect.Stopped {
 			// Gone from the catalog, or its container removed: nothing to start.
-			delete(r, id)
-			changed = true
+			forget[id] = r[id]
 			continue
 		}
 		apps = append(apps, a)
@@ -49,17 +51,28 @@ func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, conta
 			}
 			a, _ := h.catalog.Get(id)
 			started = append(started, a)
-			delete(r, id)
-			changed = true
+			h.noteStarted(whyTimer, id)
+			forget[id] = r[id]
 		}
 	}
 	if len(started) > 0 {
 		h.ui.Info("started %s again, as asked when it was stopped", names(started))
 	}
-	if changed {
-		if err := r.Save(path); err != nil {
-			h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
+	if len(forget) == 0 {
+		return
+	}
+	err := stopped.Update(path, func(now stopped.Record) bool {
+		changed := false
+		for id, was := range forget {
+			if s, ok := now[id]; ok && s.Since.Equal(was.Since) && s.Until.Equal(was.Until) {
+				delete(now, id)
+				changed = true
+			}
 		}
+		return changed
+	})
+	if err != nil {
+		h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
 	}
 }
 

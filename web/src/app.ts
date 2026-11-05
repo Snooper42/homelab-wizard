@@ -17,6 +17,7 @@ import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
 import { arrivePlace, leavePlace } from './place';
+import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
@@ -88,6 +89,8 @@ $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });
+// A right-click on a screen in the sidebar: its own menu (palette/navMenu.tsx).
+wireNavMenus();
 
 // Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
 // Settings, R refreshes, F finds (Choose stacks, Settings), K opens the
