@@ -83,13 +83,15 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
 
     var isRunning: Bool { state == "running" }
 
-    /// Running but broken, or expected and not running.
+    /// Running but broken, expected and not running, or stopped by the
+    /// watchdog because it kept restarting.
     var needsAttention: Bool {
         if let notAnswering, !notAnswering.isEmpty { return true }
         switch health {
         case "unhealthy", "restarting": return true
         default: break
         }
+        if state == "stopped", stoppedOnPurpose?.keptRestarting == true { return true }
         return state == "missing" || state == "not running"
     }
 

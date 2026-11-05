@@ -57,13 +57,14 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
 
     /// The apps a group action covers, as the computer's group menu picks
     /// them: Start covers the stopped apps, except those stopped on purpose,
-    /// which are started each from its own row. Restart and Stop cover the
+    /// which are started each from its own row. One the watchdog stopped
+    /// for restarting over and over isn't stopped by you, so it's covered. Restart and Stop cover the
     /// running ones. Native apps and Roll back are never in a group.
     static func groupTargets(_ action: AppAction, in apps: [AppStatus]) -> [AppStatus] {
         apps.filter { app in
             guard !app.isNative, AppStatus.isValidID(app.id) else { return false }
             switch action {
-            case .start: return app.state == "stopped" && app.stoppedOnPurpose == nil
+            case .start: return app.state == "stopped" && (app.stoppedOnPurpose == nil || app.stoppedOnPurpose?.keptRestarting == true)
             case .restart, .stop: return app.isRunning
             case .rollback: return false
             }

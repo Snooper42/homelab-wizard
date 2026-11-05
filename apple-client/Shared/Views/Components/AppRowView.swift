@@ -190,7 +190,10 @@ extension AppStatus {
     }
 
     var tint: Color {
-        if needsAttention { return health == "restarting" || health == "unhealthy" ? .red : .orange }
+        if needsAttention {
+            let red = health == "restarting" || health == "unhealthy" || stoppedOnPurpose?.keptRestarting == true
+            return red ? .red : .orange
+        }
         if health == "starting" { return .yellow }
         switch state {
         case "running": return .green

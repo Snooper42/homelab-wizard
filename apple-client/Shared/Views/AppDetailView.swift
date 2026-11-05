@@ -29,6 +29,14 @@ struct AppDetailView: View {
                         Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
                             .foregroundStyle(.orange)
                     }
+                } else if app.state == "stopped", let stop = app.stoppedOnPurpose, stop.keptRestarting {
+                    Section("Problem") {
+                        Label(stop.words(), systemImage: "arrow.triangle.2.circlepath.circle")
+                            .foregroundStyle(.red)
+                        Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 actionsSection(for: app)

@@ -52,19 +52,37 @@ struct StopChoice: Sendable, Equatable, Identifiable {
 struct StopRecord: Codable, Sendable, Equatable, Hashable {
     let since: Date
     let until: Date?
+    /// Who stopped it when not a person (`stopped.Stop.Why`):
+    /// `restarting` is the watchdog, after Docker restarted it over and
+    /// over (main #427). It stays stopped until someone starts it.
+    let why: String?
+    /// How many times Docker restarted it in the hour, for `restarting`.
+    let restarts: Int
 
-    enum CodingKeys: String, CodingKey { case since, until }
+    static let keptRestartingWhy = "restarting"
+
+    enum CodingKeys: String, CodingKey { case since, until, why, restarts }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         since = try c.decode(Date.self, forKey: .since)
         until = try c.decodeIfPresent(Date.self, forKey: .until)
+        why = try c.decodeIfPresent(String.self, forKey: .why)
+        restarts = max(0, try c.decodeIfPresent(Int.self, forKey: .restarts) ?? 0)
     }
 
+    /// Stopped by the watchdog for restarting over and over. Unlike one
+    /// stopped by you, it needs a look: its log says why.
+    var keptRestarting: Bool { why == Self.keptRestartingWhy }
+
     /// How a row says it, as on the computer: "Stopped by you",
+    /// "Stopped: it restarted 5 times in an hour" (the watchdog),
     /// "Stopped until 9:00 PM", "Stopped until tomorrow, 8:00 AM",
     /// "Stopped until Fri, 8:00 AM".
     func words(now: Date = Date(), calendar: Calendar = .current) -> String {
+        if keptRestarting {
+            return restarts > 0 ? "Stopped: it restarted \(restarts) times in an hour" : "Stopped: it restarted many times in an hour"
+        }
         guard let until else { return "Stopped by you" }
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: until)).day ?? 0
         let time = until.formatted(date: .omitted, time: .shortened)

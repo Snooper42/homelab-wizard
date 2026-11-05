@@ -99,6 +99,23 @@ struct StopChoiceTests {
         #expect(status.apps[1].stoppedOnPurpose?.words() == "Stopped by you")
     }
 
+    @Test func anAppTheWatchdogStoppedNeedsALook() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"loop","name":"Loop","state":"stopped"},{"id":"plex","name":"Plex","state":"stopped"},
+                 {"id":"odd","name":"Odd","state":"stopped"}],
+         "stopped":{"loop":{"since":"2026-11-05T14:00:00Z","why":"restarting","restarts":5},
+                    "plex":{"since":"2026-11-05T14:00:00Z"},
+                    "odd":{"since":"2026-11-05T14:00:00Z","why":"restarting"}}}
+        """#.utf8))
+        let loop = status.apps[0], plex = status.apps[1], odd = status.apps[2]
+        #expect(loop.stoppedOnPurpose?.keptRestarting == true)
+        #expect(loop.detailLine == "Stopped: it restarted 5 times in an hour")
+        #expect(odd.detailLine == "Stopped: it restarted many times in an hour")
+        #expect(loop.needsAttention && !plex.needsAttention)
+        // Not stopped by you, so Start the stopped covers it; one stopped by you isn't.
+        #expect(AppAction.groupTargets(.start, in: status.apps).map(\.id) == ["loop", "odd"])
+    }
+
     @Test func aBadStoppedRecordDoesNotCostTheStatus() throws {
         let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
         {"apps":[{"id":"a","name":"A","state":"stopped"}],"stopped":{"a":{"since":"yesterday"}}}
