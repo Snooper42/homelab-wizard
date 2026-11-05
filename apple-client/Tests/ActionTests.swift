@@ -1,0 +1,151 @@
+import CoreGraphics
+import Foundation
+import ImageIO
+import SwiftUI
+import Testing
+@testable import HomelabClient
+
+@Suite("AppAction")
+struct AppActionTests {
+    private func app(state: String, health: String? = nil, id: String = "jellyfin") throws -> AppStatus {
+        var json = #"{"id":"\#(id)","name":"Jellyfin","state":"\#(state)""#
+        if let health { json += #","health":"\#(health)""# }
+        json += "}"
+        return try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func followsTheComputersRowMenu() throws {
+        #expect(AppAction.available(for: try app(state: "stopped")) == [.start])
+        #expect(AppAction.available(for: try app(state: "running", health: "healthy")) == [.restart, .stop])
+        #expect(AppAction.available(for: try app(state: "running", health: "native")).isEmpty)
+        #expect(AppAction.available(for: try app(state: "missing")).isEmpty)
+        #expect(AppAction.available(for: try app(state: "elsewhere")).isEmpty)
+    }
+
+    @Test func stopAndRollBackAreConfirmed() {
+        #expect(AppAction.allCases.filter(\.needsConfirmation) == [.stop, .rollback])
+        #expect(!AppAction.rollback.isEveryday)
+    }
+
+    @Test func rollBackWhileTheOldVersionIsKept() throws {
+        let json = #"{"id":"immich","name":"Immich","state":"running","updatedAt":"2026-11-04T03:00:00Z"}"#
+        let updated = try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+        #expect(AppAction.available(for: updated) == [.restart, .stop, .rollback])
+        #expect(AppAction.rollback.confirmationMessage(for: updated).contains("homelab updates release immich"))
+    }
+
+    @Test func appIDsAreCatalogShaped() {
+        #expect(AppStatus.isValidID("nginx-proxy-manager"))
+        #expect(AppStatus.isValidID("firefly-iii"))
+        #expect(!AppStatus.isValidID(""))
+        #expect(!AppStatus.isValidID("../etc"))
+        #expect(!AppStatus.isValidID("a b"))
+        #expect(!AppStatus.isValidID("app;rm -rf"))
+        #expect(!AppStatus.isValidID(String(repeating: "a", count: 65)))
+    }
+
+    @Test func commandOutputIsCleanedAndCapped() {
+        let lines = APIError.sanitizeLog(["\u{1B}[1mbold\u{7}", "tab\there"] + Array(repeating: "x", count: 500))
+        #expect(lines.count == 400)
+        let short = APIError.sanitizeLog(["\u{1B}[1mbold\u{7}", "tab\there", String(repeating: "y", count: 2000)])
+        #expect(short[0] == "[1mbold")
+        #expect(short[1] == "tab\there")
+        #expect(short[2].count == 1000)
+        #expect(APIError.sanitizeLog(nil).isEmpty)
+    }
+
+    @Test func failedActionsLogNoOutput() {
+        #expect(APIError.actionFailed(message: "no such container jellyfin", log: ["secret"]).logName == "actionFailed")
+    }
+}
+
+@Suite("Stop for a while")
+struct StopChoiceTests {
+    private var utc: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
+    private func at(_ text: String) -> Date { GoTime.parse(text)! }
+
+    @Test func afternoonOffersAnHourTonightAndTomorrowMorning() {
+        let choices = StopChoice.choices(now: at("2026-11-05T14:30:42Z"), calendar: utc)
+        #expect(choices.map(\.until) == [at("2026-11-05T15:30:00Z"), at("2026-11-05T21:00:00Z"), at("2026-11-06T08:00:00Z")])
+        #expect(choices[2].label.hasSuffix("tomorrow"))
+    }
+
+    @Test func lateEveningSkipsTonight() {
+        let choices = StopChoice.choices(now: at("2026-11-05T20:30:00Z"), calendar: utc)
+        #expect(choices.map(\.until) == [at("2026-11-05T21:30:00Z"), at("2026-11-06T08:00:00Z")])
+    }
+
+    @Test func earlyMorningOffersThisMorning() {
+        let choices = StopChoice.choices(now: at("2026-11-05T03:00:00Z"), calendar: utc)
+        #expect(choices.last?.until == at("2026-11-05T08:00:00Z"))
+        #expect(choices.last?.label.hasSuffix("tomorrow") == false)
+    }
+
+    @Test func untilIsWhatTheCLITakes() {
+        #expect(StopChoice(label: "x", until: at("2026-11-05T21:00:00Z")).untilArgument == "2026-11-05T21:00:00Z")
+    }
+
+    @Test func statusCarriesTheStopToItsApp() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"immich","name":"Immich","state":"stopped"},{"id":"plex","name":"Plex","state":"stopped"}],
+         "stopped":{"immich":{"since":"2026-11-05T14:00:00Z","until":"2026-11-05T21:00:00Z"},"plex":{"since":"2026-11-05T14:00:00Z"}}}
+        """#.utf8))
+        #expect(status.apps[0].stoppedOnPurpose?.until == at("2026-11-05T21:00:00Z"))
+        #expect(status.apps[1].stoppedOnPurpose?.words() == "Stopped by you")
+    }
+
+    @Test func aBadStoppedRecordDoesNotCostTheStatus() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"stopped"}],"stopped":{"a":{"since":"yesterday"}}}
+        """#.utf8))
+        #expect(status.apps.count == 1)
+        #expect(status.stopped.isEmpty)
+    }
+}
+
+@Suite("App settings")
+struct AppSettingTests {
+    private func app(_ json: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func valuesFromStatus() throws {
+        let held = try app(#"{"id":"immich","name":"Immich","state":"running","held":true,"quiet":true}"#)
+        #expect(!AppSetting.updates.isOn(for: held))
+        #expect(!AppSetting.alerts.isOn(for: held))
+        let plain = try app(#"{"id":"immich","name":"Immich","state":"running"}"#)
+        #expect(AppSetting.updates.isOn(for: plain) && AppSetting.alerts.isOn(for: plain))
+    }
+
+    @Test func nativeAppsHaveOnlyAlerts() throws {
+        let native = try app(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#)
+        #expect(AppSetting.available(for: native) == [.alerts])
+        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts"]) // what SetAppSetting takes
+    }
+}
+
+@Suite("Group actions")
+struct GroupActionTests {
+    @Test func targetsAsTheComputerPicksThem() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"},
+                 {"id":"c","name":"C","state":"stopped"},{"id":"n","name":"N","state":"running","health":"native"},
+                 {"id":"m","name":"M","state":"missing"}],
+         "stopped":{"c":{"since":"2026-11-05T10:00:00Z"}}}
+        """#.utf8))
+        #expect(AppAction.groupTargets(.start, in: status.apps).map(\.id) == ["b"])     // c was stopped on purpose
+        #expect(AppAction.groupTargets(.restart, in: status.apps).map(\.id) == ["a"])   // n is native
+        #expect(AppAction.groupTargets(.stop, in: status.apps).map(\.id) == ["a"])
+        #expect(AppAction.groupTargets(.rollback, in: status.apps).isEmpty)
+    }
+
+    @Test func progressLabel() {
+        let p = AppActionsViewModel.GroupProgress(action: .restart, at: 1, of: 5)
+        #expect(p.label == "Restarting 2 of 5…")
+    }
+}
