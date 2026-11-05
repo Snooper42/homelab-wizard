@@ -1815,7 +1815,7 @@
 
   // web/src/parts/Hover.tsx
   var made = 0;
-  function useHoverCard(tip, { wide, side = "below" } = {}) {
+  function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
     const [open3, setOpen] = d2(false);
     const [id2] = d2(() => `hover-${++made}`);
     const at2 = A2(null);
@@ -1860,11 +1860,11 @@
         }
       }
     };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open3, children: tip });
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open3, children: (!lazy || open3) && tip });
     return { on: on2, card, show: show3, open: open3 };
   }
-  function Hover({ label, cls = "", tip, wide }) {
-    const { on: on2, card, show: show3 } = useHoverCard(tip, { wide });
+  function Hover({ label, cls = "", tip, wide, lazy }) {
+    const { on: on2, card, show: show3 } = useHoverCard(tip, { wide, lazy });
     return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show3(true), children: [
       label,
       card
@@ -2083,6 +2083,47 @@
       /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
     ] });
   }
+  function firstLines(notes = "", n3 = 2) {
+    return notes.split("\n").map((l3) => l3.replace(/^\s*(#+|[-*+]|\d+\.)\s+/, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`]/g, "").trim()).filter((l3) => l3 && !/^(what'?s changed|changelog|release notes?)$/i.test(l3)).slice(0, n3);
+  }
+  var newest = {};
+  function HeldNotes({ a: a3, load }) {
+    const [p3, setP] = d2(null);
+    const [problem, setProblem] = d2("");
+    h2(() => {
+      let live = true;
+      (newest[a3.id] ||= load(a3.id)).then((v3) => live && setP(v3), (e3) => {
+        delete newest[a3.id];
+        if (live) setProblem(String(e3?.message || e3));
+      });
+      return () => {
+        live = false;
+      };
+    }, [a3.id]);
+    const r3 = p3?.releases?.[0];
+    const when3 = r3 && new Date(r3.when);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "outline", children: "Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back." }),
+      problem ? /* @__PURE__ */ u3("span", { class: "outline muted", children: [
+        "Could not read its releases: ",
+        problem
+      ] }) : !p3 ? /* @__PURE__ */ u3("span", { class: "outline muted", children: "Reading its newest release…" }) : !r3 ? /* @__PURE__ */ u3("span", { class: "outline muted", children: [
+        "Its project has published no releases",
+        p3.repo ? "" : " that its image names",
+        "."
+      ] }) : /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "outline", children: [
+          /* @__PURE__ */ u3("strong", { children: [
+            "Newest: ",
+            r3.name && r3.name !== r3.tag ? `${r3.tag}, ${r3.name}` : r3.tag
+          ] }),
+          when3 && !isNaN(when3.getTime()) ? ` · ${when3.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "",
+          p3.running ? ` (it runs ${p3.running})` : ""
+        ] }),
+        firstLines(r3.notes).map((l3, i3) => /* @__PURE__ */ u3("span", { class: "outline muted", children: l3 }, i3))
+      ] })
+    ] });
+  }
   var startedWords = {
     you: "You started it",
     updated: "You updated it, so it started on its new version",
@@ -2095,7 +2136,7 @@
     timer: "It started again at the time you set when you stopped it",
     docker: "Docker started it again after it stopped on its own; its log says why"
   };
-  function Uptime({ a: a3, week: week2, outages: outages2 }) {
+  function Uptime({ a: a3, week: week2, outages: outages2, load }) {
     if (a3.state !== "running" || !a3.since) return null;
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
@@ -2113,7 +2154,7 @@
         a3.restarts,
         "×"
       ] }),
-      a3.held && /* @__PURE__ */ u3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
+      a3.held && /* @__PURE__ */ u3(Hover, { cls: "badge", wide: true, lazy: true, label: "updates held", tip: /* @__PURE__ */ u3(HeldNotes, { a: a3, load }) }),
       a3.settingsChanged && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
       week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3(Hover, { cls: "badge warn", wide: true, label: `${Math.floor(week2 * 1e3) / 10}% up this week`, tip: /* @__PURE__ */ u3(WeekOutages, { outages: outages2 }) })
     ] });
@@ -2188,7 +2229,7 @@
                   a3.container
                 ] }),
                 /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id], outages: p3.outages?.[a3.id] }),
+              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id], outages: p3.outages?.[a3.id], load: p3.on.releaseNotes }),
               pend?.failed && /* @__PURE__ */ u3("span", { class: "rowerr", role: "status", children: [
                 "Could not ",
                 verb[pend.action] || pend.action,
@@ -6085,6 +6126,7 @@
       replan();
     },
     adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
+    releaseNotes: (id2) => go().ReleaseNotes(id2),
     open: (url) => go().Open(url),
     page: (a3) => pageOpener.open(a3.id),
     startAll: (apps, progress2) => groupAct(apps, "start", progress2),
@@ -6524,13 +6566,13 @@
   }
   function RestoreTile({ t: t3, due, test }) {
     const runs2 = t3.history || [];
-    const newest = runs2[runs2.length - 1];
+    const newest2 = runs2[runs2.length - 1];
     const timed = runs2.slice().reverse().find((r3) => r3.passed && r3.seconds);
-    const sub = newest && !newest.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
+    const sub = newest2 && !newest2.passed ? /* @__PURE__ */ u3("span", { class: "bad", children: [
       "Failed ",
-      ago(newest.when),
+      ago(newest2.when),
       ": ",
-      newest.summary
+      newest2.summary
     ] }) : due ? /* @__PURE__ */ u3("span", { class: "warn", children: "Prove the backups open, once a month" }) : (t3.lastSummary || (never(t3.lastTest) ? "Once there is a backup to test" : "Proven in the last 30 days")) + (timed ? ` · in ${tookText(timed.seconds)}` : "");
     const record2 = runs2.slice(-6).reverse().map((r3) => `${dayText(new Date(r3.when), { day: "numeric", month: "short" })}: ${r3.passed ? "passed" : "failed"}${r3.seconds ? " in " + tookText(r3.seconds) : ""}`);
     return /* @__PURE__ */ u3(
@@ -6698,7 +6740,7 @@
       ] });
     }
     const bad = jobs.filter((j3) => j3.state !== "ok").length;
-    const newest = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
+    const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
         bad,
@@ -6707,7 +6749,7 @@
         "✓ All ",
         jobs.length,
         " ran",
-        newest ? " " + ago(newest) : ""
+        newest2 ? " " + ago(newest2) : ""
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
         const [tone, word] = jobMark[j3.state] || ["", j3.state];
