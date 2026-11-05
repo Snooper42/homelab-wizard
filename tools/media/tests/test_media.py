@@ -313,6 +313,19 @@ class Trash(Base):
         self.assertIsNone(mc.trash(self.home / "missing"))
         self.trash.start()
 
+    def test_undo_takes_back_only_from_where_things_are_thrown(self):
+        film = self.lib["movies"] / "Gone (2001)" / "film.mkv"  # gone, and its folder too
+        day = Path(self.tmp.anchor) / ".tidy-trash" / "2026-11-05"
+        with mock.patch.object(mc, "IS_WINDOWS", True):  # a USB drive's own trash, a dated folder a day
+            self.assertTrue(mc.trashed_from(film, day / "film.mkv"))
+            self.assertFalse(mc.trashed_from(film, day / "deeper" / "film.mkv"))
+            self.assertFalse(mc.trashed_from(film, self.tmp / "homelab" / "film.mkv"))
+        if not mc.IS_WINDOWS and not mc.IS_MAC:  # the freedesktop Trash in this test's home
+            files = self.home / ".local" / "share" / "Trash" / "files"
+            self.assertTrue(mc.trashed_from(self.home / "film.mkv", files / "film.mkv"))
+        self.assertFalse(mc.trashed_from(self.home / "film.mkv", self.home / "film 2.mkv"))
+        self.assertFalse(mc.trashed_from("film.mkv", "film 2.mkv"), "a relative path is no one's")
+
     def test_windows_uses_the_recycle_bin(self):
         f = self.touch(self.tmp / "E" / "film.mkv")
         with mock.patch.object(mc.subprocess, "run") as run:
@@ -715,6 +728,26 @@ class UndoTrash(Base):
         self.assertEqual(a.read_text(), "a new one", "the new one stays")
         self.assertIn("A.nfo: something else is in its place", res["stayed"])
         self.assertFalse(b.exists(), "another run's stays in the Trash")
+
+    def test_a_crafted_log_moves_nothing_that_is_not_in_the_trash(self):
+        # A homelab moved in from a file someone else made brings its data/ (this log, and the run
+        # Undo offers). A line whose "to" is a file it brought, and whose "from" is where a login
+        # item goes, would have Undo plant it there. Only what sits where trash() puts things goes back.
+        planted = self.touch(self.tmp / "homelab" / "appdata" / "evil.plist")
+        nested = self.touch(self.home / ".local" / "share" / "Trash" / "files" / "dir" / "evil.sh")
+        agent = self.home / "Library" / "LaunchAgents" / "com.evil.plist"
+        rc = self.home / ".config" / "autostart" / "evil.desktop"
+        lines = [{"run": "scrubber-scan-1", "from": str(agent), "to": str(planted)},
+                 {"run": "scrubber-scan-1", "from": str(rc), "to": str(nested)},
+                 {"run": "scrubber-scan-1", "from": "Library/LaunchAgents/rel.plist", "to": "appdata/evil.plist"}]
+        self.log.parent.mkdir(parents=True, exist_ok=True)
+        self.log.write_text("".join(json.dumps(l) + "\n" for l in lines))
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        res = self.results()[-1]
+        self.assertEqual(res["restored"], 0)
+        self.assertFalse(agent.exists() or rc.exists(), "nothing planted")
+        self.assertTrue(planted.exists() and nested.exists(), "nothing moved")
+        self.assertIn("com.evil.plist: not where Tidy Up puts what it throws away", res["stayed"])
 
     def test_without_a_run_nothing_is_noted(self):
         with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": ""}):

@@ -89,6 +89,19 @@ type State struct {
 	// Days counts each check's passing and total runs per day (local date),
 	// for the last WeekDays days: how each app did this week.
 	Days map[string]map[string][2]int `json:"days,omitempty"`
+	// Outages are each check's times down this week, oldest first: what
+	// "94% up this week" was, for its hover.
+	Outages map[string][]Outage `json:"outages,omitempty"`
+}
+
+// Outage is one time a check was down: from its first failing run in a row
+// to the run that passed again (zero while it still fails), and what the
+// check said last. A single failing run that passes the next time (a blip)
+// is no outage, as it is no alert.
+type Outage struct {
+	From    time.Time `json:"from"`
+	To      time.Time `json:"to,omitzero"`
+	Problem string    `json:"problem"`
 }
 
 // WeekDays is how many days of runs Days keeps.
@@ -136,6 +149,7 @@ func (s *State) Forget(name string) {
 	delete(s.Pending, name)
 	delete(s.Problems, name)
 	delete(s.Days, name)
+	delete(s.Outages, name)
 }
 
 // Save writes the state.
@@ -154,9 +168,13 @@ func (s State) Save(path string) error {
 // A check counts as failed on its second failing run in a row, so a single
 // blip (waking from sleep, an update recreating a container) never alerts.
 func (s *State) Update(results []Result, now time.Time) (failed []Result, recovered []string) {
+	prev := s.LastRun
 	s.LastRun, s.Checks, s.Problems = now, len(results), map[string]string{}
 	if s.Days == nil {
 		s.Days = map[string]map[string][2]int{}
+	}
+	if s.Outages == nil {
+		s.Outages = map[string][]Outage{}
 	}
 	if s.Failing == nil {
 		s.Failing = map[string]time.Time{}
@@ -188,11 +206,24 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 				delete(s.Failing, r.Name)
 				recovered = append(recovered, r.Name)
 			}
+			s.endOutage(r.Name, now)
 		case was:
+			if o := s.Outages[r.Name]; len(o) > 0 && o[len(o)-1].To.IsZero() {
+				o[len(o)-1].Problem = r.Problem()
+			} else {
+				// Down since before outages were kept: from when it was confirmed.
+				s.Outages[r.Name] = append(o, Outage{From: s.Failing[r.Name], Problem: r.Problem()})
+			}
 		case s.Pending[r.Name] > 0:
 			delete(s.Pending, r.Name)
 			s.Failing[r.Name] = now
 			failed = append(failed, r)
+			// It was down from the run before, the first that failed.
+			from := prev
+			if from.IsZero() || !from.Before(now) {
+				from = now
+			}
+			s.Outages[r.Name] = append(s.Outages[r.Name], Outage{From: from, Problem: r.Problem()})
 		default:
 			s.Pending[r.Name]++
 		}
@@ -213,6 +244,27 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 			delete(s.Failing, name)
 		}
 	}
+	// A check no longer run ends its outage at the last run that saw it; an
+	// outage that ended before the week's first day is dropped.
+	start := now.AddDate(0, 0, -(WeekDays - 1))
+	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, now.Location())
+	for name, list := range s.Outages {
+		if !seen[name] {
+			s.endOutage(name, prev)
+			list = s.Outages[name]
+		}
+		kept := list[:0]
+		for _, o := range list {
+			if o.To.IsZero() || o.To.After(start) {
+				kept = append(kept, o)
+			}
+		}
+		if len(kept) == 0 {
+			delete(s.Outages, name)
+		} else {
+			s.Outages[name] = kept
+		}
+	}
 	for name := range s.Pending {
 		if !seen[name] {
 			delete(s.Pending, name)
@@ -220,6 +272,13 @@ func (s *State) Update(results []Result, now time.Time) (failed []Result, recove
 	}
 	sort.Strings(recovered)
 	return failed, recovered
+}
+
+// endOutage closes name's open outage at t, if it has one.
+func (s *State) endOutage(name string, t time.Time) {
+	if o := s.Outages[name]; len(o) > 0 && o[len(o)-1].To.IsZero() {
+		o[len(o)-1].To = t
+	}
 }
 
 // Failure is a check that has failed long enough to count.
@@ -240,11 +299,13 @@ type Summary struct {
 	// Days are each check's passing and total runs per day (local date,
 	// 2006-01-02) this week: an app's page draws them as the week's bars.
 	Days map[string]map[string][2]int `json:"days,omitempty"`
+	// Outages are each check's times down this week, oldest first.
+	Outages map[string][]Outage `json:"outages,omitempty"`
 }
 
 // Summary lists the confirmed failures with what each said last.
 func (s State) Summary() Summary {
-	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days}
+	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days, Outages: s.Outages}
 	for name, since := range s.Failing {
 		sum.Failing = append(sum.Failing, Failure{Name: name, Problem: s.Problems[name], Since: since})
 	}
