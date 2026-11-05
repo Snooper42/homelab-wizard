@@ -118,7 +118,7 @@ The homelab looks after itself, and says what it did.
 
 Safe by default, and easy to check.
 
-- **Hide amounts** (S, *Idea*): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder.
+- **Hide amounts** (S, *Built*, #368): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder (Finances' *Hide amounts and a wall-screen card*).
 - **Lock with Touch ID or Windows Hello** (M, *Idea*): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
@@ -226,7 +226,7 @@ Details that make it feel finished.
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
 - **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
 - **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
-- **Every menu by keyboard** (S, *Idea*): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape).
+- **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
 ## Insight
 
