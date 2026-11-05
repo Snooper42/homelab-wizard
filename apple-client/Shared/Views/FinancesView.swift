@@ -42,11 +42,15 @@ struct FinancesView: View {
         }
         .formStyle(.grouped)
         .overlay {
-            if finances.plan == nil, finances.planError == nil {
+            if !finances.canSeePlan {
+                ContentUnavailableView("Finances Aren't on This Device", systemImage: "banknote",
+                                       description: Text("On the computer, Settings › Phones, let this device see Finances."))
+            } else if finances.plan == nil, finances.planError == nil {
                 ProgressView("Reading the plan…")
             }
         }
-        .task { await finances.loadPlan() }
+        // Again once the device's level is known: right after unlock it may not be yet.
+        .task(id: finances.canSeePlan) { await finances.loadPlan() }
         .refreshable { await finances.loadPlan() }
         .sheet(item: $editing) { account in
             BalanceEditor(account: account, finances: finances)

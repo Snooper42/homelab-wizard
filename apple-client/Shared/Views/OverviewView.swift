@@ -38,7 +38,8 @@ struct OverviewView: View {
             await cards.load()
             await money
         }
-        .task { await finances.load() }
+        // Again once the device's level is known: right after unlock it may not be yet.
+        .task(id: finances.canSeeMoney) { await finances.load() }
         .navigationTitle("Overview")
     }
 }

@@ -81,7 +81,6 @@ struct DashboardView: View {
         .environment(tasks)
         .environment(model)
         .environment(model.icons)
-        // The cards change slowly: read them now, then every 5 minutes while unlocked.
         .task { await model.loadCatalog() }
         .task { await model.loadForMorning() }
         // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
@@ -89,6 +88,7 @@ struct DashboardView: View {
             if let status { model.latestApps = status.apps }
         }
         .onDisappear { model.rememberSeen() }
+        // The cards change slowly: read them now, then every 5 minutes while unlocked.
         .task {
             while !Task.isCancelled {
                 await model.cards.load()
