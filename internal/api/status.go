@@ -95,7 +95,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		}
 	}
 	quiet := map[string]bool{}
-	for _, id := range notify.Quiet(env) {
+	for _, id := range notify.LoadQuiet(c.Root, env) {
 		quiet[id] = true
 	}
 	for _, a := range c.Apps {
