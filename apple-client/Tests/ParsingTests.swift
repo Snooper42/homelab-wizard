@@ -378,3 +378,54 @@ struct DuplicatiRunTests {
         #expect(jobs[1].lastRunSummary == nil) // an older computer, or nothing yet: nothing said
     }
 }
+
+@Suite("Overnight")
+struct OvernightTests {
+    private var utc: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }
+    private func at(_ s: String) -> Date { GoTime.parse(s)! }
+    private func apps(_ json: String) -> [AppStatus] { try! JSONDecoder.homelab().decode([AppStatus].self, from: Data(json.utf8)) }
+
+    @Test func onlyInTheMorning() {
+        #expect(Overnight.night(of: at("2026-11-05T04:59:00Z"), calendar: utc) == nil)
+        #expect(Overnight.night(of: at("2026-11-05T12:00:00Z"), calendar: utc) == nil)
+        let night = Overnight.night(of: at("2026-11-05T07:30:00Z"), calendar: utc)
+        #expect(night?.lowerBound == at("2026-11-04T20:00:00Z"))
+    }
+
+    @Test func sumsUpTheNightAsTheComputerDoes() throws {
+        let list = apps(#"[{"id":"a","name":"Immich","state":"running","updatedAt":"2026-11-05T03:00:00Z"},{"id":"b","name":"Plex","state":"running","updatedAt":"2026-11-03T03:00:00Z"}]"#)
+        let copies = try JSONDecoder.homelab().decode([BackupCopy].self, from: Data(#"[{"id":"a","name":"Immich","newest":"2026-11-05T03:10:00Z","size":1073741824,"count":3,"state":"fresh"}]"#.utf8))
+        let line = Overnight.words(.init(now: at("2026-11-05T07:30:00Z"), apps: list, events: [], outages: [:], copies: copies, watched: true), calendar: utc)
+        let words = try #require(line)
+        #expect(words.hasPrefix("Overnight: Immich updated, a backup of"))
+        #expect(words.hasSuffix("nothing needed you."))
+    }
+
+    @Test func whatNeededYouComesFirst() throws {
+        let list = apps(#"[{"id":"a","name":"Immich","state":"running"}]"#)
+        let summary = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"""
+        {"lastRun":"2026-11-05T07:00:00Z","checks":1,"failing":[],"pending":0,"week":{"a":0.9},
+         "outages":{"a":[{"from":"2026-11-05T01:00:00Z","to":"2026-11-05T01:30:00Z","problem":"HTTP 502"}]}}
+        """#.utf8))
+        let words = Overnight.words(.init(now: at("2026-11-05T07:30:00Z"), apps: list, events: [], outages: summary.outages, copies: nil, watched: true), calendar: utc)
+        #expect(words == "Overnight: Immich was down for a while.")
+    }
+
+    @Test func saysNothingUntilTheWatchdogWasRead() {
+        let words = Overnight.words(.init(now: at("2026-11-05T07:30:00Z"), apps: [], events: [], outages: [:], copies: nil, watched: false), calendar: utc)
+        #expect(words == nil)
+    }
+
+    @Test func hideUntilTomorrow() {
+        let d = UserDefaults(suiteName: "homelab.tests.\(UUID().uuidString)")!
+        let morning = at("2026-11-05T07:30:00Z")
+        #expect(!Overnight.isHiddenToday(morning, defaults: d, calendar: utc))
+        Overnight.hideToday(morning, defaults: d, calendar: utc)
+        #expect(Overnight.isHiddenToday(morning, defaults: d, calendar: utc))
+        #expect(!Overnight.isHiddenToday(at("2026-11-06T07:30:00Z"), defaults: d, calendar: utc))
+    }
+}

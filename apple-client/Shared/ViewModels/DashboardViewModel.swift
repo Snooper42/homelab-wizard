@@ -148,6 +148,35 @@ final class DashboardViewModel {
         }
     }
 
+    /// Hidden until tomorrow on this device.
+    private(set) var overnightHidden = Overnight.isHiddenToday()
+
+    /// The morning's line about the night, or nil.
+    var overnightLine: String? {
+        guard !overnightHidden, let status = liveEvents.status else { return nil }
+        var events: [AlertEvent] = []
+        if case .alerts(let list)? = cards.cards["alerts"]?.data { events = list }
+        return Overnight.words(.init(
+            now: Date(),
+            apps: status.apps,
+            events: events,
+            outages: cards.watchdog?.outages ?? [:],
+            copies: backups.overview?.copies,
+            watched: cards.watchdog != nil
+        ))
+    }
+
+    func hideOvernight() {
+        Overnight.hideToday()
+        overnightHidden = true
+    }
+
+    /// In the morning, read Backups too, for the night's copies.
+    func loadForMorning() async {
+        guard Overnight.night(of: Date()) != nil, backups.overview == nil else { return }
+        await backups.load()
+    }
+
     /// For the sidebar badge and the phone's overview row: failing checks.
     var failingChecks: Int { cards.watchdog?.failing.count ?? 0 }
 }

@@ -83,6 +83,7 @@ struct DashboardView: View {
         .environment(model.icons)
         // The cards change slowly: read them now, then every 5 minutes while unlocked.
         .task { await model.loadCatalog() }
+        .task { await model.loadForMorning() }
         .task {
             while !Task.isCancelled {
                 await model.cards.load()
@@ -266,6 +267,14 @@ private struct SplitDashboard: View {
             AppRowView(app: app)
                 .appActionControls(for: app)
         }
+        .safeAreaInset(edge: .top) {
+            if model.overnightLine != nil {
+                OvernightLine(model: model)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(.bar)
+            }
+        }
         .overlay {
             if !model.hasLoaded {
                 NotLoadedView(model: model)
@@ -327,6 +336,25 @@ private struct NotLoadedView: View {
     }
 }
 
+/// The morning's line about the night, with Hide until tomorrow.
+struct OvernightLine: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        if let words = model.overnightLine {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
+                Text(words).font(.callout)
+                Spacer(minLength: 4)
+                Button("Hide Until Tomorrow") { model.hideOvernight() }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+}
+
 private extension DashboardViewModel.Filter {
     var emptyTitle: String {
         switch self {
@@ -348,6 +376,7 @@ private struct OverviewHeader: View {
             ConnectionBadge(state: model.liveEvents.connection)
             Text(model.summary)
                 .font(.headline)
+            OvernightLine(model: model)
             if let savings = model.yearlySavings {
                 Text("Replaces \(savings, format: .currency(code: "USD").precision(.fractionLength(0))) a year in subscriptions")
                     .font(.subheadline)
