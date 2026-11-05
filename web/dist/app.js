@@ -1532,14 +1532,14 @@
     }
     if (!s3?.start) return "";
     const d3 = parseDay(s3.start);
-    const weekday2 = dayText(d3, { weekday: "long" });
+    const weekday3 = dayText(d3, { weekday: "long" });
     switch (s3.every) {
       case "once":
         return "Once, " + dayShort(s3.start);
       case "week":
-        return "Every " + weekday2;
+        return "Every " + weekday3;
       case "2 weeks":
-        return "Every other " + weekday2;
+        return "Every other " + weekday3;
       case "twice a month":
         return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
       case "month":
@@ -1813,6 +1813,58 @@
     ] })) });
   }
 
+  // web/src/parts/Hover.tsx
+  var made = 0;
+  function Hover({ label, cls = "", tip, wide }) {
+    const [open2, setOpen] = d2(false);
+    const [id2] = d2(() => `hover-${++made}`);
+    const at2 = A2(null);
+    const card = A2(null);
+    const timer = A2(0);
+    const show2 = (soon2) => {
+      clearTimeout(timer.current);
+      if (soon2) setOpen(true);
+      else timer.current = window.setTimeout(() => setOpen(true), 250);
+    };
+    const hide = () => {
+      clearTimeout(timer.current);
+      setOpen(false);
+    };
+    _2(() => {
+      const t3 = at2.current, c3 = card.current;
+      if (!open2 || !t3 || !c3) return;
+      const r3 = t3.getBoundingClientRect(), w3 = c3.offsetWidth, h3 = c3.offsetHeight, pad = 8;
+      const left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
+      const below = r3.bottom + 6, top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+      c3.style.left = `${left}px`;
+      c3.style.top = `${top}px`;
+    }, [open2]);
+    return /* @__PURE__ */ u3(
+      "span",
+      {
+        class: "hovers " + cls,
+        ref: at2,
+        tabIndex: 0,
+        "aria-describedby": id2,
+        onMouseEnter: () => show2(false),
+        onMouseLeave: hide,
+        onFocus: () => show2(true),
+        onBlur: hide,
+        onClick: () => show2(true),
+        onKeyDown: (e3) => {
+          if (e3.key === "Escape" && open2) {
+            e3.stopPropagation();
+            hide();
+          }
+        },
+        children: [
+          label,
+          /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: card, hidden: !open2, children: tip })
+        ]
+      }
+    );
+  }
+
   // web/src/status/memory.ts
   var units = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
   function parseMem(s3) {
@@ -1965,7 +2017,34 @@
   function Link({ url, text: text2, open: open2 }) {
     return /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
   }
-  function Uptime({ a: a3, week: week2 }) {
+  var clock = (d3) => d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  var weekday = (d3) => d3.toLocaleDateString("en-US", { weekday: "short" });
+  function lasted(ms) {
+    const mins = Math.max(1, Math.round(ms / 6e4)), hours = Math.round(mins / 60);
+    return mins < 60 ? mins === 1 ? "a minute" : `${mins} minutes` : hours < 48 ? hours === 1 ? "an hour" : `${hours} hours` : `${Math.round(hours / 24)} days`;
+  }
+  function outageWords(o3, now = Date.now()) {
+    const from = new Date(o3.from), to = o3.to ? new Date(o3.to).getTime() : 0;
+    return `${weekday(from)} ${clock(from)}, ${to ? lasted(to - from.getTime()) : `down for ${lasted(now - from.getTime())} now`}: ${o3.problem}`;
+  }
+  function WeekOutages({ outages: outages2 = [], now = Date.now() }) {
+    const end = new Date(now), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
+    const t0 = first.getTime(), span = now - t0;
+    const days = Array.from({ length: 7 }, (_3, i3) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i3));
+    const shown5 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now) > t0);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "outstrip", "aria-hidden": "true", children: [
+        days.map((d3, i3) => /* @__PURE__ */ u3("span", { class: "outday", style: { left: `${(d3.getTime() - t0) / span * 100}%` }, children: weekday(d3).slice(0, 1) }, i3)),
+        shown5.map((o3, i3) => {
+          const from = Math.max(t0, new Date(o3.from).getTime()), to = o3.to ? new Date(o3.to).getTime() : now;
+          return /* @__PURE__ */ u3("span", { class: "out" + (o3.to ? "" : " now"), style: { left: `${(from - t0) / span * 100}%`, width: `max(3px, ${(to - from) / span * 100}%)` } }, i3);
+        })
+      ] }),
+      shown5.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown5.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
+      /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
+    ] });
+  }
+  function Uptime({ a: a3, week: week2, outages: outages2 }) {
     if (a3.state !== "running" || !a3.since) return null;
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
@@ -1978,10 +2057,7 @@
       ] }),
       a3.held && /* @__PURE__ */ u3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
       a3.settingsChanged && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
-      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days", children: [
-        Math.floor(week2 * 1e3) / 10,
-        "% up this week"
-      ] })
+      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3(Hover, { cls: "badge warn", wide: true, label: `${Math.floor(week2 * 1e3) / 10}% up this week`, tip: /* @__PURE__ */ u3(WeekOutages, { outages: outages2 }) })
     ] });
   }
   function NativeButton({ a: a3, title, label, open: open2 }) {
@@ -2022,7 +2098,7 @@
           "aria-busy": pend && !pend.failed ? true : void 0,
           class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
-            if (!e3.target.closest("a, button, .rowmenu")) p3.on.page(a3);
+            if (!e3.target.closest("a, button, .rowmenu, .hovers")) p3.on.page(a3);
           } : void 0,
           onContextMenu: menuable ? (e3) => {
             if (e3.target.closest(".rowmenu")) return;
@@ -2046,7 +2122,7 @@
                   a3.container
                 ] }),
                 /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
+              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id], outages: p3.outages?.[a3.id] }),
               pend?.failed && /* @__PURE__ */ u3("span", { class: "rowerr", role: "status", children: [
                 "Could not ",
                 verb[pend.action] || pend.action,
@@ -5527,6 +5603,7 @@
   var batteryPaused = /* @__PURE__ */ new Set();
   var held = {};
   var weekUp = {};
+  var outages = {};
   var savingsHistory = [];
   var lastAttention = -1;
   function renderTiles(st) {
@@ -5563,7 +5640,7 @@
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    appList = { groups: groups3, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -5781,6 +5858,7 @@
       return;
     }
     weekUp = w3.week || {};
+    outages = w3.outages || {};
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
     mountWatchdog(card, { w: w3, openSetup: () => {
@@ -6704,11 +6782,11 @@
   }
   function when(t3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
-    const clock = clockText(d3);
+    const clock2 = clockText(d3);
     const day3 = (x3) => new Date(x3.getFullYear(), x3.getMonth(), x3.getDate()).getTime();
     const days = Math.round((day3(now) - day3(d3)) / 864e5);
-    if (days === 0) return `Today, ${clock}`;
-    if (days === 1) return `Yesterday, ${clock}`;
+    if (days === 0) return `Today, ${clock2}`;
+    if (days === 1) return `Yesterday, ${clock2}`;
     return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
@@ -9094,7 +9172,7 @@
     return isoDay(new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + n3));
   };
   var monthTitle = (month3) => parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long", year: "numeric" });
-  var weekday = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
+  var weekday2 = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
   function daysOf(v3) {
     const cushion = v3.plan.cushion || 0;
     const moved = {};
@@ -9195,7 +9273,7 @@
           children: [
             /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last2 > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last2)}.` : `From today to ${dayShort(last2)}, as far as Finances reads ahead.` }),
             /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
-              /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
+              /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday2(d3, "long"), children: weekday2(d3, "short") }, d3)) }) }),
               /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
                 if (!d3) return /* @__PURE__ */ u3("td", { class: "fx-blank" }, k3);
                 const info = days[d3];

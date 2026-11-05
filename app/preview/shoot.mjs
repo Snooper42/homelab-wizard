@@ -2527,6 +2527,42 @@ const smokes = [
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');
   } },
+  // Hover "96.2% up this week" (or Tab to it, or tap it): the week as a strip with each time it was down, and why.
+  { name: 'The week’s outages on hover', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 0.98 },
+    outages: { navidrome: [{ from: hoursAgo(50), to: hoursAgo(49.25), problem: 'nothing answers on its port' }, { from: hoursAgo(5), to: hoursAgo(4.5), problem: 'HTTP 502' }] } } }, run: async (page) => {
+    const badge = 'tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")';
+    await page.waitForSelector(badge, { timeout: 5000 });
+    if (await page.isVisible('[role=tooltip]')) throw new Error('a card shows before any hover');
+    await page.hover(badge);
+    const card = await page.waitForSelector(`${badge} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const words = await card.innerText();
+    if (!/45 minutes: nothing answers on its port/.test(words) || !/30 minutes: HTTP 502/.test(words)) throw new Error('the card says: ' + words);
+    if (await card.$$eval('.outstrip .out', (o) => o.length) !== 2) throw new Error('not two marks on the strip');
+    if (await card.$$eval('.outstrip .outday', (o) => o.length) !== 7) throw new Error('not 7 days on the strip');
+    // Inside the window, and nothing over it.
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    // The screen reader reads it as the badge's description.
+    if (await page.$eval(badge, (b) => document.getElementById(b.getAttribute('aria-describedby'))?.getAttribute('role')) !== 'tooltip') throw new Error('not its description');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${badge} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    // A click (a phone's tap) shows it and stays on Status; Escape closes it.
+    await page.click(badge);
+    await page.waitForSelector(`${badge} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    if (!(await page.isVisible('#status'))) throw new Error('the click left Status');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(`${badge} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    // Tab reaches it.
+    await page.mouse.move(5, 5);
+    await page.$eval(badge, (b) => b.blur());
+    await page.focus(badge);
+    await page.waitForSelector(`${badge} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    // Only missed checks that passed the next time: it says so.
+    const blips = 'tr:has(strong:text-is("Vaultwarden")) .badge:has-text("98% up this week")';
+    await page.hover(blips);
+    const said = await page.waitForSelector(`${blips} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    if (!/No outage: each check it missed passed the next time/.test(await said.innerText())) throw new Error('Vaultwarden says: ' + await said.innerText());
+  } },
   { name: 'Uptime and restarts on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Audiobookshelf") .badge:has-text("restarted 3×")', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has-text("Vikunja") .local:has-text("up 8 hours")');
