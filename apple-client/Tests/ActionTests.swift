@@ -133,6 +133,17 @@ struct StopChoiceTests {
         #expect(apps[5].detailLine == "Restarting" && apps[6].detailLine == "Running (native app)")
     }
 
+    @Test func theSummaryReadsLikeTheComputersTiles() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"},
+                 {"id":"homelab-companion","name":"Phone companion","state":"not running"}],
+         "missing":1,"batteryPaused":["b"],"checking":true}
+        """#.utf8))
+        #expect(DashboardViewModel.summary(of: status) == "1 of 2 running · 1 needs attention · 1 baseline app is down · 1 paused on battery · checking…")
+        let empty = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[]}"#.utf8))
+        #expect(DashboardViewModel.summary(of: empty) == "No apps yet")
+    }
+
     @Test func batteryAndDriveWaitsAreNotStartedInBulk() throws {
         let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
         {"apps":[{"id":"plain","name":"Plain","state":"stopped"},

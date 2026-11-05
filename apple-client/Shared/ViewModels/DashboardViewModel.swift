@@ -155,12 +155,23 @@ final class DashboardViewModel {
         return liveEvents.status?.apps.first { $0.id == id }
     }
 
-    /// For example, "12 running · 1 needs attention".
+    /// For example, "12 of 14 running · 1 needs attention".
     var summary: String {
         guard let status = liveEvents.status else { return "Loading…" }
-        var parts = ["\(status.apps.filter(\.isRunning).count) running"]
-        if attentionCount > 0 { parts.append("\(attentionCount) need\(attentionCount == 1 ? "s" : "") attention") }
-        if status.missing > 0 { parts.append("\(status.missing) missing") }
+        return Self.summary(of: status)
+    }
+
+    /// The computer's Running and Needs a look tiles, in one line. The
+    /// phone companion waiting for its scheduled jobs isn't counted, as there.
+    nonisolated static func summary(of status: HomelabStatus) -> String {
+        guard !status.apps.isEmpty else { return "No apps yet" }
+        let counted = status.apps.filter { !$0.awaitingJobs }.count
+        var parts = ["\(status.apps.filter(\.isRunning).count) of \(counted) running"]
+        let attention = status.apps.filter(\.needsAttention).count
+        if attention > 0 { parts.append("\(attention) need\(attention == 1 ? "s" : "") attention") }
+        if status.missing > 0 {
+            parts.append(status.missing == 1 ? "1 baseline app is down" : "\(status.missing) baseline apps are down")
+        }
         if !status.batteryPaused.isEmpty { parts.append("\(status.batteryPaused.count) paused on battery") }
         if status.checking { parts.append("checking…") }
         return parts.joined(separator: " · ")
