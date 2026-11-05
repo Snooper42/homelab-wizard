@@ -113,6 +113,8 @@ struct FinancesView: View {
                         Label(hidden ? "Show Amounts on Every Device" : "Hide Amounts on Every Device",
                               systemImage: hidden ? "eye" : "eye.slash.circle")
                     }
+                    // As on the computer.
+                    .keyboardShortcut("h", modifiers: [.command, .shift])
                     .disabled(finances.isSaving)
                 }
             }
@@ -697,6 +699,12 @@ struct TransactionsView: View {
                     } label: {
                         Label("Add Transaction", systemImage: "plus")
                     }
+                    // ⌘N on iPad. On the Mac, ⌘N is New Window, so ⌥⌘N.
+                    #if os(macOS)
+                    .keyboardShortcut("n", modifiers: [.command, .option])
+                    #else
+                    .keyboardShortcut("n")
+                    #endif
                 }
             }
         }

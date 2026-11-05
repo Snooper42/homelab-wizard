@@ -23,12 +23,12 @@ apple-client/
 | **Pairing** | The code, the pasted pairing link, or a scan of the computer's QR code. Optionally as a wall screen (look-only for good). | The code or the pasted link |
 | **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, window close, and after five minutes behind other apps |
 | **Status** | Live list, searchable by name: pinned first, then needs attention, running, stopped. Each row has its icon, "N% up" and a dot for what changed since you looked. An app the watchdog stopped because Docker kept restarting it (main #427) reads "Stopped: it restarted 5 times in an hour", in red, and counts as needing attention. The overnight line in the morning. | The same, in a three-column split view whose sidebar keeps its place, plus a menu bar item |
-| **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog), details, why it last started, addresses, logs (filter, errors and warnings in colour, Problems Only, copy), and its settings (nightly updates, alerts, pin) | The same, with an App menu (⌥⌘S/R/./L) |
+| **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog), details, why it last started, addresses, logs (filter, errors and warnings in colour, Problems Only, copy with ⇧⌘C), and its settings (nightly updates, alerts, pin) | The same, with an App menu (⌥⌘S/R/./L) |
 | **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list | The same, plus keyboard shortcuts |
 | **Overview** | The money card, watchdog, protection, alerts, savings | Overview in the sidebar |
 | **Backups** | Each app's copy, Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
 | **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device, Unpair | Computer in the sidebar |
-| **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, the cushion, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar |
+| **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, the cushion, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar; ⌥⌘N adds a transaction, ⇧⌘H hides amounts on every device |
 
 ## Check it first, without Xcode
 

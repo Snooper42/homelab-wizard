@@ -62,6 +62,7 @@ struct LogsView: View {
                             Label(model.filter.isEmpty && !model.problemsOnly ? "Copy Log" : "Copy Shown Lines",
                                   systemImage: "doc.on.doc")
                         }
+                        .keyboardShortcut("c", modifiers: [.command, .shift])
                         .disabled(model.shownLines.isEmpty)
                         Button {
                             Task { await model.load() }
