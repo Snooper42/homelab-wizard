@@ -169,8 +169,9 @@ extension AppStatus {
     /// One line explaining the state, the most urgent part first.
     var detailLine: String {
         if let problem = notAnswering, !problem.isEmpty { return "Not answering: \(problem)" }
-        if let drive = waitingFor, !drive.isEmpty { return "Waiting for \(drive)" }
         if state == "stopped", let stop = stoppedOnPurpose { return stop.words() }
+        if state != "running", pausedOnBattery { return "Paused on battery" }
+        if let drive = waitingFor, !drive.isEmpty { return "Waiting for the \(Self.driveName(drive)) drive" }
         switch health {
         case "restarting": return "Crash loop"
         case "unhealthy": return "Unhealthy"
@@ -179,8 +180,20 @@ extension AppStatus {
         }
     }
 
+    /// A drive as the computer names it: "/Volumes/Media" is "Media".
+    static func driveName(_ path: String) -> String {
+        path.hasPrefix("/Volumes/") ? String(path.dropFirst("/Volumes/".count)) : path
+    }
+
+    /// Not running for a reason that passes by itself: the power or a drive
+    /// comes back. A warning, not trouble (the web's "warn" dot).
+    var isWaiting: Bool {
+        state != "running" && (pausedOnBattery || !(waitingFor ?? "").isEmpty)
+    }
+
     var symbolName: String {
         if needsAttention { return "exclamationmark.triangle.fill" }
+        if isWaiting { return pausedOnBattery ? "bolt.slash.circle.fill" : "externaldrive.fill.badge.exclamationmark" }
         if health == "starting" { return "hourglass.circle.fill" }
         switch state {
         case "running": return "checkmark.circle.fill"
@@ -194,7 +207,7 @@ extension AppStatus {
             let red = health == "restarting" || health == "unhealthy" || stoppedOnPurpose?.keptRestarting == true
             return red ? .red : .orange
         }
-        if health == "starting" { return .yellow }
+        if health == "starting" || isWaiting { return isWaiting ? .orange : .yellow }
         switch state {
         case "running": return .green
         case "elsewhere": return .blue

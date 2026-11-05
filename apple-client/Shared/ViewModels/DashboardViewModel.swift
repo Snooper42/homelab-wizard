@@ -161,6 +161,8 @@ final class DashboardViewModel {
         var parts = ["\(status.apps.filter(\.isRunning).count) running"]
         if attentionCount > 0 { parts.append("\(attentionCount) need\(attentionCount == 1 ? "s" : "") attention") }
         if status.missing > 0 { parts.append("\(status.missing) missing") }
+        if !status.batteryPaused.isEmpty { parts.append("\(status.batteryPaused.count) paused on battery") }
+        if status.checking { parts.append("checking…") }
         return parts.joined(separator: " · ")
     }
 

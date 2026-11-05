@@ -56,15 +56,18 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
     var isEveryday: Bool { self != .rollback }
 
     /// The apps a group action covers, as the computer's group menu picks
-    /// them: Start covers the stopped apps, except those stopped on purpose,
-    /// which are started each from its own row. One the watchdog stopped
-    /// for restarting over and over isn't stopped by you, so it's covered. Restart and Stop cover the
+    /// them (`startable` in web/src/status/AppList.tsx): Start covers the
+    /// stopped apps, except one stopped on purpose (by you, or by the
+    /// watchdog because it kept restarting), one waiting for its drive, and
+    /// one the battery saver paused. Each of those is started from its own row. Restart and Stop cover the
     /// running ones. Native apps and Roll back are never in a group.
     static func groupTargets(_ action: AppAction, in apps: [AppStatus]) -> [AppStatus] {
         apps.filter { app in
             guard !app.isNative, AppStatus.isValidID(app.id) else { return false }
             switch action {
-            case .start: return app.state == "stopped" && (app.stoppedOnPurpose == nil || app.stoppedOnPurpose?.keptRestarting == true)
+            case .start:
+                return app.state == "stopped" && app.stoppedOnPurpose == nil && !app.pausedOnBattery
+                    && (app.waitingFor ?? "").isEmpty
             case .restart, .stop: return app.isRunning
             case .rollback: return false
             }

@@ -38,9 +38,11 @@ struct HomelabStatus: Codable, Sendable, Equatable {
         // One entry that doesn't read shouldn't cost the whole status.
         let stopped = ((try? c.decodeIfPresent([String: StopRecord].self, forKey: .stopped)) ?? nil) ?? [:]
         self.stopped = stopped
+        let paused = Set(batteryPaused)
         apps = apps.map { app in
             var app = app
             app.stoppedOnPurpose = stopped[app.id]
+            app.pausedOnBattery = paused.contains(app.id)
             return app
         }
     }
@@ -75,6 +77,9 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let settingsChanged: Bool?
     /// From the status's `stopped` record, not the app's own JSON.
     var stoppedOnPurpose: StopRecord?
+    /// In the status's `batteryPaused`: the battery saver paused it until
+    /// the power comes back.
+    var pausedOnBattery = false
 
     enum CodingKeys: String, CodingKey {
         case id, name, state, health, container, url, address, since, restarts, startedBy

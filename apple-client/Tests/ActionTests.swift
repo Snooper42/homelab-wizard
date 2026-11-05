@@ -112,8 +112,25 @@ struct StopChoiceTests {
         #expect(loop.detailLine == "Stopped: it restarted 5 times in an hour")
         #expect(odd.detailLine == "Stopped: it restarted many times in an hour")
         #expect(loop.needsAttention && !plex.needsAttention)
-        // Not stopped by you, so Start the stopped covers it; one stopped by you isn't.
-        #expect(AppAction.groupTargets(.start, in: status.apps).map(\.id) == ["loop", "odd"])
+        // Like one stopped by you, it's started from its own row, not by Start the stopped.
+        #expect(AppAction.groupTargets(.start, in: status.apps).isEmpty)
+    }
+
+    @Test func batteryAndDriveWaitsAreNotStartedInBulk() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"plain","name":"Plain","state":"stopped"},
+                 {"id":"immich","name":"Immich","state":"stopped"},
+                 {"id":"jellyfin","name":"Jellyfin","state":"stopped","waitingFor":"/Volumes/Media"},
+                 {"id":"running","name":"Running","state":"running"}],
+         "batteryPaused":["immich","running"]}
+        """#.utf8))
+        let apps = status.apps
+        #expect(AppAction.groupTargets(.start, in: apps).map(\.id) == ["plain"])
+        #expect(apps[1].pausedOnBattery && apps[1].detailLine == "Paused on battery" && apps[1].isWaiting)
+        #expect(apps[2].detailLine == "Waiting for the Media drive" && apps[2].isWaiting)
+        // Running again: the battery list doesn't change how it reads.
+        #expect(apps[3].detailLine == "Running" && !apps[3].isWaiting)
+        #expect(!apps[1].needsAttention && !apps[2].needsAttention)
     }
 
     @Test func aBadStoppedRecordDoesNotCostTheStatus() throws {
