@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -41,11 +42,12 @@ func TestSummaryAndLooks(t *testing.T) {
 		{Name: "Uptime Kuma", State: "missing"},
 		{Name: "ntfy", State: "missing"},
 		{Name: "Syncthing", State: "stopped"},
-	}, Missing: 2}
-	if got := Looks(loop, 5); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running" {
+		{ID: "mealie", Name: "Mealie", State: "stopped"},
+	}, Missing: 2, Stopped: stopped.Record{"mealie": {Why: stopped.KeptRestarting, Restarts: 4}}}
+	if got := Looks(loop, 6); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running|Mealie was stopped: it kept restarting" {
 		t.Errorf("looks %q", got)
 	}
-	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 3 more need a look" {
+	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 4 more need a look" {
 		t.Errorf("looks, at most 3: %q", got)
 	}
 	if got := Looks(api.Status{Apps: st.Apps[:1]}, 3); len(got) != 0 {

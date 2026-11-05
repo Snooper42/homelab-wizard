@@ -49,6 +49,8 @@ type FakeContainer struct {
 	// ConfigHash is the configuration hash Compose made it with.
 	ConfigHash string
 	Mounts     []Mount
+	// Restarts is how many times its restart policy restarted it.
+	Restarts int
 }
 
 // Output implements Runner.
@@ -169,6 +171,7 @@ func (f *FakeRunner) inspect() ([]byte, error) {
 			"Mounts":          mounts,
 			"Id":              fmt.Sprintf("id%d", i),
 			"Name":            "/" + c.Name,
+			"RestartCount":    c.Restarts,
 			"Image":           c.ImageID,
 			"Config":          map[string]any{"Image": c.Image, "Labels": labels},
 			"State":           state,
