@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Result is one check.
@@ -129,10 +131,13 @@ func StatePath(root string) string {
 
 // LoadState reads path; a missing file is an empty state.
 func LoadState(path string) State {
+	data, _ := os.ReadFile(path)
+	return parseState(data)
+}
+
+func parseState(data []byte) State {
 	var s State
-	if data, err := os.ReadFile(path); err == nil {
-		_ = json.Unmarshal(data, &s)
-	}
+	_ = json.Unmarshal(data, &s)
 	if s.Failing == nil {
 		s.Failing = map[string]time.Time{}
 	}
@@ -152,7 +157,8 @@ func (s *State) Forget(name string) {
 	delete(s.Outages, name)
 }
 
-// Save writes the state.
+// Save writes the state whole (Status, the app, and the menu bar read it
+// at any moment), only this account's to read.
 func (s State) Save(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -161,7 +167,19 @@ func (s State) Save(path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0o644)
+	return lockedfile.Write(path, data, 0o600)
+}
+
+// UpdateState reads the state, lets change change it, and saves it, under
+// the lock beside it: two watchdog runs at once, or one and homelab
+// remove, never save over each other.
+func UpdateState(path string, change func(*State)) error {
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		s := parseState(old)
+		change(&s)
+		data, err := json.MarshalIndent(s, "", "  ")
+		return data, err == nil
+	})
 }
 
 // Update records results and returns what newly failed and what recovered.

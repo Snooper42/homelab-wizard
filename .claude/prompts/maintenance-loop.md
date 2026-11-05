@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** #432 (`claude/fix-pinned-record`), `APPS_PINNED` from item 2: take it to merged. #429 and #431 merged; their branches are gone.
+**Open now:** the PR for `claude/fix-update-history` (item 3, its second part): take it to merged. #429, #431, #432, and #433 merged.
 
 ## Your job
 
@@ -90,10 +90,14 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
    - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`). Waits for #425 to merge: `cmd/homelab/apps.go` reads it, and #425 claims that file. Then add it to `internal/applist` (#432) as the others are.
    - **(#431, merged)** `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`): now `data/alerts-off.json`.
-   - **(#432, open)** `APPS_PINNED` (`internal/api/pinned.go`, `cmd/homelab/pin.go`): now `data/pinned.json`.
+   - **(#432, merged)** `APPS_PINNED` (`internal/api/pinned.go`, `cmd/homelab/pin.go`): now `data/pinned.json`.
 
    On first run, read the old `.env` key, carry it over, then remove it, so nothing is lost on upgrade; prove it in `TestEachReleasesFolderUpgrades`. Top-level `data/*.json` goes off-site in the encrypted Secrets job, as `.env` does. Leave every other key the CLI writes where it is: secrets it generates (`NTFY_*`, `ADGUARD_*`, `KOPIA_*`), settings Compose reads (`VAULTWARDEN_SIGNUPS_ALLOWED`), and the owner's choices (`HOMELAB_DOMAIN`, `BACKUP_DESTINATION`). Leave the `<APP>_DIGEST` lines too: `cmd/homelab/versions.go` keeps them in `.env` on purpose, so a restore starts the version that wrote the data.
 3. **Records written in place.** Records that more than one process writes with a plain `os.WriteFile` move to `internal/lockedfile`. Start with `data/healed.json` (`cmd/homelab/heal.go`), the watchdog's state (`internal/health/health.go`), `data/battery.json` (`internal/battery`), and the savings history (`internal/savings`), and grep for others under `data/`. `internal/stopped`'s own copy of the lock becomes `lockedfile` too.
+   - **(#433, merged)** `data/battery.json` (`battery.Update`, `Pause`, `Resume`), the watchdog's state (`health.UpdateState`; `Save` whole), the savings history, and `internal/stopped` on `lockedfile`.
+   - **Waits for #425** (it claims `cmd/homelab/heal.go` and `apps.go`): `data/healed.json`, and `homelab remove`'s `Forget` through `health.UpdateState`.
+   - **(this PR, open)** `data/updates.json` (`updates.SaveChanges`: a run saves only the records it changed), `data/setup.json` (under its lock), `data/people.json` and `data/restarts.json` (one writer each: written whole).
+   - **Left, each with one writer** (whole writes are enough; take them when touching the code anyway): `internal/backup/reminder.go`, `internal/core/core.go`'s, `internal/upgrade/back.go`'s, `cmd/homelab/digest.go`'s, `cmd/homelab/finances.go`'s.
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
 5. **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
 6. **Dead code and duplicates.**
@@ -101,7 +105,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 
 ## For Account 1
 
-- **A Finances smoke case timed out once in CI** (Nov 5, #429's first run, `smoke (light)`): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
+- **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`, both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
 
