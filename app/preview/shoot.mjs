@@ -2799,8 +2799,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, and Open Net worth.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, and Export (which saves a copy and changes nothing).
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -4797,6 +4797,55 @@ const smokes = [
     await page.click('.fx-reportsum button:text-is("Export CSV")');
     await page.waitForFunction(() => window.__MOCK.exported.length === 3, null, { timeout: 5000 });
     await page.waitForFunction(() => document.querySelector('.fx-exported').textContent === '', null, { timeout: 5000 });
+  } },
+  // Export (F18): the plan as JSON (finance.json's own shape), the year ahead as a CSV (each payday and payment with
+  // checking after), and this month or the next on a page that prints itself; each says where it went.
+  { name: 'Finances: Export the plan, the year ahead, and a month to print', screen: 'finances', run: async (page) => {
+    const menu = async (item) => {
+      await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+      await page.click(`#finances .header [role=menuitem]:has-text("${item}")`, { timeout: 3000 });
+    };
+    await menu('The plan, as JSON');
+    await page.waitForSelector('.fx-exportsaid:has-text("Saved to /Users/alex/Downloads/finances-plan-")', { timeout: 5000 });
+    let x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    if (!/^finances-plan-\d{4}-\d\d-\d\d\.json$/.test(x.name)) throw new Error('named ' + x.name);
+    const plan = JSON.parse(x.text);
+    if (!plan.accounts?.length || !plan.payments?.length || !plan.people?.length) throw new Error('the plan exported: ' + Object.keys(plan).join(', '));
+    await menu('The year ahead');
+    await page.waitForFunction(() => /^finances-ahead-.*\.csv$/.test(window.__MOCK.exported.at(-1).name), null, { timeout: 5000 });
+    x = await page.evaluate(() => window.__MOCK.exported.at(-1));
+    const lines = x.text.split('\r\n');
+    if (lines[0] !== 'Date,What,Kind,Amount,Account,Checking after') throw new Error('header ' + lines[0]);
+    if (!lines.some((l) => /,Payday,\d+\.\d\d,/.test(l)) || !lines.some((l) => /,Payment,-\d+\.\d\d,/.test(l))) throw new Error('no payday or payment: ' + lines.slice(0, 6).join(' | '));
+    const dates = lines.slice(1, -1).map((l) => l.slice(0, 10));
+    if (dates.join() !== [...dates].sort().join()) throw new Error('not oldest first');
+    const months = new Set(dates.map((d) => d.slice(0, 7)));
+    if (months.size < 12) throw new Error(`only ${months.size} months ahead`);
+    await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")');
+    const printItems = await page.$$eval('#finances .header [role=menuitem]', (b) => b.map((x) => x.textContent).filter((t) => t.endsWith(', to print')));
+    if (printItems.length !== 2) throw new Error('print items: ' + printItems.join(', '));
+    await page.click(`#finances .header [role=menuitem]:text-is("${printItems[0]}")`);
+    await page.waitForSelector('.fx-exportsaid:has-text("Opened /Users/alex/Homelab/reports/finances/finances-")', { timeout: 5000 });
+    const p = await page.evaluate(() => window.__MOCK.printed.at(-1));
+    if (!/^finances-\d{4}-\d\d\.html$/.test(p.name) || !p.html.includes('<body onload="print()">') || !p.html.includes('<h1>Finances: ')) throw new Error('the page: ' + p.name);
+    if (/<script|https?:\/\//.test(p.html)) throw new Error('the printed page loads something from elsewhere');
+  } },
+  // Export stands level with the toolbar beside it on each system: the same middle as the capsule's buttons
+  // (the capsule keeps to the header's top, so a centred Export once sat a few pixels lower).
+  ...[['Mac', 'MacIntel', 'macOS 26.0'], ['Windows', 'Win32', 'Windows 11'], ['Linux', 'Linux x86_64', 'Ubuntu 24.04']].map(([sys, platform, os]) => ({
+    name: `Finances: Export sits level with the toolbar on ${sys}`, screen: 'finances', mock: { platform, host: { ...host, os } }, run: async (page) => {
+      await page.waitForSelector('#finances .header .fx-export button[aria-haspopup=menu]', { timeout: 5000 });
+      const at = await page.evaluate(() => {
+        const mid = (e) => { const r = e.getBoundingClientRect(); return { mid: r.top + r.height / 2, top: r.top, bottom: r.bottom }; };
+        return { exp: mid(document.querySelector('#finances .header .fx-export button[aria-haspopup=menu]')), btn: mid(document.querySelector('#finances .header .toolbar .btn')) };
+      });
+      if (Math.abs(at.exp.mid - at.btn.mid) > 0.5) throw new Error(`Export's middle is at ${at.exp.mid.toFixed(1)}px, the toolbar's buttons' at ${at.btn.mid.toFixed(1)}px`);
+    } })),
+  // A phone allowed only to look exports too (it changes nothing): the plan downloads.
+  { name: 'The phone, view only: Export downloads the plan', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.click('#finances .header [role=menuitem]:has-text("The plan, as JSON")')]);
+    if (!/^finances-plan-.*\.json$/.test(file.suggestedFilename())) throw new Error('downloaded ' + file.suggestedFilename());
   } },
   { name: 'The phone, view only: Reports exports as a download', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
