@@ -84,13 +84,14 @@ hash. The client receives the token itself, once.
 ## Not built yet
 
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
-- Finances editing beyond balances and new transactions: payments, budgets, goals, and changing or deleting a transaction. What's built:
+- Finances editing beyond balances and transactions: payments, budgets, goals, transfers and split transactions. What's built:
   - typing in an account's balance (`SaveFinances`, edit level). This edits the plan as the raw JSON the computer sent and sends it back whole, with its `rev`. Nothing the phone doesn't show is lost, and the computer refuses the save if another device saved first;
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;
   - budgets, goals and loans from the same view;
   - transactions (`FinancesLedger`), newest first by month, searchable;
   - adding a transaction (`SaveFinancesLedger`, edit level): money in or out of one account, with payee, category, day and note. It's appended to the raw ledger and sent back with its `rev`. The computer gives it its id and checks it;
+  - changing or deleting a transaction (by its id; transfers and splits stay on the computer). Everything else it holds, such as tags, bank id and receipt, is kept;
   - receipts: a kept one opens from its transaction (`FinancesReceipt`; pictures through a capped thumbnail, PDFs in PDFKit), and a photo can be attached to a new one (`SaveFinancesReceipt`). It's shrunk and re-encoded as JPEG with no metadata, so no location leaves the device.
   Amounts stay hidden until tapped and hide again on lock. None show while the plan's Hide amounts is on.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.

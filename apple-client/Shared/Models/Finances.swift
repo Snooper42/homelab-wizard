@@ -354,9 +354,11 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let tags: [String]
     /// The receipt kept with it on the computer, by its file's name.
     let receipt: String?
+    /// Divided across categories (changed only on the computer).
+    let isSplit: Bool
     var hasReceipt: Bool { receipt != nil }
 
-    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, category, note, to, tags, receipt }
+    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, category, note, to, tags, receipt, splits }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -371,6 +373,7 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
         let name = try c.decodeIfPresent(String.self, forKey: .receipt) ?? ""
         receipt = ReceiptCodec.isValidName(name) ? name : nil
+        isSplit = !(((try? c.decodeIfPresent([JSONValue].self, forKey: .splits)) ?? nil) ?? []).isEmpty
     }
 
     /// Whether `text` is in the payee, the category, the note or a tag.

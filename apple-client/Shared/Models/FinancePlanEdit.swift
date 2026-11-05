@@ -91,6 +91,48 @@ enum LedgerEdit {
         return nil
     }
 
+    /// `ledger` without the transaction `id`, or nil when it has none by that id.
+    static func removing(id: String, from ledger: JSONValue) -> JSONValue? {
+        guard !id.isEmpty, case .object(var root) = ledger, case .array(let all)? = root["transactions"] else { return nil }
+        let kept = all.filter { $0["id"] != .string(id) }
+        guard kept.count == all.count - 1 else { return nil }
+        root["transactions"] = .array(kept)
+        return .object(root)
+    }
+
+    /// `ledger` with the transaction `id`'s day, amount, payee, category
+    /// and note set from `t`. Every other field it has (splits, tags, bank
+    /// id, receipt, a transfer's other account, the planned payment it
+    /// pays) is kept. Nil when it can't be: an unknown id, a bad entry, or
+    /// a transfer or split one, which is changed on the computer.
+    static func updating(id: String, with t: NewTransaction, accounts: Set<String>, calendar: Calendar = .current, in ledger: JSONValue) -> JSONValue? {
+        guard problem(with: t, accounts: accounts) == nil,
+              case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var entry) = all[index]
+        else { return nil }
+        if case .string(let to)? = entry["to"], !to.isEmpty { return nil }
+        if case .array(let splits)? = entry["splits"], !splits.isEmpty { return nil }
+
+        let amount = FinancePlanEdit.roundedToCents(t.amount)
+        entry["date"] = .string(FinancePlanEdit.todayString(t.date, calendar: calendar))
+        entry["account"] = .string(t.account)
+        entry["amount"] = .number(t.isMoneyIn ? amount : -amount)
+        entry["payee"] = .string(t.payee.trimmingCharacters(in: .whitespacesAndNewlines))
+        let category = t.category.trimmingCharacters(in: .whitespacesAndNewlines)
+        entry["category"] = category.isEmpty ? nil : .string(category)
+        let note = t.note.trimmingCharacters(in: .whitespacesAndNewlines)
+        entry["note"] = note.isEmpty ? nil : .string(note)
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
+    /// Whether the phone can change `t`: not a transfer or a split one.
+    static func canUpdate(_ t: FinanceTransaction) -> Bool {
+        (t.to ?? "").isEmpty && !t.isSplit
+    }
+
     /// `ledger` with `t` added at the end, or nil when it can't be. The
     /// computer keeps the order by day itself.
     static func appending(_ t: NewTransaction, accounts: Set<String>, calendar: Calendar = .current, to ledger: JSONValue) -> JSONValue? {

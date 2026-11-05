@@ -359,6 +359,7 @@ struct TransactionsView: View {
     @State private var search = ""
     @State private var adding = false
     @State private var receiptFor: FinanceTransaction?
+    @State private var editingTransaction: FinanceTransaction?
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -386,7 +387,16 @@ struct TransactionsView: View {
             ForEach(months) { group in
                 Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
                     ForEach(group.items) { t in
-                        if t.hasReceipt {
+                        if finances.canAddTransactions && LedgerEdit.canUpdate(t) {
+                            Button {
+                                finances.clearSaveError()
+                                editingTransaction = t
+                            } label: {
+                                TransactionRow(transaction: t, finances: finances)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Change or delete it")
+                        } else if t.hasReceipt {
                             Button {
                                 receiptFor = t
                             } label: {
@@ -439,6 +449,9 @@ struct TransactionsView: View {
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
         }
+        .sheet(item: $editingTransaction) { t in
+            AddTransactionView(finances: finances, editing: t)
+        }
         .sheet(item: $receiptFor) { t in
             if let name = t.receipt {
                 ReceiptView(name: name, title: t.payee.isEmpty ? "Receipt" : t.payee, finances: finances)
@@ -451,9 +464,13 @@ struct TransactionsView: View {
 /// Records money in or out of one account, as a person types it in.
 private struct AddTransactionView: View {
     let finances: FinancesViewModel
+    /// The transaction being changed, or nil for a new one.
+    var editing: FinanceTransaction? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var draft = NewTransaction(date: Date(), account: "", isMoneyIn: false, amount: 0, payee: "", category: "", note: "")
     @State private var amountText = ""
+    @State private var confirmingDelete = false
+    @State private var showingReceipt = false
     @State private var photo: PhotosPickerItem?
     @State private var attaching = false
 
@@ -505,31 +522,59 @@ private struct AddTransactionView: View {
                     TextField("Note", text: $draft.note, axis: .vertical)
                         .lineLimit(1...4)
                 }
-                Section {
-                    if draft.receipt != nil {
-                        HStack {
-                            Label("Receipt attached", systemImage: "paperclip")
-                            Spacer()
-                            Button("Remove", role: .destructive) {
-                                draft.receipt = nil
-                                photo = nil
+                if let editing {
+                    Section {
+                        if let name = editing.receipt {
+                            Button {
+                                showingReceipt = true
+                            } label: {
+                                Label("Show the Receipt", systemImage: "paperclip")
                             }
-                            .buttonStyle(.borderless)
+                            .sheet(isPresented: $showingReceipt) {
+                                ReceiptView(name: name, title: editing.payee.isEmpty ? "Receipt" : editing.payee, finances: finances)
+                            }
                         }
-                    } else {
-                        PhotosPicker(selection: $photo, matching: .images) {
+                        Button(role: .destructive) {
+                            confirmingDelete = true
+                        } label: {
+                            Label("Delete Transaction", systemImage: "trash")
+                        }
+                        .disabled(finances.isSaving)
+                        .confirmationDialog("Delete this transaction?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                            Button("Delete", role: .destructive) {
+                                Task { if await finances.delete(editing) { dismiss() } }
+                            }
+                        } message: {
+                            Text("It's removed from the ledger on the computer too.")
+                        }
+                    }
+                } else {
+                    Section {
+                        if draft.receipt != nil {
                             HStack {
-                                Label("Attach a Photo of the Receipt", systemImage: "camera")
-                                if attaching {
-                                    Spacer()
-                                    ProgressView().controlSize(.small)
+                                Label("Receipt attached", systemImage: "paperclip")
+                                Spacer()
+                                Button("Remove", role: .destructive) {
+                                    draft.receipt = nil
+                                    photo = nil
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        } else {
+                            PhotosPicker(selection: $photo, matching: .images) {
+                                HStack {
+                                    Label("Attach a Photo of the Receipt", systemImage: "camera")
+                                    if attaching {
+                                        Spacer()
+                                        ProgressView().controlSize(.small)
+                                    }
                                 }
                             }
+                            .disabled(attaching)
                         }
-                        .disabled(attaching)
+                    } footer: {
+                        Text("The photo is shrunk and sent without its location or any other details the camera kept.")
                     }
-                } footer: {
-                    Text("The photo is shrunk and sent without its location or any other details the camera kept.")
                 }
                 if let error = finances.saveError {
                     Section {
@@ -538,7 +583,7 @@ private struct AddTransactionView: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Add Transaction")
+            .navigationTitle(editing == nil ? "Add Transaction" : "Change Transaction")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -574,6 +619,18 @@ private struct AddTransactionView: View {
         .frame(minWidth: 420, minHeight: 440)
         #endif
         .onAppear {
+            if let editing, draft.payee.isEmpty {
+                draft.date = editing.date ?? Date()
+                draft.account = editing.account
+                draft.isMoneyIn = editing.amount > 0
+                draft.payee = editing.payee
+                draft.category = editing.category
+                draft.note = editing.note
+                // The amount is filled in only when amounts are showing here.
+                if finances.amountsShown, !finances.amountsHiddenByPlan {
+                    amountText = abs(editing.amount).formatted(.number.precision(.fractionLength(0...2)).grouping(.never))
+                }
+            }
             if draft.account.isEmpty {
                 let checking = finances.plan?.checking ?? ""
                 draft.account = accounts.contains(where: { $0.id == checking }) ? checking : (accounts.first?.id ?? "")
@@ -586,7 +643,13 @@ private struct AddTransactionView: View {
         guard let amount = FinancePlanEdit.parseAmount(amountText) else { return }
         t.amount = abs(amount)
         Task {
-            if await finances.add(t) { dismiss() }
+            let saved: Bool
+            if let editing {
+                saved = await finances.update(editing, with: t)
+            } else {
+                saved = await finances.add(t)
+            }
+            if saved { dismiss() }
         }
     }
 }

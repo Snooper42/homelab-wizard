@@ -112,9 +112,41 @@ final class FinancesViewModel {
             saveError = "The ledger couldn't take that."
             return false
         }
+        return await saveLedger(edited, reason: "Add a transaction to your Finances.")
+    }
+
+    func clearSaveError() { saveError = nil }
+
+    /// Changes a transaction the phone may change. Returns whether it saved.
+    func update(_ original: FinanceTransaction, with t: NewTransaction) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger, let plan else { return false }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        if let problem = LedgerEdit.problem(with: t, accounts: accounts) {
+            saveError = problem
+            return false
+        }
+        guard let edited = LedgerEdit.updating(id: original.id, with: t, accounts: accounts, in: raw) else {
+            saveError = "This transaction is changed on the computer."
+            return false
+        }
+        return await saveLedger(edited, reason: "Change a transaction in your Finances.")
+    }
+
+    /// Removes a transaction. Returns whether it saved.
+    func delete(_ t: FinanceTransaction) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger else { return false }
+        guard let edited = LedgerEdit.removing(id: t.id, from: raw) else {
+            saveError = "That transaction isn't in the ledger any more."
+            await loadLedger()
+            return false
+        }
+        return await saveLedger(edited, reason: "Delete a transaction from your Finances.")
+    }
+
+    private func saveLedger(_ edited: JSONValue, reason: String) async -> Bool {
         isSaving = true
         defer { isSaving = false }
-        guard await authorize("Add a transaction to your Finances.") else { return false }
+        guard await authorize(reason) else { return false }
         do {
             let read = try await api.saveFinancesLedger(edited)
             ledger = read.ledger
@@ -130,8 +162,6 @@ final class FinancesViewModel {
             return false
         }
     }
-
-    func clearSaveError() { saveError = nil }
 
     /// A receipt to show, read when asked and kept only while shown.
     func openReceipt(_ name: String) async -> ReceiptCodec.Content? {

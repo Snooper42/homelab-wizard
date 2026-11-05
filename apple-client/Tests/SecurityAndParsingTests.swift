@@ -741,3 +741,50 @@ struct ReceiptTests {
         #expect(LedgerEdit.appending(bad, accounts: ["chk"], to: .null) == nil)
     }
 }
+
+@Suite("Changing a transaction")
+struct LedgerChangeTests {
+    private let ledger = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r1","transactions":[
+      {"id":"a","date":"2026-11-01","account":"chk","amount":-5,"payee":"Café","bank":"FITID1","tags":["coffee"],"receipt":"0123456789abcdef0123456789abcdef.jpg","category":"Food"},
+      {"id":"b","date":"2026-11-02","account":"chk","amount":-500,"to":"sav","payee":"Savings"},
+      {"id":"c","date":"2026-11-03","account":"chk","amount":-60,"payee":"Shop","splits":[{"category":"Food","amount":-40},{"category":"Home","amount":-20}]}
+    ]}
+    """#.utf8))
+
+    private func draft() -> NewTransaction {
+        NewTransaction(date: GoTime.parse("2026-11-04T12:00:00Z")!, account: "chk", isMoneyIn: false, amount: 6.5, payee: "Café Bleu", category: "", note: "oat milk")
+    }
+
+    @Test func updatesAndKeepsTheRest() throws {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC")!
+        let edited = try #require(LedgerEdit.updating(id: "a", with: draft(), accounts: ["chk"], calendar: utc, in: ledger))
+        guard case .array(let all)? = edited["transactions"] else { Issue.record("no transactions"); return }
+        let a = all[0]
+        #expect(a["amount"] == .number(-6.5))
+        #expect(a["payee"] == .string("Café Bleu"))
+        #expect(a["date"] == .string("2026-11-04"))
+        #expect(a["category"] == nil)                       // cleared
+        #expect(a["note"] == .string("oat milk"))
+        #expect(a["bank"] == .string("FITID1"))              // kept
+        #expect(a["tags"] == .array([.string("coffee")]))    // kept
+        #expect(a["receipt"] == .string("0123456789abcdef0123456789abcdef.jpg")) // kept
+        #expect(a["id"] == .string("a"))
+        #expect(edited["rev"] == .string("r1"))
+    }
+
+    @Test func transfersAndSplitsStayOnTheComputer() {
+        #expect(LedgerEdit.updating(id: "b", with: draft(), accounts: ["chk"], in: ledger) == nil)
+        #expect(LedgerEdit.updating(id: "c", with: draft(), accounts: ["chk"], in: ledger) == nil)
+        #expect(LedgerEdit.updating(id: "zzz", with: draft(), accounts: ["chk"], in: ledger) == nil)
+    }
+
+    @Test func removesExactlyOne() throws {
+        let edited = try #require(LedgerEdit.removing(id: "b", from: ledger))
+        guard case .array(let all)? = edited["transactions"] else { Issue.record("no transactions"); return }
+        #expect(all.map { $0["id"] } == [.string("a"), .string("c")])
+        #expect(LedgerEdit.removing(id: "nope", from: ledger) == nil)
+        #expect(LedgerEdit.removing(id: "", from: ledger) == nil)
+    }
+}
