@@ -94,6 +94,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `NTFY_PUBLISH_TOKEN`, `NTFY_PUBLISH_AUTH` | empty | Secrets, filled in by `homelab notify setup`: the publishers' access token, and the same as an `?auth=` parameter for publishers that only take a URL |
 | `NTFY_READ_TOKEN` | empty | Secret, made by `notify setup`: read-only access for the app's list of recent alerts |
 | `DESKTOP_ALERTS` | `true` | Alerts also show on this machine's screen (Notification Center on a Mac). `false`: the phone only |
+| `QUIET_HOURS` | `22-7` | The night: alerts between these hours (22:00 to 07:00) reach the phone at ntfy's low priority, without a sound, unless serious (the vault unreachable, backups failing for two days). `13-15` for other hours; `off` sounds every alert |
 | `HELPER_EMAIL` | empty | Who helps you with the homelab: **Email it to my helper** writes to them with the diagnostics report |
 | `HEARTBEAT_URL` | empty | An external heartbeat (such as a healthchecks.io ping URL, period and grace 15 minutes). The watchdog pings it every run and pings `/fail` when something is down |
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | When the background agent runs the nightly updates (a cron with seconds): 4:00 AM daily, after the 03:30 backup. Named for Watchtower, which ran them before |

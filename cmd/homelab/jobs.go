@@ -59,6 +59,9 @@ func (h *homelab) ntfy() *notify.Client {
 // desktopNotify shows an alert on this machine's screen; tests replace it.
 var desktopNotify = notify.Desktop
 
+// alertNow is the time an alert is sent at, for its quiet hours; tests set it.
+var alertNow = time.Now
+
 // alert publishes best-effort; failures are reported but never fatal. It
 // also shows on this machine's screen (DESKTOP_ALERTS, on by default), so
 // alerts reach someone before the phone is set up, or when ntfy is down.
@@ -70,9 +73,30 @@ func (h *homelab) alert(ctx context.Context, topic string, m notify.Message) {
 	if env["NTFY_PUBLISH_TOKEN"] == "" {
 		return // phone alerts are not set up yet (Set up the alert token)
 	}
+	// Overnight (QUIET_HOURS, 22-7 by default) it reaches the phone without
+	// a sound, unless it is serious.
+	m = notify.Hush(m, env[notify.QuietHoursKey], alertNow())
 	if err := h.ntfy().Publish(ctx, topic, m); err != nil {
 		h.ui.Warn("could not send the alert: %v", err)
 	}
+}
+
+// downPriority is the down alert's priority: the vault unreachable is
+// serious, so it sounds in the quiet hours too; anything else is high.
+func downPriority(failed []health.Result) int {
+	if slices.ContainsFunc(failed, func(r health.Result) bool { return r.Name == "vaultwarden" }) {
+		return notify.Serious
+	}
+	return 4
+}
+
+// daysFailing says an app's newest copy is two nights old or more: the
+// backup has been failing for days, not only tonight. A copy paused while
+// its app waits for a drive is not failing.
+func daysFailing(o backup.Overview, now time.Time) bool {
+	return slices.ContainsFunc(o.Copies, func(c backup.Copy) bool {
+		return c.State == "stale" && now.Sub(c.Newest) >= 48*time.Hour
+	})
 }
 
 // backup dumps every running database marked `dump: postgres`, archives the
@@ -277,7 +301,18 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	// Finances' reminders go whatever became of the backup.
 	h.sendFinanceReminders(ctx, time.Now())
 	if len(failures) > 0 {
-		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})
+		// Failing for days (a copy two nights old) is serious: it sounds
+		// in the quiet hours too.
+		priority := 4
+		installed := func(a *catalog.App) bool {
+			st, _ := report.State(a.ID)
+			return st == detect.Running || st == detect.Stopped
+		}
+		waiting := func(a *catalog.App) string { return core.WaitingFor(report, a) }
+		if daysFailing(backup.Read(h.root, backup.SourcesFor(h.catalog, installed, waiting), h.envMap(), time.Now()), time.Now()) {
+			priority = notify.Serious
+		}
+		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: priority, Tags: []string{"warning"}})
 		return fmt.Errorf("%d backup step(s) failed", len(failures))
 	}
 	h.remindRestoreTest(ctx)
@@ -817,7 +852,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		for _, r := range failed {
 			lines = append(lines, core.DownLine(r))
 		}
-		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: 4, Tags: []string{"warning"}})
+		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: downPriority(failed), Tags: []string{"warning"}})
 	}
 	if len(recovered) > 0 && engineUp {
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: recovered", Body: strings.Join(recovered, ", ") + " answering again", Tags: []string{"white_check_mark"}})

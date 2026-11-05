@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #PR20 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -143,7 +144,7 @@ Confidence that what matters can come back.
 Few, clear, and useful when they come.
 
 - **Buttons on alerts** (M, *Idea*): "Radarr stopped" on the phone with **Restart** and **Show logs** (ntfy's actions, through the phone companion's own access).
-- **Quiet hours** (S, *Idea*): no sound overnight unless it is serious (backups failing for days, the vault unreachable).
+- **Quiet hours** (S, *Built*, #PR20): no sound overnight unless it is serious (backups failing for days, the vault unreachable). `QUIET_HOURS=22-7` by default; Settings › Quiet hours.
 - **One alert for many** (S, *Idea*): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.
 - **Snooze an alert** (S, *Idea*): snooze one check for an hour or a day from the alert itself.
 - **Who hears what** (S, *Idea*): each person picks the alerts they get; the household's other members get only the ones about their apps.
