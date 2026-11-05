@@ -1048,6 +1048,9 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .tiles.health .sub .storagebar { display:block; height:5px; margin:3px 0 5px; }
 .tiles.health .sub button { display:block; margin-top:8px; }
 .healthline { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; margin:-4px 0 14px; font-size:13px; }
+/* What happened overnight (status/Overnight.tsx): the morning's first line, above the machine's. */
+.overnight { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; margin:-6px 0 12px; font-size:14px; font-weight:500; }
+.overnight .linkbtn { font-size:12px; font-weight:400; }
 .healthline .label { color:var(--muted); font-weight:600; }
 .healthline .item { display:inline-flex; align-items:center; color:var(--muted); }
 .healthline .item.warn { color:var(--warn); } .healthline .item.bad { color:var(--bad); }
@@ -2152,6 +2155,9 @@ table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px)
 .rowmenu .check { color:var(--link); }
 tr.menued > td { background:var(--accent-soft); }
 .rowsaid { display:block; font-size:12px; color:var(--ok); margin-top:2px; }
+/* What changed since you looked (status/changed.ts): a dot after the app's name, until you leave Status. */
+.changedot { display:inline-block; width:7px; height:7px; margin-left:7px; border-radius:50%; background:var(--accent); vertical-align:middle; cursor:help; }
+@media (forced-colors: active) { .changedot { forced-color-adjust:none; background:Highlight; } }
 
 /* The money card on a wall screen's Status (status/WallCard.tsx). */
 #wallCard { margin-bottom:16px; }

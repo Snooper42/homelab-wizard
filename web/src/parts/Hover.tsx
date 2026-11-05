@@ -15,6 +15,8 @@ export interface HoverCardOptions {
   wide?: boolean;
   /** Where it opens: under the trigger, or to its right (the sidebar's). */
   side?: 'below' | 'right';
+  /** Its content drawn only while it shows: one that reads something (release notes) reads it then, not with every row. */
+  lazy?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ export interface HoverCardOptions {
  * spread `on` onto the trigger, and put `card` beside it, outside it, so the
  * trigger's name stays its own words.
  */
-export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wide, side = 'below' }: HoverCardOptions = {}) {
+export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wide, side = 'below', lazy }: HoverCardOptions = {}) {
   const [open, setOpen] = useState(false);
   const [id] = useState(() => `hover-${++made}`);
   const at = useRef<T>(null);
@@ -55,20 +57,21 @@ export function useHoverCard<T extends HTMLElement>(tip: ComponentChildren, { wi
     onBlur: hide,
     onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Escape' && open) { e.stopPropagation(); hide(); } },
   };
-  const card: JSX.Element = <span id={id} role="tooltip" class={'hovercard' + (wide ? ' wide' : '')} ref={box} hidden={!open}>{tip}</span>;
+  const card: JSX.Element = <span id={id} role="tooltip" class={'hovercard' + (wide ? ' wide' : '')} ref={box} hidden={!open}>{(!lazy || open) && tip}</span>;
   return { on, card, show, open };
 }
 
 /** Words that answer on hover: a badge in a row, focusable, its card inside it. */
-export function Hover({ label, cls = '', tip, wide }: {
+export function Hover({ label, cls = '', tip, wide, lazy }: {
   /** What shows in the row: the badge's words. */
   label: ComponentChildren;
   cls?: string;
   /** The card's content. */
   tip: ComponentChildren;
   wide?: boolean;
+  lazy?: boolean;
 }) {
-  const { on, card, show } = useHoverCard<HTMLSpanElement>(tip, { wide });
+  const { on, card, show } = useHoverCard<HTMLSpanElement>(tip, { wide, lazy });
   return (
     <span class={'hovers ' + cls} tabIndex={0} {...on} onClick={() => show(true)}>
       {label}

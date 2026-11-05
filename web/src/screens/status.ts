@@ -22,6 +22,9 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
+import { mountOvernight, nightOf } from '../status/Overnight';
+import { backupsData } from './backups';
+import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
@@ -33,6 +36,19 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
+// What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
+let lastEvents: notify.Event[] = [];
+let watched = false;
+function drawOvernight() {
+  if (!lastStatus) return;
+  const now = Date.now();
+  // The night's database copies come from Backups, read for it only in the morning.
+  if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 60000);
+  mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+}
+backupsData.watch(drawOvernight);
+// Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
+let seen = loadSeen();
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -70,12 +86,17 @@ let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
   // Grouped by category, as on Choose stacks; what needs a look comes
   // first, in a group of its own.
+  // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
+  const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    { label: 'Pinned', apps: pinned, pinned: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -239,6 +260,7 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
+  drawOvernight();
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -275,6 +297,8 @@ function showWatchdog(w: health.Summary | null) {
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};
+  watched = true;
+  drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
   mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
@@ -341,6 +365,8 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
+  lastEvents = events || [];
+  drawOvernight();
   if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
   else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
 }
@@ -351,6 +377,7 @@ const appListActions: AppListActions = {
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
   install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
+  releaseNotes: (id) => go().ReleaseNotes(id),
   open: (url) => go().Open(url),
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
@@ -372,8 +399,23 @@ const appListActions: AppListActions = {
       try { await inTurn(`${a.name}'s alerts`, () => go().SetAppSetting(a.id, 'alerts', on)); } catch (e) { showError(e); }
       await loadStatus();
     },
+    pin: async (a, on) => {
+      try { await go().SetAppSetting(a.id, 'pinned', on); } catch (e) { showError(e); }
+      await loadStatus();
+    },
   },
 };
+/**
+ * Leaving Status (for another screen, or closing the app): what it shows now
+ * is what you saw, so the next visit's dots are what changed after it.
+ */
+export function leftStatus() {
+  if (!lastStatus) return;
+  saveSeen(lastStatus.apps);
+  seen = loadSeen();
+  renderAppList(lastStatus);
+}
+
 /** The rows' actions, for the command palette. */
 export const rowActions = appListActions;
 /** The apps the battery saver paused, from the last Status. */

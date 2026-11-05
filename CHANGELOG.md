@@ -8,6 +8,15 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
+- **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
+- **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.
+- **Remember where you were:** each screen keeps how far down you were and which of its sections were open, between visits and after quitting. Picking another screen opens it at its own place, no longer partway down where the last one was.
+- **What changed since you looked:** each app on Status that restarted, updated, stopped, or started since you were last there has a dot beside its name saying which, until you leave Status again.
+- **Open, your way:** on Status, Alt-click (⌥-click on a Mac) an app's address to copy it, and Shift-click (⇧-click) **Open** to use its address on this computer when the domain does not answer.
+- **Pinned apps:** right-click an app on Status and pick **Pin to the top** to keep the apps you open most in a Pinned group at the top, in the order you pinned them, and first in the menu bar's Open an app. `homelab pin <app>` does it from the Terminal.
+- **Right-click the sidebar:** a screen's own menu, without opening it first: Status's Check again and Update all; Backups' Back up now and Test a restore; Finances' Add a transaction, Update balances, and Hide amounts. Shift+F10 opens it from the keyboard.
+- **Why an app restarted:** hover *up 9 minutes* on Status for why it last started, and when: you, an update (yours or the nightly one), Fix it, the watchdog, the power coming back, its drive plugged in again, the end of a Stop for a while, or Docker after it stopped on its own.
 - **A balance's accounts:** rest the pointer on Cash, Investments, or another group in the sidebar for its accounts, each with its balance and how long since it was updated; one older than a month has a dot.
 - **When an app was down this week:** hover its *96.2% up this week* on Status (or Tab to it, or tap it on a phone) for the week as a strip, with each time it was down, for how long, and why (*Wed 3:15 AM, 45 minutes: nothing answers on its port*).
 - **Export your finances:** Finances has **Export**: your whole plan as a JSON file to keep or take elsewhere, the year ahead as a spreadsheet (each payday and payment, with checking after each day), and this month or the next as a page that prints itself. Saved where you pick, readable only by you; on a phone, shared or downloaded, even one that may only look.

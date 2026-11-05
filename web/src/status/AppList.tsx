@@ -15,12 +15,15 @@ import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
 import { stopChoices, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
+import { changedSince, type Seen } from './changed';
 
 export interface Group {
   label: string;
   apps: api.AppStatus[];
   /** What needs a look: its count in red, never folded by default. */
   alert?: boolean;
+  /** The apps pinned to the top: open by default, as the point of them is a glance. */
+  pinned?: boolean;
 }
 
 /** What the rows do; app.ts runs each. */
@@ -31,6 +34,8 @@ export interface AppListActions {
   install: (a: api.AppStatus) => void;
   adopt: (a: api.AppStatus) => void;
   open: (url: string) => void;
+  /** Its project's releases newer than what it runs (GitHub), for "updates held" on hover. */
+  releaseNotes: (id: string) => Promise<releases.Preview>;
   /** Opens the app's page. */
   page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
@@ -64,6 +69,8 @@ export interface AppListProps {
   weekUp: Record<string, number>;
   /** Each app's times down this week, oldest first (the watchdog's). */
   outages?: Record<string, health.Outage[]>;
+  /** Each app as Status last showed it before this visit (changed.ts): a row that changed since has a dot. */
+  seen?: Seen | null;
   batteryPaused: Set<string>;
   /** The apps stopped on purpose, and until when: nothing starts them by itself. */
   held: Record<string, stopped.Stop>;
@@ -101,8 +108,13 @@ const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…
 const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
 /** A link that opens in the browser. */
-function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  return <ActionLink onClick={() => open(url)}><Address text={text} /></ActionLink>;
+/** The modifier key's name as each system says it: ⌥ (Option) on a Mac, Alt elsewhere. */
+const alt = (os: string) => (os === 'mac' ? '⌥' : 'Alt-');
+const shift = (os: string) => (os === 'mac' ? '⇧' : 'Shift-');
+
+/** A row's address: a click opens it; ⌥-click (Alt-click) copies it, and says so under the row. */
+function Link({ url, text, open, copy, os }: { url: string; text: string; open: (url: string) => void; copy: (url: string) => void; os: string }) {
+  return <ActionLink title={`${alt(os)}click copies it`} onClick={(e) => (e?.altKey ? copy(url) : open(url))}><Address text={text} /></ActionLink>;
 }
 
 const clock = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -142,16 +154,66 @@ export function WeekOutages({ outages = [], now = Date.now() }: { outages?: heal
   );
 }
 
+/** The first lines of a release's notes, as plain words: no headings' #, no list marks, no links' addresses. */
+export function firstLines(notes = '', n = 2): string[] {
+  return notes.split('\n').map((l) => l.replace(/^\s*(#+|[-*+]|\d+\.)\s+/, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim())
+    .filter((l) => l && !/^(what'?s changed|changelog|release notes?)$/i.test(l)).slice(0, n);
+}
+
+/** Each app's newest release, once read, for this run of the app. */
+const newest: Record<string, Promise<releases.Preview>> = {};
+
+/** "updates held" on hover: why, how to put it back, and what its newest release says, read when the card opens. */
+function HeldNotes({ a, load }: { a: api.AppStatus; load: (id: string) => Promise<releases.Preview> }) {
+  const [p, setP] = useState<releases.Preview | null>(null);
+  const [problem, setProblem] = useState('');
+  useEffect(() => {
+    let live = true;
+    (newest[a.id] ||= load(a.id)).then((v) => live && setP(v), (e) => { delete newest[a.id]; if (live) setProblem(String(e?.message || e)); });
+    return () => { live = false; };
+  }, [a.id]);
+  const r = p?.releases?.[0];
+  const when = r && new Date(r.when);
+  return (
+    <>
+      <span class="outline">Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back.</span>
+      {problem ? <span class="outline muted">Could not read its releases: {problem}</span>
+        : !p ? <span class="outline muted">Reading its newest release…</span>
+        : !r ? <span class="outline muted">Its project has published no releases{p.repo ? '' : ' that its image names'}.</span>
+        : <>
+          <span class="outline"><strong>Newest: {r.name && r.name !== r.tag ? `${r.tag}, ${r.name}` : r.tag}</strong>{when && !isNaN(when.getTime()) ? ` · ${when.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}{p.running ? ` (it runs ${p.running})` : ''}</span>
+          {firstLines(r.notes).map((l, i) => <span key={i} class="outline muted">{l}</span>)}
+        </>}
+    </>
+  );
+}
+
+/** Why an app last started, for "up 9 minutes" on hover (AppStatus.startedBy). */
+export const startedWords: Record<string, string> = {
+  you: 'You started it',
+  updated: 'You updated it, so it started on its new version',
+  nightly: 'The nightly update moved it to its new version',
+  update: 'It was updated, and started on its new version',
+  fix: 'Fix it restarted it',
+  watchdog: 'The watchdog restarted it: it was unwell on two checks in a row',
+  battery: 'It started again when the power came back (the battery saver had paused it)',
+  drive: 'It started once its drive was plugged in again',
+  timer: 'It started again at the time you set when you stopped it',
+  docker: 'Docker started it again after it stopped on its own; its log says why',
+};
+
 /** How long a running app has been up, and badges for what to know about it. */
-function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages?: health.Outage[] }) {
+function Uptime({ a, week, outages, load }: { a: api.AppStatus; week?: number; outages?: health.Outage[]; load: (id: string) => Promise<releases.Preview> }) {
   if (a.state !== 'running' || !a.since) return null;
   const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return (
     <>
-      <span class="local">{up}</span>
+      {a.startedBy && startedWords[a.startedBy]
+        ? <Hover cls="local" label={up} tip={<><span class="outline">{startedWords[a.startedBy]}</span><span class="outfoot">{weekday(new Date(a.since))} {clock(new Date(a.since))}</span></>} />
+        : <span class="local">{up}</span>}
       {!!a.restarts && <span class="badge warn" title="Docker restarted it after it stopped on its own; its log says why">restarted {a.restarts}×</span>}
-      {a.held && <span class="badge" title={`Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back`}>updates held</span>}
+      {a.held && <Hover cls="badge" wide lazy label="updates held" tip={<HeldNotes a={a} load={load} />} />}
       {a.settingsChanged && <span class="badge warn" title="Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones">settings changed</span>}
       {week !== undefined && week < 0.99 && <Hover cls="badge warn" wide label={`${Math.floor(week * 1000) / 10}% up this week`} tip={<WeekOutages outages={outages} />} />}
     </>
@@ -176,7 +238,9 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
   if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
   const url = a.address ? 'https://' + a.address : a.url;
-  return url ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(url)}>Open</button> : null;
+  // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
+  const local = a.address && a.url ? a.url : '';
+  return url ? <button class="small rowmain" title={local ? `Open ${a.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, '')})` : `Open ${a.name}`} onClick={(e) => on.open(local && e.shiftKey ? local : url)}>Open</button> : null;
 }
 
 /** Where a row's menu is open, and which row: one at a time. */
@@ -187,6 +251,8 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
   // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
   const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  // ⌥-click on its address: copied, as the menu's Copy address does.
+  const copy = (url: string) => { p.on.menu.copy(url).then(() => say(a.id, 'Address copied'), () => say(a.id, 'Could not copy the address')); };
   const close = (refocus?: boolean) => {
     const from = menu?.from as HTMLElement | null;
     setMenu(null);
@@ -195,6 +261,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
   // Clicked and not confirmed yet: what it is doing, at once.
   const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
+  const changed = changedSince(a, p.seen ?? null);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
@@ -208,19 +275,19 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         const r = (e.currentTarget as HTMLElement).querySelector('strong')!.getBoundingClientRect();
         openMenu(r.left, r.bottom + 4);
       } : undefined}>
-      <td><strong>{a.name}</strong></td>
+      <td><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
       <td class="state">
         <span class={'dot ' + cls} />{words}
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
-          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} />}
+          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} load={p.on.releaseNotes} />}
         {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}{pend.log && <> <button type="button" class="linkbtn" onClick={() => p.on.details(a)}>Details</button></>}</span>}
         {said && <span class="rowsaid" role="status">{said}</span>}
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
       <td title={a.address && a.url ? 'On this machine: ' + a.url : ''}>
-        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} />
-          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
+        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} copy={copy} os={p.os} />
+          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} copy={copy} os={p.os} />
           : <span class="muted">—</span>}
       </td>
       <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
@@ -535,7 +602,7 @@ export function FilterBox() {
 
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
 function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
-  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
+  const fine = (g: Group) => !g.alert && !g.pinned && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 
