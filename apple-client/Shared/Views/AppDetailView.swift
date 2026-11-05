@@ -201,7 +201,6 @@ struct AppDetailView: View {
         Duration.seconds(max(60, seconds)).formatted(.units(allowed: [.days, .hours, .minutes], width: .abbreviated, maximumUnitCount: 2))
     }
 
-    @ViewBuilder
     /// The app page's Updates card (web/src/page/AppPage.tsx): the version
     /// it runs, when it came, and whether its updates are held.
     @ViewBuilder
@@ -288,6 +287,7 @@ struct AppDetailView: View {
         .task { if backups.overview == nil, !backups.isLoading { await backups.load() } }
     }
 
+    @ViewBuilder
     private func aboutSection(for app: AppStatus) -> some View {
         if let entry = dashboard.catalog?.entry(app.id) {
             Section("About") {
@@ -347,10 +347,9 @@ struct AppDetailView: View {
             } header: {
                 Text("Settings")
             } footer: {
+                // Held updates are explained under Updates, above.
                 if !actions.canChange {
                     Text("This device can only look.")
-                } else if app.held == true {
-                    Text("Its updates are held, for example after a rollback. Turn Nightly updates on to let the nightly update include it again.")
                 }
             }
         }
