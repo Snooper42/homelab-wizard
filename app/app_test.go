@@ -165,8 +165,8 @@ func copyCatalog(t *testing.T, root string) {
 
 // launcher writes the homelab folder's launcher as one that prints what it
 // was asked, a progress step, and for --json digest a summary; recovery-kit
-// and fail fail, and (not on Windows) unready says why on its output, as the
-// real one says ffmpeg is missing. The app runs it as it runs the real one.
+// and fail fail, and (not on Windows) media movies scan --check says why on
+// its output, as the real one says ffmpeg is missing. The app runs it as it runs the real one.
 func launcher(t *testing.T, root string) {
 	t.Helper()
 	if goruntime.GOOS == "windows" {
@@ -180,7 +180,7 @@ func launcher(t *testing.T, root string) {
 	}
 	os.WriteFile(filepath.Join(root, "homelab"), []byte(`#!/bin/sh
 echo "ran $*"
-case "$*" in *unready*) echo '  ✗ ffmpeg and ffprobe: Not installed. Install ffmpeg: brew install ffmpeg in Terminal'; exit 1 ;; esac
+case "$*" in *"movies scan --check"*) echo '  ✗ ffmpeg and ffprobe: Not installed. Install ffmpeg: brew install ffmpeg in Terminal'; exit 1 ;; esac
 case "$1" in
 recovery-kit|fail) exit 1 ;;
 --json) echo '{"type":"digest","data":{"title":"Homelab this week: all well","body":"ok","problems":0}}' ;;
