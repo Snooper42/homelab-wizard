@@ -114,7 +114,9 @@ private struct MoneySection: View {
                 } else {
                     Text("No payday ahead in the plan.").foregroundStyle(.secondary)
                 }
-                ForEach(money.bills) { bill in
+                // By position: two bills can share a name and a day.
+                ForEach(money.bills.indices, id: \.self) { i in
+                    let bill = money.bills[i]
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(bill.name)
