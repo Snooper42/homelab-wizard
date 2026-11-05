@@ -2429,7 +2429,7 @@ const smokes = [
   // table's last row, and the clicks are as WebKit's on the Mac: a mouse click that leaves no focus on the button.
   { name: 'A group’s menu at the bottom of Status is whole, and one menu opens at a time', screen: 'status', mock: { usage }, run: async (page) => {
     const press = async (b) => { await b.dispatchEvent('mousedown', { detail: 1 }); await b.dispatchEvent('click', { detail: 1 }); };
-    const heads = page.locator('tr.grouphead');
+    const heads = page.locator('#statusRows tr.grouphead') // Status's own (Backups' copies have group rows too, drawn once its data is read);
     await heads.first().waitFor({ timeout: 5000 });
     const last = heads.last();
     if ((await last.locator('.foldbtn').getAttribute('aria-expanded')) === 'true') await last.locator('.foldbtn').click();
@@ -2738,6 +2738,49 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
+  // What happened overnight: in the morning, Status's first line is the night since 8 PM (updates, a rollback, the night's
+  // copies, and whether anything needed you); an app down overnight says so instead; Hide until tomorrow keeps it away for
+  // the day; in the afternoon there is none.
+  ...(() => {
+    const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+    const morning = at(7, 30), iso = (h, m = 0) => at(h, m).toISOString();
+    const night = {
+      overnight: true,
+      status: { ...status, apps: status.apps.map((a) => ({ ...a, updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? iso(4) : undefined })) },
+      alerts: [{ id: 'r1', time: iso(4, 20), topic: 'watchtower', title: 'Homelab: Navidrome rolled back', message: 'It runs the version from before its update again.', tags: ['rewind'] },
+        { id: 'o1', time: at(5, 0).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'all well' }],
+      backups: { ...backups, copies: [{ id: 'immich', name: 'Immich', newest: iso(3, 30), size: 1.5 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'paperless', name: 'Paperless-ngx', newest: iso(3, 35), size: 0.6 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'old', name: 'Mealie', newest: new Date(at(3).getTime() - 864e5).toISOString(), size: 9e9, count: 7, state: 'stale' }] },
+      watchdog: { lastRun: morning.toISOString(), checks: 40, failing: [], pending: 0, week: {}, outages: {} },
+    };
+    const line = '#overnightLine .overnight';
+    return [
+      { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForSelector(line, { timeout: 5000 });
+        await page.waitForFunction((s) => /backup/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
+        const said = (await page.textContent(`${line} > span`)).trim();
+        if (said !== 'Overnight: 2 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you.') throw new Error('it says: ' + said);
+        // Above the machine's line, under the heading.
+        if (!(await page.evaluate(() => document.getElementById('overnightLine').nextElementSibling?.id === 'healthLine'))) throw new Error('not above the machine’s line');
+        await page.click(`${line} button:text-is("Hide until tomorrow")`);
+        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 2000 });
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForTimeout(400);
+        if (await page.isVisible(line)) throw new Error('back after Hide until tomorrow');
+      } },
+      { name: 'What happened overnight: an app down in the night says so, and none in the afternoon', screen: 'status',
+        mock: { ...night, watchdog: { ...night.watchdog, outages: { 'immich-server': [{ from: iso(2, 10), to: iso(2, 40), problem: 'HTTP 502' }] } } }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForFunction((s) => /was down/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
+        if (!/Immich was down for a while\.$/.test((await page.textContent(`${line} > span`)).trim())) throw new Error('it says: ' + await page.textContent(line));
+        await page.clock.setFixedTime(at(15));
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 3000 });
+      } },
+    ];
+  })(),
   // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
   // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
   // counts as Status. Kept on this device across launches.
@@ -5723,6 +5766,9 @@ async function open(browser, s, look = {}) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...phoneMock(s.phone), ...look.mock, ...s.mock, host: { ...mock.host, ...look.mock?.host, ...s.mock?.host }, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
+  // What happened overnight shows only in the morning: kept hidden in every case but its own (mock.overnight), so a
+  // case or a picture is the same whatever the hour it runs at.
+  if (!s.mock?.overnight) await page.addInitScript(() => { try { localStorage.setItem('homelab.overnightHidden', new Date().toDateString()); } catch { /* none */ } });
   await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
   await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), s.phone || []);
   await page.waitForTimeout(600);
