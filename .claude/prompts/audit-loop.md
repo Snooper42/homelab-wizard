@@ -385,7 +385,7 @@ Added after round 27 (the backlog was empty; worst first):
     back (#423), the battery saver, and the stop timer start apps while an
     update or backup may have them down on purpose. Show one starting an
     app mid-backup (its database stopped for the dump), then decide.
-26. **Release notes from GitHub** (#419, internal/releases): the repo is
+26. (done: round 31) **Release notes from GitHub** (#419, internal/releases): the repo is
     taken from an image's own `org.opencontainers.image.source` label, so
     a custom app's image picks any repo; check the path built from it
     (`..`, `?`), that the notes are drawn as text (no raw HTML, no
@@ -403,7 +403,7 @@ Added after round 27 (the backlog was empty; worst first):
 30. **The update window** (`claude/feature-update-window`,
     `data/update-days.json`): a window must not hold a security release
     forever, and a crafted record must not stop every update.
-31. **Explain on another machine's Ollama**: what the model is sent when
+31. (done: round 32) **Explain on another machine's Ollama**: what the model is sent when
     `OLLAMA_HOST` points off this machine (item 9 checked only
     172.17.0.1), and whether that counts as leaving the machine (Rule 3).
 32. **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
@@ -679,6 +679,21 @@ Added after round 27 (the backlog was empty; worst first):
   the apps to a job that has the turn (`jobRunning`, the watchdog's rule)
   and looks again on its next run. `TestStartersWaitOutAJob` failed
   before (the saver stopped sonarr, the timer started radarr, mid-job).
+
+- **Round 31 (item 26, release notes, read through):** the notes are
+  drawn as plain text (`<pre>`), and Full notes and all releases open
+  through `Open`, which takes only http(s) with a host or mailto
+  (`webLink`, held by `TestWebLink`), so a crafted `data/releases.json`
+  from a move file opens nothing else. A repo name with `..` or `?`
+  (from an image label or a custom app's image) changes only which
+  unauthenticated api.github.com page is read; nothing is sent with it
+  but the repo's name, and only when the household looks. No code change.
+- **Round 32 (item 31, Explain on another machine's Ollama):** N15's
+  rest. Explain's `forModel` (and a phone's Logs, which also goes through
+  `explain.Redact`) took out key=value secrets but not a password an app
+  prints in a sentence, and `OLLAMA_HOST` may put the model on another
+  computer. `explain.Redact` now takes it out too.
+  `TestRedactAPrintedPassword` failed before.
 
 ## For Account 2
 
