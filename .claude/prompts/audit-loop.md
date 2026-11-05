@@ -695,6 +695,25 @@ Added after round 27 (the backlog was empty; worst first):
   computer. `explain.Redact` now takes it out too.
   `TestRedactAPrintedPassword` failed before.
 
+- **Round 33 (item 30, the update window, read on its branch before its
+  PR):** `claude/feature-update-window`. A crafted
+  `data/update-days.json` can only narrow an app to some weekdays (an
+  unknown day is dropped, none left is every night), so it cannot stop
+  every update; the phone's `"sundays"` setting needs Change and a
+  container app, as `"updates"` does. Two notes under For Account 1.
+  Re-check once its PR is open: item 30 stays open until then.
+
+## For Account 1
+
+- **The update window's record is written 0644**
+  (`claude/feature-update-window`, `updates.SaveDays`): the other records
+  the homelab writes moved to 0600 today (#431–#433). Nothing secret is
+  in it; 0600 keeps it with the rest.
+- **A window holds a security release too:** Vaultwarden set to Sundays
+  takes a security fix up to 6 days late. The roadmap's own example
+  ("Vaultwarden at once when a security release comes out") is not built;
+  worth saying on the app's page when a password app gets a window.
+
 ## For Account 2
 
 - **`data/restarts.json` is written in place, without a lock** (#427,
