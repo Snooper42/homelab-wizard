@@ -53,13 +53,19 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 5, 2026, 17:30 UTC):
-- #430 *What CrowdSec stopped* (`claude/feature-crowdsec-today`): open, main's #428 merged in. Take it to merged first.
-- Then these branches, which have work and no PR. **Both wait for #425 (Account 3) to merge**: they change `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (update-window also `cmd/homelab/apps.go`), which #425 claims (lanes.md Rule 2). Don't push to them while #425 is open. Each has main up to #427 merged in, its CHANGELOG line, tests with the failing-before proof (checked Nov 5), docs, and a `#PRn` placeholder:
-  - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5). Tried on Docker 29.9 on Nov 5: set to Sundays, a Thursday's `update --all` left it out and didn't touch its container; `every` took it back. Its PR text is drafted in the session's scratchpad; write it again from this if that's gone.
-  - `claude/feature-phones-expire` (#PR16): a phone's changes and Finances end after a day, a week, or a month.
-- While those wait, take the next roadmap item whose files no open PR claims (Security and privacy: *Tailnet devices*, *Two-step sign-in, nudged*; check each one's files against #425 first).
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428.
+**Open now** (Nov 5, 2026, 22:30 UTC):
+- #435 *What changed since last night* (`claude/feature-backup-shrank`): open. It also marks *Hide amounts* (#368) and *Every menu by keyboard* (#369, #413) *Built*. Take it to merged first.
+- **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
+- Then these branches, built and pushed, each with its CHANGELOG line, tests with the failing-before proof, docs, a `#PRn` placeholder, and its PR text drafted (in the session's scratchpad, `pr-<name>.md`; write it again from the branch if that is gone). One at a time, in this order:
+  - `claude/feature-savings-so-far` (#PR21): hover *Replaces a year* on Status for what the apps have saved so far, month by month.
+  - `claude/feature-same-job` (#PR22): Choose stacks says when you already run an app that does the same job (`same_job` in `x-homelab`).
+  - `claude/feature-quiet-hours` (#PR20): `QUIET_HOURS=22-7`, alerts at night without a sound unless serious (Vaultwarden down, backups failing two nights). `internal/notify/night.go`, beside #431's `quiet.go`.
+  - `claude/feature-goes-with` (#PR24): Choose stacks › Add more › *Suggested for what you run* (`goes_with`). It and same-job both change `web/src/choose/Choose.tsx` and the same style rule: merge main in and keep both lines on a row.
+  - `claude/feature-welcome-sheet` (#PR23): a sheet for the fridge beside each person's welcome page (`internal/people`); merge main in first, since #434 changed `internal/people/people.go`.
+  - `claude/feature-phone-quick-actions`: a long press on a Status row on a phone that may make changes opens Open, Start, Restart, Stop, Stop for a while, Logs. Code and its two smoke cases done (failing first on main's build); still to write: its CHANGELOG line, Testing.md row, roadmap *Built*, and placeholder.
+  - `claude/feature-update-window` (#PR15) and `claude/feature-phones-expire` (#PR16): **wait for #425** (Account 3), which changes `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (lanes.md Rule 2).
+- Not started, for later: *Memory pressure alert* (its Stop on the alert needs `serve.go`, while #425 has it); *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.

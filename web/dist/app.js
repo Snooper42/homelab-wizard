@@ -2194,7 +2194,7 @@
     };
     const [cls, words4] = pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
-    const changed2 = changedSince(a3, p3.seen ?? null);
+    const changed3 = changedSince(a3, p3.seen ?? null);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
       // on it, opens the app's page.
@@ -2220,7 +2220,7 @@
           children: [
             /* @__PURE__ */ u3("td", { children: [
               /* @__PURE__ */ u3("strong", { children: a3.name }),
-              changed2 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed2, title: changed2 })
+              changed3 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed3, title: changed3 })
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
@@ -6076,6 +6076,7 @@
       { key: "none", label: "Not copied yet", tone: "", copies: none2, note: `${none2.map((c3) => c3.name).join(", ")}, tonight` }
     ].filter((g2) => g2.copies.length);
   }
+  var changed2 = (c3) => !!c3.before && Math.abs(c3.size - c3.before) >= c3.before / 10;
   function CopyRows({ o: o3 }) {
     const [picked, setPicked] = d2({});
     const groups3 = copyGroups(o3);
@@ -6095,13 +6096,27 @@
           /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
           !open3 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
         ] }) }, "g:" + g2.key),
-        ...open3 ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state, children: [
+        ...open3 ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state + (c3.shrank ? " shrank" : ""), children: [
           /* @__PURE__ */ u3("td", { class: "name", children: [
-            /* @__PURE__ */ u3("span", { class: "dot " + g2.tone }),
-            c3.name
+            /* @__PURE__ */ u3("span", { class: "dot " + (c3.shrank ? "bad" : g2.tone) }),
+            c3.name,
+            c3.shrank && /* @__PURE__ */ u3("span", { class: "note bad", children: [
+              "Less than half the night before's ",
+              bytes(c3.before || 0),
+              ": check that ",
+              c3.name,
+              " still has its data"
+            ] })
           ] }),
           /* @__PURE__ */ u3("td", { class: "when muted", children: never(c3.newest) ? "—" : ago(c3.newest) }),
-          /* @__PURE__ */ u3("td", { class: "size muted", children: bytes(c3.size) }),
+          /* @__PURE__ */ u3("td", { class: "size muted", title: c3.before ? `The night before: ${bytes(c3.before)}` : void 0, children: [
+            bytes(c3.size),
+            !c3.shrank && changed2(c3) && /* @__PURE__ */ u3("span", { class: "was", children: [
+              " (was ",
+              bytes(c3.before || 0),
+              ")"
+            ] })
+          ] }),
           /* @__PURE__ */ u3("td", { class: "kept muted", children: c3.count ? `${c3.count} kept` : "—" })
         ] }, c3.id)) : []
       ];
@@ -6412,14 +6427,14 @@
   }
   function applyAnswers(st, why) {
     if (lastStatus !== st) return;
-    let changed2 = false;
+    let changed3 = false;
     for (const a3 of st.apps) {
       if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
       a3.notAnswering = why[a3.id] || void 0;
-      changed2 = true;
+      changed3 = true;
     }
     st.checking = false;
-    if (!changed2) return;
+    if (!changed3) return;
     renderTiles(st);
     renderAppList(st);
   }
@@ -9388,16 +9403,16 @@
         return gone.parent ? now(gone.parent) : void 0;
       };
       const categories2 = rows.map((r3) => ({ name: r3.name.trim(), parent: r3.parent && renamed.get(r3.parent) || r3.parent || void 0, icon: r3.icon || void 0, income: r3.income || void 0 }));
-      let changed2 = false;
+      let changed3 = false;
       const transactions = (ledger?.transactions || []).map((t3) => {
         const cat = now(t3.category), splits = t3.splits?.map((sp) => ({ ...sp, category: now(sp.category) || "Other" }));
         if (cat === t3.category && JSON.stringify(splits) === JSON.stringify(t3.splits)) return t3;
-        changed2 = true;
+        changed3 = true;
         return { ...t3, category: cat, splits };
       });
       setBusy(true);
       let ok = await props.save({ ...plan, categories: categories2 });
-      if (ok && changed2 && props.saveLedger) ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions });
+      if (ok && changed3 && props.saveLedger) ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions });
       setBusy(false);
       if (ok) props.close();
     };
