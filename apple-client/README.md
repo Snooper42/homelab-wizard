@@ -24,6 +24,12 @@ On any Mac with Xcode 16 or later (or a Swift 6 toolchain):
 cd apple-client && swift build && swift test
 ```
 
+To also compile the iOS-only parts (the QR scanner, haptics, keyboard types), build the same package for iOS:
+
+```bash
+cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platform=iOS' build
+```
+
 `Package.swift` builds everything in `Shared/` except the `@main` entry point, in Swift 6 language mode, and runs `Tests/`. It's the quickest way to catch what a hand review can't. These sources were written without a compiler.
 
 ## Make the Xcode project
