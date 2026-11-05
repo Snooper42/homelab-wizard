@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| An update's notes | Hover *updates held* on Status for why, how to put it back, and the first lines of its newest release | #PR10 |
 | A balance's accounts | Rest on a group in the sidebar's Accounts for its accounts, each balance, and how long since each was updated; a dot on one older than a month | #409 |
 | The week's outages | Hover *96.2% up this week* on Status for the week as a strip, with each time the app was down, how long, and why | #406 |
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
@@ -73,7 +74,7 @@ Questions the screen can answer without a click.
 - **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Built*, #409): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.
 - **A backup's contents** (S, *Idea*): hover a backup's time on Backups for its size, what it holds, and how long it took.
-- **An update's notes** (S, *Idea*): hover "updates held" or an update waiting for the release's first lines.
+- **An update's notes** (S, *Built*, #PR10; "updates held" only, as Status has no per-app update waiting yet): hover "updates held" or an update waiting for the release's first lines.
 
 ## Memory and performance
 
