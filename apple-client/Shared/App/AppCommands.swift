@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// The app's window ids, apart from the @main file so the Swift package
+/// (which leaves that file out) builds too.
+enum AppWindows {
+    static let main = "main"
+}
+
 /// What the App menu acts on: the app selected in the window in front,
 /// with that window's actions. Set by the dashboard's detail pane.
 struct SelectedAppFocus {

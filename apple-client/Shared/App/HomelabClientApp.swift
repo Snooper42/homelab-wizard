@@ -4,12 +4,10 @@ import SwiftUI
 /// Multiplatform template creates with this one.
 @main
 struct HomelabClientApp: App {
-    static let mainWindowID = "main"
-
     @State private var coordinator = AppCoordinator()
 
     var body: some Scene {
-        WindowGroup(id: Self.mainWindowID) {
+        WindowGroup(id: AppWindows.main) {
             AppCoordinatorView()
                 .environment(coordinator)
         }

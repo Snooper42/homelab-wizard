@@ -44,7 +44,7 @@ struct MenuBarView: View {
     }
 
     private func open() {
-        openWindow(id: HomelabClientApp.mainWindowID)
+        openWindow(id: AppWindows.main)
         NSApplication.shared.activate()
     }
 }
