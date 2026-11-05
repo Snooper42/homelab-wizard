@@ -90,6 +90,7 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 		}
 		if len(started) > 0 {
 			h.ui.Info("on power again: started %s", names(started))
+			h.noteStarted(whyBattery, ids(started)...)
 		}
 		st = battery.State{Paused: still, Since: st.Since}
 	default:

@@ -142,6 +142,20 @@ export function WeekOutages({ outages = [], now = Date.now() }: { outages?: heal
   );
 }
 
+/** Why an app last started, for "up 9 minutes" on hover (AppStatus.startedBy). */
+export const startedWords: Record<string, string> = {
+  you: 'You started it',
+  updated: 'You updated it, so it started on its new version',
+  nightly: 'The nightly update moved it to its new version',
+  update: 'It was updated, and started on its new version',
+  fix: 'Fix it restarted it',
+  watchdog: 'The watchdog restarted it: it was unwell on two checks in a row',
+  battery: 'It started again when the power came back (the battery saver had paused it)',
+  drive: 'It started once its drive was plugged in again',
+  timer: 'It started again at the time you set when you stopped it',
+  docker: 'Docker started it again after it stopped on its own; its log says why',
+};
+
 /** How long a running app has been up, and badges for what to know about it. */
 function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages?: health.Outage[] }) {
   if (a.state !== 'running' || !a.since) return null;
@@ -149,7 +163,9 @@ function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return (
     <>
-      <span class="local">{up}</span>
+      {a.startedBy && startedWords[a.startedBy]
+        ? <Hover cls="local" label={up} tip={<><span class="outline">{startedWords[a.startedBy]}</span><span class="outfoot">{weekday(new Date(a.since))} {clock(new Date(a.since))}</span></>} />
+        : <span class="local">{up}</span>}
       {!!a.restarts && <span class="badge warn" title="Docker restarted it after it stopped on its own; its log says why">restarted {a.restarts}×</span>}
       {a.held && <span class="badge" title={`Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back`}>updates held</span>}
       {a.settingsChanged && <span class="badge warn" title="Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones">settings changed</span>}

@@ -118,7 +118,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
 10. **Export** (F18, *Built*, #405): the plan and its projection as CSV and JSON, and a printable month.
-11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round, *Built*, #409), then why an app restarted (needs a record of who restarted it: an update, a crash, the battery saver, the watchdog, or you).
+11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round, *Built*, #409), then why an app restarted (*Built*, #411: `internal/started`, data/started.json, noted wherever the homelab starts an app).
 12. **Right-click the sidebar**, then **pinned apps**.
 
 **Not yours:** the roadmap's *Media library cleanup* ("Tidy Up"). It has its own session and branch; leave its roadmap section and its files alone.

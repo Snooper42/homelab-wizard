@@ -134,6 +134,7 @@ func (h *homelab) startFailed(ctx context.Context, strict bool) []string {
 		}
 		if _, err := client.Runner.Output(ctx, client.Bin, "start", c.ID); err == nil {
 			started = append(started, c.Name)
+			h.noteStarted(whyDrive, c.Service())
 		}
 	}
 	return started

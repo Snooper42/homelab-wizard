@@ -2050,12 +2050,31 @@
       /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
     ] });
   }
+  var startedWords = {
+    you: "You started it",
+    updated: "You updated it, so it started on its new version",
+    nightly: "The nightly update moved it to its new version",
+    update: "It was updated, and started on its new version",
+    fix: "Fix it restarted it",
+    watchdog: "The watchdog restarted it: it was unwell on two checks in a row",
+    battery: "It started again when the power came back (the battery saver had paused it)",
+    drive: "It started once its drive was plugged in again",
+    timer: "It started again at the time you set when you stopped it",
+    docker: "Docker started it again after it stopped on its own; its log says why"
+  };
   function Uptime({ a: a3, week: week2, outages: outages2 }) {
     if (a3.state !== "running" || !a3.since) return null;
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "local", children: up }),
+      a3.startedBy && startedWords[a3.startedBy] ? /* @__PURE__ */ u3(Hover, { cls: "local", label: up, tip: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "outline", children: startedWords[a3.startedBy] }),
+        /* @__PURE__ */ u3("span", { class: "outfoot", children: [
+          weekday(new Date(a3.since)),
+          " ",
+          clock(new Date(a3.since))
+        ] })
+      ] }) }) : /* @__PURE__ */ u3("span", { class: "local", children: up }),
       !!a3.restarts && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why", children: [
         "restarted ",
         a3.restarts,

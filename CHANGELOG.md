@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Why an app restarted:** hover *up 9 minutes* on Status for why it last started, and when: you, an update (yours or the nightly one), Fix it, the watchdog, the power coming back, its drive plugged in again, the end of a Stop for a while, or Docker after it stopped on its own.
 - **A balance's accounts:** rest the pointer on Cash, Investments, or another group in the sidebar for its accounts, each with its balance and how long since it was updated; one older than a month has a dot.
 - **When an app was down this week:** hover its *96.2% up this week* on Status (or Tab to it, or tap it on a phone) for the week as a strip, with each time it was down, for how long, and why (*Wed 3:15 AM, 45 minutes: nothing answers on its port*).
 - **Export your finances:** Finances has **Export**: your whole plan as a JSON file to keep or take elsewhere, the year ahead as a spreadsheet (each payday and payment, with checking after each day), and this month or the next as a page that prints itself. Saved where you pick, readable only by you; on a phone, shared or downloaded, even one that may only look.
