@@ -29,6 +29,10 @@ struct HomelabClientApp: App {
                 .environment(coordinator)
         }
         .menuBarExtraStyle(.menu)
+
+        Settings {
+            MacSettingsView()
+        }
         #endif
     }
 }

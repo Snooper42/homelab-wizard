@@ -80,3 +80,4 @@ enum Overnight {
         defaults.set(FinancePlanEdit.todayString(now, calendar: calendar), forKey: hiddenKey)
     }
 }
+

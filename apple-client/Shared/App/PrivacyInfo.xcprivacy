@@ -9,8 +9,8 @@
     anyone else. What the app reads from the person's own computer stays
     in memory while unlocked; the device token stays in the Keychain.
   - Required reason APIs: UserDefaults only (CA92.1, the app's own
-    settings: the install marker, the overnight line's "hide today", and
-    the hashed "changed since you looked" values).
+    settings: the install marker, the overnight line's "hide today", the
+    hashed "changed since you looked" values, and the Mac's lock delay).
 -->
 <plist version="1.0">
 <dict>

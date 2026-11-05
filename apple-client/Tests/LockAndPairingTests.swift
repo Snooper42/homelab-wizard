@@ -195,3 +195,23 @@ struct LockStateMachineTests {
         #expect(c.pairingNotice != nil)
     }
 }
+
+@Suite("How long the Mac app may sit behind others")
+struct BackgroundLockTests {
+    private func defaults() -> UserDefaults { UserDefaults(suiteName: "homelab.tests.\(UUID().uuidString)")! }
+
+    @Test func fiveMinutesUnlessAChoiceIsSet() {
+        let d = defaults()
+        #expect(BackgroundLock.minutes(in: d) == 5)
+        d.set(15, forKey: BackgroundLock.key)
+        #expect(BackgroundLock.duration(in: d) == .seconds(900))
+    }
+
+    @Test func anythingElseIsTheDefault() {
+        let d = defaults()
+        for odd in [0, -1, 2, 60, 100_000] {
+            d.set(odd, forKey: BackgroundLock.key)
+            #expect(BackgroundLock.minutes(in: d) == 5)
+        }
+    }
+}

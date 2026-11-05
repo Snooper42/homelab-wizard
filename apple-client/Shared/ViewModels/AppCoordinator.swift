@@ -94,10 +94,10 @@ final class AppCoordinator {
     @ObservationIgnored private var macObservers: [NSObjectProtocol] = []
     @ObservationIgnored private var backgroundLock: Task<Void, Never>?
 
-    /// How long the app may sit behind other apps, unlocked, before it locks.
-    /// A Mac app doesn't go to the background the way an iPhone app does,
-    /// so without this a window left open behind others stays unlocked.
-    static let macBackgroundLock: Duration = .seconds(300)
+    // How long the app may sit behind other apps, unlocked, before it locks
+    // is `BackgroundLock` (1, 5 or 15 minutes, in Settings). A Mac app doesn't
+    // go to the background the way an iPhone app does, so without this a
+    // window left open behind others stays unlocked.
 
     /// A Mac can be walked away from without the app going to the
     /// background, and with only the menu bar item open. So these are
@@ -106,7 +106,7 @@ final class AppCoordinator {
     /// - the screen locks
     /// - the screens or the Mac sleep
     /// - fast user switching
-    /// - five minutes behind other apps (`macBackgroundLock`)
+    /// - a while behind other apps (`BackgroundLock`, five minutes unless changed)
     private func installMacLockTriggers() {
         let workspace = NSWorkspace.shared.notificationCenter
         let distributed = DistributedNotificationCenter.default()
@@ -132,8 +132,9 @@ final class AppCoordinator {
 
     private func startBackgroundLock() {
         backgroundLock?.cancel()
+        let wait = BackgroundLock.duration(in: defaults)
         backgroundLock = Task { [weak self] in
-            try? await Task.sleep(for: Self.macBackgroundLock)
+            try? await Task.sleep(for: wait)
             guard !Task.isCancelled, let self else { return }
             self.backgroundLock = nil
             if self.route == .unlocked {
