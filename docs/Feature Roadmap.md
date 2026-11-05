@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #PR11 |
 | The week's outages | Hover *96.2% up this week* on Status for the week as a strip, with each time the app was down, how long, and why | #406 |
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
 | Export your finances | Finances › **Export**: the plan as JSON, the year ahead as a spreadsheet, and this month or the next on a page that prints itself; on a phone too | #405 |
@@ -98,7 +99,7 @@ The homelab looks after itself, and says what it did.
 - **A restart that keeps failing** (S, *Idea*): an app the watchdog restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Idea*): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
 - **A drive comes back** (S, *Idea*): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.
-- **What happened overnight** (S, *Idea*): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."
+- **What happened overnight** (S, *Built*, #PR11): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."
 
 ## Security and privacy
 

@@ -20,6 +20,8 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
+import { mountOvernight, nightOf } from '../status/Overnight';
+import { backupsData } from './backups';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
@@ -31,6 +33,17 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
+// What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
+let lastEvents: notify.Event[] = [];
+let watched = false;
+function drawOvernight() {
+  if (!lastStatus) return;
+  const now = Date.now();
+  // The night's database copies come from Backups, read for it only in the morning.
+  if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 60000);
+  mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+}
+backupsData.watch(drawOvernight);
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -237,6 +250,7 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
+  drawOvernight();
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -273,6 +287,8 @@ function showWatchdog(w: health.Summary | null) {
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};
+  watched = true;
+  drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
   mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
@@ -339,6 +355,8 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
+  lastEvents = events || [];
+  drawOvernight();
   if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
   else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
 }

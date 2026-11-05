@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
 - **When an app was down this week:** hover its *96.2% up this week* on Status (or Tab to it, or tap it on a phone) for the week as a strip, with each time it was down, for how long, and why (*Wed 3:15 AM, 45 minutes: nothing answers on its port*).
 - **Export your finances:** Finances has **Export**: your whole plan as a JSON file to keep or take elsewhere, the year ahead as a spreadsheet (each payday and payment, with checking after each day), and this month or the next as a page that prints itself. Saved where you pick, readable only by you; on a phone, shared or downloaded, even one that may only look.
 - **Tidy Up gets ffmpeg for you:** without ffmpeg, Tidy Up's Overview has **Install**, with no Terminal and no password: it runs Homebrew (or winget on Windows) for you when it's there, and otherwise fetches ffmpeg for Tidy Up alone, checks it's exactly the build expected before it runs, and keeps it in its own folder. A scan that stopped for want of it offers **Install ffmpeg**, then carries on by itself. Calibre's row opens its download page, and coming back to the window checks again without a click.
