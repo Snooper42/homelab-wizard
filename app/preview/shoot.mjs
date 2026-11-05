@@ -3012,8 +3012,9 @@ const smokes = [
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
+    // Nothing cancels it while it runs: Hide alone, which lets it carry on behind.
     const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
-    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    if (buttons.join() !== 'Hide') throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
     // The engine says containers changed while the job runs: Status behind the sheet waits.
     await page.waitForSelector('#cliApps li', { timeout: 5000 });
     await page.evaluate(() => window.__emit('status:changed'));
