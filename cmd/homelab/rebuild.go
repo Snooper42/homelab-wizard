@@ -210,6 +210,11 @@ func restoreJob(ctx context.Context, client *docker.Client, image, folder, job, 
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
+	// Pulled first, waiting out a busy registry: docker run would pull it
+	// once and give up.
+	if err := client.EnsureImage(ctx, image); err != nil {
+		return err
+	}
 	args := []string{"run", "--rm", "-e", "PASSPHRASE",
 		// Duplicati keeps its own files in a folder of its own; the image's
 		// (/config) is the server's, which a throwaway run must not use.

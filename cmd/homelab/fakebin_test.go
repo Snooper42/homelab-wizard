@@ -97,6 +97,32 @@ func fakeDockerMain(d string, args []string) int {
 		os.Stdout.Write(data)
 	}
 	has := func(s string) bool { return strings.Contains(all, s) }
+	// FAKE_REGISTRY_BUSY=n: no image is here until a pull gets through,
+	// and the registry is busy for the first n pulls, and for a run that
+	// would pull its image itself, as ghcr.io's per-minute limit is.
+	if n, err := strconv.Atoi(os.Getenv("FAKE_REGISTRY_BUSY")); err == nil {
+		pulled := filepath.Join(d, "pulled")
+		_, here := os.Stat(pulled)
+		busy := "toomanyrequests: retry-after: 205.338µs, allowed: 44000/minute"
+		switch {
+		case arg(0) == "pull":
+			data, _ := os.ReadFile(filepath.Join(d, "pulls"))
+			tries := len(data) + 1
+			_ = os.WriteFile(filepath.Join(d, "pulls"), append(data, '.'), 0o644)
+			if tries <= n {
+				fmt.Fprintln(os.Stderr, "Error response from daemon: "+busy)
+				return 1
+			}
+			_ = os.WriteFile(pulled, nil, 0o644)
+			return 0
+		case arg(0) == "image" && arg(1) == "inspect" && here != nil:
+			fmt.Fprintln(os.Stderr, "Error response from daemon: No such image: "+args[len(args)-1])
+			return 1
+		case arg(0) == "run" && here != nil:
+			fmt.Fprintln(os.Stderr, "docker: error pulling image configuration: download failed after attempts=1: "+busy)
+			return 125
+		}
+	}
 	switch arg(0) {
 	case "info":
 		// A file named down: the runtime is not running yet.

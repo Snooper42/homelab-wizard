@@ -1941,7 +1941,7 @@
       fn();
     };
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const running4 = a3.state === "running", stopped = a3.state === "stopped";
+    const running4 = a3.state === "running", stopped2 = a3.state === "stopped";
     const item = (label, fn, opts = {}) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: opts.cls, disabled: opts.disabled, onClick: fn, children: label });
     return /* @__PURE__ */ u3(
       "div",
@@ -1981,7 +1981,7 @@
             on2.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
           })),
           !native && url && /* @__PURE__ */ u3("hr", {}),
-          !native && stopped && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
+          !native && stopped2 && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
           !native && running4 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
           !native && running4 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
             if (!sure) {
@@ -2258,14 +2258,14 @@
   var startable = (p3, a3) => a3.state === "stopped" && !a3.waitingFor && !p3.batteryPaused.has(a3.id) && !p3.held[a3.id];
   function StartAll({ g: g2, p: p3 }) {
     const [at2, setAt] = d2(-1);
-    const stopped = g2.apps.filter((a3) => startable(p3, a3) && p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind !== "native");
-    if (!stopped.length || p3.companion) return null;
+    const stopped2 = g2.apps.filter((a3) => startable(p3, a3) && p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind !== "native");
+    if (!stopped2.length || p3.companion) return null;
     const go2 = (e3) => {
       e3.stopPropagation();
       setAt(0);
-      p3.on.startAll(stopped, setAt).finally(() => setAt(-1));
+      p3.on.startAll(stopped2, setAt).finally(() => setAt(-1));
     };
-    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go2, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped.length}…` : stopped.length === 1 ? "Start it" : `Start the ${stopped.length} stopped` });
+    return /* @__PURE__ */ u3("button", { class: "small startall", title: "Start " + stopped2.map((a3) => a3.name).join(", "), disabled: at2 >= 0, onClick: go2, children: at2 >= 0 ? `Starting ${at2 + 1} of ${stopped2.length}…` : stopped2.length === 1 ? "Start it" : `Start the ${stopped2.length} stopped` });
   }
   var isNative = (p3, a3) => p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind === "native";
   function GroupMenu({ g: g2, p: p3, count: count2 }) {
@@ -2281,7 +2281,7 @@
     const used = mem ? g2.apps.reduce((t3, a3) => t3 + (mem[a3.id] || 0), 0) : 0;
     const containers = g2.apps.filter((a3) => !isNative(p3, a3));
     const running4 = containers.filter((a3) => a3.state === "running");
-    const stopped = containers.filter((a3) => startable(p3, a3));
+    const stopped2 = containers.filter((a3) => startable(p3, a3));
     const held3 = containers.filter((a3) => a3.state === "stopped" && p3.held[a3.id] && !keptRestarting(p3.held[a3.id]));
     const items = () => [...wrap.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
     const close3 = (refocus) => {
@@ -2396,7 +2396,7 @@
               /* @__PURE__ */ u3("span", { children: a3.name }),
               /* @__PURE__ */ u3("span", { class: "muted", children: formatMem(mem[a3.id]) })
             ] }, a3.id)) }),
-            stopped.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("start", stopped), children: stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped` }),
+            stopped2.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("start", stopped2), children: stopped2.length === 1 ? `Start ${stopped2[0].name}` : `Start the ${stopped2.length} stopped` }),
             running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running4), children: running4.length === 1 ? `Restart ${running4[0].name}` : `Restart the ${running4.length} running` }),
             running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running4), children: sure ? `Click again to stop ${running4.length === 1 ? running4[0].name : `all ${running4.length}`}` : running4.length === 1 ? `Stop ${running4[0].name}` : `Stop the ${running4.length} running` }),
             running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
@@ -4108,14 +4108,14 @@
   }
   function HealthLine(p3) {
     const all = facts(p3);
-    const stopped = p3.h.agent === "stopped" || p3.h.agent === "quit";
+    const stopped2 = p3.h.agent === "stopped" || p3.h.agent === "quit";
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("span", { class: "label", children: p3.machine.charAt(0).toUpperCase() + p3.machine.slice(1) }),
       all.map((f4) => /* @__PURE__ */ u3("span", { class: "item " + f4.tone, title: f4.sub, children: [
         /* @__PURE__ */ u3("span", { class: "dot " + f4.tone }),
         f4.short
       ] }, f4.key)),
-      stopped && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
+      stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
     ] });
   }
   var mountHealthTiles = (el2, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el2);
@@ -7560,6 +7560,34 @@
       rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
     ] });
   }
+  function Stopped({ stopped: stopped2 }) {
+    const reading = stopped2 === "reading", s3 = reading ? null : stopped2;
+    const today2 = s3?.today || [];
+    const more = (s3?.todayCount || 0) - today2.length;
+    const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
+    const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "What CrowdSec stopped today", children: head && /* @__PURE__ */ u3("span", { class: "muted", children: head }) }),
+      reading && /* @__PURE__ */ u3(Empty, { children: "Asking CrowdSec…" }),
+      !s3 && !reading && /* @__PURE__ */ u3(Empty, { children: "CrowdSec can't be read right now: it and the proxy both need to be running." }),
+      s3 && !s3.enforced && /* @__PURE__ */ u3(Rows, { children: /* @__PURE__ */ u3(Row, { dot: "bad", title: "Bans aren't reaching the proxy", sub: `${s3.bouncer}. Status › Protection › Fix reconnects them.` }) }),
+      s3 && (today2.length ? /* @__PURE__ */ u3(Rows, { children: [
+        today2.map((a3, i3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            dot: a3.banned ? "bad" : "",
+            title: a3.scenario,
+            sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
+            end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", title: "A ban on it is still in force", children: "Banned" }),
+            when: clockText(new Date(a3.when)),
+            whenTitle: ago(a3.when)
+          },
+          i3
+        )),
+        more > 0 && /* @__PURE__ */ u3(Row, { sub: more === 1 ? "and 1 more today" : `and ${more} more today` })
+      ] }) : /* @__PURE__ */ u3(Empty, { children: quiet2 }))
+    ] });
+  }
   function People2({ p: p3 }) {
     const { entry, people, on: on2 } = p3;
     if (!people && !entry?.login?.length) return null;
@@ -7648,6 +7676,7 @@
       /* @__PURE__ */ u3("div", { class: "pagecols", children: [
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
           p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u3(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
+          p3.stopped !== void 0 && /* @__PURE__ */ u3(Stopped, { stopped: p3.stopped }),
           /* @__PURE__ */ u3(Updates, { p: p3 })
         ] }),
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
@@ -7669,6 +7698,8 @@
   var watch = null;
   var household = null;
   var explainer = "";
+  var guards = /* @__PURE__ */ new Set(["nginx-proxy-manager", "crowdsec"]);
+  var stopped = "reading";
   var switching = {};
   async function setSetting(appId, setting, on2) {
     switching[appId] = { ...switching[appId], [setting]: on2 };
@@ -7691,6 +7722,7 @@
       usage = void 0;
       disk = void 0;
       household = null;
+      stopped = "reading";
     }
     id = appId;
     navigate("app");
@@ -7748,8 +7780,9 @@
   }
   async function readRest() {
     const at2 = id;
-    const [w3, st, ppl, ex] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer()]);
+    const [w3, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at2) ? go().Protection() : Promise.resolve(null)]);
     if (at2 !== id) return;
+    stopped = pr.status === "fulfilled" ? pr.value : null;
     watch = w3.status === "fulfilled" ? w3.value : null;
     disk = st.status === "fulfilled" ? st.value?.apps?.find((x3) => x3.app === id)?.bytes : void 0;
     household = ppl.status === "fulfilled" ? (ppl.value || []).filter((p3) => never2(p3.removed) && (!p3.apps?.length || p3.apps.includes(id))) : null;
@@ -7787,6 +7820,7 @@
       dozzle: !companion2 && statusById.dozzle?.state === "running" ? statusById.dozzle.url || "" : "",
       machine: thisMachine.replace(/^This/, "this"),
       companion: companion2,
+      stopped: guards.has(id) ? stopped : void 0,
       on: {
         back: () => navigate("status"),
         act: (action) => appActions.act(a3, action),
@@ -13328,13 +13362,13 @@ ${pays}
     if (!phone2 && !busy2) {
       for (const g2 of catalog?.categories || []) {
         const mine = apps.filter((a3) => entry(a3.id)?.category === g2.id && container(a3));
-        const running4 = mine.filter((a3) => a3.state === "running"), stopped = mine.filter(startable2);
+        const running4 = mine.filter((a3) => a3.state === "running"), stopped2 = mine.filter(startable2);
         const n3 = (k3) => k3 === 1 ? `the 1 ${g2.label} app` : `the ${k3} ${g2.label} apps`;
         const act = (action, of) => onStatus(() => {
           rowActions.groupAct(of, action, () => {
           });
         });
-        if (stopped.length) add({ id: `group:${g2.id}:start`, label: `Start ${n3(stopped.length)} stopped`, hint: g2.label, run: act("start", stopped) });
+        if (stopped2.length) add({ id: `group:${g2.id}:start`, label: `Start ${n3(stopped2.length)} stopped`, hint: g2.label, run: act("start", stopped2) });
         if (running4.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running4.length)}`, hint: g2.label, run: act("restart", running4) });
         if (running4.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running4.length)}`, hint: g2.label, danger: `stop ${n3(running4.length)}`, run: act("stop", running4) });
       }

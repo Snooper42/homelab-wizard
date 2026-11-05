@@ -767,10 +767,15 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	if drives, err := checkDrives(ctx); err == nil {
 		results = append(results, driveChecks(drives)...)
 	}
-	statePath := health.StatePath(h.root)
-	state := health.LoadState(statePath)
-	failed, recovered := state.Update(results, time.Now())
-	if err := state.Save(statePath); err != nil {
+	// Under the state's lock: another watchdog run, or homelab remove
+	// forgetting an app, is never saved over.
+	var state health.State
+	var failed []health.Result
+	var recovered []string
+	if err := health.UpdateState(health.StatePath(h.root), func(s *health.State) {
+		failed, recovered = s.Update(results, time.Now())
+		state = *s
+	}); err != nil {
 		h.ui.Warn("could not save watchdog state: %v", err)
 	}
 	if engineUp {
@@ -807,7 +812,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	// Apps whose alerts are off (homelab notify off) are still checked,
 	// and shown, but not alerted about.
 	off := map[string]bool{}
-	for _, id := range notify.Quiet(env) {
+	for _, id := range notify.LoadQuiet(h.root, env) {
 		off[id] = true
 	}
 	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return off[r.Name] })
@@ -1039,12 +1044,20 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		if !ok {
 			return fmt.Errorf("unknown app %q", args[1])
 		}
+		// Kept in data/alerts-off.json; a list still in .env from before
+		// goes there first.
 		f, err := envfile.Load(h.envFile)
 		if err != nil {
 			return err
 		}
-		f.Set(notify.QuietKey, notify.SetQuiet(f.Map(), a.ID, args[0] == "off"))
-		if err := f.Save(); err != nil {
+		if moved, err := notify.CarryQuiet(h.root, f); err != nil {
+			return err
+		} else if moved {
+			if err := f.Save(); err != nil {
+				return err
+			}
+		}
+		if err := notify.SetQuiet(h.root, a.ID, args[0] == "off"); err != nil {
 			return err
 		}
 		if args[0] == "off" {

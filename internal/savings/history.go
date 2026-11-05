@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Point is the yearly saving on one day.
@@ -31,19 +35,22 @@ func LoadHistory(path string) []Point {
 
 // Record sets now's point to annual (replacing one already recorded today)
 // and drops points older than keepDays.
+// It is changed under the lock beside it and written whole, so Status
+// reading it meanwhile never meets half of it.
 func Record(path string, now time.Time, annual float64) error {
 	day := now.Format("2006-01-02")
 	cutoff := now.AddDate(0, 0, -keepDays).Format("2006-01-02")
-	var pts []Point
-	for _, p := range LoadHistory(path) {
-		if p.Date != day && p.Date >= cutoff {
-			pts = append(pts, p)
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		var was, pts []Point
+		_ = json.Unmarshal(old, &was)
+		for _, p := range was {
+			if p.Date != day && p.Date >= cutoff {
+				pts = append(pts, p)
+			}
 		}
-	}
-	pts = append(pts, Point{Date: day, Annual: annual})
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	data, _ := json.MarshalIndent(pts, "", "  ")
-	return os.WriteFile(path, data, 0o644)
+		pts = append(pts, Point{Date: day, Annual: annual})
+		slices.SortFunc(pts, func(a, b Point) int { return strings.Compare(a.Date, b.Date) })
+		data, err := json.MarshalIndent(pts, "", "  ")
+		return data, err == nil
+	})
 }

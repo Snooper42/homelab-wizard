@@ -64,6 +64,7 @@ internal/setup 79
 internal/sso 88  # target 70
 internal/started 91
 internal/lockedfile 94
+internal/applist 83
 internal/stopped 92
 internal/storage 86
 internal/sysmem 89

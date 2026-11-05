@@ -61,8 +61,47 @@ func TestRead(t *testing.T) {
 	if !p.Enforced || p.Week != 3 || p.BannedNow != 1 || len(p.Recent) != 3 || !strings.Contains(p.Bouncer, "8 seconds ago") {
 		t.Errorf("protection = %+v", p)
 	}
+	// Today, from midnight: only the virtual-patching ban of 06:50.
+	if p.TodayCount != 1 || len(p.Today) != 1 || p.Today[0].IP != "203.0.113.7" {
+		t.Errorf("today = %d %+v", p.TodayCount, p.Today)
+	}
 	down := func(context.Context, ...string) ([]byte, error) { return nil, errors.New("container not running") }
 	if _, err := Read(context.Background(), down, now); err == nil {
 		t.Error("an unreachable CrowdSec should be an error")
+	}
+}
+
+// Since takes the newest attacks back to a time, at most MaxToday of them,
+// and counts them all.
+func TestSince(t *testing.T) {
+	from := time.Date(2026, 11, 5, 0, 0, 0, 0, time.UTC)
+	at := func(h int) Attack { return Attack{IP: "198.51.100.1", When: from.Add(time.Duration(h) * time.Hour)} }
+	many := make([]Attack, 0, MaxToday+12)
+	for i := 0; i < MaxToday+12; i++ {
+		many = append(many, at(23))
+	}
+	for _, c := range []struct {
+		name         string
+		attacks      []Attack
+		shown, count int
+	}{
+		{"none", nil, 0, 0},
+		{"all yesterday", []Attack{at(-1), at(-5)}, 0, 0},
+		{"some today", []Attack{at(9), at(0), at(-1)}, 2, 2},
+		{"at midnight counts", []Attack{at(0)}, 1, 1},
+		{"more than shown", append(many, at(-2)), MaxToday, MaxToday + 12},
+	} {
+		got, n := Since(c.attacks, from)
+		if len(got) != c.shown || n != c.count {
+			t.Errorf("%s: shown %d of %d, want %d of %d", c.name, len(got), n, c.shown, c.count)
+		}
+	}
+}
+
+func TestMidnight(t *testing.T) {
+	ny, _ := time.LoadLocation("America/New_York")
+	now := time.Date(2026, 11, 5, 0, 30, 0, 0, ny) // 05:30 UTC: still the 5th where it is
+	if m := midnight(now); !m.Equal(time.Date(2026, 11, 5, 0, 0, 0, 0, ny)) {
+		t.Errorf("midnight = %v", m)
 	}
 }
