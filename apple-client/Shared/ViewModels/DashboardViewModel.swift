@@ -41,6 +41,7 @@ final class DashboardViewModel {
     enum SidebarItem: Hashable {
         case overview
         case backups
+        case computer
         case apps(Filter)
     }
 

@@ -47,6 +47,8 @@ engine's `/v1/*` routes to devices. It wraps them:
 | Status (`/v1/status`) | `POST /api/call/Status` `[]` | `{result: Status, log}`. `LastStatus` answers at once with the last reading. |
 | Cards (`/v1/cards`) | `POST /api/call/StatusBoard` `[n, ["watchdog","savings","protection","alerts"]]` | ndjson: `{"result":Status}`, then `{"event":"status:card","data":Card}` for each card |
 | Live (`/v1/events`) | `GET /api/events` | SSE: `data: <engine.Change>`, plus a `: still here` heartbeat every 30 s |
+| Back up now, Test a restore, Fix | `POST /api/call/Homelab` `["backup"\|"restore-test"\|"fix", "", apply]` | Changes. Fix runs first without `apply` (a plan), then with it |
+| Computer | `Host`, `SetUpdatesPaused` `[bool]` (a change), `Report` (secrets removed by the computer; up to 3 min) | |
 | Start / Stop / Restart / Roll back | `POST /api/call/AppAction` `[id, "start"\|"stop"\|"restart"\|"rollback"]`; Stop for a while is `StopUntil` `[id, RFC 3339]` | Needs `canChange` and https. One change from a phone at a time. `{result: null, log}`, or 500 `{error, log}` |
 
 All requests after pairing send `Authorization: Bearer <token>`. The token
@@ -71,11 +73,14 @@ hash. The client receives the token itself, once.
 | A change made from an unattended, unlocked device | Start, Stop and Restart ask for Face ID / Touch ID / passcode again unless the owner authenticated in the last 2 minutes. The window is measured on the monotonic clock, so changing the device time can't stretch it. | `AppCoordinator.authorizeChange` |
 | Accidental or repeated changes | Stop is confirmed and offers Undo for 10 s. One change at a time. Changes are never retried, and a timeout says the change may still be running. Buttons show only when the computer says `canChange`. App ids must look like catalog ids before they're sent. | `AppActionsViewModel`, `AppAction`, `APIClient.perform` |
 | Card data, logs and alerts in memory | Cards, logs and command output belong to the dashboard, so locking drops them. A late answer after a lock is dropped, not stored. Log lines are shown verbatim (never parsed as Markdown) and marked `privacySensitive`. One card that fails to decode only costs that card. | `CardsViewModel`, `LogsViewModel`, `StatusCard` |
+| Fix applied by accident | Fix always runs as a plan first. `fix --apply` runs only from that plan's Fix These button, after authentication. | `HomelabTasksViewModel`, `TaskOutputView` |
+| Diagnostics report leaking secrets | The computer removes secrets before sending. The phone shows the whole report before the share sheet, keeps it only while that sheet is open, and never logs it. | `ComputerViewModel`, `ReportView` |
 | Command output kept or shown | Docker's output is kept only for a failure's Details: the last 400 lines, cleaned, in memory, dropped on lock. It's never logged. | `APIError.sanitizeLog` |
 
 ## Not built yet
 
-- Update and Back up now. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes`, no way to learn that an update exists, and no backup action. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. These need backend methods first.
+- Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
+- Finances (`Finances`, `FinancesLedger`, …). These have their own per-device level and need the encrypted link, so they deserve their own design pass.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
 - Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.

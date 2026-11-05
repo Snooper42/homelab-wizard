@@ -16,6 +16,12 @@ struct BackupsView: View {
                     Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.orange)
                 }
             }
+            Section {
+                TaskButton(task: .backup)
+                TaskButton(task: .restoreTest)
+            } footer: {
+                Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
+            }
             jobs
             if let copies = backups.overview?.copies, !copies.isEmpty {
                 Section("Each App's Copy") {

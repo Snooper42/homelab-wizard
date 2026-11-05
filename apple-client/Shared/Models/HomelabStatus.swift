@@ -1,7 +1,6 @@
 import Foundation
 
-/// The homelab's state (`api.Status` in internal/api/api.go). Fields the
-/// phone doesn't show yet (`updates`) are left out, and Codable ignores them.
+/// The homelab's state (`api.Status` in internal/api/api.go).
 struct HomelabStatus: Codable, Sendable, Equatable {
     var apps: [AppStatus]
     /// Baseline apps that aren't running.
@@ -17,9 +16,11 @@ struct HomelabStatus: Codable, Sendable, Equatable {
     /// Apps stopped on purpose, by id. Each app also carries its own entry
     /// as `stoppedOnPurpose`.
     var stopped: [String: StopRecord]
+    /// Whether nightly image updates run, and when.
+    var updates: UpdatesState?
 
     enum CodingKeys: String, CodingKey {
-        case apps, missing, unmatched, savings, batteryPaused, checking, stopped
+        case apps, missing, unmatched, savings, batteryPaused, checking, stopped, updates
     }
 
     init(from decoder: Decoder) throws {
@@ -30,6 +31,7 @@ struct HomelabStatus: Codable, Sendable, Equatable {
         savings = try c.decodeIfPresent(Double.self, forKey: .savings) ?? 0
         batteryPaused = try c.decodeIfPresent([String].self, forKey: .batteryPaused) ?? []
         checking = try c.decodeIfPresent(Bool.self, forKey: .checking) ?? false
+        updates = try? c.decodeIfPresent(UpdatesState.self, forKey: .updates)
         // One entry that doesn't read shouldn't cost the whole status.
         let stopped = ((try? c.decodeIfPresent([String: StopRecord].self, forKey: .stopped)) ?? nil) ?? [:]
         self.stopped = stopped

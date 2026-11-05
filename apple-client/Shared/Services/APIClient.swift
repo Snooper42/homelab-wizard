@@ -145,6 +145,47 @@ actor APIClient {
         return try await call("Logs", [.string(appID), .number(Double(count))], as: String.self)
     }
 
+    // MARK: The computer
+
+    func host() async throws -> HostInfo {
+        try await call("Host", as: HostInfo.self)
+    }
+
+    /// A diagnostics report. The computer removes every secret before
+    /// sending it. Making one takes up to 3 minutes, so it goes on the
+    /// long-timeout session. It's a read, not a change.
+    func report() async throws -> DiagnosticsReport {
+        let (request, endpoint) = try callRequest("Report", [])
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<DiagnosticsReport>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// Pauses or resumes the nightly image updates. This is a change.
+    func setUpdatesPaused(_ paused: Bool) async throws -> UpdatesState {
+        let (request, endpoint) = try callRequest("SetUpdatesPaused", [.bool(paused)])
+        Log.network.notice("SetUpdatesPaused \(paused, privacy: .public)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<UpdatesState>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// Runs a whole-homelab job and returns what it printed. This is a
+    /// change, and it's never retried.
+    func run(_ task: HomelabTask, apply: Bool = false) async throws -> [String] {
+        let (request, endpoint) = try callRequest("Homelab", [.string(task.rawValue), .string(""), .bool(apply)])
+        Log.network.notice("Homelab \(task.rawValue, privacy: .public) apply=\(apply, privacy: .public)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        let envelope = try? JSONDecoder().decode(LogEnvelope.self, from: data)
+        return APIError.sanitizeLog(envelope?.log)
+    }
+
     // MARK: Changes
 
     /// Starts, stops or restarts an app on the computer (the `AppAction`

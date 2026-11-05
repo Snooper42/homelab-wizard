@@ -10,6 +10,8 @@ struct DashboardView: View {
     /// Lives as long as the dashboard. Locking removes both, and the pending
     /// states and command output go with them.
     @State private var actions: AppActionsViewModel
+    @State private var tasks: HomelabTasksViewModel
+    @State private var computer: ComputerViewModel
     private let api: APIClient
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -17,14 +19,35 @@ struct DashboardView: View {
 
     init(coordinator: AppCoordinator) {
         api = coordinator.api
-        _model = State(initialValue: DashboardViewModel(api: coordinator.api, liveEvents: coordinator.liveEvents))
+        let dashboard = DashboardViewModel(api: coordinator.api, liveEvents: coordinator.liveEvents)
+        let device: @MainActor () -> DeviceInfo? = { [weak coordinator] in coordinator?.device }
+        let authorize: @MainActor (String) async -> Bool = { [weak coordinator] reason in
+            await coordinator?.authorizeChange(reason: reason) ?? false
+        }
+        _model = State(initialValue: dashboard)
         _actions = State(initialValue: AppActionsViewModel(
             api: coordinator.api,
             liveEvents: coordinator.liveEvents,
-            device: { [weak coordinator] in coordinator?.device },
-            authorize: { [weak coordinator] reason in
-                await coordinator?.authorizeChange(reason: reason) ?? false
+            device: device,
+            authorize: authorize
+        ))
+        _tasks = State(initialValue: HomelabTasksViewModel(
+            api: coordinator.api,
+            device: device,
+            authorize: authorize,
+            didFinish: { [weak dashboard] task in
+                // Read again what the job changed.
+                switch task {
+                case .backup, .restoreTest: await dashboard?.backups.load()
+                case .fix: await dashboard?.refresh()
+                }
             }
+        ))
+        _computer = State(initialValue: ComputerViewModel(
+            api: coordinator.api,
+            liveEvents: coordinator.liveEvents,
+            device: device,
+            authorize: authorize
         ))
     }
 
@@ -32,12 +55,12 @@ struct DashboardView: View {
         Group {
             #if os(iOS)
             if sizeClass == .compact {
-                PhoneDashboard(model: model)
+                PhoneDashboard(model: model, computer: computer)
             } else {
-                SplitDashboard(model: model)
+                SplitDashboard(model: model, computer: computer)
             }
             #else
-            SplitDashboard(model: model)
+            SplitDashboard(model: model, computer: computer)
             #endif
         }
         // A haptic when something new needs attention, not when it clears.
@@ -46,7 +69,14 @@ struct DashboardView: View {
         .sheet(item: $model.logsApp) { app in
             LogsView(app: app, api: api)
         }
+        .sheet(item: $tasks.output) { output in
+            TaskOutputView(output: output)
+                .environment(tasks)
+        }
+        .sensoryFeedback(.success, trigger: tasks.successCount)
+        .sensoryFeedback(.error, trigger: tasks.failureCount)
         .environment(actions)
+        .environment(tasks)
         .environment(model)
         .environment(model.icons)
         // The cards change slowly: read them now, then every 5 minutes while unlocked.
@@ -63,6 +93,7 @@ struct DashboardView: View {
 
 private struct PhoneDashboard: View {
     let model: DashboardViewModel
+    let computer: ComputerViewModel
 
     var body: some View {
         NavigationStack {
@@ -80,6 +111,11 @@ private struct PhoneDashboard: View {
                     } label: {
                         Label("Backups", systemImage: "externaldrive.badge.checkmark")
                             .badge(model.backups.needsAttention)
+                    }
+                    NavigationLink {
+                        ComputerView(computer: computer)
+                    } label: {
+                        Label("Computer", systemImage: "desktopcomputer")
                     }
                 }
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
@@ -119,6 +155,7 @@ private struct PhoneDashboard: View {
 
 private struct SplitDashboard: View {
     @Bindable var model: DashboardViewModel
+    let computer: ComputerViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
@@ -131,6 +168,8 @@ private struct SplitDashboard: View {
                     Label("Backups", systemImage: "externaldrive.badge.checkmark")
                         .badge(model.backups.needsAttention)
                         .tag(DashboardViewModel.SidebarItem.backups)
+                    Label("Computer", systemImage: "desktopcomputer")
+                        .tag(DashboardViewModel.SidebarItem.computer)
                 }
                 Section("Apps") {
                     ForEach(DashboardViewModel.Filter.allCases) { filter in
@@ -155,6 +194,10 @@ private struct SplitDashboard: View {
                     .toolbar { toolbarItems }
             case .backups?:
                 BackupsView(backups: model.backups)
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            case .computer?:
+                ComputerView(computer: computer)
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             default:

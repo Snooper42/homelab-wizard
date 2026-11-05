@@ -394,3 +394,23 @@ struct BackupsTests {
         #expect(jobs[0].nextRun != nil)
     }
 }
+
+@Suite("Computer")
+struct ComputerTests {
+    @Test func statusCarriesTheNightlyUpdates() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[],"updates":{"paused":true,"schedule":"daily at 04:00"}}"#.utf8))
+        #expect(status.updates == UpdatesState(paused: true, schedule: "daily at 04:00"))
+    }
+
+    @Test func hostAndReport() throws {
+        let host = try JSONDecoder.homelab().decode(HostInfo.self, from: Data(#"{"os":"macOS 15","machine":"arm64","runtime":"OrbStack","scheduler":"launchd","supported":true,"rootOK":true,"runtimeOK":false,"version":"0.42.0"}"#.utf8))
+        #expect(host.runtime == "OrbStack" && !host.runtimeOK)
+        let report = try JSONDecoder.homelab().decode(DiagnosticsReport.self, from: Data(#"{"text":"homelab report\n","helper":""}"#.utf8))
+        #expect(report.text.hasPrefix("homelab report"))
+    }
+
+    @Test func tasksAreWhatTheComputerTakes() {
+        // The Homelab method's switch: backup, restore-test, fix.
+        #expect(HomelabTask.allCases.map(\.rawValue) == ["backup", "restore-test", "fix"])
+    }
+}
