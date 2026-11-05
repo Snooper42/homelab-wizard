@@ -7,6 +7,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // The menu's lines, read from a Status: what is said first, at a glance,
@@ -78,6 +79,8 @@ func Looks(st api.Status, n int) []string {
 		switch {
 		case a.Health == "restarting":
 			out = append(out, a.Name+" keeps restarting")
+		case a.State == "stopped" && st.Stopped[a.ID].Why == stopped.KeptRestarting:
+			out = append(out, a.Name+" was stopped: it kept restarting")
 		case a.Health == "unhealthy":
 			out = append(out, a.Name+" is unwell")
 		case a.NotAnswering != "":

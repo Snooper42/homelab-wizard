@@ -1700,6 +1700,21 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Running")', { timeout: 5000 });
   } },
+  // A restart that keeps failing: the watchdog stopped it, and unlike one stopped by you it needs a look: its row
+  // says why with a red dot, Needs a look counts it, its group opens, and the group menu does not call it yours.
+  { name: 'Stopped for restarting over and over: its row says so, and it needs a look', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } } }, run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped: it restarted 5 times in an hour")', { timeout: 5000 });
+    if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('stopped by the watchdog has no red dot');
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    const head = page.locator('#statusRows tr:has(strong:text-is("Mealie"))').locator('xpath=preceding-sibling::tr[contains(concat(" ", @class, " "), " grouphead ")][1]');
+    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'true') throw new Error('its group stayed folded');
+    if (await head.locator('.startall').count()) throw new Error('Start them offers it, which would only restart the loop');
+    await head.locator('.groupcount').click();
+    await page.waitForSelector('.groupmenulist', { timeout: 3000 });
+    if (await page.locator('.groupmenulist .heldnote').count()) throw new Error(`the group menu says you stopped it: ${await page.locator('.groupmenulist .heldnote').textContent()}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {
