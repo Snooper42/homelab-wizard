@@ -88,7 +88,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		held[id] = true
 	}
 	pinned := map[string]bool{}
-	for _, id := range Pinned(env) {
+	for _, id := range Pinned(c.Root, env) {
 		if _, ok := c.Get(id); ok {
 			pinned[id] = true
 			st.Pinned = append(st.Pinned, id)

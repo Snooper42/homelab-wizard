@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -20,7 +21,6 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
-	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
@@ -474,8 +474,10 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 		case "env":
 			// Lists the app writes, kept in data/ now, leave .env.
 			if c.Root != "" {
-				if _, err := notify.CarryQuiet(c.Root, p.Env); err != nil {
-					return fmt.Errorf("moving %s into data: %w", notify.QuietKey, err)
+				for _, l := range applist.Moved {
+					if _, err := l.Carry(c.Root, p.Env); err != nil {
+						return fmt.Errorf("moving %s into data: %w", l.Key, err)
+					}
 				}
 			}
 			if err := p.Env.Save(); err != nil {
