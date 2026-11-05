@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Why it restarted | Hover *up 9 minutes* on Status for why the app last started and when: you, an update, Fix it, the watchdog, the power back, its drive back, a Stop for a while ending, or Docker after a crash | #PR3 |
 | A balance's accounts | Rest on a group in the sidebar's Accounts for its accounts, each balance, and how long since each was updated; a dot on one older than a month | #PR2 |
 | The week's outages | Hover *96.2% up this week* on Status for the week as a strip, with each time the app was down, how long, and why | #PR |
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
@@ -67,7 +68,7 @@ The things you do many times a day, made one click shorter.
 
 Questions the screen can answer without a click.
 
-- **Why it restarted** (S, *Idea*): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.
+- **Why it restarted** (S, *Built*, #PR3): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.
 - **The week's outages** (S, *Built*, #PR): hover "94% up this week" for a strip of the week with each time it was down, and why.
 - **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Built*, #PR2): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.

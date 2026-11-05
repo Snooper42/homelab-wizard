@@ -31,6 +31,7 @@ declare namespace api {
     address?: string;
     since?: string;
     restarts?: number;
+    startedBy?: string;
     updatedAt?: string;
     held?: boolean;
     quiet?: boolean;
