@@ -60,7 +60,7 @@ struct PairingView: View {
                     .symbolRenderingMode(.hierarchical)
                 Text("Pair with Your Homelab")
                     .font(.title2.bold())
-                Text("On the computer, run **homelab phone pair**, or open **Settings › Phones**, to make a one-time code.")
+                Text("On the computer, open **Settings › Phones** and choose **Pair a phone**, or run **homelab phone pair**, to make a one-time code.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
