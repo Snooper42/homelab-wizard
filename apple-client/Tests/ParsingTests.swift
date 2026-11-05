@@ -279,6 +279,22 @@ struct CardTests {
         #expect(p.recent.first?.flag == "🇩🇪")
     }
 
+    @Test func whatItStoppedToday() throws {
+        let card = try line(#"""
+        {"board":1,"name":"protection","data":{"enforced":true,"bouncer":"ok","week":30,"bannedNow":2,"recent":[],
+         "today":[{"scenario":"http-probing","ip":"203.0.113.9","when":"2026-11-05T08:00:00Z","banned":true},
+                  {"scenario":"http-probing","ip":"203.0.113.9","when":"2026-11-05T08:00:00Z","banned":true}],
+         "todayCount":14}}
+        """#)
+        guard case .protection(let p)? = card.data else { Issue.record("not a protection card"); return }
+        #expect(p.today.count == 2 && p.todayCount == 14 && p.moreToday == 12)
+
+        // An older computer sends neither: nothing today, nothing more.
+        let old = try line(#"{"board":1,"name":"protection","data":{"enforced":true,"bouncer":"ok","week":1,"bannedNow":0,"recent":[]}}"#)
+        guard case .protection(let q)? = old.data else { Issue.record("not a protection card"); return }
+        #expect(q.today.isEmpty && q.todayCount == 0 && q.moreToday == 0)
+    }
+
     @Test func savingsDays() {
         #expect(SavingsPoint(date: "2026-11-05", annual: 1).day != nil)
         #expect(SavingsPoint(date: "bad", annual: 1).day == nil)

@@ -99,8 +99,17 @@ struct Protection: Decodable, Sendable, Equatable {
     let bannedNow: Int
     /// Newest first, at most 5.
     let recent: [Attack]
+    /// What it stopped since midnight on the computer, newest first, at
+    /// most `maxToday` (main #430); `todayCount` is all of them.
+    let today: [Attack]
+    let todayCount: Int
 
-    enum CodingKeys: String, CodingKey { case enforced, bouncer, week, bannedNow, recent }
+    static let maxToday = 50
+
+    /// How many of today's aren't listed: "and 12 more today".
+    var moreToday: Int { max(0, todayCount - today.count) }
+
+    enum CodingKeys: String, CodingKey { case enforced, bouncer, week, bannedNow, recent, today, todayCount }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -109,6 +118,9 @@ struct Protection: Decodable, Sendable, Equatable {
         week = try c.decodeIfPresent(Int.self, forKey: .week) ?? 0
         bannedNow = try c.decodeIfPresent(Int.self, forKey: .bannedNow) ?? 0
         recent = try c.decodeIfPresent([Attack].self, forKey: .recent) ?? []
+        let today = Array((try c.decodeIfPresent([Attack].self, forKey: .today) ?? []).prefix(Self.maxToday))
+        self.today = today
+        todayCount = max(today.count, try c.decodeIfPresent(Int.self, forKey: .todayCount) ?? 0)
     }
 }
 

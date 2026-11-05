@@ -33,6 +33,11 @@ final class CardsViewModel {
         return nil
     }
 
+    var protection: Protection? {
+        if case .protection(let p)? = cards["protection"]?.data { return p }
+        return nil
+    }
+
     func load() async {
         board += 1
         let mine = board

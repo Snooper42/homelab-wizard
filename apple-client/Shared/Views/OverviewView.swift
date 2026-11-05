@@ -234,31 +234,65 @@ private struct ProtectionCard: View {
         }
         LabeledContent("Alerts this week", value: protection.week.formatted())
         LabeledContent("Banned now", value: protection.bannedNow.formatted())
+        if protection.todayCount > 0 {
+            DisclosureGroup {
+                StoppedToday(protection: protection)
+            } label: {
+                LabeledContent("Stopped today", value: protection.todayCount.formatted())
+            }
+        }
         ForEach(protection.recent) { attack in
-            HStack(spacing: 10) {
-                Text(attack.flag ?? "🌐")
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(attack.scenarioWords)
-                    Text([attack.ip, attack.network].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                }
-                Spacer(minLength: 0)
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(attack.when, format: .relative(presentation: .named))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if attack.banned {
-                        Label("Banned", systemImage: "lock.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.red)
-                    }
+            AttackRow(attack: attack)
+        }
+    }
+}
+
+/// What CrowdSec stopped since midnight, as the proxy's page lists it
+/// (main #430): each attack, then "and N more today".
+struct StoppedToday: View {
+    let protection: Protection
+
+    var body: some View {
+        // By position: one address can try the same thing twice in a second.
+        ForEach(protection.today.indices, id: \.self) { i in
+            AttackRow(attack: protection.today[i])
+        }
+        if protection.moreToday > 0 {
+            Text(protection.moreToday == 1 ? "and 1 more today" : "and \(protection.moreToday) more today")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// One attack: where it came from, what it tried, when, and whether a ban holds.
+struct AttackRow: View {
+    let attack: Attack
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(attack.flag ?? "🌐")
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(attack.scenarioWords)
+                Text([attack.ip, attack.network].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
+            Spacer(minLength: 0)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(attack.when, format: .relative(presentation: .named))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if attack.banned {
+                    Label("Banned", systemImage: "lock.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.red)
                 }
             }
-            .accessibilityElement(children: .combine)
         }
+        .accessibilityElement(children: .combine)
     }
 }
 

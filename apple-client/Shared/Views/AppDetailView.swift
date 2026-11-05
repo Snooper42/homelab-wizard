@@ -46,6 +46,8 @@ struct AppDetailView: View {
 
                 aboutSection(for: app)
 
+                stoppedSection(for: app)
+
                 backupSection(for: app)
 
                 updatesSection(for: app)
@@ -200,6 +202,34 @@ struct AppDetailView: View {
 
     private static func lasted(_ seconds: TimeInterval) -> String {
         Duration.seconds(max(60, seconds)).formatted(.units(allowed: [.days, .hours, .minutes], width: .abbreviated, maximumUnitCount: 2))
+    }
+
+    /// The proxy's and CrowdSec's pages: what CrowdSec stopped today
+    /// (main #430), from the Protection card the dashboard already holds.
+    static let guardApps: Set<String> = ["nginx-proxy-manager", "crowdsec"]
+
+    @ViewBuilder
+    private func stoppedSection(for app: AppStatus) -> some View {
+        if Self.guardApps.contains(app.id), let protection = dashboard.cards.protection {
+            Section {
+                if !protection.enforced {
+                    Label("Bans aren't reaching the proxy. \(protection.bouncer)", systemImage: "exclamationmark.shield.fill")
+                        .foregroundStyle(.red)
+                }
+                if protection.today.isEmpty {
+                    Text(protection.week == 0 ? "Nothing this week." : "Nothing yet today; \(protection.week) this week.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    StoppedToday(protection: protection)
+                }
+            } header: {
+                Text("What CrowdSec Stopped Today")
+            } footer: {
+                if protection.todayCount > 0 {
+                    Text(protection.bannedNow > 0 ? "\(protection.todayCount) today · \(protection.bannedNow) banned now" : "\(protection.todayCount) today")
+                }
+            }
+        }
     }
 
     /// The app page's Updates card (web/src/page/AppPage.tsx): the version
