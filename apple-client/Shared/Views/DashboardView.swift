@@ -173,6 +173,7 @@ private struct PhoneDashboard: View {
 // MARK: - Mac & iPad
 
 private struct SplitDashboard: View {
+    @Environment(AppActionsViewModel.self) private var actions
     @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
     let finances: FinancesViewModel
@@ -234,6 +235,7 @@ private struct SplitDashboard: View {
         } detail: {
             if let app = model.app(id: model.selectedAppID) {
                 AppDetailView(app: app)
+                    .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
             } else {
                 ContentUnavailableView(
                     "No App Selected",

@@ -19,6 +19,7 @@ struct HomelabClientApp: App {
         #endif
         .commands {
             HomelabCommands(coordinator: coordinator)
+            AppMenuCommands()
         }
 
         #if os(macOS)

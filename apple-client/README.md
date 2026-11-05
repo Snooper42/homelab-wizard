@@ -7,7 +7,7 @@ the Xcode project yourself (steps below).
 ```
 apple-client/
 ├── Shared/
-│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L), the Mac menu bar item
+│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L), the Mac menu bar item; AppCommands.swift: the App menu (⌥⌘S start, ⌥⌘R restart, ⌥⌘. stop, ⌥⌘L logs)
 │   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), AppAction, PairingCode, ServerEndpoint, DeviceCredential
 │   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel, AppActionsViewModel
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
