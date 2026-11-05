@@ -22,6 +22,8 @@ What started this page: small features asked for one by one, each now in the app
 | An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #PR15 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
+| A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
+| A drive comes back | Apps waiting for an unplugged drive start within a minute of it being plugged in again | #423 |
 | An update's notes | Hover *updates held* on Status for why, how to put it back, and the first lines of its newest release | #419 |
 | A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #418 |
 | Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #417 |
@@ -107,9 +109,9 @@ The homelab looks after itself, and says what it did.
 - **Start in order** (M, *Idea*): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.
 - **One app at a time** (M, *Idea*): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.
 - **An update window per app** (S, *Built*, #PR15): update Immich only on Sundays (an app's page › **Only on Sundays**, or `homelab updates days immich sun` for any days). Still an idea: Vaultwarden at once when a security release comes out.
-- **A restart that keeps failing** (S, *Idea*): an app the watchdog restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
+- **A restart that keeps failing** (S, *Built*, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Built*, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
-- **A drive comes back** (S, *Idea*): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.
+- **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.
 - **What happened overnight** (S, *Built*, #420): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."
 
 ## Security and privacy

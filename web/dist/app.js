@@ -617,6 +617,30 @@
     return /* @__PURE__ */ u3("svg", { class: "spark", viewBox: `0 0 ${w3} ${h3}`, role: title ? "img" : void 0, "aria-label": title, children: /* @__PURE__ */ u3("polyline", { points, fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linejoin": "round", "stroke-linecap": "round" }) });
   }
 
+  // web/src/status/stopFor.ts
+  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
+  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
+  function stopChoices(now = /* @__PURE__ */ new Date()) {
+    const hour = new Date(now.getTime() + 36e5);
+    hour.setSeconds(0, 0);
+    const out = [{ label: "For an hour", until: iso(hour) }];
+    const tonight = at(now, 0, 21);
+    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
+    const early = now.getHours() < 6;
+    const morning = at(now, early ? 0 : 1, 8);
+    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
+    return out;
+  }
+  var keptRestarting = (s3) => s3?.why === "restarting";
+  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
+    if (keptRestarting(s3)) return `Stopped: it restarted ${s3.restarts || "many"} times in an hour`;
+    if (!s3.until) return "Stopped by you";
+    const t3 = new Date(s3.until);
+    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
+    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
+    return `Stopped until ${day3}${clockText(t3)}`;
+  }
+
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
     return /* @__PURE__ */ u3(Card, { kind: "tile" + (tone ? " " + tone : ""), id: id2, title, children: [
@@ -649,7 +673,7 @@
     return /* @__PURE__ */ u3("button", { class: "small change", disabled: busy2, onClick: click, children: paused ? "Resume" : "Pause" });
   }
   var awaitingJobs = (a3) => a3.id === "homelab-companion" && a3.state === "not running";
-  var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && !held3[a3.id];
+  var troubled = (a3, held3 = {}) => a3.health === "unhealthy" || a3.health === "restarting" || !!a3.notAnswering || a3.state === "missing" || a3.state === "stopped" && (!held3[a3.id] || keptRestarting(held3[a3.id]));
   function Tiles({ status: st, history, onPause, onChoose }) {
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
@@ -733,28 +757,6 @@
     );
   }
   var mountUndoNote = (el2, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el2);
-
-  // web/src/status/stopFor.ts
-  var iso = (d3) => d3.toISOString().replace(/\.\d{3}Z$/, "Z");
-  var at = (now, days, hour) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, hour);
-  function stopChoices(now = /* @__PURE__ */ new Date()) {
-    const hour = new Date(now.getTime() + 36e5);
-    hour.setSeconds(0, 0);
-    const out = [{ label: "For an hour", until: iso(hour) }];
-    const tonight = at(now, 0, 21);
-    if (tonight.getTime() - now.getTime() > 36e5) out.push({ label: `Until ${clockText(tonight)} tonight`, until: iso(tonight) });
-    const early = now.getHours() < 6;
-    const morning = at(now, early ? 0 : 1, 8);
-    out.push({ label: `Until ${clockText(morning)}${early ? "" : " tomorrow"}`, until: iso(morning) });
-    return out;
-  }
-  function stoppedWords(s3, now = /* @__PURE__ */ new Date()) {
-    if (!s3.until) return "Stopped by you";
-    const t3 = new Date(s3.until);
-    const days = Math.round((at(t3, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);
-    const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
-    return `Stopped until ${day3}${clockText(t3)}`;
-  }
 
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
@@ -2035,7 +2037,7 @@
 
   // web/src/status/AppList.tsx
   function stateOf(a3, batteryPaused2, held3 = {}) {
-    if (a3.state === "stopped" && held3[a3.id]) return ["", stoppedWords(held3[a3.id])];
+    if (a3.state === "stopped" && held3[a3.id]) return [keptRestarting(held3[a3.id]) ? "bad" : "", stoppedWords(held3[a3.id])];
     if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
     if (a3.state === "stopped" && a3.waitingFor) return ["warn", `Waiting for the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive`];
     if (a3.state === "running") {
@@ -2280,7 +2282,7 @@
     const containers = g2.apps.filter((a3) => !isNative(p3, a3));
     const running4 = containers.filter((a3) => a3.state === "running");
     const stopped = containers.filter((a3) => startable(p3, a3));
-    const held3 = containers.filter((a3) => a3.state === "stopped" && p3.held[a3.id]);
+    const held3 = containers.filter((a3) => a3.state === "stopped" && p3.held[a3.id] && !keptRestarting(p3.held[a3.id]));
     const items = () => [...wrap.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
     const close3 = (refocus) => {
       setOpen(false);
@@ -2592,7 +2594,7 @@
     ] });
   }
   function openGroups(groups3, f4, held3) {
-    const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id]);
+    const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id] && !keptRestarting(held3[a3.id]));
     return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   function AppList(p3) {

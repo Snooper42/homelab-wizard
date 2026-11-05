@@ -268,6 +268,10 @@ func fakeDockerMain(d string, args []string) int {
 				return 1
 			}
 		}
+	case "logs":
+		// An app's crash, on its stderr as most say it, and a secret it printed.
+		fmt.Println("Starting server")
+		fmt.Fprintln(os.Stderr, "Error: could not open the database at postgres://immich:"+os.Getenv("FAKE_LOG_SECRET")+"@db/immich")
 	case "system":
 		if arg(1) == "df" {
 			fmt.Println(`{"Type":"Images","Size":"24.1GB","Reclaimable":"12.3GB (51%)"}`)

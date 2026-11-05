@@ -699,6 +699,17 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 			}
 		}
 		apps, sick, gone := h.appChecks(ctx, containers, env, health.LoadState(health.StatePath(h.root)))
+		// An app Docker keeps restarting is stopped instead, and said once,
+		// with why: no longer a failing check, as one stopped by hand.
+		if loops, lines := h.stopRestartLoops(ctx, client, containers, env, time.Now()); len(loops) > 0 {
+			apps = slices.DeleteFunc(apps, func(r health.Result) bool { return slices.Contains(loops, r.Name) })
+			h.alert(ctx, "tunnel-watchdog", notify.Message{
+				Title:    "Homelab: stopped an app that kept restarting",
+				Body:     strings.Join(lines, "\n\n") + "\n\nIt stays stopped until you start it again, from Status or homelab start, once its log says what to fix (AUTO_HEAL=false leaves it to Docker).",
+				Priority: 4,
+				Tags:     []string{"octagonal_sign"},
+			})
+		}
 		results, unwell, missing = append(results, apps...), sick, gone
 		report := detect.Analyze(h.catalog, containers)
 		results = append(results, h.dumpAgeChecks(report, time.Now())...)
