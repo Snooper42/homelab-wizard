@@ -441,13 +441,13 @@
 
   // web/src/ActionLink.tsx
   function ActionLink({ onClick, title, id: id2, cls, children }) {
-    const key4 = (e3) => {
+    const key5 = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
         onClick(e3);
       }
     };
-    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key4, children });
+    return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key5, children });
   }
 
   // web/src/icons.ts
@@ -479,12 +479,12 @@
 
   // web/src/setup/Checklist.tsx
   var failedLine = (f4) => `Did not work: ${f4.why.replace(/^✗\s*/, "").replace(/[.\s]+$/, "")}. Once that is put right, press ${f4.again} again.`;
-  function Actions({ s: s3, running: running3, on: on2 }) {
+  function Actions({ s: s3, running: running4, on: on2 }) {
     const open3 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
       open3 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.fill(s3.settings), children: "Fill in settings" }),
-      open3 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running3, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
-      ...open3 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running3, onClick: () => on2.run(s3, ci), children: c3.label })) : [],
+      open3 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running4, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
+      ...open3 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running4, onClick: () => on2.run(s3, ci), children: c3.label })) : [],
       open3 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on2.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
       open3 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on2.closeSignups, children: "Close sign-ups now" }),
       s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
@@ -510,7 +510,7 @@
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
   }
-  function Checklist({ steps, showDone, showLater, running: running3, failed = {}, on: on2 }) {
+  function Checklist({ steps, showDone, showLater, running: running4, failed = {}, on: on2 }) {
     const [opened2, setOpened] = d2({});
     const toggle = (id2) => setOpened({ ...opened2, [id2]: !opened2[id2] });
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
@@ -530,7 +530,7 @@
             failed[s3.id] && s3.state !== "done" && /* @__PURE__ */ u3("div", { class: "sub failed bad", children: failedLine(failed[s3.id]) }),
             open3 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
-          /* @__PURE__ */ u3(Actions, { s: s3, running: running3 === s3.id, on: on2 }),
+          /* @__PURE__ */ u3(Actions, { s: s3, running: running4 === s3.id, on: on2 }),
           more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
@@ -682,7 +682,7 @@
         /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose stacks" })
       ] });
     }
-    const running3 = st.apps.filter((a3) => a3.state === "running");
+    const running4 = st.apps.filter((a3) => a3.state === "running");
     const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
@@ -692,7 +692,7 @@
         {
           label: "Running",
           value: /* @__PURE__ */ u3(S, { children: [
-            running3.length,
+            running4.length,
             /* @__PURE__ */ u3("small", { children: [
               " of ",
               counted
@@ -1941,7 +1941,7 @@
       fn();
     };
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const running3 = a3.state === "running", stopped = a3.state === "stopped";
+    const running4 = a3.state === "running", stopped = a3.state === "stopped";
     const item = (label, fn, opts = {}) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: opts.cls, disabled: opts.disabled, onClick: fn, children: label });
     return /* @__PURE__ */ u3(
       "div",
@@ -1975,15 +1975,15 @@
           item("‹ Back", () => showLater(false), { cls: "menuback" }),
           /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
         ] }) : /* @__PURE__ */ u3(S, { children: [
-          running3 && url && item("Open", pick(() => on2.open(url))),
-          running3 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
+          running4 && url && item("Open", pick(() => on2.open(url))),
+          running4 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
           url && item("Copy address", pick(() => {
             on2.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
           })),
           !native && url && /* @__PURE__ */ u3("hr", {}),
           !native && stopped && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
-          !native && running3 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
-          !native && running3 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
+          !native && running4 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
+          !native && running4 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
             if (!sure) {
               setSure(true);
               return;
@@ -1991,7 +1991,7 @@
             close3(true);
             on2.act(a3, "stop");
           }, { cls: sure ? "danger" : void 0, disabled: busy2 }),
-          !native && running3 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
+          !native && running4 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
           item("Back up now", pick(() => on2.backupNow())),
@@ -2246,7 +2246,7 @@
             ] }),
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
-              /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
+              /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy || !!pend && !pend.failed, os: p3.os, on: p3.on }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
               menu?.id === a3.id && /* @__PURE__ */ u3(RowMenu, { a: a3, x: menu.x, y: menu.y, native: entry?.kind === "native", busy: p3.busy, companion: p3.companion, on: p3.on.menu, close: close3, said: (w3) => say(a3.id, w3) })
             ] })
@@ -2280,7 +2280,7 @@
     const mem = p3.memory;
     const used = mem ? g2.apps.reduce((t3, a3) => t3 + (mem[a3.id] || 0), 0) : 0;
     const containers = g2.apps.filter((a3) => !isNative(p3, a3));
-    const running3 = containers.filter((a3) => a3.state === "running");
+    const running4 = containers.filter((a3) => a3.state === "running");
     const stopped = containers.filter((a3) => startable(p3, a3));
     const held3 = containers.filter((a3) => a3.state === "stopped" && p3.held[a3.id] && !keptRestarting(p3.held[a3.id]));
     const items = () => [...wrap.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
@@ -2325,7 +2325,7 @@
     };
     const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
     const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
-    const byMem = running3.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
+    const byMem = running4.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
     return /* @__PURE__ */ u3(
       "span",
       {
@@ -2385,10 +2385,10 @@
             }
           ),
           open3 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
-            /* @__PURE__ */ u3("p", { class: "menuhead", children: running3.length === 1 ? `Stop ${running3[0].name} for a while` : `Stop the ${running3.length} running for a while` }),
-            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running3, c3.until), children: c3.label }, c3.until)),
+            /* @__PURE__ */ u3("p", { class: "menuhead", children: running4.length === 1 ? `Stop ${running4[0].name} for a while` : `Stop the ${running4.length} running for a while` }),
+            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running4, c3.until), children: c3.label }, c3.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
-            /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running3.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
+            /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running4.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
           open3 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
@@ -2397,10 +2397,10 @@
               /* @__PURE__ */ u3("span", { class: "muted", children: formatMem(mem[a3.id]) })
             ] }, a3.id)) }),
             stopped.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("start", stopped), children: stopped.length === 1 ? `Start ${stopped[0].name}` : `Start the ${stopped.length} stopped` }),
-            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running3), children: running3.length === 1 ? `Restart ${running3[0].name}` : `Restart the ${running3.length} running` }),
-            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running3), children: sure ? `Click again to stop ${running3.length === 1 ? running3[0].name : `all ${running3.length}`}` : running3.length === 1 ? `Stop ${running3[0].name}` : `Stop the ${running3.length} running` }),
-            running3.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
-            running3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
+            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running4), children: running4.length === 1 ? `Restart ${running4[0].name}` : `Restart the ${running4.length} running` }),
+            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running4), children: sure ? `Click again to stop ${running4.length === 1 ? running4[0].name : `all ${running4.length}`}` : running4.length === 1 ? `Stop ${running4[0].name}` : `Stop the ${running4.length} running` }),
+            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
+            running4.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
             held3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted heldnote", children: [
               "Stopped by you: ",
               held3.map((a3) => a3.name).join(", "),
@@ -2414,7 +2414,7 @@
     );
   }
   function GroupHead({ g: g2, open: open3, toggle, p: p3 }) {
-    const running3 = g2.apps.filter((a3) => a3.state === "running").length;
+    const running4 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     return (
       // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
@@ -2445,7 +2445,7 @@
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
+            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running4 >= counted ? `${running4} running ✓` : `${running4} of ${counted} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
             !open3 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
@@ -2652,20 +2652,20 @@
 
   // web/src/store.ts
   function store(read) {
-    const watchers = [];
-    let running3 = null;
+    const watchers2 = [];
+    let running4 = null;
     let again = null;
-    const tell = () => watchers.forEach((fn) => fn());
+    const tell2 = () => watchers2.forEach((fn) => fn());
     const s3 = {
       value: void 0,
       error: void 0,
       at: 0,
       load() {
-        if (running3) return again ??= running3.then(() => {
+        if (running4) return again ??= running4.then(() => {
           again = null;
           return s3.load();
         });
-        running3 = (async () => {
+        running4 = (async () => {
           try {
             s3.value = await read();
             s3.error = void 0;
@@ -2674,26 +2674,26 @@
             s3.error = e3;
             s3.at = 0;
           }
-          running3 = null;
-          tell();
+          running4 = null;
+          tell2();
         })();
-        return running3;
+        return running4;
       },
       fresh(maxAge) {
-        if (running3) return running3;
+        if (running4) return running4;
         return !s3.at || Date.now() - s3.at > maxAge ? s3.load() : Promise.resolve();
       },
       set(v3) {
         s3.value = v3;
         s3.error = void 0;
         s3.at = Date.now();
-        tell();
+        tell2();
       },
       stale() {
         s3.at = 0;
       },
       watch(fn) {
-        watchers.push(fn);
+        watchers2.push(fn);
       }
     };
     return s3;
@@ -2875,13 +2875,13 @@
     R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el2);
   }
   function Buttons({ buttons }) {
-    const [running3, setRunning] = d2(-1);
+    const [running4, setRunning] = d2(-1);
     return /* @__PURE__ */ u3(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u3(
       "button",
       {
         class: b2.primary ? "primary small" : "small",
         title: b2.title,
-        disabled: running3 === i3,
+        disabled: running4 === i3,
         onClick: async () => {
           setRunning(i3);
           try {
@@ -2958,6 +2958,38 @@
   var minute = 6e4;
   var errorText = (e3) => String(e3 && e3.message || e3);
 
+  // web/src/job/queue.ts
+  var running = "";
+  var waiting = [];
+  var watchers = [];
+  var jobsWaiting = () => waiting.map((t3) => t3.title);
+  function watchJobs(fn) {
+    watchers.push(fn);
+  }
+  var tell = () => watchers.forEach((fn) => fn());
+  function inTurn(title, job2, wait) {
+    return new Promise((resolve, reject) => {
+      const go2 = () => {
+        running = title;
+        tell();
+        job2().then(resolve, reject).finally(() => {
+          running = "";
+          const next = waiting.shift();
+          if (next) next.go();
+          else tell();
+        });
+      };
+      if (!running) {
+        go2();
+        return;
+      }
+      waiting.push({ title, go: go2 });
+      wait?.(running);
+      tell();
+    });
+  }
+  var waitWords = (behind) => `Waiting for “${behind}” to finish`;
+
   // web/src/job/Background.tsx
   var bg = null;
   var hidden2 = false;
@@ -2992,9 +3024,9 @@
   }
   var bgRunning = () => bg?.state === "running" ? bg.title : "";
   function waitForBg() {
-    const running3 = bgRunning();
-    if (running3) showError(`Wait for “${running3}” to finish: it is still running`);
-    return !!running3;
+    const running4 = bgRunning();
+    if (running4) showError(`Wait for “${running4}” to finish: it is still running`);
+    return !!running4;
   }
   function open() {
     hidden2 = false;
@@ -3008,16 +3040,25 @@
     draw();
   }
   function Chip({ b: b2 }) {
+    const next = jobsWaiting();
     const words4 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
     return /* @__PURE__ */ u3("div", { class: "bgjob " + b2.state, children: [
       /* @__PURE__ */ u3("button", { class: "bgopen", onClick: open, title: "Show it", children: [
         /* @__PURE__ */ u3("span", { class: "bgtitle", children: b2.title }),
         /* @__PURE__ */ u3("span", { class: "bgtrack" + (b2.state === "running" && !b2.pct ? " working" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { class: "bgfill", style: { width: `${b2.state === "running" ? b2.pct : 100}%` } }) }),
-        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words4 })
+        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words4 }),
+        !!next.length && /* @__PURE__ */ u3("span", { class: "bgnext", children: [
+          "Then: ",
+          next[0],
+          next.length > 1 ? ` (+${next.length - 1})` : ""
+        ] })
       ] }),
       b2.state !== "running" && /* @__PURE__ */ u3("button", { class: "bgdismiss", onClick: dismiss, "aria-label": `Dismiss ${b2.title}`, children: "×" })
     ] });
   }
+  watchJobs(() => {
+    if (hidden2 && bg) draw();
+  });
   function draw() {
     const el2 = $2("bgJob");
     if (el2) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el2);
@@ -3194,11 +3235,11 @@
   }
   function Form(p3) {
     const [edits, setEdits] = d2({});
-    const edit = (key4, value) => {
+    const edit = (key5, value) => {
       setEdits((old) => {
         const next = { ...old };
-        if (value === void 0) delete next[key4];
-        else next[key4] = value;
+        if (value === void 0) delete next[key5];
+        else next[key5] = value;
         p3.on.edited(next);
         return next;
       });
@@ -3456,10 +3497,10 @@
       if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
     }, [log2]);
     const phrase = o3.everythingElse ? "delete everything" : "uninstall";
-    const set2 = (key4, on3) => {
-      const next = { ...o3, [key4]: on3 };
-      if (key4 === "folder" && on3) next.data = true;
-      if (key4 === "data" && !on3) next.folder = false;
+    const set2 = (key5, on3) => {
+      const next = { ...o3, [key5]: on3 };
+      if (key5 === "folder" && on3) next.data = true;
+      if (key5 === "data" && !on3) next.folder = false;
       setO(next);
       setPlan("");
       setTyped("");
@@ -4105,13 +4146,13 @@
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
   function Starters({ presets, selected: selected2, status, toggle }) {
     return /* @__PURE__ */ u3(S, { children: presets.map((p3) => {
-      const running3 = p3.apps.every((id2) => status[id2]?.state === "running");
+      const running4 = p3.apps.every((id2) => status[id2]?.state === "running");
       const [glyph, tint] = starterLooks[p3.id] || [];
       return /* @__PURE__ */ u3("button", { class: "starter" + (lit(p3, selected2) ? " on" : ""), onClick: () => toggle(p3), children: [
         glyph && /* @__PURE__ */ u3("span", { class: "glyph", style: `--tint:${tint}`, children: /* @__PURE__ */ u3(Icon, { name: glyph }) }),
         /* @__PURE__ */ u3("strong", { children: p3.name }),
         /* @__PURE__ */ u3("span", { class: "desc", children: p3.description || "" }),
-        running3 && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
+        running4 && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
       ] }, p3.id);
     }) });
   }
@@ -4160,12 +4201,12 @@
     ] });
     return /* @__PURE__ */ u3(S, { children: p3.catalog.categories.filter((c3) => byCategory2[c3.id]).map((c3) => {
       const apps = byCategory2[c3.id];
-      const running3 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
+      const running4 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
       return /* @__PURE__ */ u3("div", { class: "group", children: [
         /* @__PURE__ */ u3("h2", { children: [
           c3.label,
           /* @__PURE__ */ u3("span", { class: "n", children: [
-            running3,
+            running4,
             " of ",
             apps.length,
             " running"
@@ -4188,10 +4229,10 @@
     if (typeof p3 === "string") return /* @__PURE__ */ u3("p", { class: "bad", children: p3 });
     const picked = p3.start.filter((id2) => !p3.added[id2]);
     const helpers = p3.start.filter((id2) => p3.added[id2]);
-    const running3 = p3.skips.filter((s3) => /^already running/.test(s3.reason));
+    const running4 = p3.skips.filter((s3) => /^already running/.test(s3.reason));
     const quiet2 = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
-    const needs = p3.skips.filter((s3) => !running3.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
+    const needs = p3.skips.filter((s3) => !running4.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
     const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
     const details = [
       { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
@@ -4213,9 +4254,9 @@
       ] })) }),
       /* @__PURE__ */ u3(List, { title: "Problems", cls: "bad", items: p3.problems }),
       /* @__PURE__ */ u3(List, { title: "Worth knowing", cls: "warn", items: p3.warnings }),
-      !!running3.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
+      !!running4.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
         "Already running: ",
-        running3.map((s3) => appName2(s3.app)).join(", "),
+        running4.map((s3) => appName2(s3.app)).join(", "),
         "."
       ] }),
       !!details.length && /* @__PURE__ */ u3("details", { class: "planDetails", children: [
@@ -4362,13 +4403,17 @@
     jobBox = box;
     jobRows = {};
     jobSteps = false;
+    clearJob(box);
+  }
+  function clearJob(box) {
     mountJobApps($2(box + "Apps"), []);
     const d3 = $2(box + "Details");
     if (d3) {
       d3.open = true;
       delete d3.dataset.touched;
     }
-    cliProgress(null);
+    const p3 = $2(box + "Progress");
+    if (p3) p3.hidden = true;
   }
   function jobApp(u4) {
     const fresh = !jobRows[u4.app];
@@ -4469,12 +4514,21 @@
     log2.hidden = false;
     log2.textContent = "";
     $2("cAdd").disabled = true;
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2.textContent += line + "\n";
-    });
+    let off = null;
     try {
       const before3 = new Set(catalog.apps.map((a3) => a3.id));
-      catalog = await go().AddCustom(spec);
+      catalog = await inTurn(`Adding ${spec.name || "your app"}`, () => {
+        off = window.runtime.EventsOn("cli:log", (line) => {
+          log2.textContent += line + "\n";
+        });
+        return go().AddCustom(spec).finally(() => {
+          if (typeof off === "function") off();
+          off = null;
+        });
+      }, (behind) => {
+        log2.textContent = `${waitWords(behind)}…
+`;
+      });
       const added = catalog.apps.find((a3) => !before3.has(a3.id));
       renderApps();
       if (added) {
@@ -4580,49 +4634,53 @@
   }
   var installing = false;
   $2("installBtn").onclick = async () => {
-    if (waitForBg()) return;
     const btn = $2("installBtn");
     installing = true;
     btn.disabled = true;
     btn.textContent = "Installing…";
-    startJob("install");
     mountStarted($2("started"), null);
     mountWiring($2("wiring"), null);
     const words4 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
-    const offLog = window.runtime.EventsOn("install:log", (line) => {
-      $2("installDetails").hidden = false;
-      ilog.textContent += line + "\n";
-      ilog.scrollTop = ilog.scrollHeight;
+    await inTurn("Installing", async () => {
+      btn.textContent = "Installing…";
+      startJob("install");
+      const offLog = window.runtime.EventsOn("install:log", (line) => {
+        $2("installDetails").hidden = false;
+        ilog.textContent += line + "\n";
+        ilog.scrollTop = ilog.scrollHeight;
+      });
+      const off = window.runtime.EventsOn("progress", (ev) => {
+        if (ev.error) return;
+        const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words4[ev.name];
+        cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
+      });
+      try {
+        const started = await go().Install([...selected], filled());
+        cliProgress("done");
+        mountStarted($2("started"), { started, open: (url) => go().Open(url), close: () => {
+          clearInstall();
+          $2("search").focus();
+        } });
+        if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
+        selected.clear();
+        settingsData.stale();
+        await loadStatus();
+      } catch (e3) {
+        cliProgress("failed");
+        showError(e3);
+      } finally {
+        if (typeof off === "function") off();
+        if (typeof offLog === "function") offLog();
+      }
+    }, (behind) => {
+      btn.textContent = `${waitWords(behind)}…`;
     });
-    const off = window.runtime.EventsOn("progress", (ev) => {
-      if (ev.error) return;
-      const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words4[ev.name];
-      cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
-    });
-    try {
-      const started = await go().Install([...selected], filled());
-      cliProgress("done");
-      mountStarted($2("started"), { started, open: (url) => go().Open(url), close: () => {
-        clearInstall();
-        $2("search").focus();
-      } });
-      if (!$2("wireRow").hidden && $2("wire").checked && started.length) await wire($2("wiring"));
-      selected.clear();
-      settingsData.stale();
-      await loadStatus();
-    } catch (e3) {
-      cliProgress("failed");
-      showError(e3);
-    } finally {
-      if (typeof off === "function") off();
-      if (typeof offLog === "function") offLog();
-      btn.textContent = "Install";
-      installing = false;
-      replan();
-    }
+    btn.textContent = "Install";
+    installing = false;
+    replan();
   };
   async function wire(box) {
     const done = [];
@@ -4646,7 +4704,7 @@
   $2("connect").onclick = () => wire($2("statusWiring"));
 
   // web/src/updates/UpdateLine.tsx
-  var running = (step2) => !!step2 && step2.step !== "done" && step2.step !== "failed";
+  var running2 = (step2) => !!step2 && step2.step !== "done" && step2.step !== "failed";
   var lineShown = (s3, step2) => !!step2 || !!s3 && (s3.state === "ready" || s3.state === "blocked" || !!s3.updated || !!s3.notInstalled);
   function Notes({ notes }) {
     return /* @__PURE__ */ u3("ul", { id: "updateNotes", children: [
@@ -4659,7 +4717,7 @@
     const v3 = s3.version;
     const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more), children: more ? "Hide" : "What’s new" });
     let mark = "↑", tone = "ready", head = "", sub = "", end = null, below = null, bar = -1;
-    if (running(step2)) {
+    if (running2(step2)) {
       mark = "↻";
       head = s3.finish ? "Finishing the update…" : "Updating…";
       sub = "Your apps keep running";
@@ -4769,7 +4827,7 @@
   var companion = () => document.documentElement.classList.contains("companion");
   var key2 = (s3) => `${s3.version}|${s3.files}|${s3.app}`;
   var ready = () => state?.state === "ready";
-  var running2 = () => !!step && step.step !== "done" && step.step !== "failed";
+  var running3 = () => !!step && step.step !== "done" && step.step !== "failed";
   function draw2() {
     const box = $2("updateLine");
     if (companion() || !state) {
@@ -4777,19 +4835,19 @@
       mountUpdateLine(box, null);
       return;
     }
-    const hidden3 = !running2() && step?.step !== "failed" && ready() && laterKey === key2(state) && !state.updated && !state.notInstalled;
+    const hidden3 = !running3() && step?.step !== "failed" && ready() && laterKey === key2(state) && !state.updated && !state.notInstalled;
     const shown5 = lineShown(state, step) && !hidden3;
     box.hidden = !shown5;
     const failed = step?.step === "failed" || !!state.notInstalled && !step && !state.updated;
-    box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
+    box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running3() ? " done" : "");
     mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
-    drawFoot({ update: running2() ? "finishing" : ready() && hidden3 ? "ready" : "", openSetup: showLine });
+    drawFoot({ update: running3() ? "finishing" : ready() && hidden3 ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
   }
   function set(s3) {
     state = s3;
-    if (s3.finish && s3.state === "ready" && !finishing && !running2()) {
+    if (s3.finish && s3.state === "ready" && !finishing && !running3()) {
       finishing = true;
       updateNow();
       return;
@@ -4811,7 +4869,7 @@
     draw2();
   }
   async function updateNow() {
-    if (running2()) return;
+    if (running3()) return;
     step = { step: "files", percent: 3 };
     log = "";
     laterKey = "";
@@ -4872,10 +4930,10 @@
     });
     window.runtime.EventsOn("app:download", (d3) => {
       download = d3;
-      if (running2()) draw2();
+      if (running3()) draw2();
     });
     window.runtime.EventsOn("cli:log", (line) => {
-      if (running2()) log += line + "\n";
+      if (running3()) log += line + "\n";
     });
   }
   window.addEventListener("focus", cameForward);
@@ -5025,23 +5083,31 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
-      if (waitForBg()) return;
       navigate("setup");
-      setupJob();
       const log2 = $2("setupLog");
       log2.hidden = false;
       log2.textContent = "Going back…\n";
-      const off = window.runtime.EventsOn("cli:log", (line) => {
-        log2.textContent += line + "\n";
-        log2.scrollTop = log2.scrollHeight;
-      });
       try {
-        await go().Homelab("upgrade-back", "", true);
+        await inTurn("Going back", async () => {
+          setupJob();
+          log2.textContent = "Going back…\n";
+          const off = window.runtime.EventsOn("cli:log", (line) => {
+            log2.textContent += line + "\n";
+            log2.scrollTop = log2.scrollHeight;
+          });
+          try {
+            await go().Homelab("upgrade-back", "", true);
+          } finally {
+            if (typeof off === "function") off();
+            setupJobEnded();
+          }
+        }, (behind) => {
+          log2.textContent = `${waitWords(behind)}, then: going back…
+`;
+        });
       } catch (e3) {
         showError(e3);
       }
-      if (typeof off === "function") off();
-      setupJobEnded();
       loadUpgrade(true);
     }
   };
@@ -5113,18 +5179,25 @@
     mountReportActions($2("reportActions"), null);
     log2.hidden = false;
     log2.textContent = "Making the report (about a minute)…\n";
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
     let ok = true;
-    try {
-      await go().Homelab("report", "", false);
-    } catch (e3) {
-      ok = false;
-      showError(e3);
-    }
-    if (typeof off === "function") off();
+    await inTurn("Making the report", async () => {
+      log2.textContent = "Making the report (about a minute)…\n";
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      try {
+        await go().Homelab("report", "", false);
+      } catch (e3) {
+        ok = false;
+        showError(e3);
+      } finally {
+        if (typeof off === "function") off();
+      }
+    }, (behind) => {
+      log2.textContent = `${waitWords(behind)}, then: making the report…
+`;
+    });
     btn.disabled = false;
     if (ok) {
       const reveal = hostOS.startsWith("macOS") ? "Show in Finder" : hostOS.startsWith("Windows") ? "Show in Explorer" : "Show the file";
@@ -5190,15 +5263,23 @@
     closeSignups: async () => {
       const log2 = $2("setupLog");
       log2.hidden = false;
-      const off = window.runtime.EventsOn("cli:log", (line) => {
-        log2.textContent += line + "\n";
-      });
       try {
-        await go().Homelab("signups-close", "", true);
+        await inTurn("Closing sign-ups", async () => {
+          const off = window.runtime.EventsOn("cli:log", (line) => {
+            log2.textContent += line + "\n";
+          });
+          try {
+            await go().Homelab("signups-close", "", true);
+          } finally {
+            if (typeof off === "function") off();
+          }
+        }, (behind) => {
+          log2.textContent += `${waitWords(behind)}, then: closing sign-ups…
+`;
+        });
       } catch (e3) {
         showError(e3);
       }
-      if (typeof off === "function") off();
     },
     markDone: async (s3, done) => {
       try {
@@ -5240,72 +5321,82 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
-    if (waitForBg()) return;
-    setupJob();
     const log2 = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
     btn.disabled = true;
     log2.hidden = false;
     log2.textContent = "";
-    const off = window.runtime.EventsOn("setup:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
-    const tried = /* @__PURE__ */ new Set();
-    let failing = null;
-    try {
-      for (; ; ) {
-        const next = runnable(lastSteps || []).find((s3) => !tried.has(s3.id));
-        if (!next) break;
-        tried.add(next.id);
-        failing = next;
-        delete failedSteps[next.id];
-        btn.textContent = `Doing: ${next.title}…`;
-        log2.textContent += `
+    await inTurn("Doing the setup steps", async () => {
+      setupJob();
+      log2.textContent = "";
+      const off = window.runtime.EventsOn("setup:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      const tried = /* @__PURE__ */ new Set();
+      let failing = null;
+      try {
+        for (; ; ) {
+          const next = runnable(lastSteps || []).find((s3) => !tried.has(s3.id));
+          if (!next) break;
+          tried.add(next.id);
+          failing = next;
+          delete failedSteps[next.id];
+          btn.textContent = `Doing: ${next.title}…`;
+          log2.textContent += `
 — ${next.title}
 `;
-        stepsData.set(await go().RunSetup(next.id));
+          stepsData.set(await go().RunSetup(next.id));
+        }
+        log2.textContent += "\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n";
+      } catch (e3) {
+        if (failing) failStep(failing, e3);
+        showError(e3);
+        log2.textContent += "\nStopped at a step that failed: the log above says why.\n";
+      } finally {
+        if (typeof off === "function") off();
+        setupJobEnded();
       }
-      log2.textContent += "\nDone. What is left needs you: a setting to fill in, a choice, or a step only a person can do.\n";
-    } catch (e3) {
-      if (failing) failStep(failing, e3);
-      showError(e3);
-      log2.textContent += "\nStopped at a step that failed: the log above says why.\n";
-    } finally {
-      if (typeof off === "function") off();
-      setupJobEnded();
-      runningAll = false;
-      btn.disabled = false;
-      loadSetup();
-    }
+    }, (behind) => {
+      log2.textContent = `${waitWords(behind)}, then: the steps I can do…
+`;
+    });
+    runningAll = false;
+    btn.disabled = false;
+    loadSetup();
   };
   async function runStep(step2, choice) {
-    if (waitForBg()) return;
-    setupJob();
     const log2 = $2("setupLog");
     log2.hidden = false;
     log2.textContent = "";
     runningStep = step2.id;
     delete failedSteps[step2.id];
     renderSetup(lastSteps);
-    const off = window.runtime.EventsOn("setup:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
+    await inTurn(step2.title, async () => {
+      setupJob();
+      log2.textContent = "";
+      const off = window.runtime.EventsOn("setup:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      try {
+        const steps = await (choice === void 0 ? go().RunSetup(step2.id) : go().RunSetupChoice(step2.id, choice));
+        runningStep = null;
+        stepsData.set(steps);
+      } catch (e3) {
+        runningStep = null;
+        failStep(step2, e3, choice);
+        showError(e3);
+        loadSetup();
+      } finally {
+        runningStep = null;
+        if (typeof off === "function") off();
+        setupJobEnded();
+      }
+    }, (behind) => {
+      log2.textContent = `${waitWords(behind)}, then: ${step2.title}…
+`;
     });
-    try {
-      const steps = await (choice === void 0 ? go().RunSetup(step2.id) : go().RunSetupChoice(step2.id, choice));
-      runningStep = null;
-      stepsData.set(steps);
-    } catch (e3) {
-      runningStep = null;
-      failStep(step2, e3, choice);
-      showError(e3);
-      loadSetup();
-    } finally {
-      runningStep = null;
-      if (typeof off === "function") off();
-      setupJobEnded();
-    }
   }
 
   // web/src/screens/settings.ts
@@ -5384,18 +5475,26 @@
     act: async (action, who, mail = "", apps = []) => {
       peopleLog = "";
       renderPeople();
-      const off = window.runtime.EventsOn("cli:log", (line) => {
-        peopleLog += line + "\n";
+      let ok = true;
+      await inTurn(`${action === "add" ? "Adding" : action === "remove" ? "Removing" : "Changing"} ${who}`, async () => {
+        peopleLog = "";
+        const off = window.runtime.EventsOn("cli:log", (line) => {
+          peopleLog += line + "\n";
+          renderPeople();
+        });
+        try {
+          await go().PersonAction(action, who, mail, apps);
+        } catch (e3) {
+          ok = false;
+          showError(e3);
+        } finally {
+          if (typeof off === "function") off();
+        }
+      }, (behind) => {
+        peopleLog = `${waitWords(behind)}…
+`;
         renderPeople();
       });
-      let ok = true;
-      try {
-        await go().PersonAction(action, who, mail, apps);
-      } catch (e3) {
-        ok = false;
-        showError(e3);
-      }
-      if (typeof off === "function") off();
       return ok;
     },
     openWelcome: (username) => {
@@ -5425,14 +5524,18 @@
       }
     },
     run: async (o3, onLine) => {
-      const off = window.runtime.EventsOn("cli:log", onLine);
       try {
-        await go().Uninstall(o3);
+        await inTurn("Taking the homelab off this machine", async () => {
+          const off = window.runtime.EventsOn("cli:log", onLine);
+          try {
+            await go().Uninstall(o3);
+          } finally {
+            if (typeof off === "function") off();
+          }
+        }, (behind) => onLine(`${waitWords(behind)}…`));
       } catch (e3) {
         showError(e3);
         throw e3;
-      } finally {
-        if (typeof off === "function") off();
       }
     }
   };
@@ -5490,7 +5593,7 @@
   var form = null;
   var formVersion = 0;
   var settingsView = () => ({ query: $2("settingsSearch").value, page: settingsPage, showAll: settingsShowAll });
-  var isSecret = (key4) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key4 && s3.secret));
+  var isSecret = (key5) => !!form?.pages.some((pg) => pg.items.some((s3) => s3.key === key5 && s3.secret));
   var formActions = {
     edited: (edits) => {
       for (const k3 of Object.keys(changed)) delete changed[k3];
@@ -5499,12 +5602,12 @@
     },
     // The test checks the saved values, so a value just typed is saved
     // first, with the ones its test reads too (the Domain for the token).
-    test: async (key4, pending2) => {
+    test: async (key5, pending2) => {
       let used = false;
       const save2 = {};
-      for (const k3 of testReads[key4] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save2[k3] = changed[k3];
+      for (const k3 of testReads[key5] || []) if (k3 in changed && !(isSecret(k3) && changed[k3] === "")) save2[k3] = changed[k3];
       if (pending2 !== void 0) {
-        if (!(isSecret(key4) && pending2 === "")) save2[key4] = pending2;
+        if (!(isSecret(key5) && pending2 === "")) save2[key5] = pending2;
         used = true;
       }
       if (Object.keys(save2).length) {
@@ -5515,23 +5618,23 @@
         }
       }
       try {
-        const r3 = await go().TestSetting(key4);
+        const r3 = await go().TestSetting(key5);
         return { result: { tone: r3.ok ? "ok" : "bad", text: (r3.ok ? "✓ " : "✗ ") + r3.message }, used };
       } catch (e3) {
         return { result: { tone: "bad", text: errorText(e3) }, used };
       }
     },
-    copy: async (key4) => {
+    copy: async (key5) => {
       try {
-        await go().CopySetting(key4);
+        await go().CopySetting(key5);
         return { tone: "ok", text: "✓ Copied. Paste it into Vaultwarden; the clipboard clears in 90 seconds." };
       } catch (e3) {
         return { tone: "bad", text: errorText(e3) };
       }
     },
-    choose: async (key4) => {
+    choose: async (key5) => {
       try {
-        return await go().ChooseFolder(key4) || "";
+        return await go().ChooseFolder(key5) || "";
       } catch (e3) {
         showError(e3);
         return "";
@@ -5550,14 +5653,14 @@
       prefixes: [[norm(a3.id), 0], [norm(a3.name), 2], [norm(a3.id.split("-")[0]), 1]]
     }));
     const main2 = (a3) => a3 && a3.helper && a3.stack && apps.find((b2) => !b2.helper && b2.stack === a3.stack) || a3;
-    const appOf = (key4) => main2(findApp(key4));
-    const findApp = (key4) => {
-      const own2 = apps.find((a3) => a3.inputs.has(key4));
+    const appOf = (key5) => main2(findApp(key5));
+    const findApp = (key5) => {
+      const own2 = apps.find((a3) => a3.inputs.has(key5));
       if (own2) return own2;
       let best = null, score = 0;
       for (const a3 of apps) {
         for (const [p3, bonus] of a3.prefixes) {
-          const sc = key4.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
+          const sc = key5.startsWith(p3) ? p3.length * 10 + bonus + (a3.helper ? 0 : 3) : 0;
           if (sc > score) {
             best = a3;
             score = sc;
@@ -5719,26 +5822,26 @@
   var upper = /* @__PURE__ */ new Set(["API", "URL", "DNS", "IP", "HTTP", "HTTPS", "ID", "PDF", "AI", "IGDB", "SSL", "UI", "OCR", "JWT", "SSO", "VPN"]);
   var wordLabels = { DB: "database", NEXTAUTH: "NextAuth", MEILI: "Meilisearch", SCREENSCRAPER: "ScreenScraper", NPM: "Nginx Proxy Manager" };
   var envPrefix = (t3) => t3.toUpperCase().replace(/[^A-Z0-9]+/g, "_") + "_";
-  function keyApp(key4) {
+  function keyApp(key5) {
     let best = null, score = 0;
     for (const a3 of catalog?.apps || []) {
       const first = envPrefix(a3.id.split("-")[0]);
       const prefixes = [envPrefix(a3.id), envPrefix(a3.name)];
       if (a3.kind !== "helper" && envPrefix(a3.name).startsWith(first)) prefixes.push(first);
       for (const p3 of prefixes) {
-        const sc = key4.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
+        const sc = key5.startsWith(p3) ? p3.length * 2 + (a3.kind === "helper" ? 0 : 1) : 0;
         if (sc > score) {
-          best = [a3.name, key4.slice(p3.length)];
+          best = [a3.name, key5.slice(p3.length)];
           score = sc;
         }
       }
     }
     return best;
   }
-  function settingLabel(key4) {
-    if (settingLabels[key4]) return settingLabels[key4];
-    const app = keyApp(key4);
-    const words4 = (app ? app[1] : key4).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+  function settingLabel(key5) {
+    if (settingLabels[key5]) return settingLabels[key5];
+    const app = keyApp(key5);
+    const words4 = (app ? app[1] : key5).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
     if (app) return [app[0], ...words4].join(" ");
     const text2 = words4.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
@@ -5783,765 +5886,73 @@
     }
   };
 
-  // web/src/screens/status.ts
-  var statusById = {};
-  var batteryPaused = /* @__PURE__ */ new Set();
-  var held = {};
-  var weekUp = {};
-  var outages = {};
-  var seen = loadSeen();
-  var savingsHistory = [];
-  var lastAttention = -1;
-  function renderTiles(st) {
-    const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
-    mountTiles($2("tiles"), {
-      status: st,
-      history: savingsHistory,
-      onPause: async (paused) => {
-        try {
-          await go().SetUpdatesPaused(paused);
-        } catch (err) {
-          showError(err);
-        }
-        await loadStatus();
-      },
-      onChoose: () => navigate("choose")
-    });
-    const n3 = trouble.length;
-    $2("statusCount").textContent = n3 ? String(n3) : "";
-    if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
-      lastAttention = n3;
-      Promise.resolve(go().SetAttention(n3)).catch(() => {
-      });
-    }
-    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
+  // web/src/status/Overnight.tsx
+  function nightOf(now) {
+    const d3 = new Date(now);
+    if (d3.getHours() < 5 || d3.getHours() >= 12) return null;
+    const from2 = new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() - 1, 20).getTime();
+    return [from2, now];
   }
-  mountShowAll($2("statusAllBox"));
-  var lastStatus = null;
-  function renderAppList(st) {
-    const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
-    const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3.category]));
-    const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-    const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble(a3));
-    const rest = (a3) => !trouble(a3) && !pinned.includes(a3);
-    const groups3 = [
-      { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
-      { label: "Pinned", apps: pinned, pinned: true },
-      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c3.id) })),
-      { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
-    ].filter((g2) => g2.apps.length);
-    appList = { groups: groups3, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
-    mountAppList($2("statusRows"), appList);
-  }
-  async function answerPages(st) {
-    let why;
-    try {
-      why = await go().Answers();
-    } catch {
-      return;
-    }
-    applyAnswers(st, why);
-  }
-  function applyAnswers(st, why) {
-    if (lastStatus !== st) return;
-    let changed2 = false;
-    for (const a3 of st.apps) {
-      if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
-      a3.notAnswering = why[a3.id] || void 0;
-      changed2 = true;
-    }
-    st.checking = false;
-    if (!changed2) return;
-    renderTiles(st);
-    renderAppList(st);
-  }
-  async function loadCrash() {
-    let c3 = null;
-    try {
-      c3 = await go().LastCrash();
-    } catch {
-    }
-    showCrash(c3);
-  }
-  function showCrash(c3) {
-    const seen2 = () => go().CrashSeen().catch(() => {
-    }).then(loadCrash);
-    mountCrashNote($2("crashNote"), {
-      crash: c3,
-      send: () => {
-        seen2();
-        navigate("settings");
-        showSettingsPage(thisMachine);
-        $2("report").click();
-      },
-      hide: seen2
-    });
-  }
-  var statusData = store(readStatus);
-  var remembered = null;
-  async function drawRemembered(last2) {
-    let r3 = null;
-    try {
-      r3 = await last2;
-    } catch {
-      return;
-    }
-    if (!r3 || statusData.value || statusData.error) return;
-    remembered = r3;
-    statusData.set(r3.status);
-    statusData.stale();
-  }
-  statusData.watch(drawStatus);
-  function loadStatus() {
-    return statusData.load();
-  }
-  var boardNo = 0;
-  var boardStatus = null;
-  var boardFailed = false;
-  var boardAnswers = null;
-  async function readStatus() {
-    const want = ["watchdog", "crash", "alerts", "storage"];
-    if (!savingsHistory.length) want.push("savings");
-    if (Date.now() - protectionAt > 6e4) {
-      protectionAt = Date.now();
-      want.push("protection");
-    }
-    if (Date.now() - usageAt >= 9e3) {
-      usageAt = Date.now();
-      want.push("usage");
-    }
-    if (Date.now() - weekAt >= 6e5) {
-      weekAt = Date.now();
-      want.push("week");
-    }
-    const n3 = ++boardNo;
-    boardStatus = boardAnswers = null;
-    boardFailed = false;
-    try {
-      const st = boardServed ? await go().StatusBoard(n3, want).catch((e3) => {
-        if (!notOnPhone(e3)) throw e3;
-        boardServed = false;
-        return statusAlone(n3, want);
-      }) : await statusAlone(n3, want);
-      if (n3 === boardNo) boardStatus = st;
-      return st;
-    } catch (e3) {
-      if (n3 === boardNo) boardFailed = true;
-      if (want.includes("protection")) protectionAt = 0;
-      if (want.includes("usage")) usageAt = 0;
-      if (want.includes("week")) weekAt = 0;
-      throw e3;
-    }
-  }
-  var boardServed = true;
-  var singly = { watchdog: "Watchdog", alerts: "Alerts", protection: "Protection", savings: "SavingsHistory" };
-  async function statusAlone(n3, want) {
-    const st = await go().Status();
-    for (const name of want.filter((w3) => singly[w3])) {
-      go()[singly[name]]().then((data) => showCard({ board: n3, name, data }), (e3) => showCard({ board: n3, name, data: null, error: errorText(e3) }));
-    }
-    return st;
-  }
-  window.runtime?.EventsOn?.("status:card", showCard);
-  function showCard(c3) {
-    if (c3.board === boardNo && boardFailed && c3.name !== "crash") return;
-    const err = c3.error ? new Error(c3.error) : null;
-    const data = c3.data;
-    switch (c3.name) {
-      case "watchdog":
-        showWatchdog(err ? null : data);
-        break;
-      case "crash":
-        showCrash(err ? null : data);
-        break;
-      case "savings":
-        savingsHistory = !err && data || [];
-        if (lastStatus) renderTiles(lastStatus);
-        break;
-      case "protection":
-        showProtection(data, err);
-        break;
-      case "alerts":
-        showAlerts(data, err);
-        break;
-      case "storage":
-        showStorage(err ? null : data);
-        break;
-      case "usage":
-        showUsage(!err && data || []);
-        break;
-      case "week":
-        showWeek(err ? null : data);
-        break;
-      case "answers":
-        if (c3.board !== boardNo) return;
-        boardAnswers = data || {};
-        if (boardStatus) applyAnswers(boardStatus, boardAnswers);
-    }
-  }
-  function drawStatus() {
-    const kept2 = !statusData.error && statusData.value === remembered?.status;
-    $2("statusAge").hidden = !kept2;
-    if (kept2) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
-    if (statusData.error) {
-      statusById = {};
-      if (catalog) renderApps();
-      appList = lastStatus = null;
-      clearAppList($2("statusRows"));
-      $2("statusRows").closest("table").hidden = true;
-      $2("tiles").replaceChildren();
-      $2("alertsCard").hidden = true;
-      $2("watchCard").hidden = true;
-      $2("protectCard").hidden = true;
-      protectionAt = 0;
-      const e3 = statusData.error;
-      mountStatusNote($2("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
-      return;
-    }
-    const st = statusData.value;
-    statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-    if (catalog) renderApps();
-    batteryPaused = new Set(st.batteryPaused || []);
-    held = st.stopped || {};
-    renderTiles(st);
-    showWall();
-    $2("statusRows").closest("table").hidden = false;
-    lastStatus = st;
-    renderAppList(st);
-    if (st.checking && !kept2) {
-      if (st !== boardStatus) answerPages(st);
-      else if (boardAnswers) applyAnswers(st, boardAnswers);
-    }
-    const waiting = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
-    mountStatusNote($2("statusNote"), { text: [
-      waiting.length ? `Plug in ${waiting.join(" and ")}: the apps waiting for ${waiting.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting.length === 1 ? "it" : "them"} appearing.` : "",
-      batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
-      st.unmatched === 1 ? "1 other container on this machine isn’t a catalog app." : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ""
-    ].filter(Boolean).join(" ") });
-  }
-  var wallAt = 0;
-  async function showWall() {
-    const el2 = $2("wallCard");
-    if (!document.documentElement.classList.contains("wallcard")) {
-      el2.hidden = true;
-      return;
-    }
-    if (!el2.hidden && Date.now() - wallAt < 5 * 6e4) return;
-    wallAt = Date.now();
-    try {
-      mountWallCard(el2, await go().FinancesWall());
-      el2.hidden = false;
-    } catch {
-      el2.hidden = true;
-    }
-  }
-  setInterval(() => {
-    if (!$2("wallCard").hidden) {
-      wallAt = 0;
-      showWall();
-    }
-  }, 6e4);
-  function showWatchdog(w3) {
-    const card = $2("watchCard");
-    if (!w3) {
-      card.hidden = true;
-      return;
-    }
-    weekUp = w3.week || {};
-    outages = w3.outages || {};
-    if (appList && lastStatus) renderAppList(lastStatus);
-    card.hidden = false;
-    mountWatchdog(card, { w: w3, openSetup: () => {
-      navigate("setup");
-    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
-  }
-  var protectionAt = 0;
-  function showProtection(p3, err) {
-    const card = $2("protectCard");
-    if (err) {
-      card.hidden = true;
-      return;
-    }
-    card.hidden = false;
-    mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
-  }
-  function showStorage(rec) {
-    const card = $2("storageCard");
-    card.hidden = !storageShown(rec);
-    if (card.hidden) return;
-    mountStorage(card, { rec, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
-  }
-  var usageAt = 0;
-  async function loadUsage() {
-    if (Date.now() - usageAt < 9e3) return;
-    usageAt = Date.now();
-    let stats;
-    try {
-      stats = await go().Usage();
-    } catch {
-      stats = [];
-    }
-    showUsage(stats);
-  }
-  function showUsage(stats) {
-    record(usageHistory, stats);
-    mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
-    memory = memoryByApp(stats, catalog);
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, memory });
-  }
-  var memory;
-  var usageHistory = /* @__PURE__ */ new Map();
-  setInterval(() => {
-    if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
-  }, 1e4);
-  var weekAt = 0;
-  function showWeek(w3) {
-    const card = $2("weekCard");
-    if (!w3) {
-      card.hidden = true;
-      return;
-    }
-    card.hidden = !w3.body.split("\n").some(Boolean);
-    if (!card.hidden) mountWeek(card, { w: w3 });
-  }
-  function showAlerts(events, err) {
-    const card = $2("alertsCard");
-    const openSetup = () => {
-      navigate("setup");
+  function overnightWords(n3) {
+    const night = nightOf(n3.now);
+    if (!night) return null;
+    const [from2, to] = night;
+    const within = (t3) => {
+      const ms = t3 ? new Date(t3).getTime() : NaN;
+      return ms >= from2 && ms <= to;
     };
-    card.hidden = false;
-    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
-    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
+    const parts2 = [];
+    const updated = n3.apps.filter((a3) => within(a3.updatedAt));
+    if (updated.length) parts2.push(updated.length === 1 ? `${updated[0].name} updated` : `${updated.length} apps updated`);
+    const back = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
+    if (back.length) parts2.push(`${back.length} rolled back`);
+    if (n3.copies) {
+      const made2 = n3.copies.filter((c3) => within(c3.newest));
+      const size = made2.reduce((t3, c3) => t3 + (c3.size || 0), 0);
+      if (made2.length) parts2.push(size > 0 ? `a backup of ${bytes(size)}` : "the backup ran");
+    }
+    const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
+    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back.includes(e3));
+    if (down.length) {
+      const name = n3.apps.find((a3) => a3.id === down[0][0])?.name || down[0][0];
+      parts2.push(down.length === 1 ? `${name} was down for a while` : `${down.length} apps were down for a while`);
+    } else if (loud.length) {
+      parts2.push(loud.length === 1 ? "1 alert to look at" : `${loud.length} alerts to look at`);
+    } else if (n3.watched) {
+      parts2.push("nothing needed you");
+    }
+    return parts2.length ? "Overnight: " + parts2.join(", ") + "." : null;
   }
-  var appListActions = {
-    act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
-    openNative: (a3) => go().OpenNativeApp(a3.id).then(() => {
-      setTimeout(loadStatus, 3e3);
-    }, (err) => {
-      showError(err);
-      throw err;
-    }),
-    install: (a3) => {
-      selected.add(a3.id);
-      navigate("choose");
-      renderApps();
-      replan();
-    },
-    adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
-    releaseNotes: (id2) => go().ReleaseNotes(id2),
-    open: (url) => go().Open(url),
-    page: (a3) => pageOpener.open(a3.id),
-    startAll: (apps, progress2) => groupAct(apps, "start", progress2),
-    groupAct: (apps, action, progress2, until) => groupAct(apps, action, progress2, until),
-    details: (a3) => showDetails(a3),
-    // A row's own menu: what the app's page offers, from Status.
-    menu: {
-      open: (url) => go().Open(url),
-      phone: (a3) => showQR(a3),
-      // The app's clipboard, or the browser's on a phone.
-      copy: async (text2) => {
-        if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
-        else await navigator.clipboard.writeText(text2);
-      },
-      act: (a3, action) => runAppAction(a3, action),
-      stopFor: (a3, until) => runAppAction(a3, "stop", until),
-      // Its page, scrolled to its log once it is drawn.
-      logs: (a3) => {
-        pageOpener.open(a3.id);
-        requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
-      },
-      // Backups runs it, in its own panel with its progress.
-      backupNow: () => {
-        navigate("backups");
-        $2("backupNow").click();
-      },
-      alerts: async (a3, on2) => {
-        try {
-          await go().SetAppSetting(a3.id, "alerts", on2);
-        } catch (e3) {
-          showError(e3);
-        }
-        await loadStatus();
-      },
-      pin: async (a3, on2) => {
-        try {
-          await go().SetAppSetting(a3.id, "pinned", on2);
-        } catch (e3) {
-          showError(e3);
-        }
-        await loadStatus();
-      }
+  var key3 = "homelab.overnightHidden";
+  var today = (now) => new Date(now).toDateString();
+  var hiddenOn = "";
+  var hiddenToday = (now) => {
+    if (hiddenOn === today(now)) return true;
+    try {
+      return localStorage.getItem(key3) === today(now);
+    } catch {
+      return false;
     }
   };
-  function leftStatus() {
-    if (!lastStatus) return;
-    saveSeen(lastStatus.apps);
-    seen = loadSeen();
-    renderAppList(lastStatus);
+  function Overnight({ words: words4, hide }) {
+    return /* @__PURE__ */ u3("p", { class: "overnight", role: "status", children: [
+      /* @__PURE__ */ u3("span", { children: words4 }),
+      /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: hide, children: "Hide until tomorrow" })
+    ] });
   }
-  var rowActions = appListActions;
-  var batteryPausedNow = () => batteryPaused;
-  async function groupAct(apps, action, progress2, until) {
-    setAppsBusy(true);
-    const done = [];
-    try {
-      for (const [i3, a3] of apps.entries()) {
-        progress2(i3);
-        setPending(a3.id, { action });
-        try {
-          await (action === "stop" && until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
-        } catch (err) {
-          setPending(a3.id, { action, failed: errorText(err) });
-          break;
-        }
-        done.push(a3);
+  function mountOvernight(el2, n3) {
+    const words4 = hiddenToday(n3.now) ? null : overnightWords(n3);
+    el2.hidden = !words4;
+    const hide = () => {
+      hiddenOn = today(Date.now());
+      try {
+        localStorage.setItem(key3, hiddenOn);
+      } catch {
       }
-    } finally {
-      setAppsBusy(false);
-    }
-    await loadStatus();
-    for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
-    if (action === "stop" && done.length) offerUndo(done, until);
-  }
-  var undoing = null;
-  function offerUndo(apps, until) {
-    const catOf = (id2) => catalog?.apps.find((c3) => c3.id === id2)?.category;
-    const cats = new Set(apps.map((a3) => catOf(a3.id)));
-    const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
-    const what2 = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
-    const words4 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
-    undoing = { apps };
-    mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
-  }
-  function dropUndo() {
-    undoing = null;
-    mountUndoNote($2("undoNote"), null);
-  }
-  function undoNow() {
-    if (!undoing || appsBusy) return false;
-    const { apps } = undoing;
-    dropUndo();
-    groupAct(apps, "start", () => {
-    });
-    return true;
-  }
-  var pageOpener = { open: (_id) => {
-  } };
-  var appActions = { act: (a3, action) => appListActions.act(a3, action), stopFor: (a3, until) => runAppAction(a3, "stop", until), phone: showQR, signIn: showSignIn, update: showUpdate, details: (a3) => showDetails(a3) };
-  var heldNow = () => held;
-  var pendingOf = (id2) => pending[id2];
-  var appsBusyNow = () => appsBusy;
-  var rowWatchers = [];
-  function watchRows(fn) {
-    rowWatchers.push(fn);
-  }
-  var appList = null;
-  var appsBusy = false;
-  function setAppsBusy(busy2) {
-    appsBusy = busy2;
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, busy: busy2 });
-    rowWatchers.forEach((fn) => fn());
-  }
-  var pending = {};
-  function setPending(id2, p3) {
-    if (p3) pending[id2] = p3;
-    else delete pending[id2];
-    if (appList) mountAppList($2("statusRows"), appList = { ...appList, pending: { ...pending } });
-    rowWatchers.forEach((fn) => fn());
-  }
-  async function showQR(a3) {
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel"), url = "https://" + a3.address;
-    if (cliStop) cliStop();
-    let img;
-    try {
-      img = await go().QR(url);
-    } catch (e3) {
-      return showError(e3);
-    }
-    panel.hidden = false;
-    $2("cliTitle").textContent = `Open ${a3.name} on a phone`;
-    $2("cliLog").hidden = true;
-    mountSheet($2("cliActions"), k(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a3.address), phoneApp: catalog?.apps.find((c3) => c3.id === a3.id)?.phone, close: closeCli }));
-    panel.scrollIntoView({ block: "nearest" });
-  }
-  function closeCli() {
-    $2("cliPanel").hidden = true;
-    $2("cliLog").hidden = false;
-  }
-  var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
-  var hideButton = { label: "Hide", title: "It carries on, its bar in the sidebar", onClick: () => {
-    bgHide();
-    $2("cliPanel").hidden = true;
-  } };
-  var runInSheet = (title) => bgStart(title, () => {
-    $2("cliPanel").hidden = false;
-  });
-  var sheetBusy = waitForBg;
-  async function showSignIn(a3, keys2) {
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel");
-    if (cliStop) cliStop();
-    let list = [];
-    try {
-      list = await go().Settings();
-    } catch (e3) {
-      return showError(e3);
-    }
-    const byKey = Object.fromEntries(list.map((s3) => [s3.key, s3]));
-    const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
-    panel.hidden = false;
-    $2("cliTitle").textContent = `Sign in to ${a3.name}`;
-    $2("cliLog").textContent = "";
-    $2("cliLog").hidden = true;
-    const rows = keys2.map((k3) => {
-      const s3 = byKey[k3] || {};
-      const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
-        showError(e3);
-        throw e3;
-      }) : async () => {
-        window.runtime.ClipboardSetText?.(s3.value || "");
-        return `✓ ${label(k3)} copied.`;
-      };
-      return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
-    });
-    mountSheet($2("cliActions"), k(SignIns, { rows, close: closeCli }));
-    panel.scrollIntoView({ block: "nearest" });
-  }
-  var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
-  var quiet = /* @__PURE__ */ new Set(["start", "stop", "restart"]);
-  var lastLog = {};
-  var downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
-  async function runAppAction(a3, action, until) {
-    if (quiet.has(action)) return runQuietly(a3, action, until);
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
-    log2.hidden = false;
-    if (cliStop) cliStop();
-    panel.hidden = false;
-    $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
-    log2.textContent = "";
-    startJob("cli");
-    runInSheet(`${actionTitle[action]} ${a3.name}`);
-    cliButtons([hideButton]);
-    setPending(a3.id, { action });
-    setAppsBusy(true);
-    panel.scrollIntoView({ block: "nearest" });
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
-    let failed = "";
-    try {
-      await (until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
-    } catch (e3) {
-      failed = errorText(e3);
-      showError(e3);
-    }
-    if (failed) setPending(a3.id, { action, failed });
-    setAppsBusy(false);
-    if (!failed && action === "stop") offerUndo([a3], until);
-    if (typeof off === "function") off();
-    cliProgress(failed ? "failed" : "done");
-    bgEnd(!!failed);
-    $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
-    cliButtons([{ label: "Close", onClick: () => {
-      panel.hidden = true;
-    } }]);
-    await loadStatus();
-    if (!failed) setPending(a3.id, null);
-  }
-  async function runQuietly(a3, action, until) {
-    let log2 = `$ homelab ${action} ${a3.id}${until ? " --until " + until : ""}
-`;
-    setPending(a3.id, { action });
-    setAppsBusy(true);
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2 += line + "\n";
-      if (downloading.test(line) && !pending[a3.id]?.note) setPending(a3.id, { action, note: "Downloading the app…" });
-    });
-    let failed = "";
-    try {
-      await (until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
-    } catch (e3) {
-      failed = errorText(e3);
-    }
-    if (typeof off === "function") off();
-    lastLog[a3.id] = log2;
-    if (failed) setPending(a3.id, { action, failed, log: true });
-    setAppsBusy(false);
-    if (!failed && action === "stop") offerUndo([a3], until);
-    await loadStatus();
-    if (!failed) setPending(a3.id, null);
-  }
-  function showDetails(a3) {
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
-    if (cliStop) cliStop();
-    panel.hidden = false;
-    $2("cliTitle").textContent = `${a3.name}: what happened`;
-    log2.hidden = false;
-    log2.textContent = lastLog[a3.id] || "Nothing was kept.";
-    cliButtons([{ label: "Close", onClick: () => {
-      panel.hidden = true;
-    } }]);
-    panel.scrollIntoView({ block: "nearest" });
-  }
-  function showUpdate(a3) {
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel");
-    if (cliStop) cliStop();
-    panel.hidden = false;
-    $2("cliTitle").textContent = `Update ${a3.name}`;
-    $2("cliLog").hidden = true;
-    cliProgress(null);
-    mountSheet($2("cliActions"), k(ReleaseNotes, {
-      key: a3.id,
-      name: a3.name,
-      load: () => go().ReleaseNotes(a3.id),
-      onUpdate: () => runAppAction(a3, "update"),
-      onCancel: closeCli,
-      open: (url) => go().Open(url)
-    }));
-    panel.scrollIntoView({ block: "nearest" });
-  }
-  mountSheets($2("sheets"), () => {
-    if (missed) refreshStatus();
-  });
-  var cliStop = null;
-  async function cliFlow(title, action, target, confirmLabel) {
-    if (sheetBusy()) return;
-    const panel = $2("cliPanel"), log2 = $2("cliLog");
-    log2.hidden = false;
-    if (cliStop) cliStop();
-    panel.hidden = false;
-    $2("cliTitle").textContent = title;
-    log2.textContent = "";
-    startJob("cli");
-    cliButtons([]);
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      if (/^Preview only: nothing was changed/.test(line.trim())) return;
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
-    const stop2 = () => {
-      if (typeof off === "function") off();
-      if (cliStop === stop2) cliStop = null;
+      mountOvernight(el2, n3);
     };
-    cliStop = stop2;
-    try {
-      await go().Homelab(action, target, false);
-    } catch (e3) {
-      showError(e3);
-      stop2();
-      return;
-    }
-    cliButtons([
-      { label: confirmLabel, primary: true, onClick: async () => {
-        log2.textContent += "\n";
-        runInSheet(title);
-        cliButtons([hideButton]);
-        let failed = false;
-        try {
-          await go().Homelab(action, target, true);
-        } catch (err) {
-          failed = true;
-          showError(err);
-        }
-        cliProgress(failed ? "failed" : "done");
-        bgEnd(failed);
-        stop2();
-        cliButtons([{ label: "Close", onClick: () => {
-          panel.hidden = true;
-        } }]);
-        loadStatus();
-      } },
-      { label: "Cancel", onClick: () => {
-        stop2();
-        panel.hidden = true;
-      } }
-    ]);
+    R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el2);
   }
-  $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
-  $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
-  $2("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
-  var menuItems = () => [...$2("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
-  function closeMenu() {
-    $2("statusMenu").hidden = true;
-    $2("statusMore").setAttribute("aria-expanded", "false");
-  }
-  function openMenu(at2) {
-    $2("statusMenu").hidden = false;
-    $2("statusMore").setAttribute("aria-expanded", "true");
-    const items = menuItems();
-    if (at2 && items.length) items[at2 === "first" ? 0 : items.length - 1].focus();
-  }
-  $2("statusMore").onclick = (e3) => {
-    e3.stopPropagation();
-    if ($2("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
-    else closeMenu();
-  };
-  $2("statusMore").addEventListener("keydown", (e3) => {
-    if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
-      e3.preventDefault();
-      openMenu(e3.key === "ArrowDown" ? "first" : "last");
-    }
-  });
-  $2("statusMenu").addEventListener("keydown", (e3) => {
-    const items = menuItems(), at2 = items.indexOf(document.activeElement);
-    const to = { ArrowDown: at2 + 1, ArrowUp: at2 - 1, Home: 0, End: items.length - 1 }[e3.key];
-    if (to === void 0 || !items.length) return;
-    e3.preventDefault();
-    items[(to + items.length) % items.length].focus();
-  });
-  $2("statusMenu").addEventListener("click", closeMenu);
-  document.addEventListener("click", (e3) => {
-    if (!$2("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
-  });
-  document.addEventListener("keydown", (e3) => {
-    if (e3.key !== "Escape" || $2("statusMenu").hidden) return;
-    const inside = $2("statusMenu").contains(document.activeElement);
-    closeMenu();
-    if (inside) $2("statusMore").focus();
-  });
-  $2("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
-    if (!$2("statusMenu").hidden && document.hasFocus() && !$2("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
-  }));
-  var missed = false;
-  function refreshStatus(c3) {
-    const behind = document.documentElement.classList.contains("sheet-open");
-    missed = behind;
-    if (c3?.status && !behind) {
-      statusData.set(c3.status);
-      return;
-    }
-    if ($2("status").classList.contains("active") && !behind) loadStatus();
-    else statusData.stale();
-  }
-  setInterval(refreshStatus, 6e4);
-  $2("phoneReport").onclick = async (e3) => {
-    const btn = e3.target;
-    btn.disabled = true;
-    btn.textContent = "Making the report…";
-    try {
-      const r3 = await go().Report();
-      const file = new File([r3.text], "homelab-report.txt", { type: "text/plain" });
-      const text2 = "My homelab needs a look. The report has every password and token removed.";
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Homelab report", text: text2 });
-      } else {
-        const a3 = $2("reportDownload");
-        a3.href = URL.createObjectURL(file);
-        a3.download = file.name;
-        a3.click();
-        if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text2 + " The file is attached.");
-      }
-    } catch (err) {
-      if (err && err.name !== "AbortError") showError(err);
-    }
-    btn.disabled = false;
-    btn.textContent = "Send a report";
-  };
 
   // web/src/backups/Backups.tsx
   var tookText = (s3) => s3 < 120 ? `${s3} seconds` : `${Math.round(s3 / 60)} minutes`;
@@ -6843,30 +6254,35 @@
     mountJobs(card, { jobs: jobsData.value, place, create });
   }
   async function backupTask(action, busy2, done, failed) {
-    if (waitForBg()) return;
     const panel = $2("backupPanel"), log2 = $2("backupLog");
     const btns = () => [$2("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;
     $2("backupTitle").textContent = busy2;
     log2.textContent = "";
-    startJob("backup");
     btns().forEach((b2) => {
       b2.disabled = true;
     });
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
     let ok = true;
-    try {
-      await go().Homelab(action, "", action === "backup");
-    } catch (e3) {
-      ok = false;
-      showError(e3);
-    }
-    cliProgress(ok ? "done" : "failed");
-    endJob();
-    if (typeof off === "function") off();
+    await inTurn(busy2.replace(/…$/, ""), async () => {
+      $2("backupTitle").textContent = busy2;
+      startJob("backup");
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      try {
+        await go().Homelab(action, "", action === "backup");
+      } catch (e3) {
+        ok = false;
+        showError(e3);
+      } finally {
+        cliProgress(ok ? "done" : "failed");
+        endJob();
+        if (typeof off === "function") off();
+      }
+    }, (behind) => {
+      $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
+    });
     $2("backupTitle").textContent = ok ? done : failed;
     btns().forEach((b2) => {
       b2.disabled = false;
@@ -6884,18 +6300,25 @@
     panel.hidden = false;
     $2("backupTitle").textContent = direction === "out" ? "Moving out (a backup first, then packing)…" : "Moving in…";
     log2.textContent = "";
-    const off = window.runtime.EventsOn("cli:log", (line) => {
-      log2.textContent += line + "\n";
-      log2.scrollTop = log2.scrollHeight;
-    });
+    const busy2 = $2("backupTitle").textContent;
     let file = "", ok = true;
-    try {
-      file = await go().Move(direction);
-    } catch (e3) {
-      ok = false;
-      showError(e3);
-    }
-    if (typeof off === "function") off();
+    await inTurn(direction === "out" ? "Moving out" : "Moving in", async () => {
+      $2("backupTitle").textContent = busy2;
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      try {
+        file = await go().Move(direction);
+      } catch (e3) {
+        ok = false;
+        showError(e3);
+      } finally {
+        if (typeof off === "function") off();
+      }
+    }, (behind) => {
+      $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
+    });
     button.disabled = false;
     delete button.dataset.sure;
     button.textContent = direction === "out" ? "Move out…" : "Move in…";
@@ -6917,6 +6340,826 @@
       showError(e3);
     }
     btn.disabled = false;
+  };
+
+  // web/src/screens/status.ts
+  var statusById = {};
+  var batteryPaused = /* @__PURE__ */ new Set();
+  var held = {};
+  var weekUp = {};
+  var outages = {};
+  var lastEvents = [];
+  var watched = false;
+  function drawOvernight() {
+    if (!lastStatus) return;
+    const now = Date.now();
+    if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 6e4);
+    mountOvernight($2("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+  }
+  backupsData.watch(drawOvernight);
+  var seen = loadSeen();
+  var savingsHistory = [];
+  var lastAttention = -1;
+  function renderTiles(st) {
+    const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
+    mountTiles($2("tiles"), {
+      status: st,
+      history: savingsHistory,
+      onPause: async (paused) => {
+        try {
+          await go().SetUpdatesPaused(paused);
+        } catch (err) {
+          showError(err);
+        }
+        await loadStatus();
+      },
+      onChoose: () => navigate("choose")
+    });
+    const n3 = trouble.length;
+    $2("statusCount").textContent = n3 ? String(n3) : "";
+    if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
+      lastAttention = n3;
+      Promise.resolve(go().SetAttention(n3)).catch(() => {
+      });
+    }
+    $2("fixIt").hidden = !(st.missing || st.apps.some((a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.notAnswering || a3.settingsChanged));
+  }
+  mountShowAll($2("statusAllBox"));
+  var lastStatus = null;
+  function renderAppList(st) {
+    const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
+    const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3.category]));
+    const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
+    const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble(a3));
+    const rest = (a3) => !trouble(a3) && !pinned.includes(a3);
+    const groups3 = [
+      { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
+      { label: "Pinned", apps: pinned, pinned: true },
+      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c3.id) })),
+      { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
+    ].filter((g2) => g2.apps.length);
+    appList = { groups: groups3, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    mountAppList($2("statusRows"), appList);
+  }
+  async function answerPages(st) {
+    let why;
+    try {
+      why = await go().Answers();
+    } catch {
+      return;
+    }
+    applyAnswers(st, why);
+  }
+  function applyAnswers(st, why) {
+    if (lastStatus !== st) return;
+    let changed2 = false;
+    for (const a3 of st.apps) {
+      if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
+      a3.notAnswering = why[a3.id] || void 0;
+      changed2 = true;
+    }
+    st.checking = false;
+    if (!changed2) return;
+    renderTiles(st);
+    renderAppList(st);
+  }
+  async function loadCrash() {
+    let c3 = null;
+    try {
+      c3 = await go().LastCrash();
+    } catch {
+    }
+    showCrash(c3);
+  }
+  function showCrash(c3) {
+    const seen2 = () => go().CrashSeen().catch(() => {
+    }).then(loadCrash);
+    mountCrashNote($2("crashNote"), {
+      crash: c3,
+      send: () => {
+        seen2();
+        navigate("settings");
+        showSettingsPage(thisMachine);
+        $2("report").click();
+      },
+      hide: seen2
+    });
+  }
+  var statusData = store(readStatus);
+  var remembered = null;
+  async function drawRemembered(last2) {
+    let r3 = null;
+    try {
+      r3 = await last2;
+    } catch {
+      return;
+    }
+    if (!r3 || statusData.value || statusData.error) return;
+    remembered = r3;
+    statusData.set(r3.status);
+    statusData.stale();
+  }
+  statusData.watch(drawStatus);
+  function loadStatus() {
+    return statusData.load();
+  }
+  var boardNo = 0;
+  var boardStatus = null;
+  var boardFailed = false;
+  var boardAnswers = null;
+  async function readStatus() {
+    const want = ["watchdog", "crash", "alerts", "storage"];
+    if (!savingsHistory.length) want.push("savings");
+    if (Date.now() - protectionAt > 6e4) {
+      protectionAt = Date.now();
+      want.push("protection");
+    }
+    if (Date.now() - usageAt >= 9e3) {
+      usageAt = Date.now();
+      want.push("usage");
+    }
+    if (Date.now() - weekAt >= 6e5) {
+      weekAt = Date.now();
+      want.push("week");
+    }
+    const n3 = ++boardNo;
+    boardStatus = boardAnswers = null;
+    boardFailed = false;
+    try {
+      const st = boardServed ? await go().StatusBoard(n3, want).catch((e3) => {
+        if (!notOnPhone(e3)) throw e3;
+        boardServed = false;
+        return statusAlone(n3, want);
+      }) : await statusAlone(n3, want);
+      if (n3 === boardNo) boardStatus = st;
+      return st;
+    } catch (e3) {
+      if (n3 === boardNo) boardFailed = true;
+      if (want.includes("protection")) protectionAt = 0;
+      if (want.includes("usage")) usageAt = 0;
+      if (want.includes("week")) weekAt = 0;
+      throw e3;
+    }
+  }
+  var boardServed = true;
+  var singly = { watchdog: "Watchdog", alerts: "Alerts", protection: "Protection", savings: "SavingsHistory" };
+  async function statusAlone(n3, want) {
+    const st = await go().Status();
+    for (const name of want.filter((w3) => singly[w3])) {
+      go()[singly[name]]().then((data) => showCard({ board: n3, name, data }), (e3) => showCard({ board: n3, name, data: null, error: errorText(e3) }));
+    }
+    return st;
+  }
+  window.runtime?.EventsOn?.("status:card", showCard);
+  function showCard(c3) {
+    if (c3.board === boardNo && boardFailed && c3.name !== "crash") return;
+    const err = c3.error ? new Error(c3.error) : null;
+    const data = c3.data;
+    switch (c3.name) {
+      case "watchdog":
+        showWatchdog(err ? null : data);
+        break;
+      case "crash":
+        showCrash(err ? null : data);
+        break;
+      case "savings":
+        savingsHistory = !err && data || [];
+        if (lastStatus) renderTiles(lastStatus);
+        break;
+      case "protection":
+        showProtection(data, err);
+        break;
+      case "alerts":
+        showAlerts(data, err);
+        break;
+      case "storage":
+        showStorage(err ? null : data);
+        break;
+      case "usage":
+        showUsage(!err && data || []);
+        break;
+      case "week":
+        showWeek(err ? null : data);
+        break;
+      case "answers":
+        if (c3.board !== boardNo) return;
+        boardAnswers = data || {};
+        if (boardStatus) applyAnswers(boardStatus, boardAnswers);
+    }
+  }
+  function drawStatus() {
+    const kept2 = !statusData.error && statusData.value === remembered?.status;
+    $2("statusAge").hidden = !kept2;
+    if (kept2) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
+    if (statusData.error) {
+      statusById = {};
+      if (catalog) renderApps();
+      appList = lastStatus = null;
+      clearAppList($2("statusRows"));
+      $2("statusRows").closest("table").hidden = true;
+      $2("tiles").replaceChildren();
+      $2("alertsCard").hidden = true;
+      $2("watchCard").hidden = true;
+      $2("protectCard").hidden = true;
+      protectionAt = 0;
+      const e3 = statusData.error;
+      mountStatusNote($2("statusNote"), { text: "", down: String(e3 && e3.message || e3) });
+      return;
+    }
+    const st = statusData.value;
+    statusById = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
+    if (catalog) renderApps();
+    batteryPaused = new Set(st.batteryPaused || []);
+    held = st.stopped || {};
+    renderTiles(st);
+    showWall();
+    $2("statusRows").closest("table").hidden = false;
+    lastStatus = st;
+    renderAppList(st);
+    drawOvernight();
+    if (st.checking && !kept2) {
+      if (st !== boardStatus) answerPages(st);
+      else if (boardAnswers) applyAnswers(st, boardAnswers);
+    }
+    const waiting2 = [...new Set(st.apps.filter((a3) => a3.state === "stopped" && a3.waitingFor).map((a3) => a3.waitingFor.replace(/^\/Volumes\//, "")))];
+    mountStatusNote($2("statusNote"), { text: [
+      waiting2.length ? `Plug in ${waiting2.join(" and ")}: the apps waiting for ${waiting2.length === 1 ? "it" : "them"} start within 15 minutes of ${waiting2.length === 1 ? "it" : "them"} appearing.` : "",
+      batteryPaused.size ? `On battery: ${batteryPaused.size} app${batteryPaused.size === 1 ? "" : "s"} paused until this computer is plugged in (Settings › Battery saver).` : "",
+      st.unmatched === 1 ? "1 other container on this machine isn’t a catalog app." : st.unmatched ? `${st.unmatched} other containers on this machine aren’t catalog apps.` : ""
+    ].filter(Boolean).join(" ") });
+  }
+  var wallAt = 0;
+  async function showWall() {
+    const el2 = $2("wallCard");
+    if (!document.documentElement.classList.contains("wallcard")) {
+      el2.hidden = true;
+      return;
+    }
+    if (!el2.hidden && Date.now() - wallAt < 5 * 6e4) return;
+    wallAt = Date.now();
+    try {
+      mountWallCard(el2, await go().FinancesWall());
+      el2.hidden = false;
+    } catch {
+      el2.hidden = true;
+    }
+  }
+  setInterval(() => {
+    if (!$2("wallCard").hidden) {
+      wallAt = 0;
+      showWall();
+    }
+  }, 6e4);
+  function showWatchdog(w3) {
+    const card = $2("watchCard");
+    if (!w3) {
+      card.hidden = true;
+      return;
+    }
+    weekUp = w3.week || {};
+    outages = w3.outages || {};
+    watched = true;
+    drawOvernight();
+    if (appList && lastStatus) renderAppList(lastStatus);
+    card.hidden = false;
+    mountWatchdog(card, { w: w3, openSetup: () => {
+      navigate("setup");
+    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+  }
+  var protectionAt = 0;
+  function showProtection(p3, err) {
+    const card = $2("protectCard");
+    if (err) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+    mountProtection(card, { p: p3, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+  }
+  function showStorage(rec) {
+    const card = $2("storageCard");
+    card.hidden = !storageShown(rec);
+    if (card.hidden) return;
+    mountStorage(card, { rec, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
+  }
+  var usageAt = 0;
+  async function loadUsage() {
+    if (Date.now() - usageAt < 9e3) return;
+    usageAt = Date.now();
+    let stats;
+    try {
+      stats = await go().Usage();
+    } catch {
+      stats = [];
+    }
+    showUsage(stats);
+  }
+  function showUsage(stats) {
+    record(usageHistory, stats);
+    mountUsage($2("usageCard"), { stats, history: usageHistory, nameOf: (id2) => catalog?.apps.find((a3) => a3.id === id2)?.name || id2 });
+    memory = memoryByApp(stats, catalog);
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, memory });
+  }
+  var memory;
+  var usageHistory = /* @__PURE__ */ new Map();
+  setInterval(() => {
+    if (!document.hidden && $2("status").classList.contains("active")) loadUsage();
+  }, 1e4);
+  var weekAt = 0;
+  function showWeek(w3) {
+    const card = $2("weekCard");
+    if (!w3) {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = !w3.body.split("\n").some(Boolean);
+    if (!card.hidden) mountWeek(card, { w: w3 });
+  }
+  function showAlerts(events, err) {
+    const card = $2("alertsCard");
+    const openSetup = () => {
+      navigate("setup");
+    };
+    card.hidden = false;
+    lastEvents = events || [];
+    drawOvernight();
+    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
+    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
+  }
+  var appListActions = {
+    act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
+    openNative: (a3) => go().OpenNativeApp(a3.id).then(() => {
+      setTimeout(loadStatus, 3e3);
+    }, (err) => {
+      showError(err);
+      throw err;
+    }),
+    install: (a3) => {
+      selected.add(a3.id);
+      navigate("choose");
+      renderApps();
+      replan();
+    },
+    adopt: (a3) => cliFlow(`Move ${a3.name} into the homelab`, "adopt", a3.id, "Move it"),
+    releaseNotes: (id2) => go().ReleaseNotes(id2),
+    open: (url) => go().Open(url),
+    page: (a3) => pageOpener.open(a3.id),
+    startAll: (apps, progress2) => groupAct(apps, "start", progress2),
+    groupAct: (apps, action, progress2, until) => groupAct(apps, action, progress2, until),
+    details: (a3) => showDetails(a3),
+    // A row's own menu: what the app's page offers, from Status.
+    menu: {
+      open: (url) => go().Open(url),
+      phone: (a3) => showQR(a3),
+      // The app's clipboard, or the browser's on a phone.
+      copy: async (text2) => {
+        if (window.runtime.ClipboardSetText) await window.runtime.ClipboardSetText(text2);
+        else await navigator.clipboard.writeText(text2);
+      },
+      act: (a3, action) => runAppAction(a3, action),
+      stopFor: (a3, until) => runAppAction(a3, "stop", until),
+      // Its page, scrolled to its log once it is drawn.
+      logs: (a3) => {
+        pageOpener.open(a3.id);
+        requestAnimationFrame(() => document.getElementById("appLog")?.scrollIntoView({ block: "start" }));
+      },
+      // Backups runs it, in its own panel with its progress.
+      backupNow: () => {
+        navigate("backups");
+        $2("backupNow").click();
+      },
+      alerts: async (a3, on2) => {
+        try {
+          await inTurn(`${a3.name}'s alerts`, () => go().SetAppSetting(a3.id, "alerts", on2));
+        } catch (e3) {
+          showError(e3);
+        }
+        await loadStatus();
+      },
+      pin: async (a3, on2) => {
+        try {
+          await go().SetAppSetting(a3.id, "pinned", on2);
+        } catch (e3) {
+          showError(e3);
+        }
+        await loadStatus();
+      }
+    }
+  };
+  function leftStatus() {
+    if (!lastStatus) return;
+    saveSeen(lastStatus.apps);
+    seen = loadSeen();
+    renderAppList(lastStatus);
+  }
+  var rowActions = appListActions;
+  var batteryPausedNow = () => batteryPaused;
+  async function groupAct(apps, action, progress2, until) {
+    const done = [];
+    for (const a3 of apps) setPending(a3.id, { action });
+    await inTurn(`${actionTitle[action]} ${apps.length === 1 ? apps[0].name : `${apps.length} apps`}`, async () => {
+      for (const [i3, a3] of apps.entries()) {
+        progress2(i3);
+        setPending(a3.id, { action });
+        try {
+          await (action === "stop" && until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
+        } catch (err) {
+          setPending(a3.id, { action, failed: errorText(err) });
+          break;
+        }
+        done.push(a3);
+      }
+    }, (behind) => {
+      for (const a3 of apps) setPending(a3.id, { action, note: waitWords(behind) });
+    });
+    await loadStatus();
+    for (const a3 of apps) if (!pending[a3.id]?.failed) setPending(a3.id, null);
+    if (action === "stop" && done.length) offerUndo(done, until);
+  }
+  var undoing = null;
+  function offerUndo(apps, until) {
+    const catOf = (id2) => catalog?.apps.find((c3) => c3.id === id2)?.category;
+    const cats = new Set(apps.map((a3) => catOf(a3.id)));
+    const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
+    const what2 = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
+    const words4 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    undoing = { apps };
+    mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
+  }
+  function dropUndo() {
+    undoing = null;
+    mountUndoNote($2("undoNote"), null);
+  }
+  function undoNow() {
+    if (!undoing) return false;
+    const { apps } = undoing;
+    dropUndo();
+    groupAct(apps, "start", () => {
+    });
+    return true;
+  }
+  var pageOpener = { open: (_id) => {
+  } };
+  var appActions = { act: (a3, action) => appListActions.act(a3, action), stopFor: (a3, until) => runAppAction(a3, "stop", until), phone: showQR, signIn: showSignIn, update: showUpdate, details: (a3) => showDetails(a3) };
+  var heldNow = () => held;
+  var pendingOf = (id2) => pending[id2];
+  var appsBusyNow = () => appsBusy;
+  var rowWatchers = [];
+  function watchRows(fn) {
+    rowWatchers.push(fn);
+  }
+  var appList = null;
+  var appsBusy = false;
+  var pending = {};
+  function setPending(id2, p3) {
+    if (p3) pending[id2] = p3;
+    else delete pending[id2];
+    if (appList) mountAppList($2("statusRows"), appList = { ...appList, pending: { ...pending } });
+    rowWatchers.forEach((fn) => fn());
+  }
+  async function showQR(a3) {
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel"), url = "https://" + a3.address;
+    if (cliStop) cliStop();
+    let img;
+    try {
+      img = await go().QR(url);
+    } catch (e3) {
+      return showError(e3);
+    }
+    panel.hidden = false;
+    $2("cliTitle").textContent = `Open ${a3.name} on a phone`;
+    $2("cliLog").hidden = true;
+    mountSheet($2("cliActions"), k(PhoneCode, { url, img, tailnet: /\.ts\.net(:|$)/.test(a3.address), phoneApp: catalog?.apps.find((c3) => c3.id === a3.id)?.phone, close: closeCli }));
+    panel.scrollIntoView({ block: "nearest" });
+  }
+  function closeCli() {
+    $2("cliPanel").hidden = true;
+    $2("cliLog").hidden = false;
+  }
+  function cliButtons(buttons) {
+    const row = $2("cliActions"), had = row.contains(document.activeElement);
+    mountSheet(row, k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
+    if (had && !row.contains(document.activeElement)) (row.querySelector("button") || $2("cliPanel")).focus();
+  }
+  var hideButton = { label: "Hide", title: "It carries on, its bar in the sidebar", onClick: () => {
+    bgHide();
+    $2("cliPanel").hidden = true;
+  } };
+  var runInSheet = (title) => bgStart(title, () => {
+    $2("cliPanel").hidden = false;
+  });
+  var sheetBusy = waitForBg;
+  async function showSignIn(a3, keys2) {
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel");
+    if (cliStop) cliStop();
+    let list = [];
+    try {
+      list = await go().Settings();
+    } catch (e3) {
+      return showError(e3);
+    }
+    const byKey = Object.fromEntries(list.map((s3) => [s3.key, s3]));
+    const label = (k3) => /PASSWORD$/.test(k3) ? "Password" : /EMAIL$/.test(k3) ? "Email" : /USER$/.test(k3) ? "User name" : settingLabel(k3);
+    panel.hidden = false;
+    $2("cliTitle").textContent = `Sign in to ${a3.name}`;
+    $2("cliLog").textContent = "";
+    $2("cliLog").hidden = true;
+    const rows = keys2.map((k3) => {
+      const s3 = byKey[k3] || {};
+      const copy = s3.secret ? () => go().CopySetting(k3).then(() => "✓ Password copied; the clipboard clears in 90 seconds.", (e3) => {
+        showError(e3);
+        throw e3;
+      }) : async () => {
+        window.runtime.ClipboardSetText?.(s3.value || "");
+        return `✓ ${label(k3)} copied.`;
+      };
+      return { label: label(k3), shown: s3.secret ? s3.set ? "••••••••" : "not set" : s3.value || "not set", copy: s3.set ? copy : void 0 };
+    });
+    mountSheet($2("cliActions"), k(SignIns, { rows, close: closeCli }));
+    panel.scrollIntoView({ block: "nearest" });
+  }
+  var actionTitle = { start: "Starting", stop: "Stopping", restart: "Restarting", update: "Updating", rollback: "Rolling back" };
+  var quiet = /* @__PURE__ */ new Set(["start", "stop", "restart"]);
+  var lastLog = {};
+  var downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
+  async function runAppAction(a3, action, until) {
+    if (quiet.has(action)) return runQuietly(a3, action, until);
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    log2.hidden = false;
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
+    log2.textContent = "";
+    clearJob("cli");
+    const title = `${actionTitle[action]} ${a3.name}`;
+    runInSheet(title);
+    cliButtons([hideButton]);
+    setPending(a3.id, { action });
+    panel.scrollIntoView({ block: "nearest" });
+    let failed = "";
+    await inTurn(title, async () => {
+      setPending(a3.id, { action });
+      startJob("cli");
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+      try {
+        await (until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
+      } catch (e3) {
+        failed = errorText(e3);
+        showError(e3);
+      } finally {
+        if (typeof off === "function") off();
+        cliProgress(failed ? "failed" : "done");
+        bgEnd(!!failed);
+      }
+    }, (behind) => {
+      setPending(a3.id, { action, note: waitWords(behind) });
+      log2.textContent = waitWords(behind) + "…\n";
+      bgProgress(0, waitWords(behind));
+    });
+    if (failed) setPending(a3.id, { action, failed });
+    if (!failed && action === "stop") offerUndo([a3], until);
+    $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
+    cliButtons([{ label: "Close", onClick: () => {
+      panel.hidden = true;
+    } }]);
+    await loadStatus();
+    if (!failed) setPending(a3.id, null);
+  }
+  async function runQuietly(a3, action, until) {
+    let log2 = `$ homelab ${action} ${a3.id}${until ? " --until " + until : ""}
+`;
+    setPending(a3.id, { action });
+    let failed = "";
+    await inTurn(`${actionTitle[action]} ${a3.name}`, async () => {
+      setPending(a3.id, { action });
+      const off = window.runtime.EventsOn("cli:log", (line) => {
+        log2 += line + "\n";
+        if (downloading.test(line) && !pending[a3.id]?.note) setPending(a3.id, { action, note: "Downloading the app…" });
+      });
+      try {
+        await (until ? go().StopUntil(a3.id, until) : go().AppAction(a3.id, action));
+      } catch (e3) {
+        failed = errorText(e3);
+      } finally {
+        if (typeof off === "function") off();
+      }
+    }, (behind) => setPending(a3.id, { action, note: waitWords(behind) }));
+    lastLog[a3.id] = log2;
+    if (failed) setPending(a3.id, { action, failed, log: true });
+    if (!failed && action === "stop") offerUndo([a3], until);
+    await loadStatus();
+    if (!failed) setPending(a3.id, null);
+  }
+  function showDetails(a3) {
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = `${a3.name}: what happened`;
+    log2.hidden = false;
+    log2.textContent = lastLog[a3.id] || "Nothing was kept.";
+    cliButtons([{ label: "Close", onClick: () => {
+      panel.hidden = true;
+    } }]);
+    panel.scrollIntoView({ block: "nearest" });
+  }
+  function showUpdate(a3) {
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel");
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = `Update ${a3.name}`;
+    $2("cliLog").hidden = true;
+    cliProgress(null);
+    mountSheet($2("cliActions"), k(ReleaseNotes, {
+      key: a3.id,
+      name: a3.name,
+      load: () => go().ReleaseNotes(a3.id),
+      onUpdate: () => runAppAction(a3, "update"),
+      onCancel: closeCli,
+      open: (url) => go().Open(url)
+    }));
+    panel.scrollIntoView({ block: "nearest" });
+  }
+  mountSheets($2("sheets"), () => {
+    if (missed) refreshStatus();
+  });
+  var cliStop = null;
+  async function cliFlow(title, action, target, confirmLabel) {
+    if (sheetBusy()) return;
+    const panel = $2("cliPanel"), log2 = $2("cliLog");
+    log2.hidden = false;
+    if (cliStop) cliStop();
+    panel.hidden = false;
+    $2("cliTitle").textContent = title;
+    log2.textContent = "";
+    clearJob("cli");
+    let off = null, cancelled = false;
+    const listen = () => {
+      off = window.runtime.EventsOn("cli:log", (line) => {
+        if (/^Preview only: nothing was changed/.test(line.trim())) return;
+        log2.textContent += line + "\n";
+        log2.scrollTop = log2.scrollHeight;
+      });
+    };
+    const unlisten = () => {
+      if (typeof off === "function") off();
+      off = null;
+    };
+    const stop2 = () => {
+      cancelled = true;
+      unlisten();
+      if (cliStop === stop2) cliStop = null;
+    };
+    cliStop = stop2;
+    cliButtons([{ label: "Cancel", onClick: () => {
+      stop2();
+      panel.hidden = true;
+    } }]);
+    try {
+      await inTurn(title, async () => {
+        if (cancelled) return;
+        log2.textContent = "";
+        startJob("cli");
+        listen();
+        try {
+          await go().Homelab(action, target, false);
+        } finally {
+          unlisten();
+        }
+      }, (behind) => {
+        log2.textContent = waitWords(behind) + ", then this shows what it would do…\n";
+      });
+    } catch (e3) {
+      showError(e3);
+      stop2();
+      return;
+    }
+    if (cancelled) return;
+    cliButtons([
+      { label: confirmLabel, primary: true, onClick: async () => {
+        log2.textContent += "\n";
+        runInSheet(title);
+        cliButtons([hideButton]);
+        let failed = false;
+        try {
+          await inTurn(title, async () => {
+            startJob("cli");
+            listen();
+            try {
+              await go().Homelab(action, target, true);
+            } catch (err) {
+              failed = true;
+              throw err;
+            } finally {
+              unlisten();
+              cliProgress(failed ? "failed" : "done");
+              bgEnd(failed);
+            }
+          }, (behind) => {
+            log2.textContent += waitWords(behind) + "…\n";
+            bgProgress(0, waitWords(behind));
+          });
+        } catch (err) {
+          showError(err);
+        }
+        stop2();
+        cliButtons([{ label: "Close", onClick: () => {
+          panel.hidden = true;
+        } }]);
+        loadStatus();
+      } },
+      { label: "Cancel", onClick: () => {
+        stop2();
+        panel.hidden = true;
+      } }
+    ]);
+  }
+  $2("cleanup").onclick = () => cliFlow("Remove old containers whose apps now run in the homelab", "cleanup", "", "Remove them");
+  $2("fixIt").onclick = () => cliFlow("Fix it", "fix", "", "Fix these");
+  $2("updateAll").onclick = () => cliFlow("Update all apps now", "update-all", "", "Update them");
+  var menuItems = () => [...$2("statusMenu").querySelectorAll("[role=menuitem]")].filter((b2) => !b2.hidden && !b2.disabled);
+  function closeMenu() {
+    $2("statusMenu").hidden = true;
+    $2("statusMore").setAttribute("aria-expanded", "false");
+  }
+  function openMenu(at2) {
+    $2("statusMenu").hidden = false;
+    $2("statusMore").setAttribute("aria-expanded", "true");
+    const items = menuItems();
+    if (at2 && items.length) items[at2 === "first" ? 0 : items.length - 1].focus();
+  }
+  $2("statusMore").onclick = (e3) => {
+    e3.stopPropagation();
+    if ($2("statusMenu").hidden) openMenu(e3.detail === 0 ? "first" : void 0);
+    else closeMenu();
+  };
+  $2("statusMore").addEventListener("keydown", (e3) => {
+    if (e3.key === "ArrowDown" || e3.key === "ArrowUp") {
+      e3.preventDefault();
+      openMenu(e3.key === "ArrowDown" ? "first" : "last");
+    }
+  });
+  $2("statusMenu").addEventListener("keydown", (e3) => {
+    const items = menuItems(), at2 = items.indexOf(document.activeElement);
+    const to = { ArrowDown: at2 + 1, ArrowUp: at2 - 1, Home: 0, End: items.length - 1 }[e3.key];
+    if (to === void 0 || !items.length) return;
+    e3.preventDefault();
+    items[(to + items.length) % items.length].focus();
+  });
+  $2("statusMenu").addEventListener("click", closeMenu);
+  document.addEventListener("click", (e3) => {
+    if (!$2("statusMenu").hidden && !e3.target.closest(".menuwrap")) closeMenu();
+  });
+  document.addEventListener("keydown", (e3) => {
+    if (e3.key !== "Escape" || $2("statusMenu").hidden) return;
+    const inside = $2("statusMenu").contains(document.activeElement);
+    closeMenu();
+    if (inside) $2("statusMore").focus();
+  });
+  $2("statusMore").closest(".menuwrap").addEventListener("focusout", () => setTimeout(() => {
+    if (!$2("statusMenu").hidden && document.hasFocus() && !$2("statusMore").closest(".menuwrap").contains(document.activeElement)) closeMenu();
+  }));
+  var missed = false;
+  function refreshStatus(c3) {
+    const behind = document.documentElement.classList.contains("sheet-open");
+    missed = behind;
+    if (c3?.status && !behind) {
+      statusData.set(c3.status);
+      return;
+    }
+    if ($2("status").classList.contains("active") && !behind) loadStatus();
+    else statusData.stale();
+  }
+  setInterval(refreshStatus, 6e4);
+  $2("phoneReport").onclick = async (e3) => {
+    const btn = e3.target;
+    btn.disabled = true;
+    btn.textContent = "Making the report…";
+    try {
+      const r3 = await go().Report();
+      const file = new File([r3.text], "homelab-report.txt", { type: "text/plain" });
+      const text2 = "My homelab needs a look. The report has every password and token removed.";
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Homelab report", text: text2 });
+      } else {
+        const a3 = $2("reportDownload");
+        a3.href = URL.createObjectURL(file);
+        a3.download = file.name;
+        a3.click();
+        if (r3.helper) location.href = "mailto:" + encodeURIComponent(r3.helper) + "?subject=" + encodeURIComponent("Homelab report") + "&body=" + encodeURIComponent(text2 + " The file is attached.");
+      }
+    } catch (err) {
+      if (err && err.name !== "AbortError") showError(err);
+    }
+    btn.disabled = false;
+    btn.textContent = "Send a report";
   };
 
   // web/src/parts/MenuButton.tsx
@@ -7416,7 +7659,7 @@
     switching[appId] = { ...switching[appId], [setting]: on2 };
     draw3();
     try {
-      await go().SetAppSetting(appId, setting, on2);
+      await inTurn(`${statusById[appId]?.name || appId}: ${setting}`, () => go().SetAppSetting(appId, setting, on2));
     } catch (e3) {
       showError(e3);
     }
@@ -7458,8 +7701,8 @@
     for (let i3 = 6; i3 >= 0; i3--) {
       const d3 = /* @__PURE__ */ new Date();
       d3.setDate(d3.getDate() - i3);
-      const key4 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-      const [ok, all] = runs2[key4] || [0, 0];
+      const key5 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+      const [ok, all] = runs2[key5] || [0, 0];
       out.push({ letter: dayText(d3, { weekday: "narrow" }), name: dayText(d3, { weekday: "long", day: "numeric", month: "short" }), weekday: dayText(d3, { weekday: "long" }), ok, all, today: i3 === 0 });
     }
     return out;
@@ -7745,14 +7988,14 @@
       return { owned, owes, secured, net };
     };
     const out = [];
-    const today = parseDay(v3.today);
+    const today2 = parseDay(v3.today);
     for (let i3 = back; i3 >= 1; i3--) {
-      const end = isoDay(new Date(today.getFullYear(), today.getMonth() - i3 + 1, 0));
+      const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
       out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
     out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
     for (let i3 = 1; i3 <= ahead; i3++) {
-      const end = isoDay(new Date(today.getFullYear(), today.getMonth() + i3 + 1, 0));
+      const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() + i3 + 1, 0));
       if (!v3.periods.some((q2) => q2.last >= end)) break;
       const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
       if (!p3) break;
@@ -7903,8 +8146,8 @@
   }
 
   // web/src/finances/reportData.ts
-  function ranges(today, first) {
-    const d3 = parseDay(today);
+  function ranges(today2, first) {
+    const d3 = parseDay(today2);
     const month3 = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3, 1));
     const end = (n3) => isoDay(new Date(d3.getFullYear(), d3.getMonth() + n3 + 1, 0));
     return [
@@ -7933,12 +8176,12 @@
     for (const t3 of txs) {
       if (!inRange(t3, r3)) continue;
       for (const p3 of parts(t3, income)) {
-        const key4 = p3.category.toLowerCase();
-        const g2 = parent.get(key4) || name.get(key4) || p3.category;
+        const key5 = p3.category.toLowerCase();
+        const g2 = parent.get(key5) || name.get(key5) || p3.category;
         const top = groups3.get(g2) || { name: g2, amount: 0, children: [] };
         top.amount += p3.amount;
-        if (parent.get(key4)) {
-          const child = top.children.find((c3) => c3.name.toLowerCase() === key4) || (top.children.push({ name: name.get(key4) || p3.category, amount: 0 }), top.children.at(-1));
+        if (parent.get(key5)) {
+          const child = top.children.find((c3) => c3.name.toLowerCase() === key5) || (top.children.push({ name: name.get(key5) || p3.category, amount: 0 }), top.children.at(-1));
           child.amount += p3.amount;
         }
         groups3.set(g2, top);
@@ -7960,11 +8203,11 @@
     const by = /* @__PURE__ */ new Map();
     for (const t3 of txs) {
       if (t3.to || t3.amount >= 0 || !inRange(t3, r3) || !t3.payee) continue;
-      const key4 = t3.payee.toLowerCase();
-      const p3 = by.get(key4) || { payee: t3.payee, amount: 0, count: 0 };
+      const key5 = t3.payee.toLowerCase();
+      const p3 = by.get(key5) || { payee: t3.payee, amount: 0, count: 0 };
       p3.amount -= t3.amount;
       p3.count++;
-      by.set(key4, p3);
+      by.set(key5, p3);
     }
     return [...by.values()].sort((a3, b2) => b2.amount - a3.amount).slice(0, n3);
   }
@@ -8003,8 +8246,8 @@
     return rows.map((row) => row.map((c3, i3) => i3 === 4 ? c3 : cell(c3)).join(",")).join("\r\n") + "\r\n";
   }
   var csvName = (r3, tag = "") => `finances-${r3.from}-to-${r3.to}${tag ? "-" + tag.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() : ""}.csv`;
-  function categoryTrend(txs, cats, group2, today, n3 = 12) {
-    const d3 = parseDay(today);
+  function categoryTrend(txs, cats, group2, today2, n3 = 12) {
+    const d3 = parseDay(today2);
     const out = [];
     for (let k3 = n3 - 1; k3 >= 0; k3--) {
       const first = new Date(d3.getFullYear(), d3.getMonth() - k3, 1);
@@ -8014,12 +8257,12 @@
     }
     return out;
   }
-  function twelveMonths(today) {
-    const d3 = parseDay(today);
+  function twelveMonths(today2) {
+    const d3 = parseDay(today2);
     return { key: "twelve", label: "The last 12 months", from: isoDay(new Date(d3.getFullYear(), d3.getMonth() - 11, 1)), to: isoDay(new Date(d3.getFullYear(), d3.getMonth() + 1, 0)) };
   }
-  function yearOnYear(txs, cats, group2, today) {
-    const d3 = parseDay(today);
+  function yearOnYear(txs, cats, group2, today2) {
+    const d3 = parseDay(today2);
     const spent = (from2, to) => byCategory(txs, cats, { key: "", label: "", from: isoDay(from2), to: isoDay(to) }).find((g2) => g2.name.toLowerCase() === group2.toLowerCase())?.amount || 0;
     const start = new Date(d3.getFullYear() - 1, d3.getMonth(), 1);
     const end = new Date(d3.getFullYear() - 1, d3.getMonth(), Math.min(d3.getDate(), new Date(d3.getFullYear() - 1, d3.getMonth() + 1, 0).getDate()));
@@ -8372,9 +8615,9 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function withLogo(plan, key4, img, opened2, had) {
+  function withLogo(plan, key5, img, opened2, had) {
     const logos = { ...plan.logos || {} };
-    if (img) logos[key4] = img;
+    if (img) logos[key5] = img;
     else if (had) delete logos[opened2];
     return Object.keys(logos).length ? logos : void 0;
   }
@@ -8822,9 +9065,9 @@
       first.current?.focus();
       first.current?.select();
     }, []);
-    const read = (key4, was) => {
-      const n3 = parseAmount(typed[key4] ?? "");
-      return typed[key4]?.trim() && !isNaN(n3) ? n3 : was;
+    const read = (key5, was) => {
+      const n3 = parseAmount(typed[key5] ?? "");
+      return typed[key5]?.trim() && !isNaN(n3) ? n3 : was;
     };
     const submit = (e3) => {
       e3.preventDefault();
@@ -8832,10 +9075,10 @@
       const wrong = bad ? `${bad.name}: type it without a minus.` : "";
       setProblem(wrong);
       if (wrong) return;
-      const today = todayISO();
-      keep2({ ...plan, updated: today, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today })) });
+      const today2 = todayISO();
+      keep2({ ...plan, updated: today2, cushion: Math.max(0, read("cushion", plan.cushion || 0)), accounts: accounts.map((a3) => ({ ...a3, balance: read(a3.id, est(a3)), pending: a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) : a3.pending, updated: today2 })) });
     };
-    const type = (key4) => (e3) => setTyped({ ...typed, [key4]: e3.target.value });
+    const type = (key5) => (e3) => setTyped({ ...typed, [key5]: e3.target.value });
     const [pulled, setPulled] = d2({});
     const fromApp = async (app) => {
       setPulled({ busy: app.name });
@@ -9435,8 +9678,8 @@
     }
     return rows.map((row) => row.map((c3, i3) => i3 === 3 || i3 === 5 ? c3 : cell2(c3)).join(",")).join("\r\n") + "\r\n";
   }
-  var planName = (today) => `finances-plan-${today}.json`;
-  var aheadName = (today) => `finances-ahead-${today}.csv`;
+  var planName = (today2) => `finances-plan-${today2}.json`;
+  var aheadName = (today2) => `finances-ahead-${today2}.csv`;
   var monthName2 = (month3) => `finances-${month3}.html`;
   var esc = (s3) => s3.replace(/[&<>"]/g, (c3) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c3]);
   function monthPage(v3, month3, title) {
@@ -9944,7 +10187,7 @@ ${pays}
 
   // web/src/finances/Reports.tsx
   function Reports({ v: v3, ledger, exportFile: exportFile2 }) {
-    const [key4, setKey] = d2("month");
+    const [key5, setKey] = d2("month");
     const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
     const [trendOf, setTrendOf] = d2("");
@@ -9954,7 +10197,7 @@ ${pays}
     const typed = picked ? ledger.transactions.filter((t3) => t3.tags?.includes(picked)) : ledger.transactions;
     const txs = inHome(v3.plan, typed);
     const all = ranges(v3.today, txs[0]?.date || v3.today);
-    const r3 = all.find((x3) => x3.key === key4) || all[0];
+    const r3 = all.find((x3) => x3.key === key5) || all[0];
     const sum = totals(txs, r3);
     const groups3 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3);
@@ -10387,11 +10630,11 @@ ${pays}
     ];
     return c3 && pairs.find(([re]) => re.test(c3))?.[1] || "";
   }
-  function paymentFromWallos(s3, today) {
+  function paymentFromWallos(s3, today2) {
     const brand = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
     const kind = kindForBrand(brand) || (/utilit/i.test(s3.category || "") ? "utilities" : "subscriptions");
     const type = kind === "subscriptions" ? typeFromCategory(s3.category) || suggestType(brand, s3.name) : "";
-    return { id: "", name: s3.name, amount: s3.amount, kind, institution: brand, type: type || void 0, schedule: { every: s3.every, start: s3.next || today } };
+    return { id: "", name: s3.name, amount: s3.amount, kind, institution: brand, type: type || void 0, schedule: { every: s3.every, start: s3.next || today2 } };
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
@@ -10486,11 +10729,11 @@ ${pays}
     const theirs = new Set(words2(service));
     return own2.length > 0 && own2.every((w3) => theirs.has(w3));
   }
-  function replacedBy(plan, running3) {
+  function replacedBy(plan, running4) {
     const out = [];
     for (const x3 of plan.payments || []) {
       if (x3.to || x3.card) continue;
-      for (const app of running3) {
+      for (const app of running4) {
         const service = app.replaces.find((s3) => same(x3.name, s3));
         if (!service) continue;
         const had = out.find((r3) => r3.payment.id === x3.id);
@@ -10672,14 +10915,14 @@ ${pays}
   var currencies = ["USD", "CAD", "EUR", "GBP", "AUD", "NZD", "CHF", "SEK", "NOK", "DKK", "JPY", "MXN", "INR", "ZAR"];
   var newKey = () => Array.from(crypto.getRandomValues(new Uint8Array(24)), (b2) => b2.toString(16).padStart(2, "0")).join("");
   function CalendarFeed({ v: v3, calendar, busy: busy2, set: set2 }) {
-    const key4 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
+    const key5 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
     const [link, setLink] = d2({});
     const [said, setSaid] = d2("");
     const [withAmounts, setWithAmounts] = d2(false);
     h2(() => {
-      if (!key4 || link.key === key4) return;
-      calendar().then((url) => setLink({ key: key4, url }), (e3) => setLink({ key: key4, problem: String(e3?.message || e3) }));
-    }, [key4]);
+      if (!key5 || link.key === key5) return;
+      calendar().then((url) => setLink({ key: key5, url }), (e3) => setLink({ key: key5, problem: String(e3?.message || e3) }));
+    }, [key5]);
     const copy = async () => {
       try {
         if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(link.url);
@@ -10691,7 +10934,7 @@ ${pays}
     };
     return /* @__PURE__ */ u3("fieldset", { class: "fincalendar", children: [
       /* @__PURE__ */ u3("legend", { children: "Calendar feed" }),
-      !key4 ? /* @__PURE__ */ u3(S, { children: [
+      !key5 ? /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Paydays and bills in your phone's calendar, through a link only you have. It works over Tailscale or the homelab's own domain, never over the home Wi-Fi." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: withAmounts, onClick: (e3) => setWithAmounts(e3.currentTarget.checked) }),
@@ -10699,14 +10942,14 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => set2(newKey(), withAmounts), children: "Make a calendar link" }) })
       ] }) : /* @__PURE__ */ u3(S, { children: [
-        link.key === key4 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
+        link.key === key5 && link.url && /* @__PURE__ */ u3("div", { class: "fincalendarlink", children: [
           /* @__PURE__ */ u3("input", { readOnly: true, value: link.url, "aria-label": "Calendar link", onFocus: (e3) => e3.target.select() }),
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: copy, children: "Copy" })
         ] }),
-        link.key === key4 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
+        link.key === key5 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
         /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
-          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key4, e3.currentTarget.checked) }),
+          /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key5, e3.currentTarget.checked) }),
           " With amounts"
         ] }),
         /* @__PURE__ */ u3("p", { class: "fincalendarbuttons", children: [
@@ -10782,7 +11025,7 @@ ${pays}
           words4
         ] }, kind))
       ] }),
-      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key4, amounts) => keep2({ currency, holidays, calendarKey: key4, calendarAmounts: amounts }) })
+      calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key5, amounts) => keep2({ currency, holidays, calendarKey: key5, calendarAmounts: amounts }) })
     ] });
   }
   var groups2 = {
@@ -10793,8 +11036,8 @@ ${pays}
     spending: (k3) => k3 === "spending",
     saving: (k3) => k3 === "savings"
   };
-  function after(day3, today = todayISO()) {
-    const d3 = daysBetween(today, day3);
+  function after(day3, today2 = todayISO()) {
+    const d3 = daysBetween(today2, day3);
     const months = Math.round(d3 / 30.4);
     return months >= 2 ? `in ${months} months` : d3 >= 14 ? `in ${Math.round(d3 / 7)} weeks` : `in ${plural(d3, "day")}`;
   }
@@ -10837,7 +11080,7 @@ ${pays}
       )) })
     ] });
   }
-  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) {
+  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running4, fromWallos }) {
     const [filter2, setFilter2] = d2(() => {
       const f4 = opening || "all";
       opening = "";
@@ -10885,7 +11128,7 @@ ${pays}
       ] });
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running3 || []), keep: keep2 }),
+      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running4 || []), keep: keep2 }),
       /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep2 && ((x3) => {
         keep2({ ...v3.plan, payments: [...v3.plan.payments || [], x3] });
       }) }),
@@ -11324,7 +11567,7 @@ ${pays}
   function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, update }) {
     const accounts = (v3.plan.accounts || []).filter(shown4);
     const cols = v3.periods.slice(0, postCols);
-    const today = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
+    const today2 = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
     const at2 = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? todayOf(v3, a3);
     const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
     const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
@@ -11366,9 +11609,9 @@ ${pays}
                 (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
               ] })
             ] }) }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today(a3)) }) }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today2(a3)) }) }),
             cols.map((p3, i3) => {
-              const was = i3 ? at2(a3, cols[i3 - 1]) : today(a3), now = at2(a3, p3);
+              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now = at2(a3, p3);
               return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
                 /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
                 change(now - was)
@@ -11377,7 +11620,7 @@ ${pays}
           ] }, a3.id)) }),
           /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
             /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today)) }) }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today2)) }) }),
             cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at2(a3, p3))) }) }, p3.start))
           ] }) })
         ] }) })
@@ -11416,14 +11659,14 @@ ${pays}
     if (m3.spent <= 0) return null;
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
     const share2 = Math.min(100, have / f4.target * 100);
-    const set2 = (key4, text2, lo, hi) => {
+    const set2 = (key5, text2, lo, hi) => {
       const n3 = parseAmount(text2);
-      if (isNaN(n3) || n3 < lo || n3 > hi || key4 === "withdraw" && n3 === 0) {
-        setProblem(key4 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
+      if (isNaN(n3) || n3 < lo || n3 > hi || key5 === "withdraw" && n3 === 0) {
+        setProblem(key5 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
         return;
       }
       setProblem("");
-      keep2({ ...v3.plan, [key4]: n3 });
+      keep2({ ...v3.plan, [key5]: n3 });
     };
     const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
     return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
@@ -11667,9 +11910,9 @@ ${pays}
 
   // web/src/finances/Worth.tsx
   var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
-  function ago2(day3, today) {
+  function ago2(day3, today2) {
     if (!day3) return "not typed in yet";
-    const n3 = daysBetween(day3, today);
+    const n3 = daysBetween(day3, today2);
     return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
@@ -11684,8 +11927,8 @@ ${pays}
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept2 = parseDay(firstKept(v3)), today = parseDay(v3.today);
-    const back = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today.getFullYear() - kept2.getFullYear()) * 12 + today.getMonth() - kept2.getMonth()));
+    const kept2 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
+    const back = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept2.getFullYear()) * 12 + today2.getMonth() - kept2.getMonth()));
     const months = worthByMonth(v3, back, 3);
     const start = months[0];
     const now = netWorth(v3);
@@ -12003,8 +12246,8 @@ ${pays}
     }
     return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
   }
-  var soon = (today, day3) => {
-    const n3 = daysBetween(today, day3);
+  var soon = (today2, day3) => {
+    const n3 = daysBetween(today2, day3);
     return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
   };
   function ComingUpWidget({ v: v3, L: L2, calendar }) {
@@ -12110,7 +12353,7 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open3, exportFile: exportFile2, printMonth, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open3, exportFile: exportFile2, printMonth, readReceipt, running: running4, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open3("account", cardOf(id2)) : open3(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -12144,17 +12387,17 @@ ${pays}
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running3, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running4, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running3, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running4, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running3, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running3 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running4, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running4 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
   }
   function mountFinances(el2, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el2);
@@ -12291,11 +12534,11 @@ ${pays}
       return false;
     }
   }
-  function setWaiting(key4, waiting) {
+  function setWaiting(key5, waiting2) {
     const v3 = financesData.value;
     const keys2 = new Set((v3.since || []).filter((s3) => s3.waiting).map((s3) => s3.key));
-    if (waiting) keys2.add(key4);
-    else keys2.delete(key4);
+    if (waiting2) keys2.add(key5);
+    else keys2.delete(key5);
     return save({ ...v3.plan, waiting: [...keys2], notYet: void 0 });
   }
   var toggled = 0;
@@ -12707,11 +12950,11 @@ ${pays}
       go: c3.install ? { label: "Install", run: () => act.install() } : c3.id === "calibredb" ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
     }));
     const todos = [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
-    const waiting = todos.filter((t3) => t3.go).length;
+    const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "Needs your OK", span: "all", kind: "fx-paycheck tidyneeds", actions: waiting ? /* @__PURE__ */ u3("span", { class: "muted", children: [
-        count(waiting, "thing"),
+      /* @__PURE__ */ u3(Widget, { title: "Needs your OK", span: "all", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
+        count(waiting2, "thing"),
         gain ? " · " + bytes(gain) + " to win back" : ""
       ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
         /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
@@ -12774,8 +13017,8 @@ ${pays}
   function TidyScreen(p3) {
     const { d: d3, job: job2, act } = p3;
     const tab3 = tabNow(p3.tab);
-    const waiting = d3 ? LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, p3.review, p3.pick)).filter((t3) => t3.go).length : 0;
-    const say = !d3 ? "" : (d3.freed ? `${bytes(d3.freed)} won back so far · ` : "") + (waiting ? `${count(waiting, "thing")} ${waiting === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
+    const waiting2 = d3 ? LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, p3.review, p3.pick)).filter((t3) => t3.go).length : 0;
+    const say = !d3 ? "" : (d3.freed ? `${bytes(d3.freed)} won back so far · ` : "") + (waiting2 ? `${count(waiting2, "thing")} ${waiting2 === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -13056,9 +13299,9 @@ ${pays}
     if (!$2("fixIt").hidden) add({ id: "fixit", label: "Fix it", also: "repair what is wrong", run: onStatus(() => $2("fixIt").click()) });
     const fin = financesData.value;
     if (fin && !fin.readOnly) add({ id: "hide", label: fin.plan.hideAmounts ? "Show amounts" : "Hide amounts", hint: isMac ? "⌘⇧H" : "Ctrl+Shift+H", also: "money privacy blur", run: toggleHideAmounts });
-    for (const [id2, label, key4, also] of screenList) {
+    for (const [id2, label, key5, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
-      add({ id: "screen:" + id2, label, hint: mod + key4, also: "screen go " + also, run: () => navigate(id2) });
+      add({ id: "screen:" + id2, label, hint: mod + key5, also: "screen go " + also, run: () => navigate(id2) });
     }
     const apps = Object.values(statusById);
     if (!apps.length) return list;
@@ -13070,29 +13313,29 @@ ${pays}
     if (!phone2 && !busy2) {
       for (const g2 of catalog?.categories || []) {
         const mine = apps.filter((a3) => entry(a3.id)?.category === g2.id && container(a3));
-        const running3 = mine.filter((a3) => a3.state === "running"), stopped = mine.filter(startable2);
+        const running4 = mine.filter((a3) => a3.state === "running"), stopped = mine.filter(startable2);
         const n3 = (k3) => k3 === 1 ? `the 1 ${g2.label} app` : `the ${k3} ${g2.label} apps`;
         const act = (action, of) => onStatus(() => {
           rowActions.groupAct(of, action, () => {
           });
         });
         if (stopped.length) add({ id: `group:${g2.id}:start`, label: `Start ${n3(stopped.length)} stopped`, hint: g2.label, run: act("start", stopped) });
-        if (running3.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running3.length)}`, hint: g2.label, run: act("restart", running3) });
-        if (running3.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running3.length)}`, hint: g2.label, danger: `stop ${n3(running3.length)}`, run: act("stop", running3) });
+        if (running4.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running4.length)}`, hint: g2.label, run: act("restart", running4) });
+        if (running4.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running4.length)}`, hint: g2.label, danger: `stop ${n3(running4.length)}`, run: act("stop", running4) });
       }
     }
     for (const a3 of apps.sort((x3, y3) => x3.name.localeCompare(y3.name))) {
       const g2 = catalog?.categories.find((c3) => c3.id === entry(a3.id)?.category)?.label || "";
       const also = `${a3.id} ${g2}`;
       const url = a3.address ? "https://" + a3.address : a3.url || "";
-      const running3 = a3.state === "running";
+      const running4 = a3.state === "running";
       const own2 = (verb2, label, run2, danger) => add({ id: `app:${a3.id}:${verb2}`, label, hint: g2, also, danger, run: run2 });
-      if (running3 && url) own2("open", `Open ${a3.name}`, () => m3.open(url));
+      if (running4 && url) own2("open", `Open ${a3.name}`, () => m3.open(url));
       own2("page", `${a3.name}’s page`, () => pageOpener.open(a3.id));
       if (container(a3) && !phone2 && !busy2) {
         if (a3.state === "stopped") own2("start", `Start ${a3.name}`, onStatus(() => m3.act(a3, "start")));
-        if (running3) own2("restart", `Restart ${a3.name}`, onStatus(() => m3.act(a3, "restart")));
-        if (running3) own2("stop", `Stop ${a3.name}`, onStatus(() => m3.act(a3, "stop")), `stop ${a3.name}`);
+        if (running4) own2("restart", `Restart ${a3.name}`, onStatus(() => m3.act(a3, "restart")));
+        if (running4) own2("stop", `Stop ${a3.name}`, onStatus(() => m3.act(a3, "stop")), `stop ${a3.name}`);
       }
       if (container(a3)) own2("logs", `${a3.name}’s logs`, () => m3.logs(a3));
       if (url) own2("copy", `Copy ${a3.name}’s address`, () => m3.copy(url).then(() => "Address copied", () => "Could not copy the address"));
@@ -13260,11 +13503,11 @@ ${pays}
   }
 
   // web/src/place.ts
-  var key3 = "homelab.place";
+  var key4 = "homelab.place";
   var kept = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
   var places = {};
   try {
-    places = JSON.parse(localStorage.getItem(key3) || "{}") || {};
+    places = JSON.parse(localStorage.getItem(key4) || "{}") || {};
   } catch {
     places = {};
   }
@@ -13276,7 +13519,7 @@ ${pays}
     const all = sections(screen);
     places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d3) => d3.open).map((d3) => d3.id), shut: all.filter((d3) => !d3.open).map((d3) => d3.id) };
     try {
-      localStorage.setItem(key3, JSON.stringify(places));
+      localStorage.setItem(key4, JSON.stringify(places));
     } catch {
     }
   }

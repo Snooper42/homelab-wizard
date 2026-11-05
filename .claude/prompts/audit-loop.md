@@ -359,6 +359,13 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     take and whether any of them reaches outside the libraries.
 
 
+22. (done: round 23) **`data/started.json` written as stopped.json was** (internal/started,
+    #411): six writers (Start and Restart, updates, Fix it, the watchdog,
+    the battery saver, a drive back, the stop timer) each read, change,
+    and rewrite it in place with no lock. Only the "up 9 minutes" hover
+    reads it, so a lost or torn write costs a reason on a hover, nothing
+    more; save it as stopped.Update does (lock, temporary file, rename).
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -515,3 +522,34 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   now answers `movies scan --check`, since `unready` is refused before it
   runs; `TestTidyRunSaysWhyItStopped` checks the same thing as before.
   Items 19–21 done: the next come from what is added from here on.
+- **Round 18 (#405 and #406, read through):** Finances' Export writes a
+  month's page the screen built (`PrintFinances`) into
+  reports/finances, 0600 in a 0700 folder, and opens it in the browser;
+  every name in it, a bank file's payee too, is escaped (`esc`, element
+  text only), and the year-ahead CSV keeps a cell from reading as a
+  formula. Neither method is a phone method: a phone builds its files
+  itself. The week's outages (#406) keep only what the checks already
+  said, drawn by Preact. No code change needed.
+- **Round 19 (#409, read through):** the sidebar balances' hover lists
+  each account and how old its balance is; account names (a bank
+  file's too) are drawn by Preact, with no raw HTML anywhere in the
+  change, and nothing new reaches a phone or the Go side. No code
+  change needed.
+- **Round 20 (#408, read through):** Tdarr is handed only the two
+  folders its container mounts (narrower than before); lyrics are read
+  from a song's own .lrc and .txt beside it, and still come only from
+  LRCLIB, which Tidy Up already used. No code change needed.
+- **Round 21 (#411, read through):** why an app last started, for the
+  "up 9 minutes" hover: data/started.json, written by six parts of the
+  homelab without a lock, as stopped.json was before N10. Nothing starts
+  or stops by it (only the hover reads it), so it is no hole; item 22.
+- **Round 22 (#413–#420, read through):** pinning (`homelab pin`, the
+  phone's SetAppSetting "pinned", which needs Change) writes APPS_PINNED
+  to .env, but only a catalog app ID; the backups hover (#418) sends a
+  job's run time, sizes, versions, and source folders, never its
+  destination (which can hold credentials); the rest is the page. No
+  code change needed.
+- **Round 23 (item 22, data/started.json):** saved under a lock and
+  whole, with internal/lockedfile (stopped.Update's way, for any record),
+  0600. `TestNotesAtOnceAreAllKept` failed before: 40 notes at once kept
+  fewer, the record was written in place, and it was 0644.

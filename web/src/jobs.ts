@@ -19,10 +19,15 @@ export function startJob(box: string) {
   jobBox = box;
   jobRows = {};
   jobSteps = false;
+  clearJob(box);
+}
+/** A job window drawn empty (its rows, bar, and details) without taking the bar from the job that has it: a job waiting its turn (job/queue.ts). */
+export function clearJob(box: string) {
   mountJobApps($(box + 'Apps'), []);
   const d = $(box + 'Details');
   if (d) { d.open = true; delete d.dataset.touched; }
-  cliProgress(null);
+  const p = $(box + 'Progress');
+  if (p) p.hidden = true;
 }
 export function jobApp(u: progress.Update) {
   const fresh = !jobRows[u.app];

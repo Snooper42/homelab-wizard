@@ -8,7 +8,7 @@ import { loadStatus, statusById, statusData } from './status';
 import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
-import { waitForBg } from '../job/Background';
+import { inTurn, waitWords } from '../job/queue';
 import { $, go, minute, osName, showError } from '../core';
 
 // Choose stacks
@@ -63,10 +63,13 @@ $('cAdd').onclick = async () => {
   log.hidden = false;
   log.textContent = '';
   $('cAdd').disabled = true;
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
+  let off: any = null;
   try {
     const before = new Set(catalog.apps.map((a) => a.id));
-    catalog = await go().AddCustom(spec);
+    catalog = await inTurn(`Adding ${spec.name || 'your app'}`, () => {
+      off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; });
+      return go().AddCustom(spec).finally(() => { if (typeof off === 'function') off(); off = null; });
+    }, (behind) => { log.textContent = `${waitWords(behind)}…\n`; });
     const added = catalog.apps.find((a) => !before.has(a.id));
     renderApps();
     if (added) { selected.add(added.id); renderApps(); replan(); }
@@ -164,12 +167,10 @@ async function renderInputs(p: api.Plan) {
 
 let installing = false;
 $('installBtn').onclick = async () => {
-  if (waitForBg()) return;
   const btn = $('installBtn');
   installing = true;
   btn.disabled = true;
   btn.textContent = 'Installing…';
-  startJob('install');
   mountStarted($('started'), null);
   mountWiring($('wiring'), null);
   // The plan's steps, in plain words, on the bar; each app's own row comes
@@ -178,35 +179,40 @@ $('installBtn').onclick = async () => {
   const ilog = $('installLog');
   ilog.textContent = '';
   $('installDetails').hidden = true;
-  const offLog = window.runtime.EventsOn('install:log', (line) => {
-    $('installDetails').hidden = false;
-    ilog.textContent += line + '\n';
-    ilog.scrollTop = ilog.scrollHeight;
-  });
-  const off = window.runtime.EventsOn('progress', (ev) => {
-    if (ev.error) return;
-    const text = ev.name === 'start' ? `Starting ${(ev.apps || []).map(appName).join(', ')}` : words[ev.name];
-    cliProgress({ n: ev.step, total: ev.steps + 1, text });
-  });
-  try {
-    const started = await go().Install([...selected], filled());
-    cliProgress('done');
-    mountStarted($('started'), { started, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
-    if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
-    selected.clear();
-    // New apps: Settings has their settings, and Status (with the ticks here) changed.
-    settingsData.stale();
-    await loadStatus();
-  } catch (e) {
-    cliProgress('failed');
-    showError(e);
-  } finally {
-    if (typeof off === 'function') off();
-    if (typeof offLog === 'function') offLog();
-    btn.textContent = 'Install';
-    installing = false;
-    replan();
-  }
+  // In its turn (job/queue.ts): the button says what it waits for meanwhile.
+  await inTurn('Installing', async () => {
+    btn.textContent = 'Installing…';
+    startJob('install');
+    const offLog = window.runtime.EventsOn('install:log', (line) => {
+      $('installDetails').hidden = false;
+      ilog.textContent += line + '\n';
+      ilog.scrollTop = ilog.scrollHeight;
+    });
+    const off = window.runtime.EventsOn('progress', (ev) => {
+      if (ev.error) return;
+      const text = ev.name === 'start' ? `Starting ${(ev.apps || []).map(appName).join(', ')}` : words[ev.name];
+      cliProgress({ n: ev.step, total: ev.steps + 1, text });
+    });
+    try {
+      const started = await go().Install([...selected], filled());
+      cliProgress('done');
+      mountStarted($('started'), { started, open: (url) => go().Open(url), close: () => { clearInstall(); $('search').focus(); } });
+      if (!$('wireRow').hidden && $('wire').checked && started.length) await wire($('wiring'));
+      selected.clear();
+      // New apps: Settings has their settings, and Status (with the ticks here) changed.
+      settingsData.stale();
+      await loadStatus();
+    } catch (e) {
+      cliProgress('failed');
+      showError(e);
+    } finally {
+      if (typeof off === 'function') off();
+      if (typeof offLog === 'function') offLog();
+    }
+  }, (behind) => { btn.textContent = `${waitWords(behind)}…`; });
+  btn.textContent = 'Install';
+  installing = false;
+  replan();
 };
 
 // Wiring: connect the running apps, showing each link as it finishes.

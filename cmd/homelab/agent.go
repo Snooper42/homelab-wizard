@@ -22,6 +22,22 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
+// sleptAfter is how late a minute's tick may come before the machine is
+// taken to have slept (a closed lid, a sleeping Mac).
+const sleptAfter = 3 * time.Minute
+
+// watchDue says whether the watchdog runs now: every watchdogEvery, and at
+// once after the machine slept (woke), rather than at its next run. Both
+// are counted on the wall clock: Go's monotonic clock stops while the
+// machine sleeps on macOS and Linux, so after a night asleep the watchdog
+// would otherwise wait 15 more minutes of being awake.
+func watchDue(now, lastWatch, lastTick time.Time) (due, woke bool) {
+	wall := func(a, b time.Time) time.Duration { return a.Round(0).Sub(b.Round(0)) }
+	woke = !lastTick.IsZero() && wall(now, lastTick) > sleptAfter
+	due = lastWatch.IsZero() || woke || wall(now, lastWatch) >= watchdogEvery
+	return due, woke
+}
+
 // The agent's timetable: the watchdog every 15 minutes, the backup daily
 // at backupHour:backupMinute, and the nightly updates at WATCHTOWER_
 // SCHEDULE's hour (4:00 unless changed), each at the first chance after
@@ -136,7 +152,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	if h.quitted() {
 		restarted()
 	}
-	lastWatch := time.Time{}
+	lastWatch, lastTick := time.Time{}, time.Now()
 	tick := time.NewTicker(time.Minute)
 	defer tick.Stop()
 	// Tidy Up's minute (homelab media tick): the inbox, Tdarr's finished
@@ -152,10 +168,14 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 				_ = run("media", "media", "tick")
 			}()
 		}
-		if now.Sub(lastWatch) >= watchdogEvery {
+		if due, woke := watchDue(now, lastWatch, lastTick); due {
+			if woke {
+				h.ui.Info("agent: awake again: checking every app now")
+			}
 			lastWatch = now
 			_ = run("watchdog", "watchdog", "--quiet")
 		}
+		lastTick = now
 		if s := loadAgentState(state); backupDue(now, s.LastBackup) {
 			_ = run("backup", "backup", "--apply")
 			s.LastBackup = now
