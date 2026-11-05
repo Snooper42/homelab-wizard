@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -33,6 +34,15 @@ type Job struct {
 	Size         string    `json:"size,omitempty"` // what it holds at the destination, e.g. "12.3 GB"
 	State        string    `json:"state"`          // ok, failed, stale, or never
 	NextRun      time.Time `json:"nextRun"`        // when Duplicati will run it next; zero when not scheduled
+	// What its last run was, for a hover on Backups: how long it took
+	// (seconds; 0 when Duplicati did not say), what it holds of yours (its
+	// sources' size, e.g. "48.2 GB", and how many files), how many
+	// versions it keeps, and the folders it copies.
+	Took     int      `json:"took,omitempty"`
+	Holds    string   `json:"holds,omitempty"`
+	Files    int      `json:"files,omitempty"`
+	Versions int      `json:"versions,omitempty"`
+	Sources  []string `json:"sources,omitempty"`
 }
 
 // Client is a signed-in session with one Duplicati.
@@ -76,6 +86,7 @@ func (c *Client) Jobs(ctx context.Context, now time.Time) ([]Job, error) {
 		Backup struct {
 			ID       string
 			Name     string
+			Sources  []string
 			Metadata map[string]string
 		}
 	}
@@ -85,7 +96,11 @@ func (c *Client) Jobs(ctx context.Context, now time.Time) ([]Job, error) {
 	jobs := make([]Job, 0, len(list))
 	for _, item := range list {
 		m := item.Backup.Metadata
-		j := Job{ID: item.Backup.ID, Name: item.Backup.Name, LastFinished: parse(m["LastBackupFinished"]), LastError: parse(m["LastErrorDate"]), Size: m["TargetSizeString"]}
+		j := Job{ID: item.Backup.ID, Name: item.Backup.Name, LastFinished: parse(m["LastBackupFinished"]), LastError: parse(m["LastErrorDate"]), Size: m["TargetSizeString"],
+			Holds: m["SourceSizeString"], Files: count(m["SourceFilesCount"]), Versions: count(m["BackupListCount"]), Sources: item.Backup.Sources}
+		if started := parse(m["LastBackupStarted"]); !started.IsZero() && j.LastFinished.After(started) {
+			j.Took = int(j.LastFinished.Sub(started).Round(time.Second) / time.Second)
+		}
 		switch {
 		case !j.LastError.IsZero() && j.LastError.After(j.LastFinished):
 			j.State, j.ErrorMessage = "failed", m["LastErrorMessage"]
@@ -133,6 +148,15 @@ func (c *Client) nextRuns(ctx context.Context) (map[string]time.Time, error) {
 }
 
 // parse reads Duplicati's serialized dates (yyyyMMddTHHmmssZ, in UTC).
+// count reads a number Duplicati keeps as text ("4210"); 0 when it is not one.
+func count(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
 func parse(s string) time.Time {
 	t, err := time.Parse("20060102T150405Z07:00", s)
 	if err != nil {

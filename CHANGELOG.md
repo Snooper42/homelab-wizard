@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.
 - **When an app was down this week:** hover its *96.2% up this week* on Status (or Tab to it, or tap it on a phone) for the week as a strip, with each time it was down, for how long, and why (*Wed 3:15 AM, 45 minutes: nothing answers on its port*).
 - **Export your finances:** Finances has **Export**: your whole plan as a JSON file to keep or take elsewhere, the year ahead as a spreadsheet (each payday and payment, with checking after each day), and this month or the next as a page that prints itself. Saved where you pick, readable only by you; on a phone, shared or downloaded, even one that may only look.
 - **Tidy Up gets ffmpeg for you:** without ffmpeg, Tidy Up's Overview has **Install**, with no Terminal and no password: it runs Homebrew (or winget on Windows) for you when it's there, and otherwise fetches ffmpeg for Tidy Up alone, checks it's exactly the build expected before it runs, and keeps it in its own folder. A scan that stopped for want of it offers **Install ffmpeg**, then carries on by itself. Calibre's row opens its download page, and coming back to the window checks again without a click.

@@ -451,6 +451,11 @@ declare namespace duplicati {
     size?: string;
     state: string;
     nextRun: string;
+    took?: number;
+    holds?: string;
+    files?: number;
+    versions?: number;
+    sources?: string[];
   }
 }
 
