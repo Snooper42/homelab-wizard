@@ -51,6 +51,7 @@ func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, conta
 			}
 			a, _ := h.catalog.Get(id)
 			started = append(started, a)
+			h.noteStarted(whyTimer, id)
 			forget[id] = r[id]
 		}
 	}

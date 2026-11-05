@@ -15,6 +15,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
@@ -151,6 +152,8 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		p := h.project(pa.file)
 		if err := client.Compose(ctx, p, pa.profiles, append([]string{"restart"}, pa.ids...)...); err != nil {
 			warn("restart %s: %v", strings.Join(pa.ids, ", "), err)
+		} else {
+			h.noteStarted(started.Fix, pa.ids...)
 		}
 	}
 	if len(unwell) > 0 {
@@ -160,6 +163,8 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			u.Info("still unwell after a restart, recreating: %s", strings.Join(pa.ids, ", "))
 			if err := client.Compose(ctx, p, pa.profiles, append([]string{"up", "--detach", "--force-recreate", "--no-deps"}, pa.ids...)...); err != nil {
 				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
+			} else {
+				h.noteStarted(started.Fix, pa.ids...)
 			}
 		}
 		if still = h.stillUnwell(ctx, still); len(still) > 0 {

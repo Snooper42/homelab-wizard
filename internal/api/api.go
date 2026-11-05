@@ -280,6 +280,11 @@ type AppStatus struct {
 	Address   string `json:"address,omitempty"`  // on the homelab domain
 	Since     string `json:"since,omitempty"`    // when it last started (RFC 3339), while running
 	Restarts  int    `json:"restarts,omitempty"` // restarts by its restart policy since it was created
+	// StartedBy is why it last started, while running: you, updated,
+	// nightly, fix, watchdog, battery, drive, timer (internal/started);
+	// update (one noticed then, by whoever made it); or docker (its restart
+	// policy, after it stopped on its own); "" when nothing says.
+	StartedBy string `json:"startedBy,omitempty"`
 	// UpdatedAt is when its last update was noticed, while the image it ran
 	// before is kept to go back to (homelab rollback); RFC 3339.
 	UpdatedAt string `json:"updatedAt,omitempty"`

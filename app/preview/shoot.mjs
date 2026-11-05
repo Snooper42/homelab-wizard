@@ -2643,6 +2643,25 @@ const smokes = [
     const said = await page.waitForSelector(`${blips} [role=tooltip]`, { state: 'visible', timeout: 3000 });
     if (!/No outage: each check it missed passed the next time/.test(await said.innerText())) throw new Error('Vaultwarden says: ' + await said.innerText());
   } },
+  // Hover "up 8 hours" (or Tab to it) for why it last started, and when; an app with no reason kept has plain words.
+  { name: 'Why an app restarted, on hover', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, startedBy: 'watchdog' } : a.id === 'audiobookshelf' ? { ...a, startedBy: 'docker' } : a)) } }, run: async (page) => {
+    const up = '#statusRows tr:has(strong:text-is("Vikunja")) .local.hovers:has-text("up 8 hours")';
+    await page.waitForSelector(up, { timeout: 5000 });
+    await page.hover(up);
+    const card = await page.waitForSelector(`${up} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = await card.innerText();
+    if (!/The watchdog restarted it: it was unwell on two checks in a row/.test(said) || !/(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d+:\d\d (AM|PM)/.test(said)) throw new Error('Vikunja says: ' + said);
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${up} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    const abs = '#statusRows tr:has(strong:text-is("Audiobookshelf")) .local.hovers';
+    await page.focus(abs);
+    const docker = await page.waitForSelector(`${abs} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    if (!/Docker started it again after it stopped on its own/.test(await docker.innerText())) throw new Error('Audiobookshelf says: ' + await docker.innerText());
+    // A click on the words stays on Status; nothing kept, nothing to hover.
+    await page.click(up);
+    if (!(await page.isVisible('#status'))) throw new Error('the click left Status');
+    if (await page.$$eval('#statusRows tr:has(strong:text-is("Immich")) .local', (l) => l.some((e) => e.classList.contains('hovers')))) throw new Error('Immich has a hover with nothing to say');
+  } },
   { name: 'Uptime and restarts on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Audiobookshelf") .badge:has-text("restarted 3×")', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr:has-text("Vikunja") .local:has-text("up 8 hours")');

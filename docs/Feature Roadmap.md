@@ -19,7 +19,8 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Right-click the sidebar | A screen's own menu from the sidebar: Status's Check again and Update all, Backups' Back up now and Test a restore, Finances' Add a transaction, Update balances, and Hide amounts | #PR4 |
+| Right-click the sidebar | A screen's own menu from the sidebar: Status's Check again and Update all, Backups' Back up now and Test a restore, Finances' Add a transaction, Update balances, and Hide amounts | #413 |
+| Why it restarted | Hover *up 9 minutes* on Status for why the app last started and when: you, an update, Fix it, the watchdog, the power back, its drive back, a Stop for a while ending, or Docker after a crash | #411 |
 | A balance's accounts | Rest on a group in the sidebar's Accounts for its accounts, each balance, and how long since each was updated; a dot on one older than a month | #409 |
 | The week's outages | Hover *96.2% up this week* on Status for the week as a strip, with each time the app was down, how long, and why | #406 |
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
@@ -55,7 +56,7 @@ The things you do many times a day, made one click shorter.
 - **Right-click an app's row** (M, *Built*, #369): Open, Open on a phone, Copy address, Restart, Stop, Logs, Back up now, Tell me if it stops. Everything on the app's page, without opening it. A right-click on a group's heading opens its menu.
 - **Stopped on purpose** (M, *Built*, #367): an app you stop from the menu stays stopped. Start them all, the watchdog, and plugging in skip it, and its row says "Stopped by you" with Start beside it. The wait for a drive skips it too.
 - **Undo** (S, *Built*, #375): after Stop, Stop all, or Stop for a while, a note for 10 seconds: "Stopped 6 Media apps · Undo", and ⌘Z. Restart all has none (nothing to take back).
-- **Right-click the sidebar** (S, *Built*, #PR4): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
+- **Right-click the sidebar** (S, *Built*, #413): Status: Check again, Update all. Backups: Back up now, Test a restore. Finances: Add a transaction, Update balances.
 - **Command palette** (M, *Built*, #395): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
 - **Type to filter Status** (S, *Built*, #385): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it, and Return opens the first one's page.
 - **A quick peek** (M, *Idea*): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.
@@ -69,7 +70,7 @@ The things you do many times a day, made one click shorter.
 
 Questions the screen can answer without a click.
 
-- **Why it restarted** (S, *Idea*): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.
+- **Why it restarted** (S, *Built*, #411): hover "up 9 minutes" for the reason: an update, a crash, the battery saver, the watchdog, or you, with the time.
 - **The week's outages** (S, *Built*, #406): hover "94% up this week" for a strip of the week with each time it was down, and why.
 - **A balance opens its own group** (S, *Built*, #379): clicking Cash or Investments in the sidebar opens Net worth on that group's accounts, not the whole page; each account opens its own history.
 - **A balance's accounts** (S, *Built*, #409): hover a group in the sidebar's Accounts for its accounts and how long since each was updated; a dot marks one older than a month.
