@@ -517,6 +517,17 @@ struct ChangeMemoryTests {
         #expect(memory[ChangeMemory.hash("immich", key: other)] == nil)
         #expect(ChangeMemory.change(of: immich, since: memory, key: other) == nil)
     }
+
+    @Test func markAsSeenSurvivesAReadBackAndAnEmptyListKeepsIt() throws {
+        let defaults = try #require(UserDefaults(suiteName: "homelab.tests.\(UUID().uuidString)"))
+        let up = app(#"{"id":"a","name":"A","state":"running","since":"2026-11-05T01:00:00Z"}"#)
+        ChangeMemory.save([up], key: key, to: defaults)
+        let read = ChangeMemory.load(defaults)
+        #expect(ChangeMemory.change(of: up, since: read, key: key) == nil)
+        // Nothing to show (a lock mid-read) never wipes what was seen.
+        ChangeMemory.save([], key: key, to: defaults)
+        #expect(ChangeMemory.load(defaults) == read)
+    }
 }
 
 @Suite("DeviceInfo")
