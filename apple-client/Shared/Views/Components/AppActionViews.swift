@@ -33,7 +33,7 @@ struct AppActionControls: ViewModifier {
             }
             #if os(iOS)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                ForEach(available.reversed()) { action in
+                ForEach(available.filter(\.isEveryday).reversed()) { action in
                     Button {
                         actions.request(action, on: app)
                     } label: {
@@ -59,6 +59,7 @@ extension AppAction {
         case .start: .green
         case .stop: .red
         case .restart: .blue
+        case .rollback: .orange
         }
     }
 }
@@ -89,15 +90,15 @@ struct AppActionsPresenter: ViewModifier {
     func body(content: Content) -> some View {
         content
             .confirmationDialog(
-                actions.stopCandidate.map { "Stop \($0.name)?" } ?? "Stop?",
-                isPresented: stopConfirmation,
+                actions.confirmation.map { $0.action.confirmationTitle(for: $0.app) } ?? "",
+                isPresented: confirming,
                 titleVisibility: .visible,
-                presenting: actions.stopCandidate
-            ) { app in
-                Button("Stop \(app.name)", role: .destructive) { actions.confirmStop() }
-                Button("Cancel", role: .cancel) { actions.stopCandidate = nil }
-            } message: { app in
-                Text("\(app.name) stays stopped until you start it again. Anyone using it right now loses it.")
+                presenting: actions.confirmation
+            ) { pending in
+                Button("\(pending.action.title) \(pending.app.name)", role: .destructive) { actions.confirm() }
+                Button("Cancel", role: .cancel) { actions.confirmation = nil }
+            } message: { pending in
+                Text(pending.action.confirmationMessage(for: pending.app))
             }
             .sheet(item: $actions.details) { details in
                 ActionLogView(details: details)
@@ -114,10 +115,10 @@ struct AppActionsPresenter: ViewModifier {
             .sensoryFeedback(.error, trigger: actions.failureCount)
     }
 
-    private var stopConfirmation: Binding<Bool> {
+    private var confirming: Binding<Bool> {
         Binding(
-            get: { actions.stopCandidate != nil },
-            set: { if !$0 { actions.stopCandidate = nil } }
+            get: { actions.confirmation != nil },
+            set: { if !$0 { actions.confirmation = nil } }
         )
     }
 }

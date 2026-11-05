@@ -42,6 +42,11 @@ struct AppDetailView: View {
                             Text(started, format: .relative(presentation: .named))
                         }
                     }
+                    if let updated = app.updatedAt.flatMap(GoTime.parse) {
+                        LabeledContent("Updated") {
+                            Text(updated, format: .relative(presentation: .named))
+                        }
+                    }
                     if let restarts = app.restarts, restarts > 0 {
                         LabeledContent("Restarts", value: restarts.formatted())
                     }

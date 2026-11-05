@@ -170,8 +170,16 @@ struct AppActionTests {
         #expect(AppAction.available(for: try app(state: "elsewhere")).isEmpty)
     }
 
-    @Test func onlyStopIsConfirmed() {
-        #expect(AppAction.allCases.filter(\.needsConfirmation) == [.stop])
+    @Test func stopAndRollBackAreConfirmed() {
+        #expect(AppAction.allCases.filter(\.needsConfirmation) == [.stop, .rollback])
+        #expect(!AppAction.rollback.isEveryday)
+    }
+
+    @Test func rollBackWhileTheOldVersionIsKept() throws {
+        let json = #"{"id":"immich","name":"Immich","state":"running","updatedAt":"2026-11-04T03:00:00Z"}"#
+        let updated = try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+        #expect(AppAction.available(for: updated) == [.restart, .stop, .rollback])
+        #expect(AppAction.rollback.confirmationMessage(for: updated).contains("homelab updates release immich"))
     }
 
     @Test func appIDsAreCatalogShaped() {

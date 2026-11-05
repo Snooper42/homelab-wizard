@@ -42,8 +42,14 @@ final class AppActionsViewModel {
     private(set) var pending: [AppStatus.ID: Pending] = [:]
     private(set) var isBusy = false
     private(set) var undo: UndoOffer?
-    /// The app whose Stop waits for confirmation.
-    var stopCandidate: AppStatus?
+    /// A Stop or Roll back waiting for confirmation.
+    struct Confirmation: Identifiable {
+        let id = UUID()
+        let action: AppAction
+        let app: AppStatus
+    }
+
+    var confirmation: Confirmation?
     var details: Details?
     /// These go up by one per outcome, to trigger haptics.
     private(set) var successCount = 0
@@ -88,10 +94,10 @@ final class AppActionsViewModel {
 
     // MARK: Running
 
-    /// From a button: Stop asks for confirmation first, and the others run.
+    /// From a button: Stop and Roll back ask for confirmation first, and the others run.
     func request(_ action: AppAction, on app: AppStatus) {
         if action.needsConfirmation {
-            stopCandidate = app
+            confirmation = Confirmation(action: action, app: app)
         } else {
             Task { await run(action, on: app) }
         }
@@ -103,10 +109,10 @@ final class AppActionsViewModel {
         Task { await run(.stop, on: app, until: choice) }
     }
 
-    func confirmStop() {
-        guard let app = stopCandidate else { return }
-        stopCandidate = nil
-        Task { await run(.stop, on: app) }
+    func confirm() {
+        guard let pending = confirmation else { return }
+        confirmation = nil
+        Task { await run(pending.action, on: pending.app) }
     }
 
     /// Undo after a stop starts the app again. That's still a change, so
@@ -155,6 +161,11 @@ final class AppActionsViewModel {
             successCount += 1
             isBusy = false
             if action == .stop { offerUndo(for: app, until: until) }
+            // Roll back's output says which version it went to: worth reading,
+            // as on the computer, so it opens by itself.
+            if action == .rollback, !log.isEmpty {
+                details = Details(id: app.id, title: "\(action.pastTense) \(app.name)", lines: log)
+            }
             // Wait for Status to show the result, then drop "Stopping…".
             await liveEvents.refreshNow()
             if pending[app.id]?.failure == nil { pending[app.id] = nil }
