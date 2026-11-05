@@ -47,6 +47,8 @@ struct AppDetailView: View {
 
                 backupSection(for: app)
 
+                updatesSection(for: app)
+
                 Section("Details") {
                     LabeledContent("State", value: app.stateLabel)
                     if let health = app.health, !health.isEmpty {
@@ -60,11 +62,6 @@ struct AppDetailView: View {
                             Text(why).font(.callout).foregroundStyle(.secondary)
                         }
                     }
-                    if let updated = app.updatedAt.flatMap(GoTime.parse) {
-                        LabeledContent("Updated") {
-                            Text(updated, format: .relative(presentation: .named))
-                        }
-                    }
                     if let restarts = app.restarts, restarts > 0 {
                         LabeledContent("Restarts", value: restarts.formatted())
                     }
@@ -74,7 +71,7 @@ struct AppDetailView: View {
                         }
                     }
                     if let drive = app.waitingFor, !drive.isEmpty {
-                        LabeledContent("Waiting for drive", value: drive)
+                        LabeledContent("Waiting for drive", value: AppStatus.driveName(drive))
                         Text("It starts by itself within a minute of the drive being plugged in again.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
@@ -205,6 +202,34 @@ struct AppDetailView: View {
     }
 
     @ViewBuilder
+    /// The app page's Updates card (web/src/page/AppPage.tsx): the version
+    /// it runs, when it came, and whether its updates are held.
+    @ViewBuilder
+    private func updatesSection(for app: AppStatus) -> some View {
+        let updated = app.updatedAt.flatMap(GoTime.parse)
+        if !app.isNative, updated != nil || app.held == true {
+            Section("Updates") {
+                if let updated {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("The version it runs now")
+                        Text("Updated \(updated, format: .relative(presentation: .named)); the one before is kept for a week, for Roll back.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                if app.held == true {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label("Its updates are held", systemImage: "pause.circle")
+                            .foregroundStyle(.orange)
+                        Text("After a rollback, the nightly update leaves it out. Nightly updates, under Settings, puts it back.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+    }
+
     /// The app page's Last backup tile and "In the nightly backup" row
     /// (web/src/page/AppPage.tsx), from the Backups the dashboard holds.
     @ViewBuilder
