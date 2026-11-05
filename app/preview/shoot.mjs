@@ -2429,7 +2429,7 @@ const smokes = [
   // table's last row, and the clicks are as WebKit's on the Mac: a mouse click that leaves no focus on the button.
   { name: 'A group’s menu at the bottom of Status is whole, and one menu opens at a time', screen: 'status', mock: { usage }, run: async (page) => {
     const press = async (b) => { await b.dispatchEvent('mousedown', { detail: 1 }); await b.dispatchEvent('click', { detail: 1 }); };
-    const heads = page.locator('tr.grouphead');
+    const heads = page.locator('#statusRows tr.grouphead') // Status's own (Backups' copies have group rows too, drawn once its data is read);
     await heads.first().waitFor({ timeout: 5000 });
     const last = heads.last();
     if ((await last.locator('.foldbtn').getAttribute('aria-expanded')) === 'true') await last.locator('.foldbtn').click();
