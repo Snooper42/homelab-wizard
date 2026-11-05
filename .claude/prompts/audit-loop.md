@@ -351,7 +351,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     app stopped on purpose, and the watchdog starts it again. Show it with
     a test (two writers, or a read during a write), then save it as
     record.go does (a temporary file, then rename) under a lock.
-20. **Tidy Up's Undo from a crafted trash log** (data/media-trash.jsonl,
+20. (done: round 16) **Tidy Up's Undo from a crafted trash log** (data/media-trash.jsonl,
     `homelab media restore`): what the engine moves where when a line's
     `from` or `to` is a path outside the libraries, or a link.
 21. **Tidy Up's page-sent arguments** (app/tidy.go `TidyRun`'s `args`):
@@ -493,3 +493,14 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   docker stops radarr during sonarr's start), `TestSaveReplacesTheRecordWhole`
   (a link to the old file changed), and `TestUpdateLosesNoChange` (40
   writers, run without the lock) each failed before.
+- **Round 16 (item 20, Undo from a crafted trash log):** N11, Medium.
+  `trash_restore.py` moved each line's `to` back to its `from` wherever
+  either was. A move file carries `data/` (the log, and media.json's run
+  that Undo offers) and can carry the payload, so one Undo put a file in
+  `~/Library/LaunchAgents` or `~/.config/autostart`: M2 again, by another
+  door. Now `mc.trashed_from` lets back only what sits directly in the
+  Trash of its old place's drive (a dated `.tidy-trash` folder on a
+  Windows removable drive); the rest is named and left.
+  `test_a_crafted_log_moves_nothing_that_is_not_in_the_trash` failed
+  before (2 planted); `test_undo_takes_back_only_from_where_things_are_thrown`
+  holds the Windows branch.
