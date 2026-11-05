@@ -9,6 +9,7 @@ struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
     @State private var editing: FinanceAccount?
     @State private var editingBudget: FinanceBudget?
+    @State private var editingGoal: FinanceGoal?
 
     var body: some View {
         Form {
@@ -51,7 +52,18 @@ struct FinancesView: View {
             BalanceEditor(account: account, finances: finances)
         }
         .sheet(item: $editingBudget) { budget in
-            BudgetEditor(budget: budget, finances: finances)
+            AmountEditor(
+                title: "Change Budget", heading: budget.category,
+                footer: budget.per == "paycheck" ? "What it may take each pay period." : "What it may take each month.",
+                finances: finances
+            ) { amount in await finances.setBudget(budget, to: amount) }
+        }
+        .sheet(item: $editingGoal) { goal in
+            AmountEditor(
+                title: "Change Goal", heading: goal.name,
+                footer: "How much it needs in all. What's put by toward it stays as it is.",
+                finances: finances
+            ) { amount in await finances.setGoal(goal, target: amount) }
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Finances")
@@ -112,40 +124,60 @@ struct FinancesView: View {
     }
 
     private func goals(_ view: FinancesPlanView) -> some View {
-        Section("Goals") {
+        Section {
             ForEach(view.goals) { goal in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(goal.name)
-                        Spacer()
-                        Money(value: goal.saved, currency: view.plan.currency, finances: finances)
-                        Text(verbatim: "/").foregroundStyle(.secondary)
-                        Money(value: goal.target, currency: view.plan.currency, finances: finances)
+                if finances.canEdit {
+                    Button {
+                        finances.clearSaveError()
+                        editingGoal = goal
+                    } label: {
+                        goalRow(goal, view)
                     }
-                    ProgressView(value: goal.share)
-                        .tint(goal.isReached ? .green : .accentColor)
-                    Group {
-                        if goal.isReached {
-                            Text("Reached")
-                        } else if let date = goal.date {
-                            Text("By \(date, format: .dateTime.month(.wide).year())")
-                        } else if let reaches = goal.reaches {
-                            Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    if goal.needsMonth > 0, !goal.isReached {
-                        HStack(spacing: 4) {
-                            Text("Needs").font(.caption).foregroundStyle(.secondary)
-                            Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
-                            Text("a month").font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Change its target")
+                } else {
+                    goalRow(goal, view)
                 }
-                .accessibilityElement(children: .combine)
+            }
+        } header: {
+            Text("Goals")
+        } footer: {
+            if finances.canEdit { Text("Tap a goal to change its target.") }
+        }
+    }
+
+    private func goalRow(_ goal: FinanceGoal, _ view: FinancesPlanView) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(goal.name)
+                Spacer()
+                Money(value: goal.saved, currency: view.plan.currency, finances: finances)
+                Text(verbatim: "/").foregroundStyle(.secondary)
+                Money(value: goal.target, currency: view.plan.currency, finances: finances)
+            }
+            ProgressView(value: goal.share)
+                .tint(goal.isReached ? .green : .accentColor)
+            Group {
+                if goal.isReached {
+                    Text("Reached")
+                } else if let date = goal.date {
+                    Text("By \(date, format: .dateTime.month(.wide).year())")
+                } else if let reaches = goal.reaches {
+                    Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            if goal.needsMonth > 0, !goal.isReached {
+                HStack(spacing: 4) {
+                    Text("Needs").font(.caption).foregroundStyle(.secondary)
+                    Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
+                    Text("a month").font(.caption).foregroundStyle(.secondary)
+                }
             }
         }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private func loans(_ view: FinancesPlanView) -> some View {
@@ -368,10 +400,13 @@ private struct RowLine: View {
     }
 }
 
-/// Changes one budget's amount; its period and rollover stay as they are.
-private struct BudgetEditor: View {
-    let budget: FinanceBudget
+/// Types in one amount (a budget's, a goal's target) and saves it.
+private struct AmountEditor: View {
+    let title: String
+    let heading: String
+    let footer: String
     let finances: FinancesViewModel
+    let save: @MainActor (Double) async -> Bool
     @State private var text = ""
     @Environment(\.dismiss) private var dismiss
 
@@ -390,25 +425,25 @@ private struct BudgetEditor: View {
                         #endif
                         .font(.title2.monospacedDigit())
                         .privacySensitive()
-                        .onSubmit(save)
+                        .onSubmit(submit)
                 } header: {
-                    Text(budget.category)
+                    Text(heading)
                 } footer: {
-                    Text(budget.per == "paycheck" ? "What it may take each pay period." : "What it may take each month.")
+                    Text(footer)
                 }
                 if let error = finances.saveError {
                     Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("Change Budget")
+            .navigationTitle(title)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    if finances.isSaving { ProgressView() } else { Button("Save", action: save).disabled(value == nil) }
+                    if finances.isSaving { ProgressView() } else { Button("Save", action: submit).disabled(value == nil) }
                 }
             }
         }
@@ -417,9 +452,9 @@ private struct BudgetEditor: View {
         #endif
     }
 
-    private func save() {
+    private func submit() {
         guard let value else { return }
-        Task { if await finances.setBudget(budget, to: value) { dismiss() } }
+        Task { if await save(value) { dismiss() } }
     }
 }
 

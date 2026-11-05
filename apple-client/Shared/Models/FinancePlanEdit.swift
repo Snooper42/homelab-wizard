@@ -73,6 +73,23 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with the goal `id`'s target set to `amount`. Its name, day
+    /// and the accounts' shares toward it are kept. Nil for an unknown goal
+    /// or a target that isn't more than nothing.
+    static func settingGoal(id: String, target amount: Double, in plan: JSONValue) -> JSONValue? {
+        let cents = roundedToCents(amount)
+        guard !id.isEmpty, amount.isFinite, cents > 0, cents <= maxBalance,
+              case .object(var root) = plan,
+              case .array(var goals)? = root["goals"],
+              let index = goals.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var goal) = goals[index]
+        else { return nil }
+        goal["target"] = .number(cents)
+        goals[index] = .object(goal)
+        root["goals"] = .array(goals)
+        return .object(root)
+    }
+
     static func roundedToCents(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }

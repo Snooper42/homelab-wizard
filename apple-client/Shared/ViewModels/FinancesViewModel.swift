@@ -53,6 +53,16 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: waiting ? "Mark it as not in the balances yet." : "Mark it as in the balances.")
     }
 
+    /// Changes a goal's target. Returns whether it saved.
+    func setGoal(_ goal: FinanceGoal, target: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.settingGoal(id: goal.id, target: target, in: raw) else {
+            saveError = "A goal needs an amount more than nothing."
+            return false
+        }
+        return await savePlan(edited, reason: "Change the \(goal.name) goal.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

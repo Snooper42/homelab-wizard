@@ -399,3 +399,26 @@ struct WaitingTests {
         #expect(view.waitingKeys == ["payment:rent:2026-11-01"])
     }
 }
+
+@Suite("Changing a goal")
+struct GoalEditTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r4","goals":[{"id":"g1","name":"Holiday","target":2000,"date":"2027-06-01","shares":[{"account":"sav","percent":50}]}],"accounts":[]}
+    """#.utf8))
+
+    @Test func setsOnlyTheTarget() throws {
+        let edited = try #require(FinancePlanEdit.settingGoal(id: "g1", target: 2500.499, in: plan))
+        guard case .array(let goals)? = edited["goals"] else { Issue.record("no goals"); return }
+        #expect(goals[0]["target"] == .number(2500.5))
+        #expect(goals[0]["date"] == .string("2027-06-01"))
+        #expect(goals[0]["shares"] == .array([.object(["account": .string("sav"), "percent": .number(50)])]))
+        #expect(edited["rev"] == .string("r4"))
+    }
+
+    @Test func refusesNothingAndUnknown() {
+        #expect(FinancePlanEdit.settingGoal(id: "g1", target: 0, in: plan) == nil)
+        #expect(FinancePlanEdit.settingGoal(id: "nope", target: 10, in: plan) == nil)
+        #expect(FinancePlanEdit.settingGoal(id: "", target: 10, in: plan) == nil)
+        #expect(FinancePlanEdit.settingGoal(id: "g1", target: .nan, in: plan) == nil)
+    }
+}
