@@ -319,6 +319,30 @@ private struct SavingsCard: View {
                 Text(latest.annual, format: .currency(code: "USD").precision(.fractionLength(0)))
                     .fontWeight(.semibold)
             }
+            let saved = SavedSoFar.from(points)
+            if !saved.since.isEmpty {
+                DisclosureGroup {
+                    ForEach(saved.months.prefix(12)) { month in
+                        LabeledContent {
+                            Text(month.amount, format: .currency(code: "USD").precision(.fractionLength(0)))
+                        } label: {
+                            Text(LocalDay.parseMonth(month.month)?.formatted(.dateTime.month(.wide).year()) ?? month.month)
+                        }
+                    }
+                } label: {
+                    LabeledContent {
+                        Text(saved.total, format: .currency(code: "USD").precision(.fractionLength(0)))
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Saved so far")
+                            if let since = LocalDay.parse(saved.since) {
+                                Text("Since \(since.formatted(.dateTime.month(.abbreviated).day().year())), from what the apps replace each day")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
             if charted.count > 1 {
                 Chart(charted) { point in
                     AreaMark(x: .value("Day", point.day), y: .value("Per year", point.annual))

@@ -178,3 +178,59 @@ enum CardData: Sendable, Equatable {
     /// A card this client doesn't know yet, kept as plain JSON.
     case other(JSONValue)
 }
+
+/// What the apps have saved so far, month by month (main #437,
+/// `savedSoFar` in web/src/status/Tiles.tsx): each recorded day counts its
+/// yearly figure over 365, and each day up to the next record counts the
+/// earlier one's. Worked on the days as written (YYYY-MM-DD), in UTC, so no
+/// time zone can move a day into another month.
+struct SavedSoFar: Equatable, Sendable {
+    struct Month: Equatable, Sendable, Identifiable {
+        /// YYYY-MM.
+        let month: String
+        let amount: Double
+        var id: String { month }
+    }
+
+    let total: Double
+    /// The first record's day (YYYY-MM-DD), or "" with none.
+    let since: String
+    /// Newest first.
+    let months: [Month]
+
+    /// No more than ten years of days are counted, whatever the records say.
+    static let maxDays = 3660
+
+    static func from(_ points: [SavingsPoint]) -> SavedSoFar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        func day(_ text: String) -> Date? {
+            let f = text.split(separator: "-")
+            guard f.count == 3, let y = Int(f[0]), let m = Int(f[1]), let d = Int(f[2]),
+                  (1...12).contains(m), (1...31).contains(d) else { return nil }
+            return calendar.date(from: DateComponents(year: y, month: m, day: d, hour: 12))
+        }
+        let dated = points.compactMap { p in day(p.date).map { (date: $0, text: p.date, annual: p.annual) } }
+            .filter { $0.annual.isFinite }
+            .sorted { $0.text < $1.text }
+        guard let first = dated.first else { return SavedSoFar(total: 0, since: "", months: []) }
+
+        var byMonth: [String: Double] = [:]
+        var total = 0.0
+        var counted = 0
+        for (i, p) in dated.enumerated() {
+            let next = i + 1 < dated.count ? dated[i + 1].date : calendar.date(byAdding: .day, value: 1, to: p.date)!
+            var d = p.date
+            while d < next, counted < maxDays {
+                let c = calendar.dateComponents([.year, .month], from: d)
+                let key = String(format: "%04d-%02d", c.year ?? 0, c.month ?? 0)
+                byMonth[key, default: 0] += p.annual / 365
+                total += p.annual / 365
+                counted += 1
+                d = calendar.date(byAdding: .day, value: 1, to: d)!
+            }
+        }
+        let months = byMonth.map { Month(month: $0.key, amount: $0.value) }.sorted { $0.month > $1.month }
+        return SavedSoFar(total: total, since: first.text, months: months)
+    }
+}

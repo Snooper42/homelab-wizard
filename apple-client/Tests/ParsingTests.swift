@@ -320,6 +320,32 @@ struct IconTests {
     }
 }
 
+@Suite("Saved so far")
+struct SavedSoFarTests {
+    private func points(_ json: String) throws -> [SavingsPoint] {
+        try JSONDecoder().decode([SavingsPoint].self, from: Data(json.utf8))
+    }
+
+    @Test func eachDayCountsTheLatestYearlyFigure() throws {
+        // Out of order on purpose. Oct 30–Nov 1 at 365 a year, then Nov 2 at 730.
+        let s = SavedSoFar.from(try points(#"[{"date":"2026-11-02","annual":730},{"date":"2026-10-30","annual":365}]"#))
+        #expect(s.since == "2026-10-30")
+        #expect(s.months.map(\.month) == ["2026-11", "2026-10"])
+        #expect(abs(s.months[0].amount - 3) < 1e-9 && abs(s.months[1].amount - 2) < 1e-9)
+        #expect(abs(s.total - 5) < 1e-9)
+    }
+
+    @Test func nothingAndBadDaysSayNothing() throws {
+        #expect(SavedSoFar.from([]).since.isEmpty)
+        #expect(SavedSoFar.from(try points(#"[{"date":"soon","annual":100}]"#)).months.isEmpty)
+    }
+
+    @Test func aCenturyOfRecordsIsCappedAtTenYears() throws {
+        let s = SavedSoFar.from(try points(#"[{"date":"1926-01-01","annual":365},{"date":"2026-01-01","annual":365}]"#))
+        #expect(abs(s.total - Double(SavedSoFar.maxDays)) < 1e-6)
+    }
+}
+
 @Suite("Backups")
 struct BackupsTests {
     @Test func overviewFromTheComputer() throws {
