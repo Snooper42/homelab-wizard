@@ -342,6 +342,23 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
     job in the clear (finance.json, the ledger, receipts, people, sso,
     phones.json, home-address.json).
 
+Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
+
+19. (done: round 15) **`data/stopped.json` written in place** (internal/stopped, #367,
+    #375): the awake job (each minute), `homelab stop --until`, and a
+    phone's `StopUntil` each read, change, and write it whole with
+    `os.WriteFile`, no lock and no rename. A torn or lost write forgets an
+    app stopped on purpose, and the watchdog starts it again. Show it with
+    a test (two writers, or a read during a write), then save it as
+    record.go does (a temporary file, then rename) under a lock.
+20. (done: round 16) **Tidy Up's Undo from a crafted trash log** (data/media-trash.jsonl,
+    `homelab media restore`): what the engine moves where when a line's
+    `from` or `to` is a path outside the libraries, or a link.
+21. (done: round 17) **Tidy Up's page-sent arguments** (app/tidy.go `TidyRun`'s `args`):
+    passed to the CLI as they come; list which flags the media commands
+    take and whether any of them reaches outside the libraries.
+
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -449,3 +466,52 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   by design, behind `delete everything` typed out. Still untried on a
   real machine (#354 says so); a nightly or hand run on each system is
   docs/Testing.md's Uninstall row.
+- **Round 14 (#355–#402, read through):** Tidy Up's ffmpeg Install
+  fetches one pinned build over HTTPS, checks its SHA-256 and size before
+  unpacking, takes only ffmpeg and ffprobe by name, and keeps them only
+  once they run. The engines get their keys from the environment, never a
+  command line or the settings file (homelab_media.json holds none), and
+  send them in headers. Tdarr's first account goes only to 127.0.0.1, and
+  its password to `.env`. `TidyReveal` opens only Tidy Up's folders;
+  Calibre's Flatpak scripts are fixed text. Finances' Firefly III, Wallos,
+  and Ghostfolio readers reach only 127.0.0.1, and no error repeats
+  Wallos's key; every new secret (`WALLOS_API_KEY`, `TDARR_PASSWORD`, …)
+  is in .env.example, so reports and phones' logs take it out. The phone's
+  `StopUntil` needs Change, a known container app, and a time
+  `ParseUntil` reads. The update swap scripts are still fixed text with
+  the paths as parameters. gosec and npm audit clean, `make check` green;
+  govulncheck could not reach vuln.go.dev from this session. No code
+  change needed; items 19–21 added.
+- **Round 15 (item 19, `data/stopped.json`):** N10. The awake job read
+  the record, spent the seconds of a `compose start`, and saved its copy
+  over a stop made meanwhile (a phone's Stop for a while), and every save
+  rewrote the file in place, so a reader could see it empty; the watchdog
+  then started an app stopped on purpose. Now `stopped.Update` changes it
+  under a lock file beside it (stale after 30 s), the awake job drops only
+  entries no one changed since, and `Save` writes a new file (0600) and
+  renames it in. `TestStartWhenDueKeepsAStopMadeMeanwhile` (the fake
+  docker stops radarr during sonarr's start), `TestSaveReplacesTheRecordWhole`
+  (a link to the old file changed), and `TestUpdateLosesNoChange` (40
+  writers, run without the lock) each failed before.
+- **Round 16 (item 20, Undo from a crafted trash log):** N11, Medium.
+  `trash_restore.py` moved each line's `to` back to its `from` wherever
+  either was. A move file carries `data/` (the log, and media.json's run
+  that Undo offers) and can carry the payload, so one Undo put a file in
+  `~/Library/LaunchAgents` or `~/.config/autostart`: M2 again, by another
+  door. Now `mc.trashed_from` lets back only what sits directly in the
+  Trash of its old place's drive (a dated `.tidy-trash` folder on a
+  Windows removable drive); the rest is named and left.
+  `test_a_crafted_log_moves_nothing_that_is_not_in_the_trash` failed
+  before (2 planted); `test_undo_takes_back_only_from_where_things_are_thrown`
+  holds the Windows branch.
+- **Round 17 (item 21, the screen's arguments):** N12, Low. `TidyRun`
+  passed the page's `args` to `homelab media` as they came: `--library`
+  pointed a job at any folder, and `file` took any path (`--config` alone
+  was safe: Go's comes last, and argparse keeps the last). Only the app's
+  own page calls it, so it needs a bug there first (as L3). Now
+  `tidyScreenArgs` takes only what the screen sends (`--apply`, `--check`,
+  `--skip` ids, one Undo run). `TestTidyArgsTakesOnlyWhatTheScreenSends`
+  failed before (9 of 9 went through). The fake launcher's ffmpeg failure
+  now answers `movies scan --check`, since `unready` is refused before it
+  runs; `TestTidyRunSaysWhyItStopped` checks the same thing as before.
+  Items 19–21 done: the next come from what is added from here on.
