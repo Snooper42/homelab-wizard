@@ -330,6 +330,8 @@ declare namespace backup {
     newest: string;
     size: number;
     count: number;
+    before?: number;
+    shrank?: boolean;
     state: string;
     waitingFor?: string;
   }
@@ -347,6 +349,7 @@ declare namespace backup {
     copies: backup.Copy[];
     stale: number;
     paused: number;
+    shrank: number;
     restoreTest: backup.RestoreLog;
     restoreDue: boolean;
     staleAfterHours: number;
@@ -420,6 +423,8 @@ declare namespace crowdsec {
     week: number;
     bannedNow: number;
     recent: crowdsec.Attack[];
+    today: crowdsec.Attack[];
+    todayCount: number;
   }
 }
 
