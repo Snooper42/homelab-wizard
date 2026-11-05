@@ -151,6 +151,25 @@ private struct PhoneDashboard: View {
                         }
                     }
                 }
+                let changed = model.isSearching ? [] : model.changedApps
+                if !changed.isEmpty {
+                    Section {
+                        ForEach(changed) { app in
+                            NavigationLink(value: app.id) {
+                                AppRowView(app: app)
+                            }
+                            .appActionControls(for: app)
+                        }
+                    } header: {
+                        HStack {
+                            Text("Changed Since You Looked")
+                            Spacer()
+                            Button("Mark as Seen") { model.markAllSeen() }
+                                .textCase(nil)
+                                .font(.caption)
+                        }
+                    }
+                }
                 let pinned = model.pinnedApps.filter { model.matchesSearch($0) }
                 if !pinned.isEmpty {
                     Section("Pinned") {
@@ -338,6 +357,16 @@ private struct SplitDashboard: View {
             toolbarItems
             ToolbarItem(placement: .automatic) {
                 GroupActionsMenu(apps: apps)
+            }
+            if !model.changedApps.isEmpty {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        model.markAllSeen()
+                    } label: {
+                        Label("Mark as Seen", systemImage: "eye.circle")
+                    }
+                    .help("Clear the dots on rows that changed since you looked")
+                }
             }
         }
     }

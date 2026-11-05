@@ -201,8 +201,9 @@ final class DashboardViewModel {
         }
     }
 
-    /// What was seen last time, as keyed hashes (ChangeMemory), read once per unlock.
-    @ObservationIgnored private let seen = ChangeMemory.load()
+    /// What was seen last time, as keyed hashes (ChangeMemory), read once
+    /// per unlock and again after Mark as Seen.
+    private var seen = ChangeMemory.load()
     @ObservationIgnored private let seenKey = ChangeMemory.deviceKey()
     /// The apps as last shown, kept to be saved as seen when the dashboard goes.
     @ObservationIgnored var latestApps: [AppStatus] = []
@@ -217,6 +218,18 @@ final class DashboardViewModel {
     func rememberSeen() {
         guard let seenKey else { return }
         ChangeMemory.save(latestApps, key: seenKey)
+    }
+
+    /// The apps that changed since you looked, in the list's order.
+    var changedApps: [AppStatus] {
+        apps(for: .all).filter { changeNote(for: $0) != nil }
+    }
+
+    /// Mark as Seen: what's shown now is what was seen, so the dots go.
+    func markAllSeen() {
+        guard let seenKey, let apps = liveEvents.status?.apps, !apps.isEmpty else { return }
+        ChangeMemory.save(apps, key: seenKey)
+        seen = ChangeMemory.memory(of: apps, key: seenKey)
     }
 
     /// Hidden until tomorrow on this device.
