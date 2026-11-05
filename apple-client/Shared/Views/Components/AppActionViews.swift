@@ -1,16 +1,50 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+
+/// Puts text on the clipboard, on either platform.
+enum Clipboard {
+    @MainActor static func copy(_ text: String) {
+        #if canImport(UIKit)
+        UIPasteboard.general.string = text
+        #elseif canImport(AppKit)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
+    }
+}
 
 /// Start, Stop and Restart on a list row. A right-click or long press opens
 /// a context menu (Mac, iPad and iPhone). On iPhone, a swipe shows them too.
 struct AppActionControls: ViewModifier {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(\.openURL) private var openURL
     let app: AppStatus
 
     func body(content: Content) -> some View {
         let available = actions.available(for: app)
         content
             .contextMenu {
+                // As the computer's row menu: Open while it runs, and Copy Address.
+                if let address = app.address, let url = AppDetailView.httpsURL(address) {
+                    if app.isRunning {
+                        Button {
+                            openURL(url)
+                        } label: {
+                            Label("Open", systemImage: "safari")
+                        }
+                    }
+                    Button {
+                        Clipboard.copy(url.absoluteString)
+                    } label: {
+                        Label("Copy Address", systemImage: "doc.on.doc")
+                    }
+                    Divider()
+                }
                 ForEach(available) { action in
                     Button(role: action.needsConfirmation ? .destructive : nil) {
                         actions.request(action, on: app)

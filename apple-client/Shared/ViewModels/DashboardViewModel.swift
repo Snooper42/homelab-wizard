@@ -44,6 +44,29 @@ final class DashboardViewModel {
         case finances
         case computer
         case apps(Filter)
+
+        /// How the choice is kept between launches: a name, nothing more.
+        var storageKey: String {
+            switch self {
+            case .overview: "overview"
+            case .backups: "backups"
+            case .finances: "finances"
+            case .computer: "computer"
+            case .apps(let filter): "apps:" + filter.rawValue
+            }
+        }
+
+        init?(storageKey: String) {
+            switch storageKey {
+            case "overview": self = .overview
+            case "backups": self = .backups
+            case "finances": self = .finances
+            case "computer": self = .computer
+            default:
+                guard storageKey.hasPrefix("apps:"), let filter = Filter(rawValue: String(storageKey.dropFirst(5))) else { return nil }
+                self = .apps(filter)
+            }
+        }
     }
 
     /// The selection in the sidebar (Mac and iPad).

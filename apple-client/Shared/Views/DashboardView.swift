@@ -187,6 +187,9 @@ private struct PhoneDashboard: View {
 
 private struct SplitDashboard: View {
     @Environment(AppActionsViewModel.self) private var actions
+    /// The sidebar's choice, kept across launches as the computer keeps each
+    /// screen's place (#417). Only the choice is kept, never what it shows.
+    @SceneStorage("sidebar") private var savedSidebar = "apps:all"
     @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
     let finances: FinancesViewModel
@@ -218,6 +221,10 @@ private struct SplitDashboard: View {
                 }
             }
             .navigationTitle("Homelab")
+            .onAppear { model.sidebar = DashboardViewModel.SidebarItem(storageKey: savedSidebar) ?? .apps(.all) }
+            .onChange(of: model.sidebar) { _, item in
+                if let item { savedSidebar = item.storageKey }
+            }
             .navigationSplitViewColumnWidth(min: 190, ideal: 220)
             .safeAreaInset(edge: .bottom) {
                 ConnectionBadge(state: model.liveEvents.connection)

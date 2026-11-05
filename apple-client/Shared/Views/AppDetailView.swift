@@ -250,7 +250,7 @@ struct AppDetailView: View {
     }
 
     /// Only https links open. The address may come without a scheme.
-    private static func httpsURL(_ address: String) -> URL? {
+    static func httpsURL(_ address: String) -> URL? {
         let text = address.contains("://") ? address : "https://" + address
         guard let url = URL(string: text), url.scheme?.lowercased() == "https", url.host != nil else { return nil }
         return url

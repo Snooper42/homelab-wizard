@@ -172,3 +172,15 @@ struct PinnedTests {
         #expect(model.apps(for: .all).isEmpty)
     }
 }
+
+@Suite("The sidebar's place")
+struct SidebarPlaceTests {
+    @Test func roundTrips() {
+        let all: [DashboardViewModel.SidebarItem] = [.overview, .backups, .finances, .computer] + DashboardViewModel.Filter.allCases.map { .apps($0) }
+        for item in all {
+            #expect(DashboardViewModel.SidebarItem(storageKey: item.storageKey) == item)
+        }
+        #expect(DashboardViewModel.SidebarItem(storageKey: "apps:nope") == nil)
+        #expect(DashboardViewModel.SidebarItem(storageKey: "") == nil)
+    }
+}
