@@ -90,6 +90,14 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with Hide amounts on or off, which every device follows (the
+    /// computer's ⌘⇧H). Omitted when off, as the computer writes it.
+    static func settingHideAmounts(_ hide: Bool, in plan: JSONValue) -> JSONValue? {
+        guard case .object(var root) = plan else { return nil }
+        root["hideAmounts"] = hide ? .bool(true) : nil
+        return .object(root)
+    }
+
     static func roundedToCents(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }

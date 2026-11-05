@@ -474,3 +474,17 @@ struct ReceiptPrivacyTests {
         #expect(max(width, height) >= ReceiptCodec.uploadPixels - 1)
     }
 }
+
+@Suite("Hide amounts on every device")
+struct HideAmountsTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"{"rev":"r5","accounts":[]}"#.utf8))
+
+    @Test func onAndOffAsTheComputerWritesIt() throws {
+        let on = try #require(FinancePlanEdit.settingHideAmounts(true, in: plan))
+        #expect(on["hideAmounts"] == .bool(true))
+        #expect(on["rev"] == .string("r5"))
+        let off = try #require(FinancePlanEdit.settingHideAmounts(false, in: on))
+        #expect(off["hideAmounts"] == nil) // omitted, not false
+        #expect(FinancePlanEdit.settingHideAmounts(true, in: .array([])) == nil)
+    }
+}

@@ -53,6 +53,15 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: waiting ? "Mark it as not in the balances yet." : "Mark it as in the balances.")
     }
 
+    /// Turns Hide amounts on or off for every device. Returns whether it saved.
+    func setHideAmounts(_ hide: Bool) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan,
+              let edited = FinancePlanEdit.settingHideAmounts(hide, in: raw)
+        else { return false }
+        if hide { amountsShown = false }
+        return await savePlan(edited, reason: hide ? "Hide amounts on every device." : "Show amounts on every device.")
+    }
+
     /// Changes a goal's target. Returns whether it saved.
     func setGoal(_ goal: FinanceGoal, target: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

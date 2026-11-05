@@ -82,6 +82,18 @@ struct FinancesView: View {
                     }
                 }
             }
+            if finances.canEdit {
+                ToolbarItem(placement: .secondaryAction) {
+                    let hidden = finances.amountsHiddenByPlan
+                    Button {
+                        Task { _ = await finances.setHideAmounts(!hidden) }
+                    } label: {
+                        Label(hidden ? "Show Amounts on Every Device" : "Hide Amounts on Every Device",
+                              systemImage: hidden ? "eye" : "eye.slash.circle")
+                    }
+                    .disabled(finances.isSaving)
+                }
+            }
         }
     }
 
