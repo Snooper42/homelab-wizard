@@ -112,8 +112,11 @@ func Settings(in Inputs) map[string]any {
 			"codec":     strings.ToLower(or(env["TIDY_VIDEO_CODEC"], "hevc")),
 			"gpu":       in.GPU,
 			"libraries": in.Record.TdarrLibraries,
-			"path_map": [][]string{{lib("movies"), "/media/movies"}, {lib("tv"), "/media/tv"},
-				{filepath.Join(mediaRoot, "movies"), "/media/movies"}, {filepath.Join(mediaRoot, "tv"), "/media/tv"}},
+			// What Tdarr's container mounts (compose/media-automation.yaml), and
+			// nothing else: a films or TV library set elsewhere (TIDY_MOVIES_LIBRARY)
+			// isn't in it, and the engines say so rather than hand Tdarr a path it
+			// can't open.
+			"path_map": [][]string{{filepath.Join(mediaRoot, "movies"), "/media/movies"}, {filepath.Join(mediaRoot, "tv"), "/media/tv"}},
 		}
 	}
 	servers := map[string]any{}
