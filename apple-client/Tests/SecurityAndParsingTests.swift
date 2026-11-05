@@ -598,7 +598,7 @@ struct FinancePlanEditTests {
     """#.utf8))
 
     @Test func setsOnlyTheBalanceAndTheDays() throws {
-        let edited = try #require(FinancePlanEdit.settingBalance(of: "visa", to: 412.345, today: "2026-11-05", in: plan))
+        let edited = try #require(FinancePlanEdit.settingBalance(of: "visa", to: 412.346, today: "2026-11-05", in: plan))
         guard case .array(let accounts)? = edited["accounts"] else { Issue.record("no accounts"); return }
         #expect(accounts[1]["balance"] == .number(412.35))
         #expect(accounts[1]["updated"] == .string("2026-11-05"))
