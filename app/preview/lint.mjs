@@ -92,6 +92,7 @@ const colourData = {
   'web/src/appearance.ts': 'works out the shades of an accent from it, against white, black, and the pages it is drawn on',
   'web/src/settings/Appearance.tsx': 'the accent swatches: the colour a pick keeps in appearance.json',
   'web/src/finances/logos.ts': "the brands' own colours behind their marks (simple-icons)",
+  'web/src/finances/exportData.ts': "the printed month's page: a file of its own, opened in the browser away from style.css, in grey and black on white paper",
 };
 for (const f of sources) {
   const rel = relative(root, f);
