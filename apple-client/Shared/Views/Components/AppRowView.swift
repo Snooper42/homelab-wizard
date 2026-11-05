@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppRowView: View {
     @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
     /// Follows the person's text size.
     @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 32
     let app: AppStatus
@@ -22,6 +23,15 @@ struct AppRowView: View {
                 }
             }
             Spacer(minLength: 0)
+            if let uptime = dashboard.cards.watchdog?.uptimeLabel(for: app.id) {
+                Text(uptime.replacingOccurrences(of: " this week", with: ""))
+                    .font(.caption2.monospacedDigit())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.orange.opacity(0.15), in: Capsule())
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel(uptime)
+            }
             if let restarts = app.restarts, restarts > 0 {
                 Label("\(restarts)", systemImage: "arrow.counterclockwise")
                     .font(.caption.monospacedDigit())

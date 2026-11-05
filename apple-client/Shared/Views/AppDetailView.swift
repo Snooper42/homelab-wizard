@@ -27,6 +27,8 @@ struct AppDetailView: View {
 
                 actionsSection(for: app)
 
+                weekSection(for: app)
+
                 if let problem = app.notAnswering, !problem.isEmpty {
                     Section("Problem") {
                         Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
@@ -139,6 +141,45 @@ struct AppDetailView: View {
                 }
             }
         }
+    }
+
+    /// The watchdog's week for this app, as the computer shows it on hover.
+    @ViewBuilder
+    private func weekSection(for app: AppStatus) -> some View {
+        if let watchdog = dashboard.cards.watchdog, let share = watchdog.week[app.id] {
+            let outages = watchdog.outages[app.id] ?? []
+            Section {
+                LabeledContent("Up this week") {
+                    Text(share, format: .percent.precision(.fractionLength(0...1)))
+                        .foregroundStyle(share < 0.99 ? .orange : .secondary)
+                }
+                ForEach(outages.reversed()) { outage in
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack {
+                            Text(outage.from, format: .dateTime.weekday(.abbreviated).hour().minute())
+                            Spacer()
+                            Text(outage.to == nil
+                                 ? "Down \(Self.lasted(outage.duration())) now"
+                                 : Self.lasted(outage.duration()))
+                                .foregroundStyle(outage.to == nil ? .red : .secondary)
+                        }
+                        .font(.callout)
+                        if !outage.problem.isEmpty {
+                            Text(outage.problem).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            } header: {
+                Text("This Week")
+            } footer: {
+                Text(outages.isEmpty ? "No outages this week. The watchdog checks it every 15 minutes." : "The watchdog checks it every 15 minutes.")
+            }
+        }
+    }
+
+    private static func lasted(_ seconds: TimeInterval) -> String {
+        Duration.seconds(max(60, seconds)).formatted(.units(allowed: [.days, .hours, .minutes], width: .abbreviated, maximumUnitCount: 2))
     }
 
     @ViewBuilder

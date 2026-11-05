@@ -831,3 +831,26 @@ struct ScanToPairTests {
         #expect(m.code.isEmpty && m.errorMessage != nil)
     }
 }
+
+@Suite("The week's uptime")
+struct UptimeTests {
+    private func summary(_ week: String, outages: String = "{}") throws -> WatchdogSummary {
+        try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"{"lastRun":"2026-11-05T10:00:00Z","checks":2,"failing":[],"pending":0,"week":\#(week),"outages":\#(outages)}"#.utf8))
+    }
+
+    @Test func labelAsTheComputerWordsIt() throws {
+        let s = try summary(#"{"immich":0.96299,"plex":0.995,"x":0.5}"#)
+        #expect(s.uptimeLabel(for: "immich")?.hasPrefix("96.2") == true)   // cut, not rounded to 96.3
+        #expect(s.uptimeLabel(for: "plex") == nil)                         // 99% and up isn't flagged
+        #expect(s.uptimeLabel(for: "x")?.hasPrefix("50") == true)
+        #expect(s.uptimeLabel(for: "none") == nil)
+    }
+
+    @Test func outages() throws {
+        let s = try summary(#"{"immich":0.9}"#, outages: #"{"immich":[{"from":"2026-11-04T02:00:00Z","to":"2026-11-04T02:45:00Z","problem":"HTTP 502"},{"from":"2026-11-05T09:00:00Z","to":"0001-01-01T00:00:00Z","problem":"connection refused"}]}"#)
+        let list = try #require(s.outages["immich"])
+        #expect(list.count == 2)
+        #expect(list[0].duration() == 45 * 60)
+        #expect(list[1].to == nil) // still down
+    }
+}

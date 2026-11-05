@@ -12,10 +12,12 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     let failing: [WatchdogFailure]
     /// Failed once. They're checked again on the next run.
     let pending: Int
-    /// Each check's share of passing runs this week, 0 to 1.
+    /// Each check's share of passing runs this week, 0 to 1, by app id.
     let week: [String: Double]
+    /// Each check's times down this week, oldest first, by app id.
+    let outages: [String: [WatchdogOutage]]
 
-    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week }
+    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -24,6 +26,15 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         failing = try c.decodeIfPresent([WatchdogFailure].self, forKey: .failing) ?? []
         pending = try c.decodeIfPresent(Int.self, forKey: .pending) ?? 0
         week = try c.decodeIfPresent([String: Double].self, forKey: .week) ?? [:]
+        outages = ((try? c.decodeIfPresent([String: [WatchdogOutage]].self, forKey: .outages)) ?? nil) ?? [:]
+    }
+
+    /// "96.2% up this week", as the computer words it: shown only below
+    /// 99%, cut (not rounded) to a tenth of a percent.
+    func uptimeLabel(for id: String) -> String? {
+        guard let share = week[id], share < 0.99 else { return nil }
+        let tenths = (share * 1000).rounded(.down) / 10
+        return "\(tenths.formatted(.number.precision(.fractionLength(0...1))))% up this week"
     }
 
     /// The share of passing checks this week across all checks, or nil
@@ -32,6 +43,28 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         guard !week.isEmpty else { return nil }
         return week.values.reduce(0, +) / Double(week.count)
     }
+}
+
+/// One time a check was down (`health.Outage`).
+struct WatchdogOutage: Decodable, Sendable, Equatable, Identifiable {
+    let from: Date
+    /// Nil while it's still down.
+    let to: Date?
+    let problem: String
+
+    var id: Date { from }
+
+    enum CodingKeys: String, CodingKey { case from, to, problem }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        from = try c.decode(Date.self, forKey: .from)
+        to = GoZeroTime.drop(try c.decodeIfPresent(Date.self, forKey: .to))
+        problem = try c.decodeIfPresent(String.self, forKey: .problem) ?? ""
+    }
+
+    /// How long it lasted, or has lasted so far.
+    func duration(now: Date = Date()) -> TimeInterval { (to ?? now).timeIntervalSince(from) }
 }
 
 struct WatchdogFailure: Decodable, Sendable, Equatable, Identifiable {
