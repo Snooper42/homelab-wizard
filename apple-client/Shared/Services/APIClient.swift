@@ -39,7 +39,9 @@ actor APIClient {
     /// connection is noticed without a separate watchdog.
     nonisolated let streamingSession: URLSession
     /// For changes. A start or restart can pull an image first, which takes
-    /// minutes with no bytes in between. The computer gives a command up to
+    /// minutes with no bytes in between, longer still while it waits out a
+    /// busy registry (up to 3 min 40 s of tries since main #429). Its idle
+    /// timeout of 5 minutes covers that. The computer gives a command up to
     /// 30 minutes.
     private let actionSession: URLSession
 
