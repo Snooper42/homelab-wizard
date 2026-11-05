@@ -1,0 +1,184 @@
+import SwiftUI
+
+/// Pairing with the computer: its https address and the 8-character code
+/// from `homelab phone pair`. A pasted pairing link fills in both.
+struct PairingView: View {
+    @State private var model: PairingViewModel
+    @FocusState private var focus: Field?
+    private let notice: String?
+
+    private enum Field: Hashable { case server, code, name }
+
+    init(api: APIClient, notice: String?, onPaired: @escaping @MainActor (DeviceInfo) -> Void) {
+        _model = State(initialValue: PairingViewModel(api: api, onPaired: onPaired))
+        self.notice = notice
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                header
+
+                if let notice {
+                    Section {
+                        Label(notice, systemImage: "exclamationmark.shield")
+                            .foregroundStyle(.orange)
+                    }
+                }
+
+                serverSection
+                codeSection
+                nameSection
+                submitSection
+            }
+            .formStyle(.grouped)
+            #if os(macOS)
+            .frame(maxWidth: 540)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            #endif
+            .navigationTitle("Pair")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            .scrollDismissesKeyboard(.interactively)
+            #endif
+        }
+        .sensoryFeedback(.success, trigger: model.successCount)
+        .sensoryFeedback(.error, trigger: model.failureCount)
+        .onAppear { focus = model.serverAddress.isEmpty ? .server : .code }
+    }
+
+    // MARK: Sections
+
+    private var header: some View {
+        Section {
+            VStack(spacing: 12) {
+                Image(systemName: "server.rack")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.tint)
+                    .symbolRenderingMode(.hierarchical)
+                Text("Pair with Your Homelab")
+                    .font(.title2.bold())
+                Text("On the computer, run **homelab phone pair**, or open **Settings › Phones**, to make a one-time code.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+        }
+        .listRowBackground(Color.clear)
+    }
+
+    private var serverSection: some View {
+        Section {
+            TextField("Address", text: serverBinding, prompt: Text(verbatim: "https://your-mac.tailnet.ts.net:8099"))
+                #if os(iOS)
+                .textContentType(.URL)
+                .keyboardType(.URL)
+                .textInputAutocapitalization(.never)
+                #endif
+                .autocorrectionDisabled()
+                .focused($focus, equals: .server)
+                .submitLabel(.next)
+                .onSubmit { focus = .code }
+        } header: {
+            Text("Computer")
+        } footer: {
+            Text("Use the Tailscale or homelab-domain link. You can paste the whole pairing link. Plain http isn't accepted, because your device token would cross the network in readable form.")
+        }
+    }
+
+    private var codeSection: some View {
+        Section {
+            HStack {
+                TextField("Code", text: codeBinding, prompt: Text(verbatim: "ABCD2345"))
+                    .font(.system(.title2, design: .monospaced).weight(.semibold))
+                    #if os(iOS)
+                    .textContentType(.oneTimeCode)
+                    .textInputAutocapitalization(.characters)
+                    .keyboardType(.asciiCapable)
+                    #endif
+                    .autocorrectionDisabled()
+                    .privacySensitive()
+                    .focused($focus, equals: .code)
+                    .submitLabel(.go)
+                    .onSubmit(submit)
+                    .accessibilityLabel("Pairing code")
+
+                if model.isCodeComplete {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .transition(.scale.combined(with: .opacity))
+                        .accessibilityLabel("Code complete")
+                } else {
+                    Text("\(model.code.count)/\(PairingCode.length)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("\(model.code.count) of \(PairingCode.length) characters")
+                }
+            }
+            .animation(.snappy, value: model.isCodeComplete)
+        } header: {
+            Text("Pairing Code")
+        } footer: {
+            Text("8 characters. A code works once, for 10 minutes.")
+        }
+    }
+
+    private var nameSection: some View {
+        Section {
+            TextField("Name", text: $model.deviceName)
+                .focused($focus, equals: .name)
+                .autocorrectionDisabled()
+        } header: {
+            Text("This Device")
+        } footer: {
+            Text("How the computer lists this device under Phones.")
+        }
+    }
+
+    private var submitSection: some View {
+        Section {
+            Button(action: submit) {
+                HStack(spacing: 8) {
+                    if model.isPairing {
+                        ProgressView().controlSize(.small)
+                    }
+                    Text(model.isPairing ? "Pairing…" : "Pair")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(!model.canSubmit)
+            .keyboardShortcut(.defaultAction)
+            #if os(iOS)
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
+            #endif
+        } footer: {
+            if let error = model.errorMessage {
+                Label(error, systemImage: "xmark.octagon.fill")
+                    .foregroundStyle(.red)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: Bindings & actions
+
+    private var serverBinding: Binding<String> {
+        Binding(get: { model.serverAddress }, set: { model.setServerAddress($0) })
+    }
+
+    private var codeBinding: Binding<String> {
+        Binding(get: { model.code }, set: { model.setCode($0) })
+    }
+
+    private func submit() {
+        guard model.canSubmit else { return }
+        focus = nil
+        Task { await model.pair() }
+    }
+}
