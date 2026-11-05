@@ -9,6 +9,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **What changed since you looked:** each app on Status that restarted, updated, stopped, or started since you were last there has a dot beside its name saying which, until you leave Status again.
+- **Open, your way:** on Status, Alt-click (⌥-click on a Mac) an app's address to copy it, and Shift-click (⇧-click) **Open** to use its address on this computer when the domain does not answer.
 - **Pinned apps:** right-click an app on Status and pick **Pin to the top** to keep the apps you open most in a Pinned group at the top, in the order you pinned them, and first in the menu bar's Open an app. `homelab pin <app>` does it from the Terminal.
 - **Right-click the sidebar:** a screen's own menu, without opening it first: Status's Check again and Update all; Backups' Back up now and Test a restore; Finances' Add a transaction, Update balances, and Hide amounts. Shift+F10 opens it from the keyboard.
 - **Why an app restarted:** hover *up 9 minutes* on Status for why it last started, and when: you, an update (yours or the nightly one), Fix it, the watchdog, the power coming back, its drive plugged in again, the end of a Stop for a while, or Docker after it stopped on its own.

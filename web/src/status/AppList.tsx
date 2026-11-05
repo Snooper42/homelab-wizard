@@ -106,8 +106,13 @@ const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…
 const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
 /** A link that opens in the browser. */
-function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  return <ActionLink onClick={() => open(url)}><Address text={text} /></ActionLink>;
+/** The modifier key's name as each system says it: ⌥ (Option) on a Mac, Alt elsewhere. */
+const alt = (os: string) => (os === 'mac' ? '⌥' : 'Alt-');
+const shift = (os: string) => (os === 'mac' ? '⇧' : 'Shift-');
+
+/** A row's address: a click opens it; ⌥-click (Alt-click) copies it, and says so under the row. */
+function Link({ url, text, open, copy, os }: { url: string; text: string; open: (url: string) => void; copy: (url: string) => void; os: string }) {
+  return <ActionLink title={`${alt(os)}click copies it`} onClick={(e) => (e?.altKey ? copy(url) : open(url))}><Address text={text} /></ActionLink>;
 }
 
 const clock = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -197,7 +202,9 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
   if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
   const url = a.address ? 'https://' + a.address : a.url;
-  return url ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(url)}>Open</button> : null;
+  // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
+  const local = a.address && a.url ? a.url : '';
+  return url ? <button class="small rowmain" title={local ? `Open ${a.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, '')})` : `Open ${a.name}`} onClick={(e) => on.open(local && e.shiftKey ? local : url)}>Open</button> : null;
 }
 
 /** Where a row's menu is open, and which row: one at a time. */
@@ -208,6 +215,8 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
   // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
   const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  // ⌥-click on its address: copied, as the menu's Copy address does.
+  const copy = (url: string) => { p.on.menu.copy(url).then(() => say(a.id, 'Address copied'), () => say(a.id, 'Could not copy the address')); };
   const close = (refocus?: boolean) => {
     const from = menu?.from as HTMLElement | null;
     setMenu(null);
@@ -241,8 +250,8 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
       <td title={a.address && a.url ? 'On this machine: ' + a.url : ''}>
-        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} />
-          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
+        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} copy={copy} os={p.os} />
+          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} copy={copy} os={p.os} />
           : <span class="muted">—</span>}
       </td>
       <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
