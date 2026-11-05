@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #PR19 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -135,7 +136,7 @@ Confidence that what matters can come back.
 - **Restore one file** (M, *Idea*): browse a backup by app and date and bring back one document, photo, or setting without restoring the whole app.
 - **Yesterday's version of an app** (M, *Idea*): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.
 - **A copy before anything risky** (S, *Idea*): a database dump just before an update, a restore, or a settings change, kept for a week.
-- **What changed since last night** (S, *Idea*): each backup's size beside the night before's, with a warning when an app's data shrinks sharply.
+- **What changed since last night** (S, *Built*, #PR19): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).
 - **Weekly integrity check** (S, *Idea*): Duplicati's own verify on a sample each week, and its result on Backups.
 
 ## Notifications and alerts
