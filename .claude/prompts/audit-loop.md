@@ -359,6 +359,13 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     take and whether any of them reaches outside the libraries.
 
 
+22. **`data/started.json` written as stopped.json was** (internal/started,
+    #411): six writers (Start and Restart, updates, Fix it, the watchdog,
+    the battery saver, a drive back, the stop timer) each read, change,
+    and rewrite it in place with no lock. Only the "up 9 minutes" hover
+    reads it, so a lost or torn write costs a reason on a hover, nothing
+    more; save it as stopped.Update does (lock, temporary file, rename).
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -532,3 +539,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   folders its container mounts (narrower than before); lyrics are read
   from a song's own .lrc and .txt beside it, and still come only from
   LRCLIB, which Tidy Up already used. No code change needed.
+- **Round 21 (#411, read through):** why an app last started, for the
+  "up 9 minutes" hover: data/started.json, written by six parts of the
+  homelab without a lock, as stopped.json was before N10. Nothing starts
+  or stops by it (only the hover reads it), so it is no hole; item 22.
