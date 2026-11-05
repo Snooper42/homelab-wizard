@@ -1015,8 +1015,10 @@ func (a *App) FinancesCalendar() (string, error) {
 // is one. It returns "" when the dialog was cancelled, else the file.
 func (a *App) ExportFinances(name, text string) (string, error) {
 	name = filepath.Base(strings.TrimSpace(name))
-	if !strings.HasSuffix(strings.ToLower(name), ".csv") || len(name) < 5 {
-		return "", fmt.Errorf("an export is a .csv file, not %q", name)
+	ext := strings.ToLower(filepath.Ext(name))
+	filter, ok := exportKinds[ext]
+	if !ok || len(name) <= len(ext) {
+		return "", fmt.Errorf("an export is a .csv, .json, or .html file, not %q", name)
 	}
 	home, _ := os.UserHomeDir()
 	dir := home
@@ -1024,11 +1026,41 @@ func (a *App) ExportFinances(name, text string) (string, error) {
 		dir = filepath.Join(home, "Downloads")
 	}
 	file, err := saveDialog(a.ctx, runtime.SaveDialogOptions{Title: "Save the Finances export", DefaultDirectory: dir, DefaultFilename: name, CanCreateDirectories: true,
-		Filters: []runtime.FileFilter{{DisplayName: "Spreadsheet (*.csv)", Pattern: "*.csv"}}})
+		Filters: []runtime.FileFilter{filter}})
 	if err != nil || file == "" {
 		return "", err
 	}
 	return file, os.WriteFile(file, []byte(text), 0o600)
+}
+
+// openFile opens a file of the homelab's in its own app (a page in the browser); tests replace it.
+var openFile = core.OpenFile
+
+// exportKinds are the files Finances exports, each with its dialog's filter.
+var exportKinds = map[string]runtime.FileFilter{
+	".csv":  {DisplayName: "Spreadsheet (*.csv)", Pattern: "*.csv"},
+	".json": {DisplayName: "JSON (*.json)", Pattern: "*.json"},
+	".html": {DisplayName: "Web page (*.html)", Pattern: "*.html"},
+}
+
+// PrintFinances puts a month's page (a self-contained .html the screen
+// made) in the homelab folder's reports/finances, readable by this user
+// alone, and opens it in the browser, where it prints itself. It returns
+// where the page is.
+func (a *App) PrintFinances(name, html string) (string, error) {
+	name = filepath.Base(strings.TrimSpace(name))
+	if strings.ToLower(filepath.Ext(name)) != ".html" || len(name) <= 5 || !strings.HasPrefix(name, "finances-") {
+		return "", fmt.Errorf("a printed month is a finances-….html page, not %q", name)
+	}
+	dir := filepath.Join(a.root, "reports", "finances")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	file := filepath.Join(dir, name)
+	if err := os.WriteFile(file, []byte(html), 0o600); err != nil {
+		return "", err
+	}
+	return file, openFile(file)
 }
 
 // People lists the household (homelab person list), removed people too.
