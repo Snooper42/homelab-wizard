@@ -101,7 +101,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 
 ## For Account 1
 
-Nothing yet.
+- **A Finances smoke case timed out once in CI** (Nov 5, #429's first run, `smoke (light)`): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
 
