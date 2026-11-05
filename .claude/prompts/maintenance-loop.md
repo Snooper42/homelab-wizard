@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** the PR for `claude/fix-records-whole` (item 3, its first part): take it to merged. #429, #431, and #432 merged.
+**Open now:** #433 (`claude/fix-records-whole`, item 3, its first part): take it to merged. #429, #431, and #432 merged.
 
 ## Your job
 
@@ -94,7 +94,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 
    On first run, read the old `.env` key, carry it over, then remove it, so nothing is lost on upgrade; prove it in `TestEachReleasesFolderUpgrades`. Top-level `data/*.json` goes off-site in the encrypted Secrets job, as `.env` does. Leave every other key the CLI writes where it is: secrets it generates (`NTFY_*`, `ADGUARD_*`, `KOPIA_*`), settings Compose reads (`VAULTWARDEN_SIGNUPS_ALLOWED`), and the owner's choices (`HOMELAB_DOMAIN`, `BACKUP_DESTINATION`). Leave the `<APP>_DIGEST` lines too: `cmd/homelab/versions.go` keeps them in `.env` on purpose, so a restore starts the version that wrote the data.
 3. **Records written in place.** Records that more than one process writes with a plain `os.WriteFile` move to `internal/lockedfile`. Start with `data/healed.json` (`cmd/homelab/heal.go`), the watchdog's state (`internal/health/health.go`), `data/battery.json` (`internal/battery`), and the savings history (`internal/savings`), and grep for others under `data/`. `internal/stopped`'s own copy of the lock becomes `lockedfile` too.
-   - **(this PR, open)** `data/battery.json` (`battery.Update`, `Pause`, `Resume`), the watchdog's state (`health.UpdateState`; `Save` whole), the savings history, and `internal/stopped` on `lockedfile`.
+   - **(#433, open)** `data/battery.json` (`battery.Update`, `Pause`, `Resume`), the watchdog's state (`health.UpdateState`; `Save` whole), the savings history, and `internal/stopped` on `lockedfile`.
    - **Waits for #425** (it claims `cmd/homelab/heal.go` and `apps.go`): `data/healed.json`, and `homelab remove`'s `Forget` through `health.UpdateState`.
    - **Then, found by the grep** (more than one writer, or read while written): `data/updates.json` (`internal/updates/history.go`: the watchdog, `update`, `rollback`), `data/setup.json` (`internal/setup`: the app and the CLI), `data/restarts.json` (`cmd/homelab/restartloop.go`), `data/people.json` (`internal/people`), `internal/backup/reminder.go`, `internal/core/core.go`'s, and `internal/upgrade/back.go`'s. Check each one's writers first; one written by a single job and read only after needs only a whole write (`lockedfile.Write`).
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
