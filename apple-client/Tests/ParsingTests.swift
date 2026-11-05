@@ -198,6 +198,17 @@ struct DecodingTests {
 
 @Suite("Logs")
 struct LogsTests {
+    @Test func readsProblemLines() {
+        #expect(LogsViewModel.level(of: "2026-11-05 ERROR could not connect") == .error)
+        #expect(LogsViewModel.level(of: "panic: runtime error") == .error)
+        #expect(LogsViewModel.level(of: "time=... level=error msg=boom") == .error)
+        #expect(LogsViewModel.level(of: "Traceback (most recent call last):") == .error)
+        #expect(LogsViewModel.level(of: "[WARN] disk 91% full") == .warning)
+        #expect(LogsViewModel.level(of: "Listening on :8080") == .plain)
+        let lines = LogsViewModel.split("ok\nWARNING low\nFATAL gone\n")
+        #expect(lines.map(\.level) == [.plain, .warning, .error])
+    }
+
     @Test func splitsCleansAndCaps() {
         let lines = LogsViewModel.split("one\n\u{1B}[31mtwo\u{7}\n\nthree\t3\n" + String(repeating: "z", count: 3000) + "\n\n")
         #expect(lines.map(\.text) == ["one", "[31mtwo", "", "three\t3", String(repeating: "z", count: 2000)])

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 #if canImport(UIKit)
 import UIKit
 #elseif canImport(AppKit)
@@ -6,13 +7,27 @@ import AppKit
 #endif
 
 /// Puts text on the clipboard, on either platform.
+///
+/// What this app copies is about the homelab, so it stays on this device:
+/// on iPhone and iPad it isn't offered to the person's other devices
+/// (Universal Clipboard) and it expires after ten minutes. On the Mac,
+/// `sensitive` text is marked concealed, which clipboard history apps skip.
 enum Clipboard {
-    @MainActor static func copy(_ text: String) {
+    static let lifetime: TimeInterval = 600
+
+    @MainActor static func copy(_ text: String, sensitive: Bool = false) {
         #if canImport(UIKit)
-        UIPasteboard.general.string = text
+        UIPasteboard.general.setItems(
+            [[UTType.utf8PlainText.identifier: text]],
+            options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(lifetime)]
+        )
         #elseif canImport(AppKit)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(text, forType: .string)
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.setString(text, forType: .string)
+        if sensitive {
+            board.setString("", forType: NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType"))
+        }
         #endif
     }
 }

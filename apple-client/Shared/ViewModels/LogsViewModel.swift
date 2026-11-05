@@ -11,6 +11,13 @@ final class LogsViewModel {
     struct Line: Identifiable, Equatable {
         let id: Int
         let text: String
+        var level: Level = .plain
+    }
+
+    /// How a line reads, from its words. A guess, for colour and the
+    /// Problems Only filter: logs have no one format.
+    enum Level: Sendable, Equatable {
+        case plain, warning, error
     }
 
     static let lineChoices = [200, 1000, 5000]
@@ -18,6 +25,8 @@ final class LogsViewModel {
     let app: AppStatus
     private(set) var lineCount = 200
     var filter = ""
+    /// Only the lines that read as errors or warnings.
+    var problemsOnly = false
     private(set) var lines: [Line] = []
     private(set) var isLoading = false
     private(set) var error: String?
@@ -40,8 +49,23 @@ final class LogsViewModel {
 
     var shownLines: [Line] {
         let needle = filter.trimmingCharacters(in: .whitespaces)
-        guard !needle.isEmpty else { return lines }
-        return lines.filter { $0.text.localizedCaseInsensitiveContains(needle) }
+        return lines.filter { line in
+            (!problemsOnly || line.level != .plain)
+                && (needle.isEmpty || line.text.localizedCaseInsensitiveContains(needle))
+        }
+    }
+
+    var problemCount: Int { lines.filter { $0.level != .plain }.count }
+
+    /// The lines shown, as text to copy.
+    var shownText: String { shownLines.map(\.text).joined(separator: "\n") }
+
+    nonisolated static func level(of text: String) -> Level {
+        let lower = text.lowercased()
+        let errorWords = ["error", "fatal", "panic", "exception", "traceback", "critical", "level=err", "[err]", " err "]
+        if errorWords.contains(where: { lower.contains($0) }) { return .error }
+        if lower.contains("warn") { return .warning }
+        return .plain
     }
 
     func load() async {
@@ -74,7 +98,8 @@ final class LogsViewModel {
             .enumerated()
             .map { index, raw in
                 let cleaned = String(raw.unicodeScalars.filter { $0 == "\t" || !CharacterSet.controlCharacters.contains($0) })
-                return Line(id: index, text: String(cleaned.prefix(2000)))
+                let text = String(cleaned.prefix(2000))
+                return Line(id: index, text: text, level: level(of: text))
             }
     }
 }

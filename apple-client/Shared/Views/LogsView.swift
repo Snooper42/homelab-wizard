@@ -19,6 +19,9 @@ struct LogsView: View {
                             // Verbatim: a log line is never read as Markdown or a localization key.
                             Text(verbatim: line.text.isEmpty ? " " : line.text)
                                 .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(line.level == .error ? AnyShapeStyle(.red)
+                                                 : line.level == .warning ? AnyShapeStyle(.orange)
+                                                 : AnyShapeStyle(.primary))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .id(line.id)
                         }
@@ -50,6 +53,16 @@ struct LogsView: View {
                                 Text("Last \(count) lines").tag(count)
                             }
                         }
+                        Toggle(isOn: $model.problemsOnly) {
+                            Label("Problems Only (\(model.problemCount))", systemImage: "exclamationmark.triangle")
+                        }
+                        Button {
+                            Clipboard.copy(model.shownText, sensitive: true)
+                        } label: {
+                            Label(model.filter.isEmpty && !model.problemsOnly ? "Copy Log" : "Copy Shown Lines",
+                                  systemImage: "doc.on.doc")
+                        }
+                        .disabled(model.shownLines.isEmpty)
                         Button {
                             Task { await model.load() }
                         } label: {
@@ -79,7 +92,12 @@ struct LogsView: View {
                 ContentUnavailableView("Nothing in the Log", systemImage: "doc.text")
             }
         } else if model.shownLines.isEmpty {
-            ContentUnavailableView.search(text: model.filter)
+            if model.problemsOnly, model.filter.trimmingCharacters(in: .whitespaces).isEmpty {
+                ContentUnavailableView("No Errors or Warnings", systemImage: "checkmark.circle",
+                                       description: Text("None of these lines reads as a problem."))
+            } else {
+                ContentUnavailableView.search(text: model.filter)
+            }
         }
     }
 
