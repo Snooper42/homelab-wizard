@@ -1334,6 +1334,7 @@ table.copies tr.copy td.name { white-space:normal; width:100%; padding-left:32px
 table.copies tr.copy td.size, table.copies tr.copy td.kept { text-align:right; font-variant-numeric:tabular-nums; }
 table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy td.kept { font-size:13px; }
 #copiesCard table.copies tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; white-space:normal; }
+#copiesCard table.copies tr.copy td.name .note { display:block; font-size:12px; margin:2px 0 0 18px; white-space:normal; }
 .alertlist.jobs li { align-items:center; }
 .alertlist.jobs .size { font-size:13px; white-space:nowrap; min-width:4.5em; text-align:right; font-variant-numeric:tabular-nums; }
 .alertlist.jobs .when { min-width:8em; text-align:right; }

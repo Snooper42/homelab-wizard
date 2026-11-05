@@ -2,9 +2,10 @@
 # Makes testdata/upgrades/<tag>: the files a homelab folder of that release
 # keeps (.env, data/*.json, scripts/logs/*.json), written by that release's
 # own code. For each tag: its CLI installs ntfy against a stand-in Docker
-# (so .env is made as that release made it), holds ntfy's updates, and two
-# settings are changed as a person would in Settings; then make/main.go,
-# built inside that tag, writes the rest.
+# (so .env is made as that release made it), holds ntfy's updates, turns
+# Paperless's alerts off where it can, and two settings are changed as a
+# person would in Settings; then make/main.go, built inside that tag,
+# writes the rest.
 #
 #   testdata/upgrades/make.sh v0.2.0 v0.3.0 ...
 #
@@ -39,6 +40,8 @@ for tag in "$@"; do
   hl() { PATH="$work/bin:$PATH" HOME="$work/home" "$work/homelab-$tag" --root "$root" --no-color "$@" >"$work/out" 2>&1 || { cat "$work/out"; exit 1; }; }
   hl install ntfy --apply
   FIXTURE_NTFY=1 hl updates hold ntfy
+  # An app's alerts turned off, in releases that can (ALERTS_OFF, 0.14).
+  if grep -q '^ALERTS_OFF=' "$root/.env"; then hl notify off paperless; fi
   # Settings a person changed: the time zone and ntfy's port.
   for kv in TZ=Europe/Amsterdam NTFY_PORT=9393; do
     key=${kv%%=*}

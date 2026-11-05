@@ -9,8 +9,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Heavy are the apps paused on battery: background work that can wait
@@ -40,7 +43,8 @@ func Load(path string) State {
 	return s
 }
 
-// Save writes the state, or removes it when nothing is paused.
+// Save writes the state whole (a reader never meets half of it), only
+// this account's to read, or removes it when nothing is paused.
 func (s State) Save(path string) error {
 	if len(s.Paused) == 0 {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
@@ -52,7 +56,49 @@ func (s State) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(s, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return lockedfile.Write(path, append(data, '\n'), 0o600)
+}
+
+// Update reads the state, lets change change it, and saves it when change
+// says it did, under the lock beside it: the watchdog and the awake job
+// both run the saver, and neither saves over what the other did.
+func Update(path string, change func(*State) bool) error {
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		var s State
+		_ = json.Unmarshal(old, &s)
+		if !change(&s) {
+			return nil, false
+		}
+		if len(s.Paused) == 0 {
+			return nil, true
+		}
+		data, err := json.MarshalIndent(s, "", "  ")
+		return append(data, '\n'), err == nil
+	})
+}
+
+// Pause adds the apps the saver just stopped, from now if none was paused.
+func Pause(path string, ids []string, now time.Time) error {
+	return Update(path, func(s *State) bool {
+		if len(s.Paused) == 0 {
+			s.Since = now
+		}
+		for _, id := range ids {
+			if !slices.Contains(s.Paused, id) {
+				s.Paused = append(s.Paused, id)
+			}
+		}
+		slices.Sort(s.Paused)
+		return true
+	})
+}
+
+// Resume takes the apps the saver just started off the list.
+func Resume(path string, ids []string) error {
+	return Update(path, func(s *State) bool {
+		s.Paused = slices.DeleteFunc(s.Paused, func(id string) bool { return slices.Contains(ids, id) })
+		return true
+	})
 }
 
 // Power reports whether this machine runs on battery now; known is false

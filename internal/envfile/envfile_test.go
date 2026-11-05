@@ -425,3 +425,42 @@ func TestIANAZone(t *testing.T) {
 		}
 	}
 }
+
+// A setting the homelab no longer keeps in .env (it moved to data/) goes
+// with the note above it, and only that; a save after someone else's
+// keeps their change and still leaves it out.
+func TestDeleteTakesTheKeyAndItsNote(t *testing.T) {
+	dir := t.TempDir()
+	p := write(t, dir, ".env", "# --- Updates ---\nUPDATES_HELD=sonarr\n# Apps the watchdog checks but does not alert about.\n# Written by homelab notify.\nALERTS_OFF=immich\n\n# Tidy Up.\nTIDY_UP=true\n")
+	f, err := Load(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !f.Delete("ALERTS_OFF") || f.Delete("NO_SUCH_KEY") {
+		t.Fatal("Delete reports whether the key was there")
+	}
+	// Someone else saves meanwhile (the app, a terminal).
+	other, _ := Load(p)
+	other.Set("TIDY_UP", "false")
+	if err := other.Save(); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Save(); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := os.ReadFile(p)
+	want := "# --- Updates ---\nUPDATES_HELD=sonarr\n\n# Tidy Up.\nTIDY_UP=false\n"
+	if string(data) != want {
+		t.Errorf("after Delete:\n%s\nwant:\n%s", data, want)
+	}
+	// Set and then deleted: not written back.
+	f, _ = Load(p)
+	f.Set("NEW_ONE", "x")
+	f.Delete("NEW_ONE")
+	if err := f.Save(); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(p); strings.Contains(string(data), "NEW_ONE") {
+		t.Errorf("a key set and deleted was saved:\n%s", data)
+	}
+}

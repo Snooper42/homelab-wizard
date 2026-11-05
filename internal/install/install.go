@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -471,6 +472,14 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 	run := func(s step) error {
 		switch s.name {
 		case "env":
+			// Lists the app writes, kept in data/ now, leave .env.
+			if c.Root != "" {
+				for _, l := range applist.Moved {
+					if _, err := l.Carry(c.Root, p.Env); err != nil {
+						return fmt.Errorf("moving %s into data: %w", l.Key, err)
+					}
+				}
+			}
 			if err := p.Env.Save(); err != nil {
 				return fmt.Errorf("writing .env: %w", err)
 			}

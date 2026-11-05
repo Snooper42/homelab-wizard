@@ -12,6 +12,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
@@ -31,6 +32,7 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 		t.Fatalf("testdata/upgrades holds %d releases, want 0.2.0 to 0.9.0-beta: %v", len(sets), sets)
 	}
 	day := time.Date(2026, 6, 1, 3, 30, 0, 0, time.UTC)
+	quietCarried := 0
 	for _, set := range sets {
 		t.Run(filepath.Base(set), func(t *testing.T) {
 			// Nothing running yet, as after a restart into the new version.
@@ -67,6 +69,11 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 			example := envMapOf(t, root, ".env.example")
 			for k, v := range before {
 				if after[k] == v {
+					continue
+				}
+				// A list the app writes, moved out of .env into data/
+				// (checked below).
+				if k == notify.QuietKey {
 					continue
 				}
 				if (v == "" || v == example[k]) && strings.Contains(installed, k+": this machine's") {
@@ -109,6 +116,18 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 				t.Errorf("ntfy's updates are no longer held: %v", updates.Held(after))
 			}
 
+			// The apps whose alerts were off (.env's ALERTS_OFF) are in
+			// data/alerts-off.json now, and the key is out of .env.
+			if _, still := after[notify.QuietKey]; still {
+				t.Errorf("%s is still in .env", notify.QuietKey)
+			}
+			if was := before[notify.QuietKey]; was != "" {
+				quietCarried++
+				if got := strings.Join(notify.LoadQuiet(root, nil), ","); got != was {
+					t.Errorf("alerts off: %q carried over as %q", was, got)
+				}
+			}
+
 			if done := setup.LoadDone(root); !done["tunnel"] || !done["alerts"] {
 				t.Errorf("Setup's steps marked done: %v", done)
 			}
@@ -131,6 +150,9 @@ func TestEachReleasesFolderUpgrades(t *testing.T) {
 				t.Errorf("the household: %+v, %v", household, err)
 			}
 		})
+	}
+	if quietCarried == 0 {
+		t.Error("no release's folder has an app's alerts off: the carry-over is not tested")
 	}
 }
 

@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 func TestParseUntil(t *testing.T) {
@@ -170,9 +172,9 @@ func TestUpdateTakesOverAStaleLock(t *testing.T) {
 // A lock another writer holds now makes Update wait, then say so rather
 // than write without it; a change that changes nothing writes nothing.
 func TestUpdateWaitsForAnotherWriter(t *testing.T) {
-	was := lockWait
-	lockWait = 50 * time.Millisecond
-	t.Cleanup(func() { lockWait = was })
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
 	path := Path(t.TempDir())
 	if err := Update(path, func(Record) bool { return false }); err != nil {
 		t.Fatal(err)
@@ -193,9 +195,9 @@ func TestUpdateWaitsForAnotherWriter(t *testing.T) {
 // Where the record cannot be written, Save and Update say why and leave no
 // file of their own behind.
 func TestSaveAndUpdateFailPlainly(t *testing.T) {
-	was := lockWait
-	lockWait = 50 * time.Millisecond
-	t.Cleanup(func() { lockWait = was })
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
 	dir := t.TempDir()
 	file := filepath.Join(dir, "file")
 	if err := os.WriteFile(file, nil, 0o600); err != nil {
