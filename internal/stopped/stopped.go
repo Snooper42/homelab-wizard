@@ -71,8 +71,15 @@ func (r Record) Save(path string) error {
 	if werr == nil {
 		werr = os.Chmod(tmp, 0o600)
 	}
+	// On Windows a rename over a file another process is reading fails
+	// for that moment: try again briefly.
 	if werr == nil {
-		werr = os.Rename(tmp, path)
+		for range 20 {
+			if werr = os.Rename(tmp, path); werr == nil {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
 	}
 	if werr != nil {
 		_ = os.Remove(tmp)
@@ -104,7 +111,9 @@ func Update(path string, change func(Record) bool) error {
 			_ = f.Close()
 			break
 		}
-		if !os.IsExist(err) {
+		// Windows says "access is denied" for a lock another writer is
+		// removing at that moment: it is busy, as one that is there.
+		if !os.IsExist(err) && !os.IsPermission(err) {
 			return err
 		}
 		if fi, serr := os.Stat(lock); serr == nil && time.Since(fi.ModTime()) > lockStale {
