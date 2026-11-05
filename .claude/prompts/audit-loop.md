@@ -703,6 +703,15 @@ Added after round 27 (the backlog was empty; worst first):
   container app, as `"updates"` does. Two notes under For Account 1.
   Re-check once its PR is open: item 30 stays open until then.
 
+- **Round 34 (item 29, phones that expire, read on its branch before its
+  PR):** `claude/feature-phones-expire`. Every request finds its phone
+  through `Store.Lookup`, which loads the record and expires it first;
+  once its time has passed, Change and Finances are taken off the record
+  itself (Until cleared), so a clock set back gives nothing back. An open
+  `/api/events` stream only says something changed; what changed is read
+  again through methods, which check the permission then. Fine as it is
+  on the branch; item 29 stays open until its PR is.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
