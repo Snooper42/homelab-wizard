@@ -137,25 +137,31 @@ struct BackupsView: View {
         }
     }
 
-    @ViewBuilder
     private func vault(_ o: BackupOverview) -> some View {
-        if o.vaultExport != nil || o.vaultDue || !o.plainExports.isEmpty {
-            Section("Password Vault Export") {
-                if let exported = o.vaultExport {
-                    LabeledContent("Last encrypted export") { Text(exported, format: .relative(presentation: .named)) }
-                }
-                if o.vaultDue {
-                    Label("An encrypted export is due.", systemImage: "key.horizontal")
-                        .foregroundStyle(.orange)
-                }
-                if !o.plainExports.isEmpty {
-                    Label("Unencrypted exports are lying in recovery-staging. Delete them on the computer:", systemImage: "exclamationmark.lock.fill")
-                        .foregroundStyle(.red)
-                    ForEach(o.plainExports, id: \.self) { name in
-                        Text(verbatim: name).font(.caption.monospaced()).textSelection(.enabled)
-                    }
+        Section {
+            switch o.vaultState {
+            case .plainExportLyingAround:
+                EmptyView()
+            case .neverMade:
+                Label("Never made yet.", systemImage: "key.horizontal")
+                    .foregroundStyle(.orange)
+            case .due(let exported):
+                Label("Due: the last one is from \(exported.formatted(.relative(presentation: .named))).", systemImage: "key.horizontal")
+                    .foregroundStyle(.orange)
+            case .fine(let exported):
+                LabeledContent("Last encrypted export") { Text(exported, format: .relative(presentation: .named)) }
+            }
+            if !o.plainExports.isEmpty {
+                Label("Unencrypted exports are lying in recovery-staging. Delete them on the computer:", systemImage: "exclamationmark.lock.fill")
+                    .foregroundStyle(.red)
+                ForEach(o.plainExports, id: \.self) { name in
+                    Text(verbatim: name).font(.caption.monospaced()).textSelection(.enabled)
                 }
             }
+        } header: {
+            Text("Password Vault Export")
+        } footer: {
+            Text("A copy of your passwords you can open anywhere, once a month.")
         }
     }
 

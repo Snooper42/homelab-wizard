@@ -84,6 +84,22 @@ extension BackupOverview {
         (copies.filter { $0.state == "fresh" }.count, copies.filter { $0.state != "paused" }.count)
     }
 
+    /// The password vault export, as the computer's line says it
+    /// (`Vault` in web/src/backups/Backups.tsx): a plain export lying
+    /// around comes first, then never made, then due, then fine.
+    enum VaultState: Equatable, Sendable {
+        case plainExportLyingAround
+        case neverMade
+        case due(Date)
+        case fine(Date)
+    }
+
+    var vaultState: VaultState {
+        if !plainExports.isEmpty { return .plainExportLyingAround }
+        guard let exported = vaultExport else { return .neverMade }
+        return vaultDue ? .due(exported) : .fine(exported)
+    }
+
     /// This app's copy, by its id.
     func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
 

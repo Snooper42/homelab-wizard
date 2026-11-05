@@ -409,6 +409,14 @@ struct BackupsTests {
         #expect(o.upToDate.fresh == 1 && o.upToDate.of == 3)
     }
 
+    @Test func theVaultExportReadsAsTheComputerSaysIt() throws {
+        func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
+        #expect(try o(#"{"vaultExport":"0001-01-01T00:00:00Z"}"#).vaultState == .neverMade)
+        #expect(try o(#"{"vaultExport":"2026-10-01T00:00:00Z","vaultDue":true}"#).vaultState == .due(GoTime.parse("2026-10-01T00:00:00Z")!))
+        #expect(try o(#"{"vaultExport":"2026-11-01T00:00:00Z"}"#).vaultState == .fine(GoTime.parse("2026-11-01T00:00:00Z")!))
+        #expect(try o(#"{"vaultExport":"2026-11-01T00:00:00Z","plainExports":["bitwarden_export.json"]}"#).vaultState == .plainExportLyingAround)
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())
