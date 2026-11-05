@@ -8,6 +8,7 @@ import { loadStatus, statusById, statusData } from './status';
 import { hostOS } from './setup';
 import { settingLabel, settingsData, showSettings } from './settings';
 import { cliProgress, startJob } from '../jobs';
+import { waitForBg } from '../job/Background';
 import { $, go, minute, osName, showError } from '../core';
 
 // Choose stacks
@@ -163,6 +164,7 @@ async function renderInputs(p: api.Plan) {
 
 let installing = false;
 $('installBtn').onclick = async () => {
+  if (waitForBg()) return;
   const btn = $('installBtn');
   installing = true;
   btn.disabled = true;

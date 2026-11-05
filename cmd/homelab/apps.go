@@ -26,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -891,6 +892,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			if err != nil {
 				if !all {
 					h.markStopped(action, done, end)
+					h.noteLifecycle(action, nightly, done, updated)
 					return err
 				}
 				h.ui.Warn("%s: %v", strings.Join(pa.ids, ", "), err)
@@ -902,6 +904,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			}
 		}
 		h.markStopped(action, append(done, updated...), end)
+		h.noteLifecycle(action, nightly, done, updated)
 		if action == "update" {
 			// Keep what they ran before, to go back to (homelab rollback).
 			if cs, err := client.Containers(ctx); err == nil {
@@ -941,26 +944,39 @@ func (h *homelab) markStopped(action string, ids []string, end time.Time) {
 	if len(ids) == 0 {
 		return
 	}
-	path := stopped.Path(h.root)
-	r := stopped.Load(path)
-	before := len(r)
-	for _, id := range ids {
-		switch action {
-		case "stop":
-			r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
-		case "start", "restart", "update", "remove":
-			delete(r, id)
+	err := stopped.Update(stopped.Path(h.root), func(r stopped.Record) bool {
+		before := len(r)
+		for _, id := range ids {
+			switch action {
+			case "stop":
+				r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
+			case "start", "restart", "update", "remove":
+				delete(r, id)
+			}
 		}
-	}
-	if action != "stop" && len(r) == before {
-		return
-	}
-	if err := r.Save(path); err != nil {
+		return action == "stop" || len(r) != before
+	})
+	if err != nil {
 		h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
 		return
 	}
 	if action == "stop" && !end.IsZero() {
 		h.ui.Info("starts again by itself at %s", end.Local().Format("Mon 3:04 PM"))
+	}
+}
+
+// noteLifecycle keeps why the apps a lifecycle command started did: you
+// (Start, Restart), or an update, yours or the nightly one's.
+func (h *homelab) noteLifecycle(action string, nightly bool, done, updated []string) {
+	switch action {
+	case "start", "restart":
+		h.noteStarted(started.You, done...)
+	case "update":
+		why := started.Updated
+		if nightly {
+			why = started.Nightly
+		}
+		h.noteStarted(why, updated...)
 	}
 }
 

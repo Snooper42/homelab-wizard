@@ -13,6 +13,7 @@ import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
+import { bgEnd, bgHide, bgStart, waitForBg } from '../job/Background';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
@@ -20,6 +21,7 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
+import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
@@ -31,6 +33,8 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
+// Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
+let seen = loadSeen();
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -68,12 +72,17 @@ let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
   // Grouped by category, as on Choose stacks; what needs a look comes
   // first, in a group of its own.
+  // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
+  const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    { label: 'Pinned', apps: pinned, pinned: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -371,8 +380,23 @@ const appListActions: AppListActions = {
       try { await go().SetAppSetting(a.id, 'alerts', on); } catch (e) { showError(e); }
       await loadStatus();
     },
+    pin: async (a, on) => {
+      try { await go().SetAppSetting(a.id, 'pinned', on); } catch (e) { showError(e); }
+      await loadStatus();
+    },
   },
 };
+/**
+ * Leaving Status (for another screen, or closing the app): what it shows now
+ * is what you saw, so the next visit's dots are what changed after it.
+ */
+export function leftStatus() {
+  if (!lastStatus) return;
+  saveSeen(lastStatus.apps);
+  seen = loadSeen();
+  renderAppList(lastStatus);
+}
+
 /** The rows' actions, for the command palette. */
 export const rowActions = appListActions;
 /** The apps the battery saver paused, from the last Status. */
@@ -455,6 +479,7 @@ function setPending(id: string, p: Pending | null) {
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
 async function showQR(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), url = 'https://' + a.address;
   if (cliStop) cliStop();
   let img;
@@ -468,11 +493,20 @@ async function showQR(a) {
 // Closes the command sheet, its log ready for the next command.
 function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
 // The command sheet's buttons, in place of what it showed.
-const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons }));
+// A new set is a new row (its key): a button that replaced a running one is not taken for it.
+const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
+// A command running in the sheet can be hidden: it carries on, its bar in
+// the sidebar (job/Background.tsx), and the sheet comes back from there.
+const hideButton: SheetButton = { label: 'Hide', title: 'It carries on, its bar in the sidebar', onClick: () => { bgHide(); $('cliPanel').hidden = true; } };
+const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidden = false; });
+// While one runs, nothing else takes the sheet (its log and bar are the
+// running one's): it says to wait instead.
+const sheetBusy = waitForBg;
 
 // Sign in: the user name the homelab set up the app with, and the password
 // copied (it never reaches the page), from .env.
 async function showSignIn(a, keys) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   let list = [];
@@ -506,6 +540,7 @@ const lastLog: Record<string, string> = {}; // each app's last command's output,
 const downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
 async function runAppAction(a, action, until?: string) {
   if (quiet.has(action)) return runQuietly(a, action, until);
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -513,7 +548,8 @@ async function runAppAction(a, action, until?: string) {
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
   startJob('cli');
-  cliButtons([]);
+  runInSheet(`${actionTitle[action]} ${a.name}`);
+  cliButtons([hideButton]);
   setPending(a.id, { action });
   setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
@@ -527,6 +563,7 @@ async function runAppAction(a, action, until?: string) {
   if (!failed && action === 'stop') offerUndo([a], until);
   if (typeof off === 'function') off();
   cliProgress(failed ? 'failed' : 'done');
+  bgEnd(!!failed);
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
@@ -557,6 +594,7 @@ async function runQuietly(a, action, until?: string) {
 
 // Details: the last command's output for an app, in the command sheet.
 function showDetails(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -570,6 +608,7 @@ function showDetails(a) {
 // Update: what it brings first (its newer releases' notes), then Update
 // runs it in the same panel.
 function showUpdate(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -595,6 +634,7 @@ mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
 export async function cliFlow(title, action, target, confirmLabel) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
@@ -621,11 +661,13 @@ export async function cliFlow(title, action, target, confirmLabel) {
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
-      // Running, it can no longer be cancelled: no buttons until it ends.
-      cliButtons([]);
+      // Running, it can no longer be cancelled, but it can be hidden: it carries on.
+      runInSheet(title);
+      cliButtons([hideButton]);
       let failed = false;
       try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
       cliProgress(failed ? 'failed' : 'done');
+      bgEnd(failed);
       stop();
       cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();

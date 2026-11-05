@@ -2152,6 +2152,9 @@ table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px)
 .rowmenu .check { color:var(--link); }
 tr.menued > td { background:var(--accent-soft); }
 .rowsaid { display:block; font-size:12px; color:var(--ok); margin-top:2px; }
+/* What changed since you looked (status/changed.ts): a dot after the app's name, until you leave Status. */
+.changedot { display:inline-block; width:7px; height:7px; margin-left:7px; border-radius:50%; background:var(--accent); vertical-align:middle; cursor:help; }
+@media (forced-colors: active) { .changedot { forced-color-adjust:none; background:Highlight; } }
 
 /* The money card on a wall screen's Status (status/WallCard.tsx). */
 #wallCard { margin-bottom:16px; }
@@ -2245,3 +2248,29 @@ html.palette-open #palette::before { content:""; position:fixed; inset:0; z-inde
 .palette .palfoot { margin:0; padding:0 16px; font-size:13px; }
 .palette .palfoot:not(:empty) { padding:10px 16px; border-top:1px solid var(--line); }
 @media (forced-colors: active) { .palette { border:1px solid CanvasText; } .palette .pallist li.picked { outline:2px solid Highlight; } }
+
+/* A command carrying on with its sheet hidden (job/Background.tsx): a
+   chip at the foot of the sidebar with its title, bar, and step; above
+   the tab bar on a phone. */
+#bgJob:empty { display:none; }
+.bgjob { position:relative; margin:8px 0 4px; }
+html nav .bgjob button.bgopen, html nav .bgjob button.bgopen:hover { display:flex; flex-direction:column; align-items:stretch; gap:5px; width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); font-size:12px; font-weight:400; text-align:left; }
+html nav .bgjob button.bgopen:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.bgjob .bgtitle { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:16px; }
+.bgjob .bgstep { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bgjob .bgtrack { display:block; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+.bgjob .bgfill { display:block; height:100%; background:var(--accent); border-radius:2px; transition:width .3s ease; }
+.bgjob .bgtrack.working .bgfill { width:30% !important; animation:bg-working 1.4s ease-in-out infinite; }
+@keyframes bg-working { from { transform:translateX(-100%); } to { transform:translateX(340%); } }
+.bgjob.done .bgfill { background:var(--ok); }
+.bgjob.failed .bgfill { background:var(--bad); }
+.bgjob.failed .bgstep { color:var(--bad); }
+html nav .bgjob button.bgdismiss, html nav .bgjob button.bgdismiss:hover { position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; justify-content:center; border-radius:6px; color:var(--muted); font-size:15px; line-height:1; }
+html nav .bgjob button.bgdismiss:hover { background:var(--shade-06); }
+@media (prefers-reduced-motion: reduce) { .bgjob .bgtrack.working .bgfill { animation:none; width:100% !important; opacity:.5; } }
+@media (forced-colors: active) { .bgjob .bgfill { forced-color-adjust:none; background:Highlight; } }
+@media (max-width: 700px) {
+  html.companion #bgJob { position:fixed; left:12px; right:12px; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:30; }
+  html.companion .bgjob { margin:0; }
+  html.companion nav .bgjob button.bgopen { box-shadow:0 8px 24px var(--shade-18); font-size:13px; }
+}

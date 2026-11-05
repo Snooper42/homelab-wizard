@@ -857,6 +857,52 @@ const smokes = [
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("containers reach no Coral")', { timeout: 5000 });
   } },
+  // Remember where you were: each screen keeps its own scroll and open sections between visits (another screen starts at its
+  // own place, not this one's) and after the app is opened again.
+  { name: 'Each screen keeps where you were: its scroll and open sections, after quitting too', screen: 'choose', run: async (page) => {
+    const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
+    const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
+    // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.click('#more > summary');
+    await page.waitForFunction(() => document.querySelector('#more').open, null, { timeout: 2000 });
+    await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
+    await scrollTo(900);
+    const chose = await top(), shown = await atTop();
+    if (chose < 800 || !shown) throw new Error(`Choose stacks only scrolls to ${chose} (${shown})`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose stacks' place`);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+    await scrollTo(300);
+    // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
+    await page.waitForTimeout(500);
+    const status = await top();
+    if (status < 250) throw new Error(`Status only scrolls to ${status}`);
+    await page.click('nav button[data-screen=choose]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose stacks at ${await top()}, not ${chose}`);
+    if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
+    // Quit and open again (on Choose stacks): it is where it was, and so is Status. Quitting is the page going away
+    // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
+    // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
+    await page.evaluate(() => dispatchEvent(new Event('pagehide')));
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.place']) throw new Error('nothing kept on quitting');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    if ((await atTop()) !== shown || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"; Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
+  } },
   { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
@@ -1715,13 +1761,13 @@ const smokes = [
     const menu = page.locator('.rowmenu');
     await menu.waitFor({ timeout: 2000 });
     const labels = (await menu.locator('[role^=menuitem]').allTextContents()).map((t) => t.replace('✓', '').trim());
-    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops'];
+    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops', 'Pin to the top'];
     if (labels.join('|') !== want.join('|')) throw new Error(`items: ${labels.join(', ')}`);
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (box.x + 20)) > 2 || Math.abs(m.y - (box.y + box.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
     const missed = await page.$$eval('.rowmenu [role^=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
     if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
-    if ((await menu.locator('[role=menuitemcheckbox]').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
+    if ((await menu.locator('[role=menuitemcheckbox]:has-text("Tell me if it stops")').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
     await menu.locator('[role=menuitem]:text-is("Stop")').click();
     await menu.locator('[role=menuitem]:has-text("Click again to stop Vikunja")').waitFor({ timeout: 1000 });
     if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped it');
@@ -1739,10 +1785,124 @@ const smokes = [
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
   } },
+  // Open, your way: ⌥-click (Alt-click) an address copies it and says so, opening nothing; ⇧-click (Shift-click) Open uses
+  // its address on this machine instead of the domain; a plain click still opens the domain. Each says so in its tooltip.
+  ...[['Mac', 'MacIntel', '⌥', '⇧'], ['Windows', 'Win32', 'Alt-', 'Shift-']].map(([sys, platform, alt, shift]) => ({
+    name: `Open, your way: ⌥-click copies an address, ⇧-click opens it on this machine, ${sys}`, screen: 'status', mock: { platform, host: sys === 'Mac' ? host : { ...host, os: 'Windows 11', machine: 'this PC' } }, run: async (page) => {
+      const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const local = await page.evaluate(() => window.__MOCK.status.apps.find((a) => a.id === 'vikunja').url);
+      const link = row.locator('a[role=button]:has-text("todo.example.com")');
+      if ((await link.getAttribute('title')) !== `${alt}click copies it`) throw new Error('the address says: ' + await link.getAttribute('title'));
+      await link.click({ modifiers: ['Alt'] });
+      await row.locator('.rowsaid:text-is("Address copied")').waitFor({ timeout: 2000 });
+      if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'https://todo.example.com') throw new Error('copied ' + await page.evaluate(() => window.__MOCK.clipboard));
+      if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('⌥-click opened it too');
+      if (await page.isVisible('#app.active')) throw new Error('⌥-click opened its page');
+      const open = row.locator('button.rowmain:text-is("Open")');
+      if ((await open.getAttribute('title')) !== `Open Vikunja (${shift}click: on this machine, ${local.replace('http://', '')})`) throw new Error('Open says: ' + await open.getAttribute('title'));
+      await open.click({ modifiers: ['Shift'] });
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== local) throw new Error('⇧-click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await open.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('a click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await link.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('the address opened ' + await page.evaluate(() => window.__MOCK.opened));
+    } })),
+  // Pin to the top (a row's right-click): the app moves to Pinned, open under Needs a look, in the order pinned, and leaves
+  // its own group; unpinned, it goes back. Ticked in the menu while pinned.
+  { name: 'Pin an app to the top of Status', screen: 'status', run: async (page) => {
+    const pin = async (name) => {
+      const row = page.locator(`#statusRows tr:not(.grouphead):has(strong:text-is("${name}"))`).first();
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const box = await row.locator('td.state').boundingBox();
+      await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+      await page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")').click({ timeout: 2000 });
+    };
+    // The rows in order, each group's heading as "# label".
+    const rows = () => page.$$eval('#statusRows tr', (trs) => trs.map((r) => (r.classList.contains('grouphead') ? '# ' + (/Pinned|Needs a look/.exec(r.textContent)?.[0] || 'group') : r.querySelector('strong')?.textContent)));
+    await pin('Vikunja');
+    await page.waitForSelector('#statusRows tr.grouphead:has-text("Pinned")', { timeout: 3000 });
+    await pin('Immich');
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return rows[p + 2]?.querySelector('strong')?.textContent === 'Immich'; }, null, { timeout: 3000 });
+    const list = await rows();
+    const at = list.indexOf('# Pinned');
+    if (at < 0 || list[at + 1] !== 'Vikunja' || list[at + 2] !== 'Immich' || !list[at + 3]?.startsWith('# ')) throw new Error('rows: ' + list.join(', '));
+    if (list.filter((r) => r === 'Vikunja').length !== 1 || list.filter((r) => r === 'Immich').length !== 1) throw new Error('a pinned app shows twice: ' + list.join(', '));
+    const heads = list.filter((r) => r?.startsWith('# '));
+    if (heads[0] !== '# Pinned' && !(heads[0] === '# Needs a look' && heads[1] === '# Pinned')) throw new Error('Pinned is not at the top: ' + heads.join(', '));
+    // Ticked while pinned; unpinned, it is back in its group.
+    const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+    await row.scrollIntoViewIfNeeded();
+    const box = await row.locator('td.state').boundingBox();
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    const item = page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")');
+    if ((await item.getAttribute('aria-checked')) !== 'true') throw new Error('Pin to the top is not ticked for a pinned app');
+    await item.click();
+    await page.waitForFunction(() => window.__MOCK.status.pinned?.join() === 'immich-server', null, { timeout: 3000 });
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return p >= 0 && rows[p + 1]?.querySelector('strong')?.textContent === 'Immich' && !rows[p + 2]?.querySelector('strong')?.textContent?.includes('Vikunja'); }, null, { timeout: 3000 });
+    const sets = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(sets) !== JSON.stringify([['vikunja', 'pinned', true], ['immich-server', 'pinned', true], ['vikunja', 'pinned', false]])) throw new Error('set: ' + JSON.stringify(sets));
+  } },
+  // A right-click on a screen in the sidebar opens its own menu at the pointer, without picking the screen: each item opens
+  // its screen and does what its button there does (Update all shows its list first). From the keyboard too; Escape closes
+  // it back on the sidebar, and a press elsewhere (as WebKit's) closes it.
+  { name: 'Right-click the sidebar: each screen’s own menu', screen: 'setup', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    const menu = page.locator('#contextMenu .rowmenu');
+    const items = async () => (await menu.locator('[role=menuitem]').allTextContents()).map((t) => t.trim());
+    const rightClick = async (screen) => {
+      const b = await page.locator(`nav button[data-screen=${screen}]`).boundingBox();
+      await page.mouse.click(b.x + 30, b.y + b.height / 2, { button: 'right' });
+      await menu.waitFor({ timeout: 2000 });
+      return b;
+    };
+    const b = await rightClick('status');
+    if ((await items()).join('|') !== 'Check again|Update all apps…') throw new Error('Status: ' + (await items()).join(', '));
+    if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
+    const m = await menu.boundingBox();
+    if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
+    const missed = await page.$$eval('#contextMenu [role=menuitem]', (bs) => bs.filter((x) => { const r = x.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !x.contains(at); }).map((x) => x.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    if (!(await page.isVisible('#setup.active'))) throw new Error('the right-click picked the screen');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Backups: Back up now and Test a restore.
+    await rightClick('backups');
+    if ((await items()).join('|') !== 'Check again|Back up now|Test a restore') throw new Error('Backups: ' + (await items()).join(', '));
+    await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Finances, from the keyboard: Shift+F10 on its button, the first item focused, the arrows, Return.
+    await page.focus('nav button[data-screen=finances]');
+    await page.keyboard.press('Shift+F10');
+    await menu.waitFor({ timeout: 2000 });
+    if ((await items()).join('|') !== 'Check again|Add a transaction|Update balances|Hide amounts') throw new Error('Finances: ' + (await items()).join(', '));
+    if ((await page.evaluate(() => document.activeElement.textContent.trim())) !== 'Check again') throw new Error('the first item is not focused');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    if ((await page.evaluate(() => document.activeElement.dataset.screen)) !== 'finances') throw new Error('Escape did not go back to the sidebar');
+    await page.keyboard.press('Shift+F10');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#finances.active', { timeout: 3000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 3000 });
+    // Update all opens Status and its list, as its button does (a sheet that owns the window): nothing is updated yet.
+    await rightClick('status');
+    await menu.locator('[role=menuitem]:text-is("Update all apps…")').click();
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Update all apps now")', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:text-is("Update them")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.join() !== 'update-all') throw new Error('ran: ' + ran.join());
+  } },
   // From the keyboard: Shift+F10 (or the context-menu key) on a row's button opens the menu under its name with the first item
   // focused; the arrows move through it and Return runs one. Tell me if it stops turns its alerts off. A stopped app's menu offers
   // Start, not Restart or Stop.
   { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
+    // Room under Vikunja, the last row, for the whole menu (near the bottom it opens upward: its own case).
+    await page.setViewportSize({ width: 1280, height: 1000 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.locator('button.rowmain').focus({ timeout: 5000 });
     await page.keyboard.press('Shift+F10');
@@ -1751,10 +1911,13 @@ const smokes = [
     await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
     const name = await row.locator('strong').boundingBox(), m = await menu.boundingBox();
     if (m.y < name.y + name.height || m.y > name.y + name.height + 12) throw new Error('the menu did not open under the app’s name');
+    // End is Pin to the top; one up, Tell me if it stops.
     await page.keyboard.press('End');
+    await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Enter');
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     await page.waitForFunction(() => window.__MOCK.calls.SetAppSetting >= 1, null, { timeout: 3000 });
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet?.[0])) !== '["vikunja","alerts",false]') throw new Error('set ' + JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet)));
     if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });
@@ -2393,6 +2556,34 @@ const smokes = [
     await page.waitForTimeout(120);
     if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
   } },
+  { name: 'A long command can be hidden: it carries on, its bar in the sidebar, and comes back from there', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    // Running, the sheet offers Hide, and Escape presses it.
+    await page.waitForSelector('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    if (await page.evaluate(() => document.documentElement.classList.contains('sheet-open'))) throw new Error('the screen stayed dimmed');
+    await page.waitForSelector('#bgJob .bgjob.running .bgtitle:text-is("Update all apps now")', { timeout: 3000 });
+    // Another command waits for it, saying so, and leaves its sheet be.
+    await page.click('#updateAll');
+    await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
+    // The rest of the app is there to use meanwhile.
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    // A job of another screen waits too: it would take the running one's bar and log.
+    await page.click('#backupNow');
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#backupPanel')) throw new Error('Back up now started beside the running command');
+    // Done: the chip says so, and brings back the sheet, which says how it went.
+    await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
+    await page.click('#bgJob .bgopen');
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliActions button:text-is("Close")', { timeout: 3000 });
+    if (await page.$('#bgJob .bgjob')) throw new Error('the chip stayed with its sheet open');
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.filter((r) => r === 'update-all').length !== 2) throw new Error('ran: ' + ran.join());
+  } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
@@ -2523,6 +2714,39 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
+  // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
+  // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
+  // counts as Status. Kept on this device across launches.
+  { name: 'What changed since you looked: a dot on each row, cleared once seen', screen: 'status', run: async (page) => {
+    const dots = () => page.$$eval('#statusRows tr:not(.grouphead)', (rs) => rs.filter((r) => r.querySelector('.changedot')).map((r) => `${r.querySelector('strong').textContent}: ${r.querySelector('.changedot').getAttribute('aria-label')}`).sort());
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await dots()).length) throw new Error('dots on the first visit: ' + (await dots()).join(', '));
+    // An app's page is still Status: nothing is seen yet.
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
+    await page.waitForSelector('#app.active', { timeout: 3000 });
+    if (await page.evaluate(() => localStorage.getItem('homelab.statusSeen'))) throw new Error('an app’s page counted as leaving Status');
+    await page.click('nav button[data-screen=setup]');
+    await page.waitForSelector('#setup.active', { timeout: 3000 });
+    // Meanwhile: Vikunja restarted, Navidrome updated, Mealie started, Immich stopped.
+    await page.evaluate(() => {
+      const now = new Date().toISOString();
+      window.__MOCK.status = { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a) => (
+        a.id === 'vikunja' ? { ...a, since: now }
+          : a.id === 'navidrome' ? { ...a, since: now, updatedAt: now }
+          : a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: now }
+          : a.id === 'immich-server' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
+    });
+    await page.click('nav button[data-screen=status]');
+    await page.evaluate(() => window.__emit('status:changed'));
+    const want = ['Immich: Stopped since you looked', 'Mealie: Started since you looked', 'Navidrome: Updated since you looked', 'Vikunja: Restarted since you looked'];
+    await page.waitForFunction((n) => document.querySelectorAll('#statusRows .changedot').length === n, want.length, { timeout: 5000 }).catch(() => {});
+    if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
+    if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
+    // Seen: leaving and coming back clears them.
+    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
+  } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');
@@ -2562,6 +2786,25 @@ const smokes = [
     await page.hover(blips);
     const said = await page.waitForSelector(`${blips} [role=tooltip]`, { state: 'visible', timeout: 3000 });
     if (!/No outage: each check it missed passed the next time/.test(await said.innerText())) throw new Error('Vaultwarden says: ' + await said.innerText());
+  } },
+  // Hover "up 8 hours" (or Tab to it) for why it last started, and when; an app with no reason kept has plain words.
+  { name: 'Why an app restarted, on hover', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, startedBy: 'watchdog' } : a.id === 'audiobookshelf' ? { ...a, startedBy: 'docker' } : a)) } }, run: async (page) => {
+    const up = '#statusRows tr:has(strong:text-is("Vikunja")) .local.hovers:has-text("up 8 hours")';
+    await page.waitForSelector(up, { timeout: 5000 });
+    await page.hover(up);
+    const card = await page.waitForSelector(`${up} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = await card.innerText();
+    if (!/The watchdog restarted it: it was unwell on two checks in a row/.test(said) || !/(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d+:\d\d (AM|PM)/.test(said)) throw new Error('Vikunja says: ' + said);
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${up} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    const abs = '#statusRows tr:has(strong:text-is("Audiobookshelf")) .local.hovers';
+    await page.focus(abs);
+    const docker = await page.waitForSelector(`${abs} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    if (!/Docker started it again after it stopped on its own/.test(await docker.innerText())) throw new Error('Audiobookshelf says: ' + await docker.innerText());
+    // A click on the words stays on Status; nothing kept, nothing to hover.
+    await page.click(up);
+    if (!(await page.isVisible('#status'))) throw new Error('the click left Status');
+    if (await page.$$eval('#statusRows tr:has(strong:text-is("Immich")) .local', (l) => l.some((e) => e.classList.contains('hovers')))) throw new Error('Immich has a hover with nothing to say');
   } },
   { name: 'Uptime and restarts on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Audiobookshelf") .badge:has-text("restarted 3×")', { timeout: 5000 });
@@ -3013,8 +3256,9 @@ const smokes = [
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
+    // Nothing cancels it while it runs: Hide alone, which lets it carry on behind.
     const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
-    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    if (buttons.join() !== 'Hide') throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
     // The engine says containers changed while the job runs: Status behind the sheet waits.
     await page.waitForSelector('#cliApps li', { timeout: 5000 });
     await page.evaluate(() => window.__emit('status:changed'));
@@ -5297,6 +5541,31 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Add a payment")');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
+  { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Type how much it is.")', { timeout: 5000 });
+    // And Cancel asks again before it drops what was typed.
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+  } },
+  // A filter whose last transaction is deleted lets go: its menu would say Every category over an empty list.
+  { name: 'Finances: a transaction filter lets go when its last transaction goes', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Gas');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-transactions :text("None match")')) throw new Error('filtered by a category with nothing in it');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== '') throw new Error('the menu still has a pick');
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });

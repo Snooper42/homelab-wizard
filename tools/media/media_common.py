@@ -322,6 +322,25 @@ def _trash_dir(p):
     return top / "files", top / "info"
 
 
+def trashed_from(src, at):
+    """Whether at is where trash() would have put src: directly in the Trash of src's drive (on
+    Windows, a dated folder of that drive's .tidy-trash). Undo moves only such a thing back, so a
+    trash log that came with a homelab made elsewhere can't have it place any other file anywhere."""
+    src, at = Path(src), Path(at)
+    if not src.is_absolute() or not at.is_absolute():
+        return False
+    near = src.parent  # src is gone, and its folder may be: the nearest folder still there
+    while not near.exists() and near.parent != near:
+        near = near.parent
+    try:
+        if IS_WINDOWS:
+            return os.path.realpath(str(at.parent.parent)) == os.path.realpath(str(_drive_root(near) / ".tidy-trash"))
+        files, _ = _trash_dir(near)
+    except OSError:
+        return False
+    return os.path.realpath(str(at.parent)) == os.path.realpath(str(files))
+
+
 def _trash_windows(p):
     """The Recycle Bin, through the same call Explorer uses (recoverable with Restore)."""
     is_dir = Path(p).is_dir()
