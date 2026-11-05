@@ -82,7 +82,7 @@ struct AppDetailView: View {
                 }
 
                 if app.address != nil || app.url != nil {
-                    Section("Addresses") {
+                    Section {
                         if let address = app.address, let url = Self.httpsURL(address) {
                             Link(destination: url) {
                                 LabeledContent("Homelab domain", value: address)
@@ -93,6 +93,11 @@ struct AppDetailView: View {
                                 Text(local).textSelection(.enabled)
                             }
                         }
+                    } header: {
+                        Text("Addresses")
+                    } footer: {
+                        Text(Self.reach(isPublic: dashboard.catalog?.entry(app.id)?.isPublic == true,
+                                        hasAddress: !(app.address ?? "").isEmpty))
                     }
                 }
 
@@ -319,6 +324,13 @@ struct AppDetailView: View {
                 }
             }
         }
+    }
+
+    /// Where it can be reached from, as the computer's Address tile says it.
+    nonisolated static func reach(isPublic: Bool, hasAddress: Bool) -> String {
+        if isPublic { return "At home, and on the internet through the Cloudflare Tunnel." }
+        if hasAddress { return "At home and on your tailnet, not on the internet." }
+        return "On this machine only."
     }
 
     /// Only https links open. The address may come without a scheme.

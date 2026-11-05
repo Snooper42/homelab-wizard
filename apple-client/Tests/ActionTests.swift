@@ -264,3 +264,19 @@ struct AppSearchTests {
         #expect(apps.filter { DashboardViewModel.matches($0, "plex") }.isEmpty)
     }
 }
+
+@Suite("The app page")
+@MainActor
+struct AppPageTests {
+    @Test func saysWhereItCanBeReached() {
+        #expect(AppDetailView.reach(isPublic: true, hasAddress: true).contains("Cloudflare Tunnel"))
+        #expect(AppDetailView.reach(isPublic: false, hasAddress: true) == "At home and on your tailnet, not on the internet.")
+        #expect(AppDetailView.reach(isPublic: false, hasAddress: false) == "On this machine only.")
+    }
+
+    @Test func onlyHTTPSAddressesOpen() {
+        #expect(AppDetailView.httpsURL("photos.example.com")?.absoluteString == "https://photos.example.com")
+        #expect(AppDetailView.httpsURL("http://photos.example.com") == nil)
+        #expect(AppDetailView.httpsURL("ftp://photos.example.com") == nil)
+    }
+}
