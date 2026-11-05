@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -139,7 +140,7 @@ func (h *homelab) stopRestartLoops(ctx context.Context, client *docker.Client, c
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {
 		data, _ := json.MarshalIndent(next, "", "  ")
-		_ = os.WriteFile(path, append(data, '\n'), 0o644)
+		_ = lockedfile.Write(path, append(data, '\n'), 0o600)
 	}
 	return ids, lines
 }
