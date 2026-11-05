@@ -1994,8 +1994,8 @@
           !native && running4 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
-          item("Back up now", pick(() => on2.backupNow())),
-          !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
+          !companion2 && item("Back up now", pick(() => on2.backupNow())),
+          !native && !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
             "Tell me if it stops",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
           ] }),
@@ -2182,8 +2182,52 @@
   }
   function Row2({ a: a3, p: p3, menu, setMenu, said, say }) {
     const pend = p3.pending[a3.id];
-    const menuable = !p3.companion && a3.state !== "missing" && a3.state !== "elsewhere";
+    const phoneMay = () => {
+      const c3 = document.documentElement.classList;
+      return c3.contains("can-change") && !c3.contains("kiosk");
+    };
+    const menuable = a3.state !== "missing" && a3.state !== "elsewhere";
     const openMenu2 = (x3, y3) => setMenu({ id: a3.id, x: x3, y: y3, from: document.activeElement });
+    const rowRef = A2(null);
+    const opener = A2(openMenu2);
+    opener.current = openMenu2;
+    h2(() => {
+      const el2 = rowRef.current;
+      if (!el2 || !menuable || !p3.companion) return;
+      let at2 = null;
+      const stop2 = () => {
+        if (at2) clearTimeout(at2.timer);
+        at2 = null;
+      };
+      const start = (e3) => {
+        if (!phoneMay() || e3.target.closest(".rowmenu") || e3.touches.length !== 1) return;
+        const t3 = e3.touches[0], press = { x: t3.clientX, y: t3.clientY, opened: false, timer: 0 };
+        press.timer = window.setTimeout(() => {
+          press.opened = true;
+          opener.current(press.x, press.y);
+        }, 500);
+        at2 = press;
+      };
+      const move = (e3) => {
+        const t3 = e3.touches[0];
+        if (at2 && t3 && Math.hypot(t3.clientX - at2.x, t3.clientY - at2.y) > 10) stop2();
+      };
+      const end = (e3) => {
+        if (at2?.opened) e3.preventDefault();
+        stop2();
+      };
+      el2.addEventListener("touchstart", start, { passive: true });
+      el2.addEventListener("touchmove", move, { passive: true });
+      el2.addEventListener("touchend", end);
+      el2.addEventListener("touchcancel", stop2);
+      return () => {
+        stop2();
+        el2.removeEventListener("touchstart", start);
+        el2.removeEventListener("touchmove", move);
+        el2.removeEventListener("touchend", end);
+        el2.removeEventListener("touchcancel", stop2);
+      };
+    }, [menuable, p3.companion]);
     const copy = (url) => {
       p3.on.menu.copy(url).then(() => say(a3.id, "Address copied"), () => say(a3.id, "Could not copy the address"));
     };
@@ -2201,17 +2245,18 @@
       /* @__PURE__ */ u3(
         "tr",
         {
+          ref: rowRef,
           "aria-busy": pend && !pend.failed ? true : void 0,
           class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
             if (!e3.target.closest("a, button, .rowmenu, .hovers")) p3.on.page(a3);
           } : void 0,
-          onContextMenu: menuable ? (e3) => {
+          onContextMenu: menuable && (!p3.companion || phoneMay()) ? (e3) => {
             if (e3.target.closest(".rowmenu")) return;
             e3.preventDefault();
             openMenu2(e3.clientX, e3.clientY);
           } : void 0,
-          onKeyDown: menuable ? (e3) => {
+          onKeyDown: menuable && !p3.companion ? (e3) => {
             if (!(e3.key === "ContextMenu" || e3.key === "F10" && e3.shiftKey) || e3.target.closest(".rowmenu")) return;
             e3.preventDefault();
             const r3 = e3.currentTarget.querySelector("strong").getBoundingClientRect();
