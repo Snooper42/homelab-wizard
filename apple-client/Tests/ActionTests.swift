@@ -116,6 +116,23 @@ struct StopChoiceTests {
         #expect(AppAction.groupTargets(.start, in: status.apps).isEmpty)
     }
 
+    @Test func needsALookAsTheComputerCountsIt() throws {
+        let apps = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"stopped"},
+                 {"id":"b","name":"B","state":"stopped"},
+                 {"id":"homelab-companion","name":"Phone companion","state":"not running"},
+                 {"id":"c","name":"C","state":"missing"},
+                 {"id":"d","name":"D","state":"elsewhere"},
+                 {"id":"e","name":"E","state":"running","health":"restarting"},
+                 {"id":"f","name":"F","state":"running","health":"native"}],
+         "stopped":{"b":{"since":"2026-11-05T14:00:00Z"}}}
+        """#.utf8)).apps
+        #expect(apps.map(\.needsAttention) == [true, false, false, true, false, true, false])
+        #expect(apps[2].detailLine == "Starts with the scheduled jobs (Setup)")
+        #expect(apps[3].detailLine == "Not running" && apps[4].detailLine == "Runs elsewhere")
+        #expect(apps[5].detailLine == "Restarting" && apps[6].detailLine == "Running (native app)")
+    }
+
     @Test func batteryAndDriveWaitsAreNotStartedInBulk() throws {
         let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
         {"apps":[{"id":"plain","name":"Plain","state":"stopped"},
@@ -130,7 +147,8 @@ struct StopChoiceTests {
         #expect(apps[2].detailLine == "Waiting for the Media drive" && apps[2].isWaiting)
         // Running again: the battery list doesn't change how it reads.
         #expect(apps[3].detailLine == "Running" && !apps[3].isWaiting)
-        #expect(!apps[1].needsAttention && !apps[2].needsAttention)
+        // Stopped, and not on purpose: the computer's Needs a look counts them.
+        #expect(apps[1].needsAttention && apps[2].needsAttention && apps[0].needsAttention)
     }
 
     @Test func aBadStoppedRecordDoesNotCostTheStatus() throws {

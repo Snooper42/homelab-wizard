@@ -155,16 +155,20 @@ extension AppStatus {
         }
     }
 
+    /// In the computer's words (`stateOf` in web/src/status/AppList.tsx).
     var stateLabel: String {
         switch state {
-        case "running": "Running"
+        case "running": health == "native" ? "Running (native app)" : "Running"
         case "stopped": "Stopped"
-        case "elsewhere": "Running elsewhere"
-        case "missing": "Missing"
-        case "not running": "Not running"
+        case "elsewhere": "Runs elsewhere"
+        case "missing", "not running": "Not running"
         default: state.capitalized
         }
     }
+
+    /// The phone companion is `homelab serve`, which the scheduled jobs
+    /// run: not running before they're set up is expected, not a problem.
+    var awaitingJobs: Bool { id == "homelab-companion" && state == "not running" }
 
     /// One line explaining the state, the most urgent part first.
     var detailLine: String {
@@ -172,8 +176,9 @@ extension AppStatus {
         if state == "stopped", let stop = stoppedOnPurpose { return stop.words() }
         if state != "running", pausedOnBattery { return "Paused on battery" }
         if let drive = waitingFor, !drive.isEmpty { return "Waiting for the \(Self.driveName(drive)) drive" }
+        if awaitingJobs { return "Starts with the scheduled jobs (Setup)" }
         switch health {
-        case "restarting": return "Crash loop"
+        case "restarting": return "Restarting"
         case "unhealthy": return "Unhealthy"
         case "starting": return "Starting"
         default: return stateLabel
@@ -186,14 +191,21 @@ extension AppStatus {
     }
 
     /// Not running for a reason that passes by itself: the power or a drive
-    /// comes back. A warning, not trouble (the web's "warn" dot).
+    /// comes back. The web's "warn" dot; the computer still counts a
+    /// stopped one in Needs a look.
     var isWaiting: Bool {
         state != "running" && (pausedOnBattery || !(waitingFor ?? "").isEmpty)
     }
 
+    /// Stopped by a person on purpose: no trouble, a plain dot.
+    private var heldByYou: Bool {
+        state == "stopped" && stoppedOnPurpose != nil && stoppedOnPurpose?.keptRestarting != true
+    }
+
     var symbolName: String {
-        if needsAttention { return "exclamationmark.triangle.fill" }
+        if heldByYou { return "stop.circle.fill" }
         if isWaiting { return pausedOnBattery ? "bolt.slash.circle.fill" : "externaldrive.fill.badge.exclamationmark" }
+        if needsAttention { return "exclamationmark.triangle.fill" }
         if health == "starting" { return "hourglass.circle.fill" }
         switch state {
         case "running": return "checkmark.circle.fill"
@@ -203,11 +215,15 @@ extension AppStatus {
     }
 
     var tint: Color {
+        if heldByYou || awaitingJobs { return .secondary }
+        if isWaiting { return .orange }
         if needsAttention {
-            let red = health == "restarting" || health == "unhealthy" || stoppedOnPurpose?.keptRestarting == true
-            return red ? .red : .orange
+            // The computer's "bad" dot: red. A plain stop is its "warn": orange.
+            let bad = health == "restarting" || health == "unhealthy" || state == "missing"
+                || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
+            return bad ? .red : .orange
         }
-        if health == "starting" || isWaiting { return isWaiting ? .orange : .yellow }
+        if health == "starting" { return .yellow }
         switch state {
         case "running": return .green
         case "elsewhere": return .blue

@@ -88,16 +88,20 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
 
     var isRunning: Bool { state == "running" }
 
-    /// Running but broken, expected and not running, or stopped by the
-    /// watchdog because it kept restarting.
+    /// Whether it needs a look, as the computer's Needs a look counts it
+    /// (`troubled` in web/src/status/Tiles.tsx): unwell, not answering,
+    /// missing, or stopped when nobody stopped it on purpose (the watchdog's
+    /// stop of one that kept restarting counts too). Stopped on purpose,
+    /// running elsewhere, and "not running" don't.
     var needsAttention: Bool {
         if let notAnswering, !notAnswering.isEmpty { return true }
         switch health {
         case "unhealthy", "restarting": return true
         default: break
         }
-        if state == "stopped", stoppedOnPurpose?.keptRestarting == true { return true }
-        return state == "missing" || state == "not running"
+        if state == "missing" { return true }
+        if state == "stopped" { return stoppedOnPurpose == nil || stoppedOnPurpose?.keptRestarting == true }
+        return false
     }
 
     var startedAt: Date? { since.flatMap(GoTime.parse) }
