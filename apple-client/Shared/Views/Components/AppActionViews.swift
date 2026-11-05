@@ -31,6 +31,19 @@ struct AppActionControls: ViewModifier {
                     }
                 }
             }
+            // VoiceOver: the same actions in the Actions rotor, no swipe or long press needed.
+            .accessibilityActions {
+                if !actions.isBusy {
+                    ForEach(available) { action in
+                        Button(action.needsConfirmation ? "\(action.title)…" : action.title) {
+                            actions.request(action, on: app)
+                        }
+                    }
+                }
+                if app.hasLogs {
+                    Button("Logs") { dashboard.logsApp = app }
+                }
+            }
             #if os(iOS)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                 ForEach(available.filter(\.isEveryday).reversed()) { action in
