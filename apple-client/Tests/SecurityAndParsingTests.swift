@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import ImageIO
 import Testing
 @testable import HomelabClient
 
@@ -696,5 +698,46 @@ struct LedgerEditTests {
         #expect(all.count == 1)
         let fromNullList = try #require(LedgerEdit.appending(draft(5), accounts: ["chk"], calendar: utc, to: .object(["transactions": .null])))
         #expect(fromNullList["transactions"] != nil)
+    }
+}
+
+@Suite("Receipts")
+struct ReceiptTests {
+    private let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+    @Test func names() {
+        #expect(ReceiptCodec.isValidName("0123456789abcdef0123456789abcdef.jpg"))
+        #expect(ReceiptCodec.isValidName("0123456789abcdef0123456789abcdef.pdf"))
+        #expect(!ReceiptCodec.isValidName("0123456789ABCDEF0123456789ABCDEF.jpg"))
+        #expect(!ReceiptCodec.isValidName("../etc/passwd"))
+        #expect(!ReceiptCodec.isValidName("0123456789abcdef0123456789abcdef.svg"))
+        #expect(!ReceiptCodec.isValidName("short.jpg"))
+    }
+
+    @Test func showsImagesAndPDFs() {
+        if case .image? = ReceiptCodec.content(fromDataURL: "data:image/png;base64,\(png)") {} else { Issue.record("png not shown") }
+        let pdf = Data("%PDF-1.4\n%%EOF".utf8).base64EncodedString()
+        if case .pdf? = ReceiptCodec.content(fromDataURL: "data:application/pdf;base64,\(pdf)") {} else { Issue.record("pdf not shown") }
+        // The declared type must match the bytes.
+        #expect(ReceiptCodec.content(fromDataURL: "data:application/pdf;base64,\(png)") == nil)
+        #expect(ReceiptCodec.content(fromDataURL: "data:text/html;base64,\(Data("<b>".utf8).base64EncodedString())") == nil)
+    }
+
+    @Test func photosAreReencodedWithoutMetadata() throws {
+        let url = try #require(ReceiptCodec.preparePhoto(Data(base64Encoded: png)!))
+        #expect(url.hasPrefix("data:image/jpeg;base64,"))
+        let jpeg = try #require(Data(base64Encoded: String(url.dropFirst("data:image/jpeg;base64,".count))))
+        let source = try #require(CGImageSourceCreateWithData(jpeg as CFData, nil))
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] ?? [:]
+        #expect(props[kCGImagePropertyGPSDictionary] == nil)
+        #expect(props[kCGImagePropertyExifDictionary] == nil || (props[kCGImagePropertyExifDictionary] as? [CFString: Any])?[kCGImagePropertyExifDateTimeOriginal] == nil)
+    }
+
+    @Test func transactionsCarryAValidReceiptOnly() throws {
+        let good = NewTransaction(date: Date(), account: "chk", isMoneyIn: false, amount: 5, payee: "Shop", category: "", note: "", receipt: "0123456789abcdef0123456789abcdef.jpg")
+        #expect(LedgerEdit.appending(good, accounts: ["chk"], to: .null) != nil)
+        var bad = good
+        bad.receipt = "../../.env"
+        #expect(LedgerEdit.appending(bad, accounts: ["chk"], to: .null) == nil)
     }
 }

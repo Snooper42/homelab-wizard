@@ -76,6 +76,7 @@ hash. The client receives the token itself, once.
 | Accidental or repeated changes | Stop is confirmed and offers Undo for 10 s. One change at a time. Changes are never retried, and a timeout says the change may still be running. Buttons show only when the computer says `canChange`. App ids must look like catalog ids before they're sent. | `AppActionsViewModel`, `AppAction`, `APIClient.perform` |
 | Card data, logs and alerts in memory | Cards, logs and command output belong to the dashboard, so locking drops them. A late answer after a lock is dropped, not stored. Log lines are shown verbatim (never parsed as Markdown) and marked `privacySensitive`. One card that fails to decode only costs that card. | `CardsViewModel`, `LogsViewModel`, `StatusCard` |
 | Finances save losing data, or undoing another device's | Edits change only the fields they mean to (`FinancePlanEdit`) in the plan as the raw JSON sent. Its `rev` goes back, so the computer refuses a stale save, and the phone then reads the latest. The edit level, authentication, a sane amount, and never retried. | `FinancePlanEdit`, `FinancesViewModel.setBalance` |
+| A receipt photo giving away where it was taken | Re-encoded from its pixels alone (`ReceiptCodec.preparePhoto`): no EXIF, GPS or camera details, at most 2000 px and 2 MB. Receipt names must be the computer's hash form before they're sent or shown. | `ReceiptCodec` |
 | Fix applied by accident | Fix always runs as a plan first. `fix --apply` runs only from that plan's Fix These button, after authentication. | `HomelabTasksViewModel`, `TaskOutputView` |
 | Diagnostics report leaking secrets | The computer removes secrets before sending. The phone shows the whole report before the share sheet, keeps it only while that sheet is open, and never logs it. | `ComputerViewModel`, `ReportView` |
 | Command output kept or shown | Docker's output is kept only for a failure's Details: the last 400 lines, cleaned, in memory, dropped on lock. It's never logged. | `APIError.sanitizeLog` |
@@ -83,13 +84,14 @@ hash. The client receives the token itself, once.
 ## Not built yet
 
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
-- Finances editing beyond balances and new transactions, and receipts (`FinancesReceipt`, `SaveFinancesReceipt`). What's built:
+- Finances editing beyond balances and new transactions: payments, budgets, goals, and changing or deleting a transaction. What's built:
   - typing in an account's balance (`SaveFinances`, edit level). This edits the plan as the raw JSON the computer sent and sends it back whole, with its `rev`. Nothing the phone doesn't show is lost, and the computer refuses the save if another device saved first;
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;
   - budgets, goals and loans from the same view;
   - transactions (`FinancesLedger`), newest first by month, searchable;
-  - adding a transaction (`SaveFinancesLedger`, edit level): money in or out of one account, with payee, category, day and note. It's appended to the raw ledger and sent back with its `rev`. The computer gives it its id and checks it.
+  - adding a transaction (`SaveFinancesLedger`, edit level): money in or out of one account, with payee, category, day and note. It's appended to the raw ledger and sent back with its `rev`. The computer gives it its id and checks it;
+  - receipts: a kept one opens from its transaction (`FinancesReceipt`; pictures through a capped thumbnail, PDFs in PDFKit), and a photo can be attached to a new one (`SaveFinancesReceipt`). It's shrunk and re-encoded as JPEG with no metadata, so no location leaves the device.
   Amounts stay hidden until tapped and hide again on lock. None show while the plan's Hide amounts is on.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
 - Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.

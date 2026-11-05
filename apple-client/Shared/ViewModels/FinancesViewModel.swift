@@ -133,6 +133,36 @@ final class FinancesViewModel {
 
     func clearSaveError() { saveError = nil }
 
+    /// A receipt to show, read when asked and kept only while shown.
+    func openReceipt(_ name: String) async -> ReceiptCodec.Content? {
+        guard canSeePlan else { return nil }
+        do {
+            let url = try await api.receipt(named: name)
+            return await Task.detached(priority: .userInitiated) { ReceiptCodec.content(fromDataURL: url) }.value
+        } catch {
+            saveError = APIError.from(error).errorDescription
+            return nil
+        }
+    }
+
+    /// Prepares a picked photo and keeps it on the computer, returning its
+    /// name for the new transaction.
+    func attachPhoto(_ data: Data) async -> String? {
+        guard level >= .edit else { return nil }
+        guard let url = await Task.detached(priority: .userInitiated, operation: { ReceiptCodec.preparePhoto(data) }).value else {
+            saveError = "That picture couldn't be used as a receipt."
+            return nil
+        }
+        do {
+            return try await api.saveReceipt(dataURL: url)
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SaveFinancesReceipt failed: \(apiError.logName, privacy: .public)")
+            saveError = apiError.errorDescription
+            return nil
+        }
+    }
+
     func accountName(_ id: String) -> String? {
         plan?.plan.accounts.first { $0.id == id }?.name
     }

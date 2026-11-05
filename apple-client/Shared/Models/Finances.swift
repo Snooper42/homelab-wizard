@@ -352,8 +352,9 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     /// For a transfer, the account the money went into.
     let to: String?
     let tags: [String]
-    /// A receipt is kept with it on the computer.
-    let hasReceipt: Bool
+    /// The receipt kept with it on the computer, by its file's name.
+    let receipt: String?
+    var hasReceipt: Bool { receipt != nil }
 
     enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, category, note, to, tags, receipt }
 
@@ -368,7 +369,8 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
         to = try c.decodeIfPresent(String.self, forKey: .to)
         tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
-        hasReceipt = !(try c.decodeIfPresent(String.self, forKey: .receipt) ?? "").isEmpty
+        let name = try c.decodeIfPresent(String.self, forKey: .receipt) ?? ""
+        receipt = ReceiptCodec.isValidName(name) ? name : nil
     }
 
     /// Whether `text` is in the payee, the category, the note or a tag.

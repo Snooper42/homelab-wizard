@@ -246,6 +246,37 @@ actor APIClient {
         return try Self.ledgerRead(from: try await send(request, to: endpoint, using: actionSession))
     }
 
+    /// A kept receipt, as a data URL. It needs the view or edit level.
+    func receipt(named name: String) async throws -> String {
+        guard ReceiptCodec.isValidName(name) else { throw APIError.invalidResponse }
+        let (request, endpoint) = try callRequest("FinancesReceipt", [.string(name)])
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder().decode(CallEnvelope<String>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
+    /// Keeps a receipt (a data URL) and returns the name the computer gave
+    /// it. It needs the edit level. The receipt is kept a day unless a
+    /// saved transaction names it.
+    func saveReceipt(dataURL: String) async throws -> String {
+        let body = try JSONEncoder().encode([dataURL])
+        guard body.count <= 4 << 20 else { throw APIError.responseTooLarge }
+        let (request, endpoint) = try authorizedRequest(path: "/api/call/SaveFinancesReceipt", method: "POST", body: body)
+        Log.network.notice("SaveFinancesReceipt, \(body.count, privacy: .public) bytes")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        let name: String
+        do {
+            name = try JSONDecoder().decode(CallEnvelope<String>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+        guard ReceiptCodec.isValidName(name) else { throw APIError.invalidResponse }
+        return name
+    }
+
     private static func ledgerRead(from data: Data) throws -> LedgerRead {
         do {
             let decoder = JSONDecoder.homelab()

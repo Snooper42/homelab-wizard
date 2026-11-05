@@ -71,6 +71,8 @@ struct NewTransaction: Sendable, Equatable {
     var payee: String
     var category: String
     var note: String
+    /// A receipt already kept on the computer (`SaveFinancesReceipt`), by name.
+    var receipt: String? = nil
 }
 
 /// Changes to the ledger, made on the ledger exactly as the computer sent
@@ -116,6 +118,10 @@ enum LedgerEdit {
         if !category.isEmpty { entry["category"] = .string(category) }
         let note = t.note.trimmingCharacters(in: .whitespacesAndNewlines)
         if !note.isEmpty { entry["note"] = .string(note) }
+        if let receipt = t.receipt {
+            guard ReceiptCodec.isValidName(receipt) else { return nil }
+            entry["receipt"] = .string(receipt)
+        }
         transactions.append(.object(entry))
         root["transactions"] = .array(transactions)
         return .object(root)

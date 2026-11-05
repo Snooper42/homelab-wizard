@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 /// The Finances plan, read-only on this device: accounts today, then each
@@ -357,6 +358,7 @@ struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
     @State private var adding = false
+    @State private var receiptFor: FinanceTransaction?
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -384,7 +386,17 @@ struct TransactionsView: View {
             ForEach(months) { group in
                 Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
                     ForEach(group.items) { t in
-                        TransactionRow(transaction: t, finances: finances)
+                        if t.hasReceipt {
+                            Button {
+                                receiptFor = t
+                            } label: {
+                                TransactionRow(transaction: t, finances: finances)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Shows the receipt")
+                        } else {
+                            TransactionRow(transaction: t, finances: finances)
+                        }
                     }
                 }
             }
@@ -427,6 +439,11 @@ struct TransactionsView: View {
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
         }
+        .sheet(item: $receiptFor) { t in
+            if let name = t.receipt {
+                ReceiptView(name: name, title: t.payee.isEmpty ? "Receipt" : t.payee, finances: finances)
+            }
+        }
         .sensoryFeedback(.success, trigger: finances.savedCount)
     }
 }
@@ -437,6 +454,8 @@ private struct AddTransactionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft = NewTransaction(date: Date(), account: "", isMoneyIn: false, amount: 0, payee: "", category: "", note: "")
     @State private var amountText = ""
+    @State private var photo: PhotosPickerItem?
+    @State private var attaching = false
 
     private var accounts: [FinanceAccount] {
         (finances.plan?.plan.accounts ?? []).filter { ["checking", "savings", "card", "investment", "retirement", "loan", "other"].contains($0.kind) }
@@ -486,6 +505,32 @@ private struct AddTransactionView: View {
                     TextField("Note", text: $draft.note, axis: .vertical)
                         .lineLimit(1...4)
                 }
+                Section {
+                    if draft.receipt != nil {
+                        HStack {
+                            Label("Receipt attached", systemImage: "paperclip")
+                            Spacer()
+                            Button("Remove", role: .destructive) {
+                                draft.receipt = nil
+                                photo = nil
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    } else {
+                        PhotosPicker(selection: $photo, matching: .images) {
+                            HStack {
+                                Label("Attach a Photo of the Receipt", systemImage: "camera")
+                                if attaching {
+                                    Spacer()
+                                    ProgressView().controlSize(.small)
+                                }
+                            }
+                        }
+                        .disabled(attaching)
+                    }
+                } footer: {
+                    Text("The photo is shrunk and sent without its location or any other details the camera kept.")
+                }
                 if let error = finances.saveError {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
@@ -507,6 +552,17 @@ private struct AddTransactionView: View {
                     } else {
                         Button("Save", action: save).disabled(problem != nil)
                     }
+                }
+            }
+            .onChange(of: photo) { _, item in
+                guard let item else { return }
+                attaching = true
+                Task {
+                    defer { attaching = false }
+                    guard let data = try? await item.loadTransferable(type: Data.self) else {
+                        return
+                    }
+                    draft.receipt = await finances.attachPhoto(data)
                 }
             }
             .onChange(of: draft.isMoneyIn) { _, _ in
