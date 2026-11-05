@@ -366,6 +366,51 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     reads it, so a lost or torn write costs a reason on a hover, nothing
     more; save it as stopped.Update does (lock, temporary file, rename).
 
+Added after round 27 (the backlog was empty; worst first):
+
+23. **An app's own secrets in what leaves its log** (#427's restart-loop
+    alert, Explain, `homelab report`, a phone's Logs): each takes out only
+    the values in `.env`. An app that prints a secret of its own at start
+    (a database URL with its password, an admin token it made, a
+    `token=` in a URL it logs) sends it to ntfy and every phone. Run each
+    catalog app's startup log through `redact` and look; take out
+    credentials in URLs (`://user:pass@`) and `key=`/`token=` values too.
+24. **`homelab move in` from a file someone else made** (internal/move):
+    besides links and tickets, a bundle brings `.env` (a `TUNNEL_TOKEN`
+    for its maker's Cloudflare tunnel, which would put the apps on their
+    domain), `data/phones.json` (their paired phones, able to change
+    things), and sso. What does move in say before it applies them, and
+    should it unpair phones and ask before keeping a tunnel?
+25. **Apps started without a turn** (#425's decision): a drive coming
+    back (#423), the battery saver, and the stop timer start apps while an
+    update or backup may have them down on purpose. Show one starting an
+    app mid-backup (its database stopped for the dump), then decide.
+26. **Release notes from GitHub** (#419, internal/releases): the repo is
+    taken from an image's own `org.opencontainers.image.source` label, so
+    a custom app's image picks any repo; check the path built from it
+    (`..`, `?`), that the notes are drawn as text (no raw HTML, no
+    `javascript:` links), and what the lookup tells GitHub.
+27. **What CrowdSec stopped** (#430, once merged): scenario, network, and
+    country names come from outside; drawn by Preact, but check the phone
+    and a kiosk get `Protection` only with the permission they need.
+28. **The native Apple client** (#424, apple-client/, once merged): the
+    pairing token in the Keychain (not UserDefaults or a backup), the
+    companion's certificate checked, nothing secret in widgets, the lock
+    screen, or a crash log.
+29. **Phones that expire** (`claude/feature-phones-expire`, once its PR
+    is open): an expired phone refused on every method and on a stream
+    already open, and a clock set back not bringing it back.
+30. **The update window** (`claude/feature-update-window`,
+    `data/update-days.json`): a window must not hold a security release
+    forever, and a crafted record must not stop every update.
+31. **Explain on another machine's Ollama**: what the model is sent when
+    `OLLAMA_HOST` points off this machine (item 9 checked only
+    172.17.0.1), and whether that counts as leaving the machine (Rule 3).
+32. **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
+    Security items): the Tailscale API key and each app's admin key used
+    to read them stay in `.env`, and Remove a lost device is computer
+    only, never a phone method.
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
