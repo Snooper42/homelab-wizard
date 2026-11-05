@@ -48,8 +48,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${SONARR_PORT:-8989}:8989
     volumes:
       - ./data/appdata/sonarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Sonarr
@@ -67,8 +75,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${RADARR_PORT:-7878}:7878
     volumes:
       - ./data/appdata/radarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /movies
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Radarr
@@ -86,8 +102,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${LIDARR_PORT:-8686}:8686
     volumes:
       - ./data/appdata/lidarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/music
+        target: /music
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Lidarr
@@ -105,8 +129,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${BAZARR_PORT:-6767}:6767
     volumes:
       - ./data/appdata/bazarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /movies
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 200
       name: Bazarr
@@ -134,11 +166,23 @@ services:
       - ./data/appdata/tdarr/server:/app/server
       - ./data/appdata/tdarr/configs:/app/configs
       - ./data/appdata/tdarr/logs:/app/logs
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /media/tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /media/movies
+        bind:
+          create_host_path: false
       # Files half-made while it works, as large as the films: on the
       # media drive, beside them.
-      - ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache:/temp
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache
+        target: /temp
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 1000
       dump: sqlite:/app/server/Tdarr/DB2/SQL/database.db
@@ -197,8 +241,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${LAZYLIBRARIAN_PORT:-5299}:5299
     volumes:
       - ./data/appdata/lazylibrarian:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/Books
+        target: /books
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 150
       name: LazyLibrarian
@@ -222,7 +274,11 @@ services:
       WEBUI_PORT: "8082"
     volumes:
       - ./data/appdata/qbittorrent:/config
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     depends_on:
       gluetun: { condition: service_healthy }
     x-homelab:

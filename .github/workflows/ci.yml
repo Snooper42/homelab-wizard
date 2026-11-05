@@ -8,6 +8,15 @@ on:
 permissions:
   contents: read
 
+# A pull request's newer push cancels its older run (one group per PR,
+# by its ref; the PR's own text never goes in), which no longer
+# decides anything, so a branch pushed several times in a row does not
+# hold every runner (Nov 5, 2026: six runs of one PR kept the others
+# queued for an hour). Main's runs always finish.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check:
     runs-on: ubuntu-latest

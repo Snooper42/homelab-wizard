@@ -178,6 +178,13 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 			seen[r.Source] = true
 			inside := within(r.Source, root) || mediaMounted && within(r.Source, mediaRoot) ||
 				!v.ReadOnly && in.Home != "" && within(r.Source, in.Home)
+			// A folder from a folder setting, which Docker is told not to
+			// make (it would make it empty in place of an unplugged drive),
+			// is made here instead, wherever it is, while its drive is in.
+			if v.NoCreate {
+				drive := diskspace.ExternalDrive(r.Source)
+				inside = inside || drive == "" || diskspace.Mounted(drive)
+			}
 			if inside && !exists(r.Source) && filepath.Ext(r.Source) == "" {
 				plan.Dirs = append(plan.Dirs, r.Source)
 			}
