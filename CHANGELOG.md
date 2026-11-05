@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
 - **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
 - **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.
 - **Remember where you were:** each screen keeps how far down you were and which of its sections were open, between visits and after quitting. Picking another screen opens it at its own place, no longer partway down where the last one was.
@@ -31,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
 - **A drive comes back:** apps waiting for an unplugged drive start within a minute of it being plugged in again, not at the watchdog's next check up to 15 minutes later.
 - **Starting and stopping an app, without the log:** Start, Stop, and Restart no longer open a dimmed panel of Docker's output (image downloads and all) to read and close. The app's row and its page say what is happening, *Downloading the app…* while it comes down first, and the row turns to Running or Stopped; Stop still offers Undo. If it fails, the row says why, with **Details** for what Docker said. Updates keep their panel, with what's new.
 - **Lyrics for more songs, and why the rest have none:** a song LRCLIB lists under another album, another length, or a title like *Paranoid Android - 2009 Remaster* is now found by a search when its exact record isn't there, and a song with no album tag is looked up at all (it was skipped as an error). When it's done, the card says what came of every song: added, already time-synced, instrumental, not on LRCLIB yet, or no title tag. Songs LRCLIB has nothing for are asked about again a month later, so running it again is quick, and **Add lyrics** on Overview counts only the songs still worth asking about.
