@@ -16,6 +16,20 @@ apple-client/
 └── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
 ```
 
+## What it does
+
+| | iPhone | Mac and iPad |
+|---|---|---|
+| **Pairing** | The code, the pasted pairing link, or a scan of the computer's QR code. Optionally as a wall screen (look-only for good). | The code or the pasted link |
+| **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, and window close |
+| **Status** | Live list: pinned first, then needs attention, running, stopped. Each row has its icon, "N% up" and a dot for what changed since you looked. The overnight line in the morning. | The same, in a three-column split view whose sidebar keeps its place, plus a menu bar item |
+| **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog), details, why it last started, addresses, logs, and its settings (nightly updates, alerts, pin) | The same, with an App menu (⌥⌘S/R/./L) |
+| **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list | The same, plus keyboard shortcuts |
+| **Overview** | The money card, watchdog, protection, alerts, savings | Overview in the sidebar |
+| **Backups** | Each app's copy, Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
+| **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device, Unpair | Computer in the sidebar |
+| **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, budgets, goal targets, waiting marks, transactions, and receipt photos. | Finances in the sidebar |
+
 ## Check it first, without Xcode
 
 On any Mac with Xcode 16 or later (or a Swift 6 toolchain):
