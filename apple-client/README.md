@@ -8,8 +8,8 @@ the Xcode project yourself (steps below).
 apple-client/
 ├── Shared/
 │   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L)
-│   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), PairingCode, ServerEndpoint, DeviceCredential
-│   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel
+│   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), AppAction, PairingCode, ServerEndpoint, DeviceCredential
+│   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel, AppActionsViewModel
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
@@ -18,7 +18,7 @@ apple-client/
 
 ## Make the Xcode project
 
-1. **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.
+1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.
    Choose SwiftUI and Swift, with no Core Data and no SwiftData.
 2. Delete the template's `ContentView.swift` and `HomelabClientApp.swift`.
 3. Drag `apple-client/Shared` into the project. Choose *Create groups* and
@@ -47,6 +47,7 @@ engine's `/v1/*` routes to devices. It wraps them:
 | Status (`/v1/status`) | `POST /api/call/Status` `[]` | `{result: Status, log}`. `LastStatus` answers at once with the last reading. |
 | Cards (`/v1/cards`) | `POST /api/call/StatusBoard` `[n, ["watchdog","savings","protection","alerts"]]` | ndjson: `{"result":Status}`, then `{"event":"status:card","data":Card}` for each card |
 | Live (`/v1/events`) | `GET /api/events` | SSE: `data: <engine.Change>`, plus a `: still here` heartbeat every 30 s |
+| Start / Stop / Restart | `POST /api/call/AppAction` `[id, "start"\|"stop"\|"restart"]` | Needs `canChange` and https. One change from a phone at a time. `{result: null, log}`, or 500 `{error, log}` |
 
 All requests after pairing send `Authorization: Bearer <token>`. The token
 is 32 random bytes, base64url-encoded. The **server** keeps only its SHA-256
@@ -67,9 +68,13 @@ hash. The client receives the token itself, once.
 | Secrets in logs | `os.Logger` only. Tokens and codes are never interpolated. Hosts and server text are `.private`. Error log lines use payload-free `logName`. The secret types print as `<redacted>` even through `print` or `dump`. | `SecureLog`, `APIError.logName` |
 | Hostile or broken stream | The SSE and ndjson parsers are bounded (4 MB per event, 8 MB per answer). The token's shape is validated, and server messages are cleaned before display. | `SSEParser`, `APIError.sanitize` |
 | Path injection via method names | `/api/call/<Method>` accepts only ASCII alphanumerics. | `APIClient.callRequest` |
+| A change made from an unattended, unlocked device | Start, Stop and Restart ask for Face ID / Touch ID / passcode again unless the owner authenticated in the last 2 minutes. The window is measured on the monotonic clock, so changing the device time can't stretch it. | `AppCoordinator.authorizeChange` |
+| Accidental or repeated changes | Stop is confirmed and offers Undo for 10 s. One change at a time. Changes are never retried, and a timeout says the change may still be running. Buttons show only when the computer says `canChange`. App ids must look like catalog ids before they're sent. | `AppActionsViewModel`, `AppAction`, `APIClient.perform` |
+| Command output kept or shown | Docker's output is kept only for a failure's Details: the last 400 lines, cleaned, in memory, dropped on lock. It's never logged. | `APIError.sanitizeLog` |
 
 ## Not built yet
 
-- Start / Stop / Restart / Back up (`/api/call/<Method>`, needs `canChange`) and the cards UI. `APIClient.call` and `statusBoard` already support them.
+- Stop for a while (`StopUntil`), Update / Roll back (`AppAction` `update`, `rollback`), Back up now, and the cards UI. `APIClient.call` and `statusBoard` already support them.
+- "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
 - Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.

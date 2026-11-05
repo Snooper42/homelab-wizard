@@ -7,12 +7,23 @@ import SwiftUI
 ///   with a sidebar, the app list and a detail pane.
 struct DashboardView: View {
     @State private var model: DashboardViewModel
+    /// Lives as long as the dashboard. Locking removes both, and the pending
+    /// states and command output go with them.
+    @State private var actions: AppActionsViewModel
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
-    init(liveEvents: LiveEventManager) {
-        _model = State(initialValue: DashboardViewModel(liveEvents: liveEvents))
+    init(coordinator: AppCoordinator) {
+        _model = State(initialValue: DashboardViewModel(liveEvents: coordinator.liveEvents))
+        _actions = State(initialValue: AppActionsViewModel(
+            api: coordinator.api,
+            liveEvents: coordinator.liveEvents,
+            device: { [weak coordinator] in coordinator?.device },
+            authorize: { [weak coordinator] reason in
+                await coordinator?.authorizeChange(reason: reason) ?? false
+            }
+        ))
     }
 
     var body: some View {
@@ -29,6 +40,8 @@ struct DashboardView: View {
         }
         // A haptic when something new needs attention, not when it clears.
         .sensoryFeedback(.warning, trigger: model.attentionCount) { old, new in new > old }
+        .modifier(AppActionsPresenter(actions: actions))
+        .environment(actions)
     }
 }
 
@@ -51,6 +64,7 @@ private struct PhoneDashboard: View {
                                 NavigationLink(value: app.id) {
                                     AppRowView(app: app)
                                 }
+                                .appActionControls(for: app)
                             }
                         }
                     }
@@ -103,6 +117,7 @@ private struct SplitDashboard: View {
             let apps = model.apps(for: filter)
             List(apps, selection: $model.selectedAppID) { app in
                 AppRowView(app: app)
+                    .appActionControls(for: app)
             }
             .overlay {
                 if !model.hasLoaded {

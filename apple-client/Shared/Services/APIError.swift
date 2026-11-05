@@ -25,6 +25,11 @@ enum APIError: LocalizedError, Equatable, Sendable {
     case responseTooLarge
     case decoding
     case invalidMethodName
+    /// An app id with characters a catalog id never has. It isn't sent.
+    case invalidAppID
+    /// A change ran on the computer and failed. `log` is what the command
+    /// printed (Docker's output), already cleaned up for display.
+    case actionFailed(message: String, log: [String])
     case keychain(KeychainManager.KeychainError)
 
     var errorDescription: String? {
@@ -49,8 +54,10 @@ enum APIError: LocalizedError, Equatable, Sendable {
             "The computer's answer was too large."
         case .decoding:
             "The computer's answer couldn't be read. The app and the computer may be different versions."
-        case .invalidMethodName:
+        case .invalidMethodName, .invalidAppID:
             "That action isn't available."
+        case .actionFailed(let message, _):
+            message
         case .keychain(let error):
             error.errorDescription
         }
@@ -72,6 +79,8 @@ enum APIError: LocalizedError, Equatable, Sendable {
         case .responseTooLarge: "responseTooLarge"
         case .decoding: "decoding"
         case .invalidMethodName: "invalidMethodName"
+        case .invalidAppID: "invalidAppID"
+        case .actionFailed: "actionFailed"
         case .keychain: "keychain"
         }
     }
@@ -100,6 +109,16 @@ enum APIError: LocalizedError, Equatable, Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return nil }
         return String(cleaned.prefix(300))
+    }
+
+    /// Cleans up a command's output before it's kept or shown: the last
+    /// 400 lines, no control characters, at most 1000 characters per line.
+    static func sanitizeLog(_ lines: [String]?) -> [String] {
+        guard let lines else { return [] }
+        return lines.suffix(400).map { line in
+            let cleaned = String(line.unicodeScalars.filter { $0 == "\t" || !CharacterSet.controlCharacters.contains($0) })
+            return String(cleaned.prefix(1000))
+        }
     }
 
     private static func describe(_ code: URLError.Code) -> String {

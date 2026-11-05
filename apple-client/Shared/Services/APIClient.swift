@@ -38,12 +38,17 @@ actor APIClient {
     /// bytes (the companion sends a heartbeat every 30), so a dead
     /// connection is noticed without a separate watchdog.
     nonisolated let streamingSession: URLSession
+    /// For changes. A start or restart can pull an image first, which takes
+    /// minutes with no bytes in between. The computer gives a command up to
+    /// 30 minutes.
+    private let actionSession: URLSession
 
     init(keychain: KeychainManager = KeychainManager()) {
         self.keychain = keychain
         let delegate = RedirectRefusal()
         session = URLSession(configuration: .hardened(idleTimeout: 30, resourceTimeout: 120), delegate: delegate, delegateQueue: nil)
         streamingSession = URLSession(configuration: .hardened(idleTimeout: 75, resourceTimeout: 60 * 60 * 24), delegate: delegate, delegateQueue: nil)
+        actionSession = URLSession(configuration: .hardened(idleTimeout: 300, resourceTimeout: 30 * 60), delegate: delegate, delegateQueue: nil)
     }
 
     // MARK: Pairing
@@ -131,6 +136,26 @@ actor APIClient {
         }
     }
 
+    // MARK: Changes
+
+    /// Starts, stops or restarts an app on the computer (the `AppAction`
+    /// method). Returns what the command printed.
+    ///
+    /// - The device needs `canChange`. The computer checks that too, and
+    ///   answers 403 otherwise.
+    /// - The computer runs one change from a phone at a time. A second one
+    ///   fails with its explanation.
+    /// - This is never retried. A change isn't idempotent, and a timed-out
+    ///   request may still be running on the computer.
+    func perform(_ action: AppAction, appID: String) async throws -> [String] {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        let (request, endpoint) = try callRequest("AppAction", [.string(appID), .string(action.rawValue)])
+        Log.network.notice("AppAction \(action.rawValue, privacy: .public) on \(appID, privacy: .private(mask: .hash))")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        let envelope = try? JSONDecoder().decode(LogEnvelope.self, from: data)
+        return APIError.sanitizeLog(envelope?.log)
+    }
+
     /// Status, then each card as it's read (the `StatusBoard` method, ndjson).
     /// `board` is the caller's number for this request. It comes back on
     /// every card.
@@ -211,12 +236,12 @@ actor APIClient {
 
     // MARK: Sending
 
-    private func send(_ request: URLRequest, to endpoint: ServerEndpoint) async throws -> Data {
+    private func send(_ request: URLRequest, to endpoint: ServerEndpoint, using override: URLSession? = nil) async throws -> Data {
         let path = request.url?.path ?? "?"
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await session.data(for: request)
+            (data, response) = try await (override ?? session).data(for: request)
         } catch {
             let mapped = APIError.from(error)
             Log.network.error("\(request.httpMethod ?? "GET", privacy: .public) \(path, privacy: .public) failed: \(mapped.logName, privacy: .public)")
@@ -239,8 +264,8 @@ actor APIClient {
         let status = http.statusCode
         if (200..<300).contains(status) { return }
 
-        let message = errorBody.flatMap { try? JSONDecoder().decode(ErrorBody.self, from: $0).error }
-        let clean = APIError.sanitize(message)
+        let body = errorBody.flatMap { try? JSONDecoder().decode(ErrorBody.self, from: $0) }
+        let clean = APIError.sanitize(body?.error)
         if let clean {
             Log.network.error("HTTP \(status, privacy: .public): \(clean, privacy: .private)")
         } else {
@@ -251,6 +276,9 @@ actor APIClient {
         case 401: throw APIError.unauthorized
         case 403: throw APIError.forbidden(clean ?? "The computer refused.")
         case 429: throw APIError.rateLimited(clean ?? "Too many tries. Wait a few minutes.")
+        case 500 where !(body?.log ?? []).isEmpty:
+            // A command ran and failed. Its output explains why.
+            throw APIError.actionFailed(message: clean ?? "It didn't work on the computer.", log: APIError.sanitizeLog(body?.log))
         default: throw APIError.server(status: status, message: clean)
         }
     }
@@ -273,6 +301,12 @@ private struct CallEnvelope<Value: Decodable>: Decodable {
 
 private struct ErrorBody: Decodable {
     let error: String?
+    let log: [String]?
+}
+
+/// The `log` of a call's answer. `result` is ignored (AppAction answers null).
+private struct LogEnvelope: Decodable {
+    let log: [String]?
 }
 
 /// One ndjson line of `StatusBoard`: `{"result": Status}`, `{"error": "..."}`,

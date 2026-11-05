@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AppRowView: View {
+    @Environment(AppActionsViewModel.self) private var actions
     let app: AppStatus
 
     var body: some View {
@@ -9,10 +10,15 @@ struct AppRowView: View {
                 .font(.title3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name)
-                Text(app.detailLine)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                if let pending = actions.pending[app.id] {
+                    PendingActionLine(app: app, pending: pending)
+                        .font(.caption)
+                } else {
+                    Text(app.detailLine)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             Spacer(minLength: 0)
             if let restarts = app.restarts, restarts > 0 {

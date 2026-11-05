@@ -26,6 +26,9 @@ import SwiftUI
 /// - After a lock caused by leaving the app, the next return prompts by
 ///   itself, once. A cancelled prompt doesn't repeat. The person taps Unlock.
 ///   A manual lock (⌘L) doesn't prompt by itself at all.
+/// - A change (Start, Stop, Restart) asks for the owner again unless they
+///   authenticated within `changeGrace`. A device left unlocked on a table
+///   can be looked at, but nothing can be stopped from it.
 @MainActor
 @Observable
 final class AppCoordinator {
@@ -53,6 +56,12 @@ final class AppCoordinator {
     @ObservationIgnored private let biometrics: BiometricAuthManager
     @ObservationIgnored private var scenePhase: ScenePhase = .active
     @ObservationIgnored private var autoPromptArmed = true
+    /// When the owner last authenticated. This uses the monotonic clock, so
+    /// changing the device's time can't stretch the grace window.
+    @ObservationIgnored private var lastOwnerAuth: ContinuousClock.Instant?
+
+    /// How long one authentication also covers changes.
+    static let changeGrace: Duration = .seconds(120)
 
     private static let installMarkerKey = "installMarker.v1"
 
@@ -125,6 +134,7 @@ final class AppCoordinator {
     ///   itself. True when the app left the screen, false for a manual lock.
     func lock(promptOnReturn: Bool = false) {
         autoPromptArmed = promptOnReturn
+        lastOwnerAuth = nil
         guard route == .unlocked else { return }
         liveEvents.clear()
         device = nil
@@ -160,6 +170,7 @@ final class AppCoordinator {
 
         // Something may have locked the app again while the prompt was up.
         guard route == .locked else { return }
+        lastOwnerAuth = ContinuousClock.now
         do {
             guard let credential = try keychain.loadCredential() else {
                 route = .pairing
@@ -188,6 +199,27 @@ final class AppCoordinator {
         }
     }
 
+    // MARK: Changes
+
+    /// Whether the owner may make a change now. Within `changeGrace` of the
+    /// last authentication, the answer is yes. Otherwise it prompts again.
+    /// The answer is no while locked or if the prompt is dismissed.
+    func authorizeChange(reason: String) async -> Bool {
+        guard route == .unlocked else { return false }
+        if let last = lastOwnerAuth, ContinuousClock.now - last < Self.changeGrace {
+            return true
+        }
+        do {
+            try await biometrics.authenticate(reason: reason)
+        } catch {
+            return false
+        }
+        // It may have locked while the prompt was up.
+        guard route == .unlocked else { return false }
+        lastOwnerAuth = ContinuousClock.now
+        return true
+    }
+
     // MARK: Pairing
 
     func didPair(_ device: DeviceInfo) {
@@ -203,6 +235,7 @@ final class AppCoordinator {
     /// Forgets the device here. The token is deleted from the Keychain. The
     /// computer still lists the device until `homelab phone remove <id>`.
     func unpair() {
+        lastOwnerAuth = nil
         liveEvents.clear()
         do {
             try keychain.deleteCredential()

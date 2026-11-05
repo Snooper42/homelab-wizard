@@ -23,7 +23,7 @@ struct AppCoordinatorView: View {
                 LockScreenView()
                     .transition(.opacity)
             case .unlocked:
-                DashboardView(liveEvents: coordinator.liveEvents)
+                DashboardView(coordinator: coordinator)
                     .transition(.opacity)
             }
         }

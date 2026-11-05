@@ -152,3 +152,49 @@ struct DecodingTests {
         #expect(APIError.server(status: 500, message: "secret path").logName == "server(500)")
     }
 }
+
+@Suite("AppAction")
+struct AppActionTests {
+    private func app(state: String, health: String? = nil, id: String = "jellyfin") throws -> AppStatus {
+        var json = #"{"id":"\#(id)","name":"Jellyfin","state":"\#(state)""#
+        if let health { json += #","health":"\#(health)""# }
+        json += "}"
+        return try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func followsTheComputersRowMenu() throws {
+        #expect(AppAction.available(for: try app(state: "stopped")) == [.start])
+        #expect(AppAction.available(for: try app(state: "running", health: "healthy")) == [.restart, .stop])
+        #expect(AppAction.available(for: try app(state: "running", health: "native")).isEmpty)
+        #expect(AppAction.available(for: try app(state: "missing")).isEmpty)
+        #expect(AppAction.available(for: try app(state: "elsewhere")).isEmpty)
+    }
+
+    @Test func onlyStopIsConfirmed() {
+        #expect(AppAction.allCases.filter(\.needsConfirmation) == [.stop])
+    }
+
+    @Test func appIDsAreCatalogShaped() {
+        #expect(AppStatus.isValidID("nginx-proxy-manager"))
+        #expect(AppStatus.isValidID("firefly-iii"))
+        #expect(!AppStatus.isValidID(""))
+        #expect(!AppStatus.isValidID("../etc"))
+        #expect(!AppStatus.isValidID("a b"))
+        #expect(!AppStatus.isValidID("app;rm -rf"))
+        #expect(!AppStatus.isValidID(String(repeating: "a", count: 65)))
+    }
+
+    @Test func commandOutputIsCleanedAndCapped() {
+        let lines = APIError.sanitizeLog(["\u{1B}[1mbold\u{7}", "tab\there"] + Array(repeating: "x", count: 500))
+        #expect(lines.count == 400)
+        let short = APIError.sanitizeLog(["\u{1B}[1mbold\u{7}", "tab\there", String(repeating: "y", count: 2000)])
+        #expect(short[0] == "[1mbold")
+        #expect(short[1] == "tab\there")
+        #expect(short[2].count == 1000)
+        #expect(APIError.sanitizeLog(nil).isEmpty)
+    }
+
+    @Test func failedActionsLogNoOutput() {
+        #expect(APIError.actionFailed(message: "no such container jellyfin", log: ["secret"]).logName == "actionFailed")
+    }
+}

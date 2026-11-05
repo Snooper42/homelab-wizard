@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AppDetailView: View {
+    @Environment(AppActionsViewModel.self) private var actions
     /// Nil when the app left the status (uninstalled meanwhile).
     let app: AppStatus?
 
@@ -20,6 +21,8 @@ struct AppDetailView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                actionsSection(for: app)
 
                 if let problem = app.notAnswering, !problem.isEmpty {
                     Section("Problem") {
@@ -87,6 +90,37 @@ struct AppDetailView: View {
             #endif
         } else {
             ContentUnavailableView("App Not Found", systemImage: "questionmark.app", description: Text("It's no longer in the status."))
+        }
+    }
+
+    @ViewBuilder
+    private func actionsSection(for app: AppStatus) -> some View {
+        let available = actions.available(for: app)
+        let pending = actions.pending[app.id]
+        let hint = actions.lookOnlyHint(for: app)
+        if !available.isEmpty || pending != nil || hint != nil {
+            Section {
+                if let pending {
+                    PendingActionLine(app: app, pending: pending)
+                    if pending.failure != nil {
+                        Button("Dismiss") { actions.dismissFailure(for: app) }
+                    }
+                }
+                ForEach(available) { action in
+                    Button(role: action.needsConfirmation ? .destructive : nil) {
+                        actions.request(action, on: app)
+                    } label: {
+                        Label(action.title, systemImage: action.systemImage)
+                    }
+                    .disabled(actions.isBusy)
+                }
+            } header: {
+                Text("Actions")
+            } footer: {
+                if let hint {
+                    Text(hint)
+                }
+            }
         }
     }
 
