@@ -21,6 +21,8 @@ export interface Group {
   apps: api.AppStatus[];
   /** What needs a look: its count in red, never folded by default. */
   alert?: boolean;
+  /** The apps pinned to the top: open by default, as the point of them is a glance. */
+  pinned?: boolean;
 }
 
 /** What the rows do; app.ts runs each. */
@@ -551,7 +553,7 @@ export function FilterBox() {
 
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
 function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
-  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
+  const fine = (g: Group) => !g.alert && !g.pinned && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 

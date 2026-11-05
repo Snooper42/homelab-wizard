@@ -1715,13 +1715,13 @@ const smokes = [
     const menu = page.locator('.rowmenu');
     await menu.waitFor({ timeout: 2000 });
     const labels = (await menu.locator('[role^=menuitem]').allTextContents()).map((t) => t.replace('✓', '').trim());
-    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops'];
+    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops', 'Pin to the top'];
     if (labels.join('|') !== want.join('|')) throw new Error(`items: ${labels.join(', ')}`);
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (box.x + 20)) > 2 || Math.abs(m.y - (box.y + box.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
     const missed = await page.$$eval('.rowmenu [role^=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
     if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
-    if ((await menu.locator('[role=menuitemcheckbox]').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
+    if ((await menu.locator('[role=menuitemcheckbox]:has-text("Tell me if it stops")').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
     await menu.locator('[role=menuitem]:text-is("Stop")').click();
     await menu.locator('[role=menuitem]:has-text("Click again to stop Vikunja")').waitFor({ timeout: 1000 });
     if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped it');
@@ -1738,6 +1738,42 @@ const smokes = [
     await menu.waitFor({ timeout: 2000 });
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
+  } },
+  // Pin to the top (a row's right-click): the app moves to Pinned, open under Needs a look, in the order pinned, and leaves
+  // its own group; unpinned, it goes back. Ticked in the menu while pinned.
+  { name: 'Pin an app to the top of Status', screen: 'status', run: async (page) => {
+    const pin = async (name) => {
+      const row = page.locator(`#statusRows tr:not(.grouphead):has(strong:text-is("${name}"))`).first();
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const box = await row.locator('td.state').boundingBox();
+      await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+      await page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")').click({ timeout: 2000 });
+    };
+    // The rows in order, each group's heading as "# label".
+    const rows = () => page.$$eval('#statusRows tr', (trs) => trs.map((r) => (r.classList.contains('grouphead') ? '# ' + (/Pinned|Needs a look/.exec(r.textContent)?.[0] || 'group') : r.querySelector('strong')?.textContent)));
+    await pin('Vikunja');
+    await page.waitForSelector('#statusRows tr.grouphead:has-text("Pinned")', { timeout: 3000 });
+    await pin('Immich');
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return rows[p + 2]?.querySelector('strong')?.textContent === 'Immich'; }, null, { timeout: 3000 });
+    const list = await rows();
+    const at = list.indexOf('# Pinned');
+    if (at < 0 || list[at + 1] !== 'Vikunja' || list[at + 2] !== 'Immich' || !list[at + 3]?.startsWith('# ')) throw new Error('rows: ' + list.join(', '));
+    if (list.filter((r) => r === 'Vikunja').length !== 1 || list.filter((r) => r === 'Immich').length !== 1) throw new Error('a pinned app shows twice: ' + list.join(', '));
+    const heads = list.filter((r) => r?.startsWith('# '));
+    if (heads[0] !== '# Pinned' && !(heads[0] === '# Needs a look' && heads[1] === '# Pinned')) throw new Error('Pinned is not at the top: ' + heads.join(', '));
+    // Ticked while pinned; unpinned, it is back in its group.
+    const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+    await row.scrollIntoViewIfNeeded();
+    const box = await row.locator('td.state').boundingBox();
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    const item = page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")');
+    if ((await item.getAttribute('aria-checked')) !== 'true') throw new Error('Pin to the top is not ticked for a pinned app');
+    await item.click();
+    await page.waitForFunction(() => window.__MOCK.status.pinned?.join() === 'immich-server', null, { timeout: 3000 });
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return p >= 0 && rows[p + 1]?.querySelector('strong')?.textContent === 'Immich' && !rows[p + 2]?.querySelector('strong')?.textContent?.includes('Vikunja'); }, null, { timeout: 3000 });
+    const sets = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(sets) !== JSON.stringify([['vikunja', 'pinned', true], ['immich-server', 'pinned', true], ['vikunja', 'pinned', false]])) throw new Error('set: ' + JSON.stringify(sets));
   } },
   // A right-click on a screen in the sidebar opens its own menu at the pointer, without picking the screen: each item opens
   // its screen and does what its button there does (Update all shows its list first). From the keyboard too; Escape closes
@@ -1795,6 +1831,8 @@ const smokes = [
   // focused; the arrows move through it and Return runs one. Tell me if it stops turns its alerts off. A stopped app's menu offers
   // Start, not Restart or Stop.
   { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
+    // Room under Vikunja, the last row, for the whole menu (near the bottom it opens upward: its own case).
+    await page.setViewportSize({ width: 1280, height: 1000 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.locator('button.rowmain').focus({ timeout: 5000 });
     await page.keyboard.press('Shift+F10');
@@ -1803,10 +1841,13 @@ const smokes = [
     await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
     const name = await row.locator('strong').boundingBox(), m = await menu.boundingBox();
     if (m.y < name.y + name.height || m.y > name.y + name.height + 12) throw new Error('the menu did not open under the app’s name');
+    // End is Pin to the top; one up, Tell me if it stops.
     await page.keyboard.press('End');
+    await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Enter');
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     await page.waitForFunction(() => window.__MOCK.calls.SetAppSetting >= 1, null, { timeout: 3000 });
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet?.[0])) !== '["vikunja","alerts",false]') throw new Error('set ' + JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet)));
     if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });

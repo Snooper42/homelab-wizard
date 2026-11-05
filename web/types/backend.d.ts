@@ -35,6 +35,7 @@ declare namespace api {
     updatedAt?: string;
     held?: boolean;
     quiet?: boolean;
+    pinned?: boolean;
     waitingFor?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
@@ -106,6 +107,7 @@ declare namespace api {
     missing: number;
     unmatched: number;
     savings: number;
+    pinned?: string[];
     updates: updates.State;
     batteryPaused?: string[];
     stopped?: Record<string, stopped.Stop>;
