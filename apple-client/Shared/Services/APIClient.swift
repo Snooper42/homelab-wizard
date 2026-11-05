@@ -160,13 +160,13 @@ actor APIClient {
     ///   The computer starts the app again by itself at that time.
     func perform(_ action: AppAction, appID: String, until: StopChoice? = nil) async throws -> [String] {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
-        let request: URLRequest
-        let endpoint: ServerEndpoint
+        let built: (URLRequest, ServerEndpoint)
         if action == .stop, let until {
-            (request, endpoint) = try callRequest("StopUntil", [.string(appID), .string(until.untilArgument)])
+            built = try callRequest("StopUntil", [.string(appID), .string(until.untilArgument)])
         } else {
-            (request, endpoint) = try callRequest("AppAction", [.string(appID), .string(action.rawValue)])
+            built = try callRequest("AppAction", [.string(appID), .string(action.rawValue)])
         }
+        let (request, endpoint) = built
         Log.network.notice("\(action.rawValue, privacy: .public)\(until == nil ? "" : " for a while", privacy: .public) on \(appID, privacy: .private(mask: .hash))")
         let data = try await send(request, to: endpoint, using: actionSession)
         let envelope = try? JSONDecoder().decode(LogEnvelope.self, from: data)
