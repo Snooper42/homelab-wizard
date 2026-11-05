@@ -47,7 +47,10 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
         guard let parts = URLComponents(string: text) else { throw ValidationError.notAURL }
         guard parts.scheme?.lowercased() == "https" else { throw ValidationError.insecureScheme }
         guard parts.user == nil, parts.password == nil else { throw ValidationError.hasCredentials }
-        guard let host = parts.host?.lowercased(), !host.isEmpty else { throw ValidationError.missingHost }
+        // An IPv6 host (Tailscale's fd7a:…) may come with or without its brackets.
+        guard var host = parts.host?.lowercased(), !host.isEmpty else { throw ValidationError.missingHost }
+        if host.hasPrefix("["), host.hasSuffix("]") { host = String(host.dropFirst().dropLast()) }
+        guard !host.isEmpty else { throw ValidationError.missingHost }
 
         var code: PairingCode?
         if let fragment = parts.fragment, fragment.hasPrefix("pair=") {
@@ -56,7 +59,12 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
 
         var clean = URLComponents()
         clean.scheme = "https"
-        clean.host = host
+        if host.contains(":") {
+            // IPv6: the brackets must be in the URL, or the port can't be told apart.
+            clean.percentEncodedHost = "[\(host)]"
+        } else {
+            clean.host = host
+        }
         clean.port = parts.port
         guard let url = clean.url else { throw ValidationError.notAURL }
         return (ServerEndpoint(baseURL: url), code)
@@ -75,8 +83,15 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
     func owns(_ url: URL?) -> Bool {
         guard let url else { return false }
         return url.scheme?.lowercased() == "https"
-            && url.host?.lowercased() == baseURL.host?.lowercased()
+            && Self.bare(url.host) == Self.bare(baseURL.host)
             && (url.port ?? 443) == (baseURL.port ?? 443)
+    }
+
+    /// A host lower-cased, without IPv6 brackets, so both spellings compare equal.
+    private static func bare(_ host: String?) -> String? {
+        guard var h = host?.lowercased() else { return nil }
+        if h.hasPrefix("["), h.hasSuffix("]") { h = String(h.dropFirst().dropLast()) }
+        return h
     }
 
     /// The host and port as the screens show them.

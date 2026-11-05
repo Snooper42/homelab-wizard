@@ -63,6 +63,15 @@ struct ServerEndpointTests {
         }
     }
 
+    @Test func tailscaleIPv6Addresses() throws {
+        let (endpoint, code) = try ServerEndpoint.parse("https://[fd7a:115c:a1e0::1]:8099/#pair=ABCD2345")
+        #expect(endpoint.baseURL.absoluteString == "https://[fd7a:115c:a1e0::1]:8099")
+        #expect(code?.value == "ABCD2345")
+        #expect(endpoint.url(path: "/api/me").absoluteString == "https://[fd7a:115c:a1e0::1]:8099/api/me")
+        #expect(endpoint.owns(URL(string: "https://[FD7A:115C:A1E0::1]:8099/api/events")))
+        #expect(!endpoint.owns(URL(string: "https://[fd7a:115c:a1e0::2]:8099/api/me")))
+    }
+
     @Test func ownsOnlyItsOwnOrigin() throws {
         let endpoint = try ServerEndpoint.parse("https://host.ts.net:8099").endpoint
         #expect(endpoint.owns(URL(string: "https://HOST.ts.net:8099/api/me")))
