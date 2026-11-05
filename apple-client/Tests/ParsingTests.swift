@@ -63,11 +63,21 @@ struct ServerEndpointTests {
         }
     }
 
+    @Test func onlyAPIPathsAreBuilt() throws {
+        let (endpoint, _) = try ServerEndpoint.parse("https://homelab.example.com")
+        #expect(endpoint.url(path: "/api/call/Status")?.absoluteString == "https://homelab.example.com/api/call/Status")
+        #expect(endpoint.url(path: "/admin") == nil)
+        #expect(endpoint.url(path: "api/me") == nil)
+        #expect(endpoint.url(path: "/api/../admin") == nil)
+        #expect(endpoint.url(path: "/api/me?x=1") == nil)
+        #expect(endpoint.url(path: "/api/me#x") == nil)
+    }
+
     @Test func tailscaleIPv6Addresses() throws {
         let (endpoint, code) = try ServerEndpoint.parse("https://[fd7a:115c:a1e0::1]:8099/#pair=ABCD2345")
         #expect(endpoint.baseURL.absoluteString == "https://[fd7a:115c:a1e0::1]:8099")
         #expect(code?.value == "ABCD2345")
-        #expect(endpoint.url(path: "/api/me").absoluteString == "https://[fd7a:115c:a1e0::1]:8099/api/me")
+        #expect(endpoint.url(path: "/api/me")?.absoluteString == "https://[fd7a:115c:a1e0::1]:8099/api/me")
         #expect(endpoint.owns(URL(string: "https://[FD7A:115C:A1E0::1]:8099/api/events")))
         #expect(!endpoint.owns(URL(string: "https://[fd7a:115c:a1e0::2]:8099/api/me")))
         // Not an IPv6 address, though it has colons: refused, never built.

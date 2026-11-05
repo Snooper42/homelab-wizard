@@ -74,11 +74,18 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
         return (ServerEndpoint(baseURL: url), code)
     }
 
-    /// The URL for an absolute API path such as `/api/me`, on this server only.
-    func url(path: String) -> URL {
-        var parts = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+    /// The URL for an API path such as `/api/me`, on this server only. Nil
+    /// for anything outside `/api/`, or when the stored base URL can't take a
+    /// path (a damaged Keychain item), so a bad value fails closed instead of
+    /// crashing.
+    func url(path: String) -> URL? {
+        guard path.hasPrefix("/api/"), !path.contains(".."), !path.contains("?"), !path.contains("#"),
+              var parts = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)
+        else { return nil }
         parts.path = path
-        return parts.url!
+        parts.query = nil
+        parts.fragment = nil
+        return parts.url
     }
 
     /// Whether `url` has this server's scheme, host and port. Requests and

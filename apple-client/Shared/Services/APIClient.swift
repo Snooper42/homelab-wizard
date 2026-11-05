@@ -65,7 +65,8 @@ actor APIClient {
     /// - Parameter kiosk: a wall screen or TV. The computer then never lets
     ///   this device make changes or see Finances, whatever the code allowed.
     func pair(code: PairingCode, deviceName: String, at endpoint: ServerEndpoint, kiosk: Bool = false) async throws -> DeviceInfo {
-        var request = URLRequest(url: endpoint.url(path: "/api/pair"))
+        guard let pairURL = endpoint.url(path: "/api/pair") else { throw APIError.originMismatch }
+        var request = URLRequest(url: pairURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -389,8 +390,9 @@ actor APIClient {
         } catch {
             throw APIError.from(error)
         }
-        let url = credential.endpoint.url(path: path)
-        guard credential.endpoint.owns(url) else { throw APIError.originMismatch }
+        guard let url = credential.endpoint.url(path: path), credential.endpoint.owns(url) else {
+            throw APIError.originMismatch
+        }
 
         var request = URLRequest(url: url)
         request.httpMethod = method
