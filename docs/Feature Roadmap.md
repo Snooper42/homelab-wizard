@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #PR14 |
 | An update's notes | Hover *updates held* on Status for why, how to put it back, and the first lines of its newest release | #419 |
 | A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #418 |
 | Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #417 |
