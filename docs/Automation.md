@@ -32,6 +32,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 | After | An app updated 20 minutes to 6 hours ago that is unhealthy, restarting over and over, or whose page does not answer on two checks in a row is rolled back by the watchdog, its updates held, and an alert sent to the `watchtower` topic (`AUTO_ROLLBACK=false` turns this off). If it was never well after the update, its data from just before goes back with the image (nothing new can have been written); if it was well for a while, today's data stays and the alert says `homelab rollback <app> --data` puts the copy back |
 | What is new | `homelab updates notes <app>` lists the releases newer than the version it runs, with the start of each one's notes; `homelab update` prints one line per app, and the app's **Update** shows the notes before it goes ahead. They come from the GitHub project the image names (its `org.opencontainers.image.source` label, a `ghcr.io` name, or `releases:` in the app's `x-homelab`), kept 6 hours in `data/releases.json` |
 | Held | `homelab updates hold <app>` and `release <app>` (`UPDATES_HELD`), or an app's page › **Nightly updates**; a stopped app can be held too |
+| Its own days | `homelab updates days <app> sun` (`UPDATE_DAYS`), or an app's page › **Only on Sundays**: the nightly run on another day leaves it out; `every` puts it back to each night |
 | Alerts | ntfy topic `watchtower` (the name it had under Watchtower, so phones already subscribed keep getting them): what each night updated, and each rollback |
 
 ### Who updates what

@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #PR15 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | An update's notes | Hover *updates held* on Status for why, how to put it back, and the first lines of its newest release | #419 |
 | A backup's contents | Hover an off-site job's time on Backups for its last run, how long it took, what it holds, the versions kept, its folders, and its next run | #418 |
@@ -104,7 +105,7 @@ The homelab looks after itself, and says what it did.
 
 - **Start in order** (M, *Idea*): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.
 - **One app at a time** (M, *Idea*): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.
-- **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
+- **An update window per app** (S, *Built*, #PR15): update Immich only on Sundays (an app's page › **Only on Sundays**, or `homelab updates days immich sun` for any days). Still an idea: Vaultwarden at once when a security release comes out.
 - **A restart that keeps failing** (S, *Idea*): an app the watchdog restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Idea*): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
 - **A drive comes back** (S, *Idea*): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.

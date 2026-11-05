@@ -346,6 +346,11 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 					return nil, nil, err
 				}
 				cmd = []string{"updates", map[bool]string{true: "release", false: "hold"}[on], id}
+			case "sundays":
+				if err := h.containerApp(id); err != nil {
+					return nil, nil, err
+				}
+				cmd = []string{"updates", "days", id, map[bool]string{true: "sun", false: "every"}[on]}
 			case "alerts":
 				cmd = []string{"notify", map[bool]string{true: "on", false: "off"}[on], id}
 			case "pinned":

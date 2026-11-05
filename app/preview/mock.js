@@ -260,6 +260,10 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
         M.status = { ...M.status, pinned, apps: M.status.apps.map((a) => (a.id === id ? { ...a, pinned: on } : a)) };
         return;
       }
+      if (setting === 'sundays') {
+        M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, updateDays: on ? ['sun'] : undefined } : a)) };
+        return;
+      }
       const key = setting === 'updates' ? 'held' : 'quiet';
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, [key]: !on } : a)) };
     },

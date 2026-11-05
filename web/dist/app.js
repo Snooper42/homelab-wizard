@@ -7414,6 +7414,8 @@
     const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
+    const days = a3.updateDays || [], ownDays = switching2.sundays ?? days.length > 0;
+    const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
     const kept2 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
@@ -7427,7 +7429,17 @@
             disabled: busy2 || "updates" in switching2,
             on: updates,
             set: (v3) => on2.setting("updates", v3),
-            sub: updates ? "Every night, with a backup of its data first" : "Held: the nightly update leaves it out"
+            sub: !updates ? "Held: the nightly update leaves it out" : ownDays ? `On ${daysText} only, with a backup of its data first` : "Every night, with a backup of its data first"
+          }
+        ),
+        container && updates && /* @__PURE__ */ u3(
+          Switch,
+          {
+            label: `Only on ${daysText}`,
+            disabled: busy2 || "sundays" in switching2,
+            on: ownDays,
+            set: (v3) => on2.setting("sundays", v3),
+            sub: ownDays ? "The other nights leave it alone; updating it by hand still works any day" : "For an app you would rather not see change midweek"
           }
         ),
         /* @__PURE__ */ u3(
@@ -7482,6 +7494,11 @@
   }
   function mountAppPage(el2, props) {
     R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el2);
+  }
+  var dayWords = { mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays", sun: "Sundays" };
+  function weekdaysText(days) {
+    const w3 = days.map((d3) => dayWords[d3] || d3);
+    return w3.length < 2 ? w3.join("") : `${w3.slice(0, -1).join(", ")} and ${w3[w3.length - 1]}`;
   }
 
   // web/src/screens/apppage.ts

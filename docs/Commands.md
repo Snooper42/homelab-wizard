@@ -73,6 +73,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab updates resume
 ./homelab updates hold <app>     # leave one app out of nightly updates
 ./homelab updates release <app>  # put it back (after a rollback too)
+./homelab updates days immich sun  # update Immich on Sundays only (sat+sun, weekend; every: each night)
 ./homelab updates notes <app>    # what updating it brings: its newer releases' notes
 ./homelab wire                   # connect running apps: Prowlarr, FlareSolverr, qBittorrent, root folders, Bazarr, Seerr
 ./homelab move out --to /Volumes/Drive/homelab.tar   # moving machines: back up, stop, pack it into one file

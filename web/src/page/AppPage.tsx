@@ -363,6 +363,9 @@ function Settings({ p }: { p: AppPageProps }) {
   const { a, entry, busy, backup: o, switching, on } = p;
   const container = entry?.kind !== 'native' && a.state !== 'missing' && a.state !== 'elsewhere';
   const updates = switching.updates ?? !a.held, alerts = switching.alerts ?? !a.quiet;
+  // Its update window: Sundays only (homelab updates days sets any days; the switch says those, and off is every night).
+  const days = a.updateDays || [], ownDays = switching.sundays ?? days.length > 0;
+  const daysText = switching.sundays || !days.length ? 'Sundays' : weekdaysText(days);
   // What the nightly backup keeps of it: its database's copy (its own, or
   // the database it uses), and its files in the homelab folder.
   const ids = [a.id, ...(entry?.dependsOn || [])];
@@ -373,7 +376,9 @@ function Settings({ p }: { p: AppPageProps }) {
       <CardHead title="Settings">{null}</CardHead>
       <Rows>
         {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching} on={updates} set={(v) => on.setting('updates', v)}
-          sub={updates ? 'Every night, with a backup of its data first' : 'Held: the nightly update leaves it out'} />}
+          sub={!updates ? 'Held: the nightly update leaves it out' : ownDays ? `On ${daysText} only, with a backup of its data first` : 'Every night, with a backup of its data first'} />}
+        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)}
+          sub={ownDays ? 'The other nights leave it alone; updating it by hand still works any day' : 'For an app you would rather not see change midweek'} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
           sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />
@@ -427,3 +432,10 @@ export function AppPage(p: AppPageProps) {
  * log, an answer, a Copied) is ever drawn on another's, not even for a frame,
  * and an answer that comes back after the page moved on is dropped. */
 export function mountAppPage(el: Element, props: AppPageProps | null) { render(props ? <AppPage key={props.a.id} {...props} /> : null, el); }
+
+const dayWords: Record<string, string> = { mon: 'Mondays', tue: 'Tuesdays', wed: 'Wednesdays', thu: 'Thursdays', fri: 'Fridays', sat: 'Saturdays', sun: 'Sundays' };
+/** "Sundays", "Saturdays and Sundays", as the CLI says them. */
+export function weekdaysText(days: string[]): string {
+  const w = days.map((d) => dayWords[d] || d);
+  return w.length < 2 ? w.join('') : `${w.slice(0, -1).join(', ')} and ${w[w.length - 1]}`;
+}

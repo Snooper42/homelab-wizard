@@ -293,6 +293,9 @@ type AppStatus struct {
 	UpdatedAt string `json:"updatedAt,omitempty"`
 	// Held: its updates are held after a rollback (homelab updates release).
 	Held bool `json:"held,omitempty"`
+	// UpdateDays are the days the nightly update takes it ("sun", "sat"),
+	// when not every night (homelab updates days).
+	UpdateDays []string `json:"updateDays,omitempty"`
 	// Quiet: the watchdog does not alert about it (homelab notify on).
 	Quiet bool `json:"quiet,omitempty"`
 	// Pinned: at the top of Status and of the menu bar's Open an app

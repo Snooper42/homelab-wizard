@@ -87,6 +87,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	for _, id := range updates.Held(env) {
 		held[id] = true
 	}
+	days := updates.Days(env)
 	pinned := map[string]bool{}
 	for _, id := range Pinned(env) {
 		if _, ok := c.Get(id); ok {
@@ -152,6 +153,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 			s.UpdatedAt = r.Updated.UTC().Format(time.RFC3339)
 		}
 		s.Held = held[a.ID]
+		s.UpdateDays = updates.DayNames(days[a.ID])
 		s.Quiet = quiet[a.ID]
 		s.Pinned = pinned[a.ID]
 		st.Apps = append(st.Apps, s)
