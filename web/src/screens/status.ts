@@ -465,8 +465,14 @@ async function showQR(a) {
 // Closes the command sheet, its log ready for the next command.
 function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
 // The command sheet's buttons, in place of what it showed.
-// A new set is a new row (its key): a button that replaced a running one is not taken for it.
-const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
+// A new set is a new row (its key): a button that replaced a running one is
+// not taken for it. A row that held the focus hands it to the new row's
+// first button, so it never falls out of the sheet onto the page.
+function cliButtons(buttons: SheetButton[]) {
+  const row = $('cliActions'), had = row.contains(document.activeElement);
+  mountSheet(row, vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
+  if (had && !row.contains(document.activeElement)) (row.querySelector('button') || $('cliPanel')).focus();
+}
 // A command running in the sheet can be hidden: it carries on, its bar in
 // the sidebar (job/Background.tsx), and the sheet comes back from there.
 const hideButton: SheetButton = { label: 'Hide', title: 'It carries on, its bar in the sidebar', onClick: () => { bgHide(); $('cliPanel').hidden = true; } };

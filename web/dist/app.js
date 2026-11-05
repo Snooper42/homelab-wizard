@@ -6244,7 +6244,11 @@
     $2("cliPanel").hidden = true;
     $2("cliLog").hidden = false;
   }
-  var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
+  function cliButtons(buttons) {
+    const row = $2("cliActions"), had = row.contains(document.activeElement);
+    mountSheet(row, k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
+    if (had && !row.contains(document.activeElement)) (row.querySelector("button") || $2("cliPanel")).focus();
+  }
   var hideButton = { label: "Hide", title: "It carries on, its bar in the sidebar", onClick: () => {
     bgHide();
     $2("cliPanel").hidden = true;
