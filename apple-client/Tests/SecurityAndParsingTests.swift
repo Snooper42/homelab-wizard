@@ -644,3 +644,57 @@ struct FinancePlanEditTests {
         #expect(back == plan)
     }
 }
+
+@Suite("Adding a transaction")
+struct LedgerEditTests {
+    private let ledger = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r9","transactions":[{"id":"t1","date":"2026-11-01","account":"chk","amount":-5,"payee":"Café","bank":"FITID1","splits":[{"category":"Food","amount":-5}]}]}
+    """#.utf8))
+    private var utc: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }
+
+    private func draft(_ amount: Double, moneyIn: Bool = false, payee: String = " Grocer ", account: String = "chk") -> NewTransaction {
+        NewTransaction(date: GoTime.parse("2026-11-05T12:00:00Z")!, account: account, isMoneyIn: moneyIn, amount: amount, payee: payee, category: " Groceries ", note: "")
+    }
+
+    @Test func appendsSignedAndTrimmed() throws {
+        let edited = try #require(LedgerEdit.appending(draft(42.199), accounts: ["chk"], calendar: utc, to: ledger))
+        guard case .array(let all)? = edited["transactions"] else { Issue.record("no transactions"); return }
+        #expect(all.count == 2)
+        #expect(all[0] == (ledger["transactions"].flatMap { if case .array(let a) = $0 { return a[0] } else { return nil } })) // untouched
+        let added = all[1]
+        #expect(added["amount"] == .number(-42.2))
+        #expect(added["date"] == .string("2026-11-05"))
+        #expect(added["payee"] == .string("Grocer"))
+        #expect(added["category"] == .string("Groceries"))
+        #expect(added["note"] == nil)
+        #expect(added["id"] == nil) // the computer gives it one
+        #expect(edited["rev"] == .string("r9"))
+    }
+
+    @Test func moneyInIsPositive() throws {
+        let edited = try #require(LedgerEdit.appending(draft(10, moneyIn: true), accounts: ["chk"], calendar: utc, to: ledger))
+        guard case .array(let all)? = edited["transactions"] else { return }
+        #expect(all.last?["amount"] == .number(10))
+    }
+
+    @Test func refusesWhatTheComputerWould() {
+        #expect(LedgerEdit.problem(with: draft(0), accounts: ["chk"]) != nil)
+        #expect(LedgerEdit.problem(with: draft(0.004), accounts: ["chk"]) != nil) // rounds to nothing
+        #expect(LedgerEdit.problem(with: draft(5, account: "gone"), accounts: ["chk"]) != nil)
+        #expect(LedgerEdit.problem(with: draft(5, payee: "  "), accounts: ["chk"]) != nil)
+        #expect(LedgerEdit.problem(with: draft(.nan), accounts: ["chk"]) != nil)
+        #expect(LedgerEdit.problem(with: draft(5), accounts: ["chk"]) == nil)
+    }
+
+    @Test func emptyLedgersTakeOne() throws {
+        let fromNull = try #require(LedgerEdit.appending(draft(5), accounts: ["chk"], calendar: utc, to: .null))
+        guard case .array(let all)? = fromNull["transactions"] else { Issue.record("no transactions"); return }
+        #expect(all.count == 1)
+        let fromNullList = try #require(LedgerEdit.appending(draft(5), accounts: ["chk"], calendar: utc, to: .object(["transactions": .null])))
+        #expect(fromNullList["transactions"] != nil)
+    }
+}

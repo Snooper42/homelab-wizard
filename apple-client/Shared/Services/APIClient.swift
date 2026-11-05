@@ -227,9 +227,35 @@ actor APIClient {
         }
     }
 
-    /// The transactions on record. It needs the view or edit level.
-    func financesLedger() async throws -> FinanceLedger {
-        try await call("FinancesLedger", as: FinanceLedger.self)
+    /// The transactions on record, with the ledger as raw JSON for an
+    /// edit to send back whole. It needs the view or edit level.
+    func financesLedger() async throws -> LedgerRead {
+        let (request, endpoint) = try callRequest("FinancesLedger", [])
+        return try Self.ledgerRead(from: try await send(request, to: endpoint))
+    }
+
+    /// Saves the ledger, which must be the raw ledger as read, edited, with
+    /// its `rev`. It needs the edit level, and it's never retried.
+    func saveFinancesLedger(_ ledger: JSONValue) async throws -> LedgerRead {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.withoutEscapingSlashes]
+        let body = try encoder.encode([ledger])
+        guard body.count <= 4 << 20 else { throw APIError.responseTooLarge }
+        let (request, endpoint) = try authorizedRequest(path: "/api/call/SaveFinancesLedger", method: "POST", body: body)
+        Log.network.notice("SaveFinancesLedger, \(body.count, privacy: .public) bytes")
+        return try Self.ledgerRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
+    private static func ledgerRead(from data: Data) throws -> LedgerRead {
+        do {
+            let decoder = JSONDecoder.homelab()
+            let ledger = try decoder.decode(CallEnvelope<FinanceLedger>.self, from: data).result
+            let raw = try decoder.decode(CallEnvelope<JSONValue>.self, from: data).result
+            return LedgerRead(ledger: ledger, raw: raw)
+        } catch {
+            Log.network.error("The ledger answer couldn't be decoded")
+            throw APIError.decoding
+        }
     }
 
     // MARK: Changes

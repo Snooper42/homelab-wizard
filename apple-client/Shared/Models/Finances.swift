@@ -83,6 +83,13 @@ struct MoneyBill: Decodable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// One read of the ledger: what the screens show, and the ledger exactly
+/// as sent.
+struct LedgerRead: Sendable {
+    let ledger: FinanceLedger
+    let raw: JSONValue
+}
+
 /// One read of Finances: what the screens show, and the plan exactly as
 /// sent, for an edit to send back (see `FinancePlanEdit`).
 struct FinancesRead: Sendable {
@@ -110,8 +117,10 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     let budgets: [FinanceBudget]
     let goals: [FinanceGoal]
     let loans: [FinancePayoff]
+    /// The plan's categories, or the defaults while it has none.
+    let categories: [FinanceCategory]
 
-    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans }
+    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -125,6 +134,7 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         budgets = ((try? c.decodeIfPresent([FinanceBudget].self, forKey: .budgets)) ?? nil) ?? []
         goals = ((try? c.decodeIfPresent([FinanceGoal].self, forKey: .goals)) ?? nil) ?? []
         loans = ((try? c.decodeIfPresent([FinancePayoff].self, forKey: .loans)) ?? nil) ?? []
+        categories = ((try? c.decodeIfPresent([FinanceCategory].self, forKey: .categories)) ?? nil) ?? []
     }
 
     func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
@@ -160,6 +170,15 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
         hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
     }
+}
+
+struct FinanceCategory: Decodable, Sendable, Equatable, Identifiable {
+    let name: String
+    let parent: String?
+    /// Money in: a paycheck, interest, a refund.
+    let income: Bool?
+
+    var id: String { name }
 }
 
 struct FinancePerson: Decodable, Sendable, Equatable, Identifiable {

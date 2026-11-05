@@ -20,6 +20,7 @@ final class FinancesViewModel {
     private(set) var planError: String?
     private(set) var isLoadingPlan = false
     private(set) var ledger: FinanceLedger?
+    @ObservationIgnored private var rawLedger: JSONValue?
     private(set) var ledgerError: String?
     private(set) var isLoadingLedger = false
     /// Amounts show only after a tap, and hide again on lock.
@@ -81,15 +82,56 @@ final class FinancesViewModel {
         isLoadingLedger = true
         defer { isLoadingLedger = false }
         do {
-            ledger = try await api.financesLedger()
+            let read = try await api.financesLedger()
+            ledger = read.ledger
+            rawLedger = read.raw
             ledgerError = nil
         } catch {
             let apiError = APIError.from(error)
-            if case .forbidden = apiError { ledger = nil }
+            if case .forbidden = apiError {
+                ledger = nil
+                rawLedger = nil
+            }
             Log.ui.error("Ledger failed: \(apiError.logName, privacy: .public)")
             ledgerError = apiError.errorDescription
         }
     }
+
+    /// The edit level: transactions can be added.
+    var canAddTransactions: Bool { level >= .edit && rawLedger != nil && plan != nil }
+
+    /// Adds a transaction. Returns whether it saved.
+    func add(_ transaction: NewTransaction) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger, let plan else { return false }
+        let accounts = Set(plan.plan.accounts.map(\.id))
+        if let problem = LedgerEdit.problem(with: transaction, accounts: accounts) {
+            saveError = problem
+            return false
+        }
+        guard let edited = LedgerEdit.appending(transaction, accounts: accounts, to: raw) else {
+            saveError = "The ledger couldn't take that."
+            return false
+        }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Add a transaction to your Finances.") else { return false }
+        do {
+            let read = try await api.saveFinancesLedger(edited)
+            ledger = read.ledger
+            rawLedger = read.raw
+            saveError = nil
+            savedCount += 1
+            return true
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SaveFinancesLedger failed: \(apiError.logName, privacy: .public)")
+            saveError = apiError.errorDescription
+            await loadLedger()
+            return false
+        }
+    }
+
+    func clearSaveError() { saveError = nil }
 
     func accountName(_ id: String) -> String? {
         plan?.plan.accounts.first { $0.id == id }?.name

@@ -356,6 +356,7 @@ private struct BalanceEditor: View {
 struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
+    @State private var adding = false
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -404,9 +405,133 @@ struct TransactionsView: View {
             }
         }
         .searchable(text: $search, prompt: "Payee, category, note or tag")
-        .task { await finances.loadLedger() }
+        .task {
+            await finances.loadLedger()
+            // Accounts and categories for a new one come from the plan.
+            if finances.plan == nil { await finances.loadPlan() }
+        }
         .refreshable { await finances.loadLedger() }
         .navigationTitle("Transactions")
+        .toolbar {
+            if finances.canAddTransactions {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        finances.clearSaveError()
+                        adding = true
+                    } label: {
+                        Label("Add Transaction", systemImage: "plus")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $adding) {
+            AddTransactionView(finances: finances)
+        }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+}
+
+/// Records money in or out of one account, as a person types it in.
+private struct AddTransactionView: View {
+    let finances: FinancesViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft = NewTransaction(date: Date(), account: "", isMoneyIn: false, amount: 0, payee: "", category: "", note: "")
+    @State private var amountText = ""
+
+    private var accounts: [FinanceAccount] {
+        (finances.plan?.plan.accounts ?? []).filter { ["checking", "savings", "card", "investment", "retirement", "loan", "other"].contains($0.kind) }
+    }
+
+    private var categories: [FinanceCategory] {
+        (finances.plan?.categories ?? []).filter { ($0.income ?? false) == draft.isMoneyIn }
+    }
+
+    private var problem: String? {
+        var t = draft
+        t.amount = FinancePlanEdit.parseAmount(amountText) ?? 0
+        return LedgerEdit.problem(with: t, accounts: Set(accounts.map(\.id)))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("Direction", selection: $draft.isMoneyIn) {
+                        Text("Money out").tag(false)
+                        Text("Money in").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    TextField("Amount", text: $amountText)
+                        #if os(iOS)
+                        .keyboardType(.numbersAndPunctuation)
+                        #endif
+                        .font(.title2.monospacedDigit())
+                        .privacySensitive()
+                    TextField(draft.isMoneyIn ? "Who paid" : "Who was paid", text: $draft.payee)
+                        .autocorrectionDisabled()
+                }
+                Section {
+                    Picker("Account", selection: $draft.account) {
+                        ForEach(accounts) { account in
+                            Text(account.name).tag(account.id)
+                        }
+                    }
+                    Picker("Category", selection: $draft.category) {
+                        Text("None").tag("")
+                        ForEach(categories) { category in
+                            Text(category.parent.map { "\($0) › \(category.name)" } ?? category.name).tag(category.name)
+                        }
+                    }
+                    DatePicker("Day", selection: $draft.date, in: ...Date().addingTimeInterval(60 * 60 * 24 * 366), displayedComponents: .date)
+                    TextField("Note", text: $draft.note, axis: .vertical)
+                        .lineLimit(1...4)
+                }
+                if let error = finances.saveError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Add Transaction")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if finances.isSaving {
+                        ProgressView()
+                    } else {
+                        Button("Save", action: save).disabled(problem != nil)
+                    }
+                }
+            }
+            .onChange(of: draft.isMoneyIn) { _, _ in
+                // A category for money out isn't one for money in.
+                if !categories.contains(where: { $0.name == draft.category }) { draft.category = "" }
+            }
+        }
+        #if os(macOS)
+        .frame(minWidth: 420, minHeight: 440)
+        #endif
+        .onAppear {
+            if draft.account.isEmpty {
+                let checking = finances.plan?.checking ?? ""
+                draft.account = accounts.contains(where: { $0.id == checking }) ? checking : (accounts.first?.id ?? "")
+            }
+        }
+    }
+
+    private func save() {
+        var t = draft
+        guard let amount = FinancePlanEdit.parseAmount(amountText) else { return }
+        t.amount = abs(amount)
+        Task {
+            if await finances.add(t) { dismiss() }
+        }
     }
 }
 
