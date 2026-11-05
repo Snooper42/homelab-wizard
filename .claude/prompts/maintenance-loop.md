@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** #432 (`claude/fix-pinned-record`), `APPS_PINNED` from item 2: take it to merged. #429 and #431 merged; the owner may delete `claude/fix-alerts-off-record`.
+**Open now:** #432 (`claude/fix-pinned-record`), `APPS_PINNED` from item 2: take it to merged. #429 and #431 merged; their branches are gone.
 
 ## Your job
 
