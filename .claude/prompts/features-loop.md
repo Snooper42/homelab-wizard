@@ -59,7 +59,6 @@ The **one open pull request of yours at a time** rule still holds, so these go o
   - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5).
   - `claude/feature-phones-expire` (#PR16): a phone's changes and Finances end after a day, a week, or a month.
 - Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423.
-- Three remote branches whose work is all on main: `claude/feature-media-logic`, `claude/feature-tidy-duplicates`, `claude/feature-tidy-episodes`. The owner deletes them; list them in each report until they are gone.
 
 Still list what is open at the start of each round, as above: other sessions add to it.
 
