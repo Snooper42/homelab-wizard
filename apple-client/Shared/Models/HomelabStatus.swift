@@ -1,8 +1,7 @@
 import Foundation
 
 /// The homelab's state (`api.Status` in internal/api/api.go). Fields the
-/// phone doesn't show yet (`updates`, `stopped`) are left out, and Codable
-/// ignores them.
+/// phone doesn't show yet (`updates`) are left out, and Codable ignores them.
 struct HomelabStatus: Codable, Sendable, Equatable {
     var apps: [AppStatus]
     /// Baseline apps that aren't running.
@@ -15,9 +14,12 @@ struct HomelabStatus: Codable, Sendable, Equatable {
     var batteryPaused: [String]
     /// Some apps' pages haven't been checked yet. A refresh follows.
     var checking: Bool
+    /// Apps stopped on purpose, by id. Each app also carries its own entry
+    /// as `stoppedOnPurpose`.
+    var stopped: [String: StopRecord]
 
     enum CodingKeys: String, CodingKey {
-        case apps, missing, unmatched, savings, batteryPaused, checking
+        case apps, missing, unmatched, savings, batteryPaused, checking, stopped
     }
 
     init(from decoder: Decoder) throws {
@@ -28,6 +30,14 @@ struct HomelabStatus: Codable, Sendable, Equatable {
         savings = try c.decodeIfPresent(Double.self, forKey: .savings) ?? 0
         batteryPaused = try c.decodeIfPresent([String].self, forKey: .batteryPaused) ?? []
         checking = try c.decodeIfPresent(Bool.self, forKey: .checking) ?? false
+        // One entry that doesn't read shouldn't cost the whole status.
+        let stopped = ((try? c.decodeIfPresent([String: StopRecord].self, forKey: .stopped)) ?? nil) ?? [:]
+        self.stopped = stopped
+        apps = apps.map { app in
+            var app = app
+            app.stoppedOnPurpose = stopped[app.id]
+            return app
+        }
     }
 }
 
@@ -53,6 +63,13 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let waitingFor: String?
     let notAnswering: String?
     let settingsChanged: Bool?
+    /// From the status's `stopped` record, not the app's own JSON.
+    var stoppedOnPurpose: StopRecord?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, state, health, container, url, address, since, restarts
+        case updatedAt, held, quiet, waitingFor, notAnswering, settingsChanged
+    }
 
     var isRunning: Bool { state == "running" }
 

@@ -18,6 +18,9 @@ struct AppActionControls: ViewModifier {
                     }
                     .disabled(actions.isBusy)
                 }
+                if available.contains(.stop) {
+                    StopForAWhileMenu(app: app)
+                }
             }
             #if os(iOS)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -51,6 +54,24 @@ extension AppAction {
     }
 }
 
+/// Stop for a while, as a submenu of times.
+struct StopForAWhileMenu: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    let app: AppStatus
+
+    var body: some View {
+        Menu {
+            // Worked out when the menu opens, so "tonight" is still right.
+            ForEach(StopChoice.choices()) { choice in
+                Button(choice.label) { actions.stop(app, until: choice) }
+            }
+        } label: {
+            Label("Stop for a While", systemImage: "timer")
+        }
+        .disabled(actions.isBusy)
+    }
+}
+
 /// Everything about actions that sits above the lists: the Stop
 /// confirmation, the Undo banner, the Details sheet, and haptics.
 struct AppActionsPresenter: ViewModifier {
@@ -74,7 +95,7 @@ struct AppActionsPresenter: ViewModifier {
             }
             .overlay(alignment: .bottom) {
                 if let offer = actions.undo {
-                    UndoBanner(name: offer.app.name, undo: { actions.performUndo() }, close: { actions.dropUndo() })
+                    UndoBanner(text: offer.bannerText, undo: { actions.performUndo() }, close: { actions.dropUndo() })
                         .padding()
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -92,8 +113,15 @@ struct AppActionsPresenter: ViewModifier {
     }
 }
 
+private extension AppActionsViewModel.UndoOffer {
+    var bannerText: String {
+        guard let until else { return "Stopped \(app.name)" }
+        return "Stopped \(app.name) \(until.label.lowercased())"
+    }
+}
+
 private struct UndoBanner: View {
-    let name: String
+    let text: String
     let undo: @MainActor () -> Void
     let close: @MainActor () -> Void
 
@@ -101,7 +129,7 @@ private struct UndoBanner: View {
         HStack(spacing: 12) {
             Image(systemName: "stop.circle.fill")
                 .foregroundStyle(.secondary)
-            Text("Stopped \(name)")
+            Text(text)
                 .lineLimit(1)
             Spacer(minLength: 8)
             Button("Undo") { undo() }

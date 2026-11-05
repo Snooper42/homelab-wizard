@@ -90,6 +90,7 @@ extension AppStatus {
     var detailLine: String {
         if let problem = notAnswering, !problem.isEmpty { return "Not answering: \(problem)" }
         if let drive = waitingFor, !drive.isEmpty { return "Waiting for \(drive)" }
+        if state == "stopped", let stop = stoppedOnPurpose { return stop.words() }
         switch health {
         case "restarting": return "Crash loop"
         case "unhealthy": return "Unhealthy"

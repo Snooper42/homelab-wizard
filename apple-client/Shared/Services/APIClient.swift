@@ -147,10 +147,18 @@ actor APIClient {
     ///   fails with its explanation.
     /// - This is never retried. A change isn't idempotent, and a timed-out
     ///   request may still be running on the computer.
-    func perform(_ action: AppAction, appID: String) async throws -> [String] {
+    /// - A stop with `until` is Stop for a while (the `StopUntil` method).
+    ///   The computer starts the app again by itself at that time.
+    func perform(_ action: AppAction, appID: String, until: StopChoice? = nil) async throws -> [String] {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
-        let (request, endpoint) = try callRequest("AppAction", [.string(appID), .string(action.rawValue)])
-        Log.network.notice("AppAction \(action.rawValue, privacy: .public) on \(appID, privacy: .private(mask: .hash))")
+        let request: URLRequest
+        let endpoint: ServerEndpoint
+        if action == .stop, let until {
+            (request, endpoint) = try callRequest("StopUntil", [.string(appID), .string(until.untilArgument)])
+        } else {
+            (request, endpoint) = try callRequest("AppAction", [.string(appID), .string(action.rawValue)])
+        }
+        Log.network.notice("\(action.rawValue, privacy: .public)\(until == nil ? "" : " for a while", privacy: .public) on \(appID, privacy: .private(mask: .hash))")
         let data = try await send(request, to: endpoint, using: actionSession)
         let envelope = try? JSONDecoder().decode(LogEnvelope.self, from: data)
         return APIError.sanitizeLog(envelope?.log)

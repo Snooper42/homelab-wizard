@@ -28,6 +28,8 @@ final class AppActionsViewModel {
     struct UndoOffer: Equatable, Identifiable {
         let id = UUID()
         let app: AppStatus
+        /// Set for Stop for a while.
+        let until: StopChoice?
     }
 
     /// The command output shown in the Details sheet.
@@ -95,6 +97,12 @@ final class AppActionsViewModel {
         }
     }
 
+    /// Stop for a while: no confirmation, because choosing a time is
+    /// deliberate (as on the computer).
+    func stop(_ app: AppStatus, until choice: StopChoice) {
+        Task { await run(.stop, on: app, until: choice) }
+    }
+
     func confirmStop() {
         guard let app = stopCandidate else { return }
         stopCandidate = nil
@@ -125,7 +133,7 @@ final class AppActionsViewModel {
         if pending[app.id]?.failure != nil { pending[app.id] = nil }
     }
 
-    func run(_ action: AppAction, on app: AppStatus, checkAvailability: Bool = true) async {
+    func run(_ action: AppAction, on app: AppStatus, until: StopChoice? = nil, checkAvailability: Bool = true) async {
         guard !isBusy, canChange else { return }
         // The status may have changed since the button was drawn.
         if checkAvailability {
@@ -134,18 +142,19 @@ final class AppActionsViewModel {
         }
         // Busy before the prompt, so a second tap can't open a second prompt.
         isBusy = true
-        guard await authorize("\(action.title) \(app.name) on your homelab.") else {
+        let reason = until.map { "Stop \(app.name) \($0.label.lowercased())." } ?? "\(action.title) \(app.name) on your homelab."
+        guard await authorize(reason) else {
             isBusy = false
             return
         }
 
         pending[app.id] = Pending(action: action)
         do {
-            let log = try await api.perform(action, appID: app.id)
+            let log = try await api.perform(action, appID: app.id, until: until)
             pending[app.id]?.log = log
             successCount += 1
             isBusy = false
-            if action == .stop { offerUndo(for: app) }
+            if action == .stop { offerUndo(for: app, until: until) }
             // Wait for Status to show the result, then drop "Stopping…".
             await liveEvents.refreshNow()
             if pending[app.id]?.failure == nil { pending[app.id] = nil }
@@ -172,9 +181,9 @@ final class AppActionsViewModel {
         }
     }
 
-    private func offerUndo(for app: AppStatus) {
+    private func offerUndo(for app: AppStatus, until: StopChoice?) {
         undoTask?.cancel()
-        let offer = UndoOffer(app: app)
+        let offer = UndoOffer(app: app, until: until)
         undo = offer
         undoTask = Task { [weak self] in
             try? await Task.sleep(for: Self.undoFor)

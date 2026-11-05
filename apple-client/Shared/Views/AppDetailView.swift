@@ -114,11 +114,16 @@ struct AppDetailView: View {
                     }
                     .disabled(actions.isBusy)
                 }
+                if available.contains(.stop) {
+                    StopForAWhileMenu(app: app)
+                }
             } header: {
                 Text("Actions")
             } footer: {
                 if let hint {
                     Text(hint)
+                } else if available.contains(.stop) {
+                    Text("Stopped for a while, it starts again by itself.")
                 }
             }
         }

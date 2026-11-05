@@ -198,3 +198,52 @@ struct AppActionTests {
         #expect(APIError.actionFailed(message: "no such container jellyfin", log: ["secret"]).logName == "actionFailed")
     }
 }
+
+@Suite("Stop for a while")
+struct StopChoiceTests {
+    private var utc: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+
+    private func at(_ text: String) -> Date { GoTime.parse(text)! }
+
+    @Test func afternoonOffersAnHourTonightAndTomorrowMorning() {
+        let choices = StopChoice.choices(now: at("2026-11-05T14:30:42Z"), calendar: utc)
+        #expect(choices.map(\.until) == [at("2026-11-05T15:30:00Z"), at("2026-11-05T21:00:00Z"), at("2026-11-06T08:00:00Z")])
+        #expect(choices[2].label.hasSuffix("tomorrow"))
+    }
+
+    @Test func lateEveningSkipsTonight() {
+        let choices = StopChoice.choices(now: at("2026-11-05T20:30:00Z"), calendar: utc)
+        #expect(choices.map(\.until) == [at("2026-11-05T21:30:00Z"), at("2026-11-06T08:00:00Z")])
+    }
+
+    @Test func earlyMorningOffersThisMorning() {
+        let choices = StopChoice.choices(now: at("2026-11-05T03:00:00Z"), calendar: utc)
+        #expect(choices.last?.until == at("2026-11-05T08:00:00Z"))
+        #expect(choices.last?.label.hasSuffix("tomorrow") == false)
+    }
+
+    @Test func untilIsWhatTheCLITakes() {
+        #expect(StopChoice(label: "x", until: at("2026-11-05T21:00:00Z")).untilArgument == "2026-11-05T21:00:00Z")
+    }
+
+    @Test func statusCarriesTheStopToItsApp() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"immich","name":"Immich","state":"stopped"},{"id":"plex","name":"Plex","state":"stopped"}],
+         "stopped":{"immich":{"since":"2026-11-05T14:00:00Z","until":"2026-11-05T21:00:00Z"},"plex":{"since":"2026-11-05T14:00:00Z"}}}
+        """#.utf8))
+        #expect(status.apps[0].stoppedOnPurpose?.until == at("2026-11-05T21:00:00Z"))
+        #expect(status.apps[1].stoppedOnPurpose?.words() == "Stopped by you")
+    }
+
+    @Test func aBadStoppedRecordDoesNotCostTheStatus() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"stopped"}],"stopped":{"a":{"since":"yesterday"}}}
+        """#.utf8))
+        #expect(status.apps.count == 1)
+        #expect(status.stopped.isEmpty)
+    }
+}
