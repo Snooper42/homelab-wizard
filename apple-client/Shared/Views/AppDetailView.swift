@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AppDetailView: View {
+    @ScaledMetric(relativeTo: .title2) private var iconSize: CGFloat = 52
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
     /// Nil when the app left the status (uninstalled meanwhile).
@@ -11,7 +12,7 @@ struct AppDetailView: View {
             Form {
                 Section {
                     HStack(spacing: 14) {
-                        AppIconView(app: app, size: 52)
+                        AppIconView(app: app, size: iconSize)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(app.name)
                                 .font(.title2.bold())

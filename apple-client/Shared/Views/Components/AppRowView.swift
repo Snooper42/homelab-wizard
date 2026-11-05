@@ -2,11 +2,13 @@ import SwiftUI
 
 struct AppRowView: View {
     @Environment(AppActionsViewModel.self) private var actions
+    /// Follows the person's text size.
+    @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 32
     let app: AppStatus
 
     var body: some View {
         HStack(spacing: 12) {
-            AppIconView(app: app, size: 32)
+            AppIconView(app: app, size: iconSize)
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name)
                 if let pending = actions.pending[app.id] {
