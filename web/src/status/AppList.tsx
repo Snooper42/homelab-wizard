@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { Icon } from '../Icon';
 import { Address } from '../parts/Address';
+import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
 import { stopChoices, stoppedWords } from './stopFor';
@@ -61,6 +62,8 @@ export interface AppListProps {
   catalog: api.Catalog | null;
   /** Each app's share of the watchdog's passing checks this week, 0 to 1. */
   weekUp: Record<string, number>;
+  /** Each app's times down this week, oldest first (the watchdog's). */
+  outages?: Record<string, health.Outage[]>;
   batteryPaused: Set<string>;
   /** The apps stopped on purpose, and until when: nothing starts them by itself. */
   held: Record<string, stopped.Stop>;
@@ -107,18 +110,71 @@ function Link({ url, text, open, copy, os }: { url: string; text: string; open: 
   return <ActionLink title={`${alt(os)}click copies it`} onClick={(e) => (e?.altKey ? copy(url) : open(url))}><Address text={text} /></ActionLink>;
 }
 
+const clock = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const weekday = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'short' });
+/** How long, in a few words: "45 minutes", "2 hours", "1 day". */
+export function lasted(ms: number): string {
+  const mins = Math.max(1, Math.round(ms / 60000)), hours = Math.round(mins / 60);
+  return mins < 60 ? (mins === 1 ? 'a minute' : `${mins} minutes`) : hours < 48 ? (hours === 1 ? 'an hour' : `${hours} hours`) : `${Math.round(hours / 24)} days`;
+}
+
+/** One outage in words: "Tue 3:15 AM, 45 minutes: nothing answers on its port". */
+export function outageWords(o: health.Outage, now = Date.now()): string {
+  const from = new Date(o.from), to = o.to ? new Date(o.to).getTime() : 0;
+  return `${weekday(from)} ${clock(from)}, ${to ? lasted(to - from.getTime()) : `down for ${lasted(now - from.getTime())} now`}: ${o.problem}`;
+}
+
+/** The week's outages, for "94% up this week": a strip of the 7 days with each time it was down, and why. */
+export function WeekOutages({ outages = [], now = Date.now() }: { outages?: health.Outage[]; now?: number }) {
+  const end = new Date(now), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
+  const t0 = first.getTime(), span = now - t0;
+  const days = Array.from({ length: 7 }, (_, i) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i));
+  const shown = outages.filter((o) => (o.to ? new Date(o.to).getTime() : now) > t0);
+  return (
+    <>
+      <span class="outstrip" aria-hidden="true">
+        {days.map((d, i) => <span key={i} class="outday" style={{ left: `${((d.getTime() - t0) / span) * 100}%` }}>{weekday(d).slice(0, 1)}</span>)}
+        {shown.map((o, i) => {
+          const from = Math.max(t0, new Date(o.from).getTime()), to = o.to ? new Date(o.to).getTime() : now;
+          return <span key={i} class={'out' + (o.to ? '' : ' now')} style={{ left: `${((from - t0) / span) * 100}%`, width: `max(3px, ${((to - from) / span) * 100}%)` }} />;
+        })}
+      </span>
+      {shown.length
+        ? <span class="outlist">{shown.map((o, i) => <span key={i} class="outline">{outageWords(o, now)}</span>)}</span>
+        : <span class="outline">No outage: each check it missed passed the next time</span>}
+      <span class="outfoot">The watchdog checks it every 15 minutes</span>
+    </>
+  );
+}
+
+/** Why an app last started, for "up 9 minutes" on hover (AppStatus.startedBy). */
+export const startedWords: Record<string, string> = {
+  you: 'You started it',
+  updated: 'You updated it, so it started on its new version',
+  nightly: 'The nightly update moved it to its new version',
+  update: 'It was updated, and started on its new version',
+  fix: 'Fix it restarted it',
+  watchdog: 'The watchdog restarted it: it was unwell on two checks in a row',
+  battery: 'It started again when the power came back (the battery saver had paused it)',
+  drive: 'It started once its drive was plugged in again',
+  timer: 'It started again at the time you set when you stopped it',
+  docker: 'Docker started it again after it stopped on its own; its log says why',
+};
+
 /** How long a running app has been up, and badges for what to know about it. */
-function Uptime({ a, week }: { a: api.AppStatus; week?: number }) {
+function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages?: health.Outage[] }) {
   if (a.state !== 'running' || !a.since) return null;
   const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return (
     <>
-      <span class="local">{up}</span>
+      {a.startedBy && startedWords[a.startedBy]
+        ? <Hover cls="local" label={up} tip={<><span class="outline">{startedWords[a.startedBy]}</span><span class="outfoot">{weekday(new Date(a.since))} {clock(new Date(a.since))}</span></>} />
+        : <span class="local">{up}</span>}
       {!!a.restarts && <span class="badge warn" title="Docker restarted it after it stopped on its own; its log says why">restarted {a.restarts}×</span>}
       {a.held && <span class="badge" title={`Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back`}>updates held</span>}
       {a.settingsChanged && <span class="badge warn" title="Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones">settings changed</span>}
-      {week !== undefined && week < 0.99 && <span class="badge warn" title="The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days">{Math.floor(week * 1000) / 10}% up this week</span>}
+      {week !== undefined && week < 0.99 && <Hover cls="badge warn" wide label={`${Math.floor(week * 1000) / 10}% up this week`} tip={<WeekOutages outages={outages} />} />}
     </>
   );
 }
@@ -168,7 +224,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
     <tr aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
-      onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu')) p.on.page(a); } : undefined}
+      onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu, .hovers')) p.on.page(a); } : undefined}
       onContextMenu={menuable ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
       onKeyDown={menuable ? (e) => {
         // Shift+F10 and the context-menu key: under the app's name.
@@ -182,7 +238,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         <span class={'dot ' + cls} />{words}
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
-          : <Uptime a={a} week={p.weekUp[a.id]} />}
+          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} />}
         {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}{pend.log && <> <button type="button" class="linkbtn" onClick={() => p.on.details(a)}>Details</button></>}</span>}
         {said && <span class="rowsaid" role="status">{said}</span>}
       </td>

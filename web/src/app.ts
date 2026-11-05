@@ -16,6 +16,7 @@ import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './scr
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
+import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
 export function show(name) {
@@ -79,6 +80,8 @@ $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
 });
+// A right-click on a screen in the sidebar: its own menu (palette/navMenu.tsx).
+wireNavMenus();
 
 // Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
 // Settings, R refreshes, F finds (Choose stacks, Settings), K opens the

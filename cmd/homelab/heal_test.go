@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 )
 
 func TestWatchdogRestartsAHungApp(t *testing.T) {
@@ -21,6 +22,10 @@ func TestWatchdogRestartsAHungApp(t *testing.T) {
 	out, _ := homelabCmd(t, root, "", "watchdog")
 	if n := restarts(); n != 1 || !strings.Contains(out, "restarted Vaultwarden (container unhealthy), unwell on two checks in a row") {
 		t.Fatalf("not restarted once on the second failing check (%d):\n%s", n, out)
+	}
+	// Status's "up 9 minutes" says the watchdog restarted it.
+	if s := started.Load(started.Path(root))["vaultwarden"]; s.Why != started.Watchdog {
+		t.Fatalf("kept why it started: %+v", s)
 	}
 	homelabCmd(t, root, "", "watchdog")
 	if n := restarts(); n != 1 {
