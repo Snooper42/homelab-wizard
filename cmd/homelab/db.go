@@ -111,7 +111,7 @@ func (h *homelab) dbCmd(ctx context.Context, args []string) error {
 		return err
 	}
 
-	if _, err := client.Runner.Output(ctx, client.Bin, "pull", "--quiet", image); err != nil {
+	if err := client.Pull(ctx, image); err != nil {
 		// Already here (offline, or the registry's rate limit): use it.
 		if _, ierr := client.Runner.Output(ctx, client.Bin, "image", "inspect", image); ierr != nil {
 			return fmt.Errorf("downloading %s (nothing was changed): %w", image, err)
