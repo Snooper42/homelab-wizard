@@ -934,6 +934,8 @@ declare namespace stopped {
   interface Stop {
     since: string;
     until?: string;
+    why?: string;
+    restarts?: number;
   }
 }
 

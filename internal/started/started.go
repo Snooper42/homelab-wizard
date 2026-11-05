@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // The reasons an app was started by the homelab.
@@ -54,26 +56,30 @@ func Load(path string) Record {
 const Keep = 60 * 24 * time.Hour
 
 // Note records that the homelab started ids now, for why. It never fails
-// the start it follows: an error only means the hover will not know.
+// the start it follows: an error only means the hover will not know. Six
+// parts of the homelab note starts, some at once, so the record is changed
+// under its lock and saved whole (internal/lockedfile).
 func Note(root, why string, now time.Time, ids ...string) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	path := Path(root)
-	r := Load(path)
-	for _, id := range ids {
-		r[id] = Start{At: now.UTC(), Why: why}
-	}
-	for id, s := range r {
-		if now.Sub(s.At) > Keep {
-			delete(r, id)
+	return lockedfile.Update(Path(root), 0o600, func(old []byte) ([]byte, bool) {
+		r := Record{}
+		_ = json.Unmarshal(old, &r)
+		if r == nil {
+			r = Record{}
 		}
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	data, _ := json.MarshalIndent(r, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+		for _, id := range ids {
+			r[id] = Start{At: now.UTC(), Why: why}
+		}
+		for id, s := range r {
+			if now.Sub(s.At) > Keep {
+				delete(r, id)
+			}
+		}
+		data, _ := json.MarshalIndent(r, "", "  ")
+		return append(data, '\n'), true
+	})
 }
 
 // Near is how far apart a noted start and the container's own start time

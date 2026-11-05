@@ -22,7 +22,15 @@ import (
 type Stop struct {
 	Since time.Time `json:"since"`
 	Until time.Time `json:"until,omitzero"`
+	// Why is who stopped it when not a person: KeptRestarting, the
+	// watchdog, after Docker restarted it Restarts times in an hour. It
+	// stays stopped until someone starts it, like one stopped by hand.
+	Why      string `json:"why,omitempty"`
+	Restarts int    `json:"restarts,omitempty"`
 }
+
+// KeptRestarting is the watchdog's stop of an app in a crash loop.
+const KeptRestarting = "restarting"
 
 // Record is every app stopped on purpose, by app ID.
 type Record map[string]Stop

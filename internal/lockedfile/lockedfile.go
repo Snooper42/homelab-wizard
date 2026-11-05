@@ -1,0 +1,107 @@
+// Package lockedfile changes a small record that several homelab
+// processes write at once (the awake job, the watchdog, homelab start, a
+// phone): it reads, changes, and saves it under a lock beside it, so no
+// change is lost to another made at the same moment, and saves it whole
+// (a new file renamed in), so a reader never meets half a file. It is
+// what internal/stopped does for data/stopped.json (N10), for any record.
+package lockedfile
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+// Wait is how long Update waits for another writer; a lock older than
+// Stale was left by a writer that died, and is taken over. A writer holds
+// it only to read, change, and write a few lines.
+var (
+	Wait  = 5 * time.Second
+	Stale = 30 * time.Second
+)
+
+// Update reads the file at path (nil when there is none) and passes it to
+// change, holding the lock beside it throughout; when change says write,
+// what it returns is saved whole with mode, and nil removes the file.
+func Update(path string, mode os.FileMode, change func(old []byte) (data []byte, write bool)) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	unlock, err := lock(path + ".lock")
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	old, err := os.ReadFile(path)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	data, write := change(old)
+	if !write {
+		return nil
+	}
+	if data == nil {
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		return nil
+	}
+	return Write(path, data, mode)
+}
+
+func lock(name string) (func(), error) {
+	deadline := time.Now().Add(Wait)
+	for {
+		f, err := os.OpenFile(name, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+		if err == nil {
+			_ = f.Close()
+			return func() { _ = os.Remove(name) }, nil
+		}
+		// Windows says "access is denied" for a lock another writer is
+		// removing at that moment: it is busy, as one that is there.
+		if !os.IsExist(err) && !os.IsPermission(err) {
+			return nil, err
+		}
+		if fi, serr := os.Stat(name); serr == nil && time.Since(fi.ModTime()) > Stale {
+			_ = os.Remove(name)
+			continue
+		}
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("another homelab is changing %s: try again", filepath.Base(name[:len(name)-len(".lock")]))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// Write saves data at path whole: a new file beside it, renamed in, so a
+// reader at that moment reads the old file or the new one, never half.
+func Write(path string, data []byte, mode os.FileMode) error {
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".tmp*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	_, werr := f.Write(data)
+	if cerr := f.Close(); werr == nil {
+		werr = cerr
+	}
+	if werr == nil {
+		werr = os.Chmod(tmp, mode)
+	}
+	// On Windows a rename over a file another process is reading fails
+	// for that moment: try again briefly.
+	if werr == nil {
+		for range 20 {
+			if werr = os.Rename(tmp, path); werr == nil {
+				break
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
+	if werr != nil {
+		_ = os.Remove(tmp)
+	}
+	return werr
+}
