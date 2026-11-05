@@ -91,3 +91,6 @@ hash. The client receives the token itself, once.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
 - Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.
+- A look-only home Wi-Fi mode over plain http. It's left out on purpose: the token would cross the Wi-Fi in readable form (the computer makes such a device look-only for good). It's a decision to make before building it.
+- Widgets, App Intents (Shortcuts) and Live Activities. They need targets and entitlements in the Xcode project, and a choice about what may show while the app is locked.
+- A compile. These sources were written without a Swift toolchain and reviewed by hand, so expect a few small fixes on the first Xcode build.
