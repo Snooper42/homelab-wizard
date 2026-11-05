@@ -168,7 +168,7 @@ final class LiveEventManager {
             let delay = Self.backoff(attempt: attempt)
             connection = .reconnecting(attempt: attempt, at: Date().addingTimeInterval(delay))
             // A wait of its own, so the network coming back can cut it short.
-            let wait = Task { try? await Task.sleep(for: .seconds(delay)) }
+            let wait = Task { _ = try? await Task.sleep(for: .seconds(delay)) }
             backoffWait = wait
             await wait.value
             backoffWait = nil
