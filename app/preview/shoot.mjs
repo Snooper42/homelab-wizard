@@ -2393,6 +2393,34 @@ const smokes = [
     await page.waitForTimeout(120);
     if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
   } },
+  { name: 'A long command can be hidden: it carries on, its bar in the sidebar, and comes back from there', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    // Running, the sheet offers Hide, and Escape presses it.
+    await page.waitForSelector('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    if (await page.evaluate(() => document.documentElement.classList.contains('sheet-open'))) throw new Error('the screen stayed dimmed');
+    await page.waitForSelector('#bgJob .bgjob.running .bgtitle:text-is("Update all apps now")', { timeout: 3000 });
+    // Another command waits for it, saying so, and leaves its sheet be.
+    await page.click('#updateAll');
+    await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
+    // The rest of the app is there to use meanwhile.
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    // A job of another screen waits too: it would take the running one's bar and log.
+    await page.click('#backupNow');
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#backupPanel')) throw new Error('Back up now started beside the running command');
+    // Done: the chip says so, and brings back the sheet, which says how it went.
+    await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
+    await page.click('#bgJob .bgopen');
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliActions button:text-is("Close")', { timeout: 3000 });
+    if (await page.$('#bgJob .bgjob')) throw new Error('the chip stayed with its sheet open');
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.filter((r) => r === 'update-all').length !== 2) throw new Error('ran: ' + ran.join());
+  } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
@@ -2984,8 +3012,9 @@ const smokes = [
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
+    // Nothing cancels it while it runs: Hide alone, which lets it carry on behind.
     const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
-    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    if (buttons.join() !== 'Hide') throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
     // The engine says containers changed while the job runs: Status behind the sheet waits.
     await page.waitForSelector('#cliApps li', { timeout: 5000 });
     await page.evaluate(() => window.__emit('status:changed'));
@@ -5268,6 +5297,31 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Add a payment")');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
+  { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Type how much it is.")', { timeout: 5000 });
+    // And Cancel asks again before it drops what was typed.
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+  } },
+  // A filter whose last transaction is deleted lets go: its menu would say Every category over an empty list.
+  { name: 'Finances: a transaction filter lets go when its last transaction goes', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Gas');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-transactions :text("None match")')) throw new Error('filtered by a category with nothing in it');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== '') throw new Error('the menu still has a pick');
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
