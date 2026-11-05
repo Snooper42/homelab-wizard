@@ -27,7 +27,7 @@ apple-client/
 | **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list | The same, plus keyboard shortcuts |
 | **Overview** | The money card, watchdog, protection, alerts, savings | Overview in the sidebar |
 | **Backups** | Each app's copy, Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
-| **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device, Unpair | Computer in the sidebar |
+| **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device (when it paired, and a warning if it paired without encryption), Unpair | Computer in the sidebar |
 | **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, the cushion, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar; ⌥⌘N adds a transaction, ⇧⌘H hides amounts on every device |
 
 ## Check it first, without Xcode

@@ -128,6 +128,14 @@ struct ComputerView: View {
             if let device = coordinator.device {
                 LabeledContent("Paired as", value: device.name)
                 LabeledContent("Can", value: device.canChange ? "Look and make changes" : "Only look")
+                if let paired = device.paired {
+                    LabeledContent("Paired") { Text(paired, format: .dateTime.year().month().day()) }
+                }
+                if device.unencrypted {
+                    Label("It paired without encryption, so the computer keeps it look-only for good. Pair again over https to make changes.",
+                          systemImage: "lock.open.trianglebadge.exclamationmark")
+                        .foregroundStyle(.orange)
+                }
                 LabeledContent("ID") {
                     Text(verbatim: device.id).font(.body.monospaced()).textSelection(.enabled)
                 }

@@ -508,3 +508,24 @@ struct ChangeMemoryTests {
         #expect(ChangeMemory.change(of: immich, since: memory, key: other) == nil)
     }
 }
+
+@Suite("DeviceInfo")
+struct DeviceInfoTests {
+    @Test func readsWhenItPairedWhateverTheDateStrategy() throws {
+        let json = Data(#"""
+        {"id":"d1","name":"Phone","canChange":true,"finances":"view","unencrypted":true,
+         "paired":"2026-11-03T18:04:05.123456789Z","lastSeen":"0001-01-01T00:00:00Z"}
+        """#.utf8)
+        // The plain decoder's default date strategy would fail on these strings.
+        let device = try JSONDecoder().decode(DeviceInfo.self, from: json)
+        #expect(device.paired == GoTime.parse("2026-11-03T18:04:05.123Z"))
+        #expect(device.lastSeen == nil)
+        #expect(device.unencrypted)
+        #expect(device.finances == "view")
+    }
+
+    @Test func oldAnswersStillRead() throws {
+        let device = try JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"d1","name":"Phone","paired":12}"#.utf8))
+        #expect(device.paired == nil && !device.unencrypted && !device.canChange)
+    }
+}
