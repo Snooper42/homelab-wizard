@@ -105,9 +105,12 @@ type Entry struct {
 }
 
 // Entries are the installed apps by category, in the catalog's order of
-// categories, at most n lines with the categories' names counted.
+// categories, at most n lines with the categories' names counted. The
+// pinned apps come first, under Pinned, in the order they were pinned,
+// and not again in their category.
 func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 	byCat := map[string][]Entry{}
+	pinned := map[string]Entry{}
 	for _, a := range st.Apps {
 		if a.State == "missing" {
 			continue
@@ -137,6 +140,10 @@ func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 				e.URL = a.URL
 			}
 		}
+		if a.Pinned {
+			pinned[a.ID] = e
+			continue
+		}
 		byCat[cat] = append(byCat[cat], e)
 	}
 	var order []string
@@ -147,6 +154,16 @@ func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 	}
 	order = append(order, "other")
 	var out []Entry
+	for _, id := range st.Pinned {
+		e, ok := pinned[id]
+		if !ok || len(out) == n || len(out) == 0 && n < 2 {
+			continue
+		}
+		if len(out) == 0 {
+			out = append(out, Entry{Title: "Pinned", Header: true})
+		}
+		out = append(out, e)
+	}
 	seen := map[string]bool{}
 	for _, cat := range order {
 		apps := byCat[cat]

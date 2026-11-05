@@ -1996,6 +1996,10 @@
           !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
             "Tell me if it stops",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
+          ] }),
+          !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !!a3.pinned, onClick: pick(() => on2.pin(a3, !a3.pinned)), children: [
+            "Pin to the top",
+            /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.pinned ? "✓" : "" })
           ] })
         ] })
       }
@@ -2516,7 +2520,7 @@
     ] });
   }
   function openGroups(groups3, f4, held3) {
-    const fine = (g2) => !g2.alert && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id]);
+    const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id]);
     return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   function AppList(p3) {
@@ -5742,10 +5746,14 @@
   function renderAppList(st) {
     const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3.category]));
+    const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
+    const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble(a3));
+    const rest = (a3) => !trouble(a3) && !pinned.includes(a3);
     const groups3 = [
       { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
-      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => !trouble(a3) && catOf[a3.id] === c3.id) })),
-      { label: "Other", apps: st.apps.filter((a3) => !trouble(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
+      { label: "Pinned", apps: pinned, pinned: true },
+      ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c3.id) })),
+      { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
     appList = { groups: groups3, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
     mountAppList($2("statusRows"), appList);
@@ -6074,6 +6082,14 @@
       alerts: async (a3, on2) => {
         try {
           await go().SetAppSetting(a3.id, "alerts", on2);
+        } catch (e3) {
+          showError(e3);
+        }
+        await loadStatus();
+      },
+      pin: async (a3, on2) => {
+        try {
+          await go().SetAppSetting(a3.id, "pinned", on2);
         } catch (e3) {
           showError(e3);
         }

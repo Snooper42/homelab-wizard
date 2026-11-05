@@ -69,11 +69,16 @@ let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
   // Grouped by category, as on Choose stacks; what needs a look comes
   // first, in a group of its own.
+  // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
+  const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    { label: 'Pinned', apps: pinned, pinned: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
   appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
@@ -369,6 +374,10 @@ const appListActions: AppListActions = {
     backupNow: () => { navigate('backups'); $('backupNow').click(); },
     alerts: async (a, on) => {
       try { await go().SetAppSetting(a.id, 'alerts', on); } catch (e) { showError(e); }
+      await loadStatus();
+    },
+    pin: async (a, on) => {
+      try { await go().SetAppSetting(a.id, 'pinned', on); } catch (e) { showError(e); }
       await loadStatus();
     },
   },

@@ -19,7 +19,8 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Open, your way | Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer | #PR6 |
+| Open, your way | Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer | #415 |
+| Pinned apps | Right-click › Pin to the top keeps an app in a Pinned group at the top of Status, and first in the menu bar's Open an app | #414 |
 | Right-click the sidebar | A screen's own menu from the sidebar: Status's Check again and Update all, Backups' Back up now and Test a restore, Finances' Add a transaction, Update balances, and Hide amounts | #413 |
 | Why it restarted | Hover *up 9 minutes* on Status for why the app last started and when: you, an update, Fix it, the watchdog, the power back, its drive back, a Stop for a while ending, or Docker after a crash | #411 |
 | A balance's accounts | Rest on a group in the sidebar's Accounts for its accounts, each balance, and how long since each was updated; a dot on one older than a month | #409 |
@@ -61,8 +62,8 @@ The things you do many times a day, made one click shorter.
 - **Command palette** (M, *Built*, #395): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
 - **Type to filter Status** (S, *Built*, #385): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it, and Return opens the first one's page.
 - **A quick peek** (M, *Idea*): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.
-- **Pinned apps** (S, *Idea*): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
-- **Open, your way** (S, *Built*, #PR6): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
+- **Pinned apps** (S, *Built*, #414): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
+- **Open, your way** (S, *Built*, #415): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
 - **What changed since you looked** (S, *Idea*): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.
 - **Remember where you were** (S, *Idea*): each screen keeps its scroll position and open sections between visits and restarts.
 - **Drop files onto an app** (M, *Idea*): drop a PDF on Paperless's row and it goes into its import folder; an album folder on beets lands in its downloads; photos on Immich go to an album named for the day.
