@@ -171,19 +171,22 @@ final class DashboardViewModel {
         }
     }
 
-    /// What was seen last time, as hashes (ChangeMemory), read once per unlock.
+    /// What was seen last time, as keyed hashes (ChangeMemory), read once per unlock.
     @ObservationIgnored private let seen = ChangeMemory.load()
+    @ObservationIgnored private let seenKey = ChangeMemory.deviceKey()
     /// The apps as last shown, kept to be saved as seen when the dashboard goes.
     @ObservationIgnored var latestApps: [AppStatus] = []
 
     /// "Restarted since you looked", or nil.
     func changeNote(for app: AppStatus) -> String? {
-        ChangeMemory.change(of: app, since: seen)
+        guard let seenKey else { return nil }
+        return ChangeMemory.change(of: app, since: seen, key: seenKey)
     }
 
     /// Leaving the dashboard: what it showed is what was seen.
     func rememberSeen() {
-        ChangeMemory.save(latestApps)
+        guard let seenKey else { return }
+        ChangeMemory.save(latestApps, key: seenKey)
     }
 
     /// Hidden until tomorrow on this device.

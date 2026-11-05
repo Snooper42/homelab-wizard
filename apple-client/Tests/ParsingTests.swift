@@ -1,4 +1,5 @@
 import CoreGraphics
+import CryptoKit
 import Foundation
 import ImageIO
 import SwiftUI
@@ -432,6 +433,7 @@ struct OvernightTests {
 
 @Suite("Changed since you looked")
 struct ChangeMemoryTests {
+    private let key = SymmetricKey(size: .bits256)
     private func app(_ json: String) -> AppStatus { try! JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8)) }
 
     @Test func rulesAsTheComputerHasThem() {
@@ -439,20 +441,25 @@ struct ChangeMemoryTests {
                       app(#"{"id":"b","name":"B","state":"stopped"}"#),
                       app(#"{"id":"c","name":"C","state":"running","since":"2026-11-05T01:00:00Z"}"#),
                       app(#"{"id":"d","name":"D","state":"running","since":"2026-11-05T01:00:00Z"}"#)]
-        let memory = ChangeMemory.memory(of: before)
-        #expect(ChangeMemory.change(of: app(#"{"id":"a","name":"A","state":"running","since":"2026-11-05T09:00:00Z","updatedAt":"2026-11-05T09:00:00Z"}"#), since: memory) == "Updated since you looked")
-        #expect(ChangeMemory.change(of: app(#"{"id":"b","name":"B","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory) == "Started since you looked")
-        #expect(ChangeMemory.change(of: app(#"{"id":"c","name":"C","state":"stopped"}"#), since: memory) == "Stopped since you looked")
-        #expect(ChangeMemory.change(of: app(#"{"id":"d","name":"D","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory) == "Restarted since you looked")
-        #expect(ChangeMemory.change(of: before[0], since: memory) == nil)               // the same
-        #expect(ChangeMemory.change(of: app(#"{"id":"new","name":"N","state":"running"}"#), since: memory) == nil) // not seen before
-        #expect(ChangeMemory.change(of: before[0], since: nil) == nil)                   // first time on this device
+        let memory = ChangeMemory.memory(of: before, key: key)
+        #expect(ChangeMemory.change(of: app(#"{"id":"a","name":"A","state":"running","since":"2026-11-05T09:00:00Z","updatedAt":"2026-11-05T09:00:00Z"}"#), since: memory, key: key) == "Updated since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"b","name":"B","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory, key: key) == "Started since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"c","name":"C","state":"stopped"}"#), since: memory, key: key) == "Stopped since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"d","name":"D","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory, key: key) == "Restarted since you looked")
+        #expect(ChangeMemory.change(of: before[0], since: memory, key: key) == nil)               // the same
+        #expect(ChangeMemory.change(of: app(#"{"id":"new","name":"N","state":"running"}"#), since: memory, key: key) == nil) // not seen before
+        #expect(ChangeMemory.change(of: before[0], since: nil, key: key) == nil)                   // first time on this device
     }
 
-    @Test func keepsNothingReadable() throws {
-        let memory = ChangeMemory.memory(of: [app(#"{"id":"immich","name":"Immich","state":"running","since":"2026-11-05T01:00:00Z"}"#)])
+    @Test func keepsNothingReadableOrGuessable() throws {
+        let immich = app(#"{"id":"immich","name":"Immich","state":"running","since":"2026-11-05T01:00:00Z"}"#)
+        let memory = ChangeMemory.memory(of: [immich], key: key)
         let stored = String(decoding: try JSONEncoder().encode(memory), as: UTF8.self)
         #expect(!stored.contains("immich"))
         #expect(!stored.contains("2026"))
+        // A guess hashed without the device's key matches nothing.
+        let other = SymmetricKey(size: .bits256)
+        #expect(memory[ChangeMemory.hash("immich", key: other)] == nil)
+        #expect(ChangeMemory.change(of: immich, since: memory, key: other) == nil)
     }
 }

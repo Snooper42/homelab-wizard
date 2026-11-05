@@ -117,6 +117,35 @@ struct KeychainManager: Sendable {
         guard status == errSecSuccess || status == errSecItemNotFound else { throw Self.error(for: status) }
     }
 
+    // MARK: A device-only key
+
+    /// A random 256-bit key kept under `account`, made the first time it's
+    /// asked for, with the same accessibility as the credential. It keys
+    /// hashes kept outside the Keychain (ChangeMemory), so they can't be
+    /// matched against a list of guesses without this device unlocked.
+    func deviceKey(account keyAccount: String = "change-memory-key") throws -> Data {
+        var query = baseQuery(account: keyAccount)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess, let data = result as? Data, data.count == 32 { return data }
+        guard status == errSecItemNotFound || status == errSecSuccess else { throw Self.error(for: status) }
+
+        var bytes = [UInt8](repeating: 0, count: 32)
+        guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+            throw KeychainError.unexpectedStatus(errSecParam)
+        }
+        let key = Data(bytes)
+        try delete(account: keyAccount)
+        var add = baseQuery(account: keyAccount)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        add[kSecValueData as String] = key
+        let added = SecItemAdd(add as CFDictionary, nil)
+        guard added == errSecSuccess else { throw Self.error(for: added) }
+        return key
+    }
+
     // MARK: Internals
 
     private func baseQuery(account: String) -> [String: Any] {
