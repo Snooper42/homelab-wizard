@@ -9,7 +9,7 @@ import (
 )
 
 // pin puts an app at the top of Status and of the menu bar's Open an app
-// (APPS_PINNED in .env, in the order pinned); unpin puts it back in its
+// (data/pinned.json, in the order pinned); unpin puts it back in its
 // group. Nothing about the app itself changes.
 func (h *homelab) pin(on bool) func(context.Context, []string) error {
 	verb := map[bool]string{true: "pin", false: "unpin"}[on]
@@ -21,12 +21,19 @@ func (h *homelab) pin(on bool) func(context.Context, []string) error {
 		if !ok {
 			return fmt.Errorf("unknown app %q", args[0])
 		}
+		// A list still in .env from before goes into the record first.
 		f, err := envfile.Load(h.envFile)
 		if err != nil {
 			return err
 		}
-		f.Set(api.PinnedKey, api.SetPinned(f.Map(), a.ID, on))
-		if err := f.Save(); err != nil {
+		if moved, err := api.CarryPinned(h.root, f); err != nil {
+			return err
+		} else if moved {
+			if err := f.Save(); err != nil {
+				return err
+			}
+		}
+		if err := api.SetPinned(h.root, a.ID, on); err != nil {
 			return err
 		}
 		if on {

@@ -49,6 +49,8 @@ version: 0.17.0
 | `data/homelab-rebuild.json` | `homelab rebuild` | Which backup folder a rebuild restored from, while it runs, so running it again carries on; `homelab-rebuild-done.json` once it is done |
 | `data/icons/<app>` | the app's page | The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none) |
 | `data/setup.json` | Setup | Steps marked done by hand |
+| `data/alerts-off.json` | `homelab notify off\|on <app>` (an app's page › **Tell me if it stops**, or a phone) | The apps the watchdog still checks and shows on Status but does not alert about. It used to be `ALERTS_OFF` in `.env`: the first install or `homelab notify` after an upgrade moves it here and takes the key out |
+| `data/pinned.json` | `homelab pin\|unpin <app>` (a row's right-click › **Pin to the top**, or a phone) | The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be `APPS_PINNED` in `.env`: the first install or `homelab pin` after an upgrade moves it here and takes the key out |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |
 | `data/homelab-move.json` | `homelab move in` | Where the bundle came from and what ran there, until the move is done |

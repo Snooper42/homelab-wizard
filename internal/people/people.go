@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/companion"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Person is one member of the household.
@@ -73,14 +74,15 @@ func Load(path string) ([]Person, error) {
 	return out, json.Unmarshal(data, &out)
 }
 
-// Save writes the household, sorted by name.
+// Save writes the household, sorted by name, whole (a new file renamed
+// in, so the app reading it meanwhile never meets half of it).
 func Save(path string, list []Person) error {
 	sort.Slice(list, func(i, j int) bool { return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name) })
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
 	data, _ := json.MarshalIndent(list, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o600)
+	return lockedfile.Write(path, append(data, '\n'), 0o600)
 }
 
 // Find is the person with this username or name (case aside).
