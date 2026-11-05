@@ -31,7 +31,7 @@ struct FinancesView: View {
                     EmptyView()
                 } footer: {
                     Text(finances.canEdit
-                         ? "Balances can be typed in here. Change the rest of the plan on the computer."
+                         ? "Balances and budgets can be changed here, and transactions added. Change the rest of the plan on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
                 }
             } else if let error = finances.planError {
@@ -71,38 +71,43 @@ struct FinancesView: View {
     private func budgets(_ view: FinancesPlanView) -> some View {
         Section {
             ForEach(view.budgets) { budget in
-                Button {
-                    if finances.canEdit {
+                if finances.canEdit {
+                    Button {
                         finances.clearSaveError()
                         editingBudget = budget
+                    } label: {
+                        budgetRow(budget, view)
                     }
-                } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(budget.category)
-                        Spacer()
-                        Money(value: budget.spent, currency: view.plan.currency, finances: finances)
-                        Text(verbatim: "/").foregroundStyle(.secondary)
-                        Money(value: budget.amount, currency: view.plan.currency, finances: finances)
-                    }
-                    ProgressView(value: budget.share)
-                        .tint(budget.isOver ? .red : budget.isAhead ? .orange : .green)
-                    Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
-                        .font(.caption)
-                        .foregroundStyle(budget.isOver ? .red : .secondary)
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Change its amount")
+                } else {
+                    budgetRow(budget, view)
                 }
-                .contentShape(Rectangle())
-                .accessibilityElement(children: .combine)
-                }
-                .buttonStyle(.plain)
-                .allowsHitTesting(finances.canEdit)
-                .accessibilityHint(finances.canEdit ? "Change its amount" : "")
             }
         } header: {
             Text("Budgets")
         } footer: {
             if finances.canEdit { Text("Tap a budget to change its amount.") }
         }
+    }
+
+    private func budgetRow(_ budget: FinanceBudget, _ view: FinancesPlanView) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(budget.category)
+                Spacer()
+                Money(value: budget.spent, currency: view.plan.currency, finances: finances)
+                Text(verbatim: "/").foregroundStyle(.secondary)
+                Money(value: budget.amount, currency: view.plan.currency, finances: finances)
+            }
+            ProgressView(value: budget.share)
+                .tint(budget.isOver ? .red : budget.isAhead ? .orange : .green)
+            Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
+                .font(.caption)
+                .foregroundStyle(budget.isOver ? .red : .secondary)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private func goals(_ view: FinancesPlanView) -> some View {
@@ -245,8 +250,9 @@ private struct PeriodSection: View {
                 Label("Below the cushion you set", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
             }
-            ForEach(period.rows) { row in
-                RowLine(row: row, view: view, finances: finances)
+            // By position: the same payment can come twice on one day.
+            ForEach(period.rows.indices, id: \.self) { i in
+                RowLine(row: period.rows[i], view: view, finances: finances)
             }
         } header: {
             Text(title)
