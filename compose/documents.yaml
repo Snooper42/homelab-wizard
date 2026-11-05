@@ -139,7 +139,11 @@ services:
     volumes:
       - ./data/appdata/kiwix:/library
       # ZIM files are large (all of Wikipedia is over 100 GB): on the media drive.
-      - ${KIWIX_ZIM_ROOT:-${MEDIA_ROOT:-/Volumes/Media}/kiwix}:/zim
+      - type: bind
+        source: ${KIWIX_ZIM_ROOT:-${MEDIA_ROOT:-/Volumes/Media}/kiwix}
+        target: /zim
+        bind:
+          create_host_path: false
     x-homelab:
       seed: config/kiwix
       name: Kiwix

@@ -32,6 +32,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
 - **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
 - **A drive comes back:** apps waiting for an unplugged drive start within a minute of it being plugged in again, not at the watchdog's next check up to 15 minutes later.
 - **Starting and stopping an app, without the log:** Start, Stop, and Restart no longer open a dimmed panel of Docker's output (image downloads and all) to read and close. The app's row and its page say what is happening, *Downloading the app…* while it comes down first, and the row turns to Running or Stopped; Stop still offers Undo. If it fails, the row says why, with **Details** for what Docker said. Updates keep their panel, with what's new.

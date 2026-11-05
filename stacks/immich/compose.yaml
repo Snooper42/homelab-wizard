@@ -42,7 +42,11 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${IMMICH_PORT:-8013}:2283
     volumes:
-      - ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}:/data
+      - type: bind
+        source: ${IMMICH_UPLOAD_LOCATION:-/Volumes/Media/photos}
+        target: /data
+        bind:
+          create_host_path: false
     depends_on: [immich-redis, immich-database]
     networks: [default, homelab]
     healthcheck:
