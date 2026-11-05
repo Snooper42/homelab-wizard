@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** the PR for `claude/fix-growth` (item 4): take it to merged. #429, #431 to #434 merged.
+**Open now:** #436 (`claude/fix-growth`, item 4): take it to merged. #429, #431 to #434 merged.
 
 ## Your job
 
@@ -99,7 +99,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
    - **(#434, merged)** `data/updates.json` (`updates.SaveChanges`: a run saves only the records it changed), `data/setup.json` (under its lock), `data/people.json` and `data/restarts.json` (one writer each: written whole).
    - **Left, each with one writer** (whole writes are enough; take them when touching the code anyway): `internal/backup/reminder.go`, `internal/core/core.go`'s, `internal/upgrade/back.go`'s, `cmd/homelab/digest.go`'s, `cmd/homelab/finances.go`'s.
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
-   - **(this PR, open)** Tidy Up's job logs (30 days), `background.log` (cut at 5 MB), `data/media-trash.jsonl` (what Undo can reach, and 30 days), crash logs (90 days), and the page-answer cache. The agent's memory over an hour is in the PR.
+   - **(#436, open)** Tidy Up's job logs (30 days), `background.log` (cut at 5 MB), `data/media-trash.jsonl` (what Undo can reach, and 30 days), crash logs (90 days), and the page-answer cache. The agent's memory over an hour is in the PR.
 5. **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
 6. **Dead code and duplicates.**
 7. **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here.
