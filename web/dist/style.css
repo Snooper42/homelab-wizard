@@ -1799,6 +1799,14 @@ html.companion .fx-navbalances { display:none !important; }
 .fx-balance .fx-amount.fx-out { color:inherit; }
 button.fx-balance:hover { background:var(--nav-active); color:var(--white); }
 button.fx-balance:focus-visible { outline:2px solid var(--fin-accent); outline-offset:-2px; }
+/* A group's accounts on hover: each name and balance, how long since it was typed in under it; a dot on one older than a month. */
+.fx-hoveraccts { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:14px; row-gap:6px; min-width:220px; }
+.fx-hoveracct { display:contents; }
+.fx-hoveracct .fx-hovername { display:flex; align-items:center; gap:6px; font-weight:500; min-width:0; }
+.fx-hoveracct .fx-amount { text-align:right; font-weight:500; }
+.fx-hoveracct .fx-hoverwhen { grid-column:1 / -1; margin-top:-5px; color:var(--muted); }
+.fx-hoveracct.stale .fx-hoverwhen { color:var(--warn); }
+.fx-staledot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--warn); }
 .fx-balance.total { cursor:default; font-weight:600; margin-top:4px; }
 .fx-balance.total .fx-legendlabel { padding-left:19px; }
 /* The systems' own sidebars are light (dark in dark mode), their text the page's. */

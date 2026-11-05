@@ -1815,11 +1815,11 @@
 
   // web/src/parts/Hover.tsx
   var made = 0;
-  function Hover({ label, cls = "", tip, wide }) {
+  function useHoverCard(tip, { wide, side = "below" } = {}) {
     const [open2, setOpen] = d2(false);
     const [id2] = d2(() => `hover-${++made}`);
     const at2 = A2(null);
-    const card = A2(null);
+    const box = A2(null);
     const timer = A2(0);
     const show2 = (soon2) => {
       clearTimeout(timer.current);
@@ -1831,38 +1831,44 @@
       setOpen(false);
     };
     _2(() => {
-      const t3 = at2.current, c3 = card.current;
+      const t3 = at2.current, c3 = box.current;
       if (!open2 || !t3 || !c3) return;
       const r3 = t3.getBoundingClientRect(), w3 = c3.offsetWidth, h3 = c3.offsetHeight, pad = 8;
-      const left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
-      const below = r3.bottom + 6, top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+      let left, top;
+      if (side === "right") {
+        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
+        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
+      } else {
+        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
+        const below = r3.bottom + 6;
+        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+      }
       c3.style.left = `${left}px`;
       c3.style.top = `${top}px`;
     }, [open2]);
-    return /* @__PURE__ */ u3(
-      "span",
-      {
-        class: "hovers " + cls,
-        ref: at2,
-        tabIndex: 0,
-        "aria-describedby": id2,
-        onMouseEnter: () => show2(false),
-        onMouseLeave: hide,
-        onFocus: () => show2(true),
-        onBlur: hide,
-        onClick: () => show2(true),
-        onKeyDown: (e3) => {
-          if (e3.key === "Escape" && open2) {
-            e3.stopPropagation();
-            hide();
-          }
-        },
-        children: [
-          label,
-          /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: card, hidden: !open2, children: tip })
-        ]
+    const on = {
+      ref: at2,
+      "aria-describedby": id2,
+      onMouseEnter: () => show2(false),
+      onMouseLeave: hide,
+      onFocus: () => show2(true),
+      onBlur: hide,
+      onKeyDown: (e3) => {
+        if (e3.key === "Escape" && open2) {
+          e3.stopPropagation();
+          hide();
+        }
       }
-    );
+    };
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open2, children: tip });
+    return { on, card, show: show2, open: open2 };
+  }
+  function Hover({ label, cls = "", tip, wide }) {
+    const { on, card, show: show2 } = useHoverCard(tip, { wide });
+    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on, onClick: () => show2(true), children: [
+      label,
+      card
+    ] });
   }
 
   // web/src/status/memory.ts
@@ -10965,63 +10971,6 @@
     );
   }
 
-  // web/src/finances/widgets/Worth.tsx
-  function NetWorthWidget({ v: v3, open: open2 }) {
-    if (!(v3.plan.accounts || []).length) return null;
-    const now = netWorth(v3);
-    const kept = (v3.worth || []).filter((p3) => p3.date < v3.today);
-    const values = [...kept.map((p3) => p3.amount), now];
-    const month3 = worthByMonth(v3, 1, 0)[0];
-    const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
-    const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
-    return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open2 }), children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
-      values.length > 2 && /* @__PURE__ */ u3(
-        AreaChart,
-        {
-          values,
-          zero: false,
-          axis: false,
-          height: 92,
-          fill: true,
-          format: tick,
-          xLabels: [{ i: 0, label: dayShort(kept[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v3.today)} to ${money(now)} today.`,
-          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept[i3].date) }),
-            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
-          ] })
-        }
-      ),
-      /* @__PURE__ */ u3("div", { class: "fx-pair", children: [
-        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owned, form: "whole" }), caption: "Owned" }),
-        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }), caption: "Owed" })
-      ] })
-    ] });
-  }
-  function Balances({ v: v3, open: open2, toggle }) {
-    const list = grouped(v3);
-    if (!list.length) return null;
-    return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
-        "Accounts",
-        toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
-      ] }),
-      list.map((g2) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", onClick: () => open2(g2.key), children: [
-        /* @__PURE__ */ u3(Dot, { color: g2.color }),
-        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
-        /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
-      ] }, g2.key)),
-      /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
-        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
-        /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
-      ] })
-    ] });
-  }
-  function mountBalances(el2, v3, open2, toggle) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el2);
-  }
-
   // web/src/finances/widgets/Ledger.tsx
   function SinceWidget({ v: v3, L: L2, set: set2 }) {
     const [busy2, setBusy] = d2("");
@@ -11125,92 +11074,6 @@
         ] }) })
       }
     );
-  }
-
-  // web/src/finances/widgets/ComingUp.tsx
-  var comingDays = 14;
-  function billsAhead(v3, L2) {
-    const out = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const d3 of [...v3.days || [], ...v3.later || []]) {
-      const n3 = daysBetween(v3.today, d3.date);
-      if (n3 < 0 || n3 >= comingDays || seen.has(d3.date)) continue;
-      seen.add(d3.date);
-      const bill = (e3) => !!e3.payment && !e3.people?.length && !saving(L2.payment[e3.payment]?.kind);
-      const day3 = [
-        ...(d3.events || []).filter((e3) => bill(e3) && e3.amount < 0).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: false })),
-        ...(d3.charges || []).filter(bill).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: true }))
-      ];
-      out.push(...day3);
-    }
-    return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
-  }
-  var soon = (today, day3) => {
-    const n3 = daysBetween(today, day3);
-    return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
-  };
-  function ComingUpWidget({ v: v3, L: L2, calendar }) {
-    const bills = billsAhead(v3, L2);
-    const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
-    const charged = bills.filter((b2) => b2.charge).length;
-    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
-        const x3 = L2.payment[b2.e.payment || ""];
-        const near = daysBetween(v3.today, b2.date) <= 1;
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-            title: x3?.name || b2.e.payment,
-            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
-            subTone: near ? "warn" : "",
-            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
-            whenPlain: true
-          },
-          b2.date + i3
-        );
-      }) })
-    ] }) : /* @__PURE__ */ u3(Empty, { children: [
-      "Nothing due in the next ",
-      comingDays,
-      " days."
-    ] }) });
-  }
-
-  // web/src/finances/Overview.tsx
-  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 }) {
-    const picked = Math.min(sel2, v3.periods.length - 1);
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
-      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
-      ] }) }) }) });
-    }
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
-        /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
-        /* @__PURE__ */ u3("span", { class: "grow", children: [
-          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
-          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
-        ] }),
-        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-        !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
-        phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
-        phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
-        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
-        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
-        /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
-        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
-        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2 }),
-        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
-        /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
-      ] })
-    ] });
   }
 
   // web/src/finances/fire.ts
@@ -11718,6 +11581,185 @@
         ]
       }
     );
+  }
+
+  // web/src/finances/widgets/Worth.tsx
+  function NetWorthWidget({ v: v3, open: open2 }) {
+    if (!(v3.plan.accounts || []).length) return null;
+    const now = netWorth(v3);
+    const kept = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const values = [...kept.map((p3) => p3.amount), now];
+    const month3 = worthByMonth(v3, 1, 0)[0];
+    const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
+    const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
+    return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open2 }), children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
+      values.length > 2 && /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values,
+          zero: false,
+          axis: false,
+          height: 92,
+          fill: true,
+          format: tick,
+          xLabels: [{ i: 0, label: dayShort(kept[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v3.today)} to ${money(now)} today.`,
+          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept[i3].date) }),
+            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3("div", { class: "fx-pair", children: [
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owned, form: "whole" }), caption: "Owned" }),
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }), caption: "Owed" })
+      ] })
+    ] });
+  }
+  function Balances({ v: v3, open: open2, toggle }) {
+    const list = grouped(v3);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
+        "Accounts",
+        toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
+      ] }),
+      list.map((g2) => /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open2 }, g2.key)),
+      /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
+        /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
+      ] })
+    ] });
+  }
+  var updatedOn = (a3) => a3.updated || (a3.history || []).at(-1)?.date;
+  var staleDays = 30;
+  function GroupAccounts({ v: v3, accounts }) {
+    const stale = (a3) => {
+      const d3 = updatedOn(a3);
+      return !!d3 && daysBetween(d3, v3.today) > staleDays;
+    };
+    const old = accounts.filter(stale);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-hoveraccts", children: accounts.map((a3) => {
+        const d3 = updatedOn(a3), late = stale(a3);
+        return /* @__PURE__ */ u3("span", { class: "fx-hoveracct" + (late ? " stale" : ""), children: [
+          /* @__PURE__ */ u3("span", { class: "fx-hovername", children: [
+            late && /* @__PURE__ */ u3("span", { class: "fx-staledot", "aria-hidden": "true" }),
+            a3.name
+          ] }),
+          /* @__PURE__ */ u3(Amount, { value: worthOf(v3, a3), form: "whole" }),
+          /* @__PURE__ */ u3("span", { class: "fx-hoverwhen", children: [
+            ago2(d3, v3.today),
+            late ? ", over a month ago" : ""
+          ] })
+        ] }, a3.id);
+      }) }),
+      !!old.length && /* @__PURE__ */ u3("span", { class: "outfoot", children: [
+        old.length === 1 ? "One is" : `${old.length} are`,
+        " over a month old: Update balances on Finances"
+      ] })
+    ] });
+  }
+  function Balance({ v: v3, g: g2, open: open2 }) {
+    const { on, card } = useHoverCard(/* @__PURE__ */ u3(GroupAccounts, { v: v3, accounts: g2.accounts }), { side: "right" });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", ...on, onClick: () => open2(g2.key), children: [
+        /* @__PURE__ */ u3(Dot, { color: g2.color }),
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
+        /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
+      ] }),
+      card
+    ] });
+  }
+  function mountBalances(el2, v3, open2, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el2);
+  }
+
+  // web/src/finances/widgets/ComingUp.tsx
+  var comingDays = 14;
+  function billsAhead(v3, L2) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const d3 of [...v3.days || [], ...v3.later || []]) {
+      const n3 = daysBetween(v3.today, d3.date);
+      if (n3 < 0 || n3 >= comingDays || seen.has(d3.date)) continue;
+      seen.add(d3.date);
+      const bill = (e3) => !!e3.payment && !e3.people?.length && !saving(L2.payment[e3.payment]?.kind);
+      const day3 = [
+        ...(d3.events || []).filter((e3) => bill(e3) && e3.amount < 0).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: false })),
+        ...(d3.charges || []).filter(bill).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: true }))
+      ];
+      out.push(...day3);
+    }
+    return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
+  }
+  var soon = (today, day3) => {
+    const n3 = daysBetween(today, day3);
+    return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
+  };
+  function ComingUpWidget({ v: v3, L: L2, calendar }) {
+    const bills = billsAhead(v3, L2);
+    const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
+    const charged = bills.filter((b2) => b2.charge).length;
+    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
+        const x3 = L2.payment[b2.e.payment || ""];
+        const near = daysBetween(v3.today, b2.date) <= 1;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+            title: x3?.name || b2.e.payment,
+            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
+            subTone: near ? "warn" : "",
+            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
+            whenPlain: true
+          },
+          b2.date + i3
+        );
+      }) })
+    ] }) : /* @__PURE__ */ u3(Empty, { children: [
+      "Nothing due in the next ",
+      comingDays,
+      " days."
+    ] }) });
+  }
+
+  // web/src/finances/Overview.tsx
+  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 }) {
+    const picked = Math.min(sel2, v3.periods.length - 1);
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
+      ] }) }) }) });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+        /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
+          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
+        ] }),
+        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
+        phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
+        phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
+        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
+        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
+        /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
+        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
+        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2 }),
+        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
+        /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
+      ] })
+    ] });
   }
 
   // web/src/finances/Finances.tsx
