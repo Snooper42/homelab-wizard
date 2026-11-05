@@ -11,6 +11,8 @@ final class PairingViewModel {
     /// Always sanitized: upper case, only the code alphabet, at most 8 characters.
     private(set) var code = ""
     var deviceName: String
+    /// A wall screen or TV: the computer makes it look-only for good.
+    var isWallScreen = false
     private(set) var isPairing = false
     private(set) var errorMessage: String?
     /// These go up by one per outcome, to trigger haptics.
@@ -92,7 +94,7 @@ final class PairingViewModel {
         isPairing = true
         defer { isPairing = false }
         do {
-            let device = try await api.pair(code: pairingCode, deviceName: deviceName, at: endpoint)
+            let device = try await api.pair(code: pairingCode, deviceName: deviceName, at: endpoint, kiosk: isWallScreen)
             code = "" // it's spent now; don't keep it
             successCount += 1
             onPaired(device)

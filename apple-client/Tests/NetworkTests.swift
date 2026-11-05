@@ -142,6 +142,17 @@ struct NetworkRuleTests {
         #expect(try JSONDecoder().decode([String].self, from: seen.body) == ["immich", "restart"])
     }
 
+    @Test func aWallScreenPairsAsAKiosk() async throws {
+        let endpoint = try ServerEndpoint.parse(Self.origin).endpoint
+        let code = try #require(PairingCode("ABCD2345"))
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"token":"\#(Self.token)","device":{"id":"abc123","name":"Hall","canChange":false}}"#), nil) }
+        let (api, _) = client(paired: false)
+        let device = try await api.pair(code: code, deviceName: "Hall", at: endpoint, kiosk: true)
+        #expect(!device.canChange)
+        let body = try JSONDecoder().decode([String: JSONValue].self, from: try #require(StubProtocol.requests.first).body)
+        #expect(body["kiosk"] == .bool(true))
+    }
+
     @Test func pairingStoresOnlyAWellFormedToken() async throws {
         let endpoint = try ServerEndpoint.parse(Self.origin).endpoint
         let code = try #require(PairingCode("ABCD2345"))

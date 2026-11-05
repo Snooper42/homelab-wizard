@@ -62,13 +62,15 @@ actor APIClient {
 
     /// Uses a pairing code. On success, the credential is in the Keychain
     /// before this returns.
-    func pair(code: PairingCode, deviceName: String, at endpoint: ServerEndpoint) async throws -> DeviceInfo {
+    /// - Parameter kiosk: a wall screen or TV. The computer then never lets
+    ///   this device make changes or see Finances, whatever the code allowed.
+    func pair(code: PairingCode, deviceName: String, at endpoint: ServerEndpoint, kiosk: Bool = false) async throws -> DeviceInfo {
         var request = URLRequest(url: endpoint.url(path: "/api/pair"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         let name = String(deviceName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(64))
-        request.httpBody = try JSONEncoder().encode(PairRequest(code: code.value, name: name, kiosk: false))
+        request.httpBody = try JSONEncoder().encode(PairRequest(code: code.value, name: name, kiosk: kiosk))
 
         Log.security.info("Pairing with \(endpoint.displayName, privacy: .private(mask: .hash))")
         let data = try await send(request, to: endpoint)

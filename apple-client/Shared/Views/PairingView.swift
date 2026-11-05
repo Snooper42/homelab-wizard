@@ -157,10 +157,13 @@ struct PairingView: View {
             TextField("Name", text: $model.deviceName)
                 .focused($focus, equals: .name)
                 .autocorrectionDisabled()
+            Toggle("A wall screen or TV", isOn: $model.isWallScreen)
         } header: {
             Text("This Device")
         } footer: {
-            Text("How the computer lists this device under Phones.")
+            Text(model.isWallScreen
+                 ? "The computer lets a wall screen only look: never start or stop anything, and no Finances, whatever the code allowed. That can't be undone except by pairing again."
+                 : "How the computer lists this device under Phones.")
         }
     }
 
