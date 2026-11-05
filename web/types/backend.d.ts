@@ -420,6 +420,8 @@ declare namespace crowdsec {
     week: number;
     bannedNow: number;
     recent: crowdsec.Attack[];
+    today: crowdsec.Attack[];
+    todayCount: number;
   }
 }
 
