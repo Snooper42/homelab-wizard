@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Right-click the sidebar:** a screen's own menu, without opening it first: Status's Check again and Update all; Backups' Back up now and Test a restore; Finances' Add a transaction, Update balances, and Hide amounts. Shift+F10 opens it from the keyboard.
 - **Why an app restarted:** hover *up 9 minutes* on Status for why it last started, and when: you, an update (yours or the nightly one), Fix it, the watchdog, the power coming back, its drive plugged in again, the end of a Stop for a while, or Docker after it stopped on its own.
 - **A balance's accounts:** rest the pointer on Cash, Investments, or another group in the sidebar for its accounts, each with its balance and how long since it was updated; one older than a month has a dot.
 - **When an app was down this week:** hover its *96.2% up this week* on Status (or Tab to it, or tap it on a phone) for the week as a strip, with each time it was down, for how long, and why (*Wed 3:15 AM, 45 minutes: nothing answers on its port*).

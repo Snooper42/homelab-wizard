@@ -119,7 +119,7 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
 10. **Export** (F18, *Built*, #405): the plan and its projection as CSV and JSON, and a printable month.
 11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round, *Built*, #409), then why an app restarted (*Built*, #411: `internal/started`, data/started.json, noted wherever the homelab starts an app).
-12. **Right-click the sidebar**, then **pinned apps**.
+12. **Right-click the sidebar** (*Built*, #413: `web/src/palette/navMenu.tsx`, a shared `parts/ContextMenu.tsx`), then **pinned apps**.
 
 **Not yours:** the roadmap's *Media library cleanup* ("Tidy Up"). It has its own session and branch; leave its roadmap section and its files alone.
 
