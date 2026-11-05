@@ -155,6 +155,7 @@ private struct JobRow: View {
         VStack(alignment: .leading, spacing: 3) {
             HStack {
                 Image(systemName: icon).foregroundStyle(tint)
+                    .accessibilityLabel(stateWords)
                 Text(job.name).fontWeight(.semibold)
                 Spacer()
                 if let size = job.size { Text(size).font(.caption).foregroundStyle(.secondary) }
@@ -184,6 +185,15 @@ private struct JobRow: View {
         .accessibilityElement(children: .combine)
     }
 
+    private var stateWords: String {
+        switch job.state {
+        case "ok": "Backed up"
+        case "failed": "Failed"
+        case "stale": "Out of date"
+        default: "Not run yet"
+        }
+    }
+
     private var icon: String {
         switch job.state {
         case "ok": "checkmark.circle.fill"
@@ -209,6 +219,7 @@ private struct CopyRow: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: icon).foregroundStyle(tint)
+                .accessibilityLabel(stateWords)
             VStack(alignment: .leading, spacing: 2) {
                 Text(copy.name)
                 Group {
@@ -231,6 +242,15 @@ private struct CopyRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private var stateWords: String {
+        switch copy.state {
+        case "fresh": "Fresh"
+        case "stale": "Out of date"
+        case "paused": "Waiting for its drive"
+        default: "No copy yet"
+        }
     }
 
     private var icon: String {

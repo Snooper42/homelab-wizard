@@ -54,6 +54,7 @@ struct PairingView: View {
         Section {
             VStack(spacing: 12) {
                 Image(systemName: "server.rack")
+                    .accessibilityHidden(true)
                     .font(.system(size: 48))
                     .foregroundStyle(.tint)
                     .symbolRenderingMode(.hierarchical)

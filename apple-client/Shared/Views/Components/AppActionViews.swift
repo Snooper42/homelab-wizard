@@ -241,6 +241,7 @@ private struct UndoBanner: View {
         HStack(spacing: 12) {
             Image(systemName: "stop.circle.fill")
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
             Text(text)
                 .lineLimit(1)
             Spacer(minLength: 8)
