@@ -112,3 +112,23 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
         return host
     }
 }
+
+// A stored endpoint is checked again when it's read back, through the same
+// rules as a typed address. A Keychain item with an http, user-info or
+// path-carrying URL then reads as corrupt and is deleted, never used. The
+// init is in an extension so the memberwise init stays.
+extension ServerEndpoint {
+    enum CodingKeys: String, CodingKey { case baseURL }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let stored = try c.decode(URL.self, forKey: .baseURL)
+        guard let parsed = try? Self.parse(stored.absoluteString),
+              parsed.code == nil,
+              parsed.endpoint.baseURL == stored
+        else {
+            throw DecodingError.dataCorruptedError(forKey: .baseURL, in: c, debugDescription: "Not a clean https origin")
+        }
+        self.init(baseURL: parsed.endpoint.baseURL)
+    }
+}

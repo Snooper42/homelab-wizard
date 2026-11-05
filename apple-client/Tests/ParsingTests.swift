@@ -63,6 +63,19 @@ struct ServerEndpointTests {
         }
     }
 
+    @Test func storedEndpointsAreCheckedAgain() throws {
+        let (endpoint, _) = try ServerEndpoint.parse("https://[fd7a:115c:a1e0::1]:8099")
+        let data = try JSONEncoder().encode(endpoint)
+        #expect(try JSONDecoder().decode(ServerEndpoint.self, from: data) == endpoint)
+
+        for bad in ["http://homelab.example.com", "https://me:pw@homelab.example.com",
+                    "https://homelab.example.com/api/me", "https://homelab.example.com/#pair=ABCD2345",
+                    "https://homelab.example.com?x=1"] {
+            let json = try JSONEncoder().encode(["baseURL": bad])
+            #expect(throws: DecodingError.self) { try JSONDecoder().decode(ServerEndpoint.self, from: json) }
+        }
+    }
+
     @Test func onlyAPIPathsAreBuilt() throws {
         let (endpoint, _) = try ServerEndpoint.parse("https://homelab.example.com")
         #expect(endpoint.url(path: "/api/call/Status")?.absoluteString == "https://homelab.example.com/api/call/Status")
