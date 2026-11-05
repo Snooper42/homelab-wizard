@@ -30,10 +30,11 @@ func (h *homelab) awake(ctx context.Context, args []string) error {
 		h.ui.Info("KEEP_AWAKE=false: this machine sleeps as its settings say, until it is turned on")
 	}
 	// Whether or not it holds sleep off, the job starts what the battery
-	// saver paused once the machine is plugged in, and what was stopped for
-	// a while once its time comes.
+	// saver paused once the machine is plugged in, what was stopped for a
+	// while once its time comes, and what waited for a drive once it is back.
 	go h.resumeOnPower(ctx)
 	go h.resumeStopped(ctx)
+	go h.resumeDrives(ctx)
 	return followSetting(ctx, enabled, keepAwake)
 }
 
