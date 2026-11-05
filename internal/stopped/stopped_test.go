@@ -166,3 +166,69 @@ func TestUpdateTakesOverAStaleLock(t *testing.T) {
 		t.Error("not saved")
 	}
 }
+
+// A lock another writer holds now makes Update wait, then say so rather
+// than write without it; a change that changes nothing writes nothing.
+func TestUpdateWaitsForAnotherWriter(t *testing.T) {
+	was := lockWait
+	lockWait = 50 * time.Millisecond
+	t.Cleanup(func() { lockWait = was })
+	path := Path(t.TempDir())
+	if err := Update(path, func(Record) bool { return false }); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("a change of nothing wrote the record: %v", err)
+	}
+	if err := os.WriteFile(path+".lock", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	called := false
+	err := Update(path, func(Record) bool { called = true; return true })
+	if err == nil || !strings.Contains(err.Error(), "try again") || called {
+		t.Errorf("with the lock held: %v, changed %v", err, called)
+	}
+}
+
+// Where the record cannot be written, Save and Update say why and leave no
+// file of their own behind.
+func TestSaveAndUpdateFailPlainly(t *testing.T) {
+	was := lockWait
+	lockWait = 50 * time.Millisecond
+	t.Cleanup(func() { lockWait = was })
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Its folder is a file.
+	under := filepath.Join(file, "data", "stopped.json")
+	if err := (Record{"sonarr": {}}).Save(under); err == nil {
+		t.Error("saved under a file")
+	}
+	if err := Update(under, func(Record) bool { return true }); err == nil {
+		t.Error("updated under a file")
+	}
+	// The record's place is a folder: the rename fails, the new file goes.
+	path := filepath.Join(dir, "data", "stopped.json")
+	if err := os.MkdirAll(filepath.Join(path, "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := (Record{"sonarr": {}}).Save(path); err == nil {
+		t.Error("saved over a folder")
+	}
+	if left, _ := filepath.Glob(path + ".tmp*"); len(left) > 0 {
+		t.Errorf("left behind: %v", left)
+	}
+	// Nothing to keep, but the record's place cannot be removed.
+	if err := (Record{}).Save(path); err == nil {
+		t.Error("removed a folder that is not empty")
+	}
+	// The lock's place is a folder.
+	if err := os.MkdirAll(filepath.Join(dir, "other", "stopped.json.lock", "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := Update(filepath.Join(dir, "other", "stopped.json"), func(Record) bool { return true }); err == nil {
+		t.Error("updated without its lock")
+	}
+}
