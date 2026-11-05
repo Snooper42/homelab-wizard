@@ -53,12 +53,13 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 5, 2026, 16:30 UTC):
-- #428 *On Linux, apps wait for an unplugged drive* (`claude/feature-drive-linux`): open, main's #427 merged in. Docker Engine made an empty folder in place of an unplugged drive and started the app on it; library binds now say `create_host_path: false`. It also carries ci.yml's `concurrency` (a PR's newer push cancels its older run), the owner's call of Nov 5. Take it to merged first.
-- Then these branches, which have work and no PR, one at a time in this order. Each has its CHANGELOG line, tests with the failing-before proof, docs, and a `#PRn` placeholder for its number:
-  - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5). Tried on Docker 29.9 on Nov 5: set to Sundays, a Thursday's `update --all` left it out and didn't touch its container; `every` took it back. Say so in its PR.
+**Open now** (Nov 5, 2026, 17:30 UTC):
+- #430 *What CrowdSec stopped* (`claude/feature-crowdsec-today`): open, main's #428 merged in. Take it to merged first.
+- Then these branches, which have work and no PR. **Both wait for #425 (Account 3) to merge**: they change `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (update-window also `cmd/homelab/apps.go`), which #425 claims (lanes.md Rule 2). Don't push to them while #425 is open. Each has main up to #427 merged in, its CHANGELOG line, tests with the failing-before proof (checked Nov 5), docs, and a `#PRn` placeholder:
+  - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5). Tried on Docker 29.9 on Nov 5: set to Sundays, a Thursday's `update --all` left it out and didn't touch its container; `every` took it back. Its PR text is drafted in the session's scratchpad; write it again from this if that's gone.
   - `claude/feature-phones-expire` (#PR16): a phone's changes and Finances end after a day, a week, or a month.
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427.
+- While those wait, take the next roadmap item whose files no open PR claims (Security and privacy: *Tailnet devices*, *Two-step sign-in, nudged*; check each one's files against #425 first).
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.
