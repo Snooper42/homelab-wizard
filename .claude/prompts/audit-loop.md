@@ -515,3 +515,11 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   now answers `movies scan --check`, since `unready` is refused before it
   runs; `TestTidyRunSaysWhyItStopped` checks the same thing as before.
   Items 19–21 done: the next come from what is added from here on.
+- **Round 18 (#405 and #406, read through):** Finances' Export writes a
+  month's page the screen built (`PrintFinances`) into
+  reports/finances, 0600 in a 0700 folder, and opens it in the browser;
+  every name in it, a bank file's payee too, is escaped (`esc`, element
+  text only), and the year-ahead CSV keeps a cell from reading as a
+  formula. Neither method is a phone method: a phone builds its files
+  itself. The week's outages (#406) keep only what the checks already
+  said, drawn by Preact. No code change needed.
