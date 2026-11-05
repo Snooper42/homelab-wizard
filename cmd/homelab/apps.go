@@ -944,21 +944,19 @@ func (h *homelab) markStopped(action string, ids []string, end time.Time) {
 	if len(ids) == 0 {
 		return
 	}
-	path := stopped.Path(h.root)
-	r := stopped.Load(path)
-	before := len(r)
-	for _, id := range ids {
-		switch action {
-		case "stop":
-			r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
-		case "start", "restart", "update", "remove":
-			delete(r, id)
+	err := stopped.Update(stopped.Path(h.root), func(r stopped.Record) bool {
+		before := len(r)
+		for _, id := range ids {
+			switch action {
+			case "stop":
+				r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
+			case "start", "restart", "update", "remove":
+				delete(r, id)
+			}
 		}
-	}
-	if action != "stop" && len(r) == before {
-		return
-	}
-	if err := r.Save(path); err != nil {
+		return action == "stop" || len(r) != before
+	})
+	if err != nil {
 		h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
 		return
 	}

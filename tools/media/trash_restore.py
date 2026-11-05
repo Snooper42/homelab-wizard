@@ -5,6 +5,7 @@ Undo: put back what one run put in the Trash, each thing where it was.
   python3 trash_restore.py restore <run>   the run's id, as the app's record names it (it asks)
 
 Only what is still in the Trash, with nothing in its old place now, goes back; the rest is said.
+A line naming something that isn't directly in the Trash of its old place's drive is never moved.
 Things in Windows' Recycle Bin are said by name: restore them from there (Restore).
 
 For apps: --events json prints one JSON object per line; exit codes 0 ok, 1 error.
@@ -48,6 +49,9 @@ def restore(run, log):
         src, at = Path(e["from"]), Path(e["to"]) if e.get("to") else None
         if at is None:
             recycle.append(src.name)
+            continue
+        if not mc.trashed_from(src, at):
+            stayed.append("%s: not where Tidy Up puts what it throws away" % src.name)
             continue
         if not at.exists() and not at.is_symlink():
             stayed.append("%s: no longer in the Trash" % src.name)
