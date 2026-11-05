@@ -18,6 +18,9 @@ struct FinancesView: View {
                         Label("Transactions", systemImage: "list.bullet.rectangle")
                     }
                 }
+                if !view.budgets.isEmpty { budgets(view) }
+                if !view.goals.isEmpty { goals(view) }
+                if !view.loans.isEmpty { loans(view) }
                 ForEach(view.periods.prefix(8)) { period in
                     PeriodSection(period: period, view: view, finances: finances)
                 }
@@ -51,6 +54,91 @@ struct FinancesView: View {
                               systemImage: finances.amountsShown ? "eye.slash" : "eye")
                     }
                 }
+            }
+        }
+    }
+
+    private func budgets(_ view: FinancesPlanView) -> some View {
+        Section("Budgets") {
+            ForEach(view.budgets) { budget in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(budget.category)
+                        Spacer()
+                        Money(value: budget.spent, currency: view.plan.currency, finances: finances)
+                        Text(verbatim: "/").foregroundStyle(.secondary)
+                        Money(value: budget.amount, currency: view.plan.currency, finances: finances)
+                    }
+                    ProgressView(value: budget.share)
+                        .tint(budget.isOver ? .red : budget.isAhead ? .orange : .green)
+                    Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
+                        .font(.caption)
+                        .foregroundStyle(budget.isOver ? .red : .secondary)
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func goals(_ view: FinancesPlanView) -> some View {
+        Section("Goals") {
+            ForEach(view.goals) { goal in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(goal.name)
+                        Spacer()
+                        Money(value: goal.saved, currency: view.plan.currency, finances: finances)
+                        Text(verbatim: "/").foregroundStyle(.secondary)
+                        Money(value: goal.target, currency: view.plan.currency, finances: finances)
+                    }
+                    ProgressView(value: goal.share)
+                        .tint(goal.isReached ? .green : .accentColor)
+                    Group {
+                        if goal.isReached {
+                            Text("Reached")
+                        } else if let date = goal.date {
+                            Text("By \(date, format: .dateTime.month(.wide).year())")
+                        } else if let reaches = goal.reaches {
+                            Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    if goal.needsMonth > 0, !goal.isReached {
+                        HStack(spacing: 4) {
+                            Text("Needs").font(.caption).foregroundStyle(.secondary)
+                            Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
+                            Text("a month").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private func loans(_ view: FinancesPlanView) -> some View {
+        Section("Loans") {
+            ForEach(view.loans) { loan in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(finances.accountName(loan.account) ?? "Loan")
+                        Spacer()
+                        Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                    }
+                    if loan.never {
+                        Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    } else if let paidOff = loan.paidOff {
+                        Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if loan.balance <= 0 {
+                        Text("Paid off").font(.caption).foregroundStyle(.green)
+                    }
+                }
+                .accessibilityElement(children: .combine)
             }
         }
     }

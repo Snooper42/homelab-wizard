@@ -43,6 +43,14 @@ enum LocalDay {
         parts.hour = 12
         return Calendar(identifier: .gregorian).date(from: parts)
     }
+
+    /// A month (YYYY-MM), as the first of it.
+    static func parseMonth(_ text: String?) -> Date? {
+        guard let text else { return nil }
+        let fields = text.split(separator: "-")
+        guard fields.count == 2 else { return nil }
+        return parse("\(fields[0])-\(fields[1])-01")
+    }
 }
 
 extension JSONDecoder {

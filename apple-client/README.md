@@ -81,9 +81,10 @@ hash. The client receives the token itself, once.
 ## Not built yet
 
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
-- Finances editing, receipts, budgets, goals and loans (`SaveFinances`, `SaveFinancesLedger`, `FinancesReceipt`, …). Read-only Finances is built:
+- Finances editing and receipts (`SaveFinances`, `SaveFinancesLedger`, `FinancesReceipt`, `SaveFinancesReceipt`). Read-only Finances is built:
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;
+  - budgets, goals and loans from the same view;
   - transactions (`FinancesLedger`), newest first by month, searchable.
   Amounts stay hidden until tapped and hide again on lock. None show while the plan's Hide amounts is on.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.

@@ -100,8 +100,11 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     let plan: FinancePlan
     /// The computer marks this for a device allowed only to look.
     let readOnly: Bool
+    let budgets: [FinanceBudget]
+    let goals: [FinanceGoal]
+    let loans: [FinancePayoff]
 
-    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly }
+    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -111,6 +114,10 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         periods = try c.decodeIfPresent([FinancePeriod].self, forKey: .periods) ?? []
         plan = try c.decode(FinancePlan.self, forKey: .plan)
         readOnly = try c.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
+        // These are extras: one that doesn't read costs only itself.
+        budgets = ((try? c.decodeIfPresent([FinanceBudget].self, forKey: .budgets)) ?? nil) ?? []
+        goals = ((try? c.decodeIfPresent([FinanceGoal].self, forKey: .goals)) ?? nil) ?? []
+        loans = ((try? c.decodeIfPresent([FinancePayoff].self, forKey: .loans)) ?? nil) ?? []
     }
 
     func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
@@ -343,5 +350,90 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         let needle = text.trimmingCharacters(in: .whitespaces)
         guard !needle.isEmpty else { return true }
         return ([payee, category, note] + tags).contains { $0.localizedCaseInsensitiveContains(needle) }
+    }
+}
+
+// MARK: - Budgets, goals and loans (parts of `finance.View`)
+
+/// One budget this month or pay period (`finance.BudgetNow`).
+struct FinanceBudget: Decodable, Sendable, Equatable, Identifiable {
+    let category: String
+    /// "month" or "paycheck".
+    let per: String
+    /// What it may take this time, including what rolled over.
+    let amount: Double
+    let spent: Double
+    let left: Double
+    /// What would be spent by today at an even pace.
+    let pace: Double
+
+    var id: String { category }
+    var isOver: Bool { spent > amount }
+    var isAhead: Bool { spent > pace && !isOver }
+    /// Spent, as a share of the budget, 0 to 1.
+    var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
+}
+
+/// One goal today (`finance.GoalNow`).
+struct FinanceGoal: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let target: Double
+    let date: Date?
+    let saved: Double
+    let left: Double
+    let needsMonth: Double
+    let needsPaycheck: Double
+    /// The month the pace reaches the target, nil when reached or at no pace.
+    let reaches: Date?
+
+    enum CodingKeys: String, CodingKey { case id, name, target, date, saved, left, needsMonth, needsPaycheck, reaches }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        target = try c.decodeIfPresent(Double.self, forKey: .target) ?? 0
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        saved = try c.decodeIfPresent(Double.self, forKey: .saved) ?? 0
+        left = try c.decodeIfPresent(Double.self, forKey: .left) ?? 0
+        needsMonth = try c.decodeIfPresent(Double.self, forKey: .needsMonth) ?? 0
+        needsPaycheck = try c.decodeIfPresent(Double.self, forKey: .needsPaycheck) ?? 0
+        reaches = LocalDay.parseMonth(try c.decodeIfPresent(String.self, forKey: .reaches))
+    }
+
+    var share: Double { target > 0 ? min(max(saved / target, 0), 1) : 0 }
+    var isReached: Bool { target > 0 && saved >= target }
+}
+
+/// A loan read down to zero at its rate and payments (`finance.Payoff`).
+struct FinancePayoff: Decodable, Sendable, Equatable, Identifiable {
+    let account: String
+    let balance: Double
+    /// The yearly rate, as a percentage.
+    let rate: Double
+    let monthly: Double
+    let months: Int
+    /// The month it's paid off.
+    let paidOff: Date?
+    /// Interest still to pay, at its rate, as paid.
+    let interest: Double
+    /// The payment doesn't keep up with the interest: never paid off at this pace.
+    let never: Bool
+
+    var id: String { account }
+
+    enum CodingKeys: String, CodingKey { case account, balance, rate, monthly, months, date, interest, never }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        account = try c.decodeIfPresent(String.self, forKey: .account) ?? ""
+        balance = try c.decodeIfPresent(Double.self, forKey: .balance) ?? 0
+        rate = try c.decodeIfPresent(Double.self, forKey: .rate) ?? 0
+        monthly = try c.decodeIfPresent(Double.self, forKey: .monthly) ?? 0
+        months = try c.decodeIfPresent(Int.self, forKey: .months) ?? 0
+        paidOff = LocalDay.parseMonth(try c.decodeIfPresent(String.self, forKey: .date))
+        interest = try c.decodeIfPresent(Double.self, forKey: .interest) ?? 0
+        never = try c.decodeIfPresent(Bool.self, forKey: .never) ?? false
     }
 }

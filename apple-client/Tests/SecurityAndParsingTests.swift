@@ -558,3 +558,32 @@ struct LedgerTests {
         #expect(ledger.transactions.isEmpty)
     }
 }
+
+@Suite("Budgets, goals, loans")
+struct FinanceExtrasTests {
+    @Test func decodeExtras() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"today":"2026-11-05","plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[],
+         "budgets":[{"category":"Groceries","per":"month","start":"2026-11-01","last":"2026-11-30","amount":600,"spent":250,"left":350,"pace":100}],
+         "goals":[{"id":"g","name":"Holiday","target":2000,"date":"2027-06-01","saved":500,"left":1500,"needsMonth":214.29,"reaches":"2027-04"}],
+         "loans":[{"account":"car","balance":8000,"rate":4.9,"monthly":250,"months":36,"date":"2029-11","interest":600,"path":[1,2]}]}
+        """#.utf8))
+        #expect(view.budgets.first?.isAhead == true)
+        #expect(view.budgets.first?.share == 250.0 / 600.0)
+        #expect(view.goals.first?.reaches != nil && view.goals.first?.isReached == false)
+        #expect(view.loans.first?.paidOff != nil && view.loans.first?.never == false)
+    }
+
+    @Test func aBadExtraCostsOnlyItself() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[],"goals":[{"name":"no id"}]}
+        """#.utf8))
+        #expect(view.goals.isEmpty)
+    }
+
+    @Test func months() {
+        #expect(LocalDay.parseMonth("2027-04") != nil)
+        #expect(LocalDay.parseMonth("2027") == nil)
+        #expect(LocalDay.parseMonth(nil) == nil)
+    }
+}
