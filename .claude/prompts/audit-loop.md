@@ -359,7 +359,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     take and whether any of them reaches outside the libraries.
 
 
-22. **`data/started.json` written as stopped.json was** (internal/started,
+22. (done: round 23) **`data/started.json` written as stopped.json was** (internal/started,
     #411): six writers (Start and Restart, updates, Fix it, the watchdog,
     the battery saver, a drive back, the stop timer) each read, change,
     and rewrite it in place with no lock. Only the "up 9 minutes" hover
@@ -543,3 +543,13 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   "up 9 minutes" hover: data/started.json, written by six parts of the
   homelab without a lock, as stopped.json was before N10. Nothing starts
   or stops by it (only the hover reads it), so it is no hole; item 22.
+- **Round 22 (#413–#420, read through):** pinning (`homelab pin`, the
+  phone's SetAppSetting "pinned", which needs Change) writes APPS_PINNED
+  to .env, but only a catalog app ID; the backups hover (#418) sends a
+  job's run time, sizes, versions, and source folders, never its
+  destination (which can hold credentials); the rest is the page. No
+  code change needed.
+- **Round 23 (item 22, data/started.json):** saved under a lock and
+  whole, with internal/lockedfile (stopped.Update's way, for any record),
+  0600. `TestNotesAtOnceAreAllKept` failed before: 40 notes at once kept
+  fewer, the record was written in place, and it was 0644.

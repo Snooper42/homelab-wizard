@@ -1,6 +1,10 @@
 package started
 
 import (
+	"fmt"
+	"os"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 )
@@ -45,5 +49,40 @@ func TestNoteAndWhy(t *testing.T) {
 	}
 	if r := Load(root + "/nothing.json"); len(r) != 0 {
 		t.Fatalf("missing file: %+v", r)
+	}
+}
+
+// Six parts of the homelab note starts (Start, updates, Fix it, the
+// watchdog, the battery saver, a drive, the stop timer), some at once: each
+// keeps its note, and a reader never meets a half-written file.
+func TestNotesAtOnceAreAllKept(t *testing.T) {
+	root := t.TempDir()
+	now := time.Now()
+	var wg sync.WaitGroup
+	for i := range 40 {
+		wg.Go(func() {
+			if err := Note(root, Watchdog, now, fmt.Sprintf("app%02d", i)); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+	wg.Wait()
+	if got := len(Load(Path(root))); got != 40 {
+		t.Errorf("%d of 40 notes kept", got)
+	}
+	// A link to the record as it was still holds it after the next note:
+	// the record is replaced whole, never written over in place.
+	old := Path(root) + ".old"
+	if err := os.Link(Path(root), old); err != nil {
+		t.Skipf("no hard links here: %v", err)
+	}
+	if err := Note(root, You, now, "late"); err != nil {
+		t.Fatal(err)
+	}
+	if Load(old).Why("late", now) != "" {
+		t.Error("the record was written in place")
+	}
+	if fi, err := os.Stat(Path(root)); err == nil && runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600 {
+		t.Errorf("the record is %v, want 0600", fi.Mode().Perm())
 	}
 }
