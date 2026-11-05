@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"slices"
 	"strings"
 	"time"
 
@@ -38,16 +37,19 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 		if len(apps) == 0 {
 			return
 		}
+		var paused []string
 		for _, pa := range h.byProject(apps) {
 			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"stop"}, pa.ids...)...); err != nil {
 				h.ui.Warn("battery saver: stop %s: %v", strings.Join(pa.ids, ", "), err)
 				continue
 			}
-			st.Paused = append(st.Paused, pa.ids...)
+			paused = append(paused, pa.ids...)
 		}
-		slices.Sort(st.Paused)
-		st.Since = time.Now()
 		h.ui.Info("on battery: paused %s until it is plugged in", names(apps))
+		// Added to what another run paused meanwhile, never over it.
+		if err := battery.Pause(path, paused, time.Now()); err != nil {
+			h.ui.Warn("battery saver: %v", err)
+		}
 	case !onBattery && len(st.Paused) > 0:
 		// Only what is still stopped is started: an app started by hand
 		// meanwhile, or removed, or gone from the catalog has nothing to start.
@@ -79,12 +81,17 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 				}
 			}
 		}
+		// What failed stays paused, for the next run; the rest leaves the
+		// record, along with any no longer the saver's to start.
 		var started []*catalog.App
-		var still []string
+		var done []string
+		for _, id := range st.Paused {
+			if !failed[id] {
+				done = append(done, id)
+			}
+		}
 		for _, a := range apps {
-			if failed[a.ID] {
-				still = append(still, a.ID)
-			} else {
+			if !failed[a.ID] {
 				started = append(started, a)
 			}
 		}
@@ -92,12 +99,9 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 			h.ui.Info("on power again: started %s", names(started))
 			h.noteStarted(whyBattery, ids(started)...)
 		}
-		st = battery.State{Paused: still, Since: st.Since}
-	default:
-		return
-	}
-	if err := st.Save(path); err != nil {
-		h.ui.Warn("battery saver: %v", err)
+		if err := battery.Resume(path, done); err != nil {
+			h.ui.Warn("battery saver: %v", err)
+		}
 	}
 }
 
