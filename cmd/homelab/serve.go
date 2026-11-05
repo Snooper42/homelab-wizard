@@ -327,8 +327,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			log, err := run(ctx, "stop", id, "--until", until)
 			return nil, log, err
 		}},
-		// An app's own settings, from its page: its nightly update and
-		// the watchdog's alerts about it (as the computer's SetAppSetting).
+		// An app's own settings, from its page: its nightly update, the
+		// watchdog's alerts about it, and whether it is pinned to the top
+		// (as the computer's SetAppSetting).
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id, setting string
 			var on bool
@@ -347,6 +348,8 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				cmd = []string{"updates", map[bool]string{true: "release", false: "hold"}[on], id}
 			case "alerts":
 				cmd = []string{"notify", map[bool]string{true: "on", false: "off"}[on], id}
+			case "pinned":
+				cmd = []string{map[bool]string{true: "pin", false: "unpin"}[on], id}
 			default:
 				return nil, nil, fmt.Errorf("unknown setting %q", setting)
 			}

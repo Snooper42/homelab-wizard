@@ -108,6 +108,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `<APP>_DIGEST` (`PAPERLESS_DIGEST`, `VAULTWARDEN_DIGEST`, …) | not in the template | The version each app the nightly update moves forward runs: its image and that image's digest (`ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…`). Written by `homelab update`, a rollback, and the watchdog when what runs changes; `homelab up`, `install`, a move, and a rebuild start that version again, so a restore or a new machine opens the data with the version that wrote it. A version you choose by hand (`IMMICH_VERSION`) wins: a kept line for another image is left alone until the app runs the new one. Delete a line to let that app start on its newest version |
 | `UPDATES_HELD` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`). Written by the CLI; `homelab updates release <app>` takes one off |
 | `ALERTS_OFF` | empty | Apps the watchdog still checks and shows on Status, but does not alert about. Written by `homelab notify off <app>` (an app's page › **Tell me if it stops**); `homelab notify on <app>` takes one off |
+| `APPS_PINNED` | empty | Apps at the top of Status and of the menu bar's Open an app, in the order pinned. Written by `homelab pin <app>` (a row's right-click › **Pin to the top**); `homelab unpin <app>` puts one back in its group |
 
 ## App ports
 
