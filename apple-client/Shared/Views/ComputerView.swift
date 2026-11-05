@@ -5,6 +5,7 @@ import SwiftUI
 struct ComputerView: View {
     let computer: ComputerViewModel
     @Environment(AppCoordinator.self) private var coordinator
+    @State private var confirmingUnpair = false
 
     var body: some View {
         @Bindable var computer = computer
@@ -123,7 +124,7 @@ struct ComputerView: View {
     }
 
     private var deviceSection: some View {
-        Section("This Device") {
+        Section {
             if let device = coordinator.device {
                 LabeledContent("Paired as", value: device.name)
                 LabeledContent("Can", value: device.canChange ? "Look and make changes" : "Only look")
@@ -136,6 +137,16 @@ struct ComputerView: View {
                     Text(verbatim: server).textSelection(.enabled)
                 }
             }
+            Button("Unpair This Device…", role: .destructive) { confirmingUnpair = true }
+                .confirmationDialog("Unpair this device?", isPresented: $confirmingUnpair, titleVisibility: .visible) {
+                    Button("Unpair", role: .destructive) { coordinator.unpair() }
+                } message: {
+                    Text("Its token is deleted from this device. To revoke it on the computer as well, run homelab phone remove \(coordinator.device?.id ?? "<id>").")
+                }
+        } header: {
+            Text("This Device")
+        } footer: {
+            Text("Locks when it leaves the screen, and asks again before any change. Lost it? On the computer, homelab phone remove \(coordinator.device?.id ?? "<id>") stops its token at once.")
         }
     }
 }
