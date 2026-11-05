@@ -224,7 +224,7 @@ private struct CopyRow: View {
                 Text(copy.name)
                 Group {
                     if let drive = copy.waitingFor, !drive.isEmpty {
-                        Text("Waiting for \(drive)")
+                        Text("Waiting for the \(AppStatus.driveName(drive)) drive")
                     } else if let newest = copy.newest {
                         Text("\(newest, format: .relative(presentation: .named)) · \(copy.count) \(copy.count == 1 ? "copy" : "copies")")
                     } else {

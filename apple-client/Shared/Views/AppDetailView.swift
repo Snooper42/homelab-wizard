@@ -45,6 +45,8 @@ struct AppDetailView: View {
 
                 aboutSection(for: app)
 
+                backupSection(for: app)
+
                 Section("Details") {
                     LabeledContent("State", value: app.stateLabel)
                     if let health = app.health, !health.isEmpty {
@@ -198,6 +200,64 @@ struct AppDetailView: View {
     }
 
     @ViewBuilder
+    /// The app page's Last backup tile and "In the nightly backup" row
+    /// (web/src/page/AppPage.tsx), from the Backups the dashboard holds.
+    @ViewBuilder
+    private func backupSection(for app: AppStatus) -> some View {
+        let backups = dashboard.backups
+        Section {
+            if app.isNative {
+                Text("It runs on its own, outside the homelab; its own app keeps its data.")
+                    .foregroundStyle(.secondary)
+            } else if let overview = backups.overview {
+                LabeledContent("Last nightly backup") {
+                    if let last = overview.lastRun {
+                        HStack(spacing: 4) {
+                            Text(last, format: .relative(presentation: .named))
+                            if overview.isLate() {
+                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                                    .accessibilityLabel("Late")
+                            }
+                        }
+                    } else {
+                        Text("Not yet").foregroundStyle(.secondary)
+                    }
+                }
+                if let copy = overview.copy(for: app.id) {
+                    LabeledContent("Its database's copy") {
+                        if let drive = copy.waitingFor, !drive.isEmpty {
+                            Text("Waiting for the \(AppStatus.driveName(drive)) drive")
+                        } else if let newest = copy.newest {
+                            Text(newest, format: .relative(presentation: .named))
+                        } else {
+                            Text("None yet").foregroundStyle(.secondary)
+                        }
+                    }
+                    Text("Its files, and its database's copy, every night.")
+                        .font(.callout).foregroundStyle(.secondary)
+                } else {
+                    Text("Its files in the homelab folder, every night.")
+                        .font(.callout).foregroundStyle(.secondary)
+                }
+                LabeledContent("Restore test") {
+                    if let tested = overview.restoreTest.lastTest {
+                        Text(tested, format: .dateTime.month(.abbreviated).day())
+                    } else {
+                        Text("None yet").foregroundStyle(.secondary)
+                    }
+                }
+            } else if let error = backups.overviewError {
+                Text(error).foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+            }
+        } header: {
+            Text("Backup")
+        }
+        // Read once if nothing has yet (the morning or the Backups screen may have).
+        .task { if backups.overview == nil, !backups.isLoading { await backups.load() } }
+    }
+
     private func aboutSection(for app: AppStatus) -> some View {
         if let entry = dashboard.catalog?.entry(app.id) {
             Section("About") {

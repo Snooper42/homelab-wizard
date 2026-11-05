@@ -335,6 +335,16 @@ struct BackupsTests {
         #expect(o.restoreTest.lastSummary == "restored 3 files")
         #expect(o.vaultExport == nil && o.vaultDue)
         #expect(o.kopia == nil)
+        // The app page's Last backup: late after staleAfterHours (36 here).
+        #expect(o.copy(for: "immich")?.size == 1073741824 && o.copy(for: "nope") == nil)
+        let run = try #require(o.lastRun)
+        #expect(!o.isLate(now: run.addingTimeInterval(35 * 3600)))
+        #expect(o.isLate(now: run.addingTimeInterval(37 * 3600)))
+    }
+
+    @Test func neverRunIsNotLate() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
+        #expect(o.lastRun == nil && !o.isLate())
     }
 
     @Test func duplicatiJobs() throws {

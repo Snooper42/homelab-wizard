@@ -48,6 +48,20 @@ struct BackupOverview: Decodable, Sendable, Equatable {
     }
 }
 
+extension BackupOverview {
+    /// This app's copy, by its id.
+    func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
+
+    /// The nightly backup hasn't run within its window (`staleAfterHours`,
+    /// 30 when the computer doesn't say), as the app page's Last backup
+    /// tile warns. False before any run: that reads as "Not yet".
+    func isLate(now: Date = Date()) -> Bool {
+        guard let lastRun else { return false }
+        let hours = staleAfterHours > 0 ? staleAfterHours : 30
+        return now.timeIntervalSince(lastRun) > Double(hours) * 3600
+    }
+}
+
 /// One app's copy in the nightly backup (`backup.Copy`).
 struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
     let id: String
