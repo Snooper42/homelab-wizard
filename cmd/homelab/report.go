@@ -208,6 +208,11 @@ var tokenPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)(hc-ping\.com/)[A-Za-z0-9-]{8,}`), // healthchecks.io ping URLs
 	regexp.MustCompile(`(://)[^/\s:@]+:[^/\s@]+@`),            // passwords in URLs
 	regexp.MustCompile(`(?i)(auth=)[A-Za-z0-9_-]{12,}`),       // ntfy's auth query parameter
+	// An app's own secrets, which .env does not hold: a password it made
+	// and prints (qBittorrent's "A temporary password is provided for this
+	// session: …"), and key=value or JSON forms (Jellyfin's ?api_key=…).
+	regexp.MustCompile(`(?i)((?:temporary|initial|generated|default|admin|administrator)\s+password\b[^:\n]{0,60}:\s*)[^\s"'\[]+`),
+	regexp.MustCompile(`(?i)((?:password|passwd|secret|token|api[_-]?key|apikey)["']?\s*[:=]\s*["']?)[^\s"',;&\[]+`),
 }
 
 // redact replaces each secret value, and anything shaped like a token,

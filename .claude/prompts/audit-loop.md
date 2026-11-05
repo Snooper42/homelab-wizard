@@ -368,7 +368,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
 
 Added after round 27 (the backlog was empty; worst first):
 
-23. **An app's own secrets in what leaves its log** (#427's restart-loop
+23. (done: round 28) **An app's own secrets in what leaves its log** (#427's restart-loop
     alert, Explain, `homelab report`, a phone's Logs): each takes out only
     the values in `.env`. An app that prints a secret of its own at start
     (a database URL with its password, an admin token it made, a
@@ -648,6 +648,19 @@ Added after round 27 (the backlog was empty; worst first):
   hand-edited record can only name apps, matched exactly. `envfile.Delete`
   takes out the key and only the comment lines just above it. No code
   change needed.
+
+- **Round 28 (item 23, an app's own secrets in its log):** N15, Medium.
+  `redact` (a phone's Logs, the restart-loop alert, `homelab report`)
+  took out `.env`'s values and some token shapes, not what an app makes
+  and prints: qBittorrent prints its Web UI admin password at every
+  start until a permanent one is set, and Jellyfin logs `?api_key=`.
+  Every paired device reads logs, look-only and kiosk too. Now a printed
+  temporary/generated/admin password and `password`/`token`/`secret`/
+  `api_key` values (key=value, JSON) are taken out; the app on the
+  computer and `homelab logs` still show the whole log.
+  `TestAnAppsOwnSecretsAreTakenOut` failed before (all four kept by the
+  alert, qBittorrent's by a phone). Left for item 31: Explain's
+  `forModel` misses the printed-password sentence.
 
 ## For Account 2
 
