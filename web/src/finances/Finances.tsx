@@ -16,7 +16,7 @@ import { type Running } from './homelab';
 import { Reports } from './Reports';
 import { Transactions } from './Transactions';
 import { openOn, Pay, Recurring, type SaveSettings } from './Lists';
-import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
+import { cardOf, daysBetween, dayShort, isoDay, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
 import { NetWorth } from './Worth';
 
@@ -73,7 +73,8 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
     setSaid('Saving…');
     try { setSaid(await go()); } catch (e) { setSaid(`Not saved: ${(e as Error)?.message || e}`); }
   };
-  const month = (k: number) => { const d = new Date(v.today + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + k); return d.toISOString().slice(0, 7); };
+  // The month here, not in UTC: toISOString would give the month before east of UTC+12 (New Zealand in summer).
+  const month = (k: number) => { const d = new Date(v.today + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + k); return isoDay(d).slice(0, 7); };
   const label = (m: string) => new Date(m + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long' });
   const print = (k: number) => run(() => printMonth(monthName(month(k)), monthPage(v, month(k), 'Finances')));
   return (
@@ -102,7 +103,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
   // and the cards'), with what has happened since: a week old, they say so.
   const age = v?.typed ? daysBetween(v.typed, v.today) : -1;
   const lead = (age < 0 ? (phone ? 'Typed in by you, kept on your homelab' : 'Typed in by you, kept on this machine')
-    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', update them with Edit'}` : ''))
+    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', bring them up to date with Update balances'}` : ''))
     + (ro ? ' · view only' : '');
   return (
     <>

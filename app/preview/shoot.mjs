@@ -5321,6 +5321,31 @@ const smokes = [
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
   } },
+  // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
+  { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Type how much it is.")', { timeout: 5000 });
+    // And Cancel asks again before it drops what was typed.
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+  } },
+  // A filter whose last transaction is deleted lets go: its menu would say Every category over an empty list.
+  { name: 'Finances: a transaction filter lets go when its last transaction goes', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Gas');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-transactions :text("None match")')) throw new Error('filtered by a category with nothing in it');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== '') throw new Error('the menu still has a pick');
+  } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
