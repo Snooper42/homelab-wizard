@@ -1775,6 +1775,58 @@ const smokes = [
     const sets = await page.evaluate(() => window.__MOCK.settingsSet);
     if (JSON.stringify(sets) !== JSON.stringify([['vikunja', 'pinned', true], ['immich-server', 'pinned', true], ['vikunja', 'pinned', false]])) throw new Error('set: ' + JSON.stringify(sets));
   } },
+  // A right-click on a screen in the sidebar opens its own menu at the pointer, without picking the screen: each item opens
+  // its screen and does what its button there does (Update all shows its list first). From the keyboard too; Escape closes
+  // it back on the sidebar, and a press elsewhere (as WebKit's) closes it.
+  { name: 'Right-click the sidebar: each screen’s own menu', screen: 'setup', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    const menu = page.locator('#contextMenu .rowmenu');
+    const items = async () => (await menu.locator('[role=menuitem]').allTextContents()).map((t) => t.trim());
+    const rightClick = async (screen) => {
+      const b = await page.locator(`nav button[data-screen=${screen}]`).boundingBox();
+      await page.mouse.click(b.x + 30, b.y + b.height / 2, { button: 'right' });
+      await menu.waitFor({ timeout: 2000 });
+      return b;
+    };
+    const b = await rightClick('status');
+    if ((await items()).join('|') !== 'Check again|Update all apps…') throw new Error('Status: ' + (await items()).join(', '));
+    if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
+    const m = await menu.boundingBox();
+    if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
+    const missed = await page.$$eval('#contextMenu [role=menuitem]', (bs) => bs.filter((x) => { const r = x.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !x.contains(at); }).map((x) => x.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    if (!(await page.isVisible('#setup.active'))) throw new Error('the right-click picked the screen');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Backups: Back up now and Test a restore.
+    await rightClick('backups');
+    if ((await items()).join('|') !== 'Check again|Back up now|Test a restore') throw new Error('Backups: ' + (await items()).join(', '));
+    await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Finances, from the keyboard: Shift+F10 on its button, the first item focused, the arrows, Return.
+    await page.focus('nav button[data-screen=finances]');
+    await page.keyboard.press('Shift+F10');
+    await menu.waitFor({ timeout: 2000 });
+    if ((await items()).join('|') !== 'Check again|Add a transaction|Update balances|Hide amounts') throw new Error('Finances: ' + (await items()).join(', '));
+    if ((await page.evaluate(() => document.activeElement.textContent.trim())) !== 'Check again') throw new Error('the first item is not focused');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    if ((await page.evaluate(() => document.activeElement.dataset.screen)) !== 'finances') throw new Error('Escape did not go back to the sidebar');
+    await page.keyboard.press('Shift+F10');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#finances.active', { timeout: 3000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 3000 });
+    // Update all opens Status and its list, as its button does (a sheet that owns the window): nothing is updated yet.
+    await rightClick('status');
+    await menu.locator('[role=menuitem]:text-is("Update all apps…")').click();
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Update all apps now")', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:text-is("Update them")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.join() !== 'update-all') throw new Error('ran: ' + ran.join());
+  } },
   // From the keyboard: Shift+F10 (or the context-menu key) on a row's button opens the menu under its name with the first item
   // focused; the arrows move through it and Return runs one. Tell me if it stops turns its alerts off. A stopped app's menu offers
   // Start, not Restart or Stop.
