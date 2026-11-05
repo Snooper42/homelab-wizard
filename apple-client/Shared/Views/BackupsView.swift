@@ -90,7 +90,7 @@ struct BackupsView: View {
                 Text("No restore test has passed yet.").foregroundStyle(.secondary)
             }
             if o.restoreDue {
-                Label("A restore test is due. Run one on the computer (Backups › Test a restore).", systemImage: "calendar.badge.exclamationmark")
+                Label("A restore test is due: Test a Restore, below, runs one.", systemImage: "calendar.badge.exclamationmark")
                     .foregroundStyle(.orange)
             }
             if let kopia = o.kopia {
