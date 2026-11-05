@@ -75,6 +75,23 @@ final class DashboardViewModel {
     var selectedAppID: AppStatus.ID?
     /// The app whose log is open in a sheet.
     var logsApp: AppStatus?
+    /// What's typed in the app list's search field. It goes with the
+    /// dashboard on lock, and isn't kept.
+    var search = ""
+
+    /// Whether `app` matches the search: its name or id, regardless of case
+    /// and accents. Everything matches an empty search.
+    func matchesSearch(_ app: AppStatus) -> Bool { Self.matches(app, search) }
+
+    nonisolated static func matches(_ app: AppStatus, _ query: String) -> Bool {
+        let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return true }
+        let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
+        return app.name.range(of: needle, options: options) != nil
+            || app.id.range(of: needle, options: options) != nil
+    }
+
+    var isSearching: Bool { !search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     let liveEvents: LiveEventManager
     let cards: CardsViewModel

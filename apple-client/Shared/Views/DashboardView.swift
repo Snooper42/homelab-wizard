@@ -101,41 +101,44 @@ struct DashboardView: View {
 // MARK: - iPhone
 
 private struct PhoneDashboard: View {
-    let model: DashboardViewModel
+    @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
     let finances: FinancesViewModel
 
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    OverviewHeader(model: model)
-                    NavigationLink {
-                        OverviewView(cards: model.cards, finances: finances)
-                    } label: {
-                        Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
-                            .badge(model.failingChecks)
-                    }
-                    NavigationLink {
-                        BackupsView(backups: model.backups)
-                    } label: {
-                        Label("Backups", systemImage: "externaldrive.badge.checkmark")
-                            .badge(model.backups.needsAttention)
-                    }
-                    if finances.canSeePlan {
+                // While searching, only the apps that match.
+                if !model.isSearching {
+                    Section {
+                        OverviewHeader(model: model)
                         NavigationLink {
-                            FinancesView(finances: finances)
+                            OverviewView(cards: model.cards, finances: finances)
                         } label: {
-                            Label("Finances", systemImage: "banknote")
+                            Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
+                                .badge(model.failingChecks)
+                        }
+                        NavigationLink {
+                            BackupsView(backups: model.backups)
+                        } label: {
+                            Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                                .badge(model.backups.needsAttention)
+                        }
+                        if finances.canSeePlan {
+                            NavigationLink {
+                                FinancesView(finances: finances)
+                            } label: {
+                                Label("Finances", systemImage: "banknote")
+                            }
+                        }
+                        NavigationLink {
+                            ComputerView(computer: computer)
+                        } label: {
+                            Label("Computer", systemImage: "desktopcomputer")
                         }
                     }
-                    NavigationLink {
-                        ComputerView(computer: computer)
-                    } label: {
-                        Label("Computer", systemImage: "desktopcomputer")
-                    }
                 }
-                let pinned = model.pinnedApps
+                let pinned = model.pinnedApps.filter { model.matchesSearch($0) }
                 if !pinned.isEmpty {
                     Section("Pinned") {
                         ForEach(pinned) { app in
@@ -148,7 +151,7 @@ private struct PhoneDashboard: View {
                 }
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
                     // Pinned apps are listed once, at the top.
-                    let apps = model.apps(for: filter).filter { $0.pinned != true }
+                    let apps = model.apps(for: filter).filter { $0.pinned != true && model.matchesSearch($0) }
                     if !apps.isEmpty {
                         Section {
                             ForEach(apps) { app in
@@ -172,8 +175,11 @@ private struct PhoneDashboard: View {
             .overlay {
                 if !model.hasLoaded {
                     NotLoadedView(model: model)
+                } else if model.isSearching, !model.apps(for: .all).contains(where: { model.matchesSearch($0) }) {
+                    ContentUnavailableView.search(text: model.search)
                 }
             }
+            .searchable(text: $model.search, prompt: "Apps")
             .navigationTitle("Homelab")
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
@@ -274,7 +280,7 @@ private struct SplitDashboard: View {
     private var appList: some View {
         let filter: DashboardViewModel.Filter
         if case .apps(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
-        let apps = model.apps(for: filter)
+        let apps = model.apps(for: filter).filter { model.matchesSearch($0) }
         return List(apps, selection: $model.selectedAppID) { app in
             AppRowView(app: app)
                 .appActionControls(for: app)
@@ -291,9 +297,14 @@ private struct SplitDashboard: View {
             if !model.hasLoaded {
                 NotLoadedView(model: model)
             } else if apps.isEmpty {
-                ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage)
+                if model.isSearching {
+                    ContentUnavailableView.search(text: model.search)
+                } else {
+                    ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage)
+                }
             }
         }
+        .searchable(text: $model.search, prompt: "Filter Apps")
         .navigationTitle(filter.title)
         #if os(macOS)
         .navigationSubtitle(model.summary)

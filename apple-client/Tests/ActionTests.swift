@@ -201,3 +201,20 @@ struct SidebarPlaceTests {
         #expect(DashboardViewModel.SidebarItem(storageKey: "") == nil)
     }
 }
+
+@Suite("Searching the app list")
+struct AppSearchTests {
+    private let apps = try! JSONDecoder.homelab().decode([AppStatus].self, from: Data(#"""
+    [{"id":"jellyfin","name":"Jellyfin","state":"running"},{"id":"immich","name":"Immich Photos","state":"running"},
+     {"id":"pihole","name":"Pi-hole Café","state":"stopped"}]
+    """#.utf8))
+
+    @Test func matchesNameOrIDRegardlessOfCaseAndAccents() {
+        #expect(apps.filter { DashboardViewModel.matches($0, "JELLY") }.map(\.id) == ["jellyfin"])
+        #expect(apps.filter { DashboardViewModel.matches($0, "photos") }.map(\.id) == ["immich"])
+        #expect(apps.filter { DashboardViewModel.matches($0, "cafe") }.map(\.id) == ["pihole"])
+        #expect(apps.filter { DashboardViewModel.matches($0, "pihole") }.map(\.id) == ["pihole"])
+        #expect(apps.filter { DashboardViewModel.matches($0, "  ") }.count == 3)
+        #expect(apps.filter { DashboardViewModel.matches($0, "plex") }.isEmpty)
+    }
+}
