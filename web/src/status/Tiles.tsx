@@ -4,6 +4,7 @@ import { render, type ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
+import { Hover } from '../parts/Hover';
 import { Spark } from '../Spark';
 import { keptRestarting } from './stopFor';
 
@@ -30,6 +31,43 @@ export function SavingsTrend({ history }: { history: savings.Point[] }) {
       <Spark values={pts.map((p) => p.annual)} />
       <span class="trend">{delta === 0 ? `same since ${since}` : `${delta > 0 ? '+' : '−'}${dollars(Math.abs(delta))} since ${since}`}</span>
     </>
+  );
+}
+
+/** What the apps have saved since the first record, month by month: each
+ * recorded day counts its yearly figure over 365, and a day between two
+ * records counts the earlier one's. Months newest first. */
+export function savedSoFar(history: savings.Point[]): { total: number; since: string; months: { month: string; amount: number }[] } {
+  const pts = [...history].sort((a, b) => a.date.localeCompare(b.date));
+  const byMonth = new Map<string, number>();
+  let total = 0;
+  pts.forEach((p, i) => {
+    const day = new Date(p.date + 'T12:00:00');
+    const next = pts[i + 1] ? new Date(pts[i + 1].date + 'T12:00:00') : new Date(day.getTime() + 864e5);
+    for (const d = new Date(day); d < next; d.setDate(d.getDate() + 1)) {
+      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      byMonth.set(month, (byMonth.get(month) || 0) + p.annual / 365);
+      total += p.annual / 365;
+    }
+  });
+  const months = [...byMonth].map(([month, amount]) => ({ month, amount })).sort((a, b) => b.month.localeCompare(a.month));
+  return { total, since: pts[0]?.date || '', months };
+}
+
+/** The year's figure, and on hover (or Tab) what has been saved so far, month by month. */
+function SavedHover({ value, history }: { value: string; history: savings.Point[] }) {
+  const s = savedSoFar(history);
+  if (!s.since) return <>{value}</>;
+  const since = dayText(new Date(s.since + 'T12:00:00'), { month: 'short', day: 'numeric', year: 'numeric' });
+  const monthName = (m: string) => dayText(new Date(m + '-15T12:00:00'), { month: 'long', year: 'numeric' });
+  return (
+    <Hover cls="savedso" label={value} tip={
+      <>
+        <strong>Saved so far: {dollars(s.total)}</strong>
+        <span class="muted">since {since}, from what the apps replace each day</span>
+        <ul class="savedmonths">{s.months.slice(0, 12).map((m) => <li key={m.month}><span>{monthName(m.month)}</span><span>{dollars(m.amount)}</span></li>)}</ul>
+      </>
+    } />
   );
 }
 
@@ -83,7 +121,7 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
         sub={st.missing ? <span class="bad">{st.missing === 1 ? '1 baseline app is down' : `${st.missing} baseline apps are down`}</span> : 'All baseline apps are up'} />
       <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
         sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />
-      <Tile label="Replaces a year" value={st.savings > 0 ? dollars(st.savings) : '$0'} sub={<SavingsTrend history={history} />} />
+      <Tile label="Replaces a year" value={<SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} />} sub={<SavingsTrend history={history} />} />
       <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
         sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
     </>
