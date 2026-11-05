@@ -242,8 +242,10 @@ private struct UndoBanner: View {
             Image(systemName: "stop.circle.fill")
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
+            // It says what was stopped and for how long: let it wrap rather than cut that off.
             Text(text)
-                .lineLimit(1)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             Button("Undo") { undo() }
                 .fontWeight(.semibold)

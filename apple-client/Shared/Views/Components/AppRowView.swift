@@ -3,13 +3,19 @@ import SwiftUI
 struct AppRowView: View {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
-    /// Follows the person's text size.
+    @Environment(\.dynamicTypeSize) private var typeSize
+    /// Follows the person's text size, up to a point: at the largest sizes
+    /// the words need the room more than the icon does.
     @ScaledMetric(relativeTo: .body) private var iconSize: CGFloat = 32
     let app: AppStatus
 
+    /// At the accessibility text sizes the badges go under the name, and the
+    /// detail line may wrap, so nothing is cut off.
+    private var large: Bool { typeSize.isAccessibilitySize }
+
     var body: some View {
         HStack(spacing: 12) {
-            AppIconView(app: app, size: iconSize)
+            AppIconView(app: app, size: min(iconSize, 56))
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(app.name)
@@ -28,29 +34,36 @@ struct AppRowView: View {
                     Text(app.detailLine)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(large ? 4 : 1)
+                }
+                if large {
+                    HStack(spacing: 6) { badges }
                 }
             }
             Spacer(minLength: 0)
-            if let uptime = dashboard.cards.watchdog?.uptimeLabel(for: app.id) {
-                Text(uptime.replacingOccurrences(of: " this week", with: ""))
-                    .font(.caption2.monospacedDigit())
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.orange.opacity(0.15), in: Capsule())
-                    .foregroundStyle(.orange)
-                    .accessibilityLabel(uptime)
-            }
-            if let restarts = app.restarts, restarts > 0 {
-                Label("\(restarts)", systemImage: "arrow.counterclockwise")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .labelStyle(.titleAndIcon)
-                    .accessibilityLabel("\(restarts) restarts")
-            }
+            if !large { badges }
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private var badges: some View {
+        if let uptime = dashboard.cards.watchdog?.uptimeLabel(for: app.id) {
+            Text(uptime.replacingOccurrences(of: " this week", with: ""))
+                .font(.caption2.monospacedDigit())
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.orange.opacity(0.15), in: Capsule())
+                .foregroundStyle(.orange)
+                .accessibilityLabel(uptime)
+        }
+        if let restarts = app.restarts, restarts > 0 {
+            Label("\(restarts)", systemImage: "arrow.counterclockwise")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .labelStyle(.titleAndIcon)
+                .accessibilityLabel("\(restarts) restarts")
+        }
     }
 }
 
