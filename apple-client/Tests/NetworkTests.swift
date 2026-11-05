@@ -344,3 +344,61 @@ extension NetworkRuleTests {
         #expect(!vm.isBusy)
     }
 }
+
+// Finances saves, against the same stub.
+extension NetworkRuleTests {
+    private static let financesView = #"""
+    {"result":{"today":"2026-11-05","checking":"chk","start":{"chk":2400},"periods":[],"readOnly":false,
+     "plan":{"rev":"r7","people":[],"accounts":[{"id":"chk","name":"Everyday","kind":"checking","balance":2400,"history":[{"date":"2026-10-01","annual":1}]}],
+             "payments":[],"cushion":0,"logos":{"chase":"data:image/png;base64,AAAA"},"unknownFutureField":{"kept":true}}}}
+    """#
+
+    @MainActor
+    private func financesModel() -> FinancesViewModel {
+        let (api, _) = client()
+        let device = try! JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"abc123","name":"Test","canChange":false,"finances":"edit"}"#.utf8))
+        return FinancesViewModel(api: api, device: { device }, authorize: { _ in true })
+    }
+
+    @Test @MainActor func aBalanceGoesBackWithTheWholePlanAndItsRev() async throws {
+        StubProtocol.reset { request in
+            switch request.url?.path {
+            case "/api/call/Finances", "/api/call/SaveFinances": return (200, [:], Self.json(Self.financesView), nil)
+            default: return (404, [:], Self.json(#"{"error":"not here"}"#), nil)
+            }
+        }
+        let model = financesModel()
+        await model.loadPlan()
+        #expect(model.canEdit)
+        let account = try #require(model.plan?.plan.accounts.first)
+        #expect(await model.setBalance(of: account, to: 2512.5))
+
+        let save = try #require(StubProtocol.requests.first { $0.url.path == "/api/call/SaveFinances" })
+        let args = try JSONDecoder().decode([JSONValue].self, from: save.body)
+        let sent = try #require(args.first)
+        #expect(sent["rev"] == .string("r7"))                                   // the rev it was read at
+        #expect(sent["unknownFutureField"] == .object(["kept": .bool(true)]))   // nothing lost
+        #expect(sent["logos"] != nil)
+        guard case .array(let accounts)? = sent["accounts"] else { Issue.record("no accounts"); return }
+        #expect(accounts[0]["balance"] == .number(2512.5))
+        #expect(accounts[0]["history"] != nil)
+    }
+
+    @Test @MainActor func aStaleSaveIsRefusedAndTheLatestRead() async throws {
+        StubProtocol.reset { request in
+            switch request.url?.path {
+            case "/api/call/Finances": return (200, [:], Self.json(Self.financesView), nil)
+            case "/api/call/SaveFinances":
+                return (500, [:], Self.json(#"{"error":"Finances were changed on another device after this was read."}"#), nil)
+            default: return (404, [:], Self.json(#"{"error":"not here"}"#), nil)
+            }
+        }
+        let model = financesModel()
+        await model.loadPlan()
+        let account = try #require(model.plan?.plan.accounts.first)
+        #expect(await model.setBalance(of: account, to: 1) == false)
+        #expect(model.saveError?.contains("another device") == true)
+        // Read again after the refusal: the latest, not this device's stale copy.
+        #expect(StubProtocol.requests.filter { $0.url.path == "/api/call/Finances" }.count == 2)
+    }
+}
