@@ -287,3 +287,14 @@ struct AppPageTests {
         #expect(AppDetailView.httpsURL("ftp://photos.example.com") == nil)
     }
 }
+
+#if os(macOS)
+@Suite("The Dock badge")
+struct DockBadgeTests {
+    @Test func aCountOnlyAndNothingAtZero() {
+        #expect(DockBadge.label(for: 0) == nil)
+        #expect(DockBadge.label(for: 3) == "3")
+        #expect(DockBadge.label(for: 250) == "99+")
+    }
+}
+#endif
