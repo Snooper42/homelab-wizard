@@ -22,8 +22,8 @@ import AppKit
 /// - The dashboard only shows while `.unlocked`. Locking stops the live
 ///   stream and drops every reading from memory.
 /// - The app locks when it goes to the background. On macOS it also locks
-///   when the app is hidden, the screens sleep, the Mac sleeps, or the user
-///   session switches away.
+///   when the app is hidden, the screens sleep, the Mac sleeps, the user
+///   session switches away, or it has been behind other apps for five minutes.
 /// - A biometric prompt makes the scene `.inactive`, not `.background`, so
 ///   it can't trigger a lock loop. Only `.background` locks.
 /// - After a lock caused by leaving the app, the next return prompts by
@@ -88,6 +88,12 @@ final class AppCoordinator {
     #if os(macOS)
     /// The observers stay for the app's lifetime, and so does the coordinator.
     @ObservationIgnored private var macObservers: [NSObjectProtocol] = []
+    @ObservationIgnored private var backgroundLock: Task<Void, Never>?
+
+    /// How long the app may sit behind other apps, unlocked, before it locks.
+    /// A Mac app doesn't go to the background the way an iPhone app does,
+    /// so without this a window left open behind others stays unlocked.
+    static let macBackgroundLock: Duration = .seconds(300)
 
     /// A Mac can be walked away from without the app going to the
     /// background, and with only the menu bar item open. So these are
@@ -96,6 +102,7 @@ final class AppCoordinator {
     /// - the screen locks
     /// - the screens or the Mac sleep
     /// - fast user switching
+    /// - five minutes behind other apps (`macBackgroundLock`)
     private func installMacLockTriggers() {
         let workspace = NSWorkspace.shared.notificationCenter
         let distributed = DistributedNotificationCenter.default()
@@ -115,6 +122,26 @@ final class AppCoordinator {
         on(distributed, Notification.Name("com.apple.screenIsLocked")) { $0.lock() }
         on(distributed, Notification.Name("com.apple.screenIsUnlocked")) { $0.rearmAndRequestUnlock() }
         on(workspace, NSWorkspace.screensDidWakeNotification) { $0.rearmAndRequestUnlock() }
+        on(NotificationCenter.default, NSApplication.didResignActiveNotification) { $0.startBackgroundLock() }
+        on(NotificationCenter.default, NSApplication.didBecomeActiveNotification) { $0.cancelBackgroundLock() }
+    }
+
+    private func startBackgroundLock() {
+        backgroundLock?.cancel()
+        backgroundLock = Task { [weak self] in
+            try? await Task.sleep(for: Self.macBackgroundLock)
+            guard !Task.isCancelled, let self else { return }
+            self.backgroundLock = nil
+            if self.route == .unlocked {
+                Log.security.notice("Locking: behind other apps for a while")
+                self.lock(promptOnReturn: true)
+            }
+        }
+    }
+
+    private func cancelBackgroundLock() {
+        backgroundLock?.cancel()
+        backgroundLock = nil
     }
     #endif
 

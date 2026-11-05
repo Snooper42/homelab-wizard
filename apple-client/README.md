@@ -21,7 +21,7 @@ apple-client/
 | | iPhone | Mac and iPad |
 |---|---|---|
 | **Pairing** | The code, the pasted pairing link, or a scan of the computer's QR code. Optionally as a wall screen (look-only for good). | The code or the pasted link |
-| **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, and window close |
+| **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, window close, and after five minutes behind other apps |
 | **Status** | Live list: pinned first, then needs attention, running, stopped. Each row has its icon, "N% up" and a dot for what changed since you looked. The overnight line in the morning. | The same, in a three-column split view whose sidebar keeps its place, plus a menu bar item |
 | **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog), details, why it last started, addresses, logs (filter, errors and warnings in colour, Problems Only, copy), and its settings (nightly updates, alerts, pin) | The same, with an App menu (⌥⌘S/R/./L) |
 | **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list | The same, plus keyboard shortcuts |
@@ -96,7 +96,7 @@ hash. The client receives the token itself, once.
 | Token extracted from the device or backups | Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, `kSecAttrSynchronizable=false`, and the data-protection keychain on macOS. The accessibility attribute is checked again on every read, and a mismatched item is deleted. | `KeychainManager` |
 | Stale pairing after a reinstall | Keychain items survive app deletion on iOS, so the first launch after an install deletes them. | `AppCoordinator.purgeKeychainIfFreshInstall` |
 | Someone else picks up the unlocked device | Face ID / Touch ID / passcode (`.deviceOwnerAuthentication`) at launch and on every return from the background. A new `LAContext` each time, with no reuse window. With no passcode set, the app refuses to open. | `BiometricAuthManager`, `AppCoordinator` |
-| Mac left unattended | Also locks when the app is hidden, on screen lock, when the screens or the system sleep, on fast user switching, and when its window closes. These triggers are installed in the coordinator, so they work with only the menu bar item open. ⌘L locks by hand. | `AppCoordinator.installMacLockTriggers` |
+| Mac left unattended | Also locks when the app is hidden, on screen lock, when the screens or the system sleep, on fast user switching, when its window closes, and after five minutes behind other apps (a Mac app never goes to the background by itself). These triggers are installed in the coordinator, so they work with only the menu bar item open. ⌘L locks by hand. | `AppCoordinator.installMacLockTriggers` |
 | Menu bar item showing the homelab | It shows only what the unlocked app holds. Locked (including with its window closed), it says so and nothing else. | `MenuBarView` |
 | App switcher snapshot | An opaque shield covers the app whenever the scene isn't active (iOS). | `PrivacyShieldView` |
 | Data left in memory while locked | Locking stops the SSE stream and clears every reading. Late answers that arrive after the lock are dropped. | `LiveEventManager.clear` |
