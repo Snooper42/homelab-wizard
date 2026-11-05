@@ -1181,3 +1181,80 @@ struct NetworkRuleTests {
         #expect(try store.loadCredential()?.endpoint == endpoint)
     }
 }
+
+// Live events run against the same stub, so they're in the same
+// serialized suite: two suites must not set its answers at once.
+extension NetworkRuleTests {
+    private static let statusJSON = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+
+    /// Waits up to 5 seconds for `condition`.
+    @MainActor
+    private func eventually(_ condition: @MainActor () -> Bool) async -> Bool {
+        for _ in 0..<100 {
+            if condition() { return true }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+        return condition()
+    }
+
+    private static func answer(events: StubProtocol.Answer) -> @Sendable (URLRequest) -> StubProtocol.Answer {
+        { request in
+            switch request.url?.path {
+            case "/api/events": return events
+            case "/api/call/LastStatus": return (200, [:], json(#"{"result":null}"#), nil)
+            case "/api/call/Status": return (200, [:], json(#"{"result":\#(statusJSON)}"#), nil)
+            default: return (404, [:], json(#"{"error":"not here"}"#), nil)
+            }
+        }
+    }
+
+    @Test @MainActor func aChangeWithoutStatusReadsStatus() async {
+        StubProtocol.reset(Self.answer(events: (200, ["Content-Type": "text/event-stream"],
+                                                 Self.json(": following\n\ndata: {\"apps\":[\"immich\"]}\n\n"), nil)))
+        let (api, _) = client()
+        let live = LiveEventManager(api: api)
+        live.start()
+        #expect(await eventually { live.status?.apps.first?.id == "immich" })
+        #expect(StubProtocol.requests.contains { $0.url.path == "/api/call/Status" })
+        #expect(StubProtocol.requests.filter { $0.url.path == "/api/events" }.allSatisfy { $0.authorization == "Bearer \(Self.token)" })
+        live.clear()
+        #expect(live.status == nil)
+        #expect(live.connection == .idle)
+    }
+
+    @Test @MainActor func aRefusedStreamUnpairsInsteadOfRetrying() async {
+        StubProtocol.reset(Self.answer(events: (401, [:], Self.json(#"{"error":"this phone is not paired"}"#), nil)))
+        let (api, _) = client()
+        let live = LiveEventManager(api: api)
+        final class Flag { var on = false }
+        let unpaired = Flag()
+        live.onUnauthorized = { unpaired.on = true }
+        live.start()
+        #expect(await eventually { unpaired.on })
+        if case .stopped = live.connection {} else { Issue.record("not stopped: \(live.connection)") }
+        let tries = StubProtocol.requests.filter { $0.url.path == "/api/events" }.count
+        try? await Task.sleep(for: .milliseconds(1500))
+        #expect(StubProtocol.requests.filter { $0.url.path == "/api/events" }.count == tries) // no retry
+        live.clear()
+    }
+
+    @Test @MainActor func aStreamThatIsNotSSEIsNotTrusted() async {
+        StubProtocol.reset(Self.answer(events: (200, ["Content-Type": "text/html"], Self.json("<html>"), nil)))
+        let (api, _) = client()
+        let live = LiveEventManager(api: api)
+        live.start()
+        #expect(await eventually {
+            if case .reconnecting = live.connection { return true }
+            return false
+        })
+        live.clear()
+    }
+
+    @Test @MainActor func nothingIsKeptWhileStopped() throws {
+        let (api, _) = client()
+        let live = LiveEventManager(api: api)
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Self.json(Self.statusJSON))
+        live.ingest(status) // a late answer after a lock
+        #expect(live.status == nil)
+    }
+}
