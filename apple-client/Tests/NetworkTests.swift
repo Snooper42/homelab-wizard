@@ -249,3 +249,44 @@ extension NetworkRuleTests {
         #expect(live.status == nil)
     }
 }
+
+// Whole-homelab jobs, against the same stub (so in the serialized suite).
+extension NetworkRuleTests {
+    @MainActor
+    private func tasks(canChange: Bool, allow: Bool = true) -> (HomelabTasksViewModel, APIClient) {
+        let (api, _) = client()
+        let device = try! JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"abc123","name":"Test","canChange":\#(canChange)}"#.utf8))
+        let vm = HomelabTasksViewModel(api: api, device: { device }, authorize: { _ in allow }, didFinish: { _ in })
+        return (vm, api)
+    }
+
+    private static func homelabArgs(_ seen: StubProtocol.Seen) throws -> [JSONValue] {
+        try JSONDecoder().decode([JSONValue].self, from: seen.body)
+    }
+
+    @Test @MainActor func lookingForProblemsNeverApplies() async throws {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":["Would restart immich"]}"#), nil) }
+        let (vm, _) = tasks(canChange: true)
+        await vm.run(.fix)
+        let seen = try #require(StubProtocol.requests.first)
+        #expect(seen.url.path == "/api/call/Homelab")
+        #expect(try Self.homelabArgs(seen) == [.string("fix"), .string(""), .bool(false)])
+        #expect(vm.output?.isFixPreview == true)
+
+        // Only Fix These applies, and only then.
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":["Restarted immich"]}"#), nil) }
+        await vm.run(.fix, apply: true)
+        #expect(try Self.homelabArgs(try #require(StubProtocol.requests.first)) == [.string("fix"), .string(""), .bool(true)])
+        #expect(vm.output?.isFixPreview == false)
+    }
+
+    @Test @MainActor func aLookOnlyDeviceOrARefusedPromptSendsNothing() async {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null}"#), nil) }
+        let (lookOnly, _) = tasks(canChange: false)
+        await lookOnly.run(.backup)
+        let (refused, _) = tasks(canChange: true, allow: false)
+        await refused.run(.backup)
+        #expect(StubProtocol.requests.isEmpty)
+        #expect(refused.running == nil)
+    }
+}
