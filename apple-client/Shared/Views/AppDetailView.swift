@@ -65,6 +65,9 @@ struct AppDetailView: View {
                     }
                     if let drive = app.waitingFor, !drive.isEmpty {
                         LabeledContent("Waiting for drive", value: drive)
+                        Text("It starts by itself within a minute of the drive being plugged in again.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
