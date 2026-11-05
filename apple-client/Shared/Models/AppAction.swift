@@ -95,6 +95,46 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
     }
 }
 
+/// An app's own setting a phone may change (the `SetAppSetting` method).
+enum AppSetting: String, Sendable, CaseIterable, Identifiable {
+    /// On: the nightly update includes it (`homelab updates release`).
+    /// Off: its updates are held (`homelab updates hold`). Container apps only.
+    case updates
+    /// On: the watchdog alerts when it stops (`homelab notify on`).
+    case alerts
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .updates: "Update nightly"
+        case .alerts: "Tell me if it stops"
+        }
+    }
+
+    /// Its current value, from Status.
+    func isOn(for app: AppStatus) -> Bool {
+        switch self {
+        case .updates: app.held != true
+        case .alerts: app.quiet != true
+        }
+    }
+
+    /// The settings an app offers: a native app has no nightly update here,
+    /// as on the computer.
+    static func available(for app: AppStatus) -> [AppSetting] {
+        guard AppStatus.isValidID(app.id) else { return [] }
+        return app.isNative ? [.alerts] : [.updates, .alerts]
+    }
+
+    func reason(on: Bool, app: AppStatus) -> String {
+        switch self {
+        case .updates: on ? "Let \(app.name) update nightly again." : "Hold \(app.name)'s updates."
+        case .alerts: on ? "Alert when \(app.name) stops." : "Stop alerts about \(app.name)."
+        }
+    }
+}
+
 extension AppStatus {
     /// It runs as its own program (Jellyfin on a Mac), not in a container,
     /// so a phone can't start or stop it.

@@ -84,17 +84,11 @@ struct AppDetailView: View {
                     }
                 }
 
-                if app.settingsChanged == true || app.held == true || app.quiet == true {
+                settingsSection(for: app)
+
+                if app.settingsChanged == true {
                     Section("Notes") {
-                        if app.settingsChanged == true {
-                            Label("Settings changed. It keeps the old ones until it's recreated.", systemImage: "gearshape.arrow.triangle.2.circlepath")
-                        }
-                        if app.held == true {
-                            Label("Updates are held after a rollback.", systemImage: "pause.circle")
-                        }
-                        if app.quiet == true {
-                            Label("Watchdog alerts are muted.", systemImage: "bell.slash")
-                        }
+                        Label("Settings changed. It keeps the old ones until it's recreated.", systemImage: "gearshape.arrow.triangle.2.circlepath")
                     }
                 }
             }
@@ -139,6 +133,40 @@ struct AppDetailView: View {
                     Text(hint)
                 } else if available.contains(.stop) {
                     Text("Stopped for a while, it starts again by itself.")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func settingsSection(for app: AppStatus) -> some View {
+        let settings = AppSetting.available(for: app)
+        if !settings.isEmpty {
+            Section {
+                ForEach(settings) { setting in
+                    Toggle(isOn: Binding(
+                        get: { actions.value(of: setting, for: app) },
+                        set: { on in Task { await actions.set(setting, on: on, for: app) } }
+                    )) {
+                        HStack {
+                            Text(setting.title)
+                            if actions.isSaving(setting, for: app) {
+                                ProgressView().controlSize(.mini)
+                            }
+                        }
+                    }
+                    .disabled(!actions.canChange || actions.isBusy)
+                }
+                if let error = actions.settingErrors[app.id] {
+                    Text(error).font(.callout).foregroundStyle(.red)
+                }
+            } header: {
+                Text("Settings")
+            } footer: {
+                if !actions.canChange {
+                    Text("This device can only look.")
+                } else if app.held == true {
+                    Text("Its updates are held, for example after a rollback. Turn Update nightly on to let the nightly update include it again.")
                 }
             }
         }

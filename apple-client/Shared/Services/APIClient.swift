@@ -228,6 +228,16 @@ actor APIClient {
         return APIError.sanitizeLog(envelope?.log)
     }
 
+    /// Changes one of an app's settings. This is a change.
+    func setAppSetting(_ setting: AppSetting, on: Bool, appID: String) async throws -> [String] {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        let (request, endpoint) = try callRequest("SetAppSetting", [.string(appID), .string(setting.rawValue), .bool(on)])
+        Log.network.notice("SetAppSetting \(setting.rawValue, privacy: .public)=\(on, privacy: .public) on \(appID, privacy: .private(mask: .hash))")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        let envelope = try? JSONDecoder().decode(LogEnvelope.self, from: data)
+        return APIError.sanitizeLog(envelope?.log)
+    }
+
     /// Status, then each card as it's read (the `StatusBoard` method, ndjson).
     /// `board` is the caller's number for this request. It comes back on
     /// every card.

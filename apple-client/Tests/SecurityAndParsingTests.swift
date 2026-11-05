@@ -490,3 +490,24 @@ struct FinancesPlanTests {
         #expect(view.netWorth == 4050)
     }
 }
+
+@Suite("App settings")
+struct AppSettingTests {
+    private func app(_ json: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func valuesFromStatus() throws {
+        let held = try app(#"{"id":"immich","name":"Immich","state":"running","held":true,"quiet":true}"#)
+        #expect(!AppSetting.updates.isOn(for: held))
+        #expect(!AppSetting.alerts.isOn(for: held))
+        let plain = try app(#"{"id":"immich","name":"Immich","state":"running"}"#)
+        #expect(AppSetting.updates.isOn(for: plain) && AppSetting.alerts.isOn(for: plain))
+    }
+
+    @Test func nativeAppsHaveOnlyAlerts() throws {
+        let native = try app(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#)
+        #expect(AppSetting.available(for: native) == [.alerts])
+        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts"]) // what SetAppSetting takes
+    }
+}

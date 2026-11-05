@@ -51,6 +51,9 @@ final class AppActionsViewModel {
 
     var confirmation: Confirmation?
     var details: Details?
+    /// A setting being saved, as the person set it, shown until Status agrees.
+    private(set) var settingOverrides: [String: Bool] = [:]
+    private(set) var settingErrors: [AppStatus.ID: String] = [:]
     /// These go up by one per outcome, to trigger haptics.
     private(set) var successCount = 0
     private(set) var failureCount = 0
@@ -190,6 +193,45 @@ final class AppActionsViewModel {
             // A 401 here unpairs through the refresh, as anywhere else.
             await liveEvents.refreshNow()
         }
+    }
+
+    // MARK: Settings
+
+    private static func key(_ setting: AppSetting, _ id: AppStatus.ID) -> String { "\(id)|\(setting.rawValue)" }
+
+    /// The value to show: the one being saved, or Status's.
+    func value(of setting: AppSetting, for app: AppStatus) -> Bool {
+        settingOverrides[Self.key(setting, app.id)] ?? setting.isOn(for: app)
+    }
+
+    func isSaving(_ setting: AppSetting, for app: AppStatus) -> Bool {
+        settingOverrides[Self.key(setting, app.id)] != nil
+    }
+
+    func set(_ setting: AppSetting, on: Bool, for app: AppStatus) async {
+        guard !isBusy, canChange, AppSetting.available(for: app).contains(setting) else { return }
+        isBusy = true
+        guard await authorize(setting.reason(on: on, app: app)) else {
+            isBusy = false
+            return
+        }
+        let key = Self.key(setting, app.id)
+        settingOverrides[key] = on
+        settingErrors[app.id] = nil
+        do {
+            _ = try await api.setAppSetting(setting, on: on, appID: app.id)
+            successCount += 1
+            isBusy = false
+            await liveEvents.refreshNow()
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SetAppSetting failed: \(apiError.logName, privacy: .public)")
+            settingErrors[app.id] = apiError.errorDescription
+            failureCount += 1
+            isBusy = false
+        }
+        // Status now says what it is (or the switch goes back, on failure).
+        settingOverrides[key] = nil
     }
 
     private func offerUndo(for app: AppStatus, until: StopChoice?) {
