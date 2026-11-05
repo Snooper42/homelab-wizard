@@ -42,6 +42,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, a sidebar balance opens its own group:** Cash, Investments, or another group's balance in the sidebar opens Net worth on that group alone: its total, each of its accounts month by month as a band of its own, and only its accounts listed. **Show everything** goes back to the whole page.
 - **Finances, the calendar a year ahead:** past the three months it reads checking for, the calendar goes on to a year from today with each payday and payment on its day, so a yearly renewal shows in its month. Those days show what is planned, without a balance.
 - **Status, tighter:** the short cards (Protection, What the apps keep, what is using power) stack in one column beside Recent alerts instead of one sitting alone beside a long list; an alert with a long list shows its first 3 lines and **Show N more**; and each app's size takes one line, its name, bar, and size side by side.
+- **Keep using the app while a long job runs:** Update all apps now, an app's update, Fix it, and the other commands in a window of their own have **Hide** while they run; they carry on, with a small bar at the foot of the sidebar that brings them back and says when they're done.
+- **Jobs wait their turn instead of failing:** pressing Back up now, a Setup step, Install, or an app's Start, Stop, or Restart while another job runs no longer says "another install or setup step is running". It waits its turn, says what it's waiting for where you pressed it, and starts by itself as soon as the one before ends. The other apps' buttons stay usable meanwhile.
 
 ### Fixed
 
