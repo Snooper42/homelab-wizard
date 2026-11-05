@@ -84,6 +84,11 @@ struct DashboardView: View {
         // The cards change slowly: read them now, then every 5 minutes while unlocked.
         .task { await model.loadCatalog() }
         .task { await model.loadForMorning() }
+        // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
+        .onChange(of: model.liveEvents.status) { _, status in
+            if let status { model.latestApps = status.apps }
+        }
+        .onDisappear { model.rememberSeen() }
         .task {
             while !Task.isCancelled {
                 await model.cards.load()

@@ -429,3 +429,30 @@ struct OvernightTests {
         #expect(!Overnight.isHiddenToday(at("2026-11-06T07:30:00Z"), defaults: d, calendar: utc))
     }
 }
+
+@Suite("Changed since you looked")
+struct ChangeMemoryTests {
+    private func app(_ json: String) -> AppStatus { try! JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8)) }
+
+    @Test func rulesAsTheComputerHasThem() {
+        let before = [app(#"{"id":"a","name":"A","state":"running","since":"2026-11-05T01:00:00Z","updatedAt":"2026-11-01T00:00:00Z"}"#),
+                      app(#"{"id":"b","name":"B","state":"stopped"}"#),
+                      app(#"{"id":"c","name":"C","state":"running","since":"2026-11-05T01:00:00Z"}"#),
+                      app(#"{"id":"d","name":"D","state":"running","since":"2026-11-05T01:00:00Z"}"#)]
+        let memory = ChangeMemory.memory(of: before)
+        #expect(ChangeMemory.change(of: app(#"{"id":"a","name":"A","state":"running","since":"2026-11-05T09:00:00Z","updatedAt":"2026-11-05T09:00:00Z"}"#), since: memory) == "Updated since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"b","name":"B","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory) == "Started since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"c","name":"C","state":"stopped"}"#), since: memory) == "Stopped since you looked")
+        #expect(ChangeMemory.change(of: app(#"{"id":"d","name":"D","state":"running","since":"2026-11-05T09:00:00Z"}"#), since: memory) == "Restarted since you looked")
+        #expect(ChangeMemory.change(of: before[0], since: memory) == nil)               // the same
+        #expect(ChangeMemory.change(of: app(#"{"id":"new","name":"N","state":"running"}"#), since: memory) == nil) // not seen before
+        #expect(ChangeMemory.change(of: before[0], since: nil) == nil)                   // first time on this device
+    }
+
+    @Test func keepsNothingReadable() throws {
+        let memory = ChangeMemory.memory(of: [app(#"{"id":"immich","name":"Immich","state":"running","since":"2026-11-05T01:00:00Z"}"#)])
+        let stored = String(decoding: try JSONEncoder().encode(memory), as: UTF8.self)
+        #expect(!stored.contains("immich"))
+        #expect(!stored.contains("2026"))
+    }
+}

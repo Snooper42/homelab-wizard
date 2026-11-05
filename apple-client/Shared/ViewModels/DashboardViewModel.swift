@@ -171,6 +171,21 @@ final class DashboardViewModel {
         }
     }
 
+    /// What was seen last time, as hashes (ChangeMemory), read once per unlock.
+    @ObservationIgnored private let seen = ChangeMemory.load()
+    /// The apps as last shown, kept to be saved as seen when the dashboard goes.
+    @ObservationIgnored var latestApps: [AppStatus] = []
+
+    /// "Restarted since you looked", or nil.
+    func changeNote(for app: AppStatus) -> String? {
+        ChangeMemory.change(of: app, since: seen)
+    }
+
+    /// Leaving the dashboard: what it showed is what was seen.
+    func rememberSeen() {
+        ChangeMemory.save(latestApps)
+    }
+
     /// Hidden until tomorrow on this device.
     private(set) var overnightHidden = Overnight.isHiddenToday()
 

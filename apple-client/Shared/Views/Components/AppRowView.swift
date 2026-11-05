@@ -11,7 +11,16 @@ struct AppRowView: View {
         HStack(spacing: 12) {
             AppIconView(app: app, size: iconSize)
             VStack(alignment: .leading, spacing: 2) {
-                Text(app.name)
+                HStack(spacing: 6) {
+                    Text(app.name)
+                    if let note = dashboard.changeNote(for: app) {
+                        Circle()
+                            .fill(.tint)
+                            .frame(width: 7, height: 7)
+                            .accessibilityLabel(note)
+                            .help(note)
+                    }
+                }
                 if let pending = actions.pending[app.id] {
                     PendingActionLine(app: app, pending: pending)
                         .font(.caption)
