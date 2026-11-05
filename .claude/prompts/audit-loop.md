@@ -528,3 +528,7 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   file's too) are drawn by Preact, with no raw HTML anywhere in the
   change, and nothing new reaches a phone or the Go side. No code
   change needed.
+- **Round 20 (#408, read through):** Tdarr is handed only the two
+  folders its container mounts (narrower than before); lyrics are read
+  from a song's own .lrc and .txt beside it, and still come only from
+  LRCLIB, which Tidy Up already used. No code change needed.
