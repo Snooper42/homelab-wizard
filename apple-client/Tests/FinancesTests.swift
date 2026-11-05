@@ -422,3 +422,55 @@ struct GoalEditTests {
         #expect(FinancePlanEdit.settingGoal(id: "g1", target: .nan, in: plan) == nil)
     }
 }
+
+@Suite("Receipt photos lose their metadata")
+struct ReceiptPrivacyTests {
+    /// A 3000 × 2000 JPEG carrying a GPS position and EXIF details, as a phone photo would.
+    private func photoWithLocation() throws -> Data {
+        let width = 3000, height = 2000
+        let space = CGColorSpaceCreateDeviceRGB()
+        let context = try #require(CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                             space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.setFillColor(CGColor(red: 0.9, green: 0.4, blue: 0.1, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        let image = try #require(context.makeImage())
+
+        let out = NSMutableData()
+        let destination = try #require(CGImageDestinationCreateWithData(out, "public.jpeg" as CFString, 1, nil))
+        let properties: [CFString: Any] = [
+            kCGImagePropertyGPSDictionary: [
+                kCGImagePropertyGPSLatitude: 51.5007, kCGImagePropertyGPSLatitudeRef: "N",
+                kCGImagePropertyGPSLongitude: 0.1246, kCGImagePropertyGPSLongitudeRef: "W",
+            ],
+            kCGImagePropertyExifDictionary: [kCGImagePropertyExifDateTimeOriginal: "2026:11:05 08:00:00"],
+            kCGImagePropertyTIFFDictionary: [kCGImagePropertyTIFFModel: "Test Phone"],
+        ]
+        CGImageDestinationAddImage(destination, image, properties as CFDictionary)
+        #expect(CGImageDestinationFinalize(destination))
+        return out as Data
+    }
+
+    @Test func theOriginalReallyHasALocation() throws {
+        let data = try photoWithLocation()
+        let source = try #require(CGImageSourceCreateWithData(data as CFData, nil))
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] ?? [:]
+        #expect(props[kCGImagePropertyGPSDictionary] != nil) // so the next test proves something
+    }
+
+    @Test func thePreparedPhotoIsSmallerAndCarriesNone() throws {
+        let url = try #require(ReceiptCodec.preparePhoto(try photoWithLocation()))
+        let jpeg = try #require(Data(base64Encoded: String(url.dropFirst("data:image/jpeg;base64,".count))))
+        #expect(jpeg.count <= ReceiptCodec.maxBytes)
+        let source = try #require(CGImageSourceCreateWithData(jpeg as CFData, nil))
+        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] ?? [:]
+        #expect(props[kCGImagePropertyGPSDictionary] == nil)
+        let exif = props[kCGImagePropertyExifDictionary] as? [CFString: Any]
+        #expect(exif?[kCGImagePropertyExifDateTimeOriginal] == nil)
+        let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
+        #expect(tiff?[kCGImagePropertyTIFFModel] == nil)
+        let width = props[kCGImagePropertyPixelWidth] as? Int ?? 0
+        let height = props[kCGImagePropertyPixelHeight] as? Int ?? 0
+        #expect(max(width, height) <= ReceiptCodec.uploadPixels)
+        #expect(max(width, height) >= ReceiptCodec.uploadPixels - 1)
+    }
+}
