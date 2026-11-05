@@ -75,11 +75,11 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
     try { still({ id: t.id, url: await readReceipt!(t.receipt!) }); } catch (e) { still({ id: t.id, problem: String((e as Error)?.message || e) }); }
   };
   const [q, setQ] = useState('');
-  const [account, setAccount] = useState('');
-  const [category, setCategory] = useState('');
-  const [month, setMonthPick] = useState('');
+  const [accountPick, setAccount] = useState('');
+  const [categoryPick, setCategory] = useState('');
+  const [monthPick, setMonthPick] = useState('');
   const [way, setWay] = useState('');
-  const [tag, setTag] = useState('');
+  const [tagPick, setTag] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const all = ledger.transactions;
   // What each came to in the plan's currency, so the totals add up (an account may keep another).
@@ -88,6 +88,13 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
   const cats = [...new Set(all.flatMap(catsOf))].sort();
   const tags = tagsOf(all);
   const months = [...new Set(all.map((t) => t.date.slice(0, 7)))].sort().reverse();
+  const accounts = (v.plan.accounts || []).filter((a) => all.some((t) => t.account === a.id || t.to === a.id));
+  // A pick whose last transaction went (deleted, or moved to another category or month) filters by
+  // nothing: its menu would show Every … while the list stayed empty.
+  const account = accounts.some((a) => a.id === accountPick) ? accountPick : '';
+  const category = cats.includes(categoryPick) ? categoryPick : '';
+  const month = months.includes(monthPick) ? monthPick : '';
+  const tag = tags.includes(tagPick) ? tagPick : '';
   const want = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = all.filter((t) => (!account || t.account === account || t.to === account)
     && (!category || catsOf(t).includes(category))
@@ -126,7 +133,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
             <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, note" aria-label="Search transactions" />
             <select aria-label="Account" value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>
               <option value="">Every account</option>
-              {(v.plan.accounts || []).filter((a) => all.some((t) => t.account === a.id || t.to === a.id)).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
             <select aria-label="Category" value={category} onChange={(e) => setCategory((e.target as HTMLSelectElement).value)}>
               <option value="">Every category</option>

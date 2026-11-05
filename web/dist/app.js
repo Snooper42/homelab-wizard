@@ -480,13 +480,13 @@
   // web/src/setup/Checklist.tsx
   var failedLine = (f4) => `Did not work: ${f4.why.replace(/^✗\s*/, "").replace(/[.\s]+$/, "")}. Once that is put right, press ${f4.again} again.`;
   function Actions({ s: s3, running: running3, on }) {
-    const open2 = s3.state !== "waiting" && s3.state !== "done";
+    const open3 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
-      open2 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
-      open2 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running3, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
-      ...open2 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running3, onClick: () => on.run(s3, ci), children: c3.label })) : [],
-      open2 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
-      open2 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
+      open3 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on.fill(s3.settings), children: "Fill in settings" }),
+      open3 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running3, onClick: () => on.run(s3), children: s3.runLabel || "Run" }),
+      ...open3 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running3, onClick: () => on.run(s3, ci), children: c3.label })) : [],
+      open3 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
+      open3 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on.closeSignups, children: "Close sign-ups now" }),
       s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: s3.state === "done", onChange: (e3) => on.markDone(s3, e3.currentTarget.checked) }),
         " Done"
@@ -517,21 +517,21 @@
     const later2 = steps.filter(waits);
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
-      const open2 = !!opened2[s3.id];
+      const open3 = !!opened2[s3.id];
       const more = s3.why || s3.detail;
       return (
         // A row: the step's number, what it gives you (one line until it is
         // opened), its buttons, and the chevron that opens it.
-        /* @__PURE__ */ u3("li", { class: s3.state + (open2 ? " open" : ""), children: [
+        /* @__PURE__ */ u3("li", { class: s3.state + (open3 ? " open" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n3) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [
             /* @__PURE__ */ u3("strong", { class: "title", children: s3.title }),
             /* @__PURE__ */ u3("div", { class: "sub muted", children: s3.why }),
             failed[s3.id] && s3.state !== "done" && /* @__PURE__ */ u3("div", { class: "sub failed bad", children: failedLine(failed[s3.id]) }),
-            open2 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
+            open3 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running3 === s3.id, on }),
-          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open2, "aria-label": (open2 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
     };
@@ -1532,14 +1532,14 @@
     }
     if (!s3?.start) return "";
     const d3 = parseDay(s3.start);
-    const weekday2 = dayText(d3, { weekday: "long" });
+    const weekday3 = dayText(d3, { weekday: "long" });
     switch (s3.every) {
       case "once":
         return "Once, " + dayShort(s3.start);
       case "week":
-        return "Every " + weekday2;
+        return "Every " + weekday3;
       case "2 weeks":
-        return "Every other " + weekday2;
+        return "Every other " + weekday3;
       case "twice a month":
         return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
       case "month":
@@ -1813,6 +1813,64 @@
     ] })) });
   }
 
+  // web/src/parts/Hover.tsx
+  var made = 0;
+  function useHoverCard(tip, { wide, side = "below" } = {}) {
+    const [open3, setOpen] = d2(false);
+    const [id2] = d2(() => `hover-${++made}`);
+    const at2 = A2(null);
+    const box = A2(null);
+    const timer = A2(0);
+    const show3 = (soon2) => {
+      clearTimeout(timer.current);
+      if (soon2) setOpen(true);
+      else timer.current = window.setTimeout(() => setOpen(true), 250);
+    };
+    const hide = () => {
+      clearTimeout(timer.current);
+      setOpen(false);
+    };
+    _2(() => {
+      const t3 = at2.current, c3 = box.current;
+      if (!open3 || !t3 || !c3) return;
+      const r3 = t3.getBoundingClientRect(), w3 = c3.offsetWidth, h3 = c3.offsetHeight, pad = 8;
+      let left, top;
+      if (side === "right") {
+        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
+        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
+      } else {
+        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
+        const below = r3.bottom + 6;
+        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+      }
+      c3.style.left = `${left}px`;
+      c3.style.top = `${top}px`;
+    }, [open3]);
+    const on = {
+      ref: at2,
+      "aria-describedby": id2,
+      onMouseEnter: () => show3(false),
+      onMouseLeave: hide,
+      onFocus: () => show3(true),
+      onBlur: hide,
+      onKeyDown: (e3) => {
+        if (e3.key === "Escape" && open3) {
+          e3.stopPropagation();
+          hide();
+        }
+      }
+    };
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open3, children: tip });
+    return { on, card, show: show3, open: open3 };
+  }
+  function Hover({ label, cls = "", tip, wide }) {
+    const { on, card, show: show3 } = useHoverCard(tip, { wide });
+    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on, onClick: () => show3(true), children: [
+      label,
+      card
+    ] });
+  }
+
   // web/src/status/memory.ts
   var units = { b: 1, kb: 1e3, mb: 1e6, gb: 1e9, tb: 1e12, kib: 1024, mib: 1024 ** 2, gib: 1024 ** 3, tib: 1024 ** 4 };
   function parseMem(s3) {
@@ -1966,15 +2024,61 @@
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
-  function Link({ url, text: text2, open: open2 }) {
-    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
+  function Link({ url, text: text2, open: open3 }) {
+    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open3(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
   }
-  function Uptime({ a: a3, week: week2 }) {
+  var clock = (d3) => d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  var weekday = (d3) => d3.toLocaleDateString("en-US", { weekday: "short" });
+  function lasted(ms) {
+    const mins = Math.max(1, Math.round(ms / 6e4)), hours = Math.round(mins / 60);
+    return mins < 60 ? mins === 1 ? "a minute" : `${mins} minutes` : hours < 48 ? hours === 1 ? "an hour" : `${hours} hours` : `${Math.round(hours / 24)} days`;
+  }
+  function outageWords(o3, now = Date.now()) {
+    const from = new Date(o3.from), to = o3.to ? new Date(o3.to).getTime() : 0;
+    return `${weekday(from)} ${clock(from)}, ${to ? lasted(to - from.getTime()) : `down for ${lasted(now - from.getTime())} now`}: ${o3.problem}`;
+  }
+  function WeekOutages({ outages: outages2 = [], now = Date.now() }) {
+    const end = new Date(now), first = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 6);
+    const t0 = first.getTime(), span = now - t0;
+    const days = Array.from({ length: 7 }, (_3, i3) => new Date(first.getFullYear(), first.getMonth(), first.getDate() + i3));
+    const shown5 = outages2.filter((o3) => (o3.to ? new Date(o3.to).getTime() : now) > t0);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "outstrip", "aria-hidden": "true", children: [
+        days.map((d3, i3) => /* @__PURE__ */ u3("span", { class: "outday", style: { left: `${(d3.getTime() - t0) / span * 100}%` }, children: weekday(d3).slice(0, 1) }, i3)),
+        shown5.map((o3, i3) => {
+          const from = Math.max(t0, new Date(o3.from).getTime()), to = o3.to ? new Date(o3.to).getTime() : now;
+          return /* @__PURE__ */ u3("span", { class: "out" + (o3.to ? "" : " now"), style: { left: `${(from - t0) / span * 100}%`, width: `max(3px, ${(to - from) / span * 100}%)` } }, i3);
+        })
+      ] }),
+      shown5.length ? /* @__PURE__ */ u3("span", { class: "outlist", children: shown5.map((o3, i3) => /* @__PURE__ */ u3("span", { class: "outline", children: outageWords(o3, now) }, i3)) }) : /* @__PURE__ */ u3("span", { class: "outline", children: "No outage: each check it missed passed the next time" }),
+      /* @__PURE__ */ u3("span", { class: "outfoot", children: "The watchdog checks it every 15 minutes" })
+    ] });
+  }
+  var startedWords = {
+    you: "You started it",
+    updated: "You updated it, so it started on its new version",
+    nightly: "The nightly update moved it to its new version",
+    update: "It was updated, and started on its new version",
+    fix: "Fix it restarted it",
+    watchdog: "The watchdog restarted it: it was unwell on two checks in a row",
+    battery: "It started again when the power came back (the battery saver had paused it)",
+    drive: "It started once its drive was plugged in again",
+    timer: "It started again at the time you set when you stopped it",
+    docker: "Docker started it again after it stopped on its own; its log says why"
+  };
+  function Uptime({ a: a3, week: week2, outages: outages2 }) {
     if (a3.state !== "running" || !a3.since) return null;
     const mins = Math.max(0, Math.round((Date.now() - new Date(a3.since).getTime()) / 6e4)), hours = Math.round(mins / 60);
     const up = mins < 60 ? mins <= 1 ? "up a minute" : `up ${mins} minutes` : hours < 48 ? hours === 1 ? "up an hour" : `up ${hours} hours` : `up ${Math.round(hours / 24)} days`;
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "local", children: up }),
+      a3.startedBy && startedWords[a3.startedBy] ? /* @__PURE__ */ u3(Hover, { cls: "local", label: up, tip: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "outline", children: startedWords[a3.startedBy] }),
+        /* @__PURE__ */ u3("span", { class: "outfoot", children: [
+          weekday(new Date(a3.since)),
+          " ",
+          clock(new Date(a3.since))
+        ] })
+      ] }) }) : /* @__PURE__ */ u3("span", { class: "local", children: up }),
       !!a3.restarts && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Docker restarted it after it stopped on its own; its log says why", children: [
         "restarted ",
         a3.restarts,
@@ -1982,17 +2086,14 @@
       ] }),
       a3.held && /* @__PURE__ */ u3("span", { class: "badge", title: `Left out of nightly updates after a rollback; homelab updates release ${a3.id} puts it back`, children: "updates held" }),
       a3.settingsChanged && /* @__PURE__ */ u3("span", { class: "badge warn", title: "Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones", children: "settings changed" }),
-      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3("span", { class: "badge warn", title: "The share of the watchdog’s checks (every 15 minutes) it passed in the last 7 days", children: [
-        Math.floor(week2 * 1e3) / 10,
-        "% up this week"
-      ] })
+      week2 !== void 0 && week2 < 0.99 && /* @__PURE__ */ u3(Hover, { cls: "badge warn", wide: true, label: `${Math.floor(week2 * 1e3) / 10}% up this week`, tip: /* @__PURE__ */ u3(WeekOutages, { outages: outages2 }) })
     ] });
   }
-  function NativeButton({ a: a3, title, label, open: open2 }) {
+  function NativeButton({ a: a3, title, label, open: open3 }) {
     const [busy2, setBusy] = d2(false);
     return /* @__PURE__ */ u3("button", { class: "small", title, disabled: busy2, onClick: () => {
       setBusy(true);
-      open2().catch(() => setBusy(false));
+      open3().catch(() => setBusy(false));
     }, children: label });
   }
   function Actions2({ a: a3, entry, busy: busy2, os, on }) {
@@ -2026,7 +2127,7 @@
           "aria-busy": pend && !pend.failed ? true : void 0,
           class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
-            if (!e3.target.closest("a, button, .rowmenu")) p3.on.page(a3);
+            if (!e3.target.closest("a, button, .rowmenu, .hovers")) p3.on.page(a3);
           } : void 0,
           onContextMenu: menuable ? (e3) => {
             if (e3.target.closest(".rowmenu")) return;
@@ -2050,7 +2151,7 @@
                   a3.container
                 ] }),
                 /* @__PURE__ */ u3("button", { class: "small", onClick: () => p3.on.adopt(a3), children: "Move in" })
-              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id] }),
+              ] }) : /* @__PURE__ */ u3(Uptime, { a: a3, week: p3.weekUp[a3.id], outages: p3.outages?.[a3.id] }),
               pend?.failed && /* @__PURE__ */ u3("span", { class: "rowerr", role: "status", children: [
                 "Could not ",
                 verb[pend.action] || pend.action,
@@ -2088,7 +2189,7 @@
   }
   var isNative = (p3, a3) => p3.catalog?.apps.find((c3) => c3.id === a3.id)?.kind === "native";
   function GroupMenu({ g: g2, p: p3, count: count2 }) {
-    const [open2, setOpen] = d2(false);
+    const [open3, setOpen] = d2(false);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
     const [doing3, setDoing] = d2(null);
@@ -2115,15 +2216,15 @@
       requestAnimationFrame(() => (on ? items()[0] : wrap.current?.querySelector(".stoplater"))?.focus());
     };
     h2(() => {
-      if (!open2) return;
+      if (!open3) return;
       const outside = (e3) => {
         if (!wrap.current?.contains(e3.target)) close3();
       };
       document.addEventListener("mousedown", outside, true);
       return () => document.removeEventListener("mousedown", outside, true);
-    }, [open2]);
+    }, [open3]);
     _2(() => {
-      if (!open2) {
+      if (!open3) {
         setUp(false);
         return;
       }
@@ -2131,7 +2232,7 @@
       if (!menu || !box || !at2) return;
       const m3 = menu.getBoundingClientRect(), b2 = box.getBoundingClientRect(), a3 = at2.getBoundingClientRect();
       setUp(m3.bottom > b2.bottom && a3.top - b2.top > m3.height);
-    }, [open2]);
+    }, [open3]);
     if (p3.companion || g2.alert) return /* @__PURE__ */ u3("span", { class: "n", children: count2 });
     const run2 = (action, apps, until) => {
       if (action === "stop" && !sure && !until) {
@@ -2152,7 +2253,7 @@
         ref: wrap,
         onClick: (e3) => e3.stopPropagation(),
         onKeyDown: (e3) => {
-          if (!open2) return;
+          if (!open3) return;
           if (e3.key === "Escape") {
             e3.preventDefault();
             e3.stopPropagation();
@@ -2166,7 +2267,7 @@
           all[(to + all.length) % all.length].focus();
         },
         onFocusOut: () => setTimeout(() => {
-          if (open2 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
+          if (open3 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
         }),
         children: [
           /* @__PURE__ */ u3(
@@ -2176,11 +2277,11 @@
               ref: btn,
               class: "n groupcount",
               "aria-haspopup": "menu",
-              "aria-expanded": open2,
+              "aria-expanded": open3,
               disabled: !!doing3,
               title: `${g2.label}: start, stop, or restart them all, and what they hold in memory`,
               onClick: (e3) => {
-                if (open2) {
+                if (open3) {
                   close3();
                   return;
                 }
@@ -2188,7 +2289,7 @@
                 if (e3.detail === 0) requestAnimationFrame(() => items()[0]?.focus());
               },
               onKeyDown: (e3) => {
-                if (!open2 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
+                if (!open3 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
                   e3.preventDefault();
                   setOpen(true);
                   requestAnimationFrame(() => {
@@ -2203,13 +2304,13 @@
               ]
             }
           ),
-          open2 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
+          open3 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: running3.length === 1 ? `Stop ${running3[0].name} for a while` : `Stop the ${running3.length} running for a while` }),
             stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running3, c3.until), children: c3.label }, c3.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
             /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running3.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
-          open2 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
+          open3 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
             byMem.length > 0 && /* @__PURE__ */ u3("ul", { class: "memlist", "aria-label": "Memory by app", children: byMem.slice(0, 8).map((a3) => /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3("span", { children: a3.name }),
@@ -2232,7 +2333,7 @@
       }
     );
   }
-  function GroupHead({ g: g2, open: open2, toggle, p: p3 }) {
+  function GroupHead({ g: g2, open: open3, toggle, p: p3 }) {
     const running3 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     return (
@@ -2240,7 +2341,7 @@
       /* @__PURE__ */ u3(
         "tr",
         {
-          class: "grouphead fold" + (g2.alert ? " bad" : "") + (open2 ? " open" : ""),
+          class: "grouphead fold" + (g2.alert ? " bad" : "") + (open3 ? " open" : ""),
           onClick: toggle,
           onContextMenu: (e3) => {
             const c3 = e3.currentTarget.querySelector("button.groupcount");
@@ -2256,17 +2357,17 @@
             if (c3.getAttribute("aria-expanded") !== "true") c3.click();
           },
           children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-            /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
+            /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open3, onClick: (e3) => {
               e3.stopPropagation();
               toggle();
             }, children: [
-              /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
+              /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open3 ? "▾" : "▸" }),
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
             /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running3 >= counted ? `${running3} running ✓` : `${running3} of ${counted} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
-            !open2 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
+            !open3 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
         }
       )
@@ -2427,8 +2528,8 @@
     }, [said]);
     const say = (id2, words4) => setSaid({ id: id2, words: words4 });
     const q2 = useFilter().text;
-    const open2 = openGroups(p3.groups, f4, p3.held);
-    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open2 : f4.picked, [label]: !open2[label] } });
+    const open3 = openGroups(p3.groups, f4, p3.held);
+    const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open3 : f4.picked, [label]: !open3[label] } });
     const kept = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
     const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
     const first = kept?.[0]?.apps.find((a3) => a3.state !== "missing");
@@ -2450,8 +2551,8 @@
     const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said?.id === a3.id ? said.words : void 0, say }, a3.id);
     return /* @__PURE__ */ u3(S, { children: kept ? kept.flatMap(({ g: g2, apps }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps.map(row)]) : p3.groups.flatMap((g2) => [
-      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open2[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
-      ...open2[g2.label] ? g2.apps.map(row) : []
+      /* @__PURE__ */ u3(GroupHead, { g: g2, open: open3[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
+      ...open3[g2.label] ? g2.apps.map(row) : []
     ]) });
   }
   function ShowAll() {
@@ -2531,7 +2632,7 @@
     const d3 = new Date(when3);
     return isNaN(d3.getTime()) || d3.getFullYear() < 2e3 ? "" : dayText(d3, { day: "numeric", month: "short", year: "numeric" });
   };
-  function ReleaseNotes({ name, load, onUpdate, onCancel, open: open2 }) {
+  function ReleaseNotes({ name, load, onUpdate, onCancel, open: open3 }) {
     const [preview, setPreview] = d2(null);
     const [problem, setProblem] = d2("");
     h2(() => {
@@ -2561,7 +2662,7 @@
         r3.notes && /* @__PURE__ */ u3("pre", { children: r3.notes }),
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open2(r3.url);
+          open3(r3.url);
         }, children: "Full notes" })
       ] }, r3.tag)),
       preview && preview.releases.length > shown5.length && preview.page && /* @__PURE__ */ u3("p", { class: "muted", children: [
@@ -2570,7 +2671,7 @@
         " older ones: ",
         /* @__PURE__ */ u3("a", { href: "#", onClick: (e3) => {
           e3.preventDefault();
-          open2(preview.page);
+          open3(preview.page);
         }, children: "all releases" }),
         "."
       ] }),
@@ -2590,9 +2691,9 @@
       /* @__PURE__ */ u3("div", { class: "muted", children: "Every app runs inside it, so they are all paused until it starts. This page checks again every 10 seconds." })
     ] });
   }
-  function ReportActions({ reveal, show: show2, email }) {
+  function ReportActions({ reveal, show: show3, email }) {
     return /* @__PURE__ */ u3("div", { class: "actions reveal", children: [
-      /* @__PURE__ */ u3("button", { class: "small", onClick: show2, children: reveal }),
+      /* @__PURE__ */ u3("button", { class: "small", onClick: show3, children: reveal }),
       /* @__PURE__ */ u3("button", { id: "emailReport", class: "small", onClick: email, children: "Email it to my helper" }),
       /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
     ] });
@@ -2608,7 +2709,7 @@
   var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])";
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
   var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
-  var closer = (sheet) => [...sheet.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel)$/.test(b2.textContent.trim()));
+  var closer = (sheet) => [...sheet.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel|Hide)$/.test(b2.textContent.trim()));
   var listening = false;
   function keys() {
     if (listening) return;
@@ -2618,25 +2719,25 @@
       downOnDim = e3.target === document.body && openSheets().length > 0;
     }, true);
     document.addEventListener("click", (e3) => {
-      const open2 = openSheets().pop();
-      if (!open2 || !downOnDim || e3.target !== document.body) return;
+      const open3 = openSheets().pop();
+      if (!open3 || !downOnDim || e3.target !== document.body) return;
       downOnDim = false;
-      closer(open2)?.click();
+      closer(open3)?.click();
     });
     document.addEventListener("keydown", (e3) => {
-      const open2 = openSheets().pop();
-      if (!open2) return;
+      const open3 = openSheets().pop();
+      if (!open3) return;
       if (e3.key === "Escape") {
-        const close3 = closer(open2);
+        const close3 = closer(open3);
         if (close3) {
           e3.preventDefault();
           close3.click();
         }
       } else if (e3.key === "Tab") {
-        const all = stops(open2);
+        const all = stops(open3);
         if (!all.length) {
           e3.preventDefault();
-          open2.focus();
+          open3.focus();
           return;
         }
         const at2 = all.indexOf(document.activeElement);
@@ -2753,6 +2854,95 @@
     R(/* @__PURE__ */ u3(S, { children: node }), el2);
   }
 
+  // web/src/core.ts
+  var go = () => window.go.main.App;
+  var onPhone = () => document.documentElement.classList.contains("companion");
+  var notOnPhone = (e3) => e3?.name === "NotOnPhone";
+  var $2 = (id2) => document.getElementById(id2);
+  var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
+  var $1 = (sel2, root = document) => root.querySelector(sel2);
+  var errorTimer = 0;
+  function showError(e3) {
+    const el2 = $2("error");
+    el2.textContent = String(e3 && e3.message || e3);
+    el2.hidden = false;
+    clearTimeout(errorTimer);
+    errorTimer = setTimeout(() => el2.hidden = true, 6e3);
+  }
+  var platform = navigator.platform || navigator.userAgent;
+  var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
+  document.documentElement.classList.add("os-" + osName);
+  var isMac = osName === "mac";
+  var thisMachine = isMac ? "This Mac" : osName === "windows" ? "This PC" : "This machine";
+  var mod = isMac ? "⌘" : "Ctrl+";
+  var minute = 6e4;
+  var errorText = (e3) => String(e3 && e3.message || e3);
+
+  // web/src/job/Background.tsx
+  var bg = null;
+  var hidden2 = false;
+  var show = () => {
+  };
+  function bgStart(title, open3) {
+    bg = { title, state: "running", pct: 0, step: "" };
+    hidden2 = false;
+    show = open3;
+    draw();
+  }
+  function bgHide() {
+    if (bg) {
+      hidden2 = true;
+      draw();
+    }
+  }
+  function bgProgress(pct, step2) {
+    if (!bg || bg.state !== "running") return;
+    bg.pct = pct;
+    bg.step = step2;
+    if (hidden2) draw();
+  }
+  function bgEnd(failed) {
+    if (!bg) return;
+    if (!hidden2) {
+      bg = null;
+      return;
+    }
+    bg.state = failed ? "failed" : "done";
+    draw();
+  }
+  var bgRunning = () => bg?.state === "running" ? bg.title : "";
+  function waitForBg() {
+    const running3 = bgRunning();
+    if (running3) showError(`Wait for “${running3}” to finish: it is still running`);
+    return !!running3;
+  }
+  function open() {
+    hidden2 = false;
+    if (bg && bg.state !== "running") bg = null;
+    draw();
+    show();
+  }
+  function dismiss() {
+    bg = null;
+    hidden2 = false;
+    draw();
+  }
+  function Chip({ b: b2 }) {
+    const words4 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
+    return /* @__PURE__ */ u3("div", { class: "bgjob " + b2.state, children: [
+      /* @__PURE__ */ u3("button", { class: "bgopen", onClick: open, title: "Show it", children: [
+        /* @__PURE__ */ u3("span", { class: "bgtitle", children: b2.title }),
+        /* @__PURE__ */ u3("span", { class: "bgtrack" + (b2.state === "running" && !b2.pct ? " working" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { class: "bgfill", style: { width: `${b2.state === "running" ? b2.pct : 100}%` } }) }),
+        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words4 })
+      ] }),
+      b2.state !== "running" && /* @__PURE__ */ u3("button", { class: "bgdismiss", onClick: dismiss, "aria-label": `Dismiss ${b2.title}`, children: "×" })
+    ] });
+  }
+  function draw() {
+    const el2 = $2("bgJob");
+    if (el2) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el2);
+  }
+
   // web/src/status/CrashNote.tsx
   function day2(when3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(when3);
@@ -2867,7 +3057,7 @@
     if (!toggle) return words4;
     return words4.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
-  function Row3({ s: s3, p: p3, value, hidden: hidden2, edit }) {
+  function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
     const [kept, setKept] = d2(void 0);
@@ -2907,7 +3097,7 @@
     ].filter(Boolean);
     return (
       // Its .env name shows on hover, and under it while searching.
-      /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden: hidden2, children: [
+      /* @__PURE__ */ u3("div", { class: "setting" + (toggle ? " toggle" : "") + (p3.focus.includes(s3.key) ? " focus" : "") + (p3.wanted.has(s3.key) ? "" : " more"), id: "setting-" + s3.key, hidden: hidden3, children: [
         /* @__PURE__ */ u3("div", { class: "key", title: s3.key, children: [
           /* @__PURE__ */ u3("span", { class: "label", children: label }),
           /* @__PURE__ */ u3("code", { children: s3.key })
@@ -2933,11 +3123,11 @@
         return next;
       });
     };
-    const show2 = shown(p3.pages, p3.view, p3.wanted, p3.label, p3.checks);
+    const show3 = shown(p3.pages, p3.view, p3.wanted, p3.label, p3.checks);
     const searching = !!p3.view.query.trim();
-    return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show2.counts[pg.name], children: [
+    return /* @__PURE__ */ u3(S, { children: p3.pages.map((pg) => /* @__PURE__ */ u3("div", { class: "group", "data-page": pg.name, "data-kind": pg.kind, hidden: !show3.counts[pg.name], children: [
       /* @__PURE__ */ u3("h2", { hidden: !searching, children: pg.name }),
-      pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show2.keys.has(s3.key), edit }, s3.key))
+      pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show3.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
   function mountForm(el2, props, version) {
@@ -3003,7 +3193,7 @@
       )
     ] }) });
   }
-  function AddPerson({ apps, open: open2, on }) {
+  function AddPerson({ apps, open: open3, on }) {
     const [name, setName] = d2("");
     const [email, setEmail] = d2("");
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
@@ -3025,7 +3215,7 @@
       setBusy(false);
       if (ok) on.added(who);
     };
-    return /* @__PURE__ */ u3("details", { class: "addperson", open: open2, children: [
+    return /* @__PURE__ */ u3("details", { class: "addperson", open: open3, children: [
       /* @__PURE__ */ u3("summary", { children: /* @__PURE__ */ u3("strong", { children: "Add a person" }) }),
       /* @__PURE__ */ u3("div", { class: "inputrow", children: [
         /* @__PURE__ */ u3("input", { id: "personName", placeholder: "Name, e.g. Anna Smith", autocomplete: "off", spellcheck: false, value: name, onInput: (e3) => setName(e3.currentTarget.value) }),
@@ -3296,15 +3486,15 @@
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
-          const f4 = item, open2 = isOpen2(f4);
+          const f4 = item, open3 = isOpen2(f4);
           const n3 = counts ? f4.pages.reduce((sum, p3) => sum + (counts[p3] || 0), 0) : f4.pages.length;
           return [
             /* @__PURE__ */ u3(
               "button",
               {
-                class: "navfold" + (open2 ? " open" : "") + (counts && !n3 ? " nomatch" : ""),
-                "aria-expanded": open2,
-                onClick: () => setPicked({ ...picked, [f4.label]: !open2 }),
+                class: "navfold" + (open3 ? " open" : "") + (counts && !n3 ? " nomatch" : ""),
+                "aria-expanded": open3,
+                onClick: () => setPicked({ ...picked, [f4.label]: !open3 }),
                 children: [
                   /* @__PURE__ */ u3("span", { children: [
                     /* @__PURE__ */ u3(Icon, { name: "chevron" }),
@@ -3315,7 +3505,7 @@
               },
               "f:" + f4.label
             ),
-            ...open2 ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
+            ...open3 ? f4.pages.map((name) => /* @__PURE__ */ u3(PageButton, { name, active: active2, counts, pick, inFold: true }, name)) : []
           ];
         })
       ])
@@ -3502,8 +3692,8 @@
     return [c3, "#ffffff"];
   }
   var setPrimary = (root, name, hex, text2) => {
-    const [bg, fg] = primaryOn(hex, text2);
-    root.style.setProperty(`--${name}`, bg);
+    const [bg2, fg] = primaryOn(hex, text2);
+    root.style.setProperty(`--${name}`, bg2);
     root.style.setProperty(`--${name}-text`, fg);
   };
   var query = (q2) => typeof matchMedia === "function" ? matchMedia(q2) : null;
@@ -3670,7 +3860,7 @@
     ] });
   }
   var signIn = (os) => os.startsWith("Windows") ? "sign-in" : "login";
-  function Runtime({ i: i3, start, open: open2 }) {
+  function Runtime({ i: i3, start, open: open3 }) {
     const service = (i3.os || "").startsWith("Linux");
     const steamos = i3.os === "SteamOS";
     const moves = "This screen moves on by itself once it is running.";
@@ -3699,7 +3889,7 @@
           /* @__PURE__ */ u3("li", { children: "Add yourself to the docker group, then log out and back in." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open2(i3.runtimeDownload), children: "Open the install guide" }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open3(i3.runtimeDownload), children: "Open the install guide" }),
           /* @__PURE__ */ u3("span", { class: "muted", children: moves })
         ] })
       ] }) : /* @__PURE__ */ u3(S, { children: [
@@ -3709,7 +3899,7 @@
           /* @__PURE__ */ u3("li", { children: "Open it once and accept what it asks." })
         ] }),
         /* @__PURE__ */ u3("div", { class: "actions", children: [
-          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open2(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
+          i3.runtimeDownload && /* @__PURE__ */ u3("button", { id: "getRuntime", class: "primary", onClick: () => open3(i3.runtimeDownload), children: `Download ${i3.runtime}` }),
           /* @__PURE__ */ u3("span", { class: "muted", children: `Or in Terminal: ${i3.runtimeHint}. ${moves}` })
         ] })
       ] })
@@ -4046,10 +4236,10 @@
   }
 
   // web/src/choose/Started.tsx
-  function Started({ started, open: open2, close: close3 }) {
+  function Started({ started, open: open3, close: close3 }) {
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title: "Ready to open" }),
-      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open2(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
+      started.length ? /* @__PURE__ */ u3("ul", { children: started.map((s3) => /* @__PURE__ */ u3("li", { children: s3.url ? /* @__PURE__ */ u3(ActionLink, { onClick: () => open3(s3.url), children: s3.name }) : s3.name }, s3.id)) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "Nothing new to start." }),
       /* @__PURE__ */ u3("button", { type: "button", id: "installClose", class: "small", onClick: close3, children: "Close" })
     ] });
   }
@@ -4080,30 +4270,6 @@
   function mountCategories(el2, categories2) {
     R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el2);
   }
-
-  // web/src/core.ts
-  var go = () => window.go.main.App;
-  var onPhone = () => document.documentElement.classList.contains("companion");
-  var notOnPhone = (e3) => e3?.name === "NotOnPhone";
-  var $2 = (id2) => document.getElementById(id2);
-  var $$ = (sel2, root = document) => [...root.querySelectorAll(sel2)];
-  var $1 = (sel2, root = document) => root.querySelector(sel2);
-  var errorTimer = 0;
-  function showError(e3) {
-    const el2 = $2("error");
-    el2.textContent = String(e3 && e3.message || e3);
-    el2.hidden = false;
-    clearTimeout(errorTimer);
-    errorTimer = setTimeout(() => el2.hidden = true, 6e3);
-  }
-  var platform = navigator.platform || navigator.userAgent;
-  var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
-  document.documentElement.classList.add("os-" + osName);
-  var isMac = osName === "mac";
-  var thisMachine = isMac ? "This Mac" : osName === "windows" ? "This PC" : "This machine";
-  var mod = isMac ? "⌘" : "Ctrl+";
-  var minute = 6e4;
-  var errorText = (e3) => String(e3 && e3.message || e3);
 
   // web/src/jobs.ts
   var jobBox = "cli";
@@ -4139,6 +4305,7 @@
     box.classList.remove("failed");
     box.querySelector(".fill").style.width = `${Math.round(overall(rows) * 100)}%`;
     box.querySelector(".step").textContent = rows.length === 1 ? rows[0].words : `${ready2} of ${rows.length} apps ready`;
+    mirror();
   }
   document.addEventListener("click", (e3) => {
     const d3 = e3.target.closest?.(".jobdetails > summary")?.parentElement;
@@ -4169,6 +4336,12 @@
     const within = s3.percent ? s3.percent / 100 : 0.5;
     fill.style.width = `${Math.round((s3.n - 1 + within) / s3.total * 100)}%`;
     step2.textContent = `${namesFor(s3.text)}${s3.percent ? ` · ${s3.percent}%` : ""} · ${s3.n} of ${s3.total}`;
+    mirror();
+  }
+  function mirror() {
+    if (jobBox !== "cli") return;
+    const box = $2("cliProgress");
+    bgProgress(parseFloat(box.querySelector(".fill").style.width) || 0, box.querySelector(".step").textContent || "");
   }
 
   // web/src/screens/choose.ts
@@ -4327,6 +4500,7 @@
   }
   var installing = false;
   $2("installBtn").onclick = async () => {
+    if (waitForBg()) return;
     const btn = $2("installBtn");
     installing = true;
     btn.disabled = true;
@@ -4373,16 +4547,16 @@
   async function wire(box) {
     const done = [];
     let note = "Connecting… this can take a minute while new apps start.";
-    const draw5 = () => mountWiring(box, { links: [...done], note });
-    draw5();
+    const draw6 = () => mountWiring(box, { links: [...done], note });
+    draw6();
     const off = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
-      draw5();
+      draw6();
     });
     try {
       const links = await go().Wire();
       note = links.length ? "" : "Nothing to connect: none of the apps it links is running.";
-      draw5();
+      draw6();
     } catch (e3) {
       showError(e3);
     } finally {
@@ -4400,7 +4574,7 @@
       notes.length > 12 && /* @__PURE__ */ u3("li", { class: "muted", children: `and ${notes.length - 12} more` })
     ] });
   }
-  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open2 }) {
+  function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open3 }) {
     const [more, setMore] = d2(false);
     const v3 = s3.version;
     const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more), children: more ? "Hide" : "What’s new" });
@@ -4426,7 +4600,7 @@
       head = v3 ? `Homelab Wizard ${v3} did not install` : "The update did not install";
       sub = s3.notInstalled;
       end = /* @__PURE__ */ u3(S, { children: [
-        s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }),
+        s3.page && /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open3(s3.page), children: "Download it" }),
         /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small primary", onClick: update, children: "Try again" }),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
@@ -4444,7 +4618,7 @@
       tone = "blocked";
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       sub = s3.blocked || "";
-      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open2(s3.page), children: "Download it" }) : null;
+      end = s3.page ? /* @__PURE__ */ u3("button", { id: "updateDownload", class: "small", onClick: () => open3(s3.page), children: "Download it" }) : null;
     } else if (s3.state === "ready") {
       head = v3 ? `Homelab Wizard ${v3} is ready` : "An update is ready";
       end = /* @__PURE__ */ u3(S, { children: [
@@ -4516,20 +4690,20 @@
   var key = (s3) => `${s3.version}|${s3.files}|${s3.app}`;
   var ready = () => state?.state === "ready";
   var running2 = () => !!step && step.step !== "done" && step.step !== "failed";
-  function draw() {
+  function draw2() {
     const box = $2("updateLine");
     if (companion() || !state) {
       box.hidden = true;
       mountUpdateLine(box, null);
       return;
     }
-    const hidden2 = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
-    const shown5 = lineShown(state, step) && !hidden2;
+    const hidden3 = !running2() && step?.step !== "failed" && ready() && laterKey === key(state) && !state.updated && !state.notInstalled;
+    const shown5 = lineShown(state, step) && !hidden3;
     box.hidden = !shown5;
     const failed = step?.step === "failed" || !!state.notInstalled && !step && !state.updated;
     box.className = "updateline" + (failed ? " failed" : state.updated && !ready() && !running2() ? " done" : "");
     mountUpdateLine(box, shown5 ? { s: state, step, download, log, update: updateNow, later, close, open: (url) => go().Open(url) } : null);
-    drawFoot({ update: running2() ? "finishing" : ready() && hidden2 ? "ready" : "", openSetup: showLine });
+    drawFoot({ update: running2() ? "finishing" : ready() && hidden3 ? "ready" : "", openSetup: showLine });
     const settings2 = $2("updatesSettings");
     if (settings2) mountUpdateSettings(settings2, { s: state, looking, look: lookNow, setInstallOnQuit });
   }
@@ -4540,45 +4714,45 @@
       updateNow();
       return;
     }
-    draw();
+    draw2();
   }
   function later() {
     if (state) laterKey = key(state);
-    draw();
+    draw2();
   }
   function showLine() {
     laterKey = "";
-    draw();
+    draw2();
   }
   function close() {
     go().ClearUpdated();
     if (state) state = { ...state, updated: void 0, notInstalled: void 0 };
     step = null;
-    draw();
+    draw2();
   }
   async function updateNow() {
     if (running2()) return;
     step = { step: "files", percent: 3 };
     log = "";
     laterKey = "";
-    draw();
+    draw2();
     try {
       await go().UpdateNow();
     } catch (e3) {
       if (!step || step.step !== "failed") step = { step: "failed", percent: 0, error: String(e3 && e3.message || e3) };
-      draw();
+      draw2();
     }
   }
   async function lookNow() {
     looking = true;
-    draw();
+    draw2();
     try {
       set(await go().LookForUpdates(true));
     } catch (e3) {
       showError(e3);
     }
     looking = false;
-    draw();
+    draw2();
   }
   async function setInstallOnQuit(on) {
     try {
@@ -4614,11 +4788,11 @@
         }
         finishing = false;
       }
-      draw();
+      draw2();
     });
     window.runtime.EventsOn("app:download", (d3) => {
       download = d3;
-      if (running2()) draw();
+      if (running2()) draw2();
     });
     window.runtime.EventsOn("cli:log", (line) => {
       if (running2()) log += line + "\n";
@@ -4750,7 +4924,7 @@
     },
     whereBackground: () => whereBackgroundIs(),
     jobsOff: () => {
-      show("status");
+      show2("status");
       cliFlow("Turn off the scheduled jobs", "jobs-remove", "", "Turn them off");
     },
     setTrayAtLogin: async (on) => {
@@ -4771,6 +4945,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
+      if (waitForBg()) return;
       navigate("setup");
       setupJob();
       const log2 = $2("setupLog");
@@ -4985,6 +5160,7 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
+    if (waitForBg()) return;
     setupJob();
     const log2 = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
@@ -5024,6 +5200,7 @@
     }
   };
   async function runStep(step2, choice) {
+    if (waitForBg()) return;
     setupJob();
     const log2 = $2("setupLog");
     log2.hidden = false;
@@ -5508,7 +5685,7 @@
   function showSettings(keys2) {
     settingsFocus = keys2;
     const kept = settingsData.at > 0;
-    show("settings");
+    show2("settings");
     if (kept) drawSettings(false, true);
   }
   $2("saveSettings").onclick = async () => {
@@ -5531,6 +5708,7 @@
   var batteryPaused = /* @__PURE__ */ new Set();
   var held = {};
   var weekUp = {};
+  var outages = {};
   var savingsHistory = [];
   var lastAttention = -1;
   function renderTiles(st) {
@@ -5571,7 +5749,7 @@
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups3, pending, catalog, weekUp, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    appList = { groups: groups3, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -5789,6 +5967,7 @@
       return;
     }
     weekUp = w3.week || {};
+    outages = w3.outages || {};
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
     mountWatchdog(card, { w: w3, openSetup: () => {
@@ -5983,6 +6162,7 @@
     rowWatchers.forEach((fn) => fn());
   }
   async function showQR(a3) {
+    if (sheetBusy()) return;
     const panel = $2("cliPanel"), url = "https://" + a3.address;
     if (cliStop) cliStop();
     let img;
@@ -6001,8 +6181,17 @@
     $2("cliPanel").hidden = true;
     $2("cliLog").hidden = false;
   }
-  var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons }));
+  var cliButtons = (buttons) => mountSheet($2("cliActions"), k(Buttons, { buttons, key: buttons.map((b2) => b2.label).join("|") }));
+  var hideButton = { label: "Hide", title: "It carries on, its bar in the sidebar", onClick: () => {
+    bgHide();
+    $2("cliPanel").hidden = true;
+  } };
+  var runInSheet = (title) => bgStart(title, () => {
+    $2("cliPanel").hidden = false;
+  });
+  var sheetBusy = waitForBg;
   async function showSignIn(a3, keys2) {
+    if (sheetBusy()) return;
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
     let list = [];
@@ -6037,6 +6226,7 @@
   var downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
   async function runAppAction(a3, action, until) {
     if (quiet.has(action)) return runQuietly(a3, action, until);
+    if (sheetBusy()) return;
     const panel = $2("cliPanel"), log2 = $2("cliLog");
     log2.hidden = false;
     if (cliStop) cliStop();
@@ -6044,7 +6234,8 @@
     $2("cliTitle").textContent = `${actionTitle[action]} ${a3.name}…`;
     log2.textContent = "";
     startJob("cli");
-    cliButtons([]);
+    runInSheet(`${actionTitle[action]} ${a3.name}`);
+    cliButtons([hideButton]);
     setPending(a3.id, { action });
     setAppsBusy(true);
     panel.scrollIntoView({ block: "nearest" });
@@ -6064,6 +6255,7 @@
     if (!failed && action === "stop") offerUndo([a3], until);
     if (typeof off === "function") off();
     cliProgress(failed ? "failed" : "done");
+    bgEnd(!!failed);
     $2("cliTitle").textContent = failed ? `${actionTitle[action]} ${a3.name} failed` : `${a3.name}: ${action} done`;
     cliButtons([{ label: "Close", onClick: () => {
       panel.hidden = true;
@@ -6095,6 +6287,7 @@
     if (!failed) setPending(a3.id, null);
   }
   function showDetails(a3) {
+    if (sheetBusy()) return;
     const panel = $2("cliPanel"), log2 = $2("cliLog");
     if (cliStop) cliStop();
     panel.hidden = false;
@@ -6107,6 +6300,7 @@
     panel.scrollIntoView({ block: "nearest" });
   }
   function showUpdate(a3) {
+    if (sheetBusy()) return;
     const panel = $2("cliPanel");
     if (cliStop) cliStop();
     panel.hidden = false;
@@ -6128,6 +6322,7 @@
   });
   var cliStop = null;
   async function cliFlow(title, action, target, confirmLabel) {
+    if (sheetBusy()) return;
     const panel = $2("cliPanel"), log2 = $2("cliLog");
     log2.hidden = false;
     if (cliStop) cliStop();
@@ -6156,7 +6351,8 @@
     cliButtons([
       { label: confirmLabel, primary: true, onClick: async () => {
         log2.textContent += "\n";
-        cliButtons([]);
+        runInSheet(title);
+        cliButtons([hideButton]);
         let failed = false;
         try {
           await go().Homelab(action, target, true);
@@ -6165,6 +6361,7 @@
           showError(err);
         }
         cliProgress(failed ? "failed" : "done");
+        bgEnd(failed);
         stop();
         cliButtons([{ label: "Close", onClick: () => {
           panel.hidden = true;
@@ -6374,21 +6571,21 @@
     const groups3 = copyGroups(o3);
     if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
     return /* @__PURE__ */ u3(S, { children: groups3.map((g2) => {
-      const open2 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
-      const toggle = () => setPicked({ ...picked, [g2.key]: !open2 });
+      const open3 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
+      const toggle = () => setPicked({ ...picked, [g2.key]: !open3 });
       return [
-        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open2 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open2, onClick: (e3) => {
+        /* @__PURE__ */ u3("tr", { class: "grouphead fold copygroup " + g2.key + (g2.tone === "bad" ? " bad" : "") + (open3 ? " open" : ""), onClick: toggle, children: /* @__PURE__ */ u3("th", { colSpan: 4, children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "foldbtn", "aria-expanded": open3, onClick: (e3) => {
             e3.stopPropagation();
             toggle();
           }, children: [
-            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open2 ? "▾" : "▸" }),
+            /* @__PURE__ */ u3("span", { class: "chev", "aria-hidden": "true", children: open3 ? "▾" : "▸" }),
             g2.label
           ] }),
           /* @__PURE__ */ u3("span", { class: "n", children: String(g2.copies.length) }),
-          !open2 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
+          !open3 && g2.note && /* @__PURE__ */ u3("span", { class: "names", children: g2.note })
         ] }) }, "g:" + g2.key),
-        ...open2 ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state, children: [
+        ...open3 ? g2.copies.map((c3) => /* @__PURE__ */ u3("tr", { class: "copy " + c3.state, children: [
           /* @__PURE__ */ u3("td", { class: "name", children: [
             /* @__PURE__ */ u3("span", { class: "dot " + g2.tone }),
             c3.name
@@ -6548,6 +6745,7 @@
     mountJobs(card, { jobs: jobsData.value, place, create });
   }
   async function backupTask(action, busy2, done, failed) {
+    if (waitForBg()) return;
     const panel = $2("backupPanel"), log2 = $2("backupLog");
     const btns = () => [$2("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;
@@ -6625,7 +6823,7 @@
 
   // web/src/parts/MenuButton.tsx
   function MenuButton({ label, title, menuLabel, items, foot: foot2, disabled, cls = "btn" }) {
-    const [open2, setOpen] = d2(false);
+    const [open3, setOpen] = d2(false);
     const wrap = A2(null);
     const btn = A2(null);
     const all = () => [...wrap.current?.querySelectorAll("[role=menuitem]") || []];
@@ -6634,14 +6832,14 @@
       if (refocus) btn.current?.focus();
     };
     h2(() => {
-      if (!open2) return;
+      if (!open3) return;
       const outside = (e3) => {
         if (!wrap.current?.contains(e3.target)) close3();
       };
       document.addEventListener("mousedown", outside, true);
       return () => document.removeEventListener("mousedown", outside, true);
-    }, [open2]);
-    const show2 = (first) => {
+    }, [open3]);
+    const show3 = (first) => {
       setOpen(true);
       if (first) requestAnimationFrame(() => {
         const m3 = all();
@@ -6654,7 +6852,7 @@
         class: "menuwrap",
         ref: wrap,
         onKeyDown: (e3) => {
-          if (!open2) return;
+          if (!open3) return;
           if (e3.key === "Escape") {
             e3.preventDefault();
             e3.stopPropagation();
@@ -6668,7 +6866,7 @@
           m3[(to + m3.length) % m3.length].focus();
         },
         onFocusOut: () => setTimeout(() => {
-          if (open2 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
+          if (open3 && document.hasFocus() && !wrap.current?.contains(document.activeElement)) close3();
         }),
         children: [
           /* @__PURE__ */ u3(
@@ -6679,13 +6877,13 @@
               class: cls,
               title,
               "aria-haspopup": "menu",
-              "aria-expanded": open2,
+              "aria-expanded": open3,
               disabled,
-              onClick: (e3) => open2 ? close3() : show2(e3.detail === 0 ? "first" : null),
+              onClick: (e3) => open3 ? close3() : show3(e3.detail === 0 ? "first" : null),
               onKeyDown: (e3) => {
-                if (!open2 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
+                if (!open3 && (e3.key === "ArrowDown" || e3.key === "ArrowUp")) {
                   e3.preventDefault();
-                  show2(e3.key === "ArrowDown" ? "first" : "last");
+                  show3(e3.key === "ArrowDown" ? "first" : "last");
                 }
               },
               children: [
@@ -6694,7 +6892,7 @@
               ]
             }
           ),
-          open2 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
+          open3 && /* @__PURE__ */ u3("div", { class: "menu", role: "menu", "aria-label": menuLabel, children: [
             items.map((it) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", onClick: () => {
               close3(true);
               it.onClick();
@@ -6720,11 +6918,11 @@
   }
   function when(t3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
-    const clock = clockText(d3);
+    const clock2 = clockText(d3);
     const day3 = (x3) => new Date(x3.getFullYear(), x3.getMonth(), x3.getDate()).getTime();
     const days = Math.round((day3(now) - day3(d3)) / 864e5);
-    if (days === 0) return `Today, ${clock}`;
-    if (days === 1) return `Yesterday, ${clock}`;
+    if (days === 0) return `Today, ${clock2}`;
+    if (days === 1) return `Yesterday, ${clock2}`;
     return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
@@ -7118,7 +7316,7 @@
   var switching = {};
   async function setSetting(appId, setting, on) {
     switching[appId] = { ...switching[appId], [setting]: on };
-    draw2();
+    draw3();
     try {
       await go().SetAppSetting(appId, setting, on);
     } catch (e3) {
@@ -7128,7 +7326,7 @@
     });
     const { [setting]: _3, ...rest } = switching[appId] || {};
     switching[appId] = rest;
-    draw2();
+    draw3();
   }
   var icons2 = {};
   var shown2 = () => !!id && $2("app").classList.contains("active");
@@ -7149,8 +7347,8 @@
   }
   pageOpener.open = openApp;
   function refreshApp() {
-    if (!id) return show("status");
-    draw2();
+    if (!id) return show2("status");
+    draw3();
     readIcon(id);
     readUsage();
     readRest();
@@ -7177,7 +7375,7 @@
     }
     if (at2 !== id) return;
     usage = stats.find((s3) => s3.name === id) || null;
-    draw2();
+    draw3();
   }
   setInterval(() => {
     if (!document.hidden && shown2()) readUsage();
@@ -7190,7 +7388,7 @@
     }
     if (icon === (icons2[of] || "")) return;
     icons2[of] = icon;
-    if (of === id) draw2();
+    if (of === id) draw3();
   }
   async function readRest() {
     const at2 = id;
@@ -7200,16 +7398,16 @@
     disk = st.status === "fulfilled" ? st.value?.apps?.find((x3) => x3.app === id)?.bytes : void 0;
     household = ppl.status === "fulfilled" ? (ppl.value || []).filter((p3) => never2(p3.removed) && (!p3.apps?.length || p3.apps.includes(id))) : null;
     explainer = ex.status === "fulfilled" ? ex.value || "" : "";
-    draw2();
+    draw3();
   }
   var never2 = (t3) => !t3 || t3.startsWith("0001-");
-  function draw2() {
+  function draw3() {
     if (!id) return;
     const a3 = statusById[id];
     if (!a3) {
       if (shown2() && statusData.value) {
         mountAppPage($2("appPage"), null);
-        show("status");
+        show2("status");
       }
       return;
     }
@@ -7266,13 +7464,13 @@
     });
   }
   statusData.watch(() => {
-    if (shown2()) draw2();
+    if (shown2()) draw3();
   });
   backupsData.watch(() => {
-    if (shown2()) draw2();
+    if (shown2()) draw3();
   });
   watchRows(() => {
-    if (shown2()) draw2();
+    if (shown2()) draw3();
   });
 
   // web/src/finances/importData.ts
@@ -7562,7 +7760,7 @@
   // web/src/finances/widgets/Budgets.tsx
   var budgetTone = (b2) => b2.left < 0 ? "out" : b2.spent > b2.pace + 5e-3 ? "warn" : "";
   var toWatch = (b2) => budgetTone(b2) !== "" || b2.spent >= b2.amount * 0.9;
-  function BudgetsWidget({ v: v3, edit, only, open: open2, title = "Budgets", span = "all" }) {
+  function BudgetsWidget({ v: v3, edit, only, open: open3, title = "Budgets", span = "all" }) {
     const list = (v3.budgets || []).filter(only || (() => true));
     if (only && !list.length) return null;
     return /* @__PURE__ */ u3(
@@ -7572,7 +7770,7 @@
         span,
         kind: "fx-budgets",
         actions: /* @__PURE__ */ u3(S, { children: [
-          open2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open2, children: "See all" }),
+          open3 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open3, children: "See all" }),
           edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: edit, children: v3.budgets?.length ? "Edit budgets" : "Set budgets" })
         ] }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
@@ -7762,11 +7960,11 @@
       }
     };
     const [q2, setQ] = d2("");
-    const [account, setAccount] = d2("");
-    const [category, setCategory] = d2("");
-    const [month3, setMonthPick] = d2("");
+    const [accountPick, setAccount] = d2("");
+    const [categoryPick, setCategory] = d2("");
+    const [monthPick, setMonthPick] = d2("");
     const [way, setWay] = d2("");
-    const [tag, setTag] = d2("");
+    const [tagPick, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
     const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
@@ -7774,6 +7972,11 @@
     const cats = [...new Set(all.flatMap(catsOf))].sort();
     const tags = tagsOf(all);
     const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
+    const accounts = (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id));
+    const account = accounts.some((a3) => a3.id === accountPick) ? accountPick : "";
+    const category = cats.includes(categoryPick) ? categoryPick : "";
+    const month3 = months.includes(monthPick) ? monthPick : "";
+    const tag = tags.includes(tagPick) ? tagPick : "";
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown5.length !== all.length;
@@ -7808,7 +8011,7 @@
               /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
               /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
-                (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+                accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
               ] }),
               /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
@@ -7855,7 +8058,7 @@
                 const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
                 const what2 = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
                 const opens = edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
-                const open2 = seen?.id === t3.id ? seen : null;
+                const open3 = seen?.id === t3.id ? seen : null;
                 return /* @__PURE__ */ u3(S, { children: [
                   /* @__PURE__ */ u3(
                     Row,
@@ -7876,10 +8079,10 @@
                       when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
                       whenPlain: true,
                       onOpen: opens,
-                      openLabel: edit ? "edit" : opens ? open2 ? "hide the receipt" : "see the receipt" : void 0
+                      openLabel: edit ? "edit" : opens ? open3 ? "hide the receipt" : "see the receipt" : void 0
                     }
                   ),
-                  open2 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open2.url ? /* @__PURE__ */ u3(ReceiptView, { url: open2.url }) : open2.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open2.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
+                  open3 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open3.url ? /* @__PURE__ */ u3(ReceiptView, { url: open3.url }) : open3.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open3.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })
                 ] }, t3.id);
               }) })
             ] }, d3.date)),
@@ -7930,7 +8133,10 @@
         }, children: sure ? "Click again to delete" : "Delete" })),
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2, children: "Save" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2, onClick: () => {
+          setLeaving(false);
+          setSure(false);
+        }, children: "Save" })
       ] })
     ] });
   }
@@ -9080,19 +9286,19 @@
 
   // web/src/finances/ui/HideAmounts.tsx
   var hideKeys = () => osName === "mac" ? "⌘⇧H" : "Ctrl+Shift+H";
-  function HideAmounts({ hidden: hidden2, toggle, small }) {
+  function HideAmounts({ hidden: hidden3, toggle, small }) {
     return /* @__PURE__ */ u3(
       "button",
       {
         type: "button",
         class: small ? "iconbtn fx-eye" : "btn fx-eye",
-        "aria-pressed": hidden2,
+        "aria-pressed": hidden3,
         "aria-label": "Hide amounts",
-        title: `${hidden2 ? "Show amounts" : "Hide amounts"} (${hideKeys()})`,
+        title: `${hidden3 ? "Show amounts" : "Hide amounts"} (${hideKeys()})`,
         onClick: toggle,
         children: [
-          /* @__PURE__ */ u3(Icon, { name: hidden2 ? "eye-off" : "eye" }),
-          !small && /* @__PURE__ */ u3("span", { class: "fx-eyelabel", children: hidden2 ? "Show amounts" : "Hide amounts" })
+          /* @__PURE__ */ u3(Icon, { name: hidden3 ? "eye-off" : "eye" }),
+          !small && /* @__PURE__ */ u3("span", { class: "fx-eyelabel", children: hidden3 ? "Show amounts" : "Hide amounts" })
         ]
       }
     );
@@ -9183,7 +9389,7 @@ ${pays}
     return isoDay(new Date(d3.getFullYear(), d3.getMonth(), d3.getDate() + n3));
   };
   var monthTitle = (month3) => parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long", year: "numeric" });
-  var weekday = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
+  var weekday2 = (day3, form2) => parseDay(day3).toLocaleDateString(void 0, { weekday: form2 });
   function daysOf(v3) {
     const cushion = v3.plan.cushion || 0;
     const moved = {};
@@ -9284,7 +9490,7 @@ ${pays}
           children: [
             /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: lowCount ? `Checking falls under your ${compact(cushion)} cushion on ${lowCount === 1 ? "1 day" : `${lowCount} days`} this month.` : month3 > monthOf(read) ? `What is planned this month. Checking is read ahead to ${dayShort(read)}, so no balance shows.` : last2 > read ? `Checking each day to ${dayShort(read)}; after it, what is planned, to ${dayShort(last2)}.` : `From today to ${dayShort(last2)}, as far as Finances reads ahead.` }),
             /* @__PURE__ */ u3("table", { class: "fx-month", ref: grid, "aria-label": `${monthTitle(month3)}: paydays, payments, and checking each day`, children: [
-              /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday(d3, "long"), children: weekday(d3, "short") }, d3)) }) }),
+              /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: heads.map((d3) => /* @__PURE__ */ u3("th", { scope: "col", abbr: weekday2(d3, "long"), children: weekday2(d3, "short") }, d3)) }) }),
               /* @__PURE__ */ u3("tbody", { children: weeks.map((w3, i3) => /* @__PURE__ */ u3("tr", { children: w3.map((d3, k3) => {
                 if (!d3) return /* @__PURE__ */ u3("td", { class: "fx-blank" }, k3);
                 const info = days[d3];
@@ -9875,11 +10081,11 @@ ${pays}
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
   };
   function WhatIf({ v: v3, goals }) {
-    const open2 = goals.filter((g3) => g3.left > 0);
+    const open3 = goals.filter((g3) => g3.left > 0);
     const [id2, setId] = d2("");
     const [amount, setAmount] = d2("");
     const [day3, setDay] = d2("");
-    const g2 = open2.find((x3) => x3.id === id2) || open2[0];
+    const g2 = open3.find((x3) => x3.id === id2) || open3[0];
     if (!g2) return null;
     const per = paydaysAMonth(v3);
     const n3 = parseAmount(amount);
@@ -9891,8 +10097,8 @@ ${pays}
     return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
       /* @__PURE__ */ u3("h3", { children: "What if" }),
       /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
-        open2.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open2.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
-        open2.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
+        open3.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open3.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
+        open3.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
         /* @__PURE__ */ u3("label", { children: [
           "I put by ",
           /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
@@ -10976,63 +11182,6 @@ ${pays}
     );
   }
 
-  // web/src/finances/widgets/Worth.tsx
-  function NetWorthWidget({ v: v3, open: open2 }) {
-    if (!(v3.plan.accounts || []).length) return null;
-    const now = netWorth(v3);
-    const kept = (v3.worth || []).filter((p3) => p3.date < v3.today);
-    const values = [...kept.map((p3) => p3.amount), now];
-    const month3 = worthByMonth(v3, 1, 0)[0];
-    const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
-    const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
-    return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open2 }), children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
-      values.length > 2 && /* @__PURE__ */ u3(
-        AreaChart,
-        {
-          values,
-          zero: false,
-          axis: false,
-          height: 92,
-          fill: true,
-          format: tick,
-          xLabels: [{ i: 0, label: dayShort(kept[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v3.today)} to ${money(now)} today.`,
-          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept[i3].date) }),
-            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
-          ] })
-        }
-      ),
-      /* @__PURE__ */ u3("div", { class: "fx-pair", children: [
-        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owned, form: "whole" }), caption: "Owned" }),
-        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }), caption: "Owed" })
-      ] })
-    ] });
-  }
-  function Balances({ v: v3, open: open2, toggle }) {
-    const list = grouped(v3);
-    if (!list.length) return null;
-    return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
-        "Accounts",
-        toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
-      ] }),
-      list.map((g2) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", onClick: () => open2(g2.key), children: [
-        /* @__PURE__ */ u3(Dot, { color: g2.color }),
-        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
-        /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
-      ] }, g2.key)),
-      /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
-        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
-        /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
-      ] })
-    ] });
-  }
-  function mountBalances(el2, v3, open2, toggle) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open2, toggle }) : null, el2);
-  }
-
   // web/src/finances/widgets/Ledger.tsx
   function SinceWidget({ v: v3, L: L2, set: set2 }) {
     const [busy2, setBusy] = d2("");
@@ -11136,92 +11285,6 @@ ${pays}
         ] }) })
       }
     );
-  }
-
-  // web/src/finances/widgets/ComingUp.tsx
-  var comingDays = 14;
-  function billsAhead(v3, L2) {
-    const out = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const d3 of [...v3.days || [], ...v3.later || []]) {
-      const n3 = daysBetween(v3.today, d3.date);
-      if (n3 < 0 || n3 >= comingDays || seen.has(d3.date)) continue;
-      seen.add(d3.date);
-      const bill = (e3) => !!e3.payment && !e3.people?.length && !saving(L2.payment[e3.payment]?.kind);
-      const day3 = [
-        ...(d3.events || []).filter((e3) => bill(e3) && e3.amount < 0).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: false })),
-        ...(d3.charges || []).filter(bill).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: true }))
-      ];
-      out.push(...day3);
-    }
-    return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
-  }
-  var soon = (today, day3) => {
-    const n3 = daysBetween(today, day3);
-    return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
-  };
-  function ComingUpWidget({ v: v3, L: L2, calendar }) {
-    const bills = billsAhead(v3, L2);
-    const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
-    const charged = bills.filter((b2) => b2.charge).length;
-    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
-        const x3 = L2.payment[b2.e.payment || ""];
-        const near = daysBetween(v3.today, b2.date) <= 1;
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-            title: x3?.name || b2.e.payment,
-            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
-            subTone: near ? "warn" : "",
-            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
-            whenPlain: true
-          },
-          b2.date + i3
-        );
-      }) })
-    ] }) : /* @__PURE__ */ u3(Empty, { children: [
-      "Nothing due in the next ",
-      comingDays,
-      " days."
-    ] }) });
-  }
-
-  // web/src/finances/Overview.tsx
-  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 }) {
-    const picked = Math.min(sel2, v3.periods.length - 1);
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
-    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
-      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
-      ] }) }) }) });
-    }
-    return /* @__PURE__ */ u3("div", { class: "fin", children: [
-      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
-        /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
-        /* @__PURE__ */ u3("span", { class: "grow", children: [
-          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
-          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
-        ] }),
-        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-        !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
-        phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
-        phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
-        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
-        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
-        /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
-        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
-        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2 }),
-        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
-        /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
-      ] })
-    ] });
   }
 
   // web/src/finances/fire.ts
@@ -11731,6 +11794,185 @@ ${pays}
     );
   }
 
+  // web/src/finances/widgets/Worth.tsx
+  function NetWorthWidget({ v: v3, open: open3 }) {
+    if (!(v3.plan.accounts || []).length) return null;
+    const now = netWorth(v3);
+    const kept = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const values = [...kept.map((p3) => p3.amount), now];
+    const month3 = worthByMonth(v3, 1, 0)[0];
+    const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
+    const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
+    return /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-worthmini", actions: /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Net worth", onClick: open3 }), children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: now }), caption: "Today", aside: month3 && /* @__PURE__ */ u3(Delta, { value: now - month3.net, base: month3.net, shareOnly: true }) }),
+      values.length > 2 && /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values,
+          zero: false,
+          axis: false,
+          height: 92,
+          fill: true,
+          format: tick,
+          xLabels: [{ i: 0, label: dayShort(kept[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept[0]?.date || v3.today)} to ${money(now)} today.`,
+          tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
+            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept[i3].date) }),
+            /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
+          ] })
+        }
+      ),
+      /* @__PURE__ */ u3("div", { class: "fx-pair", children: [
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owned, form: "whole" }), caption: "Owned" }),
+        /* @__PURE__ */ u3(Stat, { size: "sm", value: /* @__PURE__ */ u3(Amount, { value: owes, form: "whole" }), caption: "Owed" })
+      ] })
+    ] });
+  }
+  function Balances({ v: v3, open: open3, toggle }) {
+    const list = grouped(v3);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
+        "Accounts",
+        toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
+      ] }),
+      list.map((g2) => /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open3 }, g2.key)),
+      /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
+        /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
+      ] })
+    ] });
+  }
+  var updatedOn = (a3) => a3.updated || (a3.history || []).at(-1)?.date;
+  var staleDays = 30;
+  function GroupAccounts({ v: v3, accounts }) {
+    const stale = (a3) => {
+      const d3 = updatedOn(a3);
+      return !!d3 && daysBetween(d3, v3.today) > staleDays;
+    };
+    const old = accounts.filter(stale);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-hoveraccts", children: accounts.map((a3) => {
+        const d3 = updatedOn(a3), late = stale(a3);
+        return /* @__PURE__ */ u3("span", { class: "fx-hoveracct" + (late ? " stale" : ""), children: [
+          /* @__PURE__ */ u3("span", { class: "fx-hovername", children: [
+            late && /* @__PURE__ */ u3("span", { class: "fx-staledot", "aria-hidden": "true" }),
+            a3.name
+          ] }),
+          /* @__PURE__ */ u3(Amount, { value: worthOf(v3, a3), form: "whole" }),
+          /* @__PURE__ */ u3("span", { class: "fx-hoverwhen", children: [
+            ago2(d3, v3.today),
+            late ? ", over a month ago" : ""
+          ] })
+        ] }, a3.id);
+      }) }),
+      !!old.length && /* @__PURE__ */ u3("span", { class: "outfoot", children: [
+        old.length === 1 ? "One is" : `${old.length} are`,
+        " over a month old: Update balances on Finances"
+      ] })
+    ] });
+  }
+  function Balance({ v: v3, g: g2, open: open3 }) {
+    const { on, card } = useHoverCard(/* @__PURE__ */ u3(GroupAccounts, { v: v3, accounts: g2.accounts }), { side: "right" });
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "fx-balance", ...on, onClick: () => open3(g2.key), children: [
+        /* @__PURE__ */ u3(Dot, { color: g2.color }),
+        /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: g2.name }),
+        /* @__PURE__ */ u3(Amount, { value: g2.total, form: "compact", tone: g2.total < 0 ? "out" : "" })
+      ] }),
+      card
+    ] });
+  }
+  function mountBalances(el2, v3, open3, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open3, toggle }) : null, el2);
+  }
+
+  // web/src/finances/widgets/ComingUp.tsx
+  var comingDays = 14;
+  function billsAhead(v3, L2) {
+    const out = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const d3 of [...v3.days || [], ...v3.later || []]) {
+      const n3 = daysBetween(v3.today, d3.date);
+      if (n3 < 0 || n3 >= comingDays || seen.has(d3.date)) continue;
+      seen.add(d3.date);
+      const bill = (e3) => !!e3.payment && !e3.people?.length && !saving(L2.payment[e3.payment]?.kind);
+      const day3 = [
+        ...(d3.events || []).filter((e3) => bill(e3) && e3.amount < 0).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: false })),
+        ...(d3.charges || []).filter(bill).sort((a3, b2) => a3.amount - b2.amount).map((e3) => ({ date: d3.date, e: e3, charge: true }))
+      ];
+      out.push(...day3);
+    }
+    return out.sort((a3, b2) => a3.date < b2.date ? -1 : a3.date > b2.date ? 1 : 0);
+  }
+  var soon = (today, day3) => {
+    const n3 = daysBetween(today, day3);
+    return n3 === 0 ? "Today" : n3 === 1 ? "Tomorrow" : `In ${plural(n3, "day")}`;
+  };
+  function ComingUpWidget({ v: v3, L: L2, calendar }) {
+    const bills = billsAhead(v3, L2);
+    const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
+    const charged = bills.filter((b2) => b2.charge).length;
+    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
+        const x3 = L2.payment[b2.e.payment || ""];
+        const near = daysBetween(v3.today, b2.date) <= 1;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+            title: x3?.name || b2.e.payment,
+            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
+            subTone: near ? "warn" : "",
+            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
+            whenPlain: true
+          },
+          b2.date + i3
+        );
+      }) })
+    ] }) : /* @__PURE__ */ u3(Empty, { children: [
+      "Nothing due in the next ",
+      comingDays,
+      " days."
+    ] }) });
+  }
+
+  // web/src/finances/Overview.tsx
+  function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setWaiting: setWaiting2, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 }) {
+    const picked = Math.min(sel2, v3.periods.length - 1);
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length && !add) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them." }) }) });
+    if (!v3.plan.accounts?.length && !v3.plan.people?.length) {
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Start with three things", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }), title: "Your checking account", sub: "Where paychecks land and bills come out", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add an account" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "savings", name: "Pay" }), title: "Who gets paid, and when", sub: "Every other Friday, the 26th, twice a month", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("person"), children: "Add a paycheck" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Bills" }), title: "What comes out each month", sub: "The mortgage, the car, subscriptions, a card's balance", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("payment"), children: "Add a payment" }) })
+      ] }) }) }) });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fin", children: [
+      !v3.checking && /* @__PURE__ */ u3(Card, { kind: "finnote", role: "status", children: [
+        /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Checking" }),
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: "No checking account yet." }),
+          " Paychecks land in it and payments come out of it, so until there is one every balance below reads $0.00."
+        ] }),
+        add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
+        phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
+        phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
+        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
+        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
+        /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
+        /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
+        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2 }),
+        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2 }),
+        /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
+      ] })
+    ] });
+  }
+
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
@@ -11748,7 +11990,7 @@ ${pays}
       const d3 = /* @__PURE__ */ new Date(v3.today + "T12:00:00");
       d3.setDate(1);
       d3.setMonth(d3.getMonth() + k3);
-      return d3.toISOString().slice(0, 7);
+      return isoDay(d3).slice(0, 7);
     };
     const label = (m3) => (/* @__PURE__ */ new Date(m3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long" });
     const print = (k3) => run2(() => printMonth(monthName2(month3(k3)), monthPage(v3, month3(k3), "Finances")));
@@ -11770,15 +12012,15 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, printMonth, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
-    const edit = (what3, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what3, id2, kind);
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open3, exportFile: exportFile2, printMonth, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+    const edit = (what3, id2, kind) => cardOf(id2) ? open3("account", cardOf(id2)) : open3(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
     const [what2, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
-    const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
+    const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -11822,11 +12064,11 @@ ${pays}
 
   // web/src/screens/finances.ts
   var financesData = store(() => go().Finances());
-  financesData.watch(draw3);
+  financesData.watch(draw4);
   var ledgerData = store(() => go().FinancesLedger());
-  ledgerData.watch(draw3);
+  ledgerData.watch(draw4);
   statusData.watch(() => {
-    if (financesData.value) draw3();
+    if (financesData.value) draw4();
   });
   function runningApps() {
     const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
@@ -11853,7 +12095,7 @@ ${pays}
   var opened = 0;
   var editing = null;
   var phone = document.documentElement.classList.contains("companion");
-  function draw3() {
+  function draw4() {
     if (financesData.error && $2("finances").classList.contains("active")) showError(financesData.error);
     const v3 = financesData.value || null;
     setHidden(!!v3?.plan.hideAmounts);
@@ -11869,18 +12111,18 @@ ${pays}
       setTab: (t3) => {
         tab = t3;
         group = "";
-        draw3();
+        draw4();
       },
       group,
       setGroup: (g2) => {
         group = g2;
-        draw3();
+        draw4();
       },
       pick: (i3) => {
         sel = i3;
-        draw3();
+        draw4();
       },
-      edit: open,
+      edit: open2,
       setWaiting,
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
       keep: save,
@@ -11900,7 +12142,7 @@ ${pays}
       tab = "worth";
       group = g2;
       navigate("finances");
-      draw3();
+      draw4();
       $2("finRoot").querySelector(".fx-groupcard")?.scrollIntoView({ block: "start" });
     }, v3 && !v3.readOnly ? toggleHideAmounts : void 0);
     const low = v3 ? v3.periods.filter((p3) => p3.left < (v3.plan.cushion || 0)).length : 0;
@@ -11967,7 +12209,7 @@ ${pays}
     financesData.set({ ...v3, plan });
     save(plan);
   }
-  function open(what2, id2, kind) {
+  function open2(what2, id2, kind) {
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
@@ -11979,7 +12221,7 @@ ${pays}
     $2("finSheet").hidden = true;
   }
   mountFinanceSheet($2("finSheetBox"), null);
-  draw3();
+  draw4();
 
   // web/src/tidy/Tidy.tsx
   var names2 = { music: "Music", books: "Books", movies: "Movies", tv: "TV", audiobooks: "Audiobooks", inbox: "Downloads", scrubber: "Leftovers", tdarr: "Tdarr", arr: "Downloads" };
@@ -12529,7 +12771,7 @@ ${pays}
     "tdarr setup": "Setting up Tdarr",
     "arr apply": "Handing the downloads over"
   };
-  function draw4() {
+  function draw5() {
     const d3 = tidyData.value || null;
     mountTidy($2("tidyRoot"), {
       d: d3,
@@ -12545,16 +12787,16 @@ ${pays}
         } catch {
         }
         if (t3 === "books" && !review) loadReview();
-        draw4();
+        draw5();
       },
       closeJob: () => {
         job = null;
-        draw4();
+        draw5();
       },
       toggle: (id2) => {
         if (skip.has(id2)) skip.delete(id2);
         else skip.add(id2);
-        draw4();
+        draw5();
       },
       act: {
         run,
@@ -12572,7 +12814,7 @@ ${pays}
         settings: (keys2) => keys2?.length ? showSettings(keys2) : navigate("settings"),
         review: () => {
           tab2 = "books";
-          draw4();
+          draw5();
           if (!review) loadReview();
         },
         cover: (id2, which) => go().TidyCover(id2, which),
@@ -12595,7 +12837,7 @@ ${pays}
       if (!s3.hidden) s3.hidden = true;
     });
   }
-  tidyData.watch(draw4);
+  tidyData.watch(draw5);
   window.addEventListener("focus", () => {
     if ($2("tidy").classList.contains("active") && (!job || job.ended) && (tidyData.value?.checks || []).some((c3) => !c3.ok && c3.needs)) tidyData.load();
   });
@@ -12610,7 +12852,7 @@ ${pays}
       showError(e3);
       review = [];
     }
-    draw4();
+    draw5();
   }
   function onEvent(ev) {
     if (!job || job.ended) return;
@@ -12643,7 +12885,7 @@ ${pays}
     }
     const line = ev.type === "kv" ? `${ev.label}: ${ev.value}` : ev.type === "step" ? `[${ev.n}/${ev.total}] ${text2}` : ev.type === "progress" ? "" : text2;
     if (line) job.log.push(line);
-    draw4();
+    draw5();
   }
   var listening2 = false;
   async function run(kind, action, args = [], yes = false) {
@@ -12653,7 +12895,7 @@ ${pays}
       window.runtime.EventsOn("media:event", onEvent);
     }
     job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
-    draw4();
+    draw5();
     try {
       await go().TidyRun(kind, action, args, yes);
       job.ended = { ok: job.result?.ok !== false };
@@ -12665,7 +12907,7 @@ ${pays}
       skip.clear();
       await loadReview();
     }
-    draw4();
+    draw5();
     tidyData.load();
   }
   drawSheet();
@@ -12917,7 +13159,7 @@ ${pays}
   }
 
   // web/src/app.ts
-  function show(name) {
+  function show2(name) {
     const picked = name === "app" ? "status" : name;
     $$("nav button").forEach((b2) => {
       b2.classList.toggle("active", b2.dataset.screen === picked);
@@ -12993,12 +13235,12 @@ ${pays}
   function navigate(name) {
     if (name === "update") {
       navigated = true;
-      show("status");
+      show2("status");
       updateFromMenu();
       return;
     }
     navigated = true;
-    show(name);
+    show2(name);
   }
   var screens = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
   $$("nav button").forEach((b2) => {
@@ -13094,20 +13336,20 @@ ${pays}
     const last2 = Promise.resolve().then(() => go().LastStatus()).catch(() => null);
     try {
       const info = await loadHost();
-      if (!info.rootOK) return show("setup");
+      if (!info.rootOK) return show2("setup");
       await loadCatalog();
       await drawRemembered(last2);
       const steps = onPhone() ? null : stepsData.load();
-      if (document.documentElement.classList.contains("kiosk")) return show("status");
+      if (document.documentElement.classList.contains("kiosk")) return show2("status");
       const screen = await go().Screen();
       if (screen) return screen.startsWith("app:") ? openApp(screen.slice(4)) : navigate(screen);
-      if (!steps) return show("status");
+      if (!steps) return show2("status");
       await steps;
       if (stepsData.error) throw stepsData.error;
-      if (progress(stepsData.value).left && !navigated) show("setup");
+      if (progress(stepsData.value).left && !navigated) show2("setup");
     } catch (e3) {
       showError(e3);
-      show("setup");
+      show2("setup");
     }
   });
 })();

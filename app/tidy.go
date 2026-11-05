@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	goruntime "runtime"
 	"slices"
 	"sort"
@@ -343,17 +344,50 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 		}
 		cli = []string{"media", kind, action}
 	}
-	for _, a := range args {
-		if a == "--yes" || a == "-y" || a == "--background" {
-			continue // the screen's yes is its own argument
-		}
-		cli = append(cli, a)
+	rest, err := tidyScreenArgs(kind, args)
+	if err != nil {
+		return nil, err
 	}
+	cli = append(cli, rest...)
 	cli = append(cli, "--events", "json")
 	if yes {
 		cli = append(cli, "--yes")
 	}
 	return cli, nil
+}
+
+// What the screen sends a job besides its kind and action: Undo's run, the
+// books' ids to leave alone, and --apply or --check. Anything else (another
+// library, other settings, files of the page's choosing) is refused, so a
+// bug in the page can't point Tidy Up at any folder but the libraries.
+var (
+	tidyRunID = regexp.MustCompile(`^[a-z]+(-[a-z]+)+-[0-9]+$`)
+	tidyIDs   = regexp.MustCompile(`^[0-9]+(,[0-9]+)*$`)
+)
+
+func tidyScreenArgs(kind string, args []string) ([]string, error) {
+	var out []string
+	runs := 0
+	for i := 0; i < len(args); i++ {
+		switch a := args[i]; {
+		case a == "--yes" || a == "-y" || a == "--background":
+			// the screen's yes is its own argument
+		case a == "--apply" || a == "--check":
+			out = append(out, a)
+		case a == "--skip" && i+1 < len(args) && tidyIDs.MatchString(args[i+1]):
+			out = append(out, a, args[i+1])
+			i++
+		case kind == "trash" && tidyRunID.MatchString(a):
+			out = append(out, a)
+			runs++
+		default:
+			return nil, fmt.Errorf("Tidy Up doesn't run a job with %q", a)
+		}
+	}
+	if kind == "trash" && runs != 1 {
+		return nil, errors.New("Undo puts back one run at a time")
+	}
+	return out, nil
 }
 
 // readEvents sends each line as an event: the engines' JSON as it is, the
