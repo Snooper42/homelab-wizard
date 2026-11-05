@@ -15,6 +15,7 @@ import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
 import { stopChoices, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
+import { changedSince, type Seen } from './changed';
 
 export interface Group {
   label: string;
@@ -66,6 +67,8 @@ export interface AppListProps {
   weekUp: Record<string, number>;
   /** Each app's times down this week, oldest first (the watchdog's). */
   outages?: Record<string, health.Outage[]>;
+  /** Each app as Status last showed it before this visit (changed.ts): a row that changed since has a dot. */
+  seen?: Seen | null;
   batteryPaused: Set<string>;
   /** The apps stopped on purpose, and until when: nothing starts them by itself. */
   held: Record<string, stopped.Stop>;
@@ -222,6 +225,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
   // Clicked and not confirmed yet: what it is doing, at once.
   const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
+  const changed = changedSince(a, p.seen ?? null);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
@@ -235,7 +239,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
         const r = (e.currentTarget as HTMLElement).querySelector('strong')!.getBoundingClientRect();
         openMenu(r.left, r.bottom + 4);
       } : undefined}>
-      <td><strong>{a.name}</strong></td>
+      <td><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
       <td class="state">
         <span class={'dot ' + cls} />{words}
         {pend && !pend.failed ? null : a.state === 'elsewhere'

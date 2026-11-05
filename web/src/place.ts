@@ -17,11 +17,14 @@ try { places = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { pl
 const sections = (screen: string) => [...document.querySelectorAll<HTMLDetailsElement>(`#${screen} details[id]:not(.jobdetails)`)];
 const main = () => $1('main') as HTMLElement;
 
+// A place being put back, not reached yet (the screen still drawing): leaving keeps it, not where the screen got to.
+let aiming = { screen: '', top: 0 };
+
 /** Keeps where screen is: its scroll and its open sections. */
 export function leavePlace(screen: string | undefined) {
   if (!screen || !kept.has(screen)) return;
   const all = sections(screen);
-  places[screen] = { top: Math.round(main().scrollTop), open: all.filter((d) => d.open).map((d) => d.id), shut: all.filter((d) => !d.open).map((d) => d.id) };
+  places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d) => d.open).map((d) => d.id), shut: all.filter((d) => !d.open).map((d) => d.id) };
   try { localStorage.setItem(key, JSON.stringify(places)); } catch { /* not kept */ }
 }
 
@@ -42,6 +45,7 @@ export function arrivePlace(screen: string) {
   if (!want || m.scrollTop >= want - 1) return;
   // Not drawn that far yet (its data is still coming): try again for a moment, unless you scroll first, or
   // the screen scrolls itself somewhere (a sidebar balance to its group's card).
+  aiming = { screen, top: want };
   let tries = 0, set = m.scrollTop;
   const yours = () => stop();
   const moved = () => { if (Math.abs(m.scrollTop - set) > 1) stop(); };
@@ -54,6 +58,7 @@ export function arrivePlace(screen: string) {
   for (const e of input) m.addEventListener(e, yours, { passive: true });
   m.addEventListener('scroll', moved, { passive: true });
   stop = () => {
+    aiming = { screen: '', top: 0 };
     clearInterval(timer);
     for (const e of input) m.removeEventListener(e, yours);
     m.removeEventListener('scroll', moved);

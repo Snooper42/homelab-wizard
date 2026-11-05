@@ -19,7 +19,8 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #PR8 |
+| Remember where you were | Each screen keeps its scroll and open sections between visits and after quitting; another screen opens at its own place | #417 |
+| What changed since you looked | A dot beside each app on Status that restarted, updated, stopped, or started since your last visit, cleared once you leave | #416 |
 | Open, your way | Alt-click (⌥-click) an address on Status to copy it; Shift-click (⇧-click) Open for its address on this computer | #415 |
 | Pinned apps | Right-click › Pin to the top keeps an app in a Pinned group at the top of Status, and first in the menu bar's Open an app | #414 |
 | Right-click the sidebar | A screen's own menu from the sidebar: Status's Check again and Update all, Backups' Back up now and Test a restore, Finances' Add a transaction, Update balances, and Hide amounts | #413 |
@@ -65,8 +66,8 @@ The things you do many times a day, made one click shorter.
 - **A quick peek** (M, *Idea*): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.
 - **Pinned apps** (S, *Built*, #414): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
 - **Open, your way** (S, *Built*, #415): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
-- **What changed since you looked** (S, *Idea*): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.
-- **Remember where you were** (S, *Built*, #PR8): each screen keeps its scroll position and open sections between visits and restarts.
+- **What changed since you looked** (S, *Built*, #416): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.
+- **Remember where you were** (S, *Built*, #417): each screen keeps its scroll position and open sections between visits and restarts.
 - **Drop files onto an app** (M, *Idea*): drop a PDF on Paperless's row and it goes into its import folder; an album folder on beets lands in its downloads; photos on Immich go to an album named for the day.
 
 ## Answers on hover

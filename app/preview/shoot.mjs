@@ -862,13 +862,15 @@ const smokes = [
   { name: 'Each screen keeps where you were: its scroll and open sections, after quitting too', screen: 'choose', run: async (page) => {
     const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
     const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
+    // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
     await page.waitForSelector('#choose.active #more', { timeout: 5000 });
     await page.click('#more > summary');
     await page.waitForFunction(() => document.querySelector('#more').open, null, { timeout: 2000 });
     await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
     await scrollTo(900);
-    const chose = await top();
-    if (chose < 800) throw new Error(`Choose stacks only scrolls to ${chose}`);
+    const chose = await top(), shown = await atTop();
+    if (chose < 800 || !shown) throw new Error(`Choose stacks only scrolls to ${chose} (${shown})`);
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
     if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose stacks' place`);
@@ -888,8 +890,9 @@ const smokes = [
     // Quit and open again (on Choose stacks): it is where it was, and so is Status.
     await page.reload();
     await page.waitForSelector('#choose.active #more', { timeout: 5000 });
-    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
-    if (Math.abs((await top()) - chose) > 1 || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()}, Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
+    await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    if ((await atTop()) !== shown || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"; Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
@@ -2704,6 +2707,39 @@ const smokes = [
     await page.waitForSelector('#weekCard li', { timeout: 5000 });
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
+  } },
+  // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
+  // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
+  // counts as Status. Kept on this device across launches.
+  { name: 'What changed since you looked: a dot on each row, cleared once seen', screen: 'status', run: async (page) => {
+    const dots = () => page.$$eval('#statusRows tr:not(.grouphead)', (rs) => rs.filter((r) => r.querySelector('.changedot')).map((r) => `${r.querySelector('strong').textContent}: ${r.querySelector('.changedot').getAttribute('aria-label')}`).sort());
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await dots()).length) throw new Error('dots on the first visit: ' + (await dots()).join(', '));
+    // An app's page is still Status: nothing is seen yet.
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
+    await page.waitForSelector('#app.active', { timeout: 3000 });
+    if (await page.evaluate(() => localStorage.getItem('homelab.statusSeen'))) throw new Error('an app’s page counted as leaving Status');
+    await page.click('nav button[data-screen=setup]');
+    await page.waitForSelector('#setup.active', { timeout: 3000 });
+    // Meanwhile: Vikunja restarted, Navidrome updated, Mealie started, Immich stopped.
+    await page.evaluate(() => {
+      const now = new Date().toISOString();
+      window.__MOCK.status = { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a) => (
+        a.id === 'vikunja' ? { ...a, since: now }
+          : a.id === 'navidrome' ? { ...a, since: now, updatedAt: now }
+          : a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: now }
+          : a.id === 'immich-server' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
+    });
+    await page.click('nav button[data-screen=status]');
+    await page.evaluate(() => window.__emit('status:changed'));
+    const want = ['Immich: Stopped since you looked', 'Mealie: Started since you looked', 'Navidrome: Updated since you looked', 'Vikunja: Restarted since you looked'];
+    await page.waitForFunction((n) => document.querySelectorAll('#statusRows .changedot').length === n, want.length, { timeout: 5000 }).catch(() => {});
+    if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
+    if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
+    // Seen: leaving and coming back clears them.
+    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
   } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
