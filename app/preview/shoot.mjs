@@ -1739,6 +1739,30 @@ const smokes = [
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
   } },
+  // Open, your way: ⌥-click (Alt-click) an address copies it and says so, opening nothing; ⇧-click (Shift-click) Open uses
+  // its address on this machine instead of the domain; a plain click still opens the domain. Each says so in its tooltip.
+  ...[['Mac', 'MacIntel', '⌥', '⇧'], ['Windows', 'Win32', 'Alt-', 'Shift-']].map(([sys, platform, alt, shift]) => ({
+    name: `Open, your way: ⌥-click copies an address, ⇧-click opens it on this machine, ${sys}`, screen: 'status', mock: { platform, host: sys === 'Mac' ? host : { ...host, os: 'Windows 11', machine: 'this PC' } }, run: async (page) => {
+      const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const local = await page.evaluate(() => window.__MOCK.status.apps.find((a) => a.id === 'vikunja').url);
+      const link = row.locator('a[role=button]:has-text("todo.example.com")');
+      if ((await link.getAttribute('title')) !== `${alt}click copies it`) throw new Error('the address says: ' + await link.getAttribute('title'));
+      await link.click({ modifiers: ['Alt'] });
+      await row.locator('.rowsaid:text-is("Address copied")').waitFor({ timeout: 2000 });
+      if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'https://todo.example.com') throw new Error('copied ' + await page.evaluate(() => window.__MOCK.clipboard));
+      if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('⌥-click opened it too');
+      if (await page.isVisible('#app.active')) throw new Error('⌥-click opened its page');
+      const open = row.locator('button.rowmain:text-is("Open")');
+      if ((await open.getAttribute('title')) !== `Open Vikunja (${shift}click: on this machine, ${local.replace('http://', '')})`) throw new Error('Open says: ' + await open.getAttribute('title'));
+      await open.click({ modifiers: ['Shift'] });
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== local) throw new Error('⇧-click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await open.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('a click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await link.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('the address opened ' + await page.evaluate(() => window.__MOCK.opened));
+    } })),
   // Pin to the top (a row's right-click): the app moves to Pinned, open under Needs a look, in the order pinned, and leaves
   // its own group; unpinned, it goes back. Ticked in the menu while pinned.
   { name: 'Pin an app to the top of Status', screen: 'status', run: async (page) => {

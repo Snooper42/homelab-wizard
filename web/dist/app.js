@@ -444,7 +444,7 @@
     const key2 = (e3) => {
       if (e3.key === "Enter" || e3.key === " ") {
         e3.preventDefault();
-        onClick();
+        onClick(e3);
       }
     };
     return /* @__PURE__ */ u3("a", { id: id2, class: cls, tabIndex: 0, role: "button", title, onClick, onKeyDown: key2, children });
@@ -2024,8 +2024,10 @@
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
-  function Link({ url, text: text2, open: open3 }) {
-    return /* @__PURE__ */ u3(ActionLink, { onClick: () => open3(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
+  var alt = (os) => os === "mac" ? "⌥" : "Alt-";
+  var shift = (os) => os === "mac" ? "⇧" : "Shift-";
+  function Link({ url, text: text2, open: open3, copy, os }) {
+    return /* @__PURE__ */ u3(ActionLink, { title: `${alt(os)}click copies it`, onClick: (e3) => e3?.altKey ? copy(url) : open3(url), children: /* @__PURE__ */ u3(Address, { text: text2 }) });
   }
   var clock = (d3) => d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   var weekday = (d3) => d3.toLocaleDateString("en-US", { weekday: "short" });
@@ -2105,12 +2107,16 @@
     if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: "Install" });
     if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" });
     const url = a3.address ? "https://" + a3.address : a3.url;
-    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: `Open ${a3.name}`, onClick: () => on2.open(url), children: "Open" }) : null;
+    const local = a3.address && a3.url ? a3.url : "";
+    return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
   }
   function Row2({ a: a3, p: p3, menu, setMenu, said, say }) {
     const pend = p3.pending[a3.id];
     const menuable = !p3.companion && a3.state !== "missing" && a3.state !== "elsewhere";
     const openMenu2 = (x3, y3) => setMenu({ id: a3.id, x: x3, y: y3, from: document.activeElement });
+    const copy = (url) => {
+      p3.on.menu.copy(url).then(() => say(a3.id, "Address copied"), () => say(a3.id, "Could not copy the address"));
+    };
     const close3 = (refocus) => {
       const from2 = menu?.from;
       setMenu(null);
@@ -2164,7 +2170,7 @@
               ] }),
               said && /* @__PURE__ */ u3("span", { class: "rowsaid", role: "status", children: said })
             ] }),
-            /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
+            /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
               /* @__PURE__ */ u3(Actions2, { a: a3, entry, busy: p3.busy, os: p3.os, on: p3.on }),
               a3.state !== "missing" && /* @__PURE__ */ u3("button", { class: "iconbtn topage", title: `${a3.name}: its page`, "aria-label": `${a3.name}: its page`, onClick: () => p3.on.page(a3), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) }),
