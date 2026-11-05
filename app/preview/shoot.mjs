@@ -887,7 +887,13 @@ const smokes = [
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
-    // Quit and open again (on Choose stacks): it is where it was, and so is Status.
+    // Quit and open again (on Choose stacks): it is where it was, and so is Status. Quitting is the page going away
+    // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
+    // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
+    await page.evaluate(() => dispatchEvent(new Event('pagehide')));
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.place']) throw new Error('nothing kept on quitting');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
     await page.reload();
     await page.waitForSelector('#choose.active #more', { timeout: 5000 });
     await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});

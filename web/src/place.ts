@@ -29,10 +29,16 @@ export function leavePlace(screen: string | undefined) {
 }
 
 let stop = () => {};
+let anchorTimer = 0;
 
 /** Puts screen back where it was, or at its top the first time. */
 export function arrivePlace(screen: string) {
   stop();
+  // The place was kept with the screen drawn whole: while it fills in again, the browser's scroll anchoring
+  // would shift it by what is drawn above, against nodes still being replaced. Off for a moment, it stays put.
+  clearTimeout(anchorTimer);
+  main().style.overflowAnchor = 'none';
+  anchorTimer = window.setTimeout(() => { main().style.overflowAnchor = ''; }, 2000);
   const m = main(), p = kept.has(screen) ? places[screen] : undefined;
   if (p) {
     for (const d of sections(screen)) {

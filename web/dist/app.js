@@ -13228,8 +13228,14 @@ ${pays}
   }
   var stop = () => {
   };
+  var anchorTimer = 0;
   function arrivePlace(screen) {
     stop();
+    clearTimeout(anchorTimer);
+    main().style.overflowAnchor = "none";
+    anchorTimer = window.setTimeout(() => {
+      main().style.overflowAnchor = "";
+    }, 2e3);
     const m3 = main(), p3 = kept.has(screen) ? places[screen] : void 0;
     if (p3) {
       for (const d3 of sections(screen)) {
