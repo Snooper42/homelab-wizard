@@ -38,6 +38,27 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with the budget for `category` set to `amount` this month or
+    /// pay period. Its period and rollover are kept. The category matches
+    /// regardless of case, as the computer keeps one budget per category.
+    /// Nil for an unknown budget, or an amount that isn't more than nothing.
+    static func settingBudget(category: String, to amount: Double, in plan: JSONValue) -> JSONValue? {
+        let cents = roundedToCents(amount)
+        guard amount.isFinite, cents > 0, cents <= maxBalance,
+              case .object(var root) = plan,
+              case .array(var budgets)? = root["budgets"]
+        else { return nil }
+        let wanted = category.trimmingCharacters(in: .whitespaces).lowercased()
+        guard let index = budgets.firstIndex(where: {
+            if case .string(let c)? = $0["category"] { return c.trimmingCharacters(in: .whitespaces).lowercased() == wanted }
+            return false
+        }), case .object(var budget) = budgets[index] else { return nil }
+        budget["amount"] = .number(cents)
+        budgets[index] = .object(budget)
+        root["budgets"] = .array(budgets)
+        return .object(root)
+    }
+
     static func roundedToCents(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }

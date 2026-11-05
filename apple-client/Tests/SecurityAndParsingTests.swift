@@ -1258,3 +1258,27 @@ extension NetworkRuleTests {
         #expect(live.status == nil)
     }
 }
+
+@Suite("Changing a budget")
+struct BudgetEditTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r2","budgets":[{"category":"Groceries","amount":600,"rollover":true},{"category":"Fun","amount":100,"per":"paycheck"}],"accounts":[]}
+    """#.utf8))
+
+    @Test func setsOnlyTheAmount() throws {
+        let edited = try #require(FinancePlanEdit.settingBudget(category: "groceries", to: 650.004, in: plan))
+        guard case .array(let budgets)? = edited["budgets"] else { Issue.record("no budgets"); return }
+        #expect(budgets[0]["amount"] == .number(650))
+        #expect(budgets[0]["rollover"] == .bool(true))   // kept
+        #expect(budgets[0]["category"] == .string("Groceries"))
+        #expect(budgets[1] == (plan["budgets"].flatMap { if case .array(let a) = $0 { return a[1] } else { return nil } }))
+        #expect(edited["rev"] == .string("r2"))
+    }
+
+    @Test func refusesNothingAndUnknown() {
+        #expect(FinancePlanEdit.settingBudget(category: "Groceries", to: 0, in: plan) == nil)
+        #expect(FinancePlanEdit.settingBudget(category: "Groceries", to: -5, in: plan) == nil)
+        #expect(FinancePlanEdit.settingBudget(category: "Rent", to: 5, in: plan) == nil)
+        #expect(FinancePlanEdit.settingBudget(category: "Groceries", to: .infinity, in: plan) == nil)
+    }
+}

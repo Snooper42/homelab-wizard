@@ -43,16 +43,20 @@ final class FinancesViewModel {
     /// The edit level, and a plan the computer didn't mark read-only.
     var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil }
 
-    /// Types in an account's balance, as on the computer. Returns whether it saved.
-    func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
+    /// Changes a budget's amount. Returns whether it saved.
+    func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }
-        guard let edited = FinancePlanEdit.settingBalance(of: account.id, to: value, today: FinancePlanEdit.todayString(), in: raw) else {
-            saveError = "That isn't an amount the plan can take."
+        guard let edited = FinancePlanEdit.settingBudget(category: budget.category, to: amount, in: raw) else {
+            saveError = "A budget is an amount more than nothing."
             return false
         }
+        return await savePlan(edited, reason: "Change the \(budget.category) budget.")
+    }
+
+    private func savePlan(_ edited: JSONValue, reason: String) async -> Bool {
         isSaving = true
         defer { isSaving = false }
-        guard await authorize("Update \(account.name)'s balance.") else { return false }
+        guard await authorize(reason) else { return false }
         do {
             let read = try await api.saveFinances(edited)
             plan = read.view
@@ -64,10 +68,19 @@ final class FinancesViewModel {
             let apiError = APIError.from(error)
             Log.ui.error("SaveFinances failed: \(apiError.logName, privacy: .public)")
             saveError = apiError.errorDescription
-            // Another device saved first (or the save was refused): show the latest.
             await loadPlan()
             return false
         }
+    }
+
+    /// Types in an account's balance, as on the computer. Returns whether it saved.
+    func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard let edited = FinancePlanEdit.settingBalance(of: account.id, to: value, today: FinancePlanEdit.todayString(), in: raw) else {
+            saveError = "That isn't an amount the plan can take."
+            return false
+        }
+        return await savePlan(edited, reason: "Update \(account.name)'s balance.")
     }
 
     var level: FinancesLevel { FinancesLevel(device()?.finances) }

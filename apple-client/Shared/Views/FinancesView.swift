@@ -8,6 +8,7 @@ import SwiftUI
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
     @State private var editing: FinanceAccount?
+    @State private var editingBudget: FinanceBudget?
 
     var body: some View {
         Form {
@@ -48,6 +49,9 @@ struct FinancesView: View {
         .sheet(item: $editing) { account in
             BalanceEditor(account: account, finances: finances)
         }
+        .sheet(item: $editingBudget) { budget in
+            BudgetEditor(budget: budget, finances: finances)
+        }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Finances")
         .toolbar {
@@ -65,8 +69,14 @@ struct FinancesView: View {
     }
 
     private func budgets(_ view: FinancesPlanView) -> some View {
-        Section("Budgets") {
+        Section {
             ForEach(view.budgets) { budget in
+                Button {
+                    if finances.canEdit {
+                        finances.clearSaveError()
+                        editingBudget = budget
+                    }
+                } label: {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Text(budget.category)
@@ -81,8 +91,17 @@ struct FinancesView: View {
                         .font(.caption)
                         .foregroundStyle(budget.isOver ? .red : .secondary)
                 }
+                .contentShape(Rectangle())
                 .accessibilityElement(children: .combine)
+                }
+                .buttonStyle(.plain)
+                .allowsHitTesting(finances.canEdit)
+                .accessibilityHint(finances.canEdit ? "Change its amount" : "")
             }
+        } header: {
+            Text("Budgets")
+        } footer: {
+            if finances.canEdit { Text("Tap a budget to change its amount.") }
         }
     }
 
@@ -279,6 +298,61 @@ private struct RowLine: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Changes one budget's amount; its period and rollover stay as they are.
+private struct BudgetEditor: View {
+    let budget: FinanceBudget
+    let finances: FinancesViewModel
+    @State private var text = ""
+    @Environment(\.dismiss) private var dismiss
+
+    private var value: Double? {
+        guard let v = FinancePlanEdit.parseAmount(text), FinancePlanEdit.roundedToCents(v) > 0 else { return nil }
+        return v
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Amount", text: $text)
+                        #if os(iOS)
+                        .keyboardType(.numbersAndPunctuation)
+                        #endif
+                        .font(.title2.monospacedDigit())
+                        .privacySensitive()
+                        .onSubmit(save)
+                } header: {
+                    Text(budget.category)
+                } footer: {
+                    Text(budget.per == "paycheck" ? "What it may take each pay period." : "What it may take each month.")
+                }
+                if let error = finances.saveError {
+                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle("Change Budget")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    if finances.isSaving { ProgressView() } else { Button("Save", action: save).disabled(value == nil) }
+                }
+            }
+        }
+        #if os(macOS)
+        .frame(minWidth: 360, minHeight: 220)
+        #endif
+    }
+
+    private func save() {
+        guard let value else { return }
+        Task { if await finances.setBudget(budget, to: value) { dismiss() } }
     }
 }
 
