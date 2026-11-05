@@ -167,6 +167,16 @@ private struct JobRow: View {
             if job.state == "failed", let message = job.errorMessage, !message.isEmpty {
                 Text(message).font(.caption).foregroundStyle(.red).lineLimit(4)
             }
+            if let summary = job.lastRunSummary {
+                Text(summary).font(.caption).foregroundStyle(.secondary)
+            }
+            if !job.sources.isEmpty {
+                Text(job.sources.prefix(4).joined(separator: ", ") + (job.sources.count > 4 ? ", …" : ""))
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .textSelection(.enabled)
+            }
             if let next = job.nextRun {
                 Text("Next \(next, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)
             }

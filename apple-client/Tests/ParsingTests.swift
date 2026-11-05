@@ -361,3 +361,20 @@ struct UptimeTests {
         #expect(list[1].to == nil) // still down
     }
 }
+
+@Suite("Duplicati's last run")
+struct DuplicatiRunTests {
+    @Test func summarizesTheLastRun() throws {
+        let jobs = try JSONDecoder.homelab().decode([DuplicatiJob].self, from: Data(#"""
+        [{"id":"1","name":"Nightly","state":"ok","lastFinished":"2026-11-05T02:04:00Z","nextRun":"0001-01-01T00:00:00Z",
+          "took":245,"holds":"48.2 GB","files":4210,"versions":12,"sources":["/Users/sam/homelab/data/"]},
+         {"id":"2","name":"Old","state":"never","nextRun":"0001-01-01T00:00:00Z"}]
+        """#.utf8))
+        let summary = try #require(jobs[0].lastRunSummary)
+        #expect(summary.hasPrefix("Took"))
+        #expect(summary.contains("48.2 GB in"))
+        #expect(summary.hasSuffix("keeps 12 versions"))
+        #expect(jobs[0].sources == ["/Users/sam/homelab/data/"])
+        #expect(jobs[1].lastRunSummary == nil) // an older computer, or nothing yet: nothing said
+    }
+}

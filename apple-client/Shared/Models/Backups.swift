@@ -125,8 +125,19 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
     let state: String
     /// Nil when it isn't scheduled.
     let nextRun: Date?
+    /// What its last run was (main #418): how long it took, in seconds (0
+    /// when Duplicati didn't say), what it holds of yours ("48.2 GB") and
+    /// in how many files, how many versions it keeps, and the folders it copies.
+    let took: Int
+    let holds: String?
+    let files: Int
+    let versions: Int
+    let sources: [String]
 
-    enum CodingKeys: String, CodingKey { case id, name, lastFinished, lastError, errorMessage, size, state, nextRun }
+    enum CodingKeys: String, CodingKey {
+        case id, name, lastFinished, lastError, errorMessage, size, state, nextRun
+        case took, holds, files, versions, sources
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -138,5 +149,25 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
         size = try c.decodeIfPresent(String.self, forKey: .size)
         state = try c.decodeIfPresent(String.self, forKey: .state) ?? "never"
         nextRun = GoZeroTime.drop(try c.decodeIfPresent(Date.self, forKey: .nextRun))
+        took = max(0, try c.decodeIfPresent(Int.self, forKey: .took) ?? 0)
+        holds = try c.decodeIfPresent(String.self, forKey: .holds)
+        files = max(0, try c.decodeIfPresent(Int.self, forKey: .files) ?? 0)
+        versions = max(0, try c.decodeIfPresent(Int.self, forKey: .versions) ?? 0)
+        sources = try c.decodeIfPresent([String].self, forKey: .sources) ?? []
+    }
+
+    /// "Took 4 min · 48.2 GB in 4,210 files · keeps 12 versions", or nil with nothing to say.
+    var lastRunSummary: String? {
+        var parts: [String] = []
+        if took > 0 {
+            parts.append("Took " + Duration.seconds(took).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .abbreviated, maximumUnitCount: 2)))
+        }
+        if let holds, !holds.isEmpty {
+            parts.append(files > 0 ? "\(holds) in \(files.formatted()) files" : holds)
+        } else if files > 0 {
+            parts.append("\(files.formatted()) files")
+        }
+        if versions > 0 { parts.append(versions == 1 ? "keeps 1 version" : "keeps \(versions) versions") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
