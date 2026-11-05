@@ -20,7 +20,7 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
-| Export your finances | Finances › **Export**: the plan as JSON, the year ahead as a spreadsheet, and this month or the next on a page that prints itself; on a phone too | #PR |
+| Export your finances | Finances › **Export**: the plan as JSON, the year ahead as a spreadsheet, and this month or the next on a page that prints itself; on a phone too | #405 |
 | Type to filter Status | Typing an app's name on Status keeps only the apps that have it; Return opens the first, Escape brings every app back | #385 |
 | Finances on the phone | A phone's Finances opens with the next two weeks of bills, card charges on their cards, and the goals with what each needs a paycheck | #381 |
 | Card charges on the calendar | A bill charged to a card shows on its day, on its card with the card's due day, never as checking money; on the phone too | #380 |
@@ -201,7 +201,7 @@ The Finances loop's unfinished items, built by the features loop now, with their
 - **The calendar, further ahead** (S, *Built*, #373; F20): a payment past the chart's 93 days, such as a yearly renewal, shows in its month a year ahead, without a balance.
 - **Card charges on the calendar** (S, *Built*, #380; F21): a bill charged to a card shows on its day, marked "on Chase Freedom", with the card's due day.
 - **Finances on the phone** (M, *Built*, #381; F17): the phone's Dashboard opens with Coming up (the next two weeks of bills, card charges on their cards) and the goals; the calendar (a list of days), Renewing soon, and Update balances (one sheet, every account) were already there.
-- **Export** (S, *Built*, #PR; F18): the plan and its projection as CSV and JSON, and a printable month.
+- **Export** (S, *Built*, #405; F18): the plan and its projection as CSV and JSON, and a printable month.
 - **Polish, all along** (S, *Idea*; F19): empty states for a new plan, alignment, 860px and phone widths, contrast themes, focus order, labels; a little in each Finances round.
 
 ## Accessibility and polish

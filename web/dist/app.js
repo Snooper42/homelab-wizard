@@ -11769,14 +11769,16 @@ ${pays}
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead2 })
         ] }),
-        v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
-        ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
-        !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
-          toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
-          !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
-          /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [
-            /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
-            label
+        /* @__PURE__ */ u3("div", { class: "fx-headtools", children: [
+          v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
+          ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
+          !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
+            toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
+            !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
+            /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [
+              /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
+              label
+            ] })
           ] })
         ] })
       ] }),

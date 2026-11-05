@@ -4747,6 +4747,17 @@ const smokes = [
     if (!/^finances-\d{4}-\d\d\.html$/.test(p.name) || !p.html.includes('<body onload="print()">') || !p.html.includes('<h1>Finances: ')) throw new Error('the page: ' + p.name);
     if (/<script|https?:\/\//.test(p.html)) throw new Error('the printed page loads something from elsewhere');
   } },
+  // Export stands level with the toolbar beside it on each system: the same middle as the capsule's buttons
+  // (the capsule keeps to the header's top, so a centred Export once sat a few pixels lower).
+  ...[['Mac', 'MacIntel', 'macOS 26.0'], ['Windows', 'Win32', 'Windows 11'], ['Linux', 'Linux x86_64', 'Ubuntu 24.04']].map(([sys, platform, os]) => ({
+    name: `Finances: Export sits level with the toolbar on ${sys}`, screen: 'finances', mock: { platform, host: { ...host, os } }, run: async (page) => {
+      await page.waitForSelector('#finances .header .fx-export button[aria-haspopup=menu]', { timeout: 5000 });
+      const at = await page.evaluate(() => {
+        const mid = (e) => { const r = e.getBoundingClientRect(); return { mid: r.top + r.height / 2, top: r.top, bottom: r.bottom }; };
+        return { exp: mid(document.querySelector('#finances .header .fx-export button[aria-haspopup=menu]')), btn: mid(document.querySelector('#finances .header .toolbar .btn')) };
+      });
+      if (Math.abs(at.exp.mid - at.btn.mid) > 0.5) throw new Error(`Export's middle is at ${at.exp.mid.toFixed(1)}px, the toolbar's buttons' at ${at.btn.mid.toFixed(1)}px`);
+    } })),
   // A phone allowed only to look exports too (it changes nothing): the plan downloads.
   { name: 'The phone, view only: Export downloads the plan', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finances .header .fx-export button[aria-haspopup=menu]:has-text("Export")', { timeout: 5000 });
