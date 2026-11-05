@@ -16,6 +16,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
+	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -74,6 +75,11 @@ func settled(c docker.Container, now time.Time) bool {
 // already, and apps updated lately (the rollback decides), are left.
 func (h *homelab) stopRestartLoops(ctx context.Context, client *docker.Client, containers []docker.Container, env map[string]string, now time.Time) (ids []string, lines []string) {
 	if strings.EqualFold(env["AUTO_HEAL"], "false") {
+		return nil, nil
+	}
+	// Another job changing the homelab has the turn (an update takes an app
+	// down and up again): its apps are its own until it ends, as in heal.
+	if _, busy := turn.First(h.root); busy && os.Getenv(turn.Env) == "" {
 		return nil, nil
 	}
 	path := restartsPath(h.root)

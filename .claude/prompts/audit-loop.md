@@ -577,3 +577,25 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   half-made saves), and a ticket over 10 minutes ahead of the clock holds
   no one up. `TestUnpackLeavesOutAnotherMachinesJobs` and
   `TestATicketFromTheFutureHoldsNoOneUp` failed before.
+- **Round 25 (#423, #426, #427 read through; N14):** #423 starts only
+  apps Docker could not start for a missing folder, once their drive is
+  back; nothing reaches it from outside. #426 is the lanes file. #427's
+  alert carries the last log lines with the homelab's secrets taken out,
+  and goes only to the homelab's own ntfy. N14: its restart-loop stop
+  ran without N13's turn check, so an app restarting while an update
+  brought its database back was stopped mid-job and kept stopped. Now it
+  waits for the job as heal does. `TestWatchdogLeavesRestartLoopsToAJob`
+  failed before. `data/restarts.json` is written in place, 0644, without
+  a lock: a storage matter, under For Account 2.
+
+## For Account 2
+
+- **`data/restarts.json` is written in place, without a lock** (#427,
+  cmd/homelab/restartloop.go `stopRestartLoops`): `os.WriteFile`, 0644,
+  read and rewritten whole by each watchdog run. Two runs at once (the
+  agent's and the one after sleep, #422, or `homelab watchdog` by hand)
+  can lose a count, or a reader can see it half-written; the cost is a
+  restart loop noticed one run later, nothing more (no secret in it). A
+  test like `TestNotesAtOnceAreAllKept` (40 runs at once, count the
+  kept entries and check the mode) would show it; save it with
+  internal/lockedfile as started.json is.
