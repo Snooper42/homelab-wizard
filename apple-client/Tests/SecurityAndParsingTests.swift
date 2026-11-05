@@ -247,3 +247,22 @@ struct StopChoiceTests {
         #expect(status.stopped.isEmpty)
     }
 }
+
+@Suite("Logs")
+struct LogsTests {
+    @Test func splitsCleansAndCaps() {
+        let lines = LogsViewModel.split("one\n\u{1B}[31mtwo\u{7}\n\nthree\t3\n" + String(repeating: "z", count: 3000) + "\n\n")
+        #expect(lines.map(\.text) == ["one", "[31mtwo", "", "three\t3", String(repeating: "z", count: 2000)])
+        #expect(lines.map(\.id) == [0, 1, 2, 3, 4])
+    }
+
+    @Test func emptyLogHasNoLines() {
+        #expect(LogsViewModel.split("").isEmpty)
+        #expect(LogsViewModel.split("\n\n").isEmpty)
+    }
+
+    @Test func nativeAppsHaveNoLogs() throws {
+        let native = try JSONDecoder.homelab().decode(AppStatus.self, from: Data(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#.utf8))
+        #expect(!native.hasLogs)
+    }
+}

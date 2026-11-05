@@ -64,6 +64,10 @@ extension AppStatus {
     /// so a phone can't start or stop it.
     var isNative: Bool { health == "native" }
 
+    /// Whether the computer can show its log. A native app writes its own
+    /// log elsewhere, as on the computer's row menu.
+    var hasLogs: Bool { !isNative && Self.isValidID(id) }
+
     /// Whether `id` looks like a catalog id (`nginx-proxy-manager`,
     /// `firefly-iii`). The computer checks ids against its catalog. This
     /// check means nothing else is ever sent as one.

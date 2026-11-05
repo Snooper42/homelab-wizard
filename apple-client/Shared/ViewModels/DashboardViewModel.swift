@@ -41,6 +41,8 @@ final class DashboardViewModel {
     var selectedFilter: Filter? = .all
     /// The selected app (Mac and iPad). Stored by id, so the detail follows live updates.
     var selectedAppID: AppStatus.ID?
+    /// The app whose log is open in a sheet.
+    var logsApp: AppStatus?
 
     let liveEvents: LiveEventManager
 

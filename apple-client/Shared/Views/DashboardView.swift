@@ -10,11 +10,13 @@ struct DashboardView: View {
     /// Lives as long as the dashboard. Locking removes both, and the pending
     /// states and command output go with them.
     @State private var actions: AppActionsViewModel
+    private let api: APIClient
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
     init(coordinator: AppCoordinator) {
+        api = coordinator.api
         _model = State(initialValue: DashboardViewModel(liveEvents: coordinator.liveEvents))
         _actions = State(initialValue: AppActionsViewModel(
             api: coordinator.api,
@@ -41,7 +43,11 @@ struct DashboardView: View {
         // A haptic when something new needs attention, not when it clears.
         .sensoryFeedback(.warning, trigger: model.attentionCount) { old, new in new > old }
         .modifier(AppActionsPresenter(actions: actions))
+        .sheet(item: $model.logsApp) { app in
+            LogsView(app: app, api: api)
+        }
         .environment(actions)
+        .environment(model)
     }
 }
 

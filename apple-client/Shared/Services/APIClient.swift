@@ -136,6 +136,15 @@ actor APIClient {
         }
     }
 
+    /// The app's last `lines` log lines (`homelab logs <id> --tail N`). The
+    /// computer removes `.env`'s secrets and anything shaped like a password
+    /// or token before sending, because every paired device may read logs.
+    func logs(appID: String, lines: Int) async throws -> String {
+        guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
+        let count = min(max(lines, 1), 5000)
+        return try await call("Logs", [.string(appID), .number(Double(count))], as: String.self)
+    }
+
     // MARK: Changes
 
     /// Starts, stops or restarts an app on the computer (the `AppAction`

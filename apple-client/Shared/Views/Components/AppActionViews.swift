@@ -4,6 +4,7 @@ import SwiftUI
 /// a context menu (Mac, iPad and iPhone). On iPhone, a swipe shows them too.
 struct AppActionControls: ViewModifier {
     @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
     let app: AppStatus
 
     func body(content: Content) -> some View {
@@ -20,6 +21,14 @@ struct AppActionControls: ViewModifier {
                 }
                 if available.contains(.stop) {
                     StopForAWhileMenu(app: app)
+                }
+                if app.hasLogs {
+                    Divider()
+                    Button {
+                        dashboard.logsApp = app
+                    } label: {
+                        Label("Logs", systemImage: "doc.text")
+                    }
                 }
             }
             #if os(iOS)

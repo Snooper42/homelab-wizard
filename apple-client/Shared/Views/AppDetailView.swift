@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AppDetailView: View {
     @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
     /// Nil when the app left the status (uninstalled meanwhile).
     let app: AppStatus?
 
@@ -65,6 +66,16 @@ struct AppDetailView: View {
                             LabeledContent("On the computer") {
                                 Text(local).textSelection(.enabled)
                             }
+                        }
+                    }
+                }
+
+                if app.hasLogs {
+                    Section {
+                        Button {
+                            dashboard.logsApp = app
+                        } label: {
+                            Label("Logs", systemImage: "doc.text")
                         }
                     }
                 }
