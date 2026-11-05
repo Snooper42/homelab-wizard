@@ -53,6 +53,13 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	for _, id := range updates.Held(env) {
 		held[id] = true
 	}
+	pinned := map[string]bool{}
+	for _, id := range Pinned(env) {
+		if _, ok := c.Get(id); ok {
+			pinned[id] = true
+			st.Pinned = append(st.Pinned, id)
+		}
+	}
 	quiet := map[string]bool{}
 	for _, id := range notify.Quiet(env) {
 		quiet[id] = true
@@ -111,6 +118,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		}
 		s.Held = held[a.ID]
 		s.Quiet = quiet[a.ID]
+		s.Pinned = pinned[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
 	if ask {

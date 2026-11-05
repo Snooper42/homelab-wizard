@@ -248,6 +248,9 @@ type Status struct {
 	// Savings is what the running apps replace in subscriptions a year,
 	// from docs/Savings.md.
 	Savings float64 `json:"savings"`
+	// Pinned are the apps pinned to the top, in the order they were
+	// pinned (only those in the catalog).
+	Pinned []string `json:"pinned,omitempty"`
 	// Updates is whether nightly image updates run, and when.
 	Updates updates.State `json:"updates"`
 	// BatteryPaused are the apps the battery saver paused until power
@@ -287,6 +290,9 @@ type AppStatus struct {
 	Held bool `json:"held,omitempty"`
 	// Quiet: the watchdog does not alert about it (homelab notify on).
 	Quiet bool `json:"quiet,omitempty"`
+	// Pinned: at the top of Status and of the menu bar's Open an app
+	// (homelab pin); Status lists the apps in their pinned order.
+	Pinned bool `json:"pinned,omitempty"`
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`

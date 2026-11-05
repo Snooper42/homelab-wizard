@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Pinned apps | Right-click › Pin to the top keeps an app in a Pinned group at the top of Status, and first in the menu bar's Open an app | #PR5 |
 | Command palette | ⌘K (Ctrl+K) on any screen, then an app's name for its Open, page, Restart, Stop, or Logs, or *stop media*, *back up now*, *update all*, a screen; Stop asks twice | #395 |
 | Export your finances | Finances › **Export**: the plan as JSON, the year ahead as a spreadsheet, and this month or the next on a page that prints itself; on a phone too | #405 |
 | Type to filter Status | Typing an app's name on Status keeps only the apps that have it; Return opens the first, Escape brings every app back | #385 |
@@ -56,7 +57,7 @@ The things you do many times a day, made one click shorter.
 - **Command palette** (M, *Built*, #395): ⌘K (Ctrl+K elsewhere), then type "immich" for Open, Restart, or Logs, or type "stop media", "back up now", "update all".
 - **Type to filter Status** (S, *Built*, #385): start typing an app's name on Status and the list narrows, as Finder does; Escape clears it, and Return opens the first one's page.
 - **A quick peek** (M, *Idea*): Space on a selected row shows its last log lines, memory, uptime, and its address's QR code, without leaving Status.
-- **Pinned apps** (S, *Idea*): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
+- **Pinned apps** (S, *Built*, #PR5): pin the apps you open most to the top of Status and of the menu bar item's Open an app.
 - **Open, your way** (S, *Idea*): ⌥-click (Alt-click) an address to copy it; ⇧-click Open to use the address on this computer instead of the domain.
 - **What changed since you looked** (S, *Idea*): a dot on each row whose state changed since you last opened Status (restarted, updated, stopped), cleared once seen.
 - **Remember where you were** (S, *Idea*): each screen keeps its scroll position and open sections between visits and restarts.

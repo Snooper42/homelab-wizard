@@ -89,6 +89,7 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab duplicati setup|jobs         create the backup jobs (passphrases in .env) / list them
   homelab kopia repository <folder>    where Kopia keeps its second copy (KOPIA_REPOSITORY)
   homelab notify setup|test|on|off     ntfy write grants for alert topics / test message / an app's alerts
+  homelab pin|unpin <app>              an app at the top of Status and the menu bar's Open an app, or back in its group
   homelab digest [--send]              the weekly summary the nightly backup sends on Sundays
   homelab schedule install|status|remove
   homelab agent                        the background job: starts the apps at login, keeps awake,
@@ -258,6 +259,8 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"digest":       h.digestCmd,
 		"watchdog":     h.watchdog,
 		"notify":       h.notify,
+		"pin":          h.pin(true),
+		"unpin":        h.pin(false),
 		"schedule":     h.schedule,
 		"doctor":       h.doctor,
 		"report":       h.report,

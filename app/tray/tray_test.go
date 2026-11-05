@@ -132,6 +132,18 @@ func TestEntries(t *testing.T) {
 	if none := Entries(st, nil, slots); len(none) != 6 || none[0].Title != "Other" {
 		t.Errorf("without a catalog, one list: %+v", none)
 	}
+	// Pinned apps first, in the order pinned, and not again in their category.
+	for i := range st.Apps {
+		st.Apps[i].Pinned = st.Apps[i].ID == "navidrome" || st.Apps[i].ID == "filebrowser"
+	}
+	st.Pinned = []string{"navidrome", "filebrowser"}
+	var titles []string
+	for _, e := range Entries(st, c, slots) {
+		titles = append(titles, e.Title)
+	}
+	if got := strings.Join(titles, " | "); got != "Pinned | Navidrome | File Browser · restarting | Cloud & Files | Syncthing · stopped | Media | Jellyfin | Other | My app" {
+		t.Errorf("pinned: %s", got)
+	}
 }
 
 func TestAlertTitle(t *testing.T) {
