@@ -78,16 +78,17 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	}
 	// What updates left to go back to, and which are held.
 	hist := updates.History{}
-	why := started.Record{} // why the homelab last started each app
+	why := started.Record{}             // why the homelab last started each app
+	days := map[string][]time.Weekday{} // each app's update days, when not every night
 	if c.Root != "" {
 		hist = updates.LoadHistory(updates.HistoryPath(c.Root))
 		why = started.Load(started.Path(c.Root))
+		days = updates.LoadDays(updates.DaysPath(c.Root))
 	}
 	held := map[string]bool{}
 	for _, id := range updates.Held(env) {
 		held[id] = true
 	}
-	days := updates.Days(env)
 	pinned := map[string]bool{}
 	for _, id := range Pinned(env) {
 		if _, ok := c.Get(id); ok {

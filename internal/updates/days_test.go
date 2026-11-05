@@ -1,7 +1,10 @@
 package updates
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -31,23 +34,44 @@ func TestParseDays(t *testing.T) {
 	}
 }
 
-func TestDaysInEnv(t *testing.T) {
-	env := map[string]string{DaysKey: "immich:sun, nextcloud:sat+sun,broken,jellyfin:funday"}
-	d := Days(env)
-	if len(d) != 2 || !slices.Equal(d["immich"], []time.Weekday{time.Sunday}) || !slices.Equal(d["nextcloud"], []time.Weekday{time.Saturday, time.Sunday}) {
-		t.Fatalf("Days = %v", d)
+func TestDaysKept(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "data", "update-days.json")
+	if d := LoadDays(path); len(d) != 0 || !DueOn(d, "immich", time.Saturday) {
+		t.Fatalf("nothing kept: %v", d)
 	}
-	if DueOn(env, "immich", time.Saturday) || !DueOn(env, "immich", time.Sunday) || !DueOn(env, "sonarr", time.Saturday) {
+	if err := SaveDays(path, "immich", []time.Weekday{time.Sunday}); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveDays(path, "nextcloud", []time.Weekday{time.Sunday, time.Saturday}); err != nil {
+		t.Fatal(err)
+	}
+	d := LoadDays(path)
+	if len(d) != 2 || !slices.Equal(d["immich"], []time.Weekday{time.Sunday}) || !slices.Equal(d["nextcloud"], []time.Weekday{time.Saturday, time.Sunday}) {
+		t.Fatalf("LoadDays = %v", d)
+	}
+	if DueOn(d, "immich", time.Saturday) || !DueOn(d, "immich", time.Sunday) || !DueOn(d, "sonarr", time.Saturday) {
 		t.Error("DueOn")
 	}
-	if got := SetDays(env, "vaultwarden", []time.Weekday{time.Monday, time.Thursday}); got != "immich:sun,nextcloud:sat+sun,vaultwarden:mon+thu" {
-		t.Errorf("SetDays added: %q", got)
+	if data, _ := os.ReadFile(path); !strings.Contains(string(data), `"nextcloud": [`) {
+		t.Errorf("kept as:\n%s", data)
 	}
-	if got := SetDays(env, "immich", nil); got != "nextcloud:sat+sun" {
-		t.Errorf("SetDays every night: %q", got)
+	// Every night again: that app goes; the last one gone, the record too.
+	if err := SaveDays(path, "immich", nil); err != nil {
+		t.Fatal(err)
 	}
-	if got := SetDays(map[string]string{}, "immich", []time.Weekday{time.Sunday}); got != "immich:sun" {
-		t.Errorf("SetDays on nothing: %q", got)
+	if d := LoadDays(path); len(d) != 1 || d["immich"] != nil {
+		t.Errorf("after every night: %v", d)
+	}
+	if err := SaveDays(path, "nextcloud", nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Error("an empty record was kept")
+	}
+	// A record that does not read, or a day that is not one, is every night.
+	_ = os.WriteFile(path, []byte(`{"immich": ["funday"], "x": `), 0o644)
+	if d := LoadDays(path); len(d) != 0 {
+		t.Errorf("a broken record read as %v", d)
 	}
 }
 

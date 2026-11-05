@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -36,7 +35,7 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		if held := updates.Held(h.envMap()); len(held) > 0 && !u.JSON {
 			u.Printf("Held (not updated): %s (homelab updates release <app>).\n", strings.Join(held, ", "))
 		}
-		if days := updates.Days(h.envMap()); len(days) > 0 && !u.JSON {
+		if days := updates.LoadDays(updates.DaysPath(h.root)); len(days) > 0 && !u.JSON {
 			var on []string
 			for _, a := range h.catalog.Apps {
 				if d, ok := days[a.ID]; ok {
@@ -98,19 +97,14 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 			return fmt.Errorf("unknown container app %q", rest[1])
 		}
 		if len(rest) == 2 {
-			u.Printf("%s is updated %s.\n", a.Name(), onDays(updates.Days(h.envMap())[a.ID]))
+			u.Printf("%s is updated %s.\n", a.Name(), onDays(updates.LoadDays(updates.DaysPath(h.root))[a.ID]))
 			return nil
 		}
 		days, err := updates.ParseDays(strings.Join(rest[2:], " "))
 		if err != nil {
 			return err
 		}
-		f, err := envfile.Load(h.envFile)
-		if err != nil {
-			return err
-		}
-		f.Set(updates.DaysKey, updates.SetDays(f.Map(), a.ID, days))
-		if err := f.Save(); err != nil {
+		if err := updates.SaveDays(updates.DaysPath(h.root), a.ID, days); err != nil {
 			return err
 		}
 		u.OK("%s is updated %s", a.Name(), onDays(days))

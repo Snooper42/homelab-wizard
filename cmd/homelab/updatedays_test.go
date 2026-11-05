@@ -1,13 +1,13 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
-	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -25,8 +25,8 @@ func TestUpdateWindowLeavesAnAppForItsDays(t *testing.T) {
 		}
 	}
 	daysKept := func() string {
-		env, _ := envfile.Load(filepath.Join(root, ".env"))
-		return env.Map()[updates.DaysKey]
+		data, _ := os.ReadFile(updates.DaysPath(root))
+		return strings.Join(strings.Fields(string(data)), "")
 	}
 
 	// Any day but today: tonight's update leaves it, and says so.
@@ -34,8 +34,11 @@ func TestUpdateWindowLeavesAnAppForItsDays(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "by the nightly update on") {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
-	if got := daysKept(); got != "paperless:"+strings.Join(sorted(others), "+") {
-		t.Errorf("%s=%q", updates.DaysKey, got)
+	if got, want := daysKept(), `{"paperless":["`+strings.Join(sorted(others), `","`)+`"]}`; got != want {
+		t.Errorf("kept %s, want %s", got, want)
+	}
+	if env, _ := os.ReadFile(filepath.Join(root, ".env")); strings.Contains(string(env), "UPDATE_DAYS") {
+		t.Error("the days went into .env")
 	}
 	out, _ = homelabCmd(t, root, "", "update", "--all")
 	if !strings.Contains(out, "Nothing to update now") || !strings.Contains(out, "Updated on their own days, so not today: Paperless-ngx (") {
@@ -63,7 +66,7 @@ func TestUpdateWindowLeavesAnAppForItsDays(t *testing.T) {
 	}
 }
 
-// sorted puts day names as UPDATE_DAYS keeps them: Monday first.
+// sorted puts day names as data/update-days.json keeps them: Monday first.
 func sorted(names []string) []string {
 	days, _ := updates.ParseDays(strings.Join(names, "+"))
 	return updates.DayNames(days)

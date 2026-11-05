@@ -1016,7 +1016,7 @@ var stepVerb = map[string]string{"update": "Updating", "start": "Starting", "sto
 
 // updatable is every running app that takes image updates, the nightly
 // ones and those rebuilt from a Dockerfile, without the held ones and those
-// whose update days (UPDATE_DAYS) leave out today: homelab update --all.
+// whose update days (data/update-days.json) leave out today: homelab update --all.
 func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -1030,14 +1030,14 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	env := h.envMap()
 	held := updates.Held(env)
 	tidying := media.Held(h.root)
-	today, days := time.Now().Weekday(), updates.Days(env)
+	today, days := time.Now().Weekday(), updates.LoadDays(updates.DaysPath(h.root))
 	var ids, waiting, notToday []string
 	for _, a := range h.catalog.Apps {
 		how, _ := a.UpdatePolicy()
 		if how != "nightly" && how != "built" || slices.Contains(held, a.ID) {
 			continue
 		}
-		if !updates.DueOn(env, a.ID, today) {
+		if !updates.DueOn(days, a.ID, today) {
 			if _, running := runningContainer(report, a.ID); running {
 				notToday = append(notToday, a.Name()+" ("+updates.DaysText(days[a.ID])+")")
 			}

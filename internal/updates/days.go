@@ -1,20 +1,26 @@
 package updates
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // An update window per app: an app the nightly update takes only on some
 // days (Immich on Sundays, when no one is adding photos). The nightly run on
-// another day leaves it out, as it leaves a held one. Kept in .env as
-// UPDATE_DAYS=immich:sun,nextcloud:sat+sun; an app not listed is updated
-// every night. homelab update <app> by name updates it whatever the day.
+// another day leaves it out, as it leaves a held one. Kept in
+// data/update-days.json ({"immich": ["sun"]}), beside the other records
+// the homelab writes itself, not in .env; an app not in it is updated every
+// night. homelab update <app> by name updates it whatever the day.
 
-// DaysKey is the .env key holding each app's update days.
-const DaysKey = "UPDATE_DAYS"
+// DaysPath is where each app's update days are kept.
+func DaysPath(root string) string { return filepath.Join(root, "data", "update-days.json") }
 
 var dayNames = []string{"sun", "mon", "tue", "wed", "thu", "fri", "sat"}
 
@@ -52,50 +58,45 @@ func ParseDays(s string) ([]time.Weekday, error) {
 // dayOrder puts Monday first and Sunday last, as a week reads.
 func dayOrder(d time.Weekday) int { return (int(d) + 6) % 7 }
 
-// Days is each app's update days, from .env values; an app not in it is
-// updated every night.
-func Days(env map[string]string) map[string][]time.Weekday {
+// LoadDays reads each app's update days; none kept (or a record that does
+// not read) is every night for every app.
+func LoadDays(path string) map[string][]time.Weekday {
+	raw := map[string][]string{}
+	if data, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(data, &raw)
+	}
 	out := map[string][]time.Weekday{}
-	for _, part := range strings.Split(env[DaysKey], ",") {
-		id, days, ok := strings.Cut(strings.TrimSpace(part), ":")
-		if !ok || strings.TrimSpace(id) == "" {
-			continue
-		}
-		if d, err := ParseDays(days); err == nil && len(d) > 0 {
-			out[strings.TrimSpace(id)] = d
+	for id, names := range raw {
+		if d, err := ParseDays(strings.Join(names, "+")); err == nil && len(d) > 0 {
+			out[id] = d
 		}
 	}
 	return out
 }
 
 // DueOn says whether the nightly update takes app on day.
-func DueOn(env map[string]string, app string, day time.Weekday) bool {
-	d, ok := Days(env)[app]
+func DueOn(days map[string][]time.Weekday, app string, day time.Weekday) bool {
+	d, ok := days[app]
 	return !ok || slices.Contains(d, day)
 }
 
-// SetDays gives app its update days (none: every night) and returns the new
-// value for DaysKey, the other apps' kept as they were.
-func SetDays(env map[string]string, app string, days []time.Weekday) string {
-	all := Days(env)
-	delete(all, app)
-	if len(days) > 0 && len(days) < 7 {
-		all[app] = days
-	}
-	ids := make([]string, 0, len(all))
-	for id := range all {
-		ids = append(ids, id)
-	}
-	slices.Sort(ids)
-	var parts []string
-	for _, id := range ids {
-		var names []string
-		for _, d := range all[id] {
-			names = append(names, dayNames[d])
+// SaveDays gives app its update days (none: every night), under the
+// record's lock, so a change made at the same moment (the computer and a
+// phone) is not lost; the other apps' are kept as they were.
+func SaveDays(path, app string, days []time.Weekday) error {
+	return lockedfile.Update(path, 0o644, func(old []byte) ([]byte, bool) {
+		raw := map[string][]string{}
+		_ = json.Unmarshal(old, &raw)
+		delete(raw, app)
+		if len(days) > 0 && len(days) < 7 {
+			raw[app] = DayNames(days)
 		}
-		parts = append(parts, id+":"+strings.Join(names, "+"))
-	}
-	return strings.Join(parts, ",")
+		if len(raw) == 0 {
+			return nil, true
+		}
+		data, _ := json.MarshalIndent(raw, "", "  ")
+		return append(data, '\n'), true
+	})
 }
 
 // DaysText says days as a sentence would: "Sundays", "Saturdays and
