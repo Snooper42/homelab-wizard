@@ -173,16 +173,22 @@ struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
 
-    private var months: [(month: Date, items: [FinanceTransaction])] {
+    private struct MonthGroup: Identifiable {
+        let month: Date
+        var items: [FinanceTransaction]
+        var id: Date { month }
+    }
+
+    private var months: [MonthGroup] {
         guard let ledger = finances.ledger else { return [] }
         let calendar = Calendar.current
-        var out: [(month: Date, items: [FinanceTransaction])] = []
+        var out: [MonthGroup] = []
         for t in ledger.newestFirst where t.matches(search) {
             let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
             if out.last?.month == month {
                 out[out.count - 1].items.append(t)
             } else {
-                out.append((month, [t]))
+                out.append(MonthGroup(month: month, items: [t]))
             }
         }
         return out
@@ -190,7 +196,7 @@ struct TransactionsView: View {
 
     var body: some View {
         List {
-            ForEach(months, id: \.month) { group in
+            ForEach(months) { group in
                 Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
                     ForEach(group.items) { t in
                         TransactionRow(transaction: t, finances: finances)
