@@ -16,9 +16,7 @@ final class LogsViewModel {
     static let lineChoices = [200, 1000, 5000]
 
     let app: AppStatus
-    var lineCount = 200 {
-        didSet { if lineCount != oldValue { Task { await load() } } }
-    }
+    private(set) var lineCount = 200
     var filter = ""
     private(set) var lines: [Line] = []
     private(set) var isLoading = false
@@ -31,6 +29,13 @@ final class LogsViewModel {
     init(app: AppStatus, api: APIClient) {
         self.app = app
         self.api = api
+    }
+
+    /// Reads the log again with another number of lines.
+    func setLineCount(_ count: Int) {
+        guard count != lineCount else { return }
+        lineCount = count
+        Task { await load() }
     }
 
     var shownLines: [Line] {

@@ -45,7 +45,7 @@ struct LogsView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Picker("Lines", selection: $model.lineCount) {
+                        Picker("Lines", selection: Binding(get: { model.lineCount }, set: { model.setLineCount($0) })) {
                             ForEach(LogsViewModel.lineChoices, id: \.self) { count in
                                 Text("Last \(count) lines").tag(count)
                             }
