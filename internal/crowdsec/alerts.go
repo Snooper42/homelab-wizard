@@ -30,10 +30,17 @@ type Protection struct {
 	Week      int      `json:"week"`      // alerts in the last 7 days
 	BannedNow int      `json:"bannedNow"` // addresses with a ban in force
 	Recent    []Attack `json:"recent"`    // newest first, at most MaxRecent
+	// Today is what it stopped since midnight, newest first, at most
+	// MaxToday; TodayCount is all of them, for "and 12 more".
+	Today      []Attack `json:"today"`
+	TodayCount int      `json:"todayCount"`
 }
 
 // MaxRecent is how many attacks Protection lists.
 const MaxRecent = 5
+
+// MaxToday is how many of today's attacks the proxy's page lists.
+const MaxToday = 50
 
 type alert struct {
 	Scenario  string `json:"scenario"`
@@ -83,7 +90,7 @@ func ParseAlerts(out []byte) ([]Attack, error) {
 // Read asks CrowdSec for the bouncer and the week's alerts. exec runs a
 // command inside the CrowdSec container.
 func Read(ctx context.Context, exec func(ctx context.Context, args ...string) ([]byte, error), now time.Time) (Protection, error) {
-	p := Protection{Recent: []Attack{}}
+	p := Protection{Recent: []Attack{}, Today: []Attack{}}
 	out, err := exec(ctx, ListCommand...)
 	if err != nil && len(out) == 0 {
 		return p, err
@@ -105,5 +112,22 @@ func Read(ctx context.Context, exec func(ctx context.Context, args ...string) ([
 	}
 	p.Week, p.BannedNow = len(attacks), len(banned)
 	p.Recent = attacks[:min(len(attacks), MaxRecent)]
+	p.Today, p.TodayCount = Since(attacks, midnight(now))
 	return p, nil
+}
+
+// Since is the attacks at or after from (they are newest first), at most
+// MaxToday, and how many there were in all.
+func Since(attacks []Attack, from time.Time) ([]Attack, int) {
+	n := 0
+	for n < len(attacks) && !attacks[n].When.Before(from) {
+		n++
+	}
+	return attacks[:min(n, MaxToday)], n
+}
+
+// midnight is the start of now's day, where now is.
+func midnight(now time.Time) time.Time {
+	y, m, d := now.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, now.Location())
 }

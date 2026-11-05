@@ -802,10 +802,15 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	if drives, err := checkDrives(ctx); err == nil {
 		results = append(results, driveChecks(drives)...)
 	}
-	statePath := health.StatePath(h.root)
-	state := health.LoadState(statePath)
-	failed, recovered := state.Update(results, time.Now())
-	if err := state.Save(statePath); err != nil {
+	// Under the state's lock: another watchdog run, or homelab remove
+	// forgetting an app, is never saved over.
+	var state health.State
+	var failed []health.Result
+	var recovered []string
+	if err := health.UpdateState(health.StatePath(h.root), func(s *health.State) {
+		failed, recovered = s.Update(results, time.Now())
+		state = *s
+	}); err != nil {
 		h.ui.Warn("could not save watchdog state: %v", err)
 	}
 	if engineUp {

@@ -20,6 +20,8 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #PR20 |
+| What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
+| What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -118,7 +120,7 @@ The homelab looks after itself, and says what it did.
 
 Safe by default, and easy to check.
 
-- **Hide amounts** (S, *Idea*): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder.
+- **Hide amounts** (S, *Built*, #368): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder (Finances' *Hide amounts and a wall-screen card*).
 - **Lock with Touch ID or Windows Hello** (M, *Idea*): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
@@ -126,7 +128,7 @@ Safe by default, and easy to check.
 - **Tailnet devices** (S, *Idea*): every device on the household's tailnet, when it was last seen, and Remove for a lost phone.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
-- **What CrowdSec stopped** (S, *Idea*): the addresses banned today, where from, and what they tried, on the proxy's page.
+- **What CrowdSec stopped** (S, *Built*, #430): the addresses banned today, where from, and what they tried, on the proxy's page (and CrowdSec's): Status › Nginx Proxy Manager.
 - **Two-step sign-in, nudged** (S, *Idea*): Setup and the weekly summary name each admin app without a second factor until it has one.
 
 ## Backups and data
@@ -136,7 +138,7 @@ Confidence that what matters can come back.
 - **Restore one file** (M, *Idea*): browse a backup by app and date and bring back one document, photo, or setting without restoring the whole app.
 - **Yesterday's version of an app** (M, *Idea*): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.
 - **A copy before anything risky** (S, *Idea*): a database dump just before an update, a restore, or a settings change, kept for a week.
-- **What changed since last night** (S, *Idea*): each backup's size beside the night before's, with a warning when an app's data shrinks sharply.
+- **What changed since last night** (S, *Built*, #435): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).
 - **Weekly integrity check** (S, *Idea*): Duplicati's own verify on a sample each week, and its result on Backups.
 
 ## Notifications and alerts
@@ -226,7 +228,7 @@ Details that make it feel finished.
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
 - **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
 - **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
-- **Every menu by keyboard** (S, *Idea*): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape).
+- **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
 ## Insight
 

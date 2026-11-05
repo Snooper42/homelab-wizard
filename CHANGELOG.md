@@ -9,6 +9,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### New
 
 - **Quiet hours:** from 10 PM to 7 AM alerts reach the phone without a sound, unless they are serious: the password vault not answering, or backups failing two nights running. Settings › Quiet hours picks other hours, or off.
+- **What changed since last night:** on Backups, each app's copy shows the night before's size on hover, and beside it when it moved by a tenth; a copy less than half the night before's is marked in red, so an app that lost its data is noticed before the old copies age out.
+- **What CrowdSec stopped:** the proxy's page (and CrowdSec's) lists every address stopped since midnight, with where it came from, what it tried, the time, and whether it's still banned.
 - **What happened overnight:** in the morning, Status's first line sums up the night since 8 PM: *Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you*, or which app was down. **Hide until tomorrow** puts it away for the day.
 - **A restart that keeps failing:** an app Docker restarted 3 times within an hour is stopped instead of restarting forever, and the alert carries its last log lines. Its row on Status says so with a red dot until you start it again.
 - **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
@@ -51,6 +53,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Two jobs no longer save over each other's notes:** the nightly update, the watchdog, and a rollback each keep a note of what every app ran before its update, and one could save over what another had just noted (a rollback, or when an app came up well); a Setup step ticked in the app as Setup opened elsewhere could come undone. Each now keeps the other's change, and these records, with the household's and the restart counts, are written whole, only for this account.
+- **The watchdog's, the battery saver's, and the savings records are never half written:** Status and the once-a-minute check could read one while it was being written and take it for empty, and two watchdog runs at once could save over each other. Each is now written whole, one writer at a time, and only this account can read it.
 - **Pinning an app is never lost:** pinning one app from the app and another from a phone at about the same time could keep only one pin. The pinned apps now live in a record of their own that each change updates in turn, and they move there by themselves after the upgrade, still in the order you pinned them.
 - **Turning an app's alerts off is never lost:** *Tell me if it stops*, switched from the app and a phone at about the same time, could keep only one of the two, since both rewrote the same line of the settings file. The list now lives in a record of its own that each change updates in turn, and it moves there by itself after the upgrade, with every app you had turned off still off.
 - **Downloads wait out a busy registry:** when GitHub's or LinuxServer's image registry asked to space out downloads, installing several apps at once gave up after under a minute with *the image registry is spacing out downloads*, and a rebuild from the backups stopped at its first step. Downloads now wait and try again for a few minutes, and the rebuild downloads Duplicati before it starts it.
