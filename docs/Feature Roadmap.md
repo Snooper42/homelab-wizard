@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #PR24 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -164,7 +165,7 @@ Picking, trying, and using apps.
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
 - **Two apps that do the same job** (S, *Idea*): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both.
-- **Suggestions from what you use** (S, *Idea*): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why.
+- **Suggestions from what you use** (S, *Built*, #PR24): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose stacks › Add more › *Suggested for what you run*.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
 
 ## The desktop and the menu bar

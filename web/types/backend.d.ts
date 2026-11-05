@@ -13,6 +13,7 @@ declare namespace api {
     aliases?: string[];
     dependsOn?: string[];
     conflicts?: string[];
+    goesWith?: Record<string, string>;
     inputs?: string[];
     login?: string[];
     public: boolean;

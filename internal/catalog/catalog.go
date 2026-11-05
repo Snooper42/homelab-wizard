@@ -601,6 +601,14 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 				errf("%s: conflicts with unknown service %q", a.ID, other)
 			}
 		}
+		for other, why := range a.Meta.GoesWith {
+			if _, ok := c.byID[other]; !ok || other == a.ID {
+				errf("%s: goes_with names %q, not another app", a.ID, other)
+			}
+			if strings.TrimSpace(why) == "" {
+				errf("%s: goes_with %s says nothing on what it brings", a.ID, other)
+			}
+		}
 		for _, alias := range a.Meta.Aliases {
 			l := strings.ToLower(alias)
 			if _, ok := c.byID[l]; ok {

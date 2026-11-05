@@ -99,6 +99,8 @@ services:
         bind:
           create_host_path: false
     x-homelab:
+      goes_with:
+        navidrome: "Tags and sorts the music Navidrome plays, so albums and artists read right."
       seed: config/beets
       dump: sqlite:/config/library.db
       name: beets

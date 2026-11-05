@@ -44,6 +44,9 @@ type App struct {
 	Aliases     []string `json:"aliases,omitempty"`
 	DependsOn   []string `json:"dependsOn,omitempty"`
 	Conflicts   []string `json:"conflicts,omitempty"`
+	// GoesWith are the apps this one adds to, by ID, each with what it
+	// brings them (x-homelab goes_with): suggested to those who run one.
+	GoesWith map[string]string `json:"goesWith,omitempty"`
 	// Inputs are the .env settings the app needs before it can start; a
 	// form collects them and passes them back with --set.
 	Inputs []string `json:"inputs,omitempty"`
@@ -125,7 +128,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	}
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
-		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts,
+		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith,
 		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()

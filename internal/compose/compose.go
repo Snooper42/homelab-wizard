@@ -120,7 +120,10 @@ type Meta struct {
 	Local     bool     `yaml:"local"`
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
-	Requires  []string `yaml:"requires"`
+	// GoesWith are the apps this one adds to, each with a line on what it
+	// brings them: Choose stacks suggests it to those who run one.
+	GoesWith map[string]string `yaml:"goes_with"`
+	Requires []string          `yaml:"requires"`
 	// Login names the .env settings the homelab signs in to the app with
 	// (the user or email, then the password), for Status's Sign in.
 	Login   []string `yaml:"login"`

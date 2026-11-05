@@ -61,6 +61,17 @@ const matches = (a: api.App, query: string) => !query || [a.name, a.id, a.descri
 
 const stateBadge: Record<string, [string, string]> = { running: ['running', 'ok'], stopped: ['stopped', 'warn'], elsewhere: ['runs elsewhere', 'warn'] };
 
+const installed = (p: GroupsProps, id: string) => ['running', 'stopped'].includes(p.status[id]?.state || '');
+
+/** The apps a, not yet run, adds to among those you run (x-homelab goes_with), each with what it brings them. */
+function suggested(a: api.App, p: GroupsProps): [api.App, string][] {
+  if (installed(p, a.id) || a.kind === 'native') return [];
+  return Object.entries(a.goesWith || {}).flatMap(([id, why]): [api.App, string][] => {
+    const with_ = p.catalog.apps.find((o) => o.id === id);
+    return with_ && installed(p, id) ? [[with_, why]] : [];
+  });
+}
+
 function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   const native = a.kind === 'native';
   const st = p.status[a.id];
@@ -82,6 +93,7 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
         <div class="desc">{a.description}</div>
         {!!p.note(a.id) && <div class="sysnote muted">{p.note(a.id)}</div>}
         {!!a.replaces?.length && <div class="replaces">Replaces {a.replaces.join(', ')}</div>}
+        {suggested(a, p).map(([with_, why]) => <div key={with_.id} class="goeswith muted">Goes with {with_.name}, which you run: {why}</div>)}
       </div>
       {!!links.length && <div class="links-inline">{links}</div>}
     </label>
@@ -93,8 +105,16 @@ export function Groups(p: GroupsProps) {
   const byCategory: Record<string, api.App[]> = {};
   for (const a of p.catalog.apps) if (a.kind !== 'helper' && matches(a, p.query)) (byCategory[a.category] ??= []).push(a);
   if (p.query && !Object.keys(byCategory).length) return <Empty>No app matches “{p.query}”. Add your own below.</Empty>;
+  // Suggestions from what you use, first, while nothing is searched for.
+  const suggestions = p.query ? [] : p.catalog.apps.filter((a) => a.kind !== 'helper' && suggested(a, p).length);
   return (
     <>
+      {!!suggestions.length && (
+        <div class="group suggested" key="suggested">
+          <h2>Suggested for what you run<span class="n">{suggestions.length}</span></h2>
+          {suggestions.map((a) => <AppRow key={a.id} a={a} p={p} />)}
+        </div>
+      )}
       {p.catalog.categories.filter((c) => byCategory[c.id]).map((c) => {
         const apps = byCategory[c.id];
         const running = apps.filter((a) => p.status[a.id]?.state === 'running').length;

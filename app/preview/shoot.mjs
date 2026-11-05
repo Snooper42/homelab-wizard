@@ -854,6 +854,23 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
+  // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
+  { name: 'Choose stacks: suggestions from what you run', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    const group = page.locator('.group.suggested');
+    await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
+    await group.locator('label.app:has-text("Beets") .goeswith').filter({ hasText: 'Goes with Navidrome, which you run: Tags and sorts the music' }).waitFor({ timeout: 3000 });
+    await group.locator('.goeswith').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).waitFor({ timeout: 3000 });
+    if (await group.locator('label.app:has-text("Bazarr")').count()) throw new Error('Bazarr is suggested without Sonarr or Radarr');
+    if (await group.locator('label.app strong:text-is("Navidrome")').count()) throw new Error('an app you run is suggested');
+    await group.locator('label.app:has-text("Beets") input').check();
+    if (!(await page.isChecked('.group:not(.suggested) label.app:has-text("Beets") input'))) throw new Error('ticking a suggestion did not pick the app');
+    // Searching hides the group; the row still says it.
+    await page.fill('#search', 'beets');
+    await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
+    await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
+  } },
   { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
