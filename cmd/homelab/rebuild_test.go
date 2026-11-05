@@ -6,6 +6,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // backupJob writes one job's backup as the stand-in Duplicati restores it:
@@ -27,6 +30,40 @@ func backupJob(t *testing.T, folder, job, passphrase string, files map[string]st
 	}
 	_ = os.WriteFile(filepath.Join(dir, "duplicati-20261030T050000Z.dlist.zip.aes"), nil, 0o644)
 	_ = os.WriteFile(filepath.Join(dir, "passphrase"), []byte(passphrase), 0o644)
+}
+
+// The nightly rebuild of Nov 4 and 5, 2026 stopped at its first step:
+// Duplicati's image came from a registry spacing out downloads (ghcr.io's
+// per-minute limit, shared by every machine behind the same address), and
+// docker run, unlike Compose, never tried again. The image is pulled first
+// now, waiting out a busy registry.
+func TestRebuildWaitsOutABusyRegistry(t *testing.T) {
+	calls := fakeDocker(t, nil)
+	fakeSystemctl(t)
+	old := docker.RegistryBusyWaits
+	docker.RegistryBusyWaits = []time.Duration{time.Millisecond, time.Millisecond, time.Millisecond}
+	t.Cleanup(func() { docker.RegistryBusyWaits = old })
+	t.Setenv("FAKE_REGISTRY_BUSY", "2")
+	src, _ := repoCopy(t)
+	env, err := os.ReadFile(filepath.Join(src, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder := t.TempDir()
+	backupJob(t, folder, "secrets", "sesame", map[string]string{"homelab.env": string(env) + "\nDUPLICATI_PASSPHRASE=open-the-rest\n"})
+	fresh, _ := repoCopy(t)
+	_ = os.Remove(filepath.Join(fresh, ".env"))
+	t.Setenv("DUPLICATI_SECRETS_PASSPHRASE", "sesame")
+	out, _ := homelabCmd(t, fresh, "", "rebuild", folder, "--apply")
+	if strings.Contains(out, "toomanyrequests") || strings.Contains(out, "Homelab Secrets:") {
+		t.Fatalf("stopped at a busy registry:\n%s", out)
+	}
+	if got := envMapOf(t, fresh)["DUPLICATI_PASSPHRASE"]; got != "open-the-rest" {
+		t.Errorf(".env not restored (%q):\n%s", got, out)
+	}
+	if n := strings.Count(readCalls(t, calls), "pull --quiet lscr.io/linuxserver/duplicati"); n != 3 {
+		t.Errorf("Duplicati's image pulled %d times, want 3 (busy twice):\n%s", n, readCalls(t, calls))
+	}
 }
 
 // A machine lost, a new homelab folder, and the backup folder: rebuild

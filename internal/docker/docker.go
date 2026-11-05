@@ -48,13 +48,23 @@ func (r ExecRunner) Output(ctx context.Context, name string, args ...string) ([]
 	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
-		}
-		return out, fmt.Errorf("%s %s: %s", filepath.Base(name), strings.Join(args, " "), msg)
+		return out, failed(name, args, stderr.String(), err)
 	}
 	return out, nil
+}
+
+// failed is a command's failure, with what it printed; a registry asking
+// to wait a moment is ErrRegistryBusy too, so the caller can wait and try
+// again.
+func failed(name string, args []string, stderr string, err error) error {
+	msg := strings.TrimSpace(stderr)
+	if msg == "" {
+		msg = err.Error()
+	}
+	if _, ok := briefLimit(msg); ok {
+		return fmt.Errorf("%s %s: %s (%w)", filepath.Base(name), strings.Join(args, " "), msg, ErrRegistryBusy)
+	}
+	return fmt.Errorf("%s %s: %s", filepath.Base(name), strings.Join(args, " "), msg)
 }
 
 // Stream implements Runner.
@@ -87,7 +97,7 @@ func (r ExecRunner) Stream(ctx context.Context, dir, name string, args ...string
 
 // ErrRegistryBusy is a registry asking to wait a moment between downloads
 // (toomanyrequests, with a retry-after of seconds or less): not the hourly
-// limit, so Compose tries again by itself.
+// limit, so a download waits a little and tries again (whileBusy).
 var ErrRegistryBusy = errors.New("the image registry is spacing out downloads; try again in a few minutes")
 
 // retryAfter is a rate limit's wait in docker's output, as GitHub's and
@@ -104,9 +114,29 @@ func briefLimit(out string) (time.Duration, bool) {
 	return d, err == nil && d <= time.Minute
 }
 
-// registryBusyWaits are how long Compose waits before each try again after
-// ErrRegistryBusy: a little longer each time.
-var registryBusyWaits = []time.Duration{5 * time.Second, 15 * time.Second, 30 * time.Second}
+// RegistryBusyWaits are how long a download waits before each try again
+// after ErrRegistryBusy, a little longer each time. The limit is a count
+// per minute shared by every machine behind the same address (CI's
+// runners; a household behind its provider's shared address), so the
+// tries span several of its minutes: four tries within 50 seconds all
+// met it (the nightly runs of Nov 4 and 5, 2026). Tests shorten them.
+var RegistryBusyWaits = []time.Duration{10 * time.Second, 30 * time.Second, 60 * time.Second, 120 * time.Second}
+
+// whileBusy runs try, and again after each of RegistryBusyWaits while the
+// registry is busy; any other failure, or the last, is returned.
+func whileBusy(ctx context.Context, try func() error) error {
+	for i := 0; ; i++ {
+		err := try()
+		if !errors.Is(err, ErrRegistryBusy) || i == len(RegistryBusyWaits) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(RegistryBusyWaits[i]):
+		}
+	}
+}
 
 // tailBuffer keeps the last max bytes written to it.
 type tailBuffer struct {
@@ -205,11 +235,7 @@ func (r ExecRunner) Pipe(ctx context.Context, w io.Writer, name string, args ...
 	var stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = w, &stderr
 	if err := cmd.Run(); err != nil {
-		msg := strings.TrimSpace(stderr.String())
-		if msg == "" {
-			msg = err.Error()
-		}
-		return fmt.Errorf("%s %s: %s", filepath.Base(name), strings.Join(args, " "), msg)
+		return failed(name, args, stderr.String(), err)
 	}
 	return nil
 }
@@ -763,17 +789,28 @@ func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args
 	if c.Progress != "" {
 		all = append([]string{all[0], "--progress", c.Progress}, all[1:]...)
 	}
-	for i := 0; ; i++ {
-		err := c.Runner.Stream(ctx, p.Dir, c.Bin, append(all, args...)...)
-		if !errors.Is(err, ErrRegistryBusy) || i == len(registryBusyWaits) {
-			return err
-		}
-		select {
-		case <-ctx.Done():
-			return err
-		case <-time.After(registryBusyWaits[i]):
-		}
+	return whileBusy(ctx, func() error {
+		return c.Runner.Stream(ctx, p.Dir, c.Bin, append(all, args...)...)
+	})
+}
+
+// Pull downloads an image, waiting out a registry that is spacing out
+// downloads (ErrRegistryBusy) as Compose does.
+func (c *Client) Pull(ctx context.Context, image string) error {
+	return whileBusy(ctx, func() error {
+		_, err := c.Runner.Output(ctx, c.Bin, "pull", "--quiet", image)
+		return err
+	})
+}
+
+// EnsureImage pulls an image a command is about to run when it is not
+// here yet: docker run pulls it itself, once, and gives up on a busy
+// registry.
+func (c *Client) EnsureImage(ctx context.Context, image string) error {
+	if _, err := c.ImageID(ctx, image); err == nil {
+		return nil
 	}
+	return c.Pull(ctx, image)
 }
 
 // JSONProgress reports whether this Compose prints its progress as JSON
