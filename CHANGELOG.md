@@ -51,6 +51,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.
 - **Two jobs no longer save over each other's notes:** the nightly update, the watchdog, and a rollback each keep a note of what every app ran before its update, and one could save over what another had just noted (a rollback, or when an app came up well); a Setup step ticked in the app as Setup opened elsewhere could come undone. Each now keeps the other's change, and these records, with the household's and the restart counts, are written whole, only for this account.
 - **The watchdog's, the battery saver's, and the savings records are never half written:** Status and the once-a-minute check could read one while it was being written and take it for empty, and two watchdog runs at once could save over each other. Each is now written whole, one writer at a time, and only this account can read it.
 - **Pinning an app is never lost:** pinning one app from the app and another from a phone at about the same time could keep only one pin. The pinned apps now live in a record of their own that each change updates in turn, and they move there by themselves after the upgrade, still in the order you pinned them.
