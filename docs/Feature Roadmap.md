@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Shapes as well as colours | Status's dots are a circle when up, a triangle when an app needs a look, and a cross when it's down, so a state reads without its colour | #PRn |
 | What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
@@ -225,7 +226,7 @@ Details that make it feel finished.
 
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
 - **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
-- **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
+- **Shapes as well as colours** (S, *Built*, #PRn): each state's dot also has a shape (a circle when up, a triangle when it needs a look, a cross when down), for colour-blind eyes, small screens, and contrast themes.
 - **Every menu by keyboard** (S, *Idea*): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape).
 
 ## Insight
