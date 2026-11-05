@@ -59,6 +59,20 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with `key` marked as not in the balances yet (it comes today),
+    /// or back as in them, as the computer's Taken as done does it: the
+    /// plan's `waiting` becomes the keys waiting now, with this one added
+    /// or taken out, and the older `notYet` is dropped (it's one of them).
+    static func settingWaiting(_ key: String, waiting: Bool, current: [String], in plan: JSONValue) -> JSONValue? {
+        guard FinancePast.isValidKey(key), case .object(var root) = plan else { return nil }
+        var keys = current.filter(FinancePast.isValidKey)
+        keys.removeAll { $0 == key }
+        if waiting { keys.append(key) }
+        root["waiting"] = keys.isEmpty ? nil : .array(keys.map { .string($0) })
+        root["notYet"] = nil
+        return .object(root)
+    }
+
     static func roundedToCents(_ value: Double) -> Double {
         (value * 100).rounded() / 100
     }

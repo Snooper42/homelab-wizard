@@ -21,6 +21,7 @@ struct FinancesView: View {
                         Label("Transactions", systemImage: "list.bullet.rectangle")
                     }
                 }
+                if !view.since.isEmpty { SinceSection(view: view, finances: finances) }
                 if !view.budgets.isEmpty { budgets(view) }
                 if !view.goals.isEmpty { goals(view) }
                 if !view.loans.isEmpty { loans(view) }
@@ -227,6 +228,66 @@ struct FinancesView: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Taken as done: paychecks and payments since the balances were typed in,
+/// counted in them. One that hasn't happened yet can be marked so, and
+/// then it comes today, as on the computer.
+private struct SinceSection: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @State private var showAll = false
+
+    var body: some View {
+        let shown = showAll ? view.since : Array(view.since.prefix(5))
+        Section {
+            ForEach(shown) { past in
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name(past))
+                        Text(detail(past)).font(.caption).foregroundStyle(past.waiting ? .orange : .secondary)
+                    }
+                    Spacer()
+                    Money(value: past.moneyIn ? past.amount : -past.amount, currency: view.plan.currency, finances: finances)
+                    if finances.canEdit {
+                        Picker(name(past), selection: Binding(
+                            get: { past.waiting },
+                            set: { waiting in Task { _ = await finances.setWaiting(past, waiting: waiting) } }
+                        )) {
+                            Text("In").tag(false)
+                            Text("Not yet").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                        .disabled(finances.isSaving)
+                    }
+                }
+                .accessibilityElement(children: .contain)
+            }
+            if view.since.count > 5 {
+                Button(showAll ? "Show Fewer" : "Show All \(view.since.count)") { showAll.toggle() }
+            }
+        } header: {
+            Text("Taken as Done")
+        } footer: {
+            Text(finances.canEdit
+                 ? "Counted in the balances you typed in. Mark any that hasn't happened yet: it comes today."
+                 : "Counted in the balances that were typed in.")
+        }
+    }
+
+    private func name(_ past: FinancePast) -> String {
+        if let person = past.person { return "\(view.person(person) ?? "Someone")'s paycheck" }
+        if let payment = past.payment { return view.payment(payment)?.name ?? "Payment" }
+        return "Payment"
+    }
+
+    private func detail(_ past: FinancePast) -> String {
+        let day = past.date?.formatted(.dateTime.weekday(.abbreviated).month().day()) ?? ""
+        if past.waiting { return day + " · not yet: it comes today" }
+        return day + (past.typed ? " · the day its balance was typed in" : " · since the balance was typed in")
     }
 }
 

@@ -362,3 +362,40 @@ struct BudgetEditTests {
         #expect(FinancePlanEdit.settingBudget(category: "Groceries", to: .infinity, in: plan) == nil)
     }
 }
+
+@Suite("Taken as done")
+struct WaitingTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r3","waiting":["pay:p1:2026-11-01"],"notYet":"2026-10-15","accounts":[]}
+    """#.utf8))
+
+    @Test func marksAndUnmarksAsTheComputerDoes() throws {
+        let marked = try #require(FinancePlanEdit.settingWaiting("payment:rent:2026-11-01", waiting: true, current: ["pay:p1:2026-11-01"], in: plan))
+        #expect(marked["waiting"] == .array([.string("pay:p1:2026-11-01"), .string("payment:rent:2026-11-01")]))
+        #expect(marked["notYet"] == nil)          // folded into waiting, as on the computer
+        #expect(marked["rev"] == .string("r3"))
+
+        let unmarked = try #require(FinancePlanEdit.settingWaiting("pay:p1:2026-11-01", waiting: false, current: ["pay:p1:2026-11-01"], in: plan))
+        #expect(unmarked["waiting"] == nil)       // none left: omitted
+    }
+
+    @Test func keysMustHaveTheComputersShape() {
+        #expect(FinancePast.isValidKey("pay:p1:2026-11-01"))
+        #expect(FinancePast.isValidKey("payment:rent:2026-11-01"))
+        #expect(!FinancePast.isValidKey("pay::2026-11-01"))
+        #expect(!FinancePast.isValidKey("evil:x:2026-11-01"))
+        #expect(!FinancePast.isValidKey("pay:p1:yesterday"))
+        #expect(FinancePlanEdit.settingWaiting("nope", waiting: true, current: [], in: plan) == nil)
+    }
+
+    @Test func decodesSince() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[],
+         "since":[{"key":"pay:p1:2026-11-01","date":"2026-11-01","person":"p1","amount":3000,"in":true,"typed":true},
+                  {"key":"payment:rent:2026-11-01","date":"2026-11-01","payment":"rent","amount":1200,"waiting":true}]}
+        """#.utf8))
+        #expect(view.since.count == 2)
+        #expect(view.since[0].moneyIn && view.since[0].typed)
+        #expect(view.waitingKeys == ["payment:rent:2026-11-01"])
+    }
+}

@@ -43,6 +43,16 @@ final class FinancesViewModel {
     /// The edit level, and a plan the computer didn't mark read-only.
     var canEdit: Bool { level >= .edit && plan?.readOnly == false && rawPlan != nil }
 
+    /// Marks a paycheck or payment as not in the balances yet, or back.
+    func setWaiting(_ past: FinancePast, waiting: Bool) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan, let plan, past.waiting != waiting else { return false }
+        guard let edited = FinancePlanEdit.settingWaiting(past.key, waiting: waiting, current: plan.waitingKeys, in: raw) else {
+            saveError = "That can't be marked."
+            return false
+        }
+        return await savePlan(edited, reason: waiting ? "Mark it as not in the balances yet." : "Mark it as in the balances.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

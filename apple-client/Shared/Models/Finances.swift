@@ -119,8 +119,10 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     let loans: [FinancePayoff]
     /// The plan's categories, or the defaults while it has none.
     let categories: [FinanceCategory]
+    /// Paychecks and payments taken to be in the balances, or waiting, oldest first.
+    let since: [FinancePast]
 
-    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories }
+    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -135,7 +137,11 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         goals = ((try? c.decodeIfPresent([FinanceGoal].self, forKey: .goals)) ?? nil) ?? []
         loans = ((try? c.decodeIfPresent([FinancePayoff].self, forKey: .loans)) ?? nil) ?? []
         categories = ((try? c.decodeIfPresent([FinanceCategory].self, forKey: .categories)) ?? nil) ?? []
+        since = ((try? c.decodeIfPresent([FinancePast].self, forKey: .since)) ?? nil) ?? []
     }
+
+    /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
+    var waitingKeys: [String] { since.filter(\.waiting).map(\.key) }
 
     func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
     func person(_ id: String) -> String? { plan.people.first { $0.id == id }?.name }
@@ -169,6 +175,52 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         cushion = try c.decodeIfPresent(Double.self, forKey: .cushion) ?? 0
         currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
         hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
+    }
+}
+
+/// A paycheck or payment dated on or before today, taken to be in the
+/// balances, or waiting (`finance.Past`).
+struct FinancePast: Decodable, Sendable, Equatable, Identifiable {
+    /// "pay:<person>:<date>" or "payment:<payment>:<date>", its name in `Plan.waiting`.
+    let key: String
+    let date: Date?
+    let person: String?
+    let payment: String?
+    let amount: Double
+    /// Money into checking.
+    let moneyIn: Bool
+    /// Between other accounts.
+    let outside: Bool
+    /// Dated the day its balance was typed in.
+    let typed: Bool
+    /// The household said it isn't in the balances yet: it comes today.
+    let waiting: Bool
+
+    var id: String { key }
+
+    enum CodingKeys: String, CodingKey {
+        case key, date, person, payment, amount, outside, typed, waiting
+        case moneyIn = "in"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        key = try c.decode(String.self, forKey: .key)
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        person = try c.decodeIfPresent(String.self, forKey: .person)
+        payment = try c.decodeIfPresent(String.self, forKey: .payment)
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+        moneyIn = try c.decodeIfPresent(Bool.self, forKey: .moneyIn) ?? false
+        outside = try c.decodeIfPresent(Bool.self, forKey: .outside) ?? false
+        typed = try c.decodeIfPresent(Bool.self, forKey: .typed) ?? false
+        waiting = try c.decodeIfPresent(Bool.self, forKey: .waiting) ?? false
+    }
+
+    /// The key's shape, as the computer writes it.
+    static func isValidKey(_ key: String) -> Bool {
+        let parts = key.split(separator: ":", omittingEmptySubsequences: false)
+        return parts.count == 3 && (parts[0] == "pay" || parts[0] == "payment")
+            && !parts[1].isEmpty && LocalDay.parse(String(parts[2])) != nil && key.count <= 200
     }
 }
 
