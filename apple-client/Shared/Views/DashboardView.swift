@@ -115,6 +115,13 @@ private struct PhoneDashboard: View {
                         Label("Backups", systemImage: "externaldrive.badge.checkmark")
                             .badge(model.backups.needsAttention)
                     }
+                    if finances.canSeePlan {
+                        NavigationLink {
+                            FinancesView(finances: finances)
+                        } label: {
+                            Label("Finances", systemImage: "banknote")
+                        }
+                    }
                     NavigationLink {
                         ComputerView(computer: computer)
                     } label: {
@@ -172,6 +179,10 @@ private struct SplitDashboard: View {
                     Label("Backups", systemImage: "externaldrive.badge.checkmark")
                         .badge(model.backups.needsAttention)
                         .tag(DashboardViewModel.SidebarItem.backups)
+                    if finances.canSeePlan {
+                        Label("Finances", systemImage: "banknote")
+                            .tag(DashboardViewModel.SidebarItem.finances)
+                    }
                     Label("Computer", systemImage: "desktopcomputer")
                         .tag(DashboardViewModel.SidebarItem.computer)
                 }
@@ -198,6 +209,10 @@ private struct SplitDashboard: View {
                     .toolbar { toolbarItems }
             case .backups?:
                 BackupsView(backups: model.backups)
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            case .finances?:
+                FinancesView(finances: finances)
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .computer?:

@@ -194,6 +194,12 @@ actor APIClient {
         try await call("FinancesWall", as: MoneyCard.self)
     }
 
+    /// The plan read forward: accounts today and the pay periods ahead.
+    /// It needs the view or edit level.
+    func financesPlan() async throws -> FinancesPlanView {
+        try await call("Finances", as: FinancesPlanView.self)
+    }
+
     // MARK: Changes
 
     /// Starts, stops or restarts an app on the computer (the `AppAction`

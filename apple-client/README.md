@@ -80,7 +80,10 @@ hash. The client receives the token itself, once.
 ## Not built yet
 
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
-- Finances beyond the money card (`Finances`, `FinancesLedger`, receipts, saving the plan). The money card (`FinancesWall`) is in Overview for any device with a Finances level (card, view or edit). Its amounts stay hidden until tapped and hide again on lock.
+- Finances editing, the ledger, receipts, budgets, goals and loans (`SaveFinances`, `FinancesLedger`, …). Read-only Finances is built:
+  - the money card (`FinancesWall`) in Overview, for any Finances level;
+  - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments.
+  Amounts stay hidden until tapped and hide again on lock. None show while the plan's Hide amounts is on.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
 - Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.

@@ -450,3 +450,43 @@ struct FinancesTests {
         #expect(LocalDay.parse(nil) == nil)
     }
 }
+
+@Suite("Finances plan")
+struct FinancesPlanTests {
+    private let json = #"""
+    {"today":"2026-11-05","checking":"chk","typed":"2026-11-01",
+     "start":{"chk":2400,"sav":10000,"visa":350,"car":8000},
+     "since":[],"paydays":[],"days":[],"worth":[],"next":{},"categories":[],
+     "plan":{"people":[{"id":"p1","name":"Sam","schedule":{},"net":3000}],
+             "accounts":[{"id":"chk","name":"Everyday","kind":"checking","balance":2400},
+                         {"id":"sav","name":"Rainy day","kind":"savings","balance":10000},
+                         {"id":"visa","name":"Visa","kind":"card","balance":350},
+                         {"id":"car","name":"Car loan","kind":"loan","balance":8000}],
+             "payments":[{"id":"rent","name":"Rent","amount":1200,"schedule":{}}],
+             "cushion":500,"currency":"usd","hideAmounts":true,"logos":{"x":"data:image/png;base64,AAAA"}},
+     "periods":[{"now":true,"start":"2026-11-05","last":"2026-11-12","carried":2400,"in":0,"out":1200,"saved":0,"left":400,
+                 "rows":[{"date":"2026-11-10","payment":"rent","amount":1200,"after":1200,"estimate":true}],"accounts":{}},
+                {"now":false,"start":"2026-11-13","last":"2026-11-26","pay":{"date":"2026-11-13","people":["p1"],"amount":3000},
+                 "carried":400,"in":3000,"out":0,"saved":0,"left":3400,"rows":[],"accounts":{}}],
+     "readOnly":true}
+    """#
+
+    @Test func decodesTheViewTheComputerSends() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        #expect(view.readOnly)
+        #expect(view.plan.hideAmounts)
+        #expect(view.plan.currency == "USD")
+        #expect(view.periods.count == 2)
+        #expect(view.periods[0].now && view.periods[0].left == 400)
+        #expect(view.periods[0].rows.first?.estimate == true)
+        #expect(view.periods[1].moneyIn == 3000)
+        #expect(view.person("p1") == "Sam")
+        #expect(view.payment("rent")?.name == "Rent")
+    }
+
+    @Test func netWorthSubtractsWhatIsOwed() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        // 2400 + 10000 − 350 (card) − 8000 (loan)
+        #expect(view.netWorth == 4050)
+    }
+}

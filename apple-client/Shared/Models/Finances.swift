@@ -82,3 +82,200 @@ struct MoneyBill: Decodable, Sendable, Equatable, Identifiable {
         amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
     }
 }
+
+// MARK: - The plan, read forward (`finance.View`, the `Finances` call)
+
+/// The parts of the computer's Finances view the phone shows: the
+/// accounts as of today, and each pay period ahead with its payments.
+/// Budgets, goals, loans and the ledger aren't shown here yet, and Codable
+/// ignores them.
+struct FinancesPlanView: Decodable, Sendable, Equatable {
+    let today: Date?
+    /// The checking account's id ("" before there's one).
+    let checking: String
+    /// Each account at the start of today, by id. For a card or a loan,
+    /// what it owes.
+    let start: [String: Double]
+    let periods: [FinancePeriod]
+    let plan: FinancePlan
+    /// The computer marks this for a device allowed only to look.
+    let readOnly: Bool
+
+    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        today = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .today))
+        checking = try c.decodeIfPresent(String.self, forKey: .checking) ?? ""
+        start = try c.decodeIfPresent([String: Double].self, forKey: .start) ?? [:]
+        periods = try c.decodeIfPresent([FinancePeriod].self, forKey: .periods) ?? []
+        plan = try c.decode(FinancePlan.self, forKey: .plan)
+        readOnly = try c.decodeIfPresent(Bool.self, forKey: .readOnly) ?? false
+    }
+
+    func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
+    func person(_ id: String) -> String? { plan.people.first { $0.id == id }?.name }
+
+    /// What's there less what's owed, today.
+    var netWorth: Double {
+        plan.accounts.reduce(0) { sum, account in
+            let value = start[account.id] ?? 0
+            return account.isOwed ? sum - value : sum + value
+        }
+    }
+}
+
+struct FinancePlan: Decodable, Sendable, Equatable {
+    let people: [FinancePerson]
+    let accounts: [FinanceAccount]
+    let payments: [FinancePayment]
+    /// The least checking should hold. A period that leaves less is flagged.
+    let cushion: Double
+    let currency: String
+    /// Every device follows this: no amounts are shown at all while it's on.
+    let hideAmounts: Bool
+
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        people = try c.decodeIfPresent([FinancePerson].self, forKey: .people) ?? []
+        accounts = try c.decodeIfPresent([FinanceAccount].self, forKey: .accounts) ?? []
+        payments = try c.decodeIfPresent([FinancePayment].self, forKey: .payments) ?? []
+        cushion = try c.decodeIfPresent(Double.self, forKey: .cushion) ?? 0
+        currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
+        hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
+    }
+}
+
+struct FinancePerson: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let name: String
+}
+
+struct FinanceAccount: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    /// checking, savings, card, investment, retirement, loan, home, car, collectible, other.
+    let kind: String
+    let institution: String?
+    /// Its own currency, when it isn't the plan's.
+    let currency: String?
+
+    /// A card or a loan: its balance is what it owes.
+    var isOwed: Bool { kind == "card" || kind == "loan" }
+
+    /// The order the screen lists kinds in.
+    var kindOrder: Int {
+        ["checking", "savings", "card", "investment", "retirement", "loan", "home", "car", "collectible", "other"].firstIndex(of: kind) ?? 99
+    }
+
+    var kindTitle: String {
+        switch kind {
+        case "checking": "Checking"
+        case "savings": "Savings"
+        case "card": "Card"
+        case "investment": "Investment"
+        case "retirement": "Retirement"
+        case "loan": "Loan"
+        case "home": "Home"
+        case "car": "Car"
+        case "collectible": "Collectible"
+        default: "Other"
+        }
+    }
+}
+
+struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
+    let id: String
+    let name: String
+    let kind: String?
+    let institution: String?
+}
+
+/// From a paycheck until the day before the next one, or from today for
+/// the first (`finance.Period`).
+struct FinancePeriod: Decodable, Sendable, Equatable, Identifiable {
+    let now: Bool
+    let start: Date?
+    let last: Date?
+    let pay: FinancePayday?
+    /// Checking at the start, before the paycheck.
+    let carried: Double
+    let moneyIn: Double
+    let out: Double
+    let saved: Double
+    /// Checking on the last day.
+    let left: Double
+    let rows: [FinanceRow]
+
+    var id: String { "\(start?.timeIntervalSince1970 ?? 0)|\(now)" }
+
+    enum CodingKeys: String, CodingKey {
+        case now, start, last, pay, carried, out, saved, left, rows
+        case moneyIn = "in"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        now = try c.decodeIfPresent(Bool.self, forKey: .now) ?? false
+        start = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .start))
+        last = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .last))
+        pay = try c.decodeIfPresent(FinancePayday.self, forKey: .pay)
+        carried = try c.decodeIfPresent(Double.self, forKey: .carried) ?? 0
+        moneyIn = try c.decodeIfPresent(Double.self, forKey: .moneyIn) ?? 0
+        out = try c.decodeIfPresent(Double.self, forKey: .out) ?? 0
+        saved = try c.decodeIfPresent(Double.self, forKey: .saved) ?? 0
+        left = try c.decodeIfPresent(Double.self, forKey: .left) ?? 0
+        rows = try c.decodeIfPresent([FinanceRow].self, forKey: .rows) ?? []
+    }
+}
+
+struct FinancePayday: Decodable, Sendable, Equatable {
+    let date: Date?
+    /// The earners' ids.
+    let people: [String]
+    /// Into checking.
+    let amount: Double
+
+    enum CodingKeys: String, CodingKey { case date, people, amount }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        people = try c.decodeIfPresent([String].self, forKey: .people) ?? []
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+    }
+}
+
+/// One payment on its day (`finance.Row`).
+struct FinanceRow: Decodable, Sendable, Equatable, Identifiable {
+    let date: Date?
+    let payment: String
+    let amount: Double
+    let estimate: Bool
+    /// Between other accounts; checking isn't in it.
+    let outside: Bool
+    /// Money moved into checking from another account.
+    let into: Bool
+    /// Dated before today and still waiting: it comes today.
+    let late: Bool
+    /// Into savings, an investment or retirement: kept, not spent.
+    let saved: Bool
+
+    var id: String { "\(payment)|\(date?.timeIntervalSince1970 ?? 0)" }
+
+    enum CodingKeys: String, CodingKey { case date, payment, amount, estimate, outside, into, late, saved }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        payment = try c.decodeIfPresent(String.self, forKey: .payment) ?? ""
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+        estimate = try c.decodeIfPresent(Bool.self, forKey: .estimate) ?? false
+        outside = try c.decodeIfPresent(Bool.self, forKey: .outside) ?? false
+        into = try c.decodeIfPresent(Bool.self, forKey: .into) ?? false
+        late = try c.decodeIfPresent(Bool.self, forKey: .late) ?? false
+        saved = try c.decodeIfPresent(Bool.self, forKey: .saved) ?? false
+    }
+}

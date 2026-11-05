@@ -11,6 +11,9 @@ final class FinancesViewModel {
     private(set) var money: MoneyCard?
     private(set) var error: String?
     private(set) var isLoading = false
+    private(set) var plan: FinancesPlanView?
+    private(set) var planError: String?
+    private(set) var isLoadingPlan = false
     /// Amounts show only after a tap, and hide again on lock.
     var amountsShown = false
 
@@ -24,6 +27,25 @@ final class FinancesViewModel {
 
     var level: FinancesLevel { FinancesLevel(device()?.finances) }
     var canSeeMoney: Bool { level >= .card }
+    var canSeePlan: Bool { level >= .view }
+
+    /// Hide amounts in the plan: every device follows it.
+    var amountsHiddenByPlan: Bool { plan?.plan.hideAmounts ?? money?.hidden ?? false }
+
+    func loadPlan() async {
+        guard canSeePlan, !isLoadingPlan else { return }
+        isLoadingPlan = true
+        defer { isLoadingPlan = false }
+        do {
+            plan = try await api.financesPlan()
+            planError = nil
+        } catch {
+            let apiError = APIError.from(error)
+            if case .forbidden = apiError { plan = nil }
+            Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
+            planError = apiError.errorDescription
+        }
+    }
 
     func load() async {
         guard canSeeMoney, !isLoading else { return }
