@@ -276,6 +276,17 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     let name: String
     let kind: String?
     let institution: String?
+    /// What it costs each time. For a card payoff, the card's other spending instead.
+    let amount: Double?
+    /// The amount changes (electric): about this much.
+    let estimate: Bool?
+    /// A card whose whole balance it pays (`Payment.Card`).
+    let card: String?
+
+    /// Whether the phone can change its amount. A card payoff's amount
+    /// isn't what the rows show (they show what the card owes), so it's
+    /// changed on the computer.
+    var canChangeAmount: Bool { (card ?? "").isEmpty }
 }
 
 /// From a paycheck until the day before the next one, or from today for

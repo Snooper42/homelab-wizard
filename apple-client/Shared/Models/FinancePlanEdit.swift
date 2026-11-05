@@ -90,6 +90,25 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` with the payment `id` costing `amount` each time from now on.
+    /// Its schedule, accounts, kind and "about this much" are kept. Nil for
+    /// an unknown payment, a card payoff (whose amount means the card's
+    /// other spending), or an amount that isn't more than nothing.
+    static func settingPayment(id: String, to amount: Double, in plan: JSONValue) -> JSONValue? {
+        let cents = roundedToCents(amount)
+        guard !id.isEmpty, amount.isFinite, cents > 0, cents <= maxBalance,
+              case .object(var root) = plan,
+              case .array(var payments)? = root["payments"],
+              let index = payments.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var payment) = payments[index]
+        else { return nil }
+        if case .string(let card)? = payment["card"], !card.isEmpty { return nil }
+        payment["amount"] = .number(cents)
+        payments[index] = .object(payment)
+        root["payments"] = .array(payments)
+        return .object(root)
+    }
+
     /// `plan` with Hide amounts on or off, which every device follows (the
     /// computer's ⌘⇧H). Omitted when off, as the computer writes it.
     static func settingHideAmounts(_ hide: Bool, in plan: JSONValue) -> JSONValue? {

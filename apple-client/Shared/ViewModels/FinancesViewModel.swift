@@ -75,6 +75,18 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Change the \(goal.name) goal.")
     }
 
+    /// Changes what a planned payment costs each time. Returns whether it saved.
+    func setPayment(_ payment: FinancePayment, to amount: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        guard payment.canChangeAmount,
+              let edited = FinancePlanEdit.settingPayment(id: payment.id, to: amount, in: raw)
+        else {
+            saveError = payment.canChangeAmount ? "A payment needs an amount more than nothing." : "A card payoff is changed on the computer."
+            return false
+        }
+        return await savePlan(edited, reason: "Change what \(payment.name) costs.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

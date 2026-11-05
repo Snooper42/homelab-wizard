@@ -10,6 +10,7 @@ struct FinancesView: View {
     @State private var editing: FinanceAccount?
     @State private var editingBudget: FinanceBudget?
     @State private var editingGoal: FinanceGoal?
+    @State private var editingPayment: FinancePayment?
 
     var body: some View {
         Form {
@@ -27,13 +28,16 @@ struct FinancesView: View {
                 if !view.goals.isEmpty { goals(view) }
                 if !view.loans.isEmpty { loans(view) }
                 ForEach(view.periods.prefix(8)) { period in
-                    PeriodSection(period: period, view: view, finances: finances)
+                    PeriodSection(period: period, view: view, finances: finances) { payment in
+                        finances.clearSaveError()
+                        editingPayment = payment
+                    }
                 }
                 Section {
                     EmptyView()
                 } footer: {
                     Text(finances.canEdit
-                         ? "Balances and budgets can be changed here, and transactions added. Change the rest of the plan on the computer."
+                         ? "Balances, budgets, goals and what a payment costs can be changed here, and transactions added. Change the rest of the plan on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
                 }
             } else if let error = finances.planError {
@@ -68,6 +72,15 @@ struct FinancesView: View {
                 footer: "How much it needs in all. What's put by toward it stays as it is.",
                 finances: finances
             ) { amount in await finances.setGoal(goal, target: amount) }
+        }
+        .sheet(item: $editingPayment) { payment in
+            AmountEditor(
+                title: "Change Payment", heading: payment.name,
+                footer: payment.estimate == true
+                    ? "About what it costs each time. Every one still to come changes."
+                    : "What it costs each time. Every one still to come changes.",
+                finances: finances
+            ) { amount in await finances.setPayment(payment, to: amount) }
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Finances")
@@ -343,6 +356,7 @@ private struct PeriodSection: View {
     let period: FinancePeriod
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    let edit: (FinancePayment) -> Void
 
     var body: some View {
         Section {
@@ -361,7 +375,19 @@ private struct PeriodSection: View {
             }
             // By position: the same payment can come twice on one day.
             ForEach(period.rows.indices, id: \.self) { i in
-                RowLine(row: period.rows[i], view: view, finances: finances)
+                let row = period.rows[i]
+                if finances.canEdit, let payment = view.payment(row.payment), payment.canChangeAmount {
+                    Button {
+                        edit(payment)
+                    } label: {
+                        RowLine(row: row, view: view, finances: finances)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Change what it costs")
+                } else {
+                    RowLine(row: row, view: view, finances: finances)
+                }
             }
         } header: {
             Text(title)

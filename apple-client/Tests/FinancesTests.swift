@@ -488,3 +488,43 @@ struct HideAmountsTests {
         #expect(FinancePlanEdit.settingHideAmounts(true, in: .array([])) == nil)
     }
 }
+
+@Suite("Changing what a payment costs")
+struct PaymentEditTests {
+    private let plan = try! JSONDecoder().decode(JSONValue.self, from: Data(#"""
+    {"rev":"r9","payments":[
+      {"id":"netflix","name":"Netflix","amount":15.49,"kind":"subscriptions","institution":"netflix","schedule":{"every":"month","day":12},"from":"chk","type":"streaming"},
+      {"id":"visa-payoff","name":"Visa","amount":300,"card":"visa","schedule":{"every":"month","day":1}}
+    ],"accounts":[]}
+    """#.utf8))
+
+    @Test func setsOnlyTheAmount() throws {
+        let edited = try #require(FinancePlanEdit.settingPayment(id: "netflix", to: 17.994, in: plan))
+        guard case .array(let payments)? = edited["payments"] else { Issue.record("no payments"); return }
+        #expect(payments[0]["amount"] == .number(17.99))
+        #expect(payments[0]["schedule"] == .object(["every": .string("month"), "day": .number(12)]))
+        #expect(payments[0]["from"] == .string("chk"))
+        #expect(payments[0]["type"] == .string("streaming"))
+        #expect(payments[1]["amount"] == .number(300))
+        #expect(payments[1]["card"] == .string("visa"))
+        #expect(edited["rev"] == .string("r9"))
+    }
+
+    @Test func refusesCardPayoffsNothingAndUnknown() {
+        #expect(FinancePlanEdit.settingPayment(id: "visa-payoff", to: 400, in: plan) == nil)
+        #expect(FinancePlanEdit.settingPayment(id: "netflix", to: 0, in: plan) == nil)
+        #expect(FinancePlanEdit.settingPayment(id: "netflix", to: -5, in: plan) == nil)
+        #expect(FinancePlanEdit.settingPayment(id: "netflix", to: .infinity, in: plan) == nil)
+        #expect(FinancePlanEdit.settingPayment(id: "nope", to: 10, in: plan) == nil)
+        #expect(FinancePlanEdit.settingPayment(id: "", to: 10, in: plan) == nil)
+    }
+
+    @Test func decodesWhetherThePhoneMayChangeIt() throws {
+        let payments = try JSONDecoder().decode([FinancePayment].self, from: Data(#"""
+        [{"id":"a","name":"Electric","amount":80,"estimate":true},{"id":"b","name":"Visa","card":"visa"},{"id":"c","name":"Old"}]
+        """#.utf8))
+        #expect(payments[0].canChangeAmount && payments[0].estimate == true && payments[0].amount == 80)
+        #expect(!payments[1].canChangeAmount)
+        #expect(payments[2].canChangeAmount && payments[2].amount == nil)
+    }
+}
