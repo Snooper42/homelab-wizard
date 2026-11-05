@@ -15,9 +15,41 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
+
+// startedBy is why a running container last started, for "up 9 minutes"
+// on hover: what the homelab noted then (data/started.json); an update
+// noticed about then; Docker's restart policy after it stopped on its own
+// (DockerRestart); or "" when none of them says.
+func startedBy(why started.Record, hist updates.History, id string, c docker.Container) string {
+	if w := why.Why(id, c.StartedAt); w != "" {
+		return w
+	}
+	if r := hist.Apps[id]; r != nil && !c.StartedAt.IsZero() && !r.Updated.IsZero() {
+		if d := r.Updated.Sub(c.StartedAt); d >= -started.Near && d <= updateNoticed {
+			return Updated
+		}
+	}
+	if c.Restarts > 0 {
+		return DockerRestart
+	}
+	return ""
+}
+
+// StartedBy's own reasons, besides internal/started's: Docker started it
+// again by itself after it stopped on its own (its restart policy); or an
+// update the homelab noticed about then, by whoever made it.
+const (
+	DockerRestart = "docker"
+	Updated       = "update"
+)
+
+// updateNoticed is how long after a container starts its update may be
+// noticed (the next look at the images) and still be why it started.
+const updateNoticed = 30 * time.Minute
 
 // StatusOf is the state of every app, given the running containers and the
 // .env settings; helpers only with all. Optional apps that were never
@@ -46,12 +78,21 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	}
 	// What updates left to go back to, and which are held.
 	hist := updates.History{}
+	why := started.Record{} // why the homelab last started each app
 	if c.Root != "" {
 		hist = updates.LoadHistory(updates.HistoryPath(c.Root))
+		why = started.Load(started.Path(c.Root))
 	}
 	held := map[string]bool{}
 	for _, id := range updates.Held(env) {
 		held[id] = true
+	}
+	pinned := map[string]bool{}
+	for _, id := range Pinned(env) {
+		if _, ok := c.Get(id); ok {
+			pinned[id] = true
+			st.Pinned = append(st.Pinned, id)
+		}
 	}
 	quiet := map[string]bool{}
 	for _, id := range notify.Quiet(env) {
@@ -86,6 +127,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 					s.Since = m.Container.StartedAt.UTC().Format(time.RFC3339)
 				}
 				s.Restarts = m.Container.Restarts
+				s.StartedBy = startedBy(why, hist, a.ID, m.Container)
 			case detect.Stopped:
 				s.State = "stopped"
 				s.WaitingFor = diskspace.MissingDrive(m.Container.Binds)
@@ -111,6 +153,7 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		}
 		s.Held = held[a.ID]
 		s.Quiet = quiet[a.ID]
+		s.Pinned = pinned[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
 	if ask {

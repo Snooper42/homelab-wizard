@@ -10,8 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // The fake commands the end-to-end tests put on PATH (docker, systemctl,
@@ -241,6 +243,15 @@ func fakeDockerMain(d string, args []string) int {
 		if has("config --hash") {
 			// As printf '%b' would: the test writes \n for each line.
 			fmt.Print(strings.ReplaceAll(os.Getenv("FAKE_CONFIG_HASHES"), `\n`, "\n"))
+		}
+		// FAKE_START_STOPS=<stopped.json>=<svc>: while a start runs, another
+		// homelab process (a phone's Stop for a while) stops svc on purpose.
+		if v := os.Getenv("FAKE_START_STOPS"); v != "" && has(" start ") {
+			if i := strings.LastIndex(v, "="); i > 0 {
+				r := stopped.Load(v[:i])
+				r[v[i+1:]] = stopped.Stop{Since: time.Now().Truncate(time.Second)}
+				_ = r.Save(v[:i])
+			}
 		}
 		// FAKE_START_FAILS=svc: a start that names the service fails.
 		if svc := os.Getenv("FAKE_START_FAILS"); svc != "" && has(" start ") && has(" "+svc) {

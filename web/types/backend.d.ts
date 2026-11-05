@@ -31,9 +31,11 @@ declare namespace api {
     address?: string;
     since?: string;
     restarts?: number;
+    startedBy?: string;
     updatedAt?: string;
     held?: boolean;
     quiet?: boolean;
+    pinned?: boolean;
     waitingFor?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
@@ -105,6 +107,7 @@ declare namespace api {
     missing: number;
     unmatched: number;
     savings: number;
+    pinned?: string[];
     updates: updates.State;
     batteryPaused?: string[];
     stopped?: Record<string, stopped.Stop>;
@@ -760,6 +763,11 @@ declare namespace health {
     problem: string;
     since: string;
   }
+  interface Outage {
+    from: string;
+    to?: string;
+    problem: string;
+  }
   interface Summary {
     lastRun: string;
     checks: number;
@@ -767,6 +775,7 @@ declare namespace health {
     pending: number;
     week: Record<string, number>;
     days?: Record<string, Record<string, number[]>>;
+    outages?: Record<string, health.Outage[]>;
   }
 }
 

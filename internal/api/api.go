@@ -248,6 +248,9 @@ type Status struct {
 	// Savings is what the running apps replace in subscriptions a year,
 	// from docs/Savings.md.
 	Savings float64 `json:"savings"`
+	// Pinned are the apps pinned to the top, in the order they were
+	// pinned (only those in the catalog).
+	Pinned []string `json:"pinned,omitempty"`
 	// Updates is whether nightly image updates run, and when.
 	Updates updates.State `json:"updates"`
 	// BatteryPaused are the apps the battery saver paused until power
@@ -280,6 +283,11 @@ type AppStatus struct {
 	Address   string `json:"address,omitempty"`  // on the homelab domain
 	Since     string `json:"since,omitempty"`    // when it last started (RFC 3339), while running
 	Restarts  int    `json:"restarts,omitempty"` // restarts by its restart policy since it was created
+	// StartedBy is why it last started, while running: you, updated,
+	// nightly, fix, watchdog, battery, drive, timer (internal/started);
+	// update (one noticed then, by whoever made it); or docker (its restart
+	// policy, after it stopped on its own); "" when nothing says.
+	StartedBy string `json:"startedBy,omitempty"`
 	// UpdatedAt is when its last update was noticed, while the image it ran
 	// before is kept to go back to (homelab rollback); RFC 3339.
 	UpdatedAt string `json:"updatedAt,omitempty"`
@@ -287,6 +295,9 @@ type AppStatus struct {
 	Held bool `json:"held,omitempty"`
 	// Quiet: the watchdog does not alert about it (homelab notify on).
 	Quiet bool `json:"quiet,omitempty"`
+	// Pinned: at the top of Status and of the menu bar's Open an app
+	// (homelab pin); Status lists the apps in their pinned order.
+	Pinned bool `json:"pinned,omitempty"`
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`

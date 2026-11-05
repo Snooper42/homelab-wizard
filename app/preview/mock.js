@@ -245,6 +245,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line.replace('%s', target)); }
       if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
+      // homelabDelay: a long command (ms more once applied), to hide it while it runs.
+      if (apply && M.homelabDelay) await later(null, M.homelabDelay);
       // Remove from an app's page: its container goes (missing on Status).
       if (apply && action === 'remove') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === target ? { ...a, state: 'missing', health: undefined, since: undefined } : a)) };
     },
@@ -253,6 +255,11 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       (M.settingsSet ||= []).push([id, setting, on]);
       if (M.settingDelay) await later(null, M.settingDelay);
       if (M.settingError) throw new Error(M.settingError);
+      if (setting === 'pinned') {
+        const pinned = (M.status.pinned || []).filter((x) => x !== id).concat(on ? [id] : []);
+        M.status = { ...M.status, pinned, apps: M.status.apps.map((a) => (a.id === id ? { ...a, pinned: on } : a)) };
+        return;
+      }
       const key = setting === 'updates' ? 'held' : 'quiet';
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, [key]: !on } : a)) };
     },
