@@ -444,7 +444,7 @@ struct FinancesTests {
     }
 
     @Test func localDays() {
-        #expect(LocalDay.parse("2026-02-29") != nil || true) // Calendar rolls invalid days; shape is what's checked
+        #expect(LocalDay.parse("2026-11-05") != nil)
         #expect(LocalDay.parse("2026-13-01") == nil)
         #expect(LocalDay.parse("soon") == nil)
         #expect(LocalDay.parse(nil) == nil)
