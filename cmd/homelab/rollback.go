@@ -26,6 +26,7 @@ import (
 func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, containers []docker.Container, auto bool) []string {
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this run changed
 	report := detect.Analyze(h.catalog, containers)
 	now := time.Now()
 	seen := map[string]updates.Seen{}
@@ -108,7 +109,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 	if pruned {
 		_ = client.PruneDangling(ctx)
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		h.ui.Warn("could not save the update history: %v", err)
 	}
 	// .env keeps the version each app now runs: after an update, a
@@ -208,6 +209,7 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this rollback changed
 	r := hist.Apps[a.ID]
 	if *dataOnly {
 		return h.restoreData(ctx, client, a, r, *apply)
@@ -234,13 +236,13 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	aside, err := h.doRollback(ctx, client, a, ctr, &hist, cp)
 	if err != nil {
-		_ = hist.Save(path)
+		_ = updates.SaveChanges(path, was, hist)
 		return err
 	}
 	if aside != "" {
 		u.OK("its data is as it was before the update; what it held since is in %s", h.rel(aside))
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		return err
 	}
 	h.keepVersions(ctx, client) // .env keeps the version it went back to
