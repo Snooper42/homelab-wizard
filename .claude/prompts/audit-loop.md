@@ -375,7 +375,7 @@ Added after round 27 (the backlog was empty; worst first):
     `token=` in a URL it logs) sends it to ntfy and every phone. Run each
     catalog app's startup log through `redact` and look; take out
     credentials in URLs (`://user:pass@`) and `key=`/`token=` values too.
-24. **`homelab move in` from a file someone else made** (internal/move):
+24. (done: round 29) **`homelab move in` from a file someone else made** (internal/move):
     besides links and tickets, a bundle brings `.env` (a `TUNNEL_TOKEN`
     for its maker's Cloudflare tunnel, which would put the apps on their
     domain), `data/phones.json` (their paired phones, able to change
@@ -661,6 +661,16 @@ Added after round 27 (the backlog was empty; worst first):
   `TestAnAppsOwnSecretsAreTakenOut` failed before (all four kept by the
   alert, qBittorrent's by a phone). Left for item 31: Explain's
   `forModel` misses the printed-password sentence.
+
+- **Round 29 (item 24, move in from a file someone else made):** N16,
+  Medium. A bundle brings its maker's paired phones, Cloudflare tunnel
+  and domain, and own apps (run by Docker as written), all kept, and the
+  plan said only "unpack .env and the apps' data". Now `move.Brings` reads
+  them from the bundle and the plan names each (phones and whether they
+  may make changes, the tunnel, the domain, each own app with its image)
+  and warns to move in only a file you made, before it asks.
+  `TestMoveInNamesWhatReachesIn` failed before. Kept, not dropped: a move
+  between your own machines needs them (a decision for the owner).
 
 ## For Account 2
 
