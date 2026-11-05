@@ -1,10 +1,14 @@
 package api
 
 import (
+	"os"
 	"slices"
+	"strings"
 	"testing"
 )
 
+// The pinned apps are a record in data/ (pinned.json), in the order
+// pinned; a list still in .env from before counts too.
 func TestPinned(t *testing.T) {
 	for _, tc := range []struct {
 		name, was, app string
@@ -17,16 +21,30 @@ func TestPinned(t *testing.T) {
 		{"unpinned", "immich,jellyfin", "immich", false, "jellyfin"},
 		{"unpinned, never pinned", "immich", "vikunja", false, "immich"},
 		{"the last", "immich", "immich", false, ""},
-		{"a hand-typed list, spaces and twice", " immich , ,immich,jellyfin", "vikunja", true, "immich,jellyfin,vikunja"},
 	} {
-		if got := SetPinned(map[string]string{PinnedKey: tc.was}, tc.app, tc.pin); got != tc.want {
+		root := t.TempDir()
+		for _, id := range strings.Split(tc.was, ",") {
+			if id != "" {
+				if err := SetPinned(root, id, true); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+		if err := SetPinned(root, tc.app, tc.pin); err != nil {
+			t.Fatal(err)
+		}
+		if got := strings.Join(Pinned(root, nil), ","); got != tc.want {
 			t.Errorf("%s: %q, want %q", tc.name, got, tc.want)
 		}
+		if _, err := os.Stat(PinnedPath(root)); err != nil {
+			t.Errorf("%s: no record: %v", tc.name, err)
+		}
 	}
-	if got := Pinned(map[string]string{}); len(got) != 0 {
+	if got := Pinned(t.TempDir(), map[string]string{}); len(got) != 0 {
 		t.Errorf("none: %v", got)
 	}
-	if got := Pinned(map[string]string{PinnedKey: "a, b,a"}); !slices.Equal(got, []string{"a", "b"}) {
+	// A hand-typed list in .env, from before the record: spaces, and twice.
+	if got := Pinned("", map[string]string{PinnedKey: " a , ,b,a"}); !slices.Equal(got, []string{"a", "b"}) {
 		t.Errorf("read: %v", got)
 	}
 }
