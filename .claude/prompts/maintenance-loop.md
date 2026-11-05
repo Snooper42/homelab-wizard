@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** nothing of this loop's. This file and `lanes.md` came in on `claude/fix-lanes`.
+**Open now:** #429 (`claude/fix-registry-busy`), item 1 of the order: take it to merged.
 
 ## Your job
 
@@ -86,7 +86,7 @@ What is not yours: features (Account 1) and security findings (Account 3). When 
 
 Do these in order, one per round. Tick each with its PR number once it is known.
 
-1. **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
+1. **(#429, open)** **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
    - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`)
    - `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`)
@@ -112,6 +112,8 @@ Nothing yet.
 - `internal/lockedfile` (lock beside the file, replaced whole, 0600) and `internal/turn` (one queue for every process's changes) exist; use them.
 - Never build `web/dist` in a worktree whose `node_modules` is a symlink.
 - A force-push to reset a branch can be refused; merge main in instead.
+- A job's whole log: `get_job_logs` with `tail_lines` larger than the log (1500) is too big to show, so it is saved to a file you can grep (`logs_content` in its JSON). The run's zip of logs is blocked by the proxy.
+- Nov 4 and 5's nightly failures were all ghcr.io's per-minute limit (`toomanyrequests: retry-after: <µs>, allowed: 44000/minute`), hit by every job at about 11:01 UTC. #429 makes downloads wait it out. If it comes back, look at how long the tries span (`RegistryBusyWaits`) and at any `docker run` that pulls its own image.
 
 ## Rules that never bend
 
