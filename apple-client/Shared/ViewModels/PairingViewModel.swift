@@ -49,6 +49,25 @@ final class PairingViewModel {
         serverAddress = text
     }
 
+    /// What a scanned QR code said. Only a pairing link with an https
+    /// address and a code is taken; anything else says why.
+    func scanned(_ text: String) {
+        errorMessage = nil
+        do {
+            let parsed = try ServerEndpoint.parse(text)
+            guard let code = parsed.code else {
+                fail("That QR code isn't a pairing code. On the computer, run homelab phone pair.")
+                return
+            }
+            serverAddress = parsed.endpoint.baseURL.absoluteString
+            self.code = code.value
+        } catch ServerEndpoint.ValidationError.insecureScheme {
+            fail("That QR code is for the home Wi-Fi link (http). Use the Tailscale or homelab-domain link instead: on the computer, Settings › Phones.")
+        } catch {
+            fail(error.localizedDescription)
+        }
+    }
+
     func setCode(_ text: String) {
         errorMessage = nil
         code = PairingCode.sanitize(text)

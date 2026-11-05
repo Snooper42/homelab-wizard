@@ -30,6 +30,7 @@ apple-client/
    - On Xcode 26, set **Default Actor Isolation = nonisolated**. The new-project default is MainActor, but these sources mark `@MainActor` explicitly where needed. Under a MainActor default, the model and parser types would be main-actor-bound, and the background stream reader couldn't use them.
 5. In **Info** (Info.plist keys):
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
+   - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. Without it, the scan button doesn't show.
    - Add no `NSAppTransportSecurity` exceptions. The client is https-only, and ATS stays fully on.
 6. In **Signing & Capabilities**:
    - Choose a development team on both platforms. On macOS, the data-protection keychain needs a signed app; an unsigned one gets `errSecMissingEntitlement`.
@@ -71,6 +72,7 @@ hash. The client receives the token itself, once.
 | Data left in memory while locked | Locking stops the SSE stream and clears every reading. Late answers that arrive after the lock are dropped. | `LiveEventManager.clear` |
 | Secrets in logs | `os.Logger` only. Tokens and codes are never interpolated. Hosts and server text are `.private`. Error log lines use payload-free `logName`. The secret types print as `<redacted>` even through `print` or `dump`. | `SecureLog`, `APIError.logName` |
 | Hostile or broken stream | The SSE and ndjson parsers are bounded (4 MB per event, 8 MB per answer). The token's shape is validated, and server messages are cleaned before display. | `SSEParser`, `APIError.sanitize` |
+| A planted pairing QR code | A scan only fills in the address and code, through the same https-only parser as typing. Nothing pairs until the person taps Pair, with the host in front of them. A wrong server could only issue its own token; it never sees this device's real one. | `QRScannerView`, `PairingViewModel.scanned` |
 | Path injection via method names | `/api/call/<Method>` accepts only ASCII alphanumerics. | `APIClient.callRequest` |
 | A change made from an unattended, unlocked device | Start, Stop and Restart ask for Face ID / Touch ID / passcode again unless the owner authenticated in the last 2 minutes. The window is measured on the monotonic clock, so changing the device time can't stretch it. | `AppCoordinator.authorizeChange` |
 | Accidental or repeated changes | Stop is confirmed and offers Undo for 10 s, one app or a group. A group runs one app at a time, stops at the first failure, and authenticates once. One change at a time. Changes are never retried, and a timeout says the change may still be running. Buttons show only when the computer says `canChange`. App ids must look like catalog ids before they're sent. | `AppActionsViewModel`, `AppAction`, `APIClient.perform` |

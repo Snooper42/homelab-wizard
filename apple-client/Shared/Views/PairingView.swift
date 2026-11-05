@@ -5,6 +5,7 @@ import SwiftUI
 struct PairingView: View {
     @State private var model: PairingViewModel
     @FocusState private var focus: Field?
+    @State private var scanning = false
     private let notice: String?
 
     private enum Field: Hashable { case server, code, name }
@@ -71,6 +72,32 @@ struct PairingView: View {
 
     private var serverSection: some View {
         Section {
+            #if os(iOS)
+            if QRScannerView.isAvailable {
+                Button {
+                    scanning = true
+                } label: {
+                    Label("Scan the Computer's QR Code", systemImage: "qrcode.viewfinder")
+                }
+                .sheet(isPresented: $scanning) {
+                    NavigationStack {
+                        QRScannerView { text in
+                            scanning = false
+                            model.scanned(text)
+                            focus = nil
+                        }
+                        .ignoresSafeArea()
+                        .navigationTitle("Scan to Pair")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Cancel") { scanning = false }
+                            }
+                        }
+                    }
+                }
+            }
+            #endif
             TextField("Address", text: serverBinding, prompt: Text(verbatim: "https://your-mac.tailnet.ts.net:8099"))
                 #if os(iOS)
                 .textContentType(.URL)

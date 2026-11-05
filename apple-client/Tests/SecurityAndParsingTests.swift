@@ -809,3 +809,25 @@ struct GroupActionTests {
         #expect(p.label == "Restarting 2 of 5…")
     }
 }
+
+@Suite("Scanning to pair")
+@MainActor
+struct ScanToPairTests {
+    private func model() -> PairingViewModel { PairingViewModel(api: APIClient(keychain: KeychainManager(service: "test.scan")), onPaired: { _ in }) }
+
+    @Test func takesAnHTTPSPairingLink() {
+        let m = model()
+        m.scanned("https://mac.tail1234.ts.net:8099/#pair=ABCD2345")
+        #expect(m.serverAddress == "https://mac.tail1234.ts.net:8099")
+        #expect(m.code == "ABCD2345")
+        #expect(m.errorMessage == nil)
+    }
+
+    @Test func refusesTheHomeWiFiLinkAndOtherCodes() {
+        let m = model()
+        m.scanned("http://mac.local:8099/#pair=ABCD2345")
+        #expect(m.code.isEmpty && m.errorMessage != nil)
+        m.scanned("https://example.com/menu")
+        #expect(m.code.isEmpty && m.errorMessage != nil)
+    }
+}
