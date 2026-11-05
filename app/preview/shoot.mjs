@@ -2668,6 +2668,39 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
+  // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
+  // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
+  // counts as Status. Kept on this device across launches.
+  { name: 'What changed since you looked: a dot on each row, cleared once seen', screen: 'status', run: async (page) => {
+    const dots = () => page.$$eval('#statusRows tr:not(.grouphead)', (rs) => rs.filter((r) => r.querySelector('.changedot')).map((r) => `${r.querySelector('strong').textContent}: ${r.querySelector('.changedot').getAttribute('aria-label')}`).sort());
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await dots()).length) throw new Error('dots on the first visit: ' + (await dots()).join(', '));
+    // An app's page is still Status: nothing is seen yet.
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
+    await page.waitForSelector('#app.active', { timeout: 3000 });
+    if (await page.evaluate(() => localStorage.getItem('homelab.statusSeen'))) throw new Error('an app’s page counted as leaving Status');
+    await page.click('nav button[data-screen=setup]');
+    await page.waitForSelector('#setup.active', { timeout: 3000 });
+    // Meanwhile: Vikunja restarted, Navidrome updated, Mealie started, Immich stopped.
+    await page.evaluate(() => {
+      const now = new Date().toISOString();
+      window.__MOCK.status = { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a) => (
+        a.id === 'vikunja' ? { ...a, since: now }
+          : a.id === 'navidrome' ? { ...a, since: now, updatedAt: now }
+          : a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: now }
+          : a.id === 'immich-server' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
+    });
+    await page.click('nav button[data-screen=status]');
+    await page.evaluate(() => window.__emit('status:changed'));
+    const want = ['Immich: Stopped since you looked', 'Mealie: Started since you looked', 'Navidrome: Updated since you looked', 'Vikunja: Restarted since you looked'];
+    await page.waitForFunction((n) => document.querySelectorAll('#statusRows .changedot').length === n, want.length, { timeout: 5000 }).catch(() => {});
+    if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
+    if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
+    // Seen: leaving and coming back clears them.
+    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
+  } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');

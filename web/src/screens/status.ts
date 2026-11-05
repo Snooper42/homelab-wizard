@@ -21,6 +21,7 @@ import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
 import { cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
+import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
@@ -32,6 +33,8 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
+// Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
+let seen = loadSeen();
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -79,7 +82,7 @@ function renderAppList(st: api.Status) {
     { label: 'Pinned', apps: pinned, pinned: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -382,6 +385,17 @@ const appListActions: AppListActions = {
     },
   },
 };
+/**
+ * Leaving Status (for another screen, or closing the app): what it shows now
+ * is what you saw, so the next visit's dots are what changed after it.
+ */
+export function leftStatus() {
+  if (!lastStatus) return;
+  saveSeen(lastStatus.apps);
+  seen = loadSeen();
+  renderAppList(lastStatus);
+}
+
 /** The rows' actions, for the command palette. */
 export const rowActions = appListActions;
 /** The apps the battery saver paused, from the last Status. */

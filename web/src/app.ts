@@ -5,7 +5,7 @@
 // starts the app; each screen's code is in web/src/screens, drawn by Preact
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { progress } from './setup/Checklist';
-import { drawRemembered, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
@@ -22,6 +22,9 @@ import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 export function show(name) {
   // An app's page belongs to Status: its button stays the one picked.
   const picked = name === 'app' ? 'status' : name;
+  // Leaving Status (an app's page is part of it): what changed there is seen.
+  const was = document.querySelector('.screen.active')?.id;
+  if ((was === 'status' || was === 'app') && picked !== 'status') leftStatus();
   $$('nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.screen === picked);
     if (b.dataset.screen === picked) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -76,6 +79,8 @@ export function navigate(name) {
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
 // always were, Finances after them, then Tidy Up.
 const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
+// Closing the app on Status: what it showed is what was seen.
+addEventListener('pagehide', () => { const on = document.querySelector('.screen.active')?.id; if (on === 'status' || on === 'app') leftStatus(); });
 $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;
