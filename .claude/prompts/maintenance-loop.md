@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** the PR for `claude/fix-update-history` (item 3, its second part): take it to merged. #429, #431, #432, and #433 merged.
+**Open now:** #434 (`claude/fix-update-history`, item 3, its second part): take it to merged. #429, #431, #432, and #433 merged.
 
 ## Your job
 
@@ -96,7 +96,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 3. **Records written in place.** Records that more than one process writes with a plain `os.WriteFile` move to `internal/lockedfile`. Start with `data/healed.json` (`cmd/homelab/heal.go`), the watchdog's state (`internal/health/health.go`), `data/battery.json` (`internal/battery`), and the savings history (`internal/savings`), and grep for others under `data/`. `internal/stopped`'s own copy of the lock becomes `lockedfile` too.
    - **(#433, merged)** `data/battery.json` (`battery.Update`, `Pause`, `Resume`), the watchdog's state (`health.UpdateState`; `Save` whole), the savings history, and `internal/stopped` on `lockedfile`.
    - **Waits for #425** (it claims `cmd/homelab/heal.go` and `apps.go`): `data/healed.json`, and `homelab remove`'s `Forget` through `health.UpdateState`.
-   - **(this PR, open)** `data/updates.json` (`updates.SaveChanges`: a run saves only the records it changed), `data/setup.json` (under its lock), `data/people.json` and `data/restarts.json` (one writer each: written whole).
+   - **(#434, open)** `data/updates.json` (`updates.SaveChanges`: a run saves only the records it changed), `data/setup.json` (under its lock), `data/people.json` and `data/restarts.json` (one writer each: written whole).
    - **Left, each with one writer** (whole writes are enough; take them when touching the code anyway): `internal/backup/reminder.go`, `internal/core/core.go`'s, `internal/upgrade/back.go`'s, `cmd/homelab/digest.go`'s, `cmd/homelab/finances.go`'s.
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
 5. **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
