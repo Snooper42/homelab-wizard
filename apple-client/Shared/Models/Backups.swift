@@ -52,6 +52,38 @@ struct BackupOverview: Decodable, Sendable, Equatable {
 }
 
 extension BackupOverview {
+    /// The copies in groups, as the computer's Backups screen shows them
+    /// (`copyGroups` in web/src/backups/Backups.tsx): stale, up to date,
+    /// paused, not copied yet. Empty groups are left out.
+    struct CopyGroup: Identifiable, Equatable, Sendable {
+        let state: String
+        let title: String
+        let copies: [BackupCopy]
+        /// For paused and not-yet-copied ones: who waits for what, or when.
+        let note: String?
+        var id: String { state }
+    }
+
+    var copyGroups: [CopyGroup] {
+        func of(_ state: String) -> [BackupCopy] { copies.filter { $0.state == state } }
+        let paused = of("paused"), none = of("none")
+        let drives = Array(Set(paused.compactMap { $0.waitingFor }.filter { !$0.isEmpty }.map(AppStatus.driveName))).sorted()
+        let pausedNote = paused.isEmpty ? nil
+            : "\(paused.map(\.name).joined(separator: ", ")) \(paused.count == 1 ? "waits" : "wait") for \(drives.isEmpty ? "a drive" : drives.joined(separator: " and ")); \(paused.count == 1 ? "its last copy is" : "their last copies are") kept."
+        let groups = [
+            CopyGroup(state: "stale", title: "Stale", copies: of("stale"), note: nil),
+            CopyGroup(state: "fresh", title: "Up to Date", copies: of("fresh"), note: nil),
+            CopyGroup(state: "paused", title: "Paused", copies: paused, note: pausedNote),
+            CopyGroup(state: "none", title: "Not Copied Yet", copies: none, note: none.isEmpty ? nil : "\(none.map(\.name).joined(separator: ", ")), tonight."),
+        ]
+        return groups.filter { !$0.copies.isEmpty }
+    }
+
+    /// "5 of 6": fresh copies of all but the paused ones, as the computer's tile.
+    var upToDate: (fresh: Int, of: Int) {
+        (copies.filter { $0.state == "fresh" }.count, copies.filter { $0.state != "paused" }.count)
+    }
+
     /// This app's copy, by its id.
     func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
 

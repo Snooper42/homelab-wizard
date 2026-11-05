@@ -23,10 +23,16 @@ struct BackupsView: View {
                 Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
             }
             jobs
-            if let copies = backups.overview?.copies, !copies.isEmpty {
-                Section("Each App's Copy") {
-                    ForEach(copies) { copy in
-                        CopyRow(copy: copy)
+            if let overview = backups.overview {
+                ForEach(overview.copyGroups) { group in
+                    Section {
+                        ForEach(group.copies) { copy in
+                            CopyRow(copy: copy)
+                        }
+                    } header: {
+                        Text(group.title)
+                    } footer: {
+                        if let note = group.note { Text(note) }
                     }
                 }
             }
@@ -67,6 +73,9 @@ struct BackupsView: View {
             }
             if let last = o.lastRun {
                 LabeledContent("Last backup") { Text(last, format: .relative(presentation: .named)) }
+            }
+            if !o.copies.isEmpty {
+                LabeledContent("Copies up to date", value: "\(o.upToDate.fresh) of \(o.upToDate.of)")
             }
             // The settings file (.env) goes with the nightly backup, as the computer says.
             LabeledContent("Settings file") {

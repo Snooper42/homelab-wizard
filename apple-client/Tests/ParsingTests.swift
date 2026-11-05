@@ -397,6 +397,18 @@ struct BackupsTests {
         #expect(o.copies[1].sizeChanged && !o.copies[2].sizeChanged && !o.copies[3].sizeChanged)
     }
 
+    @Test func copiesInTheComputersGroups() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Plex","state":"paused","waitingFor":"/Volumes/Media"},
+                   {"id":"c","name":"Jellyfin","state":"paused","waitingFor":"/Volumes/Media"},{"id":"d","name":"Mealie","state":"none"},
+                   {"id":"e","name":"Paperless","state":"stale"}]}
+        """#.utf8))
+        #expect(o.copyGroups.map(\.state) == ["stale", "fresh", "paused", "none"])
+        #expect(o.copyGroups[2].note == "Plex, Jellyfin wait for Media; their last copies are kept.")
+        #expect(o.copyGroups[3].note == "Mealie, tonight.")
+        #expect(o.upToDate.fresh == 1 && o.upToDate.of == 3)
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())
