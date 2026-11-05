@@ -50,6 +50,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up's logs and crash notes no longer pile up:** each Tidy Up job, its checks included, left a log that was never cleared, its background log grew without end, and the list of what went to the Trash kept every line forever. Job logs now go after 30 days, the background log is cut at 5 MB, what Undo can no longer reach leaves the Trash list, and crash notes go after 90 days.
 - **The watchdog's, the battery saver's, and the savings records are never half written:** Status and the once-a-minute check could read one while it was being written and take it for empty, and two watchdog runs at once could save over each other. Each is now written whole, one writer at a time, and only this account can read it.
 - **Pinning an app is never lost:** pinning one app from the app and another from a phone at about the same time could keep only one pin. The pinned apps now live in a record of their own that each change updates in turn, and they move there by themselves after the upgrade, still in the order you pinned them.
 - **Turning an app's alerts off is never lost:** *Tell me if it stops*, switched from the app and a phone at about the same time, could keep only one of the two, since both rewrote the same line of the settings file. The list now lives in a record of its own that each change updates in turn, and it moves there by itself after the upgrade, with every app you had turned off still off.
