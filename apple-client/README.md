@@ -62,9 +62,11 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
    - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. Without it, the scan button doesn't show.
    - Add no `NSAppTransportSecurity` exceptions. The client is https-only, and ATS stays fully on.
+   - `ITSAppUsesNonExemptEncryption` = NO. The app's only encryption is the system's HTTPS and Keychain, which is exempt, so App Store Connect stops asking at each upload.
 6. In **Signing & Capabilities**:
    - Choose a development team on both platforms. On macOS, the data-protection keychain needs a signed app; an unsigned one gets `errSecMissingEntitlement`.
    - macOS: **App Sandbox › Outgoing Connections (Client)**, and keep the Hardened Runtime on.
+7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target (both platforms). It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
 
 ## The server contract (read from the Go sources)
 
