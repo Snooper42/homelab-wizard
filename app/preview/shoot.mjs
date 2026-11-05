@@ -857,6 +857,52 @@ const smokes = [
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("containers reach no Coral")', { timeout: 5000 });
   } },
+  // Remember where you were: each screen keeps its own scroll and open sections between visits (another screen starts at its
+  // own place, not this one's) and after the app is opened again.
+  { name: 'Each screen keeps where you were: its scroll and open sections, after quitting too', screen: 'choose', run: async (page) => {
+    const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
+    const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
+    // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.click('#more > summary');
+    await page.waitForFunction(() => document.querySelector('#more').open, null, { timeout: 2000 });
+    await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
+    await scrollTo(900);
+    const chose = await top(), shown = await atTop();
+    if (chose < 800 || !shown) throw new Error(`Choose stacks only scrolls to ${chose} (${shown})`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose stacks' place`);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+    await scrollTo(300);
+    // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
+    await page.waitForTimeout(500);
+    const status = await top();
+    if (status < 250) throw new Error(`Status only scrolls to ${status}`);
+    await page.click('nav button[data-screen=choose]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose stacks at ${await top()}, not ${chose}`);
+    if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
+    // Quit and open again (on Choose stacks): it is where it was, and so is Status. Quitting is the page going away
+    // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
+    // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
+    await page.evaluate(() => dispatchEvent(new Event('pagehide')));
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.place']) throw new Error('nothing kept on quitting');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    if ((await atTop()) !== shown || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"; Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
+  } },
   { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
