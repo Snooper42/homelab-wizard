@@ -446,9 +446,13 @@ private struct RowLine: View {
     let row: FinanceRow
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        HStack(spacing: 8) {
+        // At the accessibility text sizes the amount goes under the name.
+        let large = typeSize.isAccessibilitySize
+        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+        layout {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(view.payment(row.payment)?.name ?? "Payment")
@@ -465,7 +469,7 @@ private struct RowLine: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }
-            Spacer()
+            if !large { Spacer() }
             HStack(spacing: 2) {
                 if row.estimate { Text(verbatim: "≈").foregroundStyle(.secondary).accessibilityLabel("About") }
                 Money(value: row.into ? row.amount : -row.amount, currency: view.plan.currency, finances: finances)
@@ -919,9 +923,15 @@ private struct AddTransactionView: View {
 private struct TransactionRow: View {
     let transaction: FinanceTransaction
     let finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// At the accessibility text sizes the amount goes under the words, and
+    /// the detail line may wrap.
+    private var large: Bool { typeSize.isAccessibilitySize }
 
     var body: some View {
-        HStack(spacing: 8) {
+        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+        layout {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(transaction.payee.isEmpty ? "Transaction" : transaction.payee)
@@ -933,9 +943,9 @@ private struct TransactionRow: View {
                 Text(detail)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .lineLimit(large ? 3 : 1)
             }
-            Spacer()
+            if !large { Spacer() }
             Money(value: transaction.amount, currency: finances.currency, finances: finances)
                 .foregroundStyle(transaction.amount > 0 ? .green : .primary)
         }
