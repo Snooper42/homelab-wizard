@@ -2445,6 +2445,34 @@ const smokes = [
     await page.waitForTimeout(120);
     if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
   } },
+  { name: 'A long command can be hidden: it carries on, its bar in the sidebar, and comes back from there', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    // Running, the sheet offers Hide, and Escape presses it.
+    await page.waitForSelector('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    if (await page.evaluate(() => document.documentElement.classList.contains('sheet-open'))) throw new Error('the screen stayed dimmed');
+    await page.waitForSelector('#bgJob .bgjob.running .bgtitle:text-is("Update all apps now")', { timeout: 3000 });
+    // Another command waits for it, saying so, and leaves its sheet be.
+    await page.click('#updateAll');
+    await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
+    // The rest of the app is there to use meanwhile.
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    // A job of another screen waits too: it would take the running one's bar and log.
+    await page.click('#backupNow');
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#backupPanel')) throw new Error('Back up now started beside the running command');
+    // Done: the chip says so, and brings back the sheet, which says how it went.
+    await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
+    await page.click('#bgJob .bgopen');
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliActions button:text-is("Close")', { timeout: 3000 });
+    if (await page.$('#bgJob .bgjob')) throw new Error('the chip stayed with its sheet open');
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.filter((r) => r === 'update-all').length !== 2) throw new Error('ran: ' + ran.join());
+  } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
@@ -3036,8 +3064,9 @@ const smokes = [
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
+    // Nothing cancels it while it runs: Hide alone, which lets it carry on behind.
     const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
-    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    if (buttons.join() !== 'Hide') throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
     // The engine says containers changed while the job runs: Status behind the sheet waits.
     await page.waitForSelector('#cliApps li', { timeout: 5000 });
     await page.evaluate(() => window.__emit('status:changed'));
