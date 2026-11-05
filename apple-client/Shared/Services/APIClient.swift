@@ -186,6 +186,14 @@ actor APIClient {
         return APIError.sanitizeLog(envelope?.log)
     }
 
+    // MARK: Finances
+
+    /// The money card: the next payday, what's left after it, and the next
+    /// bills. Any Finances level may read it (card, view or edit).
+    func moneyCard() async throws -> MoneyCard {
+        try await call("FinancesWall", as: MoneyCard.self)
+    }
+
     // MARK: Changes
 
     /// Starts, stops or restarts an app on the computer (the `AppAction`

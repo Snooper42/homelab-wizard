@@ -51,16 +51,7 @@ struct SavingsPoint: Decodable, Sendable, Equatable, Identifiable {
     var id: String { date }
 
     /// Noon on that day, for charting, so time zones can't move it to another day.
-    var day: Date? {
-        var parts = DateComponents()
-        let fields = date.split(separator: "-").compactMap { Int($0) }
-        guard fields.count == 3 else { return nil }
-        parts.year = fields[0]
-        parts.month = fields[1]
-        parts.day = fields[2]
-        parts.hour = 12
-        return Calendar(identifier: .gregorian).date(from: parts)
-    }
+    var day: Date? { LocalDay.parse(date) }
 }
 
 /// CrowdSec as the app shows it (`crowdsec.Protection`, card "protection").

@@ -12,6 +12,7 @@ struct DashboardView: View {
     @State private var actions: AppActionsViewModel
     @State private var tasks: HomelabTasksViewModel
     @State private var computer: ComputerViewModel
+    @State private var finances: FinancesViewModel
     private let api: APIClient
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -43,6 +44,7 @@ struct DashboardView: View {
                 }
             }
         ))
+        _finances = State(initialValue: FinancesViewModel(api: coordinator.api, device: device))
         _computer = State(initialValue: ComputerViewModel(
             api: coordinator.api,
             liveEvents: coordinator.liveEvents,
@@ -55,12 +57,12 @@ struct DashboardView: View {
         Group {
             #if os(iOS)
             if sizeClass == .compact {
-                PhoneDashboard(model: model, computer: computer)
+                PhoneDashboard(model: model, computer: computer, finances: finances)
             } else {
-                SplitDashboard(model: model, computer: computer)
+                SplitDashboard(model: model, computer: computer, finances: finances)
             }
             #else
-            SplitDashboard(model: model, computer: computer)
+            SplitDashboard(model: model, computer: computer, finances: finances)
             #endif
         }
         // A haptic when something new needs attention, not when it clears.
@@ -94,6 +96,7 @@ struct DashboardView: View {
 private struct PhoneDashboard: View {
     let model: DashboardViewModel
     let computer: ComputerViewModel
+    let finances: FinancesViewModel
 
     var body: some View {
         NavigationStack {
@@ -101,9 +104,9 @@ private struct PhoneDashboard: View {
                 Section {
                     OverviewHeader(model: model)
                     NavigationLink {
-                        OverviewView(cards: model.cards)
+                        OverviewView(cards: model.cards, finances: finances)
                     } label: {
-                        Label("Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
+                        Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
                             .badge(model.failingChecks)
                     }
                     NavigationLink {
@@ -156,6 +159,7 @@ private struct PhoneDashboard: View {
 private struct SplitDashboard: View {
     @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
+    let finances: FinancesViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
 
     var body: some View {
@@ -189,7 +193,7 @@ private struct SplitDashboard: View {
         } content: {
             switch model.sidebar {
             case .overview?:
-                OverviewView(cards: model.cards)
+                OverviewView(cards: model.cards, finances: finances)
                     .navigationSplitViewColumnWidth(min: 300, ideal: 380)
                     .toolbar { toolbarItems }
             case .backups?:

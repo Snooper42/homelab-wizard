@@ -26,6 +26,25 @@ enum GoTime {
     }
 }
 
+/// A calendar day as the computer writes it (YYYY-MM-DD, in its own time
+/// zone), as noon on that day here, so a time zone can't move it.
+enum LocalDay {
+    static func parse(_ text: String?) -> Date? {
+        guard let text else { return nil }
+        let fields = text.split(separator: "-")
+        guard fields.count == 3,
+              let year = Int(fields[0]), let month = Int(fields[1]), let day = Int(fields[2]),
+              (1...12).contains(month), (1...31).contains(day)
+        else { return nil }
+        var parts = DateComponents()
+        parts.year = year
+        parts.month = month
+        parts.day = day
+        parts.hour = 12
+        return Calendar(identifier: .gregorian).date(from: parts)
+    }
+}
+
 extension JSONDecoder {
     /// A decoder for the companion's JSON.
     static func homelab() -> JSONDecoder {

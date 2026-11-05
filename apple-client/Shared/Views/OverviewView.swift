@@ -6,9 +6,13 @@ import SwiftUI
 /// the Overview item in the sidebar.
 struct OverviewView: View {
     let cards: CardsViewModel
+    let finances: FinancesViewModel
 
     var body: some View {
         Form {
+            if finances.canSeeMoney {
+                MoneySection(finances: finances)
+            }
             ForEach(cards.shown) { card in
                 CardSection(card: card)
             }
@@ -29,7 +33,12 @@ struct OverviewView: View {
                 }
             }
         }
-        .refreshable { await cards.load() }
+        .refreshable {
+            async let money: Void = finances.load()
+            await cards.load()
+            await money
+        }
+        .task { await finances.load() }
         .navigationTitle("Overview")
     }
 }
@@ -76,6 +85,84 @@ extension StatusCard {
         case "alerts": "bell"
         case "savings": "dollarsign.circle"
         default: "rectangle.stack"
+        }
+    }
+}
+
+// MARK: - Money
+
+/// The money card, as a wall screen shows it: the next payday, what's left
+/// after it, and the next bills. Amounts stay hidden until tapped.
+private struct MoneySection: View {
+    @Bindable var finances: FinancesViewModel
+
+    var body: some View {
+        Section {
+            if let money = finances.money {
+                if let payday = money.payday {
+                    LabeledContent("Next payday") {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(payday, format: .dateTime.weekday(.wide).month().day())
+                            if !money.who.isEmpty {
+                                Text(money.who.joined(separator: ", ")).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    LabeledContent("Left after its bills") {
+                        amount(money.left, money)
+                    }
+                } else {
+                    Text("No payday ahead in the plan.").foregroundStyle(.secondary)
+                }
+                ForEach(money.bills) { bill in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(bill.name)
+                            if let date = bill.date {
+                                Text(date, format: .dateTime.weekday(.abbreviated).month().day())
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                        amount(bill.amount, money)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                if money.hidden {
+                    Label("Hide amounts is on, on the computer.", systemImage: "eye.slash")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            } else if let error = finances.error {
+                Text(error).foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+            }
+        } header: {
+            HStack {
+                Label("Money", systemImage: "banknote")
+                Spacer()
+                if let money = finances.money, !money.hidden {
+                    Button(finances.amountsShown ? "Hide Amounts" : "Show Amounts") {
+                        finances.amountsShown.toggle()
+                    }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func amount(_ value: Double, _ money: MoneyCard) -> some View {
+        if money.hidden || !finances.amountsShown {
+            Text(verbatim: "••••")
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("Amount hidden")
+        } else {
+            Text(value, format: .currency(code: money.currency))
+                .monospacedDigit()
+                .privacySensitive()
         }
     }
 }

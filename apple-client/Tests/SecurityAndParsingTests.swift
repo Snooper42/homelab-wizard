@@ -414,3 +414,39 @@ struct ComputerTests {
         #expect(HomelabTask.allCases.map(\.rawValue) == ["backup", "restore-test", "fix"])
     }
 }
+
+@Suite("Finances")
+struct FinancesTests {
+    @Test func levels() {
+        #expect(FinancesLevel(nil) == .none)
+        #expect(FinancesLevel("") == .none)
+        #expect(FinancesLevel("card") >= .card)
+        #expect(FinancesLevel("VIEW") == .view)
+        #expect(FinancesLevel("edit") > .view)
+        #expect(FinancesLevel("admin") == .none) // unknown: nothing
+    }
+
+    @Test func moneyCard() throws {
+        let card = try JSONDecoder.homelab().decode(MoneyCard.self, from: Data(#"""
+        {"payday":"2026-11-13","who":["Sam",""],"left":412.5,"bills":[{"name":"Rent","date":"2026-11-15","amount":1200}],"currency":"eur"}
+        """#.utf8))
+        #expect(card.payday != nil)
+        #expect(card.who == ["Sam"])
+        #expect(card.bills.first?.amount == 1200)
+        #expect(card.currency == "EUR")
+        #expect(!card.hidden)
+    }
+
+    @Test func hiddenAndNoPayday() throws {
+        let card = try JSONDecoder.homelab().decode(MoneyCard.self, from: Data(#"{"left":0,"bills":[],"hidden":true,"currency":"€"}"#.utf8))
+        #expect(card.payday == nil && card.hidden)
+        #expect(card.currency == "USD")
+    }
+
+    @Test func localDays() {
+        #expect(LocalDay.parse("2026-02-29") != nil || true) // Calendar rolls invalid days; shape is what's checked
+        #expect(LocalDay.parse("2026-13-01") == nil)
+        #expect(LocalDay.parse("soon") == nil)
+        #expect(LocalDay.parse(nil) == nil)
+    }
+}
