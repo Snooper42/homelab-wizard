@@ -178,7 +178,12 @@ final class FinancesViewModel {
     /// Prepares a picked photo and keeps it on the computer, returning its
     /// name for the new transaction.
     func attachPhoto(_ data: Data) async -> String? {
-        guard level >= .edit else { return nil }
+        guard level >= .edit, !isSaving else { return nil }
+        isSaving = true
+        defer { isSaving = false }
+        // Keeping a receipt writes to the computer, so it's authenticated
+        // like any save (the save that names it falls in the same grace).
+        guard await authorize("Keep a receipt in your Finances.") else { return nil }
         guard let url = await Task.detached(priority: .userInitiated, operation: { ReceiptCodec.preparePhoto(data) }).value else {
             saveError = "That picture couldn't be used as a receipt."
             return nil
