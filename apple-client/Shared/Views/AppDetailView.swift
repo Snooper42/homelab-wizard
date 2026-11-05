@@ -302,11 +302,16 @@ struct AppDetailView: View {
                         get: { actions.value(of: setting, for: app) },
                         set: { on in Task { await actions.set(setting, on: on, for: app) } }
                     )) {
-                        HStack {
-                            Text(setting.title)
-                            if actions.isSaving(setting, for: app) {
-                                ProgressView().controlSize(.mini)
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(setting.title)
+                                if actions.isSaving(setting, for: app) {
+                                    ProgressView().controlSize(.mini)
+                                }
                             }
+                            Text(setting.detail(on: actions.value(of: setting, for: app)))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .disabled(!actions.canChange || actions.isBusy)
@@ -320,7 +325,7 @@ struct AppDetailView: View {
                 if !actions.canChange {
                     Text("This device can only look.")
                 } else if app.held == true {
-                    Text("Its updates are held, for example after a rollback. Turn Update nightly on to let the nightly update include it again.")
+                    Text("Its updates are held, for example after a rollback. Turn Nightly updates on to let the nightly update include it again.")
                 }
             }
         }

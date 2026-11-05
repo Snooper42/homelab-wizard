@@ -137,9 +137,19 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .updates: "Update nightly"
+        case .updates: "Nightly updates"
         case .alerts: "Tell me if it stops"
         case .pinned: "Pin to the top"
+        }
+    }
+
+    /// What on or off means, under its switch, in the computer's words
+    /// (web/src/page/AppPage.tsx's Settings card).
+    func detail(on: Bool) -> String {
+        switch self {
+        case .updates: on ? "Every night, with a backup of its data first." : "Held: the nightly update leaves it out."
+        case .alerts: on ? "On your phone through ntfy, and on the computer." : "Still checked and shown on Status, without an alert."
+        case .pinned: on ? "At the top of Status, here and on the computer." : "Listed with the others, by its state."
         }
     }
 

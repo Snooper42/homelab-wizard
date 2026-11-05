@@ -274,6 +274,13 @@ struct AppPageTests {
         #expect(AppDetailView.reach(isPublic: false, hasAddress: false) == "On this machine only.")
     }
 
+    @Test func settingsSayWhatOnAndOffMean() {
+        #expect(AppSetting.updates.title == "Nightly updates")
+        #expect(AppSetting.updates.detail(on: false) == "Held: the nightly update leaves it out.")
+        #expect(AppSetting.alerts.detail(on: true).contains("ntfy"))
+        #expect(AppSetting.allCases.allSatisfy { $0.detail(on: true) != $0.detail(on: false) })
+    }
+
     @Test func onlyHTTPSAddressesOpen() {
         #expect(AppDetailView.httpsURL("photos.example.com")?.absoluteString == "https://photos.example.com")
         #expect(AppDetailView.httpsURL("http://photos.example.com") == nil)
