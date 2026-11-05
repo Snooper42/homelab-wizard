@@ -22,6 +22,8 @@ struct AppDetailView: View {
                     .padding(.vertical, 4)
                 }
 
+                aboutSection(for: app)
+
                 actionsSection(for: app)
 
                 if let problem = app.notAnswering, !problem.isEmpty {
@@ -133,6 +135,36 @@ struct AppDetailView: View {
                     Text(hint)
                 } else if available.contains(.stop) {
                     Text("Stopped for a while, it starts again by itself.")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func aboutSection(for app: AppStatus) -> some View {
+        if let entry = dashboard.catalog?.entry(app.id) {
+            Section("About") {
+                if !entry.description.isEmpty {
+                    Text(entry.description)
+                }
+                if let category = dashboard.catalog?.categoryLabel(entry.category), !category.isEmpty {
+                    LabeledContent("Category", value: category)
+                }
+                if !entry.replaces.isEmpty {
+                    LabeledContent("Instead of") {
+                        Text(entry.replaces.joined(separator: ", ")).multilineTextAlignment(.trailing)
+                    }
+                }
+                if let phone = entry.phone, !phone.isEmpty {
+                    LabeledContent("Phone app", value: phone)
+                }
+                if entry.isPublic {
+                    Label("Reachable from the internet, not only at home.", systemImage: "globe")
+                        .foregroundStyle(.orange)
+                }
+                if let warning = entry.warning, !warning.isEmpty {
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
                 }
             }
         }

@@ -57,12 +57,17 @@ final class DashboardViewModel {
     let cards: CardsViewModel
     let icons: IconStore
     let backups: BackupsViewModel
+    /// The catalog, read once per unlock: it only changes with an update on the computer.
+    private(set) var catalog: AppCatalog?
+    @ObservationIgnored private var catalogLoading = false
+    @ObservationIgnored private let api: APIClient
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.liveEvents = liveEvents
         cards = CardsViewModel(api: api, liveEvents: liveEvents)
         icons = IconStore(api: api)
         backups = BackupsViewModel(api: api)
+        self.api = api
     }
 
     var hasLoaded: Bool { liveEvents.status != nil }
@@ -107,6 +112,18 @@ final class DashboardViewModel {
     func refresh() async {
         await cards.load()
         if cards.error != nil { await liveEvents.refreshNow() }
+    }
+
+    func loadCatalog() async {
+        guard catalog == nil, !catalogLoading else { return }
+        catalogLoading = true
+        defer { catalogLoading = false }
+        do {
+            catalog = try await api.call("Catalog", as: AppCatalog.self)
+        } catch {
+            // The page works without it; the description is just left out.
+            Log.network.error("Catalog failed: \(APIError.from(error).logName, privacy: .public)")
+        }
     }
 
     /// For the sidebar badge and the phone's overview row: failing checks.

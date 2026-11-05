@@ -82,6 +82,7 @@ struct DashboardView: View {
         .environment(model)
         .environment(model.icons)
         // The cards change slowly: read them now, then every 5 minutes while unlocked.
+        .task { await model.loadCatalog() }
         .task {
             while !Task.isCancelled {
                 await model.cards.load()

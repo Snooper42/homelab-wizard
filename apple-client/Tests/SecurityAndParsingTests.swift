@@ -511,3 +511,20 @@ struct AppSettingTests {
         #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts"]) // what SetAppSetting takes
     }
 }
+
+@Suite("Catalog")
+struct CatalogTests {
+    @Test func decodesTheCatalog() throws {
+        let catalog = try JSONDecoder.homelab().decode(AppCatalog.self, from: Data(#"""
+        {"categories":[{"id":"media","label":"Media"}],
+         "apps":[{"id":"jellyfin","name":"Jellyfin","category":"media","description":"Films and shows.","kind":"optional","public":true,
+                  "phone":"Jellyfin","replaces":["Netflix",""],"inputs":["JELLYFIN_DIR"]}],
+         "presets":[{"id":"p","name":"P","token":"@p","apps":[]}],"wireable":[]}
+        """#.utf8))
+        let entry = try #require(catalog.entry("jellyfin"))
+        #expect(entry.isPublic)
+        #expect(entry.replaces == ["Netflix"])
+        #expect(catalog.categoryLabel("media") == "Media")
+        #expect(catalog.entry("nope") == nil)
+    }
+}
