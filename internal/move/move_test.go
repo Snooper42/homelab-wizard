@@ -113,3 +113,39 @@ func TestUnpackRefusesWritingThroughLinks(t *testing.T) {
 		t.Error("wrote a file outside the homelab folder")
 	}
 }
+
+// A bundle leaves out what stands for a job running on this machine: a
+// job's place in the queue, a record's lock, a save half made. On the new
+// machine they would stand for a job that is not there, and hold its jobs up.
+func TestPackLeavesThisMachinesJobsBehind(t *testing.T) {
+	src := t.TempDir()
+	now := time.Now()
+	write(t, src, ".env", "TZ=UTC\n", now)
+	write(t, src, "data/stopped.json", "{}\n", now)
+	write(t, src, "data/turns/00000000000000000001-4242.json", `{"pid":4242}`, now)
+	write(t, src, "data/stopped.json.lock", "", now)
+	write(t, src, "data/homelab.media.lock", `{"pid":4242}`, now)
+	write(t, src, "data/started.json.tmp123", "{", now)
+	var b bytes.Buffer
+	if _, err := Pack(src, Manifest{Made: now}, &b); err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	tr := tar.NewReader(&b)
+	for {
+		h, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, filepath.ToSlash(h.Name))
+	}
+	all := strings.Join(names, " ")
+	if !strings.Contains(all, "data/stopped.json") {
+		t.Fatalf("the record itself was left out: %v", names)
+	}
+	for _, gone := range []string{"data/turns", ".lock", ".tmp"} {
+		if strings.Contains(all, gone) {
+			t.Errorf("%s went in the bundle: %v", gone, names)
+		}
+	}
+}

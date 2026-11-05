@@ -553,3 +553,16 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   whole, with internal/lockedfile (stopped.Update's way, for any record),
   0600. `TestNotesAtOnceAreAllKept` failed before: 40 notes at once kept
   fewer, the record was written in place, and it was 0644.
+- **Round 24 (#422 read through; N13, the queue across processes):** the
+  watchdog after sleep (#422) changes only when it checks. N13: the app,
+  homelab serve, and the agent's nightly jobs each kept their own "one at
+  a time", so they could change the homelab at once, and the watchdog
+  could restart an app mid-update. Now internal/turn queues every command
+  that changes something (tickets in data/turns, oldest live first, a
+  job's children sharing its turn), and the watchdog heals nothing while
+  a job has it. Found on the way: a move would have carried a ticket (and
+  record locks) to the new machine and held its jobs up (TestMoveOutAndIn
+  hung); a move now leaves them behind, and a ticket from another machine
+  is cleared. `TestAChangeWaitsForAnotherProcesssTurn`,
+  `TestWatchdogWaitsOutAJob`, and `TestPackLeavesThisMachinesJobsBehind`
+  failed before.

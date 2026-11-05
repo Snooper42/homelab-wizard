@@ -36,9 +36,21 @@ var Folders = []string{".env", "data", "appdata", "stacks/custom", "recovery-sta
 // file in a bundle (dumps and archives, one per app or volume).
 var Newest = []string{"recovery-staging/databases", "recovery-staging/volumes"}
 
-// skip are paths a bundle leaves out: things made again on the new machine.
+// skip are paths a bundle leaves out: things made again on the new
+// machine, and what belongs to this one's running processes, which on the
+// new one would stand for a job that is not there: a job's place in the
+// queue (data/turns), a record's lock (*.lock), and a save half made
+// (*.tmp…).
 func skip(rel string) bool {
-	return rel == filepath.Join("data", ManifestName)
+	if rel == filepath.Join("data", ManifestName) {
+		return true
+	}
+	if turns := filepath.Join("data", "turns"); rel == turns || strings.HasPrefix(rel, turns+string(filepath.Separator)) {
+		return true
+	}
+	base := filepath.Base(rel)
+	return strings.HasPrefix(rel, "data"+string(filepath.Separator)) &&
+		(strings.HasSuffix(base, ".lock") || strings.Contains(base, ".tmp"))
 }
 
 // Result is what Pack wrote.
