@@ -16,16 +16,23 @@ import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './scr
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
+import { arrivePlace, leavePlace } from './place';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 
+let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
   // An app's page belongs to Status: its button stays the one picked.
   const picked = name === 'app' ? 'status' : name;
+  // Where the screen being left was (place.ts); not the one the page starts on, before any is shown.
+  const was = document.querySelector('.screen.active')?.id;
+  if (placed && was !== name) leavePlace(was);
   $$('nav button').forEach((b) => {
     b.classList.toggle('active', b.dataset.screen === picked);
     if (b.dataset.screen === picked) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === name));
+  if (!placed || was !== name) arrivePlace(name);
+  placed = true;
   setupNav();
   freshen(name);
 }
@@ -75,6 +82,8 @@ export function navigate(name) {
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
 // always were, Finances after them, then Tidy Up.
 const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
+// Quitting: where the screen showing was, for next time.
+addEventListener('pagehide', () => leavePlace(document.querySelector('.screen.active')?.id));
 $$('nav button').forEach((b) => {
   b.onclick = () => { navigate(b.dataset.screen); focusScreen(b.dataset.screen); };
   b.title = `${b.querySelector('span').textContent.trim()} (${mod}${screens.indexOf(b.dataset.screen) + 1})`;

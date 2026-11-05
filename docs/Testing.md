@@ -51,6 +51,7 @@ cd ~/Homelab
 | Check | You should see |
 |---|---|
 | First screen | Setup, with the number of steps left beside it in the sidebar, unless every step is done |
+| Scroll down Choose stacks with **Add more** open, pick Status, then Choose stacks again; quit and open the app again | Status opens at its own top (or where you left it), not partway down; Choose stacks is back where it was with Add more open, and so is each screen after opening the app again |
 | Settings › This Mac | macOS, OrbStack with its engine version, the homelab folder `~/Homelab`, the version, and **Storage**: a green line for the Mac's disk (homelab folder, backups) and one for the media drive (photos, media, downloads), each with its free space. `./homelab doctor` lists the same under Disk space |
 | Settings › This Mac › Version | "✓ up to date" after the pull, and "build" with the commit this app was made from |
 | An update found by itself | Within 15 minutes of a newer build (or on bringing the window forward after 10), with no click: one line at the top of every screen, *Homelab Wizard … is ready*, with **What's new**, **Later**, and **Update now**; Settings › This Mac › Updates says when it last looked |
