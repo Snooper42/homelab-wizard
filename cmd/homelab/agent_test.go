@@ -126,3 +126,31 @@ func TestFindsTheAppsFolderWithoutRoot(t *testing.T) {
 		t.Fatalf("found %q, want %q", h.root, root)
 	}
 }
+
+// The watchdog every 15 minutes, and at once when the machine wakes: a
+// minute's tick that comes more than 3 minutes late means it slept.
+func TestWatchDue(t *testing.T) {
+	at := func(h, m int) time.Time { return time.Date(2026, 11, 5, h, m, 0, 0, time.Local) }
+	for _, c := range []struct {
+		name                   string
+		now, lastWatch, lastTk time.Time
+		due, woke              bool
+	}{
+		{"the first run", at(9, 0), time.Time{}, at(8, 59), true, false},
+		{"4 minutes after the last", at(9, 4), at(9, 0), at(9, 3), false, false},
+		{"15 minutes after the last", at(9, 15), at(9, 0), at(9, 14), true, false},
+		{"awake again after the night, 7 minutes after the last run", at(7, 7), at(7, 0).Add(-8 * time.Hour), at(7, 0).Add(-8*time.Hour + 7*time.Minute), true, true},
+		{"a tick 2 minutes late is no sleep", at(9, 6), at(9, 0), at(9, 4), false, false},
+		{"a short sleep, 10 minutes after the last run", at(9, 10), at(9, 0), at(9, 5), true, true},
+	} {
+		due, woke := watchDue(c.now, c.lastWatch, c.lastTk)
+		if due != c.due || woke != c.woke {
+			t.Errorf("%s: due %v woke %v, want %v %v", c.name, due, woke, c.due, c.woke)
+		}
+	}
+	// Times that carry a monotonic reading are compared on the wall clock too.
+	now := time.Now()
+	if due, woke := watchDue(now, now.Add(-time.Minute), now.Add(-time.Minute)); due || woke {
+		t.Errorf("a minute on: due %v woke %v", due, woke)
+	}
+}
