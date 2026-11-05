@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
 | What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
 | What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
@@ -235,4 +236,4 @@ What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
 - **Health in one line** (S, *Idea*): "All well", or the one thing that needs you, at the top of every screen.
-- **Savings over time** (S, *Idea*): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>).
+- **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.
