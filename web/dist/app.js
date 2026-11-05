@@ -4161,6 +4161,14 @@
   }
   var matches2 = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
+  function sameJob(a3, p3) {
+    const installed = (id2) => ["running", "stopped"].includes(p3.status[id2]?.state || "");
+    if (installed(a3.id)) return [];
+    return p3.catalog.apps.flatMap((o3) => {
+      const why = a3.sameJob?.[o3.id] || o3.sameJob?.[a3.id];
+      return o3.id !== a3.id && why && installed(o3.id) ? [[o3, why]] : [];
+    });
+  }
   function AppRow({ a: a3, p: p3 }) {
     const native = a3.kind === "native";
     const st = p3.status[a3.id];
@@ -4186,7 +4194,13 @@
         !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
-        ] })
+        ] }),
+        sameJob(a3, p3).map(([other, why]) => /* @__PURE__ */ u3("div", { class: "samejob muted", children: [
+          "You already run ",
+          other.name,
+          ": ",
+          why
+        ] }, other.id))
       ] }),
       !!links.length && /* @__PURE__ */ u3("div", { class: "links-inline", children: links })
     ] });

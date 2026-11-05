@@ -45,6 +45,8 @@ services:
       - ./recovery-staging:/staging
       - ${BACKUP_DESTINATION:-./backups}:/destination
     x-homelab:
+      same_job:
+        kopia: "Meant to run beside it: Kopia keeps a second, independent copy on another drive."
       memory: 250
       name: Duplicati
       login: [DUPLICATI_PASSWORD]
@@ -120,6 +122,8 @@ services:
       - ./data/appdata/homarr:/appdata
     depends_on: [docker-socket-proxy]
     x-homelab:
+      same_job:
+        homepage: "Both are a page of your apps; one is usually enough."
       memory: 300
       dump: sqlite:/appdata/db/db.sqlite
       name: Homarr
