@@ -47,7 +47,9 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
             }
             stream.close()
         }
-        let request = self.request
+        // The answer sees the body too: the stream above can be read only once.
+        var request = self.request
+        request.httpBody = body
         let (status, headers, data, url) = Self.lock.withLock {
             Self.seen.append(Seen(url: request.url!, method: request.httpMethod ?? "GET",
                                   authorization: request.value(forHTTPHeaderField: "Authorization"), body: body))
@@ -328,12 +330,7 @@ extension NetworkRuleTests {
     @Test @MainActor func aGroupStopsAtTheFirstFailure() async {
         StubProtocol.reset { request in
             guard request.url?.path == "/api/call/AppAction" else { return (404, [:], Self.json(#"{"error":"not here"}"#), nil) }
-            let body = (try? JSONDecoder().decode([String].self, from: request.httpBodyStream.map { s -> Data in
-                s.open(); defer { s.close() }
-                var d = Data(); var b = [UInt8](repeating: 0, count: 1024)
-                while s.hasBytesAvailable { let n = s.read(&b, maxLength: b.count); if n <= 0 { break }; d.append(b, count: n) }
-                return d
-            } ?? request.httpBody ?? Data())) ?? []
+            let body = (try? JSONDecoder().decode([String].self, from: request.httpBody ?? Data())) ?? []
             if body.first == "b" { return (500, [:], Self.json(#"{"error":"exit status 1","log":["no such container"]}"#), nil) }
             return (200, [:], Self.json(#"{"result":null,"log":[]}"#), nil)
         }
