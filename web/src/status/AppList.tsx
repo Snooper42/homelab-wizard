@@ -223,7 +223,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
           : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
         {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={(w) => say(a.id, w)} />}</td>
     </tr>
   );

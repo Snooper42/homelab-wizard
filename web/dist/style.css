@@ -2271,3 +2271,4 @@ html nav .bgjob button.bgdismiss:hover { background:var(--shade-06); }
   html.companion .bgjob { margin:0; }
   html.companion nav .bgjob button.bgopen { box-shadow:0 8px 24px var(--shade-18); font-size:13px; }
 }
+.bgjob .bgnext { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-top:1px solid var(--line); padding-top:5px; }

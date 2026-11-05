@@ -2409,17 +2409,35 @@ const smokes = [
     // The rest of the app is there to use meanwhile.
     await page.click('nav button[data-screen="backups"]');
     await page.waitForSelector('#backups.active', { timeout: 3000 });
-    // A job of another screen waits too: it would take the running one's bar and log.
+    // A job of another screen waits its turn, saying so, and the chip says what is next.
     await page.click('#backupNow');
-    await page.waitForTimeout(300);
-    if (await page.isVisible('#backupPanel')) throw new Error('Back up now started beside the running command');
+    await page.waitForSelector('#backupPanel:not([hidden]) #backupTitle:has-text("Waiting for “Update all apps now” to finish, then: Backing up…")', { timeout: 3000 });
+    await page.waitForSelector('#bgJob .bgnext:text-is("Then: Backing up")', { timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.homelabRan || [])).includes('backup')) throw new Error('the backup ran beside the command');
     // Done: the chip says so, and brings back the sheet, which says how it went.
     await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
+    // Then the backup runs, in its turn.
+    await page.waitForSelector('#backupTitle:text-is("Backup done")', { timeout: 10000 });
     await page.click('#bgJob .bgopen');
     await page.waitForSelector('#cliPanel:not([hidden]) #cliActions button:text-is("Close")', { timeout: 3000 });
     if (await page.$('#bgJob .bgjob')) throw new Error('the chip stayed with its sheet open');
     const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
-    if (ran.filter((r) => r === 'update-all').length !== 2) throw new Error('ran: ' + ran.join());
+    if (ran.join() !== 'update-all,update-all,backup') throw new Error('ran, in order: ' + ran.join());
+  } },
+  { name: 'An app’s Restart waits its turn behind a running command, saying so, and the other rows stay usable', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.click('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    const row = (name) => page.locator('#statusRows tr', { has: page.locator(`text="${name}"`) }).first();
+    // Every row's buttons are there to press while it runs.
+    if (await row('Vaultwarden').locator('button:has-text("Open")').isDisabled()) throw new Error('the rows are held while the command runs');
+    await row('Vaultwarden').click({ button: 'right' });
+    await page.click('.rowmenu [role=menuitem]:has-text("Restart")', { timeout: 3000 });
+    await row('Vaultwarden').locator('text=Waiting for “Update all apps now” to finish').waitFor({ timeout: 3000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction || 0)) throw new Error('the restart ran beside the command');
+    // Then it runs, in its turn.
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) > 0, null, { timeout: 15000 });
   } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });

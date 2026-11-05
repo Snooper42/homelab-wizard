@@ -13,13 +13,14 @@ import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
-import { bgEnd, bgHide, bgStart, waitForBg } from '../job/Background';
+import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background';
+import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
-import { cliProgress, startJob } from '../jobs';
+import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
@@ -368,7 +369,7 @@ const appListActions: AppListActions = {
     // Backups runs it, in its own panel with its progress.
     backupNow: () => { navigate('backups'); $('backupNow').click(); },
     alerts: async (a, on) => {
-      try { await go().SetAppSetting(a.id, 'alerts', on); } catch (e) { showError(e); }
+      try { await inTurn(`${a.name}'s alerts`, () => go().SetAppSetting(a.id, 'alerts', on)); } catch (e) { showError(e); }
       await loadStatus();
     },
   },
@@ -382,9 +383,10 @@ export const batteryPausedNow = () => batteryPaused;
 // fails stops the rest and says why under its row. A stop with until is
 // for a while: each starts again then.
 async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) {
-  setAppsBusy(true);
   const done: api.AppStatus[] = [];
-  try {
+  for (const a of apps) setPending(a.id, { action });
+  // One turn for the group (job/queue.ts): each row says what it waits for meanwhile.
+  await inTurn(`${actionTitle[action]} ${apps.length === 1 ? apps[0].name : `${apps.length} apps`}`, async () => {
     for (const [i, a] of apps.entries()) {
       progress(i);
       setPending(a.id, { action });
@@ -394,9 +396,7 @@ async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'resta
       }
       done.push(a);
     }
-  } finally {
-    setAppsBusy(false);
-  }
+  }, (behind) => { for (const a of apps) setPending(a.id, { action, note: waitWords(behind) }); });
   await loadStatus();
   for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
   if (action === 'stop' && done.length) offerUndo(done, until);
@@ -418,7 +418,7 @@ function offerUndo(apps: api.AppStatus[], until?: string) {
 function dropUndo() { undoing = null; mountUndoNote($('undoNote'), null); }
 /** Undoes the last stop while its note shows (Undo, or ⌘Z); false when there is none. */
 export function undoNow(): boolean {
-  if (!undoing || appsBusy) return false;
+  if (!undoing) return false;
   const { apps } = undoing;
   dropUndo();
   groupAct(apps, 'start', () => {});
@@ -435,15 +435,11 @@ export const appsBusyNow = () => appsBusy;
 const rowWatchers: (() => void)[] = [];
 /** Calls fn when a row's action starts, ends, or fails. */
 export function watchRows(fn: () => void) { rowWatchers.push(fn); }
-// The list as last shown, and whether an app's command runs (every row's
-// buttons wait meanwhile).
+// The list as last shown. An app's command no longer holds every row's
+// buttons: another row's waits its turn (job/queue.ts), and a row's own
+// buttons wait while its action is pending.
 let appList: AppListProps | null = null;
-let appsBusy = false;
-function setAppsBusy(busy: boolean) {
-  appsBusy = busy;
-  if (appList) mountAppList($('statusRows'), (appList = { ...appList, busy }));
-  rowWatchers.forEach((fn) => fn());
-}
+const appsBusy = false;
 // A click answers at once: the row says what it is doing ("Starting…")
 // until Status confirms it, or goes back as it was and says why it failed.
 const pending: Record<string, Pending> = {};
@@ -523,23 +519,28 @@ async function runAppAction(a, action, until?: string) {
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
-  startJob('cli');
-  runInSheet(`${actionTitle[action]} ${a.name}`);
+  clearJob('cli');
+  const title = `${actionTitle[action]} ${a.name}`;
+  runInSheet(title);
   cliButtons([hideButton]);
   setPending(a.id, { action });
-  setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let failed = '';
-  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); showError(e); }
+  // In its turn (job/queue.ts): the bar and log are its own only then.
+  await inTurn(title, async () => {
+    setPending(a.id, { action });
+    startJob('cli');
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); showError(e); } finally {
+      if (typeof off === 'function') off();
+      cliProgress(failed ? 'failed' : 'done');
+      bgEnd(!!failed);
+    }
+  }, (behind) => { setPending(a.id, { action, note: waitWords(behind) }); log.textContent = waitWords(behind) + '…\n'; bgProgress(0, waitWords(behind)); });
   // A failure puts the row back at once, saying why; a success waits for
   // the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed });
-  setAppsBusy(false);
   if (!failed && action === 'stop') offerUndo([a], until);
-  if (typeof off === 'function') off();
-  cliProgress(failed ? 'failed' : 'done');
-  bgEnd(!!failed);
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
@@ -549,20 +550,23 @@ async function runAppAction(a, action, until?: string) {
 async function runQuietly(a, action, until?: string) {
   let log = `$ homelab ${action} ${a.id}${until ? ' --until ' + until : ''}\n`;
   setPending(a.id, { action });
-  setAppsBusy(true);
-  const off = window.runtime.EventsOn('cli:log', (line: string) => {
-    log += line + '\n';
-    // An image coming down before the app can start: said in place of "Starting…".
-    if (downloading.test(line) && !pending[a.id]?.note) setPending(a.id, { action, note: 'Downloading the app…' });
-  });
   let failed = '';
-  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); }
-  if (typeof off === 'function') off();
+  // In its turn (job/queue.ts): the row says what it waits for meanwhile.
+  await inTurn(`${actionTitle[action]} ${a.name}`, async () => {
+    setPending(a.id, { action });
+    const off = window.runtime.EventsOn('cli:log', (line: string) => {
+      log += line + '\n';
+      // An image coming down before the app can start: said in place of "Starting…".
+      if (downloading.test(line) && !pending[a.id]?.note) setPending(a.id, { action, note: 'Downloading the app…' });
+    });
+    try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); } finally {
+      if (typeof off === 'function') off();
+    }
+  }, (behind) => setPending(a.id, { action, note: waitWords(behind) }));
   lastLog[a.id] = log;
   // A failure puts the row back at once, saying why, with Details; a
   // success waits for the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed, log: true });
-  setAppsBusy(false);
   if (!failed && action === 'stop') offerUndo([a], until);
   await loadStatus();
   if (!failed) setPending(a.id, null);
@@ -617,23 +621,36 @@ export async function cliFlow(title, action, target, confirmLabel) {
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
-  startJob('cli');
-  cliButtons([]);
-  // The CLI's "run again with --apply" is the confirm button here.
-  const off = window.runtime.EventsOn('cli:log', (line) => {
-    if (/^Preview only: nothing was changed/.test(line.trim())) return;
-    log.textContent += line + '\n';
-    log.scrollTop = log.scrollHeight;
-  });
-  const stop = () => { if (typeof off === 'function') off(); if (cliStop === stop) cliStop = null; };
+  clearJob('cli');
+  // Its preview and its run each take their turn (job/queue.ts): the log
+  // is the command's own only then. Cancel while it waits drops it.
+  let off: any = null, cancelled = false;
+  const listen = () => {
+    // The CLI's "run again with --apply" is the confirm button here.
+    off = window.runtime.EventsOn('cli:log', (line) => {
+      if (/^Preview only: nothing was changed/.test(line.trim())) return;
+      log.textContent += line + '\n';
+      log.scrollTop = log.scrollHeight;
+    });
+  };
+  const unlisten = () => { if (typeof off === 'function') off(); off = null; };
+  const stop = () => { cancelled = true; unlisten(); if (cliStop === stop) cliStop = null; };
   cliStop = stop;
+  cliButtons([{ label: 'Cancel', onClick: () => { stop(); panel.hidden = true; } }]);
   try {
-    await go().Homelab(action, target, false);
+    await inTurn(title, async () => {
+      if (cancelled) return;
+      log.textContent = '';
+      startJob('cli');
+      listen();
+      try { await go().Homelab(action, target, false); } finally { unlisten(); }
+    }, (behind) => { log.textContent = waitWords(behind) + ', then this shows what it would do…\n'; });
   } catch (e) {
     showError(e);
     stop();
     return;
   }
+  if (cancelled) return;
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
@@ -641,9 +658,17 @@ export async function cliFlow(title, action, target, confirmLabel) {
       runInSheet(title);
       cliButtons([hideButton]);
       let failed = false;
-      try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
-      cliProgress(failed ? 'failed' : 'done');
-      bgEnd(failed);
+      try {
+        await inTurn(title, async () => {
+          startJob('cli');
+          listen();
+          try { await go().Homelab(action, target, true); } catch (err) { failed = true; throw err; } finally {
+            unlisten();
+            cliProgress(failed ? 'failed' : 'done');
+            bgEnd(failed);
+          }
+        }, (behind) => { log.textContent += waitWords(behind) + '…\n'; bgProgress(0, waitWords(behind)); });
+      } catch (err) { showError(err); }
       stop();
       cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();
