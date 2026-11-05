@@ -118,6 +118,7 @@ hash. The client receives the token itself, once.
 
 - Update. The phone method list (`phoneMethods` in cmd/homelab/serve.go) has no `ReleaseNotes` and no way to learn that an update exists. The computer offers Update only behind its release notes, so the phone doesn't offer a blind update. This needs a backend method first.
 - Finances editing beyond balances, budgets, goal targets and transactions: payments, accounts, goal shares, transfers and split transactions. What's built:
+  - turning the plan's Hide amounts on or off for every device (as ⌘⇧H on the computer);
   - typing in an account's balance, changing a budget's amount or a goal's target, and marking a paycheck or payment as not in the balances yet (Taken as done) (`SaveFinances`, edit level). This edits the plan as the raw JSON the computer sent and sends it back whole, with its `rev`. Nothing the phone doesn't show is lost, and the computer refuses the save if another device saved first;
   - the money card (`FinancesWall`) in Overview, for any Finances level;
   - the plan (`Finances`) for view and edit: accounts today, net worth, and each pay period with its payments;

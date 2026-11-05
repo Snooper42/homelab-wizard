@@ -59,7 +59,10 @@ final class FinancesViewModel {
               let edited = FinancePlanEdit.settingHideAmounts(hide, in: raw)
         else { return false }
         if hide { amountsShown = false }
-        return await savePlan(edited, reason: hide ? "Hide amounts on every device." : "Show amounts on every device.")
+        let saved = await savePlan(edited, reason: hide ? "Hide amounts on every device." : "Show amounts on every device.")
+        // The money card follows the plan's setting: read it again.
+        if saved { await load() }
+        return saved
     }
 
     /// Changes a goal's target. Returns whether it saved.
