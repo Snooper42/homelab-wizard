@@ -1,6 +1,7 @@
 package people
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -120,3 +121,69 @@ func TestWelcomeKeepsAPasswordWhole(t *testing.T) {
 		}
 	}
 }
+
+// The sheet for the fridge has each app, its address, phone app, and a code
+// for the camera, and never the sign-in link, a username, or a password,
+// though the welcome page it comes from holds them.
+func TestSheetForTheFridge(t *testing.T) {
+	w := Welcome{
+		Person: Person{Name: "Anna Smith", Username: "anna"}, Household: "The Smith homelab",
+		SignIn: "https://id.example.com/lc/secret-one-time", Issuer: "https://id.example.com",
+		Apps: []App{
+			{Name: "Immich", Address: "https://photos.example.com", What: "Photos", Phone: "Immich"},
+			{Name: "Vaultwarden", Address: "https://vault.example.com", What: "Passwords"},
+		},
+		Accounts:  []Account{{App: "Jellyfin", Address: "https://films.example.com", Username: "anna-films", Password: "correct-horse-battery"}},
+		StartPage: "https://home.example.com/anna",
+	}
+	var b strings.Builder
+	if err := RenderSheet(&b, w); err != nil {
+		t.Fatal(err)
+	}
+	page := b.String()
+	for _, want := range []string{"Anna's apps", "The Smith homelab", "https://photos.example.com", "Phone app: Immich", "Vaultwarden", "All your apps", "https://home.example.com/anna", `src="data:image/svg`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("the sheet lacks %q", want)
+		}
+	}
+	if n := strings.Count(page, `src="data:image/svg`); n != 3 {
+		t.Errorf("%d codes, want one per app and the start page", n)
+	}
+	for _, never := range []string{"secret-one-time", "anna-films", "correct-horse-battery", "films.example.com", "Tailscale"} {
+		if strings.Contains(page, never) {
+			t.Errorf("the sheet shows %q", never)
+		}
+	}
+	// The welcome page links to it, by its name beside it.
+	w.Sheet = "anna-sheet.html"
+	b.Reset()
+	if err := Render(&b, w); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(b.String(), `href="anna-sheet.html"`) {
+		t.Error("the welcome page does not link to the sheet")
+	}
+	if got := SheetPath("/r", "anna"); got != filepath.Join("/r", "data", "people", "anna-sheet.html") {
+		t.Errorf("SheetPath = %s", got)
+	}
+}
+
+// An address too long for a code still gets its card, without the code;
+// a sheet that cannot be written says so.
+func TestSheetEdges(t *testing.T) {
+	long := "https://example.com/" + strings.Repeat("a", 3000)
+	var b strings.Builder
+	if err := RenderSheet(&b, Welcome{Person: Person{Name: "Bo"}, Apps: []App{{Name: "Long", Address: long}}}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(b.String(), "<strong>Long</strong>") || strings.Contains(b.String(), "data:image/svg") {
+		t.Errorf("a long address: %.300s", b.String())
+	}
+	if err := RenderSheet(failWriter{}, Welcome{}); err == nil || !strings.Contains(err.Error(), "the sheet for the fridge") {
+		t.Errorf("a failed write: %v", err)
+	}
+}
+
+type failWriter struct{}
+
+func (failWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }

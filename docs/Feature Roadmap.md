@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #PR23 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -153,8 +154,8 @@ Few, clear, and useful when they come.
 The homelab as something a family uses, not one person.
 
 - **Guest access** (M, *Idea*): a guest's sign-in to chosen apps (Jellyfin, an Immich album) that ends on a date.
-- **A printable welcome sheet** (S, *Idea*): each person's apps, addresses, and QR codes on one page for the fridge.
-- **Each person's apps** (S, *Idea*): a person's welcome page lists only the apps they use, with their phone app for each.
+- **A printable welcome sheet** (S, *Built*, #PR23): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.
+- **Each person's apps** (S, *Built*): a person's welcome page lists only the apps they use, with their phone app for each (`homelab person apps <name> <app>…`).
 - **What's new for the family** (S, *Idea*): a short page in plain words when an app they use gains something (a new player in Navidrome), not the technical notes.
 
 ## Apps and the catalog
