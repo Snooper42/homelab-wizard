@@ -43,12 +43,19 @@ actor APIClient {
     /// 30 minutes.
     private let actionSession: URLSession
 
-    init(keychain: any CredentialStore = KeychainManager()) {
+    /// - Parameter protocolClasses: for tests only, URL protocols that
+    ///   answer in place of the network.
+    init(keychain: any CredentialStore = KeychainManager(), protocolClasses: [AnyClass] = []) {
         self.keychain = keychain
         let delegate = RedirectRefusal()
-        session = URLSession(configuration: .hardened(idleTimeout: 30, resourceTimeout: 120), delegate: delegate, delegateQueue: nil)
-        streamingSession = URLSession(configuration: .hardened(idleTimeout: 75, resourceTimeout: 60 * 60 * 24), delegate: delegate, delegateQueue: nil)
-        actionSession = URLSession(configuration: .hardened(idleTimeout: 300, resourceTimeout: 30 * 60), delegate: delegate, delegateQueue: nil)
+        func config(_ idle: TimeInterval, _ resource: TimeInterval) -> URLSessionConfiguration {
+            let c = URLSessionConfiguration.hardened(idleTimeout: idle, resourceTimeout: resource)
+            if !protocolClasses.isEmpty { c.protocolClasses = protocolClasses }
+            return c
+        }
+        session = URLSession(configuration: config(30, 120), delegate: delegate, delegateQueue: nil)
+        streamingSession = URLSession(configuration: config(75, 60 * 60 * 24), delegate: delegate, delegateQueue: nil)
+        actionSession = URLSession(configuration: config(300, 30 * 60), delegate: delegate, delegateQueue: nil)
     }
 
     // MARK: Pairing
