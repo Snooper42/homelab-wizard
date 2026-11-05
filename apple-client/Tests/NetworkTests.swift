@@ -290,3 +290,60 @@ extension NetworkRuleTests {
         #expect(refused.running == nil)
     }
 }
+
+// App actions, against the same stub.
+extension NetworkRuleTests {
+    @MainActor
+    private func actions(canChange: Bool) -> AppActionsViewModel {
+        let (api, _) = client()
+        let device = try! JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"abc123","name":"Test","canChange":\#(canChange)}"#.utf8))
+        return AppActionsViewModel(api: api, liveEvents: LiveEventManager(api: api), device: { device }, authorize: { _ in true })
+    }
+
+    private static func apps(_ json: String) -> [AppStatus] { try! JSONDecoder.homelab().decode([AppStatus].self, from: Data(json.utf8)) }
+
+    private static func appActions() -> [[JSONValue]] {
+        StubProtocol.requests.filter { $0.url.path == "/api/call/AppAction" }.compactMap { try? JSONDecoder().decode([JSONValue].self, from: $0.body) }
+    }
+
+    @Test @MainActor func stopWaitsForConfirmation() async {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null,"log":[]}"#), nil) }
+        let vm = actions(canChange: true)
+        let app = Self.apps(#"[{"id":"immich","name":"Immich","state":"running"}]"#)[0]
+        vm.request(.stop, on: app)
+        #expect(vm.confirmation?.action == .stop)
+        try? await Task.sleep(for: .milliseconds(200))
+        #expect(Self.appActions().isEmpty) // nothing sent before confirming
+    }
+
+    @Test @MainActor func aLookOnlyDeviceSendsNoAction() async {
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"result":null}"#), nil) }
+        let vm = actions(canChange: false)
+        let app = Self.apps(#"[{"id":"immich","name":"Immich","state":"running"}]"#)[0]
+        await vm.run(.restart, on: app)
+        #expect(Self.appActions().isEmpty)
+        #expect(vm.available(for: app).isEmpty)
+    }
+
+    @Test @MainActor func aGroupStopsAtTheFirstFailure() async {
+        StubProtocol.reset { request in
+            guard request.url?.path == "/api/call/AppAction" else { return (404, [:], Self.json(#"{"error":"not here"}"#), nil) }
+            let body = (try? JSONDecoder().decode([String].self, from: request.httpBodyStream.map { s -> Data in
+                s.open(); defer { s.close() }
+                var d = Data(); var b = [UInt8](repeating: 0, count: 1024)
+                while s.hasBytesAvailable { let n = s.read(&b, maxLength: b.count); if n <= 0 { break }; d.append(b, count: n) }
+                return d
+            } ?? request.httpBody ?? Data())) ?? []
+            if body.first == "b" { return (500, [:], Self.json(#"{"error":"exit status 1","log":["no such container"]}"#), nil) }
+            return (200, [:], Self.json(#"{"result":null,"log":[]}"#), nil)
+        }
+        let vm = actions(canChange: true)
+        let list = Self.apps(#"[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"c","name":"C","state":"running"}]"#)
+        await vm.runGroup(.restart, on: list)
+        let sent = Self.appActions().compactMap { args -> String? in if case .string(let id)? = args.first { return id } else { return nil } }
+        #expect(sent == ["a", "b"])                  // c is never tried
+        #expect(vm.pending["b"]?.failure != nil)     // b says why
+        #expect(vm.pending["a"] == nil)
+        #expect(!vm.isBusy)
+    }
+}
