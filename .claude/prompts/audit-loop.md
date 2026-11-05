@@ -587,6 +587,14 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   waits for the job as heal does. `TestWatchdogLeavesRestartLoopsToAJob`
   failed before. `data/restarts.json` is written in place, 0644, without
   a lock: a storage matter, under For Account 2.
+- **Round 26 (#428 and #429, read through):** #428 tells Docker not to
+  make a library folder that is missing (an unplugged drive), and the
+  install makes it instead, wherever its folder setting points. Those
+  settings come only from `.env`: a phone's SetAppSetting takes only
+  updates, alerts, and pinned, each true or false. Before, Docker made
+  the same folders, as root on Linux, so this is narrower. #429 waits out
+  a busy registry for the same pulls as before (pinned or catalog
+  images), and nothing new is printed or sent. No code change needed.
 
 ## For Account 2
 
