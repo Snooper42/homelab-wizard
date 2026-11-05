@@ -4,6 +4,7 @@ struct AppDetailView: View {
     @ScaledMetric(relativeTo: .title2) private var iconSize: CGFloat = 52
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(HomelabTasksViewModel.self) private var tasks
     /// Nil when the app left the status (uninstalled meanwhile).
     let app: AppStatus?
 
@@ -274,6 +275,10 @@ struct AppDetailView: View {
                     } else {
                         Text("None yet").foregroundStyle(.secondary)
                     }
+                }
+                // As the computer's More card: the whole nightly backup, now.
+                if tasks.canRun {
+                    TaskButton(task: .backup)
                 }
             } else if let error = backups.overviewError {
                 Text(error).foregroundStyle(.secondary)
