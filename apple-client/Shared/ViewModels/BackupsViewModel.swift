@@ -21,11 +21,11 @@ final class BackupsViewModel {
         self.api = api
     }
 
-    /// Something to look at: a stale copy, a failed job, a due restore
+    /// Something to look at: a stale copy, one that shrank, a failed job, a due restore
     /// test or vault export, or a plain export lying around.
     var needsAttention: Int {
         guard let overview else { return 0 }
-        var n = overview.stale + (jobs ?? []).filter { $0.state == "failed" }.count
+        var n = overview.stale + overview.shrank + (jobs ?? []).filter { $0.state == "failed" }.count
         if overview.restoreDue { n += 1 }
         if overview.vaultDue { n += 1 }
         n += overview.plainExports.count

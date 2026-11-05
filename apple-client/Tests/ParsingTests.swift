@@ -342,6 +342,19 @@ struct BackupsTests {
         #expect(o.isLate(now: run.addingTimeInterval(37 * 3600)))
     }
 
+    @Test func aCopyThatShrankIsFlagged() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"copies":[{"id":"immich","name":"Immich","size":1000000,"before":5000000,"shrank":true,"count":7,"state":"fresh"},
+                   {"id":"plex","name":"Plex","size":1200000,"before":1000000,"count":7,"state":"fresh"},
+                   {"id":"vault","name":"Vault","size":1020,"before":1000,"count":7,"state":"fresh"},
+                   {"id":"new","name":"New","size":10,"count":1,"state":"fresh"}],
+         "shrank":1}
+        """#.utf8))
+        #expect(o.shrank == 1 && o.copies[0].shrank && o.copies[0].before == 5_000_000)
+        // A tenth or more either way shows the night before's size; less doesn't, nor a first copy.
+        #expect(o.copies[1].sizeChanged && !o.copies[2].sizeChanged && !o.copies[3].sizeChanged)
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())

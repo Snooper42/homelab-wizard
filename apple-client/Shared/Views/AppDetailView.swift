@@ -263,6 +263,11 @@ struct AppDetailView: View {
                             Text("None yet").foregroundStyle(.secondary)
                         }
                     }
+                    if copy.shrank {
+                        Label("Less than half the night before's \(copy.before.formatted(.byteCount(style: .file))): check that \(app.name) still has its data.",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                    }
                     Text("Its files, and its database's copy, every night.")
                         .font(.callout).foregroundStyle(.secondary)
                 } else {

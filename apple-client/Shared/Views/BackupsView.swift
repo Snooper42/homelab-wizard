@@ -56,6 +56,11 @@ struct BackupsView: View {
                 Label("Every copy is fresh", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             }
+            if o.shrank > 0 {
+                Label(o.shrank == 1 ? "1 copy is less than half the night before's" : "\(o.shrank) copies are less than half the night before's",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+            }
             if o.paused > 0 {
                 Label("\(o.paused) waiting for a drive", systemImage: "externaldrive.badge.timemachine")
                     .foregroundStyle(.secondary)
@@ -233,19 +238,30 @@ private struct CopyRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                if copy.shrank {
+                    Text("Less than half the night before's \(copy.before, format: .byteCount(style: .file)): check that \(copy.name) still has its data.")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
             }
             Spacer(minLength: 0)
             if copy.size > 0 {
-                Text(copy.size, format: .byteCount(style: .file))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text(copy.size, format: .byteCount(style: .file))
+                    if !copy.shrank, copy.sizeChanged {
+                        Text("was \(copy.before, format: .byteCount(style: .file))")
+                    }
+                }
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
             }
         }
         .accessibilityElement(children: .combine)
     }
 
     private var stateWords: String {
-        switch copy.state {
+        if copy.shrank { return "Shrank" }
+        return switch copy.state {
         case "fresh": "Fresh"
         case "stale": "Out of date"
         case "paused": "Waiting for its drive"
@@ -254,7 +270,8 @@ private struct CopyRow: View {
     }
 
     private var icon: String {
-        switch copy.state {
+        if copy.shrank { return "exclamationmark.triangle.fill" }
+        return switch copy.state {
         case "fresh": "checkmark.circle.fill"
         case "stale": "exclamationmark.triangle.fill"
         case "paused": "pause.circle.fill"
@@ -263,7 +280,8 @@ private struct CopyRow: View {
     }
 
     private var tint: Color {
-        switch copy.state {
+        if copy.shrank { return .red }
+        return switch copy.state {
         case "fresh": .green
         case "stale": .orange
         default: .secondary

@@ -11,6 +11,8 @@ struct BackupOverview: Decodable, Sendable, Equatable {
     let envCopied: Date?
     let copies: [BackupCopy]
     let stale: Int
+    /// Copies less than half the night before's (main #435).
+    let shrank: Int
     /// Not fresh, while their apps wait for a drive.
     let paused: Int
     let restoreTest: RestoreLog
@@ -25,7 +27,7 @@ struct BackupOverview: Decodable, Sendable, Equatable {
     let kopia: BackupEngine?
 
     enum CodingKeys: String, CodingKey {
-        case destination, destinationOK, lastRun, envCopied, copies, stale, paused, restoreTest
+        case destination, destinationOK, lastRun, envCopied, copies, stale, shrank, paused, restoreTest
         case restoreDue, staleAfterHours, vaultExport, vaultDue, plainExports, kopia
     }
 
@@ -37,6 +39,7 @@ struct BackupOverview: Decodable, Sendable, Equatable {
         envCopied = GoZeroTime.drop(try c.decodeIfPresent(Date.self, forKey: .envCopied))
         copies = try c.decodeIfPresent([BackupCopy].self, forKey: .copies) ?? []
         stale = try c.decodeIfPresent(Int.self, forKey: .stale) ?? 0
+        shrank = max(0, try c.decodeIfPresent(Int.self, forKey: .shrank) ?? 0)
         paused = try c.decodeIfPresent(Int.self, forKey: .paused) ?? 0
         restoreTest = try c.decodeIfPresent(RestoreLog.self, forKey: .restoreTest) ?? RestoreLog()
         restoreDue = try c.decodeIfPresent(Bool.self, forKey: .restoreDue) ?? false
@@ -72,11 +75,15 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
     /// In bytes.
     let size: Int64
     let count: Int
+    /// The copy before the newest (the night before's), in bytes; 0 with only one.
+    let before: Int64
+    /// The newest is less than half of `before`: the app may have lost its data.
+    let shrank: Bool
     /// fresh, stale, none, or paused.
     let state: String
     let waitingFor: String?
 
-    enum CodingKeys: String, CodingKey { case id, name, volume, newest, size, count, state, waitingFor }
+    enum CodingKeys: String, CodingKey { case id, name, volume, newest, size, count, before, shrank, state, waitingFor }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -86,8 +93,18 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
         newest = GoZeroTime.drop(try c.decodeIfPresent(Date.self, forKey: .newest))
         size = try c.decodeIfPresent(Int64.self, forKey: .size) ?? 0
         count = try c.decodeIfPresent(Int.self, forKey: .count) ?? 0
+        before = max(0, try c.decodeIfPresent(Int64.self, forKey: .before) ?? 0)
+        shrank = try c.decodeIfPresent(Bool.self, forKey: .shrank) ?? false
         state = try c.decodeIfPresent(String.self, forKey: .state) ?? "none"
         waitingFor = try c.decodeIfPresent(String.self, forKey: .waitingFor)
+    }
+}
+
+extension BackupCopy {
+    /// Its size moved by a tenth or more since the night before's, so both
+    /// are worth showing (`changed` in web/src/backups/Backups.tsx).
+    var sizeChanged: Bool {
+        before > 0 && abs(size - before) >= before / 10
     }
 }
 
