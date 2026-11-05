@@ -1046,6 +1046,7 @@ interface Backend {
     PersonAction(arg1: string, arg2: string, arg3: string, arg4: string[]): Promise<void>;
     Phones(): Promise<companion.Phone[]>;
     Plan(arg1: string[], arg2: Record<string, string>): Promise<api.Plan>;
+    PrintFinances(arg1: string, arg2: string): Promise<string>;
     Protection(): Promise<crowdsec.Protection>;
     QR(arg1: string): Promise<string>;
     RecoveryKit(): Promise<void>;

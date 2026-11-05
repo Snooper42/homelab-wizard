@@ -74,6 +74,8 @@ function draw() {
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
+    // A month's page: opened in the browser to print (it prints itself); on a phone, shared or downloaded.
+    printMonth: async (name, html) => (phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`),
     toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
     running: runningApps(),
@@ -98,7 +100,8 @@ function draw() {
  */
 async function exportFile(name: string, text: string): Promise<string> {
   if (!phone) { const file = await go().ExportFinances(name, text); return file ? `Saved to ${file}` : ''; }
-  const file = new File([text], name, { type: 'text/csv' });
+  const type = name.endsWith('.json') ? 'application/json' : name.endsWith('.html') ? 'text/html' : 'text/csv';
+  const file = new File([text], name, { type });
   if (navigator.canShare?.({ files: [file] })) {
     try { await navigator.share({ files: [file], title: name }); } catch (e) { if ((e as Error)?.name === 'AbortError') return ''; throw e; }
     return `Shared ${name}`;

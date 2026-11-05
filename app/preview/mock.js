@@ -224,6 +224,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       : later(M.finances?.plan?.calendarKey ? `https://homelab.tail1.ts.net:8099/finances.ics?key=${M.finances.plan.calendarKey}` : '')),
     // An export saved where the dialog said: exportPick, '' for cancelled; each kept in exported.
     ExportFinances: (name, text) => { (M.exported ??= []).push({ name, text }); return later(M.exportPick ?? `/Users/alex/Downloads/${name}`); },
+    // A month to print: kept in M.printed; the app opens it in the browser.
+    PrintFinances: (name, html) => { (M.printed ??= []).push({ name, html }); return later(`/Users/alex/Homelab/reports/finances/${name}`); },
     SaveFinancesLedger: (l) => {
       if (M.ledgerConflict) {
         M.ledgerConflict = false;

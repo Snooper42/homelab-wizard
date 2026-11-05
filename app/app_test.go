@@ -304,6 +304,33 @@ func TestReadingScreens(t *testing.T) {
 	if _, err := a.ExportFinances("../finances.txt", "x"); err == nil {
 		t.Fatal("an export saves as other than a CSV")
 	}
+	// The plan as JSON and a month's page export too, each through its own filter.
+	for _, name := range []string{"finances-plan-2026-11-04.json", "finances-2026-11.html"} {
+		w.pick = filepath.Join(t.TempDir(), name)
+		if f, err := a.ExportFinances(name, "{}"); err != nil || f != w.pick {
+			t.Fatalf("ExportFinances %s: %q %v", name, f, err)
+		}
+	}
+	if _, err := a.ExportFinances(".json", "{}"); err == nil {
+		t.Fatal("a name that is only its kind")
+	}
+	// A month to print: in reports/finances, this user's alone, opened in the browser.
+	var opened string
+	savedOpen := openFile
+	openFile = func(p string) error { opened = p; return nil }
+	defer func() { openFile = savedOpen }()
+	page, err := a.PrintFinances("finances-2026-11.html", "<!doctype html><title>November</title>")
+	if err != nil || page != filepath.Join(a.root, "reports", "finances", "finances-2026-11.html") || opened != page {
+		t.Fatalf("PrintFinances: %q %v, opened %q", page, err, opened)
+	}
+	if st, _ := os.Stat(page); goruntime.GOOS != "windows" && st.Mode().Perm() != 0o600 {
+		t.Fatalf("the printed month is %v, readable by others", st.Mode().Perm())
+	}
+	for _, bad := range []string{"../../etc/finances-x.html", "notes.html", "finances-2026-11.js"} {
+		if p, err := a.PrintFinances(bad, "x"); err == nil && filepath.Dir(p) != filepath.Join(a.root, "reports", "finances") || bad != "../../etc/finances-x.html" && err == nil {
+			t.Fatalf("PrintFinances(%q) = %q %v", bad, p, err)
+		}
+	}
 	if list, err := a.People(); err != nil || list == nil {
 		t.Fatalf("People: %v %v", list, err)
 	}

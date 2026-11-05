@@ -6003,8 +6003,8 @@
     const catOf = (id2) => catalog?.apps.find((c3) => c3.id === id2)?.category;
     const cats = new Set(apps.map((a3) => catOf(a3.id)));
     const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
-    const what = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
-    const words4 = `Stopped ${what}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    const what2 = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
+    const words4 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
     undoing = { apps };
     mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
   }
@@ -7342,28 +7342,28 @@
     const first = text2.split(/\r?\n/, 1)[0] || "";
     const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("	") && !first.includes(",") ? "	" : ",";
     const rows = [];
-    let row = [], cell2 = "", quoted = false;
+    let row = [], cell3 = "", quoted = false;
     for (let i3 = 0; i3 < text2.length; i3++) {
       const c3 = text2[i3];
       if (quoted) {
         if (c3 === '"' && text2[i3 + 1] === '"') {
-          cell2 += '"';
+          cell3 += '"';
           i3++;
         } else if (c3 === '"') quoted = false;
-        else cell2 += c3;
+        else cell3 += c3;
       } else if (c3 === '"') quoted = true;
       else if (c3 === sep) {
-        row.push(cell2);
-        cell2 = "";
+        row.push(cell3);
+        cell3 = "";
       } else if (c3 === "\n" || c3 === "\r") {
         if (c3 === "\r" && text2[i3 + 1] === "\n") i3++;
-        row.push(cell2);
-        cell2 = "";
+        row.push(cell3);
+        cell3 = "";
         if (row.some((x3) => x3.trim())) rows.push(row);
         row = [];
-      } else cell2 += c3;
+      } else cell3 += c3;
     }
-    row.push(cell2);
+    row.push(cell3);
     if (row.some((x3) => x3.trim())) rows.push(row);
     return rows.map((r3) => r3.map((x3) => x3.trim()));
   }
@@ -7915,7 +7915,7 @@
               /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
                 const a3 = L2.account[t3.account];
                 const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
-                const what = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+                const what2 = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
                 const opens = edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
                 const open2 = seen?.id === t3.id ? seen : null;
                 return /* @__PURE__ */ u3(S, { children: [
@@ -7925,7 +7925,7 @@
                       lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
                       title: txTitle(t3, L2),
                       sub: /* @__PURE__ */ u3(S, { children: [
-                        what,
+                        what2,
                         " · ",
                         where,
                         t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
@@ -8108,7 +8108,7 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function OwnLogo({ value, set: set2, what }) {
+  function OwnLogo({ value, set: set2, what: what2 }) {
     const file = A2(null);
     const [problem, setProblem] = d2("");
     const read = async (f4) => {
@@ -8121,11 +8121,11 @@
       }
     };
     return /* @__PURE__ */ u3("div", { class: "ownlogo", children: [
-      /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", hidden: true, "aria-label": `Your own image for ${what}`, onChange: (e3) => {
+      /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", hidden: true, "aria-label": `Your own image for ${what2}`, onChange: (e3) => {
         read(e3.currentTarget.files?.[0]);
         e3.currentTarget.value = "";
       } }),
-      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: value ? "Use another image" : `Use your own image for ${what}` }),
+      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: value ? "Use another image" : `Use your own image for ${what2}` }),
       value && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => set2(void 0), children: "Remove your image" }),
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
@@ -8292,11 +8292,11 @@
     const broker = kind === "investment" || kind === "retirement";
     const label = payment || kind === "home" ? "Logo" : kind === "car" ? "Make" : broker ? "Broker" : "Bank";
     const none2 = payment || kind === "home" ? "None" : kind === "car" ? "Another make" : broker ? "Another broker" : "Another bank";
-    const what = payment ? "logos" : kind === "car" ? "makes" : "banks and brokers";
+    const what2 = payment ? "logos" : kind === "car" ? "makes" : "banks and brokers";
     return /* @__PURE__ */ u3("div", { class: "brandpick", children: [
       /* @__PURE__ */ u3("div", { class: "brandhead", children: [
         /* @__PURE__ */ u3("span", { children: label }),
-        all.length > 9 && /* @__PURE__ */ u3("input", { type: "search", class: "brandsearch", value: q2, onInput: input(setQ), placeholder: `Search ${all.length} ${what}`, "aria-label": `Search ${what}` })
+        all.length > 9 && /* @__PURE__ */ u3("input", { type: "search", class: "brandsearch", value: q2, onInput: input(setQ), placeholder: `Search ${all.length} ${what2}`, "aria-label": `Search ${what2}` })
       ] }),
       /* @__PURE__ */ u3("div", { class: "brandgrid", ref: grid, role: "radiogroup", "aria-label": label, children: [
         (value && !shown5.includes(value) ? [value, ...shown5] : shown5).map((k3) => /* @__PURE__ */ u3("button", { type: "button", role: "radio", "aria-checked": value === k3, class: value === k3 ? "on" : "", onClick: () => set2(k3), children: [
@@ -9158,6 +9158,79 @@
         ]
       }
     );
+  }
+
+  // web/src/finances/exportData.ts
+  function cell2(s3) {
+    if (/^[=+\-@\t\r]/.test(s3)) s3 = "'" + s3;
+    return /[",\r\n;]/.test(s3) ? `"${s3.replace(/"/g, '""')}"` : s3;
+  }
+  var planJson = (plan) => JSON.stringify(plan, null, 2) + "\n";
+  function what(plan, e3) {
+    if (e3.payment) {
+      const p3 = plan.payments?.find((x3) => x3.id === e3.payment);
+      return [p3?.name || e3.payment, e3.card ? "Card charge" : e3.amount >= 0 ? "Money in" : "Payment"];
+    }
+    const names3 = (e3.people || []).map((id2) => plan.people?.find((x3) => x3.id === id2)?.name || id2);
+    return [names3.length ? `${names3.join(" and ")}'s pay` : "Pay", "Payday"];
+  }
+  var accountName = (plan, id2) => id2 ? plan.accounts?.find((a3) => a3.id === id2)?.name || id2 : "";
+  function aheadCsv(v3) {
+    const rows = [["Date", "What", "Kind", "Amount", "Account", "Checking after"]];
+    const days = [...v3.days || [], ...v3.later || []].filter((d3) => d3.date >= v3.today);
+    for (const d3 of days) {
+      const balance = (v3.days || []).includes(d3) ? d3.balance.toFixed(2) : "";
+      for (const e3 of d3.events || []) {
+        const [name, kind] = what(v3.plan, e3);
+        const pay = e3.payment ? v3.plan.payments?.find((x3) => x3.id === e3.payment) : void 0;
+        const acct = e3.card || (e3.amount >= 0 ? pay?.to : pay?.from) || v3.checking;
+        rows.push([d3.date, name, kind, e3.amount.toFixed(2), accountName(v3.plan, acct), balance]);
+      }
+      for (const e3 of d3.charges || []) {
+        const [name] = what(v3.plan, e3);
+        rows.push([d3.date, name, "Card charge", e3.amount.toFixed(2), accountName(v3.plan, e3.card), ""]);
+      }
+    }
+    return rows.map((row) => row.map((c3, i3) => i3 === 3 || i3 === 5 ? c3 : cell2(c3)).join(",")).join("\r\n") + "\r\n";
+  }
+  var planName = (today) => `finances-plan-${today}.json`;
+  var aheadName = (today) => `finances-ahead-${today}.csv`;
+  var monthName2 = (month3) => `finances-${month3}.html`;
+  var esc = (s3) => s3.replace(/[&<>"]/g, (c3) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c3]);
+  function monthPage(v3, month3, title) {
+    const days = [...v3.days || [], ...v3.later || []].filter((d3) => d3.date.startsWith(month3) && ((d3.events || []).length || (d3.charges || []).length));
+    const label = (/* @__PURE__ */ new Date(month3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const day3 = (iso2) => (/* @__PURE__ */ new Date(iso2 + "T12:00:00")).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    const lines = days.map((d3) => {
+      const shown5 = (v3.days || []).includes(d3);
+      const items = [
+        ...(d3.events || []).map((e3) => [what(v3.plan, e3)[0], money(e3.amount)]),
+        ...(d3.charges || []).map((e3) => [`${what(v3.plan, e3)[0]} (on ${accountName(v3.plan, e3.card)})`, money(e3.amount)])
+      ];
+      return `<tr><th scope="row">${esc(day3(d3.date))}</th><td>${items.map(([n3, a3]) => `<div><span>${esc(n3)}</span><span class="n">${esc(a3)}</span></div>`).join("")}</td><td class="n">${shown5 ? esc(money(d3.balance)) : ""}</td></tr>`;
+    }).join("\n");
+    const pays = (v3.periods || []).filter((p3) => p3.start.startsWith(month3)).map((p3) => `<tr><th scope="row">${esc(day3(p3.start))} – ${esc(day3(p3.last))}</th><td class="n">${esc(money(p3.in))}</td><td class="n">${esc(money(p3.out))}</td><td class="n">${esc(money(p3.saved))}</td><td class="n">${esc(money(p3.left))}</td></tr>`).join("\n");
+    return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>${esc(title)} · ${esc(label)}</title>
+<style>
+body { font: 13px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; color: #111; margin: 32px; }
+h1 { font-size: 20px; margin: 0 0 2px; } p { color: #555; margin: 0 0 18px; } h2 { font-size: 15px; margin: 26px 0 8px; }
+table { width: 100%; border-collapse: collapse; } th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid #ddd; }
+th { font-weight: 600; white-space: nowrap; } td div { display: flex; justify-content: space-between; gap: 16px; }
+.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; } thead th { color: #555; font-weight: 500; }
+@media print { body { margin: 0; } @page { margin: 16mm; } }
+</style></head>
+<body onload="print()">
+<h1>${esc(title)}: ${esc(label)}</h1>
+<p>Paydays and payments as planned on ${esc(day3(v3.today))}, with checking at each day's end.</p>
+${days.length ? `<table><thead><tr><th>Day</th><th>What</th><th class="n">Checking after</th></tr></thead><tbody>
+${lines}
+</tbody></table>` : "<p>Nothing is planned this month.</p>"}
+${pays ? `<h2>Paychecks</h2><table><thead><tr><th>Paycheck</th><th class="n">In</th><th class="n">Out</th><th class="n">Saved</th><th class="n">Left</th></tr></thead><tbody>
+${pays}
+</tbody></table>` : ""}
+</body></html>
+`;
   }
 
   // web/src/finances/Calendar.tsx
@@ -11723,12 +11796,48 @@
   // web/src/finances/Finances.tsx
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
-    const edit = (what2, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what2, id2, kind);
+  function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
+    const [said, setSaid] = d2("");
+    const run2 = (go2) => async () => {
+      setSaid("Saving…");
+      try {
+        setSaid(await go2());
+      } catch (e3) {
+        setSaid(`Not saved: ${e3?.message || e3}`);
+      }
+    };
+    const month3 = (k3) => {
+      const d3 = /* @__PURE__ */ new Date(v3.today + "T12:00:00");
+      d3.setDate(1);
+      d3.setMonth(d3.getMonth() + k3);
+      return d3.toISOString().slice(0, 7);
+    };
+    const label = (m3) => (/* @__PURE__ */ new Date(m3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long" });
+    const print = (k3) => run2(() => printMonth(monthName2(month3(k3)), monthPage(v3, month3(k3), "Finances")));
+    return /* @__PURE__ */ u3("span", { class: "fx-export", children: [
+      said && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: said }),
+      /* @__PURE__ */ u3(
+        MenuButton,
+        {
+          label: "Export",
+          menuLabel: "Export",
+          title: "Your plan and what's ahead, to keep, open in a spreadsheet, or print",
+          items: [
+            { label: "The plan, as JSON", onClick: run2(() => exportFile2(planName(v3.today), planJson(v3.plan))) },
+            { label: "The year ahead, as a spreadsheet (CSV)", onClick: run2(() => exportFile2(aheadName(v3.today), aheadCsv(v3))) },
+            { label: `${label(month3(0))}, to print`, onClick: print(0) },
+            { label: `${label(month3(1))}, to print`, onClick: print(1) }
+          ]
+        }
+      )
+    ] });
+  }
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open2, exportFile: exportFile2, printMonth, readReceipt, running: running3, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+    const edit = (what3, id2, kind) => cardOf(id2) ? open2("account", cardOf(id2)) : open2(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
-    const [what, label] = adds[tab3] || adds.overview;
+    const [what2, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
@@ -11738,13 +11847,16 @@
           /* @__PURE__ */ u3("h1", { children: "Finances" }),
           /* @__PURE__ */ u3("p", { class: "lead" + (age >= 7 ? " warn" : ""), children: lead2 })
         ] }),
-        ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
-        !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
-          toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
-          !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
-          /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what), disabled: !v3, children: [
-            /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
-            label
+        /* @__PURE__ */ u3("div", { class: "fx-headtools", children: [
+          v3 && /* @__PURE__ */ u3(ExportMenu, { v: v3, exportFile: exportFile2, printMonth }),
+          ro && v3?.plan.hideAmounts && /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("span", { class: "pill", children: "Amounts hidden" }) }),
+          !ro && /* @__PURE__ */ u3("div", { class: "toolbar", children: [
+            toggleHidden && v3 && /* @__PURE__ */ u3(HideAmounts, { hidden: !!v3.plan.hideAmounts, toggle: toggleHidden }),
+            !!v3?.plan.accounts?.length && /* @__PURE__ */ u3("button", { class: "btn", onClick: () => edit("balances"), children: "Update balances" }),
+            /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: () => edit(what2), disabled: !v3, children: [
+              /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M12 5v14M5 12h14" }) }),
+              label
+            ] })
           ] })
         ] })
       ] }),
@@ -11835,6 +11947,8 @@
       saveSettings: (s3) => save({ ...financesData.value.plan, currency: s3.currency, holidays: s3.holidays, rates: s3.rates, quiet: s3.quiet?.length ? s3.quiet : void 0, calendarKey: s3.calendarKey, calendarAmounts: s3.calendarKey ? s3.calendarAmounts || void 0 : void 0 }),
       keep: save,
       exportFile,
+      // A month's page: opened in the browser to print (it prints itself); on a phone, shared or downloaded.
+      printMonth: async (name, html) => phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`,
       toggleHidden: v3 && !v3.readOnly ? toggleHideAmounts : void 0,
       readReceipt: receipts.read,
       running: runningApps(),
@@ -11859,7 +11973,8 @@
       const file2 = await go().ExportFinances(name, text2);
       return file2 ? `Saved to ${file2}` : "";
     }
-    const file = new File([text2], name, { type: "text/csv" });
+    const type = name.endsWith(".json") ? "application/json" : name.endsWith(".html") ? "text/html" : "text/csv";
+    const file = new File([text2], name, { type });
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: name });
@@ -11914,10 +12029,10 @@
     financesData.set({ ...v3, plan });
     save(plan);
   }
-  function open(what, id2, kind) {
+  function open(what2, id2, kind) {
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
-    editing = { what, id: id2, kind, n: ++opened };
+    editing = { what: what2, id: id2, kind, n: ++opened };
     mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     $2("finSheet").hidden = false;
   }
