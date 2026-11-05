@@ -390,7 +390,7 @@ Added after round 27 (the backlog was empty; worst first):
     a custom app's image picks any repo; check the path built from it
     (`..`, `?`), that the notes are drawn as text (no raw HTML, no
     `javascript:` links), and what the lookup tells GitHub.
-27. **What CrowdSec stopped** (#430, once merged): scenario, network, and
+27. (done: round 35) **What CrowdSec stopped** (#430, once merged): scenario, network, and
     country names come from outside; drawn by Preact, but check the phone
     and a kiosk get `Protection` only with the permission they need.
 28. **The native Apple client** (#424, apple-client/, once merged): the
@@ -712,6 +712,14 @@ Added after round 27 (the backlog was empty; worst first):
   again through methods, which check the permission then. Fine as it is
   on the branch; item 29 stays open until its PR is.
 
+- **Round 35 (#430 and #434, read through; item 27):** #430's list of
+  what CrowdSec stopped today reaches every paired device through the
+  read-only `Protection` method, as the week's five did: scanners'
+  addresses, country and network, and what they tried, nothing of the
+  household's; drawn by Preact as text. #434 (Account 2) saves the
+  updates, Setup, people, and restarts records whole under their locks,
+  0600, which settles the note below. No code change needed.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -725,7 +733,7 @@ Added after round 27 (the backlog was empty; worst first):
 
 ## For Account 2
 
-- **`data/restarts.json` is written in place, without a lock** (#427,
+- (done: #434) **`data/restarts.json` is written in place, without a lock** (#427,
   cmd/homelab/restartloop.go `stopRestartLoops`): `os.WriteFile`, 0644,
   read and rewritten whole by each watchdog run. Two runs at once (the
   agent's and the one after sleep, #422, or `homelab watchdog` by hand)
