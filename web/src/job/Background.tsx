@@ -6,7 +6,7 @@
 // the chip brings the sheet back; once the command ends, the chip says how
 // it went until it is opened or dismissed.
 import { render } from 'preact';
-import { $ } from '../core';
+import { $, showError } from '../core';
 
 interface Bg {
   title: string;
@@ -49,6 +49,14 @@ export function bgEnd(failed: boolean) {
 
 /** A command runs with its sheet open or hidden: its title, else "". */
 export const bgRunning = () => (bg?.state === 'running' ? bg.title : '');
+
+/** Another job waits while one runs, saying so: it would take the running
+ *  one's bar and log (jobs.ts has one of each). True when it must wait. */
+export function waitForBg() {
+  const running = bgRunning();
+  if (running) showError(`Wait for “${running}” to finish: it is still running`);
+  return !!running;
+}
 
 function open() {
   hidden = false;

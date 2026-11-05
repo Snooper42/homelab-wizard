@@ -13,7 +13,7 @@ import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
-import { bgEnd, bgHide, bgRunning, bgStart } from '../job/Background';
+import { bgEnd, bgHide, bgStart, waitForBg } from '../job/Background';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
@@ -477,11 +477,7 @@ const hideButton: SheetButton = { label: 'Hide', title: 'It carries on, its bar 
 const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidden = false; });
 // While one runs, nothing else takes the sheet (its log and bar are the
 // running one's): it says to wait instead.
-function sheetBusy() {
-  const running = bgRunning();
-  if (running) showError(`Wait for “${running}” to finish: it is still running`);
-  return !!running;
-}
+const sheetBusy = waitForBg;
 
 // Sign in: the user name the homelab set up the app with, and the password
 // copied (it never reaches the page), from .env.

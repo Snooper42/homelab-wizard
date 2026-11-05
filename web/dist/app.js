@@ -2882,6 +2882,11 @@
     draw();
   }
   var bgRunning = () => bg?.state === "running" ? bg.title : "";
+  function waitForBg() {
+    const running3 = bgRunning();
+    if (running3) showError(`Wait for “${running3}” to finish: it is still running`);
+    return !!running3;
+  }
   function open() {
     hidden2 = false;
     if (bg && bg.state !== "running") bg = null;
@@ -4466,6 +4471,7 @@
   }
   var installing = false;
   $2("installBtn").onclick = async () => {
+    if (waitForBg()) return;
     const btn = $2("installBtn");
     installing = true;
     btn.disabled = true;
@@ -4910,6 +4916,7 @@
     },
     chooseRoot: () => chooseRoot(),
     goBack: async () => {
+      if (waitForBg()) return;
       navigate("setup");
       setupJob();
       const log2 = $2("setupLog");
@@ -5124,6 +5131,7 @@
   }
   var runningAll = false;
   $2("runAll").onclick = async () => {
+    if (waitForBg()) return;
     setupJob();
     const log2 = $2("setupLog"), btn = $2("runAll");
     runningAll = true;
@@ -5163,6 +5171,7 @@
     }
   };
   async function runStep(step2, choice) {
+    if (waitForBg()) return;
     setupJob();
     const log2 = $2("setupLog");
     log2.hidden = false;
@@ -6139,11 +6148,7 @@
   var runInSheet = (title) => bgStart(title, () => {
     $2("cliPanel").hidden = false;
   });
-  function sheetBusy() {
-    const running3 = bgRunning();
-    if (running3) showError(`Wait for “${running3}” to finish: it is still running`);
-    return !!running3;
-  }
+  var sheetBusy = waitForBg;
   async function showSignIn(a3, keys2) {
     if (sheetBusy()) return;
     const panel = $2("cliPanel");
@@ -6699,6 +6704,7 @@
     mountJobs(card, { jobs: jobsData.value, place, create });
   }
   async function backupTask(action, busy2, done, failed) {
+    if (waitForBg()) return;
     const panel = $2("backupPanel"), log2 = $2("backupLog");
     const btns = () => [$2("backupNow"), document.getElementById("restoreTest")].filter(Boolean);
     panel.hidden = false;

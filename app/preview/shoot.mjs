@@ -2409,6 +2409,10 @@ const smokes = [
     // The rest of the app is there to use meanwhile.
     await page.click('nav button[data-screen="backups"]');
     await page.waitForSelector('#backups.active', { timeout: 3000 });
+    // A job of another screen waits too: it would take the running one's bar and log.
+    await page.click('#backupNow');
+    await page.waitForTimeout(300);
+    if (await page.isVisible('#backupPanel')) throw new Error('Back up now started beside the running command');
     // Done: the chip says so, and brings back the sheet, which says how it went.
     await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
     await page.click('#bgJob .bgopen');

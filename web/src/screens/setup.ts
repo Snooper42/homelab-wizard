@@ -15,6 +15,7 @@ import { cliFlow, statusData } from './status';
 import { drawSettings, form, showSettings } from './settings';
 import { loadCatalog } from './choose';
 import { endJob, startJob } from '../jobs';
+import { waitForBg } from '../job/Background';
 import { mountJobApps } from '../job/Apps';
 import { navigate, show } from '../app';
 import { lookForUpdates } from './updates';
@@ -138,6 +139,7 @@ const hostActions: HostActions = {
   setMenuEntry: async (on) => { try { await go().SetMenuEntry(on); } catch (e) { showError(e); } await loadHost(); },
   chooseRoot: () => chooseRoot(),
   goBack: async () => {
+    if (waitForBg()) return;
     navigate('setup'); // from Settings › This Mac: its progress shows on Setup
     setupJob();
     const log = $('setupLog');
@@ -319,6 +321,7 @@ function runnable(steps) {
 // none is left or one fails.
 let runningAll = false;
 $('runAll').onclick = async () => {
+  if (waitForBg()) return;
   setupJob();
   const log = $('setupLog'), btn = $('runAll');
   runningAll = true;
@@ -354,6 +357,7 @@ $('runAll').onclick = async () => {
 };
 
 async function runStep(step: setup.Step, choice?: number) {
+  if (waitForBg()) return;
   setupJob();
   const log = $('setupLog');
   log.hidden = false;
