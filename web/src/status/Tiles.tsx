@@ -5,6 +5,7 @@ import { useState } from 'preact/hooks';
 import { dayText, dollars } from '../format';
 import { Card } from '../parts/Card';
 import { Spark } from '../Spark';
+import { keptRestarting } from './stopFor';
 
 export function Tile({ label, value, sub, tone, id, title }: { label: string; value: ComponentChildren; sub: ComponentChildren; tone?: string; id?: string; title?: string }) {
   return (
@@ -50,7 +51,7 @@ function PauseButton({ paused, onPause }: { paused: boolean; onPause: (paused: b
 export const awaitingJobs = (a: api.AppStatus) => a.id === 'homelab-companion' && a.state === 'not running';
 
 /** Apps that need a look: unwell, not answering, or not running; not one stopped on purpose (held). */
-export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = {}) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || (a.state === 'stopped' && !held[a.id]);
+export const troubled = (a: api.AppStatus, held: Record<string, stopped.Stop> = {}) => a.health === 'unhealthy' || a.health === 'restarting' || !!a.notAnswering || a.state === 'missing' || (a.state === 'stopped' && (!held[a.id] || keptRestarting(held[a.id])));
 
 export interface TilesProps {
   status: api.Status;
