@@ -30,6 +30,7 @@ let batteryPaused = new Set<string>();
 let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
+let outages: Record<string, health.Outage[]> = {};
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -72,7 +73,7 @@ function renderAppList(st: api.Status) {
   const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
     ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
     { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -271,6 +272,7 @@ function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
+  outages = w.outages || {};
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
   mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });

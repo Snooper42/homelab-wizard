@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -158,5 +159,54 @@ func TestPlain(t *testing.T) {
 		if got := plain(errors.New(in)).Error(); got != want {
 			t.Errorf("plain(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestOutages(t *testing.T) {
+	start := time.Date(2026, 10, 1, 3, 0, 0, 0, time.Local)
+	ok := Result{Name: "app", Status: 200}
+	refused := Result{Name: "app", Err: errors.New("nothing answers on its port")}
+	gone := Result{Name: "app", Status: 502}
+	at := func(m int) time.Time { return start.Add(time.Duration(m) * time.Minute) }
+	for _, tc := range []struct {
+		name string
+		runs []Result // one every 15 minutes from start
+		want []Outage
+	}{
+		{"up all along", []Result{ok, ok, ok}, nil},
+		{"a blip is no outage", []Result{ok, refused, ok}, nil},
+		{"down from the first failing run to the run that passed, with what it said last",
+			[]Result{ok, refused, refused, gone, ok}, []Outage{{From: at(15), To: at(60), Problem: "HTTP 502"}}},
+		{"still down: no end yet", []Result{ok, refused, refused}, []Outage{{From: at(15), Problem: "nothing answers on its port"}}},
+		{"two in a row, oldest first", []Result{refused, refused, ok, gone, gone, ok},
+			[]Outage{{From: at(0), To: at(30), Problem: "nothing answers on its port"}, {From: at(45), To: at(75), Problem: "HTTP 502"}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var s State
+			for i, r := range tc.runs {
+				s.Update([]Result{r}, at(15*i))
+			}
+			if got := s.Summary().Outages["app"]; !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("outages\n got %+v\nwant %+v", got, tc.want)
+			}
+		})
+	}
+	// A week on, an outage that ended is gone; one still going stays.
+	var s State
+	s.Update([]Result{refused, {Name: "other", Err: errors.New("down")}}, at(0))
+	s.Update([]Result{refused, {Name: "other", Err: errors.New("down")}}, at(15))
+	s.Update([]Result{ok, {Name: "other", Err: errors.New("down")}}, at(30))
+	s.Update([]Result{ok, {Name: "other", Err: errors.New("down")}}, start.AddDate(0, 0, 8))
+	if o := s.Outages; o["app"] != nil || len(o["other"]) != 1 || !o["other"][0].To.IsZero() {
+		t.Fatalf("a week on: %+v", o)
+	}
+	// A check no longer run ends its outage at the last run that saw it; Forget drops it.
+	s.Update([]Result{ok}, start.AddDate(0, 0, 8).Add(15*time.Minute))
+	if o := s.Outages["other"]; len(o) != 1 || !o[0].To.Equal(start.AddDate(0, 0, 8)) {
+		t.Fatalf("no longer run: %+v", o)
+	}
+	s.Forget("other")
+	if s.Outages["other"] != nil {
+		t.Fatalf("forgotten: %+v", s.Outages)
 	}
 }
