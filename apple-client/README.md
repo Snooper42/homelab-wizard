@@ -65,7 +65,7 @@ engine's `/v1/*` routes to devices. It wraps them:
 | Cards (`/v1/cards`) | `POST /api/call/StatusBoard` `[n, ["watchdog","savings","protection","alerts"]]` | ndjson: `{"result":Status}`, then `{"event":"status:card","data":Card}` for each card |
 | Live (`/v1/events`) | `GET /api/events` | SSE: `data: <engine.Change>`, plus a `: still here` heartbeat every 30 s |
 | Back up now, Test a restore, Fix | `POST /api/call/Homelab` `["backup"\|"restore-test"\|"fix", "", apply]` | Changes. Fix runs first without `apply` (a plan), then with it |
-| App settings | `POST /api/call/SetAppSetting` `[id, "updates"\|"alerts", bool]` | A change: hold or release updates, watchdog alerts on or off |
+| App settings | `POST /api/call/SetAppSetting` `[id, "updates"\|"alerts"\|"pinned", bool]` | A change: hold or release updates, watchdog alerts on or off, pin to the top |
 | Computer | `Host`, `SetUpdatesPaused` `[bool]` (a change), `Report` (secrets removed by the computer; up to 3 min) | |
 | Start / Stop / Restart / Roll back | `POST /api/call/AppAction` `[id, "start"\|"stop"\|"restart"\|"rollback"]`; Stop for a while is `StopUntil` `[id, RFC 3339]` | Needs `canChange` and https. One change from a phone at a time. `{result: null, log}`, or 500 `{error, log}` |
 
