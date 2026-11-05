@@ -342,6 +342,23 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
     job in the clear (finance.json, the ledger, receipts, people, sso,
     phones.json, home-address.json).
 
+Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
+
+19. **`data/stopped.json` written in place** (internal/stopped, #367,
+    #375): the awake job (each minute), `homelab stop --until`, and a
+    phone's `StopUntil` each read, change, and write it whole with
+    `os.WriteFile`, no lock and no rename. A torn or lost write forgets an
+    app stopped on purpose, and the watchdog starts it again. Show it with
+    a test (two writers, or a read during a write), then save it as
+    record.go does (a temporary file, then rename) under a lock.
+20. **Tidy Up's Undo from a crafted trash log** (data/media-trash.jsonl,
+    `homelab media restore`): what the engine moves where when a line's
+    `from` or `to` is a path outside the libraries, or a link.
+21. **Tidy Up's page-sent arguments** (app/tidy.go `TidyRun`'s `args`):
+    passed to the CLI as they come; list which flags the media commands
+    take and whether any of them reaches outside the libraries.
+
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -449,3 +466,19 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
   by design, behind `delete everything` typed out. Still untried on a
   real machine (#354 says so); a nightly or hand run on each system is
   docs/Testing.md's Uninstall row.
+- **Round 14 (#355–#402, read through):** Tidy Up's ffmpeg Install
+  fetches one pinned build over HTTPS, checks its SHA-256 and size before
+  unpacking, takes only ffmpeg and ffprobe by name, and keeps them only
+  once they run. The engines get their keys from the environment, never a
+  command line or the settings file (homelab_media.json holds none), and
+  send them in headers. Tdarr's first account goes only to 127.0.0.1, and
+  its password to `.env`. `TidyReveal` opens only Tidy Up's folders;
+  Calibre's Flatpak scripts are fixed text. Finances' Firefly III, Wallos,
+  and Ghostfolio readers reach only 127.0.0.1, and no error repeats
+  Wallos's key; every new secret (`WALLOS_API_KEY`, `TDARR_PASSWORD`, …)
+  is in .env.example, so reports and phones' logs take it out. The phone's
+  `StopUntil` needs Change, a known container app, and a time
+  `ParseUntil` reads. The update swap scripts are still fixed text with
+  the paths as parameters. gosec and npm audit clean, `make check` green;
+  govulncheck could not reach vuln.go.dev from this session. No code
+  change needed; items 19–21 added.
