@@ -20,6 +20,9 @@ let disk: number | undefined;
 let watch: health.Summary | null = null;
 let household: people.Person[] | null = null;
 let explainer = '';
+// The proxy's and CrowdSec's pages say what CrowdSec stopped today.
+const guards = new Set(['nginx-proxy-manager', 'crowdsec']);
+let stopped: crowdsec.Protection | null | 'reading' = 'reading';
 // Its settings switched since the click, by app, until Status says so.
 const switching: Record<string, Record<string, boolean>> = {};
 async function setSetting(appId: string, setting: string, on: boolean) {
@@ -39,7 +42,7 @@ const shown = () => !!id && $('app').classList.contains('active');
 
 /** Opens an app's page, from its row or the app's --screen app:<id>. */
 export function openApp(appId: string) {
-  if (appId !== id) { usage = undefined; disk = undefined; household = null; }
+  if (appId !== id) { usage = undefined; disk = undefined; household = null; stopped = 'reading'; }
   id = appId;
   navigate('app');
   const h1 = $1('#app h1');
@@ -94,8 +97,9 @@ async function readIcon(of: string) {
 
 async function readRest() {
   const at = id;
-  const [w, st, ppl, ex] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer()]);
+  const [w, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at) ? go().Protection() : Promise.resolve(null)]);
   if (at !== id) return;
+  stopped = pr.status === 'fulfilled' ? pr.value : null;
   watch = w.status === 'fulfilled' ? w.value : null;
   disk = st.status === 'fulfilled' ? st.value?.apps?.find((x) => x.app === id)?.bytes : undefined;
   household = ppl.status === 'fulfilled' ? (ppl.value || []).filter((p) => never(p.removed) && (!p.apps?.length || p.apps.includes(id))) : null;
@@ -123,6 +127,7 @@ function draw() {
     // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
     dozzle: !companion && statusById.dozzle?.state === 'running' ? statusById.dozzle.url || '' : '',
     machine: thisMachine.replace(/^This/, 'this'), companion,
+    stopped: guards.has(id) ? stopped : undefined,
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),
