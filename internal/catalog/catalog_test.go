@@ -292,3 +292,33 @@ func TestOnSteamOSJellyfinIsTheContainer(t *testing.T) {
 		t.Errorf("Load on SteamOS: jellyfin is %s", a.ID)
 	}
 }
+
+// A library folder from a folder setting (the media folder, downloads,
+// photos, Kiwix's) may be on a drive, and Docker on Linux makes a missing
+// bind folder empty where the drive should be, then starts the app on it.
+// Each such bind says create_host_path: false, so the app waits for the
+// drive (A drive comes back), and the install makes the folder instead.
+// Backup sources (/source/...) are left: a missing one is only nothing to
+// copy, and Duplicati must not wait on Jellyfin's folder.
+func TestLibraryFoldersAreNotMadeByDocker(t *testing.T) {
+	keys := []string{"${MEDIA_ROOT", "${DOWNLOADS_ROOT", "${IMMICH_UPLOAD_LOCATION", "${KIWIX_ZIM_ROOT"}
+	n := 0
+	for _, a := range load(t).Apps {
+		for _, v := range a.Volumes {
+			fromSetting := false
+			for _, k := range keys {
+				fromSetting = fromSetting || strings.HasPrefix(v.Source, k)
+			}
+			if !fromSetting || strings.HasPrefix(v.Target, "/source/") {
+				continue
+			}
+			n++
+			if !v.NoCreate {
+				t.Errorf("%s: %s is made empty by Docker while its drive is away; write it as type: bind with bind.create_host_path: false", a.ID, v.Raw)
+			}
+		}
+	}
+	if n < 20 {
+		t.Errorf("only %d library binds found: the test no longer sees the compose files' volumes", n)
+	}
+}

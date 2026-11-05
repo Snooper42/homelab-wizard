@@ -45,7 +45,11 @@ services:
     ports:
       - ${BIND_IP:-127.0.0.1}:${ROMM_PORT:-7676}:8080
     volumes:
-      - ${MEDIA_ROOT:-/Volumes/Media}/games:/romm/library
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/games
+        target: /romm/library
+        bind:
+          create_host_path: false
       - ../../appdata/romm/resources:/romm/resources
       - ../../appdata/romm/assets:/romm/assets
       - ../../appdata/romm/config:/romm/config

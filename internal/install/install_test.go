@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -466,5 +467,33 @@ func TestNativeAppPortsStayFree(t *testing.T) {
 	}
 	if ch, ok := moved("jellyfin-container")["JELLYFIN_PORT"]; ok {
 		t.Errorf("Jellyfin in a container should keep 8096, the port it stands in for: %+v", ch)
+	}
+}
+
+// A library folder Docker is told not to make (bind.create_host_path:
+// false) is made by the install instead, wherever its setting puts it, but
+// never in place of a drive that is unplugged.
+func TestLibraryFoldersDockerLeavesAreMade(t *testing.T) {
+	elsewhere := filepath.Join(t.TempDir(), "zim")
+	for _, c := range []struct {
+		zim  string
+		made bool
+	}{
+		{elsewhere, true},
+		{"/Volumes/NoSuchDrive/kiwix", false},
+	} {
+		in, _, _ := fixture(t, nil, "MEDIA_ROOT=~/Media", "KIWIX_ZIM_ROOT="+c.zim)
+		sel, err := selector.Resolve(in.Catalog, []string{"kiwix"}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		plan, err := Build(in, sel)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := filepath.FromSlash(c.zim)
+		if slices.Contains(plan.Dirs, want) != c.made {
+			t.Errorf("KIWIX_ZIM_ROOT=%s: made %v, want %v (%v)", c.zim, !c.made, c.made, plan.Dirs)
+		}
 	}
 }
