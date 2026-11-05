@@ -344,7 +344,7 @@ Done or checked so far (see Security done): 1 (in part), 3, 4 (in part),
 
 Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
 
-19. **`data/stopped.json` written in place** (internal/stopped, #367,
+19. (done: round 15) **`data/stopped.json` written in place** (internal/stopped, #367,
     #375): the awake job (each minute), `homelab stop --until`, and a
     phone's `StopUntil` each read, change, and write it whole with
     `os.WriteFile`, no lock and no rename. A torn or lost write forgets an
@@ -482,3 +482,14 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   the paths as parameters. gosec and npm audit clean, `make check` green;
   govulncheck could not reach vuln.go.dev from this session. No code
   change needed; items 19–21 added.
+- **Round 15 (item 19, `data/stopped.json`):** N10. The awake job read
+  the record, spent the seconds of a `compose start`, and saved its copy
+  over a stop made meanwhile (a phone's Stop for a while), and every save
+  rewrote the file in place, so a reader could see it empty; the watchdog
+  then started an app stopped on purpose. Now `stopped.Update` changes it
+  under a lock file beside it (stale after 30 s), the awake job drops only
+  entries no one changed since, and `Save` writes a new file (0600) and
+  renames it in. `TestStartWhenDueKeepsAStopMadeMeanwhile` (the fake
+  docker stops radarr during sonarr's start), `TestSaveReplacesTheRecordWhole`
+  (a link to the old file changed), and `TestUpdateLosesNoChange` (40
+  writers, run without the lock) each failed before.

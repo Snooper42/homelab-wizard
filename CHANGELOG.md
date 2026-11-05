@@ -47,6 +47,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **A finished install can be closed:** on Choose stacks, the bar, each app's row, the details, and *Ready to open* stayed beside the plan until the next install. **Close** under *Ready to open* now puts them away.
 - **An app update that did not go in place, on a Mac or Linux:** when the app was still open a minute after the update asked it to quit, the new build was put in place under it anyway, so opening it only brought the old one back, and the app said the update did not install without saying why. Now it asks the app to stop, as on Windows, and puts the update in place; one that still will not stop is left as it was, and the line says so. That line is red, as a failure, with **Try again** and **Download it** (the newest release), not only words saying to.
 - **The update line on Settings is whole again:** Settings' header, which blurs what scrolls under it, also covered the lower half of *Homelab Wizard … is ready* and its buttons on a Mac (and in the Windows and Linux app). It now sits below the line.
+- **An app you stop stays stopped, even at the same moment as another:** stopping an app from a phone while the computer was starting another again at its time could be forgotten, and the watchdog then started the app you had just stopped. The list of apps stopped on purpose is now changed one at a time, and never read half-written.
 
 ## [0.17.0] - 2026-11-02
 
