@@ -13,7 +13,7 @@ import { Address } from '../parts/Address';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
-import { stopChoices, stoppedWords } from './stopFor';
+import { keptRestarting, stopChoices, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
 import { changedSince, type Seen } from './changed';
 
@@ -86,8 +86,8 @@ export interface AppListProps {
 
 /** One dot class and a few words for an app's state and health. */
 export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Record<string, stopped.Stop> = {}): [string, string] {
-  // Stopped on purpose is no trouble: a plain dot.
-  if (a.state === 'stopped' && held[a.id]) return ['', stoppedWords(held[a.id])];
+  // Stopped on purpose is no trouble: a plain dot. Stopped by the watchdog for restarting over and over is.
+  if (a.state === 'stopped' && held[a.id]) return [keptRestarting(held[a.id]) ? 'bad' : '', stoppedWords(held[a.id])];
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
   if (a.state === 'running') {
@@ -342,7 +342,7 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
   const containers = g.apps.filter((a) => !isNative(p, a));
   const running = containers.filter((a) => a.state === 'running');
   const stopped = containers.filter((a) => startable(p, a));
-  const held = containers.filter((a) => a.state === 'stopped' && p.held[a.id]);
+  const held = containers.filter((a) => a.state === 'stopped' && p.held[a.id] && !keptRestarting(p.held[a.id]));
   const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
   const close = (refocus?: boolean) => { setOpen(false); setSure(false); setLater(false); if (refocus) btn.current?.focus(); };
   // The times in place of the menu, or the menu back: the focus moves with it.
@@ -602,7 +602,7 @@ export function FilterBox() {
 
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
 function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
-  const fine = (g: Group) => !g.alert && !g.pinned && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
+  const fine = (g: Group) => !g.alert && !g.pinned && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id] && !keptRestarting(held[a.id])));
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 

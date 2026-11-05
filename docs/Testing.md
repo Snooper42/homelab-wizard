@@ -206,6 +206,7 @@ With a domain (in a copy, or once you are ready: Settings › `HOMELAB_DOMAIN` =
 ```
 
 - Stop one baseline app (`./homelab stop navidrome`), run `./homelab watchdog` twice: the second run shows *Homelab: something is down* in Notification Center as well as on the phone. `./homelab start navidrome` and the next run shows *recovered*.
+- A restart that keeps failing: set `NAVIDROME_MUSIC_PATH` in `.env` to a folder that does not exist, `./homelab up navidrome`, then run `./homelab watchdog` twice, 15 minutes apart. If Navidrome stops on its own and Docker keeps restarting it, the second run says *stopped Navidrome: Docker restarted it … times in an hour* with its last log lines, the phone gets *Homelab: stopped an app that kept restarting*, and Status's Navidrome row says *Stopped: it restarted … times in an hour* with a red dot. Put the setting back and `./homelab up navidrome`: within a minute the row is plain again.
 - `watchdog` lists every check as ✓. A check that fails once only says so; it alerts when it fails twice in a row. The app's Status screen then shows **Watchdog** with all checks passed and when it ran.
 - `backup` writes the database dumps and the `.env` copy into `recovery-staging` (Duplicati takes them off-site from 05:00) and ends with a summary.
 - `schedule status` shows each job loaded, with a last exit code of 0 once it has run.

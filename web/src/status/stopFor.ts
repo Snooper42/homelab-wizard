@@ -27,9 +27,15 @@ export function stopChoices(now = new Date()): StopChoice[] {
   return out;
 }
 
+/** Stopped by the watchdog, after Docker restarted it over and over: unlike
+ * one stopped by you, it needs a look (its log says why). */
+export const keptRestarting = (s?: stopped.Stop) => s?.why === 'restarting';
+
 /** What a row says of an app stopped on purpose: "Stopped by you", or
- * "Stopped until 9:00 PM", "until tomorrow, 8:00 AM", "until Fri, 8:00 AM". */
+ * "Stopped until 9:00 PM", "until tomorrow, 8:00 AM", "until Fri, 8:00 AM";
+ * one the watchdog stopped, "Stopped: it restarted 5 times in an hour". */
 export function stoppedWords(s: stopped.Stop, now = new Date()): string {
+  if (keptRestarting(s)) return `Stopped: it restarted ${s.restarts || 'many'} times in an hour`;
   if (!s.until) return 'Stopped by you';
   const t = new Date(s.until);
   const days = Math.round((at(t, 0, 0).getTime() - at(now, 0, 0).getTime()) / 864e5);

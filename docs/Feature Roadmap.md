@@ -104,7 +104,7 @@ The homelab looks after itself, and says what it did.
 - **Start in order** (M, *Idea*): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.
 - **One app at a time** (M, *Idea*): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.
 - **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
-- **A restart that keeps failing** (S, *Idea*): an app the watchdog restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
+- **A restart that keeps failing** (S, *Built*, #PR14): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Idea*): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
 - **A drive comes back** (S, *Idea*): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.
 - **What happened overnight** (S, *Idea*): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."

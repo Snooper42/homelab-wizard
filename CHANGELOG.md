@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A restart that keeps failing:** an app Docker restarted 3 times within an hour is stopped instead of restarting forever, and the alert carries its last log lines. Its row on Status says so with a red dot until you start it again.
 - **An update's notes:** hover *updates held* on Status for why the app is held, how to put it back, and the first lines of its newest release, read from GitHub only when you look.
 - **A backup's contents:** on Backups, hover an off-site job's time (or Tab to it) for its last run and how long it took, what it holds of yours and in how many files, its size where it is kept and the versions to go back to, the folders it copies, and its next run.
 - **Remember where you were:** each screen keeps how far down you were and which of its sections were open, between visits and after quitting. Picking another screen opens it at its own place, no longer partway down where the last one was.
