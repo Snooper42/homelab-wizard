@@ -24,6 +24,19 @@ final class LiveEventManager {
         case reconnecting(attempt: Int, at: Date)
         case stopped(String)
 
+        /// What to tell the person while nothing has been read: nil while
+        /// connecting, or after the first try.
+        var problem: String? {
+            switch self {
+            case .reconnecting(let attempt, _) where attempt >= 2:
+                "The computer isn't answering. Is it on, and is Tailscale connected on this device?"
+            case .stopped(let reason):
+                reason
+            default:
+                nil
+            }
+        }
+
         var label: String {
             switch self {
             case .idle: "Not connected"

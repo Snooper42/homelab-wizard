@@ -153,7 +153,7 @@ private struct PhoneDashboard: View {
             }
             .overlay {
                 if !model.hasLoaded {
-                    ProgressView("Loading…")
+                    NotLoadedView(model: model)
                 }
             }
             .navigationTitle("Homelab")
@@ -254,7 +254,7 @@ private struct SplitDashboard: View {
         }
         .overlay {
             if !model.hasLoaded {
-                ProgressView("Loading…")
+                NotLoadedView(model: model)
             } else if apps.isEmpty {
                 ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage)
             }
@@ -285,6 +285,30 @@ private struct SplitDashboard: View {
             .help("Read the status and cards again")
 
             DeviceMenu()
+        }
+    }
+}
+
+/// Before the first status: reading it, or why it can't be read yet.
+private struct NotLoadedView: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        let live = model.liveEvents
+        if let error = live.refreshError ?? live.connection.problem {
+            ContentUnavailableView {
+                Label("Can't Reach the Computer", systemImage: "wifi.exclamationmark")
+            } description: {
+                Text(error)
+            } actions: {
+                Button("Try Again") {
+                    Task { await model.refresh() }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(live.isRefreshing || model.cards.isLoading)
+            }
+        } else {
+            ProgressView("Reading the status…")
         }
     }
 }
