@@ -11,8 +11,7 @@ struct AppDetailView: View {
             Form {
                 Section {
                     HStack(spacing: 14) {
-                        AppStateIcon(app: app)
-                            .font(.system(size: 40))
+                        AppIconView(app: app, size: 52)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(app.name)
                                 .font(.title2.bold())

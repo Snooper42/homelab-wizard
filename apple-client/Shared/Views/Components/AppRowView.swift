@@ -6,8 +6,7 @@ struct AppRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AppStateIcon(app: app)
-                .font(.title3)
+            AppIconView(app: app, size: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name)
                 if let pending = actions.pending[app.id] {
@@ -31,6 +30,36 @@ struct AppRowView: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// The app's own icon with its state as a badge, or the state symbol
+/// alone while there's no icon.
+struct AppIconView: View {
+    @Environment(IconStore.self) private var icons
+    let app: AppStatus
+    let size: CGFloat
+
+    var body: some View {
+        if let icon = icons.icon(for: app) {
+            Image(decorative: icon.image, scale: 1)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
+                .overlay(alignment: .bottomTrailing) {
+                    AppStateIcon(app: app)
+                        .font(.system(size: size * 0.42))
+                        .background(Circle().fill(.background).padding(1))
+                        .offset(x: size * 0.12, y: size * 0.12)
+                }
+                .accessibilityHidden(true)
+        } else {
+            AppStateIcon(app: app)
+                .font(.system(size: size * 0.75))
+                .frame(width: size, height: size)
+        }
     }
 }
 

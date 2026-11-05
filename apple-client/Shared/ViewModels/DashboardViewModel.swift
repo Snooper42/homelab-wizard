@@ -52,10 +52,12 @@ final class DashboardViewModel {
 
     let liveEvents: LiveEventManager
     let cards: CardsViewModel
+    let icons: IconStore
 
     init(api: APIClient, liveEvents: LiveEventManager) {
         self.liveEvents = liveEvents
         cards = CardsViewModel(api: api, liveEvents: liveEvents)
+        icons = IconStore(api: api)
     }
 
     var hasLoaded: Bool { liveEvents.status != nil }

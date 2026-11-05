@@ -333,3 +333,38 @@ struct CardTests {
         #expect(SavingsPoint(date: "bad", annual: 1).day == nil)
     }
 }
+
+@Suite("Icons")
+struct IconTests {
+    // A 1×1 PNG.
+    private let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+    @Test func acceptsARealPNG() throws {
+        let payload = try #require(IconDecoder.payload(fromDataURL: "data:image/png;base64,\(png)"))
+        #expect(payload.type == "image/png")
+        let image = try #require(IconDecoder.thumbnail(from: payload.data))
+        #expect(image.width == 1)
+    }
+
+    @Test func typeMustMatchTheBytes() {
+        #expect(IconDecoder.payload(fromDataURL: "data:image/jpeg;base64,\(png)") == nil)
+    }
+
+    @Test func refusesSVGAndNonBase64() {
+        let svg = Data("<svg xmlns=\"http://www.w3.org/2000/svg\"/>".utf8).base64EncodedString()
+        #expect(IconDecoder.payload(fromDataURL: "data:image/svg+xml;base64,\(svg)") == nil)
+        #expect(IconDecoder.payload(fromDataURL: "data:image/png,\(png)") == nil)
+        #expect(IconDecoder.payload(fromDataURL: "https://example.com/icon.png") == nil)
+    }
+
+    @Test func refusesOversizePayloads() {
+        let big = Data(repeating: 0, count: IconDecoder.maxEncodedBytes + 1).base64EncodedString()
+        #expect(IconDecoder.payload(fromDataURL: "data:image/png;base64,\(big)") == nil)
+    }
+
+    @Test func garbageWithAPNGHeaderDoesNotDecode() {
+        var bytes = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        bytes.append(Data(repeating: 0xAB, count: 64))
+        #expect(IconDecoder.thumbnail(from: bytes) == nil)
+    }
+}

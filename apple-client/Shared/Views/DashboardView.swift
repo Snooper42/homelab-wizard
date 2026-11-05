@@ -48,6 +48,7 @@ struct DashboardView: View {
         }
         .environment(actions)
         .environment(model)
+        .environment(model.icons)
         // The cards change slowly: read them now, then every 5 minutes while unlocked.
         .task {
             while !Task.isCancelled {
