@@ -7849,11 +7849,11 @@
       }
     };
     const [q2, setQ] = d2("");
-    const [account, setAccount] = d2("");
-    const [category, setCategory] = d2("");
-    const [month3, setMonthPick] = d2("");
+    const [accountPick, setAccount] = d2("");
+    const [categoryPick, setCategory] = d2("");
+    const [monthPick, setMonthPick] = d2("");
     const [way, setWay] = d2("");
-    const [tag, setTag] = d2("");
+    const [tagPick, setTag] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
     const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
@@ -7861,6 +7861,11 @@
     const cats = [...new Set(all.flatMap(catsOf))].sort();
     const tags = tagsOf(all);
     const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
+    const accounts = (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id));
+    const account = accounts.some((a3) => a3.id === accountPick) ? accountPick : "";
+    const category = cats.includes(categoryPick) ? categoryPick : "";
+    const month3 = months.includes(monthPick) ? monthPick : "";
+    const tag = tags.includes(tagPick) ? tagPick : "";
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown5.length !== all.length;
@@ -7895,7 +7900,7 @@
               /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note", "aria-label": "Search transactions" }),
               /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
-                (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id)).map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+                accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
               ] }),
               /* @__PURE__ */ u3("select", { "aria-label": "Category", value: category, onChange: (e3) => setCategory(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every category" }),
@@ -8017,7 +8022,10 @@
         }, children: sure ? "Click again to delete" : "Delete" })),
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: cancel, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2, children: "Save" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2, onClick: () => {
+          setLeaving(false);
+          setSure(false);
+        }, children: "Save" })
       ] })
     ] });
   }
@@ -11871,7 +11879,7 @@ ${pays}
       const d3 = /* @__PURE__ */ new Date(v3.today + "T12:00:00");
       d3.setDate(1);
       d3.setMonth(d3.getMonth() + k3);
-      return d3.toISOString().slice(0, 7);
+      return isoDay(d3).slice(0, 7);
     };
     const label = (m3) => (/* @__PURE__ */ new Date(m3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long" });
     const print = (k3) => run2(() => printMonth(monthName2(month3(k3)), monthPage(v3, month3(k3), "Finances")));
@@ -11901,7 +11909,7 @@ ${pays}
     const [what2, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
-    const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", update them with Edit"}` : "")) + (ro ? " · view only" : "");
+    const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [

@@ -29,7 +29,12 @@ mo = mc.mo
 ui = mc.ui
 LRCLIB = "https://lrclib.net"
 USER_AGENT = "Homelab Wizard Tidy Up (https://github.com/Snooper42/homelab-wizard)"
-SYNCED_RE = re.compile(r"^\s*\[\d{1,3}:\d{2}(?:[.:]\d{1,3})?\]", re.M)
+# A time-synced line: [mm:ss], [mm:ss.xx] or [mm:ss,xx] at its start (a byte-order mark or a
+# carriage return before it is the file's, not the line's).
+SYNCED_RE = re.compile(r"^[\s\ufeff]*\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\]", re.M)
+# Lyrics that carry a translation on each line, after a caret ("¡NUEVAYoL!^NEW YORK!"): players show
+# the caret and both languages run together on one line. A line's times, before its words.
+TIMES_RE = re.compile(r"^((?:\s*\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\])*)(.*)$")
 INSTRUMENTAL_RE = re.compile(r"(?i)[\(\[\-–\s]instrumental[\)\]\s]*$|^instrumental$")
 LOSSLESS_EXT = {".flac", ".wav", ".aiff", ".aif", ".alac", ".ape", ".wv"}
 
@@ -258,12 +263,52 @@ def genre_of(path):
 
 
 # ============================================================== lyrics (LRCLIB)
+def normalize_lyrics(text):
+    """Lyrics as players read them best: one kind of line ending, no byte-order mark, and, when most lines
+    carry a translation after a caret, each translation on a line of its own under its original, with
+    the same time, so a player shows the two together as the song reaches them."""
+    text = (text or "").replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n")
+    # The words of each line: not its times, and not the file's own tags ([ar:...], [offset:...]).
+    words = [re.sub(r"\[\d{1,3}:\d{2}(?:[.:,]\d{1,3})?\]|<\d{1,3}:\d{2}(?:[.:,]\d{1,3})?>", "", l).strip()
+             for l in text.split("\n") if not re.match(r"^\s*\[[a-z#]+:", l, re.I)]
+    lines = [w for w in words if w]
+    if lines and sum("^" in l for l in lines) * 2 >= len(lines):
+        out = []
+        for l in text.split("\n"):
+            times, words = TIMES_RE.match(l).groups()
+            if "^" not in words:
+                out.append(l)
+                continue
+            first, _, second = words.partition("^")
+            out.append(times + first.strip())
+            if second.strip():
+                out.append(times + second.strip())
+        text = "\n".join(out)
+    return text
+
+
+def has_translation(text):
+    """Lyrics with a translation after a caret on most lines: normalize_lyrics puts each on its own line."""
+    return bool(text) and normalize_lyrics(text) != (text or "").replace("\ufeff", "").replace("\r\n", "\n").replace("\r", "\n")
+
+
+def is_synced(text):
+    return bool(SYNCED_RE.search((text or "").replace("\r", "\n")))
+
+
+def sidecars(path):
+    """The lyrics files beside a song, in the order Navidrome reads them before the song's own tags
+    (its LyricsPriority: .lrc, .txt, embedded): any of them hides lyrics written into the file."""
+    return [q for q in (Path(path).with_suffix(".lrc"), Path(path).with_suffix(".txt")) if q.is_file()]
+
+
 def read_lyrics(path):
-    """(text, synced) from the file's tags, or a .lrc beside it."""
-    lrc = Path(path).with_suffix(".lrc")
-    if lrc.is_file():
-        t = lrc.read_text(encoding="utf-8", errors="replace")
-        return t, bool(SYNCED_RE.search(t))
+    """(text, synced): the lyrics a player shows for this song: a .lrc beside it, else a .txt beside it,
+    else the file's own tags."""
+    for side in sidecars(path):
+        t = side.read_text(encoding="utf-8", errors="replace")
+        if t.strip():
+            return t, is_synced(t)
     import mutagen
     try:
         f = mutagen.File(path)
@@ -288,13 +333,16 @@ def read_lyrics(path):
             if v:
                 text = v[0] if isinstance(v, list) else str(v)
                 break
-    return text, bool(SYNCED_RE.search(text or ""))
+    return text, is_synced(text)
 
 
 def write_lyrics(path, text, where):
     """Into the file (every player reads it) or a .lrc beside it. The APE safety pass runs first:
-    an old APE tag on an MP3 would otherwise keep its stale lyrics in front of Navidrome."""
-    if where == "lrc":
+    an old APE tag on an MP3 would otherwise keep its stale lyrics in front of Navidrome. A .lrc or .txt
+    already beside the song is read before the file's tags, so lyrics written into the file would never
+    show: the .lrc beside it gets them then (it comes first), and the file's tags are left as they are."""
+    text = normalize_lyrics(text)
+    if where == "lrc" or sidecars(path):
         Path(path).with_suffix(".lrc").write_text(text, encoding="utf-8")
         return
     if mo.has_ape(path):
@@ -366,11 +414,14 @@ def lrclib(info):
     /api/get asks), then, when that has nothing or the tags lack the album or length, a search by title
     and artist, taking the closest record: the same title, the artist named, and a length within 3
     seconds when the song's is known, time-synced ones first."""
+    exact = None
     if info["title"] and info["artist"] and info["album"] and info["duration"]:
-        found = _lrclib_get("/api/get", {"track_name": info["title"], "artist_name": info["artist"],
+        exact = _lrclib_get("/api/get", {"track_name": info["title"], "artist_name": info["artist"],
                                          "album_name": info["album"], "duration": info["duration"]})
-        if found:
-            return found
+        # An exact record with time-synced lyrics (or one saying it's an instrumental) is the answer. One
+        # with plain lyrics alone isn't the end: another record of the same song often has them synced.
+        if exact and (exact.get("syncedLyrics") or exact.get("instrumental")):
+            return exact
     hits = _lrclib_get("/api/search", {"track_name": info["title"], "artist_name": info["artist"]}) or []
     want, artist = _plain_title(info["title"]), _plain_title(info["artist"])
     best = None
@@ -386,6 +437,8 @@ def lrclib(info):
                 -abs(float(h.get("duration") or 0) - (info["duration"] or 0)))
         if best is None or rank > best[0]:
             best = (rank, h)
+    if exact and (best is None or not best[1].get("syncedLyrics")):
+        return exact
     return best[1] if best else None
 
 
@@ -398,17 +451,25 @@ def _not_found_path():
     return mo.state_dir() / "lyrics-not-found.json"
 
 
+# Raised when the lookup learns to find more: songs remembered by an older one are asked again now.
+NOT_FOUND_VERSION = 2
+
+
 def _load_not_found():
     try:
         data = json.loads(_not_found_path().read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
     except (OSError, ValueError):
         return {}
+    if not isinstance(data, dict) or data.get("version") != NOT_FOUND_VERSION:
+        return {}
+    songs = data.get("songs")
+    return songs if isinstance(songs, dict) else {}
 
 
 def _save_not_found(seen):
     try:
-        _not_found_path().write_text(json.dumps(seen, indent=0, sort_keys=True) + "\n", encoding="utf-8")
+        body = {"version": NOT_FOUND_VERSION, "songs": seen}
+        _not_found_path().write_text(json.dumps(body, indent=0, sort_keys=True) + "\n", encoding="utf-8")
     except OSError as e:
         ui.to_log("NOTE   couldn't keep the songs LRCLIB has no lyrics for: %s" % e)
 
@@ -425,8 +486,23 @@ def lyrics(args, files=None):
     # none: songs still worth asking LRCLIB about. not_found: asked, and it had nothing (asked again after
     # a month). plain: plain lyrics LRCLIB has no time-synced ones for. untagged: no title to ask with.
     counts = {"synced": 0, "plain": 0, "none": 0, "instrumental": 0, "not_found": 0, "untagged": 0}
-    added = upgraded = failed = already = 0
+    added = upgraded = failed = already = cleaned = 0
     seen = _load_not_found()
+
+    def tidy(p, text):
+        """The song's own lyrics, each translation after a caret on a line of its own. Whether it was."""
+        nonlocal cleaned, failed
+        if check or not has_translation(text):
+            return False
+        try:
+            write_lyrics(p, text, where)
+        except Exception as e:
+            ui.to_log("NOTE   couldn't write lyrics to %s: %s" % (p, e))
+            failed += 1
+            return False
+        cleaned += 1
+        return True
+
     now = time.time()
     fresh = lambda p: now - float(seen.get(str(p), 0)) < NOT_FOUND_DAYS * 86400
     with ui.progress(len(files), "Checking" if check else "Lyrics") as bar:
@@ -441,10 +517,12 @@ def lyrics(args, files=None):
                 continue
             text, synced = read_lyrics(p)
             if synced:
+                tidy(p, text)
                 counts["synced"] += 1
                 already += 1
                 continue
             if fresh(p):
+                tidy(p, text)
                 counts["plain" if text.strip() else "not_found"] += 1
                 continue
             if check:
@@ -465,6 +543,7 @@ def lyrics(args, files=None):
             new = new or (None if text.strip() else (found or {}).get("plainLyrics"))
             if not new:
                 seen[str(p)] = now
+                tidy(p, text)
                 counts["plain" if text.strip() else "not_found"] += 1
                 continue
             try:
@@ -474,8 +553,7 @@ def lyrics(args, files=None):
                 failed += 1
                 continue
             seen.pop(str(p), None)
-            is_synced = bool(SYNCED_RE.search(new))
-            counts["synced" if is_synced else "plain"] += 1
+            counts["synced" if is_synced(new) else "plain"] += 1
             if text.strip():
                 upgraded += 1  # plain lyrics replaced by time-synced ones
             else:
@@ -485,6 +563,7 @@ def lyrics(args, files=None):
         ui.ok("Lyrics added to %s songs; %s plain ones replaced by time-synced" % (mc.fmt_n(added), mc.fmt_n(upgraded)))
         # Every other song, said: why it has none, or why it kept what it had.
         for n, words in ((already, "already had time-synced lyrics"),
+                         (cleaned, "had a translation after a caret on each line: each is on its own line under its original now"),
                          (counts["plain"], "keep plain lyrics: LRCLIB has no time-synced ones for them"),
                          (counts["instrumental"], "are instrumentals"),
                          (counts["not_found"], "aren't on LRCLIB yet: asked again in a month"),
@@ -494,10 +573,10 @@ def lyrics(args, files=None):
                 ui.line("  " + text, "NOTE   " + text, kind="note", text=text)
         if failed:
             ui.warn("LRCLIB didn't answer for %s songs: run it again later" % mc.fmt_n(failed))
-    if not check and (added or upgraded):
+    if not check and (added or upgraded or cleaned):
         mc.Servers().ping(lib, "music")
     ui.result(action="lyrics", ok=True, check=check, songs=len(files), added=added, upgraded=upgraded,
-              failed=failed, **counts)
+              cleaned=cleaned, failed=failed, **counts)
 
 
 # ============================================================== file: new music from the inbox
