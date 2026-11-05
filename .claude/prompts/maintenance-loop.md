@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** nothing of this loop's. This file and `lanes.md` came in on `claude/fix-lanes`.
+**Open now:** #431 (`claude/fix-alerts-off-record`), `ALERTS_OFF` from item 2: take it to merged. #429 merged; `claude/fix-registry-busy` is gone.
 
 ## Your job
 
@@ -86,10 +86,10 @@ What is not yours: features (Account 1) and security findings (Account 3). When 
 
 Do these in order, one per round. Tick each with its PR number once it is known.
 
-1. **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
+1. **(#429, merged)** **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
-   - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`)
-   - `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`)
+   - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`). Waits for #425 to merge: `cmd/homelab/apps.go` reads it, and #425 claims that file.
+   - **(#431, open)** `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`): now `data/alerts-off.json`.
    - `APPS_PINNED` (`internal/api/pinned.go`, `cmd/homelab/pin.go`)
 
    On first run, read the old `.env` key, carry it over, then remove it, so nothing is lost on upgrade; prove it in `TestEachReleasesFolderUpgrades`. Top-level `data/*.json` goes off-site in the encrypted Secrets job, as `.env` does. Leave every other key the CLI writes where it is: secrets it generates (`NTFY_*`, `ADGUARD_*`, `KOPIA_*`), settings Compose reads (`VAULTWARDEN_SIGNUPS_ALLOWED`), and the owner's choices (`HOMELAB_DOMAIN`, `BACKUP_DESTINATION`). Leave the `<APP>_DIGEST` lines too: `cmd/homelab/versions.go` keeps them in `.env` on purpose, so a restore starts the version that wrote the data.
@@ -101,7 +101,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 
 ## For Account 1
 
-Nothing yet.
+- **A Finances smoke case timed out once in CI** (Nov 5, #429's first run, `smoke (light)`): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
 
@@ -112,6 +112,9 @@ Nothing yet.
 - `internal/lockedfile` (lock beside the file, replaced whole, 0600) and `internal/turn` (one queue for every process's changes) exist; use them.
 - Never build `web/dist` in a worktree whose `node_modules` is a symlink.
 - A force-push to reset a branch can be refused; merge main in instead.
+- A list moved out of `.env`: readers take the record and the old key together (nothing is lost before the carry-over), install's env step carries it over (`envfile.Delete` takes the key and its note), and it comes out of `.env.example`. `notify.CarryQuiet` (#431) is the pattern. `testdata/upgrades/make.sh v0.17.0` runs with that release's own CLI, to check what it writes.
+- A job's whole log: `get_job_logs` with `tail_lines` larger than the log (1500) is too big to show, so it is saved to a file you can grep (`logs_content` in its JSON). The run's zip of logs is blocked by the proxy.
+- Nov 4 and 5's nightly failures were all ghcr.io's per-minute limit (`toomanyrequests: retry-after: <µs>, allowed: 44000/minute`), hit by every job at about 11:01 UTC. #429 makes downloads wait it out. If it comes back, look at how long the tries span (`RegistryBusyWaits`) and at any `docker run` that pulls its own image.
 
 ## Rules that never bend
 

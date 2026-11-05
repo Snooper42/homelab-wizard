@@ -726,6 +726,19 @@ func TestWatchdogLeavesQuietAppsOutOfItsAlerts(t *testing.T) {
 	if env, _ := envfile.Load(filepath.Join(root, ".env")); env.Map()["ALERTS_OFF"] != "" {
 		t.Errorf("ALERTS_OFF=%q after notify on", env.Map()["ALERTS_OFF"])
 	}
+	// Kept in data/, not in .env.
+	if quiet := notify.LoadQuiet(root, nil); len(quiet) != 0 {
+		t.Errorf("still quiet after notify on: %v", quiet)
+	}
+	if _, code := homelabCmd(t, root, "", "notify", "off", "vaultwarden"); code != 0 {
+		t.Fatal("notify off failed")
+	}
+	if env, _ := envfile.Load(filepath.Join(root, ".env")); env.Map()["ALERTS_OFF"] != "" {
+		t.Errorf("notify off wrote .env: ALERTS_OFF=%q", env.Map()["ALERTS_OFF"])
+	}
+	if quiet := notify.LoadQuiet(root, nil); len(quiet) != 1 || quiet[0] != "vaultwarden" {
+		t.Errorf("data/alerts-off.json: %v", quiet)
+	}
 }
 
 func TestWatchdogNoticesACrashLoop(t *testing.T) {
