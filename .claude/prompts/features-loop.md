@@ -15,6 +15,7 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 These come before everything below; where they disagree with a later section, these win.
 
 - **State:** GitHub is the only source of truth: open PRs, remote branches, this file's order, the roadmap's *Built* marks. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs, and `git ls-remote origin 'refs/heads/claude/*'`.
+- **The three accounts:** `.claude/prompts/lanes.md` sets who owns what, how each lane claims files, and the order PRs merge in. Read it at the start of every round once it is on main; where it and this file disagree, it wins. You are Account 1, and you merge last when two lanes' PRs are green at once.
 - **Lanes:** you own `claude/feature-*` branches and the roadmap's features. `claude/fix-*` is the maintenance account's lane, and the Library cleanup ("Tidy Up") branch belongs to its own session. Never push to, merge, or rebase a branch outside your lane. Library cleanup is not yours: leave its roadmap section and its files alone.
 - **Merging:** maintenance (`claude/fix-*`) PRs go first; if one is green, don't race it. Before squash-merging, if main moved since your last CI run, merge main in and let CI run again. Always pin `expectedHeadSha`. Each merge is one release, so merge one PR at a time.
 - **Hot files** (merging main into a branch):
