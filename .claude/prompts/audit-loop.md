@@ -596,6 +596,14 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   a busy registry for the same pulls as before (pinned or catalog
   images), and nothing new is printed or sent. No code change needed.
 
+- **Round 27 (#431, read through):** an app's alerts off moved from
+  `.env` to `data/alerts-off.json`, saved whole under its lock, 0600,
+  holding only app IDs. A phone reaches it as before, through
+  SetAppSetting's "alerts", which needs Change and a catalog app ID; a
+  hand-edited record can only name apps, matched exactly. `envfile.Delete`
+  takes out the key and only the comment lines just above it. No code
+  change needed.
+
 ## For Account 2
 
 - **`data/restarts.json` is written in place, without a lock** (#427,
