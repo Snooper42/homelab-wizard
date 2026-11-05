@@ -788,3 +788,24 @@ struct LedgerChangeTests {
         #expect(LedgerEdit.removing(id: "", from: ledger) == nil)
     }
 }
+
+@Suite("Group actions")
+struct GroupActionTests {
+    @Test func targetsAsTheComputerPicksThem() throws {
+        let status = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"""
+        {"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"},
+                 {"id":"c","name":"C","state":"stopped"},{"id":"n","name":"N","state":"running","health":"native"},
+                 {"id":"m","name":"M","state":"missing"}],
+         "stopped":{"c":{"since":"2026-11-05T10:00:00Z"}}}
+        """#.utf8))
+        #expect(AppAction.groupTargets(.start, in: status.apps).map(\.id) == ["b"])     // c was stopped on purpose
+        #expect(AppAction.groupTargets(.restart, in: status.apps).map(\.id) == ["a"])   // n is native
+        #expect(AppAction.groupTargets(.stop, in: status.apps).map(\.id) == ["a"])
+        #expect(AppAction.groupTargets(.rollback, in: status.apps).isEmpty)
+    }
+
+    @Test func progressLabel() {
+        let p = AppActionsViewModel.GroupProgress(action: .restart, at: 1, of: 5)
+        #expect(p.label == "Restarting 2 of 5…")
+    }
+}

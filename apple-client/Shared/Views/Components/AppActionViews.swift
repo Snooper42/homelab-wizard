@@ -90,15 +90,15 @@ struct AppActionsPresenter: ViewModifier {
     func body(content: Content) -> some View {
         content
             .confirmationDialog(
-                actions.confirmation.map { $0.action.confirmationTitle(for: $0.app) } ?? "",
+                actions.confirmation?.title ?? "",
                 isPresented: confirming,
                 titleVisibility: .visible,
                 presenting: actions.confirmation
             ) { pending in
-                Button("\(pending.action.title) \(pending.app.name)", role: .destructive) { actions.confirm() }
+                Button(pending.button, role: .destructive) { actions.confirm() }
                 Button("Cancel", role: .cancel) { actions.confirmation = nil }
             } message: { pending in
-                Text(pending.action.confirmationMessage(for: pending.app))
+                Text(pending.message)
             }
             .sheet(item: $actions.details) { details in
                 ActionLogView(details: details)
@@ -125,8 +125,53 @@ struct AppActionsPresenter: ViewModifier {
 
 private extension AppActionsViewModel.UndoOffer {
     var bannerText: String {
-        guard let until else { return "Stopped \(app.name)" }
-        return "Stopped \(app.name) \(until.label.lowercased())"
+        let what = apps.count == 1 ? apps[0].name : "\(apps.count) apps"
+        guard let until else { return "Stopped \(what)" }
+        return "Stopped \(what) \(until.label.lowercased())"
+    }
+}
+
+/// Start, restart or stop all the apps in a list at once, as the
+/// computer's group menu does.
+struct GroupActionsMenu: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    let apps: [AppStatus]
+
+    var body: some View {
+        let start = AppAction.groupTargets(.start, in: apps)
+        let running = AppAction.groupTargets(.restart, in: apps)
+        if actions.canChange, !start.isEmpty || !running.isEmpty {
+            Menu {
+                if !start.isEmpty {
+                    Button { actions.requestGroup(.start, on: start) } label: {
+                        Label(start.count == 1 ? "Start \(start[0].name)" : AppAction.start.groupTitle(count: start.count), systemImage: AppAction.start.systemImage)
+                    }
+                }
+                if !running.isEmpty {
+                    Button { actions.requestGroup(.restart, on: running) } label: {
+                        Label(running.count == 1 ? "Restart \(running[0].name)" : AppAction.restart.groupTitle(count: running.count), systemImage: AppAction.restart.systemImage)
+                    }
+                    Button(role: .destructive) { actions.requestGroup(.stop, on: running) } label: {
+                        Label(running.count == 1 ? "Stop \(running[0].name)" : AppAction.stop.groupTitle(count: running.count), systemImage: AppAction.stop.systemImage)
+                    }
+                    Menu {
+                        ForEach(StopChoice.choices()) { choice in
+                            Button(choice.label) { actions.requestGroup(.stop, on: running, until: choice) }
+                        }
+                    } label: {
+                        Label("Stop for a While", systemImage: "timer")
+                    }
+                }
+            } label: {
+                if let group = actions.group {
+                    Text(group.label).font(.caption.monospacedDigit())
+                } else {
+                    Label("All of These", systemImage: "ellipsis.circle")
+                }
+            }
+            .disabled(actions.isBusy)
+            .accessibilityLabel(actions.group?.label ?? "Start, restart or stop them all")
+        }
     }
 }
 

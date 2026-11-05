@@ -132,12 +132,20 @@ private struct PhoneDashboard: View {
                 ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
                     let apps = model.apps(for: filter)
                     if !apps.isEmpty {
-                        Section(filter.title) {
+                        Section {
                             ForEach(apps) { app in
                                 NavigationLink(value: app.id) {
                                     AppRowView(app: app)
                                 }
                                 .appActionControls(for: app)
+                            }
+                        } header: {
+                            HStack {
+                                Text(filter.title)
+                                Spacer()
+                                GroupActionsMenu(apps: apps)
+                                    .textCase(nil)
+                                    .font(.caption)
                             }
                         }
                     }
@@ -257,7 +265,12 @@ private struct SplitDashboard: View {
         #endif
         .navigationSplitViewColumnWidth(min: 260, ideal: 320)
         .refreshable { await model.refresh() }
-        .toolbar { toolbarItems }
+        .toolbar {
+            toolbarItems
+            ToolbarItem(placement: .automatic) {
+                GroupActionsMenu(apps: apps)
+            }
+        }
     }
 
     @ToolbarContentBuilder

@@ -27,9 +27,19 @@ final class AppActionsViewModel {
 
     struct UndoOffer: Equatable, Identifiable {
         let id = UUID()
-        let app: AppStatus
+        /// The apps just stopped: one, or a group.
+        let apps: [AppStatus]
         /// Set for Stop for a while.
         let until: StopChoice?
+    }
+
+    /// A group action under way: "Restarting 2 of 5…".
+    struct GroupProgress: Equatable {
+        let action: AppAction
+        var at: Int
+        let of: Int
+
+        var label: String { "\(action.progressTitle.dropLast()) \(at + 1) of \(of)…" }
     }
 
     /// The command output shown in the Details sheet.
@@ -42,12 +52,29 @@ final class AppActionsViewModel {
     private(set) var pending: [AppStatus.ID: Pending] = [:]
     private(set) var isBusy = false
     private(set) var undo: UndoOffer?
-    /// A Stop or Roll back waiting for confirmation.
+    /// A Stop or Roll back waiting for confirmation, for one app or a group.
     struct Confirmation: Identifiable {
         let id = UUID()
         let action: AppAction
-        let app: AppStatus
+        let apps: [AppStatus]
+        var until: StopChoice? = nil
+
+        var title: String {
+            apps.count == 1 ? action.confirmationTitle(for: apps[0]) : "\(action.title) \(apps.count) apps?"
+        }
+
+        var button: String {
+            apps.count == 1 ? "\(action.title) \(apps[0].name)" : "\(action.title) All \(apps.count)"
+        }
+
+        var message: String {
+            if apps.count == 1 { return action.confirmationMessage(for: apps[0]) }
+            let names = apps.prefix(6).map(\.name).joined(separator: ", ") + (apps.count > 6 ? ", …" : "")
+            return "\(names). Nothing starts them again by itself until you do. Anyone using them right now loses them."
+        }
     }
+
+    private(set) var group: GroupProgress?
 
     var confirmation: Confirmation?
     var details: Details?
@@ -100,7 +127,7 @@ final class AppActionsViewModel {
     /// From a button: Stop and Roll back ask for confirmation first, and the others run.
     func request(_ action: AppAction, on app: AppStatus) {
         if action.needsConfirmation {
-            confirmation = Confirmation(action: action, app: app)
+            confirmation = Confirmation(action: action, apps: [app])
         } else {
             Task { await run(action, on: app) }
         }
@@ -115,7 +142,66 @@ final class AppActionsViewModel {
     func confirm() {
         guard let pending = confirmation else { return }
         confirmation = nil
-        Task { await run(pending.action, on: pending.app) }
+        if pending.apps.count == 1 {
+            Task { await run(pending.action, on: pending.apps[0], until: pending.until) }
+        } else {
+            Task { await runGroup(pending.action, on: pending.apps, until: pending.until) }
+        }
+    }
+
+    /// From a group menu: Stop asks for confirmation first, Stop for a
+    /// while (a time chosen) and the others run.
+    func requestGroup(_ action: AppAction, on apps: [AppStatus], until: StopChoice? = nil) {
+        let targets = AppAction.groupTargets(action, in: apps)
+        guard !targets.isEmpty else { return }
+        if action == .stop && until == nil {
+            confirmation = Confirmation(action: action, apps: targets)
+        } else {
+            Task { await runGroup(action, on: targets, until: until) }
+        }
+    }
+
+    /// Runs `action` on each app in turn, as the computer does: one change
+    /// at a time, stopping at the first that fails. It authenticates once.
+    func runGroup(_ action: AppAction, on apps: [AppStatus], until: StopChoice? = nil, checkAvailability: Bool = true) async {
+        let targets = checkAvailability ? AppAction.groupTargets(action, in: apps) : apps.filter { AppStatus.isValidID($0.id) }
+        guard !isBusy, canChange, !targets.isEmpty else { return }
+        isBusy = true
+        let reason = "\(action.title) \(targets.count) apps on your homelab."
+        guard await authorize(reason) else {
+            isBusy = false
+            return
+        }
+        var done: [AppStatus] = []
+        group = GroupProgress(action: action, at: 0, of: targets.count)
+        for (i, app) in targets.enumerated() {
+            group?.at = i
+            pending[app.id] = Pending(action: action)
+            do {
+                _ = try await api.perform(action, appID: app.id, until: action == .stop ? until : nil)
+                done.append(app)
+            } catch {
+                let apiError = APIError.from(error)
+                var log: [String] = []
+                var message = apiError.errorDescription ?? "It didn't work."
+                if case .actionFailed(let text, let lines) = apiError {
+                    message = text
+                    log = lines
+                }
+                Log.ui.error("Group \(action.rawValue, privacy: .public) stopped at \(i, privacy: .public): \(apiError.logName, privacy: .public)")
+                pending[app.id] = Pending(action: action, failure: message, log: log)
+                failureCount += 1
+                break
+            }
+        }
+        group = nil
+        isBusy = false
+        if !done.isEmpty { successCount += 1 }
+        if action == .stop, !done.isEmpty { offerUndo(for: done, until: until) }
+        await liveEvents.refreshNow()
+        for app in done where pending[app.id]?.failure == nil {
+            pending[app.id] = nil
+        }
     }
 
     /// Undo after a stop starts the app again. That's still a change, so
@@ -123,8 +209,12 @@ final class AppActionsViewModel {
     func performUndo() {
         guard let offer = undo else { return }
         dropUndo()
-        let app = liveEvents.status?.apps.first { $0.id == offer.app.id } ?? offer.app
-        Task { await run(.start, on: app, checkAvailability: false) }
+        let apps = offer.apps.map { app in liveEvents.status?.apps.first { $0.id == app.id } ?? app }
+        if apps.count == 1 {
+            Task { await run(.start, on: apps[0], checkAvailability: false) }
+        } else {
+            Task { await runGroup(.start, on: apps, checkAvailability: false) }
+        }
     }
 
     func dropUndo() {
@@ -163,7 +253,7 @@ final class AppActionsViewModel {
             pending[app.id]?.log = log
             successCount += 1
             isBusy = false
-            if action == .stop { offerUndo(for: app, until: until) }
+            if action == .stop { offerUndo(for: [app], until: until) }
             // Roll back's output says which version it went to: worth reading,
             // as on the computer, so it opens by itself.
             if action == .rollback, !log.isEmpty {
@@ -234,9 +324,9 @@ final class AppActionsViewModel {
         settingOverrides[key] = nil
     }
 
-    private func offerUndo(for app: AppStatus, until: StopChoice?) {
+    private func offerUndo(for apps: [AppStatus], until: StopChoice?) {
         undoTask?.cancel()
-        let offer = UndoOffer(app: app, until: until)
+        let offer = UndoOffer(apps: apps, until: until)
         undo = offer
         undoTask = Task { [weak self] in
             try? await Task.sleep(for: Self.undoFor)

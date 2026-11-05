@@ -55,6 +55,30 @@ enum AppAction: String, Sendable, CaseIterable, Identifiable {
     /// the app's page and in its menu.
     var isEveryday: Bool { self != .rollback }
 
+    /// The apps a group action covers, as the computer's group menu picks
+    /// them: Start covers the stopped apps, except those stopped on purpose,
+    /// which are started each from its own row. Restart and Stop cover the
+    /// running ones. Native apps and Roll back are never in a group.
+    static func groupTargets(_ action: AppAction, in apps: [AppStatus]) -> [AppStatus] {
+        apps.filter { app in
+            guard !app.isNative, AppStatus.isValidID(app.id) else { return false }
+            switch action {
+            case .start: return app.state == "stopped" && app.stoppedOnPurpose == nil
+            case .restart, .stop: return app.isRunning
+            case .rollback: return false
+            }
+        }
+    }
+
+    func groupTitle(count: Int) -> String {
+        switch self {
+        case .start: "Start the \(count) Stopped"
+        case .restart: "Restart the \(count) Running"
+        case .stop: "Stop the \(count) Running"
+        case .rollback: "Roll Back"
+        }
+    }
+
     func confirmationTitle(for app: AppStatus) -> String {
         switch self {
         case .rollback: "Roll back \(app.name)?"
