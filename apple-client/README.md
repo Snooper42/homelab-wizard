@@ -76,7 +76,7 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
    - On Xcode 26, set **Default Actor Isolation = nonisolated**. The new-project default is MainActor, but these sources mark `@MainActor` explicitly where needed. Under a MainActor default, the model and parser types would be main-actor-bound, and the background stream reader couldn't use them.
 5. In **Info** (Info.plist keys):
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
-   - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. Without it, the scan button doesn't show.
+   - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. The first tap on Scan asks for the camera; if it's refused, the app says how to allow it, and the address and code can still be typed.
    - `NSLocalNetworkUsageDescription`: "Homelab talks to your homelab on the home network." iOS (and macOS 15) ask before an app reaches a home-network address such as the one `homelab.<your domain>` resolves to; this is the reason the prompt shows. Allow it, or the connection fails. Loopback on the Mac needs no permission.
    - `NSAppTransportSecurity` › `NSAllowsLocalNetworking` = YES (macOS; in Xcode's Info tab, *App Transport Security Settings › Allow Local Networking*). It's for the companion on the same Mac (`localhost:8099`) only. Add no other exceptions: the app itself refuses plain http to anything but loopback.
    - `ITSAppUsesNonExemptEncryption` = NO. The app's only encryption is the system's HTTPS and Keychain, which is exempt, so App Store Connect stops asking at each upload.

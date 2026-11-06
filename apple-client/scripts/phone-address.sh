@@ -56,12 +56,13 @@ esac
 
 # 2. The certificate and the companion behind the proxy. Without a token the
 #    companion answers 401 ("not paired"): that means the whole way works.
+ERRFILE="$(mktemp)"
 set +e
-CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$URL/api/me" 2>"${TMPDIR:-/tmp}/phone-address.err")"
+CODE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$URL/api/me" 2>"$ERRFILE")"
 RC=$?
 set -e
-ERR="$(cat "${TMPDIR:-/tmp}/phone-address.err" 2>/dev/null || true)"
-rm -f "${TMPDIR:-/tmp}/phone-address.err"
+ERR="$(cat "$ERRFILE" 2>/dev/null || true)"
+rm -f "$ERRFILE"
 case "$RC:$CODE" in
   0:401)
     echo "✓ The certificate is trusted, and the companion answers through the proxy."

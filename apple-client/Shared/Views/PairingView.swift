@@ -6,6 +6,7 @@ struct PairingView: View {
     @State private var model: PairingViewModel
     @FocusState private var focus: Field?
     @State private var scanning = false
+    @State private var cameraRefused = false
     private let notice: String?
 
     private enum Field: Hashable { case server, code, name }
@@ -74,9 +75,20 @@ struct PairingView: View {
             #if os(iOS)
             if QRScannerView.isAvailable {
                 Button {
-                    scanning = true
+                    Task {
+                        if await QRScannerView.requestAccess() {
+                            scanning = true
+                        } else {
+                            cameraRefused = true
+                        }
+                    }
                 } label: {
                     Label("Scan the Computer's QR Code", systemImage: "qrcode.viewfinder")
+                }
+                .alert("The Camera Isn't Allowed", isPresented: $cameraRefused) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text("To scan, allow the camera in Settings › Homelab. Or type the address and the code instead.")
                 }
                 .sheet(isPresented: $scanning) {
                     NavigationStack {
