@@ -52,54 +52,9 @@ struct AppDetailView: View {
 
                 updatesSection(for: app)
 
-                Section("Details") {
-                    LabeledContent("State", value: app.stateLabel)
-                    if let health = app.health, !health.isEmpty {
-                        LabeledContent("Health", value: health.capitalized)
-                    }
-                    if app.isRunning, let started = app.startedAt {
-                        LabeledContent("Started") {
-                            Text(started, format: .relative(presentation: .named))
-                        }
-                        if let why = app.startedWords {
-                            Text(why).font(.callout).foregroundStyle(.secondary)
-                        }
-                    }
-                    if let restarts = app.restarts, restarts > 0 {
-                        LabeledContent("Restarts", value: restarts.formatted())
-                    }
-                    if let container = app.container, !container.isEmpty {
-                        LabeledContent("Container") {
-                            Text(container).textSelection(.enabled)
-                        }
-                    }
-                    if let drive = app.waitingFor, !drive.isEmpty {
-                        LabeledContent("Waiting for drive", value: AppStatus.driveName(drive))
-                        Text("It starts by itself within a minute of the drive being plugged in again.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                detailsSection(for: app)
 
-                if app.address != nil || app.url != nil {
-                    Section {
-                        if let address = app.address, let url = Self.httpsURL(address) {
-                            Link(destination: url) {
-                                LabeledContent("Homelab domain", value: address)
-                            }
-                        }
-                        if let local = app.url, !local.isEmpty {
-                            LabeledContent("On the computer") {
-                                Text(local).textSelection(.enabled)
-                            }
-                        }
-                    } header: {
-                        Text("Addresses")
-                    } footer: {
-                        Text(Self.reach(isPublic: dashboard.catalog?.entry(app.id)?.isPublic == true,
-                                        hasAddress: !(app.address ?? "").isEmpty))
-                    }
-                }
+                addressesSection(for: app)
 
                 if app.hasLogs {
                     Section {
@@ -126,6 +81,60 @@ struct AppDetailView: View {
             #endif
         } else {
             ContentUnavailableView("App Not Found", systemImage: "questionmark.app", description: Text("It's no longer in the status."))
+        }
+    }
+
+    private func detailsSection(for app: AppStatus) -> some View {
+        Section("Details") {
+            LabeledContent("State", value: app.stateLabel)
+            if let health = app.health, !health.isEmpty {
+                LabeledContent("Health", value: health.capitalized)
+            }
+            if app.isRunning, let started = app.startedAt {
+                LabeledContent("Started") {
+                    Text(started, format: .relative(presentation: .named))
+                }
+                if let why = app.startedWords {
+                    Text(why).font(.callout).foregroundStyle(.secondary)
+                }
+            }
+            if let restarts = app.restarts, restarts > 0 {
+                LabeledContent("Restarts", value: restarts.formatted())
+            }
+            if let container = app.container, !container.isEmpty {
+                LabeledContent("Container") {
+                    Text(container).textSelection(.enabled)
+                }
+            }
+            if let drive = app.waitingFor, !drive.isEmpty {
+                LabeledContent("Waiting for drive", value: AppStatus.driveName(drive))
+                Text("It starts by itself within a minute of the drive being plugged in again.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func addressesSection(for app: AppStatus) -> some View {
+        if app.address != nil || app.url != nil {
+            Section {
+                if let address = app.address, let url = Self.httpsURL(address) {
+                    Link(destination: url) {
+                        LabeledContent("Homelab domain", value: address)
+                    }
+                }
+                if let local = app.url, !local.isEmpty {
+                    LabeledContent("On the computer") {
+                        Text(local).textSelection(.enabled)
+                    }
+                }
+            } header: {
+                Text("Addresses")
+            } footer: {
+                Text(Self.reach(isPublic: dashboard.catalog?.entry(app.id)?.isPublic == true,
+                                hasAddress: !(app.address ?? "").isEmpty))
+            }
         }
     }
 
