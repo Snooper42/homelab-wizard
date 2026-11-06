@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
 | Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
 | Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
@@ -159,8 +160,8 @@ Few, clear, and useful when they come.
 The homelab as something a family uses, not one person.
 
 - **Guest access** (M, *Idea*): a guest's sign-in to chosen apps (Jellyfin, an Immich album) that ends on a date.
-- **A printable welcome sheet** (S, *Idea*): each person's apps, addresses, and QR codes on one page for the fridge.
-- **Each person's apps** (S, *Idea*): a person's welcome page lists only the apps they use, with their phone app for each.
+- **A printable welcome sheet** (S, *Built*, #446): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.
+- **Each person's apps** (S, *Built*): a person's welcome page lists only the apps they use, with their phone app for each (`homelab person apps <name> <app>…`).
 - **What's new for the family** (S, *Idea*): a short page in plain words when an app they use gains something (a new player in Navidrome), not the technical notes.
 
 ## Apps and the catalog
