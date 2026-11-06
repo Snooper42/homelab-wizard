@@ -26,6 +26,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Asset is one archive to fetch: where, its pinned SHA-256 and size, and
@@ -169,7 +171,7 @@ func Fetch(ctx context.Context, home, goos string, pin Pin, o FetchOptions) erro
 		rec.URLs = append(rec.URLs, a.URL)
 	}
 	data, _ := json.MarshalIndent(rec, "", "  ")
-	return os.WriteFile(filepath.Join(dir, "ffmpeg.json"), data, 0o644)
+	return lockedfile.Write(filepath.Join(dir, "ffmpeg.json"), data, 0o644)
 }
 
 // download writes a's archive to file, hashing it as it arrives; a file that
