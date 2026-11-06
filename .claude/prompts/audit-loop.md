@@ -463,7 +463,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     on GitHub. Does the Mac copy's code signature (and Team ID) get
     checked before it replaces the app, and what do Linux and Windows
     check?
-45. **Pairing's demotions are separate saves** (internal/companion
+45. (done: round 55, N25 open) **Pairing's demotions are separate saves** (internal/companion
     server.go `pair`): a kiosk or a phone paired over plain HTTP is saved
     first with the code's permissions, then lowered in up to three more
     saves (`SetCanChange`, `SetFinances`, `MarkUnencrypted`). With N22's
@@ -1026,6 +1026,26 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   and a broken signature. Windows and Linux builds are not signed:
   item 55. Also read #458 (memory pressure) as it merged: its alert
   names apps and figures only. gosec clean on the change.
+
+- **Round 55 (item 45, pairing's demotions; N25):** the separate saves
+  are safe: `pair` sends the token only after every lowering has saved,
+  and any error answers 500 without it, so a failure part-way leaves a
+  device no one holds a token for, not one with too much; a lowering
+  saved over by another process is N22's, fixed with it. Found on the
+  way, **N25 (Medium), open as a decision:** whether a pairing phone
+  came over https is read from `X-Forwarded-Proto`, which anyone sends,
+  so a code caught on the Wi-Fi (the plain `:8099` link sends it in
+  clear) and used first with the header gets the code's changes and
+  Finances, not look-only; the companion's own proxy host passes the
+  header on too (`trust_forwarded_proto` on every route). The existing
+  `TestPairingOverTheHomeWiFiIsReadOnly` shows it: it uses
+  `192.168.1.20` with the header to stand for the proxy, as the server
+  cannot tell the two apart. Not fixed here: the proxy reaches the
+  companion from loopback, OrbStack's address, the bridge's gateway, or
+  its own container address (with `HOST_GATEWAY` the LAN address), so
+  no address rule holds; a header only the proxy adds, with
+  `trust_forwarded_proto` off for the companion's host, changes every
+  domain install's proxy and is for the owner (Decisions to look at).
 
 ## For Account 1
 
