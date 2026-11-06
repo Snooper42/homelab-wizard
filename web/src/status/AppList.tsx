@@ -254,9 +254,40 @@ interface MenuAt { id: string; x: number; y: number; from: Element | null }
 
 function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void; said?: string; say: (id: string, words: string) => void }) {
   const pend = p.pending[a.id];
-  // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
-  const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
+  // Its menu: on this computer, and on a phone that may make changes (a
+  // long press); never on a look-only phone or a wall screen, nor for an
+  // app not installed or run elsewhere.
+  // The phone's level is read when the finger is down: it can come after the rows were drawn, and change.
+  const phoneMay = () => { const c = document.documentElement.classList; return c.contains('can-change') && !c.contains('kiosk'); };
+  const menuable = a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  // A long press, as on the phone's own Home Screen: half a second held
+  // still opens the row's menu where the finger is, and the click that
+  // follows the press is not taken as opening the app's page. Listened for
+  // by name, so it works wherever touch events come, not only where the
+  // browser says it has a touchscreen.
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  const opener = useRef(openMenu);
+  opener.current = openMenu;
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || !menuable || !p.companion) return;
+    let at: { timer: number; x: number; y: number; opened: boolean } | null = null;
+    const stop = () => { if (at) clearTimeout(at.timer); at = null; };
+    const start = (e: TouchEvent) => {
+      if (!phoneMay() || (e.target as Element).closest('.rowmenu') || e.touches.length !== 1) return;
+      const t = e.touches[0], press = { x: t.clientX, y: t.clientY, opened: false, timer: 0 };
+      press.timer = window.setTimeout(() => { press.opened = true; opener.current(press.x, press.y); }, 500);
+      at = press;
+    };
+    const move = (e: TouchEvent) => { const t = e.touches[0]; if (at && t && Math.hypot(t.clientX - at.x, t.clientY - at.y) > 10) stop(); };
+    const end = (e: TouchEvent) => { if (at?.opened) e.preventDefault(); stop(); };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', stop);
+    return () => { stop(); el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', stop); };
+  }, [menuable, p.companion]);
   // ⌥-click on its address: copied, as the menu's Copy address does.
   const copy = (url: string) => { p.on.menu.copy(url).then(() => say(a.id, 'Address copied'), () => say(a.id, 'Could not copy the address')); };
   const close = (refocus?: boolean) => {
@@ -271,10 +302,10 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
-    <tr aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
+    <tr ref={rowRef} aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
       onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu, .hovers')) p.on.page(a); } : undefined}
-      onContextMenu={menuable ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
-      onKeyDown={menuable ? (e) => {
+      onContextMenu={menuable && (!p.companion || phoneMay()) ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
+      onKeyDown={menuable && !p.companion ? (e) => {
         // Shift+F10 and the context-menu key: under the app's name.
         if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.rowmenu')) return;
         e.preventDefault();

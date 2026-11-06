@@ -176,6 +176,7 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 			return err
 		}
 		_ = os.Remove(people.WelcomePath(h.root, p.Username))
+		_ = os.Remove(people.SheetPath(h.root, p.Username))
 		u.OK("%s can no longer sign in with Pocket ID; their data stays", p.Name)
 		h.afterChange(ctx)
 		return nil
@@ -235,12 +236,23 @@ func (h *homelab) welcome(ctx context.Context, api *sso.PocketID, issuer string,
 			w.StartPage = h.startPage(report, env, p, w.Tailnet, len(w.Apps))
 		}
 	}
-	var b bytes.Buffer
-	if err := people.Render(&b, w); err != nil {
-		return err
-	}
 	path := people.WelcomePath(h.root, p.Username)
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	// The sheet for the fridge, beside it: their apps and a code for each,
+	// never the sign-in link or a password.
+	var sh bytes.Buffer
+	if err := people.RenderSheet(&sh, w); err != nil {
+		return err
+	}
+	sheet := people.SheetPath(h.root, p.Username)
+	if err := os.WriteFile(sheet, sh.Bytes(), 0o600); err != nil {
+		return err
+	}
+	w.Sheet = filepath.Base(sheet)
+	var b bytes.Buffer
+	if err := people.Render(&b, w); err != nil {
 		return err
 	}
 	if err := os.WriteFile(path, b.Bytes(), 0o600); err != nil {
@@ -257,6 +269,7 @@ func (h *homelab) welcome(ctx context.Context, api *sso.PocketID, issuer string,
 		u.Printf("  %s\n", u.Dim("Their "+strings.Join(with, " and ")+" password is on it and nowhere else: the homelab does not keep it."))
 	}
 	u.Printf("  %s\n", u.Dim("Send it to them, or open it and print it. Their sign-in link works once, for 7 days."))
+	u.Printf("  %s\n", u.Dim("For the fridge, without passwords or the link: "+h.rel(sheet)))
 	return nil
 }
 
