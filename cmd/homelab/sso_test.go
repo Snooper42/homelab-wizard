@@ -53,6 +53,15 @@ func TestSSOSetup(t *testing.T) {
 	if !strings.Contains(strings.Join(callbacks, " "), "https://links.example.com/api/auth/callback/custom") {
 		t.Errorf("callbacks: %v", callbacks)
 	}
+	// A copy first: Karakeep's database is dumped before it starts again signing in with Pocket ID.
+	log := readCalls(t, calls)
+	dump, up := strings.Index(log, "--volumes-from karakeep homelab/sqlite"), strings.Index(log, "--force-recreate karakeep")
+	if dump < 0 || up < 0 || dump > up || !strings.Contains(out, "dumping karakeep first, before Karakeep signs in with Pocket ID") {
+		t.Errorf("no dump before the recreate (dump at %d, recreate at %d):\n%s", dump, up, out)
+	}
+	if dumps, _ := filepath.Glob(filepath.Join(root, "recovery-staging", "databases", "karakeep", "karakeep-*.sqlite.gz")); len(dumps) != 1 {
+		t.Errorf("dumps kept: %v", dumps)
+	}
 	if !strings.Contains(readCalls(t, calls), "up --detach --no-deps --force-recreate karakeep") {
 		t.Errorf("karakeep was not recreated:\n%s", readCalls(t, calls))
 	}
