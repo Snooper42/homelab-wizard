@@ -58,7 +58,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+	if err := h.makeLogsDir(); err != nil {
 		return err
 	}
 	if slices.Contains(args, "--login-item") {
@@ -214,7 +214,7 @@ func openJobLog(dir, name string, limit int64) (*os.File, error) {
 			return nil, err
 		}
 	}
-	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 }
 
 // splitLog moves the older half of path, up to a line's end, to older.
@@ -234,7 +234,7 @@ func splitLog(path, older string) error {
 		data []byte
 	}{{older, data[:cut]}, {path, data[cut:]}} {
 		tmp := f.path + ".tmp"
-		if err := os.WriteFile(tmp, f.data, 0o644); err != nil {
+		if err := os.WriteFile(tmp, f.data, 0o600); err != nil {
 			return err
 		}
 		if err := os.Rename(tmp, f.path); err != nil {
