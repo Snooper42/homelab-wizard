@@ -564,6 +564,11 @@ func Rehome(envPath string, id Identity) ([]Change, error) {
 // for encryption/secret keys, otherwise 32 alphanumeric characters.
 func NewSecret(key string) (string, error) {
 	upper := strings.ToUpper(key)
+	if upper == "TDARR_API_KEY" {
+		// Tdarr takes a seeded key only in its own shape (tried, 3.06).
+		s, err := NewSecret("TDARR_KEY")
+		return "tapi_" + s, err
+	}
 	if strings.Contains(upper, "ENCRYPTION_KEY") || strings.Contains(upper, "SECRET_KEY") {
 		b := make([]byte, 32)
 		if _, err := rand.Read(b); err != nil {

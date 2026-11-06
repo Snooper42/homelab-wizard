@@ -69,6 +69,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up signs in to a new Tdarr by itself:** Tdarr 3 takes no sign-up, so on a new Tdarr Tidy Up couldn't make its account and every Shrink stopped at *Tdarr asks for a sign-in*. The homelab now gives Tdarr a key of its own when it's installed (and gives one to a Tdarr installed before, restarting it once), and Tidy Up signs in with it.
 - **Saves on Windows wait for a reader instead of failing:** on Windows a settings file or record can't be replaced while another part of the homelab is reading it, and a save gave up after a fifth of a second. It now keeps trying, in the gaps, for up to two seconds.
 - **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
