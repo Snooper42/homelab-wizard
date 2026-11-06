@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Two apps that do the same job:** Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor, Navidrome and Jellyfin's music), and why you might keep one or both.
 - **What the apps have saved so far:** on Status, hover (or Tab to) the figure under *Replaces a year* for what they have saved since the first nightly record, and month by month.
 - **What changed since last night:** on Backups, each app's copy shows the night before's size on hover, and beside it when it moved by a tenth; a copy less than half the night before's is marked in red, so an app that lost its data is noticed before the old copies age out.
 - **What CrowdSec stopped:** the proxy's page (and CrowdSec's) lists every address stopped since midnight, with where it came from, what it tried, the time, and whether it's still banned.

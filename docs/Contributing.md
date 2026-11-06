@@ -102,6 +102,7 @@ Use `../../appdata/<name>/...` for bind mounts so data sits next to the other st
 | `version` | For a PostgreSQL database (`dump: postgres`): the `.env` setting with its major version, used in its image as `postgres:${KEY:-N}`; `homelab db upgrade` moves it on |
 | `proxy_host` | Reach the UI through another container (qBittorrent through `gluetun`) |
 | `conflicts` | Apps that cannot run alongside it |
+| `same_job` | Apps that do much the same, each with one line on why you might keep one or both (`kavita: "Both read comics…"`). Written on one side of a pair; Choose stacks says it on both, beside the one you don't run yet |
 | `doc` | A different note path |
 | `releases` | The GitHub project (`owner/name`) the image's releases are published in, when the image does not say (no `org.opencontainers.image.source` label, not on `ghcr.io`): Update shows their notes |
 | `pin` | Why the image is updated by hand rather than by the nightly updates (a database, a cache, and a locally built image are by hand already) |
