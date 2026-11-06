@@ -1362,9 +1362,9 @@
     own = logos || {};
   };
   var ownKey = (brand, name) => brand && brand !== "none" ? brand : "name:" + words(name || "").trim();
-  function Mark({ brand, kind, name, type, size, img, auto }) {
+  function Mark({ brand, kind, name, type, size: size2, img, auto }) {
     const b2 = brand ? brands[brand] : void 0;
-    const cls = "fmark" + (size ? " " + size : "");
+    const cls = "fmark" + (size2 ? " " + size2 : "");
     const mine = img ?? own[ownKey(brand, name)];
     if (mine) return /* @__PURE__ */ u3("span", { class: cls + " logo art own", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: mine, alt: "" }) });
     if (b2?.art) return /* @__PURE__ */ u3("span", { class: cls + " logo art", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(b2.art), alt: "" }) });
@@ -1488,11 +1488,11 @@
     return m3 && brands[models[m3]] ? models[m3] : void 0;
   }
   var payeeBrand = (institution, payee) => institution === "none" ? void 0 : brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
-  function AcctMark({ a: a3, size }) {
-    return /* @__PURE__ */ u3(Mark, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size });
+  function AcctMark({ a: a3, size: size2 }) {
+    return /* @__PURE__ */ u3(Mark, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size: size2 });
   }
-  function Who({ name, n: n3, size }) {
-    return /* @__PURE__ */ u3("span", { class: `fwho p${n3}` + (size ? " " + size : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
+  function Who({ name, n: n3, size: size2 }) {
+    return /* @__PURE__ */ u3("span", { class: `fwho p${n3}` + (size2 ? " " + size2 : ""), "aria-hidden": "true", children: (name || "?").charAt(0).toUpperCase() });
   }
   function brandsFor(kind) {
     const want = { checking: ["bank"], savings: ["bank"], card: ["card", "bank"], investment: ["investment"], retirement: ["investment"], loan: ["bank"], car: ["car"], home: ["home"] }[kind];
@@ -1523,8 +1523,8 @@
     return h3 === "music" ? "streaming" : h3 && subTypes.some(([k3]) => k3 === h3) ? h3 : "";
   }
   var typeOf = (x3) => x3.type || suggestType(x3.institution, x3.name) || "other";
-  function PayMark({ x: x3, size }) {
-    return /* @__PURE__ */ u3(Mark, { brand: brandOf(x3?.institution, x3?.name), kind: x3?.kind, name: x3?.name || "?", type: x3?.kind === "subscriptions" ? x3?.type : void 0, size });
+  function PayMark({ x: x3, size: size2 }) {
+    return /* @__PURE__ */ u3(Mark, { brand: brandOf(x3?.institution, x3?.name), kind: x3?.kind, name: x3?.name || "?", type: x3?.kind === "subscriptions" ? x3?.type : void 0, size: size2 });
   }
   var brandKinds = Object.fromEntries(Object.entries({
     utilities: "spectrum xfinity cox optimum googlefiber starlink frontier centurylink dukeenergy pge coned",
@@ -6180,8 +6180,8 @@
     if (back.length) parts2.push(`${back.length} rolled back`);
     if (n3.copies) {
       const made2 = n3.copies.filter((c3) => within(c3.newest));
-      const size = made2.reduce((t3, c3) => t3 + (c3.size || 0), 0);
-      if (made2.length) parts2.push(size > 0 ? `a backup of ${bytes(size)}` : "the backup ran");
+      const size2 = made2.reduce((t3, c3) => t3 + (c3.size || 0), 0);
+      if (made2.length) parts2.push(size2 > 0 ? `a backup of ${bytes(size2)}` : "the backup ran");
     }
     const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
     const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back.includes(e3));
@@ -7679,14 +7679,14 @@
     const [broken, setBroken] = d2("");
     const [drawn, setDrawn] = d2({ of: "", size: "" });
     if (!icon || broken === icon) return /* @__PURE__ */ u3("span", { class: "appmark", "aria-hidden": "true", children: name.slice(0, 1) });
-    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size = drawn.of === icon ? drawn.size : "";
+    const picture = /^data:image\/(png|jpeg|webp)/.test(icon), size2 = drawn.of === icon ? drawn.size : "";
     const measure = (w3) => setDrawn({ of: icon, size: w3 > 0 && w3 <= 24 && !icon.startsWith("data:image/svg") ? "small" : picture && w3 >= 120 ? "fill" : "" });
-    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
+    return /* @__PURE__ */ u3("span", { class: "appmark icon" + (size2 === "fill" ? " fill" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3(
       "img",
       {
         src: icon,
         alt: "",
-        class: size === "small" ? "small" : "",
+        class: size2 === "small" ? "small" : "",
         onError: () => setBroken(icon),
         onLoad: (e3) => measure(e3.currentTarget.naturalWidth)
       }
@@ -8426,8 +8426,8 @@
       ] })
     ] });
   }
-  function Stat({ value, caption, aside, size = "md" }) {
-    return /* @__PURE__ */ u3("div", { class: "fx-stat " + size, children: [
+  function Stat({ value, caption, aside, size: size2 = "md" }) {
+    return /* @__PURE__ */ u3("div", { class: "fx-stat " + size2, children: [
       /* @__PURE__ */ u3("div", { class: "fx-statmain", children: [
         /* @__PURE__ */ u3("div", { class: "fx-figure", children: value }),
         aside && /* @__PURE__ */ u3("div", { class: "fx-aside", children: aside })
@@ -8640,10 +8640,10 @@
     const c3 = (categories2 || []).find((q2) => q2.name.toLowerCase() === (name || "").toLowerCase());
     return c3?.icon || (c3?.parent ? iconOf(categories2, c3.parent) : void 0);
   }
-  function TxMark({ t: t3, size, categories: categories2 }) {
+  function TxMark({ t: t3, size: size2, categories: categories2 }) {
     const brand = t3.to ? void 0 : payeeBrand(t3.institution, t3.payee);
     const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
-    return /* @__PURE__ */ u3(Mark, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size, auto: !t3.to && !icon && t3.institution !== "none" && !!t3.payee?.trim() });
+    return /* @__PURE__ */ u3(Mark, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size: size2, auto: !t3.to && !icon && t3.institution !== "none" && !!t3.payee?.trim() });
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
@@ -10112,10 +10112,10 @@ ${pays}
     return out;
   }
   var named4 = (e3, L2) => e3.people?.length ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment || ""]?.name || e3.payment || "";
-  function Lead({ e: e3, L: L2, size }) {
-    if (e3.people?.length) return /* @__PURE__ */ u3("span", { class: "fwhos", children: e3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size }, id2)) });
+  function Lead({ e: e3, L: L2, size: size2 }) {
+    if (e3.people?.length) return /* @__PURE__ */ u3("span", { class: "fwhos", children: e3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0, size: size2 }, id2)) });
     const x3 = L2.payment[e3.payment || ""];
-    return /* @__PURE__ */ u3(PayMark, { x: x3, size });
+    return /* @__PURE__ */ u3(PayMark, { x: x3, size: size2 });
   }
   var onCard = (e3, L2) => `on ${L2.account[e3.card || ""]?.name || "a card"}` + (e3.due ? `, due ${dayShort(e3.due)}` : "");
   var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
@@ -10369,10 +10369,10 @@ ${pays}
   function Dot({ color, shape = "round" }) {
     return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
   }
-  function SplitBar({ parts: parts2, label, size = "md" }) {
+  function SplitBar({ parts: parts2, label, size: size2 = "md" }) {
     const total = parts2.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
     const said = parts2.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-split " + size, role: "img", "aria-label": `${label}: ${said}`, children: parts2.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
+    return /* @__PURE__ */ u3("div", { class: "fx-split " + size2, role: "img", "aria-label": `${label}: ${said}`, children: parts2.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
   }
   function Legend({ items, layout = "list" }) {
     return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
@@ -10493,12 +10493,12 @@ ${pays}
       /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown5 ? "on" : "", children: c3.label }, i3)) })
     ] });
   }
-  function Donut({ slices, center, size = 150, label }) {
+  function Donut({ slices, center, size: size2 = 150, label }) {
     const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
     const r3 = 56, c3 = 2 * Math.PI * r3, gap = slices.length > 1 ? 2 : 0;
     let run2 = 0;
     const said = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size}px`, height: `${size}px` }, children: [
+    return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size2}px`, height: `${size2}px` }, children: [
       /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
         const len = Math.max(0, s3.value) / total * c3;
         const el3 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
@@ -12974,6 +12974,19 @@ ${pays}
     if (kind === "music" && action === "lyrics" && args.includes("--tidy")) return "Tidying lyrics";
     return titles[`${kind} ${action}`] || `${names2[kind] || kind}: ${action.replace(/-/g, " ")}`;
   }
+  function size(v3) {
+    if (!v3) return "—";
+    let f4 = v3, i3 = 0;
+    const units2 = ["bytes", "KB", "MB", "GB", "TB"];
+    while (f4 >= 1e3 && i3 < units2.length - 1) {
+      f4 /= 1e3;
+      i3++;
+    }
+    if (i3 === 0) return `${Math.trunc(f4)} bytes`;
+    if (f4 >= 100) return `${Math.round(f4)} ${units2[i3]}`;
+    const tenths = Math.round(f4 * 10);
+    return `${tenths % 10 ? (tenths / 10).toFixed(1) : tenths / 10} ${units2[i3]}`;
+  }
   var n2 = (v3) => typeof v3 === "number" ? v3 : Number(v3) || 0;
   var count = (v3, one, many = one + "s") => `${v3.toLocaleString()} ${v3 === 1 ? one : many}`;
   var lib = (d3, kind) => d3.libraries.find((l3) => l3.kind === kind);
@@ -13245,7 +13258,7 @@ ${pays}
       const changing = review2 ? review2.filter((b2) => !b2.held).map((b2) => b2.title) : [];
       const many = review2 ? changing.length : Math.max(0, n2(rv?.result?.changes) - (rv?.result?.held || []).length);
       if (!rv) out.push({ kind: k3, title: "Look over your books", sub: "Titles, series, publishers, genres, and covers: nothing changes until you say", go: { label: "Review", run: () => act.review() } });
-      else if (many) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => pick("books") } });
+      else if (many) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => act.review() } });
     } else if (k3 === "audiobooks") {
       if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "A scan finds books split into many files and changes nothing", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
       else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
@@ -13261,7 +13274,7 @@ ${pays}
         sub: t3.sub,
         subTone: t3.warn ? "warn" : void 0,
         end: /* @__PURE__ */ u3(S, { children: [
-          !!t3.gain && /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: bytes(t3.gain) }),
+          !!t3.gain && /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: size(t3.gain) }),
           t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: !t3.go.quiet, job: job2, onClick: t3.go.run })
         ] })
       },
@@ -13333,11 +13346,11 @@ ${pays}
     const measuring = d3.libraries.some((l3) => l3.found && !l3.size);
     return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrive", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
-        bytes(dr.free),
+        size(dr.free),
         /* @__PURE__ */ u3("small", { children: " free" })
-      ] }), caption: `Of ${bytes(dr.total)}${d3.freed ? " · " + bytes(d3.freed) + " won back so far" : ""}` }),
+      ] }), caption: `Of ${size(dr.total)}${d3.freed ? " · " + size(d3.freed) + " won back so far" : ""}` }),
       /* @__PURE__ */ u3(SplitBar, { parts: [...parts2, { label: "Free", value: dr.free, color: "track" }], label: "The drive" }),
-      /* @__PURE__ */ u3(Legend, { items: [...parts2.map((p3) => ({ label: p3.label, color: p3.color, value: bytes(p3.value) })), { label: "Free", color: "track", value: bytes(dr.free) }] }),
+      /* @__PURE__ */ u3(Legend, { items: [...parts2.map((p3) => ({ label: p3.label, color: p3.color, value: size(p3.value) })), { label: "Free", color: "track", value: size(dr.free) }] }),
       measuring && /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Measuring the rest: it takes a few minutes on a big drive." })
     ] });
   }
@@ -13346,13 +13359,13 @@ ${pays}
     const parts2 = [{ label: "Lean", value: n2(c3.lean), color: "in" }, { label: "Could shrink", value: n2(c3.bloated), color: "out" }, { label: "With Tdarr", value: n2(c3.queued) + n2(l3.waiting), color: "save" }];
     const total = parts2.reduce((t3, p3) => t3 + p3.value, 0);
     return /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: [
-      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: l3.size ? bytes(l3.size) : total ? things(l3.kind, total) : "—" }), caption: l3.size && total ? things(l3.kind, total) : l3.freed ? bytes(l3.freed) + " won back" : "Measured after a scan" }),
+      /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: l3.size ? size(l3.size) : total ? things(l3.kind, total) : "—" }), caption: l3.size && total ? things(l3.kind, total) : l3.freed ? size(l3.freed) + " won back" : "Measured after a scan" }),
       total > 0 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(SplitBar, { parts: parts2, label: names2[l3.kind] }),
         /* @__PURE__ */ u3(Legend, { items: parts2.map((p3) => ({ label: p3.label, color: p3.color, value: p3.value.toLocaleString() })) })
       ] }),
       !!l3.freed && total > 0 && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-        bytes(l3.freed),
+        size(l3.freed),
         " won back so far"
       ] }),
       !!d3.tdarr?.[l3.kind] && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
@@ -13402,7 +13415,7 @@ ${pays}
       );
     }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. What Tidy Up does shows here, with Undo where it can be undone." }) });
   }
-  function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
+  function needsFor(d3, act, review2, pick) {
     const gone = d3.libraries.filter((l3) => !l3.found).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
     const machine = d3.checks.filter((c3) => !c3.ok && c3.needs).map((c3) => ({
       kind: "machine",
@@ -13411,13 +13424,16 @@ ${pays}
       warn: true,
       go: c3.install ? { label: "Install", run: () => act.install() } : c3.id === "calibredb" ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
     }));
-    const todos = [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
+    return [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
+  }
+  function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
+    const todos = needsFor(d3, act, review2, pick);
     const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3(Widget, { title: "Needs your OK", span: "all", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
         count(waiting2, "thing"),
-        gain ? " · " + bytes(gain) + " to win back" : ""
+        gain ? " · " + size(gain) + " to win back" : ""
       ] }) : void 0, children: todos.length ? /* @__PURE__ */ u3(TodoRows, { todos, job: job2 }) : /* @__PURE__ */ u3("div", { class: "tidyclear", children: [
         /* @__PURE__ */ u3("span", { class: "fmark logo tidyicon fx-h-in", "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: "M20 6 9 17l-5-5" }) }) }),
         /* @__PURE__ */ u3("div", { children: [
@@ -13430,7 +13446,7 @@ ${pays}
       /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act })
     ] });
   }
-  function LibraryTab({ kind, d: d3, job: job2, act, review: review2, skip: skip2, toggle, pick }) {
+  function LibraryTab({ kind, d: d3, job: job2, act, review: review2, reviewError: reviewError2, reloadReview, skip: skip2, toggle, pick }) {
     const l3 = lib(d3, kind);
     const todos = todosFor(l3, d3, act, review2, pick);
     const scanned = !!last(l3, "scan") || !!last(l3, "review");
@@ -13464,13 +13480,21 @@ ${pays}
       /* @__PURE__ */ u3(Gone, { l: l3 }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names2[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
+        kind === "books" && !review2 && reviewError2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReviewError", span: "all", kind: "fx-renewing tidyreview", children: [
+          /* @__PURE__ */ u3("p", { class: "warn", role: "alert", children: [
+            "Couldn't read the last review: ",
+            reviewError2
+          ] }),
+          /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: reloadReview, children: "Try again" }) })
+        ] }),
+        kind === "books" && !review2 && !reviewError2 && last(l3, "review") && /* @__PURE__ */ u3(Widget, { title: "The review", span: "all", kind: "fx-renewing tidyreview", children: /* @__PURE__ */ u3(Empty, { children: "Reading the last review…" }) }),
         kind === "books" && review2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReview", span: "all", kind: "fx-renewing tidyreview", actions: !!changing.length && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }), children: [
           review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Every book already looks tidy." }),
           last(l3, "apply")?.ok && /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) }) })
         ] }),
         kind in genreAsk && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
         (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
-        kind !== "music" && kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: bytes(l3.size) }), caption: l3.freed ? bytes(l3.freed) + " won back so far" : "On the drive" }) }),
+        kind !== "music" && kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: size(l3.size) }), caption: l3.freed ? size(l3.freed) + " won back so far" : "On the drive" }) }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
       ] })
     ] });
@@ -13479,9 +13503,9 @@ ${pays}
   function TidyScreen(p3) {
     const { d: d3, job: job2, act } = p3;
     const tab3 = tabNow(p3.tab);
-    const waiting2 = d3 ? LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, p3.review, p3.pick)).filter((t3) => t3.go).length : 0;
+    const waiting2 = d3 ? needsFor(d3, act, p3.review, p3.pick).filter((t3) => t3.go).length : 0;
     const other = job2 && !job2.ended ? null : (p3.running ? p3.running.lock : d3?.lock) || null;
-    const say = !d3 ? "" : (d3.freed ? `${bytes(d3.freed)} won back so far · ` : "") + (waiting2 ? `${count(waiting2, "thing")} ${waiting2 === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
+    const say = !d3 ? "" : (d3.freed ? `${size(d3.freed)} won back so far · ` : "") + (waiting2 ? `${count(waiting2, "thing")} ${waiting2 === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -13515,11 +13539,15 @@ ${pays}
           again: job2.yes ? void 0 : () => act.run(job2.kind, job2.action, job2.args || [])
         }
       ),
-      p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
+      p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", id: "tidyError", role: "alert", children: [
         /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: p3.error })
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          p3.error,
+          ". Nothing in your libraries changed. ",
+          /* @__PURE__ */ u3("button", { class: "small", onClick: p3.reload, children: "Try again" })
+        ] })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
   }
   function mountTidy(el3, props) {
@@ -13538,6 +13566,8 @@ ${pays}
   }
   var job = null;
   var review = null;
+  var reviewError = "";
+  var showReview = false;
   var skip = /* @__PURE__ */ new Set();
   var confirm = null;
   var running4 = null;
@@ -13551,8 +13581,15 @@ ${pays}
       tab: tab2,
       job,
       review,
+      reviewError,
       skip,
       running: running4,
+      reload: () => {
+        tidyData.load();
+      },
+      reloadReview: () => {
+        loadReview();
+      },
       pick: (t3) => {
         tab2 = t3;
         try {
@@ -13593,6 +13630,11 @@ ${pays}
         settings: (keys2) => keys2?.length ? showSettings(keys2) : navigate("settings"),
         review: () => {
           tab2 = "books";
+          try {
+            localStorage.setItem("homelab.tidyTab", tab2);
+          } catch {
+          }
+          showReview = true;
           draw5();
           if (!review) loadReview();
         },
@@ -13608,6 +13650,12 @@ ${pays}
       }
     });
     if (job && (!document.activeElement || document.activeElement === document.body) && $2("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();
+    if (showReview && tab2 === "books" && (review || reviewError)) {
+      showReview = false;
+      const box = document.getElementById("tidyReview") || document.getElementById("tidyReviewError");
+      box?.scrollIntoView({ block: "start" });
+      box?.querySelector("input, button")?.focus({ preventScroll: true });
+    }
     const looks2 = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
     $2("tidyCount").textContent = looks2 ? String(looks2) : "";
     follow2();
@@ -13655,11 +13703,12 @@ ${pays}
     return tidyData.load();
   }
   async function loadReview() {
+    reviewError = "";
     try {
       review = await go().TidyReview();
     } catch (e3) {
-      showError(e3);
-      review = [];
+      review = null;
+      reviewError = errorText(e3);
     }
     draw5();
   }

@@ -329,6 +329,9 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     },
     // M.tidyStopSlow: the engine takes that many ms to reach a safe point after Stop.
     ...(M.tidyStopSlow ? { TidyStop: () => { setTimeout(() => { M.tidyStopped = true; }, M.tidyStopSlow); return later(null); } } : {}),
+    // M.tidyUpFails, M.tidyReviewFails: how many reads fail first (then they answer), and M.tidyFailWhy what they say.
+    ...(M.tidyUpFails ? { TidyUp: () => (M.tidyUpFails-- > 0 ? Promise.reject(new Error(M.tidyFailWhy || 'open data/media.json: permission denied')) : later(M.tidy)) } : {}),
+    ...(M.tidyReviewFails ? { TidyReview: () => (M.tidyReviewFails-- > 0 ? Promise.reject(new Error(M.tidyFailWhy || "Calibre's database is locked")) : later(M.tidyReview || [])) } : {}),
     async TidyRun(kind, action, args, yes) {
       (M.tidyRuns ??= []).push([kind, action, args, yes]);
       for (const ev of M.tidyEvents?.[`${kind} ${action}`] || [{ type: 'ok', text: 'Done' }, { type: 'result', action, ok: true }]) { await later(null, 60); emit('media:event', ev); }

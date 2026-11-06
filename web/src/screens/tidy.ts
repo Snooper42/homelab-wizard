@@ -12,6 +12,10 @@ let tab: TidyTab = 'overview';
 try { tab = tabNow(localStorage.getItem('homelab.tidyTab') || 'overview'); } catch { /* none */ }
 let job: TidyJob | null = null;
 let review: app.TidyBook[] | null = null;
+// Why the review couldn't be read (Calibre's database locked, say): said on Books, with Try again, never "every book looks tidy".
+let reviewError = '';
+// Look… was pressed: the review is shown, and the keyboard taken to it, once it's there.
+let showReview = false;
 const skip = new Set<number>();
 let confirm: TidyConfirm | null = null;
 // A job this window didn't start (the agent's Collect, a terminal's run): followed every few seconds while it holds the lock.
@@ -23,7 +27,9 @@ const FOLLOW_MS = 3000;
 function draw() {
   const d = tidyData.value || null;
   mountTidy($('tidyRoot'), {
-    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, skip, running,
+    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running,
+    reload: () => { tidyData.load(); },
+    reloadReview: () => { loadReview(); },
     pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); },
     // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
     closeJob: () => { job = null; draw(); (document.querySelector('#tidy .seg button[aria-checked="true"]') as HTMLElement | null)?.focus(); },
@@ -33,7 +39,7 @@ function draw() {
       ask: (c) => { confirm = c; drawSheet(); $('tidySheet').hidden = false; },
       reveal: (path) => { Promise.resolve(go().TidyReveal(path)).catch(showError); },
       settings: (keys) => (keys?.length ? showSettings(keys) : navigate('settings')),
-      review: () => { tab = 'books'; draw(); if (!review) loadReview(); },
+      review: () => { tab = 'books'; try { localStorage.setItem('homelab.tidyTab', tab); } catch { /* none */ } showReview = true; draw(); if (!review) loadReview(); },
       cover: (id, which) => go().TidyCover(id, which),
       // Fetches ffmpeg; once it's in, the job that wanted it runs again.
       install: async (after) => {
@@ -45,6 +51,13 @@ function draw() {
   });
   // The button that started a job waits while it runs, which takes the keyboard's place with it: it goes to the job's own button.
   if (job && (!document.activeElement || document.activeElement === document.body) && $('tidy').classList.contains('active')) (document.querySelector('#tidyJob button:not([disabled])') as HTMLElement | null)?.focus();
+  // Look…: once the review is there, it's scrolled to and its first switch (or its Apply) takes the keyboard.
+  if (showReview && tab === 'books' && (review || reviewError)) {
+    showReview = false;
+    const box = document.getElementById('tidyReview') || document.getElementById('tidyReviewError');
+    box?.scrollIntoView({ block: 'start' });
+    (box?.querySelector('input, button') as HTMLElement | null)?.focus({ preventScroll: true });
+  }
   // The sidebar's count: what needs a look (a check that blocks, or a library swapped and not checked).
   const looks = (d?.checks || []).filter((c) => !c.ok && c.needs === 'all').length + (d?.libraries || []).filter((l) => l.stage === 'swapped').length;
   $('tidyCount').textContent = looks ? String(looks) : '';
@@ -77,7 +90,8 @@ window.addEventListener('focus', () => {
 });
 export function loadTidy() { running = null; if (tab === 'books' && !review) loadReview(); return tidyData.load(); }
 async function loadReview() {
-  try { review = await go().TidyReview(); } catch (e) { showError(e); review = []; }
+  reviewError = '';
+  try { review = await go().TidyReview(); } catch (e) { review = null; reviewError = errorText(e); }
   draw();
 }
 

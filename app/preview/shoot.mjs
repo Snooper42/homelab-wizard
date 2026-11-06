@@ -465,7 +465,7 @@ const smokes = [
     const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Collect what Tdarr has finished', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
     const sorted = (a) => JSON.stringify([...a].sort((x, y) => x[0].localeCompare(y[0])));
     if (sorted(rows) !== sorted(want)) throw new Error('rows: ' + JSON.stringify(rows));
-    if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('354 GB')) throw new Error('the shrink does not say what it wins back');
+    if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('380 GB')) throw new Error('the shrink does not say what it wins back');
     const head = (await page.textContent('#tidy .header .lead')).trim(), card = (await page.textContent('#tidy .tidyneeds .fx-actions')).trim();
     if (!head.includes('6 things need your OK') || !card.startsWith('6 things')) throw new Error(`the heading says “${head}”, the card “${card}”`);
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
@@ -648,7 +648,7 @@ const smokes = [
     duplicate_list: [{ keep: '/Volumes/Hobbies/movies/Heat (1995)/Heat (1995).mkv', extra: ['/Volumes/Hobbies/movies/Heat (1995)/Heat.1995.1080p.x264.mkv'], bytes: 9e9 }, { keep: '/Volumes/Hobbies/movies/Ronin (1998)/Ronin.1998.2160p.mkv', extra: ['/Volumes/Hobbies/movies/Ronin (1998)/Ronin (1998).mkv'], bytes: 4e9 }] } } } } : l)) } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     const row = '#tidy .tidyneeds li:has-text("2 films are in the library twice")';
-    if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '12 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
+    if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '13 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
     await page.click(`${row} button:text-is("Remove extras…")`);
     await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the extra copies in the Trash?")', { timeout: 5000 });
     await page.waitForSelector('#tidySheet li:text-is("Heat.1995.1080p.x264.mkv goes; Heat (1995).mkv stays")', { timeout: 3000 });
@@ -696,7 +696,7 @@ const smokes = [
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     const t = await page.textContent('#tidy .tidydrive', { timeout: 5000 });
-    for (const w of ['On the Hobbies drive', '1.1 TB free', 'Of 3.6 TB', 'Movies1.3 TB', 'Music484 GB', 'Free1.1 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
+    for (const w of ['On the Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies1.4 TB', 'Music520 GB', 'Free1.2 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
   } },
   // Undo on the swap asks first, then puts the old library back.
   { name: 'Tidy Up: Undo on the swap asks first, then puts the old library back', screen: 'tidy', run: async (page) => {
@@ -812,6 +812,48 @@ const smokes = [
     await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
     await page.click('#tidyJob button:text-is("Close")');
     if (await page.evaluate(() => document.activeElement === document.body)) throw new Error('Close left the keyboard at the top of the window');
+  } },
+  // One figure, one way: the screen counts sizes as the engines do (1000 to a KB, as the Finder counts a drive).
+  { name: 'Tidy Up: a size reads the same on the first line, the drive, and Recently done', screen: 'tidy', run: async (page) => {
+    const lead = await page.textContent('#tidy .header .lead', { timeout: 5000 });
+    if (!lead.startsWith('412 GB won back so far')) throw new Error(`the first line: ${lead}`);
+    await page.waitForSelector('#tidy .tidydone .fx-rows :text("12 files replaced · 412 GB freed")', { timeout: 5000 });
+    const drive = await page.textContent('#tidy .tidydrive');
+    if (!drive.includes('Of 4 TB · 412 GB won back so far')) throw new Error(`the drive: ${drive}`);
+    const gain = await page.textContent('#tidy .tidyneeds .tidygain');
+    if (gain !== '380 GB') throw new Error(`what Shrink wins back: ${gain} (the scan's saving is 380e9)`);
+  } },
+  // Install counts as a thing to OK on Overview, so the first line counts it too.
+  { name: 'Tidy Up: the first line counts what Overview lists, a tool to install included', screen: 'tidy', mock: { tidy: { ...tidy, checks: tidy.checks.map((c) => (c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix: 'Install runs brew install ffmpeg for you', install: true } : c)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds button:text-is("Install")', { timeout: 5000 });
+    const card = (await page.textContent('#tidy .tidyneeds .muted')).split(' · ')[0];
+    const lead = await page.textContent('#tidy .header .lead');
+    if (card !== '7 things' || !lead.includes('7 things need your OK')) throw new Error(`card: ${card}; first line: ${lead}`);
+  } },
+  // A review that can't be read says so, with Try again; it never says every book looks tidy.
+  { name: 'Tidy Up: a books review that can’t be read says why, with Try again', screen: 'tidy', mock: { tidyReviewFails: 1 }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReviewError [role=alert]:text-is("Couldn\'t read the last review: Calibre\'s database is locked")', { timeout: 5000 });
+    if (await page.locator('#tidy :text("Every book already looks tidy"), #tidy :text("Your books are tidy")').count()) throw new Error('it says the books are tidy');
+    const lead = await page.textContent('#tidy .header .lead');
+    if (!lead.includes('6 things need your OK')) throw new Error(`the count changed: ${lead}`);
+    await page.click('#tidyReviewError button:text-is("Try again")');
+    await page.waitForSelector('#tidyReview :text-is("Project Hail Mary (Unabridged)")', { timeout: 5000 });
+  } },
+  // Look… on the Books tab used to open the tab it was on: it shows the review and takes the keyboard there.
+  { name: 'Tidy Up: Look… on Books shows the review and moves the keyboard to it', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReview', { timeout: 5000 });
+    await page.focus('#tidy .tidyneeds button:text-is("Look…")');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !!document.activeElement?.closest('#tidyReview'), null, { timeout: 5000 });
+  } },
+  // A record that can't be read says nothing changed, with Try again.
+  { name: 'Tidy Up: a record that can’t be read has Try again', screen: 'tidy', mock: { tidyUpFails: 1 }, run: async (page) => {
+    await page.waitForSelector('#tidyError strong:text-is("Tidy Up couldn\'t read its record")', { timeout: 5000 });
+    await page.click('#tidyError button:text-is("Try again")');
+    await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
+    if (await page.locator('#tidyError').count()) throw new Error('the error stayed');
   } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {

@@ -6,7 +6,7 @@
 // components only draw, and say what a click wants (run, confirm, reveal).
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
-import { ago, bytes } from '../format';
+import { ago } from '../format';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows, type Tone } from '../parts/Row';
@@ -86,6 +86,18 @@ const titles: Record<string, string> = {
 export function jobTitle(kind: string, action: string, args: string[] = []): string {
   if (kind === 'music' && action === 'lyrics' && args.includes('--tidy')) return 'Tidying lyrics';
   return titles[`${kind} ${action}`] || `${names[kind] || kind}: ${action.replace(/-/g, ' ')}`;
+}
+/** A size as the engines write it (internal/media's Bytes, video_engine's human): 1000 to a KB, as the Finder and
+ * Explorer count a drive, so the screen's "412 GB won back" and Recently done's "412 GB freed" are one figure. */
+export function size(v: number): string {
+  if (!v) return '—';
+  let f = v, i = 0;
+  const units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+  while (f >= 1000 && i < units.length - 1) { f /= 1000; i++; }
+  if (i === 0) return `${Math.trunc(f)} bytes`;
+  if (f >= 100) return `${Math.round(f)} ${units[i]}`;
+  const tenths = Math.round(f * 10);
+  return `${tenths % 10 ? (tenths / 10).toFixed(1) : tenths / 10} ${units[i]}`;
 }
 const n = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 const count = (v: number, one: string, many = one + 's') => `${v.toLocaleString()} ${v === 1 ? one : many}`;
@@ -354,7 +366,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const changing = review ? review.filter((b) => !b.held).map((b) => b.title) : [];
     const many = review ? changing.length : Math.max(0, n(rv?.result?.changes) - ((rv?.result?.held as unknown[]) || []).length);
     if (!rv) out.push({ kind: k, title: 'Look over your books', sub: 'Titles, series, publishers, genres, and covers: nothing changes until you say', go: { label: 'Review', run: () => act.review() } });
-    else if (many) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => pick('books') } });
+    else if (many) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
   } else if (k === 'audiobooks') {
     if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: 'A scan finds books split into many files and changes nothing', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
     else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
@@ -368,7 +380,7 @@ function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
     <Rows kind="fx-rows tidytodo">
       {todos.map((t, i) => (
         <Row key={t.kind + i} lead={<LibIcon kind={t.kind} />} title={t.title} sub={t.sub} subTone={t.warn ? 'warn' : undefined}
-          end={<>{!!t.gain && <span class="fx-amount fx-in tidygain">{bytes(t.gain)}</span>}{t.go && <Go label={t.go.label} primary={!t.go.quiet} job={job} onClick={t.go.run} />}</>} />
+          end={<>{!!t.gain && <span class="fx-amount fx-in tidygain">{size(t.gain)}</span>}{t.go && <Go label={t.go.label} primary={!t.go.quiet} job={job} onClick={t.go.run} />}</>} />
       ))}
     </Rows>
   );
@@ -450,9 +462,9 @@ function DriveWidget({ d }: { d: app.TidyUp }) {
   const measuring = d.libraries.some((l) => l.found && !l.size);
   return (
     <Widget title={dr.name ? `On the ${dr.name} drive` : 'On this machine'} kind="fx-flow tidydrive">
-      <Stat value={<span class="fx-amount">{bytes(dr.free)}<small> free</small></span>} caption={`Of ${bytes(dr.total)}${d.freed ? ' · ' + bytes(d.freed) + ' won back so far' : ''}`} />
+      <Stat value={<span class="fx-amount">{size(dr.free)}<small> free</small></span>} caption={`Of ${size(dr.total)}${d.freed ? ' · ' + size(d.freed) + ' won back so far' : ''}`} />
       <SplitBar parts={[...parts, { label: 'Free', value: dr.free, color: 'track' }]} label="The drive" />
-      <Legend items={[...parts.map((p) => ({ label: p.label, color: p.color, value: bytes(p.value) })), { label: 'Free', color: 'track' as Hue, value: bytes(dr.free) }]} />
+      <Legend items={[...parts.map((p) => ({ label: p.label, color: p.color, value: size(p.value) })), { label: 'Free', color: 'track' as Hue, value: size(dr.free) }]} />
       {measuring && <p class="fx-sub">Measuring the rest: it takes a few minutes on a big drive.</p>}
     </Widget>
   );
@@ -465,9 +477,9 @@ function SpaceWidget({ l, d }: { l: app.TidyLibrary; d: app.TidyUp }) {
   const total = parts.reduce((t, p) => t + p.value, 0);
   return (
     <Widget title="Space" kind="fx-flow tidyspace">
-      <Stat value={<span class="fx-amount">{l.size ? bytes(l.size) : total ? things(l.kind, total) : '—'}</span>} caption={l.size && total ? things(l.kind, total) : l.freed ? bytes(l.freed) + ' won back' : 'Measured after a scan'} />
+      <Stat value={<span class="fx-amount">{l.size ? size(l.size) : total ? things(l.kind, total) : '—'}</span>} caption={l.size && total ? things(l.kind, total) : l.freed ? size(l.freed) + ' won back' : 'Measured after a scan'} />
       {total > 0 && <><SplitBar parts={parts} label={names[l.kind]} /><Legend items={parts.map((p) => ({ label: p.label, color: p.color, value: p.value.toLocaleString() }))} /></>}
-      {!!l.freed && total > 0 && <p class="fx-sub">{bytes(l.freed)} won back so far</p>}
+      {!!l.freed && total > 0 && <p class="fx-sub">{size(l.freed)} won back so far</p>}
       {!!d.tdarr?.[l.kind] && <p class="fx-sub">Tdarr: {(d.settings.TIDY_VIDEO_CODEC || 'hevc').toUpperCase()}, {languages(d.settings.TIDY_KEEP_LANGUAGES || 'eng')} only</p>}
     </Widget>
   );
@@ -512,18 +524,24 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
 
 // ------------------------------------------------------------ Overview
 
-function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
+/** Overview's list, Needs your OK: a tool missing, then each library's next things, then a drive that's away. The
+ * screen's first line counts the same list, so the two always agree. */
+function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null, pick: (t: TidyTab) => void): Todo[] {
   const gone: Todo[] = d.libraries.filter((l) => !l.found).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
   // A tool missing: Install when the app can fetch it (ffmpeg), Calibre's download page for Calibre.
   const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true,
     go: c.install ? { label: 'Install', run: () => act.install() } : c.id === 'calibredb' ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }));
-  const todos = [...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
+  return [...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
+}
+
+function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
+  const todos = needsFor(d, act, review, pick);
   // What waits on you: the things with a button (a drive away or a tool missing is said, not counted), as the heading counts.
   const waiting = todos.filter((t) => t.go).length;
   const gain = todos.reduce((t, x) => t + (x.gain || 0), 0);
   return (
     <div class="fx-board">
-      <Widget title="Needs your OK" span="all" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + bytes(gain) + ' to win back' : ''}</span> : undefined}>
+      <Widget title="Needs your OK" span="all" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
         {todos.length ? <TodoRows todos={todos} job={job} /> : (
           <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
             <div><strong>Everything's tidy</strong><div class="muted">New downloads are filed as they finish, and anything new to tidy shows up here.</div></div></div>
@@ -538,7 +556,7 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
 
 // ------------------------------------------------------------ a library's own tab
 
-function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: string; d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; skip: Set<number>; toggle: (id: number) => void; pick: (t: TidyTab) => void }) {
+function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip, toggle, pick }: { kind: string; d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; reviewError?: string; reloadReview?: () => void; skip: Set<number>; toggle: (id: number) => void; pick: (t: TidyTab) => void }) {
   const l = lib(d, kind);
   const todos = todosFor(l, d, act, review, pick);
   const scanned = !!last(l, 'scan') || !!last(l, 'review');
@@ -577,6 +595,15 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
         <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds" actions={again || undefined}>
           {rows.length ? <TodoRows todos={rows} job={job} /> : <Empty>{l.found ? `Your ${names[kind].toLowerCase()} ${kind === 'music' ? 'is' : 'are'} tidy. Anything new shows up here.` : 'Plug in its drive to see what could be tidier.'}</Empty>}
         </Widget>
+        {kind === 'books' && !review && reviewError && (
+          <Widget title="The review" id="tidyReviewError" span="all" kind="fx-renewing tidyreview">
+            <p class="warn" role="alert">Couldn't read the last review: {reviewError}</p>
+            <div class="actions"><button class="small" onClick={reloadReview}>Try again</button></div>
+          </Widget>
+        )}
+        {kind === 'books' && !review && !reviewError && last(l, 'review') && (
+          <Widget title="The review" span="all" kind="fx-renewing tidyreview"><Empty>Reading the last review…</Empty></Widget>
+        )}
         {kind === 'books' && review && (
           <Widget title="The review" id="tidyReview" span="all" kind="fx-renewing tidyreview" actions={!!changing.length && <Go primary label={`Apply to ${count(changing.length, 'book')}…`} job={job} onClick={apply} />}>
             {review.length ? (
@@ -590,7 +617,7 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
         {kind in genreAsk && <GenresWidget d={d} job={job} act={act} only={kind} />}
         {(kind === 'movies' || kind === 'tv') && <SpaceWidget l={l} d={d} />}
         {kind !== 'music' && kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
-          <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{bytes(l.size)}</span>} caption={l.freed ? bytes(l.freed) + ' won back so far' : 'On the drive'} /></Widget>
+          <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{size(l.size)}</span>} caption={l.freed ? size(l.freed) + ' won back so far' : 'On the drive'} /></Widget>
         )}
         <DoneWidget d={d} job={job} act={act} kind={kind} />
       </div>
@@ -611,8 +638,14 @@ export interface TidyProps {
   closeJob: () => void;
   act: TidyActions;
   review: app.TidyBook[] | null;
+  /** Why the review couldn't be read, when it couldn't. */
+  reviewError?: string;
   skip: Set<number>;
   toggle: (id: number) => void;
+  /** Reads Tidy Up's record again (Try again when it couldn't be read). */
+  reload?: () => void;
+  /** Reads the books' review again. */
+  reloadReview?: () => void;
 }
 
 /** A tab kept from before (New downloads, Lyrics) opens where those things are now. */
@@ -621,10 +654,10 @@ export const tabNow = (t: string): TidyTab => (t === 'inbox' ? 'overview' : t ==
 export function TidyScreen(p: TidyProps) {
   const { d, job, act } = p;
   const tab = tabNow(p.tab);
-  const waiting = d ? LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, p.review, p.pick)).filter((t) => t.go).length : 0;
+  const waiting = d ? needsFor(d, act, p.review, p.pick).filter((t) => t.go).length : 0;
   // A job this window didn't start holds the lock: followed as it goes (screens/tidy.ts asks every few seconds).
   const other = job && !job.ended ? null : (p.running ? p.running.lock : d?.lock) || null;
-  const say = !d ? '' : (d.freed ? `${bytes(d.freed)} won back so far · ` : '') + (waiting ? `${count(waiting, 'thing')} ${waiting === 1 ? 'needs' : 'need'} your OK` : 'Everything is tidy');
+  const say = !d ? '' : (d.freed ? `${size(d.freed)} won back so far · ` : '') + (waiting ? `${count(waiting, 'thing')} ${waiting === 1 ? 'needs' : 'need'} your OK` : 'Everything is tidy');
   return (
     <>
       <div class="row header">
@@ -640,12 +673,12 @@ export function TidyScreen(p: TidyProps) {
       {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)}
         // A job that asked first (a swap, an apply) is tried again from its own button, which asks again.
         again={job.yes ? undefined : () => act.run(job.kind, job.action, job.args || [])} />}
-      {p.error && !d && <Card kind="notice"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}</span></Card>}
+      {p.error && !d && <Card kind="notice" id="tidyError" role="alert"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}. Nothing in your libraries changed. <button class="small" onClick={p.reload}>Try again</button></span></Card>}
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
         <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action) : ''}>
           <div class="finbody tidybody">
             {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} />
-              : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
+              : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} reviewError={p.reviewError} reloadReview={p.reloadReview} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
           </div>
         </Elsewhere.Provider>
       )}
