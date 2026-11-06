@@ -17,6 +17,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crash"
+	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -39,9 +40,10 @@ func watchDue(now, lastWatch, lastTick time.Time) (due, woke bool) {
 }
 
 // The agent's timetable: the watchdog every 15 minutes, the backup daily
-// at backupHour:backupMinute, and the nightly updates at WATCHTOWER_
-// SCHEDULE's hour (4:00 unless changed), each at the first chance after
-// if the machine was asleep or off then: the backup first.
+// at backupHour:backupMinute, the nightly updates at WATCHTOWER_
+// SCHEDULE's hour (4:00 unless changed), and the backups' check on Sundays
+// from verifyHour, each at the first chance after if the machine was
+// asleep or off then: the backup first.
 const (
 	watchdogEvery = 15 * time.Minute
 	backupHour    = 3
@@ -158,6 +160,10 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	// Tidy Up's minute (homelab media tick): the inbox, Tdarr's finished
 	// work, and the 03:00 scrubber, beside the timetable, never holding it up.
 	var tidying atomic.Bool
+	// Sunday's check of the backups runs on its own too: it can take
+	// minutes, and the watchdog's next run should not wait for it.
+	var verifying atomic.Bool
+	var verifyTried time.Time
 	for {
 		now := time.Now()
 		if tidying.CompareAndSwap(false, true) {
@@ -189,6 +195,15 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 			}
 			s.LastUpdate = now
 			_ = saveAgentState(state, s)
+		}
+		if verifyDue(now, duplicati.LoadChecks(duplicati.CheckPath(h.root)).At) && now.Sub(verifyTried) > 6*time.Hour && verifying.CompareAndSwap(false, true) {
+			verifyTried = now
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				defer verifying.Store(false)
+				_ = run("backup-check", "backup-check", "--quiet")
+			}()
 		}
 		select {
 		case <-ctx.Done():

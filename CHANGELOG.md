@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Weekly integrity check:** every Sunday morning, each off-site backup is checked with Duplicati's own Verify: a sample of its files where they are kept is downloaded and compared with what Duplicati recorded. If one is damaged, so that a version might not restore, the watchdog alerts, Status lists it, and Backups shows it in red beside the job until a check passes. Each job's hover on Backups says when it was last checked. `homelab backup-check` runs the check at any time.
 - **Memory pressure alert:** when the apps use 90% or more of the memory Docker has on two checks in a row (10 minutes or more), you get one alert, *Homelab: memory nearly full*, naming the three biggest apps and how much each uses. Status's Watchdog card lists them with **Stop** on each until memory comes down, and a second alert says when it has.
 - **An update window per app:** an app's page has **Only on Sundays** under Nightly updates, for an app you would rather not see change midweek; the other nights leave it alone. `homelab updates days immich sat+sun` picks any days.
 - **Phones that expire:** beside a phone in Settings › Phones, **For a day**, **For a week**, or **For a month** ends its changes and Finances then, and it only looks; its row says until when. For a guest's phone, or one lent for a while (`homelab phone until <phone> 7d`).
@@ -107,6 +108,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Hide amounts covers the alerts too:** with amounts hidden, the nightly Finances reminders and the weekly summary still showed them on the phone's lock screen (*Due tomorrow: Mortgage $1,845.00*). They now say $••• there too.
 - **The Beszel agent stays on the version you chose:** it can control Docker, and it updated itself every night from its newest image, as the socket proxy once did. It is now pinned (`BESZEL_AGENT_VERSION`) and updated by hand after reading its notes.
 - **A removed phone stops getting Status at once:** a phone removed in Settings › Phones could no longer ask for anything, but one that had Status open kept receiving each change for as long as it stayed connected. It is now cut off within seconds.
+- **A Mac update comes only from whoever signed your app:** the app checked that an update downloaded whole, but not who made it. On a Mac, an update signed by anyone but the team that signed the app you have is now refused, and the app says so.
 
 ## [0.17.0] - 2026-11-02
 

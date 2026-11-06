@@ -457,20 +457,20 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     `<name>.kit-tmp` and `.local` copy, which follow a link put there by
     someone else on the machine (Low); and that the kit a newer app
     brings comes only from the signed app itself.
-44. **What the self-update trusts** (internal/selfupdate): the checksum
+44. (done: round 54, N24) **What the self-update trusts** (internal/selfupdate): the checksum
     it checks is GitHub's own `digest`, from the same API as the
     download, so it catches a broken download but not a release swapped
     on GitHub. Does the Mac copy's code signature (and Team ID) get
     checked before it replaces the app, and what do Linux and Windows
     check?
-45. **Pairing's demotions are separate saves** (internal/companion
+45. (done: round 55, N25 open) **Pairing's demotions are separate saves** (internal/companion
     server.go `pair`): a kiosk or a phone paired over plain HTTP is saved
     first with the code's permissions, then lowered in up to three more
     saves (`SetCanChange`, `SetFinances`, `MarkUnencrypted`). With N22's
     race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
     phone could keep Can make changes or Finances. One save, or a test
     that each failure leaves the device with less.
-46. **A kiosk is not remembered as one** (`Device` has no kiosk field):
+46. (round 56: N26, open until N22 merges) **A kiosk is not remembered as one** (`Device` has no kiosk field):
     kiosk mode is enforced only at pairing, so the Phones page can later
     give a wall screen Can make changes or Finances with nothing saying
     it is a screen anyone walking past can use. And which `phoneMethods`
@@ -510,6 +510,12 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
+55. **Windows and Linux updates rest on the release alone** (after N24):
+    neither build is signed (release.yml signs only the Mac's), so the
+    app checks GitHub's checksum, from the same release. The release has
+    build provenance (`actions/attest-build-provenance`); checking it in
+    the app, or a key the app carries (minisign), would tell a build the
+    workflow made from one put up by hand. Windows also asks for Authenticode.
 
 ### Security done
 
@@ -1006,6 +1012,54 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   under For Account 1 stands), and a window still holds a security
   release (also there). Re-read if #457 changes before it merges.
 
+- **Round 54 (item 44, what the self-update trusts; N24):** the Mac
+  update checked the download against GitHub's own `digest`, from the
+  same release, then took the quarantine off the new app
+  (`swapScript`'s `xattr -dr`), so nothing asked who made it: a release
+  put up by someone who got at the repository would have run on every
+  Mac that took it. **N24 (Medium), fixed:** an installed app signed
+  with a Developer ID takes a new one only if `codesign --verify --deep
+  --strict` holds and its Team ID is the same; an ad-hoc build has none
+  to keep and updates as before (the workflow signs only when its
+  secret is there). `TestAMacUpdateKeepsItsSigner` (stand-ins for
+  hdiutil, ditto, codesign) failed before for another team, no team,
+  and a broken signature. Windows and Linux builds are not signed:
+  item 55. Also read #458 (memory pressure) as it merged: its alert
+  names apps and figures only. gosec clean on the change.
+
+- **Round 55 (item 45, pairing's demotions; N25):** the separate saves
+  are safe: `pair` sends the token only after every lowering has saved,
+  and any error answers 500 without it, so a failure part-way leaves a
+  device no one holds a token for, not one with too much; a lowering
+  saved over by another process is N22's, fixed with it. Found on the
+  way, **N25 (Medium), open as a decision:** whether a pairing phone
+  came over https is read from `X-Forwarded-Proto`, which anyone sends,
+  so a code caught on the Wi-Fi (the plain `:8099` link sends it in
+  clear) and used first with the header gets the code's changes and
+  Finances, not look-only; the companion's own proxy host passes the
+  header on too (`trust_forwarded_proto` on every route). The existing
+  `TestPairingOverTheHomeWiFiIsReadOnly` shows it: it uses
+  `192.168.1.20` with the header to stand for the proxy, as the server
+  cannot tell the two apart. Not fixed here: the proxy reaches the
+  companion from loopback, OrbStack's address, the bridge's gateway, or
+  its own container address (with `HOST_GATEWAY` the LAN address), so
+  no address rule holds; a header only the proxy adds, with
+  `trust_forwarded_proto` off for the companion's host, changes every
+  domain install's proxy and is for the owner (Decisions to look at).
+
+- **Round 56 (item 46, a kiosk not remembered; N26):** `pair` reads
+  `Kiosk` from the screen's own request and only lowers (changes off,
+  Finances off), so claiming it gains nothing; but `Device` keeps no
+  kiosk mark, and Settings › Phones or `homelab phone allow` can later
+  give a wall screen changes or Finances as any phone. **N26 (Low),
+  open:** keep `Kiosk` on the device and refuse those as
+  `ErrUnencrypted` is refused; it is a change to `devices.go`, which
+  Account 2 is rewriting for N22, so it waits for that to merge (item
+  46 stays open until then). What a screen may call is what any
+  look-only phone may: `StatusBoard`, `Logs` (N15's redaction), `Report`
+  (secrets removed; it also sends `HELPER_EMAIL`, the helper the owner
+  named), and `FinancesWall` with the card level. Fine as they are.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -1035,7 +1089,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ## For Account 2
 
-- **N22: a phone removed on the computer can come back** (your note in
+- (done: #460) **N22: a phone removed on the computer can come back** (your note in
   maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
   next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
   `internal/companion/devices.go` reads `data/phones.json`, and when a
