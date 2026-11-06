@@ -470,7 +470,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
     phone could keep Can make changes or Finances. One save, or a test
     that each failure leaves the device with less.
-46. **A kiosk is not remembered as one** (`Device` has no kiosk field):
+46. (round 56: N26, open until N22 merges) **A kiosk is not remembered as one** (`Device` has no kiosk field):
     kiosk mode is enforced only at pairing, so the Phones page can later
     give a wall screen Can make changes or Finances with nothing saying
     it is a screen anyone walking past can use. And which `phoneMethods`
@@ -1046,6 +1046,19 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   no address rule holds; a header only the proxy adds, with
   `trust_forwarded_proto` off for the companion's host, changes every
   domain install's proxy and is for the owner (Decisions to look at).
+
+- **Round 56 (item 46, a kiosk not remembered; N26):** `pair` reads
+  `Kiosk` from the screen's own request and only lowers (changes off,
+  Finances off), so claiming it gains nothing; but `Device` keeps no
+  kiosk mark, and Settings › Phones or `homelab phone allow` can later
+  give a wall screen changes or Finances as any phone. **N26 (Low),
+  open:** keep `Kiosk` on the device and refuse those as
+  `ErrUnencrypted` is refused; it is a change to `devices.go`, which
+  Account 2 is rewriting for N22, so it waits for that to merge (item
+  46 stays open until then). What a screen may call is what any
+  look-only phone may: `StatusBoard`, `Logs` (N15's redaction), `Report`
+  (secrets removed; it also sends `HELPER_EMAIL`, the helper the owner
+  named), and `FinancesWall` with the card level. Fine as they are.
 
 ## For Account 1
 
