@@ -1478,6 +1478,14 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
+  // Quiet hours: an everyday setting on the Notifications page, named for people, the night it ships with.
+  { name: 'Settings: quiet hours among the everyday ones', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Notifications"]', { timeout: 5000 });
+    const row = page.locator('#setting-QUIET_HOURS');
+    await row.waitFor({ state: 'visible', timeout: 5000 });
+    if (!(await row.textContent()).includes('Quiet hours (no sound at night)')) throw new Error(`its name: ${await row.textContent()}`);
+    if ((await row.locator('input').inputValue()) !== '22-7') throw new Error(`its value: ${await row.locator('input').inputValue()}`);
+  } },
   { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'snooper42.com');
