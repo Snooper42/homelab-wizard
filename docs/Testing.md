@@ -400,6 +400,7 @@ The owner ran the homelab on Windows for a while in autumn 2026, before the Mac 
 | W20 | A USB drive plugged in, then Setup's step *A second copy with Kopia* (with Kopia installed) | A **Use the … drive** button for the USB drive's letter, never for Duplicati's or the media's; once used, Kopia's page lists the repository at `Homelab Kopia` on it | Not yet |
 | W21 | With an older build installed by the installer (in Program Files): the line's **Update now** | One approval prompt (no SmartScreen), then the app opens again on the new build (Settings shows its version). `%LOCALAPPDATA%\Homelab Wizard\update.log` ends with `done`. With the portable copy in a folder of your own, no prompt at all | Not yet |
 | W22 | Make the update fail (deny the approval prompt) | The app opens on the old build, and the line says the update did not go in place and why, with the release page; it does not offer the same update again. `update.log` has an `ERROR:` line | Not yet |
+| W23 | Settings › Accessibility › Contrast themes › *Night sky*, then `docker pause homelab_security-ntfy-1` (running, but not answering) and `docker stop` one other app, and Status once it has checked again | Every dot is one colour, yet the running apps read as circles, the stopped one as a triangle, and ntfy, not answering, as a cross; afterwards `docker unpause homelab_security-ntfy-1`, start the other, and *None* puts the colours back | Not yet |
 
 ### The Steam Machine
 
