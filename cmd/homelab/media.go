@@ -259,8 +259,10 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
-			if ev.Type == "info" && strings.HasPrefix(strings.TrimSpace(line), "{") {
-				fmt.Fprintln(h.ui.Out, line) // status --json: printed as it is
+			// status --json: printed as it is. An engine's own info events
+			// are JSON lines too, and are shown as text like the rest.
+			if ev.Raw == nil && strings.HasPrefix(strings.TrimSpace(line), "{") {
+				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
 			if l := ev.Line(); l != "" {

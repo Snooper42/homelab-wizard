@@ -54,6 +54,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up's notes read as text in a terminal:** `homelab media` printed each of an engine's notes as a line of JSON (`{"type": "info", "text": "Fixes planned"}`); they read as the rest of its output again, and `status --json` still prints its object as it is.
 - **Music jobs work again after a Python upgrade:** when the Python that Tidy Up's beets setup (`~/.music-cleanup/venv`) was made with goes, through a Homebrew upgrade for example, every music scan, build, and lyrics run, and the inbox filing songs, failed with *couldn't create …venv*. Each run now removes a venv whose Python doesn't start, says so, and beets is installed again on that run, in about a minute.
 - **Tidy Up offers to set apart lyrics in two languages again:** songs whose lyrics run a translation after a caret on each line (*¡NUEVAYoL!^NEW YORK!*) are put right by adding lyrics, but once every song had lyrics, Overview offered nothing, so they stayed as they were. Checking lyrics now counts them, Overview offers **Tidy lyrics** for them, and a check from before this asks to be run again.
 - **Tidy Up's logs and crash notes no longer pile up:** each Tidy Up job, its checks included, left a log that was never cleared, its background log grew without end, and the list of what went to the Trash kept every line forever. Job logs now go after 30 days, the background log is cut at 5 MB, what Undo can no longer reach leaves the Trash list, and crash notes go after 90 days.

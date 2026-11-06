@@ -115,13 +115,14 @@ func TestMediaRunsAnEngineAndRecordsItsResult(t *testing.T) {
 		`{"type": "title", "text": "Movies library", "sub": "scan only"}`,
 		`{"type": "step", "n": 1, "total": 2, "text": "Reading 3 videos"}`,
 		`{"type": "ok", "text": "Read them"}`,
+		`{"type": "info", "text": "Fixes planned"}`,
 		`{"type": "result", "action": "scan", "ok": true, "media": "movies", "files": 3, "bloated": 2, "saving": 5000000000}`,
 	}}, "JELLYFIN_API_KEY=jf-secret-key")
 	out, code := homelabCmd(t, root, "", "media", "movies", "scan")
 	if code != 0 {
 		t.Fatalf("exit %d:\n%s", code, out)
 	}
-	for _, want := range []string{"Movies library  ·  scan only", "[1/2] Reading 3 videos", "✓ Read them"} {
+	for _, want := range []string{"Movies library  ·  scan only", "[1/2] Reading 3 videos", "✓ Read them", "\n  Fixes planned\n"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
@@ -133,6 +134,9 @@ func TestMediaRunsAnEngineAndRecordsItsResult(t *testing.T) {
 	args := fmt.Sprint(c[0]["args"])
 	if !strings.Contains(args, "movies_organizer.py scan --config "+media.SettingsPath(root)+" --events json") {
 		t.Errorf("command: %s", args)
+	}
+	if strings.Contains(out, `"type"`) {
+		t.Errorf("an engine's event shown as JSON:\n%s", out)
 	}
 	if strings.Contains(args, "jf-secret-key") || c[0]["jellyfinKey"] != "jf-secret-key" {
 		t.Errorf("the key goes in the environment, never the command line: %v", c[0])
@@ -154,6 +158,17 @@ func TestMediaRunsAnEngineAndRecordsItsResult(t *testing.T) {
 	}
 	if _, err := os.Stat(media.LockPath(root)); err == nil {
 		t.Error("a scan reads only: it takes no lock")
+	}
+}
+
+// An engine's status --json is one object of its own: printed as it is.
+func TestMediaStatusJSONIsPrintedAsItIs(t *testing.T) {
+	fakeDocker(t, nil)
+	line := `{"library": "/music", "files": 3}`
+	root, _ := mediaHomelab(t, pythonFixture{Lines: []string{line}})
+	out, code := homelabCmd(t, root, "", "media", "music", "status", "--json")
+	if code != 0 || !strings.Contains(out, line+"\n") {
+		t.Fatalf("exit %d:\n%s", code, out)
 	}
 }
 
