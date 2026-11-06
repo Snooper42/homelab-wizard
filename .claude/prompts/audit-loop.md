@@ -400,7 +400,7 @@ Added after round 27 (the backlog was empty; worst first):
 29. (done: round 52) **Phones that expire** (`claude/feature-phones-expire`, once its PR
     is open): an expired phone refused on every method and on a stream
     already open, and a clock set back not bringing it back.
-30. **The update window** (`claude/feature-update-window`,
+30. (done: round 53, on #457) **The update window** (`claude/feature-update-window`,
     `data/update-days.json`): a window must not hold a security release
     forever, and a crafted record must not stop every update.
 31. (done: round 32) **Explain on another machine's Ollama**: what the model is sent when
@@ -992,6 +992,19 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   stream ended once it is not paired. `TestARemovedPhonesStreamEnds`
   failed before. #455 also makes `load()` save when a phone's time is
   up, so readers write too: added to N22's note for Account 2.
+
+- **Round 53 (item 30, the update window, read on #457 before it
+  merged):** `ParseDays` takes only weekdays (three letters or more), and
+  an empty or seven-day list is every night, so neither a typo nor a
+  crafted `data/update-days.json` (one a move file brings) can hold an
+  app for more than 6 days: an app is never left out of every night.
+  `SaveDays` writes under `lockedfile.Update`. A phone changes the window
+  through `SetAppSetting`, which needs Can make changes, and checks the
+  app is a container app before running a fixed `homelab updates days`
+  command; `homelab update <app>` by name still updates it on any day.
+  Fine as it is; the record is still written 0644 on #457 (the note
+  under For Account 1 stands), and a window still holds a security
+  release (also there). Re-read if #457 changes before it merges.
 
 ## For Account 1
 
