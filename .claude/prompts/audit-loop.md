@@ -867,6 +867,18 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   `data/people` beside the welcome page, named by a username round 3
   checked, and removed with the person. Fine as it is.
 
+- **Round 48 (item 28, the Apple client, read on draft #424):** the
+  device token is kept in the Keychain as `WhenUnlockedThisDeviceOnly`,
+  never synced, and read for each request; it goes only to the origin it
+  was paired with (each request and each final URL checked), redirects
+  are refused, sessions are ephemeral with App Transport Security fully on
+  and https only (localhost excepted on the Mac), and the logs never
+  carry a token or a code. No widget, notification, or Live Activity
+  shows anything, and the screen is covered whenever the app is not in
+  front. Fine as it is on the draft; item 28 stays open until it merges.
+  Its branch, `claude/hopeful-turing-bfcknh`, matches no lane (lanes.md
+  Rule 1): for the owner.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
