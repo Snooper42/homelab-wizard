@@ -16,6 +16,8 @@ export const $1 = (sel: string, root: ParentNode = document): any => root.queryS
 
 let errorTimer = 0;
 export function showError(e) {
+  // The phone away from the homelab (companion.js): the line at the top already says so.
+  if (e?.name === 'Away' && document.documentElement.classList.contains('away')) return;
   const el = $('error');
   el.textContent = String((e && e.message) || e);
   el.hidden = false;

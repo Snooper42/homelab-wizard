@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **The last Status, offline:** away from home with Tailscale off, the phone opens on the last Status it saw, with a line saying when (*This is Status as it was at 7:42 AM*), rather than an error. It needs the phone's address to be HTTPS (the domain, or the tailnet's).
 - **A sheet for the fridge:** each person's welcome page links to their apps on one printed page, each with its address, its phone app, and a code the phone's camera opens; the sheet never has their sign-in link or a password.
 - **Suggestions from what you use:** Choose stacks › Add more opens on the apps that go with ones you run, each with what it brings them: Beets with Navidrome, Bazarr and Prowlarr with Sonarr and Radarr, Paperless-AI with Paperless-ngx, Seerr and Tdarr with Jellyfin.
 - **Quiet hours:** from 10 PM to 7 AM alerts reach the phone without a sound, unless they are serious: the password vault not answering, or backups failing two nights running. Settings › Quiet hours picks other hours, or off.
@@ -57,6 +58,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Backups failing in the morning:** when Backups couldn't be read, Status's overnight line asked for it again at once, over and over, keeping the computer busy and the page stuck. It now asks at most once a minute.
 - **Tidy Up starts again after a job was cut off:** a job stopped part way (the computer restarted or slept during the nightly sweep, or the app quit) could leave its lock behind under a number the computer later gave another program. Tidy Up then took the job for still running: the downloads, the nightly sweep, and the automatic jobs never ran, every job you started said another was moving files, and backups waited. A lock like that is now seen as left behind, and the next job takes over.
 - **Tidy Up offers to set apart lyrics in two languages again:** songs whose lyrics run a translation after a caret on each line (*¡NUEVAYoL!^NEW YORK!*) are put right by adding lyrics, but once every song had lyrics, Overview offered nothing, so they stayed as they were. Checking lyrics now counts them, Overview offers **Tidy lyrics** for them, and a check from before this asks to be run again.
 - **Tidy Up's logs and crash notes no longer pile up:** each Tidy Up job, its checks included, left a log that was never cleared, its background log grew without end, and the list of what went to the Trash kept every line forever. Job logs now go after 30 days, the background log is cut at 5 MB, what Undo can no longer reach leaves the Trash list, and crash notes go after 90 days.

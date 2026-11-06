@@ -39,11 +39,14 @@ let outages: Record<string, health.Outage[]> = {};
 // What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
 let lastEvents: notify.Event[] = [];
 let watched = false;
+let backupsAsked = 0;
 function drawOvernight() {
   if (!lastStatus) return;
   const now = Date.now();
-  // The night's database copies come from Backups, read for it only in the morning.
-  if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 60000);
+  // The night's database copies come from Backups, read for it only in the
+  // morning, and asked again at most once a minute: a read that fails is
+  // drawn here too (backupsData.watch), and must not ask again at once.
+  if (nightOf(now) && !backupsData.value && now - backupsAsked > 60000) { backupsAsked = now; backupsData.fresh(10 * 60000); }
   mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
 }
 backupsData.watch(drawOvernight);

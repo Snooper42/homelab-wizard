@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| The last Status, offline | Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error | #PRn |
 | A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
 | Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
@@ -192,7 +193,7 @@ The app at home on each system.
 The household's phones as a second screen.
 
 - **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
-- **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
+- **The last Status, offline** (S, *Built*, #PRn): away from home with no tailnet, it shows the last Status it saw and when, rather than an error. The page itself is kept on the phone too (a service worker), where it's served over HTTPS.
 - **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
 
 ## Media library cleanup
