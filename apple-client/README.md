@@ -68,6 +68,7 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 6. In **Signing & Capabilities**:
    - Choose a development team on both platforms. On macOS, the data-protection keychain needs a signed app; an unsigned one gets `errSecMissingEntitlement`.
    - macOS: **App Sandbox › Outgoing Connections (Client)**, and keep the Hardened Runtime on.
+   - macOS: add **Keychain Sharing** (its default group is fine). Without an entitlement like it, Xcode signs with no provisioning profile ("None Required"), and the data-protection Keychain answers -34018 (`errSecMissingEntitlement`) when pairing saves the token. A free Personal Team is enough.
 7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target (both platforms). It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
 
 ## Pair with the homelab on the same Mac

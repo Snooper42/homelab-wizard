@@ -87,6 +87,10 @@ targets:
       properties:
         com.apple.security.app-sandbox: true
         com.apple.security.network.client: true
+        # Makes Xcode sign with a provisioning profile, which the
+        # data-protection Keychain needs (else errSecMissingEntitlement, -34018).
+        keychain-access-groups:
+          - "\$(AppIdentifierPrefix)$PREFIX.HomelabClient"
 YAML
 
 (cd "$OUT" && xcodegen generate --quiet)
