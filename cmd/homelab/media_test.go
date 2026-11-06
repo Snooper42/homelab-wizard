@@ -227,6 +227,39 @@ func TestMediaRemovesABrokenBeetsVenv(t *testing.T) {
 	}
 }
 
+// A job that takes over the lock a stopped one left says so, in a terminal
+// and to the app (a warn event with --events json), and runs on.
+func TestMediaSaysAJobCarriesOnFromAStoppedOne(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "run", "ok": true}`}})
+	for _, events := range []bool{false, true} {
+		// A job cut off: its process is gone (a PID no process has).
+		left, _ := json.Marshal(media.Lock{PID: 1 << 30, Kind: "audiobooks", Action: "run", Start: time.Now().Add(-time.Hour).UTC()})
+		if err := os.MkdirAll(filepath.Dir(media.LockPath(root)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(media.LockPath(root), left, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		args := []string{"media", "audiobooks", "run"}
+		want := "audiobooks run stopped part-way"
+		if events {
+			args = append(args, "--events", "json")
+			want = `{"type":"warn","text":"audiobooks run stopped part-way`
+		}
+		out, code := homelabCmd(t, root, "", args...)
+		if code != 0 {
+			t.Fatalf("exit %d:\n%s", code, out)
+		}
+		if !strings.Contains(out, want) {
+			t.Errorf("events %v: missing %q in:\n%s", events, want, out)
+		}
+	}
+	if n := len(pythonCalls(t, calls)); n != 2 {
+		t.Errorf("the jobs ran %d times, want 2", n)
+	}
+}
+
 func TestMediaLockIsOneJobAtATime(t *testing.T) {
 	fakeDocker(t, nil)
 	hold := filepath.Join(t.TempDir(), "release")

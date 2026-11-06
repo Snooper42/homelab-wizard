@@ -228,13 +228,22 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		return err
 	}
 	defer logf.Close()
+	// warn tells the household: in a terminal, or to the app as an event.
+	warn := func(msg string) {
+		if f.events {
+			line, _ := json.Marshal(media.Event{Type: "warn", Text: msg})
+			fmt.Fprintln(h.ui.Out, string(line))
+			return
+		}
+		h.ui.Warn("%s", msg)
+	}
 	if lock {
 		stale, err := media.Acquire(h.root, kind, action, logf.Name())
 		if err != nil {
 			return err
 		}
-		if stale != nil && !f.events {
-			h.ui.Warn("%s %s stopped part-way at %s; this run carries on from there", stale.Kind, stale.Action, stale.Start.Local().Format("15:04"))
+		if stale != nil {
+			warn(fmt.Sprintf("%s %s stopped part-way at %s; this run carries on from there", stale.Kind, stale.Action, stale.Start.Local().Format("15:04")))
 		}
 		h.pauseDuplicati(ctx)
 		defer func() {
@@ -249,12 +258,7 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		if rerr != nil {
 			msg = fmt.Sprintf("Tidy Up's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
 		}
-		if f.events {
-			line, _ := json.Marshal(media.Event{Type: "warn", Text: msg})
-			fmt.Fprintln(h.ui.Out, string(line))
-		} else {
-			h.ui.Warn("%s", msg)
-		}
+		warn(msg)
 	}
 	job := media.Job{Root: h.root, Kind: kind, Action: action, Args: f.rest, Env: env, Python: py, Yes: f.yes, Log: logf,
 		Out: func(ev media.Event, line string) {
