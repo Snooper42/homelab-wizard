@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Inputs are what the engines' settings are made from.
@@ -158,11 +160,7 @@ func Write(root string, s map[string]any) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o644); err != nil {
-		return "", err
-	}
-	return path, os.Rename(tmp, path)
+	return path, lockedfile.Write(path, append(data, '\n'), 0o644)
 }
 
 // SecretKeys are the .env keys the engines read from their environment

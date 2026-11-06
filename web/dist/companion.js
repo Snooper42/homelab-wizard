@@ -29,15 +29,66 @@
     EventsEmit: emit,
   };
 
+  // The last Status, offline: the answers Status is drawn from (Status
+  // itself, and the computer, catalog and look it's drawn with) are kept
+  // on this phone, with when. When the computer can't be reached (away
+  // from home, Tailscale off), they answer instead, and a line at the top
+  // says Status is from then; the next Status that comes through puts it
+  // away. Nothing else is kept, and all of it goes when the phone is unpaired.
+  const LAST = 'homelab.companion.lastStatus';
+  const KEPT = ['StatusBoard', 'Host', 'Catalog', 'Appearance'];
+  const keptAll = () => { try { return JSON.parse(localStorage.getItem(LAST) || 'null'); } catch (e) { return null; } };
+  const keep = (method, result) => {
+    const all = keptAll() || { answers: {} };
+    all.answers[method] = result;
+    if (method === 'StatusBoard') all.at = new Date().toISOString();
+    try { localStorage.setItem(LAST, JSON.stringify(all)); } catch (e) { /* not kept */ }
+  };
+  function away(at) {
+    document.documentElement.classList.toggle('away', !!at);
+    const note = document.getElementById('awayNote');
+    if (!note) return;
+    note.hidden = !at;
+    if (!at) return;
+    const t = new Date(at);
+    const today = t.toDateString() === new Date().toDateString();
+    const when = t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + (today ? '' : ', ' + t.toLocaleDateString([], { weekday: 'long' }));
+    note.textContent = `The homelab can't be reached from here (at home, or with Tailscale on, it can). This is Status as it was at ${when}.`;
+  }
+  // What a call answers while the computer can't be reached.
+  function whileAway(method, e) {
+    const all = keptAll();
+    if (all?.at && method in all.answers) {
+      if (method === 'StatusBoard') away(all.at);
+      return all.answers[method];
+    }
+    if (all?.at && method === 'Screen') return ''; // nothing was asked to open
+    const err = new Error("The homelab can't be reached from here: at home, or with Tailscale on, it can.");
+    err.name = 'Away'; // the page leaves it to the line at the top (core.ts's showError)
+    err.cause = e;
+    throw err;
+  }
+
   const never = new Promise(() => {});
   async function call(method, args) {
     if (!token) return never; // the pairing form is showing
-    const r = await fetch('api/call/' + method, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-      body: JSON.stringify(args),
-    });
-    if (r.ok && (r.headers.get('Content-Type') || '').startsWith('application/x-ndjson')) return lines(r);
+    let r;
+    try {
+      r = await fetch('api/call/' + method, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(args),
+        // A computer that can't be reached may not refuse at once: Status waits 20 seconds for it.
+        signal: method === 'StatusBoard' && AbortSignal.timeout ? AbortSignal.timeout(20000) : undefined,
+      });
+    } catch (e) {
+      return whileAway(method, e);
+    }
+    if (r.ok && (r.headers.get('Content-Type') || '').startsWith('application/x-ndjson')) {
+      const result = lines(r);
+      if (method === 'StatusBoard') result.then((st) => { keep(method, st); away(''); }, () => {});
+      return result;
+    }
     const body = await r.json().catch(() => ({}));
     (body.log || []).forEach((line) => emit('cli:log', line));
     if (r.status === 401) { forget(); return never; }
@@ -48,6 +99,7 @@
       if (r.status === 404) err.name = 'NotOnPhone';
       throw err;
     }
+    if (KEPT.includes(method)) keep(method, body.result);
     return body.result;
   }
 
@@ -93,7 +145,7 @@
 
   function forget() {
     token = '';
-    try { localStorage.removeItem(KEY); } catch (e) { /* nothing kept */ }
+    try { localStorage.removeItem(KEY); localStorage.removeItem(LAST); } catch (e) { /* nothing kept */ }
     pairForm('This phone is not paired, or it was removed on the Mac.');
   }
 
@@ -200,6 +252,11 @@
     tick();
     setInterval(tick, 10000);
   }
+
+  // The page itself, for when the computer can't be reached (sw.js). A
+  // service worker needs HTTPS, so a phone on the computer's plain address
+  // at home has none, and needs none there.
+  if (navigator.serviceWorker && window.isSecureContext) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   window.addEventListener('DOMContentLoaded', () => {
     if (!token) return pairForm(kiosk ? 'Pair this screen as you would a phone; it then shows Status only.' : '');

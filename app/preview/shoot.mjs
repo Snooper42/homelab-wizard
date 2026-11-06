@@ -3041,6 +3041,16 @@ const smokes = [
     };
     const line = '#overnightLine .overnight';
     return [
+      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
+      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
+        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+        await page.waitForTimeout(1500);
+        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
+        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
+        await page.waitForSelector(line, { timeout: 5000 });
+      } },
       { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
         await page.clock.setFixedTime(morning);
         await page.evaluate(() => window.__emit('status:changed'));

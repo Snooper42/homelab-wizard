@@ -3052,6 +3052,7 @@
   var $1 = (sel2, root = document) => root.querySelector(sel2);
   var errorTimer = 0;
   function showError(e3) {
+    if (e3?.name === "Away" && document.documentElement.classList.contains("away")) return;
     const el3 = $2("error");
     el3.textContent = String(e3 && e3.message || e3);
     el3.hidden = false;
@@ -6539,10 +6540,14 @@
   var outages = {};
   var lastEvents = [];
   var watched = false;
+  var backupsAsked = 0;
   function drawOvernight() {
     if (!lastStatus) return;
     const now = Date.now();
-    if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 6e4);
+    if (nightOf(now) && !backupsData.value && now - backupsAsked > 6e4) {
+      backupsAsked = now;
+      backupsData.fresh(10 * 6e4);
+    }
     mountOvernight($2("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
   }
   backupsData.watch(drawOvernight);
