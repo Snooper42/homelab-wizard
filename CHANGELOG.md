@@ -124,6 +124,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **A Mac update comes only from whoever signed your app:** the app checked that an update downloaded whole, but not who made it. On a Mac, an update signed by anyone but the team that signed the app you have is now refused, and the app says so.
 - **Apps can no longer read each other's passwords through Docker:** the read-only view of Docker that Dozzle, Homarr, and Homepage use also answered any app asking for another app's settings, passwords included. Only those three reach it now.
 - **A wall screen stays a wall screen:** a screen paired in kiosk mode can no longer be given changes or Finances (beyond the money card) later in Settings › Phones, since anyone walking past could use them.
+- **A phone on your Wi-Fi can't pretend it used the secure link:** pairing through your domain's link now checks with the proxy itself whether the phone really came over https, so someone who catches a pairing code on the Wi-Fi gets a phone that only looks. Run Set up the domain once more to turn it on; the doctor reminds you.
 
 ## [0.17.0] - 2026-11-02
 
