@@ -1325,6 +1325,11 @@ From task 6, **Pair a partner's phone with only look access, then remove a lost 
 9. **The same thing, done two ways:** Anna's row has "Until you change it" and "Make read-only", while the iPad's has "Allow changes" and no time limit. *Fixed looks like:* every phone has the same controls in the same places.
 10. **Words:** "tailnet", "http:" and "https:", "key", and "kiosk", on a screen a household opens to pair a phone. *Fixed looks like:* "at home and on your own private network", "the secure link", "the home Wi-Fi link", "wall screen".
 
+From task 4, **Update everything, and know it worked** (Nov 6, Update apps on Status, against the fake backend):
+
+11. **Before you press Update, the sheet already says it updated them, in a terminal's words** (`t4-plan.png`). Under "Update all apps now" it shows `$ homelab update-all`, "→ dumping mealie-db first", "✓ updated navidrome, vikunja, mealie": app IDs, not names, and "✓ updated" before anything has happened. *Fixed looks like:* "These 3 apps have updates: Navidrome, Vikunja, Mealie. Mealie's recipes are copied first." with the command behind Details. *Smoke case:* the Update apps sheet, before Update them, shows no "✓", "$", or "→", and names apps by their names.
+12. **"Done" does not say what changed** (`t4-done.png`): each app is "Running" with a full bar, so the household cannot tell which got a new version, from what to what, or which were already up to date; "what Docker said" is jargon. *Fixed looks like:* "Updated: Navidrome 0.53 → 0.54. Already up to date: Vikunja, Mealie." with a link to what's new. *Smoke case:* after Update apps, the sheet names each app's old and new version or says it was already up to date.
+
 Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
 
 - (done: #460) **N22: a phone removed on the computer can come back** (your note in
