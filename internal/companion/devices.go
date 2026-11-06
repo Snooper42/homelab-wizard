@@ -77,6 +77,10 @@ type Device struct {
 	Unencrypted bool      `json:"unencrypted,omitempty"`
 	Paired      time.Time `json:"paired"`
 	LastSeen    time.Time `json:"lastSeen"`
+	// Until is when what it may do beyond looking ends: making changes,
+	// and seeing or changing Finances (a wall screen's money card stays).
+	// Zero: until you change it. Reached, the phone only looks.
+	Until time.Time `json:"until,omitzero"`
 }
 
 // Phone is a paired phone as the screens show it (no token hash).
@@ -88,13 +92,15 @@ type Phone struct {
 	Unencrypted bool      `json:"unencrypted,omitempty"`
 	Paired      time.Time `json:"paired"`
 	LastSeen    time.Time `json:"lastSeen"`
+	// Until is when its changes and Finances end; zero: until you change it.
+	Until time.Time `json:"until,omitzero"`
 }
 
 // Phones lists the paired phones for the screens.
 func (s *Store) Phones() []Phone {
 	out := []Phone{}
 	for _, d := range s.Devices() {
-		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen})
+		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen, Until: d.Until})
 	}
 	return out
 }
@@ -176,7 +182,44 @@ func (s *Store) load() state {
 		}
 	}
 	st.Pairings = live
+	if expire(st.Devices, now) {
+		_ = s.save(st)
+	}
 	return st
+}
+
+// expire takes from each device whose time is up what it may do beyond
+// looking: it makes no more changes and sees no Finances (a wall screen
+// keeps its money card). It says whether any changed.
+func expire(devices []Device, now time.Time) bool {
+	changed := false
+	for i, d := range devices {
+		if d.Until.IsZero() || now.Before(d.Until) {
+			continue
+		}
+		devices[i].CanChange = false
+		if d.Finances != FinancesCard {
+			devices[i].Finances = ""
+		}
+		devices[i].Until = time.Time{}
+		changed = true
+	}
+	return changed
+}
+
+// SetUntil ends what a device may do beyond looking at until (zero: never,
+// until you change it). A time already past ends it now.
+func (s *Store) SetUntil(idOrName string, until time.Time) (Device, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	st := s.load()
+	i := find(st, idOrName)
+	if i < 0 {
+		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
+	}
+	st.Devices[i].Until = until.Truncate(time.Second)
+	expire(st.Devices, s.Now())
+	return st.Devices[i], s.save(st)
 }
 
 func (s *Store) save(st state) error {
