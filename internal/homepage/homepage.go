@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Marker is the first line of a services.yaml this package wrote.
@@ -123,7 +125,8 @@ func Write(path string, data []byte) (changed bool, err error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return false, err
 	}
-	return true, os.WriteFile(path, data, 0o644)
+	// Replaced whole: the Homepage container reads it live.
+	return true, lockedfile.Write(path, data, 0o644)
 }
 
 // isStarter reports Homepage's own first-run services.yaml (its example

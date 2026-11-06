@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // FileName is the kit's name next to the app's CLI.
@@ -321,9 +323,12 @@ func write(root string, e entry) error {
 	return os.Rename(tmp, full)
 }
 
+// writeManifest replaces the manifest whole: an update cut off while it
+// was rewritten in place would leave none, and the folder would no longer
+// read as a kit.
 func writeManifest(root string, m Manifest) error {
 	data, _ := json.MarshalIndent(m, "", "  ")
-	return os.WriteFile(filepath.Join(root, ManifestName), data, 0o644)
+	return lockedfile.Write(filepath.Join(root, ManifestName), data, 0o644)
 }
 
 // Bundled is the kit that ships with the desktop app: in the bundle's

@@ -16,6 +16,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/digest"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
@@ -68,9 +69,20 @@ func (h *homelab) sendWeekly(ctx context.Context) {
 	h.ui.Info("sending the weekly summary: %s", title)
 	h.alert(ctx, digestTopic, h.digestMessage(title, body))
 	state.LastSent = time.Now()
-	if data, err := json.Marshal(state); err == nil {
-		_ = os.MkdirAll(filepath.Dir(path), 0o755)
-		_ = os.WriteFile(path, data, 0o644)
+	h.noteSent(path, "the weekly summary", state)
+}
+
+// noteSent saves the note that a message went out, whole: one read
+// half-written says not sent, and the message would go again. One that
+// can't be saved is said, since the next night sends it again.
+func (h *homelab) noteSent(path, what string, note any) {
+	data, _ := json.Marshal(note)
+	err := os.MkdirAll(filepath.Dir(path), 0o700)
+	if err == nil {
+		err = lockedfile.Write(path, data, 0o600)
+	}
+	if err != nil {
+		h.ui.Warn("couldn't note that %s went out (%v): it may be sent again", what, err)
 	}
 }
 

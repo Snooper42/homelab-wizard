@@ -185,7 +185,7 @@ func (h *homelab) report(ctx context.Context, args []string) error {
 		return nil
 	}
 	path := filepath.Join(h.logsDir(), "report-"+time.Now().Format("2006-01-02-1504")+".txt")
-	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+	if err := h.makeLogsDir(); err != nil {
 		return err
 	}
 	if err := os.WriteFile(path, []byte(text), 0o600); err != nil {
