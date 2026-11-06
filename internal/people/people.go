@@ -223,6 +223,10 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
 </html>
 `))
 
+// qrPrefix is how every code from companion.QRDataURL begins: an image,
+// with nothing of the text it encodes in the clear.
+const qrPrefix = "data:image/svg+xml;base64,"
+
 // sheet is the page for the fridge: each app's name, address, phone app,
 // and a code the phone's camera opens. It never holds the sign-in link or
 // a password, so it can hang where guests see it.
@@ -230,9 +234,10 @@ var sheet = template.Must(template.New("sheet").Funcs(template.FuncMap{
 	"first": func(name string) string { f, _ := Split(name); return f },
 	"qr": func(text string) template.URL {
 		u, err := companion.QRDataURL(text)
-		if err != nil {
+		if err != nil || !strings.HasPrefix(u, qrPrefix) {
 			return ""
 		}
+		// #nosec G203 -- QRDataURL's own SVG as base64 after a fixed data: prefix (checked above); the text is only drawn as the code
 		return template.URL(u)
 	},
 }).Parse(`<!doctype html>
