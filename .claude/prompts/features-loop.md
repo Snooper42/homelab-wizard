@@ -54,7 +54,7 @@ For each, oldest first, one at a time:
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
 **Open now** (Nov 6, 2026, 14:45 UTC):
-- #464 *Tailnet devices* (`claude/feature-tailnet-devices`): open. Take it to merged first.
+- #465 *Tailnet devices* (`claude/feature-tailnet-devices`): open. Take it to merged first.
 - Then `claude/feature-snooze-alert` (#PRn): *Snooze an alert*, built and pushed (Snooze… beside a failing check on Status's Watchdog card; `homelab notify snooze`). Merge main in, fill its number, and open it.
 - *Two-step sign-in, nudged* is skipped for now: knowing whether each admin app has a second factor needs that app's own API and its admin login, app by app, more than an S, and nothing here can try it. Take it up only with a list of the apps and how each says so.
 - **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
