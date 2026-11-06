@@ -612,6 +612,33 @@ struct UptimeTests {
     }
 }
 
+@Suite("Memory nearly full")
+struct MemoryPressureTests {
+    private func summary(_ memory: String) throws -> WatchdogSummary {
+        try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"{"lastRun":"2026-11-05T10:00:00Z","checks":1,"failing":[],"pending":0,"week":{},"memory":\#(memory)}"#.utf8))
+    }
+
+    // main #458: health.Memory, as the watchdog card carries it while it has alerted.
+    @Test func decodesTheAlert() throws {
+        let s = try summary(#"{"used":7988639171,"total":8589934592,"since":"2026-11-05T09:40:00Z","alerted":true,"biggest":[{"id":"immich","name":"Immich","bytes":2254857830},{"name":"some-container","bytes":943718400},{"id":"plex","name":"Plex","bytes":524288000},{"id":"x","name":"X","bytes":1}]}"#)
+        let m = try #require(s.memory)
+        #expect(m.percent == 93)
+        #expect(m.since != nil)
+        #expect(m.biggest.count == 3)                // three at most
+        #expect(m.biggest[1].id == nil)              // the catalog doesn't know it: no Stop
+        #expect(MemoryPressure.text(m.total) == "8.0 GB")
+        #expect(MemoryPressure.text(943_718_400) == "900 MB")
+    }
+
+    @Test func noAlertNoMemory() throws {
+        let plain = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"{"lastRun":"2026-11-05T10:00:00Z","checks":1,"failing":[],"pending":0,"week":{}}"#.utf8))
+        #expect(plain.memory == nil)
+        // A part the phone can't read costs only that part.
+        let broken = try summary(#""not an object""#)
+        #expect(broken.memory == nil && broken.checks == 1)
+    }
+}
+
 @Suite("Duplicati's last run")
 struct DuplicatiRunTests {
     @Test func summarizesTheLastRun() throws {

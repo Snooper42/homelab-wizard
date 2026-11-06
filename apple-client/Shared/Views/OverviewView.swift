@@ -177,6 +177,9 @@ private struct WatchdogCard: View {
     let summary: WatchdogSummary
 
     var body: some View {
+        if let memory = summary.memory {
+            MemoryPressureView(memory: memory)
+        }
         if let lastRun = summary.lastRun {
             if summary.failing.isEmpty {
                 Label(summary.checks == 1 ? "The check passes" : "All \(summary.checks) checks pass", systemImage: "checkmark.seal.fill")
@@ -212,6 +215,59 @@ private struct WatchdogCard: View {
             Text("The watchdog hasn't run yet.")
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Memory nearly full: the biggest apps, each with Stop for a device that
+/// may make changes, as the computer's Watchdog card lists them.
+private struct MemoryPressureView: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
+    let memory: MemoryPressure
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Label("Memory nearly full", systemImage: "memorychip.fill")
+                .font(.headline)
+                .foregroundStyle(Theme.danger)
+            Text(summary)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+        ForEach(memory.biggest.indices, id: \.self) { i in
+            let big = memory.biggest[i]
+            HStack {
+                Text(verbatim: big.name)
+                Spacer(minLength: 8)
+                Text(MemoryPressure.text(big.bytes))
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                if let app = stoppable(big) {
+                    Button("Stop") { actions.request(.stop, on: app) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(actions.isBusy)
+                        .accessibilityLabel("Stop \(big.name)")
+                }
+            }
+        }
+    }
+
+    private var summary: String {
+        var words = "The apps use \(memory.percent)% of the \(MemoryPressure.text(memory.total)) Docker has"
+        if let since = memory.since {
+            words += ", high since \(since.formatted(.relative(presentation: .named)))"
+        }
+        return words + ". Stop one you don't need now."
+    }
+
+    /// The app to stop, when the catalog knows it, it's running here, and
+    /// this device may stop it.
+    private func stoppable(_ big: MemoryPressure.AppMemory) -> AppStatus? {
+        guard let id = big.id, !id.isEmpty, let app = dashboard.app(id: id),
+              actions.available(for: app).contains(.stop) else { return nil }
+        return app
     }
 }
 

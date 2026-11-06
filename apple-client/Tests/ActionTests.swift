@@ -188,7 +188,28 @@ struct AppSettingTests {
     @Test func nativeAppsHaveOnlyAlerts() throws {
         let native = try app(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#)
         #expect(AppSetting.available(for: native) == [.alerts, .pinned])
-        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "alerts", "pinned"]) // what SetAppSetting takes
+        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "sundays", "alerts", "pinned"]) // what SetAppSetting takes
+    }
+
+    // main #457: an update window per app.
+    @Test func updateDays() throws {
+        let plain = try app(#"{"id":"immich","name":"Immich","state":"running"}"#)
+        #expect(AppSetting.available(for: plain) == [.updates, .sundays, .alerts, .pinned])
+        #expect(!AppSetting.sundays.isOn(for: plain))
+        #expect(AppSetting.sundays.title(for: plain) == "Only on Sundays")
+        #expect(AppSetting.updates.detail(on: true, app: plain) == "Every night, with a backup of its data first.")
+
+        let sundays = try app(#"{"id":"immich","name":"Immich","state":"running","updateDays":["sun"]}"#)
+        #expect(AppSetting.sundays.isOn(for: sundays))
+        #expect(AppSetting.updates.detail(on: true, app: sundays) == "On Sundays only, with a backup of its data first.")
+
+        let weekend = try app(#"{"id":"immich","name":"Immich","state":"running","updateDays":["sat","sun"]}"#)
+        #expect(AppSetting.sundays.title(for: weekend) == "Only on Saturdays and Sundays")
+        #expect(AppStatus.weekdaysText(["mon", "wed", "fri"]) == "Mondays, Wednesdays and Fridays")
+
+        // Held: the nightly update leaves it out, so no days to choose.
+        let held = try app(#"{"id":"immich","name":"Immich","state":"running","held":true}"#)
+        #expect(!AppSetting.available(for: held).contains(.sundays))
     }
 }
 
@@ -298,3 +319,53 @@ struct DockBadgeTests {
     }
 }
 #endif
+
+// main #449: a state reads by its shape as well as its colour.
+@Suite("State shapes")
+struct StateShapeTests {
+    private func app(_ json: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func circleTriangleCross() throws {
+        let up = try app(#"{"id":"a","name":"A","state":"running"}"#)
+        #expect(up.symbolName == "checkmark.circle.fill")
+        // Stopped, and nobody stopped it on purpose: to look at.
+        let stopped = try app(#"{"id":"a","name":"A","state":"stopped"}"#)
+        #expect(stopped.needsAttention && !stopped.isDown)
+        #expect(stopped.symbolName == "exclamationmark.triangle.fill")
+        // Down: a cross.
+        for json in [#"{"id":"a","name":"A","state":"running","health":"unhealthy"}"#,
+                     #"{"id":"a","name":"A","state":"missing"}"#,
+                     #"{"id":"a","name":"A","state":"running","notAnswering":"HTTP 502"}"#] {
+            let down = try app(json)
+            #expect(down.isDown)
+            #expect(down.symbolName == "xmark.circle.fill")
+        }
+    }
+}
+
+// main #451: what VoiceOver hears when Status changes.
+@Suite("Status read aloud")
+struct StatusAloudTests {
+    private func apps(_ json: String) throws -> [AppStatus] {
+        try JSONDecoder.homelab().decode([AppStatus].self, from: Data(json.utf8))
+    }
+
+    @Test func saysWhatChangedInTheRowsWords() throws {
+        let before = try apps(#"[{"id":"v","name":"Vikunja","state":"running"},{"id":"i","name":"Immich","state":"running"},{"id":"p","name":"Plex","state":"running"}]"#)
+        let was = Dictionary(uniqueKeysWithValues: before.map { ($0.id, $0.detailLine) })
+        let after = try apps(#"[{"id":"v","name":"Vikunja","state":"running","health":"restarting"},{"id":"i","name":"Immich","state":"running","health":"restarting"},{"id":"p","name":"Plex","state":"running"}]"#)
+        #expect(DashboardViewModel.changes(from: was, to: after) == "Vikunja and Immich: Restarting")
+        #expect(DashboardViewModel.changes(from: was, to: before) == nil)
+        // A new app isn't a change to say.
+        let added = try before + apps(#"[{"id":"n","name":"New","state":"running"}]"#)
+        #expect(DashboardViewModel.changes(from: was, to: added) == nil)
+    }
+
+    @Test func listsNamesAsTheComputerDoes() {
+        #expect(DashboardViewModel.listed(["A"]) == "A")
+        #expect(DashboardViewModel.listed(["A", "B", "C"]) == "A, B and C")
+        #expect(DashboardViewModel.listed(["A", "B", "C", "D", "E", "F", "G"]) == "A, B, C, D and 3 more")
+    }
+}

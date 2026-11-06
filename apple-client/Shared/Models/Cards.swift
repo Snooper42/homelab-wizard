@@ -16,8 +16,10 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     let week: [String: Double]
     /// Each check's times down this week, oldest first, by app id.
     let outages: [String: [WatchdogOutage]]
+    /// Memory nearly full, while the watchdog has alerted about it (main #458).
+    let memory: MemoryPressure?
 
-    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages }
+    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages, memory }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -27,6 +29,8 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         pending = try c.decodeIfPresent(Int.self, forKey: .pending) ?? 0
         week = try c.decodeIfPresent([String: Double].self, forKey: .week) ?? [:]
         outages = ((try? c.decodeIfPresent([String: [WatchdogOutage]].self, forKey: .outages)) ?? nil) ?? [:]
+        // A part the phone can't read costs only that part.
+        memory = (try? c.decodeIfPresent(MemoryPressure.self, forKey: .memory)) ?? nil
     }
 
     /// "96.2% up this week", as the computer words it: shown only below
@@ -42,6 +46,53 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     var weekUptime: Double? {
         guard !week.isEmpty else { return nil }
         return week.values.reduce(0, +) / Double(week.count)
+    }
+}
+
+/// The apps together using nearly all the memory Docker has, for long
+/// enough that the watchdog alerted (`health.Memory`, main #458). Status
+/// names the biggest, each with Stop, until it comes down.
+struct MemoryPressure: Decodable, Sendable, Equatable {
+    /// Bytes, all the apps together.
+    let used: Int64
+    /// Bytes Docker has.
+    let total: Int64
+    /// When it first measured high in a row.
+    let since: Date?
+    /// The apps using the most, largest first (three at most).
+    let biggest: [AppMemory]
+
+    struct AppMemory: Decodable, Sendable, Equatable {
+        /// Its catalog id. Empty for a container the catalog doesn't know,
+        /// which gets no Stop.
+        let id: String?
+        let name: String
+        let bytes: Int64
+    }
+
+    enum CodingKeys: String, CodingKey { case used, total, since, biggest }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        used = try c.decodeIfPresent(Int64.self, forKey: .used) ?? 0
+        total = try c.decodeIfPresent(Int64.self, forKey: .total) ?? 0
+        since = GoZeroTime.drop((try? c.decodeIfPresent(Date.self, forKey: .since)) ?? nil)
+        biggest = Array(((try? c.decodeIfPresent([AppMemory].self, forKey: .biggest)) ?? nil)?.prefix(3) ?? [])
+    }
+
+    /// The share used, in whole percent, as the computer rounds it.
+    var percent: Int {
+        total > 0 ? Int((Double(used) / Double(total) * 100).rounded()) : 0
+    }
+
+    /// Memory as the alert says it, in the binary units Docker sets it in:
+    /// "2.1 GB", "900 MB" (`memText` in web/src/status/Cards.tsx).
+    static func text(_ bytes: Int64) -> String {
+        let gib = Double(1 << 30), mib = Double(1 << 20)
+        if Double(bytes) >= gib {
+            return (Double(bytes) / gib).formatted(.number.precision(.fractionLength(1)).locale(Locale(identifier: "en_US_POSIX"))) + " GB"
+        }
+        return "\(Int((Double(bytes) / mib).rounded())) MB"
     }
 }
 

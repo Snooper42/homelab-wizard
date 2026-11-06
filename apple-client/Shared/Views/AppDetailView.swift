@@ -386,12 +386,12 @@ struct AppDetailView: View {
                     )) {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack {
-                                Text(setting.title)
+                                Text(setting.title(for: app))
                                 if actions.isSaving(setting, for: app) {
                                     ProgressView().controlSize(.mini)
                                 }
                             }
-                            Text(setting.detail(on: actions.value(of: setting, for: app)))
+                            Text(setting.detail(on: actions.value(of: setting, for: app), app: app))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

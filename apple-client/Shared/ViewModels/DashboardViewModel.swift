@@ -208,6 +208,45 @@ final class DashboardViewModel {
     /// The apps as last shown, kept to be saved as seen when the dashboard goes.
     @ObservationIgnored var latestApps: [AppStatus] = []
 
+    // MARK: Status read aloud (main #451)
+
+    /// Each app's words at the last reading, for what to say when they change.
+    /// In memory only, and gone with the dashboard on lock.
+    @ObservationIgnored private var heard: [AppStatus.ID: String]?
+
+    /// What changed since the last reading, for VoiceOver to say: "Vikunja:
+    /// Restarting", apps that change to the same words together. Nil the
+    /// first time and when nothing changed.
+    func changesToSay(_ apps: [AppStatus]) -> String? {
+        let before = heard
+        heard = Dictionary(apps.map { ($0.id, $0.detailLine) }, uniquingKeysWith: { first, _ in first })
+        guard let before else { return nil }
+        return Self.changes(from: before, to: apps)
+    }
+
+    /// The row's own words, as the computer reads them out: apps listed in
+    /// Status's order, five at most by name.
+    nonisolated static func changes(from before: [AppStatus.ID: String], to apps: [AppStatus]) -> String? {
+        var order: [String] = []
+        var names: [String: [String]] = [:]
+        for app in apps {
+            let words = app.detailLine
+            guard let was = before[app.id], was != words else { continue }
+            if names[words] == nil { order.append(words) }
+            names[words, default: []].append(app.name)
+        }
+        guard !order.isEmpty else { return nil }
+        return order.map { "\(listed(names[$0] ?? [])): \($0)" }.joined(separator: ". ")
+    }
+
+    /// "A", "A and B", "A, B and C", or "A, B, C, D and 3 more".
+    nonisolated static func listed(_ names: [String]) -> String {
+        guard let last = names.last else { return "" }
+        if names.count > 5 { return names.prefix(4).joined(separator: ", ") + " and \(names.count - 4) more" }
+        if names.count == 1 { return last }
+        return names.dropLast().joined(separator: ", ") + " and " + last
+    }
+
     /// "Restarted since you looked", or nil.
     func changeNote(for app: AppStatus) -> String? {
         guard let seenKey else { return nil }
@@ -262,5 +301,9 @@ final class DashboardViewModel {
     }
 
     /// For the sidebar badge and the phone's overview row: failing checks.
-    var failingChecks: Int { cards.watchdog?.failing.count ?? 0 }
+    /// What the Overview's watchdog card has to show: failing checks, and
+    /// memory nearly full (main #458).
+    var failingChecks: Int {
+        (cards.watchdog?.failing.count ?? 0) + (cards.watchdog?.memory == nil ? 0 : 1)
+    }
 }

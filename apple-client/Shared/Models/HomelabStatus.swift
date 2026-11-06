@@ -69,6 +69,9 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let startedBy: String?
     let updatedAt: String?
     let held: Bool?
+    /// The days the nightly update takes it ("sun", "sat"), when not every
+    /// night (main #457).
+    var updateDays: [String]? = nil
     let quiet: Bool?
     /// At the top of Status (homelab pin).
     let pinned: Bool?
@@ -83,7 +86,7 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, state, health, container, url, address, since, restarts, startedBy
-        case updatedAt, held, quiet, pinned, waitingFor, notAnswering, settingsChanged
+        case updatedAt, held, updateDays, quiet, pinned, waitingFor, notAnswering, settingsChanged
     }
 
     var isRunning: Bool { state == "running" }

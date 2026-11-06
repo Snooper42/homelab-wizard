@@ -204,10 +204,20 @@ extension AppStatus {
         state == "stopped" && stoppedOnPurpose != nil && stoppedOnPurpose?.keptRestarting != true
     }
 
+    /// The computer's "bad" dot: unwell, crash-looping, missing, not
+    /// answering, or stopped for restarting too often. A plain stop that
+    /// needs a look is its "warn".
+    var isDown: Bool {
+        health == "restarting" || health == "unhealthy" || state == "missing"
+            || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
+    }
+
     var symbolName: String {
         if heldByYou { return "stop.circle.fill" }
         if isWaiting { return pausedOnBattery ? "bolt.slash.circle.fill" : "externaldrive.fill.badge.exclamationmark" }
-        if needsAttention { return "exclamationmark.triangle.fill" }
+        // As the computer's dots (main #449): a triangle to look at, a cross
+        // when down, so a state reads without telling orange from red.
+        if needsAttention { return isDown ? "xmark.circle.fill" : "exclamationmark.triangle.fill" }
         if health == "starting" { return "hourglass.circle.fill" }
         switch state {
         case "running": return "checkmark.circle.fill"
@@ -219,12 +229,7 @@ extension AppStatus {
     var tint: Color {
         if heldByYou || awaitingJobs { return .secondary }
         if isWaiting { return Theme.warning }
-        if needsAttention {
-            // The computer's "bad" dot: red. A plain stop is its "warn": orange.
-            let bad = health == "restarting" || health == "unhealthy" || state == "missing"
-                || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
-            return bad ? Theme.danger : Theme.warning
-        }
+        if needsAttention { return isDown ? Theme.danger : Theme.warning }
         if health == "starting" { return Theme.caution }
         switch state {
         case "running": return Theme.success

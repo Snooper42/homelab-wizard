@@ -128,6 +128,10 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     /// On: the nightly update includes it (`homelab updates release`).
     /// Off: its updates are held (`homelab updates hold`). Container apps only.
     case updates
+    /// On: the nightly update takes it on Sundays only, or the days the CLI
+    /// set (`homelab updates days <app> sun`); off: every night (main #457).
+    /// Offered while its updates are on.
+    case sundays
     /// On: the watchdog alerts when it stops (`homelab notify on`).
     case alerts
     /// On: at the top of Status and the menu bar (`homelab pin`).
@@ -138,6 +142,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .updates: "Nightly updates"
+        case .sundays: "Only on Sundays"
         case .alerts: "Tell me if it stops"
         case .pinned: "Pin to the top"
         }
@@ -148,15 +153,33 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     func detail(on: Bool) -> String {
         switch self {
         case .updates: on ? "Every night, with a backup of its data first." : "Held: the nightly update leaves it out."
+        case .sundays: on ? "The other nights leave it alone; updating it by hand still works any day." : "For an app you would rather not see change midweek."
         case .alerts: on ? "On your phone through ntfy, and on the computer." : "Still checked and shown on Status, without an alert."
         case .pinned: on ? "At the top of Status, here and on the computer." : "Listed with the others, by its state."
         }
+    }
+
+    /// The title for this app: the days the CLI set say themselves
+    /// ("Only on Saturdays and Sundays"), as on the computer's page.
+    func title(for app: AppStatus) -> String {
+        guard self == .sundays, let days = app.updateDays, !days.isEmpty else { return title }
+        return "Only on \(AppStatus.weekdaysText(days))"
+    }
+
+    /// What on or off means for this app. Nightly updates that keep to
+    /// their own days say which.
+    func detail(on: Bool, app: AppStatus) -> String {
+        if self == .updates, on, let days = app.updateDays, !days.isEmpty {
+            return "On \(AppStatus.weekdaysText(days)) only, with a backup of its data first."
+        }
+        return detail(on: on)
     }
 
     /// Its current value, from Status.
     func isOn(for app: AppStatus) -> Bool {
         switch self {
         case .updates: app.held != true
+        case .sundays: !(app.updateDays ?? []).isEmpty
         case .alerts: app.quiet != true
         case .pinned: app.pinned == true
         }
@@ -166,12 +189,15 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     /// as on the computer.
     static func available(for app: AppStatus) -> [AppSetting] {
         guard AppStatus.isValidID(app.id) else { return [] }
-        return app.isNative ? [.alerts, .pinned] : [.updates, .alerts, .pinned]
+        if app.isNative { return [.alerts, .pinned] }
+        // The days apply only while its nightly updates are on.
+        return app.held == true ? [.updates, .alerts, .pinned] : [.updates, .sundays, .alerts, .pinned]
     }
 
     func reason(on: Bool, app: AppStatus) -> String {
         switch self {
         case .updates: on ? "Let \(app.name) update nightly again." : "Hold \(app.name)'s updates."
+        case .sundays: on ? "Update \(app.name) on Sundays only." : "Let \(app.name) update every night."
         case .alerts: on ? "Alert when \(app.name) stops." : "Stop alerts about \(app.name)."
         case .pinned: on ? "Pin \(app.name) to the top." : "Unpin \(app.name)."
         }
@@ -179,6 +205,17 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
 }
 
 extension AppStatus {
+    private static let dayWords = ["mon": "Mondays", "tue": "Tuesdays", "wed": "Wednesdays", "thu": "Thursdays",
+                                   "fri": "Fridays", "sat": "Saturdays", "sun": "Sundays"]
+
+    /// "Sundays", "Saturdays and Sundays", as the computer says them
+    /// (`weekdaysText` in web/src/page/AppPage.tsx).
+    static func weekdaysText(_ days: [String]) -> String {
+        let words = days.map { dayWords[$0] ?? $0 }
+        guard words.count > 1, let last = words.last else { return words.joined() }
+        return words.dropLast().joined(separator: ", ") + " and " + last
+    }
+
     /// It runs as its own program (Jellyfin on a Mac), not in a container,
     /// so a phone can't start or stop it.
     var isNative: Bool { health == "native" }
