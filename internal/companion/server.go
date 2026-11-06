@@ -415,8 +415,9 @@ func Page(index []byte) []byte {
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Homelab">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#1f3a5f">
-<link rel="apple-touch-icon" href="logo.svg">
+<meta name="theme-color" content="` + splashLight + `" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="` + splashDark + `" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 </head>`
 	out := bytes.Replace(index, []byte("</head>"), []byte(head), 1)
 	out = bytes.Replace(out, []byte(`<html lang="en">`), []byte(`<html lang="en" class="companion">`), 1)
@@ -424,16 +425,37 @@ func Page(index []byte) []byte {
 <script src="app.js"></script>`), 1)
 }
 
+// Icons are the phone's Home Screen icons (web/dist, made from
+// assets/appicon-phone.svg by app/preview/icons.mjs): PNGs, since an
+// iPhone takes no SVG for one, and the 512 also maskable, its shield inside
+// the middle 80% that Android's shapes keep.
+var Icons = []map[string]string{
+	{"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+	{"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+	{"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+	{"src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
+}
+
+// The app's own background (style.css's --bg): the splash Android shows
+// while the app opens from the Home Screen (a manifest has one colour, so
+// the light one), and the bar above the app, light or dark with the phone.
+const (
+	splashLight = "#f4f6fa"
+	splashDark  = "#0b1020"
+)
+
 func manifest(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/manifest+json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
+		"id":               "./",
 		"name":             "Homelab",
 		"short_name":       "Homelab",
+		"description":      "Your homelab's apps, backups, and alerts",
 		"start_url":        "./",
 		"scope":            "./",
 		"display":          "standalone",
-		"background_color": "#ffffff",
-		"theme_color":      "#1f3a5f",
-		"icons":            []map[string]string{{"src": "logo.svg", "sizes": "any", "type": "image/svg+xml"}},
+		"background_color": splashLight,
+		"theme_color":      splashLight,
+		"icons":            Icons,
 	})
 }

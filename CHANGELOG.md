@@ -39,6 +39,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Add to Home Screen, done right:** the phone companion added to an iPhone's Home Screen has the app's icon, no longer a picture of the page, and Android's shapes no longer cut it. Opened from there, its splash on Android is the app's own background, and the bar above it follows light or dark mode.
 - **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
 - **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
 - **A drive comes back:** apps waiting for an unplugged drive start within a minute of it being plugged in again, not at the watchdog's next check up to 15 minutes later.

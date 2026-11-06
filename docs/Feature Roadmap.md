@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #PRn |
 | Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
 | Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
@@ -190,7 +191,7 @@ The app at home on each system.
 
 The household's phones as a second screen.
 
-- **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
+- **Add to Home Screen, done right** (S, *Built*, #PRn): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
 - **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
 
