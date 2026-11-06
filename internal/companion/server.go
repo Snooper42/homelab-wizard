@@ -373,7 +373,14 @@ func stream(w http.ResponseWriter, r *http.Request, m Method, args []json.RawMes
 	}, func(name string, data any) { line(map[string]any{"event": name, "data": data}) })
 }
 
-// events streams the engine's changes to a paired phone.
+// streamRecheck is how often a phone following Status changes is looked
+// up again, so one removed on the computer stops getting them.
+var streamRecheck = 5 * time.Second
+
+// events streams the engine's changes to a paired phone, for as long as it
+// stays paired: a stream stays open for hours, so the phone is looked up
+// again every few seconds, and one removed on the computer (by another
+// process too) is cut off, as its token stops working (N23).
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.device(r); !ok {
 		fail(w, http.StatusUnauthorized, "this phone is not paired")
@@ -383,7 +390,24 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, "no changes to follow")
 		return
 	}
-	s.Changes.Stream(w, r)
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	go func() {
+		tick := time.NewTicker(streamRecheck)
+		defer tick.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-tick.C:
+				if _, ok := s.device(r); !ok {
+					cancel()
+					return
+				}
+			}
+		}
+	}()
+	s.Changes.Stream(w, r.WithContext(ctx))
 }
 
 // files serves the frontend. index.html gets the companion's script (in

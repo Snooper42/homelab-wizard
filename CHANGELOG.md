@@ -103,6 +103,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **An app goes on the internet only once it has its first account:** with a domain, installing Immich, Audiobookshelf, Komga, Navidrome, or Calibre-Web put it on the internet at once, where the first person to open it would have made its admin account (or signed in to Calibre-Web as admin/admin123). Each now stays at home until it has one; the domain plan says so, and Set up the domain puts it online after.
 - **Hide amounts covers the alerts too:** with amounts hidden, the nightly Finances reminders and the weekly summary still showed them on the phone's lock screen (*Due tomorrow: Mortgage $1,845.00*). They now say $••• there too.
 - **The Beszel agent stays on the version you chose:** it can control Docker, and it updated itself every night from its newest image, as the socket proxy once did. It is now pinned (`BESZEL_AGENT_VERSION`) and updated by hand after reading its notes.
+- **A removed phone stops getting Status at once:** a phone removed in Settings › Phones could no longer ask for anything, but one that had Status open kept receiving each change for as long as it stayed connected. It is now cut off within seconds.
 
 ## [0.17.0] - 2026-11-02
 
