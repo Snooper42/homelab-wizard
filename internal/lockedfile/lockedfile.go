@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
+	"syscall"
 	"time"
 )
 
@@ -113,4 +115,39 @@ func Write(path string, data []byte, mode os.FileMode) error {
 		_ = os.Remove(tmp)
 	}
 	return werr
+}
+
+// Read reads a record Write saves. On Windows an open at the very moment
+// another process renames the file in fails ("access is denied", or "in
+// use by another process"): Read tries again for up to RenameWait, so a
+// save never reads as no record at all. Any other failure, and every
+// failure off Windows, is returned at once.
+func Read(path string) ([]byte, error) {
+	deadline := time.Now().Add(RenameWait)
+	for {
+		data, err := readFile(path)
+		if err == nil || !busy(err) || time.Now().After(deadline) {
+			return data, err
+		}
+		time.Sleep(2 * time.Millisecond)
+	}
+}
+
+// errSharingViolation is Windows' ERROR_SHARING_VIOLATION, which Go does
+// not count as a permission error.
+const errSharingViolation = syscall.Errno(32)
+
+// onWindows and readFile are what tests change, to try Read's Windows
+// path anywhere.
+var (
+	onWindows = runtime.GOOS == "windows"
+	readFile  = os.ReadFile
+)
+
+func busy(err error) bool {
+	if !onWindows {
+		return false
+	}
+	var errno syscall.Errno
+	return os.IsPermission(err) || (errors.As(err, &errno) && errno == errSharingViolation)
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
@@ -60,7 +61,7 @@ func (h *homelab) agent(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+	if err := h.makeLogsDir(); err != nil {
 		return err
 	}
 	if slices.Contains(args, "--login-item") {
@@ -229,7 +230,7 @@ func openJobLog(dir, name string, limit int64) (*os.File, error) {
 			return nil, err
 		}
 	}
-	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	return os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 }
 
 // splitLog moves the older half of path, up to a line's end, to older.
@@ -248,11 +249,9 @@ func splitLog(path, older string) error {
 		path string
 		data []byte
 	}{{older, data[:cut]}, {path, data[cut:]}} {
-		tmp := f.path + ".tmp"
-		if err := os.WriteFile(tmp, f.data, 0o644); err != nil {
-			return err
-		}
-		if err := os.Rename(tmp, f.path); err != nil {
+		// A temporary file of its own: two agents rotating one log at
+		// once (one handing over to the next) don't trip on each other's.
+		if err := lockedfile.Write(f.path, f.data, 0o600); err != nil {
 			return err
 		}
 	}
@@ -288,13 +287,15 @@ type agentState struct {
 
 func loadAgentState(path string) agentState {
 	var s agentState
-	if data, err := os.ReadFile(path); err == nil {
+	if data, err := lockedfile.Read(path); err == nil {
 		_ = json.Unmarshal(data, &s)
 	}
 	return s
 }
 
+// saveAgentState replaces the note whole: one read half-written says no
+// backup yet, and the backup would start at once.
 func saveAgentState(path string, s agentState) error {
 	data, _ := json.MarshalIndent(s, "", "  ")
-	return os.WriteFile(path, data, 0o644)
+	return lockedfile.Write(path, data, 0o600)
 }

@@ -70,7 +70,7 @@ func (h *homelab) quit(ctx context.Context, args []string) error {
 	if core.QuitTray() {
 		u.OK("quit %s", tray)
 	}
-	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+	if err := h.makeLogsDir(); err != nil {
 		return err
 	}
 	// Quit twice: the first one's list still counts.

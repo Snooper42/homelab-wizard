@@ -46,6 +46,19 @@ func (h *homelab) stagingDir(parts ...string) string {
 
 func (h *homelab) logsDir() string { return filepath.Join(h.root, "scripts", "logs") }
 
+// makeLogsDir makes scripts/logs this account's only (0700), tightening one
+// an older version made 0755: the jobs' logs and crash notes are the
+// household's diagnostics, not for another account on the computer.
+func (h *homelab) makeLogsDir() error {
+	if err := os.MkdirAll(h.logsDir(), 0o700); err != nil {
+		return err
+	}
+	// Best effort: a folder another account owns (made with sudo) can't be
+	// changed, and the jobs still write their logs.
+	_ = os.Chmod(h.logsDir(), 0o700)
+	return nil
+}
+
 func (h *homelab) ntfy() *notify.Client {
 	port := h.envMap()["NTFY_PORT"]
 	if port == "" {
@@ -1400,7 +1413,7 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 		if err := h.goAhead(*apply, "\nInstall?"); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+		if err := h.makeLogsDir(); err != nil {
 			return err
 		}
 		for _, j := range jobs() {

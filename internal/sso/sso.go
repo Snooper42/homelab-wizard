@@ -19,6 +19,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Provider is how the apps name Pocket ID on their sign-in pages.
@@ -170,7 +172,8 @@ func WriteEnv(path string, kv map[string]string) error {
 		}
 		fmt.Fprintf(&b, "%s=%s\n", k, kv[k])
 	}
-	return os.WriteFile(path, []byte(b.String()), 0o600)
+	// Replaced whole: Compose reads it at each up.
+	return lockedfile.Write(path, []byte(b.String()), 0o600)
 }
 
 // ReadEnv reads back an env file WriteEnv wrote.
