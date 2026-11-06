@@ -43,6 +43,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Add to Home Screen, done right:** the phone companion added to an iPhone's Home Screen has the app's icon, no longer a picture of the page, and Android's shapes no longer cut it. Opened from there, its splash on Android is the app's own background, and the bar above it follows light or dark mode.
 - **Status read aloud:** with VoiceOver or Narrator on, Status reads out each app's change as it happens, not only a job's result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line. Nothing is read for Status while another screen is shown.
 - **Shapes as well as colours:** an app (or backup, or anything else) that is stopped or needs a look has a triangle beside it and one that is down a cross, where a running one has a circle, so a state reads without telling green from red, on a small screen, and in Windows' contrast themes.
 - **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
