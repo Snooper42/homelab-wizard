@@ -222,23 +222,19 @@ jobs:
           npm ci
           npx --no-install playwright install --with-deps chromium
       # Three at once, each every third check (SMOKE_SHARD): together every
-      # check, in about a third of the time on the runner's four cores. Each
-      # one's output is printed whole once all three are done.
+      # check, in about a third of the time on the runner's four cores (Nov
+      # 6, the Finances checks here: 983 s one at a time, 348 s three at
+      # once, the same 681 passing). Each line says its shard as it comes.
       - name: Click through, and check each screen
         run: |
-          pids=()
           for i in 1 2 3; do
-            SMOKE_SHARD=$i/3 node app/preview/shoot.mjs --smoke ${{ matrix.scheme }} > "smoke-$i.log" 2>&1 &
-            pids+=($!)
+            ( SMOKE_SHARD=$i/3 node app/preview/shoot.mjs --smoke ${{ matrix.scheme }} 2>&1; echo $? > "smoke-$i.exit" ) | sed -u "s|^|[$i/3] |" &
           done
+          wait
           failed=0
           for i in 1 2 3; do
-            wait "${pids[$((i - 1))]}" || failed=1
-            echo "::group::shard $i of 3"
-            cat "smoke-$i.log"
-            echo "::endgroup::"
+            [ "$(cat "smoke-$i.exit" 2>/dev/null)" = 0 ] || failed=1
           done
-          grep -h '^FAIL' smoke-*.log || true
           exit $failed
       - name: Keep the screenshots of what failed
         if: failure()
