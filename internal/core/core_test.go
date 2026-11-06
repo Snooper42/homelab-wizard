@@ -68,8 +68,9 @@ func homelab(t *testing.T, env string) string {
 // runner is the docker package's fake, plus `docker stats`.
 type runner struct {
 	*docker.FakeRunner
-	stats string
-	down  error
+	stats     string
+	tailscale string // what tailscale status --json says in its container
+	down      error
 }
 
 func (r *runner) Output(ctx context.Context, bin string, args ...string) ([]byte, error) {
@@ -78,6 +79,9 @@ func (r *runner) Output(ctx context.Context, bin string, args ...string) ([]byte
 	}
 	if len(args) > 0 && args[0] == "stats" {
 		return []byte(r.stats), nil
+	}
+	if len(args) > 3 && args[0] == "exec" && args[2] == "tailscale" && args[3] == "status" {
+		return []byte(r.tailscale), nil
 	}
 	return r.FakeRunner.Output(ctx, bin, args...)
 }
@@ -477,5 +481,26 @@ func TestLastStatusFromTheAgent(t *testing.T) {
 	cancel()
 	if err := <-served; err != nil {
 		t.Errorf("serve: %v", err)
+	}
+}
+
+// TestTailnetDevices: the devices come from tailscale status in
+// Tailscale's container; without Tailscale running there are none to list.
+func TestTailnetDevices(t *testing.T) {
+	away(t)
+	root := homelab(t, "")
+	ctx := context.Background()
+	withDocker(t, &runner{FakeRunner: &docker.FakeRunner{Containers: []docker.FakeContainer{running("homelab_security", "ntfy")}}})
+	if _, err := TailnetDevices(ctx, root); !errors.Is(err, ErrNoTailscale) {
+		t.Fatalf("without Tailscale: %v", err)
+	}
+	withDocker(t, &runner{FakeRunner: &docker.FakeRunner{Containers: []docker.FakeContainer{running("homelab_network", "tailscale")}},
+		tailscale: `{"Self":{"HostName":"homelab","DNSName":"homelab.tail1.ts.net.","OS":"linux","TailscaleIPs":["100.64.0.1"]},"Peer":{"k":{"HostName":"Annas-iPhone","DNSName":"annas-iphone.tail1.ts.net.","OS":"iOS","TailscaleIPs":["100.64.0.2"],"Online":false,"LastSeen":"2026-08-01T10:00:00Z"}}}`})
+	devices, err := TailnetDevices(ctx, root)
+	if err != nil || len(devices) != 2 || !devices[0].Self || devices[1].Name != "annas-iphone" || devices[1].Admin != "https://login.tailscale.com/admin/machines/100.64.0.2" {
+		t.Fatalf("devices %+v, %v", devices, err)
+	}
+	if _, err := TailnetDevices(ctx, t.TempDir()); err == nil {
+		t.Error("without a homelab")
 	}
 }

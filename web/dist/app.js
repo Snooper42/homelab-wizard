@@ -3655,6 +3655,35 @@
   }
   var mountPhones = (el3, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el3);
 
+  // web/src/settings/TailnetDevices.tsx
+  var awayFor = 30 * 864e5;
+  var away = (d3) => !d3.online && !never(d3.lastSeen) && Date.now() - new Date(d3.lastSeen).getTime() > awayFor;
+  var systems = { iOS: "iPhone or iPad", macOS: "Mac", android: "Android", windows: "Windows", linux: "Linux" };
+  function TailnetDevices({ devices, open: open3 }) {
+    const online = devices.filter((d3) => d3.online).length;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Devices on your tailnet", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+        devices.length === 1 ? "1 device" : `${devices.length} devices`,
+        ", ",
+        online,
+        " online"
+      ] }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Each of these can open the apps away from home. One that is lost or sold: Remove it, and it can no longer reach them." }),
+      /* @__PURE__ */ u3(Rows, { children: devices.map((d3) => /* @__PURE__ */ u3(
+        Row,
+        {
+          dot: d3.online ? "ok" : away(d3) ? "warn" : "",
+          title: d3.name,
+          sub: [systems[d3.os || ""] || d3.os, d3.self ? "this machine" : d3.online ? "online now" : never(d3.lastSeen) ? "not seen yet" : `last seen ${ago(d3.lastSeen)}`].filter(Boolean).join(" · ") + (away(d3) ? ". Not seen for a month: if it is lost, remove it" : ""),
+          subTone: away(d3) ? "warn" : void 0,
+          end: !d3.self && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${d3.name}`, title: "Opens it in Tailscale's admin console, where Remove is", onClick: () => open3(d3.admin || ""), children: "Remove…" })
+        },
+        d3.ip || d3.name
+      )) })
+    ] });
+  }
+  var mountTailnetDevices = (el3, props) => R(/* @__PURE__ */ u3(TailnetDevices, { ...props }), el3);
+
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
   function choices(machine) {
@@ -5632,6 +5661,20 @@
     card.hidden = false;
     mountPhones(card, { phones: phones || [], on: phonesActions });
   }
+  async function loadTailnet() {
+    const card = $2("tailnetCard");
+    let devices;
+    try {
+      devices = await go().TailnetDevices();
+    } catch {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = !devices?.length;
+    mountTailnetDevices(card, { devices: devices || [], open: (url) => {
+      Promise.resolve(go().Open(url)).catch(showError);
+    } });
+  }
   var phonesActions = {
     setCanChange: async (id2, can) => {
       try {
@@ -5769,6 +5812,7 @@
   var settingsFocus = [];
   var settingsData = store(async () => {
     loadPhones();
+    loadTailnet();
     loadPeople();
     const tests = testable ? null : go().SettingTests().catch(() => []);
     const list = await go().Settings();
@@ -6085,7 +6129,7 @@
     mountForm($2("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
+    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
     mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
     $2("settingsForm").classList.toggle("searching", searching);
     $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
@@ -6239,6 +6283,7 @@
       j3.holds && line(`Holds ${j3.holds} of yours` + (j3.files ? `, ${j3.files.toLocaleString("en-US")} ${j3.files === 1 ? "file" : "files"}` : "")),
       (j3.size || j3.versions) && line([j3.size && `${sizeText(j3.size)} where it is kept`, j3.versions && `${j3.versions} ${j3.versions === 1 ? "version" : "versions"} to go back to`].filter(Boolean).join(", ")),
       !!j3.sources?.length && line(`Copies ${sourceNames(j3.sources)}`),
+      !never(j3.checked) && line(j3.checkProblem ? `Checked ${dateTimeText(new Date(j3.checked))}: a file is damaged` : `Checked ${dateTimeText(new Date(j3.checked))}: a sample of its files matched`),
       !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
     ] });
   }
@@ -6395,7 +6440,7 @@
         /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
       ] });
     }
-    const bad = jobs.filter((j3) => j3.state !== "ok").length;
+    const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
     const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
@@ -6408,14 +6453,16 @@
         newest2 ? " " + ago(newest2) : ""
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
-        const [tone, word] = jobMark[j3.state] || ["", j3.state];
+        const [mark, word] = jobMark[j3.state] || ["", j3.state];
+        const damaged = j3.checkProblem && j3.state === "ok" ? `Failed its check ${dateTimeText(new Date(j3.checked))}: ${j3.checkProblem}. A version may not restore: open the job in Duplicati.` : "";
+        const tone = damaged ? "bad" : mark;
         return /* @__PURE__ */ u3(
           Row,
           {
             dot: tone,
             title: j3.name,
-            sub: j3.errorMessage || j3.state !== "ok" && word,
-            subTone: j3.errorMessage ? "bad" : void 0,
+            sub: j3.errorMessage || damaged || j3.state !== "ok" && word,
+            subTone: j3.errorMessage || damaged ? "bad" : void 0,
             end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
             when: /* @__PURE__ */ u3(Hover, { label: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
               "next ",
@@ -13059,9 +13106,9 @@ ${pays}
       const lyr = last(l3, "lyrics")?.result;
       const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
-      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${apart ? ` · ${count(apart, "song")} with two languages on one line set apart` : ""}${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
-      else if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics") } });
-      else if (lyr && lyr.to_clean === void 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+      if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
+      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
       const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
@@ -13558,7 +13605,8 @@ ${pays}
       listening2 = true;
       window.runtime.EventsOn("media:event", onEvent);
     }
-    job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
+    const title = action === "lyrics" && args.includes("--tidy") ? "Tidying lyrics" : titles[`${kind} ${action}`] || `${kind} ${action}`;
+    job = { kind, action, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
     draw5();
     try {
       await go().TidyRun(kind, action, args, yes);

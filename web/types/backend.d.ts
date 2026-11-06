@@ -468,6 +468,8 @@ declare namespace duplicati {
     files?: number;
     versions?: number;
     sources?: string[];
+    checked?: string;
+    checkProblem?: string;
   }
 }
 
@@ -978,6 +980,18 @@ declare namespace storage {
   }
 }
 
+declare namespace tailnet {
+  interface Device {
+    name: string;
+    os?: string;
+    ip?: string;
+    online: boolean;
+    lastSeen?: string;
+    self?: boolean;
+    admin?: string;
+  }
+}
+
 declare namespace tray {
   interface Appearance {
     theme: string;
@@ -1114,6 +1128,7 @@ interface Backend {
     StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
     StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
+    TailnetDevices(): Promise<tailnet.Device[]>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
     TidyReveal(arg1: string): Promise<void>;

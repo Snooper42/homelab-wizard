@@ -87,6 +87,7 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab backup                       dump databases, archive volumes, copy .env
   homelab watchdog                     check the tunnel and public apps; alert via ntfy
   homelab restore-test --auto [--engine duplicati|kopia] | <restored> <original>
+  homelab backup-check                 Duplicati's own check of each backup (weekly, on Sundays)
   homelab duplicati setup|jobs         create the backup jobs (passphrases in .env) / list them
   homelab kopia repository <folder>    where Kopia keeps its second copy (KOPIA_REPOSITORY)
   homelab notify setup|test|on|off     ntfy write grants for alert topics / test message / an app's alerts
@@ -256,6 +257,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"domain":       h.domain,
 		"backup":       h.backup,
 		"restore-test": h.restoreTest,
+		"backup-check": h.backupCheck,
 		"duplicati":    h.duplicatiCmd,
 		"kopia":        h.kopiaCmd,
 		"homepage":     h.homepageCmd,

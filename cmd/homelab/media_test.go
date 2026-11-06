@@ -297,6 +297,30 @@ func TestMediaBatteryWaitsForPower(t *testing.T) {
 	}
 }
 
+// Setting lyrics right on this computer (--tidy) and counting them
+// (--check) are minutes of light work: they run on battery, as a scan does;
+// asking LRCLIB for thousands of songs waits for power.
+func TestMediaLyricsTidyRunsOnBattery(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "lyrics", "ok": true}`}})
+	mediaProbe = func() media.Probe {
+		return media.Probe{GOOS: "linux", LookPath: func(s string) (string, error) { return s, nil }, Stat: os.Stat,
+			Output: func(context.Context, string, ...string) (string, error) { return "", errors.New("none") },
+			Power:  func() (bool, bool) { return true, true }}
+	}
+	for _, flag := range []string{"--tidy", "--check"} {
+		if out, code := homelabCmd(t, root, "", "media", "music", "lyrics", flag); code != 0 {
+			t.Errorf("lyrics %s on battery (exit %d):\n%s", flag, code, out)
+		}
+	}
+	if n := len(pythonCalls(t, calls)); n != 2 {
+		t.Errorf("ran %d times, want 2", n)
+	}
+	if out, code := homelabCmd(t, root, "", "media", "music", "lyrics"); code == 0 || !strings.Contains(out, "on battery") {
+		t.Errorf("asking LRCLIB on battery (exit %d):\n%s", code, out)
+	}
+}
+
 func TestMediaTickRunsTheInboxOnlyWhenDownloadsChanged(t *testing.T) {
 	fakeDocker(t, nil)
 	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "inbox", "ok": true, "filed": {}, "waiting": []}`}},
