@@ -20,6 +20,7 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #PRn |
+| Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #463 |
 | A copy before anything risky | An app's databases are dumped before it starts again on changed settings (a domain or tailnet address, Pocket ID sign-in, Fix it's changed settings), as before an update; a dump that fails stops the change | #461 |
 | Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
 | An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #457 |
@@ -154,7 +155,7 @@ Confidence that what matters can come back.
 - **Yesterday's version of an app** (M, *Idea*): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.
 - **A copy before anything risky** (S, *Built*, #461): a database dump just before an update (with the app's own data, kept for the week a rollback can use it), before a restore (`rollback --data` sets today's aside), and now before an app starts again on changed settings (a new address, signing in with Pocket ID, settings changed by hand), kept with the nightly dumps.
 - **What changed since last night** (S, *Built*, #435): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).
-- **Weekly integrity check** (S, *Idea*): Duplicati's own verify on a sample each week, and its result on Backups.
+- **Weekly integrity check** (S, *Built*, #463): Duplicati's own Verify of each job on Sundays (`homelab backup-check`, a sample of its files against the hashes it recorded); a damaged file is a failing check on Status and a red line on Backups until a check passes again.
 
 ## Notifications and alerts
 

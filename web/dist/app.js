@@ -6254,6 +6254,7 @@
       j3.holds && line(`Holds ${j3.holds} of yours` + (j3.files ? `, ${j3.files.toLocaleString("en-US")} ${j3.files === 1 ? "file" : "files"}` : "")),
       (j3.size || j3.versions) && line([j3.size && `${sizeText(j3.size)} where it is kept`, j3.versions && `${j3.versions} ${j3.versions === 1 ? "version" : "versions"} to go back to`].filter(Boolean).join(", ")),
       !!j3.sources?.length && line(`Copies ${sourceNames(j3.sources)}`),
+      !never(j3.checked) && line(j3.checkProblem ? `Checked ${dateTimeText(new Date(j3.checked))}: a file is damaged` : `Checked ${dateTimeText(new Date(j3.checked))}: a sample of its files matched`),
       !never(j3.nextRun) && line(`Next run ${dateTimeText(new Date(j3.nextRun))}`, "outfoot")
     ] });
   }
@@ -6410,7 +6411,7 @@
         /* @__PURE__ */ u3("p", { class: "muted", children: "No jobs yet. This makes the jobs in docs/Automation.md, encrypted with passphrases kept in .env, and runs the small ones once. Then copy DUPLICATI_SECRETS_PASSPHRASE from Settings into Vaultwarden." })
       ] });
     }
-    const bad = jobs.filter((j3) => j3.state !== "ok").length;
+    const bad = jobs.filter((j3) => j3.state !== "ok" || j3.checkProblem).length;
     const newest2 = jobs.map((j3) => j3.lastFinished).filter((t3) => !never(t3)).sort().pop();
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(CardHead, { title, children: bad ? /* @__PURE__ */ u3("span", { class: "warn", children: [
@@ -6423,14 +6424,16 @@
         newest2 ? " " + ago(newest2) : ""
       ] }) }),
       /* @__PURE__ */ u3(Rows, { kind: "jobs", children: jobs.map((j3) => {
-        const [tone, word] = jobMark[j3.state] || ["", j3.state];
+        const [mark, word] = jobMark[j3.state] || ["", j3.state];
+        const damaged = j3.checkProblem && j3.state === "ok" ? `Failed its check ${dateTimeText(new Date(j3.checked))}: ${j3.checkProblem}. A version may not restore: open the job in Duplicati.` : "";
+        const tone = damaged ? "bad" : mark;
         return /* @__PURE__ */ u3(
           Row,
           {
             dot: tone,
             title: j3.name,
-            sub: j3.errorMessage || j3.state !== "ok" && word,
-            subTone: j3.errorMessage ? "bad" : void 0,
+            sub: j3.errorMessage || damaged || j3.state !== "ok" && word,
+            subTone: j3.errorMessage || damaged ? "bad" : void 0,
             end: j3.size && /* @__PURE__ */ u3("span", { class: "size muted", children: sizeText(j3.size) }),
             when: /* @__PURE__ */ u3(Hover, { label: never(j3.nextRun) ? never(j3.lastFinished) ? "never ran" : "ran " + ago(j3.lastFinished) : /* @__PURE__ */ u3("span", { class: "next", children: [
               "next ",

@@ -298,7 +298,44 @@ func Stage(ctx context.Context, r Release, dir string, on func(done, total int64
 	if out, err := exec.CommandContext(ctx, "ditto", apps[0], staged).CombinedOutput(); err != nil {
 		return "", fmt.Errorf("unpacking the new app: %v %s", err, strings.TrimSpace(string(out)))
 	}
+	if err := keepsSigner(ctx, in.Path, staged); err != nil {
+		os.RemoveAll(staged)
+		return "", err
+	}
 	return staged, nil
+}
+
+// keepsSigner refuses a new Mac app not signed by the team that signed the
+// one installed (N24). GitHub's checksum comes from the same release as the
+// download, so it says the file arrived whole, not who made it: a release
+// put up by someone who got at the repository would pass it, and the swap
+// takes the quarantine off, so Gatekeeper would not ask either. An app
+// with no Team ID (an ad-hoc build, made without the Developer ID secret)
+// has no signer to keep, and takes the update as before.
+func keepsSigner(ctx context.Context, installed, staged string) error {
+	team := teamOf(ctx, installed)
+	if team == "" {
+		return nil
+	}
+	if out, err := exec.CommandContext(ctx, "codesign", "--verify", "--deep", "--strict", staged).CombinedOutput(); err != nil {
+		return fmt.Errorf("the new build's signature does not hold (%s), so it was not installed; download the newest build from the release page instead", strings.TrimSpace(string(out)))
+	}
+	if got := teamOf(ctx, staged); got != team {
+		return fmt.Errorf("the new build is signed by someone else (team %s, not %s), so it was not installed; download the newest build from the release page instead", cmpOr(got, "none"), team)
+	}
+	return nil
+}
+
+// teamOf is the Team ID app is signed with: "" for none (an ad-hoc
+// signature, no signature, or no app there).
+func teamOf(ctx context.Context, app string) string {
+	out, _ := exec.CommandContext(ctx, "codesign", "-dv", "--verbose=2", app).CombinedOutput()
+	for _, line := range strings.Split(string(out), "\n") {
+		if v, ok := strings.CutPrefix(strings.TrimSpace(line), "TeamIdentifier="); ok && v != "not set" {
+			return v
+		}
+	}
+	return ""
 }
 
 // Swap starts a helper that waits for this process to quit, puts staged
