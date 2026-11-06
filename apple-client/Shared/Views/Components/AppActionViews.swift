@@ -158,6 +158,7 @@ struct StopForAWhileMenu: View {
 /// confirmation, the Undo banner, the Details sheet, and haptics.
 struct AppActionsPresenter: ViewModifier {
     @Bindable var actions: AppActionsViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
@@ -179,7 +180,7 @@ struct AppActionsPresenter: ViewModifier {
                 if let offer = actions.undo {
                     UndoBanner(text: offer.bannerText, undo: { actions.performUndo() }, close: { actions.dropUndo() })
                         .padding()
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(reduceMotion ? AnyTransition.opacity : AnyTransition.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .animation(.snappy, value: actions.undo)
@@ -278,6 +279,11 @@ private struct UndoBanner: View {
         .frame(maxWidth: 440)
         .background(.regularMaterial, in: Capsule())
         .shadow(radius: 8, y: 2)
+        // It goes away by itself: say it, so VoiceOver users know Undo is there.
+        .onAppear {
+            let words = "\(text). Undo is available."
+            AccessibilityNotification.Announcement(words).post()
+        }
         .accessibilityElement(children: .contain)
     }
 }

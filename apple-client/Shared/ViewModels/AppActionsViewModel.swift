@@ -6,7 +6,8 @@ import Observation
 /// - A tap answers at once. The row says what it's doing ("Restarting…")
 ///   until Status is read again. A failure puts the row back and says why,
 ///   with Details for the command's output.
-/// - Stop is confirmed first. Afterwards it offers Undo for 10 seconds.
+/// - Stop is confirmed first. Afterwards it offers Undo for 10 seconds,
+///   30 with VoiceOver or Switch Control on.
 /// - One change at a time, as on the computer: every button is disabled
 ///   while one runs.
 /// - The owner authenticates for changes (`AppCoordinator.authorizeChange`).
@@ -92,6 +93,8 @@ final class AppActionsViewModel {
     @ObservationIgnored private var undoTask: Task<Void, Never>?
 
     static let undoFor: Duration = .seconds(10)
+    /// With VoiceOver or Switch Control, reaching Undo takes longer.
+    static let undoForAssistive: Duration = .seconds(30)
 
     init(
         api: APIClient,
@@ -330,7 +333,7 @@ final class AppActionsViewModel {
         let offer = UndoOffer(apps: apps, until: until)
         undo = offer
         undoTask = Task { [weak self] in
-            try? await Task.sleep(for: Self.undoFor)
+            try? await Task.sleep(for: AssistiveTech.isRunning ? Self.undoForAssistive : Self.undoFor)
             guard !Task.isCancelled, let self, self.undo?.id == offer.id else { return }
             self.undo = nil
         }
