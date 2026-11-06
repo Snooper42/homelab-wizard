@@ -22,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Port is where homelab serve listens.
@@ -156,7 +158,10 @@ type state struct {
 	Pairings []pairing `json:"pairings,omitempty"`
 }
 
-// Store keeps the paired phones in a file only this user can read.
+// Store keeps the paired phones in a file only this user can read. Every
+// change is made under the file's lock (internal/lockedfile): homelab serve,
+// the app, and homelab phone are processes of their own, and mu is one
+// process's only (N22).
 type Store struct {
 	Path string
 	Now  func() time.Time
@@ -169,12 +174,11 @@ func StorePath(root string) string { return filepath.Join(root, "data", "phones.
 // NewStore opens the store at path.
 func NewStore(path string) *Store { return &Store{Path: path, Now: time.Now} }
 
-func (s *Store) load() state {
+// parse reads a store's file, without the pairing codes that have run out
+// and with each phone's time that is up ended (expire says whether any was).
+func parse(data []byte, now time.Time) (state, bool) {
 	var st state
-	if data, err := os.ReadFile(s.Path); err == nil {
-		_ = json.Unmarshal(data, &st)
-	}
-	now := s.Now()
+	_ = json.Unmarshal(data, &st)
 	live := st.Pairings[:0]
 	for _, p := range st.Pairings {
 		if now.Before(p.Expires) {
@@ -182,10 +186,46 @@ func (s *Store) load() state {
 		}
 	}
 	st.Pairings = live
-	if expire(st.Devices, now) {
-		_ = s.save(st)
-	}
+	return st, expire(st.Devices, now)
+}
+
+// update reads the store and passes it to change, holding the file's lock
+// throughout, so a change another process makes meanwhile waits and is
+// never saved over. The store is saved whole when change says so, or when
+// a phone's time ran out.
+func (s *Store) update(change func(st *state) bool) error {
+	return lockedfile.Update(s.Path, 0o600, func(old []byte) ([]byte, bool) {
+		st, expired := parse(old, s.Now())
+		if !change(&st) && !expired {
+			return nil, false
+		}
+		data, _ := json.MarshalIndent(st, "", "  ")
+		return append(data, '\n'), true
+	})
+}
+
+// view reads the store without saving: for a store not made yet, and for a
+// reader the lock kept waiting too long.
+func (s *Store) view() state {
+	data, _ := os.ReadFile(s.Path)
+	st, _ := parse(data, s.Now())
 	return st
+}
+
+// read passes the store to look under its lock, as update does, saving it
+// when look says so; with no store yet, or the lock not had, it looks
+// without saving.
+func (s *Store) read(look func(st *state) bool) {
+	if _, err := os.Stat(s.Path); err != nil {
+		st := s.view()
+		look(&st)
+		return
+	}
+	ran := false
+	if err := s.update(func(st *state) bool { ran = true; return look(st) }); err != nil && !ran {
+		st := s.view()
+		look(&st)
+	}
 }
 
 // expire takes from each device whose time is up what it may do beyond
@@ -210,35 +250,48 @@ func expire(devices []Device, now time.Time) bool {
 // SetUntil ends what a device may do beyond looking at until (zero: never,
 // until you change it). A time already past ends it now.
 func (s *Store) SetUntil(idOrName string, until time.Time) (Device, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	st := s.load()
-	i := find(st, idOrName)
-	if i < 0 {
-		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
-	}
-	st.Devices[i].Until = until.Truncate(time.Second)
-	expire(st.Devices, s.Now())
-	return st.Devices[i], s.save(st)
+	return s.change(idOrName, func(d *Device) error {
+		d.Until = until.Truncate(time.Second)
+		one := []Device{*d}
+		expire(one, s.Now())
+		*d = one[0]
+		return nil
+	})
 }
 
-func (s *Store) save(st state) error {
-	if err := os.MkdirAll(filepath.Dir(s.Path), 0o755); err != nil {
-		return err
+// change applies fn to one device, found by its id or name, under the
+// store's lock; an error from fn leaves the store as it was.
+func (s *Store) change(idOrName string, fn func(d *Device) error) (Device, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var d Device
+	var ferr error
+	err := s.update(func(st *state) bool {
+		i := find(*st, idOrName)
+		if i < 0 {
+			ferr = fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
+			return false
+		}
+		if ferr = fn(&st.Devices[i]); ferr != nil {
+			d = st.Devices[i]
+			return false
+		}
+		d = st.Devices[i]
+		return true
+	})
+	if ferr != nil {
+		return d, ferr
 	}
-	data, _ := json.MarshalIndent(st, "", "  ")
-	tmp := s.Path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, s.Path)
+	return d, err
 }
 
 // Devices lists the paired phones.
 func (s *Store) Devices() []Device {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.load().Devices
+	var out []Device
+	s.read(func(st *state) bool { out = st.Devices; return false })
+	return out
 }
 
 // codeAlphabet leaves out look-alikes (0/O, 1/I/L), for typing a code.
@@ -262,9 +315,10 @@ func (s *Store) NewPairing(name string, canChange bool, finances string) (string
 	code := string(b)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	st := s.load()
-	st.Pairings = append(st.Pairings, pairing{CodeHash: hash(code), Name: strings.TrimSpace(name), CanChange: canChange, Finances: finances, Expires: s.Now().Add(PairFor)})
-	return code, s.save(st)
+	return code, s.update(func(st *state) bool {
+		st.Pairings = append(st.Pairings, pairing{CodeHash: hash(code), Name: strings.TrimSpace(name), CanChange: canChange, Finances: finances, Expires: s.Now().Add(PairFor)})
+		return true
+	})
 }
 
 // ErrBadCode means the code is wrong, used, or expired.
@@ -274,34 +328,45 @@ var ErrBadCode = errors.New("that code does not work: make a new one on the comp
 // is shown only this once.
 func (s *Store) Pair(code, name string) (Device, string, error) {
 	code = strings.ToUpper(strings.Join(strings.Fields(code), ""))
+	token, err := secret(32)
+	if err != nil {
+		return Device{}, "", err
+	}
+	idBytes := make([]byte, 3)
+	if _, err := rand.Read(idBytes); err != nil {
+		return Device{}, "", err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	st := s.load()
-	for i, p := range st.Pairings {
-		if subtle.ConstantTimeCompare([]byte(p.CodeHash), []byte(hash(code))) != 1 {
-			continue
+	var d Device
+	paired := false
+	err = s.update(func(st *state) bool {
+		for i, p := range st.Pairings {
+			if subtle.ConstantTimeCompare([]byte(p.CodeHash), []byte(hash(code))) != 1 {
+				continue
+			}
+			st.Pairings = append(st.Pairings[:i], st.Pairings[i+1:]...)
+			if p.Name != "" {
+				name = p.Name
+			}
+			name = strings.TrimSpace(name)
+			if name == "" {
+				name = "Phone"
+			}
+			d = Device{ID: hex.EncodeToString(idBytes), Name: name, TokenHash: hash(token), CanChange: p.CanChange, Finances: p.Finances, Paired: s.Now()}
+			st.Devices = append(st.Devices, d)
+			paired = true
+			return true
 		}
-		st.Pairings = append(st.Pairings[:i], st.Pairings[i+1:]...)
-		token, err := secret(32)
-		if err != nil {
-			return Device{}, "", err
-		}
-		idBytes := make([]byte, 3)
-		if _, err := rand.Read(idBytes); err != nil {
-			return Device{}, "", err
-		}
-		if p.Name != "" {
-			name = p.Name
-		}
-		name = strings.TrimSpace(name)
-		if name == "" {
-			name = "Phone"
-		}
-		d := Device{ID: hex.EncodeToString(idBytes), Name: name, TokenHash: hash(token), CanChange: p.CanChange, Finances: p.Finances, Paired: s.Now()}
-		st.Devices = append(st.Devices, d)
-		return d, token, s.save(st)
+		return false
+	})
+	if err != nil {
+		return Device{}, "", err
 	}
-	return Device{}, "", ErrBadCode
+	if !paired {
+		return Device{}, "", ErrBadCode
+	}
+	return d, token, nil
 }
 
 // Lookup finds the device a token belongs to, and notes when it was last
@@ -313,17 +378,24 @@ func (s *Store) Lookup(token string) (Device, bool) {
 	want := hash(token)
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	st := s.load()
-	for i, d := range st.Devices {
-		if subtle.ConstantTimeCompare([]byte(d.TokenHash), []byte(want)) == 1 {
-			if now := s.Now(); now.Sub(d.LastSeen) > time.Minute {
-				st.Devices[i].LastSeen = now
-				_ = s.save(st)
+	var found Device
+	ok := false
+	s.read(func(st *state) bool {
+		for i, d := range st.Devices {
+			if subtle.ConstantTimeCompare([]byte(d.TokenHash), []byte(want)) == 1 {
+				ok = true
+				if now := s.Now(); now.Sub(d.LastSeen) > time.Minute {
+					st.Devices[i].LastSeen = now
+					found = st.Devices[i]
+					return true
+				}
+				found = st.Devices[i]
+				return false
 			}
-			return st.Devices[i], true
 		}
-	}
-	return Device{}, false
+		return false
+	})
+	return found, ok
 }
 
 // find matches a device by its id or its name (case aside).
@@ -340,14 +412,22 @@ func find(st state, idOrName string) int {
 func (s *Store) Remove(idOrName string) (Device, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	st := s.load()
-	i := find(st, idOrName)
-	if i < 0 {
-		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
+	var d Device
+	var ferr error
+	err := s.update(func(st *state) bool {
+		i := find(*st, idOrName)
+		if i < 0 {
+			ferr = fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
+			return false
+		}
+		d = st.Devices[i]
+		st.Devices = append(st.Devices[:i], st.Devices[i+1:]...)
+		return true
+	})
+	if ferr != nil {
+		return Device{}, ferr
 	}
-	d := st.Devices[i]
-	st.Devices = append(st.Devices[:i], st.Devices[i+1:]...)
-	return d, s.save(st)
+	return d, err
 }
 
 // ErrUnencrypted is a change allowed to a device paired without
@@ -358,18 +438,13 @@ var ErrUnencrypted = errors.New("was paired over the home Wi-Fi without encrypti
 // makes it read-only again. A device paired without encryption stays
 // read-only.
 func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	st := s.load()
-	i := find(st, idOrName)
-	if i < 0 {
-		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
-	}
-	if on && st.Devices[i].Unencrypted {
-		return st.Devices[i], fmt.Errorf("%s %w", st.Devices[i].Name, ErrUnencrypted)
-	}
-	st.Devices[i].CanChange = on
-	return st.Devices[i], s.save(st)
+	return s.change(idOrName, func(d *Device) error {
+		if on && d.Unencrypted {
+			return fmt.Errorf("%s %w", d.Name, ErrUnencrypted)
+		}
+		d.CanChange = on
+		return nil
+	})
 }
 
 // ErrNoFinances is Finances allowed to a device paired without encryption.
@@ -384,34 +459,24 @@ func (s *Store) SetFinances(idOrName, level string) (Device, error) {
 	if err != nil {
 		return Device{}, err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	st := s.load()
-	i := find(st, idOrName)
-	if i < 0 {
-		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", idOrName)
-	}
-	if level != "" && st.Devices[i].Unencrypted {
-		return st.Devices[i], fmt.Errorf("%s %w", st.Devices[i].Name, ErrNoFinances)
-	}
-	st.Devices[i].Finances = level
-	return st.Devices[i], s.save(st)
+	return s.change(idOrName, func(d *Device) error {
+		if level != "" && d.Unencrypted {
+			return fmt.Errorf("%s %w", d.Name, ErrNoFinances)
+		}
+		d.Finances = level
+		return nil
+	})
 }
 
 // MarkUnencrypted notes that a device was paired without encryption and
 // makes it read-only for good, without Finances.
 func (s *Store) MarkUnencrypted(id string) (Device, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	st := s.load()
-	i := find(st, id)
-	if i < 0 {
-		return Device{}, fmt.Errorf("no paired phone %q (homelab phone list)", id)
-	}
-	st.Devices[i].Unencrypted = true
-	st.Devices[i].CanChange = false
-	st.Devices[i].Finances = ""
-	return st.Devices[i], s.save(st)
+	return s.change(id, func(d *Device) error {
+		d.Unencrypted = true
+		d.CanChange = false
+		d.Finances = ""
+		return nil
+	})
 }
 
 func hash(s string) string {
