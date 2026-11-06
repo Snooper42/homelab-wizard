@@ -454,6 +454,19 @@ struct BackupsTests {
         #expect(job.sourceNames == ["immich", "paperless"])
     }
 
+    @Test func whereTheBackupsGoInWords() {
+        #expect(BackupOverview.placeName("/Users/sam/Library/CloudStorage/ProtonDrive-sam/homelab") == "Proton Drive")
+        #expect(BackupOverview.placeName("/Volumes/Backup/homelab") == "the Backup drive")
+        #expect(BackupOverview.placeName("/media/sam/Backup/homelab") == "the Backup drive")
+        #expect(BackupOverview.placeName("/run/media/sam/Backup") == "the Backup drive")
+        #expect(BackupOverview.placeName("/mnt/nas/homelab") == "the nas drive")
+        #expect(BackupOverview.placeName("D:\\Backups\\homelab") == "the D drive")
+        #expect(BackupOverview.placeName("/srv/backups/homelab") == "homelab")
+        // Too short to name a drive: no crash, the last folder.
+        #expect(BackupOverview.placeName("/Volumes") == "Volumes")
+        #expect(BackupOverview.placeName("/media/sam") == "sam")
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())

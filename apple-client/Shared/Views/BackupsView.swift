@@ -86,7 +86,14 @@ struct BackupsView: View {
                 }
             }
             LabeledContent("Goes to") {
-                Text(o.destination).textSelection(.enabled).multilineTextAlignment(.trailing)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(BackupOverview.placeName(o.destination))
+                    Text(o.destination)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .multilineTextAlignment(.trailing)
+                }
             }
             if !o.destinationOK {
                 Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")

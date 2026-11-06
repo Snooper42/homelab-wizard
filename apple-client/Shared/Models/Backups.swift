@@ -100,6 +100,31 @@ extension BackupOverview {
         return vaultDue ? .due(exported) : .fine(exported)
     }
 
+    /// Where the backups go, in words, as `placeName` in
+    /// web/src/backups/Backups.tsx: "Proton Drive", "the Backup drive", or
+    /// else its last folder.
+    static func placeName(_ destination: String) -> String {
+        let clouds: [(String, String)] = [("protondrive", "Proton Drive"), ("onedrive", "OneDrive"), ("googledrive", "Google Drive"),
+                                         ("google drive", "Google Drive"), ("dropbox", "Dropbox"), ("icloud", "iCloud Drive"),
+                                         ("mobile documents", "iCloud Drive"), ("pcloud", "pCloud")]
+        let lower = destination.lowercased()
+        if let cloud = clouds.first(where: { lower.contains($0.0) }) { return cloud.1 }
+        let parts = destination.split(whereSeparator: { $0 == "/" || $0 == "\\" }).map(String.init)
+        if destination.hasPrefix("/") {
+            // A `where` binds only the pattern it follows, so each case has its own.
+            switch parts.first ?? "" {
+            case "Volumes" where parts.count >= 2: return "the \(parts[1]) drive"
+            case "mnt" where parts.count >= 2: return "the \(parts[1]) drive"
+            case "media" where parts.count >= 3: return "the \(parts[2]) drive"
+            case "run" where parts.count >= 4 && parts[1] == "media": return "the \(parts[3]) drive"
+            default: break
+            }
+        } else if destination.count >= 2, destination.dropFirst().first == ":", let letter = destination.first, letter.isLetter {
+            return "the \(letter) drive"
+        }
+        return parts.last ?? destination
+    }
+
     /// This app's copy, by its id.
     func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
 
