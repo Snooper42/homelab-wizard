@@ -37,7 +37,7 @@ apple-client/
 `Shared/Views/Theme.swift` holds it, in the calm, card-based style of privacy-focused mail apps, but with no other product's name, logo or artwork:
 - **Colours:** a violet accent (also the asset catalog's `AccentColor`, set as the global accent by `make-xcode-project.sh`), a warm grey canvas behind white cards on iPhone and iPad (blue-black behind dark ones), and calm status colours (`success`, `warning`, `caution`, `danger`, `info`). Every colour has a light and a dark value, and as text each keeps at least 4.5:1 contrast on its card.
 - **Shapes:** states and counts in tinted pills, an app without an icon yet on a soft tile of its state's colour, and rounded bordered buttons.
-- **The app mark:** a server rack on a violet tile, on the pairing and lock screens, at launch, and on the app-switcher cover.
+- **The app mark and icon:** a server rack on a violet tile, on the pairing and lock screens, at launch, and on the app-switcher cover. The app icon is the same, with one mint "running" light. `scripts/make-app-icon.py` (Pillow) draws it from shapes into `Shared/Assets.xcassets/AppIcon.appiconset`: one 1024 px iPhone and iPad icon edge to edge with its iOS 18 dark and tinted variants, and the Mac's rounded tile with margin and shadow at 16 to 1024 px.
 - **On the Mac:** the window keeps the system's background, so it still matches the sidebar's vibrancy. Only the accent, pills and colours change.
 
 ## Check it first, without Xcode
