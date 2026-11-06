@@ -123,33 +123,7 @@ private struct PhoneDashboard: View {
             List {
                 // While searching, only the apps that match.
                 if !model.isSearching {
-                    Section {
-                        OverviewHeader(model: model)
-                        NavigationLink {
-                            OverviewView(cards: model.cards, finances: finances)
-                        } label: {
-                            Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
-                                .badge(model.failingChecks)
-                        }
-                        NavigationLink {
-                            BackupsView(backups: model.backups)
-                        } label: {
-                            Label("Backups", systemImage: "externaldrive.badge.checkmark")
-                                .badge(model.backups.needsAttention)
-                        }
-                        if finances.canSeePlan {
-                            NavigationLink {
-                                FinancesView(finances: finances)
-                            } label: {
-                                Label("Finances", systemImage: "banknote")
-                            }
-                        }
-                        NavigationLink {
-                            ComputerView(computer: computer)
-                        } label: {
-                            Label("Computer", systemImage: "desktopcomputer")
-                        }
-                    }
+                    PhoneOverviewSection(model: model, computer: computer, finances: finances)
                 }
                 let changed = model.isSearching ? [] : model.changedApps
                 if !changed.isEmpty {
@@ -221,6 +195,44 @@ private struct PhoneDashboard: View {
                 ToolbarItem(placement: .primaryAction) {
                     DeviceMenu()
                 }
+            }
+        }
+    }
+}
+
+/// The iPhone list's first section: the summary, and the way to each screen.
+/// Its own view, so the list's body stays small enough to type-check quickly.
+private struct PhoneOverviewSection: View {
+    let model: DashboardViewModel
+    let computer: ComputerViewModel
+    let finances: FinancesViewModel
+
+    var body: some View {
+        Section {
+            OverviewHeader(model: model)
+            NavigationLink {
+                OverviewView(cards: model.cards, finances: finances)
+            } label: {
+                Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
+                    .badge(model.failingChecks)
+            }
+            NavigationLink {
+                BackupsView(backups: model.backups)
+            } label: {
+                Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                    .badge(model.backups.needsAttention)
+            }
+            if finances.canSeePlan {
+                NavigationLink {
+                    FinancesView(finances: finances)
+                } label: {
+                    Label("Finances", systemImage: "banknote")
+                }
+            }
+            NavigationLink {
+                ComputerView(computer: computer)
+            } label: {
+                Label("Computer", systemImage: "desktopcomputer")
             }
         }
     }
