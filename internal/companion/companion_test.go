@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -259,6 +260,50 @@ func TestEventsForPairedPhones(t *testing.T) {
 		}
 	}
 	t.Fatal("no change streamed")
+}
+
+// N23: a phone removed on the computer stops getting Status changes on a
+// stream it opened before, as its token "stops working at once".
+func TestARemovedPhonesStreamEnds(t *testing.T) {
+	defer func(d time.Duration) { streamRecheck = d }(streamRecheck)
+	streamRecheck = 20 * time.Millisecond
+	path := filepath.Join(t.TempDir(), "phones.json")
+	store := NewStore(path)
+	code, _ := store.NewPairing("Lost phone", false, "")
+	_, token, err := store.Pair(code, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hub := &engine.Hub{}
+	srv := httptest.NewServer((&Server{Store: store, Changes: hub, Files: fstest.MapFS{}}).Handler())
+	defer srv.Close()
+	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/api/events", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("paired: %s", resp.Status)
+	}
+	for hub.Subscribers() == 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	// homelab phone remove, from another process.
+	if _, err := NewStore(path).Remove("Lost phone"); err != nil {
+		t.Fatal(err)
+	}
+	for deadline := time.Now().Add(3 * time.Second); hub.Subscribers() > 0; time.Sleep(10 * time.Millisecond) {
+		if time.Now().After(deadline) {
+			t.Fatal("the removed phone still follows Status changes")
+		}
+	}
+	hub.Publish(engine.Change{Apps: []string{"vaultwarden"}})
+	rest, _ := io.ReadAll(resp.Body)
+	if strings.Contains(string(rest), "data:") {
+		t.Errorf("a change reached the removed phone: %s", rest)
+	}
 }
 
 // A phone paired over plain HTTP from the home network may only look, for
