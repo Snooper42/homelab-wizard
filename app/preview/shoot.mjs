@@ -887,6 +887,23 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
+  // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
+  { name: 'Choose stacks: suggestions from what you run', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    const group = page.locator('.group.suggested');
+    await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
+    await group.locator('label.app:has-text("Beets") .goeswith').filter({ hasText: 'Goes with Navidrome, which you run: Tags and sorts the music' }).waitFor({ timeout: 3000 });
+    await group.locator('.goeswith').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).waitFor({ timeout: 3000 });
+    if (await group.locator('label.app:has-text("Bazarr")').count()) throw new Error('Bazarr is suggested without Sonarr or Radarr');
+    if (await group.locator('label.app strong:text-is("Navidrome")').count()) throw new Error('an app you run is suggested');
+    await group.locator('label.app:has-text("Beets") input').check();
+    if (!(await page.isChecked('.group:not(.suggested) label.app:has-text("Beets") input'))) throw new Error('ticking a suggestion did not pick the app');
+    // Searching hides the group; the row still says it.
+    await page.fill('#search', 'beets');
+    await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
+    await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
+  } },
   // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
   // from whichever side the pair is written, and an app you run says nothing.
   { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {

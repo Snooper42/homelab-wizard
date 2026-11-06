@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Suggestions from what you use:** Choose stacks › Add more opens on the apps that go with ones you run, each with what it brings them: Beets with Navidrome, Bazarr and Prowlarr with Sonarr and Radarr, Paperless-AI with Paperless-ngx, Seerr and Tdarr with Jellyfin.
 - **Quiet hours:** from 10 PM to 7 AM alerts reach the phone without a sound, unless they are serious: the password vault not answering, or backups failing two nights running. Settings › Quiet hours picks other hours, or off.
 - **Two apps that do the same job:** Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor, Navidrome and Jellyfin's music), and why you might keep one or both.
 - **What the apps have saved so far:** on Status, hover (or Tab to) the figure under *Replaces a year* for what they have saved since the first nightly record, and month by month.

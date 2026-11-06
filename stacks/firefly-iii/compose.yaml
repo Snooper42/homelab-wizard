@@ -77,6 +77,8 @@ services:
     depends_on: [firefly-iii]
     networks: [default, homelab]
     x-homelab:
+      goes_with:
+        firefly-iii: "Brings your bank's export files into Firefly III, instead of typing them."
       url: FIREFLY_IMPORTER_URL
       name: Firefly III importer
       category: finance
