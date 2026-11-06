@@ -50,3 +50,59 @@ func TestBrings(t *testing.T) {
 		t.Error("no bundle, no error")
 	}
 }
+
+// N30: an own app a bundle brings is named with what it takes beyond an
+// ordinary app (privileged, Docker's socket, this computer's network or
+// processes, its whole disk, added powers), so the plan does not list a
+// service that controls the computer as it lists any other.
+func TestBringsNamesWhatAnOwnAppTakes(t *testing.T) {
+	src := t.TempDir()
+	compose := `services:
+  plain:
+    image: one
+    volumes: ["./data/appdata/plain:/data"]
+  root:
+    image: two
+    privileged: true
+    network_mode: host
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host:ro
+  long:
+    image: three
+    cap_add: [SYS_ADMIN]
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /sock
+`
+	p := filepath.Join(src, "stacks", "custom", "compose.yaml")
+	_ = os.MkdirAll(filepath.Dir(p), 0o755)
+	if err := os.WriteFile(p, []byte(compose), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var b bytes.Buffer
+	if _, err := Pack(src, Manifest{Made: time.Now()}, &b); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "move.tar")
+	_ = os.WriteFile(path, b.Bytes(), 0o600)
+	r, err := Brings(path)
+	if err != nil || len(r.Custom) != 3 {
+		t.Fatalf("%+v %v", r, err)
+	}
+	if r.Custom[1] != "plain (one)" {
+		t.Errorf("an ordinary own app: %q", r.Custom[1])
+	}
+	for i, want := range map[int][]string{
+		0: {"long (three", "Docker's socket", "SYS_ADMIN"},
+		2: {"root (two", "privileged", "Docker's socket", "this computer's network", "this computer's processes", "its whole disk"},
+	} {
+		for _, w := range want {
+			if !strings.Contains(r.Custom[i], w) {
+				t.Errorf("%q does not say %q", r.Custom[i], w)
+			}
+		}
+	}
+}

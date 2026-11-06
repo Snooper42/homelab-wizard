@@ -406,7 +406,7 @@ Added after round 27 (the backlog was empty; worst first):
 31. (done: round 32) **Explain on another machine's Ollama**: what the model is sent when
     `OLLAMA_HOST` points off this machine (item 9 checked only
     172.17.0.1), and whether that counts as leaving the machine (Rule 3).
-32. **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
+32. (done: round 59, Tailnet devices on #465; Two-step not built) **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
     Security items): the Tailscale API key and each app's admin key used
     to read them stay in `.env`, and Remove a lost device is computer
     only, never a phone method.
@@ -470,52 +470,85 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
     phone could keep Can make changes or Finances. One save, or a test
     that each failure leaves the device with less.
-46. (round 56: N26, open until N22 merges) **A kiosk is not remembered as one** (`Device` has no kiosk field):
+46. (done: rounds 56 and 57, N26) **A kiosk is not remembered as one** (`Device` has no kiosk field):
     kiosk mode is enforced only at pairing, so the Phones page can later
     give a wall screen Can make changes or Finances with nothing saying
     it is a screen anyone walking past can use. And which `phoneMethods`
     a kiosk may call beyond Status (Logs, AppIcon, a Finances card).
-47. **The pairing limit** (`tooMany`): global or per address? A device on
+47. (done: round 57) **The pairing limit** (`tooMany`): global or per address? A device on
     the Wi-Fi sending wrong codes may lock the household out of pairing
     for 10 minutes; check the code's length and lifetime against the
     limit, and that the limit holds across a restart of `homelab serve`.
-48. **The Finances calendar link** (`/finances.ics?key=`, the Finances
+48. (done: round 57, notes for the Finances session) **The Finances calendar link** (`/finances.ics?key=`, the Finances
     session's code): a key in a URL ends up in calendar apps, their sync
     servers, and proxy logs. What it shows with Hide amounts on, how it
     is turned off or changed, and that a wrong key is refused at the same
     rate limit as a code. A real hole is fixed in its smallest form;
     anything less goes in the PR for that session.
-49. **The phone's offline page across homelabs** (#453, web/dist/sw.js):
+49. (done: round 57) **The phone's offline page across homelabs** (#453, web/dist/sw.js):
     the copy is kept per address, not per pairing, so a phone paired again
     to another homelab at the same name (a new computer, a move) is
     served the old page until it is reached; check that nothing kept
     carries a token or answer from the other one, and the worker's scope.
-50. **What each holder of Docker's socket may do** (after N18's pins): a
+50. (done: round 57, N27) **What each holder of Docker's socket may do** (after N18's pins): a
     read-only mount does not limit Docker's API. List each app that gets
     the raw socket rather than `docker-socket-proxy`, and the proxy's
     allowed endpoints (POST, EXEC, CONTAINERS) against what each app needs.
-51. **Duplicati's passphrase** (the backups' own secret): where it is
+51. (done: round 57) **Duplicati's passphrase** (the backups' own secret): where it is
     kept (.env, Duplicati's database), whether a move file, `homelab
     report`, or the Secrets job carries it, and what someone holding only
     the off-site copy can read.
-52. **The proxy's own admin page** (Nginx Proxy Manager): the address its
+52. (done: round 57) **The proxy's own admin page** (Nginx Proxy Manager): the address its
     admin port is bound to (the LAN, or this machine only), who changes
     its first login and when, and that it is never itself a proxy host
     (N19's question, asked of the proxy).
-53. **ntfy on a public name** (`homelab notify setup`): the server's
+53. (done: round 57) **ntfy on a public name** (`homelab notify setup`): the server's
     default access, the publish and read tokens' reach, and whether a
     stranger can read the topic or send a fake alert ("backup failed,
     open this link") that a phone shows as the homelab's.
-54. **The music jobs' Python** (internal/media, the beets venv #444 and
+54. (done: round 57, N28 open) **The music jobs' Python** (internal/media, the beets venv #444 and
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
-55. **Windows and Linux updates rest on the release alone** (after N24):
+55. (done: round 58, N29 open) **Windows and Linux updates rest on the release alone** (after N24):
     neither build is signed (release.yml signs only the Mac's), so the
     app checks GitHub's checksum, from the same release. The release has
     build provenance (`actions/attest-build-provenance`); checking it in
     the app, or a key the app carries (minisign), would tell a build the
     workflow made from one put up by hand. Windows also asks for Authenticode.
+56. (done: round 59) **Duplicati's error text** (Backups, a phone's Backups, the
+    watchdog's alert, `homelab report`, #463's weekly check): a failed
+    backup's message can name its destination; check that no login in a
+    destination URL (`auth-username`, `auth-password`, a key) reaches a
+    phone, ntfy, or a report.
+57. (done: round 60, N30) **What a custom app may take** (stacks/custom, cmd/homelab custom.go,
+    and a move file's own apps, N16): `privileged`, `network_mode: host`,
+    `pid: host`, Docker's socket, or `/` mounted are taken without a word.
+    Name them before it starts, as N16 names its image.
+58. **Apps with no sign-in when `BIND_IP` is the LAN address** (Dozzle,
+    `local: true`, and any app whose port is on `BIND_IP`): which then
+    face the whole home network, and whether Settings says so when the
+    address is changed.
+59. **CrowdSec's API on the shared network**: whether any app on
+    `homelab` can reach the LAPI, and what it could do there (read
+    decisions, add or remove a ban) with or without the bouncer key.
+60. **Databases on the shared network**: every app's database should sit
+    on its own project's network, never on `homelab`; a test like
+    N27's over the catalog would hold it.
+61. **Vaultwarden on a public name**: `SIGNUPS_ALLOWED` and the admin
+    page (`ADMIN_TOKEN`, hashed or not) when it goes through the tunnel,
+    as N19 asked of the apps with a first account.
+62. **Uptime Kuma's status pages and push URLs** on a public name: what
+    a stranger can read or post there.
+63. **Homarr's `SECRET_ENCRYPTION_KEY`**: made where, kept 0600, carried
+    by which backup, and what Homarr keeps with it (the integrations'
+    keys).
+64. **The app's link to the agent on Windows** (the named pipe or local
+    port item 8 read on the Mac): who on the same computer may use it.
+65. **The tunnel's catch-all kept by hand** (`MergeIngress` keeps a
+    catch-all someone added): one that sends every hostname to the proxy
+    would put each home-only app behind the tunnel; say so when it is
+    there (round 58 found the homelab's own catch-all answers 404).
 
 ### Security done
 
@@ -1059,6 +1092,95 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   look-only phone may: `StatusBoard`, `Logs` (N15's redaction), `Report`
   (secrets removed; it also sends `HELPER_EMAIL`, the helper the owner
   named), and `FinancesWall` with the card level. Fine as they are.
+
+- **Round 57 (items 46 to 54; N27 and N26 fixed, N28 open):**
+  **N27 (Medium), fixed:** `docker-socket-proxy` answers every GET under
+  `/containers`, each container's environment (its secrets) and files
+  (`/archive`, `/export`) included, and it sat on the `homelab` network
+  every app joins. Tried on Docker 29.9 (with `DISABLE_IPV6=1`, as this
+  session has no IPv6): a container on the shared network read another's
+  `ADMIN_TOKEN` and exported its files; only POSTs were refused. Now on
+  an internal `socket` network of its own with Dozzle, Homarr, and
+  Homepage; tried again, an app on the shared network cannot resolve it
+  and a reader still lists containers. `TestTheSocketProxyIsOnlyForItsReaders`
+  failed before. **N26 (Low), fixed** now that #460 has merged: a
+  screen is marked when it pairs and refused changes and Finances beyond
+  the card (`TestAWallScreenStaysOne` failed before). Item 47: a code is
+  8 of 31 letters (8.5e11) against 10 wrong tries in 10 minutes for all
+  devices together, so guessing is hopeless; one device on the Wi-Fi can
+  hold pairing off for 10 minutes at a time, the trade a per-address
+  limit would lose. Item 48: the calendar key is 32 to 128 random
+  letters and digits, compared in constant time, made anew in Finances ›
+  Pay, never through the tunnel; notes below for the Finances session.
+  Item 49: the service worker keeps only the page's own files, network
+  first, per address; a phone re-paired elsewhere drops the kept Status
+  at the first 401. Item 51: the passphrases live only in `.env` (0600);
+  the off-site copies are encrypted, the Secrets job with its own
+  passphrase kept off the machine, and the recovery kit leaves a blank
+  for it. Item 52: NPM's admin port is on `BIND_IP` (this machine by
+  default), its first login comes from `.env`, and admin apps are never
+  published. Item 53: ntfy is `deny-all` and is published only once its
+  publishers use a token. **N28 (Medium), open:** the music jobs' venv
+  installs `beets`, `requests`, `pylast`, `Pillow`, and `pyacoustid`
+  unpinned (and remade unattended since #444/#454); one pinned list does
+  not fit Python 3.8 to 3.14 (today's need 3.10 to 3.12+), so the way to
+  pin is for the owner. Read as they merged: #460 (N22's fix: the round
+  51 test keeps the phone removed), #461 (a dump before risky changes,
+  through the backup's own path), #454.
+
+  **For the Finances session** (in the PR, not fixed): the calendar
+  feed shows bill amounts by `CalendarAmounts` alone, so with Hide
+  amounts on, a phone's calendar can still show them (N20's kind); and
+  NPM's access log for `homelab.<domain>` keeps the feed's whole URL,
+  key included.
+
+- **Round 58 (item 55; N29 open; the tunnel; #462, #463):** Windows
+  and Linux builds are not signed, so their updates rest on GitHub's
+  checksum from the same release: **N29 (Medium), open**, as it needs a
+  key or certificate only the owner can make. The tunnel checked while
+  on the domain code: one ingress rule per public hostname and a
+  catch-all answering 404, and home-only names under `*.domain` are DNS
+  only, so a forged Host header reaches nothing through it (item 65 for
+  a catch-all kept by hand). N27 tried with Dozzle itself on Docker
+  29.9: it connects through the proxy on the new network and lists the
+  containers (3 of 3 starts; the very first, which also made the
+  network, missed the proxy once and was restarted by Docker), and an app on `homelab` cannot
+  resolve the proxy. Read as they merged: #462 (rebuild writes
+  settings whole), #463 (the weekly Verify: its record is 0600 under
+  its lock; the problem text is Duplicati's own, which already reached
+  Backups, item 56). Backlog grown by 10 (items 56 to 65), as 2 were
+  open.
+
+- **Round 59 (item 56, Duplicati's error text; item 32 on #465):** a
+  job's `ErrorMessage` is Duplicati's own `LastErrorMessage`, sent as it
+  is to any paired device (`DuplicatiJobs`, look-only, wall screens
+  too) and into the watchdog's alert. Tried on Duplicati 2.x
+  (`duplicati/duplicati`, Docker Hub) through the homelab's own client,
+  with a login in each destination: FTP, SSH, WebDAV, and S3 that could
+  not connect each said "Connection refused" (with the address at
+  most); an unknown backend named only its protocol; a missing local
+  folder was made. No login reached the message, so no change (a fix
+  needs a check that fails first); re-run if Duplicati's messages
+  change. Item 32's Tailnet devices, read on #465: Settings only (no
+  phone method), a fixed `tailscale status --json` in the Tailscale
+  container, devices shared in from other tailnets left out, names
+  drawn as text, and the admin link a fixed prefix with the device's
+  IPv4. Fine as it is. #465 changes the generated
+  `web/types/backend.d.ts`, which N26 had too (`kiosk` on a phone for
+  the screens): N26 now keeps the mark on the stored device only, so
+  the two PRs share no file (lanes.md Rule 2); the Phones page can show
+  it later.
+
+- **Round 60 (item 57, what a custom app may take; N30):** `homelab
+  custom add` writes the service itself (image, one port, volumes under
+  `data/appdata/<id>`, env), so it cannot ask for more; a hand-edited
+  `stacks/custom` file is the owner's own; a move file's own apps were
+  named with their image only. **N30 (Low), fixed:** each is named with
+  what it takes (privileged, Docker's socket, host network or
+  processes, `/` mounted, `cap_add`, devices). Read as they merged: #466
+  (CI's smoke shards interpolate only the fixed matrix and fail closed;
+  Windows renames retry 2 s on "access denied" only), #467 (Duplicati's
+  ntfy report decoded and cut to three lines: less reaches a phone).
 
 ## For Account 1
 

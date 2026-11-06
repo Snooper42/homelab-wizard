@@ -21,7 +21,7 @@ type Reach struct {
 	Phones []string // each paired phone's name, "(may make changes)" when it may
 	Tunnel bool     // a Cloudflare tunnel token
 	Domain string   // HOMELAB_DOMAIN
-	Custom []string // own apps, "id (image)"
+	Custom []string // own apps, "id (image)", with what each takes beyond an ordinary app
 }
 
 // Any reports whether the bundle brings anything that reaches in.
@@ -83,16 +83,75 @@ func Brings(path string) (Reach, error) {
 			}
 		case "stacks/custom/compose.yaml":
 			var c struct {
-				Services map[string]struct {
-					Image string `yaml:"image"`
-				} `yaml:"services"`
+				Services map[string]ownApp `yaml:"services"`
 			}
 			if yaml.NewDecoder(body).Decode(&c) == nil {
 				for id, s := range c.Services {
-					r.Custom = append(r.Custom, id+" ("+s.Image+")")
+					what := s.Image
+					if takes := s.takes(); len(takes) > 0 {
+						what += "; " + strings.Join(takes, ", ")
+					}
+					r.Custom = append(r.Custom, id+" ("+what+")")
 				}
 				sort.Strings(r.Custom)
 			}
 		}
 	}
+}
+
+// ownApp is an own app as a bundle's stacks/custom file writes it: what it
+// runs, and what it asks of the computer beyond an ordinary app.
+type ownApp struct {
+	Image       string      `yaml:"image"`
+	Privileged  bool        `yaml:"privileged"`
+	NetworkMode string      `yaml:"network_mode"`
+	Pid         string      `yaml:"pid"`
+	CapAdd      []string    `yaml:"cap_add"`
+	Devices     []yaml.Node `yaml:"devices"`
+	Volumes     []yaml.Node `yaml:"volumes"`
+}
+
+// takes says, in the household's words, what the app asks for that an
+// ordinary app does not (N30): any of these gives it the computer, or
+// what is on it, beyond its own folder.
+func (a ownApp) takes() []string {
+	var out []string
+	if a.Privileged {
+		out = append(out, "privileged: full control of this computer")
+	}
+	sock, root := false, false
+	for _, v := range a.Volumes {
+		src := v.Value // the short form, source:target[:mode]
+		if v.Kind == yaml.MappingNode {
+			src = ""
+			for i := 0; i+1 < len(v.Content); i += 2 {
+				if v.Content[i].Value == "source" {
+					src = v.Content[i+1].Value
+				}
+			}
+		} else {
+			src, _, _ = strings.Cut(src, ":")
+		}
+		sock = sock || strings.HasSuffix(src, "docker.sock")
+		root = root || src == "/"
+	}
+	if sock {
+		out = append(out, "Docker's socket: control of every app")
+	}
+	if root {
+		out = append(out, "its whole disk")
+	}
+	if a.NetworkMode == "host" {
+		out = append(out, "this computer's network")
+	}
+	if a.Pid == "host" {
+		out = append(out, "this computer's processes")
+	}
+	if len(a.CapAdd) > 0 {
+		out = append(out, "added powers ("+strings.Join(a.CapAdd, ", ")+")")
+	}
+	if len(a.Devices) > 0 {
+		out = append(out, "this computer's devices")
+	}
+	return out
 }

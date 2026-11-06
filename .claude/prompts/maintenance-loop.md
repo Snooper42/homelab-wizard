@@ -1,6 +1,6 @@
-# Maintenance: the upkeep loop
+# Maintenance: the usability and reliability loop
 
-The master prompt for the maintenance account (Account 2), a session that keeps Homelab Wizard healthy on its own: it fixes what fails, moves records to safe storage, trims what grows, and clears dead code, one finished item per round, each in its own pull request that it merges once CI is green. Start it from a Claude Code session of your own on this repository (a session another session started cannot run /loop), and send:
+The master prompt for Account 2, a session that makes Homelab Wizard easier to use, screen by screen, and keeps it working underneath: it fixes what fails, keeps records safe, and makes every screen except Tidy Up and Finances clearly easier for the household, one finished problem per round, each in its own pull request that it merges once CI is green. Start it from a Claude Code session of your own on this repository (a session another session started cannot run /loop), and send:
 
     /loop Read .claude/prompts/maintenance-loop.md and do the next round.
 
@@ -10,68 +10,22 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 
 ---
 
-## The owner's new direction (Nov 6, 2026): read this first
-
-This section overrides **Your job** and **The order** below, wherever they disagree. `lanes.md` (rewritten the same day) wins over both.
-
-**The complaint:** dozens of releases, and the app is not much easier to use. Until now this lane was mostly invisible plumbing (one record moved under a lock per PR, each one a release). From today this lane owns **making every screen except Tidy Up and Finances clearly easier to use**, together with the reliability under them:
-- **Screens:** Setup and first run, Status, Choose and install, an app's page, Updates and release notes, Backups (restore, the recovery kit, the move), Settings (People, Phones, Domain, Devices on your tailnet, the rest), the menu bar and tray, and the phone's screens other than Finances.
-- **Code:** `web/src` outside `tidy`, `finances`, `screens/tidy.ts`, and `screens/finances.ts`; `app/`; `cmd/homelab` and `internal/*` outside `internal/media` and `internal/finance`.
-- **Not yours:** Tidy Up and Finances (Account 1), `apple-client/` (Account 4), security fixes (Account 3).
-
-**Pick one problem per round**, in this order:
-1. An open failure issue.
-2. The owner's complaints in `.claude/prompts/complaints.md` for your screens, top first.
-3. Account 3's usability findings under **For Account 2** in `audit-loop.md`.
-4. Your own walkthrough: do the household's task on the screen as each system, in light and dark, at 320px and with big text, against the fake backend (`app/preview/mock.js`, `node app/preview/shoot.mjs <shot>`), and fix the worst dead end.
-
-From **The order** below, keep only items 9, 10, 18, 20, 21, 22, 23 (a household can lose data or see a wrong state), and 27 once Account 3 has answered it. Every other open item there is **parked**: take one only when you are changing that code anyway.
-
-**Solve the problem whole:** everywhere it shows (every screen, the phone, the menu bar, the words in errors). A PR a household would not notice is not a round's work, unless it fixes a failure issue or lost data.
-
-**Prove it:**
-- a smoke case (`app/preview/shoot.mjs`) or Go test that fails on the old behaviour;
-- before-and-after screenshots, retaken for every screen you changed, linked in the PR body;
-- the keyboard and a screen reader still reach everything you touched;
-- `make check`, `make coverage`, and the smoke cases you touched, each judged by its exit code.
-
-**Ship:**
-- The PR's first line says what the household notices.
-- A CHANGELOG line under **Improved** (usability) or **Fixed** (failures).
-- At most 3 merges a day: put several small related fixes in one PR.
-
-**Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next.
-
-**The SQLite base (ADR-0022)** is built together with the first screen that needs it, after your first two usability fixes have merged: **What the homelab did**, a plain list on Status and on each app's page of what happened and why ("Restarted Immich at 03:12 because it stopped answering", "Updated Vaultwarden to 1.33", "Backed up 4.2 GB").
-- `modernc.org/sqlite` (pure Go), one file `data/homelab.db`, WAL mode.
-- Modes: the folder 0700; the database and its `-wal` and `-shm` files 0600.
-- Each table keeps a limit (by age or count) from day one.
-- Numbered migrations, and `TestEachReleasesFolderUpgrades` still passing.
-- The nightly backup copies it through SQLite's own backup.
-- Phones read it only through a look-only method in `serve.go`'s `phoneMethods`, with `phoneLog`'s redaction on every line.
-- Before merging, write under **For Account 3** what it stores and who can read it, and wait one round for Account 3's answer.
-- The Memory screen's samples come after.
-
-When this section has been folded into the rest of the file (rewrite **Your job** and **The order** to match, keeping **What the last sessions learned** and **Rules that never bend**), do that as one small PR of its own.
-
----
-
 ## Standing rules
 
 These come before everything below; where they disagree with a later section, these win. `.claude/prompts/lanes.md` wins over all of this file.
 
 - **Lanes:** read `.claude/prompts/lanes.md` at the start of every round. It wins over this file. You are **Account 2**: you merge first, and you own `claude/fix-*` branches only. Never push to, merge, rebase, close, or comment on a branch or PR outside your lane.
-- **State:** GitHub is the only source of truth: open PRs, open issues, remote branches, this file's order. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs and open issues, and `git ls-remote origin 'refs/heads/claude/*'`.
+- **State:** GitHub is the only source of truth: open PRs, open issues, remote branches, `complaints.md`, this file's order. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs and open issues, and `git ls-remote origin 'refs/heads/claude/*'`.
 - **Files claimed by open PRs** (lanes.md Rule 2): before you start an item, and again just before each push, list every other open PR's files (`pull_request_read` with `get_files`). If your change would touch one of them (outside lanes.md's shared files), don't start it or push it: take your next item, or wait for that PR to merge.
 - **Merging:**
   - **One open pull request of yours at a time.**
-  - Before squash-merging, if main moved since your last CI run, merge main in and let CI run again. Never merge on a CI run older than main.
-  - Squash-merge with a title ending in its number, with `expectedHeadSha` pinned to the head CI passed on. Each merge is one release, so merge one PR at a time.
+  - A PR merges when every check is green on its head and every commit main gained since that run touches none of its files (lanes.md Rule 5; a newer `CHANGELOG.md` line on main doesn't count if main merges in cleanly). Otherwise merge main in and let CI run again.
+  - Squash-merge with a title ending in its number, with `expectedHeadSha` pinned to the head CI passed on. Each merge is one release, so merge one PR at a time, and **at most 3 a day**: put several small related fixes in one PR.
   - Wait on CI with `subscribe_pr_activity` on the PR plus one `send_later` check-in about 50 minutes out, then end the turn. Never poll.
   - PR and issue numbers share one count: fill a PR's number into the docs only once it is known (after the PR is opened), never a guess.
 - **Hot files** (merging main into a branch), as lanes.md Rule 4 says:
   - `web/dist/*`: never hand-merge. Run `make frontend` with a real `node_modules` (not a symlink) and commit what it builds.
-  - `CHANGELOG.md`: your lines go only under `## [Unreleased]`, at the top of **Fixed**. A conflict there keeps both lines. After every merge, check none slid into a released version.
+  - `CHANGELOG.md`: your lines go only under `## [Unreleased]`, at the top of **Improved** (usability) or **Fixed** (failures). A conflict there keeps both lines. After every merge, check none slid into a released version.
   - `coverage-floors.txt`, `docs/Testing.md`, `app/preview/shoot.mjs`, `app/preview/mock.js`: conflicts are both sides adding lines. Keep both.
   - This file: only you change it. `lanes.md`: only the owner changes it.
 - **Spend less:**
@@ -83,54 +37,79 @@ These come before everything below; where they disagree with a later section, th
 
 ## Open items first
 
-Every round begins by clearing what is still open, and nothing new starts until it is all cleared. "Open" is anything GitHub shows unfinished in your lane:
+Every round begins by finishing what is open in your lane: an open pull request on a `claude/fix-*` branch, oldest first, taken to merged as **Each round** step 1 says.
 
-- an open pull request on a `claude/fix-*` branch;
-- a remote `claude/fix-*` branch that main has not taken (`git ls-remote origin 'refs/heads/claude/*'`, then `git log origin/main..origin/<branch>`).
+A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main: tell the owner to delete it (your tools can't). A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner.
 
-For each, oldest first, one at a time:
+**Open now:** nothing. #471 (items 9, 10, 18 to 22, and the `scripts/logs` note) merged Nov 6.
 
-- **Its work is already on main** (every commit's change is in main, as after a squash-merge): nothing to ship. Tell the owner to delete the branch (your tools can't), and list it in your report until it is gone.
-- **An open PR:** take it to merged, as **Each round** step 1 says.
-- **A branch with work and no PR:** merge main into it (never rebase a pushed branch), finish what it started with its CHANGELOG line and its failing-before proof, open its PR, and take it to merged.
-- **Stale, or half done beyond saving:** don't delete it. Ask the owner, once, in your report, and go on to the next open item.
-
-A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
-
-**Open now:** #466 (`claude/fix-smoke-shards`, item 26): take it to merged. Then the pushed branches with no PR yet, one at a time, in this order: `claude/fix-proc` (item 13, in part), `claude/fix-logs-private` (audit-loop.md's **For Account 2** note on `scripts/logs`), `claude/fix-agent-state` (item 9; built on `fix-logs-private`, so after it), `claude/fix-resume-warn` (item 14), `claude/fix-sent-notes` (item 10), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-healed` (item 22), `claude/fix-custom-compose` (item 18). #429, #431 to #434, #436, #440 (the owner's lyrics fix), #441 to #444, #454, #460, and #462 merged; #444 shipped in v0.22.8.
+**Parked branches:** `claude/fix-proc` (item 13, in part), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-small-notes` (item 25). `claude/fix-resume-warn` (item 14) is Tidy Up, now Account 1's: list it for the owner, don't merge it. Merged branches for the owner to delete: `claude/fix-logs-private`, `fix-agent-state`, `fix-sent-notes`, `fix-custom-compose`, `fix-kit-manifest`, `fix-healed`, `fix-records-whole` (all in #471).
 
 ## Your job
 
-You keep Homelab Wizard healthy, on your own, one finished item per round, for as long as this loop runs. Never stop to ask. When a decision is the owner's, take the most conservative choice that keeps the app working, write it under **Decisions to look at** in the PR, and carry on.
+The owner's complaint (Nov 6, 2026): dozens of releases, and the app is not much easier to use. So this lane owns **making every screen except Tidy Up and Finances clearly easier to use**, together with the reliability under them. Never stop to ask. When a decision is the owner's, take the most conservative choice that keeps the app working, write it under **Decisions to look at** in the PR, and carry on.
 
 What is yours (lanes.md's row for Account 2):
 
-- **Failure issues:** *Nightly run failed* and *Catalog share N failed*. Fix the root cause, not the symptom, and close the issue from the PR that fixes it (`Fixes #N` in its description). Only you close them.
-- **How records are stored:** `internal/lockedfile`, `internal/envfile`, and the code that reads and writes the files in `data/`.
-- **Cleanup and dead code.**
+- **Screens:** Setup and first run, Status, Choose and install, an app's page, Updates and release notes, Backups (restore, the recovery kit, the move), Settings (People, Phones, Domain, Devices on your tailnet, the rest), the menu bar and tray, and the phone's screens other than Finances.
+- **Code:** `web/src` outside `tidy`, `finances`, `screens/tidy.ts`, and `screens/finances.ts`; `app/`; `cmd/homelab` and `internal/*` outside `internal/media` and `internal/finance`.
+- **Failure issues:** *Nightly run failed* and *Catalog share N failed*. Fix the root cause, and close the issue from the PR that fixes it (`Fixes #N`). Only you close them.
+- **Storage under it all:** `internal/lockedfile`, `internal/envfile`, the code that reads and writes `data/`, and the SQLite base (ADR-0022, below).
 - **`docs/Decisions.md`.**
 
-What is not yours: features (Account 1) and security findings (Account 3). When you find something in their lane, write it below under **For Account 1** or **For Account 3**, with what you found and how to show it. Don't fix it, don't open an issue, and don't comment on a PR. The one exception: a security finding in storage code that Account 3 has written up under **For Account 2** in `audit-loop.md` is yours, next after failure issues.
+What is not yours: Tidy Up and Finances (Account 1), `apple-client/` (Account 4), security fixes (Account 3, which also tests usability and writes what it finds under **For Account 2** in `audit-loop.md`). When you find something in their lane, write it below under **For Account 1** or **For Account 3**. Don't fix it, open an issue, or comment on their PR. The one exception: a security finding in storage code that Account 3 has written up for you is yours, next after failure issues.
+
+**Solve a problem whole:** everywhere it shows (every screen, the phone, the menu bar, the words in errors). A PR a household would not notice is not a round's work, unless it fixes a failure issue or lost data.
 
 ## Each round
 
-1. **Your own open PR and branches.** `git fetch origin`, list the open PRs and issues, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read `lanes.md` and this file; if **Paused** is yes, say so and stop the round. Clear **Open items first**. For your open PR, read its head's CI, its mergeability, and any review comments:
-   - Green on every check, mergeable, and CI ran on main's current head: squash-merge it (title ending in its number, `expectedHeadSha` pinned). You merge first, so no other lane's green PR holds you back.
-   - Main moved since its CI run: merge main in, regenerate what is generated, push, and wait again.
+1. **Your own open PR.** `git fetch origin`, list the open PRs and issues, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read `lanes.md`, `complaints.md`, and this file; if **Paused** is yes, say so and stop the round. Clear **Open items first**. For your open PR, read its head's CI, its mergeability, and any review comments:
+   - Green on every check, mergeable, and main's commits since that run touch none of its files: squash-merge it (title ending in its number, `expectedHeadSha` pinned). You merge first.
+   - Main's new commits touch its files: merge main in, regenerate what is generated, push, and wait again.
    - Red: find out why. Yours: fix the cause and push. A job may be re-run once to tell a flaky runner from a real failure; a second failure is real.
    - Still running: carry on with the next steps on a new branch, but open no second PR.
-2. **Main's health.** A red CI on main, or an open failure issue, comes before anything in **The order**.
-3. **For Account 2.** Read the **For Account 2** sections in `features-loop.md` and `audit-loop.md`. A security finding in storage code there comes next, after failure issues only: write the test that shows the hole, then the fix.
-4. **The order:** the first item below not yet done, and whose files no other open PR has claimed. Read the code it touches before changing it. Do it whole.
-5. **Tests that prove it:** a Go test that fails before your change and passes after (a table test for logic; the fake docker in `cmd/homelab/main_test.go` and `fakebin_test.go` for anything that runs a command; `TestEachReleasesFolderUpgrades` for anything that changes what is on disk). Show it failing first.
-6. **Checks** (CONTRIBUTING.md has the full list): `make check`; `make coverage` when Go changes; `make frontend` then `make frontend-check` when the frontend changes; the smoke cases you touched (`SMOKE_ONLY="..." node app/preview/shoot.mjs --smoke`). Fix the cause of anything that fails.
-7. **Words:** a line at the top of **Fixed** under `## [Unreleased]` in `CHANGELOG.md`, in plain words about what the household gets. Update the docs the change touches.
-8. **Ship:** commit on `claude/fix-<short-name>`, re-check the other open PRs' files (lanes.md Rule 2), push, and open the PR (the repository's template), with `Fixes #N` for each issue it closes, how it was tested (with the failing-before proof), and **Decisions to look at**. Then `subscribe_pr_activity`, one `send_later` about 50 minutes out, and end the turn.
-9. **Report** in a few lines: what shipped, what merged, the checks, branches for the owner to delete, what's next.
+2. **Pick one problem**, in this order, skipping one whose files another open PR claims:
+   1. A red CI on main, or an open failure issue.
+   2. The owner's complaints in `.claude/prompts/complaints.md` for your screens, top first.
+   3. Account 3's findings under **For Account 2** in `audit-loop.md` (and `features-loop.md`'s).
+   4. Your own walkthrough: do the household's task on one of your screens as each system, in light and dark, at 320px and with big text, against the fake backend (`app/preview/mock.js`, `node app/preview/shoot.mjs <shot>`), and fix the worst dead end. **Walkthrough notes** below lists what earlier rounds found.
+   5. The next kept item in **The order** below.
+3. **Read the code it touches** before changing it.
+4. **Prove it:**
+   - a smoke case (`app/preview/shoot.mjs`) or Go test that fails on the old behaviour (show it failing first; the fake docker in `cmd/homelab/main_test.go` and `fakebin_test.go` for anything that runs a command; `TestEachReleasesFolderUpgrades` for anything that changes what is on disk);
+   - for a screen: before-and-after screenshots, retaken for every screen you changed, linked in the PR body;
+   - the keyboard and a screen reader still reach everything you touched.
+5. **Checks** (CONTRIBUTING.md has the full list): `make check`; `make coverage` when Go changes; gosec (`bin/gosec` with CI's excludes) on the packages you touched; `GOOS=windows go vet ./...`; `make frontend` then `make frontend-check` when the frontend changes; the smoke cases you touched (`SMOKE_ONLY="..." node app/preview/shoot.mjs --smoke`), each judged by its exit code.
+6. **Words:** the PR's first line says what the household notices. A CHANGELOG line under `## [Unreleased]`, at the top of **Improved** (usability) or **Fixed** (failures), in plain words. Update the docs the change touches.
+7. **Ship:** commit on `claude/fix-<short-name>`, re-check the other open PRs' files (lanes.md Rule 2), push, and open the PR (the repository's template), with `Fixes #N` for each issue it closes, how it was tested, the screenshots, and **Decisions to look at**. Then `subscribe_pr_activity`, one `send_later` about 50 minutes out, and end the turn.
+8. **Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next. Say "fixed" only for what was run for real; say what wasn't.
+
+## The SQLite base (ADR-0022)
+
+Built together with the first screen that needs it, once two usability fixes have merged: **What the homelab did**, a plain list on Status and on each app's page of what happened and why ("Restarted Immich at 03:12 because it stopped answering", "Updated Vaultwarden to 1.33", "Backed up 4.2 GB").
+- `modernc.org/sqlite` (pure Go), one file `data/homelab.db`, WAL mode.
+- Modes: the folder 0700; the database and its `-wal` and `-shm` files 0600.
+- Each table keeps a limit (by age or count) from day one.
+- Numbered migrations, and `TestEachReleasesFolderUpgrades` still passing.
+- The nightly backup copies it through SQLite's own backup.
+- Phones read it only through a look-only method in `serve.go`'s `phoneMethods`, with `phoneLog`'s redaction on every line.
+- Before merging, write under **For Account 3** what it stores and who can read it, and wait one round for Account 3's answer.
+- The Memory screen's samples come after.
+
+## Walkthrough notes
+
+What earlier walkthroughs found, worst first; take them in **Each round** step 2.4 and tick each with its PR.
+- **Status shows a stopped app with no reason**, though `data/stopped.json` keeps why (who stopped it, or the watchdog giving up).
+- **Setup's rows cut their descriptions off with "…"**: the household can't read what a choice does before making it.
+- **An app's page says "Missed checks on Tuesday"** with nothing on what a check is or what to do.
 
 ## The order
 
-Do these in order, one per round. Tick each with its PR number once it is known.
+Kept from the earlier queue (Nov 6): only the items where a household can lose data or see a wrong state. The rest are **parked**: take one only when you are changing that code anyway. Tick each with its PR number once it is known. Done and parked items are kept below for their notes.
+
+**Kept:** 23, then 27 once Account 3 has answered it. (9, 10, 18 to 22: #471, merged.)
+
+**Parked:** 2 (`UPDATES_HELD`), 3's leftovers, 11, 12, 13, 24, 25. Item 14 is Tidy Up: Account 1's now.
 
 1. **(#429, merged)** **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
@@ -150,8 +129,8 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 6. **(#442, merged)** **Dead code and duplicates.** Removed `compose.MustInterpolate` and `dockerapi.Client.Ping` (used nowhere); `homelab rollback` uses `History.CanRollBack`; Tidy Up's record, settings, and sizes, and Finances' receipts, write through `lockedfile.Write` (a fixed `.tmp` broke two saves at once); Finances' rev check and write are under the file's lock. Left for later: `internal/turn` and `internal/media` each have a `processAlive` (merge them once #425, which adds turn's, is in); exported functions only tests use (`ReadEnv`, `FetchedRecord`, `Testable`, `BankDay`) stay as test read-backs.
 7. **(Nov 6, done; #443 and #444 came first, for the owner's Tidy Up report)** **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here. Done for check, coverage and security (govulncheck can't reach vuln.go.dev here; CI's passed); the whole smoke suite is CI's `smoke` job (every case, light and dark, on each PR), green on #443 and #444. A second sweep later on Nov 6 (every plain `os.WriteFile` left in `cmd/`, `internal/`, and `app/`, and the CI waits) added items 18 to 27.
 8. **(#462, merged)** **`homelab rebuild` restores `.env` around its lock** (`cmd/homelab/rebuild.go`, `os.WriteFile(h.envFile, ...)`): an agent or app reading `.env` at that moment can read half of it, and `internal/envfile`'s writers can save over it. Write it through `lockedfile.Write` (or envfile's own writer, keeping its `.bak`), and prove it with a reader in a loop.
-9. **The agent's own state** (`saveAgentState`, `cmd/homelab/agent.go`) and **its log rotation**, which writes a fixed `<log>.tmp` that two processes rotating the same log at once share: `lockedfile.Write` for both.
-10. **Notes that say a message went out**: the weekly summary's (`cmd/homelab/digest.go`) and Finances' reminders' (`cmd/homelab/finances.go`) are plain writes whose errors are dropped. A torn or unsaved note sends the message again. `lockedfile.Write`, and a warning when it fails.
+9. **(#471)** **The agent's own state** (`saveAgentState`, `cmd/homelab/agent.go`) and **its log rotation**, which writes a fixed `<log>.tmp` that two processes rotating the same log at once share: `lockedfile.Write` for both.
+10. **(#471)** **Notes that say a message went out**: the weekly summary's (`cmd/homelab/digest.go`) and Finances' reminders' (`cmd/homelab/finances.go`) are plain writes whose errors are dropped. A torn or unsaved note sends the message again. `lockedfile.Write`, and a warning when it fails.
 11. **Caches and readings written in place**: `internal/releases` (its mutex is one process's only), `internal/storage`'s `Record.Save`, `internal/upgrade`'s rollback point (`PointPath`), `internal/media/fetch.go`'s `ffmpeg.json`. `lockedfile.Write` each; the rollback point first, since `homelab rollback` reads it.
 12. **`homelab quit`'s list** (`scripts/logs/stopped.json`, `saveStopped` in `cmd/homelab/quit.go`) is a plain write beside `internal/stopped`'s locked `data/stopped.json`. See whether they are the same idea twice; keep one, written under its lock.
 13. **`data/healed.json`** (`cmd/homelab/heal.go`) is still a plain write, left in item 3 for #425. Once #425 is in, move it to `lockedfile.Update` and merge `internal/turn`'s and `internal/media`'s `processAlive` (item 6).
@@ -159,15 +138,15 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 15. **(Nov 6, done by looking: no change needed)** A PID reused within one boot belongs to a process that started after the job that held it ended, so after the lock was written: item 13's start-time check (`proc.Process.Holds`, on `claude/fix-proc`) already counts such a lock as left behind, but for the 5 s slack. A name check would cost one more `ps` on every check for that 5 s. **Tidy Up's lock and a reused process ID within one boot** (#443's note): a lock is held by a live process that started before it was written, which a reused PID can be after the IDs wrap. Checking that the process is homelab (its name, as `ps -o comm=` and `QueryFullProcessImageName` give it) would close it; weigh the extra exec per check first.
 16. **(#454, merged)** **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
 17. **(#460, merged; N22)** **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
-18. **Custom apps' compose file** (`internal/custom/custom.go`, `stacks/custom/compose.yaml`): Add and its `restore()` write it in place, and the app and the CLI can add at once (one add lost). A torn file takes every custom app down at the next `up`. `lockedfile.Update` for the add, `lockedfile.Write` for the restore.
-19. **Homepage's config** (`homepage.Write`): written in place while the Homepage container reads it live, so the dashboard can read half a file. `lockedfile.Write`, keeping the hand-edited check.
-20. **Sign-in env files** (`internal/sso/sso.go`, 0600): written in place, read by Compose at each `up`. `lockedfile.Write`.
-21. **The kit's manifest** (`kit.writeManifest`): written in place after an update. An update cut off there leaves no manifest, `kit.Installed` says no kit, and the next upgrade and rollback treat the folder as something it isn't. `lockedfile.Write`. (`kit.write`'s fixed `.kit-tmp` is one updater's only: leave it.)
-22. **`data/healed.json`** (`cmd/homelab/heal.go`, the rest of item 13): read and rewritten whole by each watchdog run, so two at once (the agent's and the one after sleep) can lose a note. `lockedfile.Update`, shown with 40 runs at once as #434 did for `restarts.json`.
+18. **(#471)** **Custom apps' compose file** (`internal/custom/custom.go`, `stacks/custom/compose.yaml`): Add and its `restore()` write it in place, and the app and the CLI can add at once (one add lost). A torn file takes every custom app down at the next `up`. `lockedfile.Update` for the add, `lockedfile.Write` for the restore.
+19. **(#471)** **Homepage's config** (`homepage.Write`): written in place while the Homepage container reads it live, so the dashboard can read half a file. `lockedfile.Write`, keeping the hand-edited check.
+20. **(#471)** **Sign-in env files** (`internal/sso/sso.go`, 0600): written in place, read by Compose at each `up`. `lockedfile.Write`.
+21. **(#471)** **The kit's manifest** (`kit.writeManifest`): written in place after an update. An update cut off there leaves no manifest, `kit.Installed` says no kit, and the next upgrade and rollback treat the folder as something it isn't. `lockedfile.Write`. (`kit.write`'s fixed `.kit-tmp` is one updater's only: leave it.)
+22. **(#471)** **`data/healed.json`** (`cmd/homelab/heal.go`, the rest of item 13): read and rewritten whole by each watchdog run, so two at once (the agent's and the one after sleep) can lose a note. `lockedfile.Update`, shown with 40 runs at once as #434 did for `restarts.json`.
 23. **Where the homelab folder is** (`core.SaveRoot`): the app and the CLI remember it in a file rewritten in place. One torn means the next app start can't find the homelab. `lockedfile.Write`.
 24. **The app's own small notes** (`app/autoupdate.go` prefs, `app/window.go`, `app/updates.go`'s `writeJSON`, `app/tray/found.go` and `appearance.go`): plain writes, some read by the tray, which is a process of its own. `lockedfile.Write` each, in one PR.
 25. **Small notes left, one writer each**: `backup.RestoreLog.Save`, `core.SaveAPIFallback` (`docker-api.json`), `core`'s `crash-seen`, `domain.Home.Save`, `tailnet`'s config. `lockedfile.Write` when touched; one PR for the lot if none is touched by then.
-26. **(#466, open)** **The smoke suite's length**: `smoke (light)` and `smoke (dark)` take 30 to 40 minutes each, and every lane waits on them for every merge, so a slower lane's PR keeps finding main moved (Nov 6: #444, #442, and #454 needed 3, 3, and 7 runs). Measure the slowest cases (`shoot.mjs --smoke` prints each), and split each theme's run into shards in `.github/workflows/ci.yml` if the time is spread out, or speed up the slow waits if it isn't. Same cases, same checks: nothing skipped.
+26. **(#466, merged: three shards per theme, run at once)** **The smoke suite's length**: `smoke (light)` and `smoke (dark)` take 30 to 40 minutes each, and every lane waits on them for every merge, so a slower lane's PR keeps finding main moved (Nov 6: #444, #442, and #454 needed 3, 3, and 7 runs). Measure the slowest cases (`shoot.mjs --smoke` prints each), and split each theme's run into shards in `.github/workflows/ci.yml` if the time is spread out, or speed up the slow waits if it isn't. Same cases, same checks: nothing skipped.
 27. **`data/`'s own mode**: see **For Account 3** (Nov 6). Once Account 3 has looked at it, make `data/` 0700 where it is made (`lockedfile.Update`'s `MkdirAll`, `battery`, `health`, `restartloop`, `heal`, and the rest), tightening an existing one, as `claude/fix-logs-private` does for `scripts/logs`.
 
 ## For Account 1
@@ -190,6 +169,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 - A job's whole log: `get_job_logs` with `tail_lines` larger than the log (1500) is too big to show, so it is saved to a file you can grep (`logs_content` in its JSON). The run's zip of logs is blocked by the proxy.
 - Nov 4 and 5's nightly failures were all ghcr.io's per-minute limit (`toomanyrequests: retry-after: <µs>, allowed: 44000/minute`), hit by every job at about 11:01 UTC. #429 makes downloads wait it out. If it comes back, look at how long the tries span (`RegistryBusyWaits`) and at any `docker run` that pulls its own image.
 - Nov 6, the owner's *Tidy Up won't work, every script errors*: two causes. A leftover media lock whose PID another program had taken counted as held for good, so the agent's minute skipped everything and every job said busy (#443). And a beets venv (`~/.music-cleanup/venv`) whose Python was upgraded away can't be made again over itself, so every music and inbox job failed with *couldn't create …venv* (#444). To try Tidy Up for real: a copy of the repo as `--root`, `HOME=<scratch dir>`, real tagged MP3s from `ffmpeg -f lavfi -i sine=d=2 -metadata …`, and `uv python install 3.9` (or 3.14) with `HOMELAB_PYTHON` for other Pythons. musicbrainz.org and lrclib.net are blocked here; PyPI isn't.
+- Windows, Nov 6 (#471): a rename over a file another process has open fails for that moment ("access is denied"), and so does an open that meets the rename ("access is denied" or `ERROR_SHARING_VIOLATION`, which Go doesn't count as a permission error). `lockedfile.Write` and `lockedfile.Read` each try again for `RenameWait`; read a record that is saved while others read it with `lockedfile.Read`. And `os.Stat` on Windows reads a file's identity only when `SameFile` asks, by path: take the "before" stat from an open file (`f.Stat()`).
 
 ## Rules that never bend
 
