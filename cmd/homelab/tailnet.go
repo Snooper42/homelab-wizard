@@ -165,6 +165,15 @@ func (h *homelab) recreate(ctx context.Context, client *docker.Client, report *d
 		if len(ids) == 0 {
 			continue
 		}
+		var apps []*catalog.App
+		for _, id := range ids {
+			if a, ok := h.catalog.Get(id); ok {
+				apps = append(apps, a)
+			}
+		}
+		if err := h.dumpBefore(ctx, client, apps, "they restart "+why); err != nil {
+			return err
+		}
 		h.ui.Info("restarting %s %s", strings.Join(ids, ", "), why)
 		if err := client.Compose(ctx, h.project(file), profiles, append([]string{"up", "--detach", "--no-deps"}, ids...)...); err != nil {
 			return err

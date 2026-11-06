@@ -41,6 +41,10 @@ func TestTailnetSetupServesTheRunningApps(t *testing.T) {
 	if log := readCalls(t, calls); !strings.Contains(log, "up --detach --no-deps vaultwarden") {
 		t.Errorf("vaultwarden was not recreated with its address:\n%s", log)
 	}
+	// A copy first: its database is dumped before it starts on its new address.
+	if log := readCalls(t, calls); strings.Index(log, "--volumes-from vaultwarden homelab/sqlite") < 0 || strings.Index(log, "--volumes-from vaultwarden homelab/sqlite") > strings.Index(log, "up --detach --no-deps vaultwarden") {
+		t.Errorf("no dump before vaultwarden restarted on its tailnet address:\n%s", log)
+	}
 
 	// After an install, an unchanged config says nothing.
 	if out, code = homelabCmd(t, root, "", "tailnet", "setup", "--auto"); code != 0 || strings.Contains(out, "On your tailnet") {
