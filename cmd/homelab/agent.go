@@ -18,6 +18,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/crash"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
@@ -233,11 +234,9 @@ func splitLog(path, older string) error {
 		path string
 		data []byte
 	}{{older, data[:cut]}, {path, data[cut:]}} {
-		tmp := f.path + ".tmp"
-		if err := os.WriteFile(tmp, f.data, 0o600); err != nil {
-			return err
-		}
-		if err := os.Rename(tmp, f.path); err != nil {
+		// A temporary file of its own: two agents rotating one log at
+		// once (one handing over to the next) don't trip on each other's.
+		if err := lockedfile.Write(f.path, f.data, 0o600); err != nil {
 			return err
 		}
 	}
@@ -279,7 +278,9 @@ func loadAgentState(path string) agentState {
 	return s
 }
 
+// saveAgentState replaces the note whole: one read half-written says no
+// backup yet, and the backup would start at once.
 func saveAgentState(path string, s agentState) error {
 	data, _ := json.MarshalIndent(s, "", "  ")
-	return os.WriteFile(path, data, 0o644)
+	return lockedfile.Write(path, data, 0o600)
 }
