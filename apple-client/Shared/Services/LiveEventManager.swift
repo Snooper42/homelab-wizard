@@ -182,7 +182,11 @@ final class LiveEventManager {
     private func watchNetwork() {
         guard pathMonitor == nil else { return }
         let monitor = NWPathMonitor()
-        monitor.pathUpdateHandler = { [weak self] path in
+        // @Sendable on purpose: written in a main-actor method, the closure
+        // would otherwise be main-actor isolated, and Swift 6 traps when the
+        // monitor calls it on its own queue.
+        monitor.pathUpdateHandler = { @Sendable [weak self] path in
+            // A strong let for the Task: a captured weak var can't cross into it.
             guard path.status == .satisfied, let self else { return }
             Task { @MainActor in self.networkCameBack() }
         }
