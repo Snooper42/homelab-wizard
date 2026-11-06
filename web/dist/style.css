@@ -545,6 +545,9 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 .pairing ul { margin:0 0 8px; padding-left:18px; }
 .pairing code { overflow-wrap:anywhere; }
 html:not(.companion) .companion-only { display:none; }
+/* Memory nearly full (the watchdog card): Stop only where this phone may make changes. */
+html.companion:not(.can-change) .memstop { display:none; }
+#memoryPressure .alertlist button.memstop { margin-left:8px; }
 
 /* The phone companion (homelab serve, html.companion): Status and Backups,
    Finances where this phone may see them (html.finances), and only the

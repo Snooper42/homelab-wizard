@@ -1724,7 +1724,30 @@
   }
 
   // web/src/status/Cards.tsx
-  function Watchdog({ w: w3, openSetup, fix }) {
+  var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
+  function MemoryPressure({ m: m3, stop: stop2 }) {
+    const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
+      /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
+        " ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "the apps use ",
+          share2,
+          "% of the ",
+          memText(m3.total),
+          " Docker has, high since ",
+          ago(m3.since),
+          ". Stop one you don't need now."
+        ] })
+      ] }) }),
+      /* @__PURE__ */ u3(Rows, { children: (m3.biggest || []).map((a3) => /* @__PURE__ */ u3(Row, { dot: "warn", title: a3.name, end: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: memText(a3.bytes) }),
+        a3.id && stop2 && /* @__PURE__ */ u3("button", { class: "small memstop", "aria-label": `Stop ${a3.name}`, onClick: () => stop2(a3.id), children: "Stop" })
+      ] }) }, a3.name)) })
+    ] });
+  }
+  function Watchdog({ w: w3, openSetup, fix, stop: stop2 }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1751,6 +1774,7 @@
           ago(w3.lastRun)
         ] })
       ] }) }),
+      w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
       late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "It has not run since ",
         ago(w3.lastRun),
@@ -6816,9 +6840,18 @@
     drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
-    mountWatchdog(card, { w: w3, openSetup: () => {
-      navigate("setup");
-    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+    mountWatchdog(card, {
+      w: w3,
+      openSetup: () => {
+        navigate("setup");
+      },
+      fix: () => cliFlow("Fix it", "fix", "", "Fix these"),
+      // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+      stop: (id2) => {
+        const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
+        if (a3) void runAppAction(a3, "stop");
+      }
+    });
   }
   var protectionAt = 0;
   function showProtection(p3, err) {
