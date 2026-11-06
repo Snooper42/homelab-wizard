@@ -19,6 +19,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 )
 
@@ -188,47 +189,59 @@ func Add(root string, c *catalog.Catalog, s Spec, env map[string]string) (*catal
 	if err := s.Check(c); err != nil {
 		return c, 0, err
 	}
-	path := filepath.Join(root, File)
-	old, readErr := os.ReadFile(path)
-	restore := func() {
-		if readErr != nil {
-			os.Remove(path)
-		} else {
-			_ = os.WriteFile(path, old, 0o644)
-		}
-	}
-	hostPort := FreePort(c, env)
-	stack := header
-	if readErr == nil {
-		stack = strings.TrimRight(string(old), "\n") + "\n"
-	}
-	if !strings.HasSuffix(stack, "services:\n") {
-		stack += "\n"
-	}
-	stack += s.Block(hostPort)
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return c, 0, err
-	}
-	if err := os.WriteFile(path, []byte(stack), 0o644); err != nil {
-		return c, 0, err
-	}
 	example, err := os.ReadFile(filepath.Join(root, ".env.example"))
 	if err != nil {
-		restore()
 		return c, 0, err
 	}
-	next, err := catalog.Load(root)
-	if err == nil {
-		if issues := next.Validate(declared(string(example))); len(issues) > 0 {
-			var msgs []string
-			for _, i := range issues {
-				msgs = append(msgs, i.String())
-			}
-			err = fmt.Errorf("the new app does not validate: %s", strings.Join(msgs, "; "))
+	path := filepath.Join(root, File)
+	var next *catalog.Catalog
+	var hostPort int
+	var aerr error
+	// Under the file's lock from reading it to checking the result: the app
+	// and homelab custom add are processes of their own, and an add that
+	// read the file a moment before another's would write over it.
+	err = lockedfile.Update(path, 0o644, func(old []byte) ([]byte, bool) {
+		// Read again here: another add may have come in since c was read,
+		// with its ID or its port.
+		cur, err := catalog.Load(root)
+		if err != nil {
+			aerr = err
+			return nil, false
 		}
+		if aerr = s.Check(cur); aerr != nil {
+			return nil, false
+		}
+		hostPort = FreePort(cur, env)
+		stack := header
+		if old != nil {
+			stack = strings.TrimRight(string(old), "\n") + "\n"
+		}
+		if !strings.HasSuffix(stack, "services:\n") {
+			stack += "\n"
+		}
+		stack += s.Block(hostPort)
+		if aerr = lockedfile.Write(path, []byte(stack), 0o644); aerr != nil {
+			return nil, false
+		}
+		next, aerr = catalog.Load(root)
+		if aerr == nil {
+			if issues := next.Validate(declared(string(example))); len(issues) > 0 {
+				var msgs []string
+				for _, i := range issues {
+					msgs = append(msgs, i.String())
+				}
+				aerr = fmt.Errorf("the new app does not validate: %s", strings.Join(msgs, "; "))
+			}
+		}
+		if aerr != nil {
+			return old, true // as it was; none before: removed
+		}
+		return nil, false
+	})
+	if aerr != nil {
+		return c, 0, aerr
 	}
 	if err != nil {
-		restore()
 		return c, 0, err
 	}
 	return next, hostPort, nil
@@ -248,11 +261,28 @@ func declared(example string) map[string]bool {
 // app). Its data folder stays.
 func Remove(root, id string) error {
 	path := filepath.Join(root, File)
-	data, err := os.ReadFile(path)
-	if err != nil {
+	if _, err := os.Stat(path); err != nil {
 		return fmt.Errorf("%s is not one of your own apps", id)
 	}
-	lines := strings.Split(string(data), "\n")
+	var rerr error
+	err := lockedfile.Update(path, 0o644, func(data []byte) ([]byte, bool) {
+		out, ok := without(string(data), id)
+		if !ok {
+			rerr = fmt.Errorf("%s is not one of your own apps", id)
+			return nil, false
+		}
+		return out, true // nil, with the last app: the file goes
+	})
+	if rerr != nil {
+		return rerr
+	}
+	return err
+}
+
+// without is the custom stack without id's service, and whether it had
+// one; nil when id was the last.
+func without(data, id string) ([]byte, bool) {
+	lines := strings.Split(data, "\n")
 	var out []string
 	in, found, remaining, services := false, false, 0, false
 	serviceRe := regexp.MustCompile(`^  ([a-z0-9-]+):\s*$`)
@@ -274,17 +304,12 @@ func Remove(root, id string) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("%s is not one of your own apps", id)
+		return nil, false
 	}
 	if remaining == 0 {
-		err = os.Remove(path)
-	} else {
-		err = os.WriteFile(path, []byte(strings.TrimRight(strings.Join(out, "\n"), "\n")+"\n"), 0o644)
+		return nil, true
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return []byte(strings.TrimRight(strings.Join(out, "\n"), "\n") + "\n"), true
 }
 
 // Apps lists your own apps.
