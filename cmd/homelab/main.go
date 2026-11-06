@@ -295,6 +295,15 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		u.Fail("unknown command %q (see: homelab help)", cmd)
 		return 2
 	}
+	// A command that changes the homelab waits its turn behind any other
+	// changing it (turn.go); a plan answered yes in a terminal takes it then.
+	h.turnAs, h.turnCtx = h.turnWhat(cmd, cmdArgs), ctx
+	defer h.releaseTurn()
+	if changes(cmd, cmdArgs) {
+		if err := h.takeTurn(ctx); err != nil {
+			return exit(u, err)
+		}
+	}
 	return exit(u, fn(ctx, cmdArgs))
 }
 
@@ -354,6 +363,11 @@ type homelab struct {
 	// rows shows Compose's lines as a line per app, in a terminal (rows.go).
 	rows *appRows
 	host host.Profile
+	// The command's turn to change the homelab (turn.go): what it is as
+	// others waiting see it, its context, and the turn while held.
+	turnAs   string
+	turnCtx  context.Context
+	turnHeld func()
 }
 
 func newHomelab(u *ui.UI, root string) (*homelab, error) {
@@ -486,6 +500,9 @@ func (h *homelab) goAhead(apply bool, question string) error {
 	}
 	if !h.ui.Confirm(question, true) {
 		return errCancelled
+	}
+	if h.turnCtx != nil {
+		return h.takeTurn(h.turnCtx)
 	}
 	return nil
 }

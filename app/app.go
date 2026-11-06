@@ -54,6 +54,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
+	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
@@ -534,6 +535,15 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 		return nil, errors.New("an install is already running")
 	}
 	defer a.install.Unlock()
+	// Its turn behind any other change, from a phone or the nightly jobs
+	// (internal/turn); the commands it runs after have it too.
+	release, err := turn.Take(a.ctx, a.root, "installing apps", func(ahead turn.Ticket) {
+		emitEvent(a.ctx, "install:log", "Waiting for “"+ahead.What+"” to finish first…")
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	c, client, p, err := a.plan(tokens, settings)
 	if err != nil {
 		return nil, err

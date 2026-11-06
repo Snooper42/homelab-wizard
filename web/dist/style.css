@@ -175,7 +175,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .app input { margin-top:4px; accent-color:var(--accent); width:15px; height:15px; }
 .app .grow { flex:1; min-width:0; }
 .app .desc { color:var(--muted); font-size:13px; }
-.app :is(.sysnote, .samejob) { font-size:12.5px; margin-top:2px; }
+.app :is(.sysnote, .samejob, .goeswith) { font-size:12.5px; margin-top:2px; }
 #trayNote { font-size:12.5px; margin-top:4px; }
 .app .replaces { font-size:12px; color:var(--ok); margin-top:2px; }
 .app .links-inline { display:flex; gap:14px; font-size:13px; padding-top:2px; white-space:nowrap; }
@@ -551,6 +551,9 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
+/* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
+   and iOS shows no callout under that finger at the same moment. */
+html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .fx-export { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
 /* Export and the toolbar's capsule at the header's top, as the capsule is elsewhere, level by their middles. */
 .header .fx-headtools { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-left:auto; align-self:flex-start; }
