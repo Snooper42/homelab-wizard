@@ -1006,16 +1006,23 @@ func (h *homelab) duplicatiChecks(ctx context.Context, report *detect.Report, en
 	if err != nil {
 		return []health.Result{{Name: "duplicati jobs", Err: err}}
 	}
+	// With Sunday's checks (WithChecks sorts out which failure is a check's).
+	jobs = duplicati.WithChecks(jobs, duplicati.LoadChecks(duplicati.CheckPath(h.root)))
 	var out []health.Result
 	for _, j := range jobs {
 		r := health.Result{Name: "duplicati " + j.Name, Status: 200}
 		switch j.State {
 		case "failed":
-			r.Err = fmt.Errorf("the last run failed: %s", j.ErrorMessage)
+			r.Err = fmt.Errorf("the last run failed: %s", duplicati.ShortProblem(j.ErrorMessage))
 		case "stale":
 			r.Err = fmt.Errorf("no successful run since %s", j.LastFinished.Local().Format("2 January"))
 		case "never":
 			continue
+		}
+		// A damaged file: a version may not restore, until a check passes
+		// again (later runs leave old files as they are).
+		if r.Err == nil && j.CheckProblem != "" {
+			r.Err = fmt.Errorf("the check of its backup on %s failed: %s (a version may not restore: open the job in Duplicati, or homelab report for help)", j.Checked.Local().Format("Monday 2 January"), j.CheckProblem)
 		}
 		out = append(out, r)
 	}

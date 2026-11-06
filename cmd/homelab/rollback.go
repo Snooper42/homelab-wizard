@@ -289,7 +289,20 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 		return err
 	}
 	h.trackUpdates(ctx, client, containers, false)
-	report := detect.Analyze(h.catalog, containers)
+	dumps := h.dumpsFor(detect.Analyze(h.catalog, containers), apps)
+	if len(dumps) == 0 {
+		return nil
+	}
+	h.ui.Info("dumping %s first", strings.Join(dumps, ", "))
+	if err := h.backup(ctx, []string{"--apply", "--apps", strings.Join(dumps, ",")}); err != nil {
+		return fmt.Errorf("the dump before the update failed, so nothing was updated: %w", err)
+	}
+	return nil
+}
+
+// dumpsFor is which databases to dump before changing apps: each running
+// app's own and those of the databases it uses, once each.
+func (h *homelab) dumpsFor(report *detect.Report, apps []*catalog.App) []string {
 	var dumps []string
 	for _, a := range apps {
 		for _, id := range append([]string{a.ID}, a.DependsOn...) {
@@ -301,12 +314,26 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 			}
 		}
 	}
+	return dumps
+}
+
+// dumpBefore dumps the databases of apps about to start again on changed
+// settings (a new address, signing in with Pocket ID, settings changed
+// by hand), so what they hold just before is in the backups folder beside
+// the nightly dumps, rotated out as they are. what names the change; a
+// dump that fails stops it, as before an update.
+func (h *homelab) dumpBefore(ctx context.Context, client *docker.Client, apps []*catalog.App, what string) error {
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return err
+	}
+	dumps := h.dumpsFor(detect.Analyze(h.catalog, containers), apps)
 	if len(dumps) == 0 {
 		return nil
 	}
-	h.ui.Info("dumping %s first", strings.Join(dumps, ", "))
+	h.ui.Info("dumping %s first, before %s", strings.Join(dumps, ", "), what)
 	if err := h.backup(ctx, []string{"--apply", "--apps", strings.Join(dumps, ",")}); err != nil {
-		return fmt.Errorf("the dump before the update failed, so nothing was updated: %w", err)
+		return fmt.Errorf("the dump before %s failed, so it was not done: %w", what, err)
 	}
 	return nil
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 )
 
@@ -277,7 +278,13 @@ func (h *homelab) takeSecrets(staging string) error {
 	if err := os.Chmod(copied, 0o600); err != nil {
 		return err
 	}
-	if err := os.WriteFile(h.envFile, env, 0o600); err != nil {
+	// Replaced whole, never rewritten in place: the agent and the app may
+	// read .env at this moment. Through a link, the file it points at.
+	path := h.envFile
+	if real, err := filepath.EvalSymlinks(path); err == nil {
+		path = real
+	}
+	if err := lockedfile.Write(path, env, 0o600); err != nil {
 		return err
 	}
 	// The records the app writes for this account alone, as it does.

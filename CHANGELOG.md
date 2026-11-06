@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Weekly integrity check:** every Sunday morning, each off-site backup is checked with Duplicati's own Verify: a sample of its files where they are kept is downloaded and compared with what Duplicati recorded. If one is damaged, so that a version might not restore, the watchdog alerts, Status lists it, and Backups shows it in red beside the job until a check passes. Each job's hover on Backups says when it was last checked. `homelab backup-check` runs the check at any time.
 - **Memory pressure alert:** when the apps use 90% or more of the memory Docker has on two checks in a row (10 minutes or more), you get one alert, *Homelab: memory nearly full*, naming the three biggest apps and how much each uses. Status's Watchdog card lists them with **Stop** on each until memory comes down, and a second alert says when it has.
 - **An update window per app:** an app's page has **Only on Sundays** under Nightly updates, for an app you would rather not see change midweek; the other nights leave it alone. `homelab updates days immich sat+sun` picks any days.
 - **Phones that expire:** beside a phone in Settings › Phones, **For a day**, **For a week**, or **For a month** ends its changes and Finances then, and it only looks; its row says until when. For a guest's phone, or one lent for a while (`homelab phone until <phone> 7d`).
@@ -46,6 +47,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A copy before anything risky:** an app's databases are now dumped just before it starts again on changed settings, as they already were before an update: when it gets a domain or tailnet address, when it starts signing in with Pocket ID, and when **Fix it** applies settings changed by hand. The dump sits beside the nightly ones, and if it fails, the change isn't made.
 - **Add to Home Screen, done right:** the phone companion added to an iPhone's Home Screen has the app's icon, no longer a picture of the page, and Android's shapes no longer cut it. Opened from there, its splash on Android is the app's own background, and the bar above it follows light or dark mode.
 - **Status read aloud:** with VoiceOver or Narrator on, Status reads out each app's change as it happens, not only a job's result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line. Nothing is read for Status while another screen is shown.
 - **Shapes as well as colours:** an app (or backup, or anything else) that is stopped or needs a look has a triangle beside it and one that is down a cross, where a running one has a circle, so a state reads without telling green from red, on a small screen, and in Windows' contrast themes.
@@ -71,6 +73,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Your logs are yours alone:** the jobs' logs and crash notes in `scripts/logs` could be read by another account on the same computer. The folder is now this account's only, an older one included, and new logs are too.
 - **The weekly summary and Finances' reminders come once:** the note that one went out was rewritten in place and its errors dropped, so a note cut off or not saved sent the message again the next night without a word. It is now replaced whole, and one that can't be saved says so in the nightly log.
 - **Your own apps, added at once, are all kept:** two of your own apps added at the same moment (from the app and from Terminal) could each write over the other, and one was lost. Each add now waits for the one before it, on a port of its own.
+- **Settings the apps read are never caught half-written:** the Homepage dashboard's list of apps, each app's sign-in settings, and the note that says which version of the homelab folder you have were rewritten in place, so one read at that moment (by Homepage, by an app starting, or by the next upgrade) could find half a file. Each is now replaced whole.
+- **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
 - **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.
@@ -109,6 +113,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Hide amounts covers the alerts too:** with amounts hidden, the nightly Finances reminders and the weekly summary still showed them on the phone's lock screen (*Due tomorrow: Mortgage $1,845.00*). They now say $••• there too.
 - **The Beszel agent stays on the version you chose:** it can control Docker, and it updated itself every night from its newest image, as the socket proxy once did. It is now pinned (`BESZEL_AGENT_VERSION`) and updated by hand after reading its notes.
 - **A removed phone stops getting Status at once:** a phone removed in Settings › Phones could no longer ask for anything, but one that had Status open kept receiving each change for as long as it stayed connected. It is now cut off within seconds.
+- **A Mac update comes only from whoever signed your app:** the app checked that an update downloaded whole, but not who made it. On a Mac, an update signed by anyone but the team that signed the app you have is now refused, and the app says so.
 
 ## [0.17.0] - 2026-11-02
 
