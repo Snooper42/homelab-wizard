@@ -16,6 +16,7 @@ const StaleAfter = 26 * time.Hour
 type Source struct {
 	ID     string // the app, or the volume
 	Name   string // what a person calls it
+	App    string // the app it is of (a volume's app)
 	Volume bool
 	// WaitingFor is the drive its app waits for, stopped until the drive
 	// is plugged in ("/Volumes/Hobbies"): the backup cannot copy it then.
@@ -24,8 +25,10 @@ type Source struct {
 
 // Copy is one source's newest copy in recovery-staging.
 type Copy struct {
-	ID     string    `json:"id"`
-	Name   string    `json:"name"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// App is the app it is of: its state says why a copy is stale.
+	App    string    `json:"app,omitempty"`
 	Volume bool      `json:"volume,omitempty"`
 	Newest time.Time `json:"newest"` // zero when there is none yet
 	Size   int64     `json:"size"`
@@ -107,7 +110,7 @@ func Read(root string, sources []Source, env map[string]string, now time.Time) O
 		o.LastRun = o.EnvCopied
 	}
 	for _, s := range sources {
-		c := Copy{ID: s.ID, Name: s.Name, Volume: s.Volume, State: "none", WaitingFor: s.WaitingFor}
+		c := Copy{ID: s.ID, Name: s.Name, App: s.App, Volume: s.Volume, State: "none", WaitingFor: s.WaitingFor}
 		dir := filepath.Join(staging, "databases", s.ID)
 		if s.Volume {
 			dir = filepath.Join(staging, "volumes", s.ID)

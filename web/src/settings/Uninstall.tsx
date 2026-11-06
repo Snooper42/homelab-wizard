@@ -20,11 +20,14 @@ interface Choice {
   danger?: boolean;
 }
 
+/** "This Mac" inside a sentence: "this Mac", "this PC", "this machine" (not "this mac"). */
+const inSentence = (machine: string) => machine.charAt(0).toLowerCase() + machine.slice(1);
+
 function choices(machine: string): Choice[] {
   return [
     { key: 'data', label: 'Delete the apps’ data', note: 'Their volumes and data folders. Without this, Start the homelab brings every app back as it was.' },
     { key: 'folder', label: 'Delete the homelab folder too', note: 'With .env: every app’s password, and the passphrase that opens the backups. Print the recovery kit (Backups) first if you may restore them.' },
-    { key: 'backups', label: 'Delete the backups on ' + machine.toLowerCase(), note: 'A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive.' },
+    { key: 'backups', label: 'Delete the backups on ' + inSentence(machine), note: 'A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive.' },
     { key: 'app', label: 'Remove Homelab Wizard itself', note: 'Its settings and downloads too. It quits when it is done.' },
     { key: 'everythingElse', label: 'Delete everything else in the container runtime', note: 'Every other container, image, and volume (with its data), the homelab’s or not: things you run yourself go too.', danger: true },
   ];
@@ -73,7 +76,7 @@ export function Uninstall({ machine, on }: { machine: string; on: UninstallActio
 
   return (
     <div id="uninstall" class="uninstall">
-      <h3 class="subhead">Take the homelab off {machine.toLowerCase()}</h3>
+      <h3 class="subhead">Take the homelab off {inSentence(machine)}</h3>
       <p class="muted">Stops and removes every app, the images it pulled, the scheduled jobs, and the tray icon at login. For when another machine runs the homelab now, or to start again. The media drive is never touched.</p>
       {choices(machine).map((c) => (
         <label key={c.key} class={'check' + (c.danger ? ' danger' : '')}>

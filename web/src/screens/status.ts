@@ -23,7 +23,7 @@ import { catalog, renderApps, replan, selected } from './choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
-import { backupsData } from './backups';
+import { backupsData, redrawBackups } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
@@ -156,6 +156,8 @@ export async function drawRemembered(last: Promise<api.Reading | null>) {
   statusData.stale(); // read when Status shows
 }
 statusData.watch(drawStatus);
+// Backups says why a stale copy is stale from its app's state: drawn again as it changes.
+statusData.watch(() => redrawBackups());
 export function loadStatus() { return statusData.load(); }
 
 // One request for Status and the cards beside it (StatusBoard): Status

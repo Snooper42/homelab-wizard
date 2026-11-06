@@ -82,7 +82,7 @@ An app's log usually says why it is unwell. With [Ollama](<../services/documents
 
 | Symptom | Fix |
 |---|---|
-| Backups shows a stale copy | The nightly job did not run or an app's dump failed: `./homelab schedule status`, then **Back up now** and read its output |
+| Backups shows a stale copy | The row says why from its app's state. Stopped: the nightly copy skips it; start it, and tonight's copy catches up. Running: the nightly job did not run or the dump failed: `./homelab schedule status`, then **Back up now** and read its output |
 | Backups shows a copy as *Paused* | Its app is stopped because the drive its folders are on is unplugged (the Hobbies drive): plug the drive in, the app starts, and the next nightly backup copies it again. Its last copies are kept meanwhile |
 | An off-site job failed or has not run for a week | Backups › Off-site jobs shows Duplicati's error. Most often the backup folder is missing or offline: the cloud drive's app is not running, or the drive is unplugged ([ISSUE-0003](<Known Issues.md#issue-0003-duplicati-writing-into-the-proton-drive-folder>)) |
 | Off-site jobs fail after months of working | The cloud drive may be full: its quota cannot be read from this machine ([ISSUE-0019](<Known Issues.md#issue-0019-a-cloud-drives-own-quota-cannot-be-read>)), so check the space left in the drive's own app |

@@ -2,7 +2,7 @@
 // screen's commands.
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { store } from '../store';
-import { statusById } from './status';
+import { statusById, statusData } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
 import { $, go, osName, showError } from '../core';
@@ -20,6 +20,9 @@ backupsData.watch(() => { drawBackups(); drawJobs(); });
 jobsData.watch(() => { if (backupsData.value && !backupsData.error) drawBackups(); drawJobs(); });
 export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load()]); }
 
+/** Draws Backups again with the apps' state, which says why a stale copy is stale (status.ts calls it as that changes). */
+export function redrawBackups() { if (backupsData.value && !backupsData.error) drawBackups(); }
+
 function drawBackups() {
   if (backupsData.error) { mountCopyRows($('backupRows'), null); showError(backupsData.error); return; }
   const o = backupsData.value!;
@@ -27,7 +30,7 @@ function drawBackups() {
   const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
   mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined });
-  mountCopyRows($('backupRows'), { o });
+  mountCopyRows($('backupRows'), { o, apps: statusData.value ? statusById : undefined });
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);

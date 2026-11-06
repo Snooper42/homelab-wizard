@@ -122,8 +122,18 @@ export function copyGroups(o: backup.Overview): CopyGroup[] {
 /** Whether a copy's size moved by a tenth or more since the night before's: then both are shown. */
 const changed = (c: backup.Copy) => !!c.before && Math.abs(c.size - c.before) >= c.before / 10;
 
+/** Why a copy is stale, from its app's state, and what helps: "" when that isn't known. */
+export function staleWhy(c: backup.Copy, apps?: Record<string, api.AppStatus>): string {
+  if (!apps || !c.app) return '';
+  const a = apps[c.app];
+  if (!a) return "It isn't installed any more: its last copies are kept.";
+  if (a.state === 'stopped') return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
+  if (a.state !== 'running') return "It isn't running, so the nightly copy skips it.";
+  return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+}
+
 /** Each database copy or volume archive, in groups; stale and up to date open, the rest folded with their names. */
-export function CopyRows({ o }: { o: backup.Overview }) {
+export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string, api.AppStatus> }) {
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const groups = copyGroups(o);
   if (!groups.length) return <tr><td colSpan={4} class="muted">No installed app has a database to dump yet.</td></tr>;
@@ -146,6 +156,7 @@ export function CopyRows({ o }: { o: backup.Overview }) {
             <tr key={c.id} class={'copy ' + c.state + (c.shrank ? ' shrank' : '')}>
               <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} />{c.name}
                 {c.shrank && <span class="note bad">Less than half the night before's {bytes(c.before || 0)}: check that {c.name} still has its data</span>}
+                {c.state === 'stale' && staleWhy(c, apps) && <span class="note muted">{staleWhy(c, apps)}</span>}
               </td>
               <td class="when muted">{never(c.newest) ? '—' : ago(c.newest)}</td>
               <td class="size muted" title={c.before ? `The night before: ${bytes(c.before)}` : undefined}>
@@ -257,6 +268,6 @@ export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
 
 export const mountKopia = (el: Element, props: { k: backup.Engine; test: () => void } | null) => render(props && <KopiaLine {...props} />, el);
 export const mountBackupTiles = (el: Element, props: { o: backup.Overview; os: string; test?: () => void }) => render(<BackupTiles {...props} />, el);
-export const mountCopyRows = (el: Element, props: { o: backup.Overview } | null) => render(props && <CopyRows {...props} />, el);
+export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: Record<string, api.AppStatus> } | null) => render(props && <CopyRows {...props} />, el);
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);

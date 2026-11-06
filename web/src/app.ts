@@ -47,7 +47,8 @@ export function show(name) {
 function freshen(name) {
   if (name === 'status') { statusData.fresh(minute); healthData.fresh(minute); }
   if (name === 'app') { statusData.fresh(minute); refreshApp(); }
-  if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); }
+  // Status too: a stale copy says why from its app's state.
+  if (name === 'backups') { backupsData.fresh(minute); jobsData.fresh(minute); statusData.fresh(minute); }
   if (name === 'setup') { hostData.fresh(minute); stepsData.fresh(minute); healthData.fresh(minute); statusData.fresh(minute); }
   if (name === 'settings') { hostData.fresh(minute); if (!Object.keys(changed).length) settingsData.fresh(minute); }
   if (name === 'tidy') tidyData.fresh(minute);

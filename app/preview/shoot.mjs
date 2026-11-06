@@ -143,11 +143,11 @@ const backups = {
   ] },
   vaultExport: hoursAgo(9 * 24), vaultDue: false,
   copies: [
-    ...dumped.map(([id, name, size]) => ({ id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
-    { id: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
-    { id: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'moneymatter-attachments', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
+    ...dumped.map(([id, name, size]) => ({ id, app: id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
+    { id: 'mealie', app: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
+    { id: 'komga', app: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'kavita', app: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'moneymatter-attachments', app: 'moneymatter', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
   ],
 };
 const duplicatiJobs = [
@@ -1935,6 +1935,27 @@ const smokes = [
     if (await page.locator('.groupmenulist .heldnote').count()) throw new Error(`the group menu says you stopped it: ${await page.locator('.groupmenulist .heldnote').textContent()}`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
+  // nightly copy skips it; one whose app runs says Back up now tries again.
+  ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
+    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."],
+  ].map(([what, st, words]) => ({ name: `A stale copy says why: ${what}`, screen: 'backups', mock: { status: st }, run: async (page) => {
+    await page.waitForSelector(`tr.copy.stale:has-text("Mealie") .note:text-is("${words}")`, { timeout: 5000 });
+  } })),
+  // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
+  ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await page.waitForSelector(`h3.subhead:text-is("Take the homelab off ${words}")`, { timeout: 5000 });
+    await page.waitForSelector(`label:has-text("Delete the backups on ${words}")`);
+  } })),
+  // The phone's Backups: a copy's when, size, and how many are kept on one line under its name, not three lines with
+  // the size alone at the far right.
+  { name: "The phone's Backups: each copy on two lines", screen: 'backups', phone: ['companion'], run: async (page) => {
+    const row = page.locator('tr.copy:has-text("Vaultwarden")');
+    await row.waitFor({ timeout: 5000 });
+    const tops = await row.evaluate((r) => ['td.name', 'td.when', 'td.size', 'td.kept'].map((q) => Math.round(r.querySelector(q).getBoundingClientRect().top)));
+    if (!(tops[1] > tops[0] && tops[1] === tops[2] && tops[2] === tops[3])) throw new Error(`the lines' tops: ${tops.join(', ')}`);
+    if (!(await row.innerText()).includes('7 kept')) throw new Error('how many are kept is hidden');
   } },
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
