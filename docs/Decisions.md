@@ -29,6 +29,7 @@ Architecture decisions and why they were made.
 | ADR-0019 | Kopia as an optional second backup engine beside Duplicati | Accepted |
 | ADR-0020 | A rollback puts back the app's data with its image | Accepted |
 | ADR-0021 | Finances as a screen of the app, typed in by hand and kept on this machine | Accepted |
+| ADR-0022 | SQLite only for records that grow and are searched; small state stays in JSON | Accepted |
 
 ---
 
@@ -218,3 +219,20 @@ Architecture decisions and why they were made.
 - **No lost saves:** each read carries the file's version, and a save made after another device's is refused with the latest shown and the form kept.
 
 **Trade-offs:** balances go stale unless someone types them in (the heading says when they are a week old, and **Update balances** starts each at what is expected); no transaction history, categories, or imports, which stay the budget apps' job; and one more screen the app itself must keep working, outside the catalog's per-app proof (its checks are in the click-through and `internal/finance`'s tests).
+
+## ADR-0022: SQLite only for records that grow and are searched; small state stays in JSON
+
+**Status:** Accepted, November 2026, from the maintenance order (the owner's call); nothing uses it yet.
+
+**Context:** The homelab keeps its own records as small JSON files in `data/` (what is stopped, pinned, held, the watchdog's state, Setup's ticks), each changed whole under a lock beside it (`internal/lockedfile`, `internal/applist`) and copied by the nightly Secrets backup. That suits a record of a few kilobytes that is read whole. Two planned features are different: the Memory screen needs a day of samples taken every minute or so, and a record of what the homelab did needs months of entries that a screen filters and searches. As JSON, each would be read and rewritten whole on every change, and a search would read everything.
+
+**Decision:**
+
+- **SQLite, in pure Go:** `modernc.org/sqlite`, no cgo, so the same build works on a Mac, Windows, and Linux without a C toolchain, as every other part of the CLI does.
+- **One database file in `data/`** (`data/homelab.db`), this account's alone (0600), opened in WAL mode so the app, the agent, and a phone's requests read while one writes. The nightly backup copies it through SQLite's own backup, as it already does for the apps' SQLite databases, never as a file copied mid-write.
+- **Only for data that grows and is searched:** the Memory screen's samples and the action record. Each table keeps a limit (by age or by count) from the day it is added, so nothing in it only grows (see the maintenance order's *Memory and growth*).
+- **Small state stays in JSON files:** a record read whole and changed a few times a day keeps its file, its lock, and its whole write. Nothing moves into the database for being a record alone.
+
+**Trade-offs:** a dependency of some size (the pure-Go SQLite is a translation of SQLite's C, and grows the binary), a schema to migrate between versions, and a file that, unlike the JSON records, a person cannot read or fix in a text editor. In return the two growing records stay fast and bounded, and the rest of `data/` stays as simple as it is.
+
+**Alternatives:** JSON lines files with rotation (simple, but every search reads them all, and a day of samples is rewritten to trim it); bbolt or another key-value store (pure Go too, but no queries, so each screen would grow its own index); the cgo SQLite driver (the original C, but a C toolchain on every build machine and harder cross-builds).

@@ -19,7 +19,9 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #PR23 |
+| A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
+| Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
+| Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
 | Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
 | Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
 | What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
@@ -148,7 +150,7 @@ Confidence that what matters can come back.
 Few, clear, and useful when they come.
 
 - **Buttons on alerts** (M, *Idea*): "Radarr stopped" on the phone with **Restart** and **Show logs** (ntfy's actions, through the phone companion's own access).
-- **Quiet hours** (S, *Idea*): no sound overnight unless it is serious (backups failing for days, the vault unreachable).
+- **Quiet hours** (S, *Built*, #439): no sound overnight unless it is serious (backups failing for days, the vault unreachable). `QUIET_HOURS=22-7` by default; Settings › Quiet hours.
 - **One alert for many** (S, *Idea*): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.
 - **Snooze an alert** (S, *Idea*): snooze one check for an hour or a day from the alert itself.
 - **Who hears what** (S, *Idea*): each person picks the alerts they get; the household's other members get only the ones about their apps.
@@ -158,7 +160,7 @@ Few, clear, and useful when they come.
 The homelab as something a family uses, not one person.
 
 - **Guest access** (M, *Idea*): a guest's sign-in to chosen apps (Jellyfin, an Immich album) that ends on a date.
-- **A printable welcome sheet** (S, *Built*, #PR23): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.
+- **A printable welcome sheet** (S, *Built*, #446): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.
 - **Each person's apps** (S, *Built*): a person's welcome page lists only the apps they use, with their phone app for each (`homelab person apps <name> <app>…`).
 - **What's new for the family** (S, *Idea*): a short page in plain words when an app they use gains something (a new player in Navidrome), not the technical notes.
 
@@ -168,6 +170,8 @@ Picking, trying, and using apps.
 
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
+- **Two apps that do the same job** (S, *Idea*): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both.
+- **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose stacks › Add more › *Suggested for what you run*.
 - **Two apps that do the same job** (S, *Built*, #438): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
 - **Suggestions from what you use** (S, *Idea*): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
