@@ -868,6 +868,24 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	}
 	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return off[r.Name] })
 	recovered = slices.DeleteFunc(recovered, func(name string) bool { return off[name] })
+	// A snoozed check (homelab notify snooze, or Snooze on Status) is not
+	// alerted about until it wakes; one still failing then is, since it
+	// would otherwise never be (it alerted only when it began to fail).
+	snoozed := notify.LoadSnoozes(h.root)
+	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return snoozed.Active(r.Name, now) })
+	recovered = slices.DeleteFunc(recovered, func(name string) bool { return snoozed.Active(name, now) })
+	if woken, err := notify.Woken(h.root, now); err == nil {
+		for _, name := range woken {
+			if off[name] || slices.ContainsFunc(failed, func(r health.Result) bool { return r.Name == name }) {
+				continue
+			}
+			for _, r := range results {
+				if r.Name == name && !r.OK() && state.Confirmed(name) {
+					failed = append(failed, r)
+				}
+			}
+		}
+	}
 	if len(failed) > 0 && engineUp {
 		var lines []string
 		for _, r := range failed {
@@ -1091,9 +1109,32 @@ func ntfyTokenAdd(label, user string) string {
 // notify manages ntfy: write grants for the alert topics, and a test message.
 func (h *homelab) notify(ctx context.Context, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic] | homelab notify on|off <app>")
+		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic] | homelab notify on|off <app> | homelab notify snooze <check> 1h|1d|off")
 	}
 	switch args[0] {
+	case "snooze":
+		// One check (as homelab watchdog names it) not alerted about for a
+		// while: a failure you already know of.
+		if len(args) != 3 {
+			return fmt.Errorf("usage: homelab notify snooze <check> 1h|1d|off (the check as homelab watchdog names it)")
+		}
+		var until time.Time
+		if args[2] != "off" {
+			d, err := parseFor(args[2])
+			if err != nil {
+				return err
+			}
+			until = time.Now().Add(d)
+		}
+		if err := notify.Snooze(h.root, args[1], until); err != nil {
+			return err
+		}
+		if until.IsZero() {
+			h.ui.OK("the watchdog alerts about %s again (on its next run, if it still fails)", args[1])
+		} else {
+			h.ui.OK("no alerts about %s until %s; the watchdog still checks it, and alerts then if it still fails", args[1], until.Local().Format("Mon 2 Jan 15:04"))
+		}
+		return nil
 	case "on", "off":
 		if len(args) != 2 {
 			return fmt.Errorf("usage: homelab notify %s <app>", args[0])

@@ -745,7 +745,21 @@ func (a *App) Alerts() ([]notify.Event, error) {
 // Watchdog is the watchdog's last run (every 15 minutes once the jobs are
 // installed): how many checks ran, and those failing with what they said.
 func (a *App) Watchdog() health.Summary {
-	return health.LoadState(health.StatePath(a.root)).Summary()
+	return core.WatchdogSummary(a.root)
+}
+
+// SnoozeCheck stops the watchdog alerting about one failing check for
+// hours (Status › Watchdog › Snooze); 0 wakes it. It goes on checking it,
+// and alerts when the snooze ends if it still fails.
+func (a *App) SnoozeCheck(check string, hours int) error {
+	if hours < 0 || hours > 24*7 {
+		return fmt.Errorf("a snooze is up to a week, not %d hours", hours)
+	}
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	return notify.Snooze(a.root, check, until)
 }
 
 // TailnetDevices is every device on the household's tailnet, when

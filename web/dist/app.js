@@ -1724,6 +1724,21 @@
   }
 
   // web/src/status/Cards.tsx
+  var wakeText = (t3) => {
+    const d3 = new Date(t3);
+    return d3.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? clockText(d3) : `${dayText(d3, { weekday: "short" })} ${clockText(d3)}`;
+  };
+  function SnoozePick({ check, until, snooze }) {
+    return /* @__PURE__ */ u3("select", { class: "snoozepick", "aria-label": `Snooze the alerts about ${check}`, value: "", onChange: (e3) => {
+      const v3 = e3.currentTarget.value;
+      if (v3 !== "") snooze(check, Number(v3));
+    }, children: [
+      /* @__PURE__ */ u3("option", { value: "", disabled: true, children: until ? `Snoozed until ${wakeText(until)}` : "Snooze…" }),
+      /* @__PURE__ */ u3("option", { value: "1", children: "For an hour" }),
+      /* @__PURE__ */ u3("option", { value: "24", children: "For a day" }),
+      until && /* @__PURE__ */ u3("option", { value: "0", children: "Alert again now" })
+    ] });
+  }
   var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
   function MemoryPressure({ m: m3, stop: stop2 }) {
     const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
@@ -1747,7 +1762,7 @@
       ] }) }, a3.name)) })
     ] });
   }
-  function Watchdog({ w: w3, openSetup, fix, stop: stop2 }) {
+  function Watchdog({ w: w3, openSetup, fix, stop: stop2, snooze }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1784,7 +1799,21 @@
         /* @__PURE__ */ u3("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
         /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
       ] }),
-      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => /* @__PURE__ */ u3(Row, { dot: "bad", title: f4.name, sub: f4.problem, when: ago(f4.since), whenTitle: "Failing since" }, f4.name)) })
+      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => {
+        const until = w3.snoozed?.[f4.name];
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            dot: "bad",
+            title: f4.name,
+            sub: until ? `${f4.problem}. No alerts about it until ${wakeText(until)}` : f4.problem,
+            when: ago(f4.since),
+            whenTitle: "Failing since",
+            end: snooze && /* @__PURE__ */ u3(SnoozePick, { check: f4.name, until, snooze })
+          },
+          f4.name
+        );
+      }) })
     ] });
   }
   function Protection({ p: p3, fix }) {
@@ -6897,6 +6926,15 @@
       stop: (id2) => {
         const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
         if (a3) void runAppAction(a3, "stop");
+      },
+      // Snooze a failing check's alerts, then draw the card again with it.
+      snooze: async (check, hours) => {
+        try {
+          await go().SnoozeCheck(check, hours);
+          showWatchdog(await go().Watchdog());
+        } catch (e3) {
+          showError(e3);
+        }
       }
     });
   }
