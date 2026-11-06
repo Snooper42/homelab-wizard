@@ -6192,12 +6192,16 @@ async function keep(page, label) {
 // Clicks through every smoke check in light and dark; then each screen, as
 // each system, in both themes, with and without more contrast, through axe
 // and a layout check. `--smoke light` or `--smoke dark` runs one theme;
-// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_DEBUG=1
-// prints what axe measured, and SMOKE_SHOTS=folder keeps a picture of each
-// screen that passed (for a pull request).
+// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_SHARD=i/n runs
+// every nth from the ith (CI runs n at once: together they are every
+// check), SMOKE_DEBUG=1 prints what axe measured, and SMOKE_SHOTS=folder
+// keeps a picture of each screen that passed (for a pull request).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
-  const picked = (label) => !process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY);
+  const [shard, shards] = (process.env.SMOKE_SHARD || '1/1').split('/').map(Number);
+  if (!(shards >= 1 && shard >= 1 && shard <= shards)) throw new Error(`SMOKE_SHARD is i/n, not ${process.env.SMOKE_SHARD}`);
+  let seen = 0;
+  const picked = (label) => (!process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY)) && seen++ % shards === shard - 1;
   const browser = await chromium.launch();
   let failed = 0;
   for (const scheme of schemes) {
