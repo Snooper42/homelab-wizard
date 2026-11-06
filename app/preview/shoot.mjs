@@ -1122,8 +1122,11 @@ const smokes = [
     await page.waitForSelector('tr.copy.paused:has-text("Komga")');
     if (await page.isVisible('tr.copy:has-text("Komga") .dot.bad')) throw new Error('a paused copy shows red');
     if ((await page.textContent('#backupsCount')).trim() !== '1') throw new Error('a paused copy counted as a problem');
-    // One line a copy: no cell wraps, nor says "database" under the name.
-    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => r.getBoundingClientRect().height > 44).map((r) => r.textContent));
+    // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
+    // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
+    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
+      ? [...r.querySelectorAll('td:not(.name)')].some((td) => { const g = document.createRange(); g.selectNodeContents(td); return new Set([...g.getClientRects()].map((x) => Math.round(x.top))).size > 1; })
+      : r.getBoundingClientRect().height > 44)).map((r) => r.textContent));
     if (tall.length) throw new Error(`copies on more than one line: ${tall.join(' | ')}`);
     if (await page.isVisible('#copiesCard .local')) throw new Error('"database" under each name');
     // Off-site sizes as the app's other sizes: 3.311 GiB → 3.3 GB.
