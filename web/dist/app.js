@@ -13223,7 +13223,19 @@ ${pays}
         swapped: { kind: k3, title: "Check nothing went missing", sub: "Every song in the old library is looked for in the new one", go: { label: "Check", run: () => act.run("music", "verify") } },
         verified: { kind: k3, title: "Free the old music library", sub: `Every song made it${n2(run2?.set_aside) ? " · " + count(n2(run2?.set_aside), "copy", "copies") + " set aside go with it" : ""}`, go: { label: "Free it…", run: free, risky: true } }
       };
-      if (step2[l3.stage]) out.push(step2[l3.stage]);
+      const ver = last(l3, "verify");
+      if (l3.stage === "swapped" && ver && !ver.ok && n2(ver.result?.missing) > 0) {
+        const short = ver.result?.artists_with_fewer || [];
+        const who = short.slice(0, 3).map((a3) => a3.folder_missing ? `${a3.artist} (all of it)` : `${a3.artist} (${a3.fewer} fewer)`).join(", ") + (short.length > 3 ? `, and ${short.length - 3} more` : "");
+        out.push({
+          kind: k3,
+          title: `${count(n2(ver.result.missing), "song")} didn't make it into the new library`,
+          warn: true,
+          sub: `${who ? who + " · " : ""}Your old library is still kept, so nothing is lost: put it back, or check again once they're in`,
+          go: { label: "Put the old library back…", quiet: true, run: () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) }) }
+        });
+        out.push({ kind: k3, title: "Check again", sub: "Every song in the old library is looked for in the new one", go: { label: "Check", run: () => act.run("music", "verify"), quiet: true } });
+      } else if (step2[l3.stage]) out.push(step2[l3.stage]);
       const lyr = last(l3, "lyrics")?.result;
       const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";

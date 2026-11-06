@@ -892,6 +892,20 @@ const smokes = [
     const said = await page.textContent('#tidyJob .tidylines li strong');
     if (said !== 'Failed: Tdarr isn\'t answering') throw new Error(`a failed line reads "${said}"`);
   } },
+  // A check that found songs missing isn't asked for again as if it never ran: it says how many and whose, and offers
+  // putting the old library back (asked first) or checking again; Free it… isn't offered.
+  { name: 'Tidy Up: a music check that found songs missing says so, with Put it back and Check again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'swapped', last: { ...l.last, verify: tidyRun('verify', 1, { original: 14000, new: 13929, set_aside: 68, missing: 3, artists_with_fewer: [{ artist: 'Radiohead', fewer: 2 }, { artist: 'Björk', fewer: 1, folder_missing: true }] }, false) } } : l)) } }, run: async (page) => {
+    const row = '#tidy .tidyneeds li:has-text("3 songs didn\'t make it into the new library")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const sub = await page.textContent(`${row} .warn`);
+    if (!sub.startsWith('Radiohead (2 fewer), Björk (all of it) · ')) throw new Error(`it says: ${sub}`);
+    if (await page.locator('#tidy .tidyneeds li:has-text("Check nothing went missing"), #tidy button:text-is("Free it…")').count()) throw new Error('it asks for the check again as if it never ran, or offers to free the space');
+    await page.click(`${row} button:text-is("Put the old library back…")`);
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the old library back?")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the OK');
+    await page.click('#tidySheet button:text-is("Put it back")');
+    await page.waitForFunction(() => JSON.stringify((window.__MOCK.tidyRuns || [])[0]) === JSON.stringify(['music', 'undo', [], true]), null, { timeout: 5000 });
+  } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };

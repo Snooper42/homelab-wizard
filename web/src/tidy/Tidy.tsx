@@ -327,7 +327,16 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       swapped: { kind: k, title: 'Check nothing went missing', sub: 'Every song in the old library is looked for in the new one', go: { label: 'Check', run: () => act.run('music', 'verify') } },
       verified: { kind: k, title: 'Free the old music library', sub: `Every song made it${n(run?.set_aside) ? ' · ' + count(n(run?.set_aside), 'copy', 'copies') + ' set aside go with it' : ''}`, go: { label: 'Free it…', run: free, risky: true } },
     };
-    if (step[l.stage]) out.push(step[l.stage]);
+    // A check that found songs missing: said, with what's short, and both ways on (the old library is still kept).
+    const ver = last(l, 'verify');
+    if (l.stage === 'swapped' && ver && !ver.ok && n(ver.result?.missing) > 0) {
+      const short = ((ver.result?.artists_with_fewer || []) as { artist: string; fewer: number; folder_missing?: boolean }[]);
+      const who = short.slice(0, 3).map((a) => a.folder_missing ? `${a.artist} (all of it)` : `${a.artist} (${a.fewer} fewer)`).join(', ') + (short.length > 3 ? `, and ${short.length - 3} more` : '');
+      out.push({ kind: k, title: `${count(n(ver.result!.missing), 'song')} didn't make it into the new library`, warn: true,
+        sub: `${who ? who + ' · ' : ''}Your old library is still kept, so nothing is lost: put it back, or check again once they're in`,
+        go: { label: 'Put the old library back…', quiet: true, run: () => act.ask({ title: 'Put the old library back?', action: 'Put it back', lead: 'Navidrome is paused while the folders swap back, exactly as they were.', go: () => act.run('music', 'undo', [], true) }) } });
+      out.push({ kind: k, title: 'Check again', sub: 'Every song in the old library is looked for in the new one', go: { label: 'Check', run: () => act.run('music', 'verify'), quiet: true } });
+    } else if (step[l.stage]) out.push(step[l.stage]);
     const lyr = last(l, 'lyrics')?.result;
     // Only songs not yet asked about: those LRCLIB had nothing for wait a month before they're asked again. Songs whose
     // lyrics carry a translation after a caret on each line (two languages on one line) are set apart by the same job.
