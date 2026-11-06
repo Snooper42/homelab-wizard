@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -42,49 +41,5 @@ func TestAnUnclaimedAppStaysOffTheInternet(t *testing.T) {
 	initialized = true
 	if out, _ = homelabCmd(t, root, "", "domain", "status"); !strings.Contains(out, "public apps: photos.example.com") {
 		t.Fatalf("Immich with its first account is not public:\n%s", out)
-	}
-}
-
-// How each app that can be claimed says whether it has been.
-func TestClaimed(t *testing.T) {
-	for _, c := range []struct {
-		app, path, answer string
-		status            int
-		basic             bool // the default login still opens it
-		want              bool
-	}{
-		{"immich-server", "/api/server/config", `{"isInitialized":true}`, 200, false, true},
-		{"immich-server", "/api/server/config", `{"isInitialized":false}`, 200, false, false},
-		{"audiobookshelf", "/status", `{"app":"audiobookshelf","isInit":false}`, 200, false, false},
-		{"audiobookshelf", "/status", `{"app":"audiobookshelf","isInit":true}`, 200, false, true},
-		{"komga", "/api/v1/claim", `{"isClaimed":false}`, 200, false, false},
-		{"komga", "/api/v1/claim", `{"isClaimed":true}`, 200, false, true},
-		{"navidrome", "/app/", `<script>window.__APP_CONFIG__ = "{\"firstTime\":true,\"version\":\"0.53\"}"</script>`, 200, false, false},
-		{"navidrome", "/app/", `<script>window.__APP_CONFIG__ = "{\"firstTime\":false,\"version\":\"0.53\"}"</script>`, 200, false, true},
-		{"calibre-web", "/opds", `<feed/>`, 200, true, false},
-		{"calibre-web", "/opds", ``, 401, false, true},
-		{"immich-server", "/api/server/config", `not json`, 200, false, false}, // can't tell: not yet
-		{"immich-server", "/api/server/config", ``, 500, false, false},
-	} {
-		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != c.path {
-				w.WriteHeader(404)
-				return
-			}
-			if user, pass, ok := r.BasicAuth(); c.basic && !(ok && user == "admin" && pass == "admin123") {
-				w.WriteHeader(401)
-				return
-			}
-			w.WriteHeader(c.status)
-			_, _ = w.Write([]byte(c.answer))
-		}))
-		got, why := claimedAt(context.Background(), c.app, srv.URL)
-		srv.Close()
-		if got != c.want {
-			t.Errorf("%s answering %d %q: claimed %v (%s), want %v", c.app, c.status, c.answer, got, why, c.want)
-		}
-	}
-	if ok, _ := claimedAt(context.Background(), "vaultwarden", "http://127.0.0.1:1"); !ok {
-		t.Error("an app no one can claim from the web held back")
 	}
 }

@@ -879,6 +879,15 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   Its branch, `claude/hopeful-turing-bfcknh`, matches no lane (lanes.md
   Rule 1): for the owner.
 
+- **Round 49 (`make security` on the batch):** gosec flagged N19's own
+  probe (G704: a request built from `.env`'s port). Fixed, not quieted:
+  the question is now asked only at `127.0.0.1:<port>` (Calibre-Web's
+  carries its default login, which must go nowhere else), and the probe
+  lives in `internal/claim`, as the other app probes live in internal
+  packages; `TestAskedOnlyOnThisMachine` holds the loopback rule. gosec
+  and npm audit clean; govulncheck could not reach vuln.go.dev from this
+  session (CI's security job runs it).
+
 ## For Account 1
 
 - **The update window's record is written 0644**
