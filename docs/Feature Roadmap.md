@@ -20,6 +20,7 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #PR16 |
+| Shapes as well as colours | Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour | #449 |
 | Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #447 |
 | A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
 | Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
@@ -235,7 +236,7 @@ Details that make it feel finished.
 
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
 - **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
-- **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
+- **Shapes as well as colours** (S, *Built*, #449): each state's dot also has a shape (a circle when up, a triangle when stopped or it needs a look, a cross when down), for colour-blind eyes, small screens, and contrast themes.
 - **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
 ## Insight
