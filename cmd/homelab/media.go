@@ -206,7 +206,10 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 	}
 	// Python was found above (HOMELAB_PYTHON, or the probe): the other checks.
 	checks := slices.DeleteFunc(media.Preflight(ctx, mediaProbe(), env, homeDir()), func(c media.Check) bool { return c.ID == "python" })
-	if c := media.Blocking(checks, kind, act.Power); c != nil {
+	// Lyrics set right on this computer (--tidy), or counted (--check), are
+	// light: only asking LRCLIB about every song waits for power.
+	heavy := act.Power && !(kind == "music" && action == "lyrics" && (slices.Contains(f.rest, "--tidy") || slices.Contains(f.rest, "--check")))
+	if c := media.Blocking(checks, kind, heavy); c != nil {
 		if c.ID == "power" {
 			return media.ErrOnBattery
 		}

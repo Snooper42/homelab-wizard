@@ -1280,6 +1280,39 @@ class Lyrics(Base):
         self.assertEqual(writes[-1][1], "[00:01.00]¡NUEVAYoL!\n[00:04.50]Si te quieres divertir")
         self.assertEqual((res["upgraded"], res["synced"]), (1, 1))
 
+    def test_lyrics_are_tidied_when_lrclib_does_not_answer(self):
+        # Nov 6, the owner: thousands of songs kept two languages on one line. Each was asked about first, and
+        # when LRCLIB didn't answer (blocked, slow, down) the song was skipped and never set apart.
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
+        writes = []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", return_value=("¡NUEVAYoL!^NEW YORK!\nSi te quieres divertir^If you want to have fun", False)).start()
+        mock.patch.object(music_tidy, "lrclib", side_effect=RuntimeError("GET https://lrclib.net/api/get: timed out")).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(t)).start()
+        mock.patch.object(music_tidy.time, "sleep").start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False, tidy=False), files=[song])
+        res = self.results()[-1]
+        self.assertEqual(len(writes), 1, "set apart though LRCLIB didn't answer")
+        self.assertEqual((res["cleaned"], res["failed"]), (1, 1))
+
+    def test_tidying_alone_asks_lrclib_nothing(self):
+        # lyrics --tidy: the songs' own lyrics set right on this computer, every one, in minutes, with no
+        # question to LRCLIB, so thousands of songs never wait on the network.
+        songs = [self.touch(self.lib["music"] / "A" / "B" / ("%02d Song.mp3" % i)) for i in (1, 2)]
+        have = {str(songs[0]): ("¡NUEVAYoL!^NEW YORK!\nSi te quieres divertir^If you want to have fun", False), str(songs[1]): ("", False)}
+        writes, asked = [], []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", side_effect=lambda p: have[str(p)]).start()
+        mock.patch.object(music_tidy, "lrclib", side_effect=lambda info: asked.append(info) or None).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(p)).start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False, tidy=True), files=songs)
+        res = self.results()[-1]
+        self.assertEqual((asked, writes), ([], [songs[0]]))
+        self.assertEqual((res["cleaned"], res["none"], res["tidy"]), (1, 1, True))
+        self.assertIn("languages on one line set apart in 1 songs", self.out.getvalue())
+
     def test_songs_remembered_by_the_older_lookup_are_asked_again(self):
         song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
         mc.mo.state_dir().mkdir(parents=True, exist_ok=True)

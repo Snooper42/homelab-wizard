@@ -552,9 +552,23 @@ const smokes = [
     const text = await page.textContent(row);
     if (!text.includes('12 songs show two languages on one line')) throw new Error('the row says ' + text);
     await page.click(`${row} button:text-is("Tidy lyrics")`);
-    await page.waitForSelector('#tidyJob h2:text-is("Adding lyrics: done")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob h2:text-is("Tidying lyrics: done")', { timeout: 5000 });
     const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
-    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && !(r[2] || []).includes('--check'))) throw new Error('ran ' + JSON.stringify(ran));
+    // Set right on this computer: never a wait on LRCLIB.
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // Thousands of songs with no lyrics yet, and some with two languages on one line (Nov 6, the owner): setting those
+  // apart is offered on its own, not only inside Add lyrics, which asks LRCLIB about every song first.
+  { name: 'Tidy Up: two languages on one line are tidied even with songs still to ask LRCLIB about', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 9120, none: 2402, to_clean: 3150 }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const tidyRow = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(tidyRow, { timeout: 5000 });
+    if (!(await page.textContent(tidyRow)).includes('3,150 songs show two languages on one line')) throw new Error('the row says ' + (await page.textContent(tidyRow)));
+    if (!(await page.isVisible('#tidy .tidyneeds li:has-text("2,402 songs could get lyrics") button:text-is("Add lyrics")'))) throw new Error('no Add lyrics beside it');
+    await page.click(`${tidyRow} button:text-is("Tidy lyrics")`);
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
   } },
   // A lyrics check from before the count of songs with two languages on one line: Overview offers one more check,
   // which changes nothing, so those songs are found.
