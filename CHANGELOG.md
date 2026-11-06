@@ -65,6 +65,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.
 - **Tidy Up's notes read as text in a terminal:** `homelab media` printed each of an engine's notes as a line of JSON (`{"type": "info", "text": "Fixes planned"}`); they read as the rest of its output again, and `status --json` still prints its object as it is.
 - **Music jobs work again after a Python upgrade:** when the Python that Tidy Up's beets setup (`~/.music-cleanup/venv`) was made with goes, through a Homebrew upgrade for example, every music scan, build, and lyrics run, and the inbox filing songs, failed with *couldn't create …venv*. Each run now removes a venv whose Python doesn't start, says so, and beets is installed again on that run, in about a minute.
