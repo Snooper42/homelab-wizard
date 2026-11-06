@@ -353,6 +353,13 @@ struct AppDetailView: View {
                     Label(warning, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
                 }
+                // Others installed here that do much the same job (main #438).
+                let installed = Set((dashboard.liveEvents.status?.apps ?? [])
+                    .filter { $0.state == "running" || $0.state == "stopped" }.map(\.id))
+                ForEach(dashboard.catalog?.sameJob(as: app.id, among: installed) ?? []) { pair in
+                    Label("You also run \(pair.name), which does much the same: \(pair.why)", systemImage: "square.on.square")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }

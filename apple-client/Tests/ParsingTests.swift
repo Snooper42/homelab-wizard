@@ -362,6 +362,22 @@ struct SavedSoFarTests {
     }
 }
 
+@Suite("Apps that do the same job")
+struct SameJobTests {
+    @Test func saidOnBothSidesOfAPair() throws {
+        let catalog = try JSONDecoder().decode(AppCatalog.self, from: Data(#"""
+        {"apps":[{"id":"karakeep","name":"Karakeep","sameJob":{"linkwarden":"Karakeep tags with AI; Linkwarden keeps a full copy of each page"}},
+                 {"id":"linkwarden","name":"Linkwarden"},{"id":"wallabag","name":"Wallabag","sameJob":{"karakeep":"both save links","linkwarden":7}}]}
+        """#.utf8))
+        // Written on Karakeep's side, said on Linkwarden's too; only for apps that are here.
+        #expect(catalog.sameJob(as: "linkwarden", among: ["karakeep", "linkwarden"]).map(\.name) == ["Karakeep"])
+        #expect(catalog.sameJob(as: "karakeep", among: ["karakeep", "linkwarden"]).map(\.name) == ["Linkwarden"])
+        #expect(catalog.sameJob(as: "karakeep", among: ["karakeep"]).isEmpty)
+        // A same-job map that doesn't read costs only itself.
+        #expect(catalog.entry("wallabag")?.sameJob.isEmpty == true)
+    }
+}
+
 @Suite("Backups")
 struct BackupsTests {
     @Test func overviewFromTheComputer() throws {

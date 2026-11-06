@@ -16,6 +16,25 @@ struct AppCatalog: Decodable, Sendable, Equatable {
     }
 
     func entry(_ id: String) -> CatalogEntry? { apps.first { $0.id == id } }
+
+    /// Apps that do much the same job as `id`, each with why one might keep
+    /// one or both (main #438). A pair is written on one side (`sameJob`) and
+    /// said on both, as `sameJob` in web/src/choose/Choose.tsx.
+    func sameJob(as id: String, among ids: Set<String>) -> [SameJob] {
+        let mine = entry(id)?.sameJob ?? [:]
+        return apps.compactMap { other in
+            guard other.id != id, ids.contains(other.id) else { return nil }
+            guard let why = mine[other.id] ?? other.sameJob[id], !why.isEmpty else { return nil }
+            return SameJob(id: other.id, name: other.name, why: why)
+        }
+    }
+
+    /// Another app that does much the same job, and why one might keep one or both.
+    struct SameJob: Identifiable, Equatable, Sendable {
+        let id: String
+        let name: String
+        let why: String
+    }
     func categoryLabel(_ id: String) -> String? { categories.first { $0.id == id }?.label }
 }
 
@@ -38,9 +57,12 @@ struct CatalogEntry: Decodable, Sendable, Equatable, Identifiable {
     let phone: String?
     /// The subscriptions it stands in for.
     let replaces: [String]
+    /// Apps that do much the same job, by id, each with why you might keep
+    /// one or both. Written on one side of a pair only.
+    let sameJob: [String: String]
 
     enum CodingKeys: String, CodingKey {
-        case id, name, category, description, kind, warning, phone, replaces
+        case id, name, category, description, kind, warning, phone, replaces, sameJob
         case isPublic = "public"
     }
 
@@ -55,5 +77,7 @@ struct CatalogEntry: Decodable, Sendable, Equatable, Identifiable {
         warning = try c.decodeIfPresent(String.self, forKey: .warning)
         phone = try c.decodeIfPresent(String.self, forKey: .phone)
         replaces = (try c.decodeIfPresent([String].self, forKey: .replaces) ?? []).filter { !$0.isEmpty }
+        // A field the phone only shows: one that doesn't read costs nothing else.
+        sameJob = ((try? c.decodeIfPresent([String: String].self, forKey: .sameJob)) ?? nil) ?? [:]
     }
 }
