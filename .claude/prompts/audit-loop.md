@@ -450,7 +450,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 41. (done: round 44, N21 open) **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
     homelab-init.sh): runs as root in the proxy's container with the
     bouncer key; how the key is passed and kept, and file modes.
-42. **Crash notes** (internal/crash, with #436's cleanup): what a note
+42. (done: round 45) **Crash notes** (internal/crash, with #436's cleanup): what a note
     holds (a panic can print values, secrets among them), where it is
     kept and at what mode, and whether a report or a phone gets it.
 43. **The kit's writes** (internal/kit): files go through a fixed
@@ -835,6 +835,13 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   (or its own listener), a change to every install's network: for the
   owner.
 
+- **Round 45 (item 42, crash notes, read through):** a crash note is the
+  header and Go's own report (goroutine stacks, arguments as addresses,
+  not values); `homelab report` includes the newest one, and the whole
+  report goes through `redact`; no phone method serves it. Notes and job
+  logs are 0644 in a 0755 `scripts/logs`, readable by another account on
+  the same computer (Low): a note under For Account 2. No code change.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -851,6 +858,13 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   worth saying on the app's page when a password app gets a window.
 
 ## For Account 2
+
+- **`scripts/logs` is 0755 and its files 0644** (the agent's
+  `MkdirAll(h.logsDir(), 0o755)`, `crash.Watch`, `openJobLog`): another
+  account on the same computer can read every job log and crash note.
+  Nothing secret is meant to be in them, but they are the household's
+  diagnostics; 0700 for the folder (and 0600 for new files) keeps them to
+  this account. Show it with a test on the folder's and a note's mode.
 
 - (done: #434) **`data/restarts.json` is written in place, without a lock** (#427,
   cmd/homelab/restartloop.go `stopRestartLoops`): `os.WriteFile`, 0644,
