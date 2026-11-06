@@ -69,8 +69,27 @@ func Watch(dir, who, version string) error {
 // Save moves each crash a pending file holds into crash-<date>.log (the
 // day it crashed, added to that day's file). A pending file with nothing
 // after its header belongs to a run that is still going or ended
-// normally, and is left as it is.
+// normally, and is left as it is. A day's log goes after KeepDays.
 func Save(dir string) {
+	savePending(dir)
+	dropOld(dir, time.Now())
+}
+
+// KeepDays is how long a day's crash log stays.
+const KeepDays = 90
+
+// dropOld removes the crash logs of days more than KeepDays before now.
+func dropOld(dir string, now time.Time) {
+	files, _ := filepath.Glob(filepath.Join(dir, "crash-????-??-??.log"))
+	cutoff := now.AddDate(0, 0, -KeepDays).Format("2006-01-02")
+	for _, p := range files {
+		if day := strings.TrimSuffix(strings.TrimPrefix(filepath.Base(p), "crash-"), ".log"); day < cutoff {
+			_ = os.Remove(p)
+		}
+	}
+}
+
+func savePending(dir string) {
 	files, _ := filepath.Glob(filepath.Join(dir, "crash-*.pending"))
 	for _, p := range files {
 		data, err := os.ReadFile(p)

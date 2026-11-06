@@ -524,9 +524,36 @@ const smokes = [
     if (!note || note[0] !== 'dot') throw new Error('the note line: ' + JSON.stringify(lines));
     if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
   } },
+  // Every song has lyrics, but some show two languages on one line (a translation after a caret): Overview still
+  // offers to set them apart, which the lyrics job does.
+  { name: 'Tidy Up: songs with two languages on one line are offered on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 12 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 0 songs; 0 plain ones replaced by time-synced' },
+      { type: 'note', text: '12 had a translation after a caret on each line: each is on its own line under its original now' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const text = await page.textContent(row);
+    if (!text.includes('12 songs show two languages on one line')) throw new Error('the row says ' + text);
+    await page.click(`${row} button:text-is("Tidy lyrics")`);
+    await page.waitForSelector('#tidyJob h2:text-is("Adding lyrics: done")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && !(r[2] || []).includes('--check'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // A lyrics check from before the count of songs with two languages on one line: Overview offers one more check,
+  // which changes nothing, so those songs are found.
+  { name: 'Tidy Up: an older lyrics check is offered again on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 13932, none: 0, cleaned: 0 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'result', action: 'lyrics', ok: true, check: true, to_clean: 12 }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("Look over the lyrics again")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    await page.click(`${row} button:text-is("Check lyrics")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--check')), null, { timeout: 5000 });
+  } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
-    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },
+    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 0 }) } },
     { ...tidy.libraries[1], last: { review: tidyRun('review', 1, { books: 412, changes: 0 }) } },
     { ...tidy.libraries[2], counts: { lean: 352 }, waiting: 0, last: { scan: tidyRun('scan', 3, { files: 352, bloated: 0 }) } },
     { ...tidy.libraries[3], last: { scan: tidyRun('scan', 3, { files: 800, bloated: 0 }) } },
