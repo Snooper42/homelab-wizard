@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #PRn |
+| Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #452 |
 | Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #451 |
 | A sheet of shortcuts | Press ? on any screen (or pick *Keyboard shortcuts* in ⌘K) for that screen's shortcuts, those that work everywhere, and each screen's key | #450 |
 | Shapes as well as colours | Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour | #449 |
@@ -196,7 +196,7 @@ The app at home on each system.
 
 The household's phones as a second screen.
 
-- **Add to Home Screen, done right** (S, *Built*, #PRn): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.
+- **Add to Home Screen, done right** (S, *Built*, #452): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
 - **Quick actions** (S, *Built*, #447): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).
 
