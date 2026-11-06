@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Health in one line | At the top of every screen but Status: ✓ All well, or the one thing that needs you, with Open Status | #PRn |
+| Health in one line | At the top of every screen but Status: ✓ All well, or the one thing that needs you, with Open Status | #470 |
 | Snooze an alert | Snooze… beside a failing check on Status's Watchdog card: no alerts about it for an hour or a day, and one then if it still fails | #469 |
 | Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #465 |
 | Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #463 |
@@ -253,5 +253,5 @@ Details that make it feel finished.
 What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
-- **Health in one line** (S, *Built*, #PRn): "All well", or the one thing that needs you (an app in its row's words, several in one line, or a failing check that is no app's), at the top of every screen but Status, with Open Status.
+- **Health in one line** (S, *Built*, #470): "All well", or the one thing that needs you (an app in its row's words, several in one line, or a failing check that is no app's), at the top of every screen but Status, with Open Status.
 - **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.
