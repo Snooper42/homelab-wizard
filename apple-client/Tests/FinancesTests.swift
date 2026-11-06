@@ -87,14 +87,18 @@ struct LedgerTests {
     {"transactions":[
       {"id":"a","date":"2026-10-30","account":"chk","amount":-12.99,"payee":"Netflix","category":"Streaming","tags":["tv"]},
       {"id":"c","date":"2026-11-02","account":"chk","amount":3000,"payee":"Sam's paycheck","category":"Paycheck"},
-      {"id":"b","date":"2026-11-02","account":"chk","amount":-500,"to":"sav","payee":"","note":"rainy day","receipt":"r1.jpg"}
+      {"id":"b","date":"2026-11-02","account":"chk","amount":-500,"to":"sav","payee":"","note":"rainy day","receipt":"0123456789abcdef0123456789abcdef.jpg"},
+      {"id":"d","date":"2026-10-01","account":"chk","amount":-1,"payee":"Odd","receipt":"../../.env"}
     ],"rev":"x"}
     """#
 
     @Test func newestFirstStable() throws {
         let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(json.utf8))
-        #expect(ledger.newestFirst.map(\.id) == ["c", "b", "a"])
+        #expect(ledger.newestFirst.map(\.id) == ["c", "b", "a", "d"])
+        // Named as the computer names them (internal/finance/receipts.go): 32 hex characters.
         #expect(ledger.transactions.first { $0.id == "b" }?.hasReceipt == true)
+        // Any other name reads as no receipt, so it's never asked for.
+        #expect(ledger.transactions.first { $0.id == "d" }?.hasReceipt == false)
         #expect(ledger.transactions.first { $0.id == "b" }?.to == "sav")
     }
 
