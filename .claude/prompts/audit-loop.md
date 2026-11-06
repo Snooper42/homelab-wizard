@@ -440,7 +440,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 38. **Quiet hours** (#439, once merged): a crafted or careless setting
     must not silence the alerts that matter at night (a ban that failed,
     a backup that failed, a disk dying, the tunnel down).
-39. **What ntfy carries** (the weekly summary, the morning line, Finances
+39. (done: rounds 42 and 46) **What ntfy carries** (the weekly summary, the morning line, Finances
     reminders, restart-loop logs): ntfy may be on a public name, and a
     phone's lock screen shows the first lines; list what each message
     holds (amounts, names, log lines) and what a lock screen shows.
@@ -453,7 +453,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 42. (done: round 45) **Crash notes** (internal/crash, with #436's cleanup): what a note
     holds (a panic can print values, secrets among them), where it is
     kept and at what mode, and whether a report or a phone gets it.
-43. **The kit's writes** (internal/kit): files go through a fixed
+43. (done: round 46) **The kit's writes** (internal/kit): files go through a fixed
     `<name>.kit-tmp` and `.local` copy, which follow a link put there by
     someone else on the machine (Low); and that the kit a newer app
     brings comes only from the signed app itself.
@@ -841,6 +841,16 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   report goes through `redact`; no phone method serves it. Notes and job
   logs are 0644 in a 0755 `scripts/logs`, readable by another account on
   the same computer (Low): a note under For Account 2. No code change.
+
+- **Round 46 (items 39's rest and 43, read through):** the weekly
+  summary carries the disks' free space, the backups, the apps' state,
+  the savings figure, and Finances' lines, which honour Hide amounts since
+  N20; the restart-loop alert's log lines are redacted since N15; the
+  morning line is Status's own and goes to no phone. The kit's fixed
+  `<name>.kit-tmp` and `.local` names could be turned into links only by
+  someone who can write into the homelab folder already. No code change.
+  Left open: 28 (#424), 29 and 30 (their PRs), 32 (not built yet), 38
+  (#439), and N21 (the owner's decision).
 
 ## For Account 1
 
