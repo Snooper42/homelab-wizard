@@ -68,6 +68,10 @@ func Claimed(ctx context.Context, app, base string) (bool, string) {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	switch {
+	case resp.StatusCode == http.StatusTooManyRequests:
+		// Calibre-Web, asked too often with a login it refuses, answers
+		// this to every login for a while: it cannot tell yet.
+		return false, "it is turning sign-ins away for a while, so it cannot say yet whether it has its first account"
 	case c.basic[0] != "":
 		// The default login refused: it has been changed.
 		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {

@@ -25,6 +25,8 @@ func TestClaimed(t *testing.T) {
 		{"navidrome", "/app/", `<script>window.__APP_CONFIG__ = "{\"firstTime\":false,\"version\":\"0.53\"}"</script>`, 200, false, true},
 		{"calibre-web", "/opds", `<feed/>`, 200, true, false},
 		{"calibre-web", "/opds", ``, 401, false, true},
+		{"calibre-web", "/opds", ``, 302, true, false}, // a new one sends the default login to its setup page
+		{"calibre-web", "/opds", ``, 429, false, false}, // turning sign-ins away: cannot tell
 		{"immich-server", "/api/server/config", `not json`, 200, false, false}, // can't tell: not yet
 		{"immich-server", "/api/server/config", ``, 500, false, false},
 	} {

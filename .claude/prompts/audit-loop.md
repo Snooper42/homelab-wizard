@@ -888,6 +888,17 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   and npm audit clean; govulncheck could not reach vuln.go.dev from this
   session (CI's security job runs it).
 
+- **Round 50 (N19 tried on Docker 29.9):** each claim question asked of
+  the real app, fresh, here: Komga's `/api/v1/claim` said
+  `{"isClaimed":false}`, then `true` once claimed; Audiobookshelf 2.37.2's
+  `/status` said `"isInit":false`; Navidrome's `/app/` page held
+  `firstTime\":true`, which the pattern reads; a new Calibre-Web sends the
+  default login to its setup page (302), held back as it should be. Found
+  on the way: Calibre-Web, asked too often, turns every sign-in away (429)
+  for a while, which the check read as "its default login still works";
+  it now says it cannot tell yet (still held back). Immich not tried: its
+  images come from ghcr.io, whose downloads are blocked from this session.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
