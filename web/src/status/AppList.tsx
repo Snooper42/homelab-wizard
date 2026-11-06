@@ -596,7 +596,8 @@ document.addEventListener('keydown', (e) => {
   const t = e.target as Element;
   if (status.querySelector('.menu:not([hidden])')) return;
   if (e.key === 'Escape' && filter.on && !t.closest?.('.filterbox')) { clearFilter(); return; }
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  // ? is the keyboard shortcuts' (app.ts), not a letter to filter by.
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ' || e.key === '?') return;
   if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
   e.preventDefault();
   if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
