@@ -553,3 +553,27 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   whole, with internal/lockedfile (stopped.Update's way, for any record),
   0600. `TestNotesAtOnceAreAllKept` failed before: 40 notes at once kept
   fewer, the record was written in place, and it was 0644.
+- **Round 24 (#422 read through; N13, the queue across processes):** the
+  watchdog after sleep (#422) changes only when it checks. N13: the app,
+  homelab serve, and the agent's nightly jobs each kept their own "one at
+  a time", so they could change the homelab at once, and the watchdog
+  could restart an app mid-update. Now internal/turn queues every command
+  that changes something (tickets in data/turns, oldest live first, a
+  job's children sharing its turn), and the watchdog heals nothing while
+  a job has it. Found on the way: a move would have carried a ticket (and
+  record locks) to the new machine and held its jobs up (TestMoveOutAndIn
+  hung); a move now leaves them behind, and a ticket from another machine
+  is cleared. `TestAChangeWaitsForAnotherProcesssTurn`,
+  `TestWatchdogWaitsOutAJob`, and `TestPackLeavesThisMachinesJobsBehind`
+  failed before. CI's real agent test then hung: the startup's `up
+  --wait-media 15m` took the turn before waiting for the drive, so every
+  change (removing the agent, a phone's Restart) waited up to 15 minutes
+  behind it. It now waits for the drive first and takes its turn after
+  (`TestUpWaitsForTheDriveBeforeItsTurn` failed before). Attacking the
+  queue itself: a move file someone else made could hold a ticket for
+  PID 1 (always running) dated in the future, never too old, first in
+  line for good, so every change, the nightly backup included, would
+  wait forever. Unpack now leaves out what Pack does (tickets, locks,
+  half-made saves), and a ticket over 10 minutes ahead of the clock holds
+  no one up. `TestUnpackLeavesOutAnotherMachinesJobs` and
+  `TestATicketFromTheFutureHoldsNoOneUp` failed before.

@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Quick actions on the phone:** on a phone that may make changes, hold an app's row on Status for its menu: Open, Start, Restart, Stop, Stop for a while, and Logs. A phone that only looks, and a wall screen, have none.
+- **A sheet for the fridge:** each person's welcome page links to their apps on one printed page, each with its address, its phone app, and a code the phone's camera opens; the sheet never has their sign-in link or a password.
 - **Suggestions from what you use:** Choose stacks › Add more opens on the apps that go with ones you run, each with what it brings them: Beets with Navidrome, Bazarr and Prowlarr with Sonarr and Radarr, Paperless-AI with Paperless-ngx, Seerr and Tdarr with Jellyfin.
 - **Quiet hours:** from 10 PM to 7 AM alerts reach the phone without a sound, unless they are serious: the password vault not answering, or backups failing two nights running. Settings › Quiet hours picks other hours, or off.
 - **Two apps that do the same job:** Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor, Navidrome and Jellyfin's music), and why you might keep one or both.
@@ -39,6 +41,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Shapes as well as colours:** an app (or backup, or anything else) that is stopped or needs a look has a triangle beside it and one that is down a cross, where a running one has a circle, so a state reads without telling green from red, on a small screen, and in Windows' contrast themes.
 - **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
 - **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
 - **A drive comes back:** apps waiting for an unplugged drive start within a minute of it being plugged in again, not at the watchdog's next check up to 15 minutes later.
@@ -53,6 +56,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Status, tighter:** the short cards (Protection, What the apps keep, what is using power) stack in one column beside Recent alerts instead of one sitting alone beside a long list; an alert with a long list shows its first 3 lines and **Show N more**; and each app's size takes one line, its name, bar, and size side by side.
 - **Keep using the app while a long job runs:** Update all apps now, an app's update, Fix it, and the other commands in a window of their own have **Hide** while they run; they carry on, with a small bar at the foot of the sidebar that brings them back and says when they're done.
 - **Jobs wait their turn instead of failing:** pressing Back up now, a Setup step, Install, or an app's Start, Stop, or Restart while another job runs no longer says "another install or setup step is running". It waits its turn, says what it's waiting for where you pressed it, and starts by itself as soon as the one before ends. The other apps' buttons stay usable meanwhile.
+- **Phones and the nightly jobs wait their turn too:** a Restart from a phone, the nightly backup and update, and the app's own jobs now queue behind each other rather than running at once or being refused, each saying what it is waiting for; and the watchdog leaves the apps alone while an update or backup is working on them.
 
 ### Fixed
 

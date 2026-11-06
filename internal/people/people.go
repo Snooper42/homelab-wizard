@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
@@ -53,6 +54,11 @@ func Path(root string) string { return filepath.Join(root, "data", "people.json"
 // WelcomePath is a person's welcome page.
 func WelcomePath(root, username string) string {
 	return filepath.Join(root, "data", "people", username+".html")
+}
+
+// SheetPath is a person's sheet for the fridge, beside their welcome page.
+func SheetPath(root, username string) string {
+	return filepath.Join(root, "data", "people", username+"-sheet.html")
 }
 
 // Load reads the household; none yet is an empty list.
@@ -147,6 +153,9 @@ type Welcome struct {
 	Tailnet bool
 	// StartPage is their own tab on the household's Homepage, if it runs.
 	StartPage string
+	// Sheet is the file name of their sheet for the fridge, beside the
+	// page; empty for none.
+	Sheet string
 }
 
 var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
@@ -187,6 +196,9 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
   <li>Open this link on your phone and add a <strong>passkey</strong> (Face ID or Touch ID). It is your sign-in for the apps below{{if .Accounts}}, except the few with a password of their own (at the end of this page){{else}}; there is no password to remember{{end}}.{{if .SignIn}}<br><a class="link" href="{{.SignIn}}">{{.SignIn}}</a><br><small>It works once, until {{date .Until}}. After that, sign in at {{.Issuer}} with your passkey.</small>{{end}}</li>
   <li>In each app, choose <strong>Sign in with Pocket ID</strong> where it is offered.</li>
 </ol>
+{{- if .Sheet}}
+<p class="lead">To print for the fridge: <a href="{{.Sheet}}">your apps on one page</a>, each with a code for the phone's camera, and no passwords or sign-in link.</p>
+{{- end}}
 
 <h2>Your apps</h2>
 {{- if .StartPage}}
@@ -210,6 +222,68 @@ var page = template.Must(template.New("welcome").Funcs(template.FuncMap{
 </body>
 </html>
 `))
+
+// qrPrefix is how every code from companion.QRDataURL begins: an image,
+// with nothing of the text it encodes in the clear.
+const qrPrefix = "data:image/svg+xml;base64,"
+
+// sheet is the page for the fridge: each app's name, address, phone app,
+// and a code the phone's camera opens. It never holds the sign-in link or
+// a password, so it can hang where guests see it.
+var sheet = template.Must(template.New("sheet").Funcs(template.FuncMap{
+	"first": func(name string) string { f, _ := Split(name); return f },
+	"qr": func(text string) template.URL {
+		u, err := companion.QRDataURL(text)
+		if err != nil || !strings.HasPrefix(u, qrPrefix) {
+			return ""
+		}
+		// #nosec G203 -- QRDataURL's own SVG as base64 after a fixed data: prefix (checked above); the text is only drawn as the code
+		return template.URL(u)
+	},
+}).Parse(`<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{first .Person.Name}}'s apps</title>
+<style>
+  :root { color-scheme: light; }
+  body { font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; color: #111; background: #fff; max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 24px; margin: 0 0 2px; }
+  .lead { color: #444; margin: 0 0 16px; }
+  ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  li { display: flex; gap: 10px; align-items: center; border: 1px solid #bbb; border-radius: 8px; padding: 8px; break-inside: avoid; }
+  li img { width: 84px; height: 84px; flex: none; }
+  strong { display: block; font-size: 15px; }
+  .addr { word-break: break-all; font-size: 12px; }
+  small { display: block; color: #444; }
+  @page { margin: 12mm; }
+  @media print { body { padding: 0; max-width: none; } li img { width: 26mm; height: 26mm; } }
+</style>
+</head>
+<body>
+<h1>{{first .Person.Name}}'s apps</h1>
+<p class="lead">{{if .Household}}{{.Household}}{{else}}Your homelab{{end}}. Point the phone's camera at a code to open the app.{{if .Tailnet}} Tailscale must be on.{{end}} Sign in with your passkey.</p>
+<ul>
+{{- if .StartPage}}
+  <li><img src="{{qr .StartPage}}" alt=""><div><strong>All your apps</strong><span class="addr">{{.StartPage}}</span><small>One page to keep on the Home Screen</small></div></li>
+{{- end}}
+{{- range .Apps}}
+  <li><img src="{{qr .Address}}" alt=""><div><strong>{{.Name}}</strong><span class="addr">{{.Address}}</span>{{if .Phone}}<small>Phone app: {{.Phone}}</small>{{end}}</div></li>
+{{- end}}
+</ul>
+</body>
+</html>
+`))
+
+// RenderSheet writes a person's sheet for the fridge: their apps, without
+// the sign-in link or any password, whatever wel holds.
+func RenderSheet(w io.Writer, wel Welcome) error {
+	if err := sheet.Execute(w, wel); err != nil {
+		return fmt.Errorf("the sheet for the fridge: %w", err)
+	}
+	return nil
+}
 
 // Render writes a welcome page.
 func Render(w io.Writer, wel Welcome) error {
