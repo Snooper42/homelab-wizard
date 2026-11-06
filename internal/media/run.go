@@ -239,11 +239,23 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 	return run, err
 }
 
+// LogKeep is how long a job's event log stays in logs/media.
+const LogKeep = 30 * 24 * time.Hour
+
 // LogFile opens a new event log for a job: logs/media/<kind>-<action>-<time>.jsonl.
+// Every command makes one (status and previews too, which the screen asks
+// for often), so those older than LogKeep go as it does.
 func LogFile(root, kind, action string) (*os.File, error) {
 	dir := LogDir(root)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
+	}
+	if old, err := filepath.Glob(filepath.Join(dir, "*.jsonl")); err == nil {
+		for _, p := range old {
+			if fi, err := os.Stat(p); err == nil && time.Since(fi.ModTime()) > LogKeep {
+				_ = os.Remove(p)
+			}
+		}
 	}
 	name := fmt.Sprintf("%s-%s-%s.jsonl", kind, action, time.Now().Format("20060102-150405"))
 	return os.OpenFile(filepath.Join(dir, name), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
