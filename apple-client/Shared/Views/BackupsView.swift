@@ -168,14 +168,23 @@ struct BackupsView: View {
     @ViewBuilder
     private var jobs: some View {
         if let jobs = backups.jobs, !jobs.isEmpty {
-            Section("Duplicati") {
+            Section {
                 ForEach(jobs) { job in
                     JobRow(job: job)
                 }
+            } header: {
+                Text("Duplicati")
+            } footer: {
+                Text(DuplicatiWords.summary(jobs))
+            }
+        } else if let jobs = backups.jobs, jobs.isEmpty {
+            Section("Duplicati") {
+                Text("No jobs yet. Create the backup jobs on the computer, under Backups.")
+                    .foregroundStyle(.secondary)
             }
         } else if let error = backups.jobsError {
             Section("Duplicati") {
-                Text(error).foregroundStyle(.secondary)
+                Text(DuplicatiWords.problem(error)).foregroundStyle(.secondary)
             }
         }
     }

@@ -191,6 +191,29 @@ struct BackupEngine: Decodable, Sendable, Equatable {
     }
 }
 
+/// Duplicati's jobs at a glance, in the computer's words
+/// (`Jobs` and `jobsProblem` in web/src/backups/Backups.tsx).
+enum DuplicatiWords {
+    /// Why the jobs couldn't be read, in words, not Go's "dial tcp …".
+    static func problem(_ text: String) -> String {
+        if text.contains("DUPLICATI_PASSWORD is empty") { return "Shown here once DUPLICATI_PASSWORD is in Settings on the computer." }
+        let lower = text.lowercased()
+        if ["connection refused", "dial tcp", "no such host", "timeout", "eof"].contains(where: { lower.contains($0) }) {
+            return "Duplicati isn't answering: start it on Status, and the jobs show here."
+        }
+        return text
+    }
+
+    /// "All 4 ran 6 hours ago", or "1 needs a look".
+    static func summary(_ jobs: [DuplicatiJob], now: Date = Date()) -> String {
+        let bad = jobs.filter { $0.state != "ok" }.count
+        if bad > 0 { return bad == 1 ? "1 needs a look" : "\(bad) need a look" }
+        let all = jobs.count == 1 ? "It ran" : "All \(jobs.count) ran"
+        guard let newest = jobs.compactMap(\.lastFinished).max() else { return all }
+        return all + " " + newest.formatted(.relative(presentation: .named, unitsStyle: .wide))
+    }
+}
+
 /// One Duplicati job (`duplicati.Job`, the `DuplicatiJobs` call).
 struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
     let id: String

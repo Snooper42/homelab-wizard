@@ -417,6 +417,18 @@ struct BackupsTests {
         #expect(try o(#"{"vaultExport":"2026-11-01T00:00:00Z","plainExports":["bitwarden_export.json"]}"#).vaultState == .plainExportLyingAround)
     }
 
+    @Test func duplicatiInTheComputersWords() throws {
+        #expect(DuplicatiWords.problem("Post \"http://127.0.0.1:8200/api/v1/auth/login\": dial tcp 127.0.0.1:8200: connect: connection refused").hasPrefix("Duplicati isn't answering"))
+        #expect(DuplicatiWords.problem("DUPLICATI_PASSWORD is empty").contains("Settings"))
+        #expect(DuplicatiWords.problem("something else") == "something else")
+
+        let jobs = try JSONDecoder.homelab().decode([DuplicatiJob].self, from: Data(#"""
+        [{"id":"1","name":"AppData","state":"ok","lastFinished":"2026-11-05T03:40:00Z"},{"id":"2","name":"Photos","state":"failed"}]
+        """#.utf8))
+        #expect(DuplicatiWords.summary(jobs) == "1 needs a look")
+        #expect(DuplicatiWords.summary([jobs[0]]).hasPrefix("It ran"))
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())
