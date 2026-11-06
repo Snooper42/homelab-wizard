@@ -48,6 +48,8 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 
 ## Make the Xcode project
 
+**The quickest way (Mac app, homelab on the same Mac):** `apple-client/scripts/run-on-this-mac.sh com.yourname` makes the project (below), builds and signs it with `xcodebuild -allowProvisioningUpdates` (a free Apple ID signed in to Xcode is enough), opens the app, and puts a pairing link for `localhost:8099` on the clipboard. Paste it into Address and click Pair.
+
 **The quick way (Mac app):** `apple-client/scripts/make-xcode-project.sh com.yourname` makes it with XcodeGen (installed with Homebrew if missing), with every setting below, in `~/Developer/HomelabClient-xcode`, outside the repository, pointing at this checkout's `Shared/`. Then press ⌘R in Xcode. By hand, for both platforms:
 
 1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.

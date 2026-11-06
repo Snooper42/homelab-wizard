@@ -41,6 +41,10 @@ fi
 # A second argument (the 10-character team ID, shown in Xcode under
 # Signing & Capabilities or at developer.apple.com) wins over that.
 TEAM="${2:-}"
+# Next, the team already picked in Xcode for the project made last time.
+if [ -z "$TEAM" ] && [ -f "$OUT/HomelabClient.xcodeproj/project.pbxproj" ]; then
+  TEAM="$(sed -n 's/.*DEVELOPMENT_TEAM = "\{0,1\}\([A-Z0-9]\{10\}\)"\{0,1\};.*/\1/p' "$OUT/HomelabClient.xcodeproj/project.pbxproj" | head -1)"
+fi
 [ -n "$TEAM" ] || TEAM="$(security find-certificate -c "Apple Development" -p 2>/dev/null \
   | openssl x509 -noout -subject 2>/dev/null \
   | sed -n 's/.*OU *= *\([A-Z0-9]\{10\}\).*/\1/p' | head -1 || true)"
@@ -67,6 +71,8 @@ targets:
     platform: macOS
     sources:
       - path: "$SHARED"
+    scheme:
+      gatherCoverageData: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient
@@ -100,4 +106,4 @@ if [ -z "$TEAM" ]; then
   echo "In Xcode: the HomelabClient target > Signing & Capabilities > Team, pick yours."
   echo "Running this script again resets it; pass the team ID as a second argument to keep it."
 fi
-open "$OUT/HomelabClient.xcodeproj"
+[ -n "${HOMELAB_NO_OPEN:-}" ] || open "$OUT/HomelabClient.xcodeproj"
