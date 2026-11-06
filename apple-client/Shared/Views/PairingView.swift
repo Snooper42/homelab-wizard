@@ -120,9 +120,9 @@ struct PairingView: View {
             Text("Computer")
         } footer: {
             #if os(macOS)
-            Text("Use the Tailscale or homelab-domain link, or localhost:8099 when the homelab runs on this Mac. You can paste the whole pairing link. Plain http to another computer isn't accepted, because your device token would cross the network in readable form.")
+            Text("Use your homelab domain (https://homelab.your-domain.com) or the Tailscale link, or localhost:8099 when the homelab runs on this Mac. You can paste the whole pairing link. Plain http to another computer isn't accepted, because your device token would cross the network in readable form.")
             #else
-            Text("Use the Tailscale or homelab-domain link. You can paste the whole pairing link. Plain http isn't accepted, because your device token would cross the network in readable form.")
+            Text("Use your homelab domain (https://homelab.your-domain.com), or the Tailscale link if you use it. You can paste the whole pairing link. Plain http isn't accepted, because your device token would cross the network in readable form.")
             #endif
         }
     }
@@ -215,7 +215,7 @@ struct PairingView: View {
         #if os(macOS)
         "localhost:8099"
         #else
-        "https://your-mac.tailnet.ts.net:8099"
+        "https://homelab.your-domain.com"
         #endif
     }
 

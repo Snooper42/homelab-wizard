@@ -42,7 +42,8 @@ actor APIClient {
     /// minutes with no bytes in between, longer still while it waits out a
     /// busy registry (up to 3 min 40 s of tries since main #429). Its idle
     /// timeout of 5 minutes covers that. The computer gives a command up to
-    /// 30 minutes.
+    /// 30 minutes. A change that waits its turn behind a nightly backup
+    /// (main #425) can outlast it; it then still runs, and Status shows it.
     private let actionSession: URLSession
 
     /// - Parameter protocolClasses: for tests only, URL protocols that
@@ -308,8 +309,9 @@ actor APIClient {
     ///
     /// - The device needs `canChange`. The computer checks that too, and
     ///   answers 403 otherwise.
-    /// - The computer runs one change from a phone at a time. A second one
-    ///   fails with its explanation.
+    /// - The computer makes one change at a time (main #425): a change from
+    ///   a phone waits its turn behind the app's, another phone's, or a
+    ///   nightly job's, so it can take a while. It no longer fails as busy.
     /// - This is never retried. A change isn't idempotent, and a timed-out
     ///   request may still be running on the computer.
     /// - A stop with `until` is Stop for a while (the `StopUntil` method).

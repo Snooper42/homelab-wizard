@@ -271,8 +271,9 @@ final class AppActionsViewModel {
                 message = text
                 log = lines
             case .transport(.timedOut):
-                // It may well still be running. A change isn't retried.
-                message = "The computer is still working on it. The status will show the result when it's done."
+                // It may well still be running, or waiting its turn behind
+                // another job (main #425). A change isn't retried.
+                message = "The computer is still working on it, or waiting for another job to finish first. The status will show the result when it's done."
             default:
                 message = apiError.errorDescription ?? "It didn't work."
             }

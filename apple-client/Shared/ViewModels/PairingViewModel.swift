@@ -64,7 +64,7 @@ final class PairingViewModel {
             serverAddress = parsed.endpoint.baseURL.absoluteString
             self.code = code.value
         } catch ServerEndpoint.ValidationError.insecureScheme {
-            fail("That QR code is for the home Wi-Fi link (http). Use the Tailscale or homelab-domain link instead: on the computer, Settings › Phones.")
+            fail("That QR code is for the home Wi-Fi link (http). Use the https link instead (your homelab domain, or Tailscale if you use it): on the computer, Settings › Phones.")
         } catch {
             fail(error.localizedDescription)
         }

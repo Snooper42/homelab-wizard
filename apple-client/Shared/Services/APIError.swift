@@ -128,7 +128,7 @@ enum APIError: LocalizedError, Equatable, Sendable {
         case .timedOut:
             "The computer didn't answer in time."
         case .cannotFindHost, .dnsLookupFailed:
-            "The computer's address couldn't be found. Is Tailscale on?"
+            "The computer's address couldn't be found. Is this device at home (or on Tailscale, if you use it)? A VPN can hide the home network's names."
         case .cannotConnectToHost:
             "The computer didn't accept the connection. Is `homelab serve` running?"
         case .serverCertificateUntrusted, .serverCertificateHasBadDate,

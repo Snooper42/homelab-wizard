@@ -31,7 +31,7 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
             case .empty:
                 "Enter the computer's address."
             case .notAURL:
-                "That isn't an address. It looks like https://your-mac.tailnet.ts.net:8099."
+                "That isn't an address. It looks like https://homelab.your-domain.com."
             case .insecureScheme:
                 ServerEndpoint.insecureMessage
             case .hasCredentials:
@@ -46,9 +46,9 @@ struct ServerEndpoint: Codable, Sendable, Hashable {
     /// Wi-Fi readable; on the Mac that runs the companion, localhost works.
     private static var insecureMessage: String {
         #if os(macOS)
-        "Only https addresses work, or localhost:8099 when the homelab runs on this Mac. Over plain http, your device token would cross the Wi-Fi in readable form."
+        "Only https addresses work (your homelab domain, or the Tailscale link if you use it), or localhost:8099 when the homelab runs on this Mac. Over plain http, your device token would cross the Wi-Fi in readable form."
         #else
-        "Only https addresses work: the Tailscale link or your homelab domain. Over plain http, your device token would cross the Wi-Fi in readable form."
+        "Only https addresses work: your homelab domain, or the Tailscale link if you use it. Over plain http, your device token would cross the Wi-Fi in readable form."
         #endif
     }
 

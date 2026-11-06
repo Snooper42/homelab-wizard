@@ -30,7 +30,7 @@ final class LiveEventManager {
         var problem: String? {
             switch self {
             case .reconnecting(let attempt, _) where attempt >= 2:
-                "The computer isn't answering. Is it on, and is Tailscale connected on this device?"
+                "The computer isn't answering. Is it on, and is this device at home (or on Tailscale, if you use it)?"
             case .stopped(let reason):
                 reason
             default:
