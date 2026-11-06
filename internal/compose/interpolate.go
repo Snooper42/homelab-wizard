@@ -67,15 +67,6 @@ func Interpolate(s string, lookup Lookup) (string, error) {
 	return b.String(), nil
 }
 
-// MustInterpolate interpolates and returns the input unchanged on error.
-func MustInterpolate(s string, lookup Lookup) string {
-	out, err := Interpolate(s, lookup)
-	if err != nil {
-		return s
-	}
-	return out
-}
-
 // Refs lists the variables referenced by s (including those nested in defaults).
 func Refs(s string) []VarRef {
 	var refs []VarRef
