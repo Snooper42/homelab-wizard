@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Health in one line | At the top of every screen but Status: ✓ All well, or the one thing that needs you, with Open Status | #PRn |
 | Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #463 |
 | A copy before anything risky | An app's databases are dumped before it starts again on changed settings (a domain or tailnet address, Pocket ID sign-in, Fix it's changed settings), as before an update; a dump that fails stops the change | #461 |
 | Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
@@ -250,5 +251,5 @@ Details that make it feel finished.
 What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
-- **Health in one line** (S, *Idea*): "All well", or the one thing that needs you, at the top of every screen.
+- **Health in one line** (S, *Built*, #PRn): "All well", or the one thing that needs you (an app in its row's words, several in one line, or a failing check that is no app's), at the top of every screen but Status, with Open Status.
 - **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.

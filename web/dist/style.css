@@ -274,6 +274,10 @@ dl { margin:0; }
 .tile .sub .trend { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .notice { padding:14px 18px; border-left:4px solid var(--warn); display:flex; flex-direction:column; gap:4px; color:var(--text); }
 /* The last Status, offline (companion.js): a line above the screen while the phone shows the Status it kept. */
+/* Health in one line (status/HealthLine.tsx): at the top of every screen but Status. */
+.healthline { margin:0 0 12px; font-size:13px; color:var(--muted); }
+.healthline.trouble { padding:8px 12px; border-radius:var(--radius); background:var(--bad-soft); color:var(--text); }
+.healthline .linkbtn { margin-left:6px; }
 .awaynote { margin:0 0 14px; padding:10px 14px; border-radius:var(--radius); border-left:4px solid var(--warn); background:var(--warn-soft); color:var(--text); font-size:14px; }
 /* Setup › Disk space: one line per disk, with how to free some when low. */
 .disks > div + div { margin-top:4px; }

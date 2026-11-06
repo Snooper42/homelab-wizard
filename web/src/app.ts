@@ -6,6 +6,7 @@
 // components (*.tsx). app/preview/lint.mjs keeps it under 400 lines.
 import { progress } from './setup/Checklist';
 import { drawRemembered, leftStatus, loadStatus, refreshStatus, statusData, undoNow } from './screens/status';
+import { drawHealth } from './status/HealthLine';
 import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, stepsData } from './screens/setup';
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
@@ -39,6 +40,7 @@ export function show(name) {
   placed = true;
   setupNav();
   freshen(name);
+  drawHealth(); // the line at the top: not on Status, on every other screen
 }
 // Each screen's data is kept between visits (store.ts): picking a screen
 // draws what is kept, and reads it again only when it is out of date (the
