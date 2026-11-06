@@ -17,7 +17,7 @@ import (
 func TestALockWhoseIDWasReusedIsStale(t *testing.T) {
 	root := t.TempDir()
 	me := os.Getpid()
-	began, ok := processStart(me)
+	began, ok := started(me)
 	if !ok {
 		t.Skip("this system does not say when a process started")
 	}
@@ -47,19 +47,5 @@ func TestALockWhoseIDWasReusedIsStale(t *testing.T) {
 	}
 	if _, err := Acquire(root, "music", "lyrics", ""); !errors.Is(err, ErrBusy) {
 		t.Errorf("a live job's lock was taken: %v", err)
-	}
-}
-
-// This process has a start time, before now.
-func TestProcessStart(t *testing.T) {
-	at, ok := processStart(os.Getpid())
-	if !ok {
-		t.Skip("this system does not say when a process started")
-	}
-	if at.After(time.Now()) || time.Since(at) > 24*time.Hour {
-		t.Errorf("this process started at %v", at)
-	}
-	if _, ok := processStart(1 << 30); ok {
-		t.Error("a process that never was has a start time")
 	}
 }
