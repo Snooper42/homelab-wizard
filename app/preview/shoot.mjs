@@ -487,7 +487,7 @@ const smokes = [
     await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
     if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
-    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: stopped")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: didn\'t finish")', { timeout: 5000 });
     const why = (await page.textContent('#tidyJob p.bad')).trim();
     if (!why.startsWith('ffmpeg and ffprobe: Not installed.')) throw new Error('the card says ' + why);
     await page.click('#tidyJob .tidyfix button:text-is("Install ffmpeg")');
