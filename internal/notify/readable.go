@@ -3,6 +3,7 @@ package notify
 import (
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -73,17 +74,10 @@ func duplicatiReport(text string) (title, body string, ok bool) {
 		lines = append(lines, line)
 	}
 	if n := len(lines); n > moreEntries {
-		lines = append(lines[:moreEntries], "and "+itoa(n-moreEntries)+" more in Duplicati's log")
+		lines = append(lines[:moreEntries], "and "+strconv.Itoa(n-moreEntries)+" more in Duplicati's log")
 	}
 	if len(lines) == 0 {
 		lines = []string{"Duplicati's log for this backup has the details."}
 	}
 	return title, strings.Join(lines, "\n"), true
-}
-
-func itoa(n int) string {
-	if n < 10 {
-		return string(rune('0' + n))
-	}
-	return itoa(n/10) + string(rune('0'+n%10))
 }

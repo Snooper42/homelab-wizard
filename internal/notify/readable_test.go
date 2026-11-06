@@ -72,3 +72,33 @@ func TestRecentAlertsAreReadable(t *testing.T) {
 		t.Errorf("read as %q / %q", events[0].Title, events[0].Message)
 	}
 }
+
+// Every way a report ends reads plainly: a clean one, one of an operation
+// with a result Tidy Up doesn't know, one with more problems than fit, and
+// one whose problems aren't in its log; a line said twice is said once.
+func TestEachEndOfADuplicatiReport(t *testing.T) {
+	report := func(op, result string, problems ...string) string {
+		lines := []string{"Duplicati " + op + " report for Photos (1a2b)", "", "ParsedResult: " + result, "Warnings: ["}
+		for _, p := range problems {
+			lines = append(lines, "    2026-11-06 09:27:01 -05 - [Warning-Duplicati.Library.Main-X]: "+p+",")
+		}
+		return strings.Join(append(lines, "]"), "\n")
+	}
+	for _, c := range []struct {
+		text, title, message string
+	}{
+		{report("Backup", "Success"), "The backup of Photos finished", "Duplicati's log for this backup has the details."},
+		{report("Restore", "Unknown"), "Duplicati: the restore of Photos", "Duplicati's log for this backup has the details."},
+		{report("Backup", "Warning", "one", "two", "two", "three", "four", "five"), "The backup of Photos finished with warnings", "one\ntwo\nthree\nand 2 more in Duplicati's log"},
+		{report("Backup", "Fatal", "it stopped"), "The backup of Photos failed", "it stopped"},
+	} {
+		e := Readable(Event{Message: url.QueryEscape("x") + "&message=" + url.QueryEscape(c.text)})
+		if e.Message == c.message {
+			t.Errorf("a form whose first field isn't message was decoded: %q", e.Message)
+		}
+		e = Readable(Event{Message: c.text})
+		if e.Title != c.title || e.Message != c.message {
+			t.Errorf("%q / %q, want %q / %q", e.Title, e.Message, c.title, c.message)
+		}
+	}
+}
