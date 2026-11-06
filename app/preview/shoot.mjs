@@ -167,6 +167,9 @@ const alerts = [
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+// The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
+const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
+  { id: 'immich-server', name: 'Immich', bytes: 2.5 * 2 ** 30 }, { name: 'someones-own', bytes: 1.2 * 2 ** 30 }, { id: 'paperless', name: 'Paperless-ngx', bytes: 900 * 2 ** 20 }] };
 const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0, week: { vikunja: 0.996 },
   days: { vikunja: Object.fromEntries([6, 5, 4, 3, 2, 1, 0].map((n) => [dayKey(n), n === 3 ? [93, 96] : n === 0 ? [40, 40] : [96, 96]])) } };
 // The household, for an app's Who uses it.
@@ -1729,6 +1732,20 @@ const smokes = [
     await page.click('#protectFix');
     await page.waitForSelector('#cliTitle:has-text("Fix it")', { timeout: 5000 });
   } },
+  // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
+  // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
+  { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
+    const rows = await page.locator('#memoryPressure li').allInnerTexts();
+    if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    if (await page.locator('#memoryPressure li:has-text("someones-own") button').count()) throw new Error('Stop on a container the catalog does not know');
+    await page.click('#memoryPressure button[aria-label="Stop Immich"]');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
+    if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
+  } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
@@ -3041,6 +3058,16 @@ const smokes = [
     };
     const line = '#overnightLine .overnight';
     return [
+      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
+      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
+        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+        await page.waitForTimeout(1500);
+        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
+        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
+        await page.waitForSelector(line, { timeout: 5000 });
+      } },
       { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
         await page.clock.setFixedTime(morning);
         await page.evaluate(() => window.__emit('status:changed'));
@@ -3411,6 +3438,24 @@ const smokes = [
     await page.waitForSelector('#pairing code:has-text("K7QX4MRA")');
     const paired = await page.evaluate(() => window.__MOCK.paired);
     if (paired?.finances !== 'edit' || paired.canChange) throw new Error(`paired with ${JSON.stringify(paired)}`);
+  } },
+  // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
+  // that only looks (the kitchen screen) has nothing to end.
+  { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const anna = '#phonesCard li:has-text("Anna’s iPhone")';
+    await page.waitForSelector(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, { timeout: 5000 });
+    if (await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').count()) throw new Error('a phone that only looks offers an end');
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, String(24 * 7));
+    await page.waitForSelector(`${anna} .phoneuntil:has-text("then it only looks")`, { timeout: 5000 });
+    const until = await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Anna’s iPhone').until);
+    const days = (new Date(until).getTime() - Date.now()) / 864e5;
+    if (!(days > 6.9 && days < 7.1)) throw new Error(`kept until ${until}`);
+    const want = new Date(until).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!(await page.textContent(`${anna} .phoneuntil`)).includes(want)) throw new Error(`the row does not say ${want}: ${await page.textContent(`${anna} .phoneuntil`)}`);
+    // Until you change it: the end goes.
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, '0');
+    await page.waitForSelector(`${anna} .phoneuntil`, { state: 'detached', timeout: 5000 });
   } },
   // Finances on a phone: only where it may see them; a phone allowed to
   // look has no way to change them; every view fits a phone.
@@ -3941,6 +3986,30 @@ const smokes = [
     // Status says so too: the row's badge.
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
+  // CLI says those days, and a held app has no window to choose.
+  { name: "An app's update window: Only on Sundays, and the days the CLI set", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
+    if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
+    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.click(sw('Only on Sundays'));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch went back after Status was read');
+    // Days set from the CLI (homelab updates days vikunja sat+sun): the switch names them, and off is every night.
+    await page.evaluate(() => { const M = window.__MOCK; M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, updateDays: ['sat', 'sun'] } : a)) }; });
+    await page.click(sw('Tell me if it stops')); // a change reads Status again
+    await page.waitForSelector(sw('Only on Saturdays and Sundays'), { timeout: 5000 });
+    await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
+    // Held: no window to choose.
+    await page.click(sw('Nightly updates'));
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
   } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';

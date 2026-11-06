@@ -170,6 +170,26 @@ func (h *homelab) moveIn(ctx context.Context, args []string) error {
 	u.Info("start each app on the version that wrote its data, from the backup's record")
 	u.Info("load each database from its dump")
 	u.Info("start the homelab and the %d apps that ran there, and install the scheduled jobs", len(m.Apps))
+	// What keeps its reach here once moved in: from your own old machine
+	// that is the point, from a file someone else made it lets them in.
+	if bundle != "" {
+		if r, err := moving.Brings(bundle); err == nil && r.Any() {
+			u.Info("it brings, and keeps working here:")
+			if len(r.Phones) > 0 {
+				u.Info("  the paired phones: %s (Settings › Phones removes one)", strings.Join(r.Phones, ", "))
+			}
+			if r.Tunnel {
+				u.Info("  its Cloudflare tunnel, which puts the apps on the internet through its account")
+			}
+			if r.Domain != "" {
+				u.Info("  its domain, %s", r.Domain)
+			}
+			if len(r.Custom) > 0 {
+				u.Info("  its own apps, run as they are written: %s", strings.Join(r.Custom, ", "))
+			}
+			u.Warn("move in only a file you made yourself, with homelab move out on your old machine")
+		}
+	}
 	if err := h.goAhead(*apply, "\nMove in?"); err != nil {
 		return err
 	}

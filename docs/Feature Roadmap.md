@@ -19,6 +19,10 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
+| An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #457 |
+| Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #455 |
+| The last Status, offline | Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error | #453 |
 | Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #452 |
 | Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #451 |
 | A sheet of shortcuts | Press ? on any screen (or pick *Keyboard shortcuts* in ⌘K) for that screen's shortcuts, those that work everywhere, and each screen's key | #450 |
@@ -109,7 +113,7 @@ So a laptop or a small machine stays responsive, and you can see why when it doe
 - **Memory limits** (M, *Mocked up*): a limit for an app or one part of it, suggested from its peak; reaching it restarts that part, and the watchdog says so.
 - **Stop when idle** (L, *Mocked up*): stop Immich's machine learning after an hour with no new photos and start it when a phone uploads; the same for other apps with a clear sign of work.
 - **Ways to free memory** (M, *Mocked up*): suggestions from what the apps actually do: one idle for hours, two that do the same job (Komga and Kavita), one not opened in a month, and the runtime's limit set higher than the apps need.
-- **Memory pressure alert** (S, *Idea*): an alert when memory stays above 90% for 10 minutes, naming the biggest apps, with Stop on the alert itself.
+- **Memory pressure alert** (S, *Built*, #458): an alert when the apps stay above 90% of the memory Docker has for 10 minutes or more (two watchdog runs in a row), naming the three biggest; Status's Watchdog card lists them, each with Stop, until it comes down.
 - **Quiet hours for heavy work** (M, *Idea*): Tdarr, Immich's jobs, and the downloads run at night, or while the machine is idle and plugged in, and pause when you use it.
 - **Disk space ahead** (M, *Idea*): at today's rate, when each drive fills (photos, downloads, backups), and which app grows fastest.
 
@@ -119,7 +123,7 @@ The homelab looks after itself, and says what it did.
 
 - **Start in order** (M, *Idea*): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.
 - **One app at a time** (M, *Idea*): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.
-- **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
+- **An update window per app** (S, *Built*, #457): update Immich only on Sundays (an app's page › **Only on Sundays**, or `homelab updates days immich sun` for any days). Still an idea: Vaultwarden at once when a security release comes out.
 - **A restart that keeps failing** (S, *Built*, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Built*, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
 - **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#428).
@@ -133,7 +137,7 @@ Safe by default, and easy to check.
 - **Lock with Touch ID or Windows Hello** (M, *Idea*): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
-- **Phones that expire** (S, *Idea*): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.
+- **Phones that expire** (S, *Built*, #455): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.
 - **Tailnet devices** (S, *Idea*): every device on the household's tailnet, when it was last seen, and Remove for a lost phone.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
@@ -175,10 +179,8 @@ Picking, trying, and using apps.
 
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
-- **Two apps that do the same job** (S, *Idea*): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both.
 - **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose stacks › Add more › *Suggested for what you run*.
 - **Two apps that do the same job** (S, *Built*, #438): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
-- **Suggestions from what you use** (S, *Idea*): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
 
 ## The desktop and the menu bar
@@ -196,8 +198,8 @@ The app at home on each system.
 
 The household's phones as a second screen.
 
+- **The last Status, offline** (S, *Built*, #453): away from home with no tailnet, it shows the last Status it saw and when, rather than an error. The page itself is kept on the phone too (a service worker), where it's served over HTTPS.
 - **Add to Home Screen, done right** (S, *Built*, #452): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.
-- **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
 - **Quick actions** (S, *Built*, #447): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).
 
 ## Media library cleanup

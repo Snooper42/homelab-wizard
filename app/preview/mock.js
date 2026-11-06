@@ -122,7 +122,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     AppIcon: (id) => later(M.icons?.[id] || ''),
     Explainer: () => later(M.explainer || ''),
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
-    Backups: () => later(M.backups),
+    // backupsError: Backups fails with it (a database that can't be read, a computer that can't be reached).
+    Backups: () => (M.backupsError ? Promise.reject(new Error(M.backupsError)) : later(M.backups)),
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
@@ -260,6 +261,10 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
         M.status = { ...M.status, pinned, apps: M.status.apps.map((a) => (a.id === id ? { ...a, pinned: on } : a)) };
         return;
       }
+      if (setting === 'sundays') {
+        M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, updateDays: on ? ['sun'] : undefined } : a)) };
+        return;
+      }
       const key = setting === 'updates' ? 'held' : 'quiet';
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, [key]: !on } : a)) };
     },
@@ -302,6 +307,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       { name: 'Internet', date: '2026-11-09', amount: 70 }] }),
     SetPhoneFinances(id, level) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, finances: level || undefined } : p)); return later(M.phones); },
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
+    SetPhoneUntil(id, hours) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, until: hours ? new Date(Date.now() + hours * 36e5).toISOString() : undefined } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
     // Tidy Up (M.tidy): what the screen reads, and its jobs: each run is kept

@@ -518,7 +518,7 @@
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
       const open3 = !!opened2[s3.id];
-      const more = s3.why || s3.detail;
+      const more2 = s3.why || s3.detail;
       return (
         // A row: the step's number, what it gives you (one line until it is
         // opened), its buttons, and the chevron that opens it.
@@ -531,7 +531,7 @@
             open3 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running4 === s3.id, on: on2 }),
-          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+          more2 && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
     };
@@ -1724,7 +1724,30 @@
   }
 
   // web/src/status/Cards.tsx
-  function Watchdog({ w: w3, openSetup, fix }) {
+  var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
+  function MemoryPressure({ m: m3, stop: stop2 }) {
+    const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
+      /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
+        " ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "the apps use ",
+          share2,
+          "% of the ",
+          memText(m3.total),
+          " Docker has, high since ",
+          ago(m3.since),
+          ". Stop one you don't need now."
+        ] })
+      ] }) }),
+      /* @__PURE__ */ u3(Rows, { children: (m3.biggest || []).map((a3) => /* @__PURE__ */ u3(Row, { dot: "warn", title: a3.name, end: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: memText(a3.bytes) }),
+        a3.id && stop2 && /* @__PURE__ */ u3("button", { class: "small memstop", "aria-label": `Stop ${a3.name}`, onClick: () => stop2(a3.id), children: "Stop" })
+      ] }) }, a3.name)) })
+    ] });
+  }
+  function Watchdog({ w: w3, openSetup, fix, stop: stop2 }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1751,6 +1774,7 @@
           ago(w3.lastRun)
         ] })
       ] }) }),
+      w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
       late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "It has not run since ",
         ago(w3.lastRun),
@@ -3052,6 +3076,7 @@
   var $1 = (sel2, root = document) => root.querySelector(sel2);
   var errorTimer = 0;
   function showError(e3) {
+    if (e3?.name === "Away" && document.documentElement.classList.contains("away")) return;
     const el3 = $2("error");
     el3.textContent = String(e3 && e3.message || e3);
     el3.hidden = false;
@@ -3269,11 +3294,11 @@
     for (const pg of pages) {
       const here2 = pg.name === view.page;
       for (const s3 of pg.items) {
-        const more = pg.kind === "general" && !wanted.has(s3.key);
-        if (here2 && more) out.pageMore++;
+        const more2 = pg.kind === "general" && !wanted.has(s3.key);
+        if (here2 && more2) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more);
+        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -3492,6 +3517,11 @@
   function FinancesPick({ value, set: set2, label, id: id2, paired }) {
     return /* @__PURE__ */ u3("select", { id: id2, class: "finpick", "aria-label": label, value, onChange: (e3) => set2(e3.currentTarget.value), children: (paired ? pairedChoices : financesChoices).map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) });
   }
+  var untilChoices = [[0, "Until you change it"], [24, "For a day"], [24 * 7, "For a week"], [24 * 30, "For a month"]];
+  var untilText2 = (t3) => {
+    const d3 = new Date(t3);
+    return `${dayText(d3, { weekday: "short", month: "short", day: "numeric" })}, ${clockText(d3)}`;
+  };
   function Pairing({ p: p3, asked, done }) {
     const links = p3.links || [];
     const onlyLooks = !!links.length && !links.some((l3) => l3.startsWith("https:")) && (asked.canChange || !!asked.finances);
@@ -3533,6 +3563,7 @@
       ] })
     ] }) });
   }
+  var more = (p3) => p3.canChange || p3.finances === "view" || p3.finances === "edit";
   function Phones({ phones, on: on2 }) {
     const [name, setName] = d2("");
     const [canChange, setCanChange] = d2(false);
@@ -3555,11 +3586,23 @@
           sub: /* @__PURE__ */ u3(S, { children: [
             p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
             p3.finances === "edit" ? " · changes Finances" : p3.finances === "view" ? " · sees Finances" : p3.finances === "card" ? " · shows the money card" : "",
+            p3.until && more(p3) ? /* @__PURE__ */ u3("span", { class: "phoneuntil", children: [
+              ", until ",
+              untilText2(p3.until),
+              ", then it only looks"
+            ] }) : "",
             " · last seen ",
             ago(p3.lastSeen)
           ] }),
           end: /* @__PURE__ */ u3(S, { children: [
             !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { paired: true, value: p3.finances || "", set: (level) => on2.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
+            more(p3) && /* @__PURE__ */ u3("select", { class: "untilpick", "aria-label": `How long ${p3.name} keeps it`, value: p3.until ? "set" : "0", onChange: (e3) => on2.setUntil(p3.id, Number(e3.currentTarget.value)), children: [
+              p3.until && /* @__PURE__ */ u3("option", { value: "set", disabled: true, children: [
+                "Until ",
+                untilText2(p3.until)
+              ] }),
+              untilChoices.map(([h3, t3]) => /* @__PURE__ */ u3("option", { value: String(h3), children: t3 }, h3))
+            ] }),
             !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on2.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
             /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on2.remove(p3.id), children: "Remove" })
           ] })
@@ -4859,9 +4902,9 @@
     ] });
   }
   function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open3 }) {
-    const [more, setMore] = d2(false);
+    const [more2, setMore] = d2(false);
     const v3 = s3.version;
-    const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more), children: more ? "Hide" : "What’s new" });
+    const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more2), children: more2 ? "Hide" : "What’s new" });
     let mark = "↑", tone = "ready", head = "", sub = "", end = null, below = null, bar = -1;
     if (running2(step2)) {
       mark = "↻";
@@ -4874,10 +4917,10 @@
       head = "The update stopped";
       sub = step2.error || "The details say why";
       end = /* @__PURE__ */ u3(S, { children: [
-        !!log2 && /* @__PURE__ */ u3(ActionLink, { id: "updateDetails", cls: "small", onClick: () => setMore(!more), children: more ? "Hide the details" : "Details" }),
+        !!log2 && /* @__PURE__ */ u3(ActionLink, { id: "updateDetails", cls: "small", onClick: () => setMore(!more2), children: more2 ? "Hide the details" : "Details" }),
         /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" })
       ] });
-      below = more && !!log2 && /* @__PURE__ */ u3("pre", { id: "updateLog", children: log2 });
+      below = more2 && !!log2 && /* @__PURE__ */ u3("pre", { id: "updateLog", children: log2 });
     } else if (s3.notInstalled && !step2) {
       mark = "!";
       tone = "failed";
@@ -4896,7 +4939,7 @@
         whatsNew(s3.updated.notes || []),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
-      below = more && /* @__PURE__ */ u3(Notes, { notes: s3.updated.notes || [] });
+      below = more2 && /* @__PURE__ */ u3(Notes, { notes: s3.updated.notes || [] });
     } else if (s3.state === "blocked") {
       mark = "!";
       tone = "blocked";
@@ -4910,7 +4953,7 @@
         /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later2, children: "Later" }),
         /* @__PURE__ */ u3("button", { id: "updateNow", class: "primary small", onClick: update, children: "Update now" })
       ] });
-      below = more && /* @__PURE__ */ u3(Notes, { notes: s3.notes || [] });
+      below = more2 && /* @__PURE__ */ u3(Notes, { notes: s3.notes || [] });
     } else {
       return null;
     }
@@ -5580,6 +5623,14 @@
     setFinances: async (id2, level) => {
       try {
         await go().SetPhoneFinances(id2, level);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    setUntil: async (id2, hours) => {
+      try {
+        await go().SetPhoneUntil(id2, hours);
       } catch (e3) {
         showError(e3);
       }
@@ -6513,10 +6564,14 @@
   var outages = {};
   var lastEvents = [];
   var watched = false;
+  var backupsAsked = 0;
   function drawOvernight() {
     if (!lastStatus) return;
     const now = Date.now();
-    if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 6e4);
+    if (nightOf(now) && !backupsData.value && now - backupsAsked > 6e4) {
+      backupsAsked = now;
+      backupsData.fresh(10 * 6e4);
+    }
     mountOvernight($2("overnightLine"), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
   }
   backupsData.watch(drawOvernight);
@@ -6785,9 +6840,18 @@
     drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
-    mountWatchdog(card, { w: w3, openSetup: () => {
-      navigate("setup");
-    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+    mountWatchdog(card, {
+      w: w3,
+      openSetup: () => {
+        navigate("setup");
+      },
+      fix: () => cliFlow("Fix it", "fix", "", "Fix these"),
+      // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+      stop: (id2) => {
+        const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
+        if (a3) void runAppAction(a3, "stop");
+      }
+    });
   }
   var protectionAt = 0;
   function showProtection(p3, err) {
@@ -7711,7 +7775,7 @@
   function Stopped({ stopped: stopped2 }) {
     const reading = stopped2 === "reading", s3 = reading ? null : stopped2;
     const today2 = s3?.today || [];
-    const more = (s3?.todayCount || 0) - today2.length;
+    const more2 = (s3?.todayCount || 0) - today2.length;
     const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
     const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
@@ -7732,7 +7796,7 @@
           },
           i3
         )),
-        more > 0 && /* @__PURE__ */ u3(Row, { sub: more === 1 ? "and 1 more today" : `and ${more} more today` })
+        more2 > 0 && /* @__PURE__ */ u3(Row, { sub: more2 === 1 ? "and 1 more today" : `and ${more2} more today` })
       ] }) : /* @__PURE__ */ u3(Empty, { children: quiet2 }))
     ] });
   }
@@ -7768,6 +7832,8 @@
     const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
+    const days = a3.updateDays || [], ownDays = switching2.sundays ?? days.length > 0;
+    const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
     const kept2 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
@@ -7781,7 +7847,17 @@
             disabled: busy2 || "updates" in switching2,
             on: updates,
             set: (v3) => on2.setting("updates", v3),
-            sub: updates ? "Every night, with a backup of its data first" : "Held: the nightly update leaves it out"
+            sub: !updates ? "Held: the nightly update leaves it out" : ownDays ? `On ${daysText} only, with a backup of its data first` : "Every night, with a backup of its data first"
+          }
+        ),
+        container && updates && /* @__PURE__ */ u3(
+          Switch,
+          {
+            label: `Only on ${daysText}`,
+            disabled: busy2 || "sundays" in switching2,
+            on: ownDays,
+            set: (v3) => on2.setting("sundays", v3),
+            sub: ownDays ? "The other nights leave it alone; updating it by hand still works any day" : "For an app you would rather not see change midweek"
           }
         ),
         /* @__PURE__ */ u3(
@@ -7837,6 +7913,11 @@
   }
   function mountAppPage(el3, props) {
     R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el3);
+  }
+  var dayWords = { mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays", sun: "Sundays" };
+  function weekdaysText(days) {
+    const w3 = days.map((d3) => dayWords[d3] || d3);
+    return w3.length < 2 ? w3.join("") : `${w3.slice(0, -1).join(", ")} and ${w3[w3.length - 1]}`;
   }
 
   // web/src/screens/apppage.ts

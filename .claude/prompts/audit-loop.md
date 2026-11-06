@@ -366,6 +366,151 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
     reads it, so a lost or torn write costs a reason on a hover, nothing
     more; save it as stopped.Update does (lock, temporary file, rename).
 
+Added after round 27 (the backlog was empty; worst first):
+
+23. (done: round 28) **An app's own secrets in what leaves its log** (#427's restart-loop
+    alert, Explain, `homelab report`, a phone's Logs): each takes out only
+    the values in `.env`. An app that prints a secret of its own at start
+    (a database URL with its password, an admin token it made, a
+    `token=` in a URL it logs) sends it to ntfy and every phone. Run each
+    catalog app's startup log through `redact` and look; take out
+    credentials in URLs (`://user:pass@`) and `key=`/`token=` values too.
+24. (done: round 29) **`homelab move in` from a file someone else made** (internal/move):
+    besides links and tickets, a bundle brings `.env` (a `TUNNEL_TOKEN`
+    for its maker's Cloudflare tunnel, which would put the apps on their
+    domain), `data/phones.json` (their paired phones, able to change
+    things), and sso. What does move in say before it applies them, and
+    should it unpair phones and ask before keeping a tunnel?
+25. (done: round 30) **Apps started without a turn** (#425's decision): a drive coming
+    back (#423), the battery saver, and the stop timer start apps while an
+    update or backup may have them down on purpose. Show one starting an
+    app mid-backup (its database stopped for the dump), then decide.
+26. (done: round 31) **Release notes from GitHub** (#419, internal/releases): the repo is
+    taken from an image's own `org.opencontainers.image.source` label, so
+    a custom app's image picks any repo; check the path built from it
+    (`..`, `?`), that the notes are drawn as text (no raw HTML, no
+    `javascript:` links), and what the lookup tells GitHub.
+27. (done: round 35) **What CrowdSec stopped** (#430, once merged): scenario, network, and
+    country names come from outside; drawn by Preact, but check the phone
+    and a kiosk get `Protection` only with the permission they need.
+28. **The native Apple client** (#424, apple-client/, once merged): the
+    pairing token in the Keychain (not UserDefaults or a backup), the
+    companion's certificate checked, nothing secret in widgets, the lock
+    screen, or a crash log.
+29. (done: round 52) **Phones that expire** (`claude/feature-phones-expire`, once its PR
+    is open): an expired phone refused on every method and on a stream
+    already open, and a clock set back not bringing it back.
+30. (done: round 53, on #457) **The update window** (`claude/feature-update-window`,
+    `data/update-days.json`): a window must not hold a security release
+    forever, and a crafted record must not stop every update.
+31. (done: round 32) **Explain on another machine's Ollama**: what the model is sent when
+    `OLLAMA_HOST` points off this machine (item 9 checked only
+    172.17.0.1), and whether that counts as leaving the machine (Rule 3).
+32. **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
+    Security items): the Tailscale API key and each app's admin key used
+    to read them stay in `.env`, and Remove a lost device is computer
+    only, never a phone method.
+
+Added after round 36 (four left, all waiting on other lanes; worst first):
+
+33. (done: round 37) **The Docker socket in apps' hands** (internal/dockerapi, the compose
+    files): list every container that mounts `/var/run/docker.sock` (or
+    the Docker Desktop and OrbStack sockets), read-only or not, and
+    through a socket proxy or not. A container with the socket is root on
+    the machine; one reachable through the proxy or the tailnet (Dozzle,
+    Homepage, Beszel) is a way in.
+34. (done: round 38) **The companion on a public name**: with a domain and the Cloudflare
+    tunnel, can `phone.<domain>` (or any name) reach `homelab serve`?
+    If so, the pairing code's length, expiry, and guesses allowed per
+    minute from the internet decide whether a stranger can pair.
+35. (done: round 39) **What is public by default** (internal/npm, install, custom apps,
+    Connect apps): the PR template promises no app goes on the internet
+    by default; check each path that makes a proxy host (a new app, a
+    custom app, an adopted one) against that, and the access list each
+    gets.
+36. (done: round 40) **Homepage's widget keys** (internal/homepage): its config is written
+    0644 into `data/appdata/homepage`, which the AppData job copies in
+    the clear (N9). Does any widget's config carry an app's API key, and
+    does Homepage serve it to a browser?
+37. (done: round 41) **Adopting a container** (internal/adopt): moving an app you already
+    run into the homelab reads its environment (passwords included):
+    where those values go (`.env` 0600, or a compose file 0644), what is
+    printed, and whether its volumes may name any host folder (`/`,
+    `/etc`, the home folder).
+38. (done: round 51) **Quiet hours** (#439, once merged): a crafted or careless setting
+    must not silence the alerts that matter at night (a ban that failed,
+    a backup that failed, a disk dying, the tunnel down).
+39. (done: rounds 42 and 46) **What ntfy carries** (the weekly summary, the morning line, Finances
+    reminders, restart-loop logs): ntfy may be on a public name, and a
+    phone's lock screen shows the first lines; list what each message
+    holds (amounts, names, log lines) and what a lock screen shows.
+40. (done: round 43) **Tailscale** (internal/tailnet): the homelab never turns on Funnel;
+    what `tailscale serve` (or the apps' tailnet addresses) offers to
+    every device on the tailnet, shared-in devices included.
+41. (done: round 44, N21 open) **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
+    homelab-init.sh): runs as root in the proxy's container with the
+    bouncer key; how the key is passed and kept, and file modes.
+42. (done: round 45) **Crash notes** (internal/crash, with #436's cleanup): what a note
+    holds (a panic can print values, secrets among them), where it is
+    kept and at what mode, and whether a report or a phone gets it.
+43. (done: round 46) **The kit's writes** (internal/kit): files go through a fixed
+    `<name>.kit-tmp` and `.local` copy, which follow a link put there by
+    someone else on the machine (Low); and that the kit a newer app
+    brings comes only from the signed app itself.
+44. **What the self-update trusts** (internal/selfupdate): the checksum
+    it checks is GitHub's own `digest`, from the same API as the
+    download, so it catches a broken download but not a release swapped
+    on GitHub. Does the Mac copy's code signature (and Team ID) get
+    checked before it replaces the app, and what do Linux and Windows
+    check?
+45. **Pairing's demotions are separate saves** (internal/companion
+    server.go `pair`): a kiosk or a phone paired over plain HTTP is saved
+    first with the code's permissions, then lowered in up to three more
+    saves (`SetCanChange`, `SetFinances`, `MarkUnencrypted`). With N22's
+    race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
+    phone could keep Can make changes or Finances. One save, or a test
+    that each failure leaves the device with less.
+46. **A kiosk is not remembered as one** (`Device` has no kiosk field):
+    kiosk mode is enforced only at pairing, so the Phones page can later
+    give a wall screen Can make changes or Finances with nothing saying
+    it is a screen anyone walking past can use. And which `phoneMethods`
+    a kiosk may call beyond Status (Logs, AppIcon, a Finances card).
+47. **The pairing limit** (`tooMany`): global or per address? A device on
+    the Wi-Fi sending wrong codes may lock the household out of pairing
+    for 10 minutes; check the code's length and lifetime against the
+    limit, and that the limit holds across a restart of `homelab serve`.
+48. **The Finances calendar link** (`/finances.ics?key=`, the Finances
+    session's code): a key in a URL ends up in calendar apps, their sync
+    servers, and proxy logs. What it shows with Hide amounts on, how it
+    is turned off or changed, and that a wrong key is refused at the same
+    rate limit as a code. A real hole is fixed in its smallest form;
+    anything less goes in the PR for that session.
+49. **The phone's offline page across homelabs** (#453, web/dist/sw.js):
+    the copy is kept per address, not per pairing, so a phone paired again
+    to another homelab at the same name (a new computer, a move) is
+    served the old page until it is reached; check that nothing kept
+    carries a token or answer from the other one, and the worker's scope.
+50. **What each holder of Docker's socket may do** (after N18's pins): a
+    read-only mount does not limit Docker's API. List each app that gets
+    the raw socket rather than `docker-socket-proxy`, and the proxy's
+    allowed endpoints (POST, EXEC, CONTAINERS) against what each app needs.
+51. **Duplicati's passphrase** (the backups' own secret): where it is
+    kept (.env, Duplicati's database), whether a move file, `homelab
+    report`, or the Secrets job carries it, and what someone holding only
+    the off-site copy can read.
+52. **The proxy's own admin page** (Nginx Proxy Manager): the address its
+    admin port is bound to (the LAN, or this machine only), who changes
+    its first login and when, and that it is never itself a proxy host
+    (N19's question, asked of the proxy).
+53. **ntfy on a public name** (`homelab notify setup`): the server's
+    default access, the publish and read tokens' reach, and whether a
+    stranger can read the topic or send a fake alert ("backup failed,
+    open this link") that a phone shows as the homelab's.
+54. **The music jobs' Python** (internal/media, the beets venv #444 and
+    #454 remake): the venv is made with whatever `python3` comes first on
+    PATH and installs beets from PyPI at the first run. Is the version
+    pinned, with hashes? A remade venv fetches it again, unattended.
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -577,3 +722,350 @@ Added after round 14 (#355–#402: Tidy Up, Stop for a while, the money card):
   half-made saves), and a ticket over 10 minutes ahead of the clock holds
   no one up. `TestUnpackLeavesOutAnotherMachinesJobs` and
   `TestATicketFromTheFutureHoldsNoOneUp` failed before.
+- **Round 25 (#423, #426, #427 read through; N14):** #423 starts only
+  apps Docker could not start for a missing folder, once their drive is
+  back; nothing reaches it from outside. #426 is the lanes file. #427's
+  alert carries the last log lines with the homelab's secrets taken out,
+  and goes only to the homelab's own ntfy. N14: its restart-loop stop
+  ran without N13's turn check, so an app restarting while an update
+  brought its database back was stopped mid-job and kept stopped. Now it
+  waits for the job as heal does. `TestWatchdogLeavesRestartLoopsToAJob`
+  failed before. `data/restarts.json` is written in place, 0644, without
+  a lock: a storage matter, under For Account 2.
+- **Round 26 (#428 and #429, read through):** #428 tells Docker not to
+  make a library folder that is missing (an unplugged drive), and the
+  install makes it instead, wherever its folder setting points. Those
+  settings come only from `.env`: a phone's SetAppSetting takes only
+  updates, alerts, and pinned, each true or false. Before, Docker made
+  the same folders, as root on Linux, so this is narrower. #429 waits out
+  a busy registry for the same pulls as before (pinned or catalog
+  images), and nothing new is printed or sent. No code change needed.
+
+- **Round 27 (#431, read through):** an app's alerts off moved from
+  `.env` to `data/alerts-off.json`, saved whole under its lock, 0600,
+  holding only app IDs. A phone reaches it as before, through
+  SetAppSetting's "alerts", which needs Change and a catalog app ID; a
+  hand-edited record can only name apps, matched exactly. `envfile.Delete`
+  takes out the key and only the comment lines just above it. No code
+  change needed.
+
+- **Round 28 (item 23, an app's own secrets in its log):** N15, Medium.
+  `redact` (a phone's Logs, the restart-loop alert, `homelab report`)
+  took out `.env`'s values and some token shapes, not what an app makes
+  and prints: qBittorrent prints its Web UI admin password at every
+  start until a permanent one is set, and Jellyfin logs `?api_key=`.
+  Every paired device reads logs, look-only and kiosk too. Now a printed
+  temporary/generated/admin password and `password`/`token`/`secret`/
+  `api_key` values (key=value, JSON) are taken out; the app on the
+  computer and `homelab logs` still show the whole log.
+  `TestAnAppsOwnSecretsAreTakenOut` failed before (all four kept by the
+  alert, qBittorrent's by a phone). Left for item 31: Explain's
+  `forModel` misses the printed-password sentence.
+
+- **Round 29 (item 24, move in from a file someone else made):** N16,
+  Medium. A bundle brings its maker's paired phones, Cloudflare tunnel
+  and domain, and own apps (run by Docker as written), all kept, and the
+  plan said only "unpack .env and the apps' data". Now `move.Brings` reads
+  them from the bundle and the plan names each (phones and whether they
+  may make changes, the tunnel, the domain, each own app with its image)
+  and warns to move in only a file you made, before it asks.
+  `TestMoveInNamesWhatReachesIn` failed before. Kept, not dropped: a move
+  between your own machines needs them (a decision for the owner).
+
+- **Round 30 (item 25, apps started without a turn):** N17, Low. The
+  battery saver, unplugged mid-update, could stop an app the update had
+  just started (which the update then rolls back), and the stop timer and
+  a drive coming back could start apps a job had down. Each now leaves
+  the apps to a job that has the turn (`jobRunning`, the watchdog's rule)
+  and looks again on its next run. `TestStartersWaitOutAJob` failed
+  before (the saver stopped sonarr, the timer started radarr, mid-job).
+
+- **Round 31 (item 26, release notes, read through):** the notes are
+  drawn as plain text (`<pre>`), and Full notes and all releases open
+  through `Open`, which takes only http(s) with a host or mailto
+  (`webLink`, held by `TestWebLink`), so a crafted `data/releases.json`
+  from a move file opens nothing else. A repo name with `..` or `?`
+  (from an image label or a custom app's image) changes only which
+  unauthenticated api.github.com page is read; nothing is sent with it
+  but the repo's name, and only when the household looks. No code change.
+- **Round 32 (item 31, Explain on another machine's Ollama):** N15's
+  rest. Explain's `forModel` (and a phone's Logs, which also goes through
+  `explain.Redact`) took out key=value secrets but not a password an app
+  prints in a sentence, and `OLLAMA_HOST` may put the model on another
+  computer. `explain.Redact` now takes it out too.
+  `TestRedactAPrintedPassword` failed before.
+
+- **Round 33 (item 30, the update window, read on its branch before its
+  PR):** `claude/feature-update-window`. A crafted
+  `data/update-days.json` can only narrow an app to some weekdays (an
+  unknown day is dropped, none left is every night), so it cannot stop
+  every update; the phone's `"sundays"` setting needs Change and a
+  container app, as `"updates"` does. Two notes under For Account 1.
+  Re-check once its PR is open: item 30 stays open until then.
+
+- **Round 34 (item 29, phones that expire, read on its branch before its
+  PR):** `claude/feature-phones-expire`. Every request finds its phone
+  through `Store.Lookup`, which loads the record and expires it first;
+  once its time has passed, Change and Finances are taken off the record
+  itself (Until cleared), so a clock set back gives nothing back. An open
+  `/api/events` stream only says something changed; what changed is read
+  again through methods, which check the permission then. Fine as it is
+  on the branch; item 29 stays open until its PR is.
+
+- **Round 35 (#430 and #434, read through; item 27):** #430's list of
+  what CrowdSec stopped today reaches every paired device through the
+  read-only `Protection` method, as the week's five did: scanners'
+  addresses, country and network, and what they tried, nothing of the
+  household's; drawn by Preact as text. #434 (Account 2) saves the
+  updates, Setup, people, and restarts records whole under their locks,
+  0600, which settles the note below. No code change needed.
+
+- **Round 36 (#435, #437, #438, read through):** #435 shows each
+  backup's size beside the night before's from what the overview already
+  read; #437 is the page only; #438 adds catalog metadata (which apps do
+  the same job). No new phone method, record, or outside call. No code
+  change needed. The backlog was down to four items, all waiting on other
+  lanes: items 33 to 43 added.
+
+- **Round 37 (item 33, the Docker socket):** N18, Medium. Homarr and
+  Dozzle reach Docker through the read-only socket proxy (pinned, M6);
+  only the Beszel agent mounts the socket itself, read-only, which does
+  not limit Docker's API, and it ran `:latest` under the nightly update.
+  Now pinned to 0.21.1 (`BESZEL_AGENT_VERSION`), updated by hand.
+  `TestWhatHoldsTheDockerSocketIsPinned` failed before; it holds every
+  app that mounts the socket to a pin and a fixed tag.
+
+- **Round 38 (item 34, the companion on a public name, read through):**
+  the tunnel points only at the proxy, and only for catalog apps marked
+  `public` and not admin; the companion (8099) is not a catalog app and
+  has no proxy host, so it stays on the home network and the tailnet. No
+  stranger reaches its pairing code. No code change needed.
+- **Round 39 (item 35, what is public by default):** N19, High. Seven
+  apps are public once a domain and tunnel are set, and `AUTO_DOMAIN`
+  publishes one as it is installed; Immich, Audiobookshelf, Komga, and
+  Navidrome are claimed by their first visitor, and Calibre-Web starts as
+  admin/admin123. Now each is asked first (`claimedAt`, claim.go) and
+  stays off the internet until it says it has its first account; the
+  plan says why. `TestAnUnclaimedAppStaysOffTheInternet` failed before.
+  `TestDomainSetupEndToEnd` now states its Immich has its administrator
+  (a fake answering `isInitialized: true`), the case where publishing it
+  is right. Decision for the owner: whether the watchdog should publish
+  such an app by itself once claimed, instead of the next Set up the
+  domain.
+
+- **Round 40 (item 36, Homepage's config, read through):** the
+  services.yaml it writes holds each running app's name, description,
+  address, and icon, and people's first names on their tabs; no widget
+  carries a key. Homepage is a system app, never published. No code
+  change needed.
+- **Round 41 (item 37, adopting a container, read through):** the plan
+  prints only the names of the settings carried over (`carry X over from
+  the old container`), and their values go into `.env` through envfile
+  (0600). Where each folder goes comes from the catalog, inside the
+  homelab folder or a named volume, never from the old container; a
+  container crafted to name another source needs Docker on this machine
+  already (Low, nothing to fix). No code change needed.
+
+- **Round 42 (item 39, what ntfy carries), in part:** N20, Low. With
+  Hide amounts on, Finances' reminders and the weekly summary's Finances
+  lines still went to ntfy with every amount (lock screens show them).
+  Fixed in its smallest form in `financeView` (cmd/homelab/finances.go,
+  the Finances session's code, a commit of its own):
+  `TestHiddenAmountsStayHiddenInAlerts` failed before. Still to read in
+  item 39: the morning line and the restart-loop alert's log lines on a
+  lock screen.
+
+- **Round 43 (item 40, Tailscale, read through; item 38 on #439's
+  diff):** the Serve config the homelab writes has no `AllowFunnel`, so
+  nothing goes to the internet through Tailscale; Serve offers each app
+  over HTTPS to the household's tailnet only, and `TAILNET_ADMIN_APPS`
+  keeps the admin apps to this machine. Quiet hours (#439, open) only
+  ever lower an alert's priority, keep Priority 5 (the vault down,
+  backups failing two nights) sounding, and sound everything when the
+  setting cannot be read. A note under For Account 1. Item 38 stays open
+  until #439 merges. No code change needed.
+
+- **Round 44 (item 41, the proxy's CrowdSec start script):** the bouncer
+  key goes into the bouncer's config inside the proxy's container and is
+  never echoed. N21, Low, left open as a decision: NPM's nginx.conf trusts
+  a client-address header from every private network (read from its
+  source: `set_real_ip_from` 10/8, 172.16/12, 192.168/16), and our
+  `server_proxy.conf` makes it `CF-Connecting-IP`, so a device at home or
+  on the tailnet can be any address to the proxy, CrowdSec, and the apps.
+  Trusting it from the tunnel alone needs cloudflared at a fixed address
+  (or its own listener), a change to every install's network: for the
+  owner.
+
+- **Round 45 (item 42, crash notes, read through):** a crash note is the
+  header and Go's own report (goroutine stacks, arguments as addresses,
+  not values); `homelab report` includes the newest one, and the whole
+  report goes through `redact`; no phone method serves it. Notes and job
+  logs are 0644 in a 0755 `scripts/logs`, readable by another account on
+  the same computer (Low): a note under For Account 2. No code change.
+
+- **Round 46 (items 39's rest and 43, read through):** the weekly
+  summary carries the disks' free space, the backups, the apps' state,
+  the savings figure, and Finances' lines, which honour Hide amounts since
+  N20; the restart-loop alert's log lines are redacted since N15; the
+  morning line is Status's own and goes to no phone. The kit's fixed
+  `<name>.kit-tmp` and `.local` names could be turned into links only by
+  someone who can write into the homelab folder already. No code change.
+  Left open: 28 (#424), 29 and 30 (their PRs), 32 (not built yet), 38
+  (#439), and N21 (the owner's decision).
+- **Round 47 (#446, the welcome sheet, read on its PR):** the sheet for
+  the fridge holds each app's name, address, phone app, and a QR code of
+  the address, never the sign-in link or a password; the template escapes
+  every name, and its one raw value is the QR image, taken only after its
+  fixed `data:image/svg+xml;base64,` prefix is checked. Written 0600 in
+  `data/people` beside the welcome page, named by a username round 3
+  checked, and removed with the person. Fine as it is.
+
+- **Round 48 (item 28, the Apple client, read on draft #424):** the
+  device token is kept in the Keychain as `WhenUnlockedThisDeviceOnly`,
+  never synced, and read for each request; it goes only to the origin it
+  was paired with (each request and each final URL checked), redirects
+  are refused, sessions are ephemeral with App Transport Security fully on
+  and https only (localhost excepted on the Mac), and the logs never
+  carry a token or a code. No widget, notification, or Live Activity
+  shows anything, and the screen is covered whenever the app is not in
+  front. Fine as it is on the draft; item 28 stays open until it merges.
+  Its branch, `claude/hopeful-turing-bfcknh`, matches no lane (lanes.md
+  Rule 1): for the owner.
+
+- **Round 49 (`make security` on the batch):** gosec flagged N19's own
+  probe (G704: a request built from `.env`'s port). Fixed, not quieted:
+  the question is now asked only at `127.0.0.1:<port>` (Calibre-Web's
+  carries its default login, which must go nowhere else), and the probe
+  lives in `internal/claim`, as the other app probes live in internal
+  packages; `TestAskedOnlyOnThisMachine` holds the loopback rule. gosec
+  and npm audit clean; govulncheck could not reach vuln.go.dev from this
+  session (CI's security job runs it).
+
+- **Round 50 (N19 tried on Docker 29.9):** each claim question asked of
+  the real app, fresh, here: Komga's `/api/v1/claim` said
+  `{"isClaimed":false}`, then `true` once claimed; Audiobookshelf 2.37.2's
+  `/status` said `"isInit":false`; Navidrome's `/app/` page held
+  `firstTime\":true`, which the pattern reads; a new Calibre-Web sends the
+  default login to its setup page (302), held back as it should be. Found
+  on the way: Calibre-Web, asked too often, turns every sign-in away (429)
+  for a while, which the check read as "its default login still works";
+  it now says it cannot tell yet (still held back). Immich not tried: its
+  images come from ghcr.io, whose downloads are blocked from this session.
+
+- **Round 51 (Account 2's note: a removed phone comes back; N22):**
+  confirmed and written up in docs/Security.md as N22 (Medium), and under
+  For Account 2 with the test that shows it. `Lookup` reads phones.json,
+  then saves it whole when a phone is due a last-seen time; `Remove`,
+  `SetCanChange`, and `SetFinances` from another process in between are
+  saved over (`Store.mu` is one process's). A throwaway test, two stores
+  on one file with the first's `Now` removing the phone through the
+  second, failed: the removed token still looked up. Not fixed here: it
+  is storage code, Account 2's to fix first. Item 38 (quiet hours, #439)
+  read on main: a serious alert (priority 5) sounds at any hour, an
+  unreadable setting sounds everything, and the night only lowers, so no
+  setting silences what matters; done (the dying disk and failed bans
+  not being priority 5 stay under For Account 1). Read through as they
+  merged, no change: #444 (removes only `~/.music-cleanup/venv`, a link
+  there removed as a link), #449 and #450 (the page only), #451 (read
+  aloud through `textContent`), #452 (the phone's icons and colours,
+  fixed files), #442 (dead code out, Finances saved under a lock), and
+  #453 (the phone offline: its service worker keeps only the page's own
+  files, never `/api/` or the calendar; Status and the three answers it
+  is drawn with are kept, never Finances, and cleared on a 401; one note
+  under For Account 1). `make security`: gosec (both modules) and npm
+  audit clean; govulncheck still cannot reach vuln.go.dev from this
+  session (CI's security job runs it). Backlog grown by 11 (items 44 to
+  54), as 4 were open.
+
+- **Round 52 (item 29, phones that expire, #455 on main; N23):** a
+  phone's `Until` is checked in `load()` against the clock on every
+  lookup, so a phone past it makes no change and sees no Finances from
+  its next request; a stale copy saved by another process (N22) still
+  carries `Until`, so the next read takes the permissions away again,
+  and N22 cannot bring an expired permission back. A wall screen keeps
+  its money card, as it should. The app and `homelab phone until` both
+  go through `SetUntil`. Fine as it is (one wording note under For
+  Account 1). Found on the way, **N23 (Medium)**: `/api/events` looked
+  the phone up only when the stream opened, and its half-minute comment
+  kept it open for good, so a removed phone kept getting every Status
+  change. Fixed: looked up again every 5 seconds while it follows, the
+  stream ended once it is not paired. `TestARemovedPhonesStreamEnds`
+  failed before. #455 also makes `load()` save when a phone's time is
+  up, so readers write too: added to N22's note for Account 2.
+
+- **Round 53 (item 30, the update window, read on #457 before it
+  merged):** `ParseDays` takes only weekdays (three letters or more), and
+  an empty or seven-day list is every night, so neither a typo nor a
+  crafted `data/update-days.json` (one a move file brings) can hold an
+  app for more than 6 days: an app is never left out of every night.
+  `SaveDays` writes under `lockedfile.Update`. A phone changes the window
+  through `SetAppSetting`, which needs Can make changes, and checks the
+  app is a container app before running a fixed `homelab updates days`
+  command; `homelab update <app>` by name still updates it on any day.
+  Fine as it is; the record is still written 0644 on #457 (the note
+  under For Account 1 stands), and a window still holds a security
+  release (also there). Re-read if #457 changes before it merges.
+
+## For Account 1
+
+- **The update window's record is written 0644**
+  (`claude/feature-update-window`, `updates.SaveDays`): the other records
+  the homelab writes moved to 0600 today (#431–#433). Nothing secret is
+  in it; 0600 keeps it with the rest.
+- **Quiet hours and a dying disk** (#439): a drive whose SMART report
+  says it is failing, and CrowdSec's bans no longer reaching the proxy,
+  are not Priority 5, so at night they arrive without a sound. Both are
+  the kind of thing worth waking for; worth a look.
+- **A window holds a security release too:** Vaultwarden set to Sundays
+  takes a security fix up to 6 days late. The roadmap's own example
+  ("Vaultwarden at once when a security release comes out") is not built;
+  worth saying on the app's page when a password app gets a window.
+- **A phone removed while away keeps its last Status** (#453,
+  web/dist/companion.js): the kept Status goes only when the computer
+  answers 401, so a phone removed while it is away from home (lost, say)
+  shows Status as it last was until it next reaches the homelab. It is
+  what the phone had already seen, and no Finances; the comment's "all
+  of it goes when the phone is unpaired" could say "once it learns it
+  was removed". Worth a line on the Phones page's Remove.
+- **`homelab phone until` with a huge number** (#455, `parseFor`):
+  `999999999999w` overflows the duration and lands in 1848, so the phone
+  only looks at once (the safe way) while the command says it "may do
+  more than look until" a date long past. A cap (a year, say) would say
+  so plainly.
+
+## For Account 2
+
+- **N22: a phone removed on the computer can come back** (your note in
+  maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
+  next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
+  `internal/companion/devices.go` reads `data/phones.json`, and when a
+  phone is due a last-seen time saves the whole store a moment later;
+  `Remove`, `SetCanChange`, and `SetFinances` run in another process
+  (`homelab phone`, the app) and save it the same way. The test that
+  shows it, which failed here: pair a phone through one `NewStore(path)`,
+  then make a second `NewStore(path)` whose `Now` (called between
+  `Lookup`'s read and its save) calls `first.Remove(name)` once and
+  returns an hour on; `second.Lookup(token)`, then
+  `NewStore(path).Lookup(token)` still finds the removed phone. The same
+  with `SetCanChange(name, false)` brings Can make changes back. Fix:
+  every change under `lockedfile.Update`, as `internal/stopped` does
+  (and so no shared `phones.json.tmp`). Since #455, `load()` itself
+  saves when a phone's `Until` has passed, so `Devices()` and `Phones()`
+  write too: they need the same lock. Account 3 ticks N22 once it
+  merges.
+- **`scripts/logs` is 0755 and its files 0644** (the agent's
+  `MkdirAll(h.logsDir(), 0o755)`, `crash.Watch`, `openJobLog`): another
+  account on the same computer can read every job log and crash note.
+  Nothing secret is meant to be in them, but they are the household's
+  diagnostics; 0700 for the folder (and 0600 for new files) keeps them to
+  this account. Show it with a test on the folder's and a note's mode.
+
+- (done: #434) **`data/restarts.json` is written in place, without a lock** (#427,
+  cmd/homelab/restartloop.go `stopRestartLoops`): `os.WriteFile`, 0644,
+  read and rewritten whole by each watchdog run. Two runs at once (the
+  agent's and the one after sleep, #422, or `homelab watchdog` by hand)
+  can lose a count, or a reader can see it half-written; the cost is a
+  restart loop noticed one run later, nothing more (no secret in it). A
+  test like `TestNotesAtOnceAreAllKept` (40 runs at once, count the
+  kept entries and check the mode) would show it; save it with
+  internal/lockedfile as started.json is.
