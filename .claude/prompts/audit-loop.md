@@ -859,6 +859,14 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   someone who can write into the homelab folder already. No code change.
   Left open: 28 (#424), 29 and 30 (their PRs), 32 (not built yet), 38
   (#439), and N21 (the owner's decision).
+- **Round 47 (#446, the welcome sheet, read on its PR):** the sheet for
+  the fridge holds each app's name, address, phone app, and a QR code of
+  the address, never the sign-in link or a password; the template escapes
+  every name, and its one raw value is the QR image, taken only after its
+  fixed `data:image/svg+xml;base64,` prefix is checked. Written 0600 in
+  `data/people` beside the welcome page, named by a username round 3
+  checked, and removed with the person. Fine as it is.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
