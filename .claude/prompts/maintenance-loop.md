@@ -10,6 +10,52 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 
 ---
 
+## The owner's new direction (Nov 6, 2026): read this first
+
+This section overrides **Your job** and **The order** below, wherever they disagree. `lanes.md` (rewritten the same day) wins over both.
+
+**The complaint:** dozens of releases, and the app is not much easier to use. Until now this lane was mostly invisible plumbing (one record moved under a lock per PR, each one a release). From today this lane owns **making every screen except Tidy Up and Finances clearly easier to use**, together with the reliability under them:
+- **Screens:** Setup and first run, Status, Choose and install, an app's page, Updates and release notes, Backups (restore, the recovery kit, the move), Settings (People, Phones, Domain, Devices on your tailnet, the rest), the menu bar and tray, and the phone's screens other than Finances.
+- **Code:** `web/src` outside `tidy`, `finances`, `screens/tidy.ts`, and `screens/finances.ts`; `app/`; `cmd/homelab` and `internal/*` outside `internal/media` and `internal/finance`.
+- **Not yours:** Tidy Up and Finances (Account 1), `apple-client/` (Account 4), security fixes (Account 3).
+
+**Pick one problem per round**, in this order:
+1. An open failure issue.
+2. The owner's complaints in `.claude/prompts/complaints.md` for your screens, top first.
+3. Account 3's usability findings under **For Account 2** in `audit-loop.md`.
+4. Your own walkthrough: do the household's task on the screen as each system, in light and dark, at 320px and with big text, against the fake backend (`app/preview/mock.js`, `node app/preview/shoot.mjs <shot>`), and fix the worst dead end.
+
+From **The order** below, keep only items 9, 10, 18, 20, 21, 22, 23 (a household can lose data or see a wrong state), and 27 once Account 3 has answered it. Every other open item there is **parked**: take one only when you are changing that code anyway.
+
+**Solve the problem whole:** everywhere it shows (every screen, the phone, the menu bar, the words in errors). A PR a household would not notice is not a round's work, unless it fixes a failure issue or lost data.
+
+**Prove it:**
+- a smoke case (`app/preview/shoot.mjs`) or Go test that fails on the old behaviour;
+- before-and-after screenshots, retaken for every screen you changed, linked in the PR body;
+- the keyboard and a screen reader still reach everything you touched;
+- `make check`, `make coverage`, and the smoke cases you touched, each judged by its exit code.
+
+**Ship:**
+- The PR's first line says what the household notices.
+- A CHANGELOG line under **Improved** (usability) or **Fixed** (failures).
+- At most 3 merges a day: put several small related fixes in one PR.
+
+**Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next.
+
+**The SQLite base (ADR-0022)** is built together with the first screen that needs it, after your first two usability fixes have merged: **What the homelab did**, a plain list on Status and on each app's page of what happened and why ("Restarted Immich at 03:12 because it stopped answering", "Updated Vaultwarden to 1.33", "Backed up 4.2 GB").
+- `modernc.org/sqlite` (pure Go), one file `data/homelab.db`, WAL mode.
+- Modes: the folder 0700; the database and its `-wal` and `-shm` files 0600.
+- Each table keeps a limit (by age or count) from day one.
+- Numbered migrations, and `TestEachReleasesFolderUpgrades` still passing.
+- The nightly backup copies it through SQLite's own backup.
+- Phones read it only through a look-only method in `serve.go`'s `phoneMethods`, with `phoneLog`'s redaction on every line.
+- Before merging, write under **For Account 3** what it stores and who can read it, and wait one round for Account 3's answer.
+- The Memory screen's samples come after.
+
+When this section has been folded into the rest of the file (rewrite **Your job** and **The order** to match, keeping **What the last sessions learned** and **Rules that never bend**), do that as one small PR of its own.
+
+---
+
 ## Standing rules
 
 These come before everything below; where they disagree with a later section, these win. `.claude/prompts/lanes.md` wins over all of this file.
