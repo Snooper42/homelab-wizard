@@ -53,17 +53,15 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 6, 2026, 04:05 UTC):
-- #446 *A printable welcome sheet* (`claude/feature-welcome-sheet`): open. Take it to merged first.
+**Open now** (Nov 6, 2026, 08:05 UTC):
+- #452 *Add to Home Screen, done right* (`claude/feature-home-screen`): open. Take it to merged first.
 - **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
 - Then these branches, built and pushed, each with its CHANGELOG line, tests with the failing-before proof, docs, a `#PRn` placeholder, and its PR text drafted (in the session's scratchpad, `pr-<name>.md`; write it again from the branch if that is gone). One at a time, in this order:
-  - `claude/feature-phone-quick-actions` (#PR25): a long press on a Status row on a phone that may make changes opens Open, Start, Restart, Stop, Stop for a while, Logs.
-  - `claude/feature-dot-shapes` (#PRn): *Shapes as well as colours*, a triangle for a dot that needs a look and a cross for one that's down (two CSS rules on `.dot.warn` and `.dot.bad`).
-  - `claude/feature-shortcuts-sheet` (#PRn): *A sheet of shortcuts*, ? on any screen or *Keyboard shortcuts* in ⌘K (`palette/Shortcuts.tsx`, mounted on `#keys`).
-  - `claude/feature-status-aloud` (#PRn): *Status read aloud*, one polite live region on Status (`#statusAloud`) reading each row's change in its own words.
-  - `claude/feature-update-window` (#PR15) and `claude/feature-phones-expire` (#PR16): **wait for #425** (Account 3), which changes `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (lanes.md Rule 2).
-- Not started, for later: *Memory pressure alert* (its Stop on the alert needs `serve.go`, while #425 has it); *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439, #445.
+  - `claude/feature-offline-status` (#PRn): *The last Status, offline*, `web/dist/sw.js` and the last Status kept by `companion.js`; with it, Status's overnight line no longer asks for a failing Backups over and over.
+  - `claude/feature-phones-expire` (#PR16): *Phones that expire*, For a day, a week or a month beside a phone in Settings › Phones, and `homelab phone until`. Main is merged in (through #449).
+  - `claude/feature-update-window` (#PR15): *An update window per app*. It changes one line of `docs/Automation.md`, which #448 (Account 3) claims: don't push or open it until #448 merges. Then merge main in again and open it.
+- Not started, for later: *Memory pressure alert* (its Stop on the alert needs `serve.go`, free since #425 merged); *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439, #445, #446, #447, #449, #450, #451.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.
@@ -158,6 +156,8 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 - Records the app writes itself (held, pinned, days, phones) go in `data/` through `internal/lockedfile` (a lock beside the file, the file replaced whole), not in `.env`, which is for what the owner sets. Don't add new app-written keys to `.env` (the owner's call, Nov 5).
 - If you use a git worktree anyway, copy `node_modules` into it. A symlink puts this machine's path into `web/dist/app.js`'s module comments.
 - Logs too long to read through the GitHub tools are saved to a file; search that file for `FAIL` rather than reading it whole. The proxy blocks GitHub's log storage host, so `curl` on a log URL fails.
+- `make check` doesn't run gosec or govulncheck: CI's *security* job does (`make security`). Run it before opening a PR that changes Go; #446's first push failed it on a `template.URL` (G203). `bin/gosec` stays after one `make security`, so later runs are quick.
+- In this container's real Docker, `docker stop` leaves an app *stopped*, which the watchdog takes as stopped by hand and never alerts about. To make an app down for a test, `docker pause` it: it keeps running and stops answering (#439).
 
 ## Rules that never bend
 

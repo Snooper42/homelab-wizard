@@ -107,6 +107,12 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Reco
 const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…', restart: 'Restarting…', update: 'Updating…', rollback: 'Rolling back…' };
 const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
+/** The dot and the words a row shows: what its button is doing while it works, else its state. */
+const rowWords = (a: api.AppStatus, p: AppListProps): [string, string] => {
+  const pend = p.pending[a.id];
+  return pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+};
+
 /** A link that opens in the browser. */
 /** The modifier key's name as each system says it: ⌥ (Option) on a Mac, Alt elsewhere. */
 const alt = (os: string) => (os === 'mac' ? '⌥' : 'Alt-');
@@ -248,9 +254,40 @@ interface MenuAt { id: string; x: number; y: number; from: Element | null }
 
 function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void; said?: string; say: (id: string, words: string) => void }) {
   const pend = p.pending[a.id];
-  // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
-  const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
+  // Its menu: on this computer, and on a phone that may make changes (a
+  // long press); never on a look-only phone or a wall screen, nor for an
+  // app not installed or run elsewhere.
+  // The phone's level is read when the finger is down: it can come after the rows were drawn, and change.
+  const phoneMay = () => { const c = document.documentElement.classList; return c.contains('can-change') && !c.contains('kiosk'); };
+  const menuable = a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  // A long press, as on the phone's own Home Screen: half a second held
+  // still opens the row's menu where the finger is, and the click that
+  // follows the press is not taken as opening the app's page. Listened for
+  // by name, so it works wherever touch events come, not only where the
+  // browser says it has a touchscreen.
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  const opener = useRef(openMenu);
+  opener.current = openMenu;
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || !menuable || !p.companion) return;
+    let at: { timer: number; x: number; y: number; opened: boolean } | null = null;
+    const stop = () => { if (at) clearTimeout(at.timer); at = null; };
+    const start = (e: TouchEvent) => {
+      if (!phoneMay() || (e.target as Element).closest('.rowmenu') || e.touches.length !== 1) return;
+      const t = e.touches[0], press = { x: t.clientX, y: t.clientY, opened: false, timer: 0 };
+      press.timer = window.setTimeout(() => { press.opened = true; opener.current(press.x, press.y); }, 500);
+      at = press;
+    };
+    const move = (e: TouchEvent) => { const t = e.touches[0]; if (at && t && Math.hypot(t.clientX - at.x, t.clientY - at.y) > 10) stop(); };
+    const end = (e: TouchEvent) => { if (at?.opened) e.preventDefault(); stop(); };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', stop);
+    return () => { stop(); el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', stop); };
+  }, [menuable, p.companion]);
   // ⌥-click on its address: copied, as the menu's Copy address does.
   const copy = (url: string) => { p.on.menu.copy(url).then(() => say(a.id, 'Address copied'), () => say(a.id, 'Could not copy the address')); };
   const close = (refocus?: boolean) => {
@@ -259,16 +296,16 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
     if (refocus && from?.isConnected && from !== document.body) from.focus();
   };
   // Clicked and not confirmed yet: what it is doing, at once.
-  const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+  const [cls, words] = rowWords(a, p);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   const changed = changedSince(a, p.seen ?? null);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
-    <tr aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
+    <tr ref={rowRef} aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
       onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu, .hovers')) p.on.page(a); } : undefined}
-      onContextMenu={menuable ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
-      onKeyDown={menuable ? (e) => {
+      onContextMenu={menuable && (!p.companion || phoneMay()) ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
+      onKeyDown={menuable && !p.companion ? (e) => {
         // Shift+F10 and the context-menu key: under the app's name.
         if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.rowmenu')) return;
         e.preventDefault();
@@ -559,7 +596,8 @@ document.addEventListener('keydown', (e) => {
   const t = e.target as Element;
   if (status.querySelector('.menu:not([hidden])')) return;
   if (e.key === 'Escape' && filter.on && !t.closest?.('.filterbox')) { clearFilter(); return; }
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  // ? is the keyboard shortcuts' (app.ts), not a letter to filter by.
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ' || e.key === '?') return;
   if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
   e.preventDefault();
   if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
@@ -606,6 +644,30 @@ function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 
+// Status read aloud: a screen reader hears each row's change as it is drawn,
+// a job's step as well as its end (Vikunja: Restarting…, then Vikunja:
+// Running), and an app that goes down while Status is open. The words are
+// the row's own; apps that change to the same words are said together. Not
+// on the first draw, nor while Status is not the screen shown.
+const heard = new Map<string, string>();
+let heardOnce = false;
+const listed = (names: string[]) => (names.length <= 5 ? names.slice(0, -1).join(', ') + (names.length > 1 ? ' and ' : '') + names[names.length - 1] : `${names.slice(0, 4).join(', ')} and ${names.length - 4} more`);
+function sayChanges(p: AppListProps) {
+  const now = new Map<string, [string, string]>();
+  for (const g of p.groups) for (const a of g.apps) now.set(a.id, [a.name, rowWords(a, p)[1]]);
+  const changed = new Map<string, string[]>();
+  if (heardOnce) for (const [id, [name, words]] of now) { const was = heard.get(id); if (was !== undefined && was !== words) changed.set(words, [...(changed.get(words) || []), name]); }
+  heard.clear();
+  for (const [id, [, words]] of now) heard.set(id, words);
+  heardOnce = true;
+  const el = document.getElementById('statusAloud');
+  if (!changed.size || !el || !document.getElementById('status')?.classList.contains('active')) return;
+  const text = [...changed].map(([words, names]) => `${listed(names)}: ${words}`).join('. ');
+  // Emptied first, so the same words said again (a second restart) are heard again.
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = text; });
+}
+
 export function AppList(p: AppListProps) {
   const f = useFold();
   const [menu, setMenu] = useState<MenuAt | null>(null);
@@ -613,6 +675,7 @@ export function AppList(p: AppListProps) {
   const [said, setSaid] = useState<{ id: string; words: string } | null>(null);
   useEffect(() => { if (!said) return; const t = setTimeout(() => setSaid(null), 3000); return () => clearTimeout(t); }, [said]);
   const say = (id: string, words: string) => setSaid({ id, words });
+  useEffect(() => sayChanges(p));
   const q = useFilter().text;
   const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.

@@ -500,12 +500,12 @@
     const done = counted.filter((s3) => s3.state === "done").length;
     return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
   }
-  function Fold({ id: id2, cls, title, names: names3, shown: shown5, toggle }) {
+  function Fold({ id: id2, cls, title, names: names4, shown: shown5, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown5 && names3 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names3 })
+        !shown5 && names4 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names4 })
       ] }),
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
@@ -557,7 +557,7 @@
       showDone && done.map((s3, i3) => row(s3, i3 + 1))
     ] });
   }
-  var mountChecklist = (el2, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el2);
+  var mountChecklist = (el3, props) => R(/* @__PURE__ */ u3(Checklist, { ...props }), el3);
 
   // web/src/format.ts
   var dollars = (v3) => "$" + Math.round(v3).toLocaleString("en-US");
@@ -819,8 +819,8 @@
       )
     ] });
   }
-  function mountTiles(el2, props) {
-    R(/* @__PURE__ */ u3(Tiles, { ...props }), el2);
+  function mountTiles(el3, props) {
+    R(/* @__PURE__ */ u3(Tiles, { ...props }), el3);
   }
 
   // web/src/status/UndoNote.tsx
@@ -851,7 +851,7 @@
       }
     );
   }
-  var mountUndoNote = (el2, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el2);
+  var mountUndoNote = (el3, p3) => R(p3 && /* @__PURE__ */ u3(UndoNote, { ...p3 }), el3);
 
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
@@ -1692,8 +1692,8 @@
       ] }, b2.date + b2.name)) })
     ] });
   }
-  function mountWallCard(el2, w3) {
-    R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el2);
+  function mountWallCard(el3, w3) {
+    R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el3);
   }
 
   // web/src/parts/Row.tsx
@@ -1896,11 +1896,11 @@
       /* @__PURE__ */ u3("p", { class: "muted", children: "The same summary reaches your phone on Sundays once alerts are set up." })
     ] });
   }
-  var mountWatchdog = (el2, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el2);
-  var mountProtection = (el2, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el2);
-  var mountAlerts = (el2, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el2);
-  var mountStorage = (el2, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el2);
-  var mountWeek = (el2, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el2);
+  var mountWatchdog = (el3, props) => R(/* @__PURE__ */ u3(Watchdog, { ...props }), el3);
+  var mountProtection = (el3, props) => R(/* @__PURE__ */ u3(Protection, { ...props }), el3);
+  var mountAlerts = (el3, props) => R(/* @__PURE__ */ u3(Alerts, { ...props }), el3);
+  var mountStorage = (el3, props) => R(/* @__PURE__ */ u3(Storage, { ...props }), el3);
+  var mountWeek = (el3, props) => R(/* @__PURE__ */ u3(Week, { ...props }), el3);
 
   // web/src/parts/Address.tsx
   function Address({ text: text2 }) {
@@ -2031,8 +2031,8 @@
           !native && running4 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
-          item("Back up now", pick(() => on2.backupNow())),
-          !native && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
+          !companion2 && item("Back up now", pick(() => on2.backupNow())),
+          !native && !companion2 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitemcheckbox", "aria-checked": !a3.quiet, onClick: pick(() => on2.alerts(a3, !!a3.quiet)), children: [
             "Tell me if it stops",
             /* @__PURE__ */ u3("span", { class: "check", "aria-hidden": "true", children: a3.quiet ? "" : "✓" })
           ] }),
@@ -2090,6 +2090,10 @@
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
+  var rowWords = (a3, p3) => {
+    const pend = p3.pending[a3.id];
+    return pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+  };
   var alt = (os) => os === "mac" ? "⌥" : "Alt-";
   var shift = (os) => os === "mac" ? "⇧" : "Shift-";
   function Link({ url, text: text2, open: open3, copy, os }) {
@@ -2219,8 +2223,52 @@
   }
   function Row2({ a: a3, p: p3, menu, setMenu, said, say }) {
     const pend = p3.pending[a3.id];
-    const menuable = !p3.companion && a3.state !== "missing" && a3.state !== "elsewhere";
+    const phoneMay = () => {
+      const c3 = document.documentElement.classList;
+      return c3.contains("can-change") && !c3.contains("kiosk");
+    };
+    const menuable = a3.state !== "missing" && a3.state !== "elsewhere";
     const openMenu2 = (x3, y3) => setMenu({ id: a3.id, x: x3, y: y3, from: document.activeElement });
+    const rowRef = A2(null);
+    const opener = A2(openMenu2);
+    opener.current = openMenu2;
+    h2(() => {
+      const el3 = rowRef.current;
+      if (!el3 || !menuable || !p3.companion) return;
+      let at2 = null;
+      const stop2 = () => {
+        if (at2) clearTimeout(at2.timer);
+        at2 = null;
+      };
+      const start = (e3) => {
+        if (!phoneMay() || e3.target.closest(".rowmenu") || e3.touches.length !== 1) return;
+        const t3 = e3.touches[0], press = { x: t3.clientX, y: t3.clientY, opened: false, timer: 0 };
+        press.timer = window.setTimeout(() => {
+          press.opened = true;
+          opener.current(press.x, press.y);
+        }, 500);
+        at2 = press;
+      };
+      const move = (e3) => {
+        const t3 = e3.touches[0];
+        if (at2 && t3 && Math.hypot(t3.clientX - at2.x, t3.clientY - at2.y) > 10) stop2();
+      };
+      const end = (e3) => {
+        if (at2?.opened) e3.preventDefault();
+        stop2();
+      };
+      el3.addEventListener("touchstart", start, { passive: true });
+      el3.addEventListener("touchmove", move, { passive: true });
+      el3.addEventListener("touchend", end);
+      el3.addEventListener("touchcancel", stop2);
+      return () => {
+        stop2();
+        el3.removeEventListener("touchstart", start);
+        el3.removeEventListener("touchmove", move);
+        el3.removeEventListener("touchend", end);
+        el3.removeEventListener("touchcancel", stop2);
+      };
+    }, [menuable, p3.companion]);
     const copy = (url) => {
       p3.on.menu.copy(url).then(() => say(a3.id, "Address copied"), () => say(a3.id, "Could not copy the address"));
     };
@@ -2229,7 +2277,7 @@
       setMenu(null);
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
-    const [cls, words4] = pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+    const [cls, words4] = rowWords(a3, p3);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     const changed3 = changedSince(a3, p3.seen ?? null);
     return (
@@ -2238,17 +2286,18 @@
       /* @__PURE__ */ u3(
         "tr",
         {
+          ref: rowRef,
           "aria-busy": pend && !pend.failed ? true : void 0,
           class: (a3.state !== "missing" ? "topage" : "") + (menu?.id === a3.id ? " menued" : "") || void 0,
           onClick: a3.state !== "missing" ? (e3) => {
             if (!e3.target.closest("a, button, .rowmenu, .hovers")) p3.on.page(a3);
           } : void 0,
-          onContextMenu: menuable ? (e3) => {
+          onContextMenu: menuable && (!p3.companion || phoneMay()) ? (e3) => {
             if (e3.target.closest(".rowmenu")) return;
             e3.preventDefault();
             openMenu2(e3.clientX, e3.clientY);
           } : void 0,
-          onKeyDown: menuable ? (e3) => {
+          onKeyDown: menuable && !p3.companion ? (e3) => {
             if (!(e3.key === "ContextMenu" || e3.key === "F10" && e3.shiftKey) || e3.target.closest(".rowmenu")) return;
             e3.preventDefault();
             const r3 = e3.currentTarget.querySelector("strong").getBoundingClientRect();
@@ -2572,7 +2621,7 @@
       clearFilter();
       return;
     }
-    if (e3.metaKey || e3.ctrlKey || e3.altKey || e3.key.length !== 1 || e3.key === " ") return;
+    if (e3.metaKey || e3.ctrlKey || e3.altKey || e3.key.length !== 1 || e3.key === " " || e3.key === "?") return;
     if (t3.closest?.("input, textarea, select, [contenteditable], [role=menu], dialog, .sheet")) return;
     e3.preventDefault();
     if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
@@ -2593,9 +2642,9 @@
     _2(() => {
       if (!focusBox || !box.current) return;
       focusBox = false;
-      const el2 = box.current;
-      el2.focus();
-      el2.setSelectionRange(el2.value.length, el2.value.length);
+      const el3 = box.current;
+      el3.focus();
+      el3.setSelectionRange(el3.value.length, el3.value.length);
     });
     if (!f4.on) return null;
     const said = !f4.text.trim() ? "" : n3.n ? `${n3.n} of ${n3.of} ${n3.of === 1 ? "app" : "apps"}` : "No app has that name";
@@ -2634,6 +2683,28 @@
     const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id] && !keptRestarting(held3[a3.id]));
     return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
+  var heard = /* @__PURE__ */ new Map();
+  var heardOnce = false;
+  var listed = (names4) => names4.length <= 5 ? names4.slice(0, -1).join(", ") + (names4.length > 1 ? " and " : "") + names4[names4.length - 1] : `${names4.slice(0, 4).join(", ")} and ${names4.length - 4} more`;
+  function sayChanges(p3) {
+    const now = /* @__PURE__ */ new Map();
+    for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
+    const changed3 = /* @__PURE__ */ new Map();
+    if (heardOnce) for (const [id2, [name, words4]] of now) {
+      const was = heard.get(id2);
+      if (was !== void 0 && was !== words4) changed3.set(words4, [...changed3.get(words4) || [], name]);
+    }
+    heard.clear();
+    for (const [id2, [, words4]] of now) heard.set(id2, words4);
+    heardOnce = true;
+    const el3 = document.getElementById("statusAloud");
+    if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
+    const text2 = [...changed3].map(([words4, names4]) => `${listed(names4)}: ${words4}`).join(". ");
+    el3.textContent = "";
+    requestAnimationFrame(() => {
+      el3.textContent = text2;
+    });
+  }
   function AppList(p3) {
     const f4 = useFold();
     const [menu, setMenu] = d2(null);
@@ -2644,6 +2715,7 @@
       return () => clearTimeout(t3);
     }, [said]);
     const say = (id2, words4) => setSaid({ id: id2, words: words4 });
+    h2(() => sayChanges(p3));
     const q2 = useFilter().text;
     const open3 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open3 : f4.picked, [label]: !open3[label] } });
@@ -2677,14 +2749,14 @@
     const on2 = useFilter().on;
     return /* @__PURE__ */ u3(S, { children: on2 ? /* @__PURE__ */ u3(FilterBox, {}) : /* @__PURE__ */ u3("button", { id: "statusAll", class: "linkbtn", onClick: () => setFold({ all: !f4.all, picked: {} }), children: f4.all ? "Fold them again" : "Show every app" }) });
   }
-  function mountAppList(el2, props) {
-    R(/* @__PURE__ */ u3(AppList, { ...props }), el2);
+  function mountAppList(el3, props) {
+    R(/* @__PURE__ */ u3(AppList, { ...props }), el3);
   }
-  function mountShowAll(el2) {
-    R(/* @__PURE__ */ u3(ShowAll, {}), el2);
+  function mountShowAll(el3) {
+    R(/* @__PURE__ */ u3(ShowAll, {}), el3);
   }
-  function clearAppList(el2) {
-    R(null, el2);
+  function clearAppList(el3) {
+    R(null, el3);
   }
 
   // web/src/store.ts
@@ -2815,18 +2887,18 @@
       /* @__PURE__ */ u3("span", { class: "muted", children: "Read it through, then share the file when asking for help. Email starts a message to HELPER_EMAIL and shows the file to attach." })
     ] });
   }
-  function mountStatusNote(el2, props) {
-    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el2);
+  function mountStatusNote(el3, props) {
+    R(/* @__PURE__ */ u3(StatusNote, { ...props }), el3);
   }
-  function mountReportActions(el2, props) {
-    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el2);
+  function mountReportActions(el3, props) {
+    R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el3);
   }
 
   // web/src/parts/Sheet.tsx
   var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])";
   var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
-  var stops = (sheet) => [...sheet.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
-  var closer = (sheet) => [...sheet.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel|Hide)$/.test(b2.textContent.trim()));
+  var stops = (sheet2) => [...sheet2.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
+  var closer = (sheet2) => [...sheet2.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel|Hide)$/.test(b2.textContent.trim()));
   var listening = false;
   function keys() {
     if (listening) return;
@@ -2908,8 +2980,8 @@
       /* @__PURE__ */ u3("div", { id: "cliActions", class: "actions" })
     ] });
   }
-  function mountSheets(el2, closed) {
-    R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el2);
+  function mountSheets(el3, closed) {
+    R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el3);
   }
   function Buttons({ buttons }) {
     const [running4, setRunning] = d2(-1);
@@ -2967,8 +3039,8 @@
       /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" })
     ] });
   }
-  function mountSheet(el2, node) {
-    R(/* @__PURE__ */ u3(S, { children: node }), el2);
+  function mountSheet(el3, node) {
+    R(/* @__PURE__ */ u3(S, { children: node }), el3);
   }
 
   // web/src/core.ts
@@ -2980,11 +3052,11 @@
   var $1 = (sel2, root = document) => root.querySelector(sel2);
   var errorTimer = 0;
   function showError(e3) {
-    const el2 = $2("error");
-    el2.textContent = String(e3 && e3.message || e3);
-    el2.hidden = false;
+    const el3 = $2("error");
+    el3.textContent = String(e3 && e3.message || e3);
+    el3.hidden = false;
     clearTimeout(errorTimer);
-    errorTimer = setTimeout(() => el2.hidden = true, 6e3);
+    errorTimer = setTimeout(() => el3.hidden = true, 6e3);
   }
   var platform = navigator.platform || navigator.userAgent;
   var osName = /Mac/.test(platform) ? "mac" : /Win/.test(platform) ? "windows" : "linux";
@@ -3097,8 +3169,8 @@
     if (hidden2 && bg) draw();
   });
   function draw() {
-    const el2 = $2("bgJob");
-    if (el2) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el2);
+    const el3 = $2("bgJob");
+    if (el3) R(hidden2 && bg ? /* @__PURE__ */ u3(Chip, { b: bg }) : null, el3);
   }
 
   // web/src/status/CrashNote.tsx
@@ -3131,9 +3203,9 @@
       ] })
     ] });
   }
-  function mountCrashNote(el2, props) {
-    el2.hidden = !props.crash;
-    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el2);
+  function mountCrashNote(el3, props) {
+    el3.hidden = !props.crash;
+    R(/* @__PURE__ */ u3(CrashNote, { ...props }), el3);
   }
 
   // web/src/status/Usage.tsx
@@ -3184,9 +3256,9 @@
       /* @__PURE__ */ u3("p", { class: "muted", children: heavy.length ? `${heavy.map((s3) => nameOf(s3.name)).join(" and ")} ${heavy.length === 1 ? "is" : "are"} busy. Some apps work hard for a while after you add files (Immich reads new photos); if it lasts, stop what you don’t use. On battery, the battery saver pauses the heaviest apps.` : "Nothing is working hard. On battery, the battery saver pauses the heaviest apps." })
     ] });
   }
-  function mountUsage(el2, props) {
-    el2.hidden = !props.stats.some((s3) => s3.cpu >= 1);
-    R(el2.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el2);
+  function mountUsage(el3, props) {
+    el3.hidden = !props.stats.some((s3) => s3.cpu >= 1);
+    R(el3.hidden ? null : /* @__PURE__ */ u3(Usage, { ...props }), el3);
   }
 
   // web/src/settings/Form.tsx
@@ -3195,13 +3267,13 @@
     const words4 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
-      const here = pg.name === view.page;
+      const here2 = pg.name === view.page;
       for (const s3 of pg.items) {
         const more = pg.kind === "general" && !wanted.has(s3.key);
-        if (here && more) out.pageMore++;
+        if (here2 && more) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here && (view.showAll || !more);
+        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -3288,11 +3360,11 @@
       pg.items.map((s3) => /* @__PURE__ */ u3(Row3, { s: s3, p: p3, value: edits[s3.key], hidden: !show3.keys.has(s3.key), edit }, s3.key))
     ] }, pg.name)) });
   }
-  function mountForm(el2, props, version) {
-    R(/* @__PURE__ */ u3(Form, { ...props }, version), el2);
+  function mountForm(el3, props, version) {
+    R(/* @__PURE__ */ u3(Form, { ...props }, version), el3);
   }
-  function formProblem(el2, problem) {
-    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el2);
+  function formProblem(el3, problem) {
+    R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el3);
   }
 
   // web/src/settings/People.tsx
@@ -3391,8 +3463,8 @@
     ] });
   }
   function People({ people, pocket, apps, log: log2, on: on2 }) {
-    const here = people.filter(active);
-    const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here.length ? `${here.length} in the household` : "just you so far" }) });
+    const here2 = people.filter(active);
+    const head = /* @__PURE__ */ u3(CardHead, { title: "People", children: /* @__PURE__ */ u3("span", { class: "muted", children: here2.length ? `${here2.length} in the household` : "just you so far" }) });
     const why = /* @__PURE__ */ u3("p", { class: "muted", children: "Each person gets one sign-in for the apps (with a passkey, no password to remember) and a welcome page with their apps and the phone apps to install. Jellyfin and Navidrome have a password of their own, for Infuse and music apps: with their keys in Settings, the homelab makes those accounts too, and Reset password gives a new one." });
     if (!pocket) {
       return /* @__PURE__ */ u3(S, { children: [
@@ -3407,12 +3479,12 @@
     return /* @__PURE__ */ u3(S, { children: [
       head,
       why,
-      !!here.length && /* @__PURE__ */ u3(Rows, { children: here.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2 }, p3.username)) }),
-      /* @__PURE__ */ u3(AddPerson, { apps, open: !here.length, on: on2 }),
+      !!here2.length && /* @__PURE__ */ u3(Rows, { children: here2.map((p3) => /* @__PURE__ */ u3(Person, { p: p3, on: on2 }, p3.username)) }),
+      /* @__PURE__ */ u3(AddPerson, { apps, open: !here2.length, on: on2 }),
       /* @__PURE__ */ u3("pre", { id: "peopleLog", hidden: !log2, children: log2 })
     ] });
   }
-  var mountPeople = (el2, props) => R(/* @__PURE__ */ u3(People, { ...props }), el2);
+  var mountPeople = (el3, props) => R(/* @__PURE__ */ u3(People, { ...props }), el3);
 
   // web/src/settings/Phones.tsx
   var financesChoices = [["", "No Finances"], ["view", "Sees Finances"], ["edit", "Changes Finances"]];
@@ -3509,7 +3581,7 @@
       } }) : /* @__PURE__ */ u3("div", { id: "pairing", hidden: true })
     ] });
   }
-  var mountPhones = (el2, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el2);
+  var mountPhones = (el3, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el3);
 
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
@@ -3608,7 +3680,7 @@
       result === "failed" && /* @__PURE__ */ u3("p", { id: "uninstallFailed", class: "bad", children: "Some of it could not be removed: the log says which. Fix that, then run it again; what already went stays gone." })
     ] });
   }
-  var mountUninstall = (el2, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el2);
+  var mountUninstall = (el3, props) => R(/* @__PURE__ */ u3(Uninstall, { ...props }), el3);
 
   // web/src/settings/Nav.tsx
   function PageButton({ name, active: active2, counts, pick, inFold }) {
@@ -3669,8 +3741,8 @@
       ])
     ] });
   }
-  function mountNav(el2, props) {
-    R(/* @__PURE__ */ u3(Nav, { ...props }), el2);
+  function mountNav(el3, props) {
+    R(/* @__PURE__ */ u3(Nav, { ...props }), el3);
   }
 
   // web/src/parts/Segmented.tsx
@@ -3768,8 +3840,8 @@
       /* @__PURE__ */ u3("p", { class: "muted look-help", children: "The icon in the menu bar (the system tray on Windows and Linux) takes its new colour within a few seconds." })
     ] });
   }
-  function mountAppearance(el2, props) {
-    R(/* @__PURE__ */ u3(Appearance, { ...props }), el2);
+  function mountAppearance(el3, props) {
+    R(/* @__PURE__ */ u3(Appearance, { ...props }), el3);
   }
 
   // web/src/differs.ts
@@ -3801,10 +3873,10 @@
   var written = /* @__PURE__ */ new WeakMap();
   function mediaRules() {
     const out = [];
-    for (const sheet of document.styleSheets) {
+    for (const sheet2 of document.styleSheets) {
       let rules;
       try {
-        rules = sheet.cssRules;
+        rules = sheet2.cssRules;
       } catch {
         continue;
       }
@@ -4085,9 +4157,9 @@
       ] })
     ] });
   }
-  var mountHost = (el2, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el2);
-  var mountRuntime = (el2, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el2);
-  var mountNewHomelab = (el2, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el2);
+  var mountHost = (el3, props) => R(/* @__PURE__ */ u3(Host, { ...props }), el3);
+  var mountRuntime = (el3, props) => R(/* @__PURE__ */ u3(Runtime, { ...props }), el3);
+  var mountNewHomelab = (el3, props) => R(/* @__PURE__ */ u3(NewHomelab, { ...props }), el3);
 
   // web/src/setup/Health.tsx
   function facts({ h: h3, i: i3, machine }) {
@@ -4155,8 +4227,8 @@
       stopped2 && /* @__PURE__ */ u3(StartAgent, { id: "startAgentLine", start: p3.startAgent })
     ] });
   }
-  var mountHealthTiles = (el2, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el2);
-  var mountHealthLine = (el2, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el2);
+  var mountHealthTiles = (el3, props) => R(props && /* @__PURE__ */ u3(HealthTiles, { ...props }), el3);
+  var mountHealthLine = (el3, props) => R(props && /* @__PURE__ */ u3(HealthLine, { ...props }), el3);
 
   // web/src/parts/Foot.tsx
   function Foot({ system, version, update, openSetup }) {
@@ -4169,8 +4241,8 @@
       update && /* @__PURE__ */ u3(ActionLink, { id: "footUpdate", cls: "update", title: update === "ready" ? "Show the update" : "The line at the top follows it", onClick: openSetup, children: update === "ready" ? "● Update ready" : "● Updating…" })
     ] });
   }
-  function mountFoot(el2, props) {
-    R(/* @__PURE__ */ u3(Foot, { ...props }), el2);
+  function mountFoot(el3, props) {
+    R(/* @__PURE__ */ u3(Foot, { ...props }), el3);
   }
 
   // web/src/parts/Empty.tsx
@@ -4364,19 +4436,19 @@
       })
     ] });
   }
-  var mountStarters = (el2, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el2);
-  var mountBundles = (el2, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el2);
-  var mountGroups = (el2, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el2);
+  var mountStarters = (el3, props) => R(/* @__PURE__ */ u3(Starters, { ...props }), el3);
+  var mountBundles = (el3, props) => R(/* @__PURE__ */ u3(Bundles, { ...props }), el3);
+  var mountGroups = (el3, props) => R(/* @__PURE__ */ u3(Groups, { ...props }), el3);
   var planned = /* @__PURE__ */ new WeakSet();
-  var mountPlan = (el2, props) => {
-    if (!planned.has(el2)) {
-      el2.replaceChildren();
-      planned.add(el2);
+  var mountPlan = (el3, props) => {
+    if (!planned.has(el3)) {
+      el3.replaceChildren();
+      planned.add(el3);
     }
-    R(/* @__PURE__ */ u3(Plan, { ...props }), el2);
+    R(/* @__PURE__ */ u3(Plan, { ...props }), el3);
   };
-  var mountInputs = (el2, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el2);
-  var catalogProblem = (el2, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el2);
+  var mountInputs = (el3, props) => R(/* @__PURE__ */ u3(Inputs, { ...props }), el3);
+  var catalogProblem = (el3, problem) => R(/* @__PURE__ */ u3("p", { class: "bad", children: problem }), el3);
 
   // web/src/job/Apps.tsx
   var reached = {
@@ -4426,8 +4498,8 @@
       )
     ] }, u4.app)) });
   }
-  function mountJobApps(el2, apps) {
-    R(/* @__PURE__ */ u3(JobApps, { apps }), el2);
+  function mountJobApps(el3, apps) {
+    R(/* @__PURE__ */ u3(JobApps, { apps }), el3);
   }
 
   // web/src/choose/Started.tsx
@@ -4456,14 +4528,14 @@
       }) })
     ] });
   }
-  function mountStarted(el2, props) {
-    R(props && /* @__PURE__ */ u3(Started, { ...props }), el2);
+  function mountStarted(el3, props) {
+    R(props && /* @__PURE__ */ u3(Started, { ...props }), el3);
   }
-  function mountWiring(el2, props) {
-    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el2);
+  function mountWiring(el3, props) {
+    R(props && /* @__PURE__ */ u3(Wiring, { ...props }), el3);
   }
-  function mountCategories(el2, categories2) {
-    R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el2);
+  function mountCategories(el3, categories2) {
+    R(/* @__PURE__ */ u3(S, { children: categories2.map((c3) => /* @__PURE__ */ u3("option", { value: c3.id, children: c3.label }, c3.id)) }), el3);
   }
 
   // web/src/jobs.ts
@@ -4887,8 +4959,8 @@
       )
     ] });
   }
-  var mountUpdateLine = (el2, props) => R(props && /* @__PURE__ */ u3(UpdateLine, { ...props }), el2);
-  var mountUpdateSettings = (el2, props) => R(props && /* @__PURE__ */ u3(UpdateSettings, { ...props }), el2);
+  var mountUpdateLine = (el3, props) => R(props && /* @__PURE__ */ u3(UpdateLine, { ...props }), el3);
+  var mountUpdateSettings = (el3, props) => R(props && /* @__PURE__ */ u3(UpdateSettings, { ...props }), el3);
 
   // web/src/screens/updates.ts
   var state = null;
@@ -5780,8 +5852,8 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps;
     const others2 = known ? apps.filter((p3) => !mine.includes(p3)) : [];
-    const groups3 = pageGroups.map(([head, names3]) => ({ head, items: names3.filter((n3) => general.includes(n3)) }));
-    const named5 = new Set(pageGroups.flatMap(([, names3]) => names3));
+    const groups3 = pageGroups.map(([head, names4]) => ({ head, items: names4.filter((n3) => general.includes(n3)) }));
+    const named5 = new Set(pageGroups.flatMap(([, names4]) => names4));
     groups3[0].items.push(...general.filter((n3) => !named5.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
@@ -6016,18 +6088,18 @@
       /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: hide, children: "Hide until tomorrow" })
     ] });
   }
-  function mountOvernight(el2, n3) {
+  function mountOvernight(el3, n3) {
     const words4 = hiddenToday(n3.now) ? null : overnightWords(n3);
-    el2.hidden = !words4;
+    el3.hidden = !words4;
     const hide = () => {
       hiddenOn = today(Date.now());
       try {
         localStorage.setItem(key3, hiddenOn);
       } catch {
       }
-      mountOvernight(el2, n3);
+      mountOvernight(el3, n3);
     };
-    R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el2);
+    R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el3);
   }
 
   // web/src/backups/Backups.tsx
@@ -6291,11 +6363,11 @@
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: test, children: "Test Kopia's restore" }) })
     ] });
   }
-  var mountKopia = (el2, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el2);
-  var mountBackupTiles = (el2, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el2);
-  var mountCopyRows = (el2, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el2);
-  var mountVault = (el2, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el2);
-  var mountJobs = (el2, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el2);
+  var mountKopia = (el3, props) => R(props && /* @__PURE__ */ u3(KopiaLine, { ...props }), el3);
+  var mountBackupTiles = (el3, props) => R(/* @__PURE__ */ u3(BackupTiles, { ...props }), el3);
+  var mountCopyRows = (el3, props) => R(props && /* @__PURE__ */ u3(CopyRows, { ...props }), el3);
+  var mountVault = (el3, props) => R(/* @__PURE__ */ u3(Vault, { ...props }), el3);
+  var mountJobs = (el3, props) => R(/* @__PURE__ */ u3(Jobs, { ...props }), el3);
 
   // web/src/screens/backups.ts
   var backupsData = store(() => go().Backups());
@@ -6681,18 +6753,18 @@
   }
   var wallAt = 0;
   async function showWall() {
-    const el2 = $2("wallCard");
+    const el3 = $2("wallCard");
     if (!document.documentElement.classList.contains("wallcard")) {
-      el2.hidden = true;
+      el3.hidden = true;
       return;
     }
-    if (!el2.hidden && Date.now() - wallAt < 5 * 6e4) return;
+    if (!el3.hidden && Date.now() - wallAt < 5 * 6e4) return;
     wallAt = Date.now();
     try {
-      mountWallCard(el2, await go().FinancesWall());
-      el2.hidden = false;
+      mountWallCard(el3, await go().FinancesWall());
+      el3.hidden = false;
     } catch {
-      el2.hidden = true;
+      el3.hidden = true;
     }
   }
   setInterval(() => {
@@ -7763,8 +7835,8 @@
       ] })
     ] });
   }
-  function mountAppPage(el2, props) {
-    R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el2);
+  function mountAppPage(el3, props) {
+    R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el3);
   }
 
   // web/src/screens/apppage.ts
@@ -9465,9 +9537,9 @@
     const ordered = groups3.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups3.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
     const submit = async (e3) => {
       e3.preventDefault();
-      const names3 = rows.map((r3) => r3.name.trim().toLowerCase());
-      const twice = names3.find((n3, i3) => n3 && names3.indexOf(n3) !== i3);
-      const wrong = names3.some((n3) => !n3) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
+      const names4 = rows.map((r3) => r3.name.trim().toLowerCase());
+      const twice = names4.find((n3, i3) => n3 && names4.indexOf(n3) !== i3);
+      const wrong = names4.some((n3) => !n3) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
       setProblem(wrong);
       if (wrong) return;
       const renamed = new Map(rows.filter((r3) => r3.was).map((r3) => [r3.was, r3.name.trim()]));
@@ -9525,7 +9597,7 @@
   }
   function BudgetsForm(props) {
     const { plan } = props;
-    const names3 = (props.categories || []).map((c3) => c3.name);
+    const names4 = (props.categories || []).map((c3) => c3.name);
     const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: text(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
@@ -9546,7 +9618,7 @@
       /* @__PURE__ */ u3("ul", { class: "catlist budgetlist", children: rows.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} category`, value: r3.category, onChange: (ev) => set2(i3, "category", ev.target.value), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "Pick a category" }),
-          [...new Set([...names3, r3.category].filter(Boolean))].map((n3) => /* @__PURE__ */ u3("option", { value: n3, children: n3 }, n3))
+          [...new Set([...names4, r3.category].filter(Boolean))].map((n3) => /* @__PURE__ */ u3("option", { value: n3, children: n3 }, n3))
         ] }),
         /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
@@ -9746,8 +9818,8 @@
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
   }
-  function mountFinanceSheet(el2, edit) {
-    R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el2);
+  function mountFinanceSheet(el3, edit) {
+    R(/* @__PURE__ */ u3(FinanceSheet, { edit }), el3);
   }
 
   // web/src/finances/ui/HideAmounts.tsx
@@ -9781,8 +9853,8 @@
       const p3 = plan.payments?.find((x3) => x3.id === e3.payment);
       return [p3?.name || e3.payment, e3.card ? "Card charge" : e3.amount >= 0 ? "Money in" : "Payment"];
     }
-    const names3 = (e3.people || []).map((id2) => plan.people?.find((x3) => x3.id === id2)?.name || id2);
-    return [names3.length ? `${names3.join(" and ")}'s pay` : "Pay", "Payday"];
+    const names4 = (e3.people || []).map((id2) => plan.people?.find((x3) => x3.id === id2)?.name || id2);
+    return [names4.length ? `${names4.join(" and ")}'s pay` : "Pay", "Payday"];
   }
   var accountName = (plan, id2) => id2 ? plan.accounts?.find((a3) => a3.id === id2)?.name || id2 : "";
   function aheadCsv(v3) {
@@ -10263,9 +10335,9 @@ ${pays}
     return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size}px`, height: `${size}px` }, children: [
       /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
         const len = Math.max(0, s3.value) / total * c3;
-        const el2 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
+        const el3 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
         run2 += len;
-        return el2;
+        return el3;
       }) }),
       /* @__PURE__ */ u3("div", { class: "fx-donutcenter", children: center })
     ] });
@@ -10702,7 +10774,7 @@ ${pays}
   }
 
   // web/src/finances/widgets/Homelab.tsx
-  var and = (names3) => names3.length < 3 ? names3.join(" and ") : `${names3.slice(0, -1).join(", ")}, and ${names3.at(-1)}`;
+  var and = (names4) => names4.length < 3 ? names4.join(" and ") : `${names4.slice(0, -1).join(", ")}, and ${names4.at(-1)}`;
   function HomelabWidget({ v: v3, replaced, keep: keep2 }) {
     const cancelled = v3.plan.cancelled || [];
     if (!replaced.length && !cancelled.length) return null;
@@ -10763,11 +10835,11 @@ ${pays}
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
-    const names3 = new Set(payments.flatMap((x3) => [flat2(x3.name), flat2(cleanPayee(x3.name))]));
+    const names4 = new Set(payments.flatMap((x3) => [flat2(x3.name), flat2(cleanPayee(x3.name))]));
     const brands2 = new Set(payments.map((x3) => brandOf(x3.institution, x3.name)).filter((b2) => b2 && b2 !== "none"));
     const inPlan = (s3) => {
       const b2 = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
-      return names3.has(flat2(s3.name)) || names3.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
+      return names4.has(flat2(s3.name)) || names4.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
     };
     const out = { add: [], have: [], off: [], odd: [] };
     const seen2 = /* @__PURE__ */ new Set();
@@ -10795,7 +10867,7 @@ ${pays}
     const add = (subs) => keep2({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
     const sorted = got.subs && sortWallos(got.subs, v3.plan);
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
-    const names3 = (list) => list.map((s3) => s3.name).join(", ");
+    const names4 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
       !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Wallos is running here. Bring in the subscriptions it keeps that the plan doesn't have yet; Wallos isn't changed." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
@@ -10828,7 +10900,7 @@ ${pays}
         !!(sorted.have.length || sorted.odd.length || sorted.off.length) && /* @__PURE__ */ u3("div", { class: "fx-wallosnotes", children: [
           !!sorted.have.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "In the plan already: ",
-            names3(sorted.have),
+            names4(sorted.have),
             "."
           ] }),
           !!sorted.odd.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
@@ -10838,7 +10910,7 @@ ${pays}
           ] }),
           !!sorted.off.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "Turned off in Wallos, so left out: ",
-            names3(sorted.off),
+            names4(sorted.off),
             "."
           ] })
         ] })
@@ -12349,8 +12421,8 @@ ${pays}
       card
     ] });
   }
-  function mountBalances(el2, v3, open3, toggle) {
-    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open3, toggle }) : null, el2);
+  function mountBalances(el3, v3, open3, toggle) {
+    R(v3 ? /* @__PURE__ */ u3(Balances, { v: v3, open: open3, toggle }) : null, el3);
   }
 
   // web/src/finances/widgets/ComingUp.tsx
@@ -12524,8 +12596,8 @@ ${pays}
   function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running4, group: group2, setGroup }) {
     return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running4 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
   }
-  function mountFinances(el2, props) {
-    R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el2);
+  function mountFinances(el3, props) {
+    R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
   }
 
   // web/src/screens/finances.ts
@@ -12898,11 +12970,11 @@ ${pays}
       }
       const bare = n2(scan?.posterless), asked = last(l3, "posters");
       if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
-        const names3 = scan?.posterless_list || [];
+        const names4 = scan?.posterless_list || [];
         out.push({
           kind: k3,
           title: `${count(bare, k3 === "tv" ? "show" : "film")} ${bare === 1 ? "has" : "have"} no poster in Jellyfin`,
-          sub: names3.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
+          sub: names4.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
           go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
         });
       }
@@ -13190,11 +13262,11 @@ ${pays}
       !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) })
     ] });
   }
-  function mountTidy(el2, props) {
-    R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el2);
+  function mountTidy(el3, props) {
+    R(/* @__PURE__ */ u3(TidyScreen, { ...props }), el3);
   }
-  function mountTidySheet(el2, c3, close3) {
-    R(/* @__PURE__ */ u3(ConfirmSheet, { c: c3, close: close3 }), el2);
+  function mountTidySheet(el3, c3, close3) {
+    R(/* @__PURE__ */ u3(ConfirmSheet, { c: c3, close: close3 }), el3);
   }
 
   // web/src/screens/tidy.ts
@@ -13385,6 +13457,106 @@ ${pays}
   }
   drawSheet();
 
+  // web/src/palette/Shortcuts.tsx
+  var names3 = {
+    choose: "Choose stacks",
+    status: "Status",
+    backups: "Backups",
+    setup: "Setup",
+    settings: "Settings",
+    finances: "Finances",
+    tidy: "Tidy Up"
+  };
+  function here(screen) {
+    switch (screen) {
+      case "status":
+        return [
+          [["a–z"], "Start typing an app’s name to show only the apps that match; Escape shows them all again"],
+          [["↑", "↓"], "In an app’s or a group’s menu, the item above or below"]
+        ];
+      case "choose":
+        return [[[mod + "F"], "Search the apps"]];
+      case "settings":
+        return [[[mod + "F"], "Search the settings"]];
+      case "finances":
+        return [
+          [["←", "→"], "On the calendar, the day before or after"],
+          [["↑", "↓"], "The week before or after"],
+          [["Page Up", "Page Down"], "The month before or after"],
+          [["Home", "End"], "The week’s first or last day"]
+        ];
+      default:
+        return [];
+    }
+  }
+  function everywhere() {
+    const lines = [
+      [["?"], "These shortcuts"],
+      [[mod + "K"], "The command palette: an app, a screen or a command by name"],
+      [isMac ? ["⌘R"] : ["Ctrl+R", "F5"], "Check the screen again"],
+      [[mod + "+", mod + "−", mod + "0"], "Bigger text, smaller, or the usual size"],
+      [[isMac ? "⌘⇧H" : "Ctrl+Shift+H"], "Hide every amount, or show them again"],
+      [[mod + "Z"], "Undo a stop, while its note shows"],
+      [isMac ? ["Shift+F10"] : ["Shift+F10", "Menu key"], "The menu of what has the focus: a screen in the sidebar, an app’s row, a group’s heading"],
+      [["Escape"], "Close a menu or a sheet"]
+    ];
+    if (!isMac) lines.push([["F1"], "The guide"]);
+    return lines;
+  }
+  var screens = () => [
+    [[mod + "1"], "Choose stacks"],
+    [[mod + "2"], "Status"],
+    [[mod + "3"], "Backups"],
+    [[mod + "4"], "Setup"],
+    [[mod + ","], "Settings"],
+    [[mod + "6"], "Finances"],
+    [[mod + "7"], "Tidy Up"]
+  ];
+  function Table({ lines }) {
+    return /* @__PURE__ */ u3("table", { class: "keys", children: /* @__PURE__ */ u3("tbody", { children: lines.map(([keys2, what2]) => /* @__PURE__ */ u3("tr", { children: [
+      /* @__PURE__ */ u3("th", { scope: "row", children: keys2.map((k3, i3) => /* @__PURE__ */ u3(S, { children: [
+        i3 > 0 && " ",
+        /* @__PURE__ */ u3("kbd", { children: k3 })
+      ] })) }),
+      /* @__PURE__ */ u3("td", { children: what2 })
+    ] }, what2)) }) });
+  }
+  function Shortcuts({ screen }) {
+    const mine = here(screen);
+    return /* @__PURE__ */ u3(Sheet, { id: "keysSheet", titleId: "keysTitle", children: [
+      /* @__PURE__ */ u3("h2", { id: "keysTitle", children: "Keyboard shortcuts" }),
+      mine.length > 0 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { children: [
+          "On ",
+          names3[screen]
+        ] }),
+        /* @__PURE__ */ u3(Table, { lines: mine })
+      ] }),
+      /* @__PURE__ */ u3("h3", { children: "Everywhere" }),
+      /* @__PURE__ */ u3(Table, { lines: everywhere() }),
+      /* @__PURE__ */ u3("h3", { children: "The screens" }),
+      /* @__PURE__ */ u3(Table, { lines: screens() }),
+      /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: closeShortcuts, children: "Close" }) })
+    ] });
+  }
+  var el = null;
+  var sheet = () => el?.querySelector("#keysSheet") || null;
+  function openShortcuts() {
+    const html = document.documentElement.classList;
+    if (onPhone() || html.contains("kiosk") || html.contains("sheet-open") || html.contains("palette-open")) return false;
+    el ||= document.getElementById("keys");
+    if (!el) return false;
+    const screen = document.querySelector(".screen.active")?.id || "";
+    R(/* @__PURE__ */ u3(Shortcuts, { screen }), el);
+    document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    sheet().hidden = false;
+    return true;
+  }
+  function closeShortcuts() {
+    const s3 = sheet();
+    if (s3) s3.hidden = true;
+  }
+
   // web/src/palette/commands.ts
   var words3 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   function match(list, query3) {
@@ -13428,6 +13600,9 @@ ${pays}
     if (!$2("fixIt").hidden) add({ id: "fixit", label: "Fix it", also: "repair what is wrong", run: onStatus(() => $2("fixIt").click()) });
     const fin = financesData.value;
     if (fin && !fin.readOnly) add({ id: "hide", label: fin.plan.hideAmounts ? "Show amounts" : "Hide amounts", hint: isMac ? "⌘⇧H" : "Ctrl+Shift+H", also: "money privacy blur", run: toggleHideAmounts });
+    if (!phone2) add({ id: "shortcuts", label: "Keyboard shortcuts", hint: "?", also: "keys help", run: () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => openShortcuts()));
+    } });
     for (const [id2, label, key5, also] of screenList) {
       if (phone2 && (id2 === "setup" || id2 === "choose")) continue;
       add({ id: "screen:" + id2, label, hint: mod + key5, also: "screen go " + also, run: () => navigate(id2) });
@@ -13599,12 +13774,12 @@ ${pays}
       )
     );
   }
-  var el = null;
+  var el2 = null;
   var before2 = null;
-  var isOpen = () => !!el?.firstChild;
+  var isOpen = () => !!el2?.firstChild;
   function shut(focus) {
-    if (!el) return;
-    R(null, el);
+    if (!el2) return;
+    R(null, el2);
     document.documentElement.classList.remove("palette-open");
     if (focus === "none") return;
     requestAnimationFrame(() => {
@@ -13619,16 +13794,16 @@ ${pays}
   function openPalette() {
     const html = document.documentElement.classList;
     if (html.contains("sheet-open") || html.contains("kiosk")) return;
-    el ||= document.getElementById("palette");
-    if (!el) return;
+    el2 ||= document.getElementById("palette");
+    if (!el2) return;
     if (isOpen()) {
-      el.querySelector(".palfield")?.select();
+      el2.querySelector(".palfield")?.select();
       return;
     }
     before2 = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
     document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     html.add("palette-open");
-    R(/* @__PURE__ */ u3(Palette, { list: commands, close: shut }), el);
+    R(/* @__PURE__ */ u3(Palette, { list: commands, close: shut }), el2);
   }
 
   // web/src/place.ts
@@ -13916,7 +14091,7 @@ ${pays}
     navigated = true;
     show2(name);
   }
-  var screens = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
+  var screens2 = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
   addEventListener("pagehide", () => leavePlace(document.querySelector(".screen.active")?.id));
   {
     const first = document.querySelector(".screen.active")?.id;
@@ -13934,7 +14109,7 @@ ${pays}
       navigate(b2.dataset.screen);
       focusScreen(b2.dataset.screen);
     };
-    b2.title = `${b2.querySelector("span").textContent.trim()} (${mod}${screens.indexOf(b2.dataset.screen) + 1})`;
+    b2.title = `${b2.querySelector("span").textContent.trim()} (${mod}${screens2.indexOf(b2.dataset.screen) + 1})`;
   });
   wireNavMenus();
   var textSize = 1;
@@ -13969,6 +14144,10 @@ ${pays}
       if (current) reload(current);
       return;
     }
+    if (e3.key === "?" && !e3.metaKey && !e3.ctrlKey && !e3.altKey && !target.closest?.("input, textarea, select, [contenteditable], [role=menu]")) {
+      if (openShortcuts()) e3.preventDefault();
+      return;
+    }
     if (!(isMac ? e3.metaKey : e3.ctrlKey) || e3.altKey) return;
     if (["=", "+", "-", "_", "0"].includes(e3.key)) {
       e3.preventDefault();
@@ -13994,9 +14173,9 @@ ${pays}
     if (e3.key === ",") {
       e3.preventDefault();
       navigate("settings");
-    } else if (n3 >= 1 && n3 <= screens.length) {
+    } else if (n3 >= 1 && n3 <= screens2.length) {
       e3.preventDefault();
-      navigate(screens[n3 - 1]);
+      navigate(screens2[n3 - 1]);
     } else if (e3.key.toLowerCase() === "r") {
       e3.preventDefault();
       if (current) reload(current);

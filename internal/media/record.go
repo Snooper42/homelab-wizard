@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Run is the outcome of one engine run: its result event, and when.
@@ -70,11 +72,7 @@ func (r Record) Save(root string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(r, "", "  ")
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return lockedfile.Write(path, append(data, '\n'), 0o644)
 }
 
 // Note keeps a run's outcome, the activity it amounts to, and what it freed.

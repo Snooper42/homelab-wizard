@@ -124,7 +124,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 // (putBack), and today's is set aside in the folder it returns.
 func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History, cp *backup.UpdateCopy) (aside string, err error) {
 	r := hist.Apps[a.ID]
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return "", fmt.Errorf("no earlier image of %s is kept (one is kept for a week after each update)", a.ID)
 	}
 	if err := client.Tag(ctx, updates.RollbackRef(a.ID), r.Ref); err != nil {
@@ -214,7 +214,7 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	if *dataOnly {
 		return h.restoreData(ctx, client, a, r, *apply)
 	}
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return fmt.Errorf("no earlier image of %s is kept: one is kept for a week after each update", a.Name())
 	}
 	cp, haveCopy := h.copyFor(a.ID, r.Previous)

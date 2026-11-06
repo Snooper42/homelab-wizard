@@ -19,6 +19,11 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #452 |
+| Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #451 |
+| A sheet of shortcuts | Press ? on any screen (or pick *Keyboard shortcuts* in ⌘K) for that screen's shortcuts, those that work everywhere, and each screen's key | #450 |
+| Shapes as well as colours | Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour | #449 |
+| Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #447 |
 | A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
 | Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
@@ -191,9 +196,9 @@ The app at home on each system.
 
 The household's phones as a second screen.
 
-- **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
+- **Add to Home Screen, done right** (S, *Built*, #452): an icon, a name, and a splash screen, so it opens like an app: PNG icons an iPhone takes (and a maskable one for Android), a splash in the app's own background, and the bar above it light or dark with the phone.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
-- **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
+- **Quick actions** (S, *Built*, #447): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).
 
 ## Media library cleanup
 
@@ -231,9 +236,9 @@ The Finances loop's unfinished items, built by the features loop now, with their
 
 Details that make it feel finished.
 
-- **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
-- **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
-- **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
+- **Status read aloud** (S, *Built*, #451): VoiceOver and Narrator announce a job's progress and a row's change, not only the result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line.
+- **A sheet of shortcuts** (S, *Built*, #450): press ? (or *Keyboard shortcuts* in ⌘K) for the shortcuts of the screen you are on, then those that work everywhere and each screen's key.
+- **Shapes as well as colours** (S, *Built*, #449): each state's dot also has a shape (a circle when up, a triangle when stopped or it needs a look, a cross when down), for colour-blind eyes, small screens, and contrast themes.
 - **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
 ## Insight
