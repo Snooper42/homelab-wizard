@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #451 |
 | A sheet of shortcuts | Press ? on any screen (or pick *Keyboard shortcuts* in ⌘K) for that screen's shortcuts, those that work everywhere, and each screen's key | #450 |
 | Shapes as well as colours | Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour | #449 |
 | Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #447 |
@@ -234,8 +235,8 @@ The Finances loop's unfinished items, built by the features loop now, with their
 
 Details that make it feel finished.
 
+- **Status read aloud** (S, *Built*, #451): VoiceOver and Narrator announce a job's progress and a row's change, not only the result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line.
 - **A sheet of shortcuts** (S, *Built*, #450): press ? (or *Keyboard shortcuts* in ⌘K) for the shortcuts of the screen you are on, then those that work everywhere and each screen's key.
-- **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
 - **Shapes as well as colours** (S, *Built*, #449): each state's dot also has a shape (a circle when up, a triangle when stopped or it needs a look, a cross when down), for colour-blind eyes, small screens, and contrast themes.
 - **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
