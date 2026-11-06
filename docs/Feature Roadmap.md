@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #PRn |
 | Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
 | Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
 | What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
@@ -227,7 +228,7 @@ The Finances loop's unfinished items, built by the features loop now, with their
 Details that make it feel finished.
 
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
-- **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
+- **Status read aloud** (S, *Built*, #PRn): VoiceOver and Narrator announce a job's progress and a row's change, not only the result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line.
 - **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
 - **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 

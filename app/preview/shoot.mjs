@@ -2369,6 +2369,47 @@ const smokes = [
     // Well before the minute's poll.
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
   } },
+  // Status read aloud: a screen reader hears each row's change as it is drawn, through one polite live region: a
+  // Restart's step and its end, and apps that go down together in one line. Nothing on the first draw, nor while
+  // another screen is shown.
+  { name: 'Status read aloud: a row’s change, a job’s step, and two apps at once', screen: 'status', run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 5000 });
+    await page.evaluate(() => {
+      window.__said = [];
+      const el = document.getElementById('statusAloud');
+      new MutationObserver(() => { if (el.textContent) window.__said.push(el.textContent); }).observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    const said = () => page.evaluate(() => window.__said);
+    if ((await page.getAttribute('#statusAloud', 'role')) !== 'status') throw new Error('the region is not a status');
+    await page.waitForTimeout(400);
+    if ((await said()).length) throw new Error(`said on the first draw: ${await said()}`);
+    // A Restart: its step as it starts, and the state it ends in.
+    await page.evaluate(() => { window.__MOCK.actionDelay = 900; });
+    await page.click('tr:has(strong:text-is("Vikunja")) td.state', { button: 'right' });
+    await page.click('.rowmenu button:text-is("Restart")');
+    await page.waitForFunction(() => window.__said.includes('Vikunja: Restarting…'), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`no "Vikunja: Restarting…" in ${JSON.stringify(await said())}`); });
+    await page.waitForFunction(() => window.__said.at(-1) === 'Vikunja: Running', null, { timeout: 5000 })
+      .catch(async () => { throw new Error(`the end not said: ${JSON.stringify(await said())}`); });
+    // Two apps down at once: one line.
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' || a.id === 'navidrome' ? { ...a, health: 'unhealthy' } : a)) };
+      window.__emit('status:changed', { apps: ['vikunja', 'navidrome'], status: M.status });
+    });
+    await page.waitForFunction(() => /^(Vikunja and Navidrome|Navidrome and Vikunja): Unhealthy$/.test(window.__said.at(-1) || ''), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`two apps not said together: ${JSON.stringify(await said())}`); });
+    // On another screen, Status's changes are not read out.
+    const n = (await said()).length;
+    await page.click('nav button[data-screen="backups"]');
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
+      window.__emit('status:changed', { apps: ['navidrome'], status: M.status });
+    });
+    await page.waitForTimeout(600);
+    if ((await said()).length !== n) throw new Error(`said on Backups: ${JSON.stringify((await said()).slice(n))}`);
+  } },
   { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
     await page.click('nav button[data-screen="backups"]');

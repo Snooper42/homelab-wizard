@@ -37,6 +37,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status read aloud:** with VoiceOver or Narrator on, Status reads out each app's change as it happens, not only a job's result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line. Nothing is read for Status while another screen is shown.
 - **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
 - **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
 - **A drive comes back:** apps waiting for an unplugged drive start within a minute of it being plugged in again, not at the watchdog's next check up to 15 minutes later.
