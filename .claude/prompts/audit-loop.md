@@ -805,6 +805,15 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   container crafted to name another source needs Docker on this machine
   already (Low, nothing to fix). No code change needed.
 
+- **Round 42 (item 39, what ntfy carries), in part:** N20, Low. With
+  Hide amounts on, Finances' reminders and the weekly summary's Finances
+  lines still went to ntfy with every amount (lock screens show them).
+  Fixed in its smallest form in `financeView` (cmd/homelab/finances.go,
+  the Finances session's code, a commit of its own):
+  `TestHiddenAmountsStayHiddenInAlerts` failed before. Still to read in
+  item 39: the morning line and the restart-loop alert's log lines on a
+  lock screen.
+
 ## For Account 1
 
 - **The update window's record is written 0644**

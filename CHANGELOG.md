@@ -87,6 +87,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Finances, smaller things:** on Transactions, a filter whose last transaction you deleted or changed showed *Every category* (or account, tag, month) while the list stayed empty; it now lets go. A form's Save that couldn't go through said why, rather than *Cancel again to drop it* when you had pressed Cancel first. The heading's *update them with Edit* now names the button: **Update balances**.
 - **A phone never sees an app's own password in its log:** qBittorrent writes its temporary admin password to its log, and any paired phone, even one that only looks, could read it there, as could the alert about an app that keeps restarting. Passwords, keys, and tokens an app prints are now taken out of what a phone, an alert, or a report gets; the app on the computer still shows the whole log.
 - **An app goes on the internet only once it has its first account:** with a domain, installing Immich, Audiobookshelf, Komga, Navidrome, or Calibre-Web put it on the internet at once, where the first person to open it would have made its admin account (or signed in to Calibre-Web as admin/admin123). Each now stays at home until it has one; the domain plan says so, and Set up the domain puts it online after.
+- **Hide amounts covers the alerts too:** with amounts hidden, the nightly Finances reminders and the weekly summary still showed them on the phone's lock screen (*Due tomorrow: Mortgage $1,845.00*). They now say $••• there too.
 
 ## [0.17.0] - 2026-11-02
 
