@@ -41,6 +41,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -415,6 +416,32 @@ func Protection(ctx context.Context, root string) (crowdsec.Protection, error) {
 		return client.Exec(ctx, cs.Container.Name, args...)
 	}
 	return crowdsec.Read(ctx, run, time.Now())
+}
+
+// ErrNoTailscale means Tailscale is not running here, so there is no
+// tailnet to list.
+var ErrNoTailscale = errors.New("Tailscale is not running")
+
+// TailnetDevices is every device on the household's tailnet, from
+// Tailscale's status in its container: Settings › Devices on your tailnet.
+func TailnetDevices(ctx context.Context, root string) ([]tailnet.Device, error) {
+	c, err := Catalog(root)
+	if err != nil {
+		return nil, err
+	}
+	client, containers, err := Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	st, ts := detect.Analyze(c, containers).State("tailscale")
+	if st != detect.Running || ts == nil {
+		return nil, ErrNoTailscale
+	}
+	out, err := client.Exec(ctx, ts.Container.Name, "tailscale", "status", "--json")
+	if err != nil {
+		return nil, fmt.Errorf("reading Tailscale's status: %w", err)
+	}
+	return tailnet.ParseDevices(out)
 }
 
 // ErrNoReadToken means alerts cannot be read yet: notify setup has not made

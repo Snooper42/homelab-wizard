@@ -3441,6 +3441,28 @@ const smokes = [
   } },
   // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
   // that only looks (the kitchen screen) has nothing to end.
+  // Devices on your tailnet (Settings › Phones): Tailscale's own list, this machine first; one not seen for a month
+  // is marked; Remove opens it in Tailscale's admin console. Hidden while Tailscale is not running.
+  { name: 'Settings › Phones: the devices on the tailnet, a lost one marked, Remove in the admin console', screen: 'settings', mock: { tailnetDevices: [
+    { name: 'homelab', os: 'linux', ip: '100.64.0.1', online: true, self: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.1' },
+    { name: 'bens-macbook-air', os: 'macOS', ip: '100.64.0.3', online: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.3' },
+    { name: 'old-pixel', os: 'android', ip: '100.64.0.4', online: false, lastSeen: hoursAgo(5 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.4' },
+    { name: 'annas-iphone', os: 'iOS', ip: '100.64.0.2', online: false, lastSeen: hoursAgo(97 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.2' },
+  ] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#tailnetCard:has-text("4 devices, 2 online")', { timeout: 5000 });
+    const rows = (await page.locator('#tailnetCard li').allInnerTexts()).map((r) => r.replace(/\s+/g, ' '));
+    if (!/homelab.*Linux · this machine/.test(rows[0]) || /Remove/.test(rows[0])) throw new Error(`this machine: ${rows[0]}`);
+    if (!/old-pixel.*Android · last seen 5 days ago/.test(rows[2]) || /Not seen for a month/.test(rows[2])) throw new Error(`old-pixel: ${rows[2]}`);
+    if (!/annas-iphone.*iPhone or iPad · last seen .*Not seen for a month: if it is lost, remove it/.test(rows[3])) throw new Error(`annas-iphone: ${rows[3]}`);
+    await page.click('#tailnetCard button[aria-label="Remove annas-iphone"]');
+    await page.waitForFunction(() => window.__MOCK.opened === 'https://login.tailscale.com/admin/machines/100.64.0.2', null, { timeout: 3000 });
+  } },
+  { name: 'Settings › Phones without Tailscale: no tailnet card', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#phonesCard li', { timeout: 5000 });
+    if (await page.isVisible('#tailnetCard')) throw new Error('the tailnet card shows without Tailscale');
+  } },
   { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
     const anna = '#phonesCard li:has-text("Anna’s iPhone")';
