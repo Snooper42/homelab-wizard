@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 func date(s string) time.Time {
@@ -1033,5 +1035,25 @@ func TestCardChargesOnTheirDay(t *testing.T) {
 	}
 	if later < 8 {
 		t.Errorf("%d charges a year ahead", later)
+	}
+}
+
+// The app and the phones' server are two processes: a save waits for the
+// one another process is making (the lock beside the file) rather than
+// checking and writing at the same moment, which could lose one of them
+// without ErrChanged.
+func TestSaveWaitsForAnotherProcess(t *testing.T) {
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
+	path := filepath.Join(t.TempDir(), "data", "finance.json")
+	if _, err := Save(path, Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path+".lock", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Save(path, Plan{}); err == nil || !strings.Contains(err.Error(), "try again") {
+		t.Errorf("saved while another process held the lock: %v", err)
 	}
 }

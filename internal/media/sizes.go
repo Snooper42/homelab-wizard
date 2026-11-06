@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Each library's size on disk, for Tidy Up's "On the drive" card. Walking a
@@ -42,11 +44,7 @@ func saveSizes(home string, sizes map[string]LibrarySize) error {
 	if err != nil {
 		return err
 	}
-	tmp := p + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, p)
+	return lockedfile.Write(p, data, 0o644)
 }
 
 // skipDir is a folder a library's size leaves out: the engines' working
