@@ -53,12 +53,18 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 5, 2026, 16:30 UTC):
-- #428 *On Linux, apps wait for an unplugged drive* (`claude/feature-drive-linux`): open, main's #427 merged in. Docker Engine made an empty folder in place of an unplugged drive and started the app on it; library binds now say `create_host_path: false`. It also carries ci.yml's `concurrency` (a PR's newer push cancels its older run), the owner's call of Nov 5. Take it to merged first.
-- Then these branches, which have work and no PR, one at a time in this order. Each has its CHANGELOG line, tests with the failing-before proof, docs, and a `#PRn` placeholder for its number:
-  - `claude/feature-update-window` (#PR15): **Only on Sundays** on an app's page, `homelab updates days`. Its days are kept in `data/update-days.json`, not `.env` (the owner's call, Nov 5). Tried on Docker 29.9 on Nov 5: set to Sundays, a Thursday's `update --all` left it out and didn't touch its container; `every` took it back. Say so in its PR.
-  - `claude/feature-phones-expire` (#PR16): a phone's changes and Finances end after a day, a week, or a month.
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427.
+**Open now** (Nov 5, 2026, 23:35 UTC):
+- #438 *Two apps that do the same job* (`claude/feature-same-job`): open. Take it to merged first.
+- **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
+- Then these branches, built and pushed, each with its CHANGELOG line, tests with the failing-before proof, docs, a `#PRn` placeholder, and its PR text drafted (in the session's scratchpad, `pr-<name>.md`; write it again from the branch if that is gone). One at a time, in this order:
+  - `claude/feature-quiet-hours` (#PR20): `QUIET_HOURS=22-7`, alerts at night without a sound unless serious (Vaultwarden down, backups failing two nights). `internal/notify/night.go`, beside #431's `quiet.go`.
+  - `claude/feature-goes-with` (#PR24): Choose stacks › Add more › *Suggested for what you run* (`goes_with`). It and same-job both change `web/src/choose/Choose.tsx` and the same style rule: merge main in and keep both lines on a row.
+  - `claude/feature-welcome-sheet` (#PR23): a sheet for the fridge beside each person's welcome page (`internal/people`); main, with #434's change to `internal/people/people.go`, is merged in.
+  - `claude/feature-phone-quick-actions` (#PR25): a long press on a Status row on a phone that may make changes opens Open, Start, Restart, Stop, Stop for a while, Logs.
+  - `claude/feature-dot-shapes` (#PRn): *Shapes as well as colours*, a triangle for a dot that needs a look and a cross for one that's down (two CSS rules on `.dot.warn` and `.dot.bad`).
+  - `claude/feature-update-window` (#PR15) and `claude/feature-phones-expire` (#PR16): **wait for #425** (Account 3), which changes `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (lanes.md Rule 2).
+- Not started, for later: *Memory pressure alert* (its Stop on the alert needs `serve.go`, while #425 has it); *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.

@@ -61,6 +61,17 @@ const matches = (a: api.App, query: string) => !query || [a.name, a.id, a.descri
 
 const stateBadge: Record<string, [string, string]> = { running: ['running', 'ok'], stopped: ['stopped', 'warn'], elsewhere: ['runs elsewhere', 'warn'] };
 
+/** Apps that do much the same as a and are installed (running or stopped), each with why one might keep one or both;
+ * a pair is written on one side (x-homelab same_job) and said on both. Not said on an app that is itself installed. */
+function sameJob(a: api.App, p: GroupsProps): [api.App, string][] {
+  const installed = (id: string) => ['running', 'stopped'].includes(p.status[id]?.state || '');
+  if (installed(a.id)) return [];
+  return p.catalog.apps.flatMap((o): [api.App, string][] => {
+    const why = a.sameJob?.[o.id] || o.sameJob?.[a.id];
+    return o.id !== a.id && why && installed(o.id) ? [[o, why]] : [];
+  });
+}
+
 function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   const native = a.kind === 'native';
   const st = p.status[a.id];
@@ -82,6 +93,7 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
         <div class="desc">{a.description}</div>
         {!!p.note(a.id) && <div class="sysnote muted">{p.note(a.id)}</div>}
         {!!a.replaces?.length && <div class="replaces">Replaces {a.replaces.join(', ')}</div>}
+        {sameJob(a, p).map(([other, why]) => <div key={other.id} class="samejob muted">You already run {other.name}: {why}</div>)}
       </div>
       {!!links.length && <div class="links-inline">{links}</div>}
     </label>
