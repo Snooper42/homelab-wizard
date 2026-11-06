@@ -470,43 +470,43 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
     phone could keep Can make changes or Finances. One save, or a test
     that each failure leaves the device with less.
-46. (round 56: N26, open until N22 merges) **A kiosk is not remembered as one** (`Device` has no kiosk field):
+46. (done: rounds 56 and 57, N26) **A kiosk is not remembered as one** (`Device` has no kiosk field):
     kiosk mode is enforced only at pairing, so the Phones page can later
     give a wall screen Can make changes or Finances with nothing saying
     it is a screen anyone walking past can use. And which `phoneMethods`
     a kiosk may call beyond Status (Logs, AppIcon, a Finances card).
-47. **The pairing limit** (`tooMany`): global or per address? A device on
+47. (done: round 57) **The pairing limit** (`tooMany`): global or per address? A device on
     the Wi-Fi sending wrong codes may lock the household out of pairing
     for 10 minutes; check the code's length and lifetime against the
     limit, and that the limit holds across a restart of `homelab serve`.
-48. **The Finances calendar link** (`/finances.ics?key=`, the Finances
+48. (done: round 57, notes for the Finances session) **The Finances calendar link** (`/finances.ics?key=`, the Finances
     session's code): a key in a URL ends up in calendar apps, their sync
     servers, and proxy logs. What it shows with Hide amounts on, how it
     is turned off or changed, and that a wrong key is refused at the same
     rate limit as a code. A real hole is fixed in its smallest form;
     anything less goes in the PR for that session.
-49. **The phone's offline page across homelabs** (#453, web/dist/sw.js):
+49. (done: round 57) **The phone's offline page across homelabs** (#453, web/dist/sw.js):
     the copy is kept per address, not per pairing, so a phone paired again
     to another homelab at the same name (a new computer, a move) is
     served the old page until it is reached; check that nothing kept
     carries a token or answer from the other one, and the worker's scope.
-50. **What each holder of Docker's socket may do** (after N18's pins): a
+50. (done: round 57, N27) **What each holder of Docker's socket may do** (after N18's pins): a
     read-only mount does not limit Docker's API. List each app that gets
     the raw socket rather than `docker-socket-proxy`, and the proxy's
     allowed endpoints (POST, EXEC, CONTAINERS) against what each app needs.
-51. **Duplicati's passphrase** (the backups' own secret): where it is
+51. (done: round 57) **Duplicati's passphrase** (the backups' own secret): where it is
     kept (.env, Duplicati's database), whether a move file, `homelab
     report`, or the Secrets job carries it, and what someone holding only
     the off-site copy can read.
-52. **The proxy's own admin page** (Nginx Proxy Manager): the address its
+52. (done: round 57) **The proxy's own admin page** (Nginx Proxy Manager): the address its
     admin port is bound to (the LAN, or this machine only), who changes
     its first login and when, and that it is never itself a proxy host
     (N19's question, asked of the proxy).
-53. **ntfy on a public name** (`homelab notify setup`): the server's
+53. (done: round 57) **ntfy on a public name** (`homelab notify setup`): the server's
     default access, the publish and read tokens' reach, and whether a
     stranger can read the topic or send a fake alert ("backup failed,
     open this link") that a phone shows as the homelab's.
-54. **The music jobs' Python** (internal/media, the beets venv #444 and
+54. (done: round 57, N28 open) **The music jobs' Python** (internal/media, the beets venv #444 and
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
@@ -1059,6 +1059,47 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   look-only phone may: `StatusBoard`, `Logs` (N15's redaction), `Report`
   (secrets removed; it also sends `HELPER_EMAIL`, the helper the owner
   named), and `FinancesWall` with the card level. Fine as they are.
+
+- **Round 57 (items 46 to 54; N27 and N26 fixed, N28 open):**
+  **N27 (Medium), fixed:** `docker-socket-proxy` answers every GET under
+  `/containers`, each container's environment (its secrets) and files
+  (`/archive`, `/export`) included, and it sat on the `homelab` network
+  every app joins. Tried on Docker 29.9 (with `DISABLE_IPV6=1`, as this
+  session has no IPv6): a container on the shared network read another's
+  `ADMIN_TOKEN` and exported its files; only POSTs were refused. Now on
+  an internal `socket` network of its own with Dozzle, Homarr, and
+  Homepage; tried again, an app on the shared network cannot resolve it
+  and a reader still lists containers. `TestTheSocketProxyIsOnlyForItsReaders`
+  failed before. **N26 (Low), fixed** now that #460 has merged: a
+  screen is marked when it pairs and refused changes and Finances beyond
+  the card (`TestAWallScreenStaysOne` failed before). Item 47: a code is
+  8 of 31 letters (8.5e11) against 10 wrong tries in 10 minutes for all
+  devices together, so guessing is hopeless; one device on the Wi-Fi can
+  hold pairing off for 10 minutes at a time, the trade a per-address
+  limit would lose. Item 48: the calendar key is 32 to 128 random
+  letters and digits, compared in constant time, made anew in Finances ›
+  Pay, never through the tunnel; notes below for the Finances session.
+  Item 49: the service worker keeps only the page's own files, network
+  first, per address; a phone re-paired elsewhere drops the kept Status
+  at the first 401. Item 51: the passphrases live only in `.env` (0600);
+  the off-site copies are encrypted, the Secrets job with its own
+  passphrase kept off the machine, and the recovery kit leaves a blank
+  for it. Item 52: NPM's admin port is on `BIND_IP` (this machine by
+  default), its first login comes from `.env`, and admin apps are never
+  published. Item 53: ntfy is `deny-all` and is published only once its
+  publishers use a token. **N28 (Medium), open:** the music jobs' venv
+  installs `beets`, `requests`, `pylast`, `Pillow`, and `pyacoustid`
+  unpinned (and remade unattended since #444/#454); one pinned list does
+  not fit Python 3.8 to 3.14 (today's need 3.10 to 3.12+), so the way to
+  pin is for the owner. Read as they merged: #460 (N22's fix: the round
+  51 test keeps the phone removed), #461 (a dump before risky changes,
+  through the backup's own path), #454.
+
+  **For the Finances session** (in the PR, not fixed): the calendar
+  feed shows bill amounts by `CalendarAmounts` alone, so with Hide
+  amounts on, a phone's calendar can still show them (N20's kind); and
+  NPM's access log for `homelab.<domain>` keeps the feed's whole URL,
+  key included.
 
 ## For Account 1
 

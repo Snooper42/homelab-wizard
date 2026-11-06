@@ -107,6 +107,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **The Beszel agent stays on the version you chose:** it can control Docker, and it updated itself every night from its newest image, as the socket proxy once did. It is now pinned (`BESZEL_AGENT_VERSION`) and updated by hand after reading its notes.
 - **A removed phone stops getting Status at once:** a phone removed in Settings › Phones could no longer ask for anything, but one that had Status open kept receiving each change for as long as it stayed connected. It is now cut off within seconds.
 - **A Mac update comes only from whoever signed your app:** the app checked that an update downloaded whole, but not who made it. On a Mac, an update signed by anyone but the team that signed the app you have is now refused, and the app says so.
+- **Apps can no longer read each other's passwords through Docker:** the read-only view of Docker that Dozzle, Homarr, and Homepage use also answered any app asking for another app's settings, passwords included. Only those three reach it now.
+- **A wall screen stays a wall screen:** a screen paired in kiosk mode can no longer be given changes or Finances (beyond the money card) later in Settings › Phones, since anyone walking past could use them.
 
 ## [0.17.0] - 2026-11-02
 
