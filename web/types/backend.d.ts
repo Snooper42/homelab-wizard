@@ -469,6 +469,8 @@ declare namespace duplicati {
     files?: number;
     versions?: number;
     sources?: string[];
+    checked?: string;
+    checkProblem?: string;
   }
 }
 
