@@ -186,6 +186,7 @@ The companion also serves Finances' calendar feed, `/finances.ics?key=…`: the 
 ./homelab notify setup             # write grants for the alert topics
 ./homelab notify test duplicati-alerts
 ./homelab notify off vikunja        # checked, but no alerts about it (on: alerts again)
+./homelab notify snooze "crowdsec bouncer" 1h  # one check not alerted about for an hour (1d: a day; off: now); alerted then if it still fails
 ./homelab digest                   # the weekly summary; --send sends it now
 ./homelab schedule install         # the startup, backup, watchdog, awake, and serve jobs
 ./homelab schedule status

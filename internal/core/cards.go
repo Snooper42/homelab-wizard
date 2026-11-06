@@ -8,6 +8,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/board"
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 )
@@ -30,7 +31,7 @@ func Cards(root string) board.Readers {
 		// The watchdog's last run, and each app's share of passing checks
 		// this week.
 		"watchdog": func(context.Context) (any, error) {
-			return health.LoadState(health.StatePath(root)).Summary(), nil
+			return WatchdogSummary(root), nil
 		},
 		// The yearly saving the nightly backup recorded each day.
 		"savings": func(context.Context) (any, error) {
@@ -80,4 +81,12 @@ func ReadCards(ctx context.Context, root string, n int, want []string, local boa
 	if len(missing) > 0 {
 		board.Read(ctx, local, n, missing, emit)
 	}
+}
+
+// WatchdogSummary is the watchdog's last run, with the checks snoozed now
+// (Status's Watchdog card, from the app or the engine).
+func WatchdogSummary(root string) health.Summary {
+	s := health.LoadState(health.StatePath(root)).Summary()
+	s.Snoozed = notify.LoadSnoozes(root).Asleep(time.Now())
+	return s
 }

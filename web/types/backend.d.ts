@@ -803,6 +803,7 @@ declare namespace health {
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
     memory?: health.Memory | null;
+    snoozed?: Record<string, string>;
   }
 }
 
@@ -1106,6 +1107,7 @@ interface Backend {
     SettingTests(): Promise<string[]>;
     Settings(): Promise<settings.Setting[]>;
     Setup(): Promise<setup.Step[]>;
+    SnoozeCheck(arg1: string, arg2: number): Promise<void>;
     StartAgent(): Promise<void>;
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
