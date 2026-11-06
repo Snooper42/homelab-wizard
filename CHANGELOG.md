@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A hung app is restarted once, not twice:** when two of the watchdog's checks ran at once (the regular one and the one after the computer wakes), one could lose the other's note of an app it had just restarted, and that app could be restarted again within the 6 hours it waits. Each check now adds to the note instead of writing over it.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
 - **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.
