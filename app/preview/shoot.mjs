@@ -552,9 +552,23 @@ const smokes = [
     const text = await page.textContent(row);
     if (!text.includes('12 songs show two languages on one line')) throw new Error('the row says ' + text);
     await page.click(`${row} button:text-is("Tidy lyrics")`);
-    await page.waitForSelector('#tidyJob h2:text-is("Adding lyrics: done")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob h2:text-is("Tidying lyrics: done")', { timeout: 5000 });
     const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
-    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && !(r[2] || []).includes('--check'))) throw new Error('ran ' + JSON.stringify(ran));
+    // Set right on this computer: never a wait on LRCLIB.
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // Thousands of songs with no lyrics yet, and some with two languages on one line (Nov 6, the owner): setting those
+  // apart is offered on its own, not only inside Add lyrics, which asks LRCLIB about every song first.
+  { name: 'Tidy Up: two languages on one line are tidied even with songs still to ask LRCLIB about', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 9120, none: 2402, to_clean: 3150 }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const tidyRow = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(tidyRow, { timeout: 5000 });
+    if (!(await page.textContent(tidyRow)).includes('3,150 songs show two languages on one line')) throw new Error('the row says ' + (await page.textContent(tidyRow)));
+    if (!(await page.isVisible('#tidy .tidyneeds li:has-text("2,402 songs could get lyrics") button:text-is("Add lyrics")'))) throw new Error('no Add lyrics beside it');
+    await page.click(`${tidyRow} button:text-is("Tidy lyrics")`);
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
   } },
   // A lyrics check from before the count of songs with two languages on one line: Overview offers one more check,
   // which changes nothing, so those songs are found.
@@ -1738,6 +1752,23 @@ const smokes = [
   { name: 'Watchdog failures', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("1 of 47 checks failing")', { timeout: 5000 });
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
+  } },
+  // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
+  // A phone has no Snooze (its server does not offer it).
+  { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
+    await page.waitForSelector(pick, { timeout: 5000 });
+    await page.selectOption(pick, '1');
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer"):has-text("No alerts about it until")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
+    const shown = await page.locator(`${pick} option:checked, ${pick} option[value=""]`).first().innerText();
+    if (!/^Snoozed until /.test(shown)) throw new Error(`the menu says: ${shown}`);
+    await page.selectOption(pick, '0');
+    await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
+  } },
+  { name: 'Watchdog on a phone: a failing check, no Snooze', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
+    if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone');
   } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
@@ -3454,6 +3485,28 @@ const smokes = [
   } },
   // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
   // that only looks (the kitchen screen) has nothing to end.
+  // Devices on your tailnet (Settings › Phones): Tailscale's own list, this machine first; one not seen for a month
+  // is marked; Remove opens it in Tailscale's admin console. Hidden while Tailscale is not running.
+  { name: 'Settings › Phones: the devices on the tailnet, a lost one marked, Remove in the admin console', screen: 'settings', mock: { tailnetDevices: [
+    { name: 'homelab', os: 'linux', ip: '100.64.0.1', online: true, self: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.1' },
+    { name: 'bens-macbook-air', os: 'macOS', ip: '100.64.0.3', online: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.3' },
+    { name: 'old-pixel', os: 'android', ip: '100.64.0.4', online: false, lastSeen: hoursAgo(5 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.4' },
+    { name: 'annas-iphone', os: 'iOS', ip: '100.64.0.2', online: false, lastSeen: hoursAgo(97 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.2' },
+  ] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#tailnetCard:has-text("4 devices, 2 online")', { timeout: 5000 });
+    const rows = (await page.locator('#tailnetCard li').allInnerTexts()).map((r) => r.replace(/\s+/g, ' '));
+    if (!/homelab.*Linux · this machine/.test(rows[0]) || /Remove/.test(rows[0])) throw new Error(`this machine: ${rows[0]}`);
+    if (!/old-pixel.*Android · last seen 5 days ago/.test(rows[2]) || /Not seen for a month/.test(rows[2])) throw new Error(`old-pixel: ${rows[2]}`);
+    if (!/annas-iphone.*iPhone or iPad · last seen .*Not seen for a month: if it is lost, remove it/.test(rows[3])) throw new Error(`annas-iphone: ${rows[3]}`);
+    await page.click('#tailnetCard button[aria-label="Remove annas-iphone"]');
+    await page.waitForFunction(() => window.__MOCK.opened === 'https://login.tailscale.com/admin/machines/100.64.0.2', null, { timeout: 3000 });
+  } },
+  { name: 'Settings › Phones without Tailscale: no tailnet card', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#phonesCard li', { timeout: 5000 });
+    if (await page.isVisible('#tailnetCard')) throw new Error('the tailnet card shows without Tailscale');
+  } },
   { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
     const anna = '#phonesCard li:has-text("Anna’s iPhone")';
@@ -6205,12 +6258,16 @@ async function keep(page, label) {
 // Clicks through every smoke check in light and dark; then each screen, as
 // each system, in both themes, with and without more contrast, through axe
 // and a layout check. `--smoke light` or `--smoke dark` runs one theme;
-// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_DEBUG=1
-// prints what axe measured, and SMOKE_SHOTS=folder keeps a picture of each
-// screen that passed (for a pull request).
+// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_SHARD=i/n runs
+// every nth from the ith (CI runs n at once: together they are every
+// check), SMOKE_DEBUG=1 prints what axe measured, and SMOKE_SHOTS=folder
+// keeps a picture of each screen that passed (for a pull request).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
-  const picked = (label) => !process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY);
+  const [shard, shards] = (process.env.SMOKE_SHARD || '1/1').split('/').map(Number);
+  if (!(shards >= 1 && shard >= 1 && shard <= shards)) throw new Error(`SMOKE_SHARD is i/n, not ${process.env.SMOKE_SHARD}`);
+  let seen = 0;
+  const picked = (label) => (!process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY)) && seen++ % shards === shard - 1;
   const browser = await chromium.launch();
   let failed = 0;
   for (const scheme of schemes) {

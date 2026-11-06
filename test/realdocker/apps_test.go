@@ -1038,30 +1038,28 @@ func checkPaperlessAI(l *lab) error {
 	return err
 }
 
-// Tdarr: its first account through its own sign-up (closed after that),
-// its node seen by the server, and a library on the movies folder, read
-// back after the move with the node there again.
-const (
-	tdarrUser     = "nightly"
-	tdarrPassword = "nightly-password-1"
-	tdarrLibrary  = "Nightly films"
-)
+// Tdarr: signed in with the key the homelab gave it (Tdarr 3 takes no
+// sign-up), its node seen by the server, and a library on the movies
+// folder, read back after the move with the node there again.
+const tdarrLibrary = "Nightly films"
 
-func tdarrToken(l *lab, path string) (string, error) {
-	var r struct {
-		Token string `json:"token"`
+// tdarrKey is the key the homelab gave Tdarr (TDARR_API_KEY, which Tdarr
+// takes as its seededApiKey at start): Tdarr 3 takes no sign-up, so the key
+// is how Tidy Up, and this test, sign in.
+func tdarrKey(l *lab) (string, error) {
+	if k := l.env("TDARR_API_KEY"); k != "" {
+		return k, nil
 	}
-	err := request("POST", l.url("tdarr")+path, map[string]string{"username": tdarrUser, "password": tdarrPassword}, &r)
-	return "Bearer " + r.Token, err
+	return "", errors.New("the homelab gave Tdarr no key (TDARR_API_KEY in .env)")
 }
 
 func seedTdarr(l *lab) error {
-	tok, err := tdarrToken(l, "/api/v2/public/auth/register")
+	tok, err := tdarrKey(l)
 	if err != nil {
-		return fmt.Errorf("its first account: %w", err)
+		return fmt.Errorf("its key: %w", err)
 	}
 	library := map[string]any{"_id": "nightly", "priority": 0, "name": tdarrLibrary, "folder": "/media/movies", "cache": "/temp", "container": ".mkv"}
-	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "insert", "docID": "nightly", "obj": library}}, nil, "Authorization", tok); err != nil {
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "insert", "docID": "nightly", "obj": library}}, nil, "x-api-key", tok); err != nil {
 		return fmt.Errorf("adding a library: %w", err)
 	}
 	if err := checkTdarr(l); err != nil {
@@ -1080,7 +1078,7 @@ func tdarrWorker(l *lab, tok string) error {
 	}
 	read := func() (string, int, error) {
 		var nodes map[string]node
-		if err := request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "Authorization", tok); err != nil {
+		if err := request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "x-api-key", tok); err != nil {
 			return "", 0, err
 		}
 		for id, n := range nodes {
@@ -1094,7 +1092,7 @@ func tdarrWorker(l *lab, tok string) error {
 	if err != nil {
 		return err
 	}
-	if err := request("POST", l.url("tdarr")+"/api/v2/alter-worker-limit", map[string]any{"data": map[string]any{"nodeID": id, "process": "increase", "workerType": "transcodecpu"}}, nil, "Authorization", tok); err != nil {
+	if err := request("POST", l.url("tdarr")+"/api/v2/alter-worker-limit", map[string]any{"data": map[string]any{"nodeID": id, "process": "increase", "workerType": "transcodecpu"}}, nil, "x-api-key", tok); err != nil {
 		return fmt.Errorf("giving its node a worker: %w", err)
 	}
 	for range 10 {
@@ -1108,7 +1106,7 @@ func tdarrWorker(l *lab, tok string) error {
 }
 
 func checkTdarr(l *lab) error {
-	tok, err := tdarrToken(l, "/api/v2/public/auth/login")
+	tok, err := tdarrKey(l)
 	if err != nil {
 		return fmt.Errorf("signing in: %w", err)
 	}
@@ -1116,7 +1114,7 @@ func checkTdarr(l *lab) error {
 		Name   string `json:"name"`
 		Folder string `json:"folder"`
 	}
-	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "getById", "docID": "nightly"}}, &lib, "Authorization", tok); err != nil {
+	if err := request("POST", l.url("tdarr")+"/api/v2/cruddb", map[string]any{"data": map[string]any{"collection": "LibrarySettingsJSONDB", "mode": "getById", "docID": "nightly"}}, &lib, "x-api-key", tok); err != nil {
 		return err
 	}
 	if lib.Name != tdarrLibrary {
@@ -1127,7 +1125,7 @@ func checkTdarr(l *lab) error {
 		NodeName string `json:"nodeName"`
 	}
 	for range 30 {
-		if err = request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "Authorization", tok); err == nil {
+		if err = request("GET", l.url("tdarr")+"/api/v2/get-nodes", nil, &nodes, "x-api-key", tok); err == nil {
 			for _, n := range nodes {
 				if n.NodeName == "homelab" {
 					return nil

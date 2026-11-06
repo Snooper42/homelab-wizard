@@ -37,6 +37,10 @@ func TestTdarrAccount(t *testing.T) {
 	t.Cleanup(func() { tdarrClient = saved })
 	tdarrClient = srv.Client()
 
+	fakeDocker(t, nil) // a closed sign-up makes Tdarr again
+	waited := tdarrStartWait
+	t.Cleanup(func() { tdarrStartWait = waited })
+	tdarrStartWait = 0
 	root, _ := repoCopy(t)
 	h, err := newHomelab(&ui.UI{Out: io.Discard}, root)
 	if err != nil {
@@ -67,5 +71,44 @@ func TestTdarrAccount(t *testing.T) {
 	}
 	if !tdarrJob("tdarr", "setup") || !tdarrJob("movies", "run") || !tdarrJob("tv", "collect") || tdarrJob("movies", "scan") || tdarrJob("music", "run") {
 		t.Error("tdarrJob")
+	}
+}
+
+// Tdarr 3 takes no sign-up (403, tried against 3.06). With no key or login
+// for it, Tidy Up gives it one: TDARR_API_KEY, in Tdarr's own key shape
+// (tapi_…), kept in .env, and Tdarr made again so it reads it (its
+// seededApiKey); then Tidy Up signs in with it.
+func TestTdarrGetsAKeyWhenItTakesNoSignUp(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer srv.Close()
+	port := srv.URL[strings.LastIndex(srv.URL, ":")+1:]
+	saved := tdarrClient
+	t.Cleanup(func() { tdarrClient = saved })
+	tdarrClient = srv.Client()
+	calls := fakeDocker(t, nil)
+	waited := tdarrStartWait
+	t.Cleanup(func() { tdarrStartWait = waited })
+	tdarrStartWait = 0
+	root, _ := repoCopy(t)
+	h, err := newHomelab(&ui.UI{Out: io.Discard}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := map[string]string{"TDARR_PORT": port}
+	h.tdarrAccount(context.Background(), env)
+	f, _ := envfile.Load(h.envFile)
+	key, _ := f.Get("TDARR_API_KEY")
+	if !strings.HasPrefix(key, "tapi_") || len(key) < 30 || env["TDARR_API_KEY"] != key {
+		t.Fatalf("key %q, the engine's %q", key, env["TDARR_API_KEY"])
+	}
+	if !strings.Contains(readCalls(t, calls), "--force-recreate tdarr") {
+		t.Errorf("Tdarr wasn't made again to read its key:\n%s", readCalls(t, calls))
+	}
+	// A key already: nothing changes.
+	h.tdarrAccount(context.Background(), env)
+	if f, _ := envfile.Load(h.envFile); func() string { v, _ := f.Get("TDARR_API_KEY"); return v }() != key {
+		t.Error("the key changed")
 	}
 }

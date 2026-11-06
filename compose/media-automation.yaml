@@ -166,6 +166,9 @@ services:
       internalNode: "true"
       inContainer: "true"
       nodeName: homelab
+      # Tidy Up's key to Tdarr's API: Tdarr 3 takes no sign-up, so the
+      # homelab makes the key and Tdarr takes it as its own at start.
+      seededApiKey: ${TDARR_API_KEY:-}
     ports:
       - ${BIND_IP:-127.0.0.1}:${TDARR_PORT:-8265}:8265
     volumes:

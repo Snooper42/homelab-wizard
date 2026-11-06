@@ -10,6 +10,52 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 
 ---
 
+## The owner's new direction (Nov 6, 2026): read this first
+
+This section overrides **Your job** and **The order** below, wherever they disagree. `lanes.md` (rewritten the same day) wins over both.
+
+**The complaint:** dozens of releases, and the app is not much easier to use. Until now this lane was mostly invisible plumbing (one record moved under a lock per PR, each one a release). From today this lane owns **making every screen except Tidy Up and Finances clearly easier to use**, together with the reliability under them:
+- **Screens:** Setup and first run, Status, Choose and install, an app's page, Updates and release notes, Backups (restore, the recovery kit, the move), Settings (People, Phones, Domain, Devices on your tailnet, the rest), the menu bar and tray, and the phone's screens other than Finances.
+- **Code:** `web/src` outside `tidy`, `finances`, `screens/tidy.ts`, and `screens/finances.ts`; `app/`; `cmd/homelab` and `internal/*` outside `internal/media` and `internal/finance`.
+- **Not yours:** Tidy Up and Finances (Account 1), `apple-client/` (Account 4), security fixes (Account 3).
+
+**Pick one problem per round**, in this order:
+1. An open failure issue.
+2. The owner's complaints in `.claude/prompts/complaints.md` for your screens, top first.
+3. Account 3's usability findings under **For Account 2** in `audit-loop.md`.
+4. Your own walkthrough: do the household's task on the screen as each system, in light and dark, at 320px and with big text, against the fake backend (`app/preview/mock.js`, `node app/preview/shoot.mjs <shot>`), and fix the worst dead end.
+
+From **The order** below, keep only items 9, 10, 18, 20, 21, 22, 23 (a household can lose data or see a wrong state), and 27 once Account 3 has answered it. Every other open item there is **parked**: take one only when you are changing that code anyway.
+
+**Solve the problem whole:** everywhere it shows (every screen, the phone, the menu bar, the words in errors). A PR a household would not notice is not a round's work, unless it fixes a failure issue or lost data.
+
+**Prove it:**
+- a smoke case (`app/preview/shoot.mjs`) or Go test that fails on the old behaviour;
+- before-and-after screenshots, retaken for every screen you changed, linked in the PR body;
+- the keyboard and a screen reader still reach everything you touched;
+- `make check`, `make coverage`, and the smoke cases you touched, each judged by its exit code.
+
+**Ship:**
+- The PR's first line says what the household notices.
+- A CHANGELOG line under **Improved** (usability) or **Fixed** (failures).
+- At most 3 merges a day: put several small related fixes in one PR.
+
+**Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next.
+
+**The SQLite base (ADR-0022)** is built together with the first screen that needs it, after your first two usability fixes have merged: **What the homelab did**, a plain list on Status and on each app's page of what happened and why ("Restarted Immich at 03:12 because it stopped answering", "Updated Vaultwarden to 1.33", "Backed up 4.2 GB").
+- `modernc.org/sqlite` (pure Go), one file `data/homelab.db`, WAL mode.
+- Modes: the folder 0700; the database and its `-wal` and `-shm` files 0600.
+- Each table keeps a limit (by age or count) from day one.
+- Numbered migrations, and `TestEachReleasesFolderUpgrades` still passing.
+- The nightly backup copies it through SQLite's own backup.
+- Phones read it only through a look-only method in `serve.go`'s `phoneMethods`, with `phoneLog`'s redaction on every line.
+- Before merging, write under **For Account 3** what it stores and who can read it, and wait one round for Account 3's answer.
+- The Memory screen's samples come after.
+
+When this section has been folded into the rest of the file (rewrite **Your job** and **The order** to match, keeping **What the last sessions learned** and **Rules that never bend**), do that as one small PR of its own.
+
+---
+
 ## Standing rules
 
 These come before everything below; where they disagree with a later section, these win. `.claude/prompts/lanes.md` wins over all of this file.
@@ -51,7 +97,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** #462 (`claude/fix-rebuild-env`, item 8): take it to merged. Then the pushed branches with no PR yet, one at a time, in this order: `claude/fix-proc` (item 13, in part), `claude/fix-logs-private` (audit-loop.md's **For Account 2** note on `scripts/logs`), `claude/fix-agent-state` (item 9; built on `fix-logs-private`, so after it), `claude/fix-resume-warn` (item 14), `claude/fix-sent-notes` (item 10), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12). #429, #431 to #434, #436, #440 (the owner's lyrics fix), #441 to #444, #454, and #460 merged; #444 shipped in v0.22.8.
+**Open now:** #466 (`claude/fix-smoke-shards`, item 26): take it to merged. Then the pushed branches with no PR yet, one at a time, in this order: `claude/fix-proc` (item 13, in part), `claude/fix-logs-private` (audit-loop.md's **For Account 2** note on `scripts/logs`), `claude/fix-agent-state` (item 9; built on `fix-logs-private`, so after it), `claude/fix-resume-warn` (item 14), `claude/fix-sent-notes` (item 10), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-healed` (item 22), `claude/fix-custom-compose` (item 18). #429, #431 to #434, #436, #440 (the owner's lyrics fix), #441 to #444, #454, #460, and #462 merged; #444 shipped in v0.22.8.
 
 ## Your job
 
@@ -102,8 +148,8 @@ Do these in order, one per round. Tick each with its PR number once it is known.
    - **(#436, merged)** Tidy Up's job logs (30 days), `background.log` (cut at 5 MB), `data/media-trash.jsonl` (what Undo can reach, and 30 days), crash logs (90 days), and the page-answer cache. The agent's memory over an hour is in the PR.
 5. **(#441, merged: ADR-0022)** **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
 6. **(#442, merged)** **Dead code and duplicates.** Removed `compose.MustInterpolate` and `dockerapi.Client.Ping` (used nowhere); `homelab rollback` uses `History.CanRollBack`; Tidy Up's record, settings, and sizes, and Finances' receipts, write through `lockedfile.Write` (a fixed `.tmp` broke two saves at once); Finances' rev check and write are under the file's lock. Left for later: `internal/turn` and `internal/media` each have a `processAlive` (merge them once #425, which adds turn's, is in); exported functions only tests use (`ReadEnv`, `FetchedRecord`, `Testable`, `BankDay`) stay as test read-backs.
-7. **(Nov 6, done; #443 and #444 came first, for the owner's Tidy Up report)** **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here. Done for check, coverage and security (govulncheck can't reach vuln.go.dev here; CI's passed); the whole smoke suite is CI's `smoke` job (every case, light and dark, on each PR), green on #443 and #444.
-8. **(#462, open)** **`homelab rebuild` restores `.env` around its lock** (`cmd/homelab/rebuild.go`, `os.WriteFile(h.envFile, ...)`): an agent or app reading `.env` at that moment can read half of it, and `internal/envfile`'s writers can save over it. Write it through `lockedfile.Write` (or envfile's own writer, keeping its `.bak`), and prove it with a reader in a loop.
+7. **(Nov 6, done; #443 and #444 came first, for the owner's Tidy Up report)** **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here. Done for check, coverage and security (govulncheck can't reach vuln.go.dev here; CI's passed); the whole smoke suite is CI's `smoke` job (every case, light and dark, on each PR), green on #443 and #444. A second sweep later on Nov 6 (every plain `os.WriteFile` left in `cmd/`, `internal/`, and `app/`, and the CI waits) added items 18 to 27.
+8. **(#462, merged)** **`homelab rebuild` restores `.env` around its lock** (`cmd/homelab/rebuild.go`, `os.WriteFile(h.envFile, ...)`): an agent or app reading `.env` at that moment can read half of it, and `internal/envfile`'s writers can save over it. Write it through `lockedfile.Write` (or envfile's own writer, keeping its `.bak`), and prove it with a reader in a loop.
 9. **The agent's own state** (`saveAgentState`, `cmd/homelab/agent.go`) and **its log rotation**, which writes a fixed `<log>.tmp` that two processes rotating the same log at once share: `lockedfile.Write` for both.
 10. **Notes that say a message went out**: the weekly summary's (`cmd/homelab/digest.go`) and Finances' reminders' (`cmd/homelab/finances.go`) are plain writes whose errors are dropped. A torn or unsaved note sends the message again. `lockedfile.Write`, and a warning when it fails.
 11. **Caches and readings written in place**: `internal/releases` (its mutex is one process's only), `internal/storage`'s `Record.Save`, `internal/upgrade`'s rollback point (`PointPath`), `internal/media/fetch.go`'s `ffmpeg.json`. `lockedfile.Write` each; the rollback point first, since `homelab rollback` reads it.
@@ -113,12 +159,25 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 15. **(Nov 6, done by looking: no change needed)** A PID reused within one boot belongs to a process that started after the job that held it ended, so after the lock was written: item 13's start-time check (`proc.Process.Holds`, on `claude/fix-proc`) already counts such a lock as left behind, but for the 5 s slack. A name check would cost one more `ps` on every check for that 5 s. **Tidy Up's lock and a reused process ID within one boot** (#443's note): a lock is held by a live process that started before it was written, which a reused PID can be after the IDs wrap. Checking that the process is homelab (its name, as `ps -o comm=` and `QueryFullProcessImageName` give it) would close it; weigh the extra exec per check first.
 16. **(#454, merged)** **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
 17. **(#460, merged; N22)** **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
+18. **Custom apps' compose file** (`internal/custom/custom.go`, `stacks/custom/compose.yaml`): Add and its `restore()` write it in place, and the app and the CLI can add at once (one add lost). A torn file takes every custom app down at the next `up`. `lockedfile.Update` for the add, `lockedfile.Write` for the restore.
+19. **Homepage's config** (`homepage.Write`): written in place while the Homepage container reads it live, so the dashboard can read half a file. `lockedfile.Write`, keeping the hand-edited check.
+20. **Sign-in env files** (`internal/sso/sso.go`, 0600): written in place, read by Compose at each `up`. `lockedfile.Write`.
+21. **The kit's manifest** (`kit.writeManifest`): written in place after an update. An update cut off there leaves no manifest, `kit.Installed` says no kit, and the next upgrade and rollback treat the folder as something it isn't. `lockedfile.Write`. (`kit.write`'s fixed `.kit-tmp` is one updater's only: leave it.)
+22. **`data/healed.json`** (`cmd/homelab/heal.go`, the rest of item 13): read and rewritten whole by each watchdog run, so two at once (the agent's and the one after sleep) can lose a note. `lockedfile.Update`, shown with 40 runs at once as #434 did for `restarts.json`.
+23. **Where the homelab folder is** (`core.SaveRoot`): the app and the CLI remember it in a file rewritten in place. One torn means the next app start can't find the homelab. `lockedfile.Write`.
+24. **The app's own small notes** (`app/autoupdate.go` prefs, `app/window.go`, `app/updates.go`'s `writeJSON`, `app/tray/found.go` and `appearance.go`): plain writes, some read by the tray, which is a process of its own. `lockedfile.Write` each, in one PR.
+25. **Small notes left, one writer each**: `backup.RestoreLog.Save`, `core.SaveAPIFallback` (`docker-api.json`), `core`'s `crash-seen`, `domain.Home.Save`, `tailnet`'s config. `lockedfile.Write` when touched; one PR for the lot if none is touched by then.
+26. **(#466, open)** **The smoke suite's length**: `smoke (light)` and `smoke (dark)` take 30 to 40 minutes each, and every lane waits on them for every merge, so a slower lane's PR keeps finding main moved (Nov 6: #444, #442, and #454 needed 3, 3, and 7 runs). Measure the slowest cases (`shoot.mjs --smoke` prints each), and split each theme's run into shards in `.github/workflows/ci.yml` if the time is spread out, or speed up the slow waits if it isn't. Same cases, same checks: nothing skipped.
+27. **`data/`'s own mode**: see **For Account 3** (Nov 6). Once Account 3 has looked at it, make `data/` 0700 where it is made (`lockedfile.Update`'s `MkdirAll`, `battery`, `health`, `restartloop`, `heal`, and the rest), tightening an existing one, as `claude/fix-logs-private` does for `scripts/logs`.
 
 ## For Account 1
 
 - **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`; Nov 6: #454's run on 94b290a, `smoke (dark)`, green on the next run; both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
+
+- **`data/` is 0755, and several of its records are 0644** (Nov 6): `lockedfile.Update` makes the folder with `MkdirAll(dir, 0o755)`, as do `battery`, `health`, `restartloop`, `heal`, `custom`, and `domain`. Records written 0644 include `media.json` (Tidy Up's record: where every song and film is), Tidy Up's settings and sizes, `releases.json`, and the media lock. Another account on the same computer can list `data/` and read those. The sensitive ones (`phones.json`, Finances, `people.json`) are 0600. To show it: a test on the folder's mode after any save, and on `media.json`'s. Item 27 is the fix, once you have written it up.
+- **N13 and reused process IDs** (`internal/turn`, which you built): `claude/fix-proc` (item 13, its PR comes next) moves the "is it running" check into a new `internal/proc`, shared with Tidy Up's lock, and has turn drop a ticket whose process started after the ticket was taken (another program given the same ID after a restart), which held every change up for as long as 12 hours. Worth a look when you next touch N13.
 
 - **A removed phone can come back** (`data/phones.json`, `internal/companion/devices.go`): `homelab serve` re-saves the whole store when a phone it knows asks for something (`Lookup` notes `LastSeen`, at most once a minute a phone), from a copy it read a moment before. A `homelab phone remove` (or Can make changes, or Finances off) made by another process between that read and that save is saved over: the removed phone's token works again. `Store.mu` is one process's only. The test that would show it: two processes, one looking a token up in a loop while the other removes that device, then the token still looks up. The fix (Account 2's, once written up): every change under `lockedfile.Update`, as `internal/stopped` does.
 

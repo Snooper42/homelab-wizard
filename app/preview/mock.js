@@ -124,6 +124,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
     // backupsError: Backups fails with it (a database that can't be read, a computer that can't be reached).
     Backups: () => (M.backupsError ? Promise.reject(new Error(M.backupsError)) : later(M.backups)),
+    // Devices on the tailnet: none unless a case gives them (Tailscale not running).
+    TailnetDevices: () => (M.tailnetDevices ? later(M.tailnetDevices) : Promise.reject(new Error('Tailscale is not running'))),
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
@@ -135,6 +137,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Offered only by the Linux AppImage (mock: menuEntry set).
     MenuEntry: () => later(M.menuEntry ? { available: true, added: !!M.menuEntry.added } : { available: false, added: false }),
     SetMenuEntry: (on) => { M.menuEntry = { added: on }; return later(null); },
+    // Snooze a failing check's alerts: kept on the watchdog's summary, as the app does.
+    SnoozeCheck: (check, hours) => { const w = M.watchdog || {}; const z = { ...(w.snoozed || {}) }; if (hours) z[check] = new Date(Date.now() + hours * 36e5).toISOString(); else delete z[check]; M.watchdog = { ...w, snoozed: z }; return later(null); },
     Watchdog: () => later(M.watchdog || { lastRun: '0001-01-01T00:00:00Z', checks: 0, failing: [], pending: 0 }),
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),

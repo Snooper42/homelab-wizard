@@ -4,7 +4,7 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
-import { ago, never } from '../format';
+import { ago, clockText, dayText, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
 import { Row, Rows, type Tone } from '../parts/Row';
 
@@ -14,6 +14,30 @@ export interface WatchdogProps {
   fix: () => void;
   /** Stops an app by its id: the memory card's Stop. */
   stop?: (id: string) => void;
+  /** Snoozes a failing check's alerts for hours (0: alerts again now). */
+  snooze?: (check: string, hours: number) => void;
+}
+
+/** When a snooze ends, in words: "3:40 PM" today, "Sat 9:15 AM" after. */
+const wakeText = (t: string) => {
+  const d = new Date(t);
+  return d.toDateString() === new Date().toDateString() ? clockText(d) : `${dayText(d, { weekday: 'short' })} ${clockText(d)}`;
+};
+
+/**
+ * Snooze on a failing check: no alerts about it for an hour or a day, for a
+ * failure you already know of. The watchdog goes on checking it, and alerts
+ * when the snooze ends if it still fails.
+ */
+function SnoozePick({ check, until, snooze }: { check: string; until?: string; snooze: (check: string, hours: number) => void }) {
+  return (
+    <select class="snoozepick" aria-label={`Snooze the alerts about ${check}`} value="" onChange={(e) => { const v = e.currentTarget.value; if (v !== '') snooze(check, Number(v)); }}>
+      <option value="" disabled>{until ? `Snoozed until ${wakeText(until)}` : 'Snooze…'}</option>
+      <option value="1">For an hour</option>
+      <option value="24">For a day</option>
+      {until && <option value="0">Alert again now</option>}
+    </select>
+  );
 }
 
 /** Memory as the alert says it, in the binary units Docker sets it in: 2.1 GB, 900 MB. */
@@ -48,7 +72,7 @@ function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => 
  * Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
  * scheduled job. Failing checks are the ones it alerted about.
  */
-export function Watchdog({ w, openSetup, fix, stop }: WatchdogProps) {
+export function Watchdog({ w, openSetup, fix, stop, snooze }: WatchdogProps) {
   if (never(w.lastRun)) {
     return <Head title="Watchdog"><span class="muted">It checks every app, address, and backup every 15 minutes once the jobs are installed. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
   }
@@ -72,7 +96,11 @@ export function Watchdog({ w, openSetup, fix, stop }: WatchdogProps) {
       )}
       {!!failing.length && (
         <Rows>
-          {failing.map((f) => <Row key={f.name} dot="bad" title={f.name} sub={f.problem} when={ago(f.since)} whenTitle="Failing since" />)}
+          {failing.map((f) => {
+            const until = w.snoozed?.[f.name];
+            return <Row key={f.name} dot="bad" title={f.name} sub={until ? `${f.problem}. No alerts about it until ${wakeText(until)}` : f.problem} when={ago(f.since)} whenTitle="Failing since"
+              end={snooze && <SnoozePick check={f.name} until={until} snooze={snooze} />} />;
+          })}
         </Rows>
       )}
     </>

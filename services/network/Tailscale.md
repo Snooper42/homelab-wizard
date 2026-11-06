@@ -70,6 +70,7 @@ Useful commands:
 ## Everyday use
 
 - The Tailscale app on iPhone, iPad, Android, Mac, and Windows: turn it on away from home, and the home addresses work as if you were there.
+- Settings › Phones › **Devices on your tailnet** in the app: every device on the tailnet, whether it is online or when it was last seen (one unseen for a month is marked, in case it is lost), and **Remove…**, which opens that device in the admin console: a device cannot be removed from another device, so removing is done there.
 - Admin console (login.tailscale.com) › Machines: which devices are online, the `homelab` machine's routes, and renaming or removing devices.
 - Admin console › Users: invite family members to the tailnet.
 - `./homelab doctor` checks that it is logged in and its route is approved.
