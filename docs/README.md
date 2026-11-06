@@ -59,6 +59,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Architecture](<Architecture.md>) | Diagrams of the traffic paths and the engine, the Compose projects, a night of jobs |
 | [Networking](<Networking.md>) | The LAN, DNS, the Docker network, and Cloudflare |
 | [Security](<Security.md>) | The security posture, its standards, and the review of what is reachable from outside |
+| [Usability](<Usability.md>) | The household's tasks, tried end to end, and whether each is getting easier |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
 | [Docker](<Docker.md>) | The container runtime, Compose projects, and container standards |
 | [Host](<Host.md>) | The machine: the Mac's power, login, and FileVault settings, and the Linux and Windows profiles |
