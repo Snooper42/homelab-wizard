@@ -111,6 +111,10 @@ button.primary.small { width:auto; margin:0; padding:6px 14px; font-size:13px; }
 .badge.ok { color:var(--ok); background:var(--ok-soft); border-color:transparent; } .badge.warn { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:var(--muted); vertical-align:1px; }
 .dot.ok { background:var(--ok); box-shadow:0 0 0 3px var(--ok-soft); } .dot.warn { background:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); } .dot.bad { background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+/* Shapes as well as colours: a state reads without telling green from red. Up is a circle, needs a look a triangle,
+   down a cross (and in forced colours, where every dot is one colour, the shape is all that tells them apart). */
+.dot.warn { border-radius:0; clip-path:polygon(50% 0, 100% 100%, 0 100%); }
+.dot.bad { border-radius:0; clip-path:polygon(20% 0, 50% 30%, 80% 0, 100% 20%, 70% 50%, 100% 80%, 80% 100%, 50% 70%, 20% 100%, 0 80%, 30% 50%, 0 20%); }
 .saving { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--ok-soft); color:var(--ok); font-weight:500; }
 
 /* Status */
@@ -171,7 +175,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .app input { margin-top:4px; accent-color:var(--accent); width:15px; height:15px; }
 .app .grow { flex:1; min-width:0; }
 .app .desc { color:var(--muted); font-size:13px; }
-.app .sysnote { font-size:12.5px; margin-top:2px; }
+.app :is(.sysnote, .samejob, .goeswith) { font-size:12.5px; margin-top:2px; }
 #trayNote { font-size:12.5px; margin-top:4px; }
 .app .replaces { font-size:12px; color:var(--ok); margin-top:2px; }
 .app .links-inline { display:flex; gap:14px; font-size:13px; padding-top:2px; white-space:nowrap; }
@@ -269,6 +273,8 @@ dl { margin:0; }
 .usage .spark { width:72px; height:20px; margin:0 6px 0 14px; color:var(--link); align-self:center; }
 .tile .sub .trend { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .notice { padding:14px 18px; border-left:4px solid var(--warn); display:flex; flex-direction:column; gap:4px; color:var(--text); }
+/* The last Status, offline (companion.js): a line above the screen while the phone shows the Status it kept. */
+.awaynote { margin:0 0 14px; padding:10px 14px; border-radius:var(--radius); border-left:4px solid var(--warn); background:var(--warn-soft); color:var(--text); font-size:14px; }
 /* Setup › Disk space: one line per disk, with how to free some when low. */
 .disks > div + div { margin-top:4px; }
 .disks .small { font-size:12px; margin:2px 0 0 16px; white-space:normal; }
@@ -484,6 +490,9 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .hovers:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .hovercard { position:fixed; z-index:40; display:flex; flex-direction:column; gap:6px; width:max-content; max-width:min(320px, calc(100vw - 16px)); padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); box-shadow:0 8px 24px var(--navy-shade-14); font-size:12px; font-weight:400; line-height:1.4; text-align:left; white-space:normal; cursor:auto; }
 .hovercard.wide { width:300px; }
+.hovercard .savedmonths { list-style:none; margin:0; padding:0; display:grid; gap:2px; }
+.hovercard .savedmonths li { display:flex; justify-content:space-between; gap:16px; }
+.hovercard .savedmonths li span:last-child { font-variant-numeric:tabular-nums; }
 /* The week's outages: the 7 days as a strip, each time down a red mark on it (one going on, amber), then each in words. */
 .outstrip { position:relative; display:block; height:26px; border-bottom:1px solid var(--line); }
 .outstrip .outday { position:absolute; bottom:-1px; height:26px; padding-left:3px; border-left:1px solid var(--line); color:var(--muted); font-size:10px; line-height:12px; }
@@ -544,6 +553,9 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
+/* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
+   and iOS shows no callout under that finger at the same moment. */
+html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .fx-export { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
 /* Export and the toolbar's capsule at the header's top, as the capsule is elsewhere, level by their middles. */
 .header .fx-headtools { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-left:auto; align-self:flex-start; }
@@ -981,6 +993,15 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 .panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:max(24px, calc(9vh / var(--zoom, 1))); transform:translateX(-50%); width:min(720px, calc(100vw / var(--zoom, 1) - 48px)); overscroll-behavior:contain; max-height:min(calc(78vh / var(--zoom, 1)), 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
 .panel.sheet pre { max-height:calc(46vh / var(--zoom, 1)); overflow:auto; }
 .panel.sheet:focus { outline:none; }
+/* The sheet of shortcuts (palette/Shortcuts.tsx): each key beside what it does, the screen's own first. */
+#keysSheet h3 { margin:18px 0 6px; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+#keysSheet h2 + h3 { margin-top:6px; }
+#keysSheet table.keys { box-shadow:none; }
+#keysSheet table.keys th, #keysSheet table.keys td { padding:7px 12px; font-size:13px; }
+#keysSheet table.keys th { width:34%; background:none; text-transform:none; letter-spacing:0; font-weight:400; color:var(--text); white-space:nowrap; }
+#keysSheet table.keys :is(th, td) { border:0; }
+#keysSheet table.keys tr + tr > :is(th, td) { border-top:1px solid var(--line); }
+#keysSheet kbd { display:inline-block; min-width:1.6em; padding:1px 6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--sunken); font:inherit; font-size:12px; text-align:center; }
 @keyframes sheet-in { from { opacity:0; transform:translate(-50%, 8px) scale(.98); } }
 /* A sheet holds still while it fills: it hangs from the top and grows down, and a job's rows scroll in a box of their own under its bar, so the bar and the buttons stay where they are. */
 .panel.sheet .jobapps { max-height:min(calc(42vh / var(--zoom, 1)), 380px); overflow:auto; overscroll-behavior:contain; }
@@ -1331,6 +1352,7 @@ table.copies tr.copy td.name { white-space:normal; width:100%; padding-left:32px
 table.copies tr.copy td.size, table.copies tr.copy td.kept { text-align:right; font-variant-numeric:tabular-nums; }
 table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy td.kept { font-size:13px; }
 #copiesCard table.copies tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; white-space:normal; }
+#copiesCard table.copies tr.copy td.name .note { display:block; font-size:12px; margin:2px 0 0 18px; white-space:normal; }
 .alertlist.jobs li { align-items:center; }
 .alertlist.jobs .size { font-size:13px; white-space:nowrap; min-width:4.5em; text-align:right; font-variant-numeric:tabular-nums; }
 .alertlist.jobs .when { min-width:8em; text-align:right; }

@@ -26,6 +26,7 @@ import (
 func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, containers []docker.Container, auto bool) []string {
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this run changed
 	report := detect.Analyze(h.catalog, containers)
 	now := time.Now()
 	seen := map[string]updates.Seen{}
@@ -108,7 +109,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 	if pruned {
 		_ = client.PruneDangling(ctx)
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		h.ui.Warn("could not save the update history: %v", err)
 	}
 	// .env keeps the version each app now runs: after an update, a
@@ -123,7 +124,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 // (putBack), and today's is set aside in the folder it returns.
 func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History, cp *backup.UpdateCopy) (aside string, err error) {
 	r := hist.Apps[a.ID]
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return "", fmt.Errorf("no earlier image of %s is kept (one is kept for a week after each update)", a.ID)
 	}
 	if err := client.Tag(ctx, updates.RollbackRef(a.ID), r.Ref); err != nil {
@@ -208,11 +209,12 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this rollback changed
 	r := hist.Apps[a.ID]
 	if *dataOnly {
 		return h.restoreData(ctx, client, a, r, *apply)
 	}
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return fmt.Errorf("no earlier image of %s is kept: one is kept for a week after each update", a.Name())
 	}
 	cp, haveCopy := h.copyFor(a.ID, r.Previous)
@@ -234,13 +236,13 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	aside, err := h.doRollback(ctx, client, a, ctr, &hist, cp)
 	if err != nil {
-		_ = hist.Save(path)
+		_ = updates.SaveChanges(path, was, hist)
 		return err
 	}
 	if aside != "" {
 		u.OK("its data is as it was before the update; what it held since is in %s", h.rel(aside))
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		return err
 	}
 	h.keepVersions(ctx, client) // .env keeps the version it went back to

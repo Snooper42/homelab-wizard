@@ -55,6 +55,8 @@ services:
     volumes:
       - ./data/appdata/actual-budget:/data
     x-homelab:
+      same_job:
+        firefly-iii: "Both keep the household's budget: Actual is lighter, Firefly III a full ledger. One is usually enough."
       memory: 150
       releases: actualbudget/actual
       dump: sqlite:/data/server-files/account.sqlite

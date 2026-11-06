@@ -120,7 +120,13 @@ type Meta struct {
 	Local     bool     `yaml:"local"`
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
-	Requires  []string `yaml:"requires"`
+	// GoesWith are the apps this one adds to, each with a line on what it
+	// brings them: Choose stacks suggests it to those who run one.
+	GoesWith map[string]string `yaml:"goes_with"`
+	// SameJob are apps that do much the same, each with a line on why
+	// you might keep one or both: Choose stacks says it beside both.
+	SameJob  map[string]string `yaml:"same_job"`
+	Requires []string          `yaml:"requires"`
 	// Login names the .env settings the homelab signs in to the app with
 	// (the user or email, then the password), for Status's Sign in.
 	Login   []string `yaml:"login"`
@@ -266,6 +272,11 @@ type Volume struct {
 	Target   string
 	ReadOnly bool
 	Type     string // the long syntax's type (bind, volume, tmpfs), else ""
+	// NoCreate is a bind whose folder Docker must not make when it is
+	// missing (bind.create_host_path: false): one on a drive, which Docker
+	// would otherwise make empty in its place while the drive is unplugged,
+	// and start the app on.
+	NoCreate bool
 }
 
 // ResolvedVolume is a volume with its source expanded.
@@ -623,11 +634,15 @@ func decodeVolumes(n *yaml.Node) ([]Volume, error) {
 			Source   string `yaml:"source"`
 			Target   string `yaml:"target"`
 			ReadOnly bool   `yaml:"read_only"`
+			Bind     struct {
+				CreateHostPath *bool `yaml:"create_host_path"`
+			} `yaml:"bind"`
 		}
 		if err := item.Decode(&long); err != nil {
 			return nil, err
 		}
-		out = append(out, Volume{Raw: long.Source + ":" + long.Target, Source: long.Source, Target: long.Target, ReadOnly: long.ReadOnly, Type: long.Type})
+		noCreate := long.Bind.CreateHostPath != nil && !*long.Bind.CreateHostPath
+		out = append(out, Volume{Raw: long.Source + ":" + long.Target, Source: long.Source, Target: long.Target, ReadOnly: long.ReadOnly, Type: long.Type, NoCreate: noCreate})
 	}
 	return out, nil
 }

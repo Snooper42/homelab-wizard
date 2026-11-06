@@ -486,13 +486,17 @@ def lyrics(args, files=None):
     # none: songs still worth asking LRCLIB about. not_found: asked, and it had nothing (asked again after
     # a month). plain: plain lyrics LRCLIB has no time-synced ones for. untagged: no title to ask with.
     counts = {"synced": 0, "plain": 0, "none": 0, "instrumental": 0, "not_found": 0, "untagged": 0}
-    added = upgraded = failed = already = cleaned = 0
+    # to_clean: songs a check found with a translation after a caret on each line, which a run sets apart.
+    added = upgraded = failed = already = cleaned = to_clean = 0
     seen = _load_not_found()
 
     def tidy(p, text):
         """The song's own lyrics, each translation after a caret on a line of its own. Whether it was."""
-        nonlocal cleaned, failed
-        if check or not has_translation(text):
+        nonlocal cleaned, failed, to_clean
+        if not has_translation(text):
+            return False
+        if check:
+            to_clean += 1
             return False
         try:
             write_lyrics(p, text, where)
@@ -526,6 +530,7 @@ def lyrics(args, files=None):
                 counts["plain" if text.strip() else "not_found"] += 1
                 continue
             if check:
+                tidy(p, text)  # counted, not written
                 counts["plain" if text.strip() else "none"] += 1
                 continue
             try:
@@ -573,10 +578,13 @@ def lyrics(args, files=None):
                 ui.line("  " + text, "NOTE   " + text, kind="note", text=text)
         if failed:
             ui.warn("LRCLIB didn't answer for %s songs: run it again later" % mc.fmt_n(failed))
+    if check and to_clean:
+        text = "%s songs have a translation after a caret on each line: adding lyrics puts each on a line of its own" % mc.fmt_n(to_clean)
+        ui.line("  " + text, "NOTE   " + text, kind="note", text=text)
     if not check and (added or upgraded or cleaned):
         mc.Servers().ping(lib, "music")
     ui.result(action="lyrics", ok=True, check=check, songs=len(files), added=added, upgraded=upgraded,
-              cleaned=cleaned, failed=failed, **counts)
+              cleaned=cleaned, to_clean=to_clean, failed=failed, **counts)
 
 
 # ============================================================== file: new music from the inbox

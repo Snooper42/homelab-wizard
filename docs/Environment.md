@@ -94,6 +94,7 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `NTFY_PUBLISH_TOKEN`, `NTFY_PUBLISH_AUTH` | empty | Secrets, filled in by `homelab notify setup`: the publishers' access token, and the same as an `?auth=` parameter for publishers that only take a URL |
 | `NTFY_READ_TOKEN` | empty | Secret, made by `notify setup`: read-only access for the app's list of recent alerts |
 | `DESKTOP_ALERTS` | `true` | Alerts also show on this machine's screen (Notification Center on a Mac). `false`: the phone only |
+| `QUIET_HOURS` | `22-7` | The night: alerts between these hours (22:00 to 07:00) reach the phone at ntfy's low priority, without a sound, unless serious (the vault unreachable, backups failing for two days). `13-15` for other hours; `off` sounds every alert |
 | `HELPER_EMAIL` | empty | Who helps you with the homelab: **Email it to my helper** writes to them with the diagnostics report |
 | `HEARTBEAT_URL` | empty | An external heartbeat (such as a healthchecks.io ping URL, period and grace 15 minutes). The watchdog pings it every run and pings `/fail` when something is down |
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | When the background agent runs the nightly updates (a cron with seconds): 4:00 AM daily, after the 03:30 backup. Named for Watchtower, which ran them before |
@@ -107,8 +108,6 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this** under an app's log, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `<APP>_DIGEST` (`PAPERLESS_DIGEST`, `VAULTWARDEN_DIGEST`, …) | not in the template | The version each app the nightly update moves forward runs: its image and that image's digest (`ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…`). Written by `homelab update`, a rollback, and the watchdog when what runs changes; `homelab up`, `install`, a move, and a rebuild start that version again, so a restore or a new machine opens the data with the version that wrote it. A version you choose by hand (`IMMICH_VERSION`) wins: a kept line for another image is left alone until the app runs the new one. Delete a line to let that app start on its newest version |
 | `UPDATES_HELD` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`). Written by the CLI; `homelab updates release <app>` takes one off |
-| `ALERTS_OFF` | empty | Apps the watchdog still checks and shows on Status, but does not alert about. Written by `homelab notify off <app>` (an app's page › **Tell me if it stops**); `homelab notify on <app>` takes one off |
-| `APPS_PINNED` | empty | Apps at the top of Status and of the menu bar's Open an app, in the order pinned. Written by `homelab pin <app>` (a row's right-click › **Pin to the top**); `homelab unpin <app>` puts one back in its group |
 
 ## App ports
 

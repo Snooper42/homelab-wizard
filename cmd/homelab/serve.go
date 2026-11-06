@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
@@ -92,12 +91,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return v, nil, err
 		}}
 	}
-	var busy sync.Mutex
+	// A change from a phone waits its turn (turn.go) behind any other,
+	// from a phone, the app, or the nightly jobs, as the command it runs.
 	run := func(ctx context.Context, args ...string) ([]string, error) {
-		if !busy.TryLock() {
-			return nil, errors.New("another change from a phone is running")
-		}
-		defer busy.Unlock()
 		lines, err := h.runSelf(ctx, args...)
 		return append([]string{"$ homelab " + strings.Join(args, " ")}, lines...), err
 	}

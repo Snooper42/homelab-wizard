@@ -19,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Account kinds. Cards and loans hold what is owed; the rest what is there.
@@ -320,26 +322,30 @@ func Save(path string, p Plan) (Plan, error) {
 func write(path, was string, data []byte) (string, error) {
 	saving.Lock()
 	defer saving.Unlock()
-	if was != "" {
-		now := noFile
-		if old, err := os.ReadFile(path); err == nil {
-			now = rev(old)
-		} else if !os.IsNotExist(err) {
-			return "", err
-		}
-		if now != was {
-			return "", ErrChanged
-		}
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return "", err
-	}
 	data = append(data, '\n')
-	tmp := path + ".new"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+	// Checked and written under the lock beside the file, which the other
+	// process (the app, or the phones' server) takes too.
+	var refused error
+	err := lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		if was != "" {
+			now := noFile
+			if old != nil {
+				now = rev(old)
+			}
+			if now != was {
+				refused = ErrChanged
+				return nil, false
+			}
+		}
+		return data, true
+	})
+	if err == nil {
+		err = refused
+	}
+	if err != nil {
 		return "", err
 	}
-	return rev(data), os.Rename(tmp, path)
+	return rev(data), nil
 }
 
 var notID = regexp.MustCompile(`[^a-z0-9]+`)

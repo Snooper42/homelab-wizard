@@ -88,6 +88,8 @@ export interface AppPageProps {
   icon: string;
   /** The phone companion: no Open on a phone. */
   companion: boolean;
+  /** The proxy's and CrowdSec's pages: what CrowdSec stopped ('reading' until it answers, null when it could not be read). Left out on other apps' pages. */
+  stopped?: crowdsec.Protection | null | 'reading';
   on: AppPageActions;
 }
 
@@ -331,6 +333,34 @@ function Updates({ p }: { p: AppPageProps }) {
   );
 }
 
+/** The proxy's and CrowdSec's pages: every address CrowdSec stopped today, where it came from, and what it tried. */
+function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' }) {
+  const reading = stopped === 'reading', s = reading ? null : stopped;
+  const today = s?.today || [];
+  const more = (s?.todayCount || 0) - today.length;
+  const head = s && (s.todayCount === 1 ? '1 today' : `${s.todayCount} today`) + (s.bannedNow ? ` · ${s.bannedNow} banned now` : '');
+  const quiet = !s ? '' : s.week ? `Nothing yet today; ${s.week === 1 ? '1' : s.week} this week${s.recent?.[0] ? `, the last ${ago(s.recent[0].when)}` : ''}.` : 'Nothing this week.';
+  return (
+    <Card kind="alerts pagecard" id="appStopped">
+      <CardHead title="What CrowdSec stopped today">{head && <span class="muted">{head}</span>}</CardHead>
+      {reading && <Empty>Asking CrowdSec…</Empty>}
+      {!s && !reading && <Empty>CrowdSec can't be read right now: it and the proxy both need to be running.</Empty>}
+      {s && !s.enforced && (
+        <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Status › Protection › Fix reconnects them.`} /></Rows>
+      )}
+      {s && (today.length ? (
+        <Rows>
+          {today.map((a, i) => (
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+              end={a.banned && <span class="badge" title="A ban on it is still in force">Banned</span>} when={clockText(new Date(a.when))} whenTitle={ago(a.when)} />
+          ))}
+          {more > 0 && <Row sub={more === 1 ? 'and 1 more today' : `and ${more} more today`} />}
+        </Rows>
+      ) : <Empty>{quiet}</Empty>)}
+    </Card>
+  );
+}
+
 function People({ p }: { p: AppPageProps }) {
   const { entry, people, on } = p;
   if (!people && !entry?.login?.length) return null;
@@ -415,6 +445,7 @@ export function AppPage(p: AppPageProps) {
       <div class="pagecols">
         <div class="pagecol">
           {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
+          {p.stopped !== undefined && <Stopped stopped={p.stopped} />}
           <Updates p={p} />
         </div>
         <div class="pagecol">

@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** nothing of this loop's. This file and `lanes.md` came in on `claude/fix-lanes`.
+**Open now:** #442 (`claude/fix-dead-code`, item 6): take it to merged. #429, #431 to #434, #436, #440 (the owner's lyrics fix), and #441 merged.
 
 ## Your job
 
@@ -86,32 +86,51 @@ What is not yours: features (Account 1) and security findings (Account 3). When 
 
 Do these in order, one per round. Tick each with its PR number once it is known.
 
-1. **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
+1. **(#429, merged)** **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
-   - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`)
-   - `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`)
-   - `APPS_PINNED` (`internal/api/pinned.go`, `cmd/homelab/pin.go`)
+   - `UPDATES_HELD` (`internal/updates`, `cmd/homelab/rollback.go`). Waits for #425 to merge: `cmd/homelab/apps.go` reads it, and #425 claims that file. Then add it to `internal/applist` (#432) as the others are.
+   - **(#431, merged)** `ALERTS_OFF` (`internal/notify`, `cmd/homelab/jobs.go`): now `data/alerts-off.json`.
+   - **(#432, merged)** `APPS_PINNED` (`internal/api/pinned.go`, `cmd/homelab/pin.go`): now `data/pinned.json`.
 
    On first run, read the old `.env` key, carry it over, then remove it, so nothing is lost on upgrade; prove it in `TestEachReleasesFolderUpgrades`. Top-level `data/*.json` goes off-site in the encrypted Secrets job, as `.env` does. Leave every other key the CLI writes where it is: secrets it generates (`NTFY_*`, `ADGUARD_*`, `KOPIA_*`), settings Compose reads (`VAULTWARDEN_SIGNUPS_ALLOWED`), and the owner's choices (`HOMELAB_DOMAIN`, `BACKUP_DESTINATION`). Leave the `<APP>_DIGEST` lines too: `cmd/homelab/versions.go` keeps them in `.env` on purpose, so a restore starts the version that wrote the data.
 3. **Records written in place.** Records that more than one process writes with a plain `os.WriteFile` move to `internal/lockedfile`. Start with `data/healed.json` (`cmd/homelab/heal.go`), the watchdog's state (`internal/health/health.go`), `data/battery.json` (`internal/battery`), and the savings history (`internal/savings`), and grep for others under `data/`. `internal/stopped`'s own copy of the lock becomes `lockedfile` too.
+   - **(#433, merged)** `data/battery.json` (`battery.Update`, `Pause`, `Resume`), the watchdog's state (`health.UpdateState`; `Save` whole), the savings history, and `internal/stopped` on `lockedfile`.
+   - **Waits for #425** (it claims `cmd/homelab/heal.go` and `apps.go`): `data/healed.json`, and `homelab remove`'s `Forget` through `health.UpdateState`.
+   - **(#434, merged)** `data/updates.json` (`updates.SaveChanges`: a run saves only the records it changed), `data/setup.json` (under its lock), `data/people.json` and `data/restarts.json` (one writer each: written whole).
+   - **Left, each with one writer** (whole writes are enough; take them when touching the code anyway): `internal/backup/reminder.go`, `internal/core/core.go`'s, `internal/upgrade/back.go`'s, `cmd/homelab/digest.go`'s, `cmd/homelab/finances.go`'s.
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
-5. **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
-6. **Dead code and duplicates.**
-7. **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here.
+   - **(#436, merged)** Tidy Up's job logs (30 days), `background.log` (cut at 5 MB), `data/media-trash.jsonl` (what Undo can reach, and 30 days), crash logs (90 days), and the page-answer cache. The agent's memory over an hour is in the PR.
+5. **(#441, merged: ADR-0022)** **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
+6. **(#442, open)** **Dead code and duplicates.** Removed `compose.MustInterpolate` and `dockerapi.Client.Ping` (used nowhere); `homelab rollback` uses `History.CanRollBack`; Tidy Up's record, settings, and sizes, and Finances' receipts, write through `lockedfile.Write` (a fixed `.tmp` broke two saves at once); Finances' rev check and write are under the file's lock. Left for later: `internal/turn` and `internal/media` each have a `processAlive` (merge them once #425, which adds turn's, is in); exported functions only tests use (`ReadEnv`, `FetchedRecord`, `Testable`, `BankDay`) stay as test read-backs.
+7. **(Nov 6, done; #443 and #444 came first, for the owner's Tidy Up report)** **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here. Done for check, coverage and security (govulncheck can't reach vuln.go.dev here; CI's passed); the whole smoke suite is CI's `smoke` job (every case, light and dark, on each PR), green on #443 and #444.
+8. **`homelab rebuild` restores `.env` around its lock** (`cmd/homelab/rebuild.go`, `os.WriteFile(h.envFile, ...)`): an agent or app reading `.env` at that moment can read half of it, and `internal/envfile`'s writers can save over it. Write it through `lockedfile.Write` (or envfile's own writer, keeping its `.bak`), and prove it with a reader in a loop.
+9. **The agent's own state** (`saveAgentState`, `cmd/homelab/agent.go`) and **its log rotation**, which writes a fixed `<log>.tmp` that two processes rotating the same log at once share: `lockedfile.Write` for both.
+10. **Notes that say a message went out**: the weekly summary's (`cmd/homelab/digest.go`) and Finances' reminders' (`cmd/homelab/finances.go`) are plain writes whose errors are dropped. A torn or unsaved note sends the message again. `lockedfile.Write`, and a warning when it fails.
+11. **Caches and readings written in place**: `internal/releases` (its mutex is one process's only), `internal/storage`'s `Record.Save`, `internal/upgrade`'s rollback point (`PointPath`), `internal/media/fetch.go`'s `ffmpeg.json`. `lockedfile.Write` each; the rollback point first, since `homelab rollback` reads it.
+12. **`homelab quit`'s list** (`scripts/logs/stopped.json`, `saveStopped` in `cmd/homelab/quit.go`) is a plain write beside `internal/stopped`'s locked `data/stopped.json`. See whether they are the same idea twice; keep one, written under its lock.
+13. **`data/healed.json`** (`cmd/homelab/heal.go`) is still a plain write, left in item 3 for #425. Once #425 is in, move it to `lockedfile.Update` and merge `internal/turn`'s and `internal/media`'s `processAlive` (item 6).
+14. **A Tidy Up job that resumes says so in the app too**: `mediaEngine` warns *stopped part-way … carries on from there* only in a terminal (`!f.events`); with `--events json` send it as a `warn` event, as #444 does for a beets venv made again.
+15. **Tidy Up's lock and a reused process ID within one boot** (#443's note): a lock is held by a live process that started before it was written, which a reused PID can be after the IDs wrap. Checking that the process is homelab (its name, as `ps -o comm=` and `QueryFullProcessImageName` give it) would close it; weigh the extra exec per check first.
+16. **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
+17. **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
 
 ## For Account 1
 
-Nothing yet.
+- **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`, both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
 
-Nothing yet.
+- **A removed phone can come back** (`data/phones.json`, `internal/companion/devices.go`): `homelab serve` re-saves the whole store when a phone it knows asks for something (`Lookup` notes `LastSeen`, at most once a minute a phone), from a copy it read a moment before. A `homelab phone remove` (or Can make changes, or Finances off) made by another process between that read and that save is saved over: the removed phone's token works again. `Store.mu` is one process's only. The test that would show it: two processes, one looking a token up in a loop while the other removes that device, then the token still looks up. The fix (Account 2's, once written up): every change under `lockedfile.Update`, as `internal/stopped` does.
 
 ## What the last sessions learned
 
 - `internal/lockedfile` (lock beside the file, replaced whole, 0600) and `internal/turn` (one queue for every process's changes) exist; use them.
 - Never build `web/dist` in a worktree whose `node_modules` is a symlink.
 - A force-push to reset a branch can be refused; merge main in instead.
+- A list moved out of `.env`: readers take the record and the old key together (nothing is lost before the carry-over), install's env step carries it over (`envfile.Delete` takes the key and its note), and it comes out of `.env.example`. `internal/applist` (#432) does all of it: add a `List` to `Moved`. `testdata/upgrades/make.sh v0.17.0` runs with that release's own CLI, to check what it writes.
+- A job's whole log: `get_job_logs` with `tail_lines` larger than the log (1500) is too big to show, so it is saved to a file you can grep (`logs_content` in its JSON). The run's zip of logs is blocked by the proxy.
+- Nov 4 and 5's nightly failures were all ghcr.io's per-minute limit (`toomanyrequests: retry-after: <µs>, allowed: 44000/minute`), hit by every job at about 11:01 UTC. #429 makes downloads wait it out. If it comes back, look at how long the tries span (`RegistryBusyWaits`) and at any `docker run` that pulls its own image.
+- Nov 6, the owner's *Tidy Up won't work, every script errors*: two causes. A leftover media lock whose PID another program had taken counted as held for good, so the agent's minute skipped everything and every job said busy (#443). And a beets venv (`~/.music-cleanup/venv`) whose Python was upgraded away can't be made again over itself, so every music and inbox job failed with *couldn't create …venv* (#444). To try Tidy Up for real: a copy of the repo as `--root`, `HOME=<scratch dir>`, real tagged MP3s from `ffmpeg -f lavfi -i sine=d=2 -metadata …`, and `uv python install 3.9` (or 3.14) with `HOMELAB_PYTHON` for other Pythons. musicbrainz.org and lrclib.net are blocked here; PyPI isn't.
 
 ## Rules that never bend
 

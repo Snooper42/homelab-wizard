@@ -256,6 +256,12 @@ func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOpti
 	if o.waitMedia > 0 {
 		h.waitForRuntime(ctx, 3*time.Minute)
 		h.waitForDrives(ctx, o.waitMedia)
+		// Its turn now, not while it waited (turn.go's changes).
+		if o.apply && !o.dryRun {
+			if err := h.takeTurn(ctx); err != nil {
+				return err
+			}
+		}
 	}
 	client, err := h.docker(ctx)
 	if err != nil {

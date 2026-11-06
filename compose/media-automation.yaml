@@ -32,6 +32,9 @@ services:
     volumes:
       - ./data/appdata/prowlarr:/config
     x-homelab:
+      goes_with:
+        sonarr: "Gives Sonarr its search sites in one place, shared with Radarr."
+        radarr: "Gives Radarr its search sites in one place, shared with Sonarr."
       memory: 200
       name: Prowlarr
       category: media-automation
@@ -48,8 +51,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${SONARR_PORT:-8989}:8989
     volumes:
       - ./data/appdata/sonarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Sonarr
@@ -67,8 +78,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${RADARR_PORT:-7878}:7878
     volumes:
       - ./data/appdata/radarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /movies
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Radarr
@@ -86,8 +105,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${LIDARR_PORT:-8686}:8686
     volumes:
       - ./data/appdata/lidarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/music
+        target: /music
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 250
       name: Lidarr
@@ -105,9 +132,20 @@ services:
       - ${BIND_IP:-127.0.0.1}:${BAZARR_PORT:-6767}:6767
     volumes:
       - ./data/appdata/bazarr:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/tv
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/movies
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /movies
+        bind:
+          create_host_path: false
     x-homelab:
+      goes_with:
+        sonarr: "Fetches subtitles for the shows Sonarr brings in."
+        radarr: "Fetches subtitles for the films Radarr brings in."
       memory: 200
       name: Bazarr
       category: media-automation
@@ -134,12 +172,27 @@ services:
       - ./data/appdata/tdarr/server:/app/server
       - ./data/appdata/tdarr/configs:/app/configs
       - ./data/appdata/tdarr/logs:/app/logs
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /media/tv
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /media/movies
+        bind:
+          create_host_path: false
       # Files half-made while it works, as large as the films: on the
       # media drive, beside them.
-      - ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache:/temp
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tdarr-cache
+        target: /temp
+        bind:
+          create_host_path: false
     x-homelab:
+      goes_with:
+        jellyfin: "Shrinks the films and shows Jellyfin plays, so the drive holds more."
+        jellyfin-container: "Shrinks the films and shows Jellyfin plays, so the drive holds more."
       memory: 1000
       dump: sqlite:/app/server/Tdarr/DB2/SQL/database.db
       name: Tdarr
@@ -179,6 +232,9 @@ services:
     volumes:
       - ./data/appdata/seerr:/app/config
     x-homelab:
+      goes_with:
+        jellyfin: "Lets the household ask for films and shows, which Sonarr and Radarr then fetch."
+        jellyfin-container: "Lets the household ask for films and shows, which Sonarr and Radarr then fetch."
       memory: 250
       dump: sqlite:/app/config/db/db.sqlite3
       name: Seerr
@@ -197,9 +253,19 @@ services:
       - ${BIND_IP:-127.0.0.1}:${LAZYLIBRARIAN_PORT:-5299}:5299
     volumes:
       - ./data/appdata/lazylibrarian:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/Books
+        target: /books
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
+      goes_with:
+        calibre-web: "Finds the e-books and audiobooks you want, for the library Calibre-Web reads."
       memory: 150
       name: LazyLibrarian
       category: media-automation
@@ -222,7 +288,11 @@ services:
       WEBUI_PORT: "8082"
     volumes:
       - ./data/appdata/qbittorrent:/config
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     depends_on:
       gluetun: { condition: service_healthy }
     x-homelab:

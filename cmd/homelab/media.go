@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -240,14 +239,30 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 			h.resumeDuplicati(ctx)
 		}()
 	}
+	// A beets venv left pointing at a Python that was upgraded away fails
+	// every music job: it goes, and the engine makes it again.
+	if removed, rerr := media.RepairVenv(ctx, homeDir()); rerr != nil || removed {
+		msg := "Tidy Up's beets setup stopped working (its Python was updated); it's installed again on this run, which takes about a minute"
+		if rerr != nil {
+			msg = fmt.Sprintf("Tidy Up's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
+		}
+		if f.events {
+			line, _ := json.Marshal(media.Event{Type: "warn", Text: msg})
+			fmt.Fprintln(h.ui.Out, string(line))
+		} else {
+			h.ui.Warn("%s", msg)
+		}
+	}
 	job := media.Job{Root: h.root, Kind: kind, Action: action, Args: f.rest, Env: env, Python: py, Yes: f.yes, Log: logf,
 		Out: func(ev media.Event, line string) {
 			if f.events {
 				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
-			if ev.Type == "info" && strings.HasPrefix(strings.TrimSpace(line), "{") {
-				fmt.Fprintln(h.ui.Out, line) // status --json: printed as it is
+			// status --json: printed as it is. An engine's own info events
+			// are JSON lines too, and are shown as text like the rest.
+			if ev.Raw == nil && strings.HasPrefix(strings.TrimSpace(line), "{") {
+				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
 			if l := ev.Line(); l != "" {
@@ -276,6 +291,13 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		}
 		if serr := rec.Save(h.root); serr != nil {
 			h.ui.Warn("Tidy Up's record: %v", serr)
+		}
+		// Still under the media lock, which the engines write the trash
+		// log under: what Undo can no longer reach goes.
+		if lock {
+			if terr := media.TrimTrashLog(h.root, rec, time.Now()); terr != nil {
+				h.ui.Warn("Tidy Up's trash log: %v", terr)
+			}
 		}
 	}
 	return err
@@ -311,7 +333,9 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 	if err := os.MkdirAll(media.LogDir(h.root), 0o755); err != nil {
 		return err
 	}
-	out, err := os.OpenFile(filepath.Join(media.LogDir(h.root), "background.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	// Kept as the agent's job logs are: past jobLogLimit its older half
+	// moves to background.1.log.
+	out, err := openJobLog(media.LogDir(h.root), "background", jobLogLimit)
 	if err != nil {
 		return err
 	}
