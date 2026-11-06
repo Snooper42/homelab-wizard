@@ -49,6 +49,8 @@ version: 0.17.0
 | `data/homelab-rebuild.json` | `homelab rebuild` | Which backup folder a rebuild restored from, while it runs, so running it again carries on; `homelab-rebuild-done.json` once it is done |
 | `data/icons/<app>` | the app's page | The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none) |
 | `data/setup.json` | Setup | Steps marked done by hand |
+| `data/alerts-off.json` | `homelab notify off\|on <app>` (an app's page › **Tell me if it stops**, or a phone) | The apps the watchdog still checks and shows on Status but does not alert about. It used to be `ALERTS_OFF` in `.env`: the first install or `homelab notify` after an upgrade moves it here and takes the key out |
+| `data/pinned.json` | `homelab pin\|unpin <app>` (a row's right-click › **Pin to the top**, or a phone) | The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be `APPS_PINNED` in `.env`: the first install or `homelab pin` after an upgrade moves it here and takes the key out |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |
 | `data/homelab-move.json` | `homelab move in` | Where the bundle came from and what ran there, until the move is done |
@@ -57,6 +59,9 @@ version: 0.17.0
 | `scripts/logs/restore-test.json` | `homelab restore-test` | The last 24 restore tests |
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
+| `scripts/logs/crash-<date>.log` | the app, the menu bar item, the background agent | What a part was doing when it stopped unexpectedly, a file a day; kept 90 days |
+| `scripts/logs/media/<kind>-<action>-<time>.jsonl`, `background.log` | Tidy Up | Each job's events, a file a job (kept 30 days); the jobs run in the background write `background.log`, which at 5 MB moves its older half to `background.1.log` |
+| `data/media-trash.jsonl` | Tidy Up's jobs | What each run put in the Trash, for **Undo**. A line stays while Tidy Up still offers Undo for its run (Recent activity, or an action's last run), and at least 30 days |
 
 The nightly backup copies the `.json` files here, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the Homelab Secrets job takes off-site with `.env`; the rest of `data/` is in `data/appdata` (the AppData job) or rebuilt by itself.
 

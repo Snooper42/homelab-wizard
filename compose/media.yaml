@@ -35,8 +35,16 @@ services:
       - ${BIND_IP:-127.0.0.1}:${NAVIDROME_PORT:-4533}:4533
     volumes:
       - ./data/appdata/navidrome:/data
-      - ${MEDIA_ROOT:-/Volumes/Media}/music:${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}:ro
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/music
+        target: ${NAVIDROME_MUSIC_PATH:-${MEDIA_ROOT:-/Volumes/Media}/music}
+        read_only: true
+        bind:
+          create_host_path: false
     x-homelab:
+      same_job:
+        jellyfin: "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players."
+        jellyfin-container: "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players."
       releases: navidrome/navidrome
       phone: Amperfy or play:Sub on iPhone, Symfonium on Android
       url: NAVIDROME_URL
@@ -83,9 +91,19 @@ services:
       - ${BIND_IP:-127.0.0.1}:${BEETS_PORT:-8337}:8337
     volumes:
       - ./data/appdata/beets:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/music:/music
-      - ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}:/downloads
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/music
+        target: /music
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${DOWNLOADS_ROOT:-/Volumes/Media/downloads}
+        target: /downloads
+        bind:
+          create_host_path: false
     x-homelab:
+      goes_with:
+        navidrome: "Tags and sorts the music Navidrome plays, so albums and artists read right."
       seed: config/beets
       dump: sqlite:/config/library.db
       name: beets
@@ -106,8 +124,16 @@ services:
     volumes:
       - ./data/appdata/audiobookshelf/config:/config
       - ./data/appdata/audiobookshelf/metadata:/metadata
-      - ${MEDIA_ROOT:-/Volumes/Media}/audiobooks:/audiobooks
-      - ${MEDIA_ROOT:-/Volumes/Media}/podcasts:/podcasts
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/audiobooks
+        target: /audiobooks
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/podcasts
+        target: /podcasts
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 150
       phone: Audiobookshelf
@@ -130,7 +156,11 @@ services:
       - ${BIND_IP:-127.0.0.1}:${CALIBRE_WEB_PORT:-8083}:8083
     volumes:
       - ./data/appdata/calibre-web:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/Books
+        target: /books
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 150
       dump: sqlite:/config/app.db
@@ -150,9 +180,21 @@ services:
       - ${BIND_IP:-127.0.0.1}:${KOMGA_PORT:-25600}:25600
     volumes:
       - ./data/appdata/komga:/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
-      - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/Books
+        target: /books
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/comics
+        target: /comics
+        read_only: true
+        bind:
+          create_host_path: false
     x-homelab:
+      same_job:
+        kavita: "Both read comics and manga from the same folders; Kavita reads books too. One is usually enough."
       memory: 400
       releases: gotson/komga
       dump: sqlite:/config/database.sqlite
@@ -174,9 +216,21 @@ services:
       - ${BIND_IP:-127.0.0.1}:${KAVITA_PORT:-5500}:5000
     volumes:
       - ./data/appdata/kavita:/kavita/config
-      - ${MEDIA_ROOT:-/Volumes/Media}/Books:/books:ro
-      - ${MEDIA_ROOT:-/Volumes/Media}/comics:/comics:ro
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/Books
+        target: /books
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/comics
+        target: /comics
+        read_only: true
+        bind:
+          create_host_path: false
     x-homelab:
+      same_job:
+        calibre-web: "Both serve your e-books: Calibre-Web keeps Calibre's library and its details, Kavita reads books and comics in one place."
       memory: 200
       releases: Kareadita/Kavita
       dump: sqlite:/kavita/config/kavita.db
@@ -205,8 +259,18 @@ services:
     volumes:
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}:/config
       - ${JELLYFIN_DATA_DIR:-~/.local/share/jellyfin}/cache:/cache
-      - ${MEDIA_ROOT:-/Volumes/Media}/movies:/media/movies:ro
-      - ${MEDIA_ROOT:-/Volumes/Media}/tv:/media/tv:ro
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/movies
+        target: /media/movies
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA_ROOT:-/Volumes/Media}/tv
+        target: /media/tv
+        read_only: true
+        bind:
+          create_host_path: false
     x-homelab:
       memory: 1000
       releases: jellyfin/jellyfin

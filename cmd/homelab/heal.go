@@ -14,6 +14,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
+	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -30,11 +31,18 @@ func healPath(root string) string { return filepath.Join(root, "data", "healed.j
 // Apps updated lately are left to the rollback. Among missing (their
 // container is gone), those the watchdog saw running in the last week are
 // made again, on the same terms; one never started is left alone, and so
-// is one stopped on purpose (data/stopped.json). It
+// is one stopped on purpose (data/stopped.json), and none while another
+// job has the turn (internal/turn). It
 // returns a line per app restarted, for the alert. AUTO_HEAL=false turns it
 // off.
 func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missing []string, state health.State, env map[string]string, now time.Time) []string {
 	if strings.EqualFold(env["AUTO_HEAL"], "false") || len(unwell)+len(missing) == 0 {
+		return nil
+	}
+	// Another job changing the homelab (an update takes an app down and up
+	// again) has the turn: its apps are left to it, and looked at again on
+	// the next round. A watchdog run by that job itself has its turn.
+	if _, busy := turn.First(h.root); busy && os.Getenv(turn.Env) == "" {
 		return nil
 	}
 	path := healPath(h.root)

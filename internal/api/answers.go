@@ -76,10 +76,19 @@ func (a *answers) get(u string) (string, bool) {
 	return "", false
 }
 
+// put keeps u's answer, and drops those past answerTTL: a page no longer
+// asked (a port changed, an app removed) is not kept for as long as the
+// agent runs.
 func (a *answers) put(u, why string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	a.seen[u] = answer{why, time.Now()}
+	now := time.Now()
+	for k, s := range a.seen {
+		if now.Sub(s.at) >= answerTTL {
+			delete(a.seen, k)
+		}
+	}
+	a.seen[u] = answer{why, now}
 }
 
 // Probe asks the pages of apps that StatusRemembered left to be asked, and

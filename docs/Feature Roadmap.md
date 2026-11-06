@@ -20,6 +20,14 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #PR16 |
+| Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #447 |
+| A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
+| Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
+| Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
+| Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
+| Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
+| What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
+| What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
 | After sleep | When the machine wakes, every app is checked at once rather than at the watchdog's next run | #422 |
 | A restart that keeps failing | An app Docker restarted 3 times in an hour is stopped and flagged with its last log lines, instead of restarting forever | #427 |
@@ -111,14 +119,14 @@ The homelab looks after itself, and says what it did.
 - **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
 - **A restart that keeps failing** (S, *Built*, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Built*, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
-- **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power.
+- **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#428).
 - **What happened overnight** (S, *Built*, #420): Status's first line in the morning: "Overnight: 4 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you."
 
 ## Security and privacy
 
 Safe by default, and easy to check.
 
-- **Hide amounts** (S, *Idea*): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder.
+- **Hide amounts** (S, *Built*, #368): one shortcut (⌘⇧H) and a menu item blur every money figure, the sidebar's balances included, for screen sharing or someone at your shoulder (Finances' *Hide amounts and a wall-screen card*).
 - **Lock with Touch ID or Windows Hello** (M, *Idea*): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
@@ -126,7 +134,7 @@ Safe by default, and easy to check.
 - **Tailnet devices** (S, *Idea*): every device on the household's tailnet, when it was last seen, and Remove for a lost phone.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
-- **What CrowdSec stopped** (S, *Idea*): the addresses banned today, where from, and what they tried, on the proxy's page.
+- **What CrowdSec stopped** (S, *Built*, #430): the addresses banned today, where from, and what they tried, on the proxy's page (and CrowdSec's): Status › Nginx Proxy Manager.
 - **Two-step sign-in, nudged** (S, *Idea*): Setup and the weekly summary name each admin app without a second factor until it has one.
 
 ## Backups and data
@@ -136,7 +144,7 @@ Confidence that what matters can come back.
 - **Restore one file** (M, *Idea*): browse a backup by app and date and bring back one document, photo, or setting without restoring the whole app.
 - **Yesterday's version of an app** (M, *Idea*): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.
 - **A copy before anything risky** (S, *Idea*): a database dump just before an update, a restore, or a settings change, kept for a week.
-- **What changed since last night** (S, *Idea*): each backup's size beside the night before's, with a warning when an app's data shrinks sharply.
+- **What changed since last night** (S, *Built*, #435): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).
 - **Weekly integrity check** (S, *Idea*): Duplicati's own verify on a sample each week, and its result on Backups.
 
 ## Notifications and alerts
@@ -144,7 +152,7 @@ Confidence that what matters can come back.
 Few, clear, and useful when they come.
 
 - **Buttons on alerts** (M, *Idea*): "Radarr stopped" on the phone with **Restart** and **Show logs** (ntfy's actions, through the phone companion's own access).
-- **Quiet hours** (S, *Idea*): no sound overnight unless it is serious (backups failing for days, the vault unreachable).
+- **Quiet hours** (S, *Built*, #439): no sound overnight unless it is serious (backups failing for days, the vault unreachable). `QUIET_HOURS=22-7` by default; Settings › Quiet hours.
 - **One alert for many** (S, *Idea*): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.
 - **Snooze an alert** (S, *Idea*): snooze one check for an hour or a day from the alert itself.
 - **Who hears what** (S, *Idea*): each person picks the alerts they get; the household's other members get only the ones about their apps.
@@ -154,8 +162,8 @@ Few, clear, and useful when they come.
 The homelab as something a family uses, not one person.
 
 - **Guest access** (M, *Idea*): a guest's sign-in to chosen apps (Jellyfin, an Immich album) that ends on a date.
-- **A printable welcome sheet** (S, *Idea*): each person's apps, addresses, and QR codes on one page for the fridge.
-- **Each person's apps** (S, *Idea*): a person's welcome page lists only the apps they use, with their phone app for each.
+- **A printable welcome sheet** (S, *Built*, #446): each person's apps, addresses, and QR codes on one page for the fridge, linked from their welcome page, with no sign-in link or password on it.
+- **Each person's apps** (S, *Built*): a person's welcome page lists only the apps they use, with their phone app for each (`homelab person apps <name> <app>…`).
 - **What's new for the family** (S, *Idea*): a short page in plain words when an app they use gains something (a new player in Navidrome), not the technical notes.
 
 ## Apps and the catalog
@@ -165,6 +173,8 @@ Picking, trying, and using apps.
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
 - **Two apps that do the same job** (S, *Idea*): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both.
+- **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose stacks › Add more › *Suggested for what you run*.
+- **Two apps that do the same job** (S, *Built*, #438): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
 - **Suggestions from what you use** (S, *Idea*): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
 
@@ -185,7 +195,7 @@ The household's phones as a second screen.
 
 - **Add to Home Screen, done right** (S, *Idea*): an icon, a name, and a splash screen, so it opens like an app.
 - **The last Status, offline** (S, *Idea*): away from home with no tailnet, it shows the last Status it saw and when, rather than an error.
-- **Quick actions** (S, *Idea*): long-press an app for Open, Restart, Stop for a while.
+- **Quick actions** (S, *Built*, #447): long-press an app for Open, Restart, Stop for a while, on a phone that may make changes (also Start, Stop, and Logs).
 
 ## Media library cleanup
 
@@ -226,7 +236,7 @@ Details that make it feel finished.
 - **A sheet of shortcuts** (S, *Idea*): press ? for every shortcut on the screen you are on.
 - **Status read aloud** (S, *Idea*): VoiceOver and Narrator announce a job's progress and a row's change, not only the result.
 - **Shapes as well as colours** (S, *Idea*): each state's dot also has a shape (a check, a pause, a cross), for colour-blind eyes and small screens.
-- **Every menu by keyboard** (S, *Idea*): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape).
+- **Every menu by keyboard** (S, *Built*, #369, #413): right-click menus open with the context-menu key and Shift+F10, and work like More… (arrows, Escape): an app's row, a group's heading, and the sidebar.
 
 ## Insight
 
@@ -234,4 +244,4 @@ What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
 - **Health in one line** (S, *Idea*): "All well", or the one thing that needs you, at the top of every screen.
-- **Savings over time** (S, *Idea*): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>).
+- **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.

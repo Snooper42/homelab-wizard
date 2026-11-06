@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/domain"
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Step is one item of the checklist.
@@ -655,22 +656,31 @@ type saved struct {
 }
 
 func load(root string) saved {
+	data, _ := os.ReadFile(donePath(root))
+	return parseSaved(data)
+}
+
+func parseSaved(data []byte) saved {
 	var f saved
-	if data, err := os.ReadFile(donePath(root)); err == nil {
-		_ = json.Unmarshal(data, &f)
-	}
+	_ = json.Unmarshal(data, &f)
 	if f.Done == nil {
 		f.Done = map[string]bool{}
 	}
 	return f
 }
 
-func (f saved) save(root string) error {
-	if err := os.MkdirAll(filepath.Dir(donePath(root)), 0o755); err != nil {
-		return err
-	}
-	data, _ := json.MarshalIndent(f, "", "  ")
-	return os.WriteFile(donePath(root), data, 0o644)
+// change changes data/setup.json under the lock beside it, and saves it
+// whole (only this account's to read) when change says it changed: the
+// app and homelab setup each write it.
+func change(root string, change func(*saved) bool) error {
+	return lockedfile.Update(donePath(root), 0o600, func(old []byte) ([]byte, bool) {
+		f := parseSaved(old)
+		if !change(&f) {
+			return nil, false
+		}
+		data, err := json.MarshalIndent(f, "", "  ")
+		return data, err == nil
+	})
 }
 
 // LoadDone reads the manual steps marked done.
@@ -678,13 +688,14 @@ func LoadDone(root string) map[string]bool { return load(root).Done }
 
 // MarkDone records a manual step as done (or not).
 func MarkDone(root, id string, done bool) error {
-	f := load(root)
-	if done {
-		f.Done[id] = true
-	} else {
-		delete(f.Done, id)
-	}
-	return f.save(root)
+	return change(root, func(f *saved) bool {
+		if done {
+			f.Done[id] = true
+		} else {
+			delete(f.Done, id)
+		}
+		return true
+	})
 }
 
 // Started is when Setup was first opened (FirstSeen), without recording
@@ -694,12 +705,22 @@ func Started(root string) time.Time { return load(root).Since }
 // FirstSeen is when Setup was first opened for the homelab at root,
 // noted now if it never was.
 func FirstSeen(root string) time.Time {
-	f := load(root)
-	if f.Since.IsZero() {
-		f.Since = time.Now().UTC().Truncate(time.Second)
-		_ = f.save(root)
+	if f := load(root); !f.Since.IsZero() {
+		return f.Since
 	}
-	return f.Since
+	var since time.Time
+	_ = change(root, func(f *saved) bool {
+		if since = f.Since; !since.IsZero() {
+			return false
+		}
+		since = time.Now().UTC().Truncate(time.Second)
+		f.Since = since
+		return true
+	})
+	if since.IsZero() { // the record could not be written: now, unsaved
+		since = time.Now().UTC().Truncate(time.Second)
+	}
+	return since
 }
 
 // cloudflareSaid is what Cloudflare answered, without the request it

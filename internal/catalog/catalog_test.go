@@ -156,6 +156,12 @@ services:
       - type: tmpfs
         target: /tmp/cache
     x-homelab: {name: Cams, category: media, web: false, dump: "sqlite:/config/cams.db"}
+  helper:
+    image: h
+    x-homelab: {name: Helper, category: media, web: false, goes_with: {app: "Helps it.", ghost: "Gone.", helper: "Itself.", monitor: ""}}
+  twin:
+    image: t
+    x-homelab: {name: Twin, category: media, web: false, same_job: {app: "Both do it.", ghost: "Gone.", twin: "Itself.", monitor: " "}}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -192,10 +198,55 @@ services:
 		"cams: its tmpfs volume at /tmp/cache stops the backup's SQLite copy",
 		`category "nope"`,
 		`does not join the shared "homelab" network`,
+		`helper: goes_with names "ghost", not another app`,
+		`helper: goes_with names "helper", not another app`,
+		"helper: goes_with monitor says nothing on what it brings",
+		`twin: same_job names "ghost", not another app`,
+		`twin: same_job names "twin", not another app`,
+		"twin: same_job monitor says nothing on why",
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("missing %q in:\n%s", want, all)
 		}
+	}
+}
+
+// What goes with what: each suggestion names an app the catalog has, and
+// says what it brings it.
+func TestGoesWithPairs(t *testing.T) {
+	c := load(t)
+	n := 0
+	for _, a := range c.Apps {
+		for other, why := range a.Meta.GoesWith {
+			n++
+			if c.byID[other] == nil || strings.TrimSpace(why) == "" {
+				t.Errorf("%s: goes_with %q: %q", a.ID, other, why)
+			}
+		}
+	}
+	if n < 13 {
+		t.Errorf("only %d suggestions read from the compose files", n)
+	}
+}
+
+// Two apps that do the same job are named from one side, with why, and
+// each names an app the catalog has.
+func TestSameJobPairs(t *testing.T) {
+	c := load(t)
+	n := 0
+	for _, a := range c.Apps {
+		for other := range a.Meta.SameJob {
+			n++
+			if c.byID[other] == nil {
+				t.Errorf("%s: same_job %q is not in the catalog", a.ID, other)
+			}
+			if o := c.byID[other]; o != nil && o.Meta.SameJob[a.ID] != "" {
+				t.Errorf("%s and %s name each other: say it once, from one side", a.ID, other)
+			}
+		}
+	}
+	if n < 8 {
+		t.Errorf("only %d pairs read from the compose files", n)
 	}
 }
 
@@ -290,5 +341,35 @@ func TestOnSteamOSJellyfinIsTheContainer(t *testing.T) {
 	onSteamOS = func() bool { return true }
 	if a, _ := load(t).Get("jellyfin"); a.ID != "jellyfin-container" {
 		t.Errorf("Load on SteamOS: jellyfin is %s", a.ID)
+	}
+}
+
+// A library folder from a folder setting (the media folder, downloads,
+// photos, Kiwix's) may be on a drive, and Docker on Linux makes a missing
+// bind folder empty where the drive should be, then starts the app on it.
+// Each such bind says create_host_path: false, so the app waits for the
+// drive (A drive comes back), and the install makes the folder instead.
+// Backup sources (/source/...) are left: a missing one is only nothing to
+// copy, and Duplicati must not wait on Jellyfin's folder.
+func TestLibraryFoldersAreNotMadeByDocker(t *testing.T) {
+	keys := []string{"${MEDIA_ROOT", "${DOWNLOADS_ROOT", "${IMMICH_UPLOAD_LOCATION", "${KIWIX_ZIM_ROOT"}
+	n := 0
+	for _, a := range load(t).Apps {
+		for _, v := range a.Volumes {
+			fromSetting := false
+			for _, k := range keys {
+				fromSetting = fromSetting || strings.HasPrefix(v.Source, k)
+			}
+			if !fromSetting || strings.HasPrefix(v.Target, "/source/") {
+				continue
+			}
+			n++
+			if !v.NoCreate {
+				t.Errorf("%s: %s is made empty by Docker while its drive is away; write it as type: bind with bind.create_host_path: false", a.ID, v.Raw)
+			}
+		}
+	}
+	if n < 20 {
+		t.Errorf("only %d library binds found: the test no longer sees the compose files' volumes", n)
 	}
 }

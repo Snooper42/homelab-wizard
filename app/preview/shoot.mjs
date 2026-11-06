@@ -191,6 +191,12 @@ const protection = {
     { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
     { scenario: 'http-bad-user-agent', ip: '192.0.2.150', country: 'SG', network: 'Example Transit', when: hoursAgo(19) },
   ],
+  // Today's, for the proxy's page: the first two of five (the rest are past MaxToday in this picture).
+  today: [
+    { scenario: 'vpatch-CVE-2017-9841', ip: '203.0.113.7', country: 'NL', network: 'Example Hosting B.V.', when: hoursAgo(0.8), banned: true },
+    { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
+  ],
+  todayCount: 5,
 };
 // Savings recorded nightly: apps added over two months.
 const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
@@ -386,6 +392,19 @@ const shots = [
 // with its success text and no script error.
 // A crash of the background agent yesterday, as LastCrash returns it.
 const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
+// A finger held on a Status row for ms, as a touchscreen sends it: touchstart, then touchend (and the click it makes).
+const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
+  const row = [...document.querySelectorAll('#statusRows tr')].find((r) => r.querySelector('strong')?.textContent === name);
+  const cell = row.querySelector('td.state');
+  cell.scrollIntoView({ block: 'center' });
+  const r = cell.getBoundingClientRect();
+  const touch = new Touch({ identifier: 1, target: cell, clientX: r.left + 20, clientY: r.top + r.height / 2 });
+  cell.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true }));
+  await new Promise((done) => setTimeout(done, ms));
+  const end = new TouchEvent('touchend', { touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true });
+  cell.dispatchEvent(end);
+  if (!end.defaultPrevented) cell.click();
+}, [name, ms]);
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -518,9 +537,36 @@ const smokes = [
     if (!note || note[0] !== 'dot') throw new Error('the note line: ' + JSON.stringify(lines));
     if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
   } },
+  // Every song has lyrics, but some show two languages on one line (a translation after a caret): Overview still
+  // offers to set them apart, which the lyrics job does.
+  { name: 'Tidy Up: songs with two languages on one line are offered on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 12 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 0 songs; 0 plain ones replaced by time-synced' },
+      { type: 'note', text: '12 had a translation after a caret on each line: each is on its own line under its original now' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const text = await page.textContent(row);
+    if (!text.includes('12 songs show two languages on one line')) throw new Error('the row says ' + text);
+    await page.click(`${row} button:text-is("Tidy lyrics")`);
+    await page.waitForSelector('#tidyJob h2:text-is("Adding lyrics: done")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && !(r[2] || []).includes('--check'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // A lyrics check from before the count of songs with two languages on one line: Overview offers one more check,
+  // which changes nothing, so those songs are found.
+  { name: 'Tidy Up: an older lyrics check is offered again on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 13932, none: 0, cleaned: 0 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'result', action: 'lyrics', ok: true, check: true, to_clean: 12 }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("Look over the lyrics again")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    await page.click(`${row} button:text-is("Check lyrics")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--check')), null, { timeout: 5000 });
+  } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
-    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },
+    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 0 }) } },
     { ...tidy.libraries[1], last: { review: tidyRun('review', 1, { books: 412, changes: 0 }) } },
     { ...tidy.libraries[2], counts: { lean: 352 }, waiting: 0, last: { scan: tidyRun('scan', 3, { files: 352, bloated: 0 }) } },
     { ...tidy.libraries[3], last: { scan: tidyRun('scan', 3, { files: 800, bloated: 0 }) } },
@@ -854,6 +900,40 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
+  // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
+  { name: 'Choose stacks: suggestions from what you run', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    const group = page.locator('.group.suggested');
+    await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
+    await group.locator('label.app:has-text("Beets") .goeswith').filter({ hasText: 'Goes with Navidrome, which you run: Tags and sorts the music' }).waitFor({ timeout: 3000 });
+    await group.locator('.goeswith').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).waitFor({ timeout: 3000 });
+    if (await group.locator('label.app:has-text("Bazarr")').count()) throw new Error('Bazarr is suggested without Sonarr or Radarr');
+    if (await group.locator('label.app strong:text-is("Navidrome")').count()) throw new Error('an app you run is suggested');
+    await group.locator('label.app:has-text("Beets") input').check();
+    if (!(await page.isChecked('.group:not(.suggested) label.app:has-text("Beets") input'))) throw new Error('ticking a suggestion did not pick the app');
+    // Searching hides the group; the row still says it.
+    await page.fill('#search', 'beets');
+    await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
+    await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
+  } },
+  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written, and an app you run says nothing.
+  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'kavita');
+    const kavita = page.locator('label.app:has-text("Kavita")');
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
+    await page.fill('#search', 'tandoor');
+    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await page.fill('#search', 'kopia');
+    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    // Komga runs: its own row names nothing.
+    await page.fill('#search', 'komga');
+    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
+    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+  } },
   { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
@@ -945,6 +1025,40 @@ const smokes = [
   } },
   // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
+  // first record, month by month, newest first, and the card is not cut off.
+  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    await page.hover(tile);
+    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
+    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
+    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
+    const now = new Date().toLocaleString('en-US', { month: 'long' });
+    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    await page.focus(tile);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+  } },
+  // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
+  // copy less than half the night before's warned about on its row.
+  { name: 'Backups: a copy beside the night before’s, and one that shrank', screen: 'backups', mock: { backups: { ...backups, shrank: 1, copies: backups.copies.map((c) =>
+    c.id === 'immich-database' ? { ...c, size: 9e6, before: 61e6, shrank: true }
+    : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
+    : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
+    const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
+    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
+    // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
+    await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
+    if (await row('Vikunja').locator('td.size .was').count()) throw new Error('a copy within a tenth of the night before\'s says was');
+    if ((await row('Vikunja').locator('td.size').getAttribute('title')) !== 'The night before: 396 KB') throw new Error(`Vikunja's hover: ${await row('Vikunja').locator('td.size').getAttribute('title')}`);
+  } },
   { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
     const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
     await page.waitForSelector(when, { timeout: 5000 });
@@ -1200,6 +1314,28 @@ const smokes = [
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
   } },
+  // What CrowdSec stopped: the proxy's page lists today's with where each came from and what it tried, says how
+  // many more there were, and other apps' pages have no such card.
+  { name: 'The proxy’s page: what CrowdSec stopped today', screen: 'app:nginx-proxy-manager', run: async (page) => {
+    const card = page.locator('#appStopped');
+    await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
+    await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
+    const first = card.locator('li').first();
+    for (const want of ['vpatch-CVE-2017-9841', '203.0.113.7 · NL · Example Hosting B.V.', 'Banned']) {
+      if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
+    }
+    await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
+  } },
+  { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
+    await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
+  } },
+  { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
+  } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
@@ -1354,6 +1490,14 @@ const smokes = [
     await page.click('#setting-ADGUARD_PASSWORD button:has-text("Test")');
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
+  } },
+  // Quiet hours: an everyday setting on the Notifications page, named for people, the night it ships with.
+  { name: 'Settings: quiet hours among the everyday ones', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Notifications"]', { timeout: 5000 });
+    const row = page.locator('#setting-QUIET_HOURS');
+    await row.waitFor({ state: 'visible', timeout: 5000 });
+    if (!(await row.textContent()).includes('Quiet hours (no sound at night)')) throw new Error(`its name: ${await row.textContent()}`);
+    if ((await row.locator('input').inputValue()) !== '22-7') throw new Error(`its value: ${await row.locator('input').inputValue()}`);
   } },
   { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
@@ -3072,6 +3216,37 @@ const smokes = [
       if (await page.isVisible(`#app ${sel}`)) throw new Error(sel + ' shows on a read-only phone');
     }
     await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
+  } },
+  // Quick actions: on a phone that may make changes, a long press on an app's row opens the quick ones (Open, Restart,
+  // Stop for a while, Logs), not this computer's (Back up now, alerts, Pin); the page does not open under it. A tap
+  // still opens the page, and a phone that only looks has no menu.
+  { name: 'The phone: a long press on an app for its quick actions', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    const menu = page.locator('#statusRows .rowmenu');
+    await menu.waitFor({ timeout: 3000 });
+    const items = await menu.locator('[role^=menuitem]').allTextContents();
+    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
+    for (const never of ['Back up now', 'Pin to the top', 'Open on a phone']) if (items.some((i) => i.startsWith(never))) throw new Error(`${never} on the phone: ${items}`);
+    if (items.some((i) => i.startsWith('Tell me if it stops'))) throw new Error(`alerts on the phone: ${items}`);
+    if (await page.isVisible('#app')) throw new Error('the long press opened the app\'s page too');
+    // The finger held there selects no text (and iOS shows no callout).
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) !== 'none') throw new Error('a held finger can select the row\'s text');
+    // Where a finger can reach it: on the screen, and nothing over it.
+    const reach = await page.evaluate(() => { const b = [...document.querySelectorAll('.rowmenu button')].find((x) => x.textContent === 'Restart'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); });
+    if (!reach) throw new Error('the menu opened off the screen or under something');
+    await menu.locator('button:text-is("Restart")').click();
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) >= 1, null, { timeout: 5000 });
+    // A short tap is a tap: the app's page.
+    await longPress(page, 'Mealie', 80);
+    await page.waitForSelector('#app h1:has-text("Mealie")', { timeout: 5000 });
+  } },
+  { name: 'The phone that only looks: a long press opens no menu', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    await page.waitForTimeout(300);
+    if (await page.locator('.rowmenu').count()) throw new Error('a look-only phone has a menu');
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) === 'none') throw new Error('a look-only phone cannot select a row\'s text');
   } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });

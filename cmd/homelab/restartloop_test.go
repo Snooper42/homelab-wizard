@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -84,6 +86,10 @@ func TestWatchdogStopsARestartLoop(t *testing.T) {
 	s := stopped.Load(stopped.Path(root))["ntfy"]
 	if s.Why != stopped.KeptRestarting || s.Restarts != 4 || s.Since.IsZero() || !s.Until.IsZero() {
 		t.Errorf("not kept as stopped by the watchdog: %+v", s)
+	}
+	// The counts are written whole, this account's alone.
+	if info, err := os.Stat(restartsPath(root)); err != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		t.Errorf("restarts.json: %v %v", info, err)
 	}
 	// Kept stopped: the next run leaves it, whatever Docker says meanwhile.
 	homelabCmd(t, root, "", "watchdog")
