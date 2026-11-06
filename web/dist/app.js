@@ -479,12 +479,12 @@
 
   // web/src/setup/Checklist.tsx
   var failedLine = (f4) => `Did not work: ${f4.why.replace(/^✗\s*/, "").replace(/[.\s]+$/, "")}. Once that is put right, press ${f4.again} again.`;
-  function Actions({ s: s3, running: running4, on: on2 }) {
+  function Actions({ s: s3, running: running5, on: on2 }) {
     const open3 = s3.state !== "waiting" && s3.state !== "done";
     const items = [
       open3 && !!s3.settings?.length && /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.fill(s3.settings), children: "Fill in settings" }),
-      open3 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running4, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
-      ...open3 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running4, onClick: () => on2.run(s3, ci), children: c3.label })) : [],
+      open3 && !!s3.run?.length && /* @__PURE__ */ u3("button", { class: "small", disabled: running5, onClick: () => on2.run(s3), children: s3.runLabel || "Run" }),
+      ...open3 ? (s3.choices || []).map((c3, ci) => /* @__PURE__ */ u3("button", { class: "small choice", disabled: running5, onClick: () => on2.run(s3, ci), children: c3.label })) : [],
       open3 && s3.open && /* @__PURE__ */ u3(ActionLink, { onClick: () => on2.open(s3.open), children: "Open " + s3.open.replace(/^https?:\/\//, "").replace(/\/$/, "") }),
       open3 && s3.id === "vaultwarden" && /* @__PURE__ */ u3("button", { class: "small", onClick: on2.closeSignups, children: "Close sign-ups now" }),
       s3.manual && s3.state !== "waiting" && /* @__PURE__ */ u3("label", { class: "small", children: [
@@ -510,7 +510,7 @@
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
   }
-  function Checklist({ steps, showDone, showLater, running: running4, failed = {}, on: on2 }) {
+  function Checklist({ steps, showDone, showLater, running: running5, failed = {}, on: on2 }) {
     const [opened2, setOpened] = d2({});
     const toggle = (id2) => setOpened({ ...opened2, [id2]: !opened2[id2] });
     const now = steps.filter((s3) => !waits(s3) && s3.state !== "done");
@@ -530,7 +530,7 @@
             failed[s3.id] && s3.state !== "done" && /* @__PURE__ */ u3("div", { class: "sub failed bad", children: failedLine(failed[s3.id]) }),
             open3 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
-          /* @__PURE__ */ u3(Actions, { s: s3, running: running4 === s3.id, on: on2 }),
+          /* @__PURE__ */ u3(Actions, { s: s3, running: running5 === s3.id, on: on2 }),
           more2 && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
@@ -777,7 +777,7 @@
         /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose stacks" })
       ] });
     }
-    const running4 = st.apps.filter((a3) => a3.state === "running");
+    const running5 = st.apps.filter((a3) => a3.state === "running");
     const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
     const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
@@ -787,7 +787,7 @@
         {
           label: "Running",
           value: /* @__PURE__ */ u3(S, { children: [
-            running4.length,
+            running5.length,
             /* @__PURE__ */ u3("small", { children: [
               " of ",
               counted
@@ -2031,7 +2031,7 @@
       fn();
     };
     const url = a3.address ? "https://" + a3.address : a3.url || "";
-    const running4 = a3.state === "running", stopped2 = a3.state === "stopped";
+    const running5 = a3.state === "running", stopped2 = a3.state === "stopped";
     const item = (label, fn, opts = {}) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: opts.cls, disabled: opts.disabled, onClick: fn, children: label });
     return /* @__PURE__ */ u3(
       "div",
@@ -2065,15 +2065,15 @@
           item("‹ Back", () => showLater(false), { cls: "menuback" }),
           /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "It starts again by itself then." })
         ] }) : /* @__PURE__ */ u3(S, { children: [
-          running4 && url && item("Open", pick(() => on2.open(url))),
-          running4 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
+          running5 && url && item("Open", pick(() => on2.open(url))),
+          running5 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
           url && item("Copy address", pick(() => {
             on2.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
           })),
           !native && url && /* @__PURE__ */ u3("hr", {}),
           !native && stopped2 && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
-          !native && running4 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
-          !native && running4 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
+          !native && running5 && item("Restart", pick(() => on2.act(a3, "restart")), { disabled: busy2 }),
+          !native && running5 && item(sure ? `Click again to stop ${a3.name}` : "Stop", () => {
             if (!sure) {
               setSure(true);
               return;
@@ -2081,7 +2081,7 @@
             close3(true);
             on2.act(a3, "stop");
           }, { cls: sure ? "danger" : void 0, disabled: busy2 }),
-          !native && running4 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
+          !native && running5 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: busy2, onClick: () => showLater(true), children: "Stop for a while ›" }),
           !native && /* @__PURE__ */ u3("hr", {}),
           !native && item("Logs", pick(() => on2.logs(a3))),
           !companion2 && item("Back up now", pick(() => on2.backupNow())),
@@ -2419,7 +2419,7 @@
     const mem = p3.memory;
     const used = mem ? g2.apps.reduce((t3, a3) => t3 + (mem[a3.id] || 0), 0) : 0;
     const containers = g2.apps.filter((a3) => !isNative(p3, a3));
-    const running4 = containers.filter((a3) => a3.state === "running");
+    const running5 = containers.filter((a3) => a3.state === "running");
     const stopped2 = containers.filter((a3) => startable(p3, a3));
     const held3 = containers.filter((a3) => a3.state === "stopped" && p3.held[a3.id] && !keptRestarting(p3.held[a3.id]));
     const items = () => [...wrap.current?.querySelectorAll("[role=menuitem]:not([disabled])") || []];
@@ -2464,7 +2464,7 @@
     };
     const verb2 = { start: "Starting", stop: "Stopping", restart: "Restarting" };
     const label = doing3 ? `${verb2[doing3.action]} ${doing3.at + 1} of ${doing3.of}…` : count2 + (used ? ` · ${formatMem(used)}` : "");
-    const byMem = running4.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
+    const byMem = running5.filter((a3) => mem?.[a3.id]).sort((a3, b2) => (mem[b2.id] || 0) - (mem[a3.id] || 0));
     return /* @__PURE__ */ u3(
       "span",
       {
@@ -2524,10 +2524,10 @@
             }
           ),
           open3 && later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: stop for a while`, children: [
-            /* @__PURE__ */ u3("p", { class: "menuhead", children: running4.length === 1 ? `Stop ${running4[0].name} for a while` : `Stop the ${running4.length} running for a while` }),
-            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running4, c3.until), children: c3.label }, c3.until)),
+            /* @__PURE__ */ u3("p", { class: "menuhead", children: running5.length === 1 ? `Stop ${running5[0].name} for a while` : `Stop the ${running5.length} running for a while` }),
+            stopChoices().map((c3) => /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("stop", running5, c3.until), children: c3.label }, c3.until)),
             /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "menuback", onClick: () => showLater(false), children: "‹ Back" }),
-            /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running4.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
+            /* @__PURE__ */ u3("p", { class: "menufoot muted", children: running5.length === 1 ? "It starts again by itself then." : "They start again by themselves then." })
           ] }),
           open3 && !later2 && /* @__PURE__ */ u3("div", { ref: list, class: "menu groupmenulist" + (up ? " up" : ""), role: "menu", "aria-label": `${g2.label}: all its apps`, children: [
             /* @__PURE__ */ u3("p", { class: "menuhead", children: mem ? used ? `${formatMem(used)} in memory now` : "Nothing in memory now" : "Memory: measuring…" }),
@@ -2536,10 +2536,10 @@
               /* @__PURE__ */ u3("span", { class: "muted", children: formatMem(mem[a3.id]) })
             ] }, a3.id)) }),
             stopped2.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("start", stopped2), children: stopped2.length === 1 ? `Start ${stopped2[0].name}` : `Start the ${stopped2.length} stopped` }),
-            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running4), children: running4.length === 1 ? `Restart ${running4[0].name}` : `Restart the ${running4.length} running` }),
-            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running4), children: sure ? `Click again to stop ${running4.length === 1 ? running4[0].name : `all ${running4.length}`}` : running4.length === 1 ? `Stop ${running4[0].name}` : `Stop the ${running4.length} running` }),
-            running4.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
-            running4.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
+            running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", disabled: p3.busy, onClick: () => run2("restart", running5), children: running5.length === 1 ? `Restart ${running5[0].name}` : `Restart the ${running5.length} running` }),
+            running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: sure ? "danger" : "", disabled: p3.busy, onClick: () => run2("stop", running5), children: sure ? `Click again to stop ${running5.length === 1 ? running5[0].name : `all ${running5.length}`}` : running5.length === 1 ? `Stop ${running5[0].name}` : `Stop the ${running5.length} running` }),
+            running5.length > 0 && /* @__PURE__ */ u3("button", { type: "button", role: "menuitem", class: "stoplater", "aria-haspopup": "menu", disabled: p3.busy, onClick: () => showLater(true), children: "Stop for a while ›" }),
+            running5.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted", children: "Stopping what you don’t use gives its memory back. Nothing starts it again by itself until you do." }),
             held3.length > 0 && /* @__PURE__ */ u3("p", { class: "menufoot muted heldnote", children: [
               "Stopped by you: ",
               held3.map((a3) => a3.name).join(", "),
@@ -2553,7 +2553,7 @@
     );
   }
   function GroupHead({ g: g2, open: open3, toggle, p: p3 }) {
-    const running4 = g2.apps.filter((a3) => a3.state === "running").length;
+    const running5 = g2.apps.filter((a3) => a3.state === "running").length;
     const counted = g2.apps.filter((a3) => !awaitingJobs(a3)).length;
     return (
       // A right-click on the heading, Shift+F10, or the context-menu key opens the group's menu, as a click on its count does.
@@ -2584,7 +2584,7 @@
               g2.label
             ] }),
             /* @__PURE__ */ u3("span", { class: "kiosklabel", children: g2.label }),
-            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running4 >= counted ? `${running4} running ✓` : `${running4} of ${counted} running` }),
+            /* @__PURE__ */ u3(GroupMenu, { g: g2, p: p3, count: g2.alert ? String(g2.apps.length) : running5 >= counted ? `${running5} running ✓` : `${running5} of ${counted} running` }),
             /* @__PURE__ */ u3(StartAll, { g: g2, p: p3 }),
             !open3 && /* @__PURE__ */ u3("span", { class: "names", children: g2.apps.map((a3) => a3.name).join(" · ") })
           ] })
@@ -2815,7 +2815,7 @@
   // web/src/store.ts
   function store(read) {
     const watchers2 = [];
-    let running4 = null;
+    let running5 = null;
     let again = null;
     const tell2 = () => watchers2.forEach((fn) => fn());
     const s3 = {
@@ -2823,11 +2823,11 @@
       error: void 0,
       at: 0,
       load() {
-        if (running4) return again ??= running4.then(() => {
+        if (running5) return again ??= running5.then(() => {
           again = null;
           return s3.load();
         });
-        running4 = (async () => {
+        running5 = (async () => {
           try {
             s3.value = await read();
             s3.error = void 0;
@@ -2836,13 +2836,13 @@
             s3.error = e3;
             s3.at = 0;
           }
-          running4 = null;
+          running5 = null;
           tell2();
         })();
-        return running4;
+        return running5;
       },
       fresh(maxAge) {
-        if (running4) return running4;
+        if (running5) return running5;
         return !s3.at || Date.now() - s3.at > maxAge ? s3.load() : Promise.resolve();
       },
       set(v3) {
@@ -3037,13 +3037,13 @@
     R(/* @__PURE__ */ u3(CommandSheet, { onClose: closed }), el3);
   }
   function Buttons({ buttons }) {
-    const [running4, setRunning] = d2(-1);
+    const [running5, setRunning] = d2(-1);
     return /* @__PURE__ */ u3(S, { children: buttons.map((b2, i3) => /* @__PURE__ */ u3(
       "button",
       {
         class: b2.primary ? "primary small" : "small",
         title: b2.title,
-        disabled: running4 === i3,
+        disabled: running5 === i3,
         onClick: async () => {
           setRunning(i3);
           try {
@@ -3187,9 +3187,9 @@
   }
   var bgRunning = () => bg?.state === "running" ? bg.title : "";
   function waitForBg() {
-    const running4 = bgRunning();
-    if (running4) showError(`Wait for “${running4}” to finish: it is still running`);
-    return !!running4;
+    const running5 = bgRunning();
+    if (running5) showError(`Wait for “${running5}” to finish: it is still running`);
+    return !!running5;
   }
   function open() {
     hidden2 = false;
@@ -4356,13 +4356,13 @@
   var lit = (p3, selected2) => !!p3.apps.length && p3.apps.every((id2) => selected2.has(id2));
   function Starters({ presets, selected: selected2, status, toggle }) {
     return /* @__PURE__ */ u3(S, { children: presets.map((p3) => {
-      const running4 = p3.apps.every((id2) => status[id2]?.state === "running");
+      const running5 = p3.apps.every((id2) => status[id2]?.state === "running");
       const [glyph, tint] = starterLooks[p3.id] || [];
       return /* @__PURE__ */ u3("button", { class: "starter" + (lit(p3, selected2) ? " on" : ""), onClick: () => toggle(p3), children: [
         glyph && /* @__PURE__ */ u3("span", { class: "glyph", style: `--tint:${tint}`, children: /* @__PURE__ */ u3(Icon, { name: glyph }) }),
         /* @__PURE__ */ u3("strong", { children: p3.name }),
         /* @__PURE__ */ u3("span", { class: "desc", children: p3.description || "" }),
-        running4 && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
+        running5 && /* @__PURE__ */ u3("span", { class: "state", children: "Running" })
       ] }, p3.id);
     }) });
   }
@@ -4447,12 +4447,12 @@
       ] }, "suggested"),
       p3.catalog.categories.filter((c3) => byCategory2[c3.id]).map((c3) => {
         const apps = byCategory2[c3.id];
-        const running4 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
+        const running5 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
         return /* @__PURE__ */ u3("div", { class: "group", children: [
           /* @__PURE__ */ u3("h2", { children: [
             c3.label,
             /* @__PURE__ */ u3("span", { class: "n", children: [
-              running4,
+              running5,
               " of ",
               apps.length,
               " running"
@@ -4476,10 +4476,10 @@
     if (typeof p3 === "string") return /* @__PURE__ */ u3("p", { class: "bad", children: p3 });
     const picked = p3.start.filter((id2) => !p3.added[id2]);
     const helpers = p3.start.filter((id2) => p3.added[id2]);
-    const running4 = p3.skips.filter((s3) => /^already running/.test(s3.reason));
+    const running5 = p3.skips.filter((s3) => /^already running/.test(s3.reason));
     const quiet2 = p3.skips.filter((s3) => /^only needed by/.test(s3.reason));
     const outside = p3.skips.filter((s3) => /^(runs natively|is installed on)/.test(s3.reason));
-    const needs = p3.skips.filter((s3) => !running4.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
+    const needs = p3.skips.filter((s3) => !running5.includes(s3) && !quiet2.includes(s3) && !outside.includes(s3));
     const lead2 = picked.length ? `Installs ${plural2(picked.length, "app", "apps")}` + (helpers.length ? `, with ${plural2(helpers.length, "helper", "helpers")} they need` : "") + "." : "";
     const details = [
       { title: "Helpers that start with them", items: helpers.map((id2) => `${appName2(id2)} (for ${appName2(p3.added[id2])})`) },
@@ -4501,9 +4501,9 @@
       ] })) }),
       /* @__PURE__ */ u3(List, { title: "Problems", cls: "bad", items: p3.problems }),
       /* @__PURE__ */ u3(List, { title: "Worth knowing", cls: "warn", items: p3.warnings }),
-      !!running4.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
+      !!running5.length && /* @__PURE__ */ u3("p", { class: "muted small", children: [
         "Already running: ",
-        running4.map((s3) => appName2(s3.app)).join(", "),
+        running5.map((s3) => appName2(s3.app)).join(", "),
         "."
       ] }),
       !!details.length && /* @__PURE__ */ u3("details", { class: "planDetails", children: [
@@ -9031,7 +9031,7 @@
     const [brand, setBrand] = d2(brandOf(x3?.institution, x3?.name) || "");
     const picked = A2(!!x3?.institution);
     const kindPicked = A2(!!x3);
-    const follow2 = (b2) => {
+    const follow3 = (b2) => {
       const k3 = kindForBrand(b2);
       if (k3 && !kindPicked.current) setKind(k3);
     };
@@ -9040,7 +9040,7 @@
       if (!picked.current) {
         const b2 = brandOf(void 0, n3) || "";
         setBrand(b2);
-        follow2(b2);
+        follow3(b2);
       }
     };
     const [amount, setAmount] = d2(text(x3?.amount));
@@ -9094,7 +9094,7 @@
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand === "none" ? "" : brand, set: (k3) => {
         picked.current = true;
         setBrand(k3 || "none");
-        follow2(k3);
+        follow3(k3);
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment" }),
@@ -11092,11 +11092,11 @@ ${pays}
     const theirs = new Set(words2(service));
     return own2.length > 0 && own2.every((w3) => theirs.has(w3));
   }
-  function replacedBy(plan, running4) {
+  function replacedBy(plan, running5) {
     const out = [];
     for (const x3 of plan.payments || []) {
       if (x3.to || x3.card) continue;
-      for (const app of running4) {
+      for (const app of running5) {
         const service = app.replaces.find((s3) => same(x3.name, s3));
         if (!service) continue;
         const had = out.find((r3) => r3.payment.id === x3.id);
@@ -11443,7 +11443,7 @@ ${pays}
       )) })
     ] });
   }
-  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running4, fromWallos }) {
+  function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) {
     const [filter2, setFilter2] = d2(() => {
       const f4 = opening || "all";
       opening = "";
@@ -11491,7 +11491,7 @@ ${pays}
       ] });
     };
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running4 || []), keep: keep2 }),
+      /* @__PURE__ */ u3(HomelabWidget, { v: v3, replaced: replacedBy(v3.plan, running5 || []), keep: keep2 }),
       /* @__PURE__ */ u3(FoundWidget, { v: v3, add: keep2 && ((x3) => {
         keep2({ ...v3.plan, payments: [...v3.plan.payments || [], x3] });
       }) }),
@@ -12716,7 +12716,7 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open3, exportFile: exportFile2, printMonth, readReceipt, running: running4, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setWaiting: setWaiting2, saveSettings, keep: keep2, edit: open3, exportFile: exportFile2, printMonth, readReceipt, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open3("account", cardOf(id2)) : open3(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -12750,17 +12750,17 @@ ${pays}
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running4, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running4, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setWaiting: setWaiting2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running4, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running4 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2 }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, openWorth, openSubscriptions, openTransactions, openCalendar, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
@@ -12932,6 +12932,48 @@ ${pays}
 
   // web/src/tidy/Tidy.tsx
   var names2 = { music: "Music", books: "Books", movies: "Movies", tv: "TV", audiobooks: "Audiobooks", inbox: "Downloads", scrubber: "Leftovers", tdarr: "Tdarr", arr: "Downloads" };
+  var titles = {
+    "music scan": "Scanning your music",
+    "music run": "Tidying your music",
+    "music finalize": "Swapping in your cleaned library",
+    "music verify": "Checking nothing went missing",
+    "music free-space": "Freeing the space",
+    "music undo": "Putting the old library back",
+    "music navidrome-cleanup": "Tidying Navidrome",
+    "music playlists": "Making playlists",
+    "music lyrics": "Adding lyrics",
+    "music genres": "Checking genres",
+    "music genre-counts": "Counting your genres",
+    "movies genre-counts": "Counting your films' genres",
+    "tv genre-counts": "Counting your shows' genres",
+    "books genre-counts": "Counting your books' genres",
+    "books review": "Reviewing your books",
+    "books apply": "Tidying your books",
+    "books undo": "Undoing the last apply",
+    "movies scan": "Scanning your films",
+    "movies run": "Handing films to Tdarr",
+    "movies collect": "Collecting Tdarr's work",
+    "tv scan": "Scanning your TV",
+    "movies dedupe": "Removing the extra copies",
+    "trash restore": "Putting it back",
+    "movies posters": "Asking Jellyfin for posters",
+    "tv posters": "Asking Jellyfin for posters",
+    "tv dedupe": "Removing the extra copies",
+    "tv run": "Handing episodes to Tdarr",
+    "tv collect": "Collecting Tdarr's work",
+    "audiobooks scan": "Scanning your audiobooks",
+    "audiobooks run": "Merging your audiobooks",
+    "inbox scan": "Checking Downloads",
+    "scrubber scan": "Sweeping up leftovers",
+    "music delete-backup": "Removing the old backup",
+    "install ffmpeg": "Getting ffmpeg",
+    "tdarr setup": "Setting up Tdarr",
+    "arr apply": "Handing the downloads over"
+  };
+  function jobTitle(kind, action, args = []) {
+    if (kind === "music" && action === "lyrics" && args.includes("--tidy")) return "Tidying lyrics";
+    return titles[`${kind} ${action}`] || `${names2[kind] || kind}: ${action.replace(/-/g, " ")}`;
+  }
   var n2 = (v3) => typeof v3 === "number" ? v3 : Number(v3) || 0;
   var count = (v3, one, many = one + "s") => `${v3.toLocaleString()} ${v3 === 1 ? one : many}`;
   var lib = (d3, kind) => d3.libraries.find((l3) => l3.kind === kind);
@@ -12957,16 +12999,28 @@ ${pays}
       ] })
     ] });
   }
+  var Elsewhere = X("");
   function Go({ label, primary, job: job2, title, onClick }) {
-    const gone = x2(FolderGone);
-    return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone, title: gone ? "Its folder isn't there: plug in its drive" : title, onClick, children: label });
+    const gone = x2(FolderGone), other = x2(Elsewhere);
+    const why = gone ? "Its folder isn't there: plug in its drive" : other ? `Waits for ${other.charAt(0).toLowerCase() + other.slice(1)} to finish` : busy(job2) ? "Waits for the job above to finish" : title;
+    return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone || !!other, title: why, onClick, children: label });
   }
-  function JobPanel({ job: job2, stop: stop2, done, fix }) {
-    const p3 = job2.progress;
+  function Bar({ title, p: p3, idle }) {
     const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
+    return /* @__PURE__ */ u3("div", { class: "progress", children: [
+      /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle })
+    ] });
+  }
+  function JobPanel({ job: job2, stop: stop2, done, fix, again }) {
+    const p3 = job2.progress;
+    const ended = !job2.ended ? "" : job2.ended.ok ? "done" : job2.stopping ? "stopped" : "didn't finish";
     return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyJob", role: "status", children: [
-      /* @__PURE__ */ u3(CardHead, { title: job2.ended ? job2.ended.ok ? `${job2.title}: done` : `${job2.title}: stopped` : job2.title, children: job2.ended ? /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Close" }) : /* @__PURE__ */ u3("button", { class: "small", onClick: stop2, title: "It stops at a safe point; run it again to carry on where it left off", children: "Stop" }) }),
+      /* @__PURE__ */ u3(CardHead, { title: ended ? `${job2.title}: ${ended}` : job2.stopping ? `${job2.title}: stopping` : job2.title, children: job2.ended ? /* @__PURE__ */ u3("span", { class: "actions", children: [
+        again && !fix && !job2.ended.ok && !job2.stopping && /* @__PURE__ */ u3("button", { class: "small", onClick: again, title: "Runs it again: it picks up where it left off", children: "Try again" }),
+        /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Close" })
+      ] }) : job2.stopping ? /* @__PURE__ */ u3("button", { class: "small", disabled: true, title: "It stops at its next safe point, so nothing is left half done", children: "Stopping…" }) : /* @__PURE__ */ u3("button", { class: "small", onClick: stop2, title: "It stops at a safe point; run it again to carry on where it left off", children: "Stop" }) }),
       job2.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
         "Step ",
         job2.step.n,
@@ -12975,11 +13029,9 @@ ${pays}
         " · ",
         job2.step.text
       ] }),
-      !job2.ended && /* @__PURE__ */ u3("div", { class: "progress", children: [
-        /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": job2.title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
-        /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : "Starting…" })
-      ] }),
-      p3?.note && !job2.ended && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
+      !job2.ended && /* @__PURE__ */ u3(Bar, { title: job2.title, p: p3, idle: "Starting…" }),
+      job2.stopping && !job2.ended && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there." }),
+      p3?.note && !job2.ended && !job2.stopping && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
         "Now: ",
         p3.note
       ] }),
@@ -12995,6 +13047,49 @@ ${pays}
         /* @__PURE__ */ u3("pre", { role: "log", children: job2.log.join("\n") })
       ] })
     ] });
+  }
+  function RunningCard({ lock, now }) {
+    const title = jobTitle(lock.kind, lock.action);
+    const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
+    const since = new Date(lock.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", role: "status", children: [
+      /* @__PURE__ */ u3(CardHead, { title }),
+      now?.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
+        "Step ",
+        now.step.n,
+        " of ",
+        now.step.total,
+        " · ",
+        now.step.text
+      ] }),
+      /* @__PURE__ */ u3(Bar, { title, p: p3, idle: "Working…" }),
+      p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
+        "Now: ",
+        p3.note
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "Started at ",
+        since,
+        ", outside this window, and carries on with it closed. The buttons below wait until it's done."
+      ] })
+    ] });
+  }
+  function carryOn(s3, d3, act, pick) {
+    const title = jobTitle(s3.kind, s3.action), what2 = `${s3.kind} ${s3.action}`;
+    if (what2 === "books apply") return { label: "Open the review", run: () => pick("books") };
+    if (what2 === "trash restore") return { say: "Press Undo beside it in Recently done again: what's back stays back." };
+    const asks = {
+      "music finalize": "Navidrome is paused again while the swap finishes.",
+      "music undo": "Navidrome is paused again while the old library goes back.",
+      "music free-space": `What is left of the old library goes to ${d3.trash}.`,
+      "books undo": "Calibre-Web is paused again while Calibre's database is put back.",
+      "movies dedupe": `The extra copies left go to ${d3.trash}, each checked again first.`,
+      "tv dedupe": `The extra copies left go to ${d3.trash}, each checked again first.`
+    };
+    if (asks[what2]) {
+      return { label: "Carry on…", run: () => act.ask({ title: `Carry on: ${title.charAt(0).toLowerCase() + title.slice(1)}?`, action: "Carry on", lead: `It stopped part-way. It picks up where it left off. ${asks[what2]}`, go: () => act.run(s3.kind, s3.action, [], true) }) };
+    }
+    return { label: "Carry on", run: () => act.run(s3.kind, s3.action) };
   }
   function installFix(job2, d3, act) {
     const ff = d3?.checks.find((c3) => c3.id === "ffmpeg" && !c3.ok && c3.install);
@@ -13385,6 +13480,7 @@ ${pays}
     const { d: d3, job: job2, act } = p3;
     const tab3 = tabNow(p3.tab);
     const waiting2 = d3 ? LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, p3.review, p3.pick)).filter((t3) => t3.go).length : 0;
+    const other = job2 && !job2.ended ? null : (p3.running ? p3.running.lock : d3?.lock) || null;
     const say = !d3 ? "" : (d3.freed ? `${bytes(d3.freed)} won back so far · ` : "") + (waiting2 ? `${count(waiting2, "thing")} ${waiting2 === 1 ? "needs" : "need"} your OK` : "Everything is tidy");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "row header", children: [
@@ -13395,37 +13491,35 @@ ${pays}
         /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names2[k3]])] }),
-      d3?.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
-        /* @__PURE__ */ u3("strong", { children: [
-          names2[d3.lock.kind] || d3.lock.kind,
-          ": ",
-          d3.lock.action,
-          " is running"
-        ] }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          "Since ",
-          ago(d3.lock.start),
-          ". It carries on with this window closed."
-        ] })
-      ] }),
-      d3?.stale && !d3.lock && !job2 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
-        /* @__PURE__ */ u3("strong", { children: [
-          names2[d3.stale.kind] || d3.stale.kind,
-          ": ",
-          d3.stale.action,
-          " stopped part-way"
-        ] }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: [
-          "Run it again to carry on where it left off. ",
-          /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.run(d3.stale.kind, d3.stale.action), children: "Carry on" })
-        ] })
-      ] }),
-      job2 && /* @__PURE__ */ u3(JobPanel, { job: job2, stop: act.stop, done: p3.closeJob, fix: installFix(job2, p3.d, act) }),
+      other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0 }),
+      d3?.stale && !other && !job2 && (() => {
+        const c3 = carryOn(d3.stale, d3, act, p3.pick);
+        return /* @__PURE__ */ u3(Card, { kind: "notice", id: "tidyStale", children: [
+          /* @__PURE__ */ u3("strong", { children: [
+            jobTitle(d3.stale.kind, d3.stale.action),
+            ": stopped part-way"
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "muted", children: "say" in c3 ? c3.say : /* @__PURE__ */ u3(S, { children: [
+            "It can pick up where it left off. ",
+            /* @__PURE__ */ u3("button", { class: "small", onClick: c3.run, children: c3.label })
+          ] }) })
+        ] });
+      })(),
+      job2 && /* @__PURE__ */ u3(
+        JobPanel,
+        {
+          job: job2,
+          stop: act.stop,
+          done: p3.closeJob,
+          fix: installFix(job2, p3.d, act),
+          again: job2.yes ? void 0 : () => act.run(job2.kind, job2.action, job2.args || [])
+        }
+      ),
       p3.error && !d3 && /* @__PURE__ */ u3(Card, { kind: "notice", children: [
         /* @__PURE__ */ u3("strong", { children: "Tidy Up couldn't read its record" }),
         /* @__PURE__ */ u3("span", { class: "muted", children: p3.error })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
   }
   function mountTidy(el3, props) {
@@ -13446,42 +13540,9 @@ ${pays}
   var review = null;
   var skip = /* @__PURE__ */ new Set();
   var confirm = null;
-  var titles = {
-    "music scan": "Scanning your music",
-    "music run": "Tidying your music",
-    "music finalize": "Swapping in your cleaned library",
-    "music verify": "Checking nothing went missing",
-    "music free-space": "Freeing the space",
-    "music undo": "Putting the old library back",
-    "music navidrome-cleanup": "Tidying Navidrome",
-    "music playlists": "Making playlists",
-    "music lyrics": "Adding lyrics",
-    "music genres": "Checking genres",
-    "music genre-counts": "Counting your genres",
-    "movies genre-counts": "Counting your films' genres",
-    "tv genre-counts": "Counting your shows' genres",
-    "books genre-counts": "Counting your books' genres",
-    "books review": "Reviewing your books",
-    "books apply": "Tidying your books",
-    "books undo": "Undoing the last apply",
-    "movies scan": "Scanning your films",
-    "movies run": "Handing films to Tdarr",
-    "movies collect": "Collecting Tdarr's work",
-    "tv scan": "Scanning your TV",
-    "movies dedupe": "Removing the extra copies",
-    "trash restore": "Putting it back",
-    "movies posters": "Asking Jellyfin for posters",
-    "tv posters": "Asking Jellyfin for posters",
-    "tv dedupe": "Removing the extra copies",
-    "tv run": "Handing episodes to Tdarr",
-    "tv collect": "Collecting Tdarr's work",
-    "audiobooks scan": "Scanning your audiobooks",
-    "audiobooks run": "Merging your audiobooks",
-    "inbox scan": "Checking Downloads",
-    "install ffmpeg": "Getting ffmpeg",
-    "tdarr setup": "Setting up Tdarr",
-    "arr apply": "Handing the downloads over"
-  };
+  var running4 = null;
+  var following;
+  var FOLLOW_MS = 3e3;
   function draw5() {
     const d3 = tidyData.value || null;
     mountTidy($2("tidyRoot"), {
@@ -13491,6 +13552,7 @@ ${pays}
       job,
       review,
       skip,
+      running: running4,
       pick: (t3) => {
         tab2 = t3;
         try {
@@ -13500,9 +13562,11 @@ ${pays}
         if (t3 === "books" && !review) loadReview();
         draw5();
       },
+      // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
       closeJob: () => {
         job = null;
         draw5();
+        document.querySelector('#tidy .seg button[aria-checked="true"]')?.focus();
       },
       toggle: (id2) => {
         if (skip.has(id2)) skip.delete(id2);
@@ -13512,6 +13576,10 @@ ${pays}
       act: {
         run,
         stop: () => {
+          if (job && !job.ended) {
+            job.stopping = true;
+            draw5();
+          }
           go().TidyStop();
         },
         ask: (c3) => {
@@ -13539,8 +13607,37 @@ ${pays}
         }
       }
     });
+    if (job && (!document.activeElement || document.activeElement === document.body) && $2("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();
     const looks2 = (d3?.checks || []).filter((c3) => !c3.ok && c3.needs === "all").length + (d3?.libraries || []).filter((l3) => l3.stage === "swapped").length;
     $2("tidyCount").textContent = looks2 ? String(looks2) : "";
+    follow2();
+  }
+  function follow2() {
+    const held3 = job && !job.ended ? false : running4 ? !!running4.lock : !!tidyData.value?.lock;
+    if (held3 && following === void 0) {
+      following = window.setTimeout(async () => {
+        following = void 0;
+        if (job && !job.ended) {
+          running4 = null;
+          return;
+        }
+        if (!$2("tidy").classList.contains("active")) {
+          follow2();
+          return;
+        }
+        try {
+          running4 = await go().TidyLock();
+        } catch {
+          running4 = null;
+          return;
+        }
+        if (!running4.lock) {
+          running4 = null;
+          tidyData.load();
+        }
+        draw5();
+      }, FOLLOW_MS);
+    }
   }
   function drawSheet() {
     mountTidySheet($2("tidySheetBox"), confirm, () => {
@@ -13553,6 +13650,7 @@ ${pays}
     if ($2("tidy").classList.contains("active") && (!job || job.ended) && (tidyData.value?.checks || []).some((c3) => !c3.ok && c3.needs)) tidyData.load();
   });
   function loadTidy() {
+    running4 = null;
     if (tab2 === "books" && !review) loadReview();
     return tidyData.load();
   }
@@ -13605,8 +13703,9 @@ ${pays}
       listening2 = true;
       window.runtime.EventsOn("media:event", onEvent);
     }
-    const title = action === "lyrics" && args.includes("--tidy") ? "Tidying lyrics" : titles[`${kind} ${action}`] || `${kind} ${action}`;
-    job = { kind, action, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
+    const title = jobTitle(kind, action, args);
+    job = { kind, action, args, yes, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
+    running4 = null;
     draw5();
     try {
       await go().TidyRun(kind, action, args, yes);
@@ -13784,29 +13883,29 @@ ${pays}
     if (!phone2 && !busy2) {
       for (const g2 of catalog?.categories || []) {
         const mine = apps.filter((a3) => entry(a3.id)?.category === g2.id && container(a3));
-        const running4 = mine.filter((a3) => a3.state === "running"), stopped2 = mine.filter(startable2);
+        const running5 = mine.filter((a3) => a3.state === "running"), stopped2 = mine.filter(startable2);
         const n3 = (k3) => k3 === 1 ? `the 1 ${g2.label} app` : `the ${k3} ${g2.label} apps`;
         const act = (action, of) => onStatus(() => {
           rowActions.groupAct(of, action, () => {
           });
         });
         if (stopped2.length) add({ id: `group:${g2.id}:start`, label: `Start ${n3(stopped2.length)} stopped`, hint: g2.label, run: act("start", stopped2) });
-        if (running4.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running4.length)}`, hint: g2.label, run: act("restart", running4) });
-        if (running4.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running4.length)}`, hint: g2.label, danger: `stop ${n3(running4.length)}`, run: act("stop", running4) });
+        if (running5.length) add({ id: `group:${g2.id}:restart`, label: `Restart ${n3(running5.length)}`, hint: g2.label, run: act("restart", running5) });
+        if (running5.length) add({ id: `group:${g2.id}:stop`, label: `Stop ${n3(running5.length)}`, hint: g2.label, danger: `stop ${n3(running5.length)}`, run: act("stop", running5) });
       }
     }
     for (const a3 of apps.sort((x3, y3) => x3.name.localeCompare(y3.name))) {
       const g2 = catalog?.categories.find((c3) => c3.id === entry(a3.id)?.category)?.label || "";
       const also = `${a3.id} ${g2}`;
       const url = a3.address ? "https://" + a3.address : a3.url || "";
-      const running4 = a3.state === "running";
+      const running5 = a3.state === "running";
       const own2 = (verb2, label, run2, danger) => add({ id: `app:${a3.id}:${verb2}`, label, hint: g2, also, danger, run: run2 });
-      if (running4 && url) own2("open", `Open ${a3.name}`, () => m3.open(url));
+      if (running5 && url) own2("open", `Open ${a3.name}`, () => m3.open(url));
       own2("page", `${a3.name}’s page`, () => pageOpener.open(a3.id));
       if (container(a3) && !phone2 && !busy2) {
         if (a3.state === "stopped") own2("start", `Start ${a3.name}`, onStatus(() => m3.act(a3, "start")));
-        if (running4) own2("restart", `Restart ${a3.name}`, onStatus(() => m3.act(a3, "restart")));
-        if (running4) own2("stop", `Stop ${a3.name}`, onStatus(() => m3.act(a3, "stop")), `stop ${a3.name}`);
+        if (running5) own2("restart", `Restart ${a3.name}`, onStatus(() => m3.act(a3, "restart")));
+        if (running5) own2("stop", `Stop ${a3.name}`, onStatus(() => m3.act(a3, "stop")), `stop ${a3.name}`);
       }
       if (container(a3)) own2("logs", `${a3.name}’s logs`, () => m3.logs(a3));
       if (url) own2("copy", `Copy ${a3.name}’s address`, () => m3.copy(url).then(() => "Address copied", () => "Could not copy the address"));

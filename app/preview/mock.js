@@ -321,6 +321,14 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     TidyCover: () => later(''),
     TidyReveal: (path) => { M.revealed = path; return later(null); },
     TidyStop: () => { M.tidyStopped = true; return later(null); },
+    // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
+    TidyLock: () => {
+      const r = M.tidyLocks?.length ? M.tidyLocks.shift() : (M.tidy?.lock ? { lock: M.tidy.lock, now: {} } : { now: {} });
+      if (!r.lock && M.tidy) M.tidy = { ...M.tidy, lock: undefined };
+      return later(r);
+    },
+    // M.tidyStopSlow: the engine takes that many ms to reach a safe point after Stop.
+    ...(M.tidyStopSlow ? { TidyStop: () => { setTimeout(() => { M.tidyStopped = true; }, M.tidyStopSlow); return later(null); } } : {}),
     async TidyRun(kind, action, args, yes) {
       (M.tidyRuns ??= []).push([kind, action, args, yes]);
       for (const ev of M.tidyEvents?.[`${kind} ${action}`] || [{ type: 'ok', text: 'Done' }, { type: 'result', action, ok: true }]) { await later(null, 60); emit('media:event', ev); }

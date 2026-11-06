@@ -446,6 +446,24 @@ func (t *tailLines) last() string {
 	return ""
 }
 
+// TidyRunning is a Tidy Up job that holds the lock (another window's, the
+// agent's, a terminal's), and where its log says it has got to.
+type TidyRunning struct {
+	Lock *media.Lock     `json:"lock,omitempty"`
+	Now  media.Following `json:"now"`
+}
+
+// TidyLock is the job holding Tidy Up's lock now, if any, with its step and
+// bar: light enough for the screen to ask every few seconds while one runs
+// (TidyUp also checks this machine's tools, which takes longer).
+func (a *App) TidyLock() TidyRunning {
+	l, running := media.ReadLock(a.root)
+	if !running {
+		return TidyRunning{}
+	}
+	return TidyRunning{Lock: &l, Now: media.Follow(a.root, l)}
+}
+
 // TidyStop stops the job the window runs; the engine saves where it got to.
 func (a *App) TidyStop() {
 	tidy.mu.Lock()

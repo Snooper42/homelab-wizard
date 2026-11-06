@@ -23,6 +23,9 @@ export type TidyTab = 'overview' | 'music' | 'movies' | 'tv' | 'books' | 'audiob
 export interface TidyJob {
   kind: string;
   action: string;
+  /** What it was run with, for Try again. */
+  args?: string[];
+  yes?: boolean;
   title: string;
   started: number;
   /** The step at hand: "Build", 2 of 5. */
@@ -35,6 +38,8 @@ export interface TidyJob {
   result?: Record<string, any>;
   /** Set once it ended: ok, or why not. */
   ended?: { ok: boolean; why?: string };
+  /** Stop was pressed: it stops at its next safe point, which can take a while. */
+  stopping?: boolean;
 }
 
 /** What a click asks for. */
@@ -66,6 +71,22 @@ export interface TidyConfirm {
 }
 
 const names: Record<string, string> = { music: 'Music', books: 'Books', movies: 'Movies', tv: 'TV', audiobooks: 'Audiobooks', inbox: 'Downloads', scrubber: 'Leftovers', tdarr: 'Tdarr', arr: 'Downloads' };
+/** What each job is called while it runs: "Scanning your films". */
+const titles: Record<string, string> = {
+  'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
+  'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
+  'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply',
+  'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
+  'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
+  'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
+  'inbox scan': 'Checking Downloads', 'scrubber scan': 'Sweeping up leftovers', 'music delete-backup': 'Removing the old backup', 'install ffmpeg': 'Getting ffmpeg', 'tdarr setup': 'Setting up Tdarr', 'arr apply': 'Handing the downloads over',
+};
+/** A job's name in words, never its command ("free-space"): for its panel, the lock's card, and one that stopped part-way. */
+export function jobTitle(kind: string, action: string, args: string[] = []): string {
+  if (kind === 'music' && action === 'lyrics' && args.includes('--tidy')) return 'Tidying lyrics';
+  return titles[`${kind} ${action}`] || `${names[kind] || kind}: ${action.replace(/-/g, ' ')}`;
+}
 const n = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
 const count = (v: number, one: string, many = one + 's') => `${v.toLocaleString()} ${v === 1 ? one : many}`;
 const lib = (d: app.TidyUp, kind: string) => d.libraries.find((l) => l.kind === kind)!;
@@ -91,30 +112,44 @@ function Gone({ l }: { l: app.TidyLibrary }) {
   return <Card kind="notice" role="status"><strong>{names[l.kind]}: its folder isn't there</strong><span class="muted">{l.folder} could not be found. Plug in the drive it is on: nothing here runs until it is back.</span></Card>;
 }
 
-/** A button that runs a job; every one waits while a job runs. */
+/** A job this window didn't start holds the lock (the agent's Collect, a terminal's run): what it is, for the buttons' hover. */
+const Elsewhere = createContext('');
+
+/** A button that runs a job; every one waits while a job runs, this window's or another's. */
 function Go({ label, primary, job, title, onClick }: { label: string; primary?: boolean; job: TidyJob | null; title?: string; onClick: () => void }) {
-  const gone = useContext(FolderGone);
-  return <button class={primary ? 'primary small' : 'small'} disabled={busy(job) || gone} title={gone ? "Its folder isn't there: plug in its drive" : title} onClick={onClick}>{label}</button>;
+  const gone = useContext(FolderGone), other = useContext(Elsewhere);
+  const why = gone ? "Its folder isn't there: plug in its drive" : other ? `Waits for ${other.charAt(0).toLowerCase() + other.slice(1)} to finish` : busy(job) ? 'Waits for the job above to finish' : title;
+  return <button class={primary ? 'primary small' : 'small'} disabled={busy(job) || gone || !!other} title={why} onClick={onClick}>{label}</button>;
 }
 
 /** The job at hand: its step, its bar, what it's on, its notes, and its log. */
-export function JobPanel({ job, stop, done, fix }: { job: TidyJob; stop: () => void; done: () => void; fix?: { label: string; run: () => void } }) {
-  const p = job.progress;
+/** A job's bar: done of total, and about how long is left. */
+function Bar({ title, p, idle }: { title: string; p?: TidyJob['progress']; idle: string }) {
   const pct = p && p.total ? Math.min(100, Math.round((p.done / p.total) * 100)) : undefined;
   const left = p?.eta ? (p.eta > 3600 ? `~${Math.floor(p.eta / 3600)}h ${Math.round((p.eta % 3600) / 60)}m left` : `~${Math.max(1, Math.round(p.eta / 60))}m left`) : '';
   return (
+    <div class="progress">
+      <div class="track" role="progressbar" aria-label={title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span class="fill" style={{ width: `${pct ?? 0}%` }} /></div>
+      <p class="step" aria-live="polite">{p ? `${p.label} ${p.done.toLocaleString()} of ${p.total.toLocaleString()}${pct !== undefined ? ` · ${pct}%` : ''}${left ? ' · ' + left : ''}` : idle}</p>
+    </div>
+  );
+}
+
+export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: () => void; done: () => void; fix?: { label: string; run: () => void }; again?: () => void }) {
+  const p = job.progress;
+  // Stopped is what you did; a job that ended on its own without finishing says so, and why.
+  const ended = !job.ended ? '' : job.ended.ok ? 'done' : job.stopping ? 'stopped' : "didn't finish";
+  return (
     <Card kind="tidyjob" id="tidyJob" role="status">
-      <CardHead title={job.ended ? (job.ended.ok ? `${job.title}: done` : `${job.title}: stopped`) : job.title}>
-        {job.ended ? <button class="small" onClick={done}>Close</button> : <button class="small" onClick={stop} title="It stops at a safe point; run it again to carry on where it left off">Stop</button>}
+      <CardHead title={ended ? `${job.title}: ${ended}` : job.stopping ? `${job.title}: stopping` : job.title}>
+        {job.ended ? <span class="actions">{again && !fix && !job.ended.ok && !job.stopping && <button class="small" onClick={again} title="Runs it again: it picks up where it left off">Try again</button>}<button class="small" onClick={done}>Close</button></span>
+          : job.stopping ? <button class="small" disabled title="It stops at its next safe point, so nothing is left half done">Stopping…</button>
+          : <button class="small" onClick={stop} title="It stops at a safe point; run it again to carry on where it left off">Stop</button>}
       </CardHead>
       {job.step && <p class="tidystep">Step {job.step.n} of {job.step.total} · {job.step.text}</p>}
-      {!job.ended && (
-        <div class="progress">
-          <div class="track" role="progressbar" aria-label={job.title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span class="fill" style={{ width: `${pct ?? 0}%` }} /></div>
-          <p class="step" aria-live="polite">{p ? `${p.label} ${p.done.toLocaleString()} of ${p.total.toLocaleString()}${pct !== undefined ? ` · ${pct}%` : ''}${left ? ' · ' + left : ''}` : 'Starting…'}</p>
-        </div>
-      )}
-      {p?.note && !job.ended && <p class="muted tidynow">Now: {p.note}</p>}
+      {!job.ended && <Bar title={job.title} p={p} idle="Starting…" />}
+      {job.stopping && !job.ended && <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>}
+      {p?.note && !job.ended && !job.stopping && <p class="muted tidynow">Now: {p.note}</p>}
       {job.ended && !job.ended.ok && job.ended.why && <p class="bad">{job.ended.why}</p>}
       {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
       {!!job.lines.length && (
@@ -125,6 +160,44 @@ export function JobPanel({ job, stop, done, fix }: { job: TidyJob; stop: () => v
       <details class="jobdetails"><summary>Show details</summary><pre role="log">{job.log.join('\n')}</pre></details>
     </Card>
   );
+}
+
+/** A job this window didn't start (the agent's, a terminal's): what it is, since when, and where it has got to. */
+function RunningCard({ lock, now }: { lock: app.TidyUp['lock'] & {}; now?: app.TidyRunning['now'] }) {
+  const title = jobTitle(lock.kind, lock.action);
+  const p = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || '', note: now.progress.note, eta: now.progress.eta } : undefined;
+  const since = new Date(lock.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return (
+    <Card kind="tidyjob" id="tidyRunning" role="status">
+      <CardHead title={title} />
+      {now?.step && <p class="tidystep">Step {now.step.n} of {now.step.total} · {now.step.text}</p>}
+      <Bar title={title} p={p} idle="Working…" />
+      {p?.note && <p class="muted tidynow">Now: {p.note}</p>}
+      <p class="muted">Started at {since}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
+    </Card>
+  );
+}
+
+/** A job that stopped part-way, and how to carry it on: as it is, after asking again, or from where its choices were made. */
+export function carryOn(s: { kind: string; action: string }, d: app.TidyUp, act: TidyActions, pick: (t: TidyTab) => void): { label: string; run: () => void } | { say: string } {
+  const title = jobTitle(s.kind, s.action), what = `${s.kind} ${s.action}`;
+  // Which books were left alone isn't kept with the job: Apply again from the review, where they're chosen.
+  if (what === 'books apply') return { label: 'Open the review', run: () => pick('books') };
+  // Which run to put back isn't kept either: its Undo is still in Recently done.
+  if (what === 'trash restore') return { say: "Press Undo beside it in Recently done again: what's back stays back." };
+  // A step that asks first asks again, then carries on with that OK.
+  const asks: Record<string, string> = {
+    'music finalize': 'Navidrome is paused again while the swap finishes.',
+    'music undo': 'Navidrome is paused again while the old library goes back.',
+    'music free-space': `What is left of the old library goes to ${d.trash}.`,
+    'books undo': "Calibre-Web is paused again while Calibre's database is put back.",
+    'movies dedupe': `The extra copies left go to ${d.trash}, each checked again first.`,
+    'tv dedupe': `The extra copies left go to ${d.trash}, each checked again first.`,
+  };
+  if (asks[what]) {
+    return { label: 'Carry on…', run: () => act.ask({ title: `Carry on: ${title.charAt(0).toLowerCase() + title.slice(1)}?`, action: 'Carry on', lead: `It stopped part-way. It picks up where it left off. ${asks[what]}`, go: () => act.run(s.kind, s.action, [], true) }) };
+  }
+  return { label: 'Carry on', run: () => act.run(s.kind, s.action) };
 }
 
 /** A films', TV's, or audiobooks' job stopped for want of ffmpeg, where the app can fetch it: Install, then the job again. */
@@ -529,6 +602,8 @@ function LibraryTab({ kind, d, job, act, review, skip, toggle, pick }: { kind: s
 
 export interface TidyProps {
   d: app.TidyUp | null;
+  /** The job holding the lock, as last followed (a job this window didn't start). */
+  running?: app.TidyRunning | null;
   error?: string;
   tab: TidyTab;
   pick: (t: TidyTab) => void;
@@ -547,6 +622,8 @@ export function TidyScreen(p: TidyProps) {
   const { d, job, act } = p;
   const tab = tabNow(p.tab);
   const waiting = d ? LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, p.review, p.pick)).filter((t) => t.go).length : 0;
+  // A job this window didn't start holds the lock: followed as it goes (screens/tidy.ts asks every few seconds).
+  const other = job && !job.ended ? null : (p.running ? p.running.lock : d?.lock) || null;
   const say = !d ? '' : (d.freed ? `${bytes(d.freed)} won back so far · ` : '') + (waiting ? `${count(waiting, 'thing')} ${waiting === 1 ? 'needs' : 'need'} your OK` : 'Everything is tidy');
   return (
     <>
@@ -555,15 +632,22 @@ export function TidyScreen(p: TidyProps) {
         <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
       </div>
       <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Overview'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
-      {d?.lock && !job && <Card kind="notice" role="status"><strong>{names[d.lock.kind] || d.lock.kind}: {d.lock.action} is running</strong><span class="muted">Since {ago(d.lock.start)}. It carries on with this window closed.</span></Card>}
-      {d?.stale && !d.lock && !job && <Card kind="notice"><strong>{names[d.stale.kind] || d.stale.kind}: {d.stale.action} stopped part-way</strong><span class="muted">Run it again to carry on where it left off. <button class="small" onClick={() => act.run(d.stale!.kind, d.stale!.action)}>Carry on</button></span></Card>}
-      {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)} />}
+      {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} />}
+      {d?.stale && !other && !job && (() => {
+        const c = carryOn(d.stale, d, act, p.pick);
+        return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action)}: stopped part-way</strong><span class="muted">{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;
+      })()}
+      {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)}
+        // A job that asked first (a swap, an apply) is tried again from its own button, which asks again.
+        again={job.yes ? undefined : () => act.run(job.kind, job.action, job.args || [])} />}
       {p.error && !d && <Card kind="notice"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}</span></Card>}
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
-        <div class="finbody tidybody">
-          {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} />
-            : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
-        </div>
+        <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action) : ''}>
+          <div class="finbody tidybody">
+            {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} />
+              : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
+          </div>
+        </Elsewhere.Provider>
       )}
     </>
   );

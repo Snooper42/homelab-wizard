@@ -793,6 +793,79 @@ const smokes = [
     await page.click('#tidyJob button:text-is("Close")');
     if (await page.locator('#tidyJob').count()) throw new Error('the panel stayed');
   } },
+  // A job that ends on its own without finishing isn't "stopped" (that's what Stop does): it says so and why, with Try again;
+  // the keyboard's place stays in the panel the whole time, and its log isn't called Docker's.
+  { name: 'Tidy Up: a job that didn’t finish says so, with Try again, and the keyboard stays with it', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.focus('#tidy .tidyneeds button:text-is("Collect")');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#tidyJob h2:text-is("Collecting Tdarr\'s work: didn\'t finish")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob .bad:has-text("Tdarr isn\'t answering")', { timeout: 5000 });
+    const where = await page.evaluate(() => document.activeElement?.closest('#tidyJob') ? document.activeElement.textContent : document.activeElement?.tagName);
+    if (where !== 'Try again') throw new Error(`the keyboard went to ${where}`);
+    const after = await page.evaluate(() => getComputedStyle(document.querySelector('#tidyJob .jobdetails > summary'), '::after').content);
+    if (/Docker/.test(after)) throw new Error(`its details say ${after}`);
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 2, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[1]);
+    if (JSON.stringify(ran) !== JSON.stringify(['movies', 'collect', [], false])) throw new Error(`Try again ran ${JSON.stringify(ran)}`);
+    await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
+    await page.click('#tidyJob button:text-is("Close")');
+    if (await page.evaluate(() => document.activeElement === document.body)) throw new Error('Close left the keyboard at the top of the window');
+  } },
+  // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
+  { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
+    const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };
+    return { tidy: { ...tidy, lock }, tidyLocks: [
+      { lock, now: { step: { type: 'step', n: 2, total: 2, text: 'Swapping in the smaller copies' }, progress: { type: 'progress', label: 'Films', done: 1, total: 4, note: 'Heat (1995)' } } },
+      { now: {} },
+    ] };
+  })(), run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning h2:text-is("Collecting Tdarr\'s work")', { timeout: 5000 });
+    const shrink = '#tidy .tidyneeds button:text-is("Shrink")';
+    if (!(await page.isDisabled(shrink))) throw new Error('Shrink could start while another job holds the lock');
+    const why = await page.getAttribute(shrink, 'title');
+    if (why !== "Waits for collecting Tdarr's work to finish") throw new Error(`Shrink's hover: ${why}`);
+    // The first ask, a few seconds in: where the job has got to.
+    await page.waitForSelector('#tidyRunning .tidystep:text-is("Step 2 of 2 · Swapping in the smaller copies")', { timeout: 8000 });
+    await page.waitForSelector('#tidyRunning [role=progressbar][aria-valuenow="25"]', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning .tidynow:text-is("Now: Heat (1995)")', { timeout: 5000 });
+    // The next: it's done, the card goes, and the buttons are back, with no click.
+    await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 8000 });
+    await page.waitForSelector(`${shrink}:enabled`, { timeout: 5000 });
+  } },
+  // A swap that stopped part-way asked for an OK when it started: Carry on asks again, then runs with it (never without, which fails).
+  { name: 'Tidy Up: a swap that stopped part-way asks again, then carries on with its OK', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'music', action: 'finalize', start: tidyAt(3) } } }, run: async (page) => {
+    await page.waitForSelector('#tidyStale strong:text-is("Swapping in your cleaned library: stopped part-way")', { timeout: 5000 });
+    await page.click('#tidyStale button:text-is("Carry on…")');
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Carry on: swapping in your cleaned library?")', { timeout: 5000 });
+    if (await page.evaluate(() => (window.__MOCK.tidyRuns || []).length)) throw new Error('it ran before the OK');
+    await page.click('#tidySheet button:text-is("Carry on")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[0]);
+    if (JSON.stringify(ran) !== JSON.stringify(['music', 'finalize', [], true])) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } },
+  // Which books were left alone isn't kept with the job, so a books apply never carries on by itself: the review opens.
+  { name: 'Tidy Up: a books apply that stopped part-way opens the review, and applies nothing by itself', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'books', action: 'apply', start: tidyAt(3) } } }, run: async (page) => {
+    await page.waitForSelector('#tidyStale strong:text-is("Tidying your books: stopped part-way")', { timeout: 5000 });
+    await page.click('#tidyStale button:text-is("Open the review")');
+    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReview', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (ran.length) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } },
+  // Stop waits for a safe point, which can take minutes: until then, the panel says it's stopping and Stop can't be pressed again.
+  { name: 'Tidy Up: Stop says it is stopping until the job reaches a safe point', screen: 'tidy', mock: { tidyHold: true, tidyStopSlow: 1500, tidyEvents: { 'tv scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Episodes', done: 5, total: 800, note: 'Frieren S01E05' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await page.click('#tidy .tidyneeds button:text-is("Scan")');
+    await page.waitForSelector('#tidyJob .tidynow:text-is("Now: Frieren S01E05")', { timeout: 5000 });
+    await page.click('#tidyJob button:text-is("Stop")');
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: stopping")', { timeout: 2000 });
+    if (!(await page.isDisabled('#tidyJob button:text-is("Stopping…")'))) throw new Error('Stop could be pressed again');
+    await page.waitForSelector('#tidyJob .tidynow:has-text("Stopping at the next safe point")', { timeout: 2000 });
+    await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
+  } },
   { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
     await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });
     await page.click('#crashNote button:has-text("Send the report")');
