@@ -156,6 +156,9 @@ services:
       - type: tmpfs
         target: /tmp/cache
     x-homelab: {name: Cams, category: media, web: false, dump: "sqlite:/config/cams.db"}
+  twin:
+    image: t
+    x-homelab: {name: Twin, category: media, web: false, same_job: {app: "Both do it.", ghost: "Gone.", twin: "Itself.", monitor: " "}}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -192,10 +195,34 @@ services:
 		"cams: its tmpfs volume at /tmp/cache stops the backup's SQLite copy",
 		`category "nope"`,
 		`does not join the shared "homelab" network`,
+		`twin: same_job names "ghost", not another app`,
+		`twin: same_job names "twin", not another app`,
+		"twin: same_job monitor says nothing on why",
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("missing %q in:\n%s", want, all)
 		}
+	}
+}
+
+// Two apps that do the same job are named from one side, with why, and
+// each names an app the catalog has.
+func TestSameJobPairs(t *testing.T) {
+	c := load(t)
+	n := 0
+	for _, a := range c.Apps {
+		for other := range a.Meta.SameJob {
+			n++
+			if c.byID[other] == nil {
+				t.Errorf("%s: same_job %q is not in the catalog", a.ID, other)
+			}
+			if o := c.byID[other]; o != nil && o.Meta.SameJob[a.ID] != "" {
+				t.Errorf("%s and %s name each other: say it once, from one side", a.ID, other)
+			}
+		}
+	}
+	if n < 8 {
+		t.Errorf("only %d pairs read from the compose files", n)
 	}
 }
 
