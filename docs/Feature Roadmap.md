@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #457 |
 | Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #455 |
 | The last Status, offline | Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error | #453 |
 | Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #452 |
@@ -121,7 +122,7 @@ The homelab looks after itself, and says what it did.
 
 - **Start in order** (M, *Idea*): Start all and Restart all start databases and VPNs first (Gluetun before qBittorrent), from each app's dependencies.
 - **One app at a time** (M, *Idea*): the nightly update updates one app, waits for it to answer, then the next; the first that stays unwell is rolled back and the rest are held until morning.
-- **An update window per app** (S, *Idea*): update Immich only on Sundays, Vaultwarden at once when a security release comes out.
+- **An update window per app** (S, *Built*, #457): update Immich only on Sundays (an app's page › **Only on Sundays**, or `homelab updates days immich sun` for any days). Still an idea: Vaultwarden at once when a security release comes out.
 - **A restart that keeps failing** (S, *Built*, #427): an app Docker restarted three times in an hour is stopped and flagged, with its last log lines, instead of restarting forever.
 - **After sleep** (S, *Built*, #422): when the machine wakes, every app is checked at once rather than at the watchdog's next run.
 - **A drive comes back** (S, *Built*, #423): when an unplugged drive returns, the apps waiting for it start within a minute, as the battery saver now does for power. On Linux, where Docker made an empty folder in the drive's place and started the app on it, the library folders now wait for the drive too (#428).
