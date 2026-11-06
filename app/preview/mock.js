@@ -124,6 +124,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
     // backupsError: Backups fails with it (a database that can't be read, a computer that can't be reached).
     Backups: () => (M.backupsError ? Promise.reject(new Error(M.backupsError)) : later(M.backups)),
+    // Devices on the tailnet: none unless a case gives them (Tailscale not running).
+    TailnetDevices: () => (M.tailnetDevices ? later(M.tailnetDevices) : Promise.reject(new Error('Tailscale is not running'))),
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),

@@ -4,6 +4,7 @@ import { inTurn, waitWords } from '../job/queue';
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
+import { mountTailnetDevices } from '../settings/TailnetDevices';
 import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
 import { mountNav, type NavGroup } from '../settings/Nav';
@@ -28,6 +29,16 @@ async function loadPhones() {
   card.hidden = false;
   mountPhones(card, { phones: phones || [], on: phonesActions });
 }
+// Devices on your tailnet (Phones' page): Tailscale's own list; hidden
+// while Tailscale is not running here.
+async function loadTailnet() {
+  const card = $('tailnetCard');
+  let devices: tailnet.Device[];
+  try { devices = await go().TailnetDevices(); } catch { card.hidden = true; return; }
+  card.hidden = !devices?.length;
+  mountTailnetDevices(card, { devices: devices || [], open: (url) => { Promise.resolve(go().Open(url)).catch(showError); } });
+}
+
 const phonesActions: PhonesActions = {
   setCanChange: async (id, can) => { try { await go().SetPhoneCanChange(id, can); } catch (e) { showError(e); } loadPhones(); },
   remove: async (id) => { try { await go().RemovePhone(id); } catch (e) { showError(e); } loadPhones(); },
@@ -100,6 +111,7 @@ mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions 
 let settingsFocus: string[] = [];
 export const settingsData = store(async () => {
   loadPhones();
+  loadTailnet();
   loadPeople();
   // Which settings have a Test, asked once, beside the settings.
   const tests = testable ? null : go().SettingTests().catch(() => []);
@@ -368,7 +380,7 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
   $('settingsForm').classList.toggle('searching', searching);
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;
