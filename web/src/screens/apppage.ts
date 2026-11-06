@@ -120,7 +120,7 @@ function draw() {
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
     a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
-    usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
+    usage: a.state === 'running' ? usage : undefined, disk, days: week(), outages: watch ? (watch.outages ? watch.outages[id] || [] : undefined) : undefined, switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
     icon: icons[id] || '', explainer,
