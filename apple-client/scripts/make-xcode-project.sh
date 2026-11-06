@@ -5,7 +5,7 @@
 # so no .xcodeproj is ever committed. It points at this checkout's Shared/
 # folder, so a git pull updates it.
 #
-#   apple-client/scripts/make-xcode-project.sh com.yourname
+#   apple-client/scripts/make-xcode-project.sh com.yourname [TEAMID]
 #
 # The argument is the bundle identifier prefix (reverse domain, for example
 # com.snooper42); the app becomes <prefix>.HomelabClient.
@@ -38,7 +38,10 @@ fi
 
 # The signing team: read from this Mac's Apple Development certificate, which
 # Xcode makes once an Apple ID is added under Xcode > Settings > Accounts.
-TEAM="$(security find-certificate -c "Apple Development" -p 2>/dev/null \
+# A second argument (the 10-character team ID, shown in Xcode under
+# Signing & Capabilities or at developer.apple.com) wins over that.
+TEAM="${2:-}"
+[ -n "$TEAM" ] || TEAM="$(security find-certificate -c "Apple Development" -p 2>/dev/null \
   | openssl x509 -noout -subject 2>/dev/null \
   | sed -n 's/.*OU *= *\([A-Z0-9]\{10\}\).*/\1/p' | head -1 || true)"
 
@@ -89,6 +92,8 @@ YAML
 (cd "$OUT" && xcodegen generate --quiet)
 echo "Made $OUT/HomelabClient.xcodeproj"
 if [ -z "$TEAM" ]; then
-  echo "No signing team found. In Xcode: the HomelabClient target > Signing & Capabilities > Team, pick yours."
+  echo "No signing team found. Without one the app can't keep its key in the Keychain."
+  echo "In Xcode: the HomelabClient target > Signing & Capabilities > Team, pick yours."
+  echo "Running this script again resets it; pass the team ID as a second argument to keep it."
 fi
 open "$OUT/HomelabClient.xcodeproj"
