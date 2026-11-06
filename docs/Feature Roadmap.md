@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #PR16 |
+| Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #455 |
 | The last Status, offline | Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error | #453 |
 | Add to Home Screen, done right | The phone companion added to the Home Screen has the app's icon on an iPhone and Android (PNG, maskable), its name, a splash in the app's own background, and a bar that follows light or dark mode | #452 |
 | Status read aloud | A screen reader hears each row's change on Status as it is drawn (a Restart's step and its end, an app that goes down), apps that change together in one line | #451 |
@@ -135,7 +135,7 @@ Safe by default, and easy to check.
 - **Lock with Touch ID or Windows Hello** (M, *Idea*): Finances, sign-in details, and the recovery kit ask for the system's own unlock after the app has been idle.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
-- **Phones that expire** (S, *Built*, #PR16): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.
+- **Phones that expire** (S, *Built*, #455): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.
 - **Tailnet devices** (S, *Idea*): every device on the household's tailnet, when it was last seen, and Remove for a lost phone.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
