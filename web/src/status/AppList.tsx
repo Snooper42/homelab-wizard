@@ -107,6 +107,12 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Reco
 const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…', restart: 'Restarting…', update: 'Updating…', rollback: 'Rolling back…' };
 const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
+/** The dot and the words a row shows: what its button is doing while it works, else its state. */
+const rowWords = (a: api.AppStatus, p: AppListProps): [string, string] => {
+  const pend = p.pending[a.id];
+  return pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+};
+
 /** A link that opens in the browser. */
 /** The modifier key's name as each system says it: ⌥ (Option) on a Mac, Alt elsewhere. */
 const alt = (os: string) => (os === 'mac' ? '⌥' : 'Alt-');
@@ -290,7 +296,7 @@ function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListP
     if (refocus && from?.isConnected && from !== document.body) from.focus();
   };
   // Clicked and not confirmed yet: what it is doing, at once.
-  const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+  const [cls, words] = rowWords(a, p);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
   const changed = changedSince(a, p.seen ?? null);
   return (
@@ -590,7 +596,8 @@ document.addEventListener('keydown', (e) => {
   const t = e.target as Element;
   if (status.querySelector('.menu:not([hidden])')) return;
   if (e.key === 'Escape' && filter.on && !t.closest?.('.filterbox')) { clearFilter(); return; }
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  // ? is the keyboard shortcuts' (app.ts), not a letter to filter by.
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ' || e.key === '?') return;
   if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
   e.preventDefault();
   if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
@@ -637,6 +644,30 @@ function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
 }
 
+// Status read aloud: a screen reader hears each row's change as it is drawn,
+// a job's step as well as its end (Vikunja: Restarting…, then Vikunja:
+// Running), and an app that goes down while Status is open. The words are
+// the row's own; apps that change to the same words are said together. Not
+// on the first draw, nor while Status is not the screen shown.
+const heard = new Map<string, string>();
+let heardOnce = false;
+const listed = (names: string[]) => (names.length <= 5 ? names.slice(0, -1).join(', ') + (names.length > 1 ? ' and ' : '') + names[names.length - 1] : `${names.slice(0, 4).join(', ')} and ${names.length - 4} more`);
+function sayChanges(p: AppListProps) {
+  const now = new Map<string, [string, string]>();
+  for (const g of p.groups) for (const a of g.apps) now.set(a.id, [a.name, rowWords(a, p)[1]]);
+  const changed = new Map<string, string[]>();
+  if (heardOnce) for (const [id, [name, words]] of now) { const was = heard.get(id); if (was !== undefined && was !== words) changed.set(words, [...(changed.get(words) || []), name]); }
+  heard.clear();
+  for (const [id, [, words]] of now) heard.set(id, words);
+  heardOnce = true;
+  const el = document.getElementById('statusAloud');
+  if (!changed.size || !el || !document.getElementById('status')?.classList.contains('active')) return;
+  const text = [...changed].map(([words, names]) => `${listed(names)}: ${words}`).join('. ');
+  // Emptied first, so the same words said again (a second restart) are heard again.
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = text; });
+}
+
 export function AppList(p: AppListProps) {
   const f = useFold();
   const [menu, setMenu] = useState<MenuAt | null>(null);
@@ -644,6 +675,7 @@ export function AppList(p: AppListProps) {
   const [said, setSaid] = useState<{ id: string; words: string } | null>(null);
   useEffect(() => { if (!said) return; const t = setTimeout(() => setSaid(null), 3000); return () => clearTimeout(t); }, [said]);
   const say = (id: string, words: string) => setSaid({ id, words });
+  useEffect(() => sayChanges(p));
   const q = useFilter().text;
   const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.

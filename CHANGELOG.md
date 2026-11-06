@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A sheet of shortcuts:** press ? on any screen, or pick *Keyboard shortcuts* in the command palette, for that screen's own shortcuts first (typing to filter Status, the calendar's keys on Finances), then those that work everywhere and each screen's key, as this computer writes them.
 - **Quick actions on the phone:** on a phone that may make changes, hold an app's row on Status for its menu: Open, Start, Restart, Stop, Stop for a while, and Logs. A phone that only looks, and a wall screen, have none.
 - **A sheet for the fridge:** each person's welcome page links to their apps on one printed page, each with its address, its phone app, and a code the phone's camera opens; the sheet never has their sign-in link or a password.
 - **Suggestions from what you use:** Choose stacks › Add more opens on the apps that go with ones you run, each with what it brings them: Beets with Navidrome, Bazarr and Prowlarr with Sonarr and Radarr, Paperless-AI with Paperless-ngx, Seerr and Tdarr with Jellyfin.
@@ -41,6 +42,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Add to Home Screen, done right:** the phone companion added to an iPhone's Home Screen has the app's icon, no longer a picture of the page, and Android's shapes no longer cut it. Opened from there, its splash on Android is the app's own background, and the bar above it follows light or dark mode.
+- **Status read aloud:** with VoiceOver or Narrator on, Status reads out each app's change as it happens, not only a job's result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line. Nothing is read for Status while another screen is shown.
 - **Shapes as well as colours:** an app (or backup, or anything else) that is stopped or needs a look has a triangle beside it and one that is down a cross, where a running one has a circle, so a state reads without telling green from red, on a small screen, and in Windows' contrast themes.
 - **An unplugged drive is waited for on Linux too:** with the media drive out when the machine started, Docker made an empty music, films, or photos folder where the drive goes and started the app on it, so it showed an empty library and the drive's place was taken. Those apps now wait for the drive and start within a minute of it being plugged in, as on a Mac and Windows; installing makes their folders on the drive instead.
 - **After sleep:** when the computer wakes, every app is checked at once, not up to 15 minutes later: an app that went down while it slept is noticed (and restarted, or alerted about) straight away.
@@ -61,6 +64,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Fixed
 
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
+- **Tidy Up's notes read as text in a terminal:** `homelab media` printed each of an engine's notes as a line of JSON (`{"type": "info", "text": "Fixes planned"}`); they read as the rest of its output again, and `status --json` still prints its object as it is.
+- **Music jobs work again after a Python upgrade:** when the Python that Tidy Up's beets setup (`~/.music-cleanup/venv`) was made with goes, through a Homebrew upgrade for example, every music scan, build, and lyrics run, and the inbox filing songs, failed with *couldn't create …venv*. Each run now removes a venv whose Python doesn't start, says so, and beets is installed again on that run, in about a minute.
 - **Tidy Up starts again after a job was cut off:** a job stopped part way (the computer restarted or slept during the nightly sweep, or the app quit) could leave its lock behind under a number the computer later gave another program. Tidy Up then took the job for still running: the downloads, the nightly sweep, and the automatic jobs never ran, every job you started said another was moving files, and backups waited. A lock like that is now seen as left behind, and the next job takes over.
 - **Tidy Up offers to set apart lyrics in two languages again:** songs whose lyrics run a translation after a caret on each line (*¡NUEVAYoL!^NEW YORK!*) are put right by adding lyrics, but once every song had lyrics, Overview offered nothing, so they stayed as they were. Checking lyrics now counts them, Overview offers **Tidy lyrics** for them, and a check from before this asks to be run again.
 - **Tidy Up's logs and crash notes no longer pile up:** each Tidy Up job, its checks included, left a log that was never cleared, its background log grew without end, and the list of what went to the Trash kept every line forever. Job logs now go after 30 days, the background log is cut at 5 MB, what Undo can no longer reach leaves the Trash list, and crash notes go after 90 days.
