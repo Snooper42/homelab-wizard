@@ -444,7 +444,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     reminders, restart-loop logs): ntfy may be on a public name, and a
     phone's lock screen shows the first lines; list what each message
     holds (amounts, names, log lines) and what a lock screen shows.
-40. **Tailscale** (internal/tailnet): the homelab never turns on Funnel;
+40. (done: round 43) **Tailscale** (internal/tailnet): the homelab never turns on Funnel;
     what `tailscale serve` (or the apps' tailnet addresses) offers to
     every device on the tailnet, shared-in devices included.
 41. **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
@@ -814,12 +814,26 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   item 39: the morning line and the restart-loop alert's log lines on a
   lock screen.
 
+- **Round 43 (item 40, Tailscale, read through; item 38 on #439's
+  diff):** the Serve config the homelab writes has no `AllowFunnel`, so
+  nothing goes to the internet through Tailscale; Serve offers each app
+  over HTTPS to the household's tailnet only, and `TAILNET_ADMIN_APPS`
+  keeps the admin apps to this machine. Quiet hours (#439, open) only
+  ever lower an alert's priority, keep Priority 5 (the vault down,
+  backups failing two nights) sounding, and sound everything when the
+  setting cannot be read. A note under For Account 1. Item 38 stays open
+  until #439 merges. No code change needed.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
   (`claude/feature-update-window`, `updates.SaveDays`): the other records
   the homelab writes moved to 0600 today (#431–#433). Nothing secret is
   in it; 0600 keeps it with the rest.
+- **Quiet hours and a dying disk** (#439): a drive whose SMART report
+  says it is failing, and CrowdSec's bans no longer reaching the proxy,
+  are not Priority 5, so at night they arrive without a sound. Both are
+  the kind of thing worth waking for; worth a look.
 - **A window holds a security release too:** Vaultwarden set to Sundays
   takes a security fix up to 6 days late. The roadmap's own example
   ("Vaultwarden at once when a security release comes out") is not built;
