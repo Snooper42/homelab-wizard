@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up says when a job picks up where one stopped:** a job that takes over from one cut off part-way (a restart, the app quitting) said so only in Terminal. The Tidy Up screen now says so too.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
 - **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.
 - **Tidy Up's notes read as text in a terminal:** `homelab media` printed each of an engine's notes as a line of JSON (`{"type": "info", "text": "Fixes planned"}`); they read as the rest of its output again, and `status --json` still prints its object as it is.
