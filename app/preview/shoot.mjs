@@ -1635,6 +1635,12 @@ const smokes = [
     const words = want(d.toLocaleDateString('en-US', { weekday: 'short' }), d.toLocaleDateString('en-US', { weekday: 'long' }));
     await page.waitForSelector(`.tile:has-text("This week"):has-text("${words}")`, { timeout: 5000 });
   } })),
+  // A stopped app's week, with the watchdog running (Status's header says checks are on): not "once Setup turns it on",
+  // but that the watchdog doesn't check it while it's stopped (Account 3's tester, task 2).
+  { name: "A stopped app's week says it isn't checked while stopped, not to turn Setup on", screen: 'app:mealie', mock: { ...pageMock, watchdog }, run: async (page) => {
+    await page.waitForSelector('.tile:has-text("This week"):has-text("The watchdog doesn\'t check it while it\'s stopped")', { timeout: 5000 });
+    if (await page.isVisible('.tile:has-text("This week"):has-text("once Setup turns it on")')) throw new Error('it says to turn on what is on');
+  } },
   { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     await page.waitForSelector('.weekbars .bar.ok', { timeout: 5000 });

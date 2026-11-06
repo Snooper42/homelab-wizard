@@ -75,6 +75,8 @@ export interface AppPageProps {
   days: Day[];
   /** The watchdog's outages of it this week (none from an older agent). */
   outages?: health.Outage[];
+  /** The watchdog has run: its checks are on. */
+  watching?: boolean;
   backup: backup.Overview | null;
   /** The household members who use it; null when it is not one people sign in to. */
   people: people.Person[] | null;
@@ -146,9 +148,14 @@ export function lastDown(outages: health.Outage[], weekFrom: number, now = Date.
 /** The week in words: its tile's value and the line under it. With the
  * watchdog's outages (none from an older agent), the last time it was down
  * and why; without, how many checks it didn't answer, and when. */
-export function weekWords(days: Day[], outages?: health.Outage[], now = Date.now()): [string, string] {
+export function weekWords(days: Day[], outages?: health.Outage[], now = Date.now(), seen: { watching?: boolean; stopped?: boolean } = {}): [string, string] {
   const ok = days.reduce((n, d) => n + d.ok, 0), all = days.reduce((n, d) => n + d.all, 0);
-  if (!all) return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  if (!all) {
+    // Not "once Setup turns it on" while the watchdog runs: Status's header says checks are on.
+    if (seen.watching && seen.stopped) return ['Not checked', "The watchdog doesn't check it while it's stopped"];
+    if (seen.watching) return ['Not checked yet', 'The watchdog checks it every 15 minutes, from its next run'];
+    return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  }
   const missed = days.filter((d) => d.all && d.ok < d.all);
   if (!missed.length) return ['Up all week', 'Every check passed, every 15 minutes'];
   const share = Math.floor((ok / all) * 1000) / 10;
@@ -159,8 +166,8 @@ export function weekWords(days: Day[], outages?: health.Outage[], now = Date.now
   return [`Up ${share}%`, `It didn't answer ${n} of its checks on ${missed.map((d) => d.weekday).join(', ')}`];
 }
 
-function Week({ days, outages }: { days: Day[]; outages?: health.Outage[] }) {
-  const [, line] = weekWords(days, outages);
+function Week({ days, outages, seen }: { days: Day[]; outages?: health.Outage[]; seen: { watching?: boolean; stopped?: boolean } }) {
+  const [, line] = weekWords(days, outages, Date.now(), seen);
   const said = days.map((d) => `${d.name}: ${!d.all ? 'not checked' : d.ok === d.all ? 'up' : `${d.ok} of ${d.all} checks passed`}`).join('; ');
   return (
     <>
@@ -318,7 +325,8 @@ function Facts({ p }: { p: AppPageProps }) {
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
     : a.address ? 'At home and on your tailnet, not on the internet' : 'On this machine only';
-  const [weekValue] = weekWords(days, p.outages);
+  const seen = { watching: p.watching, stopped: a.state === 'stopped' };
+  const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
   const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o.restoreTest.lastTest), { day: 'numeric', month: 'short' })}` : 'No restore test yet';
   return (
@@ -327,7 +335,7 @@ function Facts({ p }: { p: AppPageProps }) {
         sub={<>{url ? reach : 'It has no web page'}{url && <CopyButton text={url} copy={on.copy} />}</>} />
       <Tile label="Uses now" value={a.state !== 'running' ? <span class="muted">Nothing</span> : usage ? <>{memory(usage.mem)}<small> of memory</small></> : <span class="muted">{usage === null ? 'Not measured' : '…'}</span>}
         sub={a.state !== 'running' ? 'It is not running' : <>{usage ? `${usage.cpu < 10 ? usage.cpu.toFixed(1) : Math.round(usage.cpu)}% of a processor` : usage === null ? 'The container runtime did not say' : 'Reading what it uses…'}{!!disk && <span>· {bytes(disk)} on disk</span>}</>} />
-      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} outages={p.outages} />} />
+      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} outages={p.outages} seen={seen} />} />
       <Tile label="Last backup" tone={late ? 'warn' : ''}
         value={!o ? <span class="muted">…</span> : never(o.lastRun) ? <span class="muted">Not yet</span> : <>{when(o.lastRun)}{!late && <span class="ok"> <Icon name="check" /></span>}</>}
         sub={<>{o ? tested : ''}<ActionLink onClick={on.openBackups}>Backups ›</ActionLink></>} />

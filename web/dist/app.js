@@ -7591,9 +7591,13 @@
     const line = o3.to ? `Last down ${at2} for ${lasted(new Date(o3.to).getTime() - from2.getTime())}: ${o3.problem}` : `Down since ${at2}: ${o3.problem}`;
     return shown5.length > 1 ? `${line} · ${shown5.length} outages` : line;
   }
-  function weekWords(days, outages2, now = Date.now()) {
+  function weekWords(days, outages2, now = Date.now(), seen2 = {}) {
     const ok = days.reduce((n4, d3) => n4 + d3.ok, 0), all = days.reduce((n4, d3) => n4 + d3.all, 0);
-    if (!all) return ["Not checked yet", "The watchdog checks it every 15 minutes once Setup turns it on"];
+    if (!all) {
+      if (seen2.watching && seen2.stopped) return ["Not checked", "The watchdog doesn't check it while it's stopped"];
+      if (seen2.watching) return ["Not checked yet", "The watchdog checks it every 15 minutes, from its next run"];
+      return ["Not checked yet", "The watchdog checks it every 15 minutes once Setup turns it on"];
+    }
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
     const share2 = Math.floor(ok / all * 1e3) / 10;
@@ -7603,8 +7607,8 @@
     const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
     return [`Up ${share2}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
-  function Week2({ days, outages: outages2 }) {
-    const [, line] = weekWords(days, outages2);
+  function Week2({ days, outages: outages2, seen: seen2 }) {
+    const [, line] = weekWords(days, outages2, Date.now(), seen2);
     const said = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u3("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
@@ -7791,7 +7795,8 @@
     const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
-    const [weekValue] = weekWords(days, p3.outages);
+    const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
+    const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
     const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o3.restoreTest.lastTest), { day: "numeric", month: "short" })}` : "No restore test yet";
     return /* @__PURE__ */ u3("div", { class: "tiles facts", children: [
@@ -7827,7 +7832,7 @@
           ] })
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days, outages: p3.outages }) }),
+      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days, outages: p3.outages, seen: seen2 }) }),
       /* @__PURE__ */ u3(
         Tile,
         {
@@ -8137,6 +8142,7 @@
       usage: a3.state === "running" ? usage : void 0,
       disk,
       days: week(),
+      watching: !!watch && !never2(watch.lastRun),
       outages: watch ? watch.outages ? watch.outages[id] || [] : void 0 : void 0,
       switching: switching[id] || {},
       backup: backupsData.value || null,
