@@ -1724,7 +1724,30 @@
   }
 
   // web/src/status/Cards.tsx
-  function Watchdog({ w: w3, openSetup, fix }) {
+  var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
+  function MemoryPressure({ m: m3, stop: stop2 }) {
+    const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
+      /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
+        /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
+        " ",
+        /* @__PURE__ */ u3("span", { class: "muted", children: [
+          "the apps use ",
+          share2,
+          "% of the ",
+          memText(m3.total),
+          " Docker has, high since ",
+          ago(m3.since),
+          ". Stop one you don't need now."
+        ] })
+      ] }) }),
+      /* @__PURE__ */ u3(Rows, { children: (m3.biggest || []).map((a3) => /* @__PURE__ */ u3(Row, { dot: "warn", title: a3.name, end: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("span", { class: "muted", children: memText(a3.bytes) }),
+        a3.id && stop2 && /* @__PURE__ */ u3("button", { class: "small memstop", "aria-label": `Stop ${a3.name}`, onClick: () => stop2(a3.id), children: "Stop" })
+      ] }) }, a3.name)) })
+    ] });
+  }
+  function Watchdog({ w: w3, openSetup, fix, stop: stop2 }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1751,6 +1774,7 @@
           ago(w3.lastRun)
         ] })
       ] }) }),
+      w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
       late && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "It has not run since ",
         ago(w3.lastRun),
@@ -6816,9 +6840,18 @@
     drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
-    mountWatchdog(card, { w: w3, openSetup: () => {
-      navigate("setup");
-    }, fix: () => cliFlow("Fix it", "fix", "", "Fix these") });
+    mountWatchdog(card, {
+      w: w3,
+      openSetup: () => {
+        navigate("setup");
+      },
+      fix: () => cliFlow("Fix it", "fix", "", "Fix these"),
+      // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+      stop: (id2) => {
+        const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
+        if (a3) void runAppAction(a3, "stop");
+      }
+    });
   }
   var protectionAt = 0;
   function showProtection(p3, err) {
@@ -7799,6 +7832,8 @@
     const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
+    const days = a3.updateDays || [], ownDays = switching2.sundays ?? days.length > 0;
+    const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
     const kept2 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
@@ -7812,7 +7847,17 @@
             disabled: busy2 || "updates" in switching2,
             on: updates,
             set: (v3) => on2.setting("updates", v3),
-            sub: updates ? "Every night, with a backup of its data first" : "Held: the nightly update leaves it out"
+            sub: !updates ? "Held: the nightly update leaves it out" : ownDays ? `On ${daysText} only, with a backup of its data first` : "Every night, with a backup of its data first"
+          }
+        ),
+        container && updates && /* @__PURE__ */ u3(
+          Switch,
+          {
+            label: `Only on ${daysText}`,
+            disabled: busy2 || "sundays" in switching2,
+            on: ownDays,
+            set: (v3) => on2.setting("sundays", v3),
+            sub: ownDays ? "The other nights leave it alone; updating it by hand still works any day" : "For an app you would rather not see change midweek"
           }
         ),
         /* @__PURE__ */ u3(
@@ -7868,6 +7913,11 @@
   }
   function mountAppPage(el3, props) {
     R(props ? /* @__PURE__ */ u3(AppPage, { ...props }, props.a.id) : null, el3);
+  }
+  var dayWords = { mon: "Mondays", tue: "Tuesdays", wed: "Wednesdays", thu: "Thursdays", fri: "Fridays", sat: "Saturdays", sun: "Sundays" };
+  function weekdaysText(days) {
+    const w3 = days.map((d3) => dayWords[d3] || d3);
+    return w3.length < 2 ? w3.join("") : `${w3.slice(0, -1).join(", ")} and ${w3[w3.length - 1]}`;
   }
 
   // web/src/screens/apppage.ts

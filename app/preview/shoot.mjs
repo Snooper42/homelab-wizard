@@ -167,6 +167,9 @@ const alerts = [
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+// The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
+const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
+  { id: 'immich-server', name: 'Immich', bytes: 2.5 * 2 ** 30 }, { name: 'someones-own', bytes: 1.2 * 2 ** 30 }, { id: 'paperless', name: 'Paperless-ngx', bytes: 900 * 2 ** 20 }] };
 const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0, week: { vikunja: 0.996 },
   days: { vikunja: Object.fromEntries([6, 5, 4, 3, 2, 1, 0].map((n) => [dayKey(n), n === 3 ? [93, 96] : n === 0 ? [40, 40] : [96, 96]])) } };
 // The household, for an app's Who uses it.
@@ -1728,6 +1731,20 @@ const smokes = [
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
     await page.click('#protectFix');
     await page.waitForSelector('#cliTitle:has-text("Fix it")', { timeout: 5000 });
+  } },
+  // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
+  // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
+  { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
+    const rows = await page.locator('#memoryPressure li').allInnerTexts();
+    if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    if (await page.locator('#memoryPressure li:has-text("someones-own") button').count()) throw new Error('Stop on a container the catalog does not know');
+    await page.click('#memoryPressure button[aria-label="Stop Immich"]');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
+    if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
@@ -3969,6 +3986,30 @@ const smokes = [
     // Status says so too: the row's badge.
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
+  // CLI says those days, and a held app has no window to choose.
+  { name: "An app's update window: Only on Sundays, and the days the CLI set", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
+    if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
+    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.click(sw('Only on Sundays'));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch went back after Status was read');
+    // Days set from the CLI (homelab updates days vikunja sat+sun): the switch names them, and off is every night.
+    await page.evaluate(() => { const M = window.__MOCK; M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, updateDays: ['sat', 'sun'] } : a)) }; });
+    await page.click(sw('Tell me if it stops')); // a change reads Status again
+    await page.waitForSelector(sw('Only on Saturdays and Sundays'), { timeout: 5000 });
+    await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
+    // Held: no window to choose.
+    await page.click(sw('Nightly updates'));
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
   } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';

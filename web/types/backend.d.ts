@@ -36,6 +36,7 @@ declare namespace api {
     startedBy?: string;
     updatedAt?: string;
     held?: boolean;
+    updateDays?: string[];
     quiet?: boolean;
     pinned?: boolean;
     waitingFor?: string;
@@ -771,10 +772,22 @@ declare namespace finance {
 }
 
 declare namespace health {
+  interface AppMemory {
+    id?: string;
+    name: string;
+    bytes: number;
+  }
   interface Failure {
     name: string;
     problem: string;
     since: string;
+  }
+  interface Memory {
+    used: number;
+    total: number;
+    since?: string;
+    alerted?: boolean;
+    biggest?: health.AppMemory[];
   }
   interface Outage {
     from: string;
@@ -789,6 +802,7 @@ declare namespace health {
     week: Record<string, number>;
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
+    memory?: health.Memory | null;
   }
 }
 
