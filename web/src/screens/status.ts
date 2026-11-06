@@ -264,6 +264,7 @@ function drawStatus() {
   lastStatus = st;
   renderAppList(st);
   drawOvernight();
+  if (lastWatch) drawWatchdog(); // the apps it doesn't check, as they change
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -295,8 +296,10 @@ setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60
 // The watchdog's last run: every app, public address, database copy,
 // Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
 // scheduled job. Failing checks are the ones it alerted about.
+let lastWatch: health.Summary | null = null;
 function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
+  lastWatch = w;
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};
@@ -304,8 +307,19 @@ function showWatchdog(w: health.Summary | null) {
   drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
-  mountWatchdog(card, {
-    w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
+  drawWatchdog();
+}
+
+/** The apps stopped, not on purpose, that the watchdog doesn't check (one
+ * that stopped by itself is a failing check of its own). */
+const unchecked = (st: api.Status | null, w: health.Summary) => (st?.apps || []).filter((a) =>
+  a.state === 'stopped' && !held[a.id] && !batteryPaused.has(a.id) && !a.waitingFor && !(w.failing || []).some((f) => f.name === a.id)).map((a) => a.name);
+
+function drawWatchdog() {
+  const w = lastWatch;
+  if (!w) return;
+  mountWatchdog($('watchCard'), {
+    w, unchecked: unchecked(lastStatus, w), openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
     // Memory nearly full: Stop on one of the biggest, as its row's Stop.
     stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
     // Snooze a failing check's alerts, then draw the card again with it.

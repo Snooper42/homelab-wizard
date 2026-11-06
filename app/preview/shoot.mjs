@@ -1981,6 +1981,35 @@ const smokes = [
   { name: 'Stopped by itself: its page says when and why', screen: 'app:mealie', mock: stoppedByItself(), run: async (page) => {
     await page.waitForSelector('.pill.bad:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
   } },
+  // Account 3's tester, task 2: a stopped app's page says what to do, whatever stopped it, under its name.
+  ...[
+    ['stopped by you', { stopped: { mealie: { since: new Date().toISOString() } } }, {}, 'You stopped it, so nothing starts it by itself. Start starts it again.'],
+    ['kept restarting', { stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } }, {}, 'The watchdog stopped it after Docker restarted it again and again; its log below says why. Once that is put right, Start tries again.'],
+    ['out of memory', {}, { stoppedWhy: 'it ran out of memory' }, "If it runs out again, stop an app you aren't using, or give Docker more memory. Start tries again."],
+    ['its port taken', {}, { stoppedWhy: 'another program is using its port 9925' }, 'Another program has port 9925. Quit it, then Start.'],
+    ['stopped outside the homelab', {}, {}, 'It was stopped outside the homelab (by Docker, or a shutdown). Start starts it again.'],
+  ].map(([what, extra, app, words]) => ({ name: `A stopped app's page says what to do: ${what}`, screen: 'app:mealie',
+    mock: { ...pageMock, status: { ...status, ...extra, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, ...app } : a)) } }, run: async (page) => {
+    await page.waitForSelector(`.pagehead .stopnext:has-text("${words.replace(/"/g, '\\"')}")`, { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .lookonly')) throw new Error('the computer says a phone can only look');
+  } })),
+  // On a phone that only looks, a stopped app says where to start it, on Status and on its page; one that may make
+  // changes has Start, and no such words.
+  { name: 'A stopped app on a phone that only looks: start it from the computer', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) .lookonly:visible:text-is("Start it from the computer")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain')) throw new Error('a look-only phone shows Start');
+    await page.click('#statusRows tr:has(strong:text-is("Mealie")) .topage');
+    await page.waitForSelector('.pagehead .stopnext:has-text("It was stopped outside the homelab") .lookonly:visible:has-text("Start it from the computer: this phone can only look.")', { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .change')) throw new Error('a look-only phone is told to press Start');
+  } },
+  { name: 'A stopped app on a phone that may make changes: Start', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain:visible:text-is("Start")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) .lookonly')) throw new Error('a phone that may change says to use the computer');
+  } },
+  // The watchdog doesn't check a stopped app: beside "All 47 checks passed", it names it, on the computer and the phone.
+  ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
+    await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
+  } })),
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {

@@ -567,6 +567,11 @@ html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none;
 html:is(.os-mac, .os-windows, .os-linux) .header .fx-headtools > .toolbar:not(:has(input)) { align-self:auto; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
+/* What a phone that only looks says instead of a button it has not got. */
+.lookonly { display:none; }
+html.companion:not(.can-change) .lookonly { display:inline; }
+html.companion:not(.can-change) td.rowActions .lookonly { font-size:13px; white-space:nowrap; }
+.stopnext { margin:6px 0 0; color:var(--text); }
 html.unpaired nav, html.unpaired main { display:none; }
 
 /* Kiosk mode (the companion with #kiosk, for a TV or a wall screen): Status
