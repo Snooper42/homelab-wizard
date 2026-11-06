@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** #454 (`claude/fix-music-tidy-venv`, item 16): take it to merged. Then the pushed branches with no PR yet, one at a time: `claude/fix-rebuild-env` (item 8) and `claude/fix-proc` (item 13, in part; it waits while #448 claims `cmd/homelab/turn.go` and `turn_test.go`). #429, #431 to #434, #436, #440 (the owner's lyrics fix), #441, #442, #443, and #444 merged; #444 shipped in v0.22.8.
+**Open now:** #460 (`claude/fix-phones-store`, item 17, N22): take it to merged. Then the pushed branches with no PR yet, one at a time: `claude/fix-rebuild-env` (item 8) and `claude/fix-proc` (item 13, in part; #448 is in, so its files are free). Then audit-loop.md's **For Account 2** note on `scripts/logs` (0755 and 0644). #429, #431 to #434, #436, #440 (the owner's lyrics fix), #441 to #444, and #454 merged; #444 shipped in v0.22.8.
 
 ## Your job
 
@@ -111,12 +111,12 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 13. **`data/healed.json`** (`cmd/homelab/heal.go`) is still a plain write, left in item 3 for #425. Once #425 is in, move it to `lockedfile.Update` and merge `internal/turn`'s and `internal/media`'s `processAlive` (item 6).
 14. **A Tidy Up job that resumes says so in the app too**: `mediaEngine` warns *stopped part-way … carries on from there* only in a terminal (`!f.events`); with `--events json` send it as a `warn` event, as #444 does for a beets venv made again.
 15. **Tidy Up's lock and a reused process ID within one boot** (#443's note): a lock is held by a live process that started before it was written, which a reused PID can be after the IDs wrap. Checking that the process is homelab (its name, as `ps -o comm=` and `QueryFullProcessImageName` give it) would close it; weigh the extra exec per check first.
-16. **(#454, open)** **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
-17. **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
+16. **(#454, merged)** **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
+17. **(#460, open; N22)** **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
 
 ## For Account 1
 
-- **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`, both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
+- **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`; Nov 6: #454's run on 94b290a, `smoke (dark)`, green on the next run; both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
 ## For Account 3
 
