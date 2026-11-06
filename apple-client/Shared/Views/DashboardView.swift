@@ -17,12 +17,15 @@ struct DashboardView: View {
     @State private var computer: ComputerViewModel
     @State private var finances: FinancesViewModel
     private let api: APIClient
+    /// Asks the computer again what this device may do (`/api/me`).
+    private let refreshDevice: @MainActor () async -> Void
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
 
     init(coordinator: AppCoordinator) {
         api = coordinator.api
+        refreshDevice = { [weak coordinator] in await coordinator?.refreshDevice() }
         let dashboard = DashboardViewModel(api: coordinator.api, liveEvents: coordinator.liveEvents)
         let device: @MainActor () -> DeviceInfo? = { [weak coordinator] in coordinator?.device }
         let authorize: @MainActor (String) async -> Bool = { [weak coordinator] reason in
@@ -88,7 +91,12 @@ struct DashboardView: View {
         .task { await model.loadForMorning() }
         // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
         .onChange(of: model.liveEvents.status) { _, status in
-            if let status { model.latestApps = status.apps }
+            guard let status else { return }
+            model.latestApps = status.apps
+            // Status read aloud: VoiceOver hears what changed as it changes.
+            if let words = model.changesToSay(status.apps) {
+                AccessibilityNotification.Announcement(words).post()
+            }
         }
         .onDisappear {
             model.rememberSeen()
@@ -101,13 +109,23 @@ struct DashboardView: View {
         // the dashboard goes on lock, and the badge with it.
         .onChange(of: model.attentionCount, initial: true) { _, count in DockBadge.show(count) }
         #endif
-        // The cards change slowly: read them now, then every 5 minutes while unlocked.
+        // The cards change slowly: read them now, then every 5 minutes while
+        // unlocked. What this device may do is read again with them: the
+        // computer can give a phone its changes for a while only (main #455),
+        // and when that ends it only looks, without telling the phone.
         .task {
+            var first = true
             while !Task.isCancelled {
+                if !first { await refreshDevice() }
+                first = false
                 await model.cards.load()
                 try? await Task.sleep(for: .seconds(300))
             }
         }
+        // A change that failed may have failed because this device may no
+        // longer make changes: read that again, so the buttons go if so.
+        .onChange(of: actions.failureCount) { Task { await refreshDevice() } }
+        .onChange(of: tasks.failureCount) { Task { await refreshDevice() } }
     }
 }
 
