@@ -3,7 +3,7 @@
 // Finances), and a one-time code with its QR code to pair another.
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
-import { ago } from '../format';
+import { ago, clockText, dayText } from '../format';
 import { CardHead } from '../parts/Card';
 import { Row, Rows } from '../parts/Row';
 
@@ -11,6 +11,8 @@ export interface PhonesActions {
   setCanChange: (id: string, can: boolean) => Promise<void>;
   /** "" hides Finances from the phone, "card" shows only the money card (a wall screen), "view" shows them, "edit" lets it change them. */
   setFinances: (id: string, level: string) => Promise<void>;
+  /** Ends its changes and Finances in hours from now; 0: until you change it. */
+  setUntil: (id: string, hours: number) => Promise<void>;
   remove: (id: string) => Promise<void>;
   pair: (name: string, canChange: boolean, finances: string) => Promise<app.PhonePairing>;
   /** After pairing: the list again, with the new phone. */
@@ -25,6 +27,12 @@ const pairedChoices: [string, string][] = [['', 'No Finances'], ['card', 'Money 
 function FinancesPick({ value, set, label, id, paired }: { value: string; set: (level: string) => void; label: string; id?: string; paired?: boolean }) {
   return <select id={id} class="finpick" aria-label={label} value={value} onChange={(e) => set(e.currentTarget.value)}>{(paired ? pairedChoices : financesChoices).map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>;
 }
+
+// How long a phone keeps more than looking: a guest's phone for a week, say.
+const untilChoices: [number, string][] = [[0, 'Until you change it'], [24, 'For a day'], [24 * 7, 'For a week'], [24 * 30, 'For a month']];
+
+/** When a phone's changes and Finances end: "Thu, Nov 12, 3:00 PM". */
+const untilText = (t: string) => { const d = new Date(t); return `${dayText(d, { weekday: 'short', month: 'short', day: 'numeric' })}, ${clockText(d)}`; };
 
 /** The code, its QR code, and the links, until Done. asked is what was picked for the phone. */
 function Pairing({ p, asked, done }: { p: app.PhonePairing; asked: { canChange: boolean; finances: string }; done: () => void }) {
@@ -51,6 +59,9 @@ function Pairing({ p, asked, done }: { p: app.PhonePairing; asked: { canChange: 
   );
 }
 
+/** It may do more than look (make changes, or see Finances beyond the money card): that is what can end. */
+const more = (p: companion.Phone) => p.canChange || p.finances === 'view' || p.finances === 'edit';
+
 export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesActions }) {
   const [name, setName] = useState('');
   const [canChange, setCanChange] = useState(false);
@@ -65,8 +76,14 @@ export function Phones({ phones, on }: { phones: companion.Phone[]; on: PhonesAc
         <Rows>
           {phones.map((p) => (
             <Row key={p.id} dot={p.canChange ? 'warn' : 'ok'} title={p.name}
-              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : p.finances === 'card' ? ' · shows the money card' : ''} · last seen {ago(p.lastSeen)}</>} end={<>
+              sub={<>{p.canChange ? 'Can make changes' : p.unencrypted ? 'Looks only (paired over the home Wi-Fi, without encryption)' : 'Looks only'}{p.finances === 'edit' ? ' · changes Finances' : p.finances === 'view' ? ' · sees Finances' : p.finances === 'card' ? ' · shows the money card' : ''}{p.until && more(p) ? <span class="phoneuntil">, until {untilText(p.until)}, then it only looks</span> : ''} · last seen {ago(p.lastSeen)}</>} end={<>
               {!p.unencrypted && <FinancesPick paired value={p.finances || ''} set={(level) => on.setFinances(p.id, level)} label={`Finances on ${p.name}`} />}
+              {more(p) && (
+                <select class="untilpick" aria-label={`How long ${p.name} keeps it`} value={p.until ? 'set' : '0'} onChange={(e) => on.setUntil(p.id, Number(e.currentTarget.value))}>
+                  {p.until && <option value="set" disabled>Until {untilText(p.until)}</option>}
+                  {untilChoices.map(([h, t]) => <option key={h} value={String(h)}>{t}</option>)}
+                </select>
+              )}
               {!p.unencrypted && <button class="small" title={p.canChange ? 'Only look from now on' : 'Let it start, stop, restart, update, and back up'} onClick={() => on.setCanChange(p.id, !p.canChange)}>{p.canChange ? 'Make read-only' : 'Allow changes'}</button>}
               <button class="small" title="Unpair it: it stops working at once" onClick={() => on.remove(p.id)}>Remove</button>
             </>} />
