@@ -878,6 +878,9 @@ const smokes = [
     await page.waitForSelector('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
     const rows = await page.$$eval('#tidy .seg button', (b) => b.reduce((m, x) => { const t = Math.round(x.getBoundingClientRect().top); m[t] = (m[t] || 0) + 1; return m; }, {}));
     if (JSON.stringify(Object.values(rows)) !== '[3,3]') throw new Error(`tabs per row: ${JSON.stringify(rows)}`);
+    // Needs your OK's count reads as its subtitle, from the heading's left edge, not alone at the right.
+    const [h, c] = await page.$$eval('#tidy .tidyneeds > .row h2, #tidy .tidyneeds > .row .fx-actions > *', (e) => e.map((x) => Math.round(x.getBoundingClientRect().left)));
+    if (h !== c) throw new Error(`the heading starts at ${h}, its count at ${c}`);
   } },
   // VoiceOver: a running job is read when its step changes and when it ends, not on every file; a line's dot has words.
   { name: 'Tidy Up: VoiceOver hears each step and the end, not every tick, and what each line’s dot means', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }, { type: 'progress', label: 'Films', done: 1, total: 4 }, { type: 'fail', text: 'Tdarr isn\'t answering' }] } }, run: async (page) => {
