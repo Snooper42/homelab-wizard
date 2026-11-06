@@ -1100,6 +1100,53 @@ class Playlists(Base):
         self.assertEqual(rock["name"], "Rock & Metal")
 
 
+class NeedVenv(Base):
+    """A beets venv whose Python is gone (upgraded away) is made again before music_tidy relaunches."""
+
+    def test_a_broken_venv_is_made_again(self):
+        if os.name == "nt":
+            self.skipTest("a venv's Python is a link only off Windows")
+        py = music_tidy.venv_python()
+        py.parent.mkdir(parents=True)
+        os.symlink(str(self.tmp / "gone" / "python3.13"), str(py))
+        keep = self.home / ".music-cleanup" / "library.db"
+        keep.write_text("beets")
+        made = []
+
+        def bootstrap():
+            made.append(os.path.lexists(str(py)))
+            py.parent.mkdir(parents=True, exist_ok=True)
+            py.write_text("#!/bin/sh\nexit 0\n")
+            py.chmod(0o755)
+
+        with mock.patch.object(music_tidy.mo, "bootstrap", side_effect=bootstrap), \
+                mock.patch.dict(sys.modules, {"no_such_module_here": None}), \
+                mock.patch.object(music_tidy.subprocess, "call", return_value=0) as call, \
+                mock.patch.dict(os.environ, {"MUSIC_TIDY_CHILD": ""}):
+            with self.assertRaises(SystemExit) as done:
+                music_tidy.need(["no_such_module_here"])
+        self.assertEqual(done.exception.code, 0)
+        self.assertEqual(made, [False], "the broken venv went before the setup ran")
+        self.assertEqual(call.call_args[0][0][0], str(py))
+        self.assertTrue(keep.exists(), "beets' own files stay")
+
+    def test_a_working_venv_is_kept(self):
+        if os.name == "nt":
+            self.skipTest("a shell script stands in for Python only off Windows")
+        py = music_tidy.venv_python()
+        py.parent.mkdir(parents=True)
+        py.write_text("#!/bin/sh\nexit 0\n")
+        py.chmod(0o755)
+        with mock.patch.object(music_tidy.mo, "bootstrap") as bootstrap, \
+                mock.patch.dict(sys.modules, {"no_such_module_here": None}), \
+                mock.patch.object(music_tidy.subprocess, "call", return_value=0), \
+                mock.patch.dict(os.environ, {"MUSIC_TIDY_CHILD": ""}):
+            with self.assertRaises(SystemExit):
+                music_tidy.need(["no_such_module_here"])
+        bootstrap.assert_not_called()
+        self.assertTrue(py.exists())
+
+
 class GenreCounts(Base):
     def test_counts_each_song_under_one_of_your_genres(self):
         lib = self.tmp / "Music"
