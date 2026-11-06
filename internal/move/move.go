@@ -36,9 +36,21 @@ var Folders = []string{".env", "data", "appdata", "stacks/custom", "recovery-sta
 // file in a bundle (dumps and archives, one per app or volume).
 var Newest = []string{"recovery-staging/databases", "recovery-staging/volumes"}
 
-// skip are paths a bundle leaves out: things made again on the new machine.
+// skip are paths a bundle leaves out: things made again on the new
+// machine, and what belongs to this one's running processes, which on the
+// new one would stand for a job that is not there: a job's place in the
+// queue (data/turns), a record's lock (*.lock), and a save half made
+// (*.tmp…).
 func skip(rel string) bool {
-	return rel == filepath.Join("data", ManifestName)
+	if rel == filepath.Join("data", ManifestName) {
+		return true
+	}
+	if turns := filepath.Join("data", "turns"); rel == turns || strings.HasPrefix(rel, turns+string(filepath.Separator)) {
+		return true
+	}
+	base := filepath.Base(rel)
+	return strings.HasPrefix(rel, "data"+string(filepath.Separator)) &&
+		(strings.HasSuffix(base, ".lock") || strings.Contains(base, ".tmp"))
 }
 
 // Result is what Pack wrote.
@@ -232,6 +244,12 @@ func Unpack(path, root string) (Manifest, int, error) {
 		}
 		if !filepath.IsLocal(name) {
 			return m, n, fmt.Errorf("the move file holds %q, outside the homelab folder", h.Name)
+		}
+		// What Pack leaves out, a move file someone else made can hold: a
+		// ticket or a lock would stand for a job that is not running here
+		// and hold this machine's jobs up.
+		if skip(name) {
+			continue
 		}
 		switch h.Typeflag {
 		case tar.TypeDir:

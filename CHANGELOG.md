@@ -54,6 +54,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Status, tighter:** the short cards (Protection, What the apps keep, what is using power) stack in one column beside Recent alerts instead of one sitting alone beside a long list; an alert with a long list shows its first 3 lines and **Show N more**; and each app's size takes one line, its name, bar, and size side by side.
 - **Keep using the app while a long job runs:** Update all apps now, an app's update, Fix it, and the other commands in a window of their own have **Hide** while they run; they carry on, with a small bar at the foot of the sidebar that brings them back and says when they're done.
 - **Jobs wait their turn instead of failing:** pressing Back up now, a Setup step, Install, or an app's Start, Stop, or Restart while another job runs no longer says "another install or setup step is running". It waits its turn, says what it's waiting for where you pressed it, and starts by itself as soon as the one before ends. The other apps' buttons stay usable meanwhile.
+- **Phones and the nightly jobs wait their turn too:** a Restart from a phone, the nightly backup and update, and the app's own jobs now queue behind each other rather than running at once or being refused, each saying what it is waiting for; and the watchdog leaves the apps alone while an update or backup is working on them.
 
 ### Fixed
 

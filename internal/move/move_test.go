@@ -113,3 +113,75 @@ func TestUnpackRefusesWritingThroughLinks(t *testing.T) {
 		t.Error("wrote a file outside the homelab folder")
 	}
 }
+
+// A bundle leaves out what stands for a job running on this machine: a
+// job's place in the queue, a record's lock, a save half made. On the new
+// machine they would stand for a job that is not there, and hold its jobs up.
+func TestPackLeavesThisMachinesJobsBehind(t *testing.T) {
+	src := t.TempDir()
+	now := time.Now()
+	write(t, src, ".env", "TZ=UTC\n", now)
+	write(t, src, "data/stopped.json", "{}\n", now)
+	write(t, src, "data/turns/00000000000000000001-4242.json", `{"pid":4242}`, now)
+	write(t, src, "data/stopped.json.lock", "", now)
+	write(t, src, "data/homelab.media.lock", `{"pid":4242}`, now)
+	write(t, src, "data/started.json.tmp123", "{", now)
+	var b bytes.Buffer
+	if _, err := Pack(src, Manifest{Made: now}, &b); err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	tr := tar.NewReader(&b)
+	for {
+		h, err := tr.Next()
+		if err != nil {
+			break
+		}
+		names = append(names, filepath.ToSlash(h.Name))
+	}
+	all := strings.Join(names, " ")
+	if !strings.Contains(all, "data/stopped.json") {
+		t.Fatalf("the record itself was left out: %v", names)
+	}
+	for _, gone := range []string{"data/turns", ".lock", ".tmp"} {
+		if strings.Contains(all, gone) {
+			t.Errorf("%s went in the bundle: %v", gone, names)
+		}
+	}
+}
+
+// A move file someone else made can hold what Pack leaves out: a ticket
+// for PID 1 (always running) dated in the future would stand first in the
+// queue for good, and every change (the nightly backup, updates, a phone's
+// Restart) would wait behind it; a lock would hold its record or Tidy Up.
+// Unpack leaves them out as Pack does.
+func TestUnpackLeavesOutAnotherMachinesJobs(t *testing.T) {
+	var b bytes.Buffer
+	tw := tar.NewWriter(&b)
+	add := func(name, body string) {
+		_ = tw.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(body)), Typeflag: tar.TypeReg})
+		_, _ = tw.Write([]byte(body))
+	}
+	add(ManifestName, `{"made":"2026-10-01T00:00:00Z","from":"x"}`)
+	add("data/stopped.json", "{}\n")
+	_ = tw.WriteHeader(&tar.Header{Name: "data/turns/", Mode: 0o700, Typeflag: tar.TypeDir})
+	add("data/turns/00000000000000000000-1.json", `{"pid":1,"what":"a job","at":"2099-01-01T00:00:00Z"}`)
+	add("data/homelab.media.lock", `{"pid":1}`)
+	add("data/stopped.json.lock", "")
+	add("data/started.json.tmp123", "{")
+	_ = tw.Close()
+	bundle := filepath.Join(t.TempDir(), "crafted.tar")
+	_ = os.WriteFile(bundle, b.Bytes(), 0o600)
+	root := filepath.Join(t.TempDir(), "root")
+	if _, _, err := Unpack(bundle, root); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "data", "stopped.json")); err != nil {
+		t.Fatalf("the record itself was left out: %v", err)
+	}
+	for _, gone := range []string{"data/turns", "data/homelab.media.lock", "data/stopped.json.lock", "data/started.json.tmp123"} {
+		if _, err := os.Stat(filepath.Join(root, filepath.FromSlash(gone))); !os.IsNotExist(err) {
+			t.Errorf("%s was unpacked: %v", gone, err)
+		}
+	}
+}
