@@ -157,6 +157,8 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 - Records the app writes itself (held, pinned, days, phones) go in `data/` through `internal/lockedfile` (a lock beside the file, the file replaced whole), not in `.env`, which is for what the owner sets. Don't add new app-written keys to `.env` (the owner's call, Nov 5).
 - If you use a git worktree anyway, copy `node_modules` into it. A symlink puts this machine's path into `web/dist/app.js`'s module comments.
 - Logs too long to read through the GitHub tools are saved to a file; search that file for `FAIL` rather than reading it whole. The proxy blocks GitHub's log storage host, so `curl` on a log URL fails.
+- `make check` doesn't run gosec or govulncheck: CI's *security* job does (`make security`). Run it before opening a PR that changes Go; #446's first push failed it on a `template.URL` (G203). `bin/gosec` stays after one `make security`, so later runs are quick.
+- In this container's real Docker, `docker stop` leaves an app *stopped*, which the watchdog takes as stopped by hand and never alerts about. To make an app down for a test, `docker pause` it: it keeps running and stops answering (#439).
 
 ## Rules that never bend
 
