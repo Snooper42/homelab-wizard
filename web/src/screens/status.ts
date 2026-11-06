@@ -23,7 +23,7 @@ import { catalog, renderApps, replan, selected } from './choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
-import { setHealthApps, setHealthChecks } from '../status/HealthLine';
+import { setHealthApps, setHealthChecks } from '../status/healthLine';
 import { backupsData } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';

@@ -779,7 +779,7 @@
     }
     const running4 = st.apps.filter((a3) => a3.state === "running");
     const counted = st.apps.filter((a3) => !awaitingJobs(a3)).length;
-    const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
+    const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     const u4 = st.updates;
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(
@@ -800,9 +800,9 @@
         Tile,
         {
           label: "Needs a look",
-          value: String(trouble.length),
-          tone: trouble.length ? "warn" : "",
-          sub: trouble.length ? trouble.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
+          value: String(trouble2.length),
+          tone: trouble2.length ? "warn" : "",
+          sub: trouble2.length ? trouble2.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble2.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
         }
       ),
       /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
@@ -6153,7 +6153,7 @@
     R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el3);
   }
 
-  // web/src/status/HealthLine.tsx
+  // web/src/status/healthLine.ts
   var apps = null;
   var checks = [];
   var open2 = null;
@@ -6167,27 +6167,27 @@
     drawHealth2();
   }
   var listed2 = (names4) => names4.length <= 3 ? names4.slice(0, -1).join(", ") + (names4.length > 1 ? " and " : "") + names4[names4.length - 1] : `${names4.slice(0, 2).join(", ")} and ${names4.length - 2} more`;
-  function Line() {
-    if (!apps) return null;
-    let text2 = "";
-    if (apps.length === 1) text2 = `${apps[0].name}: ${apps[0].words}`;
-    else if (apps.length) text2 = `${apps.length} apps need a look: ${listed2(apps.map((a3) => a3.name))}`;
-    else if (checks.length === 1) text2 = `The watchdog's check of ${checks[0]} is failing`;
-    else if (checks.length) text2 = `${checks.length} of the watchdog's checks are failing: ${listed2(checks)}`;
-    if (!text2) return /* @__PURE__ */ u3("span", { class: "ok", children: "✓ All well" });
-    return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { class: "bad", children: text2 }),
-      " ",
-      /* @__PURE__ */ u3("button", { class: "linkbtn", onClick: () => open2?.(), children: "Open Status" })
-    ] });
+  function trouble() {
+    if (!apps) return "";
+    if (apps.length === 1) return `${apps[0].name}: ${apps[0].words}`;
+    if (apps.length) return `${apps.length} apps need a look: ${listed2(apps.map((a3) => a3.name))}`;
+    if (checks.length === 1) return `The watchdog's check of ${checks[0]} is failing`;
+    if (checks.length) return `${checks.length} of the watchdog's checks are failing: ${listed2(checks)}`;
+    return "";
   }
   function drawHealth2() {
-    const el3 = document.getElementById("healthLine");
-    if (!el3) return;
+    const el3 = document.getElementById("oneLine");
+    const text2 = document.getElementById("oneText");
+    const btn = document.getElementById("oneOpen");
+    if (!el3 || !text2 || !btn) return;
     const on2 = document.querySelector(".screen.active")?.id;
+    const said = trouble();
     el3.hidden = !apps || on2 === "status" || on2 === "app";
-    el3.classList.toggle("trouble", !!apps && (apps.length > 0 || checks.length > 0));
-    R(/* @__PURE__ */ u3(Line, {}), el3);
+    el3.classList.toggle("trouble", !!said);
+    text2.className = said ? "bad" : "ok";
+    text2.textContent = said || "✓ All well";
+    btn.hidden = !said;
+    btn.onclick = () => open2?.();
   }
 
   // web/src/backups/Backups.tsx
@@ -6619,7 +6619,7 @@
   var savingsHistory = [];
   var lastAttention = -1;
   function renderTiles(st) {
-    const trouble = st.apps.filter((a3) => troubled(a3, st.stopped));
+    const trouble2 = st.apps.filter((a3) => troubled(a3, st.stopped));
     mountTiles($2("tiles"), {
       status: st,
       history: savingsHistory,
@@ -6633,9 +6633,9 @@
       },
       onChoose: () => navigate("choose")
     });
-    const n3 = trouble.length;
+    const n3 = trouble2.length;
     $2("statusCount").textContent = n3 ? String(n3) : "";
-    setHealthApps(trouble.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
+    setHealthApps(trouble2.map((a3) => ({ id: a3.id, name: a3.name, words: stateOf(a3, batteryPaused, held)[1] })), () => navigate("status"));
     if (n3 !== lastAttention && !document.documentElement.classList.contains("companion")) {
       lastAttention = n3;
       Promise.resolve(go().SetAttention(n3)).catch(() => {
@@ -6646,13 +6646,13 @@
   mountShowAll($2("statusAllBox"));
   var lastStatus = null;
   function renderAppList(st) {
-    const trouble = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
+    const trouble2 = (a3) => a3.health === "unhealthy" || a3.health === "restarting" || a3.state === "missing";
     const catOf = Object.fromEntries((catalog?.apps || []).map((x3) => [x3.id, x3.category]));
     const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
-    const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble(a3));
-    const rest = (a3) => !trouble(a3) && !pinned.includes(a3);
+    const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble2(a3));
+    const rest = (a3) => !trouble2(a3) && !pinned.includes(a3);
     const groups3 = [
-      { label: "Needs a look", apps: st.apps.filter(trouble), alert: true },
+      { label: "Needs a look", apps: st.apps.filter(trouble2), alert: true },
       { label: "Pinned", apps: pinned, pinned: true },
       ...(catalog?.categories || []).map((c3) => ({ label: c3.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c3.id) })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c3) => c3.id === catOf[a3.id])) }
