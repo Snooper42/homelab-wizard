@@ -419,11 +419,11 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     through a socket proxy or not. A container with the socket is root on
     the machine; one reachable through the proxy or the tailnet (Dozzle,
     Homepage, Beszel) is a way in.
-34. **The companion on a public name**: with a domain and the Cloudflare
+34. (done: round 38) **The companion on a public name**: with a domain and the Cloudflare
     tunnel, can `phone.<domain>` (or any name) reach `homelab serve`?
     If so, the pairing code's length, expiry, and guesses allowed per
     minute from the internet decide whether a stranger can pair.
-35. **What is public by default** (internal/npm, install, custom apps,
+35. (done: round 39) **What is public by default** (internal/npm, install, custom apps,
     Connect apps): the PR template promises no app goes on the internet
     by default; check each path that makes a proxy host (a new app, a
     custom app, an adopted one) against that, and the access list each
@@ -773,6 +773,24 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   the same job). No new phone method, record, or outside call. No code
   change needed. The backlog was down to four items, all waiting on other
   lanes: items 33 to 43 added.
+
+- **Round 38 (item 34, the companion on a public name, read through):**
+  the tunnel points only at the proxy, and only for catalog apps marked
+  `public` and not admin; the companion (8099) is not a catalog app and
+  has no proxy host, so it stays on the home network and the tailnet. No
+  stranger reaches its pairing code. No code change needed.
+- **Round 39 (item 35, what is public by default):** N19, High. Seven
+  apps are public once a domain and tunnel are set, and `AUTO_DOMAIN`
+  publishes one as it is installed; Immich, Audiobookshelf, Komga, and
+  Navidrome are claimed by their first visitor, and Calibre-Web starts as
+  admin/admin123. Now each is asked first (`claimedAt`, claim.go) and
+  stays off the internet until it says it has its first account; the
+  plan says why. `TestAnUnclaimedAppStaysOffTheInternet` failed before.
+  `TestDomainSetupEndToEnd` now states its Immich has its administrator
+  (a fake answering `isInitialized: true`), the case where publishing it
+  is right. Decision for the owner: whether the watchdog should publish
+  such an app by itself once claimed, instead of the next Set up the
+  domain.
 
 ## For Account 1
 
