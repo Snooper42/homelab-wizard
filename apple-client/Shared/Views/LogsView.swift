@@ -19,8 +19,8 @@ struct LogsView: View {
                             // Verbatim: a log line is never read as Markdown or a localization key.
                             Text(verbatim: line.text.isEmpty ? " " : line.text)
                                 .font(.system(.caption, design: .monospaced))
-                                .foregroundStyle(line.level == .error ? AnyShapeStyle(.red)
-                                                 : line.level == .warning ? AnyShapeStyle(.orange)
+                                .foregroundStyle(line.level == .error ? AnyShapeStyle(Theme.danger)
+                                                 : line.level == .warning ? AnyShapeStyle(Theme.warning)
                                                  : AnyShapeStyle(.primary))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .id(line.id)
@@ -111,7 +111,7 @@ struct LogsView: View {
                 }
                 if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 } else if let at = model.loadedAt {
                     Text("\(model.lines.count) lines · read \(at, format: .relative(presentation: .named))")
                         .foregroundStyle(.secondary)

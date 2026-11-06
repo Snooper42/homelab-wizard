@@ -28,12 +28,12 @@ struct AppDetailView: View {
                 if let problem = app.notAnswering, !problem.isEmpty {
                     Section("Problem") {
                         Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Theme.warning)
                     }
                 } else if app.state == "stopped", let stop = app.stoppedOnPurpose, stop.keptRestarting {
                     Section("Problem") {
                         Label(stop.words(), systemImage: "arrow.triangle.2.circlepath.circle")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Theme.danger)
                         Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
@@ -75,6 +75,7 @@ struct AppDetailView: View {
                 }
             }
             .formStyle(.grouped)
+            .themedCanvas()
             .navigationTitle(app.name)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -182,7 +183,7 @@ struct AppDetailView: View {
             Section {
                 LabeledContent("Up this week") {
                     Text(share, format: .percent.precision(.fractionLength(0...1)))
-                        .foregroundStyle(share < 0.99 ? .orange : .secondary)
+                        .foregroundStyle(share < 0.99 ? Theme.warning : .secondary)
                 }
                 ForEach(outages.reversed()) { outage in
                     VStack(alignment: .leading, spacing: 2) {
@@ -192,7 +193,7 @@ struct AppDetailView: View {
                             Text(outage.to == nil
                                  ? "Down \(Self.lasted(outage.duration())) now"
                                  : Self.lasted(outage.duration()))
-                                .foregroundStyle(outage.to == nil ? .red : .secondary)
+                                .foregroundStyle(outage.to == nil ? Theme.danger : .secondary)
                         }
                         .font(.callout)
                         if !outage.problem.isEmpty {
@@ -223,7 +224,7 @@ struct AppDetailView: View {
             Section {
                 if !protection.enforced {
                     Label("Bans aren't reaching the proxy. \(protection.bouncer)", systemImage: "exclamationmark.shield.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.danger)
                 }
                 if protection.today.isEmpty {
                     Text(protection.week == 0 ? "Nothing this week." : "Nothing yet today; \(protection.week) this week.")
@@ -259,7 +260,7 @@ struct AppDetailView: View {
                 if app.held == true {
                     VStack(alignment: .leading, spacing: 2) {
                         Label("Its updates are held", systemImage: "pause.circle")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Theme.warning)
                         Text("After a rollback, the nightly update leaves it out. Nightly updates, under Settings, puts it back.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
@@ -284,7 +285,7 @@ struct AppDetailView: View {
                         HStack(spacing: 4) {
                             Text(last, format: .relative(presentation: .named))
                             if overview.isLate() {
-                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
                                     .accessibilityLabel("Late")
                             }
                         }
@@ -305,7 +306,7 @@ struct AppDetailView: View {
                     if copy.shrank {
                         Label("Less than half the night before's \(copy.before.formatted(.byteCount(style: .memory))): check that \(app.name) still has its data.",
                               systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Theme.danger)
                     }
                     Text("Its files, and its database's copy, every night.")
                         .font(.callout).foregroundStyle(.secondary)
@@ -356,11 +357,11 @@ struct AppDetailView: View {
                 }
                 if entry.isPublic {
                     Label("Reachable from the internet, not only at home.", systemImage: "globe")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 }
                 if let warning = entry.warning, !warning.isEmpty {
                     Label(warning, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 }
                 // Others installed here that do much the same job (main #438).
                 let installed = Set((dashboard.liveEvents.status?.apps ?? [])
@@ -398,7 +399,7 @@ struct AppDetailView: View {
                     .disabled(!actions.canChange || actions.isBusy)
                 }
                 if let error = actions.settingErrors[app.id] {
-                    Text(error).font(.callout).foregroundStyle(.red)
+                    Text(error).font(.callout).foregroundStyle(Theme.danger)
                 }
             } header: {
                 Text("Settings")

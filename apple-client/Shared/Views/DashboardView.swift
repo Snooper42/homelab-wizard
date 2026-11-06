@@ -185,6 +185,7 @@ private struct PhoneDashboard: View {
                     ContentUnavailableView.search(text: model.search)
                 }
             }
+            .themedCanvas()
             .searchable(text: $model.search, prompt: "Apps")
             .navigationTitle("Homelab")
             .navigationDestination(for: AppStatus.ID.self) { id in
@@ -462,7 +463,7 @@ private struct OverviewHeader: View {
         VStack(alignment: .leading, spacing: 6) {
             ConnectionBadge(state: model.liveEvents.connection)
             Text(model.summary)
-                .font(.headline)
+                .font(.title3.weight(.semibold))
             OvernightLine(model: model)
             if let savings = model.yearlySavings {
                 Text("Replaces \(savings, format: .currency(code: "USD").precision(.fractionLength(0))) a year in subscriptions")
@@ -472,10 +473,10 @@ private struct OverviewHeader: View {
             if let error = model.liveEvents.refreshError {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .font(.footnote)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Theme.warning)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }
 

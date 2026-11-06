@@ -24,6 +24,7 @@ struct HomelabClientApp: App {
         MenuBarExtra {
             MenuBarView()
                 .environment(coordinator)
+                .tint(Theme.accent)
         } label: {
             MenuBarIcon()
                 .environment(coordinator)
@@ -32,6 +33,7 @@ struct HomelabClientApp: App {
 
         Settings {
             MacSettingsView()
+                .tint(Theme.accent)
         }
         #endif
     }

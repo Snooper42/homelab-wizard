@@ -128,10 +128,10 @@ extension View {
 extension AppAction {
     var tint: Color {
         switch self {
-        case .start: .green
-        case .stop: .red
-        case .restart: .blue
-        case .rollback: .orange
+        case .start: Theme.success
+        case .stop: Theme.danger
+        case .restart: Theme.info
+        case .rollback: Theme.warning
         }
     }
 }
@@ -322,7 +322,7 @@ struct PendingActionLine: View {
         if let failure = pending.failure {
             HStack(spacing: 6) {
                 Label("Couldn't \(pending.action.title.lowercased()): \(failure)", systemImage: "xmark.octagon.fill")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Theme.danger)
                     .lineLimit(2)
                 if !pending.log.isEmpty {
                     Button("Details") { actions.showDetails(for: app) }

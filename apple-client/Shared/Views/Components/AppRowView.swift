@@ -19,6 +19,7 @@ struct AppRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(app.name)
+                        .fontWeight(.medium)
                     if let note = dashboard.changeNote(for: app) {
                         Circle()
                             .fill(.tint)
@@ -50,18 +51,13 @@ struct AppRowView: View {
     @ViewBuilder private var badges: some View {
         if let uptime = dashboard.cards.watchdog?.uptimeLabel(for: app.id) {
             Text(uptime.replacingOccurrences(of: " this week", with: ""))
-                .font(.caption2.monospacedDigit())
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(.orange.opacity(0.15), in: Capsule())
-                .foregroundStyle(.orange)
+                .pill(Theme.warning)
                 .accessibilityLabel(uptime)
         }
         if let restarts = app.restarts, restarts > 0 {
             Label("\(restarts)", systemImage: "arrow.counterclockwise")
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
                 .labelStyle(.titleAndIcon)
+                .pill(.secondary)
                 .accessibilityLabel("\(restarts) restarts")
         }
     }
@@ -90,9 +86,12 @@ struct AppIconView: View {
                 }
                 .accessibilityHidden(true)
         } else {
+            // No icon yet: the state on a soft tile of its own colour, the
+            // same shape as an icon, so the rows line up.
             AppStateIcon(app: app)
-                .font(.system(size: size * 0.75))
+                .font(.system(size: size * 0.5, weight: .semibold))
                 .frame(width: size, height: size)
+                .background(app.tint.opacity(0.13), in: RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         }
     }
 }
@@ -115,22 +114,25 @@ struct ConnectionBadge: View {
         HStack(spacing: 6) {
             Circle()
                 .fill(color)
-                .frame(width: 8, height: 8)
+                .frame(width: 7, height: 7)
             Text(state.label)
-                .font(.caption)
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.12), in: Capsule())
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Connection: \(state.label)")
     }
 
     private var color: Color {
         switch state {
-        case .live: .green
-        case .connecting, .reconnecting: .yellow
+        case .live: Theme.success
+        case .connecting, .reconnecting: Theme.caution
         case .idle: .gray
-        case .stopped: .red
+        case .stopped: Theme.danger
         }
     }
 }
@@ -216,17 +218,17 @@ extension AppStatus {
 
     var tint: Color {
         if heldByYou || awaitingJobs { return .secondary }
-        if isWaiting { return .orange }
+        if isWaiting { return Theme.warning }
         if needsAttention {
             // The computer's "bad" dot: red. A plain stop is its "warn": orange.
             let bad = health == "restarting" || health == "unhealthy" || state == "missing"
                 || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
-            return bad ? .red : .orange
+            return bad ? Theme.danger : Theme.warning
         }
-        if health == "starting" { return .yellow }
+        if health == "starting" { return Theme.caution }
         switch state {
-        case "running": return .green
-        case "elsewhere": return .blue
+        case "running": return Theme.success
+        case "elsewhere": return Theme.info
         default: return .secondary
         }
     }

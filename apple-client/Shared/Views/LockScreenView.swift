@@ -6,16 +6,12 @@ struct LockScreenView: View {
     @Environment(AppCoordinator.self) private var coordinator
 
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "lock.shield.fill")
-                .accessibilityHidden(true)
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
-                .symbolRenderingMode(.hierarchical)
+        VStack(spacing: 28) {
+            AppMark(size: 84, badge: "lock.fill")
 
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 Text("Homelab Is Locked")
-                    .font(.title2.bold())
+                    .font(.title2.weight(.bold))
                 Text("Your servers stay hidden until you unlock.")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -33,15 +29,23 @@ struct LockScreenView: View {
             .keyboardShortcut(.defaultAction)
 
             if let error = coordinator.unlockError {
-                Text(error)
-                    .font(.callout)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 360)
+                Label {
+                    Text(verbatim: error)
+                } icon: {
+                    Image(systemName: "exclamationmark.circle.fill")
+                }
+                .font(.callout)
+                .foregroundStyle(Theme.danger)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Theme.danger.opacity(0.1), in: RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+                .frame(maxWidth: 380)
             }
         }
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { HeroBackground() }
         .task { coordinator.requestAutoUnlock() }
         .sensoryFeedback(trigger: coordinator.unlockError) { _, new in
             new == nil ? nil : .error
@@ -54,10 +58,8 @@ struct LockScreenView: View {
 struct PrivacyShieldView: View {
     var body: some View {
         ZStack {
-            Rectangle().fill(.background)
-            Image(systemName: "server.rack")
-                .font(.system(size: 56))
-                .foregroundStyle(.secondary)
+            HeroBackground()
+            AppMark(size: 72)
         }
         .ignoresSafeArea()
         .accessibilityHidden(true)

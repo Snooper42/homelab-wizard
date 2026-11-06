@@ -10,7 +10,8 @@ apple-client/
 │   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L), the Mac menu bar item; AppCommands.swift: the App menu (⌥⌘S start, ⌥⌘R restart, ⌥⌘. stop, ⌥⌘L logs)
 │   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), AppAction, PairingCode, ServerEndpoint, DeviceCredential
 │   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel, AppActionsViewModel
-│   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
+│   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Theme (colours, pills, the app mark), Components/
+│   ├── Assets.xcassets AccentColor, so the system's own controls are violet too
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
 ├── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
@@ -30,6 +31,14 @@ apple-client/
 | **Backups** | Each app's copy, grouped as on the computer (stale, up to date, paused, not copied yet), beside the night before's, with a warning when one shrank to less than half (main #435), Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
 | **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device (when it paired, and a warning if it paired without encryption), Unpair | Computer in the sidebar |
 | **Finances** (by level) | The plan, budgets, goals, loans, Taken as done, and transactions. Editing: balances, the cushion, budgets, goal targets, what a payment costs, waiting marks, transactions, and receipt photos. | Finances in the sidebar; ⌥⌘N adds a transaction, ⇧⌘H hides amounts on every device |
+
+## The look
+
+`Shared/Views/Theme.swift` holds it, in the calm, card-based style of privacy-focused mail apps, but with no other product's name, logo or artwork:
+- **Colours:** a violet accent (also the asset catalog's `AccentColor`, set as the global accent by `make-xcode-project.sh`), a warm grey canvas behind white cards on iPhone and iPad (blue-black behind dark ones), and calm status colours (`success`, `warning`, `caution`, `danger`, `info`). Every colour has a light and a dark value, and as text each keeps at least 4.5:1 contrast on its card.
+- **Shapes:** states and counts in tinted pills, an app without an icon yet on a soft tile of its state's colour, and rounded bordered buttons.
+- **The app mark:** a server rack on a violet tile, on the pairing and lock screens, at launch, and on the app-switcher cover.
+- **On the Mac:** the window keeps the system's background, so it still matches the sidebar's vibrancy. Only the accent, pills and colours change.
 
 ## Check it first, without Xcode
 

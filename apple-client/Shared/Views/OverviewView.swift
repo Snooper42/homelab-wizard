@@ -19,11 +19,12 @@ struct OverviewView: View {
             if let error = cards.error {
                 Section {
                     Label(error, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 }
             }
         }
         .formStyle(.grouped)
+        .themedCanvas()
         .overlay {
             if cards.shown.isEmpty {
                 if cards.isLoading {
@@ -179,10 +180,10 @@ private struct WatchdogCard: View {
         if let lastRun = summary.lastRun {
             if summary.failing.isEmpty {
                 Label(summary.checks == 1 ? "The check passes" : "All \(summary.checks) checks pass", systemImage: "checkmark.seal.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.success)
             } else {
                 Label("\(summary.failing.count) failing", systemImage: "xmark.seal.fill")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Theme.danger)
                     .font(.headline)
                 ForEach(summary.failing) { failure in
                     VStack(alignment: .leading, spacing: 2) {
@@ -225,7 +226,7 @@ private struct ProtectionCard: View {
                 protection.enforced ? "Blocking attackers" : "Not blocking yet",
                 systemImage: protection.enforced ? "checkmark.shield.fill" : "exclamationmark.shield.fill"
             )
-            .foregroundStyle(protection.enforced ? .green : .orange)
+            .foregroundStyle(protection.enforced ? Theme.success : Theme.warning)
             if !protection.bouncer.isEmpty {
                 Text(protection.bouncer)
                     .font(.callout)
@@ -288,7 +289,7 @@ struct AttackRow: View {
                 if attack.banned {
                     Label("Banned", systemImage: "lock.fill")
                         .font(.caption2)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.danger)
                 }
             }
         }
@@ -311,7 +312,7 @@ private struct AlertsCard: View {
                     HStack(spacing: 6) {
                         if event.isUrgent {
                             Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundStyle(.red)
+                                .foregroundStyle(Theme.danger)
                                 .accessibilityLabel("Urgent")
                         }
                         Text(event.heading)
@@ -380,9 +381,9 @@ private struct SavingsCard: View {
             if charted.count > 1 {
                 Chart(charted) { point in
                     AreaMark(x: .value("Day", point.day), y: .value("Per year", point.annual))
-                        .foregroundStyle(.green.opacity(0.15))
+                        .foregroundStyle(Theme.success.opacity(0.15))
                     LineMark(x: .value("Day", point.day), y: .value("Per year", point.annual))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Theme.success)
                 }
                 .chartYAxis {
                     AxisMarks { value in

@@ -65,6 +65,8 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: NO
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: "$TEAM"
+    # Shared/Assets.xcassets: the violet accent, for the system's own controls too.
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
 targets:
   # The Mac app.
   HomelabClient:

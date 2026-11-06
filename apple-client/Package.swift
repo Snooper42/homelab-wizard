@@ -22,7 +22,7 @@ let package = Package(
         .target(
             name: "HomelabClient",
             path: "Shared",
-            exclude: ["App/HomelabClientApp.swift", "App/PrivacyInfo.xcprivacy"]
+            exclude: ["App/HomelabClientApp.swift", "App/PrivacyInfo.xcprivacy", "Assets.xcassets"]
         ),
         .testTarget(
             name: "HomelabClientTests",

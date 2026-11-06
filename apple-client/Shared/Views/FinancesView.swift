@@ -46,6 +46,7 @@ struct FinancesView: View {
             }
         }
         .formStyle(.grouped)
+        .themedCanvas()
         .overlay {
             if !finances.canSeePlan {
                 ContentUnavailableView("Finances Aren't on This Device", systemImage: "banknote",
@@ -154,10 +155,10 @@ struct FinancesView: View {
                 Money(value: budget.amount, currency: view.plan.currency, finances: finances)
             }
             ProgressView(value: budget.share)
-                .tint(budget.isOver ? .red : budget.isAhead ? .orange : .green)
+                .tint(budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.success)
             Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
                 .font(.caption)
-                .foregroundStyle(budget.isOver ? .red : .secondary)
+                .foregroundStyle(budget.isOver ? Theme.danger : .secondary)
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
@@ -196,7 +197,7 @@ struct FinancesView: View {
                 Money(value: goal.target, currency: view.plan.currency, finances: finances)
             }
             ProgressView(value: goal.share)
-                .tint(goal.isReached ? .green : .accentColor)
+                .tint(goal.isReached ? Theme.success : .accentColor)
             Group {
                 if goal.isReached {
                     Text("Reached")
@@ -232,13 +233,13 @@ struct FinancesView: View {
                     if loan.never {
                         Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Theme.danger)
                     } else if let paidOff = loan.paidOff {
                         Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else if loan.balance <= 0 {
-                        Text("Paid off").font(.caption).foregroundStyle(.green)
+                        Text("Paid off").font(.caption).foregroundStyle(Theme.success)
                     }
                 }
                 .accessibilityElement(children: .combine)
@@ -341,7 +342,7 @@ private struct SinceSection: View {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(name(past))
-                        Text(detail(past)).font(.caption).foregroundStyle(past.waiting ? .orange : .secondary)
+                        Text(detail(past)).font(.caption).foregroundStyle(past.waiting ? Theme.warning : .secondary)
                     }
                     Spacer()
                     Money(value: past.moneyIn ? past.amount : -past.amount, currency: view.plan.currency, finances: finances)
@@ -405,7 +406,7 @@ private struct PeriodSection: View {
             }
             if view.plan.cushion > 0, period.left < view.plan.cushion {
                 Label("Below the cushion you set", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Theme.warning)
             }
             // By position: the same payment can come twice on one day.
             ForEach(period.rows.indices, id: \.self) { i in
@@ -457,10 +458,10 @@ private struct RowLine: View {
                 HStack(spacing: 6) {
                     Text(view.payment(row.payment)?.name ?? "Payment")
                     if row.late {
-                        Text("Late").font(.caption2.bold()).foregroundStyle(.red)
+                        Text("Late").font(.caption2.bold()).foregroundStyle(Theme.danger)
                     }
                     if row.saved {
-                        Image(systemName: "leaf.fill").font(.caption2).foregroundStyle(.green)
+                        Image(systemName: "leaf.fill").font(.caption2).foregroundStyle(Theme.success)
                             .accessibilityLabel("Saved")
                     }
                 }
@@ -473,7 +474,7 @@ private struct RowLine: View {
             HStack(spacing: 2) {
                 if row.estimate { Text(verbatim: "≈").foregroundStyle(.secondary).accessibilityLabel("About") }
                 Money(value: row.into ? row.amount : -row.amount, currency: view.plan.currency, finances: finances)
-                    .foregroundStyle(row.into ? .green : .primary)
+                    .foregroundStyle(row.into ? Theme.success : .primary)
             }
         }
         .accessibilityElement(children: .combine)
@@ -516,10 +517,11 @@ private struct AmountEditor: View {
                     Text(footer)
                 }
                 if let error = finances.saveError {
-                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
+                    Section { Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.danger) }
                 }
             }
             .formStyle(.grouped)
+            .themedCanvas()
             .navigationTitle(title)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -571,11 +573,12 @@ private struct BalanceEditor: View {
                 }
                 if let error = finances.saveError {
                     Section {
-                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.danger)
                     }
                 }
             }
             .formStyle(.grouped)
+            .themedCanvas()
             .navigationTitle("Update Balance")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -860,11 +863,12 @@ private struct AddTransactionView: View {
                 receiptSection
                 if let error = finances.saveError {
                     Section {
-                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.danger)
                     }
                 }
             }
             .formStyle(.grouped)
+            .themedCanvas()
             .navigationTitle(editing == nil ? "Add Transaction" : "Change Transaction")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -963,7 +967,7 @@ private struct TransactionRow: View {
             }
             if !large { Spacer() }
             Money(value: transaction.amount, currency: finances.currency, finances: finances)
-                .foregroundStyle(transaction.amount > 0 ? .green : .primary)
+                .foregroundStyle(transaction.amount > 0 ? Theme.success : .primary)
         }
         .accessibilityElement(children: .combine)
     }

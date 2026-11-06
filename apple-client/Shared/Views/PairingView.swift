@@ -23,7 +23,7 @@ struct PairingView: View {
                 if let notice {
                     Section {
                         Label(notice, systemImage: "exclamationmark.shield")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Theme.warning)
                     }
                 }
 
@@ -33,6 +33,7 @@ struct PairingView: View {
                 submitSection
             }
             .formStyle(.grouped)
+            .themedCanvas()
             #if os(macOS)
             .frame(maxWidth: 540)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -52,14 +53,11 @@ struct PairingView: View {
 
     private var header: some View {
         Section {
-            VStack(spacing: 12) {
-                Image(systemName: "server.rack")
-                    .accessibilityHidden(true)
-                    .font(.system(size: 48))
-                    .foregroundStyle(.tint)
-                    .symbolRenderingMode(.hierarchical)
+            VStack(spacing: 14) {
+                AppMark(size: 68)
+                    .padding(.bottom, 4)
                 Text("Pair with Your Homelab")
-                    .font(.title2.bold())
+                    .font(.title2.weight(.bold))
                 Text("On the computer, open **Settings › Phones** and choose **Pair a phone**, or run **homelab phone pair**, to make a one-time code.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -146,7 +144,7 @@ struct PairingView: View {
 
                 if model.isCodeComplete {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Theme.success)
                         .transition(.scale.combined(with: .opacity))
                         .accessibilityLabel("Code complete")
                 } else {
@@ -202,7 +200,7 @@ struct PairingView: View {
         } footer: {
             if let error = model.errorMessage {
                 Label(error, systemImage: "xmark.octagon.fill")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Theme.danger)
                     .padding(.top, 4)
             }
         }

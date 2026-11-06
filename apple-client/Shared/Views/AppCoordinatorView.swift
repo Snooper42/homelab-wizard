@@ -10,7 +10,13 @@ struct AppCoordinatorView: View {
         ZStack {
             switch coordinator.route {
             case .launching:
-                ProgressView()
+                ZStack {
+                    HeroBackground()
+                    VStack(spacing: 20) {
+                        AppMark(size: 64)
+                        ProgressView()
+                    }
+                }
             case .pairing:
                 PairingView(api: coordinator.api, notice: coordinator.pairingNotice) { device in
                     coordinator.didPair(device)
@@ -25,6 +31,9 @@ struct AppCoordinatorView: View {
             }
         }
         .animation(.default, value: coordinator.route)
+        // The look (Theme.swift): the violet accent, and rounded bordered buttons.
+        .tint(Theme.accent)
+        .buttonBorderShape(.roundedRectangle(radius: Theme.radius))
         #if os(iOS)
         // The app switcher takes its snapshot after the scene goes
         // inactive, so cover everything before that happens.

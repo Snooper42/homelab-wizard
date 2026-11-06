@@ -17,6 +17,7 @@ struct ComputerView: View {
             deviceSection
         }
         .formStyle(.grouped)
+        .themedCanvas()
         .task { await computer.load() }
         .refreshable { await computer.load() }
         .sheet(item: $computer.report) { report in
@@ -36,7 +37,7 @@ struct ComputerView: View {
                     HStack(spacing: 6) {
                         Text(host.runtime.isEmpty ? "Unknown" : host.runtime)
                         Image(systemName: host.runtimeOK ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                            .foregroundStyle(host.runtimeOK ? .green : .red)
+                            .foregroundStyle(host.runtimeOK ? Theme.success : Theme.danger)
                             .accessibilityLabel(host.runtimeOK ? "Running" : "Not answering")
                     }
                 }
@@ -46,7 +47,7 @@ struct ComputerView: View {
                 LabeledContent("Homelab Wizard", value: host.version)
                 if !host.supported {
                     Label("This system isn't one Homelab Wizard supports.", systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 }
             } else if let error = computer.hostError {
                 Text(error).foregroundStyle(.secondary)
@@ -75,7 +76,7 @@ struct ComputerView: View {
                 }
                 .disabled(!computer.canChange || computer.isSavingUpdates)
                 if let error = computer.updatesError {
-                    Text(error).font(.callout).foregroundStyle(.red)
+                    Text(error).font(.callout).foregroundStyle(Theme.danger)
                 }
             } header: {
                 Text("Updates")
@@ -114,7 +115,7 @@ struct ComputerView: View {
             }
             .disabled(computer.isMakingReport)
             if let error = computer.reportError {
-                Text(error).font(.callout).foregroundStyle(.red)
+                Text(error).font(.callout).foregroundStyle(Theme.danger)
             }
         } header: {
             Text("Help")
@@ -134,7 +135,7 @@ struct ComputerView: View {
                 if device.unencrypted {
                     Label("It paired without encryption, so the computer keeps it look-only for good. Pair again over https to make changes.",
                           systemImage: "lock.open.fill")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Theme.warning)
                 }
                 LabeledContent("ID") {
                     Text(verbatim: device.id).font(.body.monospaced()).textSelection(.enabled)
@@ -180,7 +181,7 @@ struct TaskButton: View {
             }
             .disabled(tasks.running != nil)
             if let error = tasks.errors[task] {
-                Text(error).font(.callout).foregroundStyle(.red)
+                Text(error).font(.callout).foregroundStyle(Theme.danger)
             }
         } else {
             Label(task.title, systemImage: task.systemImage)
@@ -204,7 +205,7 @@ struct TaskOutputView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     if output.failed {
                         Label("It didn't work", systemImage: "xmark.octagon.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Theme.danger)
                             .font(.headline)
                     }
                     Text(verbatim: output.lines.joined(separator: "\n"))
