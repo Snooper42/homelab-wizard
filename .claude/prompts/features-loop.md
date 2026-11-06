@@ -53,13 +53,14 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 6, 2026, 14:20 UTC):
-- #463 *Weekly integrity check* (`claude/feature-weekly-check`): open. Take it to merged first.
-- Then `claude/feature-tailnet-devices` (#PRn): *Tailnet devices*, built and pushed (Settings › Phones › Devices on your tailnet). Merge main in, fill its number, and open it.
+**Open now** (Nov 6, 2026, 14:45 UTC):
+- #464 *Tailnet devices* (`claude/feature-tailnet-devices`): open. Take it to merged first.
+- Then `claude/feature-snooze-alert` (#PRn): *Snooze an alert*, built and pushed (Snooze… beside a failing check on Status's Watchdog card; `homelab notify snooze`). Merge main in, fill its number, and open it.
+- *Two-step sign-in, nudged* is skipped for now: knowing whether each admin app has a second factor needs that app's own API and its admin login, app by app, more than an S, and nothing here can try it. Take it up only with a list of the apps and how each says so.
 - **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
-- Nothing else is queued: every branch built ahead (shortcuts sheet, status aloud, home screen, offline status, phones expire, update window) is merged. After the tailnet devices, go on with the roadmap's S items: Security and privacy's *Two-step sign-in, nudged*, then Alerts' *Snooze an alert* and *Who hears what*.
+- Nothing else is queued: every branch built ahead (shortcuts sheet, status aloud, home screen, offline status, phones expire, update window) is merged. After the snooze, go on with the roadmap's S items: Alerts' *Who hears what*, then *What's new for the family*.
 - Not started, for later: *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439, #445, #446, #447, #449, #450, #451, #452, #453, #455, #457, #458, #461.
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439, #445, #446, #447, #449, #450, #451, #452, #453, #455, #457, #458, #461, #463.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.

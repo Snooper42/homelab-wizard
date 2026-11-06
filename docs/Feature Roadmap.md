@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #PRn |
+| Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #464 |
 | Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #463 |
 | A copy before anything risky | An app's databases are dumped before it starts again on changed settings (a domain or tailnet address, Pocket ID sign-in, Fix it's changed settings), as before an update; a dump that fails stops the change | #461 |
 | Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
@@ -141,7 +141,7 @@ Safe by default, and easy to check.
 - **What is reachable from the internet** (M, *Idea*): a check from outside, through the tunnel, that lists every address it can reach and flags anything admin that answers.
 - **A log of what was done** (M, *Idea*): every start, stop, update, restore, and settings change, by whom (this computer, or which phone), kept for 90 days and searchable.
 - **Phones that expire** (S, *Built*, #455): a phone's access to Finances or to changes ends after a time you choose, and Settings › Phones shows when each was last seen.
-- **Tailnet devices** (S, *Built*, #PRn): every device on the household's tailnet in Settings › Phones, online or when it was last seen (a month unseen is marked), and Remove for a lost phone, in Tailscale's admin console where it is done.
+- **Tailnet devices** (S, *Built*, #464): every device on the household's tailnet in Settings › Phones, online or when it was last seen (a month unseen is marked), and Remove for a lost phone, in Tailscale's admin console where it is done.
 - **Rotate a secret** (M, *Idea*): a new database password or API key put in `.env` and into the app, then the app restarted, in one step; old ones flagged after a year.
 - **Images with known holes** (M, *Idea*): each running image checked against the public vulnerability lists weekly; one with a critical finding is named with its fix version.
 - **What CrowdSec stopped** (S, *Built*, #430): the addresses banned today, where from, and what they tried, on the proxy's page (and CrowdSec's): Status › Nginx Proxy Manager.
