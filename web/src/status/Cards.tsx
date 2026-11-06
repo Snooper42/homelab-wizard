@@ -12,6 +12,35 @@ export interface WatchdogProps {
   w: health.Summary;
   openSetup: () => void;
   fix: () => void;
+  /** Stops an app by its id: the memory card's Stop. */
+  stop?: (id: string) => void;
+}
+
+/** Memory as the alert says it, in the binary units Docker sets it in: 2.1 GB, 900 MB. */
+export const memText = (n: number) => (n >= 2 ** 30 ? `${(n / 2 ** 30).toFixed(1)} GB` : `${Math.round(n / 2 ** 20)} MB`);
+
+/**
+ * Memory nearly full: the apps have stayed above 90% of what Docker has
+ * long enough for the watchdog to alert (health.StepMemory). The biggest,
+ * each with Stop, until it comes down.
+ */
+function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => void }) {
+  const share = m.total ? Math.round((m.used / m.total) * 100) : 0;
+  return (
+    <div id="memoryPressure">
+      <div class="row more">
+        <span><span class="bad">Memory nearly full:</span> <span class="muted">the apps use {share}% of the {memText(m.total)} Docker has, high since {ago(m.since)}. Stop one you don't need now.</span></span>
+      </div>
+      <Rows>
+        {(m.biggest || []).map((a) => (
+          <Row key={a.name} dot="warn" title={a.name} end={<>
+            <span class="muted">{memText(a.bytes)}</span>
+            {a.id && stop && <button class="small memstop" aria-label={`Stop ${a.name}`} onClick={() => stop(a.id!)}>Stop</button>}
+          </>} />
+        ))}
+      </Rows>
+    </div>
+  );
 }
 
 /**
@@ -19,7 +48,7 @@ export interface WatchdogProps {
  * Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
  * scheduled job. Failing checks are the ones it alerted about.
  */
-export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
+export function Watchdog({ w, openSetup, fix, stop }: WatchdogProps) {
   if (never(w.lastRun)) {
     return <Head title="Watchdog"><span class="muted">It checks every app, address, and backup every 15 minutes once the jobs are installed. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
   }
@@ -33,6 +62,7 @@ export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
           <span class="muted">{w.pending && !failing.length ? `, ${w.pending} checked again next run` : ''} · {ago(w.lastRun)}</span>
         </span>
       </Head>
+      {w.memory && <MemoryPressure m={w.memory} stop={stop} />}
       {late && <div class="muted more">It has not run since {ago(w.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.</div>}
       {!!failing.length && (
         <div class="row more">
