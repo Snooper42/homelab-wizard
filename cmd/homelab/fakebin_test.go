@@ -97,6 +97,15 @@ func fakeDockerMain(d string, args []string) int {
 		os.Stdout.Write(data)
 	}
 	has := func(s string) bool { return strings.Contains(all, s) }
+	// FAKE_ON_RESTART=src>dst: a restart copies src over dst, as another
+	// process saving a record while this one restarts an app.
+	if hook := os.Getenv("FAKE_ON_RESTART"); hook != "" && has(" restart ") {
+		if src, dst, ok := strings.Cut(hook, ">"); ok {
+			if data, err := os.ReadFile(src); err == nil {
+				_ = os.WriteFile(dst, data, 0o644)
+			}
+		}
+	}
 	// FAKE_REGISTRY_BUSY=n: no image is here until a pull gets through,
 	// and the registry is busy for the first n pulls, and for a run that
 	// would pull its image itself, as ghcr.io's per-minute limit is.
