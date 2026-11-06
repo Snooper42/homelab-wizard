@@ -81,6 +81,9 @@ func Looks(st api.Status, n int) []string {
 			out = append(out, a.Name+" keeps restarting")
 		case a.State == "stopped" && st.Stopped[a.ID].Why == stopped.KeptRestarting:
 			out = append(out, a.Name+" was stopped: it kept restarting")
+		case a.State == "stopped" && a.StoppedWhy != "" && !heldBy(st, a.ID):
+			// It stopped by itself: out of memory, an error, its port taken.
+			out = append(out, a.Name+" stopped: "+a.StoppedWhy)
 		case a.Health == "unhealthy":
 			out = append(out, a.Name+" is unwell")
 		case a.NotAnswering != "":
@@ -235,4 +238,11 @@ func plural(n int, one, many string) string {
 		return one
 	}
 	return many
+}
+
+// heldBy reports whether the app was stopped on purpose (by you, or for a
+// while), which is no trouble.
+func heldBy(st api.Status, id string) bool {
+	_, ok := st.Stopped[id]
+	return ok
 }

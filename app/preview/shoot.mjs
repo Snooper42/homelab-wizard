@@ -408,6 +408,16 @@ const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
   cell.dispatchEvent(end);
   if (!end.defaultPrevented) cell.click();
 }, [name, ms]);
+// Mealie stopped by itself at 3:12 this morning, out of memory; Vikunja stopped last night with no reason Docker
+// gave (a shutdown, or docker stop by hand). Neither was stopped from the app.
+function stoppedByItself() {
+  const now = new Date();
+  const at = (days, h, m) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, h, m).toISOString();
+  return { statusOpen: '', status: { ...status, apps: status.apps.map((a) =>
+    a.id === 'mealie' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(0, 3, 12), stoppedWhy: 'it ran out of memory' }
+      : a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(-1, 21, 40) } : a) } };
+}
+
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -1935,6 +1945,41 @@ const smokes = [
     if (await page.locator('.groupmenulist .heldnote').count()) throw new Error(`the group menu says you stopped it: ${await page.locator('.groupmenulist .heldnote').textContent()}`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // An app that stopped by itself, not from the app: its row says when, and why when Docker knows (out of memory, an
+  // error, a port taken), with a red dot, and Needs a look counts it; one Docker gave no reason for says only when.
+  // Its own row still offers Start.
+  { name: 'Stopped by itself: its row says when and why, and it needs a look', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    await page.click('#statusAll');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
+    if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:text-is("Stopped yesterday, 9:40 PM")');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
+  // need be, and nothing slides sideways.
+  ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {
+    await page.setViewportSize({ width: w, height: 640 });
+    const cell = page.locator('#statusRows tr:has(strong:text-is("Mealie")) td.state');
+    await cell.waitFor({ timeout: 5000 });
+    await cell.scrollIntoViewIfNeeded();
+    const text = (await cell.textContent()).trim();
+    if (!text.includes('Stopped at 3:12 AM: it ran out of memory')) throw new Error(`Mealie's row says "${text}"`);
+    const bad = await cell.evaluate((e) => {
+      const m = document.querySelector('main'), edge = m.getBoundingClientRect().right + 1, found = [];
+      if (m.scrollWidth > m.clientWidth + 1) found.push(`the page slides sideways (${m.scrollWidth} px in ${m.clientWidth})`);
+      for (const x of [e, ...e.querySelectorAll('*')]) {
+        if (getComputedStyle(x).textOverflow === 'ellipsis' && x.scrollWidth > x.clientWidth + 2) found.push('the why is cut off');
+        if (x.getBoundingClientRect().right > edge) found.push('the why sticks out');
+      }
+      return [...new Set(found)];
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+  } })),
+  // Its page says the same at the top, beside Start.
+  { name: 'Stopped by itself: its page says when and why', screen: 'app:mealie', mock: stoppedByItself(), run: async (page) => {
+    await page.waitForSelector('.pill.bad:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
   } },
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
@@ -6261,7 +6306,9 @@ async function keep(page, label) {
 // SMOKE_ONLY=text runs the checks whose name has it, SMOKE_SHARD=i/n runs
 // every nth from the ith (CI runs n at once: together they are every
 // check), SMOKE_DEBUG=1 prints what axe measured, and SMOKE_SHOTS=folder
-// keeps a picture of each screen that passed (for a pull request).
+// keeps a picture of each screen and each check that passed (for a pull
+// request's after; a failing check's picture in app/preview/failures is
+// its before).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
   const [shard, shards] = (process.env.SMOKE_SHARD || '1/1').split('/').map(Number);
@@ -6278,6 +6325,11 @@ if (process.argv.includes('--smoke')) {
         await s.run(page);
         if (errors.length) throw new Error(errors.join('; '));
         console.log('ok  ', `${s.name} (${scheme})`);
+        // The screen as the check left it, for a pull request's after (a failing check's is its before).
+        if (process.env.SMOKE_SHOTS) {
+          mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+          await page.screenshot({ path: join(process.env.SMOKE_SHOTS, `${scheme}-${s.name}`.replace(/[^\w.-]+/g, '-').slice(0, 120) + '.png'), fullPage: true });
+        }
       } catch (e) {
         failed++;
         // The first line, and what it was waiting for (Playwright's call log), so a timeout says which step.

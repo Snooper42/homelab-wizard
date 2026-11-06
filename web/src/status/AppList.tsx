@@ -13,7 +13,7 @@ import { Address } from '../parts/Address';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
-import { keptRestarting, stopChoices, stoppedWords } from './stopFor';
+import { keptRestarting, stopChoices, stoppedByItself, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
 import { changedSince, type Seen } from './changed';
 
@@ -90,6 +90,8 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Reco
   if (a.state === 'stopped' && held[a.id]) return [keptRestarting(held[a.id]) ? 'bad' : '', stoppedWords(held[a.id])];
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
+  // Stopped by itself, not from here: when, and why when Docker knows (a crash needs a look: a red dot).
+  if (a.state === 'stopped') return [a.stoppedWhy ? 'bad' : 'warn', stoppedByItself(a)];
   if (a.state === 'running') {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];

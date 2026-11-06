@@ -40,6 +40,8 @@ declare namespace api {
     quiet?: boolean;
     pinned?: boolean;
     waitingFor?: string;
+    stoppedAt?: string;
+    stoppedWhy?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
   }

@@ -698,6 +698,15 @@
     const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
     return `Stopped until ${day3}${clockText(t3)}`;
   }
+  function stoppedByItself(a3, now = /* @__PURE__ */ new Date()) {
+    let when3 = "";
+    if (a3.stoppedAt) {
+      const t3 = new Date(a3.stoppedAt);
+      const days = Math.round((at(now, 0, 0).getTime() - at(t3, 0, 0).getTime()) / 864e5);
+      when3 = days <= 0 ? ` at ${clockText(t3)}` : days === 1 ? ` yesterday, ${clockText(t3)}` : days < 7 ? ` ${dayText(t3, { weekday: "short" })}, ${clockText(t3)}` : ` ${dayText(t3, { month: "short", day: "numeric" })}`;
+    }
+    return `Stopped${when3}${a3.stoppedWhy ? ": " + a3.stoppedWhy : ""}`;
+  }
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
@@ -2130,6 +2139,7 @@
     if (a3.state === "stopped" && held3[a3.id]) return [keptRestarting(held3[a3.id]) ? "bad" : "", stoppedWords(held3[a3.id])];
     if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
     if (a3.state === "stopped" && a3.waitingFor) return ["warn", `Waiting for the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive`];
+    if (a3.state === "stopped") return [a3.stoppedWhy ? "bad" : "warn", stoppedByItself(a3)];
     if (a3.state === "running") {
       if (a3.health === "unhealthy") return ["bad", "Unhealthy"];
       if (a3.health === "restarting") return ["bad", "Restarting"];

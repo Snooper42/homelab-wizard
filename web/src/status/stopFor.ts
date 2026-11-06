@@ -42,3 +42,17 @@ export function stoppedWords(s: stopped.Stop, now = new Date()): string {
   const day = days <= 0 ? '' : days === 1 ? 'tomorrow, ' : dayText(t, { weekday: 'short' }) + ', ';
   return `Stopped until ${day}${clockText(t)}`;
 }
+
+/** When an app that wasn't stopped from here stopped, and why when Docker
+ * knows: "Stopped at 3:12 AM: it ran out of memory", "Stopped yesterday,
+ * 9:40 PM", "Stopped Tue, 9:40 PM", "Stopped Oct 28"; just "Stopped"
+ * when Docker didn't say when. */
+export function stoppedByItself(a: { stoppedAt?: string; stoppedWhy?: string }, now = new Date()): string {
+  let when = '';
+  if (a.stoppedAt) {
+    const t = new Date(a.stoppedAt);
+    const days = Math.round((at(now, 0, 0).getTime() - at(t, 0, 0).getTime()) / 864e5);
+    when = days <= 0 ? ` at ${clockText(t)}` : days === 1 ? ` yesterday, ${clockText(t)}` : days < 7 ? ` ${dayText(t, { weekday: 'short' })}, ${clockText(t)}` : ` ${dayText(t, { month: 'short', day: 'numeric' })}`;
+  }
+  return `Stopped${when}${a.stoppedWhy ? ': ' + a.stoppedWhy : ''}`;
+}

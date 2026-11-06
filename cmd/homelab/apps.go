@@ -557,6 +557,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		return nil
 	}
 	u.Title("Homelab status")
+	held := stopped.Load(stopped.Path(h.root))
 	var rows [][]string
 	changed := 0
 	for _, a := range st.Apps {
@@ -584,6 +585,9 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		}
 		if a.NotAnswering != "" {
 			health = u.Red("not answering: " + a.NotAnswering)
+		}
+		if _, mine := held[a.ID]; a.StoppedWhy != "" && !mine {
+			health = u.Red(a.StoppedWhy) // it stopped by itself
 		}
 		if a.SettingsChanged {
 			state += u.Yellow(", settings changed")

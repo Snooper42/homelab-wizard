@@ -47,6 +47,15 @@ func TestSummaryAndLooks(t *testing.T) {
 	if got := Looks(loop, 6); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running|Mealie was stopped: it kept restarting" {
 		t.Errorf("looks %q", got)
 	}
+	// One that stopped by itself says why; one you stopped needs no look,
+	// whatever Docker said when it stopped.
+	crashed := api.Status{Apps: []api.AppStatus{
+		{ID: "mealie", Name: "Mealie", State: "stopped", StoppedWhy: "it ran out of memory"},
+		{ID: "vikunja", Name: "Vikunja", State: "stopped", StoppedWhy: "it quit with an error"},
+	}, Stopped: stopped.Record{"vikunja": {}}}
+	if got := Looks(crashed, 6); strings.Join(got, "|") != "Mealie stopped: it ran out of memory" {
+		t.Errorf("looks, stopped by itself: %q", got)
+	}
 	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 4 more need a look" {
 		t.Errorf("looks, at most 3: %q", got)
 	}

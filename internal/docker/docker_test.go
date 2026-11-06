@@ -16,13 +16,15 @@ func TestParseInspect(t *testing.T) {
 	  "State": {"Status": "running", "Running": true, "StartedAt": "2026-10-11T07:30:15.123456789Z", "Health": {"Status": "healthy"}},
 	  "NetworkSettings": {"Ports": {"80/tcp": [{"HostIp": "127.0.0.1", "HostPort": "8087"}]}}},
 	 {"Id": "def", "Name": "/never-started", "Config": {"Image": "busybox"},
-	  "State": {"Status": "created", "Running": false, "StartedAt": "0001-01-01T00:00:00Z"}}
+	  "State": {"Status": "created", "Running": false, "StartedAt": "0001-01-01T00:00:00Z", "FinishedAt": "0001-01-01T00:00:00Z"}},
+	 {"Id": "ghi", "Name": "/homelab_food-mealie-1", "Config": {"Image": "mealie"},
+	  "State": {"Status": "exited", "Running": false, "ExitCode": 137, "OOMKilled": true, "FinishedAt": "2026-11-06T03:12:40.5Z"}}
 	]`)
 	got, err := ParseInspect(data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 2 {
+	if len(got) != 3 {
 		t.Fatalf("got %d containers", len(got))
 	}
 	vw := got[0]
@@ -33,8 +35,11 @@ func TestParseInspect(t *testing.T) {
 	if vw.Service() != "vaultwarden" || len(vw.Ports) != 1 || vw.Ports[0].HostPort != 8087 {
 		t.Errorf("labels or ports: %+v", vw)
 	}
-	if never := got[1]; !never.StartedAt.IsZero() || never.Labels == nil {
+	if never := got[1]; !never.StartedAt.IsZero() || !never.FinishedAt.IsZero() || never.Labels == nil {
 		t.Errorf("a container that never started: %+v", never)
+	}
+	if m := got[2]; !m.OOMKilled || m.ExitCode != 137 || !m.FinishedAt.Equal(time.Date(2026, 11, 6, 3, 12, 40, 5e8, time.UTC)) {
+		t.Errorf("a container out of memory: %+v", m)
 	}
 }
 
