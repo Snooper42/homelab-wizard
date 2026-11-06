@@ -521,7 +521,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     backup's message can name its destination; check that no login in a
     destination URL (`auth-username`, `auth-password`, a key) reaches a
     phone, ntfy, or a report.
-57. **What a custom app may take** (stacks/custom, cmd/homelab custom.go,
+57. (done: round 60, N30) **What a custom app may take** (stacks/custom, cmd/homelab custom.go,
     and a move file's own apps, N16): `privileged`, `network_mode: host`,
     `pid: host`, Docker's socket, or `/` mounted are taken without a word.
     Name them before it starts, as N16 names its image.
@@ -1170,6 +1170,17 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   the screens): N26 now keeps the mark on the stored device only, so
   the two PRs share no file (lanes.md Rule 2); the Phones page can show
   it later.
+
+- **Round 60 (item 57, what a custom app may take; N30):** `homelab
+  custom add` writes the service itself (image, one port, volumes under
+  `data/appdata/<id>`, env), so it cannot ask for more; a hand-edited
+  `stacks/custom` file is the owner's own; a move file's own apps were
+  named with their image only. **N30 (Low), fixed:** each is named with
+  what it takes (privileged, Docker's socket, host network or
+  processes, `/` mounted, `cap_add`, devices). Read as they merged: #466
+  (CI's smoke shards interpolate only the fixed matrix and fail closed;
+  Windows renames retry 2 s on "access denied" only), #467 (Duplicati's
+  ntfy report decoded and cut to three lines: less reaches a phone).
 
 ## For Account 1
 
