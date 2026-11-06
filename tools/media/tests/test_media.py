@@ -1207,6 +1207,22 @@ class Lyrics(Base):
         self.assertEqual((res["cleaned"], res["synced"], res["added"]), (1, 1, 0))
         self.assertIn("each is on its own line under its original now", self.out.getvalue())
 
+    def test_the_check_counts_songs_with_two_languages_on_a_line(self):
+        # The check changes nothing, but says how many songs a run would set apart, so Tidy Up's Overview
+        # can offer it even when every song has lyrics already.
+        have = "[00:01.00]¡NUEVAYoL!^NEW YORK!\n[00:04.50]Si te quieres divertir^If you want to have fun\n"
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
+        writes = []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", return_value=(have, True)).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(p)).start()
+        music_tidy.lyrics(mock.Mock(library=None, check=True), files=[song])
+        res = self.results()[-1]
+        self.assertEqual(writes, [], "a check writes nothing")
+        self.assertEqual((res["synced"], res["to_clean"], res["cleaned"]), (1, 1, 0))
+        self.assertIn("translation after a caret", self.out.getvalue())
+
     def test_lyrics_without_carets_are_left_alone(self):
         writes, res = self.run_lyrics(("[00:01.00] one ^ two\n[00:02.00] three\n[00:03.00] four", True), None)
         self.assertEqual((writes, res["cleaned"]), ([], 0), "one caret in a song is a word, not a translation")

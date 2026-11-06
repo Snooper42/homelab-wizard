@@ -59,6 +59,9 @@ version: 0.17.0
 | `scripts/logs/restore-test.json` | `homelab restore-test` | The last 24 restore tests |
 | `scripts/logs/digest.json` | the nightly backup | When the weekly summary was last sent |
 | `scripts/logs/<part>.log`, `<part>.1.log` | the background agent | Each part's output (the watchdog, the backup, startup, …); at 5 MB the older half moves to `<part>.1.log`, replacing the one before |
+| `scripts/logs/crash-<date>.log` | the app, the menu bar item, the background agent | What a part was doing when it stopped unexpectedly, a file a day; kept 90 days |
+| `scripts/logs/media/<kind>-<action>-<time>.jsonl`, `background.log` | Tidy Up | Each job's events, a file a job (kept 30 days); the jobs run in the background write `background.log`, which at 5 MB moves its older half to `background.1.log` |
+| `data/media-trash.jsonl` | Tidy Up's jobs | What each run put in the Trash, for **Undo**. A line stays while Tidy Up still offers Undo for its run (Recent activity, or an action's last run), and at least 30 days |
 
 The nightly backup copies the `.json` files here, `data/people`, and `data/sso` into `recovery-staging/secrets/data`, which the Homelab Secrets job takes off-site with `.env`; the rest of `data/` is in `data/appdata` (the AppData job) or rebuilt by itself.
 
