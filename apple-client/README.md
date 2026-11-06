@@ -32,7 +32,7 @@ apple-client/
 
 ## Check it first, without Xcode
 
-On any Mac with Xcode 16 or later (or a Swift 6 toolchain):
+On a Mac with **full Xcode** 16 or later installed and selected. The Command Line Tools alone aren't enough: SwiftUI's `@State` and `@Entry` are macros whose plugin ships only with Xcode, so a build with the tools fails on every `@State` with "plugin for module 'SwiftUIMacros' not found". Select Xcode once (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, then `xcode-select -p` shows a path inside Xcode.app), or prefix a single build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 ```bash
 cd apple-client && swift build && swift test
