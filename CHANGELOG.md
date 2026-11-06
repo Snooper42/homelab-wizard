@@ -69,6 +69,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Backup alerts read as sentences:** Duplicati's warnings and errors showed in Recent alerts as a wall of encoded text (*message=Duplicati%20Backup%20report…*), running under its tag. They now say which backup and how it ended (*The backup of Homelab AppData finished with warnings*), with what went wrong, at most three lines. Long alerts wrap.
 - **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
