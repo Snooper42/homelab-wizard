@@ -17,6 +17,7 @@ missing songs, 130 stopped.
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -45,6 +46,16 @@ def venv_python():
     return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
+def starts(py):
+    """Whether a Python runs at all (a venv's is a link to the one it was made with)."""
+    try:
+        return subprocess.run([str(py), "-c", "import sys"], capture_output=True, timeout=30).returncode == 0
+    except subprocess.TimeoutExpired:
+        return True  # slow says nothing about the venv: keep it
+    except OSError:
+        return False
+
+
 def need(modules):
     """Run under an interpreter that has these modules: this one, or the organizer's beets venv
     (~/.music-cleanup/venv, which music_organizer.py installs on its first scan)."""
@@ -58,6 +69,11 @@ def need(modules):
         mc.die("%s isn't installed for this Python." % ", ".join(modules),
                "Run a music scan once (it installs beets and its helpers), then try again.")
     py = venv_python()
+    # A venv whose Python was upgraded away (Homebrew) can't be made again over itself: it goes,
+    # and the organizer's setup makes it anew. homelab media does the same before each run.
+    venv = py.parent.parent
+    if venv.is_dir() and not starts(py):
+        shutil.rmtree(str(venv), ignore_errors=True)
     if not py.exists():
         # The organizer's own one-time setup: a venv with beets, mutagen and the rest.
         real = mo.relaunch
