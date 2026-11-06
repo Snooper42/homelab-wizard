@@ -99,7 +99,7 @@ struct PairingView: View {
                 }
             }
             #endif
-            TextField("Address", text: serverBinding, prompt: Text(verbatim: "https://your-mac.tailnet.ts.net:8099"))
+            TextField("Address", text: serverBinding, prompt: Text(verbatim: Self.addressHint))
                 #if os(iOS)
                 .textContentType(.URL)
                 .keyboardType(.URL)
@@ -209,6 +209,15 @@ struct PairingView: View {
     }
 
     // MARK: Bindings & actions
+
+    /// On the Mac, the homelab is most often on the same computer.
+    private static var addressHint: String {
+        #if os(macOS)
+        "localhost:8099"
+        #else
+        "https://your-mac.tailnet.ts.net:8099"
+        #endif
+    }
 
     private var serverBinding: Binding<String> {
         Binding(get: { model.serverAddress }, set: { model.setServerAddress($0) })
