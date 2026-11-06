@@ -1089,7 +1089,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ## For Account 2
 
-- **N22: a phone removed on the computer can come back** (your note in
+- (done: #460) **N22: a phone removed on the computer can come back** (your note in
   maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
   next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
   `internal/companion/devices.go` reads `data/phones.json`, and when a
