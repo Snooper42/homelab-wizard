@@ -17,7 +17,6 @@ if [ -z "$PREFIX" ]; then
 fi
 HERE="$(cd "$(dirname "$0")" && pwd)"
 OUT="${HOMELAB_XCODE_DIR:-$HOME/Developer/HomelabClient-xcode}"
-HOMELAB="${HOMELAB_ROOT:-$HOME/Homelab}"
 export HOMELAB_XCODE_DIR="$OUT"
 
 # Xcode can lock up when its open project is replaced under it, and the old
@@ -50,15 +49,24 @@ open "$APP"
 echo "Opened the app."
 
 # A pairing code from the homelab on this Mac, as a link the app reads in one paste.
-if [ -x "$HOMELAB/homelab" ]; then
-  CLI=("$HOMELAB/homelab")
-elif [ -x "/Applications/Homelab Wizard.app/Contents/Helpers/homelab" ]; then
-  CLI=("/Applications/Homelab Wizard.app/Contents/Helpers/homelab" --root "$HOMELAB")
-else
+# shellcheck source=homelab-cli.sh
+. "$HERE/homelab-cli.sh"
+if ! find_homelab_cli; then
   echo "No homelab found in $HOMELAB, so no pairing code. Make one in Homelab Wizard: Settings › Phones." >&2
   exit 0
 fi
-PAIR="$("${CLI[@]}" --no-color phone pair --name "$(scutil --get ComputerName 2>/dev/null || echo Mac)" --can-change 2>/dev/null || true)"
+NAME="$(scutil --get ComputerName 2>/dev/null || echo Mac)"
+# Already paired and used: a new code would only make a second "$NAME".
+# The app keeps its pairing across rebuilds. HOMELAB_PAIR_AGAIN=1 makes one anyway.
+if [ -z "${HOMELAB_PAIR_AGAIN:-}" ] && phone_rows | grep -F "  $NAME  " | grep -vqE 'last seen never$'; then
+  cat <<DONE
+
+Ready. This Mac is already paired, so no new code was made.
+If the app asks to pair anyway, run this again with HOMELAB_PAIR_AGAIN=1 in front.
+DONE
+  exit 0
+fi
+PAIR="$("${HOMELAB_CLI[@]}" phone pair --name "$NAME" --can-change 2>/dev/null || true)"
 CODE="$(printf '%s\n' "$PAIR" | grep -o 'enter [A-Z0-9]\{8\}' | head -1 | cut -d' ' -f2 || true)"
 if [ -z "$CODE" ]; then
   echo "Couldn't make a pairing code. Make one in Homelab Wizard: Settings › Phones." >&2
@@ -69,4 +77,5 @@ cat <<DONE
 
 Ready. The pairing link is on the clipboard (code $CODE, good for 10 minutes).
 In the app: click in Address, press ⌘V, then click Pair.
+If the app opened already paired, ignore the code: it stops working by itself.
 DONE

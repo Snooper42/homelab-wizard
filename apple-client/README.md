@@ -13,7 +13,8 @@ apple-client/
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Components/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
-└── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
+├── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
+└── scripts/            make-xcode-project.sh (the Xcode project, Mac and iPhone), run-on-this-mac.sh, run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices)
 ```
 
 ## What it does
@@ -24,7 +25,7 @@ apple-client/
 | **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, window close, and after a while behind other apps (5 minutes; 1 or 15 in Settings) |
 | **Status** | Live list, searchable by name: pinned first, then needs attention, running, stopped. Each row has its icon, "N% up" and a dot for what changed since you looked; on iPhone those apps are also listed together at the top, and Mark as Seen clears the dots. An app the watchdog stopped because Docker kept restarting it (main #427) reads "Stopped: it restarted 5 times in an hour", in red, and counts as needing attention. One the battery saver paused reads "Paused on battery", and one waiting for its drive "Waiting for the Media drive", both in orange. Start the stopped leaves out all of these, as the computer's Start them does. Needs attention is the computer's Needs a look: unwell, not answering, missing, or stopped when nobody stopped it on purpose. Rows use the computer's words for each state. The overnight line in the morning. | The same, in a three-column split view whose sidebar keeps its place, plus a menu bar item whose Needs attention list opens on the app's page, and the attention count on the Dock icon while unlocked |
 | **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog, and another app here that does much the same job, main #438), its backup (the last nightly run, its copy, the restore test, and Back up now), its updates (when it was last updated, and whether its updates are held), where it can be reached from (home, tailnet, or the internet through the Cloudflare Tunnel), details, why it last started, addresses, logs (filter, errors and warnings in colour, Problems Only, copy with ⇧⌘C), and its settings (nightly updates, alerts, pin) | The same, with an App menu (⌥⌘S/R/./L) |
-| **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list | The same, plus keyboard shortcuts |
+| **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list; a long press on a row opens its menu, as the phone page's does since main #447. A change waits its turn behind the computer's other jobs (main #425). | The same, plus keyboard shortcuts and a right-click menu |
 | **Overview** | The money card, watchdog, protection (with what CrowdSec stopped today, also on the proxy's and CrowdSec's own pages, main #430), alerts, savings (with what the apps have saved so far, month by month, main #437) | Overview in the sidebar |
 | **Backups** | Each app's copy, grouped as on the computer (stale, up to date, paused, not copied yet), beside the night before's, with a warning when one shrank to less than half (main #435), Duplicati's jobs and their last run, restore tests, the vault export; Back up now, Test a restore | Backups in the sidebar |
 | **Computer** | What it runs, nightly updates on or off, Look for problems → Fix these, a diagnostics report to share, this device (when it paired, and a warning if it paired without encryption), Unpair | Computer in the sidebar |
@@ -50,6 +51,8 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 
 **The quickest way (Mac app, homelab on the same Mac):** `apple-client/scripts/run-on-this-mac.sh com.yourname` makes the project (below), builds and signs it with `xcodebuild -allowProvisioningUpdates` (a free Apple ID signed in to Xcode is enough), opens the app, and puts a pairing link for `localhost:8099` on the clipboard. Paste it into Address and click Pair.
 
+**The quickest way (iPhone app):** `apple-client/scripts/run-on-iphone.sh com.yourname`, with the iPhone plugged in, unlocked, trusting this Mac, and Developer Mode on (Settings › Privacy & Security › Developer Mode). It checks the phone's address first (`phone-address.sh`, below), makes the project, builds and signs for that phone (`-allowProvisioningDeviceRegistration` adds it to a free Personal Team), installs and opens it with `devicectl`, and shows a pairing QR code to scan in the app. With a free Apple ID the app works for 7 days; run it again to renew. The first time, the phone has to trust the Apple ID: Settings › General › VPN & Device Management.
+
 **The quick way (Mac app):** `apple-client/scripts/make-xcode-project.sh com.yourname` makes it with XcodeGen (installed with Homebrew if missing), with every setting below, in `~/Developer/HomelabClient-xcode`, outside the repository, pointing at this checkout's `Shared/`. Then press ⌘R in Xcode. By hand, for both platforms:
 
 1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.
@@ -65,6 +68,7 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 5. In **Info** (Info.plist keys):
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
    - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. Without it, the scan button doesn't show.
+   - `NSLocalNetworkUsageDescription`: "Homelab talks to your homelab on the home network." iOS (and macOS 15) ask before an app reaches a home-network address such as the one `homelab.<your domain>` resolves to; this is the reason the prompt shows. Allow it, or the connection fails. Loopback on the Mac needs no permission.
    - `NSAppTransportSecurity` › `NSAllowsLocalNetworking` = YES (macOS; in Xcode's Info tab, *App Transport Security Settings › Allow Local Networking*). It's for the companion on the same Mac (`localhost:8099`) only. Add no other exceptions: the app itself refuses plain http to anything but loopback.
    - `ITSAppUsesNonExemptEncryption` = NO. The app's only encryption is the system's HTTPS and Keychain, which is exempt, so App Store Connect stops asking at each upload.
 6. In **Signing & Capabilities**:
@@ -81,6 +85,20 @@ The Mac that runs the homelab doesn't need Tailscale or a domain to use the Mac 
 2. In the app, click **The Homelab Runs on This Mac** (or type `localhost:8099`), enter the code, and click **Pair**.
 
 The app talks to `http://127.0.0.1:8099`. That never leaves the computer, so the companion counts it as encrypted and lets it make changes. An iPhone, iPad or another Mac still needs the Tailscale or homelab-domain (https) link.
+
+## Pair an iPhone over the home network (no Tailscale)
+
+Tailscale is never needed. The phone needs an **https** address, and the homelab's domain gives it one at home: `https://homelab.<your domain>`, served by Nginx Proxy Manager with the domain's certificate. The Wi-Fi's DNS (AdGuard, or the router's custom DNS) sends that name to the homelab. The companion answers it only from the home network: anything that comes through the Cloudflare tunnel gets a 403, so it is never on the internet. Since the proxy says it reached it over https (`X-Forwarded-Proto`), the companion counts it as encrypted, and the phone may make changes and see Finances.
+
+`apple-client/scripts/phone-address.sh` checks the whole way from the Mac, without changing anything: the domain in `.env`, that the name resolves to a home address, that the certificate is trusted (the iPhone refuses one that isn't, and so does this app), and that the companion answers behind the proxy (401, "not paired", without a token). Each failure says what to look at.
+
+A VPN on the phone (Proton VPN, say) usually brings its own DNS, so `homelab.<your domain>` can't be found while it's on at home. The app then says the address couldn't be found. Let the VPN use the home network (its LAN or custom-DNS setting), or turn it off at home. Away from home, the phone can't reach the companion this way at all, by design. Tailscale (`https://<machine>.<tailnet>.ts.net:8099`) is the option for that, if you ever want it.
+
+Plain `http://<this Mac>:8099` from the phone stays refused: the token would cross the Wi-Fi in readable form.
+
+## Paired devices
+
+`apple-client/scripts/phones.sh` lists the phones and Macs paired with the homelab on this Mac. `phones.sh tidy` removes the ones never used (a pairing that failed half way, for example while the Keychain refused the token), after asking. `phones.sh remove <id>` removes one by its ID, never by name: two devices can share a name, and `homelab phone remove <name>` would take the first. The run scripts make no new code when the device is already paired and in use, so rebuilding doesn't leave duplicates.
 
 ## The server contract (read from the Go sources)
 
@@ -145,8 +163,8 @@ hash. The client receives the token itself, once.
   - receipts: a kept one opens from its transaction (`FinancesReceipt`; pictures through a capped thumbnail, PDFs in PDFKit), and a photo can be attached to a new one (`SaveFinancesReceipt`). It's shrunk and re-encoded as JPEG with no metadata, so no location leaves the device.
   Amounts stay hidden until tapped and hide again on lock. None show while the plan's Hide amounts is on.
 - "Downloading the app…" while an image is pulled. `AppAction` answers only at the end, so the phone can't see the pull happening.
-- Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>`.
+- Revoking from the device. The companion has no self-unpair endpoint, so Unpair deletes the token locally and tells the person to run `homelab phone remove <id>` (or `scripts/phones.sh remove <id>`).
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.
 - A look-only home Wi-Fi mode over plain http. It's left out on purpose: the token would cross the Wi-Fi in readable form (the computer makes such a device look-only for good). It's a decision to make before building it.
 - Widgets, App Intents (Shortcuts) and Live Activities. They need targets and entitlements in the Xcode project, and a choice about what may show while the app is locked.
-- The app run against a real `homelab serve`. The package does build and pass its tests: on Xcode 27.2 (macOS), `swift build` is clean and all 174 tests pass.
+- The iPhone app run against a real `homelab serve`. The Mac app runs on Xcode 27.2, paired with the homelab on the same Mac over `127.0.0.1:8099`, and before the loopback tests were added all 174 tests passed. `run-on-iphone.sh` is the first build of the iOS target from a generated project.

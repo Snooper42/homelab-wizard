@@ -1,5 +1,5 @@
 #!/bin/bash
-# Makes the Xcode project for the Mac app, with every setting the README's
+# Makes the Xcode project for the Mac and iPhone apps, with every setting the README's
 # "Make the Xcode project" steps describe, using XcodeGen. The project is
 # written outside the repository (by default ~/Developer/HomelabClient-xcode),
 # so no .xcodeproj is ever committed. It points at this checkout's Shared/
@@ -56,6 +56,7 @@ options:
   bundleIdPrefix: $PREFIX
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -64,8 +65,8 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: NO
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: "$TEAM"
-    ENABLE_HARDENED_RUNTIME: YES
 targets:
+  # The Mac app.
   HomelabClient:
     type: application
     platform: macOS
@@ -77,12 +78,14 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient
         PRODUCT_NAME: HomelabClient
+        ENABLE_HARDENED_RUNTIME: YES
     info:
       path: Info.plist
       properties:
         CFBundleDisplayName: Homelab
         LSApplicationCategoryType: public.app-category.utilities
         NSFaceIDUsageDescription: Touch ID unlocks Homelab, which controls your servers.
+        NSLocalNetworkUsageDescription: Homelab talks to your homelab on the home network.
         ITSAppUsesNonExemptEncryption: false
         # For the companion on this Mac only (http://127.0.0.1:8099). The app's
         # own ServerEndpoint still refuses plain http to anything but loopback.
@@ -95,6 +98,44 @@ targets:
         com.apple.security.network.client: true
         # Makes Xcode sign with a provisioning profile, which the
         # data-protection Keychain needs (else errSecMissingEntitlement, -34018).
+        keychain-access-groups:
+          - "\$(AppIdentifierPrefix)$PREFIX.HomelabClient"
+  # The iPhone and iPad app: the same sources, https only (no ATS exception).
+  HomelabClient-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: "$SHARED"
+    scheme:
+      gatherCoverageData: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient
+        PRODUCT_NAME: HomelabClient
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: Info-iOS.plist
+      properties:
+        CFBundleDisplayName: Homelab
+        NSFaceIDUsageDescription: Face ID unlocks Homelab, which controls your servers.
+        NSCameraUsageDescription: The camera scans the pairing QR code your computer shows.
+        NSLocalNetworkUsageDescription: Homelab talks to your homelab on the home network.
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    entitlements:
+      path: HomelabClient-iOS.entitlements
+      properties:
         keychain-access-groups:
           - "\$(AppIdentifierPrefix)$PREFIX.HomelabClient"
 YAML
