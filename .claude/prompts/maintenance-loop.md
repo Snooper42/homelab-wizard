@@ -41,9 +41,9 @@ Every round begins by finishing what is open in your lane: an open pull request 
 
 A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main: tell the owner to delete it (your tools can't). A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner.
 
-**Open now:** #471 (`claude/fix-records-whole`: items 9, 10, 18 to 22, and the `scripts/logs` note) until it merges.
+**Open now:** nothing. #471 (items 9, 10, 18 to 22, and the `scripts/logs` note) merged Nov 6.
 
-**Parked branches:** `claude/fix-proc` (item 13, in part), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-small-notes` (item 25). `claude/fix-resume-warn` (item 14) is Tidy Up, now Account 1's: list it for the owner, don't merge it. Merged branches for the owner to delete: `claude/fix-logs-private`, `fix-agent-state`, `fix-sent-notes`, `fix-custom-compose`, `fix-kit-manifest`, `fix-healed` once #471 is in.
+**Parked branches:** `claude/fix-proc` (item 13, in part), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-small-notes` (item 25). `claude/fix-resume-warn` (item 14) is Tidy Up, now Account 1's: list it for the owner, don't merge it. Merged branches for the owner to delete: `claude/fix-logs-private`, `fix-agent-state`, `fix-sent-notes`, `fix-custom-compose`, `fix-kit-manifest`, `fix-healed`, `fix-records-whole` (all in #471).
 
 ## Your job
 
@@ -107,7 +107,7 @@ What earlier walkthroughs found, worst first; take them in **Each round** step 2
 
 Kept from the earlier queue (Nov 6): only the items where a household can lose data or see a wrong state. The rest are **parked**: take one only when you are changing that code anyway. Tick each with its PR number once it is known. Done and parked items are kept below for their notes.
 
-**Kept:** 23, then 27 once Account 3 has answered it. (9, 10, 18 to 22: #471.)
+**Kept:** 23, then 27 once Account 3 has answered it. (9, 10, 18 to 22: #471, merged.)
 
 **Parked:** 2 (`UPDATES_HELD`), 3's leftovers, 11, 12, 13, 24, 25. Item 14 is Tidy Up: Account 1's now.
 
