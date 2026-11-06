@@ -881,6 +881,23 @@ const smokes = [
     await page.click('#checklist button:has-text("Set up backups")');
     await page.waitForSelector('#checklist li:has-text("Back up to a drive") .failed', { state: 'detached', timeout: 2000 });
   } },
+  // What a step gives you, and why it failed and what next, are read in full: before, each was cut to one line with
+  // "…" (in an 860px window, every step's), and what to press next after a failure went with it. In a normal window,
+  // and in a narrow one with big text.
+  { name: 'First run: a failed step says why in full, not cut off', screen: 'setup', mock: {
+    setup: [{ id: 'backups', title: 'Back up to a drive', why: 'A copy of everything on a drive of its own, made every night while you sleep, and checked each week.', state: 'todo', run: [['backup', 'setup', '--apply']], runLabel: 'Set up backups' }],
+    runFails: { backups: 'the backup drive /Volumes/Backup is not plugged in, or is formatted for Windows (NTFS) and this computer can only read it' },
+  }, run: async (page) => {
+    await page.click('#checklist button:has-text("Set up backups")', { timeout: 5000 });
+    const line = page.locator('#checklist li:has-text("Back up to a drive") .failed');
+    await line.waitFor({ timeout: 5000 });
+    for (const [w, zoom] of [[1280, '1'], [860, '1.5']]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      const cut = await page.$$eval('#checklist li .body > .sub', (es) => es.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent.trim()));
+      if (cut.length) throw new Error(`at ${w}px, text ${zoom}×, cut off: ${cut.join(' | ')}`);
+    }
+  } },
   // Once the homelab is made with no apps yet, Setup says the next thing
   // is picking them, and takes you there; with apps, it says nothing.
   { name: 'First run: once the homelab is made, Setup points to the first apps', screen: 'setup', mock: { status: { ...status, apps: [] }, host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {

@@ -518,10 +518,10 @@
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
       const open3 = !!opened2[s3.id];
-      const more2 = s3.why || s3.detail;
+      const more2 = s3.state !== "done" && !!s3.detail;
       return (
-        // A row: the step's number, what it gives you (one line until it is
-        // opened), its buttons, and the chevron that opens it.
+        // A row: the step's number, what it gives you, its buttons, and the
+        // chevron that opens what else to know now (when there is any).
         /* @__PURE__ */ u3("li", { class: s3.state + (open3 ? " open" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n3) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [

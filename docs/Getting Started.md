@@ -79,7 +79,7 @@ Each app build carries the `homelab` CLI and the homelab files, so Setup's butto
 
 ## 2. Work down the Setup screen
 
-The steps are grouped as **Needs you**, **Can wait**, and **Done**, one line each; click a step for the rest of what it says. Each says first what it gives you, then what to do. It moves to Done when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait** for the first week: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the N I can do for you** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
+The steps are grouped as **Needs you**, **Can wait**, and **Done**. Each says first what it gives you, then what to do; a step with more to know right now has a chevron that opens it. A step that didn't work says why under it, and what to press once that is put right. It moves to Done when its check passes, and **Check again** re-runs every check. Backups and *Alerts when this machine is down* sit under **Can wait** for the first week: get the apps going, then do them within the week. After that they count as left to do again, and the Setup tab's number says so. **Do the N I can do for you** runs every step that is ready, one after another, and stops at the first that fails or when what is left needs you: a setting, a choice, or something only a person can do.
 
 | Step | What it gives you | What you do |
 |---|---|---|

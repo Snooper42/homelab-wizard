@@ -82,10 +82,11 @@ export function Checklist({ steps, showDone, showLater, running, failed = {}, on
   const done = steps.filter((s) => s.state === 'done');
   const row = (s: setup.Step, n: number) => {
     const open = !!opened[s.id];
-    const more = s.why || s.detail;
+    // What it gives you is read in full; the chevron opens what else to know now.
+    const more = s.state !== 'done' && !!s.detail;
     return (
-      // A row: the step's number, what it gives you (one line until it is
-      // opened), its buttons, and the chevron that opens it.
+      // A row: the step's number, what it gives you, its buttons, and the
+      // chevron that opens what else to know now (when there is any).
       <li key={s.id} class={s.state + (open ? ' open' : '')}>
         <span class="mark">{s.state === 'done' ? <Icon name="check" /> : String(n)}</span>
         <div class="body">
