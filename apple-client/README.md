@@ -48,6 +48,8 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 
 ## Make the Xcode project
 
+**The quick way (Mac app):** `apple-client/scripts/make-xcode-project.sh com.yourname` makes it with XcodeGen (installed with Homebrew if missing), with every setting below, in `~/Developer/HomelabClient-xcode`, outside the repository, pointing at this checkout's `Shared/`. Then press ⌘R in Xcode. By hand, for both platforms:
+
 1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.
    Choose SwiftUI and Swift, with no Core Data and no SwiftData.
 2. Delete the template's `ContentView.swift` and `HomelabClientApp.swift`.
