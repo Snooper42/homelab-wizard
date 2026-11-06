@@ -510,12 +510,45 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
-55. **Windows and Linux updates rest on the release alone** (after N24):
+55. (done: round 58, N29 open) **Windows and Linux updates rest on the release alone** (after N24):
     neither build is signed (release.yml signs only the Mac's), so the
     app checks GitHub's checksum, from the same release. The release has
     build provenance (`actions/attest-build-provenance`); checking it in
     the app, or a key the app carries (minisign), would tell a build the
     workflow made from one put up by hand. Windows also asks for Authenticode.
+56. **Duplicati's error text** (Backups, a phone's Backups, the
+    watchdog's alert, `homelab report`, #463's weekly check): a failed
+    backup's message can name its destination; check that no login in a
+    destination URL (`auth-username`, `auth-password`, a key) reaches a
+    phone, ntfy, or a report.
+57. **What a custom app may take** (stacks/custom, cmd/homelab custom.go,
+    and a move file's own apps, N16): `privileged`, `network_mode: host`,
+    `pid: host`, Docker's socket, or `/` mounted are taken without a word.
+    Name them before it starts, as N16 names its image.
+58. **Apps with no sign-in when `BIND_IP` is the LAN address** (Dozzle,
+    `local: true`, and any app whose port is on `BIND_IP`): which then
+    face the whole home network, and whether Settings says so when the
+    address is changed.
+59. **CrowdSec's API on the shared network**: whether any app on
+    `homelab` can reach the LAPI, and what it could do there (read
+    decisions, add or remove a ban) with or without the bouncer key.
+60. **Databases on the shared network**: every app's database should sit
+    on its own project's network, never on `homelab`; a test like
+    N27's over the catalog would hold it.
+61. **Vaultwarden on a public name**: `SIGNUPS_ALLOWED` and the admin
+    page (`ADMIN_TOKEN`, hashed or not) when it goes through the tunnel,
+    as N19 asked of the apps with a first account.
+62. **Uptime Kuma's status pages and push URLs** on a public name: what
+    a stranger can read or post there.
+63. **Homarr's `SECRET_ENCRYPTION_KEY`**: made where, kept 0600, carried
+    by which backup, and what Homarr keeps with it (the integrations'
+    keys).
+64. **The app's link to the agent on Windows** (the named pipe or local
+    port item 8 read on the Mac): who on the same computer may use it.
+65. **The tunnel's catch-all kept by hand** (`MergeIngress` keeps a
+    catch-all someone added): one that sends every hostname to the proxy
+    would put each home-only app behind the tunnel; say so when it is
+    there (round 58 found the homelab's own catch-all answers 404).
 
 ### Security done
 
@@ -1100,6 +1133,23 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   amounts on, a phone's calendar can still show them (N20's kind); and
   NPM's access log for `homelab.<domain>` keeps the feed's whole URL,
   key included.
+
+- **Round 58 (item 55; N29 open; the tunnel; #462, #463):** Windows
+  and Linux builds are not signed, so their updates rest on GitHub's
+  checksum from the same release: **N29 (Medium), open**, as it needs a
+  key or certificate only the owner can make. The tunnel checked while
+  on the domain code: one ingress rule per public hostname and a
+  catch-all answering 404, and home-only names under `*.domain` are DNS
+  only, so a forged Host header reaches nothing through it (item 65 for
+  a catch-all kept by hand). N27 tried with Dozzle itself on Docker
+  29.9: it connects through the proxy on the new network and lists the
+  containers (3 of 3 starts; the very first, which also made the
+  network, missed the proxy once and was restarted by Docker), and an app on `homelab` cannot
+  resolve the proxy. Read as they merged: #462 (rebuild writes
+  settings whole), #463 (the weekly Verify: its record is 0600 under
+  its lock; the problem text is Duplicati's own, which already reached
+  Backups, item 56). Backlog grown by 10 (items 56 to 65), as 2 were
+  open.
 
 ## For Account 1
 
