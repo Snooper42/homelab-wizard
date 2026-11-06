@@ -103,6 +103,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Hide amounts covers the alerts too:** with amounts hidden, the nightly Finances reminders and the weekly summary still showed them on the phone's lock screen (*Due tomorrow: Mortgage $1,845.00*). They now say $••• there too.
 - **The Beszel agent stays on the version you chose:** it can control Docker, and it updated itself every night from its newest image, as the socket proxy once did. It is now pinned (`BESZEL_AGENT_VERSION`) and updated by hand after reading its notes.
 - **A removed phone stops getting Status at once:** a phone removed in Settings › Phones could no longer ask for anything, but one that had Status open kept receiving each change for as long as it stayed connected. It is now cut off within seconds.
+- **A Mac update comes only from whoever signed your app:** the app checked that an update downloaded whole, but not who made it. On a Mac, an update signed by anyone but the team that signed the app you have is now refused, and the app says so.
 
 ## [0.17.0] - 2026-11-02
 
