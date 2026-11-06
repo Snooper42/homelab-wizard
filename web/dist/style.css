@@ -111,6 +111,10 @@ button.primary.small { width:auto; margin:0; padding:6px 14px; font-size:13px; }
 .badge.ok { color:var(--ok); background:var(--ok-soft); border-color:transparent; } .badge.warn { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:var(--muted); vertical-align:1px; }
 .dot.ok { background:var(--ok); box-shadow:0 0 0 3px var(--ok-soft); } .dot.warn { background:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); } .dot.bad { background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+/* Shapes as well as colours: a state reads without telling green from red. Up is a circle, needs a look a triangle,
+   down a cross (and in forced colours, where every dot is one colour, the shape is all that tells them apart). */
+.dot.warn { border-radius:0; clip-path:polygon(50% 0, 100% 100%, 0 100%); }
+.dot.bad { border-radius:0; clip-path:polygon(20% 0, 50% 30%, 80% 0, 100% 20%, 70% 50%, 100% 80%, 80% 100%, 50% 70%, 20% 100%, 0 80%, 30% 50%, 0 20%); }
 .saving { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--ok-soft); color:var(--ok); font-weight:500; }
 
 /* Status */
@@ -549,6 +553,9 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
+/* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
+   and iOS shows no callout under that finger at the same moment. */
+html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .fx-export { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
 /* Export and the toolbar's capsule at the header's top, as the capsule is elsewhere, level by their middles. */
 .header .fx-headtools { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-left:auto; align-self:flex-start; }
