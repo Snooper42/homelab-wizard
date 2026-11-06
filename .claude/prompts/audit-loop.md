@@ -397,7 +397,7 @@ Added after round 27 (the backlog was empty; worst first):
     pairing token in the Keychain (not UserDefaults or a backup), the
     companion's certificate checked, nothing secret in widgets, the lock
     screen, or a crash log.
-29. **Phones that expire** (`claude/feature-phones-expire`, once its PR
+29. (done: round 52) **Phones that expire** (`claude/feature-phones-expire`, once its PR
     is open): an expired phone refused on every method and on a stream
     already open, and a clock set back not bringing it back.
 30. **The update window** (`claude/feature-update-window`,
@@ -977,6 +977,22 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   session (CI's security job runs it). Backlog grown by 11 (items 44 to
   54), as 4 were open.
 
+- **Round 52 (item 29, phones that expire, #455 on main; N23):** a
+  phone's `Until` is checked in `load()` against the clock on every
+  lookup, so a phone past it makes no change and sees no Finances from
+  its next request; a stale copy saved by another process (N22) still
+  carries `Until`, so the next read takes the permissions away again,
+  and N22 cannot bring an expired permission back. A wall screen keeps
+  its money card, as it should. The app and `homelab phone until` both
+  go through `SetUntil`. Fine as it is (one wording note under For
+  Account 1). Found on the way, **N23 (Medium)**: `/api/events` looked
+  the phone up only when the stream opened, and its half-minute comment
+  kept it open for good, so a removed phone kept getting every Status
+  change. Fixed: looked up again every 5 seconds while it follows, the
+  stream ended once it is not paired. `TestARemovedPhonesStreamEnds`
+  failed before. #455 also makes `load()` save when a phone's time is
+  up, so readers write too: added to N22's note for Account 2.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -998,6 +1014,11 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   what the phone had already seen, and no Finances; the comment's "all
   of it goes when the phone is unpaired" could say "once it learns it
   was removed". Worth a line on the Phones page's Remove.
+- **`homelab phone until` with a huge number** (#455, `parseFor`):
+  `999999999999w` overflows the duration and lands in 1848, so the phone
+  only looks at once (the safe way) while the command says it "may do
+  more than look until" a date long past. A cap (a year, say) would say
+  so plainly.
 
 ## For Account 2
 
@@ -1015,7 +1036,9 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   `NewStore(path).Lookup(token)` still finds the removed phone. The same
   with `SetCanChange(name, false)` brings Can make changes back. Fix:
   every change under `lockedfile.Update`, as `internal/stopped` does
-  (and so no shared `phones.json.tmp`). Account 3 ticks N22 once it
+  (and so no shared `phones.json.tmp`). Since #455, `load()` itself
+  saves when a phone's `Until` has passed, so `Devices()` and `Phones()`
+  write too: they need the same lock. Account 3 ticks N22 once it
   merges.
 - **`scripts/logs` is 0755 and its files 0644** (the agent's
   `MkdirAll(h.logsDir(), 0o755)`, `crash.Watch`, `openJobLog`): another
