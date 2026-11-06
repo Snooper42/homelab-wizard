@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -59,6 +60,10 @@ func fakePythonMain(fixture string, args []string) int {
 func mediaHomelab(t *testing.T, fx pythonFixture, env ...string) (root, calls string) {
 	t.Helper()
 	root, _ = repoCopy(t, env...)
+	// Its own home: a run looks at the beets venv under it.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	tools := media.ToolsDir(root)
 	_ = os.MkdirAll(tools, 0o755)
 	for _, s := range []string{"music_organizer.py", "music_tidy.py", "books_organizer.py", "movies_organizer.py", "tv_organizer.py",
@@ -165,6 +170,45 @@ func TestMediaEventsPassThroughForTheApp(t *testing.T) {
 	}
 	if media.LoadRecord(root).Activity[0].Text != "Cleaned library swapped in" {
 		t.Errorf("activity: %+v", media.LoadRecord(root).Activity)
+	}
+}
+
+// A Python upgrade left the beets venv pointing at nothing, and every
+// music job failed making it again over itself: a run removes it first,
+// says so, and the engine sets beets up anew.
+func TestMediaRemovesABrokenBeetsVenv(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("a venv's Python is a link only off Windows")
+	}
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "scan", "ok": true}`}})
+	for _, events := range []bool{false, true} {
+		venv := media.VenvPath(homeDir())
+		if err := os.MkdirAll(filepath.Join(venv, "bin"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		_ = os.Symlink(filepath.Join(t.TempDir(), "python3.13"), filepath.Join(venv, "bin", "python"))
+		args := []string{"media", "music", "scan"}
+		if events {
+			args = append(args, "--events", "json")
+		}
+		out, code := homelabCmd(t, root, "", args...)
+		if code != 0 {
+			t.Fatalf("exit %d:\n%s", code, out)
+		}
+		if _, err := os.Stat(venv); !os.IsNotExist(err) {
+			t.Errorf("the broken venv is still there: %v", err)
+		}
+		want := "beets setup stopped working"
+		if events {
+			want = `{"type":"warn","text":"Tidy Up's beets setup stopped working`
+		}
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+	if n := len(pythonCalls(t, calls)); n != 2 {
+		t.Errorf("the scans ran %d times, want 2", n)
 	}
 }
 

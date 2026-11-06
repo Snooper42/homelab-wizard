@@ -239,6 +239,20 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 			h.resumeDuplicati(ctx)
 		}()
 	}
+	// A beets venv left pointing at a Python that was upgraded away fails
+	// every music job: it goes, and the engine makes it again.
+	if removed, rerr := media.RepairVenv(ctx, homeDir()); rerr != nil || removed {
+		msg := "Tidy Up's beets setup stopped working (its Python was updated); it's installed again on this run, which takes about a minute"
+		if rerr != nil {
+			msg = fmt.Sprintf("Tidy Up's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
+		}
+		if f.events {
+			line, _ := json.Marshal(media.Event{Type: "warn", Text: msg})
+			fmt.Fprintln(h.ui.Out, string(line))
+		} else {
+			h.ui.Warn("%s", msg)
+		}
+	}
 	job := media.Job{Root: h.root, Kind: kind, Action: action, Args: f.rest, Env: env, Python: py, Yes: f.yes, Log: logf,
 		Out: func(ev media.Event, line string) {
 			if f.events {
