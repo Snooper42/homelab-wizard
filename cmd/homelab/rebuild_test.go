@@ -186,3 +186,50 @@ func TestCopyTreeLeavesLinks(t *testing.T) {
 		t.Fatalf("a missing folder: %v", err)
 	}
 }
+
+// A rebuild puts the backed-up .env in place while the agent and the app
+// may read it: they read the old file or the restored one, never half.
+func TestRebuildReplacesEnvWhole(t *testing.T) {
+	root := t.TempDir()
+	h := &homelab{root: root, envFile: filepath.Join(root, ".env")}
+	staging := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(staging, "data"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	versions := []string{strings.Repeat("TZ=America/New_York\n", 1<<16), strings.Repeat("TZ=Europe/Berlin\n", 1<<16)}
+	if err := os.WriteFile(h.envFile, []byte(versions[0]), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	torn := make(chan int, 1)
+	go func() {
+		defer close(torn)
+		for {
+			select {
+			case <-done:
+				return
+			default:
+			}
+			data, err := os.ReadFile(h.envFile)
+			if err == nil && string(data) != versions[0] && string(data) != versions[1] {
+				torn <- len(data)
+				return
+			}
+		}
+	}()
+	for i := range 200 {
+		if err := os.WriteFile(filepath.Join(staging, "homelab.env"), []byte(versions[(i+1)%2]), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := h.takeSecrets(staging); err != nil {
+			t.Fatal(err)
+		}
+	}
+	close(done)
+	if n, ok := <-torn; ok {
+		t.Fatalf("a reader found half a .env (%d bytes)", n)
+	}
+	if fi, err := os.Stat(h.envFile); err != nil || (runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600) {
+		t.Errorf(".env: %v %v", fi.Mode(), err)
+	}
+}

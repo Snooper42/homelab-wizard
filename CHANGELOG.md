@@ -70,6 +70,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Saves on Windows wait for a reader instead of failing:** on Windows a settings file or record can't be replaced while another part of the homelab is reading it, and a save gave up after a fifth of a second. It now keeps trying, in the gaps, for up to two seconds.
+- **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
 - **Finances saved from the computer and a phone at once are never lost:** a save from each at the same moment could both go through, the second over the first, without the *changed on another device* message. One now waits for the other and is told. Tidy Up's record no longer fails to save when two of its jobs end together.

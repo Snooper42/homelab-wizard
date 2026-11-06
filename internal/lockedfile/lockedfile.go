@@ -20,6 +20,11 @@ import (
 var (
 	Wait  = 5 * time.Second
 	Stale = 30 * time.Second
+	// RenameWait is how long Write keeps trying to rename its file in on
+	// Windows, where a rename over a file another process has open fails
+	// for that moment: readers that open it again and again (the agent,
+	// the app) leave only short gaps between them.
+	RenameWait = 2 * time.Second
 )
 
 // Update reads the file at path (nil when there is none) and passes it to
@@ -91,13 +96,17 @@ func Write(path string, data []byte, mode os.FileMode) error {
 		werr = os.Chmod(tmp, mode)
 	}
 	// On Windows a rename over a file another process is reading fails
-	// for that moment: try again briefly.
+	// for that moment: try again, in the gaps between its reads, for up to
+	// RenameWait.
 	if werr == nil {
-		for range 20 {
-			if werr = os.Rename(tmp, path); werr == nil {
+		deadline := time.Now().Add(RenameWait)
+		for {
+			// Windows says "access is denied" for a file open elsewhere;
+			// any other failure is final.
+			if werr = os.Rename(tmp, path); werr == nil || !os.IsPermission(werr) || time.Now().After(deadline) {
 				break
 			}
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(2 * time.Millisecond)
 		}
 	}
 	if werr != nil {
