@@ -104,6 +104,11 @@ const count = (v: number, one: string, many = one + 's') => `${v.toLocaleString(
 const lib = (d: app.TidyUp, kind: string) => d.libraries.find((l) => l.kind === kind)!;
 const last = (l: app.TidyLibrary, action: string) => l.last?.[action];
 const busy = (job: TidyJob | null) => !!job && !job.ended;
+/** The books' last review was applied (and not undone since): its list is what was changed, not what could be. */
+function reviewApplied(l: app.TidyLibrary) {
+  const rv = last(l, 'review'), ap = last(l, 'apply'), un = last(l, 'undo');
+  return !!(rv && ap?.ok && ap.at > rv.at && (!un || un.at < ap.at));
+}
 
 // The languages kept, by name: "eng" reads as English, "eng,jpn" as English and Japanese.
 const languageNames: Record<string, string> = { eng: 'English', en: 'English', spa: 'Spanish', es: 'Spanish', fra: 'French', fre: 'French', fr: 'French', deu: 'German', ger: 'German', de: 'German', ita: 'Italian', it: 'Italian', por: 'Portuguese', pt: 'Portuguese', nld: 'Dutch', dut: 'Dutch', nl: 'Dutch', swe: 'Swedish', sv: 'Swedish', nor: 'Norwegian', dan: 'Danish', fin: 'Finnish', pol: 'Polish', rus: 'Russian', ukr: 'Ukrainian', jpn: 'Japanese', ja: 'Japanese', kor: 'Korean', ko: 'Korean', zho: 'Chinese', chi: 'Chinese', zh: 'Chinese', hin: 'Hindi', ara: 'Arabic', heb: 'Hebrew', tur: 'Turkish', gre: 'Greek', ell: 'Greek' };
@@ -381,7 +386,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const changing = review ? review.filter((b) => !b.held).map((b) => b.title) : [];
     const many = review ? changing.length : Math.max(0, n(rv?.result?.changes) - ((rv?.result?.held as unknown[]) || []).length);
     if (!rv) out.push({ kind: k, title: 'Look over your books', sub: 'Titles, series, publishers, genres, and covers: nothing changes until you say', go: { label: 'Review', run: () => act.review() } });
-    else if (many) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
+    else if (many && !reviewApplied(l)) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
   } else if (k === 'audiobooks') {
     if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: 'A scan finds books split into many files and changes nothing', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
     else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
@@ -623,13 +628,15 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
           <Widget title="The review" span="all" kind="fx-renewing tidyreview"><Empty>Reading the last review…</Empty></Widget>
         )}
         {kind === 'books' && review && (
-          <Widget title="The review" id="tidyReview" span="all" kind="fx-renewing tidyreview" actions={!!changing.length && <Go primary label={`Apply to ${count(changing.length, 'book')}…`} job={job} onClick={apply} />}>
-            {review.length ? (
+          <Widget title="The review" id="tidyReview" span="all" kind="fx-renewing tidyreview" actions={!!changing.length && !reviewApplied(l) && <Go primary label={`Apply to ${count(changing.length, 'book')}…`} job={job} onClick={apply} />}>
+            {reviewApplied(l) ? (
+              <Empty>Applied {ago(last(l, 'apply')!.at)}: the books in it were changed. <strong>Review again</strong> to see whether anything is left.</Empty>
+            ) : review.length ? (
               <Rows kind="tidybooks">
                 {review.map((b) => <BookRow key={b.id} b={b} on={!b.held && !skip.has(b.id)} toggle={() => toggle(b.id)} cover={act.cover} />)}
               </Rows>
             ) : <Empty>Every book already looks tidy.</Empty>}
-            {last(l, 'apply')?.ok && <div class="actions"><Go label="Undo the last apply" job={job} onClick={() => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) })} /></div>}
+            {reviewApplied(l) && <div class="actions"><Go label="Undo the last apply" job={job} onClick={() => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) })} /></div>}
           </Widget>
         )}
         {kind in genreAsk && <GenresWidget d={d} job={job} act={act} only={kind} />}

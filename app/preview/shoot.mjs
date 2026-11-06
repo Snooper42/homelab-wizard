@@ -906,6 +906,21 @@ const smokes = [
     await page.click('#tidySheet button:text-is("Put it back")');
     await page.waitForFunction(() => JSON.stringify((window.__MOCK.tidyRuns || [])[0]) === JSON.stringify(['music', 'undo', [], true]), null, { timeout: 5000 });
   } },
+  // A review that was applied lists what was changed, not what could be: Overview doesn't offer it again, Books says it
+  // was applied with Undo and no second Apply; after an Undo, the review is offered again.
+  { name: 'Tidy Up: once a books review is applied, it isn’t offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, stage: 'applied', last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }) } } : l)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
+    if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
+    await page.click('#tidy .seg button:text-is("Books")');
+    await page.waitForSelector('#tidyReview :text("Applied 30 minutes ago: the books in it were changed")', { timeout: 5000 });
+    if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
+    await page.waitForSelector('#tidyReview button:text-is("Undo the last apply")', { timeout: 3000 });
+  } },
+  { name: 'Tidy Up: after an apply is undone, the review is offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }), undo: tidyRun('undo', 0.2, {}) } } : l)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("2 books could look tidier")', { timeout: 5000 });
+    await page.click('#tidy .seg button:text-is("Books")');
+    await page.waitForSelector('#tidyReview button:text-is("Apply to 2 books…")', { timeout: 5000 });
+  } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };

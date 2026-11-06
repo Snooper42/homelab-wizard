@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A books review, once applied:** Overview no longer says the same books *could look tidier*, and Books says the review was applied, with Undo, instead of offering to apply it again.
 - **When songs go missing in the music swap:** a check that finds songs missing now says how many and whose (*3 songs didn't make it into the new library: Radiohead (2 fewer), Björk (all of it)*), with **Put the old library back…** and **Check again**, instead of asking for the same check again as if it had never run.
 - **Tidy Up says what to do first:** Overview has one main button, on the first thing to do and never on a step that throws things away; Music's tab shows its space beside its genres; a film with Tdarr reads *Tdarr is shrinking 4 films*, not *what Tdarr has finished*. On a phone the tabs sit in two even rows, and VoiceOver reads a job's steps and its end instead of every file it touches.
 - **Tidy Up's numbers agree:** sizes are counted as the Finder counts a drive, so the space won back at the top is the figure Recently done shows (it said 384 GB beside 412 GB freed), and the first line counts what **Needs your OK** lists. A books review that can't be read says why, with **Try again**, instead of saying every book looks tidy; **Look…** on the Books tab now shows the review; and when Tidy Up can't read its record, its card has **Try again**.
