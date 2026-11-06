@@ -106,7 +106,7 @@ fi
 APP="$OUT/build/Build/Products/Debug-iphoneos/HomelabClient.app"
 [ -d "$APP" ] || { echo "Built, but no app at $APP" >&2; exit 1; }
 
-echo "Installing on $NAME…"
+echo "Installing on ${NAME}…"
 if ! xcrun devicectl device install app --device "$DEVICE" "$APP" >"$TMP/install.log" 2>&1; then
   echo "Installing failed:" >&2
   tail -5 "$TMP/install.log" >&2

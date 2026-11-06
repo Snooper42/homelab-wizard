@@ -80,6 +80,12 @@ code() { [ "$RC" = "$1" ]; }
 
 env_with() { printf '%s\n' "$@" >"$HL/.env"; }
 
+echo "all scripts"
+# macOS's bash 3.2 reads the bytes of a character like "…" right after $NAME
+# as part of the name ("NAME…: unbound variable"): write ${NAME}… instead.
+OUT="$(perl -ne 'print "$ARGV:$.: $_" if /\$[A-Za-z_]\w*[^\x00-\x7F]/; close ARGV if eof' "$HERE"/*.sh 2>&1)"
+expect "no \$NAME right before a non-ASCII character" test -z "$OUT"
+
 echo "phones.sh"
 run "$HERE/phones.sh"
 expect "lists the devices" says "a1b2c3"
