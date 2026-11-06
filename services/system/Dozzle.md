@@ -33,7 +33,7 @@ Live logs from every container in the browser, with search and filters. The firs
 ## How it works
 
 - A single Go program that serves the web page and streams each container's log to it as lines are written.
-- It reads containers and logs from the Docker engine through `docker-socket-proxy` (`DOCKER_HOST: tcp://docker-socket-proxy:2375`), which only allows listing containers and reading engine info. Dozzle cannot start, stop, or change anything.
+- It reads containers and logs from the Docker engine through `docker-socket-proxy` (`DOCKER_HOST: tcp://docker-socket-proxy:2375`), which answers reads only (containers, their logs and settings, engine info), so Dozzle cannot start, stop, or change anything. Reads include every container's settings, passwords among them, so the proxy is on a network of its own that only Dozzle, Homarr, and Homepage join, not the one every app shares.
 - It stores nothing. The history it shows is what Docker still keeps: every service here logs with the `json-file` driver, at most 3 files of 10 MB per container, so older lines of a busy container roll off.
 - Anonymous usage reporting is off (`DOZZLE_NO_ANALYTICS`).
 
