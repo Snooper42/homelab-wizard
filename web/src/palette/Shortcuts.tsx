@@ -2,7 +2,9 @@
 // the focus not in a field, or Keyboard shortcuts in the command palette.
 // The shortcuts of the screen you are on come first, then those that work
 // everywhere, then each screen's own key. Not on the phone or a wall
-// screen, nor over another sheet or the palette.
+// screen, nor over another sheet or the palette. A new shortcut needs its
+// line here too: the lists below are what the keyboard handlers do (app.ts,
+// the Status filter, the menus, the calendar), written out by hand.
 import { render } from 'preact';
 import { Sheet } from '../parts/Sheet';
 import { isMac, mod, onPhone } from '../core';
