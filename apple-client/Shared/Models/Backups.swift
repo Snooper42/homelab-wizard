@@ -312,7 +312,7 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
         else { return text }
         let bytes = number * pow(1024, power)
         guard bytes < Double(Int64.max) else { return text }
-        return Int64(bytes).formatted(.byteCount(style: .file))
+        return Int64(bytes).formatted(.byteCount(style: .memory))
     }
 
     /// The folders it copies, by name: /source/appdata/immich/ is "immich".

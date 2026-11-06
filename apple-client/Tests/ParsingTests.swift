@@ -446,8 +446,8 @@ struct BackupsTests {
     }
 
     @Test func duplicatiSizesAndFoldersReadPlainly() throws {
-        #expect(DuplicatiJob.sizeText("3.311 GiB") == Int64(3.311 * 1_073_741_824).formatted(.byteCount(style: .file)))
-        #expect(DuplicatiJob.sizeText("512 bytes") == Int64(512).formatted(.byteCount(style: .file)))
+        #expect(DuplicatiJob.sizeText("3.311 GiB") == Int64(3.311 * 1_073_741_824).formatted(.byteCount(style: .memory)))
+        #expect(DuplicatiJob.sizeText("512 bytes") == Int64(512).formatted(.byteCount(style: .memory)))
         #expect(DuplicatiJob.sizeText("about a lot") == "about a lot")
         #expect(DuplicatiJob.sizeText("1e400 GB") == "1e400 GB")
         let job = try JSONDecoder.homelab().decode(DuplicatiJob.self, from: Data(#"{"id":"1","sources":["/source/appdata/immich/","/source/appdata/paperless"]}"#.utf8))
@@ -540,7 +540,7 @@ struct DuplicatiRunTests {
         """#.utf8))
         let summary = try #require(jobs[0].lastRunSummary)
         #expect(summary.hasPrefix("Took"))
-        #expect(summary.contains("48.2 GB in"))
+        #expect(summary.contains(DuplicatiJob.sizeText("48.2 GB") + " in"))   // said as the app's other sizes
         #expect(summary.hasSuffix("keeps 12 versions"))
         #expect(jobs[0].sources == ["/Users/sam/homelab/data/"])
         #expect(jobs[1].lastRunSummary == nil) // an older computer, or nothing yet: nothing said

@@ -294,7 +294,7 @@ struct AppDetailView: View {
                         }
                     }
                     if copy.shrank {
-                        Label("Less than half the night before's \(copy.before.formatted(.byteCount(style: .file))): check that \(app.name) still has its data.",
+                        Label("Less than half the night before's \(copy.before.formatted(.byteCount(style: .memory))): check that \(app.name) still has its data.",
                               systemImage: "exclamationmark.triangle.fill")
                             .foregroundStyle(.red)
                     }

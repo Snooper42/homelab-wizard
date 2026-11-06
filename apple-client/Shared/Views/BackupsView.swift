@@ -308,7 +308,7 @@ private struct CopyRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 if copy.shrank {
-                    Text("Less than half the night before's \(copy.before, format: .byteCount(style: .file)): check that \(copy.name) still has its data.")
+                    Text("Less than half the night before's \(copy.before, format: .byteCount(style: .memory)): check that \(copy.name) still has its data.")
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
@@ -316,9 +316,9 @@ private struct CopyRow: View {
             Spacer(minLength: 0)
             if copy.size > 0 {
                 VStack(alignment: .trailing, spacing: 1) {
-                    Text(copy.size, format: .byteCount(style: .file))
+                    Text(copy.size, format: .byteCount(style: .memory))
                     if !copy.shrank, copy.sizeChanged {
-                        Text("was \(copy.before, format: .byteCount(style: .file))")
+                        Text("was \(copy.before, format: .byteCount(style: .memory))")
                     }
                 }
                 .font(.caption.monospacedDigit())
