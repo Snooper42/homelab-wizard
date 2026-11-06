@@ -72,6 +72,16 @@ function suggested(a: api.App, p: GroupsProps): [api.App, string][] {
   });
 }
 
+/** Apps that do much the same as a and are installed (running or stopped), each with why one might keep one or both;
+ * a pair is written on one side (x-homelab same_job) and said on both. Not said on an app that is itself installed. */
+function sameJob(a: api.App, p: GroupsProps): [api.App, string][] {
+  if (installed(p, a.id)) return [];
+  return p.catalog.apps.flatMap((o): [api.App, string][] => {
+    const why = a.sameJob?.[o.id] || o.sameJob?.[a.id];
+    return o.id !== a.id && why && installed(p, o.id) ? [[o, why]] : [];
+  });
+}
+
 function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
   const native = a.kind === 'native';
   const st = p.status[a.id];
@@ -93,6 +103,7 @@ function AppRow({ a, p }: { a: api.App; p: GroupsProps }) {
         <div class="desc">{a.description}</div>
         {!!p.note(a.id) && <div class="sysnote muted">{p.note(a.id)}</div>}
         {!!a.replaces?.length && <div class="replaces">Replaces {a.replaces.join(', ')}</div>}
+        {sameJob(a, p).map(([other, why]) => <div key={other.id} class="samejob muted">You already run {other.name}: {why}</div>)}
         {suggested(a, p).map(([with_, why]) => <div key={with_.id} class="goeswith muted">Goes with {with_.name}, which you run: {why}</div>)}
       </div>
       {!!links.length && <div class="links-inline">{links}</div>}

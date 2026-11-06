@@ -159,6 +159,9 @@ services:
   helper:
     image: h
     x-homelab: {name: Helper, category: media, web: false, goes_with: {app: "Helps it.", ghost: "Gone.", helper: "Itself.", monitor: ""}}
+  twin:
+    image: t
+    x-homelab: {name: Twin, category: media, web: false, same_job: {app: "Both do it.", ghost: "Gone.", twin: "Itself.", monitor: " "}}
 `))
 	if err != nil {
 		t.Fatal(err)
@@ -198,6 +201,9 @@ services:
 		`helper: goes_with names "ghost", not another app`,
 		`helper: goes_with names "helper", not another app`,
 		"helper: goes_with monitor says nothing on what it brings",
+		`twin: same_job names "ghost", not another app`,
+		`twin: same_job names "twin", not another app`,
+		"twin: same_job monitor says nothing on why",
 	} {
 		if !strings.Contains(all, want) {
 			t.Errorf("missing %q in:\n%s", want, all)
@@ -220,6 +226,27 @@ func TestGoesWithPairs(t *testing.T) {
 	}
 	if n < 13 {
 		t.Errorf("only %d suggestions read from the compose files", n)
+	}
+}
+
+// Two apps that do the same job are named from one side, with why, and
+// each names an app the catalog has.
+func TestSameJobPairs(t *testing.T) {
+	c := load(t)
+	n := 0
+	for _, a := range c.Apps {
+		for other := range a.Meta.SameJob {
+			n++
+			if c.byID[other] == nil {
+				t.Errorf("%s: same_job %q is not in the catalog", a.ID, other)
+			}
+			if o := c.byID[other]; o != nil && o.Meta.SameJob[a.ID] != "" {
+				t.Errorf("%s and %s name each other: say it once, from one side", a.ID, other)
+			}
+		}
+	}
+	if n < 8 {
+		t.Errorf("only %d pairs read from the compose files", n)
 	}
 }
 

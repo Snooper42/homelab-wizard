@@ -191,6 +191,12 @@ const protection = {
     { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
     { scenario: 'http-bad-user-agent', ip: '192.0.2.150', country: 'SG', network: 'Example Transit', when: hoursAgo(19) },
   ],
+  // Today's, for the proxy's page: the first two of five (the rest are past MaxToday in this picture).
+  today: [
+    { scenario: 'vpatch-CVE-2017-9841', ip: '203.0.113.7', country: 'NL', network: 'Example Hosting B.V.', when: hoursAgo(0.8), banned: true },
+    { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
+  ],
+  todayCount: 5,
 };
 // Savings recorded nightly: apps added over two months.
 const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
@@ -871,6 +877,23 @@ const smokes = [
     await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
     await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
   } },
+  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written, and an app you run says nothing.
+  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'kavita');
+    const kavita = page.locator('label.app:has-text("Kavita")');
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
+    await page.fill('#search', 'tandoor');
+    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await page.fill('#search', 'kopia');
+    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    // Komga runs: its own row names nothing.
+    await page.fill('#search', 'komga');
+    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
+    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+  } },
   { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
@@ -962,6 +985,40 @@ const smokes = [
   } },
   // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
+  // first record, month by month, newest first, and the card is not cut off.
+  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    await page.hover(tile);
+    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
+    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
+    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
+    const now = new Date().toLocaleString('en-US', { month: 'long' });
+    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    await page.focus(tile);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+  } },
+  // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
+  // copy less than half the night before's warned about on its row.
+  { name: 'Backups: a copy beside the night before’s, and one that shrank', screen: 'backups', mock: { backups: { ...backups, shrank: 1, copies: backups.copies.map((c) =>
+    c.id === 'immich-database' ? { ...c, size: 9e6, before: 61e6, shrank: true }
+    : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
+    : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
+    const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
+    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
+    // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
+    await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
+    if (await row('Vikunja').locator('td.size .was').count()) throw new Error('a copy within a tenth of the night before\'s says was');
+    if ((await row('Vikunja').locator('td.size').getAttribute('title')) !== 'The night before: 396 KB') throw new Error(`Vikunja's hover: ${await row('Vikunja').locator('td.size').getAttribute('title')}`);
+  } },
   { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
     const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
     await page.waitForSelector(when, { timeout: 5000 });
@@ -1216,6 +1273,28 @@ const smokes = [
     const [act] = await page.evaluate(() => window.__MOCK.personActions);
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
+  } },
+  // What CrowdSec stopped: the proxy's page lists today's with where each came from and what it tried, says how
+  // many more there were, and other apps' pages have no such card.
+  { name: 'The proxy’s page: what CrowdSec stopped today', screen: 'app:nginx-proxy-manager', run: async (page) => {
+    const card = page.locator('#appStopped');
+    await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
+    await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
+    const first = card.locator('li').first();
+    for (const want of ['vpatch-CVE-2017-9841', '203.0.113.7 · NL · Example Hosting B.V.', 'Banned']) {
+      if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
+    }
+    await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
+  } },
+  { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
+    await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
+  } },
+  { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
   } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
