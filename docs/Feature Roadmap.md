@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #PRn |
 | Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
 | An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #457 |
 | Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #455 |
@@ -152,7 +153,7 @@ Confidence that what matters can come back.
 - **Yesterday's version of an app** (M, *Idea*): Restore to last night on an app's page: its data and its image as they were, the current ones kept aside in case.
 - **A copy before anything risky** (S, *Idea*): a database dump just before an update, a restore, or a settings change, kept for a week.
 - **What changed since last night** (S, *Built*, #435): each backup's size beside the night before's, with a warning when an app's data shrinks sharply (under half of a copy of 1 MB or more).
-- **Weekly integrity check** (S, *Idea*): Duplicati's own verify on a sample each week, and its result on Backups.
+- **Weekly integrity check** (S, *Built*, #PRn): Duplicati's own Verify of each job on Sundays (`homelab backup-check`, a sample of its files against the hashes it recorded); a damaged file is a failing check on Status and a red line on Backups until a check passes again.
 
 ## Notifications and alerts
 

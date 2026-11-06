@@ -43,6 +43,10 @@ type Job struct {
 	Files    int      `json:"files,omitempty"`
 	Versions int      `json:"versions,omitempty"`
 	Sources  []string `json:"sources,omitempty"`
+	// Its last weekly check (homelab backup-check): when, and what
+	// Duplicati found wrong (empty: its files matched).
+	Checked      time.Time `json:"checked,omitzero"`
+	CheckProblem string    `json:"checkProblem,omitempty"`
 }
 
 // Client is a signed-in session with one Duplicati.
@@ -190,33 +194,63 @@ func (c *Client) Restore(ctx context.Context, job string, paths []string, restor
 	if err := c.call(ctx, http.MethodPost, "/api/v1/backup/"+id+"/restore", body, &started); err != nil {
 		return err
 	}
+	failed, err := c.waitTask(ctx, started.ID, "restore", wait)
+	if err != nil {
+		return err
+	}
+	if failed != "" {
+		return fmt.Errorf("Duplicati's restore failed: %s", failed)
+	}
+	return nil
+}
+
+// Verify runs Duplicati's own check of job id's backup (its test, as
+// Verify files on its page does): it downloads a sample of the backup's
+// files and compares each with the hash it recorded. problem is what
+// Duplicati said when the check failed (a damaged file is "Hash mismatch
+// on file …"), empty when it passed; err is the check not running at all.
+// It waits up to wait: Duplicati retries a bad file a few times first.
+func (c *Client) Verify(ctx context.Context, id string, wait time.Duration) (problem string, err error) {
+	var started struct{ ID int64 }
+	if err := c.call(ctx, http.MethodPost, "/api/v1/backup/"+id+"/verify", []byte("{}"), &started); err != nil {
+		return "", err
+	}
+	return c.waitTask(ctx, started.ID, "check", wait)
+}
+
+// waitTask waits for one of Duplicati's tasks to end: failed is its error
+// when it failed, empty when it completed.
+func (c *Client) waitTask(ctx context.Context, task int64, what string, wait time.Duration) (failed string, err error) {
 	deadline := time.Now().Add(wait)
 	for {
 		var st struct {
 			Status       string
 			ErrorMessage string
 		}
-		if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/api/v1/task/%d", started.ID), nil, &st); err != nil {
-			return err
+		if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/api/v1/task/%d", task), nil, &st); err != nil {
+			return "", err
 		}
 		switch st.Status {
 		case "Completed":
-			return nil
+			return "", nil
 		case "Failed":
-			return fmt.Errorf("Duplicati's restore failed: %s", st.ErrorMessage)
+			if st.ErrorMessage == "" {
+				st.ErrorMessage = "no reason given; see Duplicati's log"
+			}
+			return st.ErrorMessage, nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("the restore was still %s after %s; see Duplicati's log", strings.ToLower(st.Status), wait)
+			return "", fmt.Errorf("the %s was still %s after %s; see Duplicati's log", what, strings.ToLower(st.Status), wait)
 		}
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return "", ctx.Err()
 		case <-time.After(pollEvery):
 		}
 	}
 }
 
-// pollEvery is how often Restore asks whether the task finished.
+// pollEvery is how often Restore and Verify ask whether the task finished.
 var pollEvery = 2 * time.Second
 
 func (c *Client) call(ctx context.Context, method, path string, body []byte, out any) error {
