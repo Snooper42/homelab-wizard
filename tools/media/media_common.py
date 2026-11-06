@@ -754,9 +754,11 @@ class Tdarr:
         return idle
 
     def queue(self, library_id, paths):
-        """Add files to a library's queue (Tdarr runs its plugin stack on each, in its own order)."""
+        """Add files to a library's queue (Tdarr runs its plugin stack on each, in its own order). A list
+        of files is handed as Tdarr's own folder watcher hands them: Tdarr 3 reads none of a list sent
+        as scanFindNew, and still answers OK (tried against 3.06, Nov 6)."""
         return self._post("/api/v2/scan-files", {"scanConfig": {"dbID": library_id, "arrayOrPath": list(paths),
-                                                               "mode": "scanFindNew"}})
+                                                               "mode": "scanFolderWatcher"}})
 
     def requeue(self, path):
         return self._post("/api/v2/cruddb", {"collection": "FileJSONDB", "mode": "update", "docID": path,

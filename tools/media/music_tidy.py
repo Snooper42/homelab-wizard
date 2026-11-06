@@ -8,6 +8,7 @@ changing it. Its genre map, tag helpers and APE handling are the organizer's own
   python3 music_tidy.py navidrome-cleanup   full scan, wait for it, remove the missing entries
   python3 music_tidy.py playlists           a Navidrome smart playlist (.nsp) for each of your genres
   python3 music_tidy.py lyrics [--check]    time-synced lyrics from LRCLIB (--check only counts)
+  python3 music_tidy.py lyrics --tidy       the songs' own lyrics set right, asking LRCLIB nothing
   python3 music_tidy.py genre-counts        how many songs are in each of your genres (changes nothing)
   python3 music_tidy.py file <paths>        file new music: shrink, compare, match with beets, genre, lyrics
 
@@ -497,8 +498,11 @@ def lyrics(args, files=None):
     prefer_synced = mc.cfg("lyrics", "prefer_synced", True) is not False
     skip_instr = mc.cfg("lyrics", "skip_instrumentals", True) is not False
     check = getattr(args, "check", False)
+    # --tidy: only the songs' own lyrics set right (two languages on one line set apart), on this computer,
+    # asking LRCLIB nothing, so thousands of songs never wait on the network.
+    tidy_only = getattr(args, "tidy", False) is True and not check
     files = files if files is not None else [p for p in mc.walk_files(lib, mo.AUDIO_EXT)]
-    ui.title("Lyrics", "coverage" if check else "time-synced from LRCLIB")
+    ui.title("Lyrics", "coverage" if check else "two languages set apart" if tidy_only else "time-synced from LRCLIB")
     # none: songs still worth asking LRCLIB about. not_found: asked, and it had nothing (asked again after
     # a month). plain: plain lyrics LRCLIB has no time-synced ones for. untagged: no title to ask with.
     counts = {"synced": 0, "plain": 0, "none": 0, "instrumental": 0, "not_found": 0, "untagged": 0}
@@ -536,17 +540,18 @@ def lyrics(args, files=None):
                 counts["instrumental"] += 1
                 continue
             text, synced = read_lyrics(p)
+            # The song's own lyrics are set right first, whatever LRCLIB answers, or if it doesn't (a check
+            # only counts them).
+            if tidy(p, text):
+                text = normalize_lyrics(text)
             if synced:
-                tidy(p, text)
                 counts["synced"] += 1
                 already += 1
                 continue
             if fresh(p):
-                tidy(p, text)
                 counts["plain" if text.strip() else "not_found"] += 1
                 continue
-            if check:
-                tidy(p, text)  # counted, not written
+            if check or tidy_only:
                 counts["plain" if text.strip() else "none"] += 1
                 continue
             try:
@@ -564,7 +569,6 @@ def lyrics(args, files=None):
             new = new or (None if text.strip() else (found or {}).get("plainLyrics"))
             if not new:
                 seen[str(p)] = now
-                tidy(p, text)
                 counts["plain" if text.strip() else "not_found"] += 1
                 continue
             try:
@@ -579,7 +583,11 @@ def lyrics(args, files=None):
                 upgraded += 1  # plain lyrics replaced by time-synced ones
             else:
                 added += 1
-    if not check:
+    if tidy_only:
+        ui.ok("Two languages on one line set apart in %s songs" % mc.fmt_n(cleaned))
+        if failed:
+            ui.warn("Couldn't write the lyrics of %s songs: the log says which" % mc.fmt_n(failed))
+    elif not check:
         _save_not_found(seen)
         ui.ok("Lyrics added to %s songs; %s plain ones replaced by time-synced" % (mc.fmt_n(added), mc.fmt_n(upgraded)))
         # Every other song, said: why it has none, or why it kept what it had.
@@ -599,7 +607,7 @@ def lyrics(args, files=None):
         ui.line("  " + text, "NOTE   " + text, kind="note", text=text)
     if not check and (added or upgraded or cleaned):
         mc.Servers().ping(lib, "music")
-    ui.result(action="lyrics", ok=True, check=check, songs=len(files), added=added, upgraded=upgraded,
+    ui.result(action="lyrics", ok=True, check=check, tidy=tidy_only, songs=len(files), added=added, upgraded=upgraded,
               cleaned=cleaned, to_clean=to_clean, failed=failed, **counts)
 
 
@@ -765,6 +773,7 @@ def main():
     ap = mc.base_parser("music_tidy.py", __doc__, ["free-space", "navidrome-cleanup", "playlists", "lyrics",
                                                    "genre-counts", "file"])
     ap.add_argument("--check", action="store_true", help="lyrics: count only, change nothing")
+    ap.add_argument("--tidy", action="store_true", help="lyrics: set the songs' own lyrics right, asking LRCLIB nothing")
     args = ap.parse_args()
     mc.begin(args, "music", "music %s" % args.action)
     if args.library:
