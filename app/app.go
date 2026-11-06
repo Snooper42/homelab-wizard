@@ -54,6 +54,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -745,6 +746,15 @@ func (a *App) Alerts() ([]notify.Event, error) {
 // installed): how many checks ran, and those failing with what they said.
 func (a *App) Watchdog() health.Summary {
 	return health.LoadState(health.StatePath(a.root)).Summary()
+}
+
+// TailnetDevices is every device on the household's tailnet, when
+// last seen, with each one's page in Tailscale's admin console (Remove).
+// It fails with "not running" until Tailscale runs.
+func (a *App) TailnetDevices() ([]tailnet.Device, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.TailnetDevices(ctx, a.root)
 }
 
 // Protection is CrowdSec's view: whether the proxy enforces its bans, and

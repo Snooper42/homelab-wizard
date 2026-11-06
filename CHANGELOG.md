@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Devices on your tailnet:** Settings › Phones lists every phone and computer that can reach the apps away from home, with whether it's online or when it was last seen. One not seen for a month is marked, in case it's lost, and **Remove…** opens it in Tailscale's admin console, where a device is removed.
 - **Weekly integrity check:** every Sunday morning, each off-site backup is checked with Duplicati's own Verify: a sample of its files where they are kept is downloaded and compared with what Duplicati recorded. If one is damaged, so that a version might not restore, the watchdog alerts, Status lists it, and Backups shows it in red beside the job until a check passes. Each job's hover on Backups says when it was last checked. `homelab backup-check` runs the check at any time.
 - **Memory pressure alert:** when the apps use 90% or more of the memory Docker has on two checks in a row (10 minutes or more), you get one alert, *Homelab: memory nearly full*, naming the three biggest apps and how much each uses. Status's Watchdog card lists them with **Stop** on each until memory comes down, and a second alert says when it has.
 - **An update window per app:** an app's page has **Only on Sundays** under Nightly updates, for an app you would rather not see change midweek; the other nights leave it alone. `homelab updates days immich sat+sun` picks any days.
