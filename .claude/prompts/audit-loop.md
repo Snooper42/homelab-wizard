@@ -428,11 +428,11 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     by default; check each path that makes a proxy host (a new app, a
     custom app, an adopted one) against that, and the access list each
     gets.
-36. **Homepage's widget keys** (internal/homepage): its config is written
+36. (done: round 40) **Homepage's widget keys** (internal/homepage): its config is written
     0644 into `data/appdata/homepage`, which the AppData job copies in
     the clear (N9). Does any widget's config carry an app's API key, and
     does Homepage serve it to a browser?
-37. **Adopting a container** (internal/adopt): moving an app you already
+37. (done: round 41) **Adopting a container** (internal/adopt): moving an app you already
     run into the homelab reads its environment (passwords included):
     where those values go (`.env` 0600, or a compose file 0644), what is
     printed, and whether its volumes may name any host folder (`/`,
@@ -791,6 +791,19 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   is right. Decision for the owner: whether the watchdog should publish
   such an app by itself once claimed, instead of the next Set up the
   domain.
+
+- **Round 40 (item 36, Homepage's config, read through):** the
+  services.yaml it writes holds each running app's name, description,
+  address, and icon, and people's first names on their tabs; no widget
+  carries a key. Homepage is a system app, never published. No code
+  change needed.
+- **Round 41 (item 37, adopting a container, read through):** the plan
+  prints only the names of the settings carried over (`carry X over from
+  the old container`), and their values go into `.env` through envfile
+  (0600). Where each folder goes comes from the catalog, inside the
+  homelab folder or a named volume, never from the old container; a
+  container crafted to name another source needs Docker on this machine
+  already (Low, nothing to fix). No code change needed.
 
 ## For Account 1
 
