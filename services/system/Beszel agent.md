@@ -10,10 +10,10 @@ Reads this machine and its containers for Beszel.
 | | |
 |---|---|
 | Service | `beszel-agent` in `stacks/beszel/compose.yaml` (project `homelab_beszel`) |
-| Image | `docker.io/henrygd/beszel-agent:latest` |
+| Image | `docker.io/henrygd/beszel-agent:0.21.1` |
 | Category | System |
 | Starts with `./homelab up` | No: optional, `./homelab install beszel-agent` |
-| Updates | Nightly at 4 AM, with a copy of its data first |
+| Updates | By hand. It holds the Docker socket; set BESZEL_AGENT_VERSION to a newer release after reading its notes (keep it near Beszel's own version), then ./homelab update beszel-agent |
 | Needs in .env | `BESZEL_AGENT_KEY` |
 <!-- END homelab:generated -->
 

@@ -52,7 +52,8 @@ services:
 
   beszel-agent:
     <<: *service
-    image: docker.io/henrygd/beszel-agent:latest
+    # Pinned: it holds Docker's socket (docs/Security.md, M6, N18).
+    image: docker.io/henrygd/beszel-agent:${BESZEL_AGENT_VERSION:-0.21.1}
     profiles: [optional]
     # This machine's own network, to read its interfaces; on Docker Desktop
     # and OrbStack that is the runtime's Linux VM (Beszel's note says what
@@ -68,6 +69,7 @@ services:
       - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
     x-homelab:
       requires: [BESZEL_AGENT_KEY]
+      pin: It holds the Docker socket; set BESZEL_AGENT_VERSION to a newer release after reading its notes (keep it near Beszel's own version), then ./homelab update beszel-agent
       name: Beszel agent
       category: system
       description: Reads this machine and its containers for Beszel

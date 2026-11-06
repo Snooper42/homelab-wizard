@@ -413,7 +413,7 @@ Added after round 27 (the backlog was empty; worst first):
 
 Added after round 36 (four left, all waiting on other lanes; worst first):
 
-33. **The Docker socket in apps' hands** (internal/dockerapi, the compose
+33. (done: round 37) **The Docker socket in apps' hands** (internal/dockerapi, the compose
     files): list every container that mounts `/var/run/docker.sock` (or
     the Docker Desktop and OrbStack sockets), read-only or not, and
     through a socket proxy or not. A container with the socket is root on
@@ -774,6 +774,14 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   change needed. The backlog was down to four items, all waiting on other
   lanes: items 33 to 43 added.
 
+- **Round 37 (item 33, the Docker socket):** N18, Medium. Homarr and
+  Dozzle reach Docker through the read-only socket proxy (pinned, M6);
+  only the Beszel agent mounts the socket itself, read-only, which does
+  not limit Docker's API, and it ran `:latest` under the nightly update.
+  Now pinned to 0.21.1 (`BESZEL_AGENT_VERSION`), updated by hand.
+  `TestWhatHoldsTheDockerSocketIsPinned` failed before; it holds every
+  app that mounts the socket to a pin and a fixed tag.
+
 - **Round 38 (item 34, the companion on a public name, read through):**
   the tunnel points only at the proxy, and only for catalog apps marked
   `public` and not admin; the companion (8099) is not a catalog app and
@@ -851,7 +859,6 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   someone who can write into the homelab folder already. No code change.
   Left open: 28 (#424), 29 and 30 (their PRs), 32 (not built yet), 38
   (#439), and N21 (the owner's decision).
-
 ## For Account 1
 
 - **The update window's record is written 0644**
