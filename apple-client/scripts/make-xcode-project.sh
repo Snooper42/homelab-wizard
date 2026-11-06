@@ -75,6 +75,10 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         NSFaceIDUsageDescription: Touch ID unlocks Homelab, which controls your servers.
         ITSAppUsesNonExemptEncryption: false
+        # For the companion on this Mac only (http://127.0.0.1:8099). The app's
+        # own ServerEndpoint still refuses plain http to anything but loopback.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     entitlements:
       path: HomelabClient.entitlements
       properties:

@@ -109,10 +109,21 @@ struct PairingView: View {
                 .focused($focus, equals: .server)
                 .submitLabel(.next)
                 .onSubmit { focus = .code }
+            #if os(macOS)
+            // The companion on this Mac: loopback never leaves the computer.
+            Button("The Homelab Runs on This Mac") {
+                model.setServerAddress("localhost:8099")
+                focus = .code
+            }
+            #endif
         } header: {
             Text("Computer")
         } footer: {
+            #if os(macOS)
+            Text("Use the Tailscale or homelab-domain link, or localhost:8099 when the homelab runs on this Mac. You can paste the whole pairing link. Plain http to another computer isn't accepted, because your device token would cross the network in readable form.")
+            #else
             Text("Use the Tailscale or homelab-domain link. You can paste the whole pairing link. Plain http isn't accepted, because your device token would cross the network in readable form.")
+            #endif
         }
     }
 

@@ -63,12 +63,21 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 5. In **Info** (Info.plist keys):
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
    - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. Without it, the scan button doesn't show.
-   - Add no `NSAppTransportSecurity` exceptions. The client is https-only, and ATS stays fully on.
+   - `NSAppTransportSecurity` › `NSAllowsLocalNetworking` = YES (macOS; in Xcode's Info tab, *App Transport Security Settings › Allow Local Networking*). It's for the companion on the same Mac (`localhost:8099`) only. Add no other exceptions: the app itself refuses plain http to anything but loopback.
    - `ITSAppUsesNonExemptEncryption` = NO. The app's only encryption is the system's HTTPS and Keychain, which is exempt, so App Store Connect stops asking at each upload.
 6. In **Signing & Capabilities**:
    - Choose a development team on both platforms. On macOS, the data-protection keychain needs a signed app; an unsigned one gets `errSecMissingEntitlement`.
    - macOS: **App Sandbox › Outgoing Connections (Client)**, and keep the Hardened Runtime on.
 7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target (both platforms). It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
+
+## Pair with the homelab on the same Mac
+
+The Mac that runs the homelab doesn't need Tailscale or a domain to use the Mac app. On it:
+
+1. In Terminal, in the homelab folder: `./homelab phone pair --name "This Mac" --can-change`. Note the 8-character code.
+2. In the app, click **The Homelab Runs on This Mac** (or type `localhost:8099`), enter the code, and click **Pair**.
+
+The app talks to `http://127.0.0.1:8099`. That never leaves the computer, so the companion counts it as encrypted and lets it make changes. An iPhone, iPad or another Mac still needs the Tailscale or homelab-domain (https) link.
 
 ## The server contract (read from the Go sources)
 
@@ -95,7 +104,7 @@ hash. The client receives the token itself, once.
 
 | Threat | Mitigation | Where |
 |---|---|---|
-| Token sniffed on Wi-Fi | https only (no ATS exceptions). `ServerEndpoint` rejects `http://`. The server also makes plain-HTTP pairings look-only. | `ServerEndpoint`, `APIClient` |
+| Token sniffed on Wi-Fi | https only, except loopback on the Mac. `ServerEndpoint` rejects `http://` to anything but `127.0.0.1`/`::1` (and turns `localhost` into `127.0.0.1`, so the hosts file can't redirect it), and only on macOS, where the companion runs. Loopback never leaves the computer, and the server counts it as encrypted too. The only ATS setting is `NSAllowsLocalNetworking`, for that. The server also makes plain-HTTP pairings from the network look-only. | `ServerEndpoint`, `APIClient` |
 | Token sent to the wrong host | The token is stored together with its origin. Every request and response URL is checked against that origin. Redirects are refused, because Foundation would copy the Authorization header onto them. A stored origin goes through the same address rules again when it's read back, and only `/api/` paths are ever built on it. | `DeviceCredential`, `ServerEndpoint`, `APIClient.check`, `RedirectRefusal` |
 | Token extracted from the device or backups | Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, `kSecAttrSynchronizable=false`, and the data-protection keychain on macOS. The accessibility attribute is checked again on every read, and a mismatched item is deleted. | `KeychainManager` |
 | Stale pairing after a reinstall | Keychain items survive app deletion on iOS, so the first launch after an install deletes them. | `AppCoordinator.purgeKeychainIfFreshInstall` |

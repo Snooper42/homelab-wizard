@@ -104,6 +104,59 @@ struct ServerEndpointTests {
         #expect(!endpoint.owns(URL(string: "http://host.ts.net:8099/api/me")))
         #expect(!endpoint.owns(URL(string: "https://evil.example:8099/api/me")))
     }
+
+    #if os(macOS)
+    // The companion on this Mac, over loopback: plain http that never leaves the computer.
+    @Test func thisMacOverLoopback() throws {
+        for typed in ["localhost", "localhost:8099", "LocalHost:8099", "http://localhost:8099",
+                      "http://127.0.0.1:8099/some/path", "127.0.0.1"] {
+            let endpoint = try ServerEndpoint.parse(typed).endpoint
+            #expect(endpoint.baseURL.absoluteString == "http://127.0.0.1:8099", "\(typed)")
+            #expect(endpoint.isThisMac)
+        }
+        let (v6, code) = try ServerEndpoint.parse("http://[::1]:8099/#pair=ABCD2345")
+        #expect(v6.baseURL.absoluteString == "http://[::1]:8099")
+        #expect(code?.value == "ABCD2345")
+
+        // Typed https stays https.
+        let tls = try ServerEndpoint.parse("https://localhost:8099").endpoint
+        #expect(tls.baseURL.absoluteString == "https://127.0.0.1:8099")
+        #expect(!tls.isThisMac)
+    }
+
+    @Test func loopbackIsTheOnlyPlainHTTP() {
+        for typed in ["http://mac.local:8099", "http://localhost.evil.example:8099", "http://127.0.0.2:8099",
+                      "http://192.168.1.20:8099", "http://andreus-macbook-pro:8099", "ftp://localhost:8099"] {
+            #expect(throws: ServerEndpoint.ValidationError.insecureScheme, "\(typed)") {
+                try ServerEndpoint.parse(typed)
+            }
+        }
+    }
+
+    @Test func loopbackOwnsOnlyItsOwnOrigin() throws {
+        let endpoint = try ServerEndpoint.parse("localhost:8099").endpoint
+        #expect(endpoint.owns(URL(string: "http://127.0.0.1:8099/api/me")))
+        // Not the name, another port, or https: the token goes to exactly one place.
+        #expect(!endpoint.owns(URL(string: "http://localhost:8099/api/me")))
+        #expect(!endpoint.owns(URL(string: "http://127.0.0.1:8098/api/me")))
+        #expect(!endpoint.owns(URL(string: "https://127.0.0.1:8099/api/me")))
+        #expect(!endpoint.owns(URL(string: "http://127.0.0.1/api/me")))
+        // And an https server never accepts a plain http answer.
+        let tls = try ServerEndpoint.parse("https://host.ts.net:8099").endpoint
+        #expect(!tls.owns(URL(string: "http://host.ts.net:8099/api/me")))
+    }
+
+    @Test func storedLoopbackIsCheckedAgain() throws {
+        let endpoint = try ServerEndpoint.parse("localhost").endpoint
+        let data = try JSONEncoder().encode(endpoint)
+        #expect(try JSONDecoder().decode(ServerEndpoint.self, from: data) == endpoint)
+        // The name is never stored, so an item that holds it was not written by this app.
+        for bad in ["http://localhost:8099", "http://127.0.0.1:8099/api/me", "http://10.0.0.2:8099"] {
+            let json = try JSONEncoder().encode(["baseURL": bad])
+            #expect(throws: DecodingError.self) { try JSONDecoder().decode(ServerEndpoint.self, from: json) }
+        }
+    }
+    #endif
 }
 
 @Suite("DeviceCredential")
