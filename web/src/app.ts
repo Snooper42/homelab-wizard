@@ -16,6 +16,7 @@ import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './scr
 import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
+import { openShortcuts } from './palette/Shortcuts';
 import { arrivePlace, leavePlace } from './place';
 import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
@@ -130,6 +131,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'F5' && !isMac && !e.ctrlKey && !e.altKey && !e.metaKey) {
     e.preventDefault();
     if (current) reload(current);
+    return;
+  }
+  // ? (Shift+/ on most keyboards) lists the keyboard shortcuts, the focus not in a field or a menu.
+  if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey && !target.closest?.('input, textarea, select, [contenteditable], [role=menu]')) {
+    if (openShortcuts()) e.preventDefault();
     return;
   }
   if (!(isMac ? e.metaKey : e.ctrlKey) || e.altKey) return;
