@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Snooze an alert | Snooze… beside a failing check on Status's Watchdog card: no alerts about it for an hour or a day, and one then if it still fails | #PRn |
+| Snooze an alert | Snooze… beside a failing check on Status's Watchdog card: no alerts about it for an hour or a day, and one then if it still fails | #469 |
 | Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #465 |
 | Weekly integrity check | On Sundays each Duplicati job's backup is checked with Duplicati's own Verify; a damaged file is a failing check (and an alert) and a red line on Backups, the last check on each job's hover | #463 |
 | A copy before anything risky | An app's databases are dumped before it starts again on changed settings (a domain or tailnet address, Pocket ID sign-in, Fix it's changed settings), as before an update; a dump that fails stops the change | #461 |
@@ -165,7 +165,7 @@ Few, clear, and useful when they come.
 - **Buttons on alerts** (M, *Idea*): "Radarr stopped" on the phone with **Restart** and **Show logs** (ntfy's actions, through the phone companion's own access).
 - **Quiet hours** (S, *Built*, #439): no sound overnight unless it is serious (backups failing for days, the vault unreachable). `QUIET_HOURS=22-7` by default; Settings › Quiet hours.
 - **One alert for many** (S, *Idea*): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.
-- **Snooze an alert** (S, *Built*, #PRn): snooze one failing check for an hour or a day beside it on Status's Watchdog card (or `homelab notify snooze`): still checked, not alerted about until it wakes, and alerted then if it still fails. Not from the phone's alert itself: ntfy's buttons would need a way in to the computer from the notification.
+- **Snooze an alert** (S, *Built*, #469): snooze one failing check for an hour or a day beside it on Status's Watchdog card (or `homelab notify snooze`): still checked, not alerted about until it wakes, and alerted then if it still fails. Not from the phone's alert itself: ntfy's buttons would need a way in to the computer from the notification.
 - **Who hears what** (S, *Idea*): each person picks the alerts they get; the household's other members get only the ones about their apps.
 
 ## The household
