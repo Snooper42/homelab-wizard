@@ -754,94 +754,110 @@ private struct AddTransactionView: View {
         return LedgerEdit.problem(with: t, accounts: Set(accounts.map(\.id)))
     }
 
+    /// Which way, how much, and who.
+    private var whatSection: some View {
+        Section {
+            Picker("Direction", selection: $draft.isMoneyIn) {
+                Text("Money out").tag(false)
+                Text("Money in").tag(true)
+            }
+            .pickerStyle(.segmented)
+            TextField("Amount", text: $amountText)
+                #if os(iOS)
+                .keyboardType(.numbersAndPunctuation)
+                #endif
+                .font(.title2.monospacedDigit())
+                .privacySensitive()
+            TextField(draft.isMoneyIn ? "Who paid" : "Who was paid", text: $draft.payee)
+                .autocorrectionDisabled()
+        }
+    }
+
+    /// Which account and category, the day, and a note.
+    private var whereSection: some View {
+        Section {
+            Picker("Account", selection: $draft.account) {
+                ForEach(accounts) { account in
+                    Text(account.name).tag(account.id)
+                }
+            }
+            Picker("Category", selection: $draft.category) {
+                Text("None").tag("")
+                ForEach(categories) { category in
+                    Text(category.parent.map { "\($0) › \(category.name)" } ?? category.name).tag(category.name)
+                }
+            }
+            DatePicker("Day", selection: $draft.date, in: ...Date().addingTimeInterval(60 * 60 * 24 * 366), displayedComponents: .date)
+            TextField("Note", text: $draft.note, axis: .vertical)
+                .lineLimit(1...4)
+        }
+    }
+
+    /// A kept receipt and Delete, for one being changed; a photo to attach, for a new one.
+    @ViewBuilder
+    private var receiptSection: some View {
+        if let editing {
+            Section {
+                if let name = editing.receipt {
+                    Button {
+                        showingReceipt = true
+                    } label: {
+                        Label("Show the Receipt", systemImage: "paperclip")
+                    }
+                    .sheet(isPresented: $showingReceipt) {
+                        ReceiptView(name: name, title: editing.payee.isEmpty ? "Receipt" : editing.payee, finances: finances)
+                    }
+                }
+                Button(role: .destructive) {
+                    confirmingDelete = true
+                } label: {
+                    Label("Delete Transaction", systemImage: "trash")
+                }
+                .disabled(finances.isSaving)
+                .confirmationDialog("Delete this transaction?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) {
+                        Task { if await finances.delete(editing) { dismiss() } }
+                    }
+                } message: {
+                    Text("It's removed from the ledger on the computer too.")
+                }
+            }
+        } else {
+            Section {
+                if draft.receipt != nil {
+                    HStack {
+                        Label("Receipt attached", systemImage: "paperclip")
+                        Spacer()
+                        Button("Remove", role: .destructive) {
+                            draft.receipt = nil
+                            photo = nil
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                } else {
+                    PhotosPicker(selection: $photo, matching: .images) {
+                        HStack {
+                            Label("Attach a Photo of the Receipt", systemImage: "camera")
+                            if attaching {
+                                Spacer()
+                                ProgressView().controlSize(.small)
+                            }
+                        }
+                    }
+                    .disabled(attaching)
+                }
+            } footer: {
+                Text("The photo is shrunk and sent without its location or any other details the camera kept.")
+            }
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Picker("Direction", selection: $draft.isMoneyIn) {
-                        Text("Money out").tag(false)
-                        Text("Money in").tag(true)
-                    }
-                    .pickerStyle(.segmented)
-                    TextField("Amount", text: $amountText)
-                        #if os(iOS)
-                        .keyboardType(.numbersAndPunctuation)
-                        #endif
-                        .font(.title2.monospacedDigit())
-                        .privacySensitive()
-                    TextField(draft.isMoneyIn ? "Who paid" : "Who was paid", text: $draft.payee)
-                        .autocorrectionDisabled()
-                }
-                Section {
-                    Picker("Account", selection: $draft.account) {
-                        ForEach(accounts) { account in
-                            Text(account.name).tag(account.id)
-                        }
-                    }
-                    Picker("Category", selection: $draft.category) {
-                        Text("None").tag("")
-                        ForEach(categories) { category in
-                            Text(category.parent.map { "\($0) › \(category.name)" } ?? category.name).tag(category.name)
-                        }
-                    }
-                    DatePicker("Day", selection: $draft.date, in: ...Date().addingTimeInterval(60 * 60 * 24 * 366), displayedComponents: .date)
-                    TextField("Note", text: $draft.note, axis: .vertical)
-                        .lineLimit(1...4)
-                }
-                if let editing {
-                    Section {
-                        if let name = editing.receipt {
-                            Button {
-                                showingReceipt = true
-                            } label: {
-                                Label("Show the Receipt", systemImage: "paperclip")
-                            }
-                            .sheet(isPresented: $showingReceipt) {
-                                ReceiptView(name: name, title: editing.payee.isEmpty ? "Receipt" : editing.payee, finances: finances)
-                            }
-                        }
-                        Button(role: .destructive) {
-                            confirmingDelete = true
-                        } label: {
-                            Label("Delete Transaction", systemImage: "trash")
-                        }
-                        .disabled(finances.isSaving)
-                        .confirmationDialog("Delete this transaction?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                            Button("Delete", role: .destructive) {
-                                Task { if await finances.delete(editing) { dismiss() } }
-                            }
-                        } message: {
-                            Text("It's removed from the ledger on the computer too.")
-                        }
-                    }
-                } else {
-                    Section {
-                        if draft.receipt != nil {
-                            HStack {
-                                Label("Receipt attached", systemImage: "paperclip")
-                                Spacer()
-                                Button("Remove", role: .destructive) {
-                                    draft.receipt = nil
-                                    photo = nil
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                        } else {
-                            PhotosPicker(selection: $photo, matching: .images) {
-                                HStack {
-                                    Label("Attach a Photo of the Receipt", systemImage: "camera")
-                                    if attaching {
-                                        Spacer()
-                                        ProgressView().controlSize(.small)
-                                    }
-                                }
-                            }
-                            .disabled(attaching)
-                        }
-                    } footer: {
-                        Text("The photo is shrunk and sent without its location or any other details the camera kept.")
-                    }
-                }
+                whatSection
+                whereSection
+                receiptSection
                 if let error = finances.saveError {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
