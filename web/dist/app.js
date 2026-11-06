@@ -13018,18 +13018,20 @@ ${pays}
     const why = gone ? "Its folder isn't there: plug in its drive" : other ? `Waits for ${other.charAt(0).toLowerCase() + other.slice(1)} to finish` : busy(job2) ? "Waits for the job above to finish" : title;
     return /* @__PURE__ */ u3("button", { class: primary ? "primary small" : "small", disabled: busy(job2) || gone || !!other, title: why, onClick, children: label });
   }
+  var toneWords = { ok: "Done", warn: "To look at", bad: "Failed" };
   function Bar({ title, p: p3, idle }) {
     const pct = p3 && p3.total ? Math.min(100, Math.round(p3.done / p3.total * 100)) : void 0;
     const left = p3?.eta ? p3.eta > 3600 ? `~${Math.floor(p3.eta / 3600)}h ${Math.round(p3.eta % 3600 / 60)}m left` : `~${Math.max(1, Math.round(p3.eta / 60))}m left` : "";
     return /* @__PURE__ */ u3("div", { class: "progress", children: [
       /* @__PURE__ */ u3("div", { class: "track", role: "progressbar", "aria-label": title, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, children: /* @__PURE__ */ u3("span", { class: "fill", style: { width: `${pct ?? 0}%` } }) }),
-      /* @__PURE__ */ u3("p", { class: "step", "aria-live": "polite", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle })
+      /* @__PURE__ */ u3("p", { class: "step", children: p3 ? `${p3.label} ${p3.done.toLocaleString()} of ${p3.total.toLocaleString()}${pct !== void 0 ? ` · ${pct}%` : ""}${left ? " · " + left : ""}` : idle })
     ] });
   }
   function JobPanel({ job: job2, stop: stop2, done, fix, again }) {
     const p3 = job2.progress;
     const ended = !job2.ended ? "" : job2.ended.ok ? "done" : job2.stopping ? "stopped" : "didn't finish";
-    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyJob", role: "status", children: [
+    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyJob", children: [
+      /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: ended ? `${job2.title}: ${ended}${job2.ended && !job2.ended.ok && job2.ended.why ? ". " + job2.ended.why : ""}` : job2.stopping ? `${job2.title}: stopping` : job2.step ? `${job2.title}: step ${job2.step.n} of ${job2.step.total}, ${job2.step.text}` : `${job2.title}: started` }),
       /* @__PURE__ */ u3(CardHead, { title: ended ? `${job2.title}: ${ended}` : job2.stopping ? `${job2.title}: stopping` : job2.title, children: job2.ended ? /* @__PURE__ */ u3("span", { class: "actions", children: [
         again && !fix && !job2.ended.ok && !job2.stopping && /* @__PURE__ */ u3("button", { class: "small", onClick: again, title: "Runs it again: it picks up where it left off", children: "Try again" }),
         /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Close" })
@@ -13054,7 +13056,13 @@ ${pays}
         " ",
         /* @__PURE__ */ u3("span", { class: "muted", children: "Then it carries on by itself." })
       ] }),
-      !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-9).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: l3.text }, i3)) }),
+      !!job2.lines.length && /* @__PURE__ */ u3(Rows, { kind: "tidylines", children: job2.lines.slice(-9).map((l3, i3) => /* @__PURE__ */ u3(Row, { dot: l3.tone, title: /* @__PURE__ */ u3(S, { children: [
+        toneWords[l3.tone] && /* @__PURE__ */ u3("span", { class: "sr", children: [
+          toneWords[l3.tone],
+          ": "
+        ] }),
+        l3.text
+      ] }) }, i3)) }),
       /* @__PURE__ */ u3("details", { class: "jobdetails", children: [
         /* @__PURE__ */ u3("summary", { children: "Show details" }),
         /* @__PURE__ */ u3("pre", { role: "log", children: job2.log.join("\n") })
@@ -13065,7 +13073,12 @@ ${pays}
     const title = jobTitle(lock.kind, lock.action);
     const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
     const since = new Date(lock.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", role: "status", children: [
+    return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", children: [
+      /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: [
+        title,
+        ": ",
+        now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : "running"
+      ] }),
       /* @__PURE__ */ u3(CardHead, { title }),
       now?.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
         "Step ",
@@ -13208,7 +13221,7 @@ ${pays}
         scanned: { kind: k3, title: `Build a tidy copy of ${files ? count(files, "song") : "your music"}`, sub: "Your originals stay as they are, and Navidrome keeps playing", go: { label: "Build", run: () => act.run("music", "run") } },
         built: { kind: k3, title: "Swap in your tidy library", sub: `${songs ? count(songs, "song") + " ready · " : ""}Navidrome is paused and backed up first`, go: { label: "Swap in…", run: swap } },
         swapped: { kind: k3, title: "Check nothing went missing", sub: "Every song in the old library is looked for in the new one", go: { label: "Check", run: () => act.run("music", "verify") } },
-        verified: { kind: k3, title: "Free the old music library", sub: `Every song made it${n2(run2?.set_aside) ? " · " + count(n2(run2?.set_aside), "copy", "copies") + " set aside go with it" : ""}`, go: { label: "Free it…", run: free } }
+        verified: { kind: k3, title: "Free the old music library", sub: `Every song made it${n2(run2?.set_aside) ? " · " + count(n2(run2?.set_aside), "copy", "copies") + " set aside go with it" : ""}`, go: { label: "Free it…", run: free, risky: true } }
       };
       if (step2[l3.stage]) out.push(step2[l3.stage]);
       const lyr = last(l3, "lyrics")?.result;
@@ -13233,7 +13246,7 @@ ${pays}
           title: `${lead(things(k3, dupes))} ${dupes === 1 ? "is" : "are"} in the library twice`,
           sub: "The copy with the best picture stays; the extra ones go",
           gain: n2(scan?.duplicate_bytes),
-          go: { label: "Remove extras…", run: () => act.ask({
+          go: { label: "Remove extras…", risky: true, run: () => act.ask({
             title: "Put the extra copies in the Trash?",
             action: "Put them in the Trash",
             lead: `${count(extras, "copy", "copies")}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d3.trash}, never straight away.`,
@@ -13252,7 +13265,7 @@ ${pays}
           go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
         });
       }
-      if (withTdarr) out.push({ kind: k3, title: "Collect what Tdarr has finished", sub: `${things(k3, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
+      if (withTdarr) out.push({ kind: k3, title: `Tdarr is shrinking ${things(k3, withTdarr)}`, sub: "Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect", go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
     } else if (k3 === "books") {
       const rv = last(l3, "review");
       const changing = review2 ? review2.filter((b2) => !b2.held).map((b2) => b2.title) : [];
@@ -13266,6 +13279,7 @@ ${pays}
     return out;
   }
   function TodoRows({ todos, job: job2 }) {
+    const first = todos.findIndex((t3) => t3.go && !t3.go.quiet && !t3.go.risky);
     return /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: todos.map((t3, i3) => /* @__PURE__ */ u3(
       Row,
       {
@@ -13274,8 +13288,11 @@ ${pays}
         sub: t3.sub,
         subTone: t3.warn ? "warn" : void 0,
         end: /* @__PURE__ */ u3(S, { children: [
-          !!t3.gain && /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: size(t3.gain) }),
-          t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: !t3.go.quiet, job: job2, onClick: t3.go.run })
+          !!t3.gain && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: size(t3.gain) }),
+            /* @__PURE__ */ u3("span", { class: "sr", children: " to win back" })
+          ] }),
+          t3.go && /* @__PURE__ */ u3(Go, { label: t3.go.label, primary: i3 === first, job: job2, onClick: t3.go.run })
         ] })
       },
       t3.kind + i3
@@ -13494,7 +13511,7 @@ ${pays}
         ] }),
         kind in genreAsk && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
         (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
-        kind !== "music" && kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: size(l3.size) }), caption: l3.freed ? size(l3.freed) + " won back so far" : "On the drive" }) }),
+        kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: size(l3.size) }), caption: l3.freed ? size(l3.freed) + " won back so far" : "On the drive" }) }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
       ] })
     ] });

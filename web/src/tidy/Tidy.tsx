@@ -135,6 +135,9 @@ function Go({ label, primary, job, title, onClick }: { label: string; primary?: 
 }
 
 /** The job at hand: its step, its bar, what it's on, its notes, and its log. */
+/** What a line's dot says, for VoiceOver (the dot alone is a colour). */
+const toneWords: Record<string, string> = { ok: 'Done', warn: 'To look at', bad: 'Failed' };
+
 /** A job's bar: done of total, and about how long is left. */
 function Bar({ title, p, idle }: { title: string; p?: TidyJob['progress']; idle: string }) {
   const pct = p && p.total ? Math.min(100, Math.round((p.done / p.total) * 100)) : undefined;
@@ -142,7 +145,7 @@ function Bar({ title, p, idle }: { title: string; p?: TidyJob['progress']; idle:
   return (
     <div class="progress">
       <div class="track" role="progressbar" aria-label={title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><span class="fill" style={{ width: `${pct ?? 0}%` }} /></div>
-      <p class="step" aria-live="polite">{p ? `${p.label} ${p.done.toLocaleString()} of ${p.total.toLocaleString()}${pct !== undefined ? ` · ${pct}%` : ''}${left ? ' · ' + left : ''}` : idle}</p>
+      <p class="step">{p ? `${p.label} ${p.done.toLocaleString()} of ${p.total.toLocaleString()}${pct !== undefined ? ` · ${pct}%` : ''}${left ? ' · ' + left : ''}` : idle}</p>
     </div>
   );
 }
@@ -152,7 +155,8 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
   // Stopped is what you did; a job that ended on its own without finishing says so, and why.
   const ended = !job.ended ? '' : job.ended.ok ? 'done' : job.stopping ? 'stopped' : "didn't finish";
   return (
-    <Card kind="tidyjob" id="tidyJob" role="status">
+    <Card kind="tidyjob" id="tidyJob">
+      <p class="sr" role="status">{ended ? `${job.title}: ${ended}${job.ended && !job.ended.ok && job.ended.why ? '. ' + job.ended.why : ''}` : job.stopping ? `${job.title}: stopping` : job.step ? `${job.title}: step ${job.step.n} of ${job.step.total}, ${job.step.text}` : `${job.title}: started`}</p>
       <CardHead title={ended ? `${job.title}: ${ended}` : job.stopping ? `${job.title}: stopping` : job.title}>
         {job.ended ? <span class="actions">{again && !fix && !job.ended.ok && !job.stopping && <button class="small" onClick={again} title="Runs it again: it picks up where it left off">Try again</button>}<button class="small" onClick={done}>Close</button></span>
           : job.stopping ? <button class="small" disabled title="It stops at its next safe point, so nothing is left half done">Stopping…</button>
@@ -166,7 +170,7 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
       {fix && <p class="tidyfix"><button class="primary small" onClick={fix.run}>{fix.label}</button> <span class="muted">Then it carries on by itself.</span></p>}
       {!!job.lines.length && (
         <Rows kind="tidylines">
-          {job.lines.slice(-9).map((l, i) => <Row key={i} dot={l.tone} title={l.text} />)}
+          {job.lines.slice(-9).map((l, i) => <Row key={i} dot={l.tone} title={<>{toneWords[l.tone] && <span class="sr">{toneWords[l.tone]}: </span>}{l.text}</>} />)}
         </Rows>
       )}
       <details class="jobdetails"><summary>Show details</summary><pre role="log">{job.log.join('\n')}</pre></details>
@@ -180,7 +184,8 @@ function RunningCard({ lock, now }: { lock: app.TidyUp['lock'] & {}; now?: app.T
   const p = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || '', note: now.progress.note, eta: now.progress.eta } : undefined;
   const since = new Date(lock.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
-    <Card kind="tidyjob" id="tidyRunning" role="status">
+    <Card kind="tidyjob" id="tidyRunning">
+      <p class="sr" role="status">{title}: {now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : 'running'}</p>
       <CardHead title={title} />
       {now?.step && <p class="tidystep">Step {now.step.n} of {now.step.total} · {now.step.text}</p>}
       <Bar title={title} p={p} idle="Working…" />
@@ -286,7 +291,8 @@ interface Todo {
   sub: string;
   /** Bytes it wins back, when known. */
   gain?: number;
-  go?: { label: string; run: () => void; quiet?: boolean };
+  /** risky: it throws things away (to the Trash), so it is never the screen's one main button. */
+  go?: { label: string; run: () => void; quiet?: boolean; risky?: boolean };
   /** Something wrong (a drive away, a tool missing): said, in amber. */
   warn?: boolean;
 }
@@ -319,7 +325,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       scanned: { kind: k, title: `Build a tidy copy of ${files ? count(files, 'song') : 'your music'}`, sub: 'Your originals stay as they are, and Navidrome keeps playing', go: { label: 'Build', run: () => act.run('music', 'run') } },
       built: { kind: k, title: 'Swap in your tidy library', sub: `${songs ? count(songs, 'song') + ' ready · ' : ''}Navidrome is paused and backed up first`, go: { label: 'Swap in…', run: swap } },
       swapped: { kind: k, title: 'Check nothing went missing', sub: 'Every song in the old library is looked for in the new one', go: { label: 'Check', run: () => act.run('music', 'verify') } },
-      verified: { kind: k, title: 'Free the old music library', sub: `Every song made it${n(run?.set_aside) ? ' · ' + count(n(run?.set_aside), 'copy', 'copies') + ' set aside go with it' : ''}`, go: { label: 'Free it…', run: free } },
+      verified: { kind: k, title: 'Free the old music library', sub: `Every song made it${n(run?.set_aside) ? ' · ' + count(n(run?.set_aside), 'copy', 'copies') + ' set aside go with it' : ''}`, go: { label: 'Free it…', run: free, risky: true } },
     };
     if (step[l.stage]) out.push(step[l.stage]);
     const lyr = last(l, 'lyrics')?.result;
@@ -345,7 +351,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       const extras = list.reduce((t, x) => t + x.extra.length, 0) || dupes;
       const file = (p: string) => p.split(/[\\/]/).pop() || p;
       out.push({ kind: k, title: `${lead(things(k, dupes))} ${dupes === 1 ? 'is' : 'are'} in the library twice`, sub: 'The copy with the best picture stays; the extra ones go', gain: n(scan?.duplicate_bytes),
-        go: { label: 'Remove extras…', run: () => act.ask({
+        go: { label: 'Remove extras…', risky: true, run: () => act.ask({
           title: 'Put the extra copies in the Trash?', action: 'Put them in the Trash',
           lead: `${count(extras, 'copy', 'copies')}, each checked again first: one changed since the scan, or of another length, stays. They go to ${d.trash}, never straight away.`,
           steps: [...list.slice(0, 4).map((x) => `${x.extra.map(file).join(' and ')} ${x.extra.length === 1 ? 'goes' : 'go'}; ${file(x.keep)} stays`), ...(list.length > 4 ? [`And ${things(k, list.length - 4)} more`] : [])],
@@ -359,7 +365,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       out.push({ kind: k, title: `${count(bare, k === 'tv' ? 'show' : 'film')} ${bare === 1 ? 'has' : 'have'} no poster in Jellyfin`, sub: names.slice(0, 3).join(', ') + (bare > 3 ? `, and ${bare - 3} more` : ''),
         go: { label: 'Fetch posters', quiet: true, run: () => act.run(k, 'posters') } });
     }
-    if (withTdarr) out.push({ kind: k, title: "Collect what Tdarr has finished", sub: `${things(k, withTdarr)} with Tdarr now · it checks by itself every few minutes`, go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
+    if (withTdarr) out.push({ kind: k, title: `Tdarr is shrinking ${things(k, withTdarr)}`, sub: 'Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect', go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');
     // Before the review's list is read (it is, on the Books tab), its count says how many.
@@ -376,11 +382,14 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
 
 /** The list: each thing's mark, words, what it wins back, and its button (off while a job runs). */
 function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
+  // One main button, on the first thing to do (the list is in the order to do them), never on one that throws things
+  // away; the rest are there, quieter.
+  const first = todos.findIndex((t) => t.go && !t.go.quiet && !t.go.risky);
   return (
     <Rows kind="fx-rows tidytodo">
       {todos.map((t, i) => (
         <Row key={t.kind + i} lead={<LibIcon kind={t.kind} />} title={t.title} sub={t.sub} subTone={t.warn ? 'warn' : undefined}
-          end={<>{!!t.gain && <span class="fx-amount fx-in tidygain">{size(t.gain)}</span>}{t.go && <Go label={t.go.label} primary={!t.go.quiet} job={job} onClick={t.go.run} />}</>} />
+          end={<>{!!t.gain && <><span class="fx-amount fx-in tidygain">{size(t.gain)}</span><span class="sr"> to win back</span></>}{t.go && <Go label={t.go.label} primary={i === first} job={job} onClick={t.go.run} />}</>} />
       ))}
     </Rows>
   );
@@ -616,7 +625,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
         )}
         {kind in genreAsk && <GenresWidget d={d} job={job} act={act} only={kind} />}
         {(kind === 'movies' || kind === 'tv') && <SpaceWidget l={l} d={d} />}
-        {kind !== 'music' && kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
+        {kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
           <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{size(l.size)}</span>} caption={l.freed ? size(l.freed) + ' won back so far' : 'On the drive'} /></Widget>
         )}
         <DoneWidget d={d} job={job} act={act} kind={kind} />

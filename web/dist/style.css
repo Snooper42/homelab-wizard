@@ -2244,6 +2244,13 @@ select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8
 .card.tidyjob > .row:first-child .actions { display:flex; gap:8px; margin:0; }
 /* Its log is Tidy Up's own, not Docker's (Status's job panel shares .jobdetails). */
 #tidyJob .jobdetails:not([open]) > summary::after { content:none; }
+/* A card's notes under its chart sit at the card's own gap, not a paragraph's margin on top of it. */
+#tidyRoot .card.fx-widget > p.fx-sub { margin:0; }
+/* On a phone, the six tabs in two even rows of three, not five and one. */
+@media (max-width: 520px) {
+  #tidy .seg { display:grid; grid-template-columns:repeat(3, 1fr); width:100%; box-sizing:border-box; }
+  #tidy .seg button { padding:6px 4px; }
+}
 .tidystep { margin:2px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
 .tidynow { margin:0 0 8px; overflow-wrap:anywhere; }
 .tidyplan, .tidykeep { margin:6px 0 14px; padding-left:22px; }

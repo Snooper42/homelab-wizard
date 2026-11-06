@@ -462,7 +462,7 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
     const rows = await page.$$eval('#tidy .tidyneeds li', (ls) => ls.map((l) => [l.querySelector('strong')?.textContent.trim(), l.querySelector('button')?.textContent.trim() || '']));
-    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Collect what Tdarr has finished', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
+    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Tdarr is shrinking 4 films', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
     const sorted = (a) => JSON.stringify([...a].sort((x, y) => x[0].localeCompare(y[0])));
     if (sorted(rows) !== sorted(want)) throw new Error('rows: ' + JSON.stringify(rows));
     if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('380 GB')) throw new Error('the shrink does not say what it wins back');
@@ -538,7 +538,7 @@ const smokes = [
     const lines = await page.$$eval('#tidyJob .tidylines li', (ls) => ls.map((l) => [l.querySelector('.dot')?.className.trim(), l.textContent.trim()]));
     const note = lines.find((l) => l[1].includes('aren’t on LRCLIB yet'));
     if (!note || note[0] !== 'dot') throw new Error('the note line: ' + JSON.stringify(lines));
-    if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
+    if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Done: Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
   } },
   // Every song has lyrics, but some show two languages on one line (a translation after a caret): Overview still
   // offers to set them apart, which the lyrics job does.
@@ -726,7 +726,7 @@ const smokes = [
     await page.waitForSelector('#tidy .tidydone li:has-text("Nothing went missing")', { timeout: 3000 });
     if (await page.$('#tidy .tidydone li:has-text("Nothing went missing") .warn')) throw new Error('Nothing went missing reads as a warning');
     await page.click('#tidy .seg button:text-is("Movies")');
-    await page.waitForSelector('#tidy .tidyneeds li:has-text("1 film with Tdarr now")', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("Tdarr is shrinking 1 film")', { timeout: 3000 });
     if (!(await page.textContent('#tidy .tidyspace')).includes('Tdarr: HEVC, English only')) throw new Error('the language is not named: ' + (await page.textContent('#tidy .tidyspace')));
     if (!(await page.textContent('#tidy .tidyneeds')).includes('H.264')) throw new Error('the reason is not given');
     if (await page.$('#tidy li:has-text("H264")')) throw new Error('H264 is written without its dot');
@@ -854,6 +854,40 @@ const smokes = [
     await page.click('#tidyError button:text-is("Try again")');
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidyError').count()) throw new Error('the error stayed');
+  } },
+  // What the screen says first: one main button, on the first thing to do, never on a step that throws things away.
+  { name: 'Tidy Up: Overview has one main button, and never on a step that throws things away', screen: 'tidy', run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds button:text-is("Free it…")', { timeout: 5000 });
+    const main = await page.$$eval('#tidy .tidyneeds button.primary', (b) => b.map((x) => x.textContent));
+    if (main.length !== 1 || main[0] !== 'Add lyrics') throw new Error(`main buttons: ${JSON.stringify(main)}`);
+  } },
+  // Music's tab shows its space beside its genres (it left half the row empty), and Tdarr's row says what it holds,
+  // not that it has finished it.
+  { name: 'Tidy Up: Music shows its space, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyspace .fx-amount:text-is("520 GB")', { timeout: 5000 });
+    await page.click('#tidy .seg button:text-is("Movies")');
+    await page.waitForSelector('#tidy .tidyneeds strong:text-is("Tdarr is shrinking 4 films")', { timeout: 5000 });
+    // The Space card's notes sit at the card's own gap.
+    const gaps = await page.$$eval('#tidy .tidyspace > p.fx-sub', (ps) => ps.map((p) => parseFloat(getComputedStyle(p).marginTop) + parseFloat(getComputedStyle(p).marginBottom)));
+    if (gaps.some((g) => g > 0)) throw new Error(`margins on the Space card's notes: ${gaps}`);
+  } },
+  // On a phone, the six tabs in two even rows of three.
+  { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.waitForSelector('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    const rows = await page.$$eval('#tidy .seg button', (b) => b.reduce((m, x) => { const t = Math.round(x.getBoundingClientRect().top); m[t] = (m[t] || 0) + 1; return m; }, {}));
+    if (JSON.stringify(Object.values(rows)) !== '[3,3]') throw new Error(`tabs per row: ${JSON.stringify(rows)}`);
+  } },
+  // VoiceOver: a running job is read when its step changes and when it ends, not on every file; a line's dot has words.
+  { name: 'Tidy Up: VoiceOver hears each step and the end, not every tick, and what each line’s dot means', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }, { type: 'progress', label: 'Films', done: 1, total: 4 }, { type: 'fail', text: 'Tdarr isn\'t answering' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.click('#tidy .tidyneeds button:text-is("Collect")');
+    await page.waitForSelector('#tidyJob h2:has-text("didn\'t finish")', { timeout: 5000 });
+    const live = await page.$$eval('#tidyJob [role=status], #tidyJob [aria-live], #tidyJob[role]', (e) => e.map((x) => `${x.className}: ${x.textContent}`));
+    if (live.length !== 1 || !/^sr: Collecting Tdarr's work: didn't finish/.test(live[0])) throw new Error(`what is read out: ${JSON.stringify(live)}`);
+    const said = await page.textContent('#tidyJob .tidylines li strong');
+    if (said !== 'Failed: Tdarr isn\'t answering') throw new Error(`a failed line reads "${said}"`);
   } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
