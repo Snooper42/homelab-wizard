@@ -201,6 +201,10 @@ func (h *homelab) resumeDrives(ctx context.Context) {
 			return
 		case <-time.After(powerEvery):
 		}
+		// A job changing the apps (an update) has them: next minute.
+		if h.jobRunning() {
+			continue
+		}
 		back := driveBack(waiting, diskspace.Mounted)
 		if !back && time.Since(asked) < drivesEvery {
 			continue

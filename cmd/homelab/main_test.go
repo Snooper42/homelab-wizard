@@ -338,8 +338,15 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 
 	npmURL, _ := url.Parse(npmSrv.URL)
 	agURL, _ := url.Parse(agSrv.URL)
+	// Immich already has its administrator, so it may go on the internet
+	// (an Immich no one has signed up to stays off it: claim.go).
+	immichSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"isInitialized":true}`))
+	}))
+	defer immichSrv.Close()
+	immichURL, _ := url.Parse(immichSrv.URL)
 	token := base64.StdEncoding.EncodeToString([]byte(`{"a":"acct","t":"tun-1","s":"c2VjcmV0"}`))
-	root, _ := repoCopy(t,
+	root, _ := repoCopy(t, "IMMICH_PORT="+immichURL.Port(),
 		"NPM_ADMIN_PORT="+npmURL.Port(), "NPM_API_EMAIL=homelab@example.com", "NPM_API_PASSWORD=npm-pw",
 		"ADGUARD_PORT="+agURL.Port(), "ADGUARD_USER=admin", "ADGUARD_PASSWORD=ag-pw",
 		"TUNNEL_TOKEN="+token, "CLOUDFLARE_API_TOKEN=cf-token", "HOMELAB_DOMAIN=example.com")

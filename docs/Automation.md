@@ -39,7 +39,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: rebuilt (a locally built image), by hand (an `x-homelab` `pin` saying why, or a database or cache), or nightly (every other app). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly (70)
+### Nightly (69)
 
 The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
 
@@ -96,7 +96,6 @@ The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE
 | [Grocy](<../services/household/Grocy.md>) | `lscr.io/linuxserver/grocy:latest` |
 | [Homebox](<../services/household/Homebox.md>) | `ghcr.io/sysadminsmedia/homebox:latest` |
 | [Beszel](<../services/system/Beszel.md>) | `docker.io/henrygd/beszel:latest` |
-| [Beszel agent](<../services/system/Beszel agent.md>) | `docker.io/henrygd/beszel-agent:latest` |
 | [Cloudflare Tunnel](<../services/network/Cloudflare Tunnel.md>) | `cloudflare/cloudflared:latest` |
 | [Docmost](<../services/documents/Docmost.md>) | `docker.io/docmost/docmost:latest` |
 | [Firefly III](<../services/finance/Firefly III.md>) | `docker.io/fireflyiii/core:latest` |
@@ -124,7 +123,7 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (28)
+### By hand (29)
 
 Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
@@ -132,6 +131,7 @@ Left out of the nightly update, each for the reason given. Update with a backup 
 |---|---|---|
 | [Kopia](<../services/system/Kopia.md>) | `kopia/kopia:0.23.1` | A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia |
 | `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` | It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy |
+| [Beszel agent](<../services/system/Beszel agent.md>) | `docker.io/henrygd/beszel-agent:0.21.1` | It holds the Docker socket; set BESZEL_AGENT_VERSION to a newer release after reading its notes (keep it near Beszel's own version), then ./homelab update beszel-agent |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | `letehaha/budget-tracker-fe:sha-f862f3d` | Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |
 | `moneymatter-backend` | `letehaha/budget-tracker-be:sha-f862f3d` | Pinned with the frontend; a new version can migrate the budget database, so it follows a backup |
 | `moneymatter-db` | `postgres:16` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |

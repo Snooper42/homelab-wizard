@@ -63,7 +63,14 @@ func (h *homelab) financeView(now time.Time) (finance.View, func(float64) string
 	if err != nil {
 		l = finance.Ledger{}
 	}
-	return finance.ProjectWith(p, l, now, finance.Ahead), moneyIn(p.Currency), true
+	money := moneyIn(p.Currency)
+	// Hide amounts covers the phones' alerts too: a lock screen shows
+	// them, and ntfy keeps them.
+	if p.HideAmounts {
+		sign := strings.TrimSuffix(money(0), "0.00")
+		money = func(float64) string { return sign + "•••" }
+	}
+	return finance.ProjectWith(p, l, now, finance.Ahead), money, true
 }
 
 // sendFinanceReminders sends what Finances has to tell the household today

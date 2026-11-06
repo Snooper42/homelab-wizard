@@ -185,6 +185,9 @@ var secrets = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)((?:bearer|basic)\s+)[a-z0-9._~+/=-]{8,}`),
 	regexp.MustCompile(`(?i)((?:password|passwd|secret|token|api[_-]?key)["']?\s*[:=]\s*["']?)[^\s"',;&]+`),
 	regexp.MustCompile(`(://[^:/@\s]+:)[^@\s]+(@)`),
+	// A password an app made and prints in a sentence (qBittorrent's "A
+	// temporary password is provided for this session: …").
+	regexp.MustCompile(`(?i)((?:temporary|initial|generated|default|admin|administrator)\s+password\b[^:\n]{0,60}:\s*)[^\s"']+()`),
 }
 
 // Redact hides what looks like a password or token in a log, so it is

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -307,8 +308,10 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 			return err
 		}
 		for _, r := range routes {
-			if publishable(r.App.ID, r.App.Public(), envMap) {
+			if ok, why := h.mayPublish(ctx, r.App, envMap); ok {
 				public = append(public, r)
+			} else if why != "" {
+				tunnelNote = why
 			} else if r.App.Public() {
 				tunnelNote = r.App.Name() + " stays off the internet until homelab notify setup has run (it needs the publishers' token)"
 			}
@@ -356,7 +359,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	var rows [][]string
 	for _, r := range routes {
 		flag := ""
-		if publishable(r.App.ID, r.App.Public(), envMap) && len(public) > 0 {
+		if len(public) > 0 && slices.ContainsFunc(public, func(p domain.Route) bool { return p.Host == r.Host }) {
 			flag = u.Green("public")
 		}
 		rows = append(rows, []string{u.Cyan(scheme + "://" + r.Host), u.Dim("→ " + r.ForwardHost + ":" + strconv.Itoa(r.ForwardPort)), flag})
@@ -581,8 +584,13 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 	report := detect.Analyze(h.catalog, containers)
 	var public []string
 	for _, a := range h.catalog.Apps {
-		if st, _ := report.State(a.ID); st == detect.Running && publishable(a.ID, a.Public(), env) {
+		if st, _ := report.State(a.ID); st != detect.Running {
+			continue
+		}
+		if ok, why := h.mayPublish(ctx, a, env); ok {
 			public = append(public, a.Subdomain()+"."+dom)
+		} else if why != "" && env["TUNNEL_TOKEN"] != "" {
+			u.Info("%s", why)
 		}
 	}
 	sort.Strings(public)
