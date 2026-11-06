@@ -156,6 +156,9 @@ services:
       - type: tmpfs
         target: /tmp/cache
     x-homelab: {name: Cams, category: media, web: false, dump: "sqlite:/config/cams.db"}
+  helper:
+    image: h
+    x-homelab: {name: Helper, category: media, web: false, goes_with: {app: "Helps it.", ghost: "Gone.", helper: "Itself.", monitor: ""}}
   twin:
     image: t
     x-homelab: {name: Twin, category: media, web: false, same_job: {app: "Both do it.", ghost: "Gone.", twin: "Itself.", monitor: " "}}
@@ -195,6 +198,9 @@ services:
 		"cams: its tmpfs volume at /tmp/cache stops the backup's SQLite copy",
 		`category "nope"`,
 		`does not join the shared "homelab" network`,
+		`helper: goes_with names "ghost", not another app`,
+		`helper: goes_with names "helper", not another app`,
+		"helper: goes_with monitor says nothing on what it brings",
 		`twin: same_job names "ghost", not another app`,
 		`twin: same_job names "twin", not another app`,
 		"twin: same_job monitor says nothing on why",
@@ -202,6 +208,24 @@ services:
 		if !strings.Contains(all, want) {
 			t.Errorf("missing %q in:\n%s", want, all)
 		}
+	}
+}
+
+// What goes with what: each suggestion names an app the catalog has, and
+// says what it brings it.
+func TestGoesWithPairs(t *testing.T) {
+	c := load(t)
+	n := 0
+	for _, a := range c.Apps {
+		for other, why := range a.Meta.GoesWith {
+			n++
+			if c.byID[other] == nil || strings.TrimSpace(why) == "" {
+				t.Errorf("%s: goes_with %q: %q", a.ID, other, why)
+			}
+		}
+	}
+	if n < 13 {
+		t.Errorf("only %d suggestions read from the compose files", n)
 	}
 }
 

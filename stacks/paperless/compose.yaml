@@ -118,6 +118,8 @@ services:
     depends_on: [paperless]
     networks: [default, homelab]
     x-homelab:
+      goes_with:
+        paperless: "Titles, tags, and correspondents for the documents you scan, written for you."
       requires: [PAPERLESS_AI_PAPERLESS_TOKEN]
       memory: 1000
       url: PAPERLESS_AI_URL

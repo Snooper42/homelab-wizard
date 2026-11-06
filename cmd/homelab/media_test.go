@@ -296,3 +296,32 @@ func TestMediaUsage(t *testing.T) {
 		t.Errorf("exit %d:\n%s", code, out)
 	}
 }
+
+// A lock left by a job cut off before the computer restarted names a
+// process ID another program has now: alive, but started after the lock.
+// The agent's tick sweeps the inbox anyway, and a job takes the lock over,
+// rather than every one waiting for a job that is gone.
+func TestALeftoverLockStopsNothing(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "inbox", "ok": true, "filed": {}, "waiting": []}`}},
+		"TIDY_SCRUB=false")
+	inbox := filepath.Join(t.TempDir(), "Downloads")
+	_ = os.MkdirAll(inbox, 0o755)
+	f, err := os.ReadFile(filepath.Join(root, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = os.WriteFile(filepath.Join(root, ".env"), append(f, []byte("TIDY_INBOX_FOLDERS="+inbox+"\n")...), 0o600)
+	// This test's own process is alive, and started well after the lock.
+	data, _ := json.Marshal(media.Lock{PID: os.Getpid(), Kind: "scrubber", Action: "scan", Start: time.Now().Add(-72 * time.Hour)})
+	_ = os.MkdirAll(filepath.Dir(media.LockPath(root)), 0o755)
+	if err := os.WriteFile(media.LockPath(root), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, code := homelabCmd(t, root, "", "media", "tick"); code != 0 {
+		t.Fatalf("tick (exit %d):\n%s", code, out)
+	}
+	if c := pythonCalls(t, calls); len(c) != 1 || !strings.Contains(fmt.Sprint(c[0]["args"]), "inbox.py scan --apply") {
+		t.Fatalf("the inbox was not swept with a leftover lock: %v", c)
+	}
+}
