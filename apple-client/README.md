@@ -18,6 +18,16 @@ apple-client/
 └── scripts/            make-xcode-project.sh (the Xcode project, Mac and iPhone), run-on-this-mac.sh, run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices)
 ```
 
+## Where it fits
+
+Three ways into the same homelab, in two roles:
+
+- **Homelab Wizard**, the desktop app on the Mac that runs the homelab, is where it's *managed*: setup, Choose stacks, installing apps, settings, Tidy Up, and pairing phones.
+- **This app** is a remote control for *keeping an eye on it* from an iPhone, iPad or another Mac: status, alerts, backups, Finances, and quick changes behind Face ID or Touch ID. It does no setup, on purpose.
+- **The phone web page** (`homelab serve`, built from `web/`) is the same remote control in a browser. It stays a web page: it works on any phone (Android, a partner's, a visitor's) with no install and no Apple account. With a free Apple ID this app can't be shared, and lapses after 7 days.
+
+As main adds phone-facing features to the companion, they're mirrored here (the `main #…` notes below).
+
 ## What it does
 
 | | iPhone | Mac and iPad |
