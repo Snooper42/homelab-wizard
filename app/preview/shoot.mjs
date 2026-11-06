@@ -2212,6 +2212,59 @@ const smokes = [
     await page.keyboard.type('s');
     if (await page.$('.filterbox')) throw new Error('typing in an open menu opened the filter');
   } },
+  // A sheet of shortcuts: ? on any screen, the focus not in a field, lists the screen's own shortcuts first, then those
+  // that work everywhere and each screen's key, as this system writes them; on Status it doesn't start the filter. In a
+  // field, ? is typed. The palette's Keyboard shortcuts opens it too, and Close puts the focus back where it was.
+  { name: 'Keyboard shortcuts: ? and the palette open them, the screen’s own first', screen: 'status', run: async (page) => {
+    const sheet = '#keysSheet';
+    const heads = () => page.$$eval(`${sheet} h3`, (h) => h.map((x) => x.textContent));
+    const text = () => page.$eval(sheet, (s) => s.innerText.replace(/\s+/g, ' '));
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.keyboard.press('?');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads()).join('|') !== 'On Status|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
+    let said = await text();
+    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘2 Status', '⌘, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('Ctrl') || /\bF1 /.test(said) || said.includes('F5')) throw new Error(`another system's keys on a Mac: ${said}`);
+    if (await page.$('.filterbox')) throw new Error('? started the filter');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    // In a field, ? is a character like any other.
+    await page.click('nav button[data-screen="choose"]');
+    await page.fill('#search', 'what');
+    await page.focus('#search');
+    await page.keyboard.press('?');
+    if ((await page.inputValue('#search')) !== 'what?') throw new Error(`the field holds "${await page.inputValue('#search')}"`);
+    if (await page.isVisible(sheet)) throw new Error('? in a field opened the sheet');
+    await page.fill('#search', '');
+    // From the palette, on Finances: the calendar's keys, and Close back where the focus was.
+    await page.click('nav button[data-screen="finances"]');
+    await page.focus('nav button[data-screen="finances"]');
+    await page.keyboard.press('Meta+k');
+    await page.fill('.palette .palfield', 'keyboard');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads())[0] !== 'On Finances') throw new Error(`the first section: ${await heads()}`);
+    said = await text();
+    if (!said.includes('Page Up Page Down The month before or after')) throw new Error(`no calendar keys in: ${said}`);
+    await page.click(`${sheet} button:text-is("Close")`);
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.matches('nav button[data-screen="finances"]'), null, { timeout: 2000 })
+      .catch(async () => { throw new Error(`the focus went to ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80))}`); });
+  } },
+  // The same sheet on Windows: Ctrl, F5 beside Ctrl+R, the menu key, and F1 for the guide.
+  { name: 'Keyboard shortcuts as Windows: Ctrl, F5, and F1', screen: 'backups', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await page.keyboard.press('?');
+    await page.waitForSelector('#keysSheet:not([hidden])', { timeout: 3000 });
+    const said = await page.$eval('#keysSheet', (s) => s.innerText.replace(/\s+/g, ' '));
+    for (const want of ['Ctrl+K The command palette', 'Ctrl+R F5 Check the screen again', 'Shift+F10 Menu key', 'F1 The guide', 'Ctrl+, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('⌘')) throw new Error(`a Mac's keys on Windows: ${said}`);
+    if (await page.$('#keysSheet h3:text-is("On Backups")')) throw new Error('a section for a screen with no keys of its own');
+  } },
   // The command palette: ⌘K (Ctrl+K) on any screen opens a field over it; an app's name lists its Open, page, Restart,
   // Stop, and Logs, the arrows pick, Return runs, a name nothing has says so, and Escape closes it with the focus back
   // where it was. Its field is a combobox whose active option follows the arrows (VoiceOver reads it).
