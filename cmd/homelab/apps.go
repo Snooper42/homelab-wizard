@@ -794,7 +794,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				return err
 			}
 			if len(tokens) == 0 {
-				h.ui.Printf("Nothing to update: no running app takes image updates.\n")
+				h.ui.Printf("Nothing to update now: no running app takes image updates today.\n")
 				return nil
 			}
 			h.ui.Printf("Updates now what the nightly update would (%d apps): %s.\n", len(tokens), strings.Join(tokens, ", "))
@@ -1021,8 +1021,8 @@ func (h *homelab) nightlyAlert(ctx context.Context, updated, failed []string) {
 var stepVerb = map[string]string{"update": "Updating", "start": "Starting", "stop": "Stopping", "restart": "Restarting", "remove": "Removing"}
 
 // updatable is every running app that takes image updates, the nightly
-// ones and those rebuilt from a Dockerfile, without the held ones:
-// homelab update --all.
+// ones and those rebuilt from a Dockerfile, without the held ones and those
+// whose update days (data/update-days.json) leave out today: homelab update --all.
 func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -1033,12 +1033,20 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	report := detect.Analyze(h.catalog, containers)
-	held := updates.Held(h.envMap())
+	env := h.envMap()
+	held := updates.Held(env)
 	tidying := media.Held(h.root)
-	var ids, waiting []string
+	today, days := time.Now().Weekday(), updates.LoadDays(updates.DaysPath(h.root))
+	var ids, waiting, notToday []string
 	for _, a := range h.catalog.Apps {
 		how, _ := a.UpdatePolicy()
 		if how != "nightly" && how != "built" || slices.Contains(held, a.ID) {
+			continue
+		}
+		if !updates.DueOn(days, a.ID, today) {
+			if _, running := runningContainer(report, a.ID); running {
+				notToday = append(notToday, a.Name()+" ("+updates.DaysText(days[a.ID])+")")
+			}
 			continue
 		}
 		// Tidy Up is moving files: the apps that read the libraries wait
@@ -1055,6 +1063,9 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	}
 	if len(waiting) > 0 {
 		h.ui.Printf("Tidy Up is moving files, so these wait for the next update: %s.\n", strings.Join(waiting, ", "))
+	}
+	if len(notToday) > 0 {
+		h.ui.Printf("Updated on their own days, so not today: %s.\n", strings.Join(notToday, ", "))
 	}
 	return ids, nil
 }
