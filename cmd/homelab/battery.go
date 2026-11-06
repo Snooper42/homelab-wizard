@@ -18,6 +18,10 @@ import (
 // watchdog runs it every 15 minutes, and the awake job within a minute of
 // the machine being plugged in (resumeOnPower).
 func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, containers []docker.Container) {
+	// A job changing the apps (an update) has them: next run.
+	if h.jobRunning() {
+		return
+	}
 	path := battery.Path(h.root)
 	st := battery.Load(path)
 	onBattery, known := battery.Power()

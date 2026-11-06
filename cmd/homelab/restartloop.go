@@ -76,6 +76,11 @@ func (h *homelab) stopRestartLoops(ctx context.Context, client *docker.Client, c
 	if strings.EqualFold(env["AUTO_HEAL"], "false") {
 		return nil, nil
 	}
+	// Another job changing the homelab has the turn (an update takes an app
+	// down and up again): its apps are its own until it ends, as in heal.
+	if h.jobRunning() {
+		return nil, nil
+	}
 	path := restartsPath(h.root)
 	seen := map[string][]restartSeen{}
 	if data, err := os.ReadFile(path); err == nil {

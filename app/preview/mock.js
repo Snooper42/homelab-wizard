@@ -307,6 +307,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       { name: 'Internet', date: '2026-11-09', amount: 70 }] }),
     SetPhoneFinances(id, level) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, finances: level || undefined } : p)); return later(M.phones); },
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
+    SetPhoneUntil(id, hours) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, until: hours ? new Date(Date.now() + hours * 36e5).toISOString() : undefined } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
     // Tidy Up (M.tidy): what the screen reads, and its jobs: each run is kept

@@ -108,3 +108,29 @@ func TestFinanceCalendar(t *testing.T) {
 		t.Errorf("with amounts:\n%s", ics)
 	}
 }
+
+// With Hide amounts on, what goes to the phones' alerts (today's
+// reminders, the weekly summary's Finances lines) carries no amount: a
+// lock screen shows them, and ntfy keeps them. Finances' own promise is
+// every amount hidden, on the phones too.
+func TestHiddenAmountsStayHiddenInAlerts(t *testing.T) {
+	root, _ := repoCopy(t)
+	out := &bytes.Buffer{}
+	h, err := newHomelab(&ui.UI{Out: out}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oct31 := time.Date(2026, 10, 31, 3, 30, 0, 0, time.Local)
+	plan := finance.Plan{Updated: "2026-10-30", HideAmounts: true,
+		Accounts: []finance.Account{{Name: "Checking", Kind: finance.Checking, Balance: 5000}},
+		People:   []finance.Earner{{Name: "Alex", Net: 2000, Schedule: finance.Schedule{Every: finance.Biweekly, Start: "2026-11-06"}}},
+		Payments: []finance.Payment{{Name: "Mortgage", Amount: 1845, Schedule: finance.Schedule{Every: finance.Monthly, Start: "2026-01-01"}}}}
+	if _, err := finance.Save(finance.Path(root), plan); err != nil {
+		t.Fatal(err)
+	}
+	h.sendFinanceReminders(context.Background(), oct31)
+	sent := out.String() + strings.Join(h.financeLines(oct31), "\n")
+	if strings.Contains(sent, "1,845") || strings.Contains(sent, "5,0") || !strings.Contains(sent, "Mortgage $•••") {
+		t.Fatalf("amounts went out with Hide amounts on:\n%s", sent)
+	}
+}

@@ -18,7 +18,8 @@ import (
 func (h *homelab) startWhenDue(ctx context.Context, client *docker.Client, containers []docker.Container, now time.Time) {
 	path := stopped.Path(h.root)
 	r := stopped.Load(path)
-	if len(r) == 0 {
+	// A job changing the apps (an update) has them: next minute.
+	if len(r) == 0 || h.jobRunning() {
 		return
 	}
 	// What to forget is worked out from this copy, while the starts take

@@ -134,6 +134,8 @@ When the old machine is gone and only the backup folder is left.
 
 **Check:** Finances is in the phone's tab bar; with **Sees Finances**, *view only* under its heading and no Edit. **No Finances** (`off`) takes it away again.
 
+For a guest's phone, or one lent for a while, pick **For a day**, **For a week**, or **For a month** beside it (`./homelab phone until <id> 7d`): its row says until when, and then it only looks, with no Finances, without anyone remembering to take them back. A wall screen keeps its money card.
+
 ## Restart the Mac safely
 
 1. Close nothing; the containers stop with OrbStack.

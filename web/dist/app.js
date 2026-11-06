@@ -518,7 +518,7 @@
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
       const open3 = !!opened2[s3.id];
-      const more = s3.why || s3.detail;
+      const more2 = s3.why || s3.detail;
       return (
         // A row: the step's number, what it gives you (one line until it is
         // opened), its buttons, and the chevron that opens it.
@@ -531,7 +531,7 @@
             open3 && s3.state !== "done" && s3.detail && /* @__PURE__ */ u3("div", { class: "sub detail", children: s3.detail })
           ] }),
           /* @__PURE__ */ u3(Actions, { s: s3, running: running4 === s3.id, on: on2 }),
-          more && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
+          more2 && /* @__PURE__ */ u3("button", { class: "iconbtn more", "aria-expanded": open3, "aria-label": (open3 ? "Less about: " : "More about: ") + s3.title, onClick: () => toggle(s3.id), children: /* @__PURE__ */ u3(Icon, { name: "chevron" }) })
         ] }, s3.id)
       );
     };
@@ -3270,11 +3270,11 @@
     for (const pg of pages) {
       const here2 = pg.name === view.page;
       for (const s3 of pg.items) {
-        const more = pg.kind === "general" && !wanted.has(s3.key);
-        if (here2 && more) out.pageMore++;
+        const more2 = pg.kind === "general" && !wanted.has(s3.key);
+        if (here2 && more2) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more);
+        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -3493,6 +3493,11 @@
   function FinancesPick({ value, set: set2, label, id: id2, paired }) {
     return /* @__PURE__ */ u3("select", { id: id2, class: "finpick", "aria-label": label, value, onChange: (e3) => set2(e3.currentTarget.value), children: (paired ? pairedChoices : financesChoices).map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) });
   }
+  var untilChoices = [[0, "Until you change it"], [24, "For a day"], [24 * 7, "For a week"], [24 * 30, "For a month"]];
+  var untilText2 = (t3) => {
+    const d3 = new Date(t3);
+    return `${dayText(d3, { weekday: "short", month: "short", day: "numeric" })}, ${clockText(d3)}`;
+  };
   function Pairing({ p: p3, asked, done }) {
     const links = p3.links || [];
     const onlyLooks = !!links.length && !links.some((l3) => l3.startsWith("https:")) && (asked.canChange || !!asked.finances);
@@ -3534,6 +3539,7 @@
       ] })
     ] }) });
   }
+  var more = (p3) => p3.canChange || p3.finances === "view" || p3.finances === "edit";
   function Phones({ phones, on: on2 }) {
     const [name, setName] = d2("");
     const [canChange, setCanChange] = d2(false);
@@ -3556,11 +3562,23 @@
           sub: /* @__PURE__ */ u3(S, { children: [
             p3.canChange ? "Can make changes" : p3.unencrypted ? "Looks only (paired over the home Wi-Fi, without encryption)" : "Looks only",
             p3.finances === "edit" ? " · changes Finances" : p3.finances === "view" ? " · sees Finances" : p3.finances === "card" ? " · shows the money card" : "",
+            p3.until && more(p3) ? /* @__PURE__ */ u3("span", { class: "phoneuntil", children: [
+              ", until ",
+              untilText2(p3.until),
+              ", then it only looks"
+            ] }) : "",
             " · last seen ",
             ago(p3.lastSeen)
           ] }),
           end: /* @__PURE__ */ u3(S, { children: [
             !p3.unencrypted && /* @__PURE__ */ u3(FinancesPick, { paired: true, value: p3.finances || "", set: (level) => on2.setFinances(p3.id, level), label: `Finances on ${p3.name}` }),
+            more(p3) && /* @__PURE__ */ u3("select", { class: "untilpick", "aria-label": `How long ${p3.name} keeps it`, value: p3.until ? "set" : "0", onChange: (e3) => on2.setUntil(p3.id, Number(e3.currentTarget.value)), children: [
+              p3.until && /* @__PURE__ */ u3("option", { value: "set", disabled: true, children: [
+                "Until ",
+                untilText2(p3.until)
+              ] }),
+              untilChoices.map(([h3, t3]) => /* @__PURE__ */ u3("option", { value: String(h3), children: t3 }, h3))
+            ] }),
             !p3.unencrypted && /* @__PURE__ */ u3("button", { class: "small", title: p3.canChange ? "Only look from now on" : "Let it start, stop, restart, update, and back up", onClick: () => on2.setCanChange(p3.id, !p3.canChange), children: p3.canChange ? "Make read-only" : "Allow changes" }),
             /* @__PURE__ */ u3("button", { class: "small", title: "Unpair it: it stops working at once", onClick: () => on2.remove(p3.id), children: "Remove" })
           ] })
@@ -4860,9 +4878,9 @@
     ] });
   }
   function UpdateLine({ s: s3, step: step2, download: download2, log: log2, update, later: later2, close: close3, open: open3 }) {
-    const [more, setMore] = d2(false);
+    const [more2, setMore] = d2(false);
     const v3 = s3.version;
-    const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more), children: more ? "Hide" : "What’s new" });
+    const whatsNew = (notes) => !!notes.length && /* @__PURE__ */ u3(ActionLink, { id: "updateWhatsNew", cls: "small", onClick: () => setMore(!more2), children: more2 ? "Hide" : "What’s new" });
     let mark = "↑", tone = "ready", head = "", sub = "", end = null, below = null, bar = -1;
     if (running2(step2)) {
       mark = "↻";
@@ -4875,10 +4893,10 @@
       head = "The update stopped";
       sub = step2.error || "The details say why";
       end = /* @__PURE__ */ u3(S, { children: [
-        !!log2 && /* @__PURE__ */ u3(ActionLink, { id: "updateDetails", cls: "small", onClick: () => setMore(!more), children: more ? "Hide the details" : "Details" }),
+        !!log2 && /* @__PURE__ */ u3(ActionLink, { id: "updateDetails", cls: "small", onClick: () => setMore(!more2), children: more2 ? "Hide the details" : "Details" }),
         /* @__PURE__ */ u3("button", { id: "updateRetry", class: "small", onClick: update, children: "Try again" })
       ] });
-      below = more && !!log2 && /* @__PURE__ */ u3("pre", { id: "updateLog", children: log2 });
+      below = more2 && !!log2 && /* @__PURE__ */ u3("pre", { id: "updateLog", children: log2 });
     } else if (s3.notInstalled && !step2) {
       mark = "!";
       tone = "failed";
@@ -4897,7 +4915,7 @@
         whatsNew(s3.updated.notes || []),
         /* @__PURE__ */ u3("button", { id: "updateClose", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
       ] });
-      below = more && /* @__PURE__ */ u3(Notes, { notes: s3.updated.notes || [] });
+      below = more2 && /* @__PURE__ */ u3(Notes, { notes: s3.updated.notes || [] });
     } else if (s3.state === "blocked") {
       mark = "!";
       tone = "blocked";
@@ -4911,7 +4929,7 @@
         /* @__PURE__ */ u3("button", { id: "updateLater", class: "small", onClick: later2, children: "Later" }),
         /* @__PURE__ */ u3("button", { id: "updateNow", class: "primary small", onClick: update, children: "Update now" })
       ] });
-      below = more && /* @__PURE__ */ u3(Notes, { notes: s3.notes || [] });
+      below = more2 && /* @__PURE__ */ u3(Notes, { notes: s3.notes || [] });
     } else {
       return null;
     }
@@ -5581,6 +5599,14 @@
     setFinances: async (id2, level) => {
       try {
         await go().SetPhoneFinances(id2, level);
+      } catch (e3) {
+        showError(e3);
+      }
+      loadPhones();
+    },
+    setUntil: async (id2, hours) => {
+      try {
+        await go().SetPhoneUntil(id2, hours);
       } catch (e3) {
         showError(e3);
       }
@@ -7716,7 +7742,7 @@
   function Stopped({ stopped: stopped2 }) {
     const reading = stopped2 === "reading", s3 = reading ? null : stopped2;
     const today2 = s3?.today || [];
-    const more = (s3?.todayCount || 0) - today2.length;
+    const more2 = (s3?.todayCount || 0) - today2.length;
     const head = s3 && (s3.todayCount === 1 ? "1 today" : `${s3.todayCount} today`) + (s3.bannedNow ? ` · ${s3.bannedNow} banned now` : "");
     const quiet2 = !s3 ? "" : s3.week ? `Nothing yet today; ${s3.week === 1 ? "1" : s3.week} this week${s3.recent?.[0] ? `, the last ${ago(s3.recent[0].when)}` : ""}.` : "Nothing this week.";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appStopped", children: [
@@ -7737,7 +7763,7 @@
           },
           i3
         )),
-        more > 0 && /* @__PURE__ */ u3(Row, { sub: more === 1 ? "and 1 more today" : `and ${more} more today` })
+        more2 > 0 && /* @__PURE__ */ u3(Row, { sub: more2 === 1 ? "and 1 more today" : `and ${more2} more today` })
       ] }) : /* @__PURE__ */ u3(Empty, { children: quiet2 }))
     ] });
   }

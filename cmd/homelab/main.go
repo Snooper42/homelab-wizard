@@ -113,6 +113,7 @@ Phones:
   homelab phone finances <id> off|card|view|edit
                                        hide Finances from a phone, show only the money
                                        card (a wall screen), show them, or let it change them
+  homelab phone until <id> 7d|never    its changes and Finances end then; it only looks
   homelab phone remove <id>            unpair a phone; its token stops working
 
 Tidy Up (homelab media help for more):
