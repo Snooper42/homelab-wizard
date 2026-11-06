@@ -287,7 +287,7 @@ type agentState struct {
 
 func loadAgentState(path string) agentState {
 	var s agentState
-	if data, err := os.ReadFile(path); err == nil {
+	if data, err := lockedfile.Read(path); err == nil {
 		_ = json.Unmarshal(data, &s)
 	}
 	return s

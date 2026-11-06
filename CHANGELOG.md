@@ -71,7 +71,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
-- **No surprise backup after a power cut:** the background agent's note of when it last backed up was rewritten in place, so one cut off half-written read as no backup yet, and a backup started at once. It is now replaced whole, as are the job logs it trims.
+- **No surprise backup after a power cut:** the background agent's note of when it last backed up was rewritten in place, so one cut off half-written read as no backup yet, and a backup started at once. It is now replaced whole, as are the job logs it trims, and on Windows a read at the very moment it's saved waits for it rather than reading as no note.
 - **Your logs are yours alone:** the jobs' logs and crash notes in `scripts/logs` could be read by another account on the same computer. The folder is now this account's only, an older one included, and new logs are too.
 - **The weekly summary and Finances' reminders come once:** the note that one went out was rewritten in place and its errors dropped, so a note cut off or not saved sent the message again the next night without a word. It is now replaced whole, and one that can't be saved says so in the nightly log.
 - **Your own apps, added at once, are all kept:** two of your own apps added at the same moment (from the app and from Terminal) could each write over the other, and one was lost. Each add now waits for the one before it, on a port of its own.

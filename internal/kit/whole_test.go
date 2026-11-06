@@ -15,7 +15,7 @@ func TestTheManifestIsReplacedWhole(t *testing.T) {
 	if _, err := Extract(v1, dest); err != nil {
 		t.Fatal(err)
 	}
-	was, err := os.Stat(filepath.Join(dest, ManifestName))
+	was, err := statNow(filepath.Join(dest, ManifestName))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,4 +33,17 @@ func TestTheManifestIsReplacedWhole(t *testing.T) {
 	if m, ok := Installed(dest); !ok || m.Commit != "bbbbbbbbbb2" {
 		t.Errorf("manifest after the update: %+v %v", m, ok)
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }
