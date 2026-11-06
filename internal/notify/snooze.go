@@ -1,0 +1,91 @@
+package notify
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
+)
+
+// Snoozing an alert: one check the watchdog still runs and shows, but does
+// not alert about until a time (an hour, a day), for a failure you already
+// know of. Kept in data/alerts-snoozed.json, check name → until.
+
+// SnoozePath is where the snoozes are kept.
+func SnoozePath(root string) string { return filepath.Join(root, "data", "alerts-snoozed.json") }
+
+// Snoozes are the snoozed checks and when each wakes; one past its time
+// stays until the watchdog has seen it (Woken), so a check still failing
+// then is alerted about.
+type Snoozes map[string]time.Time
+
+// LoadSnoozes reads the snoozes; none kept (or a record that does not
+// read) is none.
+func LoadSnoozes(root string) Snoozes {
+	s := Snoozes{}
+	if data, err := os.ReadFile(SnoozePath(root)); err == nil {
+		_ = json.Unmarshal(data, &s)
+	}
+	return s
+}
+
+// Active says the check is snoozed now.
+func (s Snoozes) Active(check string, now time.Time) bool {
+	until, ok := s[check]
+	return ok && now.Before(until)
+}
+
+// Asleep is the snoozes still running now, for Status.
+func (s Snoozes) Asleep(now time.Time) map[string]time.Time {
+	out := map[string]time.Time{}
+	for k, v := range s {
+		if now.Before(v) {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// Snooze snoozes check until then, under the record's lock. A zero time
+// wakes it now: it stays until the watchdog's next run takes it (Woken),
+// so a check still failing is alerted about then, as at a snooze's end.
+func Snooze(root, check string, until time.Time) error {
+	if until.IsZero() {
+		until = time.Now()
+	}
+	return change(root, func(s Snoozes) { s[check] = until.Truncate(time.Second) })
+}
+
+// Woken takes out the snoozes whose time has come and returns them: the
+// watchdog alerts about any of them that still fails.
+func Woken(root string, now time.Time) ([]string, error) {
+	var woken []string
+	err := change(root, func(s Snoozes) {
+		for k, v := range s {
+			if !now.Before(v) {
+				woken = append(woken, k)
+				delete(s, k)
+			}
+		}
+	})
+	return woken, err
+}
+
+func change(root string, fn func(Snoozes)) error {
+	path := SnoozePath(root)
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return err
+	}
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		s := Snoozes{}
+		_ = json.Unmarshal(old, &s)
+		fn(s)
+		data, err := json.MarshalIndent(s, "", "  ")
+		if err != nil {
+			return nil, false
+		}
+		return append(data, '\n'), true
+	})
+}

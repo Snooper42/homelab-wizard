@@ -50,6 +50,7 @@ version: 0.17.0
 | `data/icons/<app>` | the app's page | The app's own icon (its home screen icon or favicon, asked of the app on this machine once a week; empty when it has none) |
 | `data/setup.json` | Setup | Steps marked done by hand |
 | `data/alerts-off.json` | `homelab notify off\|on <app>` (an app's page › **Tell me if it stops**, or a phone) | The apps the watchdog still checks and shows on Status but does not alert about. It used to be `ALERTS_OFF` in `.env`: the first install or `homelab notify` after an upgrade moves it here and takes the key out |
+| `data/alerts-snoozed.json` | `homelab notify snooze <check> 1h\|1d\|off`, or Status › Watchdog › **Snooze…** beside a failing check | Each snoozed check and when it wakes: the watchdog still checks it but does not alert about it until then, and alerts then if it still fails. Safe to delete (every check alerts again) |
 | `data/pinned.json` | `homelab pin\|unpin <app>` (a row's right-click › **Pin to the top**, or a phone) | The apps at the top of Status and of the menu bar's Open an app, in the order pinned. It used to be `APPS_PINNED` in `.env`: the first install or `homelab pin` after an upgrade moves it here and takes the key out |
 | `data/savings-history.json` | the nightly backup | The yearly savings over time |
 | `data/upgrade/` | `homelab upgrade` | Where the folder was before the last upgrade (`previous.json`; for a folder the app made, a copy of its files), for `upgrade --back` |

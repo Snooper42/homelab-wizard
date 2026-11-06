@@ -54,6 +54,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -744,7 +745,30 @@ func (a *App) Alerts() ([]notify.Event, error) {
 // Watchdog is the watchdog's last run (every 15 minutes once the jobs are
 // installed): how many checks ran, and those failing with what they said.
 func (a *App) Watchdog() health.Summary {
-	return health.LoadState(health.StatePath(a.root)).Summary()
+	return core.WatchdogSummary(a.root)
+}
+
+// SnoozeCheck stops the watchdog alerting about one failing check for
+// hours (Status › Watchdog › Snooze); 0 wakes it. It goes on checking it,
+// and alerts when the snooze ends if it still fails.
+func (a *App) SnoozeCheck(check string, hours int) error {
+	if hours < 0 || hours > 24*7 {
+		return fmt.Errorf("a snooze is up to a week, not %d hours", hours)
+	}
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	return notify.Snooze(a.root, check, until)
+}
+
+// TailnetDevices is every device on the household's tailnet, when
+// last seen, with each one's page in Tailscale's admin console (Remove).
+// It fails with "not running" until Tailscale runs.
+func (a *App) TailnetDevices() ([]tailnet.Device, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.TailnetDevices(ctx, a.root)
 }
 
 // Protection is CrowdSec's view: whether the proxy enforces its bans, and

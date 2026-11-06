@@ -28,6 +28,8 @@ STAGING_DIR = ".tidy-staging"
 # to HAND_TRIES times in all.
 REHAND_AFTER = 20 * 60
 HAND_TRIES = 3
+# How long Shrink waits for Tdarr to record the videos it was handed, before saying which it has.
+TAKE_WAIT = 30
 
 
 class VideoEngine:
@@ -433,7 +435,23 @@ class VideoEngine:
                 self.state["files"][k].update(status="queued", queued_at=time.time(), tries=1)
             self.save()
         if todo:
-            ui.ok("Tdarr has %s videos in its queue; its nodes take them one by one" % mc.fmt_n(len(todo)))
+            # Tdarr reads what it's handed in the background: only what it has recorded is said to be with
+            # it. One it hasn't is handed again by the homelab's next run (collect), then said.
+            waiting_for = {k: self.tdarr_path(k) for k in todo}
+            deadline = time.time() + TAKE_WAIT
+            while True:
+                waiting_for = {k: tp for k, tp in waiting_for.items() if td.status(tp) is None}
+                if not waiting_for or time.time() >= deadline:
+                    break
+                time.sleep(2)
+            taken = len(todo) - len(waiting_for)
+            if taken:
+                ui.ok("Tdarr has %s videos in its queue; its nodes take them one by one" % mc.fmt_n(taken))
+            if waiting_for:
+                names = [Path(k).name for k in waiting_for]
+                ui.warn("Tdarr hasn't taken %s of the videos handed to it yet (%s): the homelab hands them again in a "
+                        "few minutes. If it never does, open Tdarr's page and check its Tidy Up library and its node"
+                        % (mc.fmt_n(len(waiting_for)), ", ".join(names[:3]) + (", …" if len(names) > 3 else "")))
         self.tdarr_unseen(unseen)
         ui.step(3, 3, "Collecting what Tdarr finished")
         self.collect(inner=True)

@@ -1724,6 +1724,21 @@
   }
 
   // web/src/status/Cards.tsx
+  var wakeText = (t3) => {
+    const d3 = new Date(t3);
+    return d3.toDateString() === (/* @__PURE__ */ new Date()).toDateString() ? clockText(d3) : `${dayText(d3, { weekday: "short" })} ${clockText(d3)}`;
+  };
+  function SnoozePick({ check, until, snooze }) {
+    return /* @__PURE__ */ u3("select", { class: "snoozepick", "aria-label": `Snooze the alerts about ${check}`, value: "", onChange: (e3) => {
+      const v3 = e3.currentTarget.value;
+      if (v3 !== "") snooze(check, Number(v3));
+    }, children: [
+      /* @__PURE__ */ u3("option", { value: "", disabled: true, children: until ? `Snoozed until ${wakeText(until)}` : "Snooze…" }),
+      /* @__PURE__ */ u3("option", { value: "1", children: "For an hour" }),
+      /* @__PURE__ */ u3("option", { value: "24", children: "For a day" }),
+      until && /* @__PURE__ */ u3("option", { value: "0", children: "Alert again now" })
+    ] });
+  }
   var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
   function MemoryPressure({ m: m3, stop: stop2 }) {
     const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
@@ -1747,7 +1762,7 @@
       ] }) }, a3.name)) })
     ] });
   }
-  function Watchdog({ w: w3, openSetup, fix, stop: stop2 }) {
+  function Watchdog({ w: w3, openSetup, fix, stop: stop2, snooze }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1784,7 +1799,21 @@
         /* @__PURE__ */ u3("span", { class: "muted", children: "Fix it restarts what is down or unwell and reconnects what dropped; it shows the plan first." }),
         /* @__PURE__ */ u3("button", { id: "watchFix", class: "small", onClick: fix, children: "Fix it" })
       ] }),
-      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => /* @__PURE__ */ u3(Row, { dot: "bad", title: f4.name, sub: f4.problem, when: ago(f4.since), whenTitle: "Failing since" }, f4.name)) })
+      !!failing.length && /* @__PURE__ */ u3(Rows, { children: failing.map((f4) => {
+        const until = w3.snoozed?.[f4.name];
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            dot: "bad",
+            title: f4.name,
+            sub: until ? `${f4.problem}. No alerts about it until ${wakeText(until)}` : f4.problem,
+            when: ago(f4.since),
+            whenTitle: "Failing since",
+            end: snooze && /* @__PURE__ */ u3(SnoozePick, { check: f4.name, until, snooze })
+          },
+          f4.name
+        );
+      }) })
     ] });
   }
   function Protection({ p: p3, fix }) {
@@ -3625,6 +3654,35 @@
     ] });
   }
   var mountPhones = (el3, props) => R(/* @__PURE__ */ u3(Phones, { ...props }), el3);
+
+  // web/src/settings/TailnetDevices.tsx
+  var awayFor = 30 * 864e5;
+  var away = (d3) => !d3.online && !never(d3.lastSeen) && Date.now() - new Date(d3.lastSeen).getTime() > awayFor;
+  var systems = { iOS: "iPhone or iPad", macOS: "Mac", android: "Android", windows: "Windows", linux: "Linux" };
+  function TailnetDevices({ devices, open: open4 }) {
+    const online = devices.filter((d3) => d3.online).length;
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Devices on your tailnet", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
+        devices.length === 1 ? "1 device" : `${devices.length} devices`,
+        ", ",
+        online,
+        " online"
+      ] }) }),
+      /* @__PURE__ */ u3("p", { class: "muted", children: "Each of these can open the apps away from home. One that is lost or sold: Remove it, and it can no longer reach them." }),
+      /* @__PURE__ */ u3(Rows, { children: devices.map((d3) => /* @__PURE__ */ u3(
+        Row,
+        {
+          dot: d3.online ? "ok" : away(d3) ? "warn" : "",
+          title: d3.name,
+          sub: [systems[d3.os || ""] || d3.os, d3.self ? "this machine" : d3.online ? "online now" : never(d3.lastSeen) ? "not seen yet" : `last seen ${ago(d3.lastSeen)}`].filter(Boolean).join(" · ") + (away(d3) ? ". Not seen for a month: if it is lost, remove it" : ""),
+          subTone: away(d3) ? "warn" : void 0,
+          end: !d3.self && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${d3.name}`, title: "Opens it in Tailscale's admin console, where Remove is", onClick: () => open4(d3.admin || ""), children: "Remove…" })
+        },
+        d3.ip || d3.name
+      )) })
+    ] });
+  }
+  var mountTailnetDevices = (el3, props) => R(/* @__PURE__ */ u3(TailnetDevices, { ...props }), el3);
 
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
@@ -5603,6 +5661,20 @@
     card.hidden = false;
     mountPhones(card, { phones: phones || [], on: phonesActions });
   }
+  async function loadTailnet() {
+    const card = $2("tailnetCard");
+    let devices;
+    try {
+      devices = await go().TailnetDevices();
+    } catch {
+      card.hidden = true;
+      return;
+    }
+    card.hidden = !devices?.length;
+    mountTailnetDevices(card, { devices: devices || [], open: (url) => {
+      Promise.resolve(go().Open(url)).catch(showError);
+    } });
+  }
   var phonesActions = {
     setCanChange: async (id2, can) => {
       try {
@@ -5740,6 +5812,7 @@
   var settingsFocus = [];
   var settingsData = store(async () => {
     loadPhones();
+    loadTailnet();
     loadPeople();
     const tests = testable ? null : go().SettingTests().catch(() => []);
     const list = await go().Settings();
@@ -6056,7 +6129,7 @@
     mountForm($2("settingsForm"), form, formVersion);
     const searching = !!form.view.query.trim();
     const sh = shown(form.pages, form.view, form.wanted, form.label, form.checks);
-    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
+    for (const [id2, name] of [["thisMacCard", thisMachine], ["appearanceCard", "Appearance"], ["peopleCard", "People"], ["phonesCard", "Phones"], ["tailnetCard", "Phones"]]) $2(id2).classList.toggle("offpage", searching || settingsPage !== name);
     mountNav($2("settingsNav"), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
     $2("settingsForm").classList.toggle("searching", searching);
     $2("settingsNone").hidden = sh.keys.size > 0 || !searching;
@@ -6893,6 +6966,15 @@
       stop: (id2) => {
         const a3 = lastStatus?.apps.find((x3) => x3.id === id2);
         if (a3) void runAppAction(a3, "stop");
+      },
+      // Snooze a failing check's alerts, then draw the card again with it.
+      snooze: async (check, hours) => {
+        try {
+          await go().SnoozeCheck(check, hours);
+          showWatchdog(await go().Watchdog());
+        } catch (e3) {
+          showError(e3);
+        }
       }
     });
   }
@@ -13064,9 +13146,9 @@ ${pays}
       const lyr = last(l3, "lyrics")?.result;
       const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
-      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${apart ? ` · ${count(apart, "song")} with two languages on one line set apart` : ""}${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
-      else if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics") } });
-      else if (lyr && lyr.to_clean === void 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+      if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
+      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
       const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
@@ -13563,7 +13645,8 @@ ${pays}
       listening2 = true;
       window.runtime.EventsOn("media:event", onEvent);
     }
-    job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
+    const title = action === "lyrics" && args.includes("--tidy") ? "Tidying lyrics" : titles[`${kind} ${action}`] || `${kind} ${action}`;
+    job = { kind, action, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(" ")}`.trim()] };
     draw5();
     try {
       await go().TidyRun(kind, action, args, yes);

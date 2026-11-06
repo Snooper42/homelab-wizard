@@ -805,6 +805,7 @@ declare namespace health {
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
     memory?: health.Memory | null;
+    snoozed?: Record<string, string>;
   }
 }
 
@@ -979,6 +980,18 @@ declare namespace storage {
   }
 }
 
+declare namespace tailnet {
+  interface Device {
+    name: string;
+    os?: string;
+    ip?: string;
+    online: boolean;
+    lastSeen?: string;
+    self?: boolean;
+    admin?: string;
+  }
+}
+
 declare namespace tray {
   interface Appearance {
     theme: string;
@@ -1108,12 +1121,14 @@ interface Backend {
     SettingTests(): Promise<string[]>;
     Settings(): Promise<settings.Setting[]>;
     Setup(): Promise<setup.Step[]>;
+    SnoozeCheck(arg1: string, arg2: number): Promise<void>;
     StartAgent(): Promise<void>;
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
     StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
     StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
+    TailnetDevices(): Promise<tailnet.Device[]>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
     TidyReveal(arg1: string): Promise<void>;

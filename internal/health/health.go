@@ -324,6 +324,9 @@ type Summary struct {
 	// Memory is there while the apps' memory has stayed high long enough
 	// to alert: Status lists the biggest apps, each with Stop.
 	Memory *Memory `json:"memory,omitempty"`
+	// Snoozed are the checks not alerted about for now, and until when
+	// (notify.Snoozes; the desktop app fills it in).
+	Snoozed map[string]time.Time `json:"snoozed,omitempty"`
 }
 
 // Summary lists the confirmed failures with what each said last.
