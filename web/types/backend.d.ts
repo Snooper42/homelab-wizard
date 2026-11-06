@@ -399,6 +399,7 @@ declare namespace companion {
     paired: string;
     lastSeen: string;
     until?: string;
+    kiosk?: boolean;
   }
 }
 

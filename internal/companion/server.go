@@ -234,14 +234,12 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, err.Error())
 		return
 	}
-	if err == nil && body.Kiosk && d.CanChange {
+	if err == nil && body.Kiosk {
 		// Kiosk mode hides the buttons, and anyone at the screen could
-		// show them again, so the screen itself may not make changes.
-		d, err = s.Store.SetCanChange(d.ID, false)
-	}
-	if err == nil && body.Kiosk && d.Finances != "" {
-		// Nor show the household's money to whoever walks past.
-		d, err = s.Store.SetFinances(d.ID, "")
+		// show them again, so the screen itself may not make changes, nor
+		// show the household's money to whoever walks past; and it is
+		// remembered as a screen, so neither is given back later (N26).
+		d, err = s.Store.MarkKiosk(d.ID)
 	}
 	if err == nil && !Encrypted(r) {
 		// Its token will cross the home Wi-Fi readable with every request
