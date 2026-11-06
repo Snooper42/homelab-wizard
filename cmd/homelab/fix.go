@@ -173,6 +173,11 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	}
 	if len(changed) > 0 {
 		step("Recreating the apps whose settings changed")
+		// A copy first: what they hold just before they start on the new settings.
+		if err := h.dumpBefore(ctx, client, changed, "they start on their new settings"); err != nil {
+			warn("%v", err)
+			changed = nil
+		}
 		for _, pa := range h.byProject(changed) {
 			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"up", "--detach", "--no-deps"}, pa.ids...)...); err != nil {
 				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
