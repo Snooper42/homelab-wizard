@@ -131,7 +131,7 @@ func (c *Client) Recent(ctx context.Context, topics []string, since time.Duratio
 		if json.Unmarshal(sc.Bytes(), &raw) != nil || raw.Event != "message" {
 			continue
 		}
-		events = append(events, Event{ID: raw.ID, Time: time.Unix(raw.Time, 0), Topic: raw.Topic, Title: raw.Title, Message: raw.Message, Priority: raw.Priority, Tags: raw.Tags})
+		events = append(events, Readable(Event{ID: raw.ID, Time: time.Unix(raw.Time, 0), Topic: raw.Topic, Title: raw.Title, Message: raw.Message, Priority: raw.Priority, Tags: raw.Tags}))
 	}
 	sort.SliceStable(events, func(i, j int) bool { return events[i].Time.After(events[j].Time) })
 	return events, sc.Err()
