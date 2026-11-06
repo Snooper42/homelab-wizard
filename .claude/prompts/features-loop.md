@@ -53,23 +53,25 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now** (Nov 5, 2026, 23:35 UTC):
-- #438 *Two apps that do the same job* (`claude/feature-same-job`): open. Take it to merged first.
+**Open now** (Nov 6, 2026, 03:15 UTC):
+- #445 *Suggestions from what you use* (`claude/feature-goes-with`): open. Take it to merged first.
 - **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
 - Then these branches, built and pushed, each with its CHANGELOG line, tests with the failing-before proof, docs, a `#PRn` placeholder, and its PR text drafted (in the session's scratchpad, `pr-<name>.md`; write it again from the branch if that is gone). One at a time, in this order:
-  - `claude/feature-quiet-hours` (#PR20): `QUIET_HOURS=22-7`, alerts at night without a sound unless serious (Vaultwarden down, backups failing two nights). `internal/notify/night.go`, beside #431's `quiet.go`.
-  - `claude/feature-goes-with` (#PR24): Choose stacks › Add more › *Suggested for what you run* (`goes_with`). It and same-job both change `web/src/choose/Choose.tsx` and the same style rule: merge main in and keep both lines on a row.
   - `claude/feature-welcome-sheet` (#PR23): a sheet for the fridge beside each person's welcome page (`internal/people`); main, with #434's change to `internal/people/people.go`, is merged in.
   - `claude/feature-phone-quick-actions` (#PR25): a long press on a Status row on a phone that may make changes opens Open, Start, Restart, Stop, Stop for a while, Logs.
   - `claude/feature-dot-shapes` (#PRn): *Shapes as well as colours*, a triangle for a dot that needs a look and a cross for one that's down (two CSS rules on `.dot.warn` and `.dot.bad`).
+  - `claude/feature-shortcuts-sheet` (#PRn): *A sheet of shortcuts*, ? on any screen or *Keyboard shortcuts* in ⌘K (`palette/Shortcuts.tsx`, mounted on `#keys`).
+  - `claude/feature-status-aloud` (#PRn): *Status read aloud*, one polite live region on Status (`#statusAloud`) reading each row's change in its own words.
   - `claude/feature-update-window` (#PR15) and `claude/feature-phones-expire` (#PR16): **wait for #425** (Account 3), which changes `app/app.go`, `cmd/homelab/main.go` and `cmd/homelab/serve.go` (lanes.md Rule 2).
 - Not started, for later: *Memory pressure alert* (its Stop on the alert needs `serve.go`, while #425 has it); *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
-- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437.
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439.
 - This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
 
 Still list what is open at the start of each round, as above: other sessions add to it.
 
 **A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; then once on #414's (Nov 5, dark only, waiting for `#finSheet` to be hidden after a Save: it has three such waits, so name each one's step before chasing it). Never on main or locally (24 of 24 runs, four at a time, on #414's head). Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
+
+**A Tidy Up smoke case to watch:** *Tidy Up: lyrics say what came of every song, and Overview counts only those still to ask* failed once on #439's CI (Nov 6, dark only): its first step, `page.click('#tidy .seg button:text-is("Overview")')`, gives the screen 5 s, and that run was early and under load. It passed on its re-run, and 6 of 6 locally. If it fails again, give that first click the time the screen needs (wait for `#tidy .seg` first), not a longer timeout.
 
 **Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390, #393 (#391 folded into it): all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
 

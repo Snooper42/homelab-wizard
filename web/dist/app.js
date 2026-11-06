@@ -4198,12 +4198,19 @@
   }
   var matches2 = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
+  var installed = (p3, id2) => ["running", "stopped"].includes(p3.status[id2]?.state || "");
+  function suggested(a3, p3) {
+    if (installed(p3, a3.id) || a3.kind === "native") return [];
+    return Object.entries(a3.goesWith || {}).flatMap(([id2, why]) => {
+      const with_ = p3.catalog.apps.find((o3) => o3.id === id2);
+      return with_ && installed(p3, id2) ? [[with_, why]] : [];
+    });
+  }
   function sameJob(a3, p3) {
-    const installed = (id2) => ["running", "stopped"].includes(p3.status[id2]?.state || "");
-    if (installed(a3.id)) return [];
+    if (installed(p3, a3.id)) return [];
     return p3.catalog.apps.flatMap((o3) => {
       const why = a3.sameJob?.[o3.id] || o3.sameJob?.[a3.id];
-      return o3.id !== a3.id && why && installed(o3.id) ? [[o3, why]] : [];
+      return o3.id !== a3.id && why && installed(p3, o3.id) ? [[o3, why]] : [];
     });
   }
   function AppRow({ a: a3, p: p3 }) {
@@ -4237,7 +4244,13 @@
           other.name,
           ": ",
           why
-        ] }, other.id))
+        ] }, other.id)),
+        suggested(a3, p3).map(([with_, why]) => /* @__PURE__ */ u3("div", { class: "goeswith muted", children: [
+          "Goes with ",
+          with_.name,
+          ", which you run: ",
+          why
+        ] }, with_.id))
       ] }),
       !!links.length && /* @__PURE__ */ u3("div", { class: "links-inline", children: links })
     ] });
@@ -4250,22 +4263,32 @@
       p3.query,
       "”. Add your own below."
     ] });
-    return /* @__PURE__ */ u3(S, { children: p3.catalog.categories.filter((c3) => byCategory2[c3.id]).map((c3) => {
-      const apps = byCategory2[c3.id];
-      const running4 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
-      return /* @__PURE__ */ u3("div", { class: "group", children: [
+    const suggestions = p3.query ? [] : p3.catalog.apps.filter((a3) => a3.kind !== "helper" && suggested(a3, p3).length);
+    return /* @__PURE__ */ u3(S, { children: [
+      !!suggestions.length && /* @__PURE__ */ u3("div", { class: "group suggested", children: [
         /* @__PURE__ */ u3("h2", { children: [
-          c3.label,
-          /* @__PURE__ */ u3("span", { class: "n", children: [
-            running4,
-            " of ",
-            apps.length,
-            " running"
-          ] })
+          "Suggested for what you run",
+          /* @__PURE__ */ u3("span", { class: "n", children: suggestions.length })
         ] }),
-        apps.map((a3) => /* @__PURE__ */ u3(AppRow, { a: a3, p: p3 }, a3.id))
-      ] }, c3.id);
-    }) });
+        suggestions.map((a3) => /* @__PURE__ */ u3(AppRow, { a: a3, p: p3 }, a3.id))
+      ] }, "suggested"),
+      p3.catalog.categories.filter((c3) => byCategory2[c3.id]).map((c3) => {
+        const apps = byCategory2[c3.id];
+        const running4 = apps.filter((a3) => p3.status[a3.id]?.state === "running").length;
+        return /* @__PURE__ */ u3("div", { class: "group", children: [
+          /* @__PURE__ */ u3("h2", { children: [
+            c3.label,
+            /* @__PURE__ */ u3("span", { class: "n", children: [
+              running4,
+              " of ",
+              apps.length,
+              " running"
+            ] })
+          ] }),
+          apps.map((a3) => /* @__PURE__ */ u3(AppRow, { a: a3, p: p3 }, a3.id))
+        ] }, c3.id);
+      })
+    ] });
   }
   var plural2 = (n3, one, many) => `${n3} ${n3 === 1 ? one : many}`;
   function List({ title, items, cls }) {
@@ -5751,11 +5774,11 @@
   ];
   var navGroups = [];
   function renderSettingsNav(pages) {
-    const installed = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
+    const installed2 = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
     const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...extraPages];
     const apps = pages.filter((p3) => p3.kind === "app");
     const known = Object.keys(statusById || {}).length > 0;
-    const mine = known ? apps.filter((p3) => installed(p3.name) || p3.name === "Other apps") : apps;
+    const mine = known ? apps.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps;
     const others2 = known ? apps.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names3]) => ({ head, items: names3.filter((n3) => general.includes(n3)) }));
     const named5 = new Set(pageGroups.flatMap(([, names3]) => names3));
@@ -5799,6 +5822,7 @@
     "HELPER_EMAIL",
     "HEARTBEAT_URL",
     "DESKTOP_ALERTS",
+    "QUIET_HOURS",
     "UPDATES_PAUSED",
     "AUTO_ROLLBACK",
     "AUTO_HEAL",
@@ -5843,6 +5867,7 @@
     CLOUDFLARE_API_TOKEN: "Cloudflare API token",
     TUNNEL_TOKEN: "Cloudflare Tunnel token",
     DESKTOP_ALERTS: "Alerts on this screen",
+    QUIET_HOURS: "Quiet hours (no sound at night)",
     HELPER_EMAIL: "Your helper's email",
     HEARTBEAT_URL: "Heartbeat ping URL",
     UPDATES_PAUSED: "Pause nightly updates",
@@ -8794,7 +8819,7 @@
     const opened2 = ownKey(brandOf(x3?.institution, x3?.name), x3?.name);
     const had = plan.logos?.[opened2];
     const [img, setImg] = d2(had);
-    const suggested = suggestType(brand, name);
+    const suggested2 = suggestType(brand, name);
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const accounts = plan.accounts || [];
@@ -8825,7 +8850,7 @@
     const remove = () => keep2({ ...plan, payments: (plan.payments || []).filter((q2) => q2.id !== x3?.id) });
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark, { brand: brand === "none" ? "" : brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested : void 0, img, size: "lg" }),
+        /* @__PURE__ */ u3(Mark, { brand: brand === "none" ? "" : brand, kind, name: name || "Payment", type: kind === "subscriptions" ? type || suggested2 : void 0, img, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: x3 ? x3.name : "Add a payment" })
       ] }),
       /* @__PURE__ */ u3(BrandPick, { kind, value: brand === "none" ? "" : brand, set: (k3) => {
@@ -8843,7 +8868,7 @@
           setKind(k3);
         }), children: categories.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3)) }) }),
         kind === "subscriptions" && /* @__PURE__ */ u3(Field, { label: "Type", children: /* @__PURE__ */ u3("select", { value: type, onChange: input(setType), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== "none" ? "logo" : "name"})` : "Other (pick one)" }),
+          /* @__PURE__ */ u3("option", { value: "", children: suggested2 ? `${subTypeName(suggested2)} (from its ${brand && brand !== "none" ? "logo" : "name"})` : "Other (pick one)" }),
           subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
         ] }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x3 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
