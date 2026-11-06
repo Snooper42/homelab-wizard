@@ -194,6 +194,12 @@ private struct WatchdogCard: View {
                         Text(failure.problem)
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                        // Snoozed on the computer (main #469): still checked, no alerts for now.
+                        if let until = summary.snoozedUntil(failure.name) {
+                            Label("No alerts about it until \(WatchdogSummary.wakeText(until))", systemImage: "bell.slash")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                         Text("Since \(failure.since, format: .relative(presentation: .named))")
                             .font(.caption)
                             .foregroundStyle(.secondary)

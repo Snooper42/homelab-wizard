@@ -18,8 +18,11 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
     let outages: [String: [WatchdogOutage]]
     /// Memory nearly full, while the watchdog has alerted about it (main #458).
     let memory: MemoryPressure?
+    /// Failing checks whose alerts are snoozed on the computer, and until
+    /// when, by check name (main #469). Still checked and shown.
+    let snoozed: [String: Date]
 
-    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages, memory }
+    enum CodingKeys: String, CodingKey { case lastRun, checks, failing, pending, week, outages, memory, snoozed }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -31,6 +34,22 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         outages = ((try? c.decodeIfPresent([String: [WatchdogOutage]].self, forKey: .outages)) ?? nil) ?? [:]
         // A part the phone can't read costs only that part.
         memory = (try? c.decodeIfPresent(MemoryPressure.self, forKey: .memory)) ?? nil
+        snoozed = ((try? c.decodeIfPresent([String: Date].self, forKey: .snoozed)) ?? nil) ?? [:]
+    }
+
+    /// When the alerts about a failing check start again, while snoozed.
+    func snoozedUntil(_ check: String, now: Date = Date()) -> Date? {
+        guard let until = snoozed[check], until > now else { return nil }
+        return until
+    }
+
+    /// When a snooze ends, as the computer says it: "3:40 PM" today,
+    /// "Sat 9:15 AM" on another day (`wakeText` in web/src/status/Cards.tsx).
+    static func wakeText(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
+        if calendar.isDate(date, inSameDayAs: now) {
+            return date.formatted(date: .omitted, time: .shortened)
+        }
+        return date.formatted(.dateTime.weekday(.abbreviated).hour().minute())
     }
 
     /// "96.2% up this week", as the computer words it: shown only below

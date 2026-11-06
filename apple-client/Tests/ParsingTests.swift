@@ -652,6 +652,35 @@ struct MemoryPressureTests {
     }
 }
 
+@Suite("Snoozed alerts")
+struct SnoozedAlertTests {
+    // main #469: the watchdog card says which failing checks' alerts wait, and until when.
+    @Test func untilWhenByCheck() throws {
+        let s = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"""
+        {"lastRun":"2026-11-06T10:00:00Z","checks":2,"pending":0,"week":{},
+         "failing":[{"name":"Immich","problem":"HTTP 502","since":"2026-11-06T09:00:00Z"}],
+         "snoozed":{"Immich":"2026-11-06T11:00:00Z","Plex":"2026-11-06T08:00:00Z"}}
+        """#.utf8))
+        let now = try #require(GoTime.parse("2026-11-06T10:30:00Z"))
+        #expect(s.snoozedUntil("Immich", now: now) == GoTime.parse("2026-11-06T11:00:00Z"))
+        #expect(s.snoozedUntil("Plex", now: now) == nil)     // already over
+        #expect(s.snoozedUntil("Nextcloud", now: now) == nil)
+        // A snoozed map that doesn't read costs only itself.
+        let bad = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"{"checks":1,"snoozed":{"Immich":"soon"}}"#.utf8))
+        #expect(bad.snoozed.isEmpty && bad.checks == 1)
+    }
+
+    @Test func wakeTextIsTheTimeTodayAndTheDayAfter() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+        let now = try #require(GoTime.parse("2026-11-06T10:30:00Z"))
+        let today = WatchdogSummary.wakeText(try #require(GoTime.parse("2026-11-06T11:00:00Z")), now: now, calendar: calendar)
+        let tomorrow = WatchdogSummary.wakeText(try #require(GoTime.parse("2026-11-07T11:00:00Z")), now: now, calendar: calendar)
+        #expect(today != tomorrow)
+        #expect(tomorrow.count > today.count) // the day's name comes first
+    }
+}
+
 @Suite("Duplicati's last run")
 struct DuplicatiRunTests {
     @Test func summarizesTheLastRun() throws {
