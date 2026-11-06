@@ -1753,6 +1753,23 @@ const smokes = [
     await page.waitForSelector('#watchCard:has-text("1 of 47 checks failing")', { timeout: 5000 });
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
   } },
+  // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
+  // A phone has no Snooze (its server does not offer it).
+  { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
+    await page.waitForSelector(pick, { timeout: 5000 });
+    await page.selectOption(pick, '1');
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer"):has-text("No alerts about it until")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
+    const shown = await page.locator(`${pick} option:checked, ${pick} option[value=""]`).first().innerText();
+    if (!/^Snoozed until /.test(shown)) throw new Error(`the menu says: ${shown}`);
+    await page.selectOption(pick, '0');
+    await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
+  } },
+  { name: 'Watchdog on a phone: a failing check, no Snooze', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
+    if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone');
+  } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');

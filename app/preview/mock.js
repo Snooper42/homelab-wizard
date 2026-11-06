@@ -137,6 +137,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Offered only by the Linux AppImage (mock: menuEntry set).
     MenuEntry: () => later(M.menuEntry ? { available: true, added: !!M.menuEntry.added } : { available: false, added: false }),
     SetMenuEntry: (on) => { M.menuEntry = { added: on }; return later(null); },
+    // Snooze a failing check's alerts: kept on the watchdog's summary, as the app does.
+    SnoozeCheck: (check, hours) => { const w = M.watchdog || {}; const z = { ...(w.snoozed || {}) }; if (hours) z[check] = new Date(Date.now() + hours * 36e5).toISOString(); else delete z[check]; M.watchdog = { ...w, snoozed: z }; return later(null); },
     Watchdog: () => later(M.watchdog || { lastRun: '0001-01-01T00:00:00Z', checks: 0, failing: [], pending: 0 }),
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),

@@ -308,6 +308,8 @@ function showWatchdog(w: health.Summary | null) {
     w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
     // Memory nearly full: Stop on one of the biggest, as its row's Stop.
     stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
+    // Snooze a failing check's alerts, then draw the card again with it.
+    snooze: async (check, hours) => { try { await go().SnoozeCheck(check, hours); showWatchdog(await go().Watchdog()); } catch (e) { showError(e); } },
   });
 }
 
