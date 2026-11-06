@@ -25,7 +25,7 @@ final class BackupsViewModel {
     /// test or vault export, or a plain export lying around.
     var needsAttention: Int {
         guard let overview else { return 0 }
-        var n = overview.stale + overview.shrank + (jobs ?? []).filter { $0.state == "failed" }.count
+        var n = overview.stale + overview.shrank + (jobs ?? []).filter { $0.state == "failed" || $0.damaged }.count
         if overview.restoreDue { n += 1 }
         if overview.vaultDue { n += 1 }
         n += overview.plainExports.count

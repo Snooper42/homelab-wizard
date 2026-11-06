@@ -248,6 +248,10 @@ private struct JobRow: View {
             }
             if let message = job.errorMessage, !message.isEmpty {
                 Text(message).font(.caption).foregroundStyle(Theme.danger).lineLimit(4)
+            } else if job.damaged, let checked = job.checked, let problem = job.checkProblem {
+                // Sunday's check found a damaged file (main #463).
+                Text("Failed its check \(checked.formatted(Self.checkTime)): \(problem). A version may not restore: open the job in Duplicati.")
+                    .font(.caption).foregroundStyle(Theme.danger).lineLimit(5)
             } else if job.state == "stale" {
                 Text("Not run for over a week").font(.caption).foregroundStyle(Theme.warning)
             }
@@ -263,12 +267,22 @@ private struct JobRow: View {
             if let next = job.nextRun {
                 Text("Next \(next, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)
             }
+            if let checked = job.checked {
+                Text(job.checkProblem == nil
+                     ? "Checked \(checked.formatted(Self.checkTime)): a sample of its files matched"
+                     : "Checked \(checked.formatted(Self.checkTime)): a file is damaged")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .accessibilityElement(children: .combine)
     }
 
+    /// "Sun, Nov 8, 7:12 AM", as the computer's dateTimeText.
+    private static let checkTime = Date.FormatStyle.dateTime.weekday(.abbreviated).month(.abbreviated).day().hour().minute()
+
     private var stateWords: String {
-        switch job.state {
+        if job.damaged { return "Failed its check" }
+        return switch job.state {
         case "ok": "Backed up"
         case "failed": "Failed"
         case "stale": "Out of date"
@@ -277,7 +291,8 @@ private struct JobRow: View {
     }
 
     private var icon: String {
-        switch job.state {
+        if job.damaged { return "xmark.octagon.fill" }
+        return switch job.state {
         case "ok": "checkmark.circle.fill"
         case "failed": "xmark.octagon.fill"
         case "stale": "exclamationmark.triangle.fill"
@@ -286,7 +301,8 @@ private struct JobRow: View {
     }
 
     private var tint: Color {
-        switch job.state {
+        if job.damaged { return Theme.danger }
+        return switch job.state {
         case "ok": Theme.success
         case "failed": Theme.danger
         case "stale": Theme.warning

@@ -498,6 +498,19 @@ struct BackupsTests {
         #expect(DuplicatiWords.summary([jobs[0]]).hasPrefix("It ran"))
     }
 
+    // main #463: Sunday's integrity check, Duplicati's own Verify of each job.
+    @Test func weeklyCheck() throws {
+        let jobs = try JSONDecoder.homelab().decode([DuplicatiJob].self, from: Data(#"""
+        [{"id":"1","name":"AppData","state":"ok","checked":"2026-11-01T07:10:00Z"},
+         {"id":"2","name":"Photos","state":"ok","checked":"2026-11-01T07:20:00Z","checkProblem":"Hash mismatch on file duplicati-b1.dblock.zip.aes"},
+         {"id":"3","name":"Docs","state":"ok","checked":"0001-01-01T00:00:00Z","checkProblem":""}]
+        """#.utf8))
+        #expect(jobs[0].checked != nil && jobs[0].checkProblem == nil && !jobs[0].damaged)
+        #expect(jobs[1].damaged && jobs[1].needsALook)
+        #expect(jobs[2].checked == nil && jobs[2].checkProblem == nil) // never checked
+        #expect(DuplicatiWords.summary(jobs) == "1 needs a look")
+    }
+
     @Test func restoreDrillsOnRecord() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
         {"restoreTest":{"lastTest":"2026-11-01T10:00:00Z","history":[

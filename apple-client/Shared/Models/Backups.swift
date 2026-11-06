@@ -275,7 +275,7 @@ enum DuplicatiWords {
 
     /// "All 4 ran 6 hours ago", or "1 needs a look".
     static func summary(_ jobs: [DuplicatiJob], now: Date = Date()) -> String {
-        let bad = jobs.filter { $0.state != "ok" }.count
+        let bad = jobs.filter(\.needsALook).count
         if bad > 0 { return bad == 1 ? "1 needs a look" : "\(bad) need a look" }
         let all = jobs.count == 1 ? "It ran" : "All \(jobs.count) ran"
         guard let newest = jobs.compactMap(\.lastFinished).max() else { return all }
@@ -304,10 +304,14 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
     let files: Int
     let versions: Int
     let sources: [String]
+    /// Its last weekly integrity check (main #463, `homelab backup-check`):
+    /// when, and what Duplicati found wrong; nil when its files matched.
+    let checked: Date?
+    let checkProblem: String?
 
     enum CodingKeys: String, CodingKey {
         case id, name, lastFinished, lastError, errorMessage, size, state, nextRun
-        case took, holds, files, versions, sources
+        case took, holds, files, versions, sources, checked, checkProblem
     }
 
     init(from decoder: Decoder) throws {
@@ -325,6 +329,9 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
         files = max(0, try c.decodeIfPresent(Int.self, forKey: .files) ?? 0)
         versions = max(0, try c.decodeIfPresent(Int.self, forKey: .versions) ?? 0)
         sources = try c.decodeIfPresent([String].self, forKey: .sources) ?? []
+        checked = GoZeroTime.drop((try? c.decodeIfPresent(Date.self, forKey: .checked)) ?? nil)
+        let problem = (try? c.decodeIfPresent(String.self, forKey: .checkProblem)) ?? nil
+        checkProblem = (problem?.isEmpty ?? true) ? nil : problem
     }
 
     /// Duplicati's sizes ("3.311 GiB") as the app's other sizes ("3.3 GB"),
@@ -360,4 +367,14 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
         if versions > 0 { parts.append(versions == 1 ? "keeps 1 version" : "keeps \(versions) versions") }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
+}
+
+extension DuplicatiJob {
+    /// Its last run went fine, but Sunday's check found a damaged file: a
+    /// version may not restore (main #463).
+    var damaged: Bool { state == "ok" && checkProblem != nil }
+
+    /// As the computer counts "need a look": not backed up, or a check
+    /// that found a damaged file.
+    var needsALook: Bool { state != "ok" || checkProblem != nil }
 }
