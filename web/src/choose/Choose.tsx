@@ -1,4 +1,4 @@
-// Choose stacks: the starter picks, the bundles, every app by category with
+// Choose apps: the starter picks, the bundles, every app by category with
 // a box to tick, and the plan of what installing the ticked ones does,
 // with the settings they need. app.ts keeps the selection and plans.
 import { render } from 'preact';

@@ -13,7 +13,7 @@ import { isMac, mod, onPhone } from '../core';
 type Line = [keys: string[], what: string];
 
 const names: Record<string, string> = {
-  choose: 'Choose stacks', status: 'Status', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
+  choose: 'Choose apps', status: 'Status', backups: 'Backups', setup: 'Setup', settings: 'Settings', finances: 'Finances', tidy: 'Tidy Up',
 };
 
 /** What each screen adds to the shortcuts that work everywhere. */
@@ -56,7 +56,7 @@ function everywhere(): Line[] {
 }
 
 const screens = (): Line[] => [
-  [[mod + '1'], 'Choose stacks'], [[mod + '2'], 'Status'], [[mod + '3'], 'Backups'], [[mod + '4'], 'Setup'],
+  [[mod + '1'], 'Choose apps'], [[mod + '2'], 'Status'], [[mod + '3'], 'Backups'], [[mod + '4'], 'Setup'],
   [[mod + ','], 'Settings'], [[mod + '6'], 'Finances'], [[mod + '7'], 'Tidy Up'],
 ];
 

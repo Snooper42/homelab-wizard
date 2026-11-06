@@ -87,7 +87,7 @@ mountShowAll($('statusAllBox'));
 // is the list's own (AppList.tsx), so it never asks the runtime.
 let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
-  // Grouped by category, as on Choose stacks; what needs a look comes
+  // Grouped by category, as on Choose apps; what needs a look comes
   // first, in a group of its own.
   // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
@@ -255,7 +255,7 @@ function drawStatus() {
   }
   const st = statusData.value!;
   statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-  if (catalog) renderApps(); // Choose stacks ticks what runs
+  if (catalog) renderApps(); // Choose apps ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
   held = st.stopped || {};
   renderTiles(st);

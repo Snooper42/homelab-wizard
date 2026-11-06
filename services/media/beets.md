@@ -4,7 +4,7 @@ version: 0.17.0
 
 # beets
 
-Tags, renames, and organizes music into the library Navidrome plays. It comes with the Music pick in Choose stacks, beside Navidrome and Feishin.
+Tags, renames, and organizes music into the library Navidrome plays. It comes with the Music pick in Choose apps, beside Navidrome and Feishin.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 | | |

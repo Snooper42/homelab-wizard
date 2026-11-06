@@ -38,7 +38,7 @@ The same order as the app's Setup screen and `./homelab setup`, which check each
 
 ## Add an optional app
 
-1. In the app, **Choose stacks**, tick the app, and install; the plan shows what will start. In Terminal, `./homelab plan <app>`, then `./homelab install <app>`.
+1. In the app, **Choose apps**, tick the app, and install; the plan shows what will start. In Terminal, `./homelab plan <app>`, then `./homelab install <app>`.
 2. Its address comes by itself: on the tailnet in Home mode; *with a domain*, a proxy host once **Set up the domain** has run once (a public app's hostname still needs `./homelab domain setup`).
 3. Sign in, set a password, and store it in Vaultwarden.
 4. Optionally, add an Uptime Kuma monitor.

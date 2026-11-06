@@ -121,10 +121,10 @@ type Meta struct {
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
 	// GoesWith are the apps this one adds to, each with a line on what it
-	// brings them: Choose stacks suggests it to those who run one.
+	// brings them: Choose apps suggests it to those who run one.
 	GoesWith map[string]string `yaml:"goes_with"`
 	// SameJob are apps that do much the same, each with a line on why
-	// you might keep one or both: Choose stacks says it beside both.
+	// you might keep one or both: Choose apps says it beside both.
 	SameJob  map[string]string `yaml:"same_job"`
 	Requires []string          `yaml:"requires"`
 	// Login names the .env settings the homelab signs in to the app with

@@ -7,6 +7,7 @@ import { ActionLink } from '../ActionLink';
 import { ago, clockText, dayText, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
 import { Row, Rows, type Tone } from '../parts/Row';
+import { attackDetail, attackFrom, attackWords } from './attack';
 
 export interface WatchdogProps {
   w: health.Summary;
@@ -128,7 +129,7 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
       {!!recent.length && (
         <Rows>
           {recent.slice(0, 3).map((a, i) => (
-            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={<span title={attackDetail(a)}>{attackWords(a.scenario)}</span>} sub={attackFrom(a)}
               end={a.banned && <span class="badge">Banned</span>} when={ago(a.when)} />
           ))}
         </Rows>

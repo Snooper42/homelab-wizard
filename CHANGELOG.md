@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status in a household's words:** *Choose stacks* is now **Choose apps** (the sidebar, the menu, the shortcuts, and the CLI's hints); *All baseline apps are up* is *The homelab's own apps are all up*; the savings tile is **Instead of subscriptions**, *$3,292 a year*; and what CrowdSec caught reads *Probing for a known security hole*, from *Netherlands · Example Hosting B.V.*, with its scenario and address on hover. On the phone, an app's log wraps its lines instead of cutting them off.
 - **A copy before anything risky:** an app's databases are now dumped just before it starts again on changed settings, as they already were before an update: when it gets a domain or tailnet address, when it starts signing in with Pocket ID, and when **Fix it** applies settings changed by hand. The dump sits beside the nightly ones, and if it fails, the change isn't made.
 - **Add to Home Screen, done right:** the phone companion added to an iPhone's Home Screen has the app's icon, no longer a picture of the page, and Android's shapes no longer cut it. Opened from there, its splash on Android is the app's own background, and the bar above it follows light or dark mode.
 - **Status read aloud:** with VoiceOver or Narrator on, Status reads out each app's change as it happens, not only a job's result: *Vikunja: Restarting…*, then *Vikunja: Running*, and apps that go down together in one line. Nothing is read for Status while another screen is shown.

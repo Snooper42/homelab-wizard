@@ -233,7 +233,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 		}
 	}
 	started := Step{ID: "started", Title: "The homelab is started", Why: "Your homelab's own apps start (updates, backups, alerts), each with a strong password made for it.",
-		Detail: plural(missing, "baseline app is", "baseline apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"}
+		Detail: plural(missing, "of the homelab's own apps is", "of the homelab's own apps are") + " not running", Run: [][]string{{"up", "--apply"}}, RunLabel: "Start the homelab"}
 	if in.NoFolder && done["runtime"] {
 		started.State, started.Detail = "waiting", "after the homelab folder is set up (Homelab folder, above)"
 	}
@@ -518,7 +518,7 @@ func Steps(ctx context.Context, in Inputs) []Step {
 	if dom == "" {
 		manual(Step{ID: "devices", Title: "Tailscale on phones and computers", Why: "Install Tailscale on each phone and computer, and the apps open on them at home and away.",
 			Detail: "Install the Tailscale app on each phone and computer and sign in with the same account."}, "tailnet")
-		// Ad blocking is a pick of its own in Home mode (Choose stacks ›
+		// Ad blocking is a pick of its own in Home mode (Choose apps ›
 		// Ad blocking): no address depends on AdGuard here.
 		if has(st, "tailnet-dns") {
 			manual(Step{ID: "adblock", Title: "Ad blocking on every device", Why: "AdGuard Home answers the lookups of every phone and computer signed in to Tailscale and drops ads and trackers, at home and away, with no router change.",

@@ -107,7 +107,7 @@ Nothing else to run. What is new:
 - Status: categories where everything runs fold into one line; each app row has a phone button (its address as a QR code) and, for the proxy, AdGuard, Duplicati, and PsiTransfer, a key button with the sign-in. **This week**, **What the apps keep**, and an *x% up this week* badge are new. **Protection** has **Fix** when the proxy stops enforcing CrowdSec's bans, and the watchdog card has **Fix it**.
 - Settings shows the everyday settings first (**Show all settings** for the rest), and **People** adds and removes household members (it needs Pocket ID).
 - Backups › **Moving to a new machine**: **Move out…** and **Move in…**.
-- Choose stacks has a shorter plan (the rest under **Details**), and the *Media automation* preset now includes qBittorrent with Gluetun, its VPN, and Seerr.
+- Choose apps has a shorter plan (the rest under **Details**), and the *Media automation* preset now includes qBittorrent with Gluetun, its VPN, and Seerr.
 - Tailscale needs no auth key: Setup's tailnet step (or `./homelab tailnet login`) opens Tailscale's sign-in page. A `TAILSCALE_AUTHKEY` you already set still works.
 - With a domain, on a Mac: Setup › **This Mac finds its apps by name** (`./homelab domain resolver`) writes `/etc/resolver/<domain>`. Once it is ✓, lines you added to `/etc/hosts` for the apps, or a DNS server set by hand on the Mac, can go.
 - In Home mode, `TAILNET_ADMIN_APPS=false` (Settings › Admin apps on the tailnet) keeps the proxy, AdGuard, Duplicati, and Dozzle off the tailnet; the next `./homelab tailnet setup` or install applies it.
@@ -156,11 +156,11 @@ A fifth scheduled job runs the phone companion. Setup's **Scheduled jobs** step 
 
 Nothing to do for a homelab with a domain. `upgrade` adds empty `*_URL` settings (each app's own address, used in Home mode) and `HOMELAB_BASELINE`; empty keeps everything as it was. Homepage restarts once on the next `up` because its list of allowed names grew.
 
-Two optional apps: Docmost (the household wiki) and Dawarich (location history). Install either from Choose stacks › Add more.
+Two optional apps: Docmost (the household wiki) and Dawarich (location history). Install either from Choose apps › Add more.
 
 ## 15 October 2026: ad blocking on the tailnet
 
-A new optional app, `tailnet-dns`, lets every phone and computer signed in to Tailscale use AdGuard Home, at home and away, with no router or Wi-Fi setting. Nothing changes until you install it (Choose stacks › **Ad blocking**, or `./homelab install @adblock`); then do what the install shows in the Tailscale admin console › DNS. Setup's AdGuard step now has **Set up AdGuard**, which answers AdGuard's first-run wizard for you; a login you already made stays as it is.
+A new optional app, `tailnet-dns`, lets every phone and computer signed in to Tailscale use AdGuard Home, at home and away, with no router or Wi-Fi setting. Nothing changes until you install it (Choose apps › **Ad blocking**, or `./homelab install @adblock`); then do what the install shows in the Tailscale admin console › DNS. Setup's AdGuard step now has **Set up AdGuard**, which answers AdGuard's first-run wizard for you; a login you already made stays as it is.
 
 ## 15 October 2026: one Compose project per category
 
@@ -185,7 +185,7 @@ The core apps moved out of `compose.yaml` into `compose/<category>.yaml`. They s
 
 ## 15 October 2026: new apps
 
-Ten optional apps: Baikal, PairDrop, PsiTransfer, Pocket ID, Wallos, Changedetection.io, Memos, Homebox, RomM, and Ghostfolio. Install any from Choose stacks. RomM looks for games on the media drive under `games/roms/<platform>`.
+Ten optional apps: Baikal, PairDrop, PsiTransfer, Pocket ID, Wallos, Changedetection.io, Memos, Homebox, RomM, and Ghostfolio. Install any from Choose apps. RomM looks for games on the media drive under `games/roms/<platform>`.
 
 - There is a new alert topic, `reminders`, for notifications from the apps themselves (Wallos renewals, Changedetection.io). Run **Set up the alert token** on Setup again (or `./homelab notify setup`) so the homelab may publish to it, then subscribe to `reminders` in the ntfy app on the phone.
 
@@ -216,7 +216,7 @@ This one time, pull by hand (`upgrade` arrives with it): `git checkout main`, `g
 - Backups: each app's newest copy, each Duplicati job's last run, **Back up now**, and **Test a restore**.
 - Setup: **Use Proton Drive**, **Create the backup jobs**, and the homelab's own updates (**Update**), including when the app itself has a newer build.
 - Settings: **Test** checks a login or token with its service; **Copy** hands a password to Vaultwarden without showing it.
-- Elsewhere: search on Choose stacks, and Show in Finder after a diagnostics report.
+- Elsewhere: search on Choose apps, and Show in Finder after a diagnostics report.
 - Menu bar: the newest alert, the last backup, and *Update ready*.
 
 **New in the jobs**
@@ -235,7 +235,7 @@ This one time, pull by hand (`upgrade` arrives with it): `git checkout main`, `g
 | You made Duplicati jobs by hand | They stay as they are, and the per-job `send-http-url` can go (the alert token step sets it for every job). **Create the backup jobs** adds only jobs whose names are missing |
 | Vaultwarden has accounts | Once a month, keep a password-protected export in `recovery-staging/secrets` ([Backups](<Backups.md#password-vault-export>)); the nightly backup reminds you |
 | You want a start page for the household | Install Homepage (it comes with the *Household* preset); its list of apps keeps itself current |
-| You want a to-do app | Install Vikunja from Choose stacks, then make each account with the command in [its note](<../services/household/Vikunja.md>) |
+| You want a to-do app | Install Vikunja from Choose apps, then make each account with the command in [its note](<../services/household/Vikunja.md>) |
 | You want MoneyMatter without Rosetta (optional, untried) | Follow [its note](<../services/finance/MoneyMatter.md#running-natively-on-apple-silicon-optional>); leaving the settings empty keeps it as it is |
 
 Nothing else changes how the apps run: no image was swapped and no data moves.

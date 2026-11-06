@@ -104,7 +104,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 
 	var plan []string
 	if len(down) > 0 {
-		plan = append(plan, "start the baseline apps that are down: "+names(down))
+		plan = append(plan, "start the homelab's own apps that are down: "+names(down))
 	}
 	if len(unwell) > 0 {
 		plan = append(plan, "restart the apps that are unwell, and recreate any that stay unwell: "+names(unwell))
@@ -122,7 +122,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		plan = append(plan, "install the scheduled jobs that are missing: "+strings.Join(jobsMissing, ", "))
 	}
 	if len(plan) == 0 {
-		u.OK("nothing to fix: every baseline app is running and well with its current settings, there is room on the disks, and the jobs are installed")
+		u.OK("nothing to fix: every one of the homelab's own apps is running and well with its current settings, there is room on the disks, and the jobs are installed")
 		return nil
 	}
 	for _, p := range plan {
