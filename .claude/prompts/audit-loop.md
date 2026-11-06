@@ -411,6 +411,53 @@ Added after round 27 (the backlog was empty; worst first):
     to read them stay in `.env`, and Remove a lost device is computer
     only, never a phone method.
 
+Added after round 36 (four left, all waiting on other lanes; worst first):
+
+33. **The Docker socket in apps' hands** (internal/dockerapi, the compose
+    files): list every container that mounts `/var/run/docker.sock` (or
+    the Docker Desktop and OrbStack sockets), read-only or not, and
+    through a socket proxy or not. A container with the socket is root on
+    the machine; one reachable through the proxy or the tailnet (Dozzle,
+    Homepage, Beszel) is a way in.
+34. **The companion on a public name**: with a domain and the Cloudflare
+    tunnel, can `phone.<domain>` (or any name) reach `homelab serve`?
+    If so, the pairing code's length, expiry, and guesses allowed per
+    minute from the internet decide whether a stranger can pair.
+35. **What is public by default** (internal/npm, install, custom apps,
+    Connect apps): the PR template promises no app goes on the internet
+    by default; check each path that makes a proxy host (a new app, a
+    custom app, an adopted one) against that, and the access list each
+    gets.
+36. **Homepage's widget keys** (internal/homepage): its config is written
+    0644 into `data/appdata/homepage`, which the AppData job copies in
+    the clear (N9). Does any widget's config carry an app's API key, and
+    does Homepage serve it to a browser?
+37. **Adopting a container** (internal/adopt): moving an app you already
+    run into the homelab reads its environment (passwords included):
+    where those values go (`.env` 0600, or a compose file 0644), what is
+    printed, and whether its volumes may name any host folder (`/`,
+    `/etc`, the home folder).
+38. **Quiet hours** (#439, once merged): a crafted or careless setting
+    must not silence the alerts that matter at night (a ban that failed,
+    a backup that failed, a disk dying, the tunnel down).
+39. **What ntfy carries** (the weekly summary, the morning line, Finances
+    reminders, restart-loop logs): ntfy may be on a public name, and a
+    phone's lock screen shows the first lines; list what each message
+    holds (amounts, names, log lines) and what a lock screen shows.
+40. **Tailscale** (internal/tailnet): the homelab never turns on Funnel;
+    what `tailscale serve` (or the apps' tailnet addresses) offers to
+    every device on the tailnet, shared-in devices included.
+41. **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
+    homelab-init.sh): runs as root in the proxy's container with the
+    bouncer key; how the key is passed and kept, and file modes.
+42. **Crash notes** (internal/crash, with #436's cleanup): what a note
+    holds (a panic can print values, secrets among them), where it is
+    kept and at what mode, and whether a report or a phone gets it.
+43. **The kit's writes** (internal/kit): files go through a fixed
+    `<name>.kit-tmp` and `.local` copy, which follow a link put there by
+    someone else on the machine (Low); and that the kit a newer app
+    brings comes only from the signed app itself.
+
 ### Security done
 
 - **Round 1 (item 1, the phone companion), in part:** every method in
@@ -719,6 +766,13 @@ Added after round 27 (the backlog was empty; worst first):
   household's; drawn by Preact as text. #434 (Account 2) saves the
   updates, Setup, people, and restarts records whole under their locks,
   0600, which settles the note below. No code change needed.
+
+- **Round 36 (#435, #437, #438, read through):** #435 shows each
+  backup's size beside the night before's from what the overview already
+  read; #437 is the page only; #438 adds catalog metadata (which apps do
+  the same job). No new phone method, record, or outside call. No code
+  change needed. The backlog was down to four items, all waiting on other
+  lanes: items 33 to 43 added.
 
 ## For Account 1
 
