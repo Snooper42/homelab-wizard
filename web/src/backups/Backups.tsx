@@ -72,6 +72,7 @@ export function JobRun({ j }: { j: duplicati.Job }) {
       {j.holds && line(`Holds ${j.holds} of yours` + (j.files ? `, ${j.files.toLocaleString('en-US')} ${j.files === 1 ? 'file' : 'files'}` : ''))}
       {(j.size || j.versions) && line([j.size && `${sizeText(j.size)} where it is kept`, j.versions && `${j.versions} ${j.versions === 1 ? 'version' : 'versions'} to go back to`].filter(Boolean).join(', '))}
       {!!j.sources?.length && line(`Copies ${sourceNames(j.sources)}`)}
+      {!never(j.checked) && line(j.checkProblem ? `Checked ${dateTimeText(new Date(j.checked!))}: a file is damaged` : `Checked ${dateTimeText(new Date(j.checked!))}: a sample of its files matched`)}
       {!never(j.nextRun) && line(`Next run ${dateTimeText(new Date(j.nextRun))}`, 'outfoot')}
     </>
   );
@@ -214,16 +215,19 @@ export function Jobs({ jobs, place, problem, waitingFor, create }: JobsProps) {
       </>
     );
   }
-  const bad = jobs.filter((j) => j.state !== 'ok').length;
+  const bad = jobs.filter((j) => j.state !== 'ok' || j.checkProblem).length;
   const newest = jobs.map((j) => j.lastFinished).filter((t) => !never(t)).sort().pop();
   return (
     <>
       <CardHead title={title}>{bad ? <span class="warn">{bad} need a look</span> : <span class="ok">✓ All {jobs.length} ran{newest ? ' ' + ago(newest) : ''}</span>}</CardHead>
       <Rows kind="jobs">
         {jobs.map((j) => {
-          const [tone, word] = jobMark[j.state] || ['', j.state];
+          const [mark, word] = jobMark[j.state] || ['', j.state];
+          // Sunday's check (homelab backup-check) found a damaged file: a version may not restore.
+          const damaged = j.checkProblem && j.state === 'ok' ? `Failed its check ${dateTimeText(new Date(j.checked!))}: ${j.checkProblem}. A version may not restore: open the job in Duplicati.` : '';
+          const tone = damaged ? 'bad' : mark;
           return (
-            <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || (j.state !== 'ok' && word)} subTone={j.errorMessage ? 'bad' : undefined}
+            <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || damaged || (j.state !== 'ok' && word)} subTone={j.errorMessage || damaged ? 'bad' : undefined}
               end={j.size && <span class="size muted">{sizeText(j.size)}</span>}
               when={<Hover label={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} tip={<JobRun j={j} />} />} />
           );

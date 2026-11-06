@@ -380,14 +380,18 @@ func WaitingFor(report *detect.Report, app *catalog.App) string {
 }
 
 // DuplicatiJobs is each Duplicati backup job's last run, read with
-// DUPLICATI_PASSWORD from Duplicati's API.
+// DUPLICATI_PASSWORD from Duplicati's API, with its last weekly check.
 func DuplicatiJobs(ctx context.Context, root string) ([]duplicati.Job, error) {
 	env := Env(root)
 	port := env["DUPLICATI_PORT"]
 	if port == "" {
 		port = "8200"
 	}
-	return duplicati.Jobs(ctx, "http://127.0.0.1:"+port, env["DUPLICATI_PASSWORD"], time.Now())
+	jobs, err := duplicati.Jobs(ctx, "http://127.0.0.1:"+port, env["DUPLICATI_PASSWORD"], time.Now())
+	if err != nil {
+		return nil, err
+	}
+	return duplicati.WithChecks(jobs, duplicati.LoadChecks(duplicati.CheckPath(root))), nil
 }
 
 // ErrNoCrowdSec means CrowdSec or the proxy is not running, so there is no

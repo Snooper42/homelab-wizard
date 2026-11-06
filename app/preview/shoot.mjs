@@ -1081,6 +1081,19 @@ const smokes = [
     const small = (await (await page.waitForSelector(`${secrets} [role=tooltip]`, { state: 'visible', timeout: 2000 })).innerText()).replace(/\s+/g, ' ');
     if (!/^Last ran /.test(small) || /, in |Holds|versions|Copies/.test(small)) throw new Error('Secrets says: ' + small);
   } },
+  // The weekly integrity check (homelab backup-check): a job whose check found a damaged file says so in red and
+  // counts as needing a look; one that passed says when on its hover.
+  { name: 'Backups: the weekly check, a damaged file in red and a passed one on hover', screen: 'backups', mock: { duplicatiJobs: duplicatiJobs.map((j) => (j.name === 'Homelab Photos' ? { ...j, checked: hoursAgo(30), checkProblem: 'Hash mismatch on file "duplicati-b9e2.dblock.zip.aes"' } : j.name === 'Homelab AppData' ? { ...j, checked: hoursAgo(30) } : j)) }, run: async (page) => {
+    await page.waitForSelector('#dupCard h2 + * .warn:text-is("1 need a look"), #dupCard .warn:text-is("1 need a look")', { timeout: 5000 });
+    const photos = page.locator('#dupCard li:has-text("Homelab Photos")');
+    const sub = (await photos.innerText()).replace(/\s+/g, ' ');
+    if (!/Failed its check .+: Hash mismatch on file "duplicati-b9e2\.dblock\.zip\.aes"\. A version may not restore/.test(sub)) throw new Error(`Photos says: ${sub}`);
+    if (!(await photos.locator('.dot.bad, [class*="bad"]').count())) throw new Error('the damaged job is not marked bad');
+    const when = '#dupCard li:has-text("Homelab AppData") .when .hovers';
+    await page.hover(when);
+    const said = (await (await page.waitForSelector(`${when} [role=tooltip]`, { state: 'visible', timeout: 3000 })).innerText()).replace(/\s+/g, ' ');
+    if (!/Checked .+: a sample of its files matched/.test(said)) throw new Error(`AppData's hover: ${said}`);
+  } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
