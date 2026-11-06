@@ -20,6 +20,8 @@ What started this page: small features asked for one by one, each now in the app
 | Feature | What it does | Pull request |
 |---|---|---|
 | Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #PR25 |
+| Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
+| Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
 | What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
 | What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
@@ -166,7 +168,7 @@ Picking, trying, and using apps.
 
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
-- **Two apps that do the same job** (S, *Idea*): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both.
+- **Two apps that do the same job** (S, *Built*, #438): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
 - **Suggestions from what you use** (S, *Idea*): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
 
@@ -236,4 +238,4 @@ What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
 - **Health in one line** (S, *Idea*): "All well", or the one thing that needs you, at the top of every screen.
-- **Savings over time** (S, *Idea*): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>).
+- **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.

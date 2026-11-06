@@ -610,6 +610,64 @@
     return /* @__PURE__ */ u3("div", { id: id2, title, role, class: "card" + (kind ? " " + kind : ""), children });
   }
 
+  // web/src/parts/Hover.tsx
+  var made = 0;
+  function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
+    const [open3, setOpen] = d2(false);
+    const [id2] = d2(() => `hover-${++made}`);
+    const at2 = A2(null);
+    const box = A2(null);
+    const timer = A2(0);
+    const show3 = (soon2) => {
+      clearTimeout(timer.current);
+      if (soon2) setOpen(true);
+      else timer.current = window.setTimeout(() => setOpen(true), 250);
+    };
+    const hide = () => {
+      clearTimeout(timer.current);
+      setOpen(false);
+    };
+    _2(() => {
+      const t3 = at2.current, c3 = box.current;
+      if (!open3 || !t3 || !c3) return;
+      const r3 = t3.getBoundingClientRect(), w3 = c3.offsetWidth, h3 = c3.offsetHeight, pad = 8;
+      let left, top;
+      if (side === "right") {
+        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
+        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
+      } else {
+        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
+        const below = r3.bottom + 6;
+        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
+      }
+      c3.style.left = `${left}px`;
+      c3.style.top = `${top}px`;
+    }, [open3]);
+    const on2 = {
+      ref: at2,
+      "aria-describedby": id2,
+      onMouseEnter: () => show3(false),
+      onMouseLeave: hide,
+      onFocus: () => show3(true),
+      onBlur: hide,
+      onKeyDown: (e3) => {
+        if (e3.key === "Escape" && open3) {
+          e3.stopPropagation();
+          hide();
+        }
+      }
+    };
+    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open3, children: (!lazy || open3) && tip });
+    return { on: on2, card, show: show3, open: open3 };
+  }
+  function Hover({ label, cls = "", tip, wide, lazy }) {
+    const { on: on2, card, show: show3 } = useHoverCard(tip, { wide, lazy });
+    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show3(true), children: [
+      label,
+      card
+    ] });
+  }
+
   // web/src/Spark.tsx
   function Spark({ values, w: w3 = 96, h: h3 = 24, title }) {
     const lo = Math.min(...values), hi = Math.max(...values), span = hi - lo || 1;
@@ -659,6 +717,43 @@
       /* @__PURE__ */ u3(Spark, { values: pts.map((p3) => p3.annual) }),
       /* @__PURE__ */ u3("span", { class: "trend", children: delta === 0 ? `same since ${since}` : `${delta > 0 ? "+" : "−"}${dollars(Math.abs(delta))} since ${since}` })
     ] });
+  }
+  function savedSoFar(history) {
+    const pts = [...history].sort((a3, b2) => a3.date.localeCompare(b2.date));
+    const byMonth2 = /* @__PURE__ */ new Map();
+    let total = 0;
+    pts.forEach((p3, i3) => {
+      const day3 = /* @__PURE__ */ new Date(p3.date + "T12:00:00");
+      const next = pts[i3 + 1] ? /* @__PURE__ */ new Date(pts[i3 + 1].date + "T12:00:00") : new Date(day3.getTime() + 864e5);
+      for (const d3 = new Date(day3); d3 < next; d3.setDate(d3.getDate() + 1)) {
+        const month3 = `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+        byMonth2.set(month3, (byMonth2.get(month3) || 0) + p3.annual / 365);
+        total += p3.annual / 365;
+      }
+    });
+    const months = [...byMonth2].map(([month3, amount]) => ({ month: month3, amount })).sort((a3, b2) => b2.month.localeCompare(a3.month));
+    return { total, since: pts[0]?.date || "", months };
+  }
+  function SavedHover({ value, history }) {
+    const s3 = savedSoFar(history);
+    if (!s3.since) return /* @__PURE__ */ u3(S, { children: value });
+    const since = dayText(/* @__PURE__ */ new Date(s3.since + "T12:00:00"), { month: "short", day: "numeric", year: "numeric" });
+    const monthName3 = (m3) => dayText(/* @__PURE__ */ new Date(m3 + "-15T12:00:00"), { month: "long", year: "numeric" });
+    return /* @__PURE__ */ u3(Hover, { cls: "savedso", label: value, tip: /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("strong", { children: [
+        "Saved so far: ",
+        dollars(s3.total)
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "muted", children: [
+        "since ",
+        since,
+        ", from what the apps replace each day"
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "savedmonths", children: s3.months.slice(0, 12).map((m3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { children: monthName3(m3.month) }),
+        /* @__PURE__ */ u3("span", { children: dollars(m3.amount) })
+      ] }, m3.month)) })
+    ] }) });
   }
   function PauseButton({ paused, onPause }) {
     const [busy2, setBusy] = d2(false);
@@ -710,7 +805,7 @@
           sub: trouble.length ? trouble.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: st.savings > 0 ? dollars(st.savings) : "$0", sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
+      /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
       /* @__PURE__ */ u3(
         Tile,
         {
@@ -1813,64 +1908,6 @@
       i3 ? /* @__PURE__ */ u3("wbr", {}) : null,
       t3
     ] })) });
-  }
-
-  // web/src/parts/Hover.tsx
-  var made = 0;
-  function useHoverCard(tip, { wide, side = "below", lazy } = {}) {
-    const [open3, setOpen] = d2(false);
-    const [id2] = d2(() => `hover-${++made}`);
-    const at2 = A2(null);
-    const box = A2(null);
-    const timer = A2(0);
-    const show3 = (soon2) => {
-      clearTimeout(timer.current);
-      if (soon2) setOpen(true);
-      else timer.current = window.setTimeout(() => setOpen(true), 250);
-    };
-    const hide = () => {
-      clearTimeout(timer.current);
-      setOpen(false);
-    };
-    _2(() => {
-      const t3 = at2.current, c3 = box.current;
-      if (!open3 || !t3 || !c3) return;
-      const r3 = t3.getBoundingClientRect(), w3 = c3.offsetWidth, h3 = c3.offsetHeight, pad = 8;
-      let left, top;
-      if (side === "right") {
-        left = Math.min(r3.right + 8, innerWidth - w3 - pad);
-        top = Math.max(pad, Math.min(r3.top - 4, innerHeight - h3 - pad));
-      } else {
-        left = Math.max(pad, Math.min(r3.left, innerWidth - w3 - pad));
-        const below = r3.bottom + 6;
-        top = below + h3 > innerHeight - pad && r3.top - h3 - 6 > pad ? r3.top - h3 - 6 : below;
-      }
-      c3.style.left = `${left}px`;
-      c3.style.top = `${top}px`;
-    }, [open3]);
-    const on2 = {
-      ref: at2,
-      "aria-describedby": id2,
-      onMouseEnter: () => show3(false),
-      onMouseLeave: hide,
-      onFocus: () => show3(true),
-      onBlur: hide,
-      onKeyDown: (e3) => {
-        if (e3.key === "Escape" && open3) {
-          e3.stopPropagation();
-          hide();
-        }
-      }
-    };
-    const card = /* @__PURE__ */ u3("span", { id: id2, role: "tooltip", class: "hovercard" + (wide ? " wide" : ""), ref: box, hidden: !open3, children: (!lazy || open3) && tip });
-    return { on: on2, card, show: show3, open: open3 };
-  }
-  function Hover({ label, cls = "", tip, wide, lazy }) {
-    const { on: on2, card, show: show3 } = useHoverCard(tip, { wide, lazy });
-    return /* @__PURE__ */ u3("span", { class: "hovers " + cls, tabIndex: 0, ...on2, onClick: () => show3(true), children: [
-      label,
-      card
-    ] });
   }
 
   // web/src/status/memory.ts
@@ -4206,6 +4243,14 @@
   }
   var matches2 = (a3, query3) => !query3 || [a3.name, a3.id, a3.description, ...a3.replaces || [], ...a3.aliases || []].join(" ").toLowerCase().includes(query3);
   var stateBadge = { running: ["running", "ok"], stopped: ["stopped", "warn"], elsewhere: ["runs elsewhere", "warn"] };
+  function sameJob(a3, p3) {
+    const installed = (id2) => ["running", "stopped"].includes(p3.status[id2]?.state || "");
+    if (installed(a3.id)) return [];
+    return p3.catalog.apps.flatMap((o3) => {
+      const why = a3.sameJob?.[o3.id] || o3.sameJob?.[a3.id];
+      return o3.id !== a3.id && why && installed(o3.id) ? [[o3, why]] : [];
+    });
+  }
   function AppRow({ a: a3, p: p3 }) {
     const native = a3.kind === "native";
     const st = p3.status[a3.id];
@@ -4231,7 +4276,13 @@
         !!a3.replaces?.length && /* @__PURE__ */ u3("div", { class: "replaces", children: [
           "Replaces ",
           a3.replaces.join(", ")
-        ] })
+        ] }),
+        sameJob(a3, p3).map(([other, why]) => /* @__PURE__ */ u3("div", { class: "samejob muted", children: [
+          "You already run ",
+          other.name,
+          ": ",
+          why
+        ] }, other.id))
       ] }),
       !!links.length && /* @__PURE__ */ u3("div", { class: "links-inline", children: links })
     ] });
@@ -12835,7 +12886,11 @@ ${pays}
       };
       if (step2[l3.stage]) out.push(step2[l3.stage]);
       const lyr = last(l3, "lyrics")?.result;
-      if (lyr && n2(lyr.none) > 0) out.push({ kind: "lyrics", title: `${count(n2(lyr.none), "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${n2(lyr.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : ""}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
+      const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
+      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${apart ? ` · ${count(apart, "song")} with two languages on one line set apart` : ""}${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      else if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics") } });
+      else if (lyr && lyr.to_clean === void 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
       const reasons = Object.keys(scan?.reasons || {}).slice(0, 2).map((r3) => r3.replace(/\b([Hh])\.?26([45])\b/g, "H.26$2")).join(", ");
