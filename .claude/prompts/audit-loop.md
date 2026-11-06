@@ -67,7 +67,7 @@ Add tasks from the owner's complaints.
 
 ### Owner-approved security work (Nov 6), before the backlog
 
-1. **N25:** the companion's proxy host adds a header with a secret only it and the companion know; `trust_forwarded_proto` is off for that host; `Encrypted` believes "https" only with the secret. Try it against a real Nginx Proxy Manager (`jc21/nginx-proxy-manager` on Docker Hub).
+1. (done: round 62) **N25:** the companion's proxy host adds a header with a secret only it and the companion know; `trust_forwarded_proto` is off for that host; `Encrypted` believes "https" only with the secret. Try it against a real Nginx Proxy Manager (`jc21/nginx-proxy-manager` on Docker Hub).
 2. **N28:** the music jobs need Python 3.10 or newer and install pinned versions (a constraints file per supported Python, tested in a fresh venv for each). `tools/media` is Account 1's, so this is the smallest security fix, in a commit of its own, and only while no open PR claims those files.
 3. **N29:** the app checks a Windows or Linux update against the build provenance the release workflow already makes (`actions/attest-build-provenance`, Sigstore, keyless), so no key is needed from the owner.
 4. **N21:** cloudflared at a fixed address on the `homelab` network, and NPM trusting `CF-Connecting-IP` from that address only. It changes every install's network, so it ships as one careful PR of its own, tried on real Docker.
@@ -1253,6 +1253,20 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   by Tdarr from its compose settings, which apps can no longer read
   through the socket proxy since N27), #471 (`scripts/logs` and crash
   notes private: the note for Account 2 is done).
+
+- **Round 62 (N25, owner-approved; #472 read):** NPM 2.16 passes a
+  client's own `X-Forwarded-Proto: https` on in its `proxy.conf`, whatever
+  `trust_forwarded_proto` says (that only stops the redirect), so the fix
+  is the companion's own location (`domain.CompanionLocation`): `$scheme`
+  and a key (`COMPANION_PROXY_KEY`, made by domain setup, saved once the
+  proxy holds it, letters and digits only as it is written into nginx's
+  settings). The companion believes "https" from the proxy only with the
+  key once it is set; with none yet it is as before (no phone loses its
+  changes until the domain is set up again; the doctor says so). Tried
+  on a real NPM 2.16 with an echo app behind it (see N25).
+  `TestDomainSetupEndToEnd` now checks the companion's host carries the
+  key saved in `.env` instead of trusting the forwarded scheme. #472
+  (Account 2's loop file) read: no security change.
 
 ## For Account 1
 
