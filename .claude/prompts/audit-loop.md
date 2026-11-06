@@ -1317,6 +1317,16 @@ From task 2, **Something is down: find out what, and fix it** (Nov 6, against th
    *Fixed looks like:* plain names ("Choose apps"; "Blocked: someone probing for a known web-server hole"; the subscription sense said). *Smoke case:* the words lint (`app/preview/words.mjs`) refusing "stacks", "baseline", and a raw scenario name on a screen.
 5. **The phone cuts log lines off at the right** (`t2-phone-mealie-page.png`, 390px): "INF Starting server on" ends mid-line with no wrap or scroll hint. *Fixed looks like:* lines wrap, or the box says it scrolls. *Smoke case:* the app page at 390px has no text running out of its box.
 
+From task 6, **Pair a partner's phone with only look access, then remove a lost phone** (Nov 6, against the fake backend; `t6-phones.png`):
+
+6. **Pairing one phone means reading three paragraphs, and a wall screen needs a link edited by hand.** The panel explains `http:` against `https:`, a "key", Finances, and then says a TV pairs "with `&kiosk` at the end of the link". Typing that onto a URL is a dead end for most households. *Fixed looks like:* "Pair a phone" and "Pair a wall screen" as two choices, each with its own QR code and one plain sentence; the details behind "More about this". *Smoke case:* Settings › Phones offers a wall-screen pairing whose QR code carries `kiosk`, with no link to edit.
+7. **Two links, with nothing saying which to use or which the QR code holds.** `https://homelab.example.com/#pair=…` and `http://192.168.1.10:8099/#pair=…` sit side by side, and the second quietly makes a phone that only looks. *Fixed looks like:* the QR code and the first link are the https one, labelled as the one to use; the home-Wi-Fi link sits under "If the phone can't open it", saying it can only look. *Smoke case:* the pairing panel names which link the QR code holds.
+8. **A red ▲ beside Anna's iPhone, unexplained.** Nothing on the row says what it warns about. *Fixed looks like:* the mark has words beside it ("Can change apps and Finances"), or isn't there.
+9. **The same thing, done two ways:** Anna's row has "Until you change it" and "Make read-only", while the iPad's has "Allow changes" and no time limit. *Fixed looks like:* every phone has the same controls in the same places.
+10. **Words:** "tailnet", "http:" and "https:", "key", and "kiosk", on a screen a household opens to pair a phone. *Fixed looks like:* "at home and on your own private network", "the secure link", "the home Wi-Fi link", "wall screen".
+
+Not a screen, but yours: **`TestJobLogSplitsAtOnceAllFinish` (#471) failed once on Windows CI** (Nov 6, #475's run: "open …\\watchdog.log: The process cannot access the file because it is being used by another process"; green on a re-run). Either the test is flaky on Windows, or a log can't be rotated on Windows while another process has it open, which would also bite a household's Windows machine. Worth a look before it turns another lane's run red.
+
 - (done: #460) **N22: a phone removed on the computer can come back** (your note in
   maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
   next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
