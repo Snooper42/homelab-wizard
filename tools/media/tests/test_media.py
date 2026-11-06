@@ -1473,11 +1473,19 @@ class TdarrHanding(Base):
         self.libs = [{"_id": "LIBM"}, {"_id": "LIBT"}]
         self.known = {}  # Tdarr's own record of each file, by its path there
         self.handed = []
+        self.tdarr_takes = True
+        mock.patch.object(ve, "TAKE_WAIT", 0).start()
 
         def http(method, url, body=None, headers=None, timeout=None):
             data = (body or {}).get("data") or {}
             if url.endswith("/api/v2/scan-files"):
-                self.handed += data["scanConfig"]["arrayOrPath"]
+                cfg = data["scanConfig"]
+                self.handed += cfg["arrayOrPath"]
+                # As Tdarr 3 does (tried, Nov 6): a list of files is read only as its folder watcher
+                # sends them; scanFindNew with a list reads none of them, and says nothing.
+                if self.tdarr_takes and cfg.get("mode") == "scanFolderWatcher":
+                    for p in cfg["arrayOrPath"]:
+                        self.known.setdefault(p, {"TranscodeDecisionMaker": "Queued"})
                 return {}
             if url.endswith("/api/v2/cruddb") and data.get("mode") == "getAll":
                 return self.libs
@@ -1498,6 +1506,24 @@ class TdarrHanding(Base):
         self.assertEqual((files[str(old)]["status"], files[str(new)]["status"]), ("queued", "queued"))
         self.assertEqual(mc.ffprobe.call_count, 1, "a film read before isn't read again")
 
+    def test_the_films_handed_are_the_ones_tdarr_has(self):
+        # Nov 6, the owner: Shrink said "Tdarr has 4 videos in its queue", and Tdarr had none. Each film
+        # handed is in Tdarr's own record after, as its folder watcher hands them.
+        films = [self.touch(self.lib["movies"] / n / (n + ".mkv")) for n in ("Heat (1995)", "Dune (2021)")]
+        movies_organizer.Movies().run()
+        self.assertEqual(sorted(self.known), sorted("/media/movies/%s/%s.mkv" % (f.parent.name, f.parent.name) for f in films))
+        self.assertIn("Tdarr has 2 videos in its queue", self.out.getvalue())
+
+    def test_shrink_says_only_what_tdarr_took(self):
+        # A Tdarr that records none of them is said, not counted as having them.
+        self.tdarr_takes = False
+        for n in ("Heat (1995)", "Dune (2021)"):
+            self.touch(self.lib["movies"] / n / (n + ".mkv"))
+        movies_organizer.Movies().run()
+        out = self.out.getvalue()
+        self.assertNotIn("videos in its queue", out)
+        self.assertIn("Tdarr hasn't taken 2 of the videos handed to it", out)
+
     def test_shrink_says_when_tdarrs_library_is_gone(self):
         self.libs = [{"_id": "someone-elses"}]
         self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
@@ -1507,6 +1533,7 @@ class TdarrHanding(Base):
         self.assertIn("Set up Tdarr again", self.out.getvalue())
 
     def test_a_film_tdarr_never_recorded_is_handed_again_then_left_for_shrink(self):
+        self.tdarr_takes = False  # a Tdarr that never records it, however it's handed
         film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
         long_ago = time.time() - 3600
         mc.save_state("movies", {"files": {str(film): {"status": "queued", "size": 10, "queued_at": long_ago}}, "pending": {}})
@@ -1533,6 +1560,7 @@ class TdarrHanding(Base):
         self.assertEqual(self.handed, [])
 
     def test_a_download_tdarr_never_took_is_filed_as_it_is(self):
+        self.tdarr_takes = False  # a Tdarr that never records it, however it's handed
         stage = self.touch(self.lib["movies"] / ".tidy-staging" / "Heat (1995)" / "Heat (1995).mkv")
         dest = self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv"
         mc.save_state("movies", {"files": {}, "pending": {str(stage): {"dest": str(dest), "replaces": [], "since": time.time() - 3600}}})

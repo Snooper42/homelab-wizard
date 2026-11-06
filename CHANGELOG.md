@@ -69,6 +69,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Shrink really hands films to Tdarr:** Tidy Up said *Tdarr has 4 videos in its queue*, but Tdarr 3 read none of them, so its page showed nothing and the films waited forever. They're now handed the way Tdarr takes them, and Tidy Up says only what Tdarr has recorded. Films stuck from before are handed again within minutes, on their own.
 - **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.
