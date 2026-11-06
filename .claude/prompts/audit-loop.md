@@ -447,7 +447,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 40. (done: round 43) **Tailscale** (internal/tailnet): the homelab never turns on Funnel;
     what `tailscale serve` (or the apps' tailnet addresses) offers to
     every device on the tailnet, shared-in devices included.
-41. **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
+41. (done: round 44, N21 open) **The proxy's CrowdSec start script** (dockerfiles/npm-crowdsec
     homelab-init.sh): runs as root in the proxy's container with the
     bouncer key; how the key is passed and kept, and file modes.
 42. **Crash notes** (internal/crash, with #436's cleanup): what a note
@@ -823,6 +823,17 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   backups failing two nights) sounding, and sound everything when the
   setting cannot be read. A note under For Account 1. Item 38 stays open
   until #439 merges. No code change needed.
+
+- **Round 44 (item 41, the proxy's CrowdSec start script):** the bouncer
+  key goes into the bouncer's config inside the proxy's container and is
+  never echoed. N21, Low, left open as a decision: NPM's nginx.conf trusts
+  a client-address header from every private network (read from its
+  source: `set_real_ip_from` 10/8, 172.16/12, 192.168/16), and our
+  `server_proxy.conf` makes it `CF-Connecting-IP`, so a device at home or
+  on the tailnet can be any address to the proxy, CrowdSec, and the apps.
+  Trusting it from the tunnel alone needs cloudflared at a fixed address
+  (or its own listener), a change to every install's network: for the
+  owner.
 
 ## For Account 1
 
