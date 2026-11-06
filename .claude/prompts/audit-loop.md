@@ -457,7 +457,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     `<name>.kit-tmp` and `.local` copy, which follow a link put there by
     someone else on the machine (Low); and that the kit a newer app
     brings comes only from the signed app itself.
-44. **What the self-update trusts** (internal/selfupdate): the checksum
+44. (done: round 54, N24) **What the self-update trusts** (internal/selfupdate): the checksum
     it checks is GitHub's own `digest`, from the same API as the
     download, so it catches a broken download but not a release swapped
     on GitHub. Does the Mac copy's code signature (and Team ID) get
@@ -510,6 +510,12 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
+55. **Windows and Linux updates rest on the release alone** (after N24):
+    neither build is signed (release.yml signs only the Mac's), so the
+    app checks GitHub's checksum, from the same release. The release has
+    build provenance (`actions/attest-build-provenance`); checking it in
+    the app, or a key the app carries (minisign), would tell a build the
+    workflow made from one put up by hand. Windows also asks for Authenticode.
 
 ### Security done
 
@@ -1005,6 +1011,21 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   Fine as it is; the record is still written 0644 on #457 (the note
   under For Account 1 stands), and a window still holds a security
   release (also there). Re-read if #457 changes before it merges.
+
+- **Round 54 (item 44, what the self-update trusts; N24):** the Mac
+  update checked the download against GitHub's own `digest`, from the
+  same release, then took the quarantine off the new app
+  (`swapScript`'s `xattr -dr`), so nothing asked who made it: a release
+  put up by someone who got at the repository would have run on every
+  Mac that took it. **N24 (Medium), fixed:** an installed app signed
+  with a Developer ID takes a new one only if `codesign --verify --deep
+  --strict` holds and its Team ID is the same; an ad-hoc build has none
+  to keep and updates as before (the workflow signs only when its
+  secret is there). `TestAMacUpdateKeepsItsSigner` (stand-ins for
+  hdiutil, ditto, codesign) failed before for another team, no team,
+  and a broken signature. Windows and Linux builds are not signed:
+  item 55. Also read #458 (memory pressure) as it merged: its alert
+  names apps and figures only. gosec clean on the change.
 
 ## For Account 1
 
