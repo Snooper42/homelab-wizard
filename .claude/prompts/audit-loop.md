@@ -406,7 +406,7 @@ Added after round 27 (the backlog was empty; worst first):
 31. (done: round 32) **Explain on another machine's Ollama**: what the model is sent when
     `OLLAMA_HOST` points off this machine (item 9 checked only
     172.17.0.1), and whether that counts as leaving the machine (Rule 3).
-32. **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
+32. (done: round 59, Tailnet devices on #465; Two-step not built) **Tailnet devices and Two-step sign-in, nudged** (the roadmap's next
     Security items): the Tailscale API key and each app's admin key used
     to read them stay in `.env`, and Remove a lost device is computer
     only, never a phone method.
@@ -516,7 +516,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     build provenance (`actions/attest-build-provenance`); checking it in
     the app, or a key the app carries (minisign), would tell a build the
     workflow made from one put up by hand. Windows also asks for Authenticode.
-56. **Duplicati's error text** (Backups, a phone's Backups, the
+56. (done: round 59) **Duplicati's error text** (Backups, a phone's Backups, the
     watchdog's alert, `homelab report`, #463's weekly check): a failed
     backup's message can name its destination; check that no login in a
     destination URL (`auth-username`, `auth-password`, a key) reaches a
@@ -1150,6 +1150,24 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   its lock; the problem text is Duplicati's own, which already reached
   Backups, item 56). Backlog grown by 10 (items 56 to 65), as 2 were
   open.
+
+- **Round 59 (item 56, Duplicati's error text; item 32 on #465):** a
+  job's `ErrorMessage` is Duplicati's own `LastErrorMessage`, sent as it
+  is to any paired device (`DuplicatiJobs`, look-only, wall screens
+  too) and into the watchdog's alert. Tried on Duplicati 2.x
+  (`duplicati/duplicati`, Docker Hub) through the homelab's own client,
+  with a login in each destination: FTP, SSH, WebDAV, and S3 that could
+  not connect each said "Connection refused" (with the address at
+  most); an unknown backend named only its protocol; a missing local
+  folder was made. No login reached the message, so no change (a fix
+  needs a check that fails first); re-run if Duplicati's messages
+  change. Item 32's Tailnet devices, read on #465: Settings only (no
+  phone method), a fixed `tailscale status --json` in the Tailscale
+  container, devices shared in from other tailnets left out, names
+  drawn as text, and the admin link a fixed prefix with the device's
+  IPv4. Fine as it is. #465 and this PR both change the generated
+  `web/types/backend.d.ts` (`TestBindings`): whichever merges second
+  regenerates it.
 
 ## For Account 1
 
