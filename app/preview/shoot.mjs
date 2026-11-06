@@ -2088,6 +2088,39 @@ const smokes = [
     await page.keyboard.press('Escape');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
+  // The owner, Nov 6: a new Mac with the media drive unplugged and no Python, ffmpeg, or Calibre had nine rows under
+  // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose folder… for media elsewhere), and the
+  // tools a library here needs, in one row (Python only, while every library is away). Once the drive is back, the
+  // tools row names all three; Calibre's also sits on Books' tab.
+  ...(() => {
+    const fresh = { ...tidy, activity: [], freed: 0, drive: null,
+      libraries: ['music', 'movies', 'tv', 'books', 'audiobooks'].map((kind) => ({ kind, folder: `/Volumes/Media/${kind === 'books' ? 'Books' : kind}`, found: false, stage: 'new', freed: 0 })),
+      checks: tidy.checks.map((c) => (c.id === 'drive' ? { ...c, name: 'The Media drive', ok: false, note: "/Volumes/Media isn't there", fix: 'Plug in the media drive (or set MEDIA_ROOT in Settings)' }
+        : c.id === 'python' ? { ...c, ok: false, note: 'Not found', fix: 'Install Python 3: brew install python (or the installer from python.org)' }
+        : c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix: 'Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh)' }
+        : c.id === 'calibredb' ? { ...c, ok: false, note: 'Not installed', fix: "Install the Calibre app (Calibre-Web doesn't include its tools)" } : c)) };
+    const back = { ...fresh, checks: fresh.checks.map((c) => (c.id === 'drive' ? { ...c, ok: true, note: '/Volumes/Media' } : c)),
+      libraries: fresh.libraries.map((l) => ({ ...l, found: true })) };
+    const rows = (page) => page.$$eval('.tidyneeds li', (li) => li.map((r) => r.querySelector('.title, strong')?.textContent.trim() || r.textContent.trim().slice(0, 60)));
+    return [
+      { name: 'Tidy Up on a new Mac with the drive away: two things, not nine', screen: 'tidy', mock: { tidy: fresh }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (JSON.stringify(got) !== JSON.stringify(['Plug in the Media drive', 'Install Python 3'])) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.waitForSelector('.tidyneeds li:has-text("Music, Movies, TV, Books and Audiobooks are on it (/Volumes/Media)")');
+        await page.waitForSelector('.tidyneeds li:has-text("Install Python 3"):has-text("brew install python (or the installer from python.org)")');
+        await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose folder…")');
+        await page.waitForFunction(() => (window.__MOCK.calls.OpenSettings || window.__MOCK.calls.Settings || 0) >= 1 || !!document.querySelector('#settings.active, .screen.active#settings'), null, { timeout: 3000 });
+      } },
+      { name: 'Tidy Up once the drive is back: the tools in one row, Calibre on Books too', screen: 'tidy', mock: { tidy: back }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (got[0] !== "Install Python 3, ffmpeg and Calibre's tools" || got.some((t) => /drive/.test(t))) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+        await page.waitForSelector(".tidyneeds li:has-text(\"Install Python 3 and Calibre's tools\")", { timeout: 3000 });
+      } },
+    ];
+  })(),
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {

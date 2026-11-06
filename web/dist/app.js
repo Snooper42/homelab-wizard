@@ -13432,16 +13432,46 @@ ${pays}
       );
     }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet. What Tidy Up does shows here, with Undo where it can be undone." }) });
   }
-  function needsFor(d3, act, review2, pick) {
-    const gone = d3.libraries.filter((l3) => !l3.found).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
-    const machine = d3.checks.filter((c3) => !c3.ok && c3.needs).map((c3) => ({
+  var toolFor = { all: [...LIBRARIES], video: ["movies", "tv"], books: ["books"] };
+  var TOOLS = /* @__PURE__ */ new Set(["python", "ffmpeg", "calibredb"]);
+  function toolsRow(d3, act, only) {
+    const missing = d3.checks.filter((c3) => !c3.ok && TOOLS.has(c3.id) && only(c3.needs || ""));
+    if (!missing.length) return [];
+    const short = { ffmpeg: "ffmpeg" };
+    const names4 = missing.map((c3) => short[c3.id] || c3.name);
+    const listed2 = names4.length === 1 ? names4[0] : names4.slice(0, -1).join(", ") + " and " + names4[names4.length - 1];
+    const fetch = missing.find((c3) => c3.install);
+    const calibre = missing.length === 1 && missing[0].id === "calibredb";
+    return [{
       kind: "machine",
-      title: c3.name,
-      sub: `${c3.note}. ${c3.fix}`,
+      title: `Install ${listed2}`,
       warn: true,
-      go: c3.install ? { label: "Install", run: () => act.install() } : c3.id === "calibredb" ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
-    }));
-    return [...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
+      // Each one's fix, without its own "Install Python 3:" (the row's title says that).
+      sub: missing.map((c3) => (missing.length > 1 ? `${short[c3.id] || c3.name}: ` : "") + (c3.fix || c3.note || "").replace(/^Install [^:]+: /, "")).join(" · "),
+      go: fetch ? { label: names4.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : "Install", run: () => act.install() } : calibre ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
+    }];
+  }
+  function needsFor(d3, act, review2, pick) {
+    const drive = d3.checks.find((c3) => c3.id === "drive" && !c3.ok);
+    const root = drive?.note?.replace(/ isn't there$/, "") || "";
+    const away2 = d3.libraries.filter((l3) => !l3.found);
+    const onIt = root ? away2.filter((l3) => l3.folder === root || l3.folder.startsWith(root.replace(/[\\/]$/, "") + "/") || l3.folder.startsWith(root.replace(/[\\/]$/, "") + "\\")) : [];
+    const listed2 = (ls) => {
+      const w3 = ls.map((l3) => names2[l3.kind]);
+      return w3.length === 1 ? w3[0] : w3.slice(0, -1).join(", ") + " and " + w3[w3.length - 1];
+    };
+    const plug = drive ? [{
+      kind: "machine",
+      warn: true,
+      title: `Plug in ${drive.name.replace(/^The /, "the ")}`,
+      sub: `${onIt.length ? `${listed2(onIt)} ${onIt.length === 1 ? "is" : "are"} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
+      go: { label: "Choose folder…", run: () => act.settings(["MEDIA_ROOT"]), quiet: true }
+    }] : [];
+    const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+    const here2 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
+    const tools = toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).some((k3) => here2.has(k3)));
+    const machine = d3.checks.filter((c3) => !c3.ok && c3.needs && c3.id !== "drive" && !TOOLS.has(c3.id)).map((c3) => ({ kind: "machine", title: c3.name, sub: `${c3.note}. ${c3.fix}`, warn: true }));
+    return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
   }
   function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
     const todos = needsFor(d3, act, review2, pick);
@@ -13485,7 +13515,8 @@ ${pays}
     if ((kind === "movies" || kind === "tv") && l3.found && !d3.activity.some((a3) => a3.kind === "arr")) {
       extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
     }
-    const rows = [...todos, ...extra];
+    const tools = l3.found ? toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).includes(kind)) : [];
+    const rows = [...tools, ...todos, ...extra];
     const changing = (review2 || []).filter((b2) => !b2.held && !skip2.has(b2.id));
     const apply = () => act.ask({
       title: `Apply the changes to ${count(changing.length, "book")}?`,
