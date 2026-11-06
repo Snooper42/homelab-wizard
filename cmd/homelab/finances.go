@@ -97,10 +97,7 @@ func (h *homelab) sendFinanceReminders(ctx context.Context, now time.Time) {
 		h.alert(ctx, digestTopic, notify.Message{Title: r.Title, Body: r.Body, Priority: 3, Tags: []string{"moneybag"}})
 	}
 	last.Day = today
-	if data, err := json.Marshal(last); err == nil {
-		_ = os.MkdirAll(filepath.Dir(state), 0o755)
-		_ = os.WriteFile(state, data, 0o644)
-	}
+	h.noteSent(state, "Finances' reminders", last)
 }
 
 // financeLines are Finances' lines for the weekly summary; none with no plan.
