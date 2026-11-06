@@ -99,7 +99,7 @@ Built together with the first screen that needs it, once two usability fixes hav
 ## Walkthrough notes
 
 What earlier walkthroughs found, worst first; take them in **Each round** step 2.4 and tick each with its PR.
-- **Status shows a stopped app with no reason**, though `data/stopped.json` keeps why (who stopped it, or the watchdog giving up).
+- **(#474)** **Status shows a stopped app with no reason.** It turned out an app stopped on purpose or by the watchdog already said why; one that stopped by itself (out of memory, an error, its port taken) read just *Stopped*. It now says when and why, everywhere. Found on the way: a folded group's names pushed the phone's Status sideways.
 - **Setup's rows cut their descriptions off with "…"**: the household can't read what a choice does before making it.
 - **An app's page says "Missed checks on Tuesday"** with nothing on what a check is or what to do.
 
