@@ -106,7 +106,8 @@ struct LedgerTests {
         let ledger = try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(json.utf8))
         #expect(ledger.transactions.filter { $0.matches("TV") }.map(\.id) == ["a"])
         #expect(ledger.transactions.filter { $0.matches("rainy") }.map(\.id) == ["b"])
-        #expect(ledger.transactions.filter { $0.matches(" ") }.count == 3)
+        // A blank search matches every transaction.
+        #expect(ledger.transactions.filter { $0.matches(" ") }.count == ledger.transactions.count)
     }
 
     @Test func nullTransactions() throws {
