@@ -51,7 +51,7 @@ For each, oldest first, one at a time:
 
 A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner in your report.
 
-**Open now:** the PR for `claude/fix-dead-code` (item 6): take it to merged. #429, #431 to #434, #436, #440 (the owner's lyrics fix), and #441 merged.
+**Open now:** #442 (`claude/fix-dead-code`, item 6): take it to merged. #429, #431 to #434, #436, #440 (the owner's lyrics fix), and #441 merged.
 
 ## Your job
 
@@ -101,7 +101,7 @@ Do these in order, one per round. Tick each with its PR number once it is known.
 4. **Memory and growth.** Anything that only grows, in memory or on disk (logs, alert and outage history, caches), gets a limit or rotation. Measure the agent's memory over an hour where it runs here; the desktop app can't run in a cloud container, so say what wasn't measured.
    - **(#436, merged)** Tidy Up's job logs (30 days), `background.log` (cut at 5 MB), `data/media-trash.jsonl` (what Undo can reach, and 30 days), crash logs (90 days), and the page-answer cache. The agent's memory over an hour is in the PR.
 5. **(#441, merged: ADR-0022)** **The database decision**, as a short record in `docs/Decisions.md`: SQLite (pure Go, `modernc.org/sqlite`, no cgo) in `data/`, only for data that grows and is searched, such as the roadmap's action log and the Memory screen's samples. Small state stays in JSON files.
-6. **(this PR, open)** **Dead code and duplicates.** Removed `compose.MustInterpolate` and `dockerapi.Client.Ping` (used nowhere); `homelab rollback` uses `History.CanRollBack`; Tidy Up's record, settings, and sizes, and Finances' receipts, write through `lockedfile.Write` (a fixed `.tmp` broke two saves at once); Finances' rev check and write are under the file's lock. Left for later: `internal/turn` and `internal/media` each have a `processAlive` (merge them once #425, which adds turn's, is in); exported functions only tests use (`ReadEnv`, `FetchedRecord`, `Testable`, `BankDay`) stay as test read-backs.
+6. **(#442, open)** **Dead code and duplicates.** Removed `compose.MustInterpolate` and `dockerapi.Client.Ping` (used nowhere); `homelab rollback` uses `History.CanRollBack`; Tidy Up's record, settings, and sizes, and Finances' receipts, write through `lockedfile.Write` (a fixed `.tmp` broke two saves at once); Finances' rev check and write are under the file's lock. Left for later: `internal/turn` and `internal/media` each have a `processAlive` (merge them once #425, which adds turn's, is in); exported functions only tests use (`ReadEnv`, `FetchedRecord`, `Testable`, `BankDay`) stay as test read-backs.
 7. **When the order runs out:** run `make check`, `make security`, `make coverage`, and the whole smoke suite (if `govulncheck` can't reach vuln.go.dev here, CI's security job is the check). Chase flaky or slow cases and stale docs, then add 10 new items here.
 
 ## For Account 1
