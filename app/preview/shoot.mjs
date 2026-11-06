@@ -392,6 +392,19 @@ const shots = [
 // with its success text and no script error.
 // A crash of the background agent yesterday, as LastCrash returns it.
 const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
+// A finger held on a Status row for ms, as a touchscreen sends it: touchstart, then touchend (and the click it makes).
+const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
+  const row = [...document.querySelectorAll('#statusRows tr')].find((r) => r.querySelector('strong')?.textContent === name);
+  const cell = row.querySelector('td.state');
+  cell.scrollIntoView({ block: 'center' });
+  const r = cell.getBoundingClientRect();
+  const touch = new Touch({ identifier: 1, target: cell, clientX: r.left + 20, clientY: r.top + r.height / 2 });
+  cell.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true }));
+  await new Promise((done) => setTimeout(done, ms));
+  const end = new TouchEvent('touchend', { touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true });
+  cell.dispatchEvent(end);
+  if (!end.defaultPrevented) cell.click();
+}, [name, ms]);
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -1331,6 +1344,22 @@ const smokes = [
     if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'homelab@example.com') throw new Error('the email was not copied');
     await page.click('#cliActions .signin:has-text("Password") button');
     await page.waitForSelector('#cliActions:has-text("Password copied")');
+  } },
+  // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
+  // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
+  // themes), where every dot is drawn in one colour.
+  { name: 'Status: the dot of each state has its own shape, in forced colours too', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .dot.bad', { timeout: 5000 });
+    const shapes = () => page.evaluate(() => Object.fromEntries(['ok', 'warn', 'bad'].map((t) => {
+      const d = document.querySelector(`#statusRows .dot.${t}`);
+      return [t, d ? getComputedStyle(d).clipPath : 'missing'];
+    })));
+    for (const forced of ['none', 'active']) {
+      await page.emulateMedia({ forcedColors: forced });
+      const s = await shapes();
+      if (s.ok !== 'none' || !s.warn.startsWith('polygon') || !s.bad.startsWith('polygon') || s.warn === s.bad) throw new Error(`forced colours ${forced}: ${JSON.stringify(s)}`);
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
   } },
   { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
     const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
@@ -3203,6 +3232,37 @@ const smokes = [
       if (await page.isVisible(`#app ${sel}`)) throw new Error(sel + ' shows on a read-only phone');
     }
     await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
+  } },
+  // Quick actions: on a phone that may make changes, a long press on an app's row opens the quick ones (Open, Restart,
+  // Stop for a while, Logs), not this computer's (Back up now, alerts, Pin); the page does not open under it. A tap
+  // still opens the page, and a phone that only looks has no menu.
+  { name: 'The phone: a long press on an app for its quick actions', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    const menu = page.locator('#statusRows .rowmenu');
+    await menu.waitFor({ timeout: 3000 });
+    const items = await menu.locator('[role^=menuitem]').allTextContents();
+    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
+    for (const never of ['Back up now', 'Pin to the top', 'Open on a phone']) if (items.some((i) => i.startsWith(never))) throw new Error(`${never} on the phone: ${items}`);
+    if (items.some((i) => i.startsWith('Tell me if it stops'))) throw new Error(`alerts on the phone: ${items}`);
+    if (await page.isVisible('#app')) throw new Error('the long press opened the app\'s page too');
+    // The finger held there selects no text (and iOS shows no callout).
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) !== 'none') throw new Error('a held finger can select the row\'s text');
+    // Where a finger can reach it: on the screen, and nothing over it.
+    const reach = await page.evaluate(() => { const b = [...document.querySelectorAll('.rowmenu button')].find((x) => x.textContent === 'Restart'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); });
+    if (!reach) throw new Error('the menu opened off the screen or under something');
+    await menu.locator('button:text-is("Restart")').click();
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) >= 1, null, { timeout: 5000 });
+    // A short tap is a tap: the app's page.
+    await longPress(page, 'Mealie', 80);
+    await page.waitForSelector('#app h1:has-text("Mealie")', { timeout: 5000 });
+  } },
+  { name: 'The phone that only looks: a long press opens no menu', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    await page.waitForTimeout(300);
+    if (await page.locator('.rowmenu').count()) throw new Error('a look-only phone has a menu');
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) === 'none') throw new Error('a look-only phone cannot select a row\'s text');
   } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
