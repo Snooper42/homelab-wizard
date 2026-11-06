@@ -3987,6 +3987,30 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
   } },
+  // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
+  // CLI says those days, and a held app has no window to choose.
+  { name: "An app's update window: Only on Sundays, and the days the CLI set", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
+    if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
+    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.click(sw('Only on Sundays'));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch went back after Status was read');
+    // Days set from the CLI (homelab updates days vikunja sat+sun): the switch names them, and off is every night.
+    await page.evaluate(() => { const M = window.__MOCK; M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, updateDays: ['sat', 'sun'] } : a)) }; });
+    await page.click(sw('Tell me if it stops')); // a change reads Status again
+    await page.waitForSelector(sw('Only on Saturdays and Sundays'), { timeout: 5000 });
+    await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
+    // Held: no window to choose.
+    await page.click(sw('Nightly updates'));
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
+  } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';
     await page.waitForSelector(`${sw}:not([disabled])`, { timeout: 5000 });
