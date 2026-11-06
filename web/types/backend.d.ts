@@ -36,6 +36,7 @@ declare namespace api {
     startedBy?: string;
     updatedAt?: string;
     held?: boolean;
+    updateDays?: string[];
     quiet?: boolean;
     pinned?: boolean;
     waitingFor?: string;

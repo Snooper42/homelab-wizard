@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **An update window per app:** an app's page has **Only on Sundays** under Nightly updates, for an app you would rather not see change midweek; the other nights leave it alone. `homelab updates days immich sat+sun` picks any days.
 - **Phones that expire:** beside a phone in Settings › Phones, **For a day**, **For a week**, or **For a month** ends its changes and Finances then, and it only looks; its row says until when. For a guest's phone, or one lent for a while (`homelab phone until <phone> 7d`).
 - **The last Status, offline:** away from home with Tailscale off, the phone opens on the last Status it saw, with a line saying when (*This is Status as it was at 7:42 AM*), rather than an error. It needs the phone's address to be HTTPS (the domain, or the tailnet's).
 - **A sheet of shortcuts:** press ? on any screen, or pick *Keyboard shortcuts* in the command palette, for that screen's own shortcuts first (typing to filter Status, the calendar's keys on Finances), then those that work everywhere and each screen's key, as this computer writes them.
