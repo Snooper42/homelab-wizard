@@ -1345,6 +1345,22 @@ const smokes = [
     await page.click('#cliActions .signin:has-text("Password") button');
     await page.waitForSelector('#cliActions:has-text("Password copied")');
   } },
+  // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
+  // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
+  // themes), where every dot is drawn in one colour.
+  { name: 'Status: the dot of each state has its own shape, in forced colours too', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .dot.bad', { timeout: 5000 });
+    const shapes = () => page.evaluate(() => Object.fromEntries(['ok', 'warn', 'bad'].map((t) => {
+      const d = document.querySelector(`#statusRows .dot.${t}`);
+      return [t, d ? getComputedStyle(d).clipPath : 'missing'];
+    })));
+    for (const forced of ['none', 'active']) {
+      await page.emulateMedia({ forcedColors: forced });
+      const s = await shapes();
+      if (s.ok !== 'none' || !s.warn.startsWith('polygon') || !s.bad.startsWith('polygon') || s.warn === s.bad) throw new Error(`forced colours ${forced}: ${JSON.stringify(s)}`);
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
+  } },
   { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
     const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
     await page.keyboard.press(`${mod}+Equal`);
