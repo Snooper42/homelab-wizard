@@ -1165,9 +1165,11 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   phone method), a fixed `tailscale status --json` in the Tailscale
   container, devices shared in from other tailnets left out, names
   drawn as text, and the admin link a fixed prefix with the device's
-  IPv4. Fine as it is. #465 and this PR both change the generated
-  `web/types/backend.d.ts` (`TestBindings`): whichever merges second
-  regenerates it.
+  IPv4. Fine as it is. #465 changes the generated
+  `web/types/backend.d.ts`, which N26 had too (`kiosk` on a phone for
+  the screens): N26 now keeps the mark on the stored device only, so
+  the two PRs share no file (lanes.md Rule 2); the Phones page can show
+  it later.
 
 ## For Account 1
 

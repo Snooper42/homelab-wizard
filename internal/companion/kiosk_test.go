@@ -43,7 +43,7 @@ func TestAWallScreenStaysOne(t *testing.T) {
 	if d, err := store.SetFinances(id, FinancesCard); err != nil || d.Finances != FinancesCard {
 		t.Errorf("the money card on a wall screen: %+v %v", d, err)
 	}
-	if p := store.Phones()[0]; !p.Kiosk || p.CanChange || p.Finances != FinancesCard {
-		t.Errorf("the Phones page sees %+v", p)
+	if d := store.Devices()[0]; !d.Kiosk || d.CanChange || d.Finances != FinancesCard {
+		t.Errorf("the screen is kept as %+v", d)
 	}
 }

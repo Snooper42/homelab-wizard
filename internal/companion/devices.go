@@ -99,15 +99,13 @@ type Phone struct {
 	LastSeen    time.Time `json:"lastSeen"`
 	// Until is when its changes and Finances end; zero: until you change it.
 	Until time.Time `json:"until,omitzero"`
-	// Kiosk: a wall screen, which only looks.
-	Kiosk bool `json:"kiosk,omitempty"`
 }
 
 // Phones lists the paired phones for the screens.
 func (s *Store) Phones() []Phone {
 	out := []Phone{}
 	for _, d := range s.Devices() {
-		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen, Until: d.Until, Kiosk: d.Kiosk})
+		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen, Until: d.Until})
 	}
 	return out
 }
