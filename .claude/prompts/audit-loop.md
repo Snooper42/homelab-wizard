@@ -437,7 +437,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     where those values go (`.env` 0600, or a compose file 0644), what is
     printed, and whether its volumes may name any host folder (`/`,
     `/etc`, the home folder).
-38. **Quiet hours** (#439, once merged): a crafted or careless setting
+38. (done: round 51) **Quiet hours** (#439, once merged): a crafted or careless setting
     must not silence the alerts that matter at night (a ban that failed,
     a backup that failed, a disk dying, the tunnel down).
 39. (done: rounds 42 and 46) **What ntfy carries** (the weekly summary, the morning line, Finances
@@ -457,6 +457,59 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     `<name>.kit-tmp` and `.local` copy, which follow a link put there by
     someone else on the machine (Low); and that the kit a newer app
     brings comes only from the signed app itself.
+44. **What the self-update trusts** (internal/selfupdate): the checksum
+    it checks is GitHub's own `digest`, from the same API as the
+    download, so it catches a broken download but not a release swapped
+    on GitHub. Does the Mac copy's code signature (and Team ID) get
+    checked before it replaces the app, and what do Linux and Windows
+    check?
+45. **Pairing's demotions are separate saves** (internal/companion
+    server.go `pair`): a kiosk or a phone paired over plain HTTP is saved
+    first with the code's permissions, then lowered in up to three more
+    saves (`SetCanChange`, `SetFinances`, `MarkUnencrypted`). With N22's
+    race, or a save that fails part-way, a wall screen or a Wi-Fi-paired
+    phone could keep Can make changes or Finances. One save, or a test
+    that each failure leaves the device with less.
+46. **A kiosk is not remembered as one** (`Device` has no kiosk field):
+    kiosk mode is enforced only at pairing, so the Phones page can later
+    give a wall screen Can make changes or Finances with nothing saying
+    it is a screen anyone walking past can use. And which `phoneMethods`
+    a kiosk may call beyond Status (Logs, AppIcon, a Finances card).
+47. **The pairing limit** (`tooMany`): global or per address? A device on
+    the Wi-Fi sending wrong codes may lock the household out of pairing
+    for 10 minutes; check the code's length and lifetime against the
+    limit, and that the limit holds across a restart of `homelab serve`.
+48. **The Finances calendar link** (`/finances.ics?key=`, the Finances
+    session's code): a key in a URL ends up in calendar apps, their sync
+    servers, and proxy logs. What it shows with Hide amounts on, how it
+    is turned off or changed, and that a wrong key is refused at the same
+    rate limit as a code. A real hole is fixed in its smallest form;
+    anything less goes in the PR for that session.
+49. **The phone's offline page across homelabs** (#453, web/dist/sw.js):
+    the copy is kept per address, not per pairing, so a phone paired again
+    to another homelab at the same name (a new computer, a move) is
+    served the old page until it is reached; check that nothing kept
+    carries a token or answer from the other one, and the worker's scope.
+50. **What each holder of Docker's socket may do** (after N18's pins): a
+    read-only mount does not limit Docker's API. List each app that gets
+    the raw socket rather than `docker-socket-proxy`, and the proxy's
+    allowed endpoints (POST, EXEC, CONTAINERS) against what each app needs.
+51. **Duplicati's passphrase** (the backups' own secret): where it is
+    kept (.env, Duplicati's database), whether a move file, `homelab
+    report`, or the Secrets job carries it, and what someone holding only
+    the off-site copy can read.
+52. **The proxy's own admin page** (Nginx Proxy Manager): the address its
+    admin port is bound to (the LAN, or this machine only), who changes
+    its first login and when, and that it is never itself a proxy host
+    (N19's question, asked of the proxy).
+53. **ntfy on a public name** (`homelab notify setup`): the server's
+    default access, the publish and read tokens' reach, and whether a
+    stranger can read the topic or send a fake alert ("backup failed,
+    open this link") that a phone shows as the homelab's.
+54. **The music jobs' Python** (internal/media, the beets venv #444 and
+    #454 remake): the venv is made with whatever `python3` comes first on
+    PATH and installs beets from PyPI at the first run. Is the version
+    pinned, with hashes? A remade venv fetches it again, unattended.
 
 ### Security done
 
@@ -899,6 +952,31 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   it now says it cannot tell yet (still held back). Immich not tried: its
   images come from ghcr.io, whose downloads are blocked from this session.
 
+- **Round 51 (Account 2's note: a removed phone comes back; N22):**
+  confirmed and written up in docs/Security.md as N22 (Medium), and under
+  For Account 2 with the test that shows it. `Lookup` reads phones.json,
+  then saves it whole when a phone is due a last-seen time; `Remove`,
+  `SetCanChange`, and `SetFinances` from another process in between are
+  saved over (`Store.mu` is one process's). A throwaway test, two stores
+  on one file with the first's `Now` removing the phone through the
+  second, failed: the removed token still looked up. Not fixed here: it
+  is storage code, Account 2's to fix first. Item 38 (quiet hours, #439)
+  read on main: a serious alert (priority 5) sounds at any hour, an
+  unreadable setting sounds everything, and the night only lowers, so no
+  setting silences what matters; done (the dying disk and failed bans
+  not being priority 5 stay under For Account 1). Read through as they
+  merged, no change: #444 (removes only `~/.music-cleanup/venv`, a link
+  there removed as a link), #449 and #450 (the page only), #451 (read
+  aloud through `textContent`), #452 (the phone's icons and colours,
+  fixed files), #442 (dead code out, Finances saved under a lock), and
+  #453 (the phone offline: its service worker keeps only the page's own
+  files, never `/api/` or the calendar; Status and the three answers it
+  is drawn with are kept, never Finances, and cleared on a 401; one note
+  under For Account 1). `make security`: gosec (both modules) and npm
+  audit clean; govulncheck still cannot reach vuln.go.dev from this
+  session (CI's security job runs it). Backlog grown by 11 (items 44 to
+  54), as 4 were open.
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -913,9 +991,32 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   takes a security fix up to 6 days late. The roadmap's own example
   ("Vaultwarden at once when a security release comes out") is not built;
   worth saying on the app's page when a password app gets a window.
+- **A phone removed while away keeps its last Status** (#453,
+  web/dist/companion.js): the kept Status goes only when the computer
+  answers 401, so a phone removed while it is away from home (lost, say)
+  shows Status as it last was until it next reaches the homelab. It is
+  what the phone had already seen, and no Finances; the comment's "all
+  of it goes when the phone is unpaired" could say "once it learns it
+  was removed". Worth a line on the Phones page's Remove.
 
 ## For Account 2
 
+- **N22: a phone removed on the computer can come back** (your note in
+  maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
+  next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
+  `internal/companion/devices.go` reads `data/phones.json`, and when a
+  phone is due a last-seen time saves the whole store a moment later;
+  `Remove`, `SetCanChange`, and `SetFinances` run in another process
+  (`homelab phone`, the app) and save it the same way. The test that
+  shows it, which failed here: pair a phone through one `NewStore(path)`,
+  then make a second `NewStore(path)` whose `Now` (called between
+  `Lookup`'s read and its save) calls `first.Remove(name)` once and
+  returns an hour on; `second.Lookup(token)`, then
+  `NewStore(path).Lookup(token)` still finds the removed phone. The same
+  with `SetCanChange(name, false)` brings Can make changes back. Fix:
+  every change under `lockedfile.Update`, as `internal/stopped` does
+  (and so no shared `phones.json.tmp`). Account 3 ticks N22 once it
+  merges.
 - **`scripts/logs` is 0755 and its files 0644** (the agent's
   `MkdirAll(h.logsDir(), 0o755)`, `crash.Watch`, `openJobLog`): another
   account on the same computer can read every job log and crash note.
