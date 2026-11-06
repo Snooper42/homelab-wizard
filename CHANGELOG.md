@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Quick actions on the phone:** on a phone that may make changes, hold an app's row on Status for its menu: Open, Start, Restart, Stop, Stop for a while, and Logs. A phone that only looks, and a wall screen, have none.
 - **A sheet for the fridge:** each person's welcome page links to their apps on one printed page, each with its address, its phone app, and a code the phone's camera opens; the sheet never has their sign-in link or a password.
 - **Suggestions from what you use:** Choose stacks › Add more opens on the apps that go with ones you run, each with what it brings them: Beets with Navidrome, Bazarr and Prowlarr with Sonarr and Radarr, Paperless-AI with Paperless-ngx, Seerr and Tdarr with Jellyfin.
 - **Quiet hours:** from 10 PM to 7 AM alerts reach the phone without a sound, unless they are serious: the password vault not answering, or backups failing two nights running. Settings › Quiet hours picks other hours, or off.

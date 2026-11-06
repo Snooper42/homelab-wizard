@@ -99,8 +99,9 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
           {!native && running && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
           {!native && <hr />}
           {!native && item('Logs', pick(() => on.logs(a)))}
-          {item('Back up now', pick(() => on.backupNow()))}
-          {!native && (
+          {/* On the phone, the quick ones: what is done to this app now. */}
+          {!companion && item('Back up now', pick(() => on.backupNow()))}
+          {!native && !companion && (
             <button type="button" role="menuitemcheckbox" aria-checked={!a.quiet} onClick={pick(() => on.alerts(a, !!a.quiet))}>
               Tell me if it stops<span class="check" aria-hidden="true">{a.quiet ? '' : '✓'}</span>
             </button>
