@@ -304,7 +304,11 @@ function showWatchdog(w: health.Summary | null) {
   drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
-  mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
+  mountWatchdog(card, {
+    w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
+    // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+    stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
+  });
 }
 
 // Protection: whether the proxy enforces CrowdSec's bans, and the attacks

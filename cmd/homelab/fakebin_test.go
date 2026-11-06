@@ -131,6 +131,8 @@ func fakeDockerMain(d string, args []string) int {
 			return 1
 		}
 		cat("info.json")
+	case "stats":
+		cat("stats.txt") // written by a test that measures memory
 	case "ps":
 		cat("ids.txt")
 	case "inspect":

@@ -94,6 +94,8 @@ type State struct {
 	// Outages are each check's times down this week, oldest first: what
 	// "94% up this week" was, for its hover.
 	Outages map[string][]Outage `json:"outages,omitempty"`
+	// Memory is the apps' memory at the last run (StepMemory).
+	Memory *Memory `json:"memory,omitempty"`
 }
 
 // Outage is one time a check was down: from its first failing run in a row
@@ -319,11 +321,17 @@ type Summary struct {
 	Days map[string]map[string][2]int `json:"days,omitempty"`
 	// Outages are each check's times down this week, oldest first.
 	Outages map[string][]Outage `json:"outages,omitempty"`
+	// Memory is there while the apps' memory has stayed high long enough
+	// to alert: Status lists the biggest apps, each with Stop.
+	Memory *Memory `json:"memory,omitempty"`
 }
 
 // Summary lists the confirmed failures with what each said last.
 func (s State) Summary() Summary {
 	sum := Summary{LastRun: s.LastRun, Checks: s.Checks, Failing: []Failure{}, Pending: len(s.Pending), Week: s.Week(), Days: s.Days, Outages: s.Outages}
+	if s.Memory != nil && s.Memory.Alerted {
+		sum.Memory = s.Memory
+	}
 	for name, since := range s.Failing {
 		sum.Failing = append(sum.Failing, Failure{Name: name, Problem: s.Problems[name], Since: since})
 	}
