@@ -58,6 +58,15 @@ func TestRead(t *testing.T) {
 			t.Errorf("%s: %+v, want %+v", c.ID, c, w)
 		}
 	}
+	// The night before's copy, beside the newest: small, so no warning.
+	for _, c := range o.Copies {
+		if c.ID == "vaultwarden" && (c.Before != 200 || c.Shrank) || c.ID == "paperless" && c.Before != 0 {
+			t.Errorf("%s: before %d, shrank %v", c.ID, c.Before, c.Shrank)
+		}
+	}
+	if o.Shrank != 0 {
+		t.Errorf("shrank %d", o.Shrank)
+	}
 	if o.Stale != 1 || o.Paused != 2 || !o.DestinationOK || !o.RestoreDue || o.RestoreTest.LastSummary == "" {
 		t.Errorf("overview: %+v", o)
 	}
@@ -66,6 +75,57 @@ func TestRead(t *testing.T) {
 	}
 	if Read(root, nil, map[string]string{"BACKUP_DESTINATION": "./backups"}, now).DestinationOK {
 		t.Error("the local default is not an off-machine destination")
+	}
+}
+
+// A copy far smaller than the night before's is flagged: the night before
+// is the copy just before the newest, not the oldest kept.
+func TestReadShrank(t *testing.T) {
+	root := t.TempDir()
+	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
+	const mb = 1 << 20
+	for _, f := range []struct {
+		name string
+		age  time.Duration
+		size int
+	}{
+		{"immich-database-20261103-043000.sql.gz", 56 * time.Hour, 3 * mb},
+		{"immich-database-20261104-043000.sql.gz", 32 * time.Hour, 2 * mb},
+		{"immich-database-20261105-043000.sql.gz", 8 * time.Hour, mb / 3},
+	} {
+		p := filepath.Join(root, "recovery-staging", "databases", "immich-database", f.name)
+		if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(p, make([]byte, f.size), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chtimes(p, now.Add(-f.age), now.Add(-f.age)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	o := Read(root, []Source{{ID: "immich-database", Name: "Immich database"}}, nil, now)
+	c := o.Copies[0]
+	if c.Size != mb/3 || c.Before != 2*mb || !c.Shrank || o.Shrank != 1 {
+		t.Errorf("copy %+v, shrank %d", c, o.Shrank)
+	}
+}
+
+func TestShrank(t *testing.T) {
+	for _, c := range []struct {
+		size, before int64
+		want         bool
+	}{
+		{0, 0, false},                // the first copy
+		{400 << 10, 1 << 20, true},   // under half of a megabyte's worth
+		{600 << 10, 1 << 20, false},  // more than half
+		{1 << 20, 2 << 20, false},    // exactly half
+		{10 << 10, 900 << 10, false}, // the one before was too small to tell
+		{3 << 20, 2 << 20, false},    // it grew
+	} {
+		if got := Shrank(c.size, c.before); got != c.want {
+			t.Errorf("Shrank(%d, %d) = %v", c.size, c.before, got)
+		}
 	}
 }
 

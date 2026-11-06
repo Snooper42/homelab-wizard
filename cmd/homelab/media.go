@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -277,6 +276,13 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		if serr := rec.Save(h.root); serr != nil {
 			h.ui.Warn("Tidy Up's record: %v", serr)
 		}
+		// Still under the media lock, which the engines write the trash
+		// log under: what Undo can no longer reach goes.
+		if lock {
+			if terr := media.TrimTrashLog(h.root, rec, time.Now()); terr != nil {
+				h.ui.Warn("Tidy Up's trash log: %v", terr)
+			}
+		}
 	}
 	return err
 }
@@ -311,7 +317,9 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 	if err := os.MkdirAll(media.LogDir(h.root), 0o755); err != nil {
 		return err
 	}
-	out, err := os.OpenFile(filepath.Join(media.LogDir(h.root), "background.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	// Kept as the agent's job logs are: past jobLogLimit its older half
+	// moves to background.1.log.
+	out, err := openJobLog(media.LogDir(h.root), "background", jobLogLimit)
 	if err != nil {
 		return err
 	}
