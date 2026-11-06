@@ -86,6 +86,9 @@ jobs:
           build iphone-app -project "$RUNNER_TEMP/xcode/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
             -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app"
 
-      # The scripts people run on their Mac.
+      # The scripts people run on their Mac: each parses, and each does what
+      # it says against stand-ins for Xcode, the iPhone and the homelab.
       - name: Scripts parse
         run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: Scripts behave
+        run: ./scripts/test-scripts.sh

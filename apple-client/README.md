@@ -15,7 +15,7 @@ apple-client/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
 ├── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
-└── scripts/            make-xcode-project.sh (the Xcode project, Mac and iPhone), run-on-this-mac.sh, run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices)
+└── scripts/            make-xcode-project.sh (the Xcode project, Mac and iPhone), run-on-this-mac.sh, run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices), test-scripts.sh (runs them all against stand-ins for Xcode, the iPhone and the homelab; CI runs it)
 ```
 
 ## Where it fits
