@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -74,5 +75,22 @@ func TestRememberedAsksNothing(t *testing.T) {
 	apps = append(apps, AppStatus{ID: "unknown", State: "running", URL: "http://localhost:9/", Since: long})
 	if !remembered(apps, now) {
 		t.Error("an app not asked yet is still to be asked")
+	}
+}
+
+// The answers kept are each page's last for answerTTL; one past it goes as
+// the next is kept, so pages no longer asked (a port changed, an app
+// removed) are not kept for as long as the agent runs.
+func TestAnswersForgetOldPages(t *testing.T) {
+	a := &answers{seen: map[string]answer{}}
+	for i := range 50 {
+		a.seen[fmt.Sprintf("http://localhost:%d", 8000+i)] = answer{"", time.Now().Add(-time.Hour)}
+	}
+	a.put("http://localhost:9293", "")
+	if len(a.seen) != 1 {
+		t.Errorf("%d answers kept, want only the fresh one", len(a.seen))
+	}
+	if _, ok := a.get("http://localhost:9293"); !ok {
+		t.Error("the fresh answer was not kept")
 	}
 }

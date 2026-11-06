@@ -42,6 +42,9 @@ services:
         bind:
           create_host_path: false
     x-homelab:
+      same_job:
+        jellyfin: "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players."
+        jellyfin-container: "Jellyfin plays music too; Navidrome is made for it, with the Subsonic phone apps. Keep both if you like either app's players."
       releases: navidrome/navidrome
       phone: Amperfy or play:Sub on iPhone, Symfonium on Android
       url: NAVIDROME_URL
@@ -188,6 +191,8 @@ services:
         bind:
           create_host_path: false
     x-homelab:
+      same_job:
+        kavita: "Both read comics and manga from the same folders; Kavita reads books too. One is usually enough."
       memory: 400
       releases: gotson/komga
       dump: sqlite:/config/database.sqlite
@@ -222,6 +227,8 @@ services:
         bind:
           create_host_path: false
     x-homelab:
+      same_job:
+        calibre-web: "Both serve your e-books: Calibre-Web keeps Calibre's library and its details, Kavita reads books and comics in one place."
       memory: 200
       releases: Kareadita/Kavita
       dump: sqlite:/kavita/config/kavita.db
