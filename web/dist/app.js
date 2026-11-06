@@ -2090,6 +2090,10 @@
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
+  var rowWords = (a3, p3) => {
+    const pend = p3.pending[a3.id];
+    return pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+  };
   var alt = (os) => os === "mac" ? "⌥" : "Alt-";
   var shift = (os) => os === "mac" ? "⇧" : "Shift-";
   function Link({ url, text: text2, open: open3, copy, os }) {
@@ -2273,7 +2277,7 @@
       setMenu(null);
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
-    const [cls, words4] = pend && !pend.failed ? ["warn", pend.note || doing[pend.action] || "Working…"] : stateOf(a3, p3.batteryPaused, p3.held);
+    const [cls, words4] = rowWords(a3, p3);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     const changed3 = changedSince(a3, p3.seen ?? null);
     return (
@@ -2679,6 +2683,28 @@
     const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id] && !keptRestarting(held3[a3.id]));
     return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
+  var heard = /* @__PURE__ */ new Map();
+  var heardOnce = false;
+  var listed = (names4) => names4.length <= 5 ? names4.slice(0, -1).join(", ") + (names4.length > 1 ? " and " : "") + names4[names4.length - 1] : `${names4.slice(0, 4).join(", ")} and ${names4.length - 4} more`;
+  function sayChanges(p3) {
+    const now = /* @__PURE__ */ new Map();
+    for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
+    const changed3 = /* @__PURE__ */ new Map();
+    if (heardOnce) for (const [id2, [name, words4]] of now) {
+      const was = heard.get(id2);
+      if (was !== void 0 && was !== words4) changed3.set(words4, [...changed3.get(words4) || [], name]);
+    }
+    heard.clear();
+    for (const [id2, [, words4]] of now) heard.set(id2, words4);
+    heardOnce = true;
+    const el3 = document.getElementById("statusAloud");
+    if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
+    const text2 = [...changed3].map(([words4, names4]) => `${listed(names4)}: ${words4}`).join(". ");
+    el3.textContent = "";
+    requestAnimationFrame(() => {
+      el3.textContent = text2;
+    });
+  }
   function AppList(p3) {
     const f4 = useFold();
     const [menu, setMenu] = d2(null);
@@ -2689,6 +2715,7 @@
       return () => clearTimeout(t3);
     }, [said]);
     const say = (id2, words4) => setSaid({ id: id2, words: words4 });
+    h2(() => sayChanges(p3));
     const q2 = useFilter().text;
     const open3 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open3 : f4.picked, [label]: !open3[label] } });
