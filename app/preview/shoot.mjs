@@ -860,6 +860,23 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written, and an app you run says nothing.
+  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'kavita');
+    const kavita = page.locator('label.app:has-text("Kavita")');
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
+    await page.fill('#search', 'tandoor');
+    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await page.fill('#search', 'kopia');
+    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    // Komga runs: its own row names nothing.
+    await page.fill('#search', 'komga');
+    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
+    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+  } },
   { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });

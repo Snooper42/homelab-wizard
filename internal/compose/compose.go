@@ -120,7 +120,10 @@ type Meta struct {
 	Local     bool     `yaml:"local"`
 	Aliases   []string `yaml:"aliases"`
 	Conflicts []string `yaml:"conflicts"`
-	Requires  []string `yaml:"requires"`
+	// SameJob are apps that do much the same, each with a line on why
+	// you might keep one or both: Choose stacks says it beside both.
+	SameJob  map[string]string `yaml:"same_job"`
+	Requires []string          `yaml:"requires"`
 	// Login names the .env settings the homelab signs in to the app with
 	// (the user or email, then the password), for Status's Sign in.
 	Login   []string `yaml:"login"`
