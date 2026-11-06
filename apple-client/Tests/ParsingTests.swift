@@ -429,6 +429,22 @@ struct BackupsTests {
         #expect(DuplicatiWords.summary([jobs[0]]).hasPrefix("It ran"))
     }
 
+    @Test func restoreDrillsOnRecord() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"restoreTest":{"lastTest":"2026-11-01T10:00:00Z","history":[
+          {"when":"2026-10-01T10:00:00Z","seconds":240,"passed":true,"summary":"12 files"},
+          {"when":"2026-11-01T10:00:00Z","passed":true,"summary":"12 files"},
+          {"when":"2026-11-05T10:00:00Z","seconds":30,"passed":false,"summary":"3 files differ","engine":"kopia"}]}}
+        """#.utf8))
+        #expect(o.restoreTest.failedSince?.summary == "3 files differ")
+        #expect(o.restoreTest.lastPassTook == 240)      // the newest pass wasn't timed
+        #expect(o.restoreTest.recentDrills.first?.engine == "kopia")
+
+        // A drill that doesn't read costs only the record.
+        let bad = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"restoreTest":{"lastTest":"2026-11-01T10:00:00Z","history":[{"when":"soon"}]}}"#.utf8))
+        #expect(bad.restoreTest.history.isEmpty && bad.restoreTest.lastTest != nil)
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())

@@ -160,8 +160,10 @@ extension BackupCopy {
 struct RestoreLog: Decodable, Sendable, Equatable {
     var lastTest: Date?
     var lastSummary: String?
+    /// The restore drills on record, oldest first (`backup.RestoreRun`).
+    var history: [RestoreRun] = []
 
-    enum CodingKeys: String, CodingKey { case lastTest, lastSummary }
+    enum CodingKeys: String, CodingKey { case lastTest, lastSummary, history }
 
     init() {}
 
@@ -169,6 +171,48 @@ struct RestoreLog: Decodable, Sendable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         lastTest = GoZeroTime.drop(try c.decodeIfPresent(Date.self, forKey: .lastTest))
         lastSummary = try c.decodeIfPresent(String.self, forKey: .lastSummary)
+        // A drill that doesn't read costs only the record, not the backups screen.
+        history = ((try? c.decodeIfPresent([RestoreRun].self, forKey: .history)) ?? nil) ?? []
+    }
+
+    /// The newest drill, when it failed: what the restore tile leads with.
+    var failedSince: RestoreRun? {
+        guard let newest = history.last, !newest.passed else { return nil }
+        return newest
+    }
+
+    /// How long the newest passing drill that was timed took, in seconds.
+    var lastPassTook: Int? {
+        history.reversed().first { $0.passed && $0.seconds > 0 }?.seconds
+    }
+
+    /// The last six drills, newest first, as the tile lists them on hover.
+    var recentDrills: [RestoreRun] { Array(history.suffix(6).reversed()) }
+}
+
+/// One restore drill (`backup.RestoreRun`).
+struct RestoreRun: Decodable, Sendable, Equatable {
+    let when: Date
+    let seconds: Int
+    let passed: Bool
+    let summary: String
+    /// "" for Duplicati, "kopia" for the second engine.
+    let engine: String
+
+    enum CodingKeys: String, CodingKey { case when, seconds, passed, summary, engine }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        when = try c.decode(Date.self, forKey: .when)
+        seconds = max(0, try c.decodeIfPresent(Int.self, forKey: .seconds) ?? 0)
+        passed = try c.decodeIfPresent(Bool.self, forKey: .passed) ?? false
+        summary = try c.decodeIfPresent(String.self, forKey: .summary) ?? ""
+        engine = try c.decodeIfPresent(String.self, forKey: .engine) ?? ""
+    }
+
+    /// "4 min", "45 sec".
+    static func took(_ seconds: Int) -> String {
+        Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .abbreviated, maximumUnitCount: 2))
     }
 }
 

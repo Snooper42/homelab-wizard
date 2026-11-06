@@ -103,8 +103,18 @@ struct BackupsView: View {
 
     private func restore(_ o: BackupOverview) -> some View {
         Section("Restore Tests") {
+            if let failed = o.restoreTest.failedSince {
+                Label("Failed \(failed.when.formatted(.relative(presentation: .named))): \(failed.summary)", systemImage: "xmark.octagon.fill")
+                    .foregroundStyle(.red)
+            }
             if let tested = o.restoreTest.lastTest {
-                LabeledContent("Last passed") { Text(tested, format: .relative(presentation: .named)) }
+                LabeledContent("Last passed") {
+                    if let took = o.restoreTest.lastPassTook {
+                        Text("\(tested.formatted(.relative(presentation: .named))) · in \(RestoreRun.took(took))")
+                    } else {
+                        Text(tested, format: .relative(presentation: .named))
+                    }
+                }
                 if let summary = o.restoreTest.lastSummary, !summary.isEmpty {
                     Text(summary).font(.callout).foregroundStyle(.secondary)
                 }
@@ -114,6 +124,27 @@ struct BackupsView: View {
             if o.restoreDue {
                 Label("A restore test is due: Test a Restore, below, runs one.", systemImage: "calendar.badge.exclamationmark")
                     .foregroundStyle(.orange)
+            }
+            if !o.restoreTest.history.isEmpty {
+                DisclosureGroup("Drills on record (\(o.restoreTest.history.count))") {
+                    // By position: two drills can share a moment.
+                    ForEach(o.restoreTest.recentDrills.indices, id: \.self) { i in
+                        let run = o.restoreTest.recentDrills[i]
+                        HStack {
+                            Image(systemName: run.passed ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                                .foregroundStyle(run.passed ? .green : .red)
+                                .accessibilityLabel(run.passed ? "Passed" : "Failed")
+                            Text(run.when, format: .dateTime.month(.abbreviated).day())
+                            if run.engine == "kopia" { Text(verbatim: "Kopia").foregroundStyle(.secondary) }
+                            Spacer()
+                            if run.seconds > 0 {
+                                Text(RestoreRun.took(run.seconds)).foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.callout)
+                        .accessibilityElement(children: .combine)
+                    }
+                }
             }
             if let kopia = o.kopia {
                 VStack(alignment: .leading, spacing: 2) {
