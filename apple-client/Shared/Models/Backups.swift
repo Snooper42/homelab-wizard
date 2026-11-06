@@ -302,6 +302,24 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
         sources = try c.decodeIfPresent([String].self, forKey: .sources) ?? []
     }
 
+    /// Duplicati's sizes ("3.311 GiB") as the app's other sizes ("3.3 GB"),
+    /// as `sizeText` in web/src/backups/Backups.tsx. Anything else is kept.
+    static func sizeText(_ text: String) -> String {
+        let parts = text.trimmingCharacters(in: .whitespaces).split(separator: " ", omittingEmptySubsequences: true)
+        let powers: [String: Double] = ["b": 0, "bytes": 0, "kb": 1, "kib": 1, "mb": 2, "mib": 2, "gb": 3, "gib": 3, "tb": 4, "tib": 4]
+        guard parts.count == 2, let power = powers[parts[1].lowercased()],
+              let number = Double(parts[0].replacingOccurrences(of: ",", with: ".")), number.isFinite, number >= 0
+        else { return text }
+        let bytes = number * pow(1024, power)
+        guard bytes < Double(Int64.max) else { return text }
+        return Int64(bytes).formatted(.byteCount(style: .file))
+    }
+
+    /// The folders it copies, by name: /source/appdata/immich/ is "immich".
+    var sourceNames: [String] {
+        sources.map { s in s.split(separator: "/").last.map(String.init) ?? s }
+    }
+
     /// "Took 4 min · 48.2 GB in 4,210 files · keeps 12 versions", or nil with nothing to say.
     var lastRunSummary: String? {
         var parts: [String] = []
@@ -309,7 +327,8 @@ struct DuplicatiJob: Decodable, Sendable, Equatable, Identifiable {
             parts.append("Took " + Duration.seconds(took).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .abbreviated, maximumUnitCount: 2)))
         }
         if let holds, !holds.isEmpty {
-            parts.append(files > 0 ? "\(holds) in \(files.formatted()) files" : holds)
+            let held = Self.sizeText(holds)
+            parts.append(files > 0 ? "\(held) in \(files.formatted()) files" : held)
         } else if files > 0 {
             parts.append("\(files.formatted()) files")
         }

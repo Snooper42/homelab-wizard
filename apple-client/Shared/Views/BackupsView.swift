@@ -231,25 +231,26 @@ private struct JobRow: View {
                     .accessibilityLabel(stateWords)
                 Text(job.name).fontWeight(.semibold)
                 Spacer()
-                if let size = job.size { Text(size).font(.caption).foregroundStyle(.secondary) }
+                if let size = job.size { Text(DuplicatiJob.sizeText(size)).font(.caption).foregroundStyle(.secondary) }
             }
             if let finished = job.lastFinished {
                 Text("Finished \(finished, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)
             } else {
                 Text("Hasn't run yet").font(.caption).foregroundStyle(.secondary)
             }
-            if job.state == "failed", let message = job.errorMessage, !message.isEmpty {
+            if let message = job.errorMessage, !message.isEmpty {
                 Text(message).font(.caption).foregroundStyle(.red).lineLimit(4)
+            } else if job.state == "stale" {
+                Text("Not run for over a week").font(.caption).foregroundStyle(.orange)
             }
             if let summary = job.lastRunSummary {
                 Text(summary).font(.caption).foregroundStyle(.secondary)
             }
             if !job.sources.isEmpty {
-                Text(job.sources.prefix(4).joined(separator: ", ") + (job.sources.count > 4 ? ", …" : ""))
-                    .font(.caption2.monospaced())
+                Text("Copies " + job.sourceNames.joined(separator: ", "))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .textSelection(.enabled)
+                    .lineLimit(3)
             }
             if let next = job.nextRun {
                 Text("Next \(next, format: .relative(presentation: .named))").font(.caption).foregroundStyle(.secondary)

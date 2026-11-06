@@ -445,6 +445,15 @@ struct BackupsTests {
         #expect(bad.restoreTest.history.isEmpty && bad.restoreTest.lastTest != nil)
     }
 
+    @Test func duplicatiSizesAndFoldersReadPlainly() throws {
+        #expect(DuplicatiJob.sizeText("3.311 GiB") == Int64(3.311 * 1_073_741_824).formatted(.byteCount(style: .file)))
+        #expect(DuplicatiJob.sizeText("512 bytes") == Int64(512).formatted(.byteCount(style: .file)))
+        #expect(DuplicatiJob.sizeText("about a lot") == "about a lot")
+        #expect(DuplicatiJob.sizeText("1e400 GB") == "1e400 GB")
+        let job = try JSONDecoder.homelab().decode(DuplicatiJob.self, from: Data(#"{"id":"1","sources":["/source/appdata/immich/","/source/appdata/paperless"]}"#.utf8))
+        #expect(job.sourceNames == ["immich", "paperless"])
+    }
+
     @Test func neverRunIsNotLate() throws {
         let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"{"lastRun":"0001-01-01T00:00:00Z"}"#.utf8))
         #expect(o.lastRun == nil && !o.isLate())
