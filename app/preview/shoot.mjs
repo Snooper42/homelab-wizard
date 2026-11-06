@@ -860,6 +860,23 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
+  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written, and an app you run says nothing.
+  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'kavita');
+    const kavita = page.locator('label.app:has-text("Kavita")');
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
+    await page.fill('#search', 'tandoor');
+    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await page.fill('#search', 'kopia');
+    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    // Komga runs: its own row names nothing.
+    await page.fill('#search', 'komga');
+    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
+    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+  } },
   { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
@@ -951,6 +968,40 @@ const smokes = [
   } },
   // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
   // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
+  // first record, month by month, newest first, and the card is not cut off.
+  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    await page.hover(tile);
+    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
+    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
+    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
+    const now = new Date().toLocaleString('en-US', { month: 'long' });
+    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    await page.focus(tile);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+  } },
+  // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
+  // copy less than half the night before's warned about on its row.
+  { name: 'Backups: a copy beside the night before’s, and one that shrank', screen: 'backups', mock: { backups: { ...backups, shrank: 1, copies: backups.copies.map((c) =>
+    c.id === 'immich-database' ? { ...c, size: 9e6, before: 61e6, shrank: true }
+    : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
+    : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
+    const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
+    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
+    // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
+    await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
+    if (await row('Vikunja').locator('td.size .was').count()) throw new Error('a copy within a tenth of the night before\'s says was');
+    if ((await row('Vikunja').locator('td.size').getAttribute('title')) !== 'The night before: 396 KB') throw new Error(`Vikunja's hover: ${await row('Vikunja').locator('td.size').getAttribute('title')}`);
+  } },
   { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
     const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
     await page.waitForSelector(when, { timeout: 5000 });

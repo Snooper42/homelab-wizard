@@ -118,6 +118,9 @@ export function copyGroups(o: backup.Overview): CopyGroup[] {
   ].filter((g) => g.copies.length);
 }
 
+/** Whether a copy's size moved by a tenth or more since the night before's: then both are shown. */
+const changed = (c: backup.Copy) => !!c.before && Math.abs(c.size - c.before) >= c.before / 10;
+
 /** Each database copy or volume archive, in groups; stale and up to date open, the rest folded with their names. */
 export function CopyRows({ o }: { o: backup.Overview }) {
   const [picked, setPicked] = useState<Record<string, boolean>>({});
@@ -139,10 +142,14 @@ export function CopyRows({ o }: { o: backup.Overview }) {
             </th>
           </tr>,
           ...(open ? g.copies.map((c) => (
-            <tr key={c.id} class={'copy ' + c.state}>
-              <td class="name"><span class={'dot ' + g.tone} />{c.name}</td>
+            <tr key={c.id} class={'copy ' + c.state + (c.shrank ? ' shrank' : '')}>
+              <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} />{c.name}
+                {c.shrank && <span class="note bad">Less than half the night before's {bytes(c.before || 0)}: check that {c.name} still has its data</span>}
+              </td>
               <td class="when muted">{never(c.newest) ? '—' : ago(c.newest)}</td>
-              <td class="size muted">{bytes(c.size)}</td>
+              <td class="size muted" title={c.before ? `The night before: ${bytes(c.before)}` : undefined}>
+                {bytes(c.size)}{!c.shrank && changed(c) && <span class="was"> (was {bytes(c.before || 0)})</span>}
+              </td>
               <td class="kept muted">{c.count ? `${c.count} kept` : '—'}</td>
             </tr>
           )) : []),
