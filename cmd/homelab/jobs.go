@@ -702,6 +702,8 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	var unwell []string  // running apps a restart may help
 	var missing []string // apps whose container is gone
 	engineUp := true
+	var mem health.Memory // the apps' memory, when memOK
+	memOK := false
 	client, err := h.docker(ctx)
 	if err != nil {
 		engineUp = false
@@ -747,6 +749,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		}
 		results, unwell, missing = append(results, apps...), sick, gone
 		report := detect.Analyze(h.catalog, containers)
+		mem, memOK = memoryNow(ctx, client, report)
 		results = append(results, h.dumpAgeChecks(report, time.Now())...)
 		results = append(results, h.duplicatiChecks(ctx, report, env, time.Now())...)
 		if checked, ok, msg := crowdsecBouncer(ctx, client, report, time.Now()); checked {
@@ -807,11 +810,24 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	var state health.State
 	var failed []health.Result
 	var recovered []string
+	var memHigh, memBack bool
+	now := time.Now()
 	if err := health.UpdateState(health.StatePath(h.root), func(s *health.State) {
-		failed, recovered = s.Update(results, time.Now())
+		failed, recovered = s.Update(results, now)
+		if memOK {
+			memHigh, memBack = s.StepMemory(mem, now)
+		}
 		state = *s
 	}); err != nil {
 		h.ui.Warn("could not save watchdog state: %v", err)
+	}
+	// Memory pressure: once, when it has stayed high; once, when it is down.
+	switch {
+	case memHigh && state.Memory != nil:
+		h.ui.Warn("memory: the apps use %d%% of what Docker has", percent(*state.Memory))
+		h.alert(ctx, "tunnel-watchdog", memoryAlert(*state.Memory, now))
+	case memBack:
+		h.alert(ctx, "tunnel-watchdog", memoryBack(mem))
 	}
 	if engineUp {
 		if healed := h.heal(ctx, client, unwell, missing, state, env, time.Now()); len(healed) > 0 {

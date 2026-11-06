@@ -167,6 +167,9 @@ const alerts = [
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+// The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
+const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
+  { id: 'immich-server', name: 'Immich', bytes: 2.5 * 2 ** 30 }, { name: 'someones-own', bytes: 1.2 * 2 ** 30 }, { id: 'paperless', name: 'Paperless-ngx', bytes: 900 * 2 ** 20 }] };
 const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0, week: { vikunja: 0.996 },
   days: { vikunja: Object.fromEntries([6, 5, 4, 3, 2, 1, 0].map((n) => [dayKey(n), n === 3 ? [93, 96] : n === 0 ? [40, 40] : [96, 96]])) } };
 // The household, for an app's Who uses it.
@@ -392,6 +395,19 @@ const shots = [
 // with its success text and no script error.
 // A crash of the background agent yesterday, as LastCrash returns it.
 const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
+// A finger held on a Status row for ms, as a touchscreen sends it: touchstart, then touchend (and the click it makes).
+const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
+  const row = [...document.querySelectorAll('#statusRows tr')].find((r) => r.querySelector('strong')?.textContent === name);
+  const cell = row.querySelector('td.state');
+  cell.scrollIntoView({ block: 'center' });
+  const r = cell.getBoundingClientRect();
+  const touch = new Touch({ identifier: 1, target: cell, clientX: r.left + 20, clientY: r.top + r.height / 2 });
+  cell.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true }));
+  await new Promise((done) => setTimeout(done, ms));
+  const end = new TouchEvent('touchend', { touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true });
+  cell.dispatchEvent(end);
+  if (!end.defaultPrevented) cell.click();
+}, [name, ms]);
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -1332,6 +1348,22 @@ const smokes = [
     await page.click('#cliActions .signin:has-text("Password") button');
     await page.waitForSelector('#cliActions:has-text("Password copied")');
   } },
+  // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
+  // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
+  // themes), where every dot is drawn in one colour.
+  { name: 'Status: the dot of each state has its own shape, in forced colours too', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .dot.bad', { timeout: 5000 });
+    const shapes = () => page.evaluate(() => Object.fromEntries(['ok', 'warn', 'bad'].map((t) => {
+      const d = document.querySelector(`#statusRows .dot.${t}`);
+      return [t, d ? getComputedStyle(d).clipPath : 'missing'];
+    })));
+    for (const forced of ['none', 'active']) {
+      await page.emulateMedia({ forcedColors: forced });
+      const s = await shapes();
+      if (s.ok !== 'none' || !s.warn.startsWith('polygon') || !s.bad.startsWith('polygon') || s.warn === s.bad) throw new Error(`forced colours ${forced}: ${JSON.stringify(s)}`);
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
+  } },
   { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
     const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
     await page.keyboard.press(`${mod}+Equal`);
@@ -1699,6 +1731,20 @@ const smokes = [
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
     await page.click('#protectFix');
     await page.waitForSelector('#cliTitle:has-text("Fix it")', { timeout: 5000 });
+  } },
+  // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
+  // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
+  { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
+    const rows = await page.locator('#memoryPressure li').allInnerTexts();
+    if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    if (await page.locator('#memoryPressure li:has-text("someones-own") button').count()) throw new Error('Stop on a container the catalog does not know');
+    await page.click('#memoryPressure button[aria-label="Stop Immich"]');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
+    if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
@@ -2183,6 +2229,59 @@ const smokes = [
     await page.keyboard.type('s');
     if (await page.$('.filterbox')) throw new Error('typing in an open menu opened the filter');
   } },
+  // A sheet of shortcuts: ? on any screen, the focus not in a field, lists the screen's own shortcuts first, then those
+  // that work everywhere and each screen's key, as this system writes them; on Status it doesn't start the filter. In a
+  // field, ? is typed. The palette's Keyboard shortcuts opens it too, and Close puts the focus back where it was.
+  { name: 'Keyboard shortcuts: ? and the palette open them, the screen’s own first', screen: 'status', run: async (page) => {
+    const sheet = '#keysSheet';
+    const heads = () => page.$$eval(`${sheet} h3`, (h) => h.map((x) => x.textContent));
+    const text = () => page.$eval(sheet, (s) => s.innerText.replace(/\s+/g, ' '));
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.keyboard.press('?');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads()).join('|') !== 'On Status|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
+    let said = await text();
+    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘2 Status', '⌘, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('Ctrl') || /\bF1 /.test(said) || said.includes('F5')) throw new Error(`another system's keys on a Mac: ${said}`);
+    if (await page.$('.filterbox')) throw new Error('? started the filter');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    // In a field, ? is a character like any other.
+    await page.click('nav button[data-screen="choose"]');
+    await page.fill('#search', 'what');
+    await page.focus('#search');
+    await page.keyboard.press('?');
+    if ((await page.inputValue('#search')) !== 'what?') throw new Error(`the field holds "${await page.inputValue('#search')}"`);
+    if (await page.isVisible(sheet)) throw new Error('? in a field opened the sheet');
+    await page.fill('#search', '');
+    // From the palette, on Finances: the calendar's keys, and Close back where the focus was.
+    await page.click('nav button[data-screen="finances"]');
+    await page.focus('nav button[data-screen="finances"]');
+    await page.keyboard.press('Meta+k');
+    await page.fill('.palette .palfield', 'keyboard');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads())[0] !== 'On Finances') throw new Error(`the first section: ${await heads()}`);
+    said = await text();
+    if (!said.includes('Page Up Page Down The month before or after')) throw new Error(`no calendar keys in: ${said}`);
+    await page.click(`${sheet} button:text-is("Close")`);
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.matches('nav button[data-screen="finances"]'), null, { timeout: 2000 })
+      .catch(async () => { throw new Error(`the focus went to ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80))}`); });
+  } },
+  // The same sheet on Windows: Ctrl, F5 beside Ctrl+R, the menu key, and F1 for the guide.
+  { name: 'Keyboard shortcuts as Windows: Ctrl, F5, and F1', screen: 'backups', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await page.keyboard.press('?');
+    await page.waitForSelector('#keysSheet:not([hidden])', { timeout: 3000 });
+    const said = await page.$eval('#keysSheet', (s) => s.innerText.replace(/\s+/g, ' '));
+    for (const want of ['Ctrl+K The command palette', 'Ctrl+R F5 Check the screen again', 'Shift+F10 Menu key', 'F1 The guide', 'Ctrl+, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('⌘')) throw new Error(`a Mac's keys on Windows: ${said}`);
+    if (await page.$('#keysSheet h3:text-is("On Backups")')) throw new Error('a section for a screen with no keys of its own');
+  } },
   // The command palette: ⌘K (Ctrl+K) on any screen opens a field over it; an app's name lists its Open, page, Restart,
   // Stop, and Logs, the arrows pick, Return runs, a name nothing has says so, and Escape closes it with the focus back
   // where it was. Its field is a combobox whose active option follows the arrows (VoiceOver reads it).
@@ -2393,6 +2492,47 @@ const smokes = [
     });
     // Well before the minute's poll.
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
+  } },
+  // Status read aloud: a screen reader hears each row's change as it is drawn, through one polite live region: a
+  // Restart's step and its end, and apps that go down together in one line. Nothing on the first draw, nor while
+  // another screen is shown.
+  { name: 'Status read aloud: a row’s change, a job’s step, and two apps at once', screen: 'status', run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 5000 });
+    await page.evaluate(() => {
+      window.__said = [];
+      const el = document.getElementById('statusAloud');
+      new MutationObserver(() => { if (el.textContent) window.__said.push(el.textContent); }).observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    const said = () => page.evaluate(() => window.__said);
+    if ((await page.getAttribute('#statusAloud', 'role')) !== 'status') throw new Error('the region is not a status');
+    await page.waitForTimeout(400);
+    if ((await said()).length) throw new Error(`said on the first draw: ${await said()}`);
+    // A Restart: its step as it starts, and the state it ends in.
+    await page.evaluate(() => { window.__MOCK.actionDelay = 900; });
+    await page.click('tr:has(strong:text-is("Vikunja")) td.state', { button: 'right' });
+    await page.click('.rowmenu button:text-is("Restart")');
+    await page.waitForFunction(() => window.__said.includes('Vikunja: Restarting…'), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`no "Vikunja: Restarting…" in ${JSON.stringify(await said())}`); });
+    await page.waitForFunction(() => window.__said.at(-1) === 'Vikunja: Running', null, { timeout: 5000 })
+      .catch(async () => { throw new Error(`the end not said: ${JSON.stringify(await said())}`); });
+    // Two apps down at once: one line.
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' || a.id === 'navidrome' ? { ...a, health: 'unhealthy' } : a)) };
+      window.__emit('status:changed', { apps: ['vikunja', 'navidrome'], status: M.status });
+    });
+    await page.waitForFunction(() => /^(Vikunja and Navidrome|Navidrome and Vikunja): Unhealthy$/.test(window.__said.at(-1) || ''), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`two apps not said together: ${JSON.stringify(await said())}`); });
+    // On another screen, Status's changes are not read out.
+    const n = (await said()).length;
+    await page.click('nav button[data-screen="backups"]');
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
+      window.__emit('status:changed', { apps: ['navidrome'], status: M.status });
+    });
+    await page.waitForTimeout(600);
+    if ((await said()).length !== n) throw new Error(`said on Backups: ${JSON.stringify((await said()).slice(n))}`);
   } },
   { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
@@ -2918,6 +3058,16 @@ const smokes = [
     };
     const line = '#overnightLine .overnight';
     return [
+      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
+      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
+        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+        await page.waitForTimeout(1500);
+        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
+        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
+        await page.waitForSelector(line, { timeout: 5000 });
+      } },
       { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
         await page.clock.setFixedTime(morning);
         await page.evaluate(() => window.__emit('status:changed'));
@@ -3204,6 +3354,37 @@ const smokes = [
     }
     await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
   } },
+  // Quick actions: on a phone that may make changes, a long press on an app's row opens the quick ones (Open, Restart,
+  // Stop for a while, Logs), not this computer's (Back up now, alerts, Pin); the page does not open under it. A tap
+  // still opens the page, and a phone that only looks has no menu.
+  { name: 'The phone: a long press on an app for its quick actions', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    const menu = page.locator('#statusRows .rowmenu');
+    await menu.waitFor({ timeout: 3000 });
+    const items = await menu.locator('[role^=menuitem]').allTextContents();
+    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
+    for (const never of ['Back up now', 'Pin to the top', 'Open on a phone']) if (items.some((i) => i.startsWith(never))) throw new Error(`${never} on the phone: ${items}`);
+    if (items.some((i) => i.startsWith('Tell me if it stops'))) throw new Error(`alerts on the phone: ${items}`);
+    if (await page.isVisible('#app')) throw new Error('the long press opened the app\'s page too');
+    // The finger held there selects no text (and iOS shows no callout).
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) !== 'none') throw new Error('a held finger can select the row\'s text');
+    // Where a finger can reach it: on the screen, and nothing over it.
+    const reach = await page.evaluate(() => { const b = [...document.querySelectorAll('.rowmenu button')].find((x) => x.textContent === 'Restart'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); });
+    if (!reach) throw new Error('the menu opened off the screen or under something');
+    await menu.locator('button:text-is("Restart")').click();
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) >= 1, null, { timeout: 5000 });
+    // A short tap is a tap: the app's page.
+    await longPress(page, 'Mealie', 80);
+    await page.waitForSelector('#app h1:has-text("Mealie")', { timeout: 5000 });
+  } },
+  { name: 'The phone that only looks: a long press opens no menu', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    await page.waitForTimeout(300);
+    if (await page.locator('.rowmenu').count()) throw new Error('a look-only phone has a menu');
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) === 'none') throw new Error('a look-only phone cannot select a row\'s text');
+  } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
@@ -3257,6 +3438,24 @@ const smokes = [
     await page.waitForSelector('#pairing code:has-text("K7QX4MRA")');
     const paired = await page.evaluate(() => window.__MOCK.paired);
     if (paired?.finances !== 'edit' || paired.canChange) throw new Error(`paired with ${JSON.stringify(paired)}`);
+  } },
+  // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
+  // that only looks (the kitchen screen) has nothing to end.
+  { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const anna = '#phonesCard li:has-text("Anna’s iPhone")';
+    await page.waitForSelector(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, { timeout: 5000 });
+    if (await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').count()) throw new Error('a phone that only looks offers an end');
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, String(24 * 7));
+    await page.waitForSelector(`${anna} .phoneuntil:has-text("then it only looks")`, { timeout: 5000 });
+    const until = await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Anna’s iPhone').until);
+    const days = (new Date(until).getTime() - Date.now()) / 864e5;
+    if (!(days > 6.9 && days < 7.1)) throw new Error(`kept until ${until}`);
+    const want = new Date(until).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!(await page.textContent(`${anna} .phoneuntil`)).includes(want)) throw new Error(`the row does not say ${want}: ${await page.textContent(`${anna} .phoneuntil`)}`);
+    // Until you change it: the end goes.
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, '0');
+    await page.waitForSelector(`${anna} .phoneuntil`, { state: 'detached', timeout: 5000 });
   } },
   // Finances on a phone: only where it may see them; a phone allowed to
   // look has no way to change them; every view fits a phone.
@@ -3787,6 +3986,30 @@ const smokes = [
     // Status says so too: the row's badge.
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
+  // CLI says those days, and a held app has no window to choose.
+  { name: "An app's update window: Only on Sundays, and the days the CLI set", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
+    if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
+    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.click(sw('Only on Sundays'));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch went back after Status was read');
+    // Days set from the CLI (homelab updates days vikunja sat+sun): the switch names them, and off is every night.
+    await page.evaluate(() => { const M = window.__MOCK; M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, updateDays: ['sat', 'sun'] } : a)) }; });
+    await page.click(sw('Tell me if it stops')); // a change reads Status again
+    await page.waitForSelector(sw('Only on Saturdays and Sundays'), { timeout: 5000 });
+    await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
+    // Held: no window to choose.
+    await page.click(sw('Nightly updates'));
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
   } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';

@@ -39,11 +39,14 @@ let outages: Record<string, health.Outage[]> = {};
 // What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
 let lastEvents: notify.Event[] = [];
 let watched = false;
+let backupsAsked = 0;
 function drawOvernight() {
   if (!lastStatus) return;
   const now = Date.now();
-  // The night's database copies come from Backups, read for it only in the morning.
-  if (nightOf(now) && !backupsData.value) backupsData.fresh(10 * 60000);
+  // The night's database copies come from Backups, read for it only in the
+  // morning, and asked again at most once a minute: a read that fails is
+  // drawn here too (backupsData.watch), and must not ask again at once.
+  if (nightOf(now) && !backupsData.value && now - backupsAsked > 60000) { backupsAsked = now; backupsData.fresh(10 * 60000); }
   mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
 }
 backupsData.watch(drawOvernight);
@@ -301,7 +304,11 @@ function showWatchdog(w: health.Summary | null) {
   drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
-  mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
+  mountWatchdog(card, {
+    w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
+    // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+    stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
+  });
 }
 
 // Protection: whether the proxy enforces CrowdSec's bans, and the attacks

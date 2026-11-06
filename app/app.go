@@ -1186,6 +1186,18 @@ func (a *App) SetPhoneFinances(id, level string) ([]companion.Phone, error) {
 	return store.Phones(), err
 }
 
+// SetPhoneUntil ends what a phone may do beyond looking (changes, and
+// Finances) in hours from now; 0 keeps it until you change it.
+func (a *App) SetPhoneUntil(id string, hours int) ([]companion.Phone, error) {
+	store := companion.NewStore(companion.StorePath(a.root))
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	_, err := store.SetUntil(id, until)
+	return store.Phones(), err
+}
+
 // RemovePhone unpairs a phone: its token stops working at once.
 func (a *App) RemovePhone(id string) ([]companion.Phone, error) {
 	store := companion.NewStore(companion.StorePath(a.root))
@@ -1481,7 +1493,8 @@ func (a *App) StopUntil(id, until string) error {
 
 // SetAppSetting turns one of an app's own settings on or off, from its
 // page: "updates" (the nightly update; off holds it, homelab updates
-// hold|release), "alerts" (the watchdog's alerts about it, homelab
+// hold|release), "sundays" (its update window: Sundays only, or every
+// night, homelab updates days), "alerts" (the watchdog's alerts about it, homelab
 // notify on|off), or "pinned" (at the top of Status and the menu bar's
 // Open an app, homelab pin|unpin). Status says the new state.
 func (a *App) SetAppSetting(id, setting string, on bool) error {
@@ -1501,6 +1514,15 @@ func (a *App) SetAppSetting(id, setting string, on bool) error {
 		args = []string{"updates", "hold", id}
 		if on {
 			args[1] = "release"
+		}
+	case "sundays":
+		// Its update window: the nightly update takes it on Sundays only, or every night.
+		if err := a.container(id); err != nil {
+			return err
+		}
+		args = []string{"updates", "days", id, "every"}
+		if on {
+			args[3] = "sun"
 		}
 	case "alerts":
 		args = []string{"notify", "off", id}

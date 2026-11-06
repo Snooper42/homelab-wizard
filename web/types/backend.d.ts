@@ -36,6 +36,7 @@ declare namespace api {
     startedBy?: string;
     updatedAt?: string;
     held?: boolean;
+    updateDays?: string[];
     quiet?: boolean;
     pinned?: boolean;
     waitingFor?: string;
@@ -397,6 +398,7 @@ declare namespace companion {
     unencrypted?: boolean;
     paired: string;
     lastSeen: string;
+    until?: string;
   }
 }
 
@@ -770,10 +772,22 @@ declare namespace finance {
 }
 
 declare namespace health {
+  interface AppMemory {
+    id?: string;
+    name: string;
+    bytes: number;
+  }
   interface Failure {
     name: string;
     problem: string;
     since: string;
+  }
+  interface Memory {
+    used: number;
+    total: number;
+    since?: string;
+    alerted?: boolean;
+    biggest?: health.AppMemory[];
   }
   interface Outage {
     from: string;
@@ -788,6 +802,7 @@ declare namespace health {
     week: Record<string, number>;
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
+    memory?: health.Memory | null;
   }
 }
 
@@ -1085,6 +1100,7 @@ interface Backend {
     SetMenuEntry(arg1: boolean): Promise<void>;
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
     SetPhoneFinances(arg1: string, arg2: string): Promise<companion.Phone[]>;
+    SetPhoneUntil(arg1: string, arg2: number): Promise<companion.Phone[]>;
     SetTrayAtLogin(arg1: boolean): Promise<void>;
     SetUpdatesPaused(arg1: boolean): Promise<updates.State>;
     SettingTests(): Promise<string[]>;

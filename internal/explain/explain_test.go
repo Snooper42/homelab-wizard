@@ -166,3 +166,18 @@ func TestNoOllama(t *testing.T) {
 		t.Errorf("no models: %v", err)
 	}
 }
+
+// An app's own password, printed in a sentence rather than as key=value
+// (qBittorrent's temporary Web UI password), is not in a model's context
+// either: OLLAMA_HOST may put the model on another computer.
+func TestRedactAPrintedPassword(t *testing.T) {
+	got := Redact("The WebUI administrator password was not set. A temporary password is provided for this session: Xq7rT2pLm\nGenerated admin password: Kp9wQ3zR")
+	for _, leak := range []string{"Xq7rT2pLm", "Kp9wQ3zR"} {
+		if strings.Contains(got, leak) {
+			t.Errorf("%q left in:\n%s", leak, got)
+		}
+	}
+	if !strings.Contains(got, "temporary password is provided for this session: ") {
+		t.Errorf("the line lost its words:\n%s", got)
+	}
+}

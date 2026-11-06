@@ -17,6 +17,7 @@ internal/awake 78
 internal/battery 85
 internal/board 99
 internal/catalog 71
+internal/claim 91
 internal/companion 83
 internal/compose 79
 internal/core 83

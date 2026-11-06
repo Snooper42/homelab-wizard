@@ -11,6 +11,7 @@ import (
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/proc"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/turn"
 )
 
@@ -211,4 +212,37 @@ func askedBy(t *testing.T, pid int) time.Time {
 		at = began.Add(time.Second)
 	}
 	return at
+}
+
+// While another job has the turn (an update takes an app down and up
+// again, and Docker may restart it while its database starts), the
+// watchdog does not stop it as a restart loop, which would keep it stopped
+// for good; it looks again once the job is over.
+func TestWatchdogLeavesRestartLoopsToAJob(t *testing.T) {
+	ntfy := func(n int) []docker.FakeContainer {
+		return []docker.FakeContainer{{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Running: true, Status: "restarting", Project: "homelab_security", Service: "ntfy", Restarts: n}}
+	}
+	fakeDocker(t, ntfy(1))
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	t.Setenv(turn.Env, "")
+	homelabCmd(t, root, "", "watchdog")
+	if err := os.MkdirAll(turn.Dir(root), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	at := askedBy(t, os.Getppid())
+	other := filepath.Join(turn.Dir(root), fmt.Sprintf("%020d-%d.json", at.UnixNano(), os.Getppid()))
+	data, _ := json.Marshal(turn.Ticket{PID: os.Getppid(), What: "Update all apps now", At: at, Host: hostnameForTest(t)})
+	if err := os.WriteFile(other, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	calls := fakeDocker(t, ntfy(5))
+	out, _ := homelabCmd(t, root, "", "watchdog")
+	if strings.Contains(readCalls(t, calls), " stop ntfy") || stopped.Load(stopped.Path(root)).Has("ntfy") {
+		t.Fatalf("stopped as a restart loop while another job ran:\n%s", out)
+	}
+	_ = os.Remove(other)
+	out, _ = homelabCmd(t, root, "", "watchdog")
+	if n := strings.Count(readCalls(t, calls), " stop ntfy"); n != 1 {
+		t.Errorf("not stopped once the job ended (%d):\n%s", n, out)
+	}
 }
