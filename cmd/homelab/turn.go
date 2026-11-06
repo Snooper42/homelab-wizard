@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/turn"
@@ -117,6 +118,15 @@ func (h *homelab) takeTurn(ctx context.Context) error {
 	}
 	h.turnHeld = release
 	return nil
+}
+
+// jobRunning reports whether another job has the turn. What runs by
+// itself (the watchdog's restarts, the battery saver, the stop timer, a
+// drive coming back) leaves the apps to that job, and looks again later;
+// one run by the job itself has its turn.
+func (h *homelab) jobRunning() bool {
+	_, busy := turn.First(h.root)
+	return busy && os.Getenv(turn.Env) == ""
 }
 
 // releaseTurn gives the turn up, if this command took it.

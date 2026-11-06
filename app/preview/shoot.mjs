@@ -3422,6 +3422,24 @@ const smokes = [
     const paired = await page.evaluate(() => window.__MOCK.paired);
     if (paired?.finances !== 'edit' || paired.canChange) throw new Error(`paired with ${JSON.stringify(paired)}`);
   } },
+  // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
+  // that only looks (the kitchen screen) has nothing to end.
+  { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const anna = '#phonesCard li:has-text("Anna’s iPhone")';
+    await page.waitForSelector(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, { timeout: 5000 });
+    if (await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').count()) throw new Error('a phone that only looks offers an end');
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, String(24 * 7));
+    await page.waitForSelector(`${anna} .phoneuntil:has-text("then it only looks")`, { timeout: 5000 });
+    const until = await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Anna’s iPhone').until);
+    const days = (new Date(until).getTime() - Date.now()) / 864e5;
+    if (!(days > 6.9 && days < 7.1)) throw new Error(`kept until ${until}`);
+    const want = new Date(until).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!(await page.textContent(`${anna} .phoneuntil`)).includes(want)) throw new Error(`the row does not say ${want}: ${await page.textContent(`${anna} .phoneuntil`)}`);
+    // Until you change it: the end goes.
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, '0');
+    await page.waitForSelector(`${anna} .phoneuntil`, { state: 'detached', timeout: 5000 });
+  } },
   // Finances on a phone: only where it may see them; a phone allowed to
   // look has no way to change them; every view fits a phone.
   { name: 'The phone: no Finances until the phone may see them', screen: 'status', phone: ['companion'], run: async (page) => {

@@ -165,6 +165,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab phone allow <id>                # may start, stop, restart, and back up
 ./homelab phone read-only <id>
 ./homelab phone finances <id> view        # it sees Finances (edit: it may change them too; card: a wall screen's money card only; off: hidden again)
+./homelab phone until <id> 7d             # its changes and Finances end in a week (12h, 2w); then it only looks. never: no end
 ./homelab phone remove <id>               # its token stops working
 ./homelab serve                           # the companion itself (the serve job runs it)
 ```
