@@ -44,6 +44,9 @@ type App struct {
 	Aliases     []string `json:"aliases,omitempty"`
 	DependsOn   []string `json:"dependsOn,omitempty"`
 	Conflicts   []string `json:"conflicts,omitempty"`
+	// GoesWith are the apps this one adds to, by ID, each with what it
+	// brings them (x-homelab goes_with): suggested to those who run one.
+	GoesWith map[string]string `json:"goesWith,omitempty"`
 	// SameJob are apps that do much the same, by ID, each with why you
 	// might keep one or both (x-homelab same_job; said from one side).
 	SameJob map[string]string `json:"sameJob,omitempty"`
@@ -128,7 +131,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	}
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
-		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, SameJob: a.Meta.SameJob,
+		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith, SameJob: a.Meta.SameJob,
 		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()
