@@ -47,6 +47,8 @@ services:
     depends_on: [karakeep-chrome, karakeep-meilisearch]
     networks: [default, homelab]
     x-homelab:
+      same_job:
+        linkwarden: "Both save links with a copy of each page; one is usually enough."
       memory: 400
       phone: Karakeep, to save links from the share sheet
       url: KARAKEEP_URL
