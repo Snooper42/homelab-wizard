@@ -19,7 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
-| Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #PRn |
+| Memory pressure alert | The apps above 90% of the memory Docker has for two watchdog runs in a row: one alert naming the three biggest, and Status's Watchdog card lists them, each with Stop | #458 |
 | An update window per app | An app's page › **Only on Sundays**, or `homelab updates days` for any days: the other nights' updates leave it alone | #457 |
 | Phones that expire | Settings › Phones › **For a week** beside a phone: its changes and Finances end then, and it only looks | #455 |
 | The last Status, offline | Away from home with no tailnet, the phone opens on the last Status it saw, with a line saying when, rather than an error | #453 |
@@ -113,7 +113,7 @@ So a laptop or a small machine stays responsive, and you can see why when it doe
 - **Memory limits** (M, *Mocked up*): a limit for an app or one part of it, suggested from its peak; reaching it restarts that part, and the watchdog says so.
 - **Stop when idle** (L, *Mocked up*): stop Immich's machine learning after an hour with no new photos and start it when a phone uploads; the same for other apps with a clear sign of work.
 - **Ways to free memory** (M, *Mocked up*): suggestions from what the apps actually do: one idle for hours, two that do the same job (Komga and Kavita), one not opened in a month, and the runtime's limit set higher than the apps need.
-- **Memory pressure alert** (S, *Built*, #PRn): an alert when the apps stay above 90% of the memory Docker has for 10 minutes or more (two watchdog runs in a row), naming the three biggest; Status's Watchdog card lists them, each with Stop, until it comes down.
+- **Memory pressure alert** (S, *Built*, #458): an alert when the apps stay above 90% of the memory Docker has for 10 minutes or more (two watchdog runs in a row), naming the three biggest; Status's Watchdog card lists them, each with Stop, until it comes down.
 - **Quiet hours for heavy work** (M, *Idea*): Tdarr, Immich's jobs, and the downloads run at night, or while the machine is idle and plugged in, and pause when you use it.
 - **Disk space ahead** (M, *Idea*): at today's rate, when each drive fills (photos, downloads, backups), and which app grows fastest.
 
