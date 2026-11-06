@@ -69,6 +69,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy lyrics works, and in minutes:** setting apart two languages on one line waited on LRCLIB for every song first, and a song LRCLIB didn't answer for (slow, blocked, or busy) was skipped and kept them. With thousands of songs that took hours, waited for power, and left most of them as they were. **Tidy lyrics** now sets every song right on this computer, asking LRCLIB nothing, on battery too, and Overview offers it beside **Add lyrics**. Adding lyrics sets each song right first too.
 - **Rebuilding from a backup never leaves half a settings file:** `homelab rebuild` rewrote `.env` in place, so the agent or the app reading it at that moment could find it empty and run without its settings. It's replaced whole now, as every other save of it is.
 - **A phone you remove stays removed:** when the phones' server noted a phone's visit at the moment you removed that phone, or took away Can make changes or Finances, on the computer, it could save the phone back as it was, and its link worked again. Every change to the phones' list now waits for the one before it.
 - **Tidy Up's music scripts run from Terminal recover from a Python upgrade too:** `music_tidy.py` run by hand makes beets' setup again when the Python it was made with is gone, instead of stopping with *No such file or directory*. Your music library and its database stay as they are.

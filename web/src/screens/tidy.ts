@@ -93,7 +93,8 @@ let listening = false;
 async function run(kind: string, action: string, args: string[] = [], yes = false) {
   if (job && !job.ended) return;
   if (!listening) { listening = true; window.runtime.EventsOn('media:event', onEvent); }
-  job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(' ')}`.trim()] };
+  const title = action === 'lyrics' && args.includes('--tidy') ? 'Tidying lyrics' : titles[`${kind} ${action}`] || `${kind} ${action}`;
+  job = { kind, action, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(' ')}`.trim()] };
   draw();
   try {
     await go().TidyRun(kind, action, args, yes);
