@@ -379,9 +379,22 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		if h.CertificateID == 0 || !h.SSLForced {
 			t.Errorf("%s should use the wildcard certificate", h.DomainNames[0])
 		}
+		if h.DomainNames[0] == "homelab.example.com" {
+			// The phone companion's host vouches for https itself (N25): the
+			// tunnel never carries it, so it trusts no client's word, and it
+			// sends the key now saved in .env.
+			key := envValue(t, root, "COMPANION_PROXY_KEY")
+			if h.TrustForwardedProto || len(key) < 24 || !strings.Contains(h.AdvancedConfig, `"`+key+`"`) {
+				t.Errorf("the companion's host should carry the key saved in .env (%q), not trust X-Forwarded-Proto: %+v", key, h)
+			}
+			continue
+		}
 		if !h.TrustForwardedProto {
 			t.Errorf("%s should trust X-Forwarded-Proto from the tunnel", h.DomainNames[0])
 		}
+	}
+	if _, ok := hosts["homelab.example.com"]; !ok {
+		t.Errorf("no proxy host for the phone companion (all: %v)", hosts)
 	}
 	for host, target := range map[string]string{
 		"photos.example.com":    "immich-server",
@@ -1113,4 +1126,19 @@ func TestStartupAsksTheRuntimeToStart(t *testing.T) {
 	if code != 0 || asked != 1 {
 		t.Fatalf("asked %d time(s), exit %d:\n%s", asked, code, out)
 	}
+}
+
+// envValue is key's value in the homelab's .env.
+func envValue(t *testing.T, root, key string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if v, ok := strings.CutPrefix(line, key+"="); ok {
+			return strings.Trim(v, `"`)
+		}
+	}
+	return ""
 }
