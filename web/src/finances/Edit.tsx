@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
-import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned, wayOnlyFixes } from './importData';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned, wayOnly, wayOnlyFixes } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -985,7 +985,8 @@ function ImportForm(props: EditProps) {
     if (!f) return;
     const t = await f.text();
     setName(f.name); setText(t); setProblem(''); setPicked({});
-    setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
+    const all = isOfx(t) ? [] : csvRows(t);
+    setCols(isOfx(t) ? null : guessColumns(all[0] || [], all.slice(1)));
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
   const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
@@ -1047,6 +1048,7 @@ function ImportForm(props: EditProps) {
       </div>
       {!!text && <>
         <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{[fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : '', found.length - fresh.length - fixes.size ? `${found.length - fresh.length - fixes.size} already in, skipped` : ''].filter(Boolean).join(' · ')}</span></h3>
+        {!ofx && found.length > 1 && found.every((t) => !t.payee || wayOnly(t.payee)) && <p class="formerr bad importnote" role="alert">No payee here is a name, only {found.find((t) => t.payee)?.payee ? `“${found.find((t) => t.payee)!.payee}”` : 'empty'}: pick the column with the names under Payee.</p>}
         {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {

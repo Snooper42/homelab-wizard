@@ -37,12 +37,14 @@ export interface Columns { date: number; amount: number; debit: number; credit: 
 /**
  * The columns guessed from a header row's words, the first word given
  * winning over the next wherever its column is: Chase's Details (CREDIT or
- * DEBIT) comes before its Description, which is the payee.
+ * DEBIT) comes before its Description, which is the payee. With the rows
+ * under it, a payee column that holds no names (only which way the money
+ * went, or figures) gives way to the column with the most different words.
  */
-export function guessColumns(header: string[]): Columns {
+export function guessColumns(header: string[], body: string[][] = []): Columns {
   const lower = header.map((h) => h.toLowerCase());
   const find = (...words: string[]) => { for (const w of words) { const i = lower.findIndex((h) => h.includes(w)); if (i >= 0) return i; } return -1; };
-  return {
+  const col: Columns = {
     date: find('date', 'posted', 'day', 'datum'),
     amount: find('amount', 'value', 'betrag'),
     debit: find('debit', 'withdrawal', 'money out', 'paid out'),
@@ -50,7 +52,23 @@ export function guessColumns(header: string[]): Columns {
     payee: find('payee', 'description', 'name', 'merchant', 'details', 'empfänger', 'beschreibung'),
     memo: find('memo', 'note', 'reference', 'category'),
   };
+  if (body.length && !namesIn(body, col.payee)) {
+    const taken = new Set([col.date, col.amount, col.debit, col.credit, col.memo]);
+    const better = header.map((_, i) => i).filter((i) => !taken.has(i) && namesIn(body, i))
+      .sort((a, b) => kinds(body, b) - kinds(body, a))[0];
+    if (better !== undefined) col.payee = better;
+  }
+  return col;
 }
+
+/** The cells of a column with something in them. */
+const cellsOf = (body: string[][], i: number) => body.map((r) => (r[i] || '').trim()).filter(Boolean);
+
+/** How many different words a column holds. */
+const kinds = (body: string[][], i: number) => new Set(cellsOf(body, i).map((c) => c.toLowerCase())).size;
+
+/** Whether a column holds names: some cell that is not which way the money went, a figure, or a day. */
+const namesIn = (body: string[][], i: number) => i >= 0 && cellsOf(body, i).some((c) => !wayOnly(c) && !/^[-+()$€£\d.,\s/:]+$/.test(c));
 
 /** A day as a bank writes it: 2026-10-30, 10/30/2026 (or 30/10/2026 when dayFirst), 30.10.2026, Oct 30 2026; "" when it is none. */
 export function readDay(s: string, dayFirst = false): string {
@@ -103,7 +121,7 @@ export function fromOfx(text: string): Imported[] {
 }
 
 /** A payee that is only a bank's word for which way the money went: CREDIT, DEBIT (Chase's Details column, read as the payee before). */
-export const wayOnly = (payee?: string): boolean => /^(credit|debit|dr|cr)$/i.test((payee || '').trim());
+export const wayOnly = (payee?: string): boolean => /^(credit|debit|dr|cr|withdrawal|deposit)$/i.test((payee || '').trim());
 
 /**
  * Rows brought in before with only CREDIT or DEBIT as their payee, each

@@ -6419,6 +6419,38 @@ const smokes = [
     const w1 = txs.find((t) => t.id === 'w1'), w2 = txs.find((t) => t.id === 'w2');
     if (txs.length !== 3 || !/costco/i.test(w1?.payee || '') || w1.category !== 'Groceries' || !/acme/i.test(w2?.payee || '') || !txs.some((t) => /shell/i.test(t.payee || ''))) throw new Error(`fixed ${JSON.stringify(txs)}`);
   } },
+  // A file whose Payee column only says which way the money went: the names come from the column that has them, and
+  // a payee column picked by hand that has none is said to have none.
+  { name: 'Finances: a CSV whose payee column says only Withdrawal or Deposit reads names from another column', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Payee,Amount,Text\n11/02/2026,Withdrawal,-12.50,CORNER BAKERY 44\n11/03/2026,Deposit,300.00,REFUND FROM ACME\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Corner Bakery")', { timeout: 5000 });
+    if (await page.locator('#finSheet .importnote.bad').count()) throw new Error('warned with names found');
+    await page.locator('#finSheet label.field').filter({ hasText: /^Payee/ }).locator('select').selectOption({ label: 'Payee' });
+    await page.waitForSelector('#finSheet .importnote.bad:has-text("No payee here is a name")', { timeout: 5000 });
+  } },
+  // Deleted, they come back with Undo; and with Ctrl+Z (⌘Z) after another delete.
+  { name: 'Finances: deleted transactions come back with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    const del = async (count) => {
+      await page.click('.fx-transactions button:text-is("Select")');
+      for (let i = 0; i < count; i++) await page.click(`.fx-transactions .fx-txday li.opens >> nth=${i}`);
+      await page.click(`.fx-txpick button:text-is("Delete ${count}")`);
+      await page.click(`.fx-txpick button:has-text("Click again to delete")`);
+      await page.waitForSelector(`#undoNote :text("Deleted ${count === 1 ? '1 transaction' : count + ' transactions'}")`, { timeout: 5000 });
+      await page.click('.fx-transactions button:text-is("Done")');
+    };
+    await del(2);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+    await page.waitForSelector('#undoNote .undonote', { state: 'detached', timeout: 5000 });
+    await del(1);
+    await page.keyboard.press((await page.evaluate(() => navigator.platform.startsWith('Mac'))) ? 'Meta+z' : 'Control+z');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+  } },
   // While selecting, Ctrl+A (⌘A on a Mac) takes every row shown and Escape stops selecting.
   { name: 'Finances: while selecting transactions, Ctrl+A selects them all and Escape stops', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

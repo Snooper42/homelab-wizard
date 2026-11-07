@@ -10,7 +10,7 @@
 // says so; above them, those that look like one but are not linked yet,
 // each to link with a click or say Not it. Select picks rows (Select all
 // takes every one shown, so a filter then Select all is a whole import or
-// month) to delete together or give one category.
+// month) to delete together, with Undo after, or give one category.
 import { Fragment } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -23,6 +23,7 @@ import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
 import { tagsOf } from './reportData';
+import { showUndo } from '../status/UndoNote';
 
 export interface TransactionsProps {
   v: finance.View;
@@ -176,6 +177,9 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const [problem, setProblem] = useState('');
   // While selecting, outside a field or a sheet: Ctrl+A (⌘A) selects every row shown, Escape stops selecting (Shortcuts.tsx says so).
   const keyed = useRef({ all: () => {}, stop: () => {} });
+  // The ledger as now, for an Undo pressed after it changed.
+  const latest = useRef(ledger);
+  latest.current = ledger;
   useLayoutEffect(() => {
     if (!picking) return undefined;
     const keys = (e: KeyboardEvent) => {
@@ -218,16 +222,24 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const pickAll = () => pick(new Set([...picked, ...shown.map((t) => t.id)]));
   keyed.current = { all: pickAll, stop: stopPicking };
   const change = async (txs: finance.Transaction[]) => {
-    if (busy || !saveLedger) return;
+    if (busy || !saveLedger) return false;
     setBusy(true);
     const ok = await saveLedger({ ...ledger, transactions: txs });
     setBusy(false);
     if (ok) pick(new Set()); else setProblem('It could not be kept: try again.');
+    return ok;
   };
-  const removePicked = () => {
+  // Deleted, they can come back with Undo (or ⌘Z) while its note shows: into the ledger as it is then.
+  const removePicked = async () => {
     if (!sure) { setSure(true); return; }
-    const gone = new Set(chosen.map((t) => t.id));
-    change(all.filter((t) => !gone.has(t.id)));
+    const gone = chosen, ids = new Set(gone.map((t) => t.id));
+    if (!(await change(all.filter((t) => !ids.has(t.id))))) return;
+    showUndo(`Deleted ${plural(gone.length, 'transaction')}`, () => {
+      const now = latest.current;
+      if (!now || !saveLedger) return;
+      const there = new Set(now.transactions.map((t) => t.id));
+      saveLedger({ ...now, transactions: [...now.transactions, ...gone.filter((t) => !there.has(t.id))] });
+    });
   };
   // A category for each picked one that is not a transfer between the household's accounts; its parts, if split, are let go.
   const categorize = () => {
