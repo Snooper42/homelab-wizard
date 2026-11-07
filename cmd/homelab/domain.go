@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -427,10 +428,26 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		scheme = "https"
 	}
 
-	// 4. Proxy hosts.
+	// 4. Proxy hosts. The phone companion's host carries its key, the
+	// companion's only proof that a phone reached it over https (N25):
+	// made here, and saved once the proxy holds it, so the companion never
+	// asks for a key its proxy host does not send.
+	companionKey, newKey := envMap["COMPANION_PROXY_KEY"], false
+	if !companionKeyOK(companionKey) {
+		if companionKey, err = envfile.NewSecret("COMPANION_PROXY_KEY"); err != nil {
+			return err
+		}
+		newKey = true
+	}
+	settings.CompanionKey = companionKey
 	results, err := domain.Sync(ctx, api, routes, settings)
 	if err != nil {
 		return err
+	}
+	if newKey {
+		if err := h.setEnv("COMPANION_PROXY_KEY", companionKey); err != nil {
+			return err
+		}
 	}
 	removed, err := domain.Withdraw(ctx, api, h.catalog.Apps, dom)
 	if err != nil {
@@ -637,3 +654,7 @@ const cloudflarePermissions = "Zone › Zone › Read, Zone › DNS › Edit, an
 func publishable(id string, public bool, env map[string]string) bool {
 	return public && (id != "ntfy" || env["NTFY_PUBLISH_TOKEN"] != "")
 }
+
+// companionKeyOK is a COMPANION_PROXY_KEY the proxy host may carry: long,
+// and letters and digits only, as it is written into nginx's settings.
+var companionKeyOK = regexp.MustCompile(`^[A-Za-z0-9]{24,128}$`).MatchString
