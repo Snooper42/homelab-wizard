@@ -144,6 +144,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **Apps can no longer read each other's passwords through Docker:** the read-only view of Docker that Dozzle, Homarr, and Homepage use also answered any app asking for another app's settings, passwords included. Only those three reach it now.
 - **A wall screen stays a wall screen:** a screen paired in kiosk mode can no longer be given changes or Finances (beyond the money card) later in Settings › Phones, since anyone walking past could use them.
 - **A phone on your Wi-Fi can't pretend it used the secure link:** pairing through your domain's link now checks with the proxy itself whether the phone really came over https, so someone who catches a pairing code on the Wi-Fi gets a phone that only looks. Run Set up the domain once more to turn it on; the doctor reminds you.
+- **Tidy Up installs exactly the music tools it was tested with:** the one-time setup for music on this computer took the newest beets and its helpers from the internet, unchecked. It now installs the versions pinned for your Python, each checked against a fingerprint, and needs Python 3.10 or newer (3.10 to 3.14); a setup made before is brought to them once.
 
 ## [0.17.0] - 2026-11-02
 

@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import sqlite3
 import sys
@@ -31,9 +32,10 @@ import trash_restore  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
 # The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
-# Nov 3, 2026 (pausing the apps under Docker Desktop, beets on this machine): change them only so.
+# Nov 3, 2026 (pausing the apps under Docker Desktop, beets on this machine), and N28's pinned beets
+# setup they approved on Nov 6 (Python 3.10 or newer, requirements/): change them only so.
 VENDORED = {
-    "music_organizer.py": "81a431693b506b5e5ae708e15dcb0a6d44cddaf458c5df9699f5ad0853587db9",
+    "music_organizer.py": "c472548f14921dfa1b51b0335e7447359a64a090ac0313f11bda86316cabc195",
     "books_organizer.py": "6ca72b3a2a411b7099305a3dcfd4e219190718484bc75643536d01292ef6a79e",
 }
 
@@ -1145,6 +1147,90 @@ class NeedVenv(Base):
                 music_tidy.need(["no_such_module_here"])
         bootstrap.assert_not_called()
         self.assertTrue(py.exists())
+
+
+class PinnedBeets(Base):
+    """N28: the music jobs' venv installs only the versions pinned, with their hashes, for its Python."""
+
+    PINS = HERE / "requirements"
+
+    def venv_py(self):
+        return self.home / ".music-cleanup" / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+    def bootstrap(self, version=(3, 12, 4), imports_ok=lambda calls: len(calls) > 1):
+        """Run the one-time setup with nothing real installed: returns every command it ran."""
+        self.calls = calls = []
+        py = self.venv_py()
+
+        def run(cmd, **kw):
+            cmd = [str(c) for c in cmd]
+            calls.append(cmd)
+            if cmd[1:3] == ["-m", "venv"]:
+                py.parent.mkdir(parents=True, exist_ok=True)
+                py.write_text("")
+                (py.parent.parent / "pyvenv.cfg").write_text("home = /usr/bin\nversion = %d.%d.%d\n" % version)
+            ok = "-c" not in cmd or imports_ok(calls)
+            return mock.Mock(returncode=0 if ok else 1, stdout="", stderr="")
+
+        with mock.patch.object(sys, "version_info", version), \
+                mock.patch.object(mc.mo.subprocess, "run", side_effect=run), \
+                mock.patch.object(mc.mo, "relaunch") as relaunch, \
+                mock.patch.object(mc.mo.shutil, "which", return_value=None), \
+                mock.patch.dict(os.environ, {"MUSIC_CLEANUP_CHILD": "", "HOMELAB_MEDIA_IN_CONTAINER": ""}), \
+                mock.patch.dict(sys.modules, {"beets": None}):
+            mc.mo.bootstrap()
+        relaunch.assert_called_once_with(str(py))
+        return calls
+
+    def installs(self, calls):
+        return [c for c in calls if c[1:4] == ["-m", "pip", "install"]]
+
+    def test_each_supported_python_has_its_pins_with_hashes(self):
+        for v in ("3.10", "3.11", "3.12", "3.13", "3.14"):
+            f = self.PINS / ("music-%s.txt" % v)
+            self.assertTrue(f.exists(), "no pins for Python %s" % v)
+            reqs = [r for r in re.sub(r"\\\n", " ", f.read_text()).splitlines()
+                    if r.strip() and not r.lstrip().startswith("#")]
+            names = set()
+            for r in reqs:
+                name, sep, rest = r.partition("==")
+                self.assertTrue(sep, "%s: %s is not pinned to one version" % (f.name, r[:60]))
+                self.assertIn("--hash=sha256:", rest, "%s: %s has no hash" % (f.name, name))
+                names.add(name.strip().lower())
+            self.assertLessEqual({"beets", "mediafile", "requests", "pylast", "pillow", "pyacoustid"}, names, f.name)
+
+    def test_the_setup_installs_only_the_pins_for_its_python(self):
+        calls = self.bootstrap()
+        installs = self.installs(calls)
+        self.assertTrue(installs, "beets was installed")
+        for c in installs:
+            self.assertIn("--require-hashes", c, "every install is checked against the pinned hashes")
+            args = c[4:]
+            self.assertEqual(args[args.index("-r") + 1], str(self.PINS / "music-3.12.txt"))
+            self.assertEqual([a for a in args if not a.startswith("-") and a != args[args.index("-r") + 1]], [],
+                             "nothing is named outside the pinned file (pip itself included)")
+
+    def test_a_venv_from_before_the_pins_is_brought_to_them_once(self):
+        py = self.venv_py()
+        py.parent.mkdir(parents=True)
+        py.write_text("")
+        (py.parent.parent / "pyvenv.cfg").write_text("home = /usr/bin\nversion = 3.11.9\n")
+        calls = self.bootstrap(imports_ok=lambda calls: True)
+        installs = self.installs(calls)
+        self.assertEqual(len(installs), 1, "an unpinned venv is brought to the pins")
+        self.assertIn(str(self.PINS / "music-3.11.txt"), installs[0], "the pins of the venv's own Python")
+        self.assertEqual(self.installs(self.bootstrap(imports_ok=lambda calls: True)), [], "and only once")
+
+    def test_python_older_than_3_10_is_told_plainly(self):
+        with self.assertRaises(SystemExit):
+            self.bootstrap(version=(3, 9, 6))
+        self.assertIn("3.10", self.out.getvalue())
+
+    def test_a_python_without_pins_installs_nothing(self):
+        with self.assertRaises(SystemExit):
+            self.bootstrap(version=(3, 15, 0))
+        self.assertEqual(self.installs(self.calls), [])
+        self.assertIn("3.10 to 3.14", self.out.getvalue())
 
 
 class GenreCounts(Base):
