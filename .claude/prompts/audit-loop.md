@@ -13,6 +13,69 @@ With no interval, /loop paces itself. Each round re-reads this file, so to
 steer a team, edit its section, commit and push it to main, and the next
 round follows.
 
+## Account 3's job from Nov 6, 2026: the household's tester, and security
+
+The owner's call (Nov 6): the app is to become clearly easier to use. This loop's main work is now **finding what gets in the household's way**, ranked, and handing each finding to the lane that owns the screen: **For Account 1** (Tidy Up, Finances) or **For Account 2** (every other screen), in this file. It then checks that the fix landed. Security stays covered, at a smaller share of the time, unless something High turns up. This loop builds no screens. It fixes security holes itself.
+
+Start each round from the `/loop` line: `Read .claude/prompts/audit-loop.md and do the next round, applying .claude/prompts/lanes.md.`
+
+### Each round
+
+1. **Start:** `git fetch origin`; open PRs; merge main into your branch; read `lanes.md`, `.claude/prompts/complaints.md`, and the **For Account 3** sections in `features-loop.md` and `maintenance-loop.md`.
+2. **Security, kept short:**
+   - Read every PR merged since the last round for what can now reach what. A real hole (High or Medium) is fixed now: a test that fails first, the smallest fix in a commit of its own, recorded in `docs/Security.md`.
+   - Then the owner-approved items below, one per round, before the security backlog.
+   - Storage-code holes go **For Account 2** with the test that shows them.
+3. **Usability, the main work:**
+   1. Re-run each task whose findings a lane says it fixed, and update `docs/Usability.md`. A finding not fixed goes back to that lane, with what is still wrong.
+   2. Run the next household task (the owner's complaints first, then the one not run longest), as each system, in light and dark, at 320px and with big text, against the fake backend (`make app-smoke`, `SMOKE_ONLY=…`, `node app/preview/shoot.mjs <shot>`, `app/preview/mock.js`; add states it does not draw yet). Open every picture.
+   3. Rank what you found, worst first:
+      - a dead end;
+      - something wrong or misleading;
+      - unreachable by keyboard or screen reader;
+      - cut off at 320px or with big text;
+      - jargon or code in words;
+      - the same thing done two ways.
+4. **Hand each finding over**, under **For Account 1** or **For Account 2**: the task and step, what the household sees (quoted), why it gets in the way, the screenshot path (committed under `docs/images/usability/`), what "fixed" looks like, and the smoke case that would fail today. Describe that smoke case; never add a failing test to the suite.
+5. **Ship:** one open PR at a time, with the scoreboard, findings, screenshots, and any security fix; about once a day, sooner for a security fix. Merge per `lanes.md` Rule 5, at most 3 merges a day.
+6. **Report to the owner** in a few plain lines: which tasks got easier and which didn't (the scoreboard's numbers), the top three findings and whose they are, and any security fix.
+
+### The household tasks (the rows of `docs/Usability.md`)
+
+Account 2's screens:
+1. From a new computer to the first app open, with no docs.
+2. Something is down: find out what, and fix it.
+3. Install an app that needs a login or a drive.
+4. Update everything, and know it worked (or what failed and what to do).
+5. Get one file back from last week's backup.
+6. Pair a partner's phone with only look access, then remove a lost phone.
+7. Give a person their own account (People) and send them the welcome page.
+8. Put the apps on your own domain.
+9. The computer is slow: find out why and free memory.
+10. After a restart or power cut: is everything back?
+11. An alert arrives on the phone: understand it, and act from the phone.
+12. Move the homelab to a new computer.
+
+Account 1's screens:
+
+13. Tidy Up: clean a music library and undo a mistake.
+14. Tidy Up: find what takes the space and free some.
+15. Finances: set up the month's bills and see what's left.
+16. Finances: bring in a bank file and fix a wrong category.
+
+Add tasks from the owner's complaints.
+
+### Owner-approved security work (Nov 6), before the backlog
+
+1. **N25:** the companion's proxy host adds a header with a secret only it and the companion know; `trust_forwarded_proto` is off for that host; `Encrypted` believes "https" only with the secret. Try it against a real Nginx Proxy Manager (`jc21/nginx-proxy-manager` on Docker Hub).
+2. **N28:** the music jobs need Python 3.10 or newer and install pinned versions (a constraints file per supported Python, tested in a fresh venv for each). `tools/media` is Account 1's, so this is the smallest security fix, in a commit of its own, and only while no open PR claims those files.
+3. **N29:** the app checks a Windows or Linux update against the build provenance the release workflow already makes (`actions/attest-build-provenance`, Sigstore, keyless), so no key is needed from the owner.
+4. **N21:** cloudflared at a fixed address on the `homelab` network, and NPM trusting `CF-Connecting-IP` from that address only. It changes every install's network, so it ships as one careful PR of its own, tried on real Docker.
+
+The sections below keep the history (the UX team's method, the security backlog, every round done). Where they disagree with this section, this section wins. Backlog item 28 (the Apple client) is dropped: `apple-client/` is Account 4's.
+
+---
+
 Start them from a session of your own: a session that another session
 started cannot run /loop. While no session runs a team, its rounds wait;
 the owner's own session takes one only when the owner asks, on that
@@ -393,7 +456,7 @@ Added after round 27 (the backlog was empty; worst first):
 27. (done: round 35) **What CrowdSec stopped** (#430, once merged): scenario, network, and
     country names come from outside; drawn by Preact, but check the phone
     and a kiosk get `Protection` only with the permission they need.
-28. **The native Apple client** (#424, apple-client/, once merged): the
+28. (dropped Nov 6: `apple-client/` is Account 4's) **The native Apple client** (#424, apple-client/, once merged): the
     pairing token in the Keychain (not UserDefaults or a backup), the
     companion's certificate checked, nothing secret in widgets, the lock
     screen, or a crash log.
@@ -1182,6 +1245,15 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   Windows renames retry 2 s on "access denied" only), #467 (Duplicati's
   ntfy report decoded and cut to three lines: less reaches a phone).
 
+- **Round 61 (the new job's first round; #464 merged):** the loop now
+  leads with the tester's job (owner, Nov 6), with `docs/Usability.md`
+  as the scoreboard. Task 2 (something is down) run against the fake
+  backend: five findings for Account 2 (under **For Account 2**). Read
+  as they merged: #468 (Tdarr gets a generated key in `.env`, 0600, read
+  by Tdarr from its compose settings, which apps can no longer read
+  through the socket proxy since N27), #471 (`scripts/logs` and crash
+  notes private: the note for Account 2 is done).
+
 ## For Account 1
 
 - **The update window's record is written 0644**
@@ -1211,6 +1283,26 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ## For Account 2
 
+### Usability findings (Account 3's tester, worst first; take these ahead of your own order)
+
+From task 2, **Something is down: find out what, and fix it** (Nov 6, against the fake backend: Mealie stopped). Pictures in `docs/images/usability/`.
+
+1. **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
+2. **On the phone, a stopped app offers nothing and says nothing** (`t2-phone-status.png`, `t2-phone-mealie-page.png`). Every running app has Open; Mealie has no button and no word, on the list or on its page. *Fixed looks like:* a phone that may make changes gets Start; one that only looks says "Start it from the computer". *Smoke case:* the phone's Status (look-only and may-change) for a stopped app shows the action or the sentence.
+3. **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
+   - The phone's Status says "Watchdog ✓ All 47 checks passed" while Mealie is stopped and the desktop's "Needs a look" card names it.
+   - Mealie's page says "Not checked yet… once Setup turns it on", while Status's header says "Backups and checks on".
+
+   *Fixed looks like:* the watchdog line counts a stopped app (or says why it is not checked), and the page says the same as the header. *Smoke case:* Status with one app stopped says it in the watchdog line.
+4. **Words a household cannot read** (`t2-status.png`, `t2-phone-status.png`):
+   - "Choose stacks" (the sidebar);
+   - "All baseline apps are up";
+   - "Replaces a year $3,292", which does not say it means what the apps would cost as subscriptions;
+   - the Protection card listing scanner names ("vpatch-CVE-2017-9841", "http-probing") and raw addresses.
+
+   *Fixed looks like:* plain names ("Choose apps"; "Blocked: someone probing for a known web-server hole"; the subscription sense said). *Smoke case:* the words lint (`app/preview/words.mjs`) refusing "stacks", "baseline", and a raw scenario name on a screen.
+5. **The phone cuts log lines off at the right** (`t2-phone-mealie-page.png`, 390px): "INF Starting server on" ends mid-line with no wrap or scroll hint. *Fixed looks like:* lines wrap, or the box says it scrolls. *Smoke case:* the app page at 390px has no text running out of its box.
+
 - (done: #460) **N22: a phone removed on the computer can come back** (your note in
   maintenance-loop.md, confirmed; docs/Security.md N22, Medium). Take it
   next, ahead of your own order (lanes.md Rule 3). `Store.Lookup` in
@@ -1229,7 +1321,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   saves when a phone's `Until` has passed, so `Devices()` and `Phones()`
   write too: they need the same lock. Account 3 ticks N22 once it
   merges.
-- **`scripts/logs` is 0755 and its files 0644** (the agent's
+- (done: #471) **`scripts/logs` is 0755 and its files 0644** (the agent's
   `MkdirAll(h.logsDir(), 0o755)`, `crash.Watch`, `openJobLog`): another
   account on the same computer can read every job log and crash note.
   Nothing secret is meant to be in them, but they are the household's
