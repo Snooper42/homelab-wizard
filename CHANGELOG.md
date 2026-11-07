@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Checking now, and after payday:** Finances' Dashboard opens with two numbers: checking now, and checking once the next paycheck lands, before that day's bills. Rest on either (or tap it on a phone) to see how it adds up: the balance it starts from, each bill and paycheck in between, and the result, to hold next to your own sums.
 - **Health in one line:** every screen but Status now starts with one line: *✓ All well*, or the one thing that needs you (*Mealie: Stopped*, *3 apps need a look: …*, or a failing check of the watchdog's), with **Open Status** beside it.
 - **Snooze an alert:** beside a failing check on Status's Watchdog card, **Snooze…** stops its alerts for an hour or a day, for something you already know about. It's still checked and shown, its line says until when, and if it still fails when the snooze ends you get one alert then. `homelab notify snooze <check> 1h` does the same.
 - **Devices on your tailnet:** Settings › Phones lists every phone and computer that can reach the apps away from home, with whether it's online or when it was last seen. One not seen for a month is marked, in case it's lost, and **Remove…** opens it in Tailscale's admin console, where a device is removed.

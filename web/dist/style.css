@@ -1981,6 +1981,23 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-subs .fx-rows { margin-top:12px; }
 .fx-subtypes { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
 .fx-subtypes .fx-legend.inline { justify-content:flex-start; }
+/* Checking now and after the next paycheck: two figures side by side (one under the other when narrow), each a button whose card shows how it adds up. */
+.fx-clearrow { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
+.fx-clearfig { min-width:0; }
+.fx-clearbtn { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:6px; width:100%; padding:12px 14px; border-radius:var(--fin-radius-sm); box-shadow:inset 0 0 0 1px var(--line); cursor:pointer; }
+.fx-clearbtn:hover { box-shadow:inset 0 0 0 1px var(--fin-accent); }
+.fx-clearbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.fx-clearbtn .fx-figure { text-decoration:underline dotted var(--muted); text-underline-offset:6px; text-decoration-thickness:2px; }
+.fx-clearhow { font-size:12px; }
+.fx-working { display:flex; flex-direction:column; gap:3px; font-variant-numeric:tabular-nums; }
+.fx-workrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px; align-items:baseline; }
+.fx-workrow > span:first-child { min-width:0; overflow-wrap:anywhere; }
+.fx-workafter { min-width:64px; text-align:right; }
+.fx-workhead { grid-template-columns:minmax(0,1fr) auto; font-weight:600; }
+.fx-workend { margin-top:4px; padding-top:6px; border-top:1px solid var(--line); }
+.fx-worknote { display:block; margin-top:4px; }
+.hovercard .fx-working { width:100%; }
+.hovercard.wide:has(.fx-working) { width:340px; }
 /* The pay period card: its dates, and the accounts side by side after its bills; one money goes into is lit. */
 .fx-paycheck .fx-actions { gap:4px; }
 .fx-paycheck .fx-actions button.small { margin-right:4px; }
