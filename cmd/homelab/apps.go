@@ -557,6 +557,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		return nil
 	}
 	u.Title("Homelab status")
+	held := stopped.Load(stopped.Path(h.root))
 	var rows [][]string
 	changed := 0
 	for _, a := range st.Apps {
@@ -585,6 +586,9 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		if a.NotAnswering != "" {
 			health = u.Red("not answering: " + a.NotAnswering)
 		}
+		if _, mine := held[a.ID]; a.StoppedWhy != "" && !mine {
+			health = u.Red(a.StoppedWhy) // it stopped by itself
+		}
 		if a.SettingsChanged {
 			state += u.Yellow(", settings changed")
 			changed++
@@ -593,7 +597,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 	}
 	u.Table([]string{"APP", "STATE", "HEALTH", strings.ToUpper("On " + h.host.Machine), "ADDRESS"}, rows)
 	if st.Missing > 0 {
-		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d baseline app(s) are not running: homelab up shows why.", st.Missing)))
+		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d of the homelab's own apps are not running: homelab up shows why.", st.Missing)))
 	}
 	if changed > 0 {
 		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d app(s) still run the settings they started with: homelab fix (or up) applies the changed ones.", changed)))

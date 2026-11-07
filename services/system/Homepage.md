@@ -26,7 +26,7 @@ A start page for the household: one address with every app on it, kept up to dat
 ## Setup
 
 1. `./homelab install homepage` and open `https://<TAILSCALE_HOST>:3000` in Home mode, or `https://homepage.example.com` with a domain (after `./homelab domain setup`).
-2. The homelab writes `services.yaml` for you: every running app with its `https://` address, its icon, and what it does, grouped like Choose stacks. It is rewritten after each install, start, stop, or removal (or with `./homelab homepage`), so the page always matches what runs.
+2. The homelab writes `services.yaml` for you: every running app with its `https://` address, its icon, and what it does, grouped like Choose apps. It is rewritten after each install, start, stop, or removal (or with `./homelab homepage`), so the page always matches what runs.
 3. To keep your own list instead, delete the file's first line (the marker); from then on the homelab leaves `services.yaml` alone. `bookmarks.yaml` and `widgets.yaml` are always yours.
 4. For container status, install `docker-socket-proxy` and add it in `docker.yaml` as `host: docker-socket-proxy`, `port: 2375`.
 

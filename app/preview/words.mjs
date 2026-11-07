@@ -14,6 +14,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 // The same list as internal/host/words_test.go's macWords.
 const macWords = ['menu bar', 'Finder', 'this Mac', 'This Mac', 'OrbStack', 'Dock icon', '⌘'];
 
+// Words for how the homelab is built, not what a household gets (Account 3's
+// tester, Nov 6): an app is an app, and the homelab's own apps are that.
+const jargon = [/\bstacks?\b/i, /\bbaseline\b/i];
+
 const allowed = [
   { file: 'web/src/settings/Appearance.tsx', text: 'the system tray on Windows and Linux', why: 'names each system' },
   { file: 'web/src/screens/settings.ts', text: 'This Mac', exact: true, why: ".env.example's section, which the app renames for each system (thisMachine)" },
@@ -39,6 +43,11 @@ function say(rel, line, text, w) {
   problems.push(`${rel}:${line}: …${text.slice(Math.max(0, at - 40), at + w.length + 40)}… says "${w}" outside Mac-only code; use the system's own word, or add it to allowed in app/preview/words.mjs with why`);
 }
 
+function said(rel, line, text, w) {
+  const at = text.indexOf(w);
+  problems.push(`${rel}:${line}: …${text.slice(Math.max(0, at - 40), at + w.length + 40)}… says "${w}": a household reads "app", or "the homelab's own apps"`);
+}
+
 const files = readdirSync(join(root, 'web', 'src'), { recursive: true }).filter((f) => /\.tsx?$/.test(f)).map((f) => join(root, 'web', 'src', f));
 for (const path of files) {
   const rel = relative(root, path).split('\\').join('/');
@@ -47,6 +56,10 @@ for (const path of files) {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateHead(node) || ts.isTemplateMiddle(node) || ts.isTemplateTail(node) || ts.isJsxText(node)) {
       for (const w of macWords) {
         if (node.text.includes(w) && !inMacBranch(node)) say(rel, src.getLineAndCharacterOfPosition(node.getStart()).line + 1, node.text, w);
+      }
+      for (const re of jargon) {
+        const m = re.exec(node.text);
+        if (m && !/^[\w.:-]+$/.test(node.text)) said(rel, src.getLineAndCharacterOfPosition(node.getStart()).line + 1, node.text, m[0]);
       }
     }
     ts.forEachChild(node, visit);
@@ -58,10 +71,12 @@ for (const path of files) {
 const html = readFileSync(join(root, 'web', 'dist', 'index.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/<(script|style)[\s\S]*?<\/\1>/g, '');
 html.split('\n').forEach((line, i) => {
   for (const w of macWords) if (line.includes(w)) say('web/dist/index.html', i + 1, line.trim(), w);
+  const text = line.replace(/<[^>]*>/g, ' ');
+  for (const re of jargon) { const m = re.exec(text); if (m) said('web/dist/index.html', i + 1, text.trim(), m[0]); }
 });
 
 if (problems.length) {
   console.error(problems.join('\n'));
   process.exit(1);
 }
-console.log(`frontend words ok: ${files.length} files and index.html say Mac words only on a Mac`);
+console.log(`frontend words ok: ${files.length} files and index.html say Mac words only on a Mac, and no stacks or baseline`);

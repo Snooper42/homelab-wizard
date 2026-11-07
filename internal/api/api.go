@@ -27,7 +27,7 @@ type Catalog struct {
 	Wireable []string `json:"wireable"`
 }
 
-// Category groups apps on the "Choose stacks" screen.
+// Category groups apps on the "Choose apps" screen.
 type Category struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
@@ -310,6 +310,11 @@ type AppStatus struct {
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`
+	// StoppedAt is when a stopped app stopped (RFC 3339), and StoppedWhy
+	// why, in a few words, when Docker knows (StoppedWhy): an app that
+	// stopped by itself, not from the app or for a missing drive.
+	StoppedAt  string `json:"stoppedAt,omitempty"`
+	StoppedWhy string `json:"stoppedWhy,omitempty"`
 	// NotAnswering is why a running app's web address on this machine
 	// does not answer ("connection refused", "HTTP 502"): the container
 	// runs, but the app does not work.

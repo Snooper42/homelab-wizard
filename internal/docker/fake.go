@@ -51,6 +51,11 @@ type FakeContainer struct {
 	Mounts     []Mount
 	// Restarts is how many times its restart policy restarted it.
 	Restarts int
+	// Why it last stopped: its exit code, whether it ran out of memory,
+	// and Docker's error when it could not start it.
+	ExitCode  int
+	OOMKilled bool
+	Error     string
 }
 
 // Output implements Runner.
@@ -159,7 +164,7 @@ func (f *FakeRunner) inspect() ([]byte, error) {
 		if c.Status != "" {
 			status = c.Status
 		}
-		state := map[string]any{"Status": status, "Running": c.Running}
+		state := map[string]any{"Status": status, "Running": c.Running, "ExitCode": c.ExitCode, "OOMKilled": c.OOMKilled, "Error": c.Error}
 		if c.Health != "" {
 			state["Health"] = map[string]any{"Status": c.Health}
 		}

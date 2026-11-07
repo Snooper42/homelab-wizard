@@ -518,10 +518,10 @@
     const done = steps.filter((s3) => s3.state === "done");
     const row = (s3, n3) => {
       const open4 = !!opened2[s3.id];
-      const more2 = s3.why || s3.detail;
+      const more2 = s3.state !== "done" && !!s3.detail;
       return (
-        // A row: the step's number, what it gives you (one line until it is
-        // opened), its buttons, and the chevron that opens it.
+        // A row: the step's number, what it gives you, its buttons, and the
+        // chevron that opens what else to know now (when there is any).
         /* @__PURE__ */ u3("li", { class: s3.state + (open4 ? " open" : ""), children: [
           /* @__PURE__ */ u3("span", { class: "mark", children: s3.state === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : String(n3) }),
           /* @__PURE__ */ u3("div", { class: "body", children: [
@@ -698,6 +698,34 @@
     const day3 = days <= 0 ? "" : days === 1 ? "tomorrow, " : dayText(t3, { weekday: "short" }) + ", ";
     return `Stopped until ${day3}${clockText(t3)}`;
   }
+  function stoppedByItself(a3, now = /* @__PURE__ */ new Date()) {
+    let when3 = "";
+    if (a3.stoppedAt) {
+      const t3 = new Date(a3.stoppedAt);
+      const days = Math.round((at(now, 0, 0).getTime() - at(t3, 0, 0).getTime()) / 864e5);
+      when3 = days <= 0 ? ` at ${clockText(t3)}` : days === 1 ? ` yesterday, ${clockText(t3)}` : days < 7 ? ` ${dayText(t3, { weekday: "short" })}, ${clockText(t3)}` : ` ${dayText(t3, { month: "short", day: "numeric" })}`;
+    }
+    return `Stopped${when3}${a3.stoppedWhy ? ": " + a3.stoppedWhy : ""}`;
+  }
+  function stoppedNext(a3, held3, paused = false, now = /* @__PURE__ */ new Date()) {
+    if (a3.state !== "stopped") return ["", ""];
+    if (held3 && keptRestarting(held3)) return ["The watchdog stopped it after Docker restarted it again and again; its log below says why.", "Once that is put right, Start tries again."];
+    if (held3?.until) return [`You stopped it until ${stoppedWords(held3, now).replace(/^Stopped until /, "")}: it starts again by itself then.`, "Or Start it now."];
+    if (held3) return ["You stopped it, so nothing starts it by itself.", "Start starts it again."];
+    if (paused) return ["Paused while this computer is on battery: it starts again by itself once it is plugged in.", ""];
+    if (a3.waitingFor) return [`Its folders are on the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive: plug it in and it starts by itself.`, ""];
+    const port = a3.stoppedWhy?.match(/port (\d+)$/)?.[1];
+    if (port) return [`Another program has port ${port}.`, "Quit it, then Start."];
+    switch (a3.stoppedWhy) {
+      case "it ran out of memory":
+        return ["If it runs out again, stop an app you aren't using, or give Docker more memory.", "Start tries again."];
+      case "Docker couldn't start it":
+        return ["Its log below may say why.", "Start tries again."];
+      case "it quit with an error":
+        return ["If it stops again, its log below says why.", "Start tries again."];
+    }
+    return ["It was stopped outside the homelab (by Docker, or a shutdown).", "Start starts it again."];
+  }
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
@@ -773,8 +801,8 @@
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
-        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose stacks. They show up here as they start, with their addresses." }),
-        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose stacks" })
+        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose apps. They show up here as they start, with their addresses." }),
+        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose apps" })
       ] });
     }
     const running5 = st.apps.filter((a3) => a3.state === "running");
@@ -793,7 +821,7 @@
               counted
             ] })
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 baseline app is down" : `${st.missing} baseline apps are down` }) : "All baseline apps are up"
+          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up"
         }
       ),
       /* @__PURE__ */ u3(
@@ -805,7 +833,10 @@
           sub: trouble2.length ? trouble2.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble2.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
+      /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
+        /* @__PURE__ */ u3("small", { children: " a year" })
+      ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
       /* @__PURE__ */ u3(
         Tile,
         {
@@ -825,14 +856,14 @@
 
   // web/src/status/UndoNote.tsx
   var undoFor = 1e4;
-  function UndoNote({ words: words4, undo, close: close3 }) {
+  function UndoNote({ words: words5, undo, close: close3 }) {
     const [held3, setHeld] = d2(false);
     const box = A2(null);
     h2(() => {
       if (held3) return;
       const t3 = setTimeout(close3, undoFor);
       return () => clearTimeout(t3);
-    }, [held3, words4]);
+    }, [held3, words5]);
     return /* @__PURE__ */ u3(
       "div",
       {
@@ -844,7 +875,7 @@
         onFocusIn: () => setHeld(true),
         onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
         children: [
-          /* @__PURE__ */ u3("span", { class: "undowords", children: words4 }),
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words5 }),
           /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
           /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
         ]
@@ -1723,6 +1754,39 @@
     ] }) });
   }
 
+  // web/src/status/attack.ts
+  var words2 = [
+    [/(^|-)cve-|^vpatch-/i, "Probing for a known security hole"],
+    [/sensitive-files/, "Looking for private files (passwords, backups)"],
+    [/path-traversal/, "Trying to reach files outside the site"],
+    [/sqli/, "Trying to break into a database"],
+    [/xss/, "Trying to plant a script in a page"],
+    [/backdoor/, "Looking for a back door left by other attackers"],
+    [/admin-interface/, "Looking for admin pages"],
+    [/wordpress|wp-/, "Scanning for WordPress holes"],
+    [/bad-user-agent/, "A known attack tool"],
+    [/open-proxy/, "Trying to use the homelab as a proxy"],
+    [/ssh.*bf|ssh-.*brute/, "Guessing an SSH password"],
+    [/(^|-)bf$|bruteforce|brute-force/, "Guessing passwords"],
+    [/crawl/, "Crawling every page"],
+    [/probing/, "Probing for pages that aren't there"]
+  ];
+  function attackWords(scenario) {
+    const s3 = scenario.replace(/^crowdsecurity\//, "");
+    return words2.find(([re]) => re.test(s3))?.[1] || "Suspicious requests";
+  }
+  var regions = null;
+  function attackFrom(a3) {
+    let country = a3.country || "";
+    try {
+      regions ||= new Intl.DisplayNames(["en"], { type: "region" });
+      if (/^[A-Z]{2}$/.test(country)) country = regions.of(country) || country;
+    } catch {
+    }
+    return [country, a3.network].filter(Boolean).join(" · ");
+  }
+  var attackDetail = (a3) => `${a3.scenario}${a3.ip ? " from " + a3.ip : ""}`;
+
   // web/src/status/Cards.tsx
   var wakeText = (t3) => {
     const d3 = new Date(t3);
@@ -1762,7 +1826,7 @@
       ] }) }, a3.name)) })
     ] });
   }
-  function Watchdog({ w: w3, openSetup, fix, stop: stop2, snooze }) {
+  function Watchdog({ w: w3, unchecked: unchecked2 = [], openSetup, fix, stop: stop2, snooze }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1787,6 +1851,10 @@
           w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : "",
           " · ",
           ago(w3.lastRun)
+        ] }),
+        !!unchecked2.length && /* @__PURE__ */ u3("span", { class: "warn unchecked", children: [
+          " · Not checked while stopped: ",
+          unchecked2.join(", ")
         ] })
       ] }) }),
       w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
@@ -1836,8 +1904,8 @@
         Row,
         {
           dot: a3.banned ? "bad" : "",
-          title: a3.scenario,
-          sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
+          title: /* @__PURE__ */ u3("span", { title: attackDetail(a3), children: attackWords(a3.scenario) }),
+          sub: attackFrom(a3),
           end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", children: "Banned" }),
           when: ago(a3.when)
         },
@@ -2130,6 +2198,7 @@
     if (a3.state === "stopped" && held3[a3.id]) return [keptRestarting(held3[a3.id]) ? "bad" : "", stoppedWords(held3[a3.id])];
     if (a3.state !== "running" && batteryPaused2.has(a3.id)) return ["warn", "Paused on battery"];
     if (a3.state === "stopped" && a3.waitingFor) return ["warn", `Waiting for the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive`];
+    if (a3.state === "stopped") return [a3.stoppedWhy ? "bad" : "warn", stoppedByItself(a3)];
     if (a3.state === "running") {
       if (a3.health === "unhealthy") return ["bad", "Unhealthy"];
       if (a3.health === "restarting") return ["bad", "Restarting"];
@@ -2138,8 +2207,8 @@
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
-    const words4 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
-    return words4[a3.state] || ["", a3.state];
+    const words5 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words5[a3.state] || ["", a3.state];
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
@@ -2269,7 +2338,10 @@
     }
     if (a3.state === "elsewhere") return null;
     if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: "Install" });
-    if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" });
+    if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" }),
+      /* @__PURE__ */ u3("span", { class: "lookonly muted", children: "Start it from the computer" })
+    ] });
     const url = a3.address ? "https://" + a3.address : a3.url;
     const local = a3.address && a3.url ? a3.url : "";
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
@@ -2330,7 +2402,7 @@
       setMenu(null);
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
-    const [cls, words4] = rowWords(a3, p3);
+    const [cls, words5] = rowWords(a3, p3);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     const changed3 = changedSince(a3, p3.seen ?? null);
     return (
@@ -2363,7 +2435,7 @@
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words4,
+              words5,
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -2743,16 +2815,16 @@
     const now = /* @__PURE__ */ new Map();
     for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
     const changed3 = /* @__PURE__ */ new Map();
-    if (heardOnce) for (const [id2, [name, words4]] of now) {
+    if (heardOnce) for (const [id2, [name, words5]] of now) {
       const was = heard.get(id2);
-      if (was !== void 0 && was !== words4) changed3.set(words4, [...changed3.get(words4) || [], name]);
+      if (was !== void 0 && was !== words5) changed3.set(words5, [...changed3.get(words5) || [], name]);
     }
     heard.clear();
-    for (const [id2, [, words4]] of now) heard.set(id2, words4);
+    for (const [id2, [, words5]] of now) heard.set(id2, words5);
     heardOnce = true;
     const el3 = document.getElementById("statusAloud");
     if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
-    const text2 = [...changed3].map(([words4, names4]) => `${listed(names4)}: ${words4}`).join(". ");
+    const text2 = [...changed3].map(([words5, names4]) => `${listed(names4)}: ${words5}`).join(". ");
     el3.textContent = "";
     requestAnimationFrame(() => {
       el3.textContent = text2;
@@ -2767,7 +2839,7 @@
       const t3 = setTimeout(() => setSaid(null), 3e3);
       return () => clearTimeout(t3);
     }, [said]);
-    const say = (id2, words4) => setSaid({ id: id2, words: words4 });
+    const say = (id2, words5) => setSaid({ id: id2, words: words5 });
     h2(() => sayChanges(p3));
     const q2 = useFilter().text;
     const open4 = openGroups(p3.groups, f4, p3.held);
@@ -3204,12 +3276,12 @@
   }
   function Chip({ b: b2 }) {
     const next = jobsWaiting();
-    const words4 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
+    const words5 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
     return /* @__PURE__ */ u3("div", { class: "bgjob " + b2.state, children: [
       /* @__PURE__ */ u3("button", { class: "bgopen", onClick: open, title: "Show it", children: [
         /* @__PURE__ */ u3("span", { class: "bgtitle", children: b2.title }),
         /* @__PURE__ */ u3("span", { class: "bgtrack" + (b2.state === "running" && !b2.pct ? " working" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { class: "bgfill", style: { width: `${b2.state === "running" ? b2.pct : 100}%` } }) }),
-        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words4 }),
+        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words5 }),
         !!next.length && /* @__PURE__ */ u3("span", { class: "bgnext", children: [
           "Then: ",
           next[0],
@@ -3318,7 +3390,7 @@
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
   function shown(pages, view, wanted, label, checks2) {
-    const words4 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words5 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
       const here2 = pg.name === view.page;
@@ -3327,7 +3399,7 @@
         if (here2 && more2) out.pageMore++;
         const step2 = checks2[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
+        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -3337,9 +3409,9 @@
     return out;
   }
   function plainHelp(help, toggle) {
-    const words4 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
-    if (!toggle) return words4;
-    return words4.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+    const words5 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words5;
+    return words5.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
   function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
@@ -3686,11 +3758,12 @@
 
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
+  var inSentence = (machine) => machine.charAt(0).toLowerCase() + machine.slice(1);
   function choices(machine) {
     return [
       { key: "data", label: "Delete the apps’ data", note: "Their volumes and data folders. Without this, Start the homelab brings every app back as it was." },
       { key: "folder", label: "Delete the homelab folder too", note: "With .env: every app’s password, and the passphrase that opens the backups. Print the recovery kit (Backups) first if you may restore them." },
-      { key: "backups", label: "Delete the backups on " + machine.toLowerCase(), note: "A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive." },
+      { key: "backups", label: "Delete the backups on " + inSentence(machine), note: "A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive." },
       { key: "app", label: "Remove Homelab Wizard itself", note: "Its settings and downloads too. It quits when it is done." },
       { key: "everythingElse", label: "Delete everything else in the container runtime", note: "Every other container, image, and volume (with its data), the homelab’s or not: things you run yourself go too.", danger: true }
     ];
@@ -3745,7 +3818,7 @@
     return /* @__PURE__ */ u3("div", { id: "uninstall", class: "uninstall", children: [
       /* @__PURE__ */ u3("h3", { class: "subhead", children: [
         "Take the homelab off ",
-        machine.toLowerCase()
+        inSentence(machine)
       ] }),
       /* @__PURE__ */ u3("p", { class: "muted", children: "Stops and removes every app, the images it pulled, the scheduled jobs, and the tray icon at login. For when another machine runs the homelab now, or to start again. The media drive is never touched." }),
       choices(machine).map((c3) => /* @__PURE__ */ u3("label", { class: "check" + (c3.danger ? " danger" : ""), children: [
@@ -4887,7 +4960,7 @@
     btn.textContent = "Installing…";
     mountStarted($2("started"), null);
     mountWiring($2("wiring"), null);
-    const words4 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
+    const words5 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
@@ -4901,7 +4974,7 @@
       });
       const off = window.runtime.EventsOn("progress", (ev) => {
         if (ev.error) return;
-        const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words4[ev.name];
+        const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words5[ev.name];
         cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
       });
       try {
@@ -6113,9 +6186,9 @@
   function settingLabel(key5) {
     if (settingLabels[key5]) return settingLabels[key5];
     const app = keyApp(key5);
-    const words4 = (app ? app[1] : key5).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
-    if (app) return [app[0], ...words4].join(" ");
-    const text2 = words4.join(" ");
+    const words5 = (app ? app[1] : key5).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words5].join(" ");
+    const text2 = words5.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
@@ -6206,15 +6279,15 @@
       return false;
     }
   };
-  function Overnight({ words: words4, hide }) {
+  function Overnight({ words: words5, hide }) {
     return /* @__PURE__ */ u3("p", { class: "overnight", role: "status", children: [
-      /* @__PURE__ */ u3("span", { children: words4 }),
+      /* @__PURE__ */ u3("span", { children: words5 }),
       /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: hide, children: "Hide until tomorrow" })
     ] });
   }
   function mountOvernight(el3, n3) {
-    const words4 = hiddenToday(n3.now) ? null : overnightWords(n3);
-    el3.hidden = !words4;
+    const words5 = hiddenToday(n3.now) ? null : overnightWords(n3);
+    el3.hidden = !words5;
     const hide = () => {
       hiddenOn = today(Date.now());
       try {
@@ -6223,7 +6296,7 @@
       }
       mountOvernight(el3, n3);
     };
-    R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el3);
+    R(words5 ? /* @__PURE__ */ u3(Overnight, { words: words5, hide }) : null, el3);
   }
 
   // web/src/status/healthLine.ts
@@ -6387,7 +6460,15 @@
     ].filter((g2) => g2.copies.length);
   }
   var changed2 = (c3) => !!c3.before && Math.abs(c3.size - c3.before) >= c3.before / 10;
-  function CopyRows({ o: o3 }) {
+  function staleWhy(c3, apps2) {
+    if (!apps2 || !c3.app) return "";
+    const a3 = apps2[c3.app];
+    if (!a3) return "It isn't installed any more: its last copies are kept.";
+    if (a3.state === "stopped") return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
+    if (a3.state !== "running") return "It isn't running, so the nightly copy skips it.";
+    return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+  }
+  function CopyRows({ o: o3, apps: apps2 }) {
     const [picked, setPicked] = d2({});
     const groups3 = copyGroups(o3);
     if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
@@ -6416,7 +6497,8 @@
               ": check that ",
               c3.name,
               " still has its data"
-            ] })
+            ] }),
+            c3.state === "stale" && staleWhy(c3, apps2) && /* @__PURE__ */ u3("span", { class: "note muted", children: staleWhy(c3, apps2) })
           ] }),
           /* @__PURE__ */ u3("td", { class: "when muted", children: never(c3.newest) ? "—" : ago(c3.newest) }),
           /* @__PURE__ */ u3("td", { class: "size muted", title: c3.before ? `The night before: ${bytes(c3.before)}` : void 0, children: [
@@ -6547,6 +6629,9 @@
   function loadBackups() {
     return Promise.all([jobsData.load(), backupsData.load()]);
   }
+  function redrawBackups() {
+    if (backupsData.value && !backupsData.error) drawBackups();
+  }
   function drawBackups() {
     if (backupsData.error) {
       mountCopyRows($2("backupRows"), null);
@@ -6557,7 +6642,7 @@
     const testable2 = (jobsData.value || []).some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
     mountBackupTiles($2("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0 });
-    mountCopyRows($2("backupRows"), { o: o3 });
+    mountCopyRows($2("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
     mountVault($2("vaultCard"), { o: o3 });
     $2("kopiaCard").hidden = !o3.kopia;
     mountKopia($2("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
@@ -6792,6 +6877,7 @@
     statusData.stale();
   }
   statusData.watch(drawStatus);
+  statusData.watch(() => redrawBackups());
   function loadStatus() {
     return statusData.load();
   }
@@ -6909,6 +6995,7 @@
     lastStatus = st;
     renderAppList(st);
     drawOvernight();
+    if (lastWatch) drawWatchdog();
     if (st.checking && !kept2) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -6942,8 +7029,10 @@
       showWall();
     }
   }, 6e4);
+  var lastWatch = null;
   function showWatchdog(w3) {
     const card = $2("watchCard");
+    lastWatch = w3;
     const apps2 = new Set((catalog?.apps || []).map((a3) => a3.id));
     setHealthChecks((w3?.failing || []).map((f4) => f4.name).filter((name) => !apps2.has(name)));
     if (!w3) {
@@ -6956,8 +7045,15 @@
     drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
-    mountWatchdog(card, {
+    drawWatchdog();
+  }
+  var unchecked = (st, w3) => (st?.apps || []).filter((a3) => a3.state === "stopped" && !held[a3.id] && !batteryPaused.has(a3.id) && !a3.waitingFor && !(w3.failing || []).some((f4) => f4.name === a3.id)).map((a3) => a3.name);
+  function drawWatchdog() {
+    const w3 = lastWatch;
+    if (!w3) return;
+    mountWatchdog($2("watchCard"), {
       w: w3,
+      unchecked: unchecked(lastStatus, w3),
       openSetup: () => {
         navigate("setup");
       },
@@ -7134,9 +7230,9 @@
     const cats = new Set(apps2.map((a3) => catOf(a3.id)));
     const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
     const what2 = apps2.length === 1 ? apps2[0].name : `${apps2.length} ${label ? label + " " : ""}apps`;
-    const words4 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    const words5 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
     undoing = { apps: apps2 };
-    mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
+    mountUndoNote($2("undoNote"), { words: words5, undo: undoNow, close: dropUndo });
   }
   function dropUndo() {
     undoing = null;
@@ -7623,16 +7719,32 @@
     const ok = days.reduce((n3, d3) => n3 + d3.ok, 0), all = days.reduce((n3, d3) => n3 + d3.all, 0);
     return all ? ok / all : 1;
   }
-  function weekWords(days) {
-    const ok = days.reduce((n3, d3) => n3 + d3.ok, 0), all = days.reduce((n3, d3) => n3 + d3.all, 0);
-    if (!all) return ["Not checked yet", "The watchdog checks it every 15 minutes once Setup turns it on"];
+  function lastDown(outages2, weekFrom, now = Date.now()) {
+    const shown5 = outages2.filter((o4) => (o4.to ? new Date(o4.to).getTime() : now) > weekFrom);
+    if (!shown5.length) return "";
+    const o3 = shown5.reduce((a3, b2) => new Date(b2.from) > new Date(a3.from) ? b2 : a3);
+    const from2 = new Date(o3.from), at2 = `${dayText(from2, { weekday: "short" })} at ${clockText(from2)}`;
+    const line = o3.to ? `Last down ${at2} for ${lasted(new Date(o3.to).getTime() - from2.getTime())}: ${o3.problem}` : `Down since ${at2}: ${o3.problem}`;
+    return shown5.length > 1 ? `${line} · ${shown5.length} outages` : line;
+  }
+  function weekWords(days, outages2, now = Date.now(), seen2 = {}) {
+    const ok = days.reduce((n4, d3) => n4 + d3.ok, 0), all = days.reduce((n4, d3) => n4 + d3.all, 0);
+    if (!all) {
+      if (seen2.watching && seen2.stopped) return ["Not checked", "The watchdog doesn't check it while it's stopped"];
+      if (seen2.watching) return ["Not checked yet", "The watchdog checks it every 15 minutes, from its next run"];
+      return ["Not checked yet", "The watchdog checks it every 15 minutes once Setup turns it on"];
+    }
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
     const share2 = Math.floor(ok / all * 1e3) / 10;
-    return [`Up ${share2}%`, `Missed checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
+    const first = new Date(now);
+    const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
+    if (outages2) return [`Up ${share2}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
+    const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
+    return [`Up ${share2}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
-  function Week2({ days }) {
-    const [, line] = weekWords(days);
+  function Week2({ days, outages: outages2, seen: seen2 }) {
+    const [, line] = weekWords(days, outages2, Date.now(), seen2);
     const said = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u3("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
@@ -7734,7 +7846,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
-    const [tone, words4] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on2.act(action), children: label });
@@ -7771,11 +7883,19 @@
             /* @__PURE__ */ u3("h1", { children: a3.name }),
             /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
               /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-              words4,
+              words5,
               up && ` · ${up}`
             ] })
           ] }),
           entry?.description && /* @__PURE__ */ u3("p", { class: "lead", children: entry.description }),
+          p3.next?.[0] && !pending2 && /* @__PURE__ */ u3("p", { class: "stopnext", role: "note", children: [
+            p3.next[0],
+            p3.next[1] && /* @__PURE__ */ u3("span", { class: "change", children: [
+              " ",
+              p3.next[1]
+            ] }),
+            p3.next[1] && /* @__PURE__ */ u3("span", { class: "lookonly", children: " Start it from the computer: this phone can only look." })
+          ] }),
           pending2?.failed && /* @__PURE__ */ u3("p", { class: "rowerr", role: "status", children: [
             "Could not ",
             pending2.action === "rollback" ? "roll back" : pending2.action,
@@ -7819,7 +7939,8 @@
     const { a: a3, entry, usage: usage2, disk: disk2, days, backup: o3, on: on2 } = p3;
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const reach = entry?.public ? "At home, and on the internet through the Cloudflare Tunnel" : a3.address ? "At home and on your tailnet, not on the internet" : "On this machine only";
-    const [weekValue] = weekWords(days);
+    const seen2 = { watching: p3.watching, stopped: a3.state === "stopped" };
+    const [weekValue] = weekWords(days, p3.outages, Date.now(), seen2);
     const late = o3 && !never(o3.lastRun) && Date.now() - new Date(o3.lastRun).getTime() > (o3.staleAfterHours || 30) * 36e5;
     const tested = o3 && !never(o3.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o3.restoreTest.lastTest), { day: "numeric", month: "short" })}` : "No restore test yet";
     return /* @__PURE__ */ u3("div", { class: "tiles facts", children: [
@@ -7855,7 +7976,7 @@
           ] })
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days }) }),
+      /* @__PURE__ */ u3(Tile, { label: "This week", value: weekValue, tone: weekShare(days) < 0.99 ? "warn" : "", sub: /* @__PURE__ */ u3(Week2, { days, outages: p3.outages, seen: seen2 }) }),
       /* @__PURE__ */ u3(
         Tile,
         {
@@ -7913,8 +8034,8 @@
           Row,
           {
             dot: a3.banned ? "bad" : "",
-            title: a3.scenario,
-            sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
+            title: /* @__PURE__ */ u3("span", { title: attackDetail(a3), children: attackWords(a3.scenario) }),
+            sub: attackFrom(a3),
             end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", title: "A ban on it is still in force", children: "Banned" }),
             when: clockText(new Date(a3.when)),
             whenTitle: ago(a3.when)
@@ -8013,7 +8134,7 @@
           p3.a.name,
           "…"
         ] }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: "A backup first; its data stays, so Choose stacks can bring it back." })
+        /* @__PURE__ */ u3("span", { class: "muted", children: "A backup first; its data stays, so Choose apps can bring it back." })
       ] })
     ] });
   }
@@ -8162,9 +8283,12 @@
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
       pending: pendingOf(id),
       busy: appsBusyNow(),
+      next: stoppedNext(a3, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
       usage: a3.state === "running" ? usage : void 0,
       disk,
       days: week(),
+      watching: !!watch && !never2(watch.lastRun),
+      outages: watch ? watch.outages ? watch.outages[id] || [] : void 0 : void 0,
       switching: switching[id] || {},
       backup: backupsData.value || null,
       people: usedByPeople(a3, entry) && household ? household : null,
@@ -8248,7 +8372,7 @@
     return rows.map((r3) => r3.map((x3) => x3.trim()));
   }
   function guessColumns(header) {
-    const find = (...words4) => header.findIndex((h3) => words4.some((w3) => h3.toLowerCase().includes(w3)));
+    const find = (...words5) => header.findIndex((h3) => words5.some((w3) => h3.toLowerCase().includes(w3)));
     return {
       date: find("date", "posted", "day", "datum"),
       amount: find("amount", "value", "betrag"),
@@ -11126,10 +11250,10 @@ ${pays}
 
   // web/src/finances/homelab.ts
   var generic = /* @__PURE__ */ new Set(["subscription", "plan", "membership", "premium", "family", "standard", "plus", "pro", "basic", "personal", "monthly", "yearly", "annual", "the", "and", "of"]);
-  var words2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+  var words3 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
   function same(payment, service) {
-    const own2 = words2(payment).filter((w3) => !generic.has(w3));
-    const theirs = new Set(words2(service));
+    const own2 = words3(payment).filter((w3) => !generic.has(w3));
+    const theirs = new Set(words3(service));
     return own2.length > 0 && own2.every((w3) => theirs.has(w3));
   }
   function replacedBy(plan, running5) {
@@ -11422,10 +11546,10 @@ ${pays}
       ] }),
       /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
         /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
-        reminders.map(([kind, words4]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+        reminders.map(([kind, words5]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet2.includes(kind), onClick: remind(kind) }),
           " ",
-          words4
+          words5
         ] }, kind))
       ] }),
       calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key5, amounts) => keep2({ currency, holidays, calendarKey: key5, calendarAmounts: amounts }) })
@@ -13564,7 +13688,7 @@ ${pays}
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
       const lr = last(l3, "lyrics"), ly = lr?.result;
       if (lr && ly) {
-        const parts2 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key5]) => n2(ly[key5]) > 0).map(([key5, words4]) => `${count(n2(ly[key5]), "song")} ${words4}`);
+        const parts2 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key5]) => n2(ly[key5]) > 0).map(([key5, words5]) => `${count(n2(ly[key5]), "song")} ${words5}`);
         const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
         extra.push({
           kind: "lyrics",
@@ -13896,7 +14020,7 @@ ${pays}
 
   // web/src/palette/Shortcuts.tsx
   var names3 = {
-    choose: "Choose stacks",
+    choose: "Choose apps",
     status: "Status",
     backups: "Backups",
     setup: "Setup",
@@ -13941,7 +14065,7 @@ ${pays}
     return lines;
   }
   var screens = () => [
-    [[mod + "1"], "Choose stacks"],
+    [[mod + "1"], "Choose apps"],
     [[mod + "2"], "Status"],
     [[mod + "3"], "Backups"],
     [[mod + "4"], "Setup"],
@@ -13995,13 +14119,13 @@ ${pays}
   }
 
   // web/src/palette/commands.ts
-  var words3 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  var words4 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   function match(list, query3) {
-    const want = words3(query3);
+    const want = words4(query3);
     if (!want.length) return list;
     const scored = [];
     list.forEach((c3, i3) => {
-      const own2 = words3(c3.label), other = [...own2, ...words3(c3.also || "")];
+      const own2 = words4(c3.label), other = [...own2, ...words4(c3.also || "")];
       if (!want.every((w3) => other.some((o3) => o3.startsWith(w3)))) return;
       let score = want.filter((w3) => own2.some((o3) => o3.startsWith(w3))).length * 2;
       if (own2.join(" ") === want.join(" ")) score += 4;
@@ -14010,7 +14134,7 @@ ${pays}
     return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
   }
   var screenList = [
-    ["choose", "Choose stacks", "1", "install add apps"],
+    ["choose", "Choose apps", "1", "install add apps"],
     ["status", "Status", "2", "apps running"],
     ["backups", "Backups", "3", "backup restore"],
     ["setup", "Setup", "4", ""],
@@ -14469,6 +14593,7 @@ ${pays}
     if (name === "backups") {
       backupsData.fresh(minute);
       jobsData.fresh(minute);
+      statusData.fresh(minute);
     }
     if (name === "setup") {
       hostData.fresh(minute);

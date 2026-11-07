@@ -43,7 +43,7 @@ On the phones you allow, it is also the household's Finances: the same screen as
 - Reading (Status, Backups, alerts, logs) works for every paired phone. Start, stop, restart, update, pausing updates, Back up now, Test a restore, and Fix it need a phone allowed to make changes; the Mac runs the same `homelab` commands the desktop app does.
 - Finances go only to a phone allowed them, and only over an encrypted connection (Tailscale, or the https address): a phone paired over plain home Wi-Fi never gets them, nor does a wall screen in kiosk mode, whatever was picked. A phone that may only look gets the plan marked read-only, and the server refuses its saves.
 - The plan is the Mac's `data/finance.json`, read and saved by the Mac's own code. Each read carries the file's version; a save from a phone or the Mac made after another device saved is refused, the latest is shown, and a form left open keeps what was typed, so Save again keeps both changes.
-- Settings, Setup, and Choose stacks stay on the Mac.
+- Settings, Setup, and Choose apps stay on the Mac.
 
 ## Where things live
 

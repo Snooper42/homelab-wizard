@@ -10,7 +10,7 @@
 <!-- Icons: Feather (feathericons.com, MIT licence), drawn inline. -->
 <nav aria-label="Screens">
   <div class="brand"><img src="logo.svg" alt=""><span>Homelab Wizard<small>Your apps, at home</small></span></div>
-  <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose stacks</span></button>
+  <button data-screen="choose" class="active"><svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>Choose apps</span></button>
   <button data-screen="status"><svg class="icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Status</span><span class="count" id="statusCount"></span></button>
   <button data-screen="backups"><svg class="icon" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg><span>Backups</span><span class="count" id="backupsCount"></span></button>
   <button data-screen="tidy"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg><span>Tidy Up</span><span class="count" id="tidyCount"></span></button>
@@ -32,7 +32,7 @@
     <div class="cols">
       <div class="pick">
         <div class="header">
-          <h1>Choose stacks</h1>
+          <h1>Choose apps</h1>
           <p class="lead">Pick what you want. Everything each app needs comes with it, and the plan on the right says what will happen.</p>
         </div>
         <input id="search" class="search" type="search" aria-label="Search apps" placeholder="Search apps, or what they replace (photos, Spotify, budget…)" autocomplete="off" spellcheck="false">
@@ -155,7 +155,7 @@
     <details id="setupDetails" class="jobdetails" open><summary>Show details</summary><pre id="setupLog" role="log" hidden></pre></details>
     <p class="jobclear"><button id="setupClear" class="btn" hidden title="Takes the finished job's bar, apps, and log off this screen">Clear</button></p>
     <p id="checkWait" class="muted" hidden>The rest of setting up shows here once your homelab is made.</p>
-    <p id="firstApps" hidden>Next, pick your first apps on <button id="firstAppsGo" class="linkbtn">Choose stacks</button>. Each app's own steps join this list once it is installed.</p>
+    <p id="firstApps" hidden>Next, pick your first apps on <button id="firstAppsGo" class="linkbtn">Choose apps</button>. Each app's own steps join this list once it is installed.</p>
     <div id="checkHead" class="row finishhead"><h2 id="checkTitle">Finish setting up</h2><span id="checkCount" class="muted"></span>
       <div class="meter"><div id="setupMeter" style="width:0"></div></div>
       <button id="runAll" class="primary small" hidden title="Runs each step that is ready, one after another, and stops at the first that needs you">Do the steps I can</button></div>

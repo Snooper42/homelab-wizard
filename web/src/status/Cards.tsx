@@ -7,9 +7,12 @@ import { ActionLink } from '../ActionLink';
 import { ago, clockText, dayText, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
 import { Row, Rows, type Tone } from '../parts/Row';
+import { attackDetail, attackFrom, attackWords } from './attack';
 
 export interface WatchdogProps {
   w: health.Summary;
+  /** The stopped apps it doesn't check (stopped, not on purpose): said beside "All checks passed". */
+  unchecked?: string[];
   openSetup: () => void;
   fix: () => void;
   /** Stops an app by its id: the memory card's Stop. */
@@ -72,7 +75,7 @@ function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => 
  * Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
  * scheduled job. Failing checks are the ones it alerted about.
  */
-export function Watchdog({ w, openSetup, fix, stop, snooze }: WatchdogProps) {
+export function Watchdog({ w, unchecked = [], openSetup, fix, stop, snooze }: WatchdogProps) {
   if (never(w.lastRun)) {
     return <Head title="Watchdog"><span class="muted">It checks every app, address, and backup every 15 minutes once the jobs are installed. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
   }
@@ -84,6 +87,7 @@ export function Watchdog({ w, openSetup, fix, stop, snooze }: WatchdogProps) {
         <span>
           {failing.length ? <span class="bad">{failing.length} of {w.checks} checks failing</span> : <span class="ok">✓ All {w.checks} checks passed</span>}
           <span class="muted">{w.pending && !failing.length ? `, ${w.pending} checked again next run` : ''} · {ago(w.lastRun)}</span>
+          {!!unchecked.length && <span class="warn unchecked"> · Not checked while stopped: {unchecked.join(', ')}</span>}
         </span>
       </Head>
       {w.memory && <MemoryPressure m={w.memory} stop={stop} />}
@@ -128,7 +132,7 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
       {!!recent.length && (
         <Rows>
           {recent.slice(0, 3).map((a, i) => (
-            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={<span title={attackDetail(a)}>{attackWords(a.scenario)}</span>} sub={attackFrom(a)}
               end={a.banned && <span class="badge">Banned</span>} when={ago(a.when)} />
           ))}
         </Rows>

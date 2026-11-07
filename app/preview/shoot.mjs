@@ -143,11 +143,11 @@ const backups = {
   ] },
   vaultExport: hoursAgo(9 * 24), vaultDue: false,
   copies: [
-    ...dumped.map(([id, name, size]) => ({ id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
-    { id: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
-    { id: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'moneymatter-attachments', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
+    ...dumped.map(([id, name, size]) => ({ id, app: id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
+    { id: 'mealie', app: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
+    { id: 'komga', app: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'kavita', app: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'moneymatter-attachments', app: 'moneymatter', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
   ],
 };
 const duplicatiJobs = [
@@ -166,6 +166,7 @@ const alerts = [
 // The watchdog's last run, a few minutes ago.
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
+const dayAt = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return d.toISOString(); };
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 // The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
 const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
@@ -408,6 +409,16 @@ const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
   cell.dispatchEvent(end);
   if (!end.defaultPrevented) cell.click();
 }, [name, ms]);
+// Mealie stopped by itself at 3:12 this morning, out of memory; Vikunja stopped last night with no reason Docker
+// gave (a shutdown, or docker stop by hand). Neither was stopped from the app.
+function stoppedByItself() {
+  const now = new Date();
+  const at = (days, h, m) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, h, m).toISOString();
+  return { statusOpen: '', status: { ...status, apps: status.apps.map((a) =>
+    a.id === 'mealie' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(0, 3, 12), stoppedWhy: 'it ran out of memory' }
+      : a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(-1, 21, 40) } : a) } };
+}
+
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -1063,6 +1074,23 @@ const smokes = [
     await page.click('#checklist button:has-text("Set up backups")');
     await page.waitForSelector('#checklist li:has-text("Back up to a drive") .failed', { state: 'detached', timeout: 2000 });
   } },
+  // What a step gives you, and why it failed and what next, are read in full: before, each was cut to one line with
+  // "…" (in an 860px window, every step's), and what to press next after a failure went with it. In a normal window,
+  // and in a narrow one with big text.
+  { name: 'First run: a failed step says why in full, not cut off', screen: 'setup', mock: {
+    setup: [{ id: 'backups', title: 'Back up to a drive', why: 'A copy of everything on a drive of its own, made every night while you sleep, and checked each week.', state: 'todo', run: [['backup', 'setup', '--apply']], runLabel: 'Set up backups' }],
+    runFails: { backups: 'the backup drive /Volumes/Backup is not plugged in, or is formatted for Windows (NTFS) and this computer can only read it' },
+  }, run: async (page) => {
+    await page.click('#checklist button:has-text("Set up backups")', { timeout: 5000 });
+    const line = page.locator('#checklist li:has-text("Back up to a drive") .failed');
+    await line.waitFor({ timeout: 5000 });
+    for (const [w, zoom] of [[1280, '1'], [860, '1.5']]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      const cut = await page.$$eval('#checklist li .body > .sub', (es) => es.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent.trim()));
+      if (cut.length) throw new Error(`at ${w}px, text ${zoom}×, cut off: ${cut.join(' | ')}`);
+    }
+  } },
   // Once the homelab is made with no apps yet, Setup says the next thing
   // is picking them, and takes you there; with apps, it says nothing.
   { name: 'First run: once the homelab is made, Setup points to the first apps', screen: 'setup', mock: { status: { ...status, apps: [] }, host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
@@ -1072,8 +1100,8 @@ const smokes = [
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(500);
     const said = await page.evaluate(() => document.querySelector('#setup').innerText);
-    if (!/Choose stacks/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
-    await page.click('#firstApps button:has-text("Choose stacks")');
+    if (!/Choose apps/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
+    await page.click('#firstApps button:has-text("Choose apps")');
     await page.waitForSelector('#choose.active', { timeout: 5000 });
   } },
   { name: 'Setup says nothing of first apps once there are apps', screen: 'setup', run: async (page) => {
@@ -1101,7 +1129,7 @@ const smokes = [
   } },
   // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
   // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
-  { name: 'Choose stacks: suggestions from what you run', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps: suggestions from what you run', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
     const group = page.locator('.group.suggested');
     await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
@@ -1118,7 +1146,7 @@ const smokes = [
   } },
   // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
   // from whichever side the pair is written, and an app you run says nothing.
-  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'kavita');
     const kavita = page.locator('label.app:has-text("Kavita")');
     await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
@@ -1133,7 +1161,7 @@ const smokes = [
     await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
     if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
   } },
-  { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
@@ -1152,10 +1180,10 @@ const smokes = [
     await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
     await scrollTo(900);
     const chose = await top(), shown = await atTop();
-    if (chose < 800 || !shown) throw new Error(`Choose stacks only scrolls to ${chose} (${shown})`);
+    if (chose < 800 || !shown) throw new Error(`Choose apps only scrolls to ${chose} (${shown})`);
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
-    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose stacks' place`);
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose apps' place`);
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
     await scrollTo(300);
     // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
@@ -1164,12 +1192,12 @@ const smokes = [
     if (status < 250) throw new Error(`Status only scrolls to ${status}`);
     await page.click('nav button[data-screen=choose]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
-    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose stacks at ${await top()}, not ${chose}`);
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose apps at ${await top()}, not ${chose}`);
     if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
-    // Quit and open again (on Choose stacks): it is where it was, and so is Status. Quitting is the page going away
+    // Quit and open again (on Choose apps): it is where it was, and so is Status. Quitting is the page going away
     // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
     // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
     await page.evaluate(() => dispatchEvent(new Event('pagehide')));
@@ -1185,20 +1213,20 @@ const smokes = [
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
   } },
-  { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+  { name: 'Choose apps as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("NVIDIA card")', { timeout: 5000 });
   } },
-  { name: 'Choose stacks as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
+  { name: 'Choose apps as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("a Coral or the graphics")', { timeout: 5000 });
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel")', { timeout: 5000 });
     if (await page.locator('label.app:has-text("Beszel") .sysnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
   } },
-  { name: 'Choose stacks as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+  { name: 'Choose apps as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
@@ -1227,7 +1255,7 @@ const smokes = [
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
   { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    const tile = '#tiles .tile:has-text("Instead of subscriptions") .savedso';
     await page.waitForSelector(tile, { timeout: 5000 });
     await page.hover(tile);
     const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
@@ -1304,8 +1332,11 @@ const smokes = [
     await page.waitForSelector('tr.copy.paused:has-text("Komga")');
     if (await page.isVisible('tr.copy:has-text("Komga") .dot.bad')) throw new Error('a paused copy shows red');
     if ((await page.textContent('#backupsCount')).trim() !== '1') throw new Error('a paused copy counted as a problem');
-    // One line a copy: no cell wraps, nor says "database" under the name.
-    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => r.getBoundingClientRect().height > 44).map((r) => r.textContent));
+    // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
+    // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
+    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
+      ? [...r.querySelectorAll('td:not(.name)')].some((td) => { const g = document.createRange(); g.selectNodeContents(td); return new Set([...g.getClientRects()].map((x) => Math.round(x.top))).size > 1; })
+      : r.getBoundingClientRect().height > 44)).map((r) => r.textContent));
     if (tall.length) throw new Error(`copies on more than one line: ${tall.join(' | ')}`);
     if (await page.isVisible('#copiesCard .local')) throw new Error('"database" under each name');
     // Off-site sizes as the app's other sizes: 3.311 GiB → 3.3 GB.
@@ -1533,7 +1564,7 @@ const smokes = [
     await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
     await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
     const first = card.locator('li').first();
-    for (const want of ['vpatch-CVE-2017-9841', '203.0.113.7 · NL · Example Hosting B.V.', 'Banned']) {
+    for (const want of ['Probing for a known security hole', 'Netherlands · Example Hosting B.V.', 'Banned']) {
       if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
     }
     await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
@@ -1795,13 +1826,32 @@ const smokes = [
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
     for (const sel of ['#tiles .tile', '#status table.grouped', '#statusAll']) if (await page.isVisible(sel)) throw new Error(`${sel} shows with no apps`);
-    await page.click('#statusEmpty button:text-is("Choose stacks")');
+    await page.click('#statusEmpty button:text-is("Choose apps")');
     await page.waitForSelector('#choose.screen.active', { timeout: 5000 });
   } },
   { name: 'Backups before the first night: no 0 of 0, and no restore test said to be proven', screen: 'backups', mock: { backups: { ...backups, lastRun: undefined, envCopied: undefined, stale: 0, paused: 0, copies: [], restoreTest: { history: [] } } }, run: async (page) => {
     await page.waitForSelector('#copiesTile .value:text-is("None yet")', { timeout: 5000 });
     await page.waitForSelector('#restoreTile .value:text-is("Never")');
     if (await page.isVisible('#restoreTile:has-text("Proven")')) throw new Error('a restore test that never ran is called proven');
+  } },
+  // An app's week says when it was last down, for how long, and why (the watchdog's outages), not "Missed checks on
+  // Thursday": with two, how many times; with misses but no outage, that each passed the next time; from an older agent
+  // with no outages, how many checks it didn't answer.
+  ...[
+    ['its last outage, and why', { vikunja: [{ from: dayAt(5, 14, 0), to: dayAt(5, 14, 30), problem: 'nothing answers on its port' }, { from: dayAt(3, 3, 10), to: dayAt(3, 3, 55), problem: 'HTTP 502' }] },
+      (d) => `Last down ${d} at 3:10 AM for 45 minutes: HTTP 502 · 2 outages`],
+    ['misses that passed the next time', {}, () => 'Each check it missed passed the next time'],
+    ['from an older agent', undefined, (d, long) => `It didn't answer 3 of its checks on ${long}`],
+  ].map(([what, outages, want]) => ({ name: `An app's week says ${what}`, screen: 'app:vikunja', mock: { ...pageMock, watchdog: { ...watchdog, ...(outages ? { outages } : {}) } }, run: async (page) => {
+    const d = new Date(); d.setDate(d.getDate() - 3);
+    const words = want(d.toLocaleDateString('en-US', { weekday: 'short' }), d.toLocaleDateString('en-US', { weekday: 'long' }));
+    await page.waitForSelector(`.tile:has-text("This week"):has-text("${words}")`, { timeout: 5000 });
+  } })),
+  // A stopped app's week, with the watchdog running (Status's header says checks are on): not "once Setup turns it on",
+  // but that the watchdog doesn't check it while it's stopped (Account 3's tester, task 2).
+  { name: "A stopped app's week says it isn't checked while stopped, not to turn Setup on", screen: 'app:mealie', mock: { ...pageMock, watchdog }, run: async (page) => {
+    await page.waitForSelector('.tile:has-text("This week"):has-text("The watchdog doesn\'t check it while it\'s stopped")', { timeout: 5000 });
+    if (await page.isVisible('.tile:has-text("This week"):has-text("once Setup turns it on")')) throw new Error('it says to turn on what is on');
   } },
   { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
@@ -2135,6 +2185,109 @@ const smokes = [
     if (await page.locator('.groupmenulist .heldnote').count()) throw new Error(`the group menu says you stopped it: ${await page.locator('.groupmenulist .heldnote').textContent()}`);
     await page.keyboard.press('Escape');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // An app that stopped by itself, not from the app: its row says when, and why when Docker knows (out of memory, an
+  // error, a port taken), with a red dot, and Needs a look counts it; one Docker gave no reason for says only when.
+  // Its own row still offers Start.
+  { name: 'Stopped by itself: its row says when and why, and it needs a look', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    await page.click('#statusAll');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
+    if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:text-is("Stopped yesterday, 9:40 PM")');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
+  // need be, and nothing slides sideways.
+  ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {
+    await page.setViewportSize({ width: w, height: 640 });
+    const cell = page.locator('#statusRows tr:has(strong:text-is("Mealie")) td.state');
+    await cell.waitFor({ timeout: 5000 });
+    await cell.scrollIntoViewIfNeeded();
+    const text = (await cell.textContent()).trim();
+    if (!text.includes('Stopped at 3:12 AM: it ran out of memory')) throw new Error(`Mealie's row says "${text}"`);
+    const bad = await cell.evaluate((e) => {
+      const m = document.querySelector('main'), edge = m.getBoundingClientRect().right + 1, found = [];
+      if (m.scrollWidth > m.clientWidth + 1) found.push(`the page slides sideways (${m.scrollWidth} px in ${m.clientWidth})`);
+      for (const x of [e, ...e.querySelectorAll('*')]) {
+        if (getComputedStyle(x).textOverflow === 'ellipsis' && x.scrollWidth > x.clientWidth + 2) found.push('the why is cut off');
+        if (x.getBoundingClientRect().right > edge) found.push('the why sticks out');
+      }
+      return [...new Set(found)];
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+  } })),
+  // Its page says the same at the top, beside Start.
+  { name: 'Stopped by itself: its page says when and why', screen: 'app:mealie', mock: stoppedByItself(), run: async (page) => {
+    await page.waitForSelector('.pill.bad:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
+  } },
+  // Account 3's tester, task 2: a stopped app's page says what to do, whatever stopped it, under its name.
+  ...[
+    ['stopped by you', { stopped: { mealie: { since: new Date().toISOString() } } }, {}, 'You stopped it, so nothing starts it by itself. Start starts it again.'],
+    ['kept restarting', { stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } }, {}, 'The watchdog stopped it after Docker restarted it again and again; its log below says why. Once that is put right, Start tries again.'],
+    ['out of memory', {}, { stoppedWhy: 'it ran out of memory' }, "If it runs out again, stop an app you aren't using, or give Docker more memory. Start tries again."],
+    ['its port taken', {}, { stoppedWhy: 'another program is using its port 9925' }, 'Another program has port 9925. Quit it, then Start.'],
+    ['stopped outside the homelab', {}, {}, 'It was stopped outside the homelab (by Docker, or a shutdown). Start starts it again.'],
+  ].map(([what, extra, app, words]) => ({ name: `A stopped app's page says what to do: ${what}`, screen: 'app:mealie',
+    mock: { ...pageMock, status: { ...status, ...extra, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, ...app } : a)) } }, run: async (page) => {
+    await page.waitForSelector(`.pagehead .stopnext:has-text("${words.replace(/"/g, '\\"')}")`, { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .lookonly')) throw new Error('the computer says a phone can only look');
+  } })),
+  // On a phone that only looks, a stopped app says where to start it, on Status and on its page; one that may make
+  // changes has Start, and no such words.
+  { name: 'A stopped app on a phone that only looks: start it from the computer', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) .lookonly:visible:text-is("Start it from the computer")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain')) throw new Error('a look-only phone shows Start');
+    await page.click('#statusRows tr:has(strong:text-is("Mealie")) .topage');
+    await page.waitForSelector('.pagehead .stopnext:has-text("It was stopped outside the homelab") .lookonly:visible:has-text("Start it from the computer: this phone can only look.")', { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .change')) throw new Error('a look-only phone is told to press Start');
+  } },
+  { name: 'A stopped app on a phone that may make changes: Start', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain:visible:text-is("Start")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) .lookonly')) throw new Error('a phone that may change says to use the computer');
+  } },
+  // The watchdog doesn't check a stopped app: beside "All 47 checks passed", it names it, on the computer and the phone.
+  ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
+    await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
+  } })),
+  // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
+  // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
+  ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
+    await page.waitForSelector('#tiles .tile:has-text("Running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
+    await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
+    const said = await page.evaluate(() => document.body.innerText);
+    for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
+    if (!phone.length) await page.waitForSelector('nav button[data-screen="choose"]:has-text("Choose apps")');
+  } })),
+  // Finding 5: on the phone, an app's log wraps its lines: none runs out of its box.
+  { name: "An app's log on the phone wraps its lines, 390px wide", screen: 'app:vikunja', phone: ['companion'], mock: pageMock, run: async (page) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const log = page.locator('#appLog .applog');
+    await log.waitFor({ timeout: 5000 });
+    const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
+    if (wide) throw new Error('a log line runs out of its box');
+  } },
+  // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
+  // nightly copy skips it; one whose app runs says Back up now tries again.
+  ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
+    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."],
+  ].map(([what, st, words]) => ({ name: `A stale copy says why: ${what}`, screen: 'backups', mock: { status: st }, run: async (page) => {
+    await page.waitForSelector(`tr.copy.stale:has-text("Mealie") .note:text-is("${words}")`, { timeout: 5000 });
+  } })),
+  // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
+  ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await page.waitForSelector(`h3.subhead:text-is("Take the homelab off ${words}")`, { timeout: 5000 });
+    await page.waitForSelector(`label:has-text("Delete the backups on ${words}")`);
+  } })),
+  // The phone's Backups: a copy's when, size, and how many are kept on one line under its name, not three lines with
+  // the size alone at the far right.
+  { name: "The phone's Backups: each copy on two lines", screen: 'backups', phone: ['companion'], run: async (page) => {
+    const row = page.locator('tr.copy:has-text("Vaultwarden")');
+    await row.waitFor({ timeout: 5000 });
+    const tops = await row.evaluate((r) => ['td.name', 'td.when', 'td.size', 'td.kept'].map((q) => Math.round(r.querySelector(q).getBoundingClientRect().top)));
+    if (!(tops[1] > tops[0] && tops[1] === tops[2] && tops[2] === tops[3])) throw new Error(`the lines' tops: ${tops.join(', ')}`);
+    if (!(await row.innerText()).includes('7 kept')) throw new Error('how many are kept is hidden');
   } },
   // The owner, Nov 6: a new Mac with the media drive unplugged and no Python, ffmpeg, or Calibre had nine rows under
   // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose folder… for media elsewhere), and the
@@ -3250,7 +3403,7 @@ const smokes = [
     });
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
-  ...[['Choose stacks', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+  ...[['Choose apps', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -3565,11 +3718,11 @@ const smokes = [
     if (c.alpha < 1) throw new Error(`the count is see-through (alpha ${c.alpha})`);
     if (!c.onTop) throw new Error('the icon covers the count');
   } })),
-  // Counts in words: "1 baseline app is down", "7 other containers … aren't".
-  ...[[1, 1, '1 baseline app is down', '1 other container on this machine isn’t a catalog app.'], [3, 7, '3 baseline apps are down', '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
+  // Counts in words: "1 of the homelab's own apps is down", "7 other containers … aren't".
+  ...[[1, 1, "1 of the homelab's own apps is down", '1 other container on this machine isn’t a catalog app.'], [3, 7, "3 of the homelab's own apps are down", '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
     await page.waitForSelector('#tiles .tile', { timeout: 5000 });
     const text = await page.$eval('#status', (e) => e.innerText);
-    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|baseline app|other container)[^\n]*/g) || []).join(' | ')})`);
+    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|own apps? (is|are)|other container)[^\n]*/g) || []).join(' | ')})`);
   } })),
   // The phone zoomed in by its browser: 390 px at 150% is a 260 px page, at 175% about 213 px.
   ...[['status', 260], ['backups', 260], ['app:vikunja', 213], ['status', 213], ['backups', 213]].map(([screen, w]) => ({ name: `The phone zoomed in, ${w}px: ${screen === 'app:vikunja' ? 'an app’s page' : screen[0].toUpperCase() + screen.slice(1)} cuts nothing off and does not slide sideways`, screen, phone: ['companion', 'can-change'], mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
@@ -6380,7 +6533,7 @@ const screens = [
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
-  { name: 'Choose stacks', screen: 'choose' },
+  { name: 'Choose apps', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).
@@ -6514,7 +6667,9 @@ async function keep(page, label) {
 // SMOKE_ONLY=text runs the checks whose name has it, SMOKE_SHARD=i/n runs
 // every nth from the ith (CI runs n at once: together they are every
 // check), SMOKE_DEBUG=1 prints what axe measured, and SMOKE_SHOTS=folder
-// keeps a picture of each screen that passed (for a pull request).
+// keeps a picture of each screen and each check that passed (for a pull
+// request's after; a failing check's picture in app/preview/failures is
+// its before).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
   const [shard, shards] = (process.env.SMOKE_SHARD || '1/1').split('/').map(Number);
@@ -6531,6 +6686,11 @@ if (process.argv.includes('--smoke')) {
         await s.run(page);
         if (errors.length) throw new Error(errors.join('; '));
         console.log('ok  ', `${s.name} (${scheme})`);
+        // The screen as the check left it, for a pull request's after (a failing check's is its before).
+        if (process.env.SMOKE_SHOTS) {
+          mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+          await page.screenshot({ path: join(process.env.SMOKE_SHOTS, `${scheme}-${s.name}`.replace(/[^\w.-]+/g, '-').slice(0, 120) + '.png'), fullPage: true });
+        }
       } catch (e) {
         failed++;
         // The first line, and what it was waiting for (Playwright's call log), so a timeout says which step.

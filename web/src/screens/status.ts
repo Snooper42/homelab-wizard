@@ -24,7 +24,7 @@ import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
 import { setHealthApps, setHealthChecks } from '../status/healthLine';
-import { backupsData } from './backups';
+import { backupsData, redrawBackups } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
@@ -90,7 +90,7 @@ mountShowAll($('statusAllBox'));
 // is the list's own (AppList.tsx), so it never asks the runtime.
 let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
-  // Grouped by category, as on Choose stacks; what needs a look comes
+  // Grouped by category, as on Choose apps; what needs a look comes
   // first, in a group of its own.
   // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
@@ -159,6 +159,8 @@ export async function drawRemembered(last: Promise<api.Reading | null>) {
   statusData.stale(); // read when Status shows
 }
 statusData.watch(drawStatus);
+// Backups says why a stale copy is stale from its app's state: drawn again as it changes.
+statusData.watch(() => redrawBackups());
 export function loadStatus() { return statusData.load(); }
 
 // One request for Status and the cards beside it (StatusBoard): Status
@@ -258,7 +260,7 @@ function drawStatus() {
   }
   const st = statusData.value!;
   statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-  if (catalog) renderApps(); // Choose stacks ticks what runs
+  if (catalog) renderApps(); // Choose apps ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
   held = st.stopped || {};
   renderTiles(st);
@@ -267,6 +269,7 @@ function drawStatus() {
   lastStatus = st;
   renderAppList(st);
   drawOvernight();
+  if (lastWatch) drawWatchdog(); // the apps it doesn't check, as they change
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -298,8 +301,10 @@ setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60
 // The watchdog's last run: every app, public address, database copy,
 // Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
 // scheduled job. Failing checks are the ones it alerted about.
+let lastWatch: health.Summary | null = null;
 function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
+  lastWatch = w;
   // The failing checks that are no app's (an app's own trouble is its row's), for the line on the other screens.
   const apps = new Set((catalog?.apps || []).map((a) => a.id));
   setHealthChecks((w?.failing || []).map((f) => f.name).filter((name) => !apps.has(name)));
@@ -310,8 +315,19 @@ function showWatchdog(w: health.Summary | null) {
   drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
-  mountWatchdog(card, {
-    w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
+  drawWatchdog();
+}
+
+/** The apps stopped, not on purpose, that the watchdog doesn't check (one
+ * that stopped by itself is a failing check of its own). */
+const unchecked = (st: api.Status | null, w: health.Summary) => (st?.apps || []).filter((a) =>
+  a.state === 'stopped' && !held[a.id] && !batteryPaused.has(a.id) && !a.waitingFor && !(w.failing || []).some((f) => f.name === a.id)).map((a) => a.name);
+
+function drawWatchdog() {
+  const w = lastWatch;
+  if (!w) return;
+  mountWatchdog($('watchCard'), {
+    w, unchecked: unchecked(lastStatus, w), openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
     // Memory nearly full: Stop on one of the biggest, as its row's Stop.
     stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
     // Snooze a failing check's alerts, then draw the card again with it.

@@ -8,7 +8,7 @@ platform: linux
 version: ${VERSION}
 version_schema: none
 maintainer: Snooper42
-description: Desktop app for the homelab - choose stacks, install them, and watch their status.
+description: Desktop app for the homelab - choose apps, install them, and watch their status.
 homepage: https://github.com/Snooper42/homelab-wizard
 license: MIT
 depends:

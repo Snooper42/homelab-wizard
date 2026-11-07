@@ -41,9 +41,9 @@ Every round begins by finishing what is open in your lane: an open pull request 
 
 A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main: tell the owner to delete it (your tools can't). A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner.
 
-**Open now:** nothing. #471 (items 9, 10, 18 to 22, and the `scripts/logs` note) merged Nov 6.
+**Open now:** nothing. On the owner's Nov 7 ask to close every branch: #478 (the five parked branches), #479 (Tidy Up's first run in two rows, and a Lyrics row always on Music), and #474 (the walkthrough's and Account 3's usability fixes, six branches in one) merged.
 
-**Parked branches:** `claude/fix-proc` (item 13, in part), `claude/fix-cache-writes` (item 11), `claude/fix-quit-list` (item 12), `claude/fix-small-notes` (item 25). `claude/fix-resume-warn` (item 14) is Tidy Up, now Account 1's: list it for the owner, don't merge it. Merged branches for the owner to delete: `claude/fix-logs-private`, `fix-agent-state`, `fix-sent-notes`, `fix-custom-compose`, `fix-kit-manifest`, `fix-healed`, `fix-records-whole` (all in #471).
+**Parked branches:** none. Branches whose work is on main, for the owner to delete (these tools can't; GitHub deletes a merged PR's own branch): `claude/fix-agent-state`, `fix-cache-writes`, `fix-custom-compose`, `fix-down-whole`, `fix-healed`, `fix-kit-manifest`, `fix-logs-private`, `fix-lyrics-offline`, `fix-page-checks`, `fix-plain-words`, `fix-proc`, `fix-quit-list`, `fix-resume-warn`, `fix-sent-notes`, `fix-setup-words`, `fix-small-notes`, `fix-tdarr-handing`, `fix-walk-2`, and every `claude/fix-*-shots` (screenshots for PR bodies).
 
 ## Your job
 
@@ -99,9 +99,9 @@ Built together with the first screen that needs it, once two usability fixes hav
 ## Walkthrough notes
 
 What earlier walkthroughs found, worst first; take them in **Each round** step 2.4 and tick each with its PR.
-- **Status shows a stopped app with no reason**, though `data/stopped.json` keeps why (who stopped it, or the watchdog giving up).
-- **Setup's rows cut their descriptions off with "…"**: the household can't read what a choice does before making it.
-- **An app's page says "Missed checks on Tuesday"** with nothing on what a check is or what to do.
+- **(#474)** **Status shows a stopped app with no reason.** It turned out an app stopped on purpose or by the watchdog already said why; one that stopped by itself (out of memory, an error, its port taken) read just *Stopped*. It now says when and why, everywhere. Found on the way: a folded group's names pushed the phone's Status sideways.
+- **(#474)** **Setup's rows cut their descriptions off with "…"**: the household can't read what a choice does before making it.
+- **(#474)** **An app's page says "Missed checks on Tuesday"** with nothing on what a check is or what to do.
 
 ## The order
 
@@ -109,7 +109,7 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 
 **Kept:** 23, then 27 once Account 3 has answered it. (9, 10, 18 to 22: #471, merged.)
 
-**Parked:** 2 (`UPDATES_HELD`), 3's leftovers, 11, 12, 13, 24, 25. Item 14 is Tidy Up: Account 1's now.
+**Parked:** 2 (`UPDATES_HELD`), 3's leftovers, 24. (11, 12, 13, 14, 25: #478.)
 
 1. **(#429, merged)** **The open failure issues, oldest first:** #403 (*Nightly run failed* on 2026-11-04), #404 (*Catalog share 3 failed to start* on 2026-11-04), #421 (*Nightly run failed* on 2026-11-05). Read each run's job logs with `get_job_logs` and `return_content` (artifact and raw-log downloads can be blocked by the proxy), fix the root cause, and close the issue from the PR. If two share one cause, one PR closes both.
 2. **App-written lists out of `.env`.** Move these into `data/*.json` through `internal/lockedfile`, one PR per record:
@@ -131,10 +131,10 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 8. **(#462, merged)** **`homelab rebuild` restores `.env` around its lock** (`cmd/homelab/rebuild.go`, `os.WriteFile(h.envFile, ...)`): an agent or app reading `.env` at that moment can read half of it, and `internal/envfile`'s writers can save over it. Write it through `lockedfile.Write` (or envfile's own writer, keeping its `.bak`), and prove it with a reader in a loop.
 9. **(#471)** **The agent's own state** (`saveAgentState`, `cmd/homelab/agent.go`) and **its log rotation**, which writes a fixed `<log>.tmp` that two processes rotating the same log at once share: `lockedfile.Write` for both.
 10. **(#471)** **Notes that say a message went out**: the weekly summary's (`cmd/homelab/digest.go`) and Finances' reminders' (`cmd/homelab/finances.go`) are plain writes whose errors are dropped. A torn or unsaved note sends the message again. `lockedfile.Write`, and a warning when it fails.
-11. **Caches and readings written in place**: `internal/releases` (its mutex is one process's only), `internal/storage`'s `Record.Save`, `internal/upgrade`'s rollback point (`PointPath`), `internal/media/fetch.go`'s `ffmpeg.json`. `lockedfile.Write` each; the rollback point first, since `homelab rollback` reads it.
-12. **`homelab quit`'s list** (`scripts/logs/stopped.json`, `saveStopped` in `cmd/homelab/quit.go`) is a plain write beside `internal/stopped`'s locked `data/stopped.json`. See whether they are the same idea twice; keep one, written under its lock.
-13. **`data/healed.json`** (`cmd/homelab/heal.go`) is still a plain write, left in item 3 for #425. Once #425 is in, move it to `lockedfile.Update` and merge `internal/turn`'s and `internal/media`'s `processAlive` (item 6).
-14. **A Tidy Up job that resumes says so in the app too**: `mediaEngine` warns *stopped part-way … carries on from there* only in a terminal (`!f.events`); with `--events json` send it as a `warn` event, as #444 does for a beets venv made again.
+11. **(#478)** **Caches and readings written in place**: `internal/releases` (its mutex is one process's only), `internal/storage`'s `Record.Save`, `internal/upgrade`'s rollback point (`PointPath`), `internal/media/fetch.go`'s `ffmpeg.json`. `lockedfile.Write` each; the rollback point first, since `homelab rollback` reads it.
+12. **(#478)** **`homelab quit`'s list** (`scripts/logs/stopped.json`, `saveStopped` in `cmd/homelab/quit.go`) is a plain write beside `internal/stopped`'s locked `data/stopped.json`. See whether they are the same idea twice; keep one, written under its lock.
+13. **(#478)** **`data/healed.json`** (`cmd/homelab/heal.go`) is still a plain write, left in item 3 for #425. Once #425 is in, move it to `lockedfile.Update` and merge `internal/turn`'s and `internal/media`'s `processAlive` (item 6).
+14. **(#478)** **A Tidy Up job that resumes says so in the app too**: `mediaEngine` warns *stopped part-way … carries on from there* only in a terminal (`!f.events`); with `--events json` send it as a `warn` event, as #444 does for a beets venv made again.
 15. **(Nov 6, done by looking: no change needed)** A PID reused within one boot belongs to a process that started after the job that held it ended, so after the lock was written: item 13's start-time check (`proc.Process.Holds`, on `claude/fix-proc`) already counts such a lock as left behind, but for the 5 s slack. A name check would cost one more `ps` on every check for that 5 s. **Tidy Up's lock and a reused process ID within one boot** (#443's note): a lock is held by a live process that started before it was written, which a reused PID can be after the IDs wrap. Checking that the process is homelab (its name, as `ps -o comm=` and `QueryFullProcessImageName` give it) would close it; weigh the extra exec per check first.
 16. **(#454, merged)** **Tidy Up's scripts run straight from Terminal**: `music_tidy.py`'s `need()` (not vendored) relaunches under `~/.music-cleanup/venv` and fails the same way #444 fixed for `homelab media` when that venv's Python is gone. Make the same check there (remove a venv whose Python doesn't start), with a Python test under 3.9.
 17. **(#460, merged; N22)** **Companion phones' store** (`internal/companion/devices.go`, its fixed `.tmp` and the race in **For Account 3**): once Account 3 has looked at it, every change goes through `lockedfile.Update`, as `internal/stopped` does.
@@ -145,13 +145,15 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 22. **(#471)** **`data/healed.json`** (`cmd/homelab/heal.go`, the rest of item 13): read and rewritten whole by each watchdog run, so two at once (the agent's and the one after sleep) can lose a note. `lockedfile.Update`, shown with 40 runs at once as #434 did for `restarts.json`.
 23. **Where the homelab folder is** (`core.SaveRoot`): the app and the CLI remember it in a file rewritten in place. One torn means the next app start can't find the homelab. `lockedfile.Write`.
 24. **The app's own small notes** (`app/autoupdate.go` prefs, `app/window.go`, `app/updates.go`'s `writeJSON`, `app/tray/found.go` and `appearance.go`): plain writes, some read by the tray, which is a process of its own. `lockedfile.Write` each, in one PR.
-25. **Small notes left, one writer each**: `backup.RestoreLog.Save`, `core.SaveAPIFallback` (`docker-api.json`), `core`'s `crash-seen`, `domain.Home.Save`, `tailnet`'s config. `lockedfile.Write` when touched; one PR for the lot if none is touched by then.
+25. **(#478)** **Small notes left, one writer each**: `backup.RestoreLog.Save`, `core.SaveAPIFallback` (`docker-api.json`), `core`'s `crash-seen`, `domain.Home.Save`, `tailnet`'s config. `lockedfile.Write` when touched; one PR for the lot if none is touched by then.
 26. **(#466, merged: three shards per theme, run at once)** **The smoke suite's length**: `smoke (light)` and `smoke (dark)` take 30 to 40 minutes each, and every lane waits on them for every merge, so a slower lane's PR keeps finding main moved (Nov 6: #444, #442, and #454 needed 3, 3, and 7 runs). Measure the slowest cases (`shoot.mjs --smoke` prints each), and split each theme's run into shards in `.github/workflows/ci.yml` if the time is spread out, or speed up the slow waits if it isn't. Same cases, same checks: nothing skipped.
 27. **`data/`'s own mode**: see **For Account 3** (Nov 6). Once Account 3 has looked at it, make `data/` 0700 where it is made (`lockedfile.Update`'s `MkdirAll`, `battery`, `health`, `restartloop`, `heal`, and the rest), tightening an existing one, as `claude/fix-logs-private` does for `scripts/logs`.
 
 ## For Account 1
 
 - **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`; Nov 6: #454's run on 94b290a, `smoke (dark)`, green on the next run; both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
+
+- **"Choose stacks" is "Choose apps"** (Nov 6, `claude/fix-plain-words`, Account 3's usability finding 4): every screen, doc, and CLI hint says *Choose apps* now, but `tools/media/tdarr_setup.py` line 47 still says *Install it from Choose stacks (Media automation)*. Yours to change; `app/preview/words.mjs` now refuses *stacks* and *baseline* in `web/src`, not in `tools/`.
 
 ## For Account 3
 

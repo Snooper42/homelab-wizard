@@ -34,6 +34,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -930,6 +931,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // it running this week (seen); one never installed is left alone.
 func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string, seen health.State) (out []health.Result, unwell, missing []string) {
 	st := api.StatusOf(ctx, h.catalog, containers, env, true)
+	held := stopped.Load(stopped.Path(h.root))
 	local := &http.Client{Timeout: 10 * time.Second}
 	for _, s := range st.Apps {
 		a, ok := h.catalog.Get(s.ID)
@@ -948,8 +950,12 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 				unwell = append(unwell, s.ID)
 			}
 		case s.State == "running" || s.State == "elsewhere":
+		case s.State == "stopped" && s.StoppedWhy != "" && !held.Has(s.ID):
+			// It stopped by itself (out of memory, an error, its port
+			// taken): an alert, not a restart, which may not help.
+			r.Err = fmt.Errorf("stopped: %s", s.StoppedWhy)
 		case s.State == "stopped":
-			continue // stopped by hand: every service restarts unless stopped
+			continue // stopped by hand, or on purpose: every service restarts unless stopped
 		case a.Optional() || a.Internal():
 			continue // stopped or not installed: the user's choice
 		case a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":

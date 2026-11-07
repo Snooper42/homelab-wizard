@@ -29,6 +29,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/npm/npmtest"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/releases"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -702,6 +703,31 @@ func TestWatchdogChecksEveryApp(t *testing.T) {
 	for _, unwanted := range []string{"watchtower", "cloudflared", "sonarr", "moneymatter-db"} {
 		if strings.Contains(out, unwanted) {
 			t.Errorf("%s should not be checked:\n%s", unwanted, out)
+		}
+	}
+}
+
+// An app that stopped by itself (out of memory here) is a failing check,
+// with why, so the household hears of it and Status's watchdog line counts
+// it; before, every stopped app was skipped as stopped by hand. It is not
+// restarted. One stopped cleanly, or stopped on purpose, is still left.
+func TestWatchdogSaysWhenAnAppStoppedByItself(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Project: "homelab_security", Service: "vaultwarden", ExitCode: 137, OOMKilled: true},
+		{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Project: "homelab_security", Service: "ntfy", ExitCode: 143},
+		{Name: "homelab_household-mealie-1", Image: "mealie", Project: "homelab_household", Service: "mealie", ExitCode: 1},
+	})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	if err := (stopped.Record{"mealie": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	out, _ := homelabCmd(t, root, "", "watchdog")
+	if !strings.Contains(out, "vaultwarden: stopped: it ran out of memory") {
+		t.Errorf("an app out of memory isn't a failing check:\n%s", out)
+	}
+	for _, unwanted := range []string{"ntfy: stopped", "mealie", "restarted Vaultwarden"} {
+		if strings.Contains(out, unwanted) {
+			t.Errorf("%q:\n%s", unwanted, out)
 		}
 	}
 }

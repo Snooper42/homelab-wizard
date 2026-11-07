@@ -34,10 +34,10 @@ What started this page: small features asked for one by one, each now in the app
 | Shapes as well as colours | Status's dots are a circle when up, a triangle when an app is stopped or needs a look, and a cross when it's down, so a state reads without its colour | #449 |
 | Quick actions | On a phone that may make changes, hold an app's row on Status for Open, Start, Restart, Stop, Stop for a while, and Logs | #447 |
 | A sheet for the fridge | Each person's apps, addresses, phone apps, and a code for the camera, on one printed page, without passwords or the sign-in link | #446 |
-| Suggestions from what you use | Choose stacks › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
+| Suggestions from what you use | Choose apps › Add more opens on the apps that go with ones you run (Beets with Navidrome, Bazarr with Sonarr), each with what it brings | #445 |
 | Quiet hours | From 10 PM to 7 AM alerts reach the phone without a sound, unless the vault is unreachable or backups have failed two nights running | #439 |
-| Two apps that do the same job | Choose stacks says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
-| Savings over time | Hover *Replaces a year* on Status for what the apps have saved since the first nightly record, month by month | #437 |
+| Two apps that do the same job | Choose apps says when you already run one that does it (Komga and Kavita, Mealie and Tandoor), and why you might keep one or both | #438 |
+| Savings over time | Hover *Instead of subscriptions* on Status for what the apps have saved since the first nightly record, month by month | #437 |
 | What changed since last night | On Backups, each copy's size beside the night before's; one less than half the night before's is marked in red | #435 |
 | What CrowdSec stopped | The proxy's page lists every address CrowdSec stopped since midnight, where from, what it tried, and whether it's still banned | #430 |
 | What happened overnight | Status's first line in the morning: the night's updates, rollbacks, backup, and whether anything needed you | #420 |
@@ -184,8 +184,8 @@ Picking, trying, and using apps.
 
 - **Import music on a button** (M, *Idea*): beets' import from Status, with the albums it is unsure of asked in the app instead of Terminal. The [Roadmap](<Roadmap.md#the-library-in-order>) has the library work in order.
 - **Try an app for a day** (M, *Idea*): install an app on trial; tomorrow the app asks to keep it or removes it with its data.
-- **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose stacks › Add more › *Suggested for what you run*.
-- **Two apps that do the same job** (S, *Built*, #438): Choose stacks says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
+- **Suggestions from what you use** (S, *Built*, #445): with Navidrome, beets; with Sonarr, Bazarr; each with one line on why. Thirteen, in each app's `goes_with`, under Choose apps › Add more › *Suggested for what you run*.
+- **Two apps that do the same job** (S, *Built*, #438): Choose apps says when you already run one that does it (Komga and Kavita, Navidrome and Jellyfin's music), and why you might want both. Eight pairs, in each app's `same_job`.
 - **Quick settings on an app's page** (M, *Idea*): the two or three settings people change most (Navidrome's scan interval, Immich's machine learning on or off) as switches, without opening the app.
 
 ## The desktop and the menu bar
@@ -254,4 +254,4 @@ What the homelab did for you, in numbers you can trust.
 
 - **A monthly report** (M, *Idea*): uptime, backups and restore tests, updates, memory, and what the apps replaced in money, as a page and a PDF.
 - **Health in one line** (S, *Built*, #470): "All well", or the one thing that needs you (an app in its row's words, several in one line, or a failing check that is no app's), at the top of every screen but Status, with Open Status.
-- **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Replaces a year* on Status.
+- **Savings over time** (S, *Built*, #437): what the apps have saved since the homelab started, month by month, from [Savings](<Savings.md>): hover *Instead of subscriptions* on Status.

@@ -15,7 +15,7 @@
   --shade-025:rgba(0,0,0,.025); --shade-04:rgba(0,0,0,.04); --shade-05:rgba(0,0,0,.05); --shade-055:rgba(0,0,0,.055); --shade-06:rgba(0,0,0,.06); --shade-07:rgba(0,0,0,.07); --shade-08:rgba(0,0,0,.08); --shade-09:rgba(0,0,0,.09); --shade-1:rgba(0,0,0,.1); --shade-12:rgba(0,0,0,.12); --shade-14:rgba(0,0,0,.14); --shade-18:rgba(0,0,0,.18); --shade-2:rgba(0,0,0,.2); --shade-25:rgba(0,0,0,.25); --shade-28:rgba(0,0,0,.28); --shade-3:rgba(0,0,0,.3); --shade-45:rgba(0,0,0,.45); --shade-5:rgba(0,0,0,.5);
   --glow-04:rgba(255,255,255,.04); --glow-06:rgba(255,255,255,.06); --glow-07:rgba(255,255,255,.07); --glow-08:rgba(255,255,255,.08); --glow-1:rgba(255,255,255,.1); --glow-12:rgba(255,255,255,.12); --glow-14:rgba(255,255,255,.14); --glow-16:rgba(255,255,255,.16); --glow-18:rgba(255,255,255,.18); --glow-22:rgba(255,255,255,.22); --glow-28:rgba(255,255,255,.28); --glow-3:rgba(255,255,255,.3); --glow-35:rgba(255,255,255,.35); --glow-45:rgba(255,255,255,.45);
   --amber:#f59e0b; --amber-ink:#1f1300; --blue:#2563eb; --bright-blue:#3b82f6; --cyan:#06b6d4; --green:#22c55e; --mac-desktop-dark:#2a2a2e; --mac-desktop-light:#e6e6ea; --mac-grey:#8e8e93; --nav-line:#1b263d; --navy-shade-14:rgba(15,23,42,.14); --pink:#ec4899; --red:#ef4444; --sky:#38bdf8; --slate:#94a3b8; --violet:#8b5cf6; --white:#fff; --yellow:#eab308;
-  /* The starters' tints on Choose stacks, as the system colours of an app's icon in System Settings. */
+  /* The starters' tints on Choose apps, as the system colours of an app's icon in System Settings. */
   --tint-orange:#ff9500; --tint-green:#34c759; --tint-red:#ff3b30; --tint-pink:#ff2d55; --tint-blue:#007aff;
   /* Each person on Finances, in their colour: white reads on all four (4.5:1). */
   --person-0:#0f766e; --person-1:#6d28d9; --person-2:#b45309; --person-3:#be185d;
@@ -137,7 +137,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .rowActions { white-space:nowrap; text-align:right; width:1%; }
 .rowActions .iconbtn, .rowActions button.small { margin-left:2px; }
 
-/* Choose stacks */
+/* Choose apps */
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
 /* It stays in view while the list scrolls, and scrolls itself when a long
    plan is taller than the window, so Install is always in reach. */
@@ -511,6 +511,8 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .pagecard .foot { margin:8px 0 0; font-size:12px; }
 .applog { margin:6px 0 0; max-height:320px; overflow:auto; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:8px 0; font:12px/1.65 var(--mono); white-space:pre; }
 .applog .line { display:block; padding:0 12px; }
+/* On a phone a log line wraps: cut off at the box's edge, its end was lost. */
+html.companion .applog { white-space:pre-wrap; overflow-wrap:anywhere; }
 .applog .line.warn { background:var(--warn-soft); } .applog .line.bad { background:var(--bad-soft); }
 .explained { margin-top:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel); box-shadow:var(--shadow); }
 .explained .answer { margin:0 0 10px; white-space:pre-wrap; font-size:14px; }
@@ -571,6 +573,11 @@ html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none;
 html:is(.os-mac, .os-windows, .os-linux) .header .fx-headtools > .toolbar:not(:has(input)) { align-self:auto; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
+/* What a phone that only looks says instead of a button it has not got. */
+.lookonly { display:none; }
+html.companion:not(.can-change) .lookonly { display:inline; }
+html.companion:not(.can-change) td.rowActions .lookonly { display:inline-block; max-width:8.5em; font-size:13px; line-height:1.3; text-align:right; vertical-align:middle; }
+.stopnext { margin:6px 0 0; color:var(--text); }
 html.unpaired nav, html.unpaired main { display:none; }
 
 /* Kiosk mode (the companion with #kiosk, for a TV or a wall screen): Status
@@ -899,6 +906,10 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion td:first-child { flex:1 1 100%; }
   html.companion td.state { flex:none; padding-right:6px; }
   html.companion td:nth-child(3) { flex:1 1 0; padding-left:0; padding-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* A folded group's names, on a line of their own under its name and cut
+     short there: inline, as on a computer, they pushed the page sideways. */
+  html.companion table.grouped tr.grouphead th { flex:1 1 100%; min-width:0; }
+  html.companion table.grouped tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; }
 }
 @media (max-width: 700px) {
   html.companion.os-mac table.grouped tbody td, html.companion table.grouped tbody td { padding-top:1px; padding-bottom:1px; }
@@ -993,7 +1004,7 @@ html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent);
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--primary); color:var(--primary-text); font-weight:500; }
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--primary); filter:brightness(1.08); }
 
-/* Choose stacks while searching: the matches first, without the starters
+/* Choose apps while searching: the matches first, without the starters
    and presets above them. */
 #choose.searching #starterBox, #choose.searching #more > h2, #choose.searching #presets { display:none; }
 
@@ -1090,7 +1101,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .finishhead .meter { flex:1 1 120px; min-width:80px; margin:0; }
 .finishhead .meter[hidden] { display:none; }
 .checklist > li { grid-template-columns:auto minmax(0,1fr) auto auto; }
-.checklist > li:not(.open) > .body > .sub { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .checklist .sub.detail { margin-top:4px; color:var(--text); }
 .checklist .more { align-self:center; color:var(--muted); }
 .checklist .more .icon { transition:transform .15s; }
@@ -1219,7 +1229,7 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
 .tile .sub { flex-wrap:wrap; }
 .tile .sub .trend { flex:none; max-width:100%; }
 /* Two columns only when the screen has room for both at the text size
-   (a 1100px window at text size 1): Choose stacks' list and plan, Status'
+   (a 1100px window at text size 1): Choose apps' list and plan, Status'
    paired cards, an app page's log and settings. */
 @container (max-width: 824px) {
   #choose .cols { grid-template-columns:1fr; }
@@ -2321,3 +2331,12 @@ html nav .bgjob button.bgdismiss:hover { background:var(--shade-06); }
   html.companion nav .bgjob button.bgopen { box-shadow:0 8px 24px var(--shade-18); font-size:13px; }
 }
 .bgjob .bgnext { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-top:1px solid var(--line); padding-top:5px; }
+
+/* The phone's Backups: each copy on two lines, its name, then when, its size,
+   and how many are kept on one line under it (on three before, the size alone
+   at the far right). */
+html.companion #copiesCard table.copies tr.copy { display:flex; flex-wrap:wrap; align-items:baseline; }
+html.companion #copiesCard table.copies tr.copy td.name { flex:1 1 100%; }
+html.companion #copiesCard table.copies tr.copy :is(td.when, td.size, td.kept) { display:block; flex:none; width:auto; padding:0 0 2px; text-align:left; white-space:nowrap; }
+html.companion #copiesCard table.copies tr.copy td.when { padding-left:36px; }
+html.companion #copiesCard table.copies tr.copy :is(td.size, td.kept)::before { content:"·"; margin:0 6px; }

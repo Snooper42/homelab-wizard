@@ -40,6 +40,8 @@ declare namespace api {
     quiet?: boolean;
     pinned?: boolean;
     waitingFor?: string;
+    stoppedAt?: string;
+    stoppedWhy?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
   }
@@ -333,6 +335,7 @@ declare namespace backup {
   interface Copy {
     id: string;
     name: string;
+    app?: string;
     volume?: boolean;
     newest: string;
     size: number;

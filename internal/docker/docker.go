@@ -506,9 +506,12 @@ type Container struct {
 	StartedAt time.Time
 	Restarts  int
 	// Why it last stopped: the error Docker gave when it could not start it
-	// (a missing folder, say), and its exit code.
-	Error    string
-	ExitCode int
+	// (a missing folder, say), its exit code, whether the system stopped it
+	// for running out of memory, and when it stopped (zero: never).
+	Error      string
+	ExitCode   int
+	OOMKilled  bool
+	FinishedAt time.Time
 	// RestartPolicy is "unless-stopped", "always", "no", or "on-failure".
 	RestartPolicy string
 	// Binds are the folders on this machine mounted into it.
@@ -578,12 +581,14 @@ func ParseInspect(data []byte) ([]Container, error) {
 			Labels map[string]string `json:"Labels"`
 		} `json:"Config"`
 		State struct {
-			Status    string `json:"Status"`
-			Running   bool   `json:"Running"`
-			StartedAt string `json:"StartedAt"`
-			Error     string `json:"Error"`
-			ExitCode  int    `json:"ExitCode"`
-			Health    *struct {
+			Status     string `json:"Status"`
+			Running    bool   `json:"Running"`
+			StartedAt  string `json:"StartedAt"`
+			Error      string `json:"Error"`
+			ExitCode   int    `json:"ExitCode"`
+			OOMKilled  bool   `json:"OOMKilled"`
+			FinishedAt string `json:"FinishedAt"`
+			Health     *struct {
 				Status string `json:"Status"`
 			} `json:"Health"`
 		} `json:"State"`
@@ -600,16 +605,17 @@ func ParseInspect(data []byte) ([]Container, error) {
 	out := make([]Container, 0, len(raw))
 	for _, r := range raw {
 		c := Container{
-			ID:       r.ID,
-			Name:     strings.TrimPrefix(r.Name, "/"),
-			Image:    r.Config.Image,
-			ImageID:  r.ImageID,
-			State:    r.State.Status,
-			Running:  r.State.Running,
-			Labels:   r.Config.Labels,
-			Restarts: r.RestartCount,
-			Error:    r.State.Error,
-			ExitCode: r.State.ExitCode,
+			ID:        r.ID,
+			Name:      strings.TrimPrefix(r.Name, "/"),
+			Image:     r.Config.Image,
+			ImageID:   r.ImageID,
+			State:     r.State.Status,
+			Running:   r.State.Running,
+			Labels:    r.Config.Labels,
+			Restarts:  r.RestartCount,
+			Error:     r.State.Error,
+			ExitCode:  r.State.ExitCode,
+			OOMKilled: r.State.OOMKilled,
 
 			RestartPolicy: r.HostConfig.RestartPolicy.Name,
 		}
@@ -622,6 +628,9 @@ func ParseInspect(data []byte) ([]Container, error) {
 		// A container that never started reports 0001-01-01.
 		if t, err := time.Parse(time.RFC3339Nano, r.State.StartedAt); err == nil && t.Year() > 1 {
 			c.StartedAt = t
+		}
+		if t, err := time.Parse(time.RFC3339Nano, r.State.FinishedAt); err == nil && t.Year() > 1 {
+			c.FinishedAt = t
 		}
 		if r.State.Health != nil {
 			c.Health = r.State.Health.Status

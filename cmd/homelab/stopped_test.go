@@ -231,7 +231,7 @@ func TestFixLeavesWhatWasStoppedOnPurpose(t *testing.T) {
 	fakeDocker(t, ctrs)
 	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
 	out, _ := homelabCmd(t, root, "", "fix")
-	if !strings.Contains(out, "start the baseline apps that are down") || !strings.Contains(out, "Navidrome") {
+	if !strings.Contains(out, "start the homelab's own apps that are down") || !strings.Contains(out, "Navidrome") {
 		t.Fatalf("without a record, a stopped Navidrome should be down:\n%s", out)
 	}
 	if err := (stopped.Record{"navidrome": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {

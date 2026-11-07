@@ -13,7 +13,7 @@ import { Address } from '../parts/Address';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
-import { keptRestarting, stopChoices, stoppedWords } from './stopFor';
+import { keptRestarting, stopChoices, stoppedByItself, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
 import { changedSince, type Seen } from './changed';
 
@@ -90,6 +90,8 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Reco
   if (a.state === 'stopped' && held[a.id]) return [keptRestarting(held[a.id]) ? 'bad' : '', stoppedWords(held[a.id])];
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
+  // Stopped by itself, not from here: when, and why when Docker knows (a crash needs a look: a red dot).
+  if (a.state === 'stopped') return [a.stoppedWhy ? 'bad' : 'warn', stoppedByItself(a)];
   if (a.state === 'running') {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];
@@ -242,7 +244,8 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   }
   if (a.state === 'elsewhere') return null;
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
-  if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
+  // A phone that only looks has no Start (html.companion:not(.can-change) hides .change): it says where to start it.
+  if (a.state !== 'running') return <><button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button><span class="lookonly muted">Start it from the computer</span></>;
   const url = a.address ? 'https://' + a.address : a.url;
   // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
   const local = a.address && a.url ? a.url : '';

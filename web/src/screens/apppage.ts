@@ -5,6 +5,7 @@
 import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
+import { stoppedNext } from '../status/stopFor';
 import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
 import { backupsData } from './backups';
 import { catalog } from './choose';
@@ -120,7 +121,8 @@ function draw() {
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
     a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
-    usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
+    next: stoppedNext(a, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
+    usage: a.state === 'running' ? usage : undefined, disk, days: week(), watching: !!watch && !never(watch.lastRun), outages: watch ? (watch.outages ? watch.outages[id] || [] : undefined) : undefined, switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
     icon: icons[id] || '', explainer,
