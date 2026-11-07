@@ -2274,6 +2274,49 @@ select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8
 .tidycovers { display:inline-flex; align-items:center; gap:6px; margin-right:10px; color:var(--muted); }
 .tidycovers img, .tidycovers .nocover { width:36px; height:54px; object-fit:cover; border-radius:3px; border:1px solid var(--line); }
 .tidycovers .nocover { display:inline-grid; place-items:center; font-size:9px; text-align:center; background:var(--sunken); }
+/* Tidy Up, take 2 (Nov 7, the owner's ask): the next thing to do leads, beside the drive; the libraries sit on a
+   shelf, each in its colour; a library's tab opens on that library; what was done sits beside the genres. */
+.fx-board.tidytop { grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); align-items:start; }
+.fx-board.tidybottom { grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr); }
+@container (max-width: 1040px) { .fx-board.tidytop, .fx-board.tidybottom { grid-template-columns:minmax(0, 1fr); } }
+/* Next up: the row with the screen's one main button, larger, on a wash of the accent. */
+.tidytodo > li:has(button.primary) { margin:2px -12px 8px; padding:16px 12px; border-radius:14px; background:var(--accent-soft); border-top:0; }
+.tidytodo > li:has(button.primary) + li { border-top:0; }
+.tidytodo > li:has(button.primary) .tidyicon { width:44px; height:44px; border-radius:12px; }
+.tidytodo > li:has(button.primary) .grow > strong { font-size:17px; letter-spacing:-.01em; }
+.tidytodo > li:has(button.primary) .grow::before { content:"Next up"; display:block; margin-bottom:3px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--link); }
+.tidytodo > li:has(button.primary) .tidygain { font-size:18px; }
+/* The shelf: a tile a library, in its own colour; it opens the library's tab. */
+.tidyshelf { margin:var(--fin-gap) 0; }
+#tidyRoot .tidyshelf > h2 { margin:0 0 12px; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+.tidyshelf > ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap:12px; }
+.tidyshelf > ul > li { display:flex; min-width:0; }
+.tidytile { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:0; padding:16px; border:0; border-radius:var(--fin-radius); background:color-mix(in srgb, var(--fx-hue) 12%, var(--panel)); color:var(--text); font:inherit; text-align:left; box-shadow:none; }
+.tidytile:hover { background:color-mix(in srgb, var(--fx-hue) 18%, var(--panel)); }
+.tidytile .tidyicon { width:36px; height:36px; border-radius:10px; margin-bottom:8px; }
+.tidytilename { font-size:16px; font-weight:700; letter-spacing:-.01em; }
+.tidytilefacts { font-size:13px; }
+.tidymeter { display:block; width:100%; height:6px; margin-top:10px; border-radius:3px; background:color-mix(in srgb, var(--fx-hue) 24%, var(--panel)); overflow:hidden; }
+.tidymeter > span { display:block; height:100%; border-radius:3px; background:var(--fx-hue); }
+.tidytilenext { margin-top:auto; padding-top:8px; font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
+.tidytile.away { background:var(--panel); box-shadow:inset 0 0 0 1.5px var(--line-strong); }
+.tidytile.away .tidyicon { background:var(--line); color:var(--text); }
+.tidytile.away .tidytilefacts { color:var(--warn); }
+/* A library's tab opens on it: its mark, its colour, what it holds, and (music) its steps. */
+#tidyRoot .card.fx-widget.tidyhero { background:color-mix(in srgb, var(--fx-hue) 10%, var(--panel)); }
+#tidyRoot .card.fx-widget.tidyhero > h2, #tidyRoot .card.fx-widget.tidyhero > .row h2 { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
+/* A card keeps its own height: a short one beside a tall one (Space beside Genres) no longer stretches half empty. */
+#tidyRoot .tidybody .fx-board { align-items:start; }
+.tidyhero h2 .tidyicon { width:36px; height:36px; border-radius:10px; }
+.tidyherorow { display:flex; justify-content:space-between; align-items:flex-end; gap:12px 24px; flex-wrap:wrap; }
+.tidyhero .tidyfolder { color:var(--text); font-size:13px; }
+.tidyfacts { display:flex; gap:12px 28px; flex-wrap:wrap; margin:0; }
+.tidyfacts dt { font-size:12px; }
+.tidyfacts dd { margin:2px 0 0; font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+.tidysteps.tidytrack { margin:2px 0 0; grid-template-columns:repeat(auto-fit, minmax(min(100%, 120px), 1fr)); }
+.tidytrack li { background:var(--panel); border-color:transparent; }
+.tidytrack li .muted { color:var(--text); }
+.tidysteps .num svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
 label.switch { display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; cursor:pointer; }
 @media (max-width: 960px) {
   .tidycols { grid-template-columns:minmax(0, 1fr); }

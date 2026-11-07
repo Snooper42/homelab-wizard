@@ -389,6 +389,9 @@ const shots = [
     await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
     await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
   } },
+  // Tidy Up: what to do next beside the drive, the shelf of libraries, and Music's own tab with its steps.
+  { name: 'tidy', screen: 'tidy' },
+  { name: 'tidy-music', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidytrack', { timeout: 5000 }); } },
 ];
 
 // Clicks through the buttons that run commands, against the fake backend
@@ -985,6 +988,29 @@ const smokes = [
     if (!(await page.isDisabled('#tidyJob button:text-is("Stopping…")'))) throw new Error('Stop could be pressed again');
     await page.waitForSelector('#tidyJob .tidynow:has-text("Stopping at the next safe point")', { timeout: 2000 });
     await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
+  } },
+  // Take 2 (Nov 7, the owner's ask): the thing to do next leads Needs your OK, above a step that throws things away;
+  // the libraries sit on a shelf, each with what it holds, how far along it is (only what the record can say), and
+  // what it waits on; a tile opens its tab, which opens on that library.
+  { name: 'Tidy Up: Overview leads with the next thing to do, and the shelf opens each library', screen: 'tidy', run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
+    const first = await page.$eval('#tidy .tidyneeds li', (li) => [li.querySelector('strong')?.textContent.trim(), !!li.querySelector('button.primary')]);
+    if (first[0] !== '2,402 songs could get lyrics' || !first[1]) throw new Error(`Needs your OK starts with ${JSON.stringify(first)}`);
+    const tiles = await page.$$eval('#tidy .tidyshelf .tidytile', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    const want = ['Music13,932 songs · 520 GB83% with lyrics', 'Movies356 films · 1.4 TB87% already lean', 'TV820 GB', 'Books412 books · 12 GB', "AudiobooksIts drive isn't plugged in"];
+    if (tiles.length !== 5 || want.some((w, i) => !tiles[i].startsWith(w))) throw new Error(`the shelf: ${JSON.stringify(tiles)}`);
+    if (!tiles[0].includes('2,402 songs could get lyrics') || !tiles[1].includes('Shrink 42 films')) throw new Error(`the tiles don't say what waits: ${JSON.stringify(tiles)}`);
+    await page.click('#tidy .tidyshelf .tidytile:has-text("Movies")');
+    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Movies")', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidyhero h2:has-text("Movies")', { timeout: 3000 });
+  } },
+  { name: 'Tidy Up: Music opens on its steps, each done one with when, and freeing the space next', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyhero .tidytrack', { timeout: 3000 });
+    const steps = await page.$$eval('#tidy .tidytrack li', (ls) => ls.map((l) => `${l.className}:${l.querySelector('strong').textContent}`));
+    if (JSON.stringify(steps) !== JSON.stringify(['done:Scanned', 'done:Tidy copy built', 'done:Swapped in', 'done:Every song checked', 'now:Old library freed'])) throw new Error(`steps: ${JSON.stringify(steps)}`);
+    const facts = (await page.textContent('#tidy .tidyhero .tidyfacts')).replace(/\s+/g, '');
+    if (!facts.includes('Songs13,932') || !facts.includes('Onthedrive520GB') || !facts.includes('Withlyrics83%')) throw new Error(`the facts: ${facts}`);
   } },
   { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
     await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });
