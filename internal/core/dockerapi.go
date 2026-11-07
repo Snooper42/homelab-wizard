@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // The docker package reads the engine's API unless DOCKER_API in .env is
@@ -37,7 +38,7 @@ func SaveAPIFallback(root string, f docker.Fallback) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(f, "", "  ")
-	return os.WriteFile(path, data, 0o644)
+	return lockedfile.Write(path, data, 0o644)
 }
 
 // APIFallback is the last read that went back to the CLI in the past week,
