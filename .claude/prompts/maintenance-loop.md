@@ -15,7 +15,7 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 These come before everything below; where they disagree with a later section, these win. `.claude/prompts/lanes.md` wins over all of this file.
 
 - **Lanes:** read `.claude/prompts/lanes.md` at the start of every round. It wins over this file. You are **Account 2**: you merge first, and you own `claude/fix-*` branches only. Never push to, merge, rebase, close, or comment on a branch or PR outside your lane.
-- **State:** GitHub is the only source of truth: open PRs, open issues, remote branches, `complaints.md`, this file's order. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs and open issues, and `git ls-remote origin 'refs/heads/claude/*'`.
+- **State:** GitHub is the only source of truth: open PRs, open issues, remote branches, `complaints.md`, this file's order. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs and open issues, and `git ls-remote --heads origin 'claude/fix-*'`. Never list any other branches.
 - **Files claimed by open PRs** (lanes.md Rule 2): before you start an item, and again just before each push, list every other open PR's files (`pull_request_read` with `get_files`). If your change would touch one of them (outside lanes.md's shared files), don't start it or push it: take your next item, or wait for that PR to merge.
 - **Merging:**
   - **One open pull request of yours at a time.**
@@ -39,11 +39,24 @@ These come before everything below; where they disagree with a later section, th
 
 Every round begins by finishing what is open in your lane: an open pull request on a `claude/fix-*` branch, oldest first, taken to merged as **Each round** step 1 says.
 
-A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main: tell the owner to delete it (your tools can't). A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner.
+A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main is deleted as **Branch cleanup** says.
 
 **Open now:** nothing. On the owner's Nov 7 ask to close every branch: #478 (the five parked branches), #479 (Tidy Up's first run in two rows, and a Lyrics row always on Music), and #474 (the walkthrough's and Account 3's usability fixes, six branches in one) merged.
 
-**Parked branches:** none. Branches whose work is on main, for the owner to delete (these tools can't; GitHub deletes a merged PR's own branch): `claude/fix-agent-state`, `fix-cache-writes`, `fix-custom-compose`, `fix-down-whole`, `fix-healed`, `fix-kit-manifest`, `fix-logs-private`, `fix-lyrics-offline`, `fix-page-checks`, `fix-plain-words`, `fix-proc`, `fix-quit-list`, `fix-resume-warn`, `fix-sent-notes`, `fix-setup-words`, `fix-small-notes`, `fix-tdarr-handing`, `fix-walk-2`, and every `claude/fix-*-shots` (screenshots for PR bodies).
+**Parked branches:** none.
+
+### Branch cleanup (every round)
+
+Which branches are left to delete is never kept in this file; each round's report is the list.
+
+1. Your branches are `claude/fix-*` only. Never list, push to, or suggest deleting any other branch.
+2. Just before you report, list them from GitHub: `git ls-remote --heads origin 'claude/fix-*'`.
+3. For each one, except `claude/fix-shots`:
+   - It has an open PR: keep it.
+   - Its work is on main (its diff applies in reverse to main: `git diff $(git merge-base origin/main origin/<branch>) origin/<branch> | git apply -R --check` on a clean checkout of `origin/main`; an empty diff counts): try `git push origin --delete <branch>`. If that is refused, add it to the owner's delete command.
+   - Anything else is parked or work to finish, as above.
+4. Before you give the command, check again (list the open PRs) that no branch in it has an open PR. Give it on one line, naming only `claude/fix-*` branches, under the heading **Safe to delete**: `git push origin --delete claude/fix-a claude/fix-b`. Nothing refused: say so instead.
+5. `claude/fix-shots` holds the screenshots for every PR body and is never deleted, so the pictures in old PRs keep working. No separate `*-shots` branches.
 
 ## Your job
 
@@ -63,7 +76,7 @@ What is not yours: Tidy Up and Finances (Account 1), `apple-client/` (Account 4)
 
 ## Each round
 
-1. **Your own open PR.** `git fetch origin`, list the open PRs and issues, `git ls-remote origin 'refs/heads/claude/*'`, then `git checkout main && git pull`. Re-read `lanes.md`, `complaints.md`, and this file; if **Paused** is yes, say so and stop the round. Clear **Open items first**. For your open PR, read its head's CI, its mergeability, and any review comments:
+1. **Your own open PR.** `git fetch origin`, list the open PRs and issues, `git ls-remote --heads origin 'claude/fix-*'`, then `git checkout main && git pull`. Re-read `lanes.md`, `complaints.md`, and this file; if **Paused** is yes, say so and stop the round. Clear **Open items first**. For your open PR, read its head's CI, its mergeability, and any review comments:
    - Green on every check, mergeable, and main's commits since that run touch none of its files: squash-merge it (title ending in its number, `expectedHeadSha` pinned). You merge first.
    - Main's new commits touch its files: merge main in, regenerate what is generated, push, and wait again.
    - Red: find out why. Yours: fix the cause and push. A job may be re-run once to tell a flaky runner from a real failure; a second failure is real.
@@ -77,12 +90,12 @@ What is not yours: Tidy Up and Finances (Account 1), `apple-client/` (Account 4)
 3. **Read the code it touches** before changing it.
 4. **Prove it:**
    - a smoke case (`app/preview/shoot.mjs`) or Go test that fails on the old behaviour (show it failing first; the fake docker in `cmd/homelab/main_test.go` and `fakebin_test.go` for anything that runs a command; `TestEachReleasesFolderUpgrades` for anything that changes what is on disk);
-   - for a screen: before-and-after screenshots, retaken for every screen you changed, linked in the PR body;
+   - for a screen: before-and-after screenshots, retaken for every screen you changed, linked in the PR body. Push the pictures to the one `claude/fix-shots` branch (add a folder named for your branch; never start another `*-shots` branch) and link them from there;
    - the keyboard and a screen reader still reach everything you touched.
 5. **Checks** (CONTRIBUTING.md has the full list): `make check`; `make coverage` when Go changes; gosec (`bin/gosec` with CI's excludes) on the packages you touched; `GOOS=windows go vet ./...`; `make frontend` then `make frontend-check` when the frontend changes; the smoke cases you touched (`SMOKE_ONLY="..." node app/preview/shoot.mjs --smoke`), each judged by its exit code.
 6. **Words:** the PR's first line says what the household notices. A CHANGELOG line under `## [Unreleased]`, at the top of **Improved** (usability) or **Fixed** (failures), in plain words. Update the docs the change touches.
 7. **Ship:** commit on `claude/fix-<short-name>`, re-check the other open PRs' files (lanes.md Rule 2), push, and open the PR (the repository's template), with `Fixes #N` for each issue it closes, how it was tested, the screenshots, and **Decisions to look at**. Then `subscribe_pr_activity`, one `send_later` about 50 minutes out, and end the turn.
-8. **Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next. Say "fixed" only for what was run for real; say what wasn't.
+8. **Report** to the owner in three or four plain lines: what a household notices now, the screenshot paths, what's next. Say "fixed" only for what was run for real; say what wasn't. Then do **Branch cleanup** and end the report with its **Safe to delete** line.
 
 ## The SQLite base (ADR-0022)
 
