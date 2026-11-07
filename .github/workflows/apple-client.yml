@@ -53,10 +53,14 @@ jobs:
           echo "BASH_ENV=$RUNNER_TEMP/build.sh" >> "$GITHUB_ENV"
 
       - name: Build the package for macOS (Swift 6 mode)
-        run: swift build
+        run: |
+          set -o pipefail
+          swift build 2>&1 | tee "$RUNNER_TEMP/swift-build.log"
 
       - name: Run the tests
-        run: swift test
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
 
       # The iOS-only parts (the QR scanner, haptics, keyboard types) compile
       # only for iOS.
@@ -92,3 +96,13 @@ jobs:
         run: for f in scripts/*.sh; do bash -n "$f"; done
       - name: Scripts behave
         run: ./scripts/test-scripts.sh
+
+      # Every compiler warning from the builds above, once each, at the end
+      # of the log where it's easy to find. Warnings don't fail the job.
+      - name: Warnings
+        if: always()
+        run: |
+          cat "$RUNNER_TEMP"/*.log 2>/dev/null | grep -E "warning:" | grep -v "^ld: warning" \
+            | sed -E 's#^.*/apple-client/##' | sort -u > "$RUNNER_TEMP/warnings.txt" || true
+          echo "$(wc -l < "$RUNNER_TEMP/warnings.txt" | tr -d ' ') unique warnings"
+          head -150 "$RUNNER_TEMP/warnings.txt"
