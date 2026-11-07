@@ -88,7 +88,7 @@ As main adds phone-facing features to the companion, they're mirrored here (the 
 - **The app mark and icon:** a server rack on a violet tile, on the pairing and lock screens, at launch, and on the app-switcher cover. The app icon is the same, with one mint "running" light. `scripts/make-app-icon.py` (Pillow) draws it from shapes into `Shared/Assets.xcassets/AppIcon.appiconset`: one 1024 px iPhone and iPad icon edge to edge with its iOS 18 dark and tinted variants, and the Mac's rounded tile with margin and shadow at 16 to 1024 px.
 - **On the Mac:** the window keeps the system's background, so it still matches the sidebar's vibrancy. Only the accent, pills and colours change.
 
-## Check it first, without Xcode
+## Check it first, without an Xcode project
 
 On a Mac with **full Xcode** 16 or later installed and selected. The Command Line Tools alone aren't enough: SwiftUI's `@State` and `@Entry` are macros whose plugin ships only with Xcode, so a build with the tools fails on every `@State` with "plugin for module 'SwiftUIMacros' not found". Select Xcode once (`sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, then `xcode-select -p` shows a path inside Xcode.app), or prefix a single build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
@@ -102,7 +102,9 @@ To also compile the iOS-only parts (the QR scanner, haptics, keyboard types), bu
 cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platform=iOS' build
 ```
 
-`Package.swift` builds everything in `Shared/` except the `@main` entry point, in Swift 6 language mode, and runs `Tests/`. It's the quickest way to catch what a hand review can't. These sources were written without a compiler.
+`Package.swift` builds everything in `Shared/` except the `@main` entry point, in Swift 6 language mode, and runs `Tests/`.
+
+The same checks run on every change on GitHub's Mac runner (`.github/workflows/apple-client.yml`): `swift build` and `swift test`, the package for iOS, the Mac and iPhone apps from the generated project (unsigned), and `scripts/test-scripts.sh`. A compiler warning fails the job, since in Swift 6 most are data races waiting to become errors.
 
 ## Make the Xcode project
 
@@ -226,4 +228,5 @@ hash. The client receives the token itself, once.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.
 - A look-only home Wi-Fi mode over plain http. It's left out on purpose: the token would cross the Wi-Fi in readable form (the computer makes such a device look-only for good). It's a decision to make before building it.
 - Widgets, App Intents (Shortcuts) and Live Activities. They need targets and entitlements in the Xcode project, and a choice about what may show while the app is locked.
-- The iPhone app run against a real `homelab serve`. The Mac app runs on Xcode 27.2, paired with the homelab on the same Mac over `127.0.0.1:8099`, and before the loopback tests were added all 174 tests passed. `run-on-iphone.sh` is the first build of the iOS target from a generated project.
+- Snoozing a failing check's alerts from the phone (main #469): `SnoozeCheck` isn't a phone method, so the phone only shows until when.
+- The iPhone app run against a real `homelab serve`. The Mac app runs on Xcode 27.2, paired with the homelab on the same Mac over `127.0.0.1:8099`. The iPhone app builds on the Mac runner; it hasn't been installed on a phone yet (`run-on-iphone.sh`).
