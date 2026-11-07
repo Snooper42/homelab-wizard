@@ -6410,6 +6410,28 @@ const smokes = [
       if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
     }
   } })),
+  // The sidebar lists each group's accounts under it, each with its round logo and balance; a group's arrow folds them away,
+  // and they stay folded when the app opens again; an account opens Net worth on its group.
+  { name: 'The sidebar lists each account under its group, and a group folds away', screen: 'status', run: async (page) => {
+    await page.waitForSelector('.fx-balances .fx-balgroup:has-text("Cash") .fx-balacct:has-text("Chase Checking") .fmark', { timeout: 5000 });
+    if (!(await page.$eval('.fx-balances .fx-balacct:has-text("Chase Checking") .fmark', (e) => getComputedStyle(e).borderRadius === '50%'))) throw new Error('an account\'s logo in the sidebar is not round');
+    const arrow = '.fx-balances .fx-balgroup:has-text("Cash") .fx-balfold';
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'true') throw new Error('Cash starts folded');
+    await page.click(arrow);
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Chase Checking")', { state: 'detached', timeout: 5000 });
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'false') throw new Error('the arrow does not say Cash is folded');
+    if (!(await page.$('.fx-balances .fx-balacct:has-text("Robinhood")'))) throw new Error('folding Cash folded Investments too');
+    // Opened again: still folded. Carried over by hand, as Status's place is: a reloaded file:// page in this browser can
+    // start with empty storage when the machine is busy.
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.finances.foldedGroups']?.includes('cash')) throw new Error('the fold is not kept on this device');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Robinhood")', { timeout: 5000 });
+    if (await page.$('.fx-balances .fx-balacct:has-text("Chase Checking")')) throw new Error('Cash opened again by itself');
+    await page.click('.fx-balances .fx-balacct:has-text("Robinhood")');
+    await page.waitForSelector('#finances.active .fx-ownlist li:has-text("Robinhood")', { timeout: 5000 });
+  } },
   // On Finances every mark is round, a logo on a coin: a payment's logo on Recurring, an account's on Net worth, a
   // category's icon on Transactions.
   { name: 'Finances: logos and icons are round on every row', screen: 'finances', run: async (page) => {

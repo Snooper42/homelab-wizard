@@ -1876,8 +1876,30 @@ button.fx-balance:focus-visible { outline:2px solid var(--fin-accent); outline-o
 .fx-hoveracct .fx-hoverwhen { grid-column:1 / -1; margin-top:-5px; color:var(--muted); }
 .fx-hoveracct.stale .fx-hoverwhen { color:var(--warn); }
 .fx-staledot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--warn); }
-.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; }
+.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; padding-left:28px; }
 .fx-balance.total .fx-legendlabel { padding-left:19px; }
+/* A group's row: its arrow, then the group; under it, its accounts, each with its round logo, a name cut short to fit, and its balance. */
+.fx-balrow { display:flex; align-items:center; }
+.fx-balances .fx-balrow > .fx-balance { flex:1; min-width:0; gap:7px; padding-left:2px; }
+.fx-balrow .fx-legendlabel { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-balances .fx-balfold { all:unset; box-sizing:border-box; flex:none; width:16px; height:26px; margin-left:2px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; color:var(--nav-muted); cursor:pointer; }
+.fx-balances .fx-balfold svg { flex:none; width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+.fx-balfold[aria-expanded="true"] svg { transform:rotate(90deg); }
+.fx-balfold:hover { background:var(--nav-active); color:var(--white); }
+.fx-balfold:focus-visible, .fx-balacct:focus-visible { outline:2px solid var(--fin-accent); outline-offset:-2px; }
+.fx-balaccts { list-style:none; margin:0 0 4px; padding:0 0 0 22px; display:flex; flex-direction:column; gap:1px; }
+.fx-balances .fx-balacct { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; padding:3px 10px 3px 6px; border-radius:8px; font-size:12.5px; cursor:pointer; }
+.fx-balacct .fmark { border-radius:50%; }
+.fx-balacct .fx-balname { flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
+.fx-balacct .fx-balname > span:last-child { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.fx-balacct .fx-amount { font-size:12px; }
+.fx-balacct .fx-amount.fx-out { color:inherit; }
+.fx-balacct:hover { background:var(--nav-active); color:var(--white); }
+html:is(.os-mac, .os-windows, .os-linux) .fx-balfold { color:var(--muted); }
+html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--shade-05); color:inherit; }
+@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--glow-06); } }
+@media (prefers-reduced-motion: reduce) { .fx-balfold svg { transition:none; } }
+@media (forced-colors: active) { :is(.fx-balfold, .fx-balacct):focus-visible { outline-color:Highlight; } }
 /* The systems' own sidebars are light (dark in dark mode), their text the page's. */
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances { border-color:var(--shade-08); }
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances > .fx-caption { color:var(--muted); }
