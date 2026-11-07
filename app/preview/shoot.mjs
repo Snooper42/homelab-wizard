@@ -3947,7 +3947,7 @@ const smokes = [
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
       // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), and checking's two figures (each shows how it adds up).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -4807,22 +4807,65 @@ const smokes = [
     await page.waitForSelector('.finreminders', { timeout: 5000 });
     if (await page.$('.fincalendar')) throw new Error('the phone offers a calendar link');
   } },
-  // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
+  // Money flow on Recurring: a typical month, each person's pay before taxes (Alex's $3,050 every other week is $6,608.33 a
+  // month; $599 of each is taxes, $1,297.83 a month) into all of it, out to taxes, each kind of bill, and saving, which goes
+  // into the 401(k), the Roth IRA, and savings, the rest kept as cash ($1,110.24, what was left over before). A band for each
+  // way money goes; a box a button for each.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
-    await page.waitForSelector('.fx-moneyflow .fx-flowchart svg', { timeout: 5000 });
-    const legend = (await page.textContent('.fx-moneyflow .fx-flowlegend')).replace(/\s+/g, ' ');
-    for (const want of ["Alex's pay", '$4,658', "Jordan's pay", '$2,400', 'Saved', '$683', 'Left over', '$1,110']) if (!legend.includes(want)) throw new Error(`no ${want} in ${legend}`);
-    const rows = await page.$$eval('.fx-moneyflow table.sr tbody tr', (rs) => rs.map((r) => r.textContent));
-    if (!rows.includes("In: Alex's pay$4,658.33") || !rows.includes('Out: Left over$1,110.24') || rows.some((r) => r.startsWith('In: From the accounts'))) throw new Error(`rows ${rows.join(' | ')}`);
-    const bands = await page.$$eval('.fx-moneyflow path.fx-band', (ps) => ps.length);
-    if (bands !== 2 + rows.filter((r) => r.startsWith('Out:')).length) throw new Error(`${bands} bands for ${rows.length} rows`);
+    await page.waitForSelector('.fx-moneyflow .fx-sankey svg', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    for (const want of ["Alex's pay|Total income|$6,608.33", "Jordan's pay|Total income|$2,400.00", 'Total income|Taxes|$1,297.83', 'Expenses|Taken from pay|$255.67', 'Savings|Fidelity 401(k)|$396.50', 'Savings|Kept as cash|$1,110.24']) {
+      if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
+    }
+    if (rows.some((r) => r.startsWith('From your accounts'))) throw new Error('a month with more in than out takes from the accounts');
+    const bands = await page.$$eval('.fx-moneyflow path.fx-sband', (ps) => ps.length);
+    const boxes = await page.$$eval('.fx-moneyflow button.fx-snode', (bs) => bs.length);
+    if (bands !== rows.length || boxes !== rows.length + 1) throw new Error(`${bands} bands and ${boxes} boxes for ${rows.length} rows`);
+    if (!(await page.textContent('.fx-flowstrip')).replace(/\s+/g, '').includes('Saved$2,190.0724%savingsrate')) throw new Error('the strip: ' + await page.textContent('.fx-flowstrip'));
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Kept as cash")');
+    await page.waitForSelector('.fx-flowpick p:has-text("stayed where it came in")', { timeout: 5000 });
+  } },
+  // Money flow on the Dashboard: this month from the ledger (Jordan's paycheck in; Costco and Trader Joe's are Food, Shell is
+  // Car; the Roth IRA's transfer is saved). Picking a box lists what is behind it, each opening its transaction; ‹ goes to a
+  // typical month from the plan, where Top 5 makes the rest Other; the keyboard picks a box too.
+  { name: 'Finances: the money flow opens what is behind each box, month by month', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-moneyflow .fx-periodname:text-is("Oct 2026")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    for (const want of ["Jordan's paycheck|Total income|$2,400.00", 'Expenses|Food|$149.85', 'Expenses|Car|$48.20', 'Savings|Roth IRA|$250.00']) {
+      if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
+    }
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Food")');
+    await page.waitForSelector('.fx-flowpick h3:has-text("Food")', { timeout: 5000 });
+    const items = await page.$$eval('.fx-flowpick li', (ls) => ls.map((l) => l.textContent));
+    if (items.length !== 2 || !items[0].includes('Costco') || !items[0].includes('−$86.10') || !items[1].includes("Trader Joe's")) throw new Error(`food: ${items.join(' | ')}`);
+    await page.click('.fx-flowpick li:has-text("Costco") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Costco")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.click('.fx-moneyflow button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-moneyflow .fx-periodname:text-is("A typical month")', { timeout: 5000 });
+    if (await page.$('.fx-flowpick')) throw new Error('the box picked in October stays picked in another month');
+    await page.selectOption('.fx-moneyflow select.fx-top', '5');
+    await page.waitForSelector('.fx-moneyflow button.fx-snode:has-text("Other (3)")', { timeout: 5000 });
+    await page.focus('.fx-moneyflow button.fx-snode:has-text("Taxes")');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.fx-flowpick li:has-text("Alex\'s taxes")', { timeout: 5000 });
+    if ((await page.getAttribute('.fx-moneyflow button.fx-snode:has-text("Taxes")', 'aria-pressed')) !== 'true') throw new Error('the box picked does not say so');
+  } },
+  { name: 'The phone, view only: the money flow opens, with nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-moneyflow .fx-sankey svg', { timeout: 5000 });
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Food")');
+    await page.waitForSelector('.fx-flowpick li:has-text("Costco")', { timeout: 5000 });
+    if (await page.$('.fx-flowpick li button')) throw new Error('a phone that may only look can open a transaction');
   } },
   // A month that takes more than comes in: the rest comes out of the accounts, and nothing is left over.
   { name: 'Finances: money flow when a month takes more than comes in', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'rent', name: 'Rent', amount: 5000, kind: 'home', schedule: { every: 'month', start: '2026-01-01' } }] } } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
-    await page.waitForSelector('.fx-moneyflow table.sr tbody tr:has-text("In: From the accounts$3,8")', { state: 'attached', timeout: 5000 });
-    if ((await page.textContent('.fx-moneyflow .fx-flowlegend')).includes('Left over')) throw new Error('left over with more out than in');
+    // Out: taxes, bills with rent, and $1,079.83 into savings accounts; in: $9,008.33; from the accounts, $3,889.76.
+    await page.waitForSelector('.fx-moneyflow .sr table tbody tr:has-text("From your accounts"):has-text("$3,889.76")', { state: 'attached', timeout: 5000 });
+    if ((await page.textContent('.fx-moneyflow .sr table')).includes('Kept as cash')) throw new Error('kept as cash with more out than in');
+    if (!(await page.textContent('.fx-flowstrip')).includes('Short')) throw new Error('the strip does not say it is short');
   } },
   // Pay more: an extra amount a paycheck on the loan picked, and every debt (a card carrying a balance too) paid down two ways.
   { name: 'Finances: pay more on a loan, highest rate or smallest balance first', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, run: async (page) => {
