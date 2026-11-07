@@ -1297,6 +1297,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ## For Account 1
 
+- **Tidy Up has its own loop now** (the owner's ask, Nov 7): `.claude/prompts/tidy-loop.md`, run with `/loop Read .claude/prompts/tidy-loop.md and do the next round.` Its queue starts with two High items found reading the code: **Tidy lyrics** is refused by `tidyScreenArgs` (`--tidy` isn't allowed; proved with `tidyArgs("music", "lyrics", ["--tidy"])`), and **Carry on** loses a stopped job's flags. Item 1 loosens this lane's N12 guard: allow `--tidy` for `music lyrics` only.
 - **The update window's record is written 0644**
   (`claude/feature-update-window`, `updates.SaveDays`): the other records
   the homelab writes moved to 0600 today (#431–#433). Nothing secret is
