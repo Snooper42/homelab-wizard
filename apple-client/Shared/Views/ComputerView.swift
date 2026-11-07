@@ -18,6 +18,7 @@ struct ComputerView: View {
             fixSection
             reportSection
             deviceSection
+            creditsSection
         }
         .formStyle(.grouped)
         .themedCanvas()
@@ -191,6 +192,17 @@ struct ComputerView: View {
             Text("This Device")
         } footer: {
             Text("Locks when it leaves the screen, and asks again before any change. Lost it? On the computer, homelab phone remove \(coordinator.device?.id ?? "<id>") stops its token at once.")
+        }
+    }
+}
+
+extension ComputerView {
+    /// Where the apps' logos come from (licenses/THIRD-PARTY.md).
+    private var creditsSection: some View {
+        Section("About") {
+            Text("App logos from dashboard-icons by homarr-labs, under the Apache License 2.0. Product names and logos belong to their owners, and are here only to tell the apps apart.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 }

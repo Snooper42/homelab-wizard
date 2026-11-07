@@ -71,20 +71,12 @@ struct AppIconView: View {
     let size: CGFloat
 
     var body: some View {
-        if let icon = icons.icon(for: app) {
-            Image(decorative: icon.image, scale: 1)
-                .resizable()
-                .interpolation(.high)
-                .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
-                .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
-                .overlay(alignment: .bottomTrailing) {
-                    AppStateIcon(app: app)
-                        .font(.system(size: size * 0.42))
-                        .background(Circle().fill(.background).padding(1))
-                        .offset(x: size * 0.12, y: size * 0.12)
-                }
-                .accessibilityHidden(true)
+        // The app's logo from the set the app ships (AppLogos), else the one
+        // the computer kept from the app itself, else its state on a tile.
+        if let logo = BundledLogo.image(for: app.id) {
+            framed(logo)
+        } else if let icon = icons.icon(for: app) {
+            framed(Image(decorative: icon.image, scale: 1))
         } else {
             // No icon yet: the state on a soft tile of its own colour, the
             // same shape as an icon, so the rows line up.
@@ -93,6 +85,53 @@ struct AppIconView: View {
                 .frame(width: size, height: size)
                 .background(app.tint.opacity(0.13), in: RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
         }
+    }
+}
+
+extension AppIconView {
+    /// A logo at the icon's size, rounded, with the state as a badge.
+    private func framed(_ image: Image) -> some View {
+        image
+            .resizable()
+            .interpolation(.high)
+            .aspectRatio(contentMode: .fit)
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
+            // A hairline, so a white tile keeps its edge on a light background.
+            .overlay {
+                RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
+                    .strokeBorder(.primary.opacity(0.08), lineWidth: 0.5)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                AppStateIcon(app: app)
+                    .font(.system(size: size * 0.42))
+                    .background(Circle().fill(.background).padding(1))
+                    .offset(x: size * 0.12, y: size * 0.12)
+            }
+            .accessibilityHidden(true)
+    }
+}
+
+/// The logos the app ships for the homelab's catalog apps
+/// (Shared/Assets.xcassets/AppLogos, from homarr-labs/dashboard-icons,
+/// Apache 2.0; scripts/fetch-app-logos.py). Looked up by app id, once each.
+@MainActor
+enum BundledLogo {
+    private static var known: [String: Bool] = [:]
+
+    static func image(for id: String) -> Image? {
+        guard AppStatus.isValidID(id) else { return nil }
+        let name = "AppLogos/\(id)"
+        if let has = known[id] { return has ? Image(name) : nil }
+        #if canImport(UIKit)
+        let has = UIImage(named: name) != nil
+        #elseif canImport(AppKit)
+        let has = NSImage(named: name) != nil
+        #else
+        let has = false
+        #endif
+        known[id] = has
+        return has ? Image(name) : nil
     }
 }
 

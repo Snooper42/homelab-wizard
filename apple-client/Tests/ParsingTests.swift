@@ -7,7 +7,7 @@ import Testing
 @testable import HomelabClient
 
 // Unit tests for the parts that don't need a device, in five files:
-// - ParsingTests: input validation, the SSE parser, decoding the companion's JSON
+// - ParsingTests: input validation, the SSE parser, decoding the companion's JSON, the bundled logos
 // - ActionTests: which actions an app offers, Stop for a while, settings, groups
 // - FinancesTests: decoding Finances, and the lossless plan and ledger edits
 // - LockAndPairingTests: the lock state machine (fake keychain and Face ID), scanning to pair
@@ -811,5 +811,44 @@ struct DeviceInfoTests {
     @Test func oldAnswersStillRead() throws {
         let device = try JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"d1","name":"Phone","paired":12}"#.utf8))
         #expect(device.paired == nil && !device.unencrypted && !device.canChange)
+    }
+}
+
+@Suite("App logos")
+struct AppLogoTests {
+    /// Shared/Assets.xcassets/AppLogos in this checkout.
+    private var folder: URL {
+        URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("Shared/Assets.xcassets/AppLogos")
+    }
+
+    private struct Contents: Decodable {
+        struct Entry: Decodable { let filename: String?; let scale: String? }
+        let images: [Entry]?
+        let properties: [String: Bool]?
+    }
+
+    @Test func everyLogoIsWholeAndNamedForAnApp() throws {
+        let manager = FileManager.default
+        // Named "AppLogos/<id>" in code, so the folder must give it its namespace.
+        let top = try JSONDecoder().decode(Contents.self, from: Data(contentsOf: folder.appendingPathComponent("Contents.json")))
+        #expect(top.properties?["provides-namespace"] == true)
+        let sets = try manager.contentsOfDirectory(atPath: folder.path).filter { $0.hasSuffix(".imageset") }
+        #expect(sets.count >= 60)
+        for set in sets {
+            let id = String(set.dropLast(".imageset".count))
+            #expect(AppStatus.isValidID(id), "\(set) isn't named for an app id")
+            let contents = try JSONDecoder().decode(Contents.self, from: Data(contentsOf: folder.appendingPathComponent("\(set)/Contents.json")))
+            let names = (contents.images ?? []).compactMap(\.filename)
+            #expect(names == ["\(id).png"], "\(set) should hold just \(id).png")
+            let png = folder.appendingPathComponent("\(set)/\(id).png")
+            let source = try #require(CGImageSourceCreateWithURL(png as CFURL, nil), "\(set): no PNG")
+            let image = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil), "\(set): unreadable")
+            #expect(image.width == 180 && image.height == 180, "\(set) is \(image.width)×\(image.height)")
+        }
+        // Nothing else in there: a stray file is an actool warning, and a
+        // warning fails the build in CI.
+        let stray = try manager.contentsOfDirectory(atPath: folder.path).filter { $0 != "Contents.json" && $0 != ".DS_Store" && !$0.hasSuffix(".imageset") }
+        #expect(stray.isEmpty, "Stray files: \(stray)")
     }
 }
