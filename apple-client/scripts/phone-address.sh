@@ -66,6 +66,13 @@ rm -f "$ERRFILE"
 case "$RC:$CODE" in
   0:401)
     echo "✓ The certificate is trusted, and the companion answers through the proxy."
+    # N25 (main #475): with the proxy's key, the companion can tell a phone
+    # that came over https from a device on the Wi-Fi only saying so. Set up
+    # the domain before it, the key is still empty. Only checked, never shown.
+    if [ -z "$(env_value COMPANION_PROXY_KEY)" ]; then
+      echo "! Recommended: run Set up the domain once more, so the companion can tell a phone"
+      echo "  that used https from a device on the Wi-Fi only claiming to: cd \"$HOMELAB\" && ./homelab domain setup"
+    fi
     if [ -z "${HOMELAB_FROM_SCRIPT:-}" ]; then
       echo
       echo "The phone can pair with $URL. Next: apple-client/scripts/run-on-iphone.sh <your prefix>"

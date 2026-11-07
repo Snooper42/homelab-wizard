@@ -108,6 +108,11 @@ env_with 'HOMELAB_DOMAIN="example.com"' 'SECRET=hunter2'
 run "$HERE/phone-address.sh"
 expect "the whole way works (401 behind the proxy)" bash -c '[ "$0" = 0 ] && grep -q "certificate is trusted" <<<"$1"' "$RC" "$OUT"
 expect "never prints another setting from .env" bash -c '! grep -q hunter2 <<<"$0"' "$OUT"
+expect "no proxy key yet: recommends setting up the domain again" says "./homelab domain setup"
+env_with 'HOMELAB_DOMAIN="example.com"' 'COMPANION_PROXY_KEY=k3y-n0t-to-print'
+run "$HERE/phone-address.sh"
+expect "with the proxy key: no recommendation, and the key never shown" bash -c '! grep -q "domain setup" <<<"$0" && ! grep -q k3y-n0t <<<"$0"' "$OUT"
+env_with 'HOMELAB_DOMAIN="example.com"' 'SECRET=hunter2'
 FAKE_CURL_RC=60 FAKE_CURL_ERR="SSL certificate problem" run "$HERE/phone-address.sh"
 expect "an untrusted certificate fails" bash -c '[ "$0" = 1 ] && grep -q "isn.t trusted" <<<"$1"' "$RC" "$OUT"
 FAKE_HTTP=502 run "$HERE/phone-address.sh"
