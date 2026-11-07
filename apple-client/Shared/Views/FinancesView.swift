@@ -838,10 +838,12 @@ private struct AddTransactionView: View {
                         .buttonStyle(.borderless)
                     }
                 } else {
+                    // Read here, on the main actor: PhotosPicker's label isn't.
+                    let busy = attaching
                     PhotosPicker(selection: $photo, matching: .images) {
                         HStack {
                             Label("Attach a Photo of the Receipt", systemImage: "camera")
-                            if attaching {
+                            if busy {
                                 Spacer()
                                 ProgressView().controlSize(.small)
                             }
