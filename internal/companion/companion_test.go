@@ -724,3 +724,42 @@ func TestSecureBase(t *testing.T) {
 		}
 	}
 }
+
+// N25: with the proxy's key set, "this came over https" is believed only
+// from the companion's own proxy host, which carries the key; a device on
+// the Wi-Fi sending X-Forwarded-Proto itself, or a wrong key, is plain
+// HTTP, and the proxy's own word for plain HTTP is believed too. With no
+// key yet, a homelab whose domain was set up before is as it was.
+func TestTheProxysWordNeedsItsKey(t *testing.T) {
+	key := "k3yk3yk3y"
+	req := func(addr string, hdr ...string) *http.Request {
+		r := httptest.NewRequest(http.MethodPost, "/api/pair", nil)
+		r.RemoteAddr = addr
+		for i := 0; i+1 < len(hdr); i += 2 {
+			r.Header.Set(hdr[i], hdr[i+1])
+		}
+		return r
+	}
+	s := &Server{ProxyKey: func() string { return key }}
+	for _, c := range []struct {
+		name string
+		r    *http.Request
+		want bool
+	}{
+		{"the Wi-Fi saying https itself", req("192.168.1.20:5000", "X-Forwarded-Proto", "https"), false},
+		{"the Wi-Fi with a wrong key", req("192.168.1.20:5000", "X-Forwarded-Proto", "https", ProxyHeader, "guess"), false},
+		{"the proxy, over https", req("172.18.0.1:5000", "X-Forwarded-Proto", "https", ProxyHeader, key), true},
+		{"the proxy, over plain HTTP, from loopback", req("127.0.0.1:5000", "X-Forwarded-Proto", "http", ProxyHeader, key), false},
+		{"Tailscale Serve on this machine", req("127.0.0.1:5000"), true},
+		{"the tailnet", req("100.101.102.103:5000"), true},
+		{"the Wi-Fi, plain", req("192.168.1.20:5000"), false},
+	} {
+		if got := s.encrypted(c.r); got != c.want {
+			t.Errorf("%s: encrypted %v, want %v", c.name, got, c.want)
+		}
+	}
+	old := &Server{}
+	if !old.encrypted(req("172.18.0.1:5000", "X-Forwarded-Proto", "https")) {
+		t.Error("with no key yet, the proxy's https is no longer believed: a domain set up before would lose its phones' changes")
+	}
+}

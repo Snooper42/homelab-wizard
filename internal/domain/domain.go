@@ -64,13 +64,16 @@ type Result struct {
 type Settings struct {
 	CertificateID int
 	ForceSSL      bool
+	// CompanionKey (COMPANION_PROXY_KEY) is the phone companion's proxy
+	// host's word that a phone reached it over https (N25).
+	CompanionKey string
 }
 
 // ProxyHostFor renders the NPM proxy host for a route. Forwarded-proto is
 // trusted so requests the Cloudflare Tunnel delivers over plain HTTP (with
 // X-Forwarded-Proto: https) are not redirected in a loop.
 func ProxyHostFor(r Route, s Settings) npm.ProxyHost {
-	return npm.ProxyHost{
+	ph := npm.ProxyHost{
 		DomainNames:           []string{r.Host},
 		ForwardScheme:         "http",
 		ForwardHost:           r.ForwardHost,
@@ -82,6 +85,36 @@ func ProxyHostFor(r Route, s Settings) npm.ProxyHost {
 		BlockExploits:         true,
 		AllowWebsocketUpgrade: true,
 	}
+	if r.App != nil && r.App.ID == CompanionID && s.CompanionKey != "" {
+		// The phone companion believes "this came over https" only from here
+		// (N25): the proxy says what it received, never what the client
+		// claims, and adds the key no phone has. The tunnel never carries the
+		// companion, so trusting a forwarded scheme is not needed for it.
+		ph.TrustForwardedProto = false
+		ph.AdvancedConfig = CompanionLocation(s.CompanionKey)
+	}
+	return ph
+}
+
+// CompanionID is the phone companion's catalog id.
+const CompanionID = "homelab-companion"
+
+// CompanionLocation is the companion's proxy host's own location: NPM's
+// usual proxying, with X-Forwarded-Proto set from the scheme NPM received
+// (NPM's own passes a client's "https" on) and the companion's key added.
+func CompanionLocation(key string) string {
+	return `# The phone companion's word for https (homelab domain setup, N25).
+location / {
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Homelab-Proxy "` + key + `";
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection $http_connection;
+  proxy_http_version 1.1;
+  proxy_pass $forward_scheme://$server:$port$request_uri;
+}`
 }
 
 // Sync creates or updates one proxy host per route. Hosts are matched by
@@ -116,7 +149,10 @@ func Sync(ctx context.Context, c *npm.Client, routes []Route, s Settings) ([]Res
 		default:
 			// Keep extra domain names and custom settings someone added by hand.
 			want.DomainNames = mergeNames(cur.DomainNames, want.DomainNames)
-			want.AdvancedConfig, want.AccessListID, want.Locations = cur.AdvancedConfig, cur.AccessListID, cur.Locations
+			if want.AdvancedConfig == "" {
+				want.AdvancedConfig = cur.AdvancedConfig
+			}
+			want.AccessListID, want.Locations = cur.AccessListID, cur.Locations
 			want.HSTSEnabled, want.HSTSSubdomains, want.CachingEnabled = cur.HSTSEnabled, cur.HSTSSubdomains, cur.CachingEnabled
 			if cur.Same(want) {
 				results = append(results, Result{r, "unchanged"})
