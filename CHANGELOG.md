@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A bill that changes, by its average:** a bill marked as changing each time (electric, water), paid three times or more in six months, asks on the Dashboard when its average is off the plan: *Electric has averaged $152.00 over 3 months*, with **Use $152.00** or **Keep $140.00**.
 - **A bill not seen yet:** a bill your transactions have paid before, with nothing for it three days after its day, is said on the Dashboard (*Electric, due Oct 18, 12 days ago*), so one that didn't go through is caught.
 - **A subscription's new price:** when a subscription is charged the same new amount twice in a row, the Dashboard asks: *Netflix is now $17.99, was $15.49*, with **Update to $17.99** or **Keep $15.49**.
 - **Money that comes in from someone:** a payment can now come in, not only go out: **Add a payment › Comes in from someone**, say who sends it (a share of the mortgage, say), how much and when. It adds to checking on its day, without starting a pay period, and shows in the pay period, Recurring, the calendar, a typical month and the calendar feed. Their real transfer, in a bank's file, is linked to it.

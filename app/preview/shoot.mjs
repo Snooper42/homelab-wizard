@@ -6321,6 +6321,26 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // An estimated bill paid three times or more in six months, its average 3% or more off the plan's: the Dashboard asks to
+  // use the average. Use keeps it; Keep is remembered on this device. Twice is too few to ask.
+  ...[['Use $152.00', 152], ['Keep $140.00', 140]].map(([button, want]) => ({ name: `Finances: a bill that changes, its average offered, ${button}`, screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: finances.plan.payments.map((x) => (x.id === 'water' ? { ...x, estimate: true } : x)) }, paid: [
+    { payment: 'electric', due: '2026-07-18', date: '2026-07-17', amount: 148, planned: 140, transaction: 'x1' },
+    { payment: 'electric', due: '2026-08-18', date: '2026-08-18', amount: 161, planned: 140, transaction: 'x2' },
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-19', amount: 147, planned: 140, transaction: 'x3' },
+    { payment: 'water', due: '2026-09-20', date: '2026-09-20', amount: 150, planned: 120, transaction: 'x4' },
+    { payment: 'water', due: '2026-10-20', date: '2026-10-20', amount: 150, planned: 120, transaction: 'x5' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-averages li:has-text("Electric has averaged $152.00 over 3 months")', { timeout: 5000 });
+    if (await page.$('.fx-averages li:has-text("Water")')) throw new Error('two payments are taken as an average');
+    await page.click(`.fx-averages button:text-is("${button}")`);
+    if (want === 152) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'electric'));
+      if (x.amount !== 152 || !x.estimate) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-averages', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+    }
+  } })),
   // A bill paid in the ledger before with nothing for its last day, three days on: the Dashboard says so. One not followed
   // in the ledger, or due two days ago, is not said.
   { name: 'Finances: a bill paid before but not seen yet is said on the Dashboard', screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),

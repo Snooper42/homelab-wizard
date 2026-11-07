@@ -16,6 +16,7 @@ import { CheckingWidget } from './widgets/Checking';
 import { NowWidget } from './widgets/Now';
 import { PricesWidget } from './widgets/Prices';
 import { MissingWidget } from './widgets/Missing';
+import { AveragesWidget } from './widgets/Averages';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { RenewingWidget } from './widgets/Subscriptions';
@@ -79,6 +80,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, openWorth
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
         <MissingWidget v={v} L={L} open={openTransactions} />
         <PricesWidget v={v} L={L} keep={keep} />
+        <AveragesWidget v={v} L={L} keep={keep} />
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}

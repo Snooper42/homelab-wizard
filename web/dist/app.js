@@ -1197,12 +1197,12 @@
     for (const x3 of payments) {
       if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !fits(x3)) continue;
       for (const due of dues[x3.id] || []) {
-        const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off = Math.abs(paid - x3.amount);
+        const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off2 = Math.abs(paid - x3.amount);
         if (gap > matchDays || taken.has(x3.id + " " + due)) continue;
-        if (!best || gap < best.gap || gap === best.gap && off < best.off) {
-          tie = !!best && best.payment !== x3.id && gap === best.gap && off === best.off;
-          best = { payment: x3.id, due, gap, off };
-        } else if (gap === best.gap && off === best.off && x3.id !== best.payment) tie = true;
+        if (!best || gap < best.gap || gap === best.gap && off2 < best.off) {
+          tie = !!best && best.payment !== x3.id && gap === best.gap && off2 === best.off;
+          best = { payment: x3.id, due, gap, off: off2 };
+        } else if (gap === best.gap && off2 === best.off && x3.id !== best.payment) tie = true;
       }
     }
     return best && !tie ? { payment: best.payment, due: best.due } : void 0;
@@ -2813,8 +2813,8 @@
     const v3 = localStorage.getItem(foldKey);
     if (v3 === "all") fold = { all: true, picked: {} };
     else if (v3) {
-      const kept3 = JSON.parse(v3);
-      fold = { all: false, picked: Array.isArray(kept3) ? Object.fromEntries(kept3.map((l3) => [l3, true])) : kept3 };
+      const kept4 = JSON.parse(v3);
+      fold = { all: false, picked: Array.isArray(kept4) ? Object.fromEntries(kept4.map((l3) => [l3, true])) : kept4 };
     }
   } catch {
   }
@@ -2871,10 +2871,10 @@
   }
   function clearFilter() {
     setFilter({ text: "", on: false });
-    const back = before;
+    const back2 = before;
     before = null;
     requestAnimationFrame(() => {
-      if (back?.isConnected && back.checkVisibility()) back.focus();
+      if (back2?.isConnected && back2.checkVisibility()) back2.focus();
       else document.getElementById("statusAll")?.focus();
     });
   }
@@ -2987,17 +2987,17 @@
     const q2 = useFilter().text;
     const open4 = openGroups(p3.groups, f4, p3.held);
     const toggle = (label) => setFold({ all: false, picked: { ...f4.all ? open4 : f4.picked, [label]: !open4[label] } });
-    const kept3 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
+    const kept4 = q2.trim() ? p3.groups.map((g2) => ({ g: g2, apps: g2.apps.filter((a3) => matches(a3, q2)) })).filter((x3) => x3.apps.length) : null;
     const all = p3.groups.reduce((t3, g2) => t3 + g2.apps.length, 0);
-    const first = kept3?.[0]?.apps.find((a3) => a3.state !== "missing");
+    const first = kept4?.[0]?.apps.find((a3) => a3.state !== "missing");
     const openFirst = A2(() => {
     });
     openFirst.current = () => {
       if (first) p3.on.page(first);
     };
     const opener = A2(() => openFirst.current());
-    h2(() => setFound({ n: kept3 ? kept3.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
-    if (kept3 && !kept3.length) {
+    h2(() => setFound({ n: kept4 ? kept4.reduce((t3, x3) => t3 + x3.apps.length, 0) : all, of: all, first: first ? opener.current : null }));
+    if (kept4 && !kept4.length) {
       return /* @__PURE__ */ u3("tr", { class: "nomatch", children: /* @__PURE__ */ u3("td", { colSpan: 4, children: [
         "No app’s name has “",
         q2.trim(),
@@ -3006,7 +3006,7 @@
       ] }) });
     }
     const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
-    return /* @__PURE__ */ u3(S, { children: kept3 ? kept3.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
+    return /* @__PURE__ */ u3(S, { children: kept4 ? kept4.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open4[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
       ...open4[g2.label] ? g2.apps.map(row) : []
@@ -3559,18 +3559,18 @@
   function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
     const [testing, setTesting] = d2(false);
-    const [kept3, setKept] = d2(void 0);
+    const [kept4, setKept] = d2(void 0);
     const step2 = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept3 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept4 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
         autocomplete: "off",
         spellcheck: false,
         "aria-label": label,
-        value: value ?? kept3 ?? (s3.secret ? "" : s3.value || ""),
+        value: value ?? kept4 ?? (s3.secret ? "" : s3.value || ""),
         placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
         onInput: (e3) => edit(s3.key, e3.currentTarget.value)
       }
@@ -4977,16 +4977,16 @@
     log2.hidden = false;
     log2.textContent = "";
     $2("cAdd").disabled = true;
-    let off = null;
+    let off2 = null;
     try {
       const before3 = new Set(catalog.apps.map((a3) => a3.id));
       catalog = await inTurn(`Adding ${spec.name || "your app"}`, () => {
-        off = window.runtime.EventsOn("cli:log", (line) => {
+        off2 = window.runtime.EventsOn("cli:log", (line) => {
           log2.textContent += line + "\n";
         });
         return go().AddCustom(spec).finally(() => {
-          if (typeof off === "function") off();
-          off = null;
+          if (typeof off2 === "function") off2();
+          off2 = null;
         });
       }, (behind) => {
         log2.textContent = `${waitWords(behind)}…
@@ -5003,7 +5003,7 @@
     } catch (e3) {
       showError(e3);
     } finally {
-      if (typeof off === "function") off();
+      if (typeof off2 === "function") off2();
       $2("cAdd").disabled = false;
     }
   };
@@ -5115,7 +5115,7 @@
         ilog.textContent += line + "\n";
         ilog.scrollTop = ilog.scrollHeight;
       });
-      const off = window.runtime.EventsOn("progress", (ev) => {
+      const off2 = window.runtime.EventsOn("progress", (ev) => {
         if (ev.error) return;
         const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words5[ev.name];
         cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
@@ -5135,7 +5135,7 @@
         cliProgress("failed");
         showError(e3);
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
         if (typeof offLog === "function") offLog();
       }
     }, (behind) => {
@@ -5150,7 +5150,7 @@
     let note = "Connecting… this can take a minute while new apps start.";
     const draw6 = () => mountWiring(box, { links: [...done], note });
     draw6();
-    const off = window.runtime.EventsOn("link", (l3) => {
+    const off2 = window.runtime.EventsOn("link", (l3) => {
       done.push(l3);
       draw6();
     });
@@ -5161,7 +5161,7 @@
     } catch (e3) {
       showError(e3);
     } finally {
-      if (typeof off === "function") off();
+      if (typeof off2 === "function") off2();
     }
   }
   $2("connect").onclick = () => wire($2("statusWiring"));
@@ -5554,14 +5554,14 @@
         await inTurn("Going back", async () => {
           setupJob();
           log2.textContent = "Going back…\n";
-          const off = window.runtime.EventsOn("cli:log", (line) => {
+          const off2 = window.runtime.EventsOn("cli:log", (line) => {
             log2.textContent += line + "\n";
             log2.scrollTop = log2.scrollHeight;
           });
           try {
             await go().Homelab("upgrade-back", "", true);
           } finally {
-            if (typeof off === "function") off();
+            if (typeof off2 === "function") off2();
             setupJobEnded();
           }
         }, (behind) => {
@@ -5645,7 +5645,7 @@
     let ok = true;
     await inTurn("Making the report", async () => {
       log2.textContent = "Making the report (about a minute)…\n";
-      const off = window.runtime.EventsOn("cli:log", (line) => {
+      const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -5655,7 +5655,7 @@
         ok = false;
         showError(e3);
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
       }
     }, (behind) => {
       log2.textContent = `${waitWords(behind)}, then: making the report…
@@ -5728,13 +5728,13 @@
       log2.hidden = false;
       try {
         await inTurn("Closing sign-ups", async () => {
-          const off = window.runtime.EventsOn("cli:log", (line) => {
+          const off2 = window.runtime.EventsOn("cli:log", (line) => {
             log2.textContent += line + "\n";
           });
           try {
             await go().Homelab("signups-close", "", true);
           } finally {
-            if (typeof off === "function") off();
+            if (typeof off2 === "function") off2();
           }
         }, (behind) => {
           log2.textContent += `${waitWords(behind)}, then: closing sign-ups…
@@ -5792,7 +5792,7 @@
     await inTurn("Doing the setup steps", async () => {
       setupJob();
       log2.textContent = "";
-      const off = window.runtime.EventsOn("setup:log", (line) => {
+      const off2 = window.runtime.EventsOn("setup:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -5817,7 +5817,7 @@
         showError(e3);
         log2.textContent += "\nStopped at a step that failed: the log above says why.\n";
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
         setupJobEnded();
       }
     }, (behind) => {
@@ -5838,7 +5838,7 @@
     await inTurn(step2.title, async () => {
       setupJob();
       log2.textContent = "";
-      const off = window.runtime.EventsOn("setup:log", (line) => {
+      const off2 = window.runtime.EventsOn("setup:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -5853,7 +5853,7 @@
         loadSetup();
       } finally {
         runningStep = null;
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
         setupJobEnded();
       }
     }, (behind) => {
@@ -5963,7 +5963,7 @@
       let ok = true;
       await inTurn(`${action === "add" ? "Adding" : action === "remove" ? "Removing" : "Changing"} ${who}`, async () => {
         peopleLog = "";
-        const off = window.runtime.EventsOn("cli:log", (line) => {
+        const off2 = window.runtime.EventsOn("cli:log", (line) => {
           peopleLog += line + "\n";
           renderPeople();
         });
@@ -5973,7 +5973,7 @@
           ok = false;
           showError(e3);
         } finally {
-          if (typeof off === "function") off();
+          if (typeof off2 === "function") off2();
         }
       }, (behind) => {
         peopleLog = `${waitWords(behind)}…
@@ -6011,11 +6011,11 @@
     run: async (o3, onLine) => {
       try {
         await inTurn("Taking the homelab off this machine", async () => {
-          const off = window.runtime.EventsOn("cli:log", onLine);
+          const off2 = window.runtime.EventsOn("cli:log", onLine);
           try {
             await go().Uninstall(o3);
           } finally {
-            if (typeof off === "function") off();
+            if (typeof off2 === "function") off2();
           }
         }, (behind) => onLine(`${waitWords(behind)}…`));
       } catch (e3) {
@@ -6355,9 +6355,9 @@
   $2("settingsSearch").oninput = filterSettings;
   function showSettings(keys2) {
     settingsFocus = keys2;
-    const kept3 = settingsData.at > 0;
+    const kept4 = settingsData.at > 0;
     show2("settings");
-    if (kept3) drawSettings(false, true);
+    if (kept4) drawSettings(false, true);
   }
   $2("saveSettings").onclick = async () => {
     const values = {};
@@ -6392,15 +6392,15 @@
     const parts2 = [];
     const updated = n3.apps.filter((a3) => within(a3.updatedAt));
     if (updated.length) parts2.push(updated.length === 1 ? `${updated[0].name} updated` : `${updated.length} apps updated`);
-    const back = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
-    if (back.length) parts2.push(`${back.length} rolled back`);
+    const back2 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
+    if (back2.length) parts2.push(`${back2.length} rolled back`);
     if (n3.copies) {
       const made2 = n3.copies.filter((c3) => within(c3.newest));
       const size2 = made2.reduce((t3, c3) => t3 + (c3.size || 0), 0);
       if (made2.length) parts2.push(size2 > 0 ? `a backup of ${bytes(size2)}` : "the backup ran");
     }
     const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
-    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back.includes(e3));
+    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back2.includes(e3));
     if (down.length) {
       const name = n3.apps.find((a3) => a3.id === down[0][0])?.name || down[0][0];
       parts2.push(down.length === 1 ? `${name} was down for a while` : `${down.length} apps were down for a while`);
@@ -6821,7 +6821,7 @@
     await inTurn(busy2.replace(/…$/, ""), async () => {
       $2("backupTitle").textContent = busy2;
       startJob("backup");
-      const off = window.runtime.EventsOn("cli:log", (line) => {
+      const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -6833,7 +6833,7 @@
       } finally {
         cliProgress(ok ? "done" : "failed");
         endJob();
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
       }
     }, (behind) => {
       $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
@@ -6859,7 +6859,7 @@
     let file = "", ok = true;
     await inTurn(direction === "out" ? "Moving out" : "Moving in", async () => {
       $2("backupTitle").textContent = busy2;
-      const off = window.runtime.EventsOn("cli:log", (line) => {
+      const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -6869,7 +6869,7 @@
         ok = false;
         showError(e3);
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
       }
     }, (behind) => {
       $2("backupTitle").textContent = `${waitWords(behind)}, then: ${busy2}`;
@@ -7109,9 +7109,9 @@
     }
   }
   function drawStatus() {
-    const kept3 = !statusData.error && statusData.value === remembered?.status;
-    $2("statusAge").hidden = !kept3;
-    if (kept3) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
+    const kept4 = !statusData.error && statusData.value === remembered?.status;
+    $2("statusAge").hidden = !kept4;
+    if (kept4) $2("statusAge").textContent = `As it was ${Date.now() - new Date(remembered.at).getTime() < 6e4 ? "a few seconds ago" : ago(remembered.at)}; checking now…`;
     if (statusData.error) {
       statusById = {};
       if (catalog) renderApps();
@@ -7139,7 +7139,7 @@
     renderAppList(st);
     drawOvernight();
     if (lastWatch) drawWatchdog();
-    if (st.checking && !kept3) {
+    if (st.checking && !kept4) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
     }
@@ -7494,7 +7494,7 @@
     await inTurn(title, async () => {
       setPending(a3.id, { action });
       startJob("cli");
-      const off = window.runtime.EventsOn("cli:log", (line) => {
+      const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
@@ -7504,7 +7504,7 @@
         failed = errorText(e3);
         showError(e3);
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
         cliProgress(failed ? "failed" : "done");
         bgEnd(!!failed);
       }
@@ -7529,7 +7529,7 @@
     let failed = "";
     await inTurn(`${actionTitle[action]} ${a3.name}`, async () => {
       setPending(a3.id, { action });
-      const off = window.runtime.EventsOn("cli:log", (line) => {
+      const off2 = window.runtime.EventsOn("cli:log", (line) => {
         log2 += line + "\n";
         if (downloading.test(line) && !pending[a3.id]?.note) setPending(a3.id, { action, note: "Downloading the app…" });
       });
@@ -7538,7 +7538,7 @@
       } catch (e3) {
         failed = errorText(e3);
       } finally {
-        if (typeof off === "function") off();
+        if (typeof off2 === "function") off2();
       }
     }, (behind) => setPending(a3.id, { action, note: waitWords(behind) }));
     lastLog[a3.id] = log2;
@@ -7591,17 +7591,17 @@
     $2("cliTitle").textContent = title;
     log2.textContent = "";
     clearJob("cli");
-    let off = null, cancelled = false;
+    let off2 = null, cancelled = false;
     const listen = () => {
-      off = window.runtime.EventsOn("cli:log", (line) => {
+      off2 = window.runtime.EventsOn("cli:log", (line) => {
         if (/^Preview only: nothing was changed/.test(line.trim())) return;
         log2.textContent += line + "\n";
         log2.scrollTop = log2.scrollHeight;
       });
     };
     const unlisten = () => {
-      if (typeof off === "function") off();
-      off = null;
+      if (typeof off2 === "function") off2();
+      off2 = null;
     };
     const stop2 = () => {
       cancelled = true;
@@ -8225,7 +8225,7 @@
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
     const copy = o3?.copies?.find((c3) => ids.includes(c3.id) && !c3.volume && !never(c3.newest));
-    const kept3 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
+    const kept4 = container ? copy ? `Its files, and its database's copy from ${when(copy.newest)}` : "Its files in the homelab folder, every night" : "It runs on its own, outside the homelab; its own app keeps its data";
     return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appSettings", children: [
       /* @__PURE__ */ u3(CardHead, { title: "Settings", children: null }),
       /* @__PURE__ */ u3(Rows, { children: [
@@ -8259,7 +8259,7 @@
             sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
           }
         ),
-        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept3, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
+        /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept4, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })
       ] })
     ] });
   }
@@ -8489,16 +8489,16 @@
     const people = v3.plan.people || [];
     const payments = allPayments(v3.plan);
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
-    const kept3 = (id2) => saving(L2.account[id2 || ""]?.kind);
+    const kept4 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const fromPay = payments.filter((x3) => !x3.payer && (!x3.from || x3.from === v3.checking || onCard2(x3)) && !(x3.to && x3.to === v3.checking));
     const each = (x3) => x3.amount * perMonth(x3.schedule, people, v3.checking);
     const fromOthers = payments.filter((x3) => x3.payer);
     const others2 = fromOthers.map((x3) => ({ name: x3.name, payer: x3.payer, amount: each(x3) }));
-    const spentList = fromPay.filter((x3) => !kept3(x3.to));
+    const spentList = fromPay.filter((x3) => !kept4(x3.to));
     const spent = spentList.reduce((t3, x3) => t3 + each(x3), 0);
-    const saved = [...fromPay, ...fromOthers].filter((x3) => kept3(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
-    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept3(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
+    const saved = [...fromPay, ...fromOthers].filter((x3) => kept4(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
+    const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept4(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
     const kinds = {};
     for (const x3 of spentList) kinds[x3.kind || "other"] = (kinds[x3.kind || "other"] || 0) + each(x3);
     const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
@@ -8543,12 +8543,12 @@
     const h3 = a3.history || [];
     let at2;
     for (const p3 of h3) if (p3.date <= day3) at2 = p3.amount;
-    const kept3 = at2 ?? h3[0]?.amount;
-    return kept3 !== void 0 ? kept3 * rateOf(v3.plan, a3) : todayOf(v3, a3);
+    const kept4 = at2 ?? h3[0]?.amount;
+    return kept4 !== void 0 ? kept4 * rateOf(v3.plan, a3) : todayOf(v3, a3);
   }
   var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
-  function worthByMonth(v3, back = 3, ahead = 3) {
+  function worthByMonth(v3, back2 = 3, ahead = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
     const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
@@ -8567,7 +8567,7 @@
     };
     const out = [];
     const today2 = parseDay(v3.today);
-    for (let i3 = back; i3 >= 1; i3--) {
+    for (let i3 = back2; i3 >= 1; i3--) {
       const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
       out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
@@ -9198,9 +9198,9 @@
       setProblem("");
       try {
         const url2 = await receiptOf(f4);
-        const kept3 = await receipts2.save(url2);
-        setShown({ name: kept3, url: url2 });
-        set2(kept3);
+        const kept4 = await receipts2.save(url2);
+        setShown({ name: kept4, url: url2 });
+        set2(kept4);
       } catch (e3) {
         setProblem(String(e3?.message || e3));
       }
@@ -11515,9 +11515,9 @@ ${pays}
       return m3;
     }, {})).map(([type, year]) => ({ type, year })).sort((a3, b2) => b2.year - a3.year || order2.indexOf(a3.type) - order2.indexOf(b2.type));
     if (types.length > 8) {
-      const kept3 = types.filter((t3) => t3.type !== "other").slice(0, 7);
-      const rest = types.filter((t3) => !kept3.includes(t3));
-      types.splice(0, types.length, ...kept3, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
+      const kept4 = types.filter((t3) => t3.type !== "other").slice(0, 7);
+      const rest = types.filter((t3) => !kept4.includes(t3));
+      types.splice(0, types.length, ...kept4, { type: "other", year: rest.reduce((t3, x3) => t3 + x3.year, 0) });
     }
     return /* @__PURE__ */ u3("div", { class: "fx-subs", children: [
       /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
@@ -11774,21 +11774,21 @@ ${pays}
     const paidLine = (x3) => {
       const pd = (v3.paid || []).filter((q2) => q2.payment === x3.id && daysBetween(q2.date, v3.today) <= 42).sort((a3, b2) => b2.date.localeCompare(a3.date))[0];
       if (!pd) return null;
-      const off = pd.amount - pd.planned;
+      const off2 = pd.amount - pd.planned;
       return /* @__PURE__ */ u3("span", { class: "fx-kept fx-paidline", children: [
         "Paid ",
         dayShort(pd.date),
         pd.due !== pd.date ? `, for ${dayShort(pd.due)}` : "",
-        Math.abs(off) >= 5e-3 && /* @__PURE__ */ u3(S, { children: [
+        Math.abs(off2) >= 5e-3 && /* @__PURE__ */ u3(S, { children: [
           ": ",
           money(pd.amount),
           ", ",
-          /* @__PURE__ */ u3("span", { class: off > 0 ? "fx-out" : "fx-in", children: off > 0 ? `${money(off)} more` : `${money(-off)} less` }),
+          /* @__PURE__ */ u3("span", { class: off2 > 0 ? "fx-out" : "fx-in", children: off2 > 0 ? `${money(off2)} more` : `${money(-off2)} less` }),
           " than planned"
         ] })
       ] });
     };
-    const kept3 = (x3, n3) => {
+    const kept4 = (x3, n3) => {
       const a3 = L2.account[x3.to || ""];
       if (!a3 || !saving(a3.kind)) return null;
       const after2 = n3?.period.accounts?.[a3.id];
@@ -11849,7 +11849,7 @@ ${pays}
                   title: x3.name,
                   sub: /* @__PURE__ */ u3(S, { children: [
                     scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : ""),
-                    kept3(x3, n3),
+                    kept4(x3, n3),
                     paidLine(x3)
                   ] }),
                   end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
@@ -12234,6 +12234,73 @@ ${pays}
         ]
       }
     );
+  }
+
+  // web/src/finances/widgets/Averages.tsx
+  var back = 183;
+  var least = 3;
+  var off = 0.03;
+  function averages(v3) {
+    const out = [];
+    for (const x3 of v3.plan.payments || []) {
+      if (!x3.estimate || x3.card || x3.payer || !(x3.amount > 0)) continue;
+      const paid = (v3.paid || []).filter((p3) => p3.payment === x3.id && daysBetween(p3.due, v3.today) <= back);
+      if (paid.length < least) continue;
+      const average = Math.round(paid.reduce((t3, p3) => t3 + p3.amount, 0) / paid.length * 100) / 100;
+      if (Math.abs(average - x3.amount) < x3.amount * off) continue;
+      const first = paid.reduce((a3, p3) => p3.due < a3 ? p3.due : a3, paid[0].due);
+      out.push({ payment: x3.id, planned: x3.amount, average, months: Math.max(1, Math.round(daysBetween(first, v3.today) / 30.4)), times: paid.length });
+    }
+    return out;
+  }
+  var keptKey2 = (a3) => `homelab.finances.keptAverage.${a3.payment}.${a3.average}`;
+  var kept2 = (a3) => {
+    try {
+      return localStorage.getItem(keptKey2(a3)) === "1";
+    } catch {
+      return false;
+    }
+  };
+  function AveragesWidget({ v: v3, L: L2, keep: keep2 }) {
+    const [busy2, setBusy] = d2("");
+    const [, redraw] = d2(0);
+    const list = averages(v3).filter((a3) => !kept2(a3) && L2.payment[a3.payment]);
+    if (!list.length) return null;
+    const use = async (a3) => {
+      if (!keep2 || busy2) return;
+      setBusy(a3.payment);
+      await keep2({ ...v3.plan, payments: (v3.plan.payments || []).map((x3) => x3.id === a3.payment ? { ...x3, amount: a3.average } : x3) });
+      setBusy("");
+    };
+    const leave = (a3) => {
+      try {
+        localStorage.setItem(keptKey2(a3), "1");
+      } catch {
+      }
+      redraw((n3) => n3 + 1);
+    };
+    return /* @__PURE__ */ u3(Widget, { title: list.length === 1 ? "A bill that changes" : "Bills that change", span: "all", kind: "fx-averages", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((a3) => {
+      const x3 = L2.payment[a3.payment];
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+          title: `${x3.name} has averaged ${money(a3.average)} over ${a3.months === 1 ? "a month" : `${a3.months} months`}`,
+          sub: `Paid ${a3.times} times; the plan says ${money(a3.planned)}.${keep2 ? ` Use ${money(a3.average)} instead?` : ""}`,
+          end: keep2 && /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!busy2, onClick: () => use(a3), children: [
+              "Use ",
+              money(a3.average)
+            ] }),
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: !!busy2, onClick: () => leave(a3), children: [
+              "Keep ",
+              money(a3.planned)
+            ] })
+          ] })
+        },
+        a3.payment
+      );
+    }) }) });
   }
 
   // web/src/finances/widgets/Paycheck.tsx
@@ -12799,9 +12866,9 @@ ${pays}
         /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
       ] }) }) }) });
     }
-    const kept3 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
-    const back = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept3.getFullYear()) * 12 + today2.getMonth() - kept3.getMonth()));
-    const months = worthByMonth(v3, back, 3);
+    const kept4 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
+    const back2 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
+    const months = worthByMonth(v3, back2, 3);
     const start = months[0];
     const now = netWorth(v3);
     const focus = group2 ? grouped(v3).find((g2) => g2.key === group2) : void 0;
@@ -13011,8 +13078,8 @@ ${pays}
   function NetWorthWidget({ v: v3, open: open4 }) {
     if (!(v3.plan.accounts || []).length) return null;
     const now = netWorth(v3);
-    const kept3 = (v3.worth || []).filter((p3) => p3.date < v3.today);
-    const values = [...kept3.map((p3) => p3.amount), now];
+    const kept4 = (v3.worth || []).filter((p3) => p3.date < v3.today);
+    const values = [...kept4.map((p3) => p3.amount), now];
     const month3 = worthByMonth(v3, 1, 0)[0];
     const each = (v3.plan.accounts || []).map((a3) => worthOf(v3, a3));
     const owned = each.filter((n3) => n3 > 0).reduce((t3, n3) => t3 + n3, 0), owes = -each.filter((n3) => n3 < 0).reduce((t3, n3) => t3 + n3, 0);
@@ -13027,10 +13094,10 @@ ${pays}
           height: 92,
           fill: true,
           format: tick,
-          xLabels: [{ i: 0, label: dayShort(kept3[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
-          label: `Net worth from ${money(values[0])} on ${dayShort(kept3[0]?.date || v3.today)} to ${money(now)} today.`,
+          xLabels: [{ i: 0, label: dayShort(kept4[0]?.date || v3.today) }, { i: values.length - 1, label: "Today" }],
+          label: `Net worth from ${money(values[0])} on ${dayShort(kept4[0]?.date || v3.today)} to ${money(now)} today.`,
           tip: (i3) => /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
-            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept3[i3].date) }),
+            /* @__PURE__ */ u3("span", { children: i3 === values.length - 1 ? "Today" : dayShort(kept4[i3].date) }),
             /* @__PURE__ */ u3(Amount, { value: values[i3], form: "whole" })
           ] })
         }
@@ -13176,6 +13243,7 @@ ${pays}
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }),
         /* @__PURE__ */ u3(MissingWidget, { v: v3, L: L2, open: openTransactions }),
         /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep2 }),
+        /* @__PURE__ */ u3(AveragesWidget, { v: v3, L: L2, keep: keep2 }),
         phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
         phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
@@ -14722,7 +14790,7 @@ ${pays}
 
   // web/src/place.ts
   var key4 = "homelab.place";
-  var kept2 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
+  var kept3 = /* @__PURE__ */ new Set(["choose", "status", "backups", "setup", "settings", "finances", "tidy"]);
   var places = {};
   try {
     places = JSON.parse(localStorage.getItem(key4) || "{}") || {};
@@ -14733,7 +14801,7 @@ ${pays}
   var main = () => $1("main");
   var aiming = { screen: "", top: 0 };
   function leavePlace(screen) {
-    if (!screen || !kept2.has(screen)) return;
+    if (!screen || !kept3.has(screen)) return;
     const all = sections(screen);
     places[screen] = { top: aiming.screen === screen ? aiming.top : Math.round(main().scrollTop), open: all.filter((d3) => d3.open).map((d3) => d3.id), shut: all.filter((d3) => !d3.open).map((d3) => d3.id) };
     try {
@@ -14751,7 +14819,7 @@ ${pays}
     anchorTimer = window.setTimeout(() => {
       main().style.overflowAnchor = "";
     }, 2e3);
-    const m3 = main(), p3 = kept2.has(screen) ? places[screen] : void 0;
+    const m3 = main(), p3 = kept3.has(screen) ? places[screen] : void 0;
     if (p3) {
       for (const d3 of sections(screen)) {
         if (p3.open.includes(d3.id)) d3.open = true;
