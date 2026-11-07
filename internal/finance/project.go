@@ -131,10 +131,15 @@ type Past struct {
 	// In is money into checking; Outside one between other accounts.
 	In      bool `json:"in,omitempty"`
 	Outside bool `json:"outside,omitempty"`
-	// Typed marks one dated the day its balance was typed in, so in it.
+	// Typed marks one dated the day its balance was typed in: a paycheck
+	// that day is taken to be in it, and a payment comes out that day
+	// unless InBalance.
 	Typed bool `json:"typed,omitempty"`
 	// Waiting is one the household said is not in the balances yet: it comes today.
 	Waiting bool `json:"waiting,omitempty"`
+	// InBalance is a payment on the day its balance was typed in that the
+	// household said the balance has already (Plan.InBalance).
+	InBalance bool `json:"inBalance,omitempty"`
 }
 
 // Period is from a paycheck into checking until the day before the next
@@ -318,11 +323,21 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			v.Typed = dateOf(t)
 		}
 	}
-	// counts says whether an event's day is in an account's balance from
-	// now on: after the day it was typed in, or any day for one waiting.
+	inBalance := map[string]bool{}
+	for _, k := range p.InBalance {
+		inBalance[k] = true
+	}
+	// counts says whether an event moves an account's balance as typed in:
+	// one after the day it was typed in, or any day for one waiting. On
+	// that day a paycheck is taken to be in it (balances are typed once the
+	// pay is there), and a payment still comes out unless the household
+	// said the balance has it (Plan.InBalance).
 	counts := func(e *event, account string) bool {
 		t, ok := typed[account]
-		return e.waiting || !ok || e.was.After(t)
+		if e.waiting || !ok || e.was.After(t) {
+			return true
+		}
+		return e.pay != nil && e.was.Equal(t) && !inBalance[e.key]
 	}
 	waiting := map[string]bool{}
 	for _, k := range p.Waiting {
@@ -372,7 +387,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		if e.was.After(today) {
 			return
 		}
-		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: !e.waiting}
+		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: !e.waiting, InBalance: e.pay != nil && !e.waiting && inBalance[e.key]}
 		listed := e.waiting
 		for _, s := range sides(e) {
 			t, ok := typed[s.account]

@@ -6486,6 +6486,23 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
     if (saved.waiting?.join() !== 'payment:hoa:2026-10-28,pay:jordan:2026-10-26' || saved.notYet) throw new Error(`waiting ${saved.waiting}, notYet ${saved.notYet}`);
   } },
+  // A bill due the day the balances were typed in comes out that day; Already in says the balance has it, and is kept.
+  { name: 'Finances: a bill on the day the balances were typed comes out, unless Already in', screen: 'finances', mock: { finances: { ...since, plan: { ...since.plan, waiting: ['payment:hoa:2026-10-28'] }, since: [
+    { key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true },
+    ...since.since,
+  ] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("due the day the balance was typed") [role=radio][aria-checked=true]:text-is("Comes out")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-since .fx-lead')).includes('A bill due that day still comes out')) throw new Error('the list does not say a bill that day comes out');
+    await page.click('.fx-since li:has-text("Netflix") [role=radio]:text-is("Already in")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
+    // What waits stays waiting; the bill is now in the balance.
+    if (saved.inBalance?.join() !== 'payment:netflix:2026-10-25' || saved.waiting?.join() !== 'payment:hoa:2026-10-28') throw new Error(`in the balance ${saved.inBalance}, waiting ${saved.waiting}`);
+  } },
+  { name: 'The phone, view only: what is taken as done is shown, with nothing to mark', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...since, readOnly: true, since: [{ key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true, inBalance: true }, ...since.since] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("already in the balance")', { timeout: 5000 });
+    if (await page.$('.fx-since [role=radio]')) throw new Error('a phone that may only look can mark what is taken as done');
+  } },
   { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');

@@ -64,12 +64,17 @@ type Plan struct {
 	Holidays string `json:"holidays,omitempty"`
 	// Waiting are paychecks and payments dated on or before today that the
 	// balances do not have yet, by key (Past.Key): each comes today. Any
-	// other one dated on the day its balance was typed in is taken to be in
-	// it, and one dated after that and before today to have happened.
+	// other paycheck dated on the day its balance was typed in is taken to
+	// be in it (a payment comes out that day, unless InBalance says), and
+	// one dated after that and before today to have happened.
 	Waiting []string `json:"waiting,omitempty"`
 	// NotYet is a payday whose checks were not in the balances that day
 	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
+	// InBalance are payments dated on the day their balance was typed in
+	// that the household says it has already, by key (Past.Key): nothing
+	// more comes out for them. Any other payment that day still comes out.
+	InBalance []string `json:"inBalance,omitempty"`
 	// Logos are the household's own images for a brand, by its key ("chase"),
 	// or for a payment or account with none, by "name:" and its name in
 	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the

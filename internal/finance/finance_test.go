@@ -658,13 +658,21 @@ func TestProjectSince(t *testing.T) {
 	if s := v.Since; len(s) != 2 || !s[len(s)-1].Waiting {
 		t.Fatalf("since, waiting: %+v", s)
 	}
-	// A bill on the day the balances were typed in is in them.
+	// A bill on the day the balances were typed in still comes out that
+	// day (2512.40 - 200), listed so the household can say it is in them.
 	p = household()
 	p.Updated = "2026-10-31"
 	v = Project(p, date("2026-10-31"), 3)
-	if v.Since[0].Key != "payment:food:2026-10-31" || !v.Since[0].Typed || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2512.40 {
+	if v.Since[0].Key != "payment:food:2026-10-31" || !v.Since[0].Typed || v.Since[0].InBalance || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2312.40 {
 		t.Fatalf("on the day: %+v, day 0 %+v", v.Since, v.Days[0])
 	}
+	// Said to be in them: nothing more comes out.
+	p.InBalance = []string{"payment:food:2026-10-31"}
+	v = Project(p, date("2026-10-31"), 3)
+	if !v.Since[0].InBalance || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2512.40 {
+		t.Fatalf("on the day, in the balance: %+v, day 0 %+v", v.Since, v.Days[0])
+	}
+	p.InBalance = nil
 	// Typed in yesterday: today's bill is still to come.
 	p.Updated = "2026-10-30"
 	if v := Project(p, date("2026-10-31"), 3); len(v.Since) != 0 || v.Days[0].Balance != 2312.40 {

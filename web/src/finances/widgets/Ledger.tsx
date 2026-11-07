@@ -1,5 +1,6 @@
 // The ledger widgets: what the balances are taken to hold (Taken as done,
-// each with In or Not yet), on the Dashboard; and every account today and
+// each with In or Not yet; a bill on the day they were typed, Comes out or
+// Already in), on the Dashboard; and every account today and
 // after each paycheck ahead (Accounts, paycheck by paycheck), on Net worth.
 import { useState } from 'preact/hooks';
 import { Empty } from '../../parts/Empty';
@@ -10,32 +11,46 @@ import { AcctMark, Mark, PayMark, Who } from '../Mark';
 import { todayOf } from '../model';
 import { dayLong, dayShort, type Lookup, money, owed, signed } from '../money';
 
+/** What became of one taken as done: counted, waiting (it comes today), or a bill the balance has already. */
+export type SinceState = 'counted' | 'waiting' | 'inBalance';
+
+/** A bill dated the day its balance was typed in: it comes out, unless the balance has it already. */
+const typedBill = (s: finance.Past) => !!s.payment && !!s.typed;
+
 /**
  * What the balances are taken to hold: each paycheck and payment dated the
  * day a balance was typed in, or after it and before today. One the
- * household marks Not yet waits, and comes today.
+ * household marks Not yet waits, and comes today. A bill on the day a
+ * balance was typed in comes out that day; Already in says the balance has it.
  */
-export function SinceWidget({ v, L, set }: { v: finance.View; L: Lookup; set?: (key: string, waiting: boolean) => Promise<boolean> }) {
+export function SinceWidget({ v, L, set }: { v: finance.View; L: Lookup; set?: (key: string, state: SinceState) => Promise<boolean> }) {
   const [busy, setBusy] = useState('');
   const [all, setAll] = useState(false);
   const list = v.since || [];
+  const stateOf = (s: finance.Past): SinceState => (s.waiting ? 'waiting' : s.inBalance ? 'inBalance' : 'counted');
   const pick = async (s: finance.Past, choice: string) => {
-    if ((choice === 'not') === !!s.waiting || busy) return;
+    const want: SinceState = choice === 'not' ? 'waiting' : choice === 'held' ? 'inBalance' : 'counted';
+    if (want === stateOf(s) || busy) return;
     setBusy(s.key);
-    await set(s.key, choice === 'not');
+    await set(s.key, want);
     setBusy('');
   };
+  const sub = (s: finance.Past) => dayLong(s.date) + (s.waiting ? ' · not yet: it comes today'
+    : typedBill(s) ? (s.inBalance ? ' · already in the balance' : ' · due the day the balance was typed')
+      : s.typed ? ' · the day its balance was typed in' : ' · since the balance was typed in');
   const name = (s: finance.Past) => (s.person ? `${L.person[s.person]?.name || s.person}'s paycheck` : L.payment[s.payment]?.name || s.payment);
   const shown = all ? list : list.slice(0, 5);
   return (
     <Widget title="Taken as done" span="all" kind="fx-since">
-      <p class="fx-sub fx-lead">Dated on or after the day you typed in the balances, so counted in them.{set && ' Mark any that hasn\'t happened yet: it comes today.'}</p>
+      <p class="fx-sub fx-lead">Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out{set ? ': mark it Already in if the balance has it. Mark any that hasn\'t happened yet: it comes today.' : '.'}</p>
       <Rows kind="finrows fx-rows">
         {shown.map((s) => {
           const x = s.payment ? L.payment[s.payment] : undefined;
           return <Row key={s.key} lead={s.person ? <Who name={L.person[s.person]?.name} n={L.order[s.person] ?? 0} /> : <PayMark x={x} />}
-            title={name(s)} sub={dayLong(s.date) + (s.waiting ? ' · not yet: it comes today' : s.typed ? ' · the day its balance was typed in' : ' · since the balance was typed in')}
-            end={set && <Segmented label={`${name(s)}, ${dayLong(s.date)}`} value={s.waiting ? 'not' : 'in'} pick={(c) => pick(s, c)} options={[['in', 'In'], ['not', 'Not yet']]} />}
+            title={name(s)} sub={sub(s)}
+            end={set && (typedBill(s)
+              ? <Segmented label={`${name(s)}, ${dayLong(s.date)}`} value={s.inBalance ? 'held' : 'in'} pick={(c) => pick(s, c)} options={[['in', 'Comes out'], ['held', 'Already in']]} />
+              : <Segmented label={`${name(s)}, ${dayLong(s.date)}`} value={s.waiting ? 'not' : 'in'} pick={(c) => pick(s, c)} options={[['in', 'In'], ['not', 'Not yet']]} />)}
             when={<span class={s.in ? "fx-amount fx-in" : "fx-amount"}>{s.in ? "+" : s.outside ? "" : "−"}{money(s.amount)}</span>} whenPlain />;
         })}
       </Rows>

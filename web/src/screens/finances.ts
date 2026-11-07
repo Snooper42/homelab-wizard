@@ -9,6 +9,7 @@ import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
 import { setHidden, todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
+import type { SinceState } from '../finances/widgets/Ledger';
 import { store } from '../store';
 import { type Running } from '../finances/homelab';
 import { catalog } from './choose';
@@ -70,7 +71,7 @@ function draw() {
     setGroup: (g) => { group = g; draw(); },
     pick: (i) => { sel = i; draw(); },
     edit: open,
-    setWaiting,
+    setSince,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
@@ -148,13 +149,21 @@ async function saveLedger(l: finance.Ledger): Promise<boolean> {
   }
 }
 
-/** Marks a paycheck or payment taken as done as not happened yet (it comes today), or back. */
-function setWaiting(key: string, waiting: boolean) {
+/**
+ * Says what became of a paycheck or payment taken as done: counted (it
+ * happened, or a bill on the day balances were typed comes out), waiting
+ * (not yet: it comes today), or a bill on that day the balance has already.
+ */
+function setSince(key: string, state: SinceState) {
   const v = financesData.value!;
-  // What waits now, by its key (NotYet, the day's paychecks before, is one of them).
-  const keys = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
-  if (waiting) keys.add(key); else keys.delete(key);
-  return save({ ...v.plan, waiting: [...keys], notYet: undefined });
+  // What waits now, by its key (NotYet, the day's paychecks before, is one of them), and what the balances have.
+  const waiting = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
+  const held = new Set((v.since || []).filter((s) => s.inBalance).map((s) => s.key));
+  waiting.delete(key);
+  held.delete(key);
+  if (state === 'waiting') waiting.add(key);
+  if (state === 'inBalance') held.add(key);
+  return save({ ...v.plan, waiting: [...waiting], inBalance: held.size ? [...held] : undefined, notYet: undefined });
 }
 
 // The menu's item and the window's own shortcut can both see one ⌘⇧H: a

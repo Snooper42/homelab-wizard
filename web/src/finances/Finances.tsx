@@ -32,7 +32,7 @@ export interface FinancesProps {
   setTab: (tab: string) => void;
   sel: number;
   pick: (i: number) => void;
-  setWaiting: OverviewProps['setWaiting'];
+  setSince: OverviewProps['setSince'];
   saveSettings: SaveSettings;
   /** Keeps the plan as it is given (Add to the plan); false when it failed. */
   keep: (plan: finance.Plan) => Promise<boolean>;
@@ -91,7 +91,7 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   );
 }
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, running, calendar, fromWallos, phone, toggleHidden, group, setGroup }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, running, calendar, fromWallos, phone, toggleHidden, group, setGroup }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -128,7 +128,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} setSince={ro ? undefined : setSince} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
       </div>
     </>
   );

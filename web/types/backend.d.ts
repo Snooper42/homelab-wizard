@@ -630,6 +630,7 @@ declare namespace finance {
     outside?: boolean;
     typed?: boolean;
     waiting?: boolean;
+    inBalance?: boolean;
   }
   interface Payday {
     date: string;
@@ -686,6 +687,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    inBalance?: string[];
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
