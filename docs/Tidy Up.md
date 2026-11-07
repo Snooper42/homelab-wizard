@@ -12,7 +12,7 @@ Tidy Up keeps the libraries on the media drive (`MEDIA_ROOT`) sorted, tagged, an
 
 ## The engines
 
-The work is done by Python scripts in `tools/media`, run by the homelab with Python 3.8 or newer:
+The work is done by Python scripts in `tools/media`, run by the homelab with Python 3.8 or newer (3.10 to 3.14 for music run on this computer: its one-time setup installs beets and its helpers at the versions pinned in `tools/media/requirements`, each checked against its hashes):
 
 | Script | What it does |
 |---|---|

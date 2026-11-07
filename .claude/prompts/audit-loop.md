@@ -68,7 +68,7 @@ Add tasks from the owner's complaints.
 ### Owner-approved security work (Nov 6), before the backlog
 
 1. (done: round 62) **N25:** the companion's proxy host adds a header with a secret only it and the companion know; `trust_forwarded_proto` is off for that host; `Encrypted` believes "https" only with the secret. Try it against a real Nginx Proxy Manager (`jc21/nginx-proxy-manager` on Docker Hub).
-2. **N28:** the music jobs need Python 3.10 or newer and install pinned versions (a constraints file per supported Python, tested in a fresh venv for each). `tools/media` is Account 1's, so this is the smallest security fix, in a commit of its own, and only while no open PR claims those files.
+2. (done: round 63) **N28:** the music jobs need Python 3.10 or newer and install pinned versions (a constraints file per supported Python, tested in a fresh venv for each). `tools/media` is Account 1's, so this is the smallest security fix, in a commit of its own, and only while no open PR claims those files.
 3. **N29:** the app checks a Windows or Linux update against the build provenance the release workflow already makes (`actions/attest-build-provenance`, Sigstore, keyless), so no key is needed from the owner.
 4. **N21:** cloudflared at a fixed address on the `homelab` network, and NPM trusting `CF-Connecting-IP` from that address only. It changes every install's network, so it ships as one careful PR of its own, tried on real Docker.
 
@@ -569,7 +569,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     default access, the publish and read tokens' reach, and whether a
     stranger can read the topic or send a fake alert ("backup failed,
     open this link") that a phone shows as the homelab's.
-54. (done: round 57, N28 open) **The music jobs' Python** (internal/media, the beets venv #444 and
+54. (done: round 57; N28 fixed in round 63) **The music jobs' Python** (internal/media, the beets venv #444 and
     #454 remake): the venv is made with whatever `python3` comes first on
     PATH and installs beets from PyPI at the first run. Is the version
     pinned, with hashes? A remade venv fetches it again, unattended.
@@ -1267,6 +1267,33 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   `TestDomainSetupEndToEnd` now checks the companion's host carries the
   key saved in `.env` instead of trusting the forwarded scheme. #472
   (Account 2's loop file) read: no security change.
+
+- **Round 63 (N28, owner-approved; #470, #474, #476, #478, #479 read):**
+  the music jobs' venv now installs only `tools/media/requirements/music-3.N.txt`
+  for its own Python (3.10 to 3.14; from `music.in` by `make music-pins`,
+  uv's universal resolution with every file's hash), with
+  `--require-hashes`, and no `pip --upgrade pip`. The file is chosen by the
+  venv's `pyvenv.cfg` (a venv may have been made by another Python than
+  the one running), and `homelab-pins` in the venv holds the file's hash,
+  so an old unpinned venv is brought to the pins once and a later pin
+  bump reaches it. Python 3.9 and older is told to install 3.10 or newer
+  (or add the beets app, off Windows); 3.15 has no pins (beets 2.14.1
+  wants <3.15) and installs nothing. `music_organizer.py` is vendored: the
+  change is the owner's N28, recorded beside the Nov 3 fixes in the
+  `VENDORED` comment. `PinnedBeets` failed before (5 of 5). Tried: `make
+  music-pins-check` (a fresh `python -m venv` per Python, its own pip,
+  each file whole: beets 2.14.1 ran on 3.10.20, 3.11.18, 3.12.3, 3.13.18,
+  3.14.6); 3.10's file with pip 22.0.2 (Ubuntu 22.04's); the real
+  bootstrap in a throwaway home (15 s, then 1 s with nothing fetched); a
+  copy with beets' hashes changed was refused and nothing installed.
+  Read as they merged: #474 (why a stopped app stopped: fixed phrases and
+  a port number, never Docker's own text, to phones too; Protection's
+  catches in words, the address on hover as before), #476 (`TidyLock`,
+  desktop only; `media.Follow` reads only a `.jsonl` in Tidy Up's own log
+  folder), #478 (records saved whole; the rollback kit renamed into place,
+  now 0600; a ticket's process that started after it is not its owner,
+  which a forged ticket cannot use as Unpack leaves tickets out), #470 and
+  #479 (the page only). No new hole.
 
 ## For Account 1
 
