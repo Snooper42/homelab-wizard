@@ -133,6 +133,8 @@ struct DashboardView: View {
 
 private struct PhoneDashboard: View {
     @Bindable var model: DashboardViewModel
+    /// Which groups are open (StatusFolds): names only, kept like the sidebar's place.
+    @SceneStorage("statusFolds") private var folds = ""
     let computer: ComputerViewModel
     let finances: FinancesViewModel
 
@@ -162,36 +164,24 @@ private struct PhoneDashboard: View {
                         }
                     }
                 }
-                let pinned = model.pinnedApps.filter { model.matchesSearch($0) }
-                if !pinned.isEmpty {
-                    Section("Pinned") {
-                        ForEach(pinned) { app in
-                            NavigationLink(value: app.id) {
-                                AppRowView(app: app)
-                            }
-                            .appActionControls(for: app)
-                        }
-                    }
-                }
-                ForEach([DashboardViewModel.Filter.attention, .running, .stopped]) { filter in
-                    // Pinned apps are listed once, at the top.
-                    let apps = model.apps(for: filter).filter { $0.pinned != true && model.matchesSearch($0) }
-                    if !apps.isEmpty {
-                        Section {
-                            ForEach(apps) { app in
+                // By category, as the computer's Status: what needs a look
+                // first, then the pinned apps. While searching, every match shows.
+                ForEach(model.isSearching ? model.groups(matching: model.search) : model.groups) { group in
+                    let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
+                    Section {
+                        if open {
+                            ForEach(group.apps) { app in
                                 NavigationLink(value: app.id) {
                                     AppRowView(app: app)
                                 }
                                 .appActionControls(for: app)
                             }
-                        } header: {
-                            HStack {
-                                Text(filter.title)
-                                Spacer()
-                                GroupActionsMenu(apps: apps)
-                                    .textCase(nil)
-                                    .font(.caption)
-                            }
+                        } else {
+                            FoldedGroupNames(group: group) { folds = StatusFolds.setting(group, open: true, in: folds) }
+                        }
+                    } header: {
+                        GroupHeader(group: group, open: open) {
+                            folds = StatusFolds.setting(group, open: !open, in: folds)
                         }
                     }
                 }
@@ -269,6 +259,8 @@ private struct SplitDashboard: View {
     /// The sidebar's choice, kept across launches as the computer keeps each
     /// screen's place (#417). Only the choice is kept, never what it shows.
     @SceneStorage("sidebar") private var savedSidebar = "apps:all"
+    /// Which Status groups are open (StatusFolds), as on iPhone.
+    @SceneStorage("statusFolds") private var folds = ""
     @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
     let finances: FinancesViewModel
@@ -361,9 +353,32 @@ private struct SplitDashboard: View {
         let filter: DashboardViewModel.Filter
         if case .apps(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
         let apps = model.apps(for: filter).filter { model.matchesSearch($0) }
-        return List(apps, selection: $model.selectedAppID) { app in
-            AppRowView(app: app)
-                .appActionControls(for: app)
+        return List(selection: $model.selectedAppID) {
+            if filter == .all {
+                // All Apps is grouped by category, as the computer's Status.
+                ForEach(model.isSearching ? model.groups(matching: model.search) : model.groups) { group in
+                    let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
+                    Section {
+                        if open {
+                            ForEach(group.apps) { app in
+                                AppRowView(app: app)
+                                    .appActionControls(for: app)
+                            }
+                        } else {
+                            FoldedGroupNames(group: group) { folds = StatusFolds.setting(group, open: true, in: folds) }
+                        }
+                    } header: {
+                        GroupHeader(group: group, open: open) {
+                            folds = StatusFolds.setting(group, open: !open, in: folds)
+                        }
+                    }
+                }
+            } else {
+                ForEach(apps) { app in
+                    AppRowView(app: app)
+                        .appActionControls(for: app)
+                }
+            }
         }
         .safeAreaInset(edge: .top) {
             if model.overnightLine != nil {
@@ -489,6 +504,59 @@ struct HealthLineBar: View {
             .background(.bar)
             .accessibilityElement(children: .combine)
         }
+    }
+}
+
+/// A Status group's heading: its fold, its name and how many, and the
+/// group's own Start, Restart and Stop menu.
+struct GroupHeader: View {
+    let group: AppGroup
+    let open: Bool
+    let toggle: @MainActor () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(action: toggle) {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(open ? 90 : 0))
+                    Text(verbatim: group.label)
+                    Text("\(group.apps.count)")
+                        .pill(group.alert ? Theme.danger : .secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(verbatim: "\(group.label), \(group.apps.count) \(group.apps.count == 1 ? "app" : "apps")"))
+            .accessibilityValue(open ? "Open" : "Folded")
+            .accessibilityHint(open ? "Folds the group" : "Opens the group")
+            Spacer()
+            GroupActionsMenu(apps: group.apps)
+                .font(.caption)
+        }
+        .textCase(nil)
+    }
+}
+
+/// A folded group's apps, by name, on a line of their own (as the computer
+/// shows them since main #474). A tap opens the group.
+struct FoldedGroupNames: View {
+    let group: AppGroup
+    let open: @MainActor () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the group")
     }
 }
 

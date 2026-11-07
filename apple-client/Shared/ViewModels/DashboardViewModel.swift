@@ -144,6 +144,40 @@ final class DashboardViewModel {
         return order
     }
 
+    // MARK: Status by category, as the computer's Status
+
+    /// Every app grouped as the computer's Status groups them: what needs a
+    /// look first, then the pinned ones, then each catalog category, then
+    /// Other (`renderAppList` in web/src/screens/status.ts).
+    var groups: [AppGroup] { Self.groups(apps: allApps, pinned: pinnedApps, catalog: catalog) }
+
+    /// The groups with only the apps the search matches; empty groups go.
+    func groups(matching query: String) -> [AppGroup] {
+        groups.compactMap { group in
+            let apps = group.apps.filter { Self.matches($0, query) }
+            return apps.isEmpty ? nil : AppGroup(label: group.label, apps: apps, alert: group.alert, pinned: group.pinned)
+        }
+    }
+
+    nonisolated static func groups(apps: [AppStatus], pinned: [AppStatus], catalog: AppCatalog?) -> [AppGroup] {
+        // The computer's Needs a look group: unwell, crash-looping, or missing.
+        // A stopped app stays in its category, its row saying why.
+        func trouble(_ app: AppStatus) -> Bool {
+            app.health == "unhealthy" || app.health == "restarting" || app.state == "missing"
+        }
+        let pinnedShown = pinned.filter { !trouble($0) }
+        let pinnedIDs = Set(pinnedShown.map(\.id))
+        let rest = apps.filter { !trouble($0) && !pinnedIDs.contains($0.id) }
+        let categoryOf = Dictionary((catalog?.apps ?? []).map { ($0.id, $0.category) }, uniquingKeysWith: { first, _ in first })
+        let categories = catalog?.categories ?? []
+        let known = Set(categories.map(\.id))
+        var out = [AppGroup(label: "Needs a look", apps: apps.filter(trouble), alert: true),
+                   AppGroup(label: "Pinned", apps: pinnedShown, pinned: true)]
+        out += categories.map { category in AppGroup(label: category.label, apps: rest.filter { categoryOf[$0.id] == category.id }) }
+        out.append(AppGroup(label: "Other", apps: rest.filter { !known.contains(categoryOf[$0.id] ?? "") }))
+        return out.filter { !$0.apps.isEmpty }
+    }
+
     func count(for filter: Filter) -> Int {
         apps(for: filter).count
     }
@@ -337,5 +371,48 @@ final class DashboardViewModel {
     /// memory nearly full (main #458).
     var failingChecks: Int {
         (cards.watchdog?.failing.count ?? 0) + (cards.watchdog?.memory == nil ? 0 : 1)
+    }
+}
+
+/// A group of Status: a category, or what needs a look, or the pinned apps.
+struct AppGroup: Identifiable, Equatable, Sendable {
+    let label: String
+    let apps: [AppStatus]
+    /// What needs a look: its count in red, never folded at first.
+    var alert = false
+    /// The pinned apps: open at first, since the point of them is a glance.
+    var pinned = false
+
+    var id: String { label }
+
+    /// Folded until opened, as on the computer: everything in it runs,
+    /// waits for the scheduled jobs, or was stopped on purpose.
+    var isFine: Bool {
+        !alert && !pinned && apps.allSatisfy { app in
+            app.isRunning || app.awaitingJobs
+                || (app.state == "stopped" && app.stoppedOnPurpose != nil && app.stoppedOnPurpose?.keptRestarting != true)
+        }
+    }
+}
+
+/// Which Status groups are open: the person's own choices, by group name,
+/// kept as the sidebar's place is (scene storage). Until they choose, a
+/// group is open unless everything in it is fine. Only names are kept,
+/// never what the groups hold.
+enum StatusFolds {
+    static func choices(_ raw: String) -> [String: Bool] {
+        (try? JSONDecoder().decode([String: Bool].self, from: Data(raw.utf8))) ?? [:]
+    }
+
+    static func isOpen(_ group: AppGroup, in raw: String) -> Bool {
+        choices(raw)[group.label] ?? !group.isFine
+    }
+
+    /// `raw` with `group` opened or folded.
+    static func setting(_ group: AppGroup, open: Bool, in raw: String) -> String {
+        var picked = choices(raw)
+        picked[group.label] = open
+        guard let data = try? JSONEncoder().encode(picked) else { return raw }
+        return String(decoding: data, as: UTF8.self)
     }
 }

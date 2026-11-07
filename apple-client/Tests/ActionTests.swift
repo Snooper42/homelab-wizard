@@ -447,3 +447,51 @@ struct StoppedByItselfTests {
         #expect(clean.detailLine.hasPrefix("Stopped"))
     }
 }
+
+// Status by category, as the computer's Status groups it.
+@Suite("Status groups")
+struct StatusGroupTests {
+    private func status(_ json: String) throws -> HomelabStatus {
+        try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(json.utf8))
+    }
+
+    private let catalog: AppCatalog = {
+        // swiftlint:disable:next force_try
+        try! JSONDecoder.homelab().decode(AppCatalog.self, from: Data(#"""
+        {"categories":[{"id":"media","label":"Media"},{"id":"photos","label":"Photos"}],
+         "apps":[{"id":"plex","name":"Plex","category":"media"},{"id":"sonarr","name":"Sonarr","category":"media"},
+                 {"id":"immich","name":"Immich","category":"photos"},{"id":"vault","name":"Vault","category":"security"}]}
+        """#.utf8))
+    }()
+
+    @Test func needsALookThenPinnedThenEachCategoryThenOther() throws {
+        let st = try status(#"""
+        {"apps":[{"id":"plex","name":"Plex","state":"running"},
+                 {"id":"sonarr","name":"Sonarr","state":"running","health":"unhealthy"},
+                 {"id":"immich","name":"Immich","state":"running","pinned":true},
+                 {"id":"vault","name":"Vault","state":"stopped"},
+                 {"id":"x","name":"X","state":"missing"}],
+         "pinned":["immich"]}
+        """#)
+        let pinned = st.apps.filter { st.pinned.contains($0.id) }
+        let groups = DashboardViewModel.groups(apps: st.apps, pinned: pinned, catalog: catalog)
+        #expect(groups.map(\.label) == ["Needs a look", "Pinned", "Media", "Other"])
+        #expect(groups[0].apps.map(\.id) == ["sonarr", "x"] && groups[0].alert)
+        #expect(groups[1].apps.map(\.id) == ["immich"] && groups[1].pinned)
+        #expect(groups[2].apps.map(\.id) == ["plex"])          // Photos is empty, so it goes
+        #expect(groups[3].apps.map(\.id) == ["vault"])         // a category the catalog doesn't list
+    }
+
+    @Test func foldedWhenAllIsFineUntilChosen() throws {
+        let st = try status(#"{"apps":[{"id":"plex","name":"Plex","state":"running"},{"id":"vault","name":"Vault","state":"stopped"}]}"#)
+        let groups = DashboardViewModel.groups(apps: st.apps, pinned: [], catalog: catalog)
+        let media = try #require(groups.first { $0.label == "Media" })
+        let other = try #require(groups.first { $0.label == "Other" })
+        #expect(media.isFine && !StatusFolds.isOpen(media, in: ""))
+        #expect(!other.isFine && StatusFolds.isOpen(other, in: ""))   // a stop nobody chose
+        let opened = StatusFolds.setting(media, open: true, in: "")
+        #expect(StatusFolds.isOpen(media, in: opened))
+        #expect(!StatusFolds.isOpen(other, in: StatusFolds.setting(other, open: false, in: opened)))
+        #expect(StatusFolds.isOpen(other, in: "not json"))             // a bad record is no choice
+    }
+}
