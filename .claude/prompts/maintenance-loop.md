@@ -41,9 +41,9 @@ Every round begins by finishing what is open in your lane: an open pull request 
 
 A pushed `claude/fix-*` branch with no PR is either **parked** (listed below: leave it until you change that code anyway, then merge main into it and finish it) or work to finish (merge main in, never rebase a pushed branch; add its CHANGELOG line and its failing-before proof; open its PR). A branch whose work is already on main: tell the owner to delete it (your tools can't). A `claude/*` branch that matches no lane in lanes.md is no loop's: leave it alone, and list it for the owner.
 
-**Open now:** #474 (the walkthrough's and Account 3's usability fixes, six branches in one) and #478 (the five parked branches, shipped on the owner's Nov 7 ask to close every branch). `claude/fix-tidy-first-run` waits for #476 (Account 1's) and opens after it.
+**Open now:** nothing. On the owner's Nov 7 ask to close every branch: #478 (the five parked branches), #479 (Tidy Up's first run in two rows, and a Lyrics row always on Music), and #474 (the walkthrough's and Account 3's usability fixes, six branches in one) merged.
 
-**Parked branches:** none: the owner asked on Nov 7 to close every branch, so `fix-proc`, `fix-cache-writes`, `fix-quit-list`, `fix-small-notes`, and `fix-resume-warn` ship in #478. Branches merged and still to delete (the owner deletes; these tools can't): every `claude/fix-*` but `fix-stopped-why`, `fix-parked`, and `fix-tidy-first-run`, and every `claude/fix-*-shots`.
+**Parked branches:** none. Branches whose work is on main, for the owner to delete (these tools can't; GitHub deletes a merged PR's own branch): `claude/fix-agent-state`, `fix-cache-writes`, `fix-custom-compose`, `fix-down-whole`, `fix-healed`, `fix-kit-manifest`, `fix-logs-private`, `fix-lyrics-offline`, `fix-page-checks`, `fix-plain-words`, `fix-proc`, `fix-quit-list`, `fix-resume-warn`, `fix-sent-notes`, `fix-setup-words`, `fix-small-notes`, `fix-tdarr-handing`, `fix-walk-2`, and every `claude/fix-*-shots` (screenshots for PR bodies).
 
 ## Your job
 

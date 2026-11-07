@@ -351,6 +351,8 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     if (lyr && apart > 0) out.push({ kind: 'lyrics', title: `${count(apart, 'song')} show two languages on one line`, sub: 'Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes', go: { label: 'Tidy lyrics', run: () => act.run('music', 'lyrics', ['--tidy']) } });
     if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
     // A check from before Tidy Up counted those: one more, which changes nothing, finds them.
+    // Never checked: say so on Overview too (it was on the Music tab only, so lyrics seemed to have no option at all).
+    if (!lyr) out.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
     if (lyr && lyr.to_clean === undefined && none === 0) out.push({ kind: 'lyrics', title: 'Look over the lyrics again', sub: 'Finds songs that show two languages on one line; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
   } else if (k === 'movies' || k === 'tv') {
     const c = l.counts || {}, bloated = n(c.bloated), withTdarr = n(c.queued) + n(l.waiting);
@@ -547,14 +549,50 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
 
 // ------------------------------------------------------------ Overview
 
-/** Overview's list, Needs your OK: a tool missing, then each library's next things, then a drive that's away. The
- * screen's first line counts the same list, so the two always agree. */
+/** The tools a library needs (a check's needs): ffmpeg for films and TV, Calibre's for books; Python for every one. */
+const toolFor: Record<string, string[]> = { all: [...LIBRARIES], video: ['movies', 'tv'], books: ['books'] };
+const TOOLS = new Set(['python', 'ffmpeg', 'calibredb']);
+
+/** A fix without its own "Install Python 3: " at the start, which the row's title already says. */
+const dropTitle = (fix: string, name: string) => (fix.toLowerCase().startsWith(`install ${name.toLowerCase()}: `) ? fix.slice(`install ${name}: `.length) : fix);
+
+/** The tools missing, in one row: "Install Python 3 and ffmpeg", each one's fix under it, and Install when the app can
+ * fetch one (ffmpeg). only: the libraries they're for (a tool no library here needs yet isn't asked for). */
+function toolsRow(d: app.TidyUp, act: TidyActions, only: (needs: string) => boolean): Todo[] {
+  const missing = d.checks.filter((c) => !c.ok && TOOLS.has(c.id) && only(c.needs || ''));
+  if (!missing.length) return [];
+  const short: Record<string, string> = { ffmpeg: 'ffmpeg' }; // "ffmpeg and ffprobe" in a list of three reads badly
+  const names = missing.map((c) => short[c.id] || c.name);
+  const listed = names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  const fetch = missing.find((c) => c.install);
+  const calibre = missing.length === 1 && missing[0].id === 'calibredb';
+  return [{ kind: 'machine', title: `Install ${listed}`, warn: true,
+    // Each one's fix, without its own "Install Python 3:" (the row's title says that).
+    sub: missing.map((c) => (missing.length > 1 ? `${short[c.id] || c.name}: ` : '') + dropTitle(c.fix || c.note || '', short[c.id] || c.name)).join(' · '),
+    go: fetch ? { label: names.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : 'Install', run: () => act.install() }
+      : calibre ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }];
+}
+
+/** Overview's list, Needs your OK: the drive when it's away (one row, whatever lives on it), the tools missing (one
+ * row), each library's next things, then a library whose own folder is away. The screen's first line counts the same
+ * list, so the two always agree. Before, a drive away was a row of its own and one more for each library on it, and
+ * each tool a row: nine rows on a new Mac with the drive unplugged. */
 function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null, pick: (t: TidyTab) => void): Todo[] {
-  const gone: Todo[] = d.libraries.filter((l) => !l.found).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
-  // A tool missing: Install when the app can fetch it (ffmpeg), Calibre's download page for Calibre.
-  const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true,
-    go: c.install ? { label: 'Install', run: () => act.install() } : c.id === 'calibredb' ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }));
-  return [...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
+  const drive = d.checks.find((c) => c.id === 'drive' && !c.ok);
+  const root = drive?.note?.replace(/ isn't there$/, '') || '';
+  const away = d.libraries.filter((l) => !l.found);
+  const onIt = root ? away.filter((l) => l.folder === root || l.folder.startsWith(root.replace(/[\\/]$/, '') + '/') || l.folder.startsWith(root.replace(/[\\/]$/, '') + '\\')) : [];
+  const listed = (ls: app.TidyLibrary[]) => { const w = ls.map((l) => names[l.kind]); return w.length === 1 ? w[0] : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1]; };
+  const plug: Todo[] = drive ? [{ kind: 'machine', warn: true, title: `Plug in ${drive.name.replace(/^The /, 'the ')}`,
+    sub: `${onIt.length ? `${listed(onIt)} ${onIt.length === 1 ? 'is' : 'are'} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
+    go: { label: 'Choose folder…', run: () => act.settings(['MEDIA_ROOT']), quiet: true } }] : [];
+  const gone: Todo[] = away.filter((l) => !onIt.includes(l)).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+  // A tool only a library that's away needs waits for it: with the drive unplugged, only Python is asked for.
+  const here = new Set(d.libraries.filter((l) => l.found).map((l) => l.kind));
+  const tools = toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).some((k) => here.has(k)));
+  // Anything else the machine needs (power for a big job): a row each, as before.
+  const machine: Todo[] = d.checks.filter((c) => !c.ok && c.needs && c.id !== 'drive' && !TOOLS.has(c.id)).map((c) => ({ kind: 'machine', title: c.name, sub: `${c.note}. ${c.fix}`, warn: true }));
+  return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
 }
 
 function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
@@ -591,7 +629,16 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
     if (!genres || n(genres.result?.to_fix) > 0) extra.push({ kind: 'music', title: n(genres?.result?.to_fix) ? `${count(n(genres!.result!.to_fix), 'song')} outside your 14 genres` : 'Fold every song into one of your 14 genres', sub: 'Looks first; you see the list before anything changes', go: { label: 'Check genres', run: () => act.run('music', 'genres'), quiet: true } });
     if ((l.stage === 'swapped' || l.stage === 'verified' || l.stage === 'freed') && !last(l, 'navidrome-cleanup')?.ok) extra.push({ kind: 'music', title: 'Tidy Navidrome after the swap', sub: 'A full scan, and the old paths it still lists removed', go: { label: 'Tidy Navidrome', run: () => act.run('music', 'navidrome-cleanup'), quiet: true } });
     if (!last(l, 'playlists')?.ok) extra.push({ kind: 'music', title: 'A smart playlist for each of your genres', sub: 'Navidrome fills them by itself as music is added', go: { label: 'Make playlists', run: () => act.run('music', 'playlists'), quiet: true } });
-    if (!last(l, 'lyrics')) extra.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    // Lyrics always have a row here once checked: what the last check found, and Check again. Before, a check that found
+    // nothing to tidy or add left no lyrics option anywhere.
+    const lr = last(l, 'lyrics'), ly = lr?.result;
+    if (lr && ly) {
+      const parts = [['synced', 'time-synced'], ['plain', 'plain'], ['none', 'without lyrics'], ['not_found', 'not on LRCLIB yet']]
+        .filter(([key]) => n(ly[key]) > 0).map(([key, words]) => `${count(n(ly[key]), 'song')} ${words}`);
+      const found = n(ly.to_clean) ? `${count(n(ly.to_clean), 'song')} with two languages on one line` : 'none with two languages on one line';
+      extra.push({ kind: 'lyrics', title: 'Lyrics', sub: `${parts.join(' · ') || 'No songs read yet'} · ${found} · checked ${ago(lr.at)}`,
+        go: { label: 'Check again', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    }
   }
   // Episodes missing from a season (a gap in its numbering, as the scan read it): said, with nothing to press.
   const gaps = kind === 'tv' && l.found ? n(last(l, 'scan')?.result?.missing) : 0;
@@ -604,7 +651,9 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
   if ((kind === 'movies' || kind === 'tv') && l.found && !d.activity.some((a) => a.kind === 'arr')) {
     extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Tidy Up file what Sonarr downloads' : 'Let Tidy Up file what Radarr downloads', sub: 'They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Tidy Up file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });
   }
-  const rows = [...todos, ...extra];
+  // The tools this library needs and hasn't got (Calibre's for books, ffmpeg for films and TV), as one row.
+  const tools = l.found ? toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).includes(kind)) : [];
+  const rows = [...tools, ...todos, ...extra];
   const changing = (review || []).filter((b) => !b.held && !skip.has(b.id));
   const apply = () => act.ask({
     title: `Apply the changes to ${count(changing.length, 'book')}?`, action: 'Apply',
