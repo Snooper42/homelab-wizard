@@ -17,7 +17,7 @@ import { NowWidget } from './widgets/Now';
 import { PricesWidget } from './widgets/Prices';
 import { MissingWidget } from './widgets/Missing';
 import { AveragesWidget } from './widgets/Averages';
-import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
+import { CashFlowWidget, MoneyFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
@@ -34,8 +34,10 @@ export interface OverviewProps {
   sel: number;
   pick: (i: number) => void;
   add?: (what: 'account' | 'person' | 'payment', kind?: string) => void;
-  /** Opens a payment's form, or a goal's (the phone's Goals). */
-  edit?: (what: 'payment' | 'goal', id: string) => void;
+  /** Opens a payment's form, a goal's (the phone's Goals), or a transaction's (from the money flow). */
+  edit?: (what: 'payment' | 'goal' | 'transaction', id: string) => void;
+  /** The ledger, for a real month's money flow; null until it is read. */
+  ledger?: finance.Ledger | null;
   /** Says what became of a paycheck or payment taken as done: counted, waiting (it comes today), or a bill the balance has already. */
   setSince?: (key: string, state: SinceState) => Promise<boolean>;
   /** Keeps the plan (a subscription's new price); left out on a phone allowed only to look. */
@@ -52,7 +54,7 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -90,6 +92,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, openWorth
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
         <CashFlowWidget v={v} L={L} />
         <SpendingWidget v={v} L={L} />
+        <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>
     </div>

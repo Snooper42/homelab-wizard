@@ -1,12 +1,17 @@
 // A month of money: what is left of it (Cash flow), where the spending
 // goes (Where it goes), and how it flows, pay to bills, saving, and what
 // is left (Money flow). The pay period card picks a paycheck.
+import { useState } from 'preact/hooks';
+import { Empty } from '../../parts/Empty';
+import { Row, Rows } from '../../parts/Row';
 import { Amount, Stat, Tiles } from '../ui/Amount';
-import { Donut, FlowChart, type FlowPart } from '../ui/charts';
-import { Legend, SplitBar } from '../ui/Legend';
-import { Widget } from '../ui/Widget';
+import { Donut } from '../ui/charts';
+import { Sankey } from '../ui/sankey';
+import { Dot, Legend, SplitBar } from '../ui/Legend';
+import { IconButton, Widget } from '../ui/Widget';
 import { kindName, month, surplus } from '../model';
-import { dayShort, type Lookup, money, perMonth, whole } from '../money';
+import { kindHue, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
+import { dayShort, type Lookup, money, monthName, whole } from '../money';
 
 
 export function CashFlowWidget({ v, L }: { v: finance.View; L: Lookup }) {
@@ -24,8 +29,6 @@ export function CashFlowWidget({ v, L }: { v: finance.View; L: Lookup }) {
   );
 }
 
-/** Each payment kind keeps its colour on the donut and in its legend. */
-const kindHue: Record<string, number> = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
 
 export function SpendingWidget({ v, L }: { v: finance.View; L: Lookup }) {
   const m = month(v, L);
@@ -42,32 +45,92 @@ export function SpendingWidget({ v, L }: { v: finance.View; L: Lookup }) {
   );
 }
 
+/** How many of each column a month's flow shows before the rest are one Other. */
+const tops: [string, string][] = [['5', 'Top 5'], ['8', 'Top 8'], ['0', 'All']];
+
+/** A month as people say it: "Oct 2026", or "A typical month". */
+const periodName = (p: string) => (p === typical ? 'A typical month' : `${monthName(p + '-01').slice(0, 3)} ${p.slice(0, 4)}`);
+const typical = 'typical';
+
 /**
- * Money flow: a typical month, each person's pay into one month's pay, and
- * out of it each kind of bill, what is saved, and what is left over (or,
- * when the month takes more than comes in, what comes out of the accounts
- * too). A legend with every amount under the picture, and a table for a
+ * Money flow: where a month's money came from, through all of it, to
+ * taxes, spending, and saving, and on to each kind of spending and each
+ * account it was saved in (or kept as cash). ‹ › step through the months
+ * the ledger has, and a typical month from the plan; Top 8 keeps the
+ * largest of each column, the rest as Other. Above it, income, taxes,
+ * expenses, and saved, each as a share of income. Picking a box shows
+ * what is behind it under the chart: its transactions, or the planned
+ * payments and pay, each opening its form. A table says it all to a
  * screen reader.
  */
-export function MoneyFlowWidget({ v, L }: { v: finance.View; L: Lookup }) {
-  const m = month(v, L);
-  const people = v.plan.people || [];
-  if (!people.length || m.in <= 0) return null;
-  const from: FlowPart[] = [...people.map((e) => ({ label: `${e.name}'s pay`, value: e.net * perMonth(e.schedule), color: 'in' as const })),
-    ...m.others.map((o) => ({ label: `${o.name}, from ${o.payer}`, value: o.amount, color: 'in' as const }))];
-  if (m.left < -0.005) from.push({ label: 'From the accounts', value: -m.left, color: 'muted' });
-  const to: FlowPart[] = [...m.byKind.map((k) => ({ label: kindName(k.kind), value: k.amount, color: (kindHue[k.kind] ?? 6) as FlowPart['color'] })),
-    { label: 'Saved', value: m.saved, color: 'save' as const }, { label: 'Left over', value: Math.max(0, m.left), color: 'in' as const }].filter((p) => p.value > 0.005);
+export function MoneyFlowWidget({ v, L, ledger, edit, title = 'Money flow' }: { v: finance.View; L: Lookup; ledger?: finance.Ledger | null; edit?: (what: 'transaction' | 'payment', id: string) => void; title?: string }) {
+  const months = ledgerMonths(ledger || null);
+  const periods = [typical, ...[...months].reverse()];
+  // This month once the ledger has it (it is read after the plan), until one is picked.
+  const [period, setPeriod] = useState('');
+  const [top, setTop] = useState('8');
+  const [picked, setPicked] = useState('');
+  const p = periods.includes(period) ? period : months.includes(v.today.slice(0, 7)) ? v.today.slice(0, 7) : typical;
+  const at = periods.indexOf(p);
+  const f = p === typical || !ledger ? typicalFlow(v, L, Number(top)) : monthFlow(v, L, ledger, p, Number(top));
+  if (f.income <= 0.005 && f.expenses <= 0.005) {
+    if (p === typical && !months.length) return null;
+  }
+  const node = f.nodes.find((n) => n.id === picked);
+  const share = (n: number) => (f.income > 0.005 ? `${Math.round((n / f.income) * 100)}%` : '');
+  const go = (i: number) => { setPeriod(periods[i]); setPicked(''); };
+  const items = node ? [...node.items].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)) : [];
+  const many = 40;
   return (
-    <Widget title="Money flow" span="all" kind="fx-moneyflow">
-      <FlowChart from={from} to={to} label={`A typical month: ${whole(m.in)} of pay, to ${to.map((p) => p.label.toLowerCase()).join(', ')}. The lists under it have every amount.`} />
-      <div class="fx-flowlegend">
-        <Legend items={from.map((p) => ({ label: p.label, color: p.color, value: whole(p.value) }))} />
-        <Legend items={to.map((p) => ({ label: p.label, color: p.color, value: whole(p.value) }))} />
+    <Widget title={title} span="all" kind="fx-moneyflow"
+      actions={<>
+        <span class="fx-period">
+          <IconButton icon="prev" label="The month before" disabled={at <= 0} onClick={() => go(at - 1)} />
+          <span class="fx-periodname" aria-live="polite">{periodName(p)}</span>
+          <IconButton icon="next" label="The month after" disabled={at >= periods.length - 1} onClick={() => go(at + 1)} />
+        </span>
+        <select class="fx-top" aria-label="How many of each to show" value={top} onChange={(e) => { setTop((e.target as HTMLSelectElement).value); setPicked(''); }}>
+          {tops.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+        </select>
+      </>}>
+      <div class="fx-flowstrip">
+        {[
+          { label: 'Income', hue: 'in' as const, value: f.income, sub: p === typical ? 'a month, before taxes' : 'this month' },
+          { label: 'Taxes', hue: 7, value: f.taxes, sub: `${share(f.taxes)} of income` },
+          { label: 'Expenses', hue: 'out' as const, value: f.expenses, sub: `${share(f.expenses)} of income` },
+          { label: f.saved < 0 ? 'Short' : 'Saved', hue: savedHue, value: Math.abs(f.saved), sub: f.saved < 0 ? 'more out than in' : `${share(f.saved)} savings rate` },
+        ].map((t) => (
+          <div key={t.label} class="fx-flowtile">
+            <span class="fx-caption"><Dot color={t.hue} shape="square" /> {t.label}</span>
+            <span class="fx-flowfig"><Amount value={t.value} form="full" /></span>
+            <span class="fx-sub">{t.sub}</span>
+          </div>
+        ))}
       </div>
-      <table class="sr"><caption>A typical month's money, in and out</caption>
-        <thead><tr><th scope="col">From or to</th><th scope="col">A month</th></tr></thead>
-        <tbody>{[...from.map((p) => ['In: ' + p.label, p.value] as const), ...to.map((p) => ['Out: ' + p.label, p.value] as const)].map(([k, n]) => <tr key={k}><th scope="row">{k}</th><td>{money(n)}</td></tr>)}</tbody>
+      {f.nodes.length > 1
+        ? <Sankey nodes={f.nodes} links={f.links} money={money} picked={picked} pick={(id) => setPicked(id === picked ? '' : id)}
+          label={`${periodName(p)}: ${money(f.income)} in, ${money(f.taxes)} in taxes, ${money(f.expenses)} spent, ${money(f.saved)} saved. Each box is a button that shows what is behind it; the table under it has every amount.`} />
+        : <Empty>Nothing came in or went out {p === typical ? 'in the plan' : `in ${periodName(p)}`} yet.</Empty>}
+      {node && <section class="fx-flowpick" aria-label={`What makes up ${node.label}`}>
+        <div class="fx-flowpickhead">
+          <h3>{node.label} <span class="fx-sub">{periodName(p)} · {money(node.value)}</span></h3>
+          <button type="button" class="small" onClick={() => setPicked('')}>Close</button>
+        </div>
+        {node.id === 'kept:cash'
+          ? <p class="fx-sub">What was left after taxes, spending, and what went into savings accounts: it stayed where it came in.</p>
+          : node.id === 'src:accounts'
+            ? <p class="fx-sub">More went out than came in: the rest came out of what the accounts held.</p>
+            : <Rows kind="fx-rows">
+              {items.slice(0, many).map((it, i) => <Row key={i} title={it.label} sub={[it.date && dayShort(it.date), it.note].filter(Boolean).join(' · ') || (it.payment ? 'Planned, a month' : it.person ? 'Pay, a month' : '')}
+                when={<Amount value={it.amount} sign={it.amount > 0} tone={it.amount > 0 ? 'in' : ''} form="full" />} whenPlain
+                onOpen={edit && (it.tx || it.payment) ? () => edit(it.tx ? 'transaction' : 'payment', (it.tx || it.payment)!) : undefined} openLabel={edit ? 'edit' : undefined} />)}
+              {!items.length && <li><Empty>Nothing behind it.</Empty></li>}
+            </Rows>}
+        {items.length > many && <p class="fx-sub">And {items.length - many} more.</p>}
+      </section>}
+      <table class="sr"><caption>{periodName(p)}: money in and out</caption>
+        <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Amount</th></tr></thead>
+        <tbody>{f.links.map((l) => <tr key={l.from + l.to}><td>{f.nodes.find((n) => n.id === l.from)?.label}</td><td>{f.nodes.find((n) => n.id === l.to)?.label}</td><td>{money(l.value)}</td></tr>)}</tbody>
       </table>
     </Widget>
   );
