@@ -240,7 +240,8 @@ func (a *Account) record() {
 func (a Account) Owed() float64 { return a.Balance + a.Pending }
 
 // Payment is something that comes out on a schedule: a bill, a
-// subscription, a card's payment, a transfer to savings.
+// subscription, a card's payment, a transfer to savings; or, with a
+// Payer, money that comes in from someone outside the household.
 type Payment struct {
 	ID       string   `json:"id"`
 	Name     string   `json:"name"`
@@ -266,6 +267,11 @@ type Payment struct {
 	// suggests one from its brand or name. One this version does not know
 	// is kept as it is, so a newer one's choice survives a save here.
 	Type string `json:"type,omitempty"`
+	// Payer is someone outside the household who sends it ("Jamie", for a
+	// share of the mortgage): it comes into To (checking when empty) on its
+	// day, out of none of the household's accounts, and starts no pay
+	// period as a paycheck does.
+	Payer string `json:"payer,omitempty"`
 }
 
 // Path is the plan in the homelab folder; the nightly backup copies data/*.json.
@@ -510,6 +516,10 @@ func Clean(p Plan) (Plan, error) {
 		}
 		if x.Card != "" && x.Card == x.From {
 			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
+		}
+		x.Payer = strings.TrimSpace(x.Payer)
+		if x.Payer != "" && (x.From != "" || x.Card != "") {
+			return p, fmt.Errorf("%s: it comes from %s, so out of none of your accounts", x.Name, x.Payer)
 		}
 		if a := accounts[x.Card]; x.Card != "" && a.PaidEach {
 			return p, fmt.Errorf("%s: %s is paid off with each paycheck already; turn that off on the card, or delete this payment", x.Name, a.Name)

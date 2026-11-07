@@ -1,0 +1,5791 @@
+{
+ "plan": {
+  "people": [
+   {
+    "id": "alex",
+    "name": "Alex",
+    "schedule": {
+     "every": "2 weeks",
+     "start": "2026-11-06"
+    },
+    "net": 2150,
+    "gross": 3050,
+    "deductions": [
+     {
+      "name": "401(k)",
+      "amount": 183,
+      "account": "k401"
+     },
+     {
+      "name": "Medical",
+      "amount": 118
+     }
+    ]
+   },
+   {
+    "id": "jordan",
+    "name": "Jordan",
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-26"
+    },
+    "net": 2400
+   }
+  ],
+  "accounts": [
+   {
+    "id": "chk",
+    "name": "Chase Checking",
+    "kind": "checking",
+    "institution": "chase",
+    "balance": 2512.4,
+    "detail": "••4821",
+    "updated": "2026-10-30",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 2031.4
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 2062.23
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 2093.07
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 2123.9
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 2154.73
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 2241.07
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 2271.9
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 2302.73
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 2333.57
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 2364.4
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 2395.23
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 2426.07
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 2456.9
+     },
+     {
+      "date": "2026-10-30",
+      "amount": 2512.4
+     }
+    ]
+   },
+   {
+    "id": "sav",
+    "name": "BofA Savings",
+    "kind": "savings",
+    "institution": "bankofamerica",
+    "balance": 6500,
+    "rate": 3.2,
+    "updated": "2026-10-30",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 3840
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 4015
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 4190
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 4365
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 4540
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 4715
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 4890
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 5380
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 5555
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 5730
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 5905
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 6080
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 6255
+     },
+     {
+      "date": "2026-10-30",
+      "amount": 6500
+     }
+    ]
+   },
+   {
+    "id": "brk",
+    "name": "Robinhood",
+    "kind": "investment",
+    "institution": "robinhood",
+    "balance": 8200,
+    "updated": "2026-10-28",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 7410.67
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 7464
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 7517.33
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 7570.67
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 7624
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 7677.33
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 7730.67
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 7784
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 7837.33
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 7986.67
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 8040
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 8093.33
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 8146.67
+     },
+     {
+      "date": "2026-10-28",
+      "amount": 8200
+     }
+    ]
+   },
+   {
+    "id": "roth",
+    "name": "Roth IRA",
+    "kind": "retirement",
+    "institution": "robinhood",
+    "balance": 14600,
+    "updated": "2026-10-28",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 12170
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 12320
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 12740
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 12890
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 13040
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 13190
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 13340
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 13490
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 13640
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 13790
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 13940
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 14360
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 14510
+     },
+     {
+      "date": "2026-10-28",
+      "amount": 14600
+     }
+    ]
+   },
+   {
+    "id": "k401",
+    "name": "Fidelity 401(k)",
+    "kind": "retirement",
+    "institution": "fidelity",
+    "balance": 38500,
+    "updated": "2026-10-25",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 36130
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 36280
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 36430
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 36580
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 37000
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 37150
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 37300
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 37450
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 37600
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 37750
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 37900
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 38050
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 38200
+     },
+     {
+      "date": "2026-10-25",
+      "amount": 38500
+     }
+    ]
+   },
+   {
+    "id": "visa",
+    "name": "Chase Freedom",
+    "kind": "card",
+    "institution": "chase",
+    "balance": 1240.55,
+    "pending": 84.1,
+    "updated": "2026-10-30",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 1535.72
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 1516.55
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 1497.38
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 1478.22
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 1459.05
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 1439.88
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 1386.22
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 1367.05
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 1347.88
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 1328.72
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 1309.55
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 1290.38
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 1271.22
+     },
+     {
+      "date": "2026-10-30",
+      "amount": 1324.6499999999999
+     }
+    ]
+   },
+   {
+    "id": "amex",
+    "name": "Amex Gold",
+    "kind": "card",
+    "institution": "americanexpress",
+    "balance": 386.2,
+    "updated": "2026-10-30",
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 673.7
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 654.53
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 635.37
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 616.2
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 597.03
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 577.87
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 558.7
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 539.53
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 485.87
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 466.7
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 447.53
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 428.37
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 409.2
+     },
+     {
+      "date": "2026-10-30",
+      "amount": 386.2
+     }
+    ]
+   },
+   {
+    "id": "mortgage",
+    "name": "Mortgage",
+    "kind": "loan",
+    "institution": "wellsfargo",
+    "balance": 287400,
+    "original": 320000,
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 293003.33
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 292046.67
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 291705
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 291363.33
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 291021.67
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 290680
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 290338.33
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 289996.67
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 289655
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 289313.33
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 288356.67
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 288015
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 287673.33
+     }
+    ]
+   },
+   {
+    "id": "carloan",
+    "name": "Toyota Financial",
+    "kind": "loan",
+    "institution": "toyota",
+    "balance": 11240,
+    "original": 24000,
+    "history": [
+     {
+      "date": "2026-07-31",
+      "amount": 16706.67
+     },
+     {
+      "date": "2026-08-07",
+      "amount": 16365
+     },
+     {
+      "date": "2026-08-14",
+      "amount": 16023.33
+     },
+     {
+      "date": "2026-08-21",
+      "amount": 15066.67
+     },
+     {
+      "date": "2026-08-28",
+      "amount": 14725
+     },
+     {
+      "date": "2026-09-04",
+      "amount": 14383.33
+     },
+     {
+      "date": "2026-09-11",
+      "amount": 14041.67
+     },
+     {
+      "date": "2026-09-18",
+      "amount": 13700
+     },
+     {
+      "date": "2026-09-25",
+      "amount": 13358.33
+     },
+     {
+      "date": "2026-10-02",
+      "amount": 13016.67
+     },
+     {
+      "date": "2026-10-09",
+      "amount": 12675
+     },
+     {
+      "date": "2026-10-16",
+      "amount": 12333.33
+     },
+     {
+      "date": "2026-10-23",
+      "amount": 11376.67
+     }
+    ]
+   },
+   {
+    "id": "home",
+    "name": "Home",
+    "kind": "home",
+    "institution": "zillow",
+    "balance": 410000,
+    "loan": "mortgage",
+    "detail": "Bought May 2022"
+   },
+   {
+    "id": "rav4",
+    "name": "2022 Toyota RAV4",
+    "kind": "car",
+    "institution": "toyota",
+    "balance": 18500,
+    "loan": "carloan",
+    "detail": "XLE, 31,400 miles",
+    "bought": 32000,
+    "boughtOn": "2022-03-15",
+    "holds": "holds"
+   }
+  ],
+  "payments": [
+   {
+    "id": "mortgagepay",
+    "name": "Mortgage",
+    "amount": 1845,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-01"
+    },
+    "kind": "home",
+    "institution": "wellsfargo",
+    "to": "mortgage"
+   },
+   {
+    "id": "netflix",
+    "name": "Netflix",
+    "amount": 15.49,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-03"
+    },
+    "kind": "subscriptions",
+    "institution": "netflix"
+   },
+   {
+    "id": "peloton",
+    "name": "Peloton",
+    "amount": 44,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-05"
+    },
+    "kind": "subscriptions",
+    "institution": "peloton"
+   },
+   {
+    "id": "internet",
+    "name": "Internet",
+    "amount": 70,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-09"
+    },
+    "kind": "utilities"
+   },
+   {
+    "id": "amexpay",
+    "name": "Amex Gold",
+    "amount": 300,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-09"
+    },
+    "kind": "cards",
+    "institution": "americanexpress",
+    "card": "amex"
+   },
+   {
+    "id": "insurance",
+    "name": "Car insurance",
+    "amount": 168,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-12"
+    },
+    "kind": "car"
+   },
+   {
+    "id": "spotify",
+    "name": "Spotify",
+    "amount": 11.99,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-14"
+    },
+    "kind": "subscriptions",
+    "institution": "spotify"
+   },
+   {
+    "id": "carpay",
+    "name": "Car payment",
+    "amount": 412,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-15"
+    },
+    "kind": "car",
+    "institution": "toyota",
+    "to": "carloan"
+   },
+   {
+    "id": "electric",
+    "name": "Electric",
+    "amount": 140,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-18"
+    },
+    "kind": "utilities",
+    "estimate": true
+   },
+   {
+    "id": "visapay",
+    "name": "Chase Freedom",
+    "amount": 900,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-21"
+    },
+    "kind": "cards",
+    "institution": "chase",
+    "card": "visa"
+   },
+   {
+    "id": "phones",
+    "name": "Verizon",
+    "amount": 95,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-22"
+    },
+    "kind": "utilities",
+    "institution": "verizon"
+   },
+   {
+    "id": "rothpay",
+    "name": "Roth IRA",
+    "amount": 250,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-27"
+    },
+    "kind": "savings",
+    "institution": "robinhood",
+    "to": "roth"
+   },
+   {
+    "id": "hoa",
+    "name": "HOA",
+    "amount": 310,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-28"
+    },
+    "kind": "home"
+   },
+   {
+    "id": "water",
+    "name": "Water and sewer",
+    "amount": 120,
+    "schedule": {
+     "every": "3 months",
+     "start": "2026-01-10"
+    },
+    "kind": "utilities"
+   },
+   {
+    "id": "food",
+    "name": "Groceries and gas",
+    "amount": 200,
+    "schedule": {
+     "every": "week",
+     "start": "2026-10-31"
+    },
+    "kind": "spending"
+   },
+   {
+    "id": "save",
+    "name": "Savings",
+    "amount": 200,
+    "schedule": {
+     "every": "2 weeks",
+     "start": "2026-11-06"
+    },
+    "kind": "savings",
+    "institution": "bankofamerica",
+    "to": "sav"
+   },
+   {
+    "id": "amc",
+    "name": "AMC A-List",
+    "amount": 29.95,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-11"
+    },
+    "kind": "subscriptions"
+   },
+   {
+    "id": "claude",
+    "name": "Claude Pro",
+    "amount": 200,
+    "schedule": {
+     "every": "year",
+     "start": "2025-10-23"
+    },
+    "kind": "subscriptions"
+   },
+   {
+    "id": "share",
+    "name": "Mortgage share",
+    "amount": 900,
+    "schedule": {
+     "every": "month",
+     "start": "2026-01-03"
+    },
+    "kind": "home",
+    "payer": "Sam"
+   }
+  ],
+  "cushion": 500,
+  "updated": "2026-10-30",
+  "budgets": [
+   {
+    "category": "Food",
+    "amount": 600
+   },
+   {
+    "category": "Car",
+    "amount": 300
+   },
+   {
+    "category": "Subscriptions",
+    "amount": 150
+   }
+  ],
+  "goals": [
+   {
+    "id": "emergency",
+    "name": "Emergency fund",
+    "target": 12000,
+    "date": "2028-06-30",
+    "shares": [
+     {
+      "account": "sav",
+      "percent": 100
+     }
+    ]
+   },
+   {
+    "id": "japan",
+    "name": "Japan trip",
+    "target": 6000,
+    "date": "2027-04-01",
+    "shares": [
+     {
+      "account": "brk",
+      "percent": 25
+     }
+    ]
+   }
+  ]
+ },
+ "today": "2026-10-30",
+ "checking": "chk",
+ "typed": "2026-10-30",
+ "start": {
+  "amex": 386.2,
+  "brk": 8200,
+  "carloan": 11240,
+  "chk": 2512.4,
+  "home": 410000,
+  "k401": 38500,
+  "mortgage": 287400,
+  "rav4": 18500,
+  "roth": 14600,
+  "sav": 6500,
+  "visa": 1324.65
+ },
+ "since": [],
+ "periods": [
+  {
+   "now": true,
+   "start": "2026-10-30",
+   "last": "2026-11-05",
+   "carried": 2512.4,
+   "in": 900,
+   "out": 2104.49,
+   "saved": 0,
+   "left": 1307.91,
+   "rows": [
+    {
+     "date": "2026-10-31",
+     "payment": "food",
+     "amount": 200,
+     "after": 2312.4
+    },
+    {
+     "date": "2026-11-01",
+     "payment": "mortgagepay",
+     "amount": 1845,
+     "after": 467.4
+    },
+    {
+     "date": "2026-11-03",
+     "payment": "share",
+     "amount": 900,
+     "after": 1367.4,
+     "into": true
+    },
+    {
+     "date": "2026-11-03",
+     "payment": "netflix",
+     "amount": 15.49,
+     "after": 1351.91
+    },
+    {
+     "date": "2026-11-05",
+     "payment": "peloton",
+     "amount": 44,
+     "after": 1307.91
+    }
+   ],
+   "accounts": {
+    "amex": 386.2,
+    "brk": 8200,
+    "carloan": 11240,
+    "chk": 1307.91,
+    "home": 410000,
+    "k401": 38500,
+    "mortgage": 285555,
+    "rav4": 18500,
+    "roth": 14600,
+    "sav": 6503.99,
+    "visa": 1324.65
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-11-06",
+   "last": "2026-11-19",
+   "pay": {
+    "date": "2026-11-06",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 1307.91,
+   "in": 2150,
+   "out": 1818.14,
+   "saved": 200,
+   "left": 1639.77,
+   "rows": [
+    {
+     "date": "2026-11-06",
+     "payment": "save",
+     "amount": 200,
+     "after": 3257.91,
+     "saved": true
+    },
+    {
+     "date": "2026-11-07",
+     "payment": "food",
+     "amount": 200,
+     "after": 3057.91
+    },
+    {
+     "date": "2026-11-09",
+     "payment": "amexpay",
+     "amount": 386.2,
+     "after": 2671.71
+    },
+    {
+     "date": "2026-11-09",
+     "payment": "internet",
+     "amount": 70,
+     "after": 2601.71
+    },
+    {
+     "date": "2026-11-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 2571.76
+    },
+    {
+     "date": "2026-11-12",
+     "payment": "insurance",
+     "amount": 168,
+     "after": 2403.76
+    },
+    {
+     "date": "2026-11-14",
+     "payment": "food",
+     "amount": 200,
+     "after": 2203.76
+    },
+    {
+     "date": "2026-11-14",
+     "payment": "spotify",
+     "amount": 11.99,
+     "after": 2191.77
+    },
+    {
+     "date": "2026-11-15",
+     "payment": "carpay",
+     "amount": 412,
+     "after": 1779.77
+    },
+    {
+     "date": "2026-11-18",
+     "payment": "electric",
+     "amount": 140,
+     "estimate": true,
+     "after": 1639.77
+    }
+   ],
+   "accounts": {
+    "amex": 110,
+    "brk": 8200,
+    "carloan": 10828,
+    "chk": 1639.77,
+    "home": 410000,
+    "k401": 38683,
+    "mortgage": 285555,
+    "rav4": 18500,
+    "roth": 14600,
+    "sav": 6712.22,
+    "visa": 1324.65
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-11-20",
+   "last": "2026-11-24",
+   "pay": {
+    "date": "2026-11-20",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 1639.77,
+   "in": 2150,
+   "out": 1819.65,
+   "saved": 200,
+   "left": 1970.12,
+   "rows": [
+    {
+     "date": "2026-11-20",
+     "payment": "save",
+     "amount": 200,
+     "after": 3589.77,
+     "saved": true
+    },
+    {
+     "date": "2026-11-21",
+     "payment": "visapay",
+     "amount": 1324.65,
+     "after": 2265.12
+    },
+    {
+     "date": "2026-11-21",
+     "payment": "food",
+     "amount": 200,
+     "after": 2065.12
+    },
+    {
+     "date": "2026-11-22",
+     "payment": "phones",
+     "amount": 95,
+     "after": 1970.12
+    }
+   ],
+   "accounts": {
+    "amex": 160,
+    "brk": 8200,
+    "carloan": 10828,
+    "chk": 1970.12,
+    "home": 410000,
+    "k401": 38866,
+    "mortgage": 285555,
+    "rav4": 18500,
+    "roth": 14600,
+    "sav": 6915.25,
+    "visa": 120
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-11-25",
+   "last": "2026-12-03",
+   "pay": {
+    "date": "2026-11-25",
+    "people": [
+     "jordan"
+    ],
+    "amount": 2400,
+    "total": 2400,
+    "moved": [
+     {
+      "person": "jordan",
+      "from": "2026-11-26",
+      "why": "Thanksgiving"
+     }
+    ]
+   },
+   "carried": 1970.12,
+   "in": 3300,
+   "out": 2620.49,
+   "saved": 250,
+   "left": 2649.63,
+   "rows": [
+    {
+     "date": "2026-11-27",
+     "payment": "rothpay",
+     "amount": 250,
+     "after": 4120.12,
+     "saved": true
+    },
+    {
+     "date": "2026-11-28",
+     "payment": "hoa",
+     "amount": 310,
+     "after": 3810.12
+    },
+    {
+     "date": "2026-11-28",
+     "payment": "food",
+     "amount": 200,
+     "after": 3610.12
+    },
+    {
+     "date": "2026-12-01",
+     "payment": "mortgagepay",
+     "amount": 1845,
+     "after": 1765.12
+    },
+    {
+     "date": "2026-12-03",
+     "payment": "share",
+     "amount": 900,
+     "after": 2665.12,
+     "into": true
+    },
+    {
+     "date": "2026-12-03",
+     "payment": "netflix",
+     "amount": 15.49,
+     "after": 2649.63
+    }
+   ],
+   "accounts": {
+    "amex": 250,
+    "brk": 8200,
+    "carloan": 10828,
+    "chk": 2649.63,
+    "home": 410000,
+    "k401": 38866,
+    "mortgage": 283710,
+    "rav4": 18500,
+    "roth": 14850,
+    "sav": 6920.71,
+    "visa": 390
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-04",
+   "last": "2026-12-17",
+   "pay": {
+    "date": "2026-12-04",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 2649.63,
+   "in": 2150,
+   "out": 1635.94,
+   "saved": 200,
+   "left": 3163.69,
+   "rows": [
+    {
+     "date": "2026-12-04",
+     "payment": "save",
+     "amount": 200,
+     "after": 4599.63,
+     "saved": true
+    },
+    {
+     "date": "2026-12-05",
+     "payment": "food",
+     "amount": 200,
+     "after": 4399.63
+    },
+    {
+     "date": "2026-12-05",
+     "payment": "peloton",
+     "amount": 44,
+     "after": 4355.63
+    },
+    {
+     "date": "2026-12-09",
+     "payment": "amexpay",
+     "amount": 300,
+     "after": 4055.63
+    },
+    {
+     "date": "2026-12-09",
+     "payment": "internet",
+     "amount": 70,
+     "after": 3985.63
+    },
+    {
+     "date": "2026-12-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 3955.68
+    },
+    {
+     "date": "2026-12-12",
+     "payment": "food",
+     "amount": 200,
+     "after": 3755.68
+    },
+    {
+     "date": "2026-12-12",
+     "payment": "insurance",
+     "amount": 168,
+     "after": 3587.68
+    },
+    {
+     "date": "2026-12-14",
+     "payment": "spotify",
+     "amount": 11.99,
+     "after": 3575.69
+    },
+    {
+     "date": "2026-12-15",
+     "payment": "carpay",
+     "amount": 412,
+     "after": 3163.69
+    }
+   ],
+   "accounts": {
+    "amex": 87.1,
+    "brk": 8200,
+    "carloan": 10416,
+    "chk": 3163.69,
+    "home": 410000,
+    "k401": 39049,
+    "mortgage": 283710,
+    "rav4": 18500,
+    "roth": 14850,
+    "sav": 7129.46,
+    "visa": 810
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-18",
+   "last": "2026-12-23",
+   "pay": {
+    "date": "2026-12-18",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 3163.69,
+   "in": 2150,
+   "out": 1535,
+   "saved": 200,
+   "left": 3778.69,
+   "rows": [
+    {
+     "date": "2026-12-18",
+     "payment": "save",
+     "amount": 200,
+     "after": 5113.69,
+     "saved": true
+    },
+    {
+     "date": "2026-12-18",
+     "payment": "electric",
+     "amount": 140,
+     "estimate": true,
+     "after": 4973.69
+    },
+    {
+     "date": "2026-12-19",
+     "payment": "food",
+     "amount": 200,
+     "after": 4773.69
+    },
+    {
+     "date": "2026-12-21",
+     "payment": "visapay",
+     "amount": 900,
+     "after": 3873.69
+    },
+    {
+     "date": "2026-12-22",
+     "payment": "phones",
+     "amount": 95,
+     "after": 3778.69
+    }
+   ],
+   "accounts": {
+    "amex": 145.16,
+    "brk": 8200,
+    "carloan": 10416,
+    "chk": 3778.69,
+    "home": 410000,
+    "k401": 39232,
+    "mortgage": 283710,
+    "rav4": 18500,
+    "roth": 14850,
+    "sav": 7333.31,
+    "visa": 87.1
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-24",
+   "last": "2026-12-30",
+   "pay": {
+    "date": "2026-12-24",
+    "people": [
+     "jordan"
+    ],
+    "amount": 2400,
+    "total": 2400,
+    "moved": [
+     {
+      "person": "jordan",
+      "from": "2026-12-26",
+      "why": "the weekend and Christmas"
+     }
+    ]
+   },
+   "carried": 3778.69,
+   "in": 2400,
+   "out": 760,
+   "saved": 250,
+   "left": 5418.69,
+   "rows": [
+    {
+     "date": "2026-12-26",
+     "payment": "food",
+     "amount": 200,
+     "after": 5978.69
+    },
+    {
+     "date": "2026-12-27",
+     "payment": "rothpay",
+     "amount": 250,
+     "after": 5728.69,
+     "saved": true
+    },
+    {
+     "date": "2026-12-28",
+     "payment": "hoa",
+     "amount": 310,
+     "after": 5418.69
+    }
+   ],
+   "accounts": {
+    "amex": 212.9,
+    "brk": 8200,
+    "carloan": 10416,
+    "chk": 5418.69,
+    "home": 410000,
+    "k401": 39232,
+    "mortgage": 283710,
+    "rav4": 18500,
+    "roth": 15100,
+    "sav": 7337.82,
+    "visa": 290.32
+   }
+  },
+  {
+   "now": false,
+   "start": "2026-12-31",
+   "last": "2027-01-14",
+   "pay": {
+    "date": "2026-12-31",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150,
+    "moved": [
+     {
+      "person": "alex",
+      "from": "2027-01-01",
+      "why": "New Year's Day"
+     }
+    ]
+   },
+   "carried": 5418.69,
+   "in": 3050,
+   "out": 3204.43,
+   "saved": 200,
+   "left": 5264.26,
+   "rows": [
+    {
+     "date": "2027-01-01",
+     "payment": "mortgagepay",
+     "amount": 1845,
+     "after": 5723.69
+    },
+    {
+     "date": "2027-01-01",
+     "payment": "save",
+     "amount": 200,
+     "after": 5523.69,
+     "saved": true
+    },
+    {
+     "date": "2027-01-02",
+     "payment": "food",
+     "amount": 200,
+     "after": 5323.69
+    },
+    {
+     "date": "2027-01-03",
+     "payment": "share",
+     "amount": 900,
+     "after": 6223.69,
+     "into": true
+    },
+    {
+     "date": "2027-01-03",
+     "payment": "netflix",
+     "amount": 15.49,
+     "after": 6208.2
+    },
+    {
+     "date": "2027-01-05",
+     "payment": "peloton",
+     "amount": 44,
+     "after": 6164.2
+    },
+    {
+     "date": "2027-01-09",
+     "payment": "amexpay",
+     "amount": 300,
+     "after": 5864.2
+    },
+    {
+     "date": "2027-01-09",
+     "payment": "food",
+     "amount": 200,
+     "after": 5664.2
+    },
+    {
+     "date": "2027-01-09",
+     "payment": "internet",
+     "amount": 70,
+     "after": 5594.2
+    },
+    {
+     "date": "2027-01-10",
+     "payment": "water",
+     "amount": 120,
+     "after": 5474.2
+    },
+    {
+     "date": "2027-01-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 5444.25
+    },
+    {
+     "date": "2027-01-12",
+     "payment": "insurance",
+     "amount": 168,
+     "after": 5276.25
+    },
+    {
+     "date": "2027-01-14",
+     "payment": "spotify",
+     "amount": 11.99,
+     "after": 5264.26
+    }
+   ],
+   "accounts": {
+    "amex": 58.06,
+    "brk": 8200,
+    "carloan": 10416,
+    "chk": 5264.26,
+    "home": 410000,
+    "k401": 39415,
+    "mortgage": 281865,
+    "rav4": 18500,
+    "roth": 15100,
+    "sav": 7547.72,
+    "visa": 725.81
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-15",
+   "last": "2027-01-25",
+   "pay": {
+    "date": "2027-01-15",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 5264.26,
+   "in": 2150,
+   "out": 2147,
+   "saved": 200,
+   "left": 5267.26,
+   "rows": [
+    {
+     "date": "2027-01-15",
+     "payment": "carpay",
+     "amount": 412,
+     "after": 7002.26
+    },
+    {
+     "date": "2027-01-15",
+     "payment": "save",
+     "amount": 200,
+     "after": 6802.26,
+     "saved": true
+    },
+    {
+     "date": "2027-01-16",
+     "payment": "food",
+     "amount": 200,
+     "after": 6602.26
+    },
+    {
+     "date": "2027-01-18",
+     "payment": "electric",
+     "amount": 140,
+     "estimate": true,
+     "after": 6462.26
+    },
+    {
+     "date": "2027-01-21",
+     "payment": "visapay",
+     "amount": 900,
+     "after": 5562.26
+    },
+    {
+     "date": "2027-01-22",
+     "payment": "phones",
+     "amount": 95,
+     "after": 5467.26
+    },
+    {
+     "date": "2027-01-23",
+     "payment": "food",
+     "amount": 200,
+     "after": 5267.26
+    }
+   ],
+   "accounts": {
+    "amex": 164.52,
+    "brk": 8200,
+    "carloan": 10004,
+    "chk": 5267.26,
+    "home": 410000,
+    "k401": 39598,
+    "mortgage": 281865,
+    "rav4": 18500,
+    "roth": 15100,
+    "sav": 7755.19,
+    "visa": 145.16
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-26",
+   "last": "2027-01-28",
+   "pay": {
+    "date": "2027-01-26",
+    "people": [
+     "jordan"
+    ],
+    "amount": 2400,
+    "total": 2400
+   },
+   "carried": 5267.26,
+   "in": 2400,
+   "out": 560,
+   "saved": 250,
+   "left": 7107.26,
+   "rows": [
+    {
+     "date": "2027-01-27",
+     "payment": "rothpay",
+     "amount": 250,
+     "after": 7417.26,
+     "saved": true
+    },
+    {
+     "date": "2027-01-28",
+     "payment": "hoa",
+     "amount": 310,
+     "after": 7107.26
+    }
+   ],
+   "accounts": {
+    "amex": 193.55,
+    "brk": 8200,
+    "carloan": 10004,
+    "chk": 7107.26,
+    "home": 410000,
+    "k401": 39598,
+    "mortgage": 281865,
+    "rav4": 18500,
+    "roth": 15350,
+    "sav": 7757.23,
+    "visa": 232.26
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-01-29",
+   "last": "2027-02-11",
+   "pay": {
+    "date": "2027-01-29",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 7107.26,
+   "in": 3050,
+   "out": 2904.44,
+   "saved": 200,
+   "left": 7252.82,
+   "rows": [
+    {
+     "date": "2027-01-29",
+     "payment": "save",
+     "amount": 200,
+     "after": 9057.26,
+     "saved": true
+    },
+    {
+     "date": "2027-01-30",
+     "payment": "food",
+     "amount": 200,
+     "after": 8857.26
+    },
+    {
+     "date": "2027-02-01",
+     "payment": "mortgagepay",
+     "amount": 1845,
+     "after": 7012.26
+    },
+    {
+     "date": "2027-02-03",
+     "payment": "share",
+     "amount": 900,
+     "after": 7912.26,
+     "into": true
+    },
+    {
+     "date": "2027-02-03",
+     "payment": "netflix",
+     "amount": 15.49,
+     "after": 7896.77
+    },
+    {
+     "date": "2027-02-05",
+     "payment": "peloton",
+     "amount": 44,
+     "after": 7852.77
+    },
+    {
+     "date": "2027-02-06",
+     "payment": "food",
+     "amount": 200,
+     "after": 7652.77
+    },
+    {
+     "date": "2027-02-09",
+     "payment": "amexpay",
+     "amount": 300,
+     "after": 7352.77
+    },
+    {
+     "date": "2027-02-09",
+     "payment": "internet",
+     "amount": 70,
+     "after": 7282.77
+    },
+    {
+     "date": "2027-02-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 7252.82
+    }
+   ],
+   "accounts": {
+    "amex": 32.14,
+    "brk": 8200,
+    "carloan": 10004,
+    "chk": 7252.82,
+    "home": 410000,
+    "k401": 39781,
+    "mortgage": 280020,
+    "rav4": 18500,
+    "roth": 15350,
+    "sav": 7967,
+    "visa": 638.71
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-12",
+   "last": "2027-02-25",
+   "pay": {
+    "date": "2027-02-12",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "total": 2150
+   },
+   "carried": 7252.82,
+   "in": 2150,
+   "out": 2326.99,
+   "saved": 200,
+   "left": 7075.83,
+   "rows": [
+    {
+     "date": "2027-02-12",
+     "payment": "save",
+     "amount": 200,
+     "after": 9202.82,
+     "saved": true
+    },
+    {
+     "date": "2027-02-12",
+     "payment": "insurance",
+     "amount": 168,
+     "after": 9034.82
+    },
+    {
+     "date": "2027-02-13",
+     "payment": "food",
+     "amount": 200,
+     "after": 8834.82
+    },
+    {
+     "date": "2027-02-14",
+     "payment": "spotify",
+     "amount": 11.99,
+     "after": 8822.83
+    },
+    {
+     "date": "2027-02-15",
+     "payment": "carpay",
+     "amount": 412,
+     "after": 8410.83
+    },
+    {
+     "date": "2027-02-18",
+     "payment": "electric",
+     "amount": 140,
+     "estimate": true,
+     "after": 8270.83
+    },
+    {
+     "date": "2027-02-20",
+     "payment": "food",
+     "amount": 200,
+     "after": 8070.83
+    },
+    {
+     "date": "2027-02-21",
+     "payment": "visapay",
+     "amount": 900,
+     "after": 7170.83
+    },
+    {
+     "date": "2027-02-22",
+     "payment": "phones",
+     "amount": 95,
+     "after": 7075.83
+    }
+   ],
+   "accounts": {
+    "amex": 182.14,
+    "brk": 8200,
+    "carloan": 9592,
+    "chk": 7075.83,
+    "home": 410000,
+    "k401": 39964,
+    "mortgage": 280020,
+    "rav4": 18500,
+    "roth": 15350,
+    "sav": 8177.03,
+    "visa": 160.71
+   }
+  },
+  {
+   "now": false,
+   "start": "2027-02-26",
+   "last": "2027-03-11",
+   "pay": {
+    "date": "2027-02-26",
+    "people": [
+     "alex",
+     "jordan"
+    ],
+    "amount": 4550,
+    "total": 4550
+   },
+   "carried": 7075.83,
+   "in": 5450,
+   "out": 3464.44,
+   "saved": 450,
+   "left": 9061.39,
+   "rows": [
+    {
+     "date": "2027-02-26",
+     "payment": "save",
+     "amount": 200,
+     "after": 11425.83,
+     "saved": true
+    },
+    {
+     "date": "2027-02-27",
+     "payment": "rothpay",
+     "amount": 250,
+     "after": 11175.83,
+     "saved": true
+    },
+    {
+     "date": "2027-02-27",
+     "payment": "food",
+     "amount": 200,
+     "after": 10975.83
+    },
+    {
+     "date": "2027-02-28",
+     "payment": "hoa",
+     "amount": 310,
+     "after": 10665.83
+    },
+    {
+     "date": "2027-03-01",
+     "payment": "mortgagepay",
+     "amount": 1845,
+     "after": 8820.83
+    },
+    {
+     "date": "2027-03-03",
+     "payment": "share",
+     "amount": 900,
+     "after": 9720.83,
+     "into": true
+    },
+    {
+     "date": "2027-03-03",
+     "payment": "netflix",
+     "amount": 15.49,
+     "after": 9705.34
+    },
+    {
+     "date": "2027-03-05",
+     "payment": "peloton",
+     "amount": 44,
+     "after": 9661.34
+    },
+    {
+     "date": "2027-03-06",
+     "payment": "food",
+     "amount": 200,
+     "after": 9461.34
+    },
+    {
+     "date": "2027-03-09",
+     "payment": "amexpay",
+     "amount": 300,
+     "after": 9161.34
+    },
+    {
+     "date": "2027-03-09",
+     "payment": "internet",
+     "amount": 70,
+     "after": 9091.34
+    },
+    {
+     "date": "2027-03-11",
+     "payment": "amc",
+     "amount": 29.95,
+     "after": 9061.39
+    }
+   ],
+   "accounts": {
+    "amex": 29.03,
+    "brk": 8200,
+    "carloan": 9592,
+    "chk": 9061.39,
+    "home": 410000,
+    "k401": 40147,
+    "mortgage": 278175,
+    "rav4": 18500,
+    "roth": 15600,
+    "sav": 8387.32,
+    "visa": 610.71
+   }
+  }
+ ],
+ "paydays": [
+  {
+   "date": "2026-11-06",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-11-20",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-11-25",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-11-26",
+     "why": "Thanksgiving"
+    }
+   ]
+  },
+  {
+   "date": "2026-12-04",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-12-18",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-12-24",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-12-26",
+     "why": "the weekend and Christmas"
+    }
+   ]
+  },
+  {
+   "date": "2026-12-31",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150,
+   "moved": [
+    {
+     "person": "alex",
+     "from": "2027-01-01",
+     "why": "New Year's Day"
+    }
+   ]
+  },
+  {
+   "date": "2027-01-15",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-01-26",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400
+  },
+  {
+   "date": "2027-01-29",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-02-12",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2027-02-26",
+   "people": [
+    "alex",
+    "jordan"
+   ],
+   "amount": 4550,
+   "total": 4550
+  }
+ ],
+ "days": [
+  {
+   "date": "2026-10-30",
+   "balance": 2512.4
+  },
+  {
+   "date": "2026-10-31",
+   "balance": 2312.4,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-01",
+   "balance": 467.4,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2026-11-02",
+   "balance": 467.4
+  },
+  {
+   "date": "2026-11-03",
+   "balance": 1351.91,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2026-11-04",
+   "balance": 1351.91
+  },
+  {
+   "date": "2026-11-05",
+   "balance": 1307.91,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2026-11-06",
+   "balance": 3257.91,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-07",
+   "balance": 3057.91,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-08",
+   "balance": 3057.91
+  },
+  {
+   "date": "2026-11-09",
+   "balance": 2601.71,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -386.2
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2026-11-10",
+   "balance": 2601.71
+  },
+  {
+   "date": "2026-11-11",
+   "balance": 2571.76,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2026-11-12",
+   "balance": 2403.76,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2026-11-13",
+   "balance": 2403.76
+  },
+  {
+   "date": "2026-11-14",
+   "balance": 2191.77,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2026-11-15",
+   "balance": 1779.77,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2026-11-16",
+   "balance": 1779.77
+  },
+  {
+   "date": "2026-11-17",
+   "balance": 1779.77
+  },
+  {
+   "date": "2026-11-18",
+   "balance": 1639.77,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2026-11-19",
+   "balance": 1639.77
+  },
+  {
+   "date": "2026-11-20",
+   "balance": 3589.77,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-21",
+   "balance": 2065.12,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -1324.65
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-22",
+   "balance": 1970.12,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2026-11-23",
+   "balance": 1970.12
+  },
+  {
+   "date": "2026-11-24",
+   "balance": 1970.12
+  },
+  {
+   "date": "2026-11-25",
+   "balance": 4370.12,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2026-11-26",
+   "balance": 4370.12
+  },
+  {
+   "date": "2026-11-27",
+   "balance": 4120.12,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2026-11-28",
+   "balance": 3610.12,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-11-29",
+   "balance": 3610.12
+  },
+  {
+   "date": "2026-11-30",
+   "balance": 3610.12
+  },
+  {
+   "date": "2026-12-01",
+   "balance": 1765.12,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2026-12-02",
+   "balance": 1765.12
+  },
+  {
+   "date": "2026-12-03",
+   "balance": 2649.63,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2026-12-04",
+   "balance": 4599.63,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-12-05",
+   "balance": 4355.63,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2026-12-06",
+   "balance": 4355.63
+  },
+  {
+   "date": "2026-12-07",
+   "balance": 4355.63
+  },
+  {
+   "date": "2026-12-08",
+   "balance": 4355.63
+  },
+  {
+   "date": "2026-12-09",
+   "balance": 3985.63,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2026-12-10",
+   "balance": 3985.63
+  },
+  {
+   "date": "2026-12-11",
+   "balance": 3955.68,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2026-12-12",
+   "balance": 3587.68,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2026-12-13",
+   "balance": 3587.68
+  },
+  {
+   "date": "2026-12-14",
+   "balance": 3575.69,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2026-12-15",
+   "balance": 3163.69,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2026-12-16",
+   "balance": 3163.69
+  },
+  {
+   "date": "2026-12-17",
+   "balance": 3163.69
+  },
+  {
+   "date": "2026-12-18",
+   "balance": 4973.69,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2026-12-19",
+   "balance": 4773.69,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-12-20",
+   "balance": 4773.69
+  },
+  {
+   "date": "2026-12-21",
+   "balance": 3873.69,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2026-12-22",
+   "balance": 3778.69,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2026-12-23",
+   "balance": 3778.69
+  },
+  {
+   "date": "2026-12-24",
+   "balance": 6178.69,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2026-12-25",
+   "balance": 6178.69
+  },
+  {
+   "date": "2026-12-26",
+   "balance": 5978.69,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2026-12-27",
+   "balance": 5728.69,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2026-12-28",
+   "balance": 5418.69,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2026-12-29",
+   "balance": 5418.69
+  },
+  {
+   "date": "2026-12-30",
+   "balance": 5418.69
+  },
+  {
+   "date": "2026-12-31",
+   "balance": 7568.69,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    }
+   ]
+  },
+  {
+   "date": "2027-01-01",
+   "balance": 5523.69,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-02",
+   "balance": 5323.69,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-03",
+   "balance": 6208.2,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-01-04",
+   "balance": 6208.2
+  },
+  {
+   "date": "2027-01-05",
+   "balance": 6164.2,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-01-06",
+   "balance": 6164.2
+  },
+  {
+   "date": "2027-01-07",
+   "balance": 6164.2
+  },
+  {
+   "date": "2027-01-08",
+   "balance": 6164.2
+  },
+  {
+   "date": "2027-01-09",
+   "balance": 5594.2,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-01-10",
+   "balance": 5474.2,
+   "events": [
+    {
+     "payment": "water",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-01-11",
+   "balance": 5444.25,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-01-12",
+   "balance": 5276.25,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-01-13",
+   "balance": 5276.25
+  },
+  {
+   "date": "2027-01-14",
+   "balance": 5264.26,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-01-15",
+   "balance": 6802.26,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "carpay",
+     "amount": -412
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-16",
+   "balance": 6602.26,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-17",
+   "balance": 6602.26
+  },
+  {
+   "date": "2027-01-18",
+   "balance": 6462.26,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-01-19",
+   "balance": 6462.26
+  },
+  {
+   "date": "2027-01-20",
+   "balance": 6462.26
+  },
+  {
+   "date": "2027-01-21",
+   "balance": 5562.26,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-01-22",
+   "balance": 5467.26,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-01-23",
+   "balance": 5267.26,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-24",
+   "balance": 5267.26
+  },
+  {
+   "date": "2027-01-25",
+   "balance": 5267.26
+  },
+  {
+   "date": "2027-01-26",
+   "balance": 7667.26,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-01-27",
+   "balance": 7417.26,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-01-28",
+   "balance": 7107.26,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-01-29",
+   "balance": 9057.26,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-01-30",
+   "balance": 8857.26,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  }
+ ],
+ "later": [
+  {
+   "date": "2027-02-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-02-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-02-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-02-06",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-02-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-02-12",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-02-13",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-02-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-02-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-02-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-02-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-02-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "jordan"
+     ],
+     "amount": 4550
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-02-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-03-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-03-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-03-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-03-06",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-03-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-03-12",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-03-13",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-03-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-03-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-03-20",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-03-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-03-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "jordan"
+     ],
+     "amount": 4550
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-03-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-04-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-04-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-04-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-04-09",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-04-10",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "water",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-04-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-04-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-04-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-04-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-04-17",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-04-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-04-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-04-23",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-24",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-04-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-04-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-04-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-05-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-05-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-05-07",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-08",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-05-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-05-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-05-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-05-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-05-21",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "visapay",
+     "amount": -900
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-05-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-05-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-05-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-05-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-05-29",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-06-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-06-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-06-04",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-06-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-06-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-06-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-06-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-06-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-06-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-06-18",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-06-19",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-06-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-06-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-06-25",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-06-26",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-06-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-06-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-07-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-07-02",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-07-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-07-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-07-10",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "water",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-07-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-07-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-07-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-07-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-07-16",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-17",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-07-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-07-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-07-24",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-07-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-07-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-07-30",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-07-31",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-08-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-08-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-08-07",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-08-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-08-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-08-13",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-08-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-08-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-08-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-08-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-08-27",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "rothpay",
+     "amount": -250
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-08-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-09-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-09-04",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-09-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-09-10",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-09-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-09-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-09-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-09-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-09-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-09-22",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-09-24",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex",
+      "jordan"
+     ],
+     "amount": 4550
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-25",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-09-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-09-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  },
+  {
+   "date": "2027-10-01",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "mortgagepay",
+     "amount": -1845
+    }
+   ]
+  },
+  {
+   "date": "2027-10-02",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-03",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "share",
+     "amount": 900
+    },
+    {
+     "payment": "netflix",
+     "amount": -15.49
+    }
+   ]
+  },
+  {
+   "date": "2027-10-05",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "peloton",
+     "amount": -44
+    }
+   ]
+  },
+  {
+   "date": "2027-10-08",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-09",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amexpay",
+     "amount": -300
+    },
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "internet",
+     "amount": -70
+    }
+   ]
+  },
+  {
+   "date": "2027-10-10",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "water",
+     "amount": -120
+    }
+   ]
+  },
+  {
+   "date": "2027-10-11",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "amc",
+     "amount": -29.95
+    }
+   ]
+  },
+  {
+   "date": "2027-10-12",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "insurance",
+     "amount": -168
+    }
+   ]
+  },
+  {
+   "date": "2027-10-14",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "spotify",
+     "amount": -11.99
+    }
+   ]
+  },
+  {
+   "date": "2027-10-15",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "carpay",
+     "amount": -412
+    }
+   ]
+  },
+  {
+   "date": "2027-10-16",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-18",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "electric",
+     "amount": -140
+    }
+   ]
+  },
+  {
+   "date": "2027-10-21",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "visapay",
+     "amount": -900
+    }
+   ]
+  },
+  {
+   "date": "2027-10-22",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "alex"
+     ],
+     "amount": 2150
+    },
+    {
+     "payment": "save",
+     "amount": -200
+    },
+    {
+     "payment": "phones",
+     "amount": -95
+    }
+   ]
+  },
+  {
+   "date": "2027-10-23",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "food",
+     "amount": -200
+    },
+    {
+     "payment": "claude",
+     "amount": -200
+    }
+   ]
+  },
+  {
+   "date": "2027-10-26",
+   "balance": 0,
+   "events": [
+    {
+     "people": [
+      "jordan"
+     ],
+     "amount": 2400
+    }
+   ]
+  },
+  {
+   "date": "2027-10-27",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "rothpay",
+     "amount": -250
+    }
+   ]
+  },
+  {
+   "date": "2027-10-28",
+   "balance": 0,
+   "events": [
+    {
+     "payment": "hoa",
+     "amount": -310
+    }
+   ]
+  }
+ ],
+ "worth": [
+  {
+   "date": "2026-07-31",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-01",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-02",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-03",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-04",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-05",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-06",
+   "amount": 178162.65
+  },
+  {
+   "date": "2026-08-07",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-08",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-09",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-10",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-11",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-12",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-13",
+   "amount": 180058.48
+  },
+  {
+   "date": "2026-08-14",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-15",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-16",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-17",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-18",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-19",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-20",
+   "amount": 181609.32
+  },
+  {
+   "date": "2026-08-21",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-22",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-23",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-24",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-25",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-26",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-27",
+   "amount": 183505.15
+  },
+  {
+   "date": "2026-08-28",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-08-29",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-08-30",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-08-31",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-09-01",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-09-02",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-09-03",
+   "amount": 185055.98
+  },
+  {
+   "date": "2026-09-04",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-05",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-06",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-07",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-08",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-09",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-10",
+   "amount": 186392.32
+  },
+  {
+   "date": "2026-09-11",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-12",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-13",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-14",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-15",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-16",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-17",
+   "amount": 187707.65
+  },
+  {
+   "date": "2026-09-18",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-19",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-20",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-21",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-22",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-23",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-24",
+   "amount": 189303.48
+  },
+  {
+   "date": "2026-09-25",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-09-26",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-09-27",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-09-28",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-09-29",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-09-30",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-10-01",
+   "amount": 190618.82
+  },
+  {
+   "date": "2026-10-02",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-03",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-04",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-05",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-06",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-07",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-08",
+   "amount": 191995.65
+  },
+  {
+   "date": "2026-10-09",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-10",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-11",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-12",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-13",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-14",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-15",
+   "amount": 193891.48
+  },
+  {
+   "date": "2026-10-16",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-17",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-18",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-19",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-20",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-21",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-22",
+   "amount": 195442.32
+  },
+  {
+   "date": "2026-10-23",
+   "amount": 197338.15
+  },
+  {
+   "date": "2026-10-24",
+   "amount": 197338.15
+  },
+  {
+   "date": "2026-10-25",
+   "amount": 197638.15
+  },
+  {
+   "date": "2026-10-26",
+   "amount": 197638.15
+  },
+  {
+   "date": "2026-10-27",
+   "amount": 197638.15
+  },
+  {
+   "date": "2026-10-28",
+   "amount": 197781.48
+  },
+  {
+   "date": "2026-10-29",
+   "amount": 197781.48
+  },
+  {
+   "date": "2026-10-30",
+   "amount": 198051.55
+  }
+ ],
+ "next": {
+  "amc": "2026-11-11",
+  "amexpay": "2026-11-09",
+  "carpay": "2026-11-15",
+  "claude": "2027-10-23",
+  "electric": "2026-11-18",
+  "food": "2026-10-31",
+  "hoa": "2026-11-28",
+  "insurance": "2026-11-12",
+  "internet": "2026-11-09",
+  "mortgagepay": "2026-11-01",
+  "netflix": "2026-11-03",
+  "peloton": "2026-11-05",
+  "phones": "2026-11-22",
+  "rothpay": "2026-11-27",
+  "save": "2026-11-06",
+  "share": "2026-11-03",
+  "spotify": "2026-11-14",
+  "visapay": "2026-11-21",
+  "water": "2027-01-10"
+ },
+ "last": {
+  "amc": "2026-10-11",
+  "amexpay": "2026-10-09",
+  "carpay": "2026-10-15",
+  "claude": "2026-10-23",
+  "electric": "2026-10-18",
+  "hoa": "2026-10-28",
+  "insurance": "2026-10-12",
+  "internet": "2026-10-09",
+  "mortgagepay": "2026-10-01",
+  "netflix": "2026-10-03",
+  "peloton": "2026-10-05",
+  "phones": "2026-10-22",
+  "rothpay": "2026-10-27",
+  "share": "2026-10-03",
+  "spotify": "2026-10-14",
+  "visapay": "2026-10-21",
+  "water": "2026-10-10"
+ },
+ "dues": {
+  "amc": [
+   "2026-07-11",
+   "2026-08-11",
+   "2026-09-11",
+   "2026-10-11",
+   "2026-11-11"
+  ],
+  "carpay": [
+   "2026-07-15",
+   "2026-08-15",
+   "2026-09-15",
+   "2026-10-15",
+   "2026-11-15"
+  ],
+  "claude": [
+   "2026-10-23"
+  ],
+  "electric": [
+   "2026-07-18",
+   "2026-08-18",
+   "2026-09-18",
+   "2026-10-18"
+  ],
+  "food": [
+   "2026-10-31",
+   "2026-11-07",
+   "2026-11-14"
+  ],
+  "hoa": [
+   "2026-07-28",
+   "2026-08-28",
+   "2026-09-28",
+   "2026-10-28"
+  ],
+  "insurance": [
+   "2026-07-12",
+   "2026-08-12",
+   "2026-09-12",
+   "2026-10-12",
+   "2026-11-12"
+  ],
+  "internet": [
+   "2026-07-09",
+   "2026-08-09",
+   "2026-09-09",
+   "2026-10-09",
+   "2026-11-09"
+  ],
+  "mortgagepay": [
+   "2026-08-01",
+   "2026-09-01",
+   "2026-10-01",
+   "2026-11-01"
+  ],
+  "netflix": [
+   "2026-07-03",
+   "2026-08-03",
+   "2026-09-03",
+   "2026-10-03",
+   "2026-11-03"
+  ],
+  "peloton": [
+   "2026-07-05",
+   "2026-08-05",
+   "2026-09-05",
+   "2026-10-05",
+   "2026-11-05"
+  ],
+  "phones": [
+   "2026-07-22",
+   "2026-08-22",
+   "2026-09-22",
+   "2026-10-22"
+  ],
+  "rothpay": [
+   "2026-07-27",
+   "2026-08-27",
+   "2026-09-27",
+   "2026-10-27"
+  ],
+  "save": [
+   "2026-11-06"
+  ],
+  "share": [
+   "2026-07-03",
+   "2026-08-03",
+   "2026-09-03",
+   "2026-10-03",
+   "2026-11-03"
+  ],
+  "spotify": [
+   "2026-07-14",
+   "2026-08-14",
+   "2026-09-14",
+   "2026-10-14",
+   "2026-11-14"
+  ],
+  "water": [
+   "2026-07-10",
+   "2026-10-10"
+  ]
+ },
+ "paid": [
+  {
+   "payment": "phones",
+   "due": "2026-10-22",
+   "date": "2026-10-22",
+   "amount": 95,
+   "planned": 95,
+   "transaction": "t1"
+  },
+  {
+   "payment": "claude",
+   "due": "2026-10-23",
+   "date": "2026-10-23",
+   "amount": 200,
+   "planned": 200,
+   "transaction": "t2"
+  },
+  {
+   "payment": "rothpay",
+   "due": "2026-10-27",
+   "date": "2026-10-27",
+   "amount": 250,
+   "planned": 250,
+   "transaction": "t5"
+  }
+ ],
+ "categories": [
+  {
+   "name": "Income",
+   "icon": "savings",
+   "income": true
+  },
+  {
+   "name": "Paycheck",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Interest",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Refunds",
+   "parent": "Income",
+   "income": true
+  },
+  {
+   "name": "Home",
+   "icon": "home"
+  },
+  {
+   "name": "Mortgage or rent",
+   "parent": "Home"
+  },
+  {
+   "name": "Repairs",
+   "parent": "Home"
+  },
+  {
+   "name": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Electric",
+   "parent": "Utilities",
+   "icon": "utilities"
+  },
+  {
+   "name": "Water",
+   "parent": "Utilities",
+   "icon": "water"
+  },
+  {
+   "name": "Internet",
+   "parent": "Utilities",
+   "icon": "internet"
+  },
+  {
+   "name": "Phone",
+   "parent": "Utilities",
+   "icon": "phone"
+  },
+  {
+   "name": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Groceries",
+   "parent": "Food",
+   "icon": "spending"
+  },
+  {
+   "name": "Eating out",
+   "parent": "Food",
+   "icon": "food"
+  },
+  {
+   "name": "Car",
+   "icon": "car"
+  },
+  {
+   "name": "Gas",
+   "parent": "Car",
+   "icon": "heat"
+  },
+  {
+   "name": "Car insurance",
+   "parent": "Car",
+   "icon": "insurance"
+  },
+  {
+   "name": "Subscriptions",
+   "icon": "subscriptions"
+  },
+  {
+   "name": "Streaming and music",
+   "parent": "Subscriptions",
+   "icon": "streaming"
+  },
+  {
+   "name": "Software and apps",
+   "parent": "Subscriptions",
+   "icon": "software"
+  },
+  {
+   "name": "Cloud and homelab",
+   "parent": "Subscriptions",
+   "icon": "cloud"
+  },
+  {
+   "name": "Health",
+   "icon": "health"
+  },
+  {
+   "name": "Fitness",
+   "parent": "Health",
+   "icon": "fitness"
+  },
+  {
+   "name": "Shopping",
+   "icon": "spending"
+  },
+  {
+   "name": "Kids and school",
+   "icon": "school"
+  },
+  {
+   "name": "Gifts and giving"
+  },
+  {
+   "name": "Travel"
+  },
+  {
+   "name": "Fees and interest"
+  },
+  {
+   "name": "Other",
+   "icon": "other"
+  }
+ ],
+ "budgets": [
+  {
+   "category": "Food",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 600,
+   "spent": 149.85,
+   "left": 450.15,
+   "pace": 580.65
+  },
+  {
+   "category": "Car",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 300,
+   "spent": 48.2,
+   "left": 251.8,
+   "pace": 290.32
+  },
+  {
+   "category": "Subscriptions",
+   "per": "month",
+   "start": "2026-10-01",
+   "last": "2026-10-31",
+   "amount": 150,
+   "spent": 200,
+   "left": -50,
+   "pace": 145.16
+  }
+ ],
+ "goals": [
+  {
+   "id": "emergency",
+   "name": "Emergency fund",
+   "target": 12000,
+   "date": "2028-06-30",
+   "saved": 6500,
+   "left": 5500,
+   "needsMonth": 274.91,
+   "needsPaycheck": 90.16,
+   "pace": 889.78,
+   "paced": true,
+   "reaches": "2027-05"
+  },
+  {
+   "id": "japan",
+   "name": "Japan trip",
+   "target": 6000,
+   "date": "2027-04-01",
+   "saved": 2050,
+   "left": 3950,
+   "needsMonth": 785.87,
+   "needsPaycheck": 263.33,
+   "pace": 66.01,
+   "paced": true,
+   "reaches": "2031-10",
+   "behind": true
+  }
+ ],
+ "loans": [
+  {
+   "account": "mortgage",
+   "balance": 287400,
+   "monthly": 1845,
+   "months": 156,
+   "date": "2039-10",
+   "path": [
+    285555,
+    283710,
+    281865,
+    280020,
+    278175,
+    276330,
+    274485,
+    272640,
+    270795,
+    268950,
+    267105,
+    265260,
+    263415,
+    261570,
+    259725,
+    257880,
+    256035,
+    254190,
+    252345,
+    250500,
+    248655,
+    246810,
+    244965,
+    243120,
+    241275,
+    239430,
+    237585,
+    235740,
+    233895,
+    232050,
+    230205,
+    228360,
+    226515,
+    224670,
+    222825,
+    220980,
+    219135,
+    217290,
+    215445,
+    213600,
+    211755,
+    209910,
+    208065,
+    206220,
+    204375,
+    202530,
+    200685,
+    198840,
+    196995,
+    195150,
+    193305,
+    191460,
+    189615,
+    187770,
+    185925,
+    184080,
+    182235,
+    180390,
+    178545,
+    176700,
+    174855,
+    173010,
+    171165,
+    169320,
+    167475,
+    165630,
+    163785,
+    161940,
+    160095,
+    158250,
+    156405,
+    154560,
+    152715,
+    150870,
+    149025,
+    147180,
+    145335,
+    143490,
+    141645,
+    139800,
+    137955,
+    136110,
+    134265,
+    132420,
+    130575,
+    128730,
+    126885,
+    125040,
+    123195,
+    121350,
+    119505,
+    117660,
+    115815,
+    113970,
+    112125,
+    110280,
+    108435,
+    106590,
+    104745,
+    102900,
+    101055,
+    99210,
+    97365,
+    95520,
+    93675,
+    91830,
+    89985,
+    88140,
+    86295,
+    84450,
+    82605,
+    80760,
+    78915,
+    77070,
+    75225,
+    73380,
+    71535,
+    69690,
+    67845,
+    66000,
+    64155,
+    62310,
+    60465,
+    58620,
+    56775,
+    54930,
+    53085,
+    51240,
+    49395,
+    47550,
+    45705,
+    43860,
+    42015,
+    40170,
+    38325,
+    36480,
+    34635,
+    32790,
+    30945,
+    29100,
+    27255,
+    25410,
+    23565,
+    21720,
+    19875,
+    18030,
+    16185,
+    14340,
+    12495,
+    10650,
+    8805,
+    6960,
+    5115,
+    3270,
+    1425,
+    0
+   ]
+  },
+  {
+   "account": "carloan",
+   "balance": 11240,
+   "monthly": 412,
+   "months": 28,
+   "date": "2029-02",
+   "path": [
+    10828,
+    10416,
+    10004,
+    9592,
+    9180,
+    8768,
+    8356,
+    7944,
+    7532,
+    7120,
+    6708,
+    6296,
+    5884,
+    5472,
+    5060,
+    4648,
+    4236,
+    3824,
+    3412,
+    3000,
+    2588,
+    2176,
+    1764,
+    1352,
+    940,
+    528,
+    116,
+    0
+   ]
+  }
+ ],
+ "holidays": {
+  "2026-11-11": "Veterans Day",
+  "2026-11-26": "Thanksgiving",
+  "2026-12-25": "Christmas",
+  "2027-01-01": "New Year's Day",
+  "2027-01-18": "Martin Luther King Jr. Day",
+  "2027-02-15": "Presidents' Day",
+  "2027-05-31": "Memorial Day",
+  "2027-07-05": "Independence Day",
+  "2027-09-06": "Labor Day",
+  "2027-10-11": "Columbus Day"
+ },
+ "checkingNow": {
+  "date": "2026-10-30",
+  "from": "2026-10-30",
+  "start": 2512.4,
+  "steps": [],
+  "result": 2512.4
+ },
+ "afterPay": {
+  "date": "2026-11-06",
+  "from": "2026-10-30",
+  "start": 2512.4,
+  "steps": [
+   {
+    "date": "2026-10-31",
+    "payment": "food",
+    "amount": -200,
+    "after": 2312.4
+   },
+   {
+    "date": "2026-11-01",
+    "payment": "mortgagepay",
+    "amount": -1845,
+    "after": 467.4
+   },
+   {
+    "date": "2026-11-03",
+    "payment": "share",
+    "amount": 900,
+    "after": 1367.4
+   },
+   {
+    "date": "2026-11-03",
+    "payment": "netflix",
+    "amount": -15.49,
+    "after": 1351.91
+   },
+   {
+    "date": "2026-11-05",
+    "payment": "peloton",
+    "amount": -44,
+    "after": 1307.91
+   },
+   {
+    "date": "2026-11-06",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "after": 3457.91
+   }
+  ],
+  "result": 3457.91
+ }
+}

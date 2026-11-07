@@ -8439,11 +8439,12 @@
   var near = 0.1;
   var dayNo = (s3) => Math.round(Date.parse(s3 + "T00:00:00Z") / 864e5);
   function plannedFor(t3, account, payments, dues, checking, taken, same2) {
-    if (!(t3.amount < 0) || !t3.payee) return void 0;
-    const paid = -t3.amount;
+    if (!t3.amount || !t3.payee) return void 0;
+    const paid = Math.abs(t3.amount);
     let best, tie = false;
+    const fits = (x3) => x3.payer ? t3.amount > 0 && (x3.to || checking) === account && (same2(t3.payee, x3) || alike(t3.payee, x3.payer)) : t3.amount < 0 && (x3.from || checking) === account && same2(t3.payee, x3);
     for (const x3 of payments) {
-      if (x3.card || !(x3.amount > 0) || (x3.from || checking) !== account || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !same2(t3.payee, x3)) continue;
+      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !fits(x3)) continue;
       for (const due of dues[x3.id] || []) {
         const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off = Math.abs(paid - x3.amount);
         if (gap > matchDays || taken.has(x3.id + " " + due)) continue;
@@ -8473,16 +8474,19 @@
     const income = people.reduce((t3, e3) => t3 + e3.net * perMonth(e3.schedule), 0);
     const kept2 = (id2) => saving(L2.account[id2 || ""]?.kind);
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
-    const fromPay = payments.filter((x3) => (!x3.from || x3.from === v3.checking || onCard2(x3)) && !(x3.to && x3.to === v3.checking));
+    const fromPay = payments.filter((x3) => !x3.payer && (!x3.from || x3.from === v3.checking || onCard2(x3)) && !(x3.to && x3.to === v3.checking));
     const each = (x3) => x3.amount * perMonth(x3.schedule, people, v3.checking);
+    const fromOthers = payments.filter((x3) => x3.payer);
+    const others2 = fromOthers.map((x3) => ({ name: x3.name, payer: x3.payer, amount: each(x3) }));
     const spentList = fromPay.filter((x3) => !kept2(x3.to));
     const spent = spentList.reduce((t3, x3) => t3 + each(x3), 0);
-    const saved = fromPay.filter((x3) => kept2(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
+    const saved = [...fromPay, ...fromOthers].filter((x3) => kept2(x3.to)).reduce((t3, x3) => t3 + each(x3), 0);
     const viaPay = people.reduce((t3, e3) => t3 + (e3.deductions || []).filter((d3) => kept2(d3.account)).reduce((u4, d3) => u4 + d3.amount, 0) * perMonth(e3.schedule), 0);
     const kinds = {};
     for (const x3 of spentList) kinds[x3.kind || "other"] = (kinds[x3.kind || "other"] || 0) + each(x3);
     const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k3) => k3.amount > 5e-3).sort((a3, b2) => b2.amount - a3.amount);
-    return { in: income, spent, saved, left: income - spent - saved, viaPay, byKind };
+    const all = income + others2.reduce((t3, o3) => t3 + o3.amount, 0);
+    return { in: all, spent, saved, left: all - spent - saved, viaPay, byKind, others: others2 };
   }
   var kindName = (kind) => ({ home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", loans: "Loans", cards: "Cards", spending: "Spending", savings: "Saving", other: "Other" })[kind] || kind;
   function rateOf(plan, a3) {
@@ -9247,6 +9251,9 @@
     const [from2, setFrom] = d2(x3?.from || checking || "");
     const [to, setTo] = d2(x3?.to || "");
     const [card, setCard] = d2(x3?.card || "");
+    const [way, setWay] = d2(x3?.payer ? "in" : "out");
+    const [payer, setPayer] = d2(x3?.payer || "");
+    const comesIn = way === "in";
     const [type, setType] = d2(x3?.type || "");
     const opened2 = ownKey(brandOf(x3?.institution, x3?.name), x3?.name);
     const had = plan.logos?.[opened2];
@@ -9257,7 +9264,7 @@
     const accounts = plan.accounts || [];
     const submit = (e3) => {
       e3.preventDefault();
-      const wrong = !name.trim() ? "Give it a name." : !card && num(amount) <= 0 ? "Type how much it is." : card && card === from2 ? "A card can't pay itself off: pick the account it comes out of." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
+      const wrong = !name.trim() ? "Give it a name." : comesIn && !payer.trim() ? "Say who sends it." : (comesIn || !card) && num(amount) <= 0 ? "Type how much it is." : !comesIn && card && card === from2 ? "A card can't pay itself off: pick the account it comes out of." : every === "twice a month" && !(num(day22) >= 1 && num(day22) <= 31) ? "The second day is 1 to 31." : every === "twice a month" && num(day22) === parseDay(start).getDate() ? "The second day is the first one again: pick another." : "";
       setProblem(wrong);
       if (wrong) return;
       const p3 = {
@@ -9268,9 +9275,8 @@
         kind,
         institution: brand || void 0,
         schedule: { every, start, day2: every === "twice a month" ? num(day22) : void 0, person: every === "paycheck" ? person : void 0 },
-        from: from2 === checking ? void 0 : from2 || void 0,
-        to: to || void 0,
-        card: card || void 0,
+        // From someone outside: out of none of the household's accounts, into checking unless another is picked.
+        ...comesIn ? { payer: payer.trim(), to: to && to !== checking ? to : void 0 } : { from: from2 === checking ? void 0 : from2 || void 0, to: to || void 0, card: card || void 0 },
         type: kind === "subscriptions" && type ? type : void 0
       };
       const list = (plan.payments || []).slice();
@@ -9292,9 +9298,11 @@
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
       /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment" }),
+      /* @__PURE__ */ u3("div", { class: "finway", children: /* @__PURE__ */ u3(Segmented, { label: "Which way the money goes", value: way, pick: setWay, options: [["out", "Goes out"], ["in", "Comes in from someone"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
-        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: "Mortgage", required: true }) }),
-        /* @__PURE__ */ u3(MoneyField, { label: card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
+        /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: comesIn ? "Mortgage share" : "Mortgage", required: true }) }),
+        comesIn && /* @__PURE__ */ u3(Field, { label: "From", children: /* @__PURE__ */ u3("input", { value: payer, onInput: input(setPayer), placeholder: "Who sends it" }) }),
+        /* @__PURE__ */ u3(MoneyField, { label: !comesIn && card ? "Other spending on it each time (each pays the balance)" : "Amount", value: amount, set: setAmount }),
         /* @__PURE__ */ u3(Field, { label: "Category", children: /* @__PURE__ */ u3("select", { value: kind, onChange: input((k3) => {
           kindPicked.current = true;
           setKind(k3);
@@ -9304,9 +9312,11 @@
           subTypes.map(([v3, t3]) => /* @__PURE__ */ u3("option", { value: v3, children: t3 }, v3))
         ] }) }),
         /* @__PURE__ */ u3(ScheduleFields, { every, setEvery, start, setStart, day2: day22, setDay2, startLabel: x3 ? "Starting" : "Next on", people: plan.people, person, setPerson }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from2, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held2(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from2 && !held2(a3.kind)), none: "Nowhere (a bill)" }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" }),
+        comesIn ? /* @__PURE__ */ u3(AccountSelect, { label: "Comes into", value: to || checking, set: setTo, accounts: accounts.filter((a3) => !owed(a3.kind) && !held2(a3.kind)), none: accounts.length ? void 0 : "Checking" }) : /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(AccountSelect, { label: "Comes out of, or is charged to", value: from2, set: setFrom, accounts: accounts.filter((a3) => (a3.kind === "card" || !owed(a3.kind)) && !held2(a3.kind)), none: accounts.length ? void 0 : "Checking" }),
+          /* @__PURE__ */ u3(AccountSelect, { label: "Goes into", value: to, set: setTo, accounts: accounts.filter((a3) => a3.id !== from2 && !held2(a3.kind)), none: "Nowhere (a bill)" }),
+          /* @__PURE__ */ u3(AccountSelect, { label: "Pays off a card", value: card, set: setCard, accounts: accounts.filter((a3) => a3.kind === "card"), none: "No" })
+        ] }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", checked: estimate, onClick: tick2(setEstimate) }),
           " The amount changes each time (an estimate)"
@@ -10514,7 +10524,7 @@ ${pays}
           {
             lead: /* @__PURE__ */ u3(Lead, { e: e3, L: L2 }),
             title: named4(e3, L2),
-            sub: e3.people?.length ? "Paycheck" : x3?.card ? "The card's balance" : kindName(x3?.kind || "other"),
+            sub: e3.people?.length ? "Paycheck" : x3?.payer ? "From " + x3.payer : x3?.card ? "The card's balance" : kindName(x3?.kind || "other"),
             when: /* @__PURE__ */ u3(Amount, { value: e3.amount, sign: true, tone: e3.amount > 0 ? "in" : "", form: "full" }),
             whenPlain: true,
             onOpen: edit && x3 ? () => edit("payment", x3.id) : void 0,
@@ -11360,7 +11370,10 @@ ${pays}
     const m3 = month(v3, L2);
     const people = v3.plan.people || [];
     if (!people.length || m3.in <= 0) return null;
-    const from2 = people.map((e3) => ({ label: `${e3.name}'s pay`, value: e3.net * perMonth(e3.schedule), color: "in" }));
+    const from2 = [
+      ...people.map((e3) => ({ label: `${e3.name}'s pay`, value: e3.net * perMonth(e3.schedule), color: "in" })),
+      ...m3.others.map((o3) => ({ label: `${o3.name}, from ${o3.payer}`, value: o3.amount, color: "in" }))
+    ];
     if (m3.left < -5e-3) from2.push({ label: "From the accounts", value: -m3.left, color: "muted" });
     const to = [
       ...m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 })),
@@ -11717,7 +11730,7 @@ ${pays}
       keep2 && fromWallos && /* @__PURE__ */ u3(WallosWidget, { v: v3, read: fromWallos, keep: keep2 }),
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share2(m3.spent)}` }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
             "Saved · ",
@@ -11744,8 +11757,8 @@ ${pays}
             list.map((x3) => {
               const n3 = next[x3.id];
               const later2 = n3 ? "" : v3.next?.[x3.id] || "";
-              const from2 = n3 && (x3.to && x3.to === v3.checking ? "into checking" : onCard2(x3) ? "on " + L2.account[x3.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
-              const into2 = x3.to ? " → " + (L2.account[x3.to]?.name || x3.to) : "";
+              const from2 = n3 && (x3.payer ? "from " + x3.payer : x3.to && x3.to === v3.checking ? "into checking" : onCard2(x3) ? "on " + L2.account[x3.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
+              const into2 = x3.to ? " → " + (L2.account[x3.to]?.name || x3.to) : x3.payer ? " → " + (L2.account[v3.checking]?.name || "checking") : "";
               return /* @__PURE__ */ u3(
                 Row,
                 {
@@ -11766,7 +11779,7 @@ ${pays}
                     ] }),
                     /* @__PURE__ */ u3("span", { class: "fx-sub", children: after(later2, v3.today) })
                   ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Nothing ahead" }) }),
-                  when: /* @__PURE__ */ u3(Amount, { value: x3.card && n3?.period ? n3.period.rows.find((r3) => r3.payment === x3.id)?.amount ?? x3.amount : x3.amount, form: "full" }),
+                  when: /* @__PURE__ */ u3(Amount, { value: x3.card && n3?.period ? n3.period.rows.find((r3) => r3.payment === x3.id)?.amount ?? x3.amount : x3.amount, sign: !!x3.payer, tone: x3.payer ? "in" : "", form: "full" }),
                   whenPlain: true,
                   onOpen: edit ? () => edit("payment", x3.id) : void 0,
                   openLabel: "edit"
@@ -11954,7 +11967,10 @@ ${pays}
   var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
   function stepName(s3, L2) {
     if (s3.people?.length) return `${names(s3.people, L2)}'s paycheck`;
-    if (s3.payment) return L2.payment[s3.payment]?.name || s3.payment;
+    if (s3.payment) {
+      const x3 = L2.payment[s3.payment];
+      return x3 ? x3.name + (x3.payer ? `, from ${x3.payer}` : "") : s3.payment;
+    }
     if (s3.interest) return "Interest";
     return s3.name || "A transaction";
   }
@@ -12159,7 +12175,7 @@ ${pays}
             rows.map((r3, k3) => {
               const x3 = L2.payment[r3.payment];
               const src = L2.account[x3?.from];
-              const via = r3.outside || r3.into ? (src?.kind === "card" ? "on " : "from ") + (src?.name || "another account") : kindName(x3?.kind || "other");
+              const via = x3?.payer ? "from " + x3.payer : r3.outside || r3.into ? (src?.kind === "card" ? "on " : "from ") + (src?.name || "another account") : kindName(x3?.kind || "other");
               return /* @__PURE__ */ u3(
                 Row,
                 {

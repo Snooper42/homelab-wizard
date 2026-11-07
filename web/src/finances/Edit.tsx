@@ -287,6 +287,10 @@ function PaymentForm(props: EditProps) {
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
+  // Money that goes out of the household's accounts, or comes in from someone outside it (who sends it).
+  const [way, setWay] = useState(x?.payer ? 'in' : 'out');
+  const [payer, setPayer] = useState(x?.payer || '');
+  const comesIn = way === 'in';
   // A subscription's type: the one picked, or "" for the one suggested from its logo or name as they change.
   const [type, setType] = useState(x?.type || '');
   // The household's own image for its logo, as it opened (its brand's, or its name's).
@@ -299,11 +303,13 @@ function PaymentForm(props: EditProps) {
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
+    const wrong = !name.trim() ? 'Give it a name.' : comesIn && !payer.trim() ? 'Say who sends it.' : (comesIn || !card) && num(amount) <= 0 ? 'Type how much it is.' : !comesIn && card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined,
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined },
+      // From someone outside: out of none of the household's accounts, into checking unless another is picked.
+      ...(comesIn ? { payer: payer.trim(), to: to && to !== checking ? to : undefined } : { from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined }),
       type: kind === 'subscriptions' && type ? type : undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
@@ -316,18 +322,24 @@ function PaymentForm(props: EditProps) {
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
+      <div class="finway"><Segmented label="Which way the money goes" value={way} pick={setWay} options={[['out', 'Goes out'], ['in', 'Comes in from someone']]} /></div>
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
-        <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder={comesIn ? 'Mortgage share' : 'Mortgage'} required /></Field>
+        {comesIn && <Field label="From"><input value={payer} onInput={input(setPayer)} placeholder="Who sends it" /></Field>}
+        <MoneyField label={!comesIn && card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input((k) => { kindPicked.current = true; setKind(k); })}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
         </select></Field>}
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
-        <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
-        <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
-        <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
+        {comesIn
+          ? <AccountSelect label="Comes into" value={to || checking} set={setTo} accounts={accounts.filter((a) => !owed(a.kind) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
+          : <>
+            <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
+            <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
+            <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
+          </>}
         <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />

@@ -116,7 +116,7 @@ export function PaycheckWidget({ v, L, sel, pick, edit }: { v: finance.View; L: 
         {rows.map((r, k) => {
           const x = L.payment[r.payment];
           const src = L.account[x?.from];
-          const via = r.outside || r.into ? (src?.kind === 'card' ? 'on ' : 'from ') + (src?.name || 'another account') : kindName(x?.kind || 'other');
+          const via = x?.payer ? 'from ' + x.payer : r.outside || r.into ? (src?.kind === 'card' ? 'on ' : 'from ') + (src?.name || 'another account') : kindName(x?.kind || 'other');
           return <Row key={k} lead={<PayMark x={x} />}
             title={<>{x?.name || r.payment}{r.estimate && <span class="fx-sub"> (about)</span>}</>} sub={`${dayShort(r.date)} · ${via}`}
             when={<Amount value={r.into ? r.amount : -r.amount} sign={r.into} tone={r.into ? 'in' : ''} form="full" />} whenPlain

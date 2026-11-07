@@ -651,6 +651,7 @@ declare namespace finance {
     to?: string;
     card?: string;
     type?: string;
+    payer?: string;
   }
   interface Payoff {
     account: string;

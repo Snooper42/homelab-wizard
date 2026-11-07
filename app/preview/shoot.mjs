@@ -264,6 +264,8 @@ const receiptPicture = async (page) => Buffer.from(await page.evaluate(async () 
 }), 'base64');
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
+// The same household with a share of the mortgage, $900, sent by Sam (outside it) on the 3rd (finance-moneyin.json).
+const moneyIn = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-moneyin.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
 // and Sam's check going into savings on the 12th.
 // The same household with its balances typed in on the 25th: Jordan's
@@ -5032,6 +5034,45 @@ const smokes = [
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
   } },
+  // Money in from someone outside the household: Comes in from someone asks who sends it, and keeps no account it comes out of.
+  { name: 'Finances: add money that comes in from someone', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.click('#finSheet .finway [role=radio]:text-is("Comes in from someone")');
+    if (await page.$('#finSheet label:has-text("Comes out of")') || await page.$('#finSheet label:has-text("Pays off a card")')) throw new Error('money in asks what it comes out of');
+    await page.fill('#finSheet label:has-text("Name") input', 'Mortgage share');
+    await page.fill('#finSheet label:has-text("Amount") input', '900');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Say who sends it")', { timeout: 5000 });
+    await page.fill('#finSheet label:text-is("From") input', 'Sam');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1));
+    const x = saved?.payments.find((q) => q.name === 'Mortgage share');
+    if (!x || x.amount !== 900 || x.payer !== 'Sam' || x.from || x.card || x.to) throw new Error(`saved ${JSON.stringify(x)}`);
+  } },
+  { name: 'The phone, view only: money from someone shows, with nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...moneyIn, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (await page.$('.fx-paycheck li:has-text("Mortgage share") button')) throw new Error('a phone that may only look can open the payment');
+  } },
+  // Money from Sam on the 3rd: in the pay period's rows, Recurring, the month, the money flow, and the calendar, as money in.
+  { name: 'Finances: money from someone shows as money in, everywhere it is planned', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button:text-is("Today")').catch(() => {});
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-monthsum')).includes('and Sam')) throw new Error('a typical month does not count what Sam sends');
+    await page.waitForSelector('.fx-moneyflow :text("Mortgage share, from Sam")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-03"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Mortgage share"):has-text("From Sam"):has-text("+$900.00")', { timeout: 5000 });
+  } },
   // Another device saved after this one read: the save is refused, the
   // latest is read, and the form stays open with what was typed, so Save
   // again keeps both changes.
@@ -6299,6 +6340,19 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-3).map((t) => `${t.payee}|${t.payment || ''}`));
     if (txs.join() !== 'Netflix|netflix,Peloton Interactive|,Electric Company|') throw new Error(`saved ${txs}`);
+  } },
+  // Money in from someone, in a bank's file by their name, is linked to what they send as planned.
+  { name: 'Finances: an imported transfer from someone is linked to the money they send', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/30/2026,ZELLE FROM SAM,900.00\n10/30/2026,ZELLE FROM PAT,900.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Zelle From Sam")) .importlink:has-text("Looks like Mortgage share, planned $900.00")', { timeout: 5000 });
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Zelle From Pat")) .importlink')) throw new Error('money from someone else is linked to what Sam sends');
+    await page.click('#finSheet button:text-is("Bring in 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
   } },
   // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
   // wrote it still shows its logo.

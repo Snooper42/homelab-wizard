@@ -219,7 +219,7 @@ function DayRows({ L, d, edit }: { L: Lookup; d: DayInfo; edit?: CalendarProps['
       {d.events.map((e, i) => {
         const x = L.payment[e.payment || ''];
         return <Row key={i} lead={<Lead e={e} L={L} />} title={named(e, L)}
-          sub={e.people?.length ? 'Paycheck' : x?.card ? 'The card\'s balance' : kindName(x?.kind || 'other')}
+          sub={e.people?.length ? 'Paycheck' : x?.payer ? 'From ' + x.payer : x?.card ? 'The card\'s balance' : kindName(x?.kind || 'other')}
           when={<Amount value={e.amount} sign tone={e.amount > 0 ? 'in' : ''} form="full" />} whenPlain
           onOpen={edit && x ? () => edit('payment', x.id) : undefined} openLabel={x && edit ? 'edit' : undefined} />;
       })}

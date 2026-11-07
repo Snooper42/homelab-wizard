@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Money that comes in from someone:** a payment can now come in, not only go out: **Add a payment › Comes in from someone**, say who sends it (a share of the mortgage, say), how much and when. It adds to checking on its day, without starting a pay period, and shows in the pay period, Recurring, the calendar, a typical month and the calendar feed. Their real transfer, in a bank's file, is linked to it.
 - **Checking now, and after payday:** Finances' Dashboard opens with two numbers: checking now, and checking once the next paycheck lands, before that day's bills. Rest on either (or tap it on a phone) to see how it adds up: the balance it starts from, each bill and paycheck in between, and the result, to hold next to your own sums.
 - **Health in one line:** every screen but Status now starts with one line: *✓ All well*, or the one thing that needs you (*Mealie: Stopped*, *3 apps need a look: …*, or a failing check of the watchdog's), with **Open Status** beside it.
 - **Snooze an alert:** beside a failing check on Status's Watchdog card, **Snooze…** stops its alerts for an hour or a day, for something you already know about. It's still checked and shown, its line says until when, and if it still fails when the snooze ends you get one alert then. `homelab notify snooze <check> 1h` does the same.

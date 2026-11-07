@@ -14,7 +14,7 @@ const names = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name |
 /** What one step was, in the words its row uses elsewhere. */
 function stepName(s: finance.Step, L: Lookup): string {
   if (s.people?.length) return `${names(s.people, L)}'s paycheck`;
-  if (s.payment) return L.payment[s.payment]?.name || s.payment;
+  if (s.payment) { const x = L.payment[s.payment]; return x ? x.name + (x.payer ? `, from ${x.payer}` : '') : s.payment; }
   if (s.interest) return 'Interest';
   return s.name || 'A transaction';
 }

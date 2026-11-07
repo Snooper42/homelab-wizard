@@ -372,6 +372,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			}
 			return out
 		}
+		// From someone outside: only into its account.
+		if e.pay.Payer != "" {
+			return []side{{toOf(e.pay, v.Checking), e.amt}}
+		}
 		from := e.pay.From
 		if from == "" {
 			from = v.Checking
@@ -414,10 +418,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			past.In = to == "" || to == v.Checking
 			past.Outside = !past.In
 		} else {
-			from := e.pay.From
+			from, to := e.pay.From, toOf(e.pay, v.Checking)
 			past.Payment, past.Amount = e.pay.ID, cents(e.amt)
-			past.In = from != "" && from != v.Checking && e.pay.To == v.Checking
-			past.Outside = from != "" && from != v.Checking && !past.In
+			past.In = (e.pay.Payer != "" || from != "" && from != v.Checking) && to == v.Checking
+			past.Outside = (e.pay.Payer != "" || from != "" && from != v.Checking) && !past.In
 		}
 		v.Since = append(v.Since, past)
 	}
@@ -851,15 +855,15 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 			inChecking = true
 		}
 	}
-	from := e.pay.From
-	if from == "" {
+	from, to := e.pay.From, toOf(e.pay, checking)
+	if from == "" && e.pay.Payer == "" {
 		from = checking
 	}
-	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking]), Saved: Saving(kind[e.pay.To])}
+	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking]), Saved: e.pay.Payer == "" && Saving(kind[to])}
 	switch {
 	case from == checking && (inChecking || checking == ""):
 		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount}, counted
-	case e.pay.To == checking && inChecking:
+	case to == checking && inChecking:
 		r.Into = true
 		return r, &Event{Payment: e.pay.ID, Amount: r.Amount}, counted
 	}
@@ -869,6 +873,15 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount, Card: from}, counted
 	}
 	return r, nil, counted
+}
+
+// toOf is the account a payment goes into: its To, or for money from
+// someone outside the household with none, checking.
+func toOf(x *Payment, checking string) string {
+	if x.To == "" && x.Payer != "" {
+		return checking
+	}
+	return x.To
 }
 
 // move adds amount to an account: money in for what is there, less owed

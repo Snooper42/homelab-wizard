@@ -134,17 +134,22 @@ export interface Planned { payment: string; due: string }
 /**
  * The planned payment a row plainly pays, or none: money out of this
  * account (the payment's From, or checking), to a payee alike its name or
- * of its brand (`same`), for its amount give or take a tenth, within two
+ * of its brand (`same`), or money into it from someone outside the
+ * household (Payer) by their name or the payment's, for its amount give or take a tenth, within two
  * weeks of one of its days (View.dues) not paid already (`taken`, by
  * payment and day). The nearest day wins; a tie between two payments is
  * no plain answer, so none.
  */
 export function plannedFor(t: Imported, account: string, payments: finance.Payment[], dues: Record<string, string[]>, checking: string, taken: Set<string>, same: (payee: string, x: finance.Payment) => boolean): Planned | undefined {
-  if (!(t.amount < 0) || !t.payee) return undefined;
-  const paid = -t.amount;
+  if (!t.amount || !t.payee) return undefined;
+  const paid = Math.abs(t.amount);
   let best: (Planned & { gap: number; off: number }) | undefined, tie = false;
+  // Money out pays a bill out of this account; money in is from someone outside, by their name or the payment's.
+  const fits = (x: finance.Payment) => (x.payer
+    ? t.amount > 0 && (x.to || checking) === account && (same(t.payee!, x) || alike(t.payee!, x.payer))
+    : t.amount < 0 && (x.from || checking) === account && same(t.payee!, x));
   for (const x of payments) {
-    if (x.card || !(x.amount > 0) || (x.from || checking) !== account || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !same(t.payee, x)) continue;
+    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !fits(x)) continue;
     for (const due of dues[x.id] || []) {
       const gap = Math.abs(dayNo(due) - dayNo(t.date)), off = Math.abs(paid - x.amount);
       if (gap > matchDays || taken.has(x.id + ' ' + due)) continue;
