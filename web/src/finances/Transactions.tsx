@@ -8,7 +8,9 @@
 // its form; on a phone allowed only to look, only a row with a receipt
 // opens, to show the receipt under it. A row that pays a planned payment
 // says so; above them, those that look like one but are not linked yet,
-// each to link with a click or say Not it.
+// each to link with a click or say Not it. Select picks rows (Select all
+// takes every one shown, so a filter then Select all is a whole import or
+// month) to delete together or give one category.
 import { Fragment } from 'preact';
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -165,6 +167,13 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const [monthPick, setMonthPick] = useState('');
   const [way, setWay] = useState('');
   const [tagPick, setTag] = useState('');
+  // Picking rows to change together: which are picked, the category typed for them, Delete asked once, saving.
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [catFor, setCatFor] = useState('');
+  const [sure, setSure] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const all = ledger.transactions;
   // What each came to in the plan's currency, so the totals add up (an account may keep another).
@@ -188,6 +197,29 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
+  // What the picked act on: those picked that the filters still show.
+  const chosen = shown.filter((t) => picked.has(t.id));
+  const pick = (ids: Set<string>) => { setPicked(ids); setSure(false); setProblem(''); };
+  const toggle = (id: string) => { const next = new Set(picked); if (next.has(id)) next.delete(id); else next.add(id); pick(next); };
+  const stopPicking = () => { setPicking(false); pick(new Set()); setCatFor(''); };
+  const change = async (txs: finance.Transaction[]) => {
+    if (busy || !saveLedger) return;
+    setBusy(true);
+    const ok = await saveLedger({ ...ledger, transactions: txs });
+    setBusy(false);
+    if (ok) pick(new Set()); else setProblem('It could not be kept: try again.');
+  };
+  const removePicked = () => {
+    if (!sure) { setSure(true); return; }
+    const gone = new Set(chosen.map((t) => t.id));
+    change(all.filter((t) => !gone.has(t.id)));
+  };
+  // A category for each picked one that is not a transfer between the household's accounts; its parts, if split, are let go.
+  const categorize = () => {
+    const ids = new Set(chosen.filter((t) => !t.to).map((t) => t.id)), c = catFor.trim();
+    if (!ids.size) { setProblem('Transfers between your accounts take no category.'); return; }
+    change(all.map((t) => (ids.has(t.id) ? { ...t, category: c || undefined, splits: undefined } : t)));
+  };
   const list = [...shown].reverse();
   const now = v.today.slice(0, 7);
   const thisMonth = all.filter((t) => t.date.startsWith(now) && !t.to);
@@ -213,6 +245,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
         <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
           actions={edit && <>
+            {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}
             <button type="button" class="small" onClick={() => edit('import')}>Import a file</button>
             <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
           </>}>
@@ -242,6 +275,21 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
             </select>
             {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
           </div>}
+          {picking && <div class="fx-txpick" role="group" aria-label="The selected transactions">
+            <span class="fx-txpicked" role="status">{chosen.length ? `${plural(chosen.length, 'transaction')} selected` : 'None selected: click a row to select it'}</span>
+            {chosen.length < shown.length
+              ? <button type="button" class="small" disabled={busy} onClick={() => pick(new Set([...picked, ...shown.map((t) => t.id)]))}>Select all {shown.length}</button>
+              : <button type="button" class="small" disabled={busy} onClick={() => pick(new Set())}>Select none</button>}
+            {!!chosen.length && <>
+              <span class="fx-txpickcat">
+                <input value={catFor} onInput={(e) => setCatFor((e.target as HTMLInputElement).value)} list="fxPickCategories" placeholder="Category" aria-label="Category for the selected" />
+                <button type="button" class="small" disabled={busy} onClick={categorize}>{catFor.trim() ? 'Set category' : 'Clear category'}</button>
+              </span>
+              <button type="button" class="small danger" disabled={busy} onClick={removePicked}>{sure ? `Click again to delete ${plural(chosen.length, 'transaction')}` : `Delete ${chosen.length}`}</button>
+            </>}
+            {problem && <span class="formerr bad" role="alert">{problem}</span>}
+            <datalist id="fxPickCategories">{[...new Set([...(v.categories || []).map((c) => c.name), ...cats])].map((c) => <option key={c} value={c} />)}</datalist>
+          </div>}
           {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
           {days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
@@ -251,12 +299,13 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
                   const a = L.account[t.account];
                   const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
                   const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
-                  const opens = edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
-                  const open = seen?.id === t.id ? seen : null;
-                  return <Fragment key={t.id}><Row lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
+                  const on = picking && picked.has(t.id);
+                  const opens = picking ? () => toggle(t.id) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
+                  const open = !picking && seen?.id === t.id ? seen : null;
+                  return <Fragment key={t.id}><Row lead={picking ? <><span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span><TxMark t={t} categories={v.categories} /></> : <TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
                     sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
-                    onOpen={opens} openLabel={edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
+                    onOpen={opens} pressed={picking ? on : undefined} openLabel={picking ? undefined : edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
                     {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}
                   </Fragment>;
                 })}

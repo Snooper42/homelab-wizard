@@ -1123,7 +1123,14 @@
     return rows.map((r3) => r3.map((x3) => x3.trim()));
   }
   function guessColumns(header) {
-    const find = (...words5) => header.findIndex((h3) => words5.some((w3) => h3.toLowerCase().includes(w3)));
+    const lower = header.map((h3) => h3.toLowerCase());
+    const find = (...words5) => {
+      for (const w3 of words5) {
+        const i3 = lower.findIndex((h3) => h3.includes(w3));
+        if (i3 >= 0) return i3;
+      }
+      return -1;
+    };
     return {
       date: find("date", "posted", "day", "datum"),
       amount: find("amount", "value", "betrag"),
@@ -1895,7 +1902,7 @@
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
   }
-  function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel }) {
+  function Row({ dot, lead: lead2, title, sub, subTone, children, end, when: when3, whenTitle, whenPlain, onOpen, openLabel, pressed }) {
     const Box = onOpen ? "span" : "div";
     const body = /* @__PURE__ */ u3(S, { children: [
       dot !== void 0 && /* @__PURE__ */ u3("span", { class: "dot " + dot }),
@@ -1909,7 +1916,7 @@
       when3 !== void 0 && /* @__PURE__ */ u3("span", { class: whenPlain ? "when" : "when muted", title: whenTitle, children: when3 })
     ] });
     if (!onOpen) return /* @__PURE__ */ u3("li", { children: body });
-    return /* @__PURE__ */ u3("li", { class: "opens", children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", onClick: onOpen, children: [
+    return /* @__PURE__ */ u3("li", { class: "opens" + (pressed ? " on" : ""), children: /* @__PURE__ */ u3("button", { type: "button", class: "rowopen", "aria-pressed": pressed, onClick: onOpen, children: [
       body,
       openLabel && /* @__PURE__ */ u3("span", { class: "sr", children: [
         ", ",
@@ -8999,6 +9006,12 @@
     const [monthPick, setMonthPick] = d2("");
     const [way, setWay] = d2("");
     const [tagPick, setTag] = d2("");
+    const [picking, setPicking] = d2(false);
+    const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
+    const [catFor, setCatFor] = d2("");
+    const [sure, setSure] = d2(false);
+    const [busy2, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
     const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
@@ -9014,6 +9027,47 @@
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const shown5 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown5.length !== all.length;
+    const chosen = shown5.filter((t3) => picked.has(t3.id));
+    const pick = (ids) => {
+      setPicked(ids);
+      setSure(false);
+      setProblem("");
+    };
+    const toggle = (id2) => {
+      const next = new Set(picked);
+      if (next.has(id2)) next.delete(id2);
+      else next.add(id2);
+      pick(next);
+    };
+    const stopPicking = () => {
+      setPicking(false);
+      pick(/* @__PURE__ */ new Set());
+      setCatFor("");
+    };
+    const change = async (txs) => {
+      if (busy2 || !saveLedger2) return;
+      setBusy(true);
+      const ok = await saveLedger2({ ...ledger, transactions: txs });
+      setBusy(false);
+      if (ok) pick(/* @__PURE__ */ new Set());
+      else setProblem("It could not be kept: try again.");
+    };
+    const removePicked = () => {
+      if (!sure) {
+        setSure(true);
+        return;
+      }
+      const gone = new Set(chosen.map((t3) => t3.id));
+      change(all.filter((t3) => !gone.has(t3.id)));
+    };
+    const categorize = () => {
+      const ids = new Set(chosen.filter((t3) => !t3.to).map((t3) => t3.id)), c3 = catFor.trim();
+      if (!ids.size) {
+        setProblem("Transfers between your accounts take no category.");
+        return;
+      }
+      change(all.map((t3) => ids.has(t3.id) ? { ...t3, category: c3 || void 0, splits: void 0 } : t3));
+    };
     const list = [...shown5].reverse();
     const now = v3.today.slice(0, 7);
     const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
@@ -9039,6 +9093,7 @@
           span: "all",
           kind: "fx-transactions",
           actions: edit && /* @__PURE__ */ u3(S, { children: [
+            saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
           ] }),
@@ -9080,6 +9135,22 @@
                 setTag("");
               }, children: "Show all" })
             ] }),
+            picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
+              /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
+              chosen.length < shown5.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set([...picked, ...shown5.map((t3) => t3.id)])), children: [
+                "Select all ",
+                shown5.length
+              ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set()), children: "Select none" }),
+              !!chosen.length && /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-txpickcat", children: [
+                  /* @__PURE__ */ u3("input", { value: catFor, onInput: (e3) => setCatFor(e3.target.value), list: "fxPickCategories", placeholder: "Category", "aria-label": "Category for the selected" }),
+                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: categorize, children: catFor.trim() ? "Set category" : "Clear category" })
+                ] }),
+                /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removePicked, children: sure ? `Click again to delete ${plural(chosen.length, "transaction")}` : `Delete ${chosen.length}` })
+              ] }),
+              problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
+              /* @__PURE__ */ u3("datalist", { id: "fxPickCategories", children: [.../* @__PURE__ */ new Set([...(v3.categories || []).map((c3) => c3.name), ...cats])].map((c3) => /* @__PURE__ */ u3("option", { value: c3 }, c3)) })
+            ] }),
             filtered && !!shown5.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
               "Together ",
               /* @__PURE__ */ u3(Amount, { value: shown5.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
@@ -9093,13 +9164,17 @@
                 const a3 = L2.account[t3.account];
                 const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
                 const what2 = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
-                const opens = edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
-                const open4 = seen2?.id === t3.id ? seen2 : null;
+                const on2 = picking && picked.has(t3.id);
+                const opens = picking ? () => toggle(t3.id) : edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
+                const open4 = !picking && seen2?.id === t3.id ? seen2 : null;
                 return /* @__PURE__ */ u3(S, { children: [
                   /* @__PURE__ */ u3(
                     Row,
                     {
-                      lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+                      lead: picking ? /* @__PURE__ */ u3(S, { children: [
+                        /* @__PURE__ */ u3("span", { class: "fx-check" + (on2 ? " on" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 16 16", children: /* @__PURE__ */ u3("path", { d: "M3.5 8.5l3 3 6-7" }) }) }),
+                        /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories })
+                      ] }) : /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
                       title: txTitle(t3, L2),
                       sub: /* @__PURE__ */ u3(S, { children: [
                         what2,
@@ -9119,7 +9194,8 @@
                       when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
                       whenPlain: true,
                       onOpen: opens,
-                      openLabel: edit ? "edit" : opens ? open4 ? "hide the receipt" : "see the receipt" : void 0
+                      pressed: picking ? on2 : void 0,
+                      openLabel: picking ? void 0 : edit ? "edit" : opens ? open4 ? "hide the receipt" : "see the receipt" : void 0
                     }
                   ),
                   open4 && /* @__PURE__ */ u3("li", { class: "fx-receiptshown", children: open4.url ? /* @__PURE__ */ u3(ReceiptView, { url: open4.url }) : open4.problem ? /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: open4.problem }) : /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: "Reading the receipt…" }) })

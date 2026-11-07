@@ -34,9 +34,14 @@ export function csvRows(text: string): string[][] {
 /** Which column holds what: indexes into a row, -1 for none. Debit and credit are a bank's two money columns. */
 export interface Columns { date: number; amount: number; debit: number; credit: number; payee: number; memo: number }
 
-/** The columns guessed from a header row's words. */
+/**
+ * The columns guessed from a header row's words, the first word given
+ * winning over the next wherever its column is: Chase's Details (CREDIT or
+ * DEBIT) comes before its Description, which is the payee.
+ */
 export function guessColumns(header: string[]): Columns {
-  const find = (...words: string[]) => header.findIndex((h) => words.some((w) => h.toLowerCase().includes(w)));
+  const lower = header.map((h) => h.toLowerCase());
+  const find = (...words: string[]) => { for (const w of words) { const i = lower.findIndex((h) => h.includes(w)); if (i >= 0) return i; } return -1; };
   return {
     date: find('date', 'posted', 'day', 'datum'),
     amount: find('amount', 'value', 'betrag'),
