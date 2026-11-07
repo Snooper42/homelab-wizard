@@ -6402,6 +6402,35 @@ const smokes = [
     const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-2);
     if (txs.some((t) => /^(CREDIT|DEBIT)$/i.test(t.payee || '')) || txs[0].amount !== -236.15 || txs[1].amount !== 2169.24) throw new Error(`brought in ${JSON.stringify(txs)}`);
   } },
+  // A Chase file read before as CREDIT and DEBIT, imported again: those rows take their payees (and keep a category given
+  // them since), rather than coming in twice; a row not in the ledger yet still comes in.
+  { name: 'Finances: a Chase CSV imported again gives rows brought in as CREDIT or DEBIT their payees', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'w1', date: '2026-11-06', account: 'chk', amount: -236.15, payee: 'DEBIT', category: 'Groceries' },
+    { id: 'w2', date: '2026-11-06', account: 'chk', amount: 2169.24, payee: 'CREDIT' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,11/06/2026,"COSTCO WHSE #0123",-236.15,DEBIT_CARD,4321.00,,\nCREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2169.24,ACH_CREDIT,4557.15,,\nDEBIT,11/04/2026,"SHELL OIL 57444",-48.00,DEBIT_CARD,4569.15,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("1 to bring in"):has-text("2 brought in before as CREDIT or DEBIT")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 1, fix 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const w1 = txs.find((t) => t.id === 'w1'), w2 = txs.find((t) => t.id === 'w2');
+    if (txs.length !== 3 || !/costco/i.test(w1?.payee || '') || w1.category !== 'Groceries' || !/acme/i.test(w2?.payee || '') || !txs.some((t) => /shell/i.test(t.payee || ''))) throw new Error(`fixed ${JSON.stringify(txs)}`);
+  } },
+  // While selecting, Ctrl+A (⌘A on a Mac) takes every row shown and Escape stops selecting.
+  { name: 'Finances: while selecting transactions, Ctrl+A selects them all and Escape stops', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    await page.click('.fx-transactions button:text-is("Select")');
+    await page.waitForSelector('.fx-txpick :text("None selected")', { timeout: 5000 });
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.waitForSelector(`.fx-txpick :text("${n} transactions selected")`, { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.fx-txpick', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions button:text-is("Select")', { timeout: 5000 });
+  } },
   // Select: rows picked by a click, or every one a filter shows; Delete asks once more, then they go; a category given to each.
   { name: 'Finances: transactions selected together are deleted or given a category', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

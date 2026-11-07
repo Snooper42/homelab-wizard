@@ -102,6 +102,25 @@ export function fromOfx(text: string): Imported[] {
   return out;
 }
 
+/** A payee that is only a bank's word for which way the money went: CREDIT, DEBIT (Chase's Details column, read as the payee before). */
+export const wayOnly = (payee?: string): boolean => /^(credit|debit|dr|cr)$/i.test((payee || '').trim());
+
+/**
+ * Rows brought in before with only CREDIT or DEBIT as their payee, each
+ * matched to the row of this file it was (on the account, the same day,
+ * the same amount, with a real payee): by the file's row index, the
+ * ledger's transaction ID. Each ledger row is matched once.
+ */
+export function wayOnlyFixes(found: Imported[], account: string, ledger: finance.Transaction[]): Map<number, string> {
+  const out = new Map<number, string>(), used = new Set<string>();
+  found.forEach((t, i) => {
+    if (!t.payee || wayOnly(t.payee)) return;
+    const q = ledger.find((q) => !used.has(q.id) && q.account === account && !q.to && q.date === t.date && Math.abs(q.amount - t.amount) < 0.005 && wayOnly(q.payee));
+    if (q) { used.add(q.id); out.set(i, q.id); }
+  });
+  return out;
+}
+
 /** Whether a file's text is an OFX or QFX statement rather than a CSV. */
 export const isOfx = (text: string): boolean => /<OFX>|OFXHEADER/i.test(text.slice(0, 2000));
 

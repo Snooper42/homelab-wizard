@@ -1184,6 +1184,19 @@
     }
     return out;
   }
+  var wayOnly = (payee) => /^(credit|debit|dr|cr)$/i.test((payee || "").trim());
+  function wayOnlyFixes(found2, account, ledger) {
+    const out = /* @__PURE__ */ new Map(), used = /* @__PURE__ */ new Set();
+    found2.forEach((t3, i3) => {
+      if (!t3.payee || wayOnly(t3.payee)) return;
+      const q2 = ledger.find((q3) => !used.has(q3.id) && q3.account === account && !q3.to && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && wayOnly(q3.payee));
+      if (q2) {
+        used.add(q2.id);
+        out.set(i3, q2.id);
+      }
+    });
+    return out;
+  }
   var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
   function already(t3, account, ledger) {
     return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || q2.to === account && t3.id && q2.toBank === t3.id || (q2.account === account || q2.to === account) && (q2.date === t3.date || q2.to === account && Math.abs(dayNo(q2.date) - dayNo(t3.date)) <= pairDays) && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee) || q2.to === account && !!q2.toBank));
@@ -9012,6 +9025,25 @@
     const [sure, setSure] = d2(false);
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
+    const keyed = A2({ all: () => {
+    }, stop: () => {
+    } });
+    _2(() => {
+      if (!picking) return void 0;
+      const keys2 = (e3) => {
+        if (e3.defaultPrevented || document.documentElement.classList.contains("sheet-open") || !document.getElementById("finances")?.classList.contains("active")) return;
+        if (e3.target.closest?.("input, textarea, select, [contenteditable], [role=menu], dialog, .sheet")) return;
+        if (e3.key === "Escape") {
+          e3.preventDefault();
+          keyed.current.stop();
+        } else if ((e3.metaKey || e3.ctrlKey) && !e3.altKey && !e3.shiftKey && e3.key.toLowerCase() === "a") {
+          e3.preventDefault();
+          keyed.current.all();
+        }
+      };
+      document.addEventListener("keydown", keys2);
+      return () => document.removeEventListener("keydown", keys2);
+    }, [picking]);
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const all = ledger.transactions;
     const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
@@ -9044,6 +9076,8 @@
       pick(/* @__PURE__ */ new Set());
       setCatFor("");
     };
+    const pickAll = () => pick(/* @__PURE__ */ new Set([...picked, ...shown5.map((t3) => t3.id)]));
+    keyed.current = { all: pickAll, stop: stopPicking };
     const change = async (txs) => {
       if (busy2 || !saveLedger2) return;
       setBusy(true);
@@ -9137,7 +9171,7 @@
             ] }),
             picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
               /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
-              chosen.length < shown5.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set([...picked, ...shown5.map((t3) => t3.id)])), children: [
+              chosen.length < shown5.length ? /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: pickAll, children: [
                 "Select all ",
                 shown5.length
               ] }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => pick(/* @__PURE__ */ new Set()), children: "Select none" }),
@@ -10267,7 +10301,9 @@
       return { ...t3, payee, raw: t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0 };
     });
     const have = ledger?.transactions || [];
-    const fresh = found2.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
+    const fixes = wayOnlyFixes(found2, account, have);
+    const fixed = new Set(fixes.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
+    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const payments = (plan.payments || []).filter((x3) => !x3.card);
@@ -10282,13 +10318,18 @@
     const linkOf = (i3) => i3 in picked ? picked[i3] : guessed[i3]?.payment || "";
     const bring = async (e3) => {
       e3.preventDefault();
-      if (!fresh.length) {
+      if (!fresh.length && !fixes.size) {
         setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
+      const fix = new Map([...fixes].map(([i3, id2]) => [id2, found2[i3]]));
+      const kept4 = have.map((q2) => {
+        const t3 = fix.get(q2.id);
+        return t3 ? { ...q2, payee: t3.payee || q2.payee, note: q2.note || (t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo) || void 0, category: q2.category || t3.payee && lastCat(t3.payee) || void 0, institution: q2.institution || t3.payee && lastLogo(t3.payee) || void 0, bank: q2.bank || t3.id } : q2;
+      });
       const added = fresh.map((t3, i3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id, payment: linkOf(i3) || void 0 }));
       setBusy(true);
-      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
+      const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept4, ...added] });
       setBusy(false);
       if (ok) props.close();
     };
@@ -10321,12 +10362,12 @@
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
           found2.length ? `${fresh.length} to bring in` : "Nothing found yet",
           " ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: found2.length - fresh.length ? `${found2.length - fresh.length} already in, skipped` : "" })
+          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", found2.length - fresh.length - fixes.size ? `${found2.length - fresh.length - fixes.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
         ] }),
         guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
-          const k3 = fresh.indexOf(t3), dup = k3 < 0;
-          const g2 = dup ? void 0 : guessed[k3], link = dup ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
+          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), dup = k3 < 0 && !fixing;
+          const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
@@ -10334,7 +10375,7 @@
               /* @__PURE__ */ u3("small", { children: [
                 t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
-                dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
+                fixing ? " · gives the CREDIT or DEBIT row its payee" : dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
               ] }),
               g2 && /* @__PURE__ */ u3("span", { class: "importlink", children: [
                 /* @__PURE__ */ u3("small", { children: !x3 ? "Not a planned payment" : k3 in picked ? `Pays ${x3.name}` : `Looks like ${x3.name}, planned ${money(x3.amount)}` }),
@@ -10357,7 +10398,7 @@
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length, children: fresh.length ? `Bring in ${fresh.length}` : "Bring in" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size}` : ""].filter(Boolean).join(", ") || "Bring in" })
       ] })
     ] });
   }
@@ -15056,7 +15097,8 @@ ${pays}
           [["←", "→"], "On the calendar, the day before or after"],
           [["↑", "↓"], "The week before or after"],
           [["Page Up", "Page Down"], "The month before or after"],
-          [["Home", "End"], "The week’s first or last day"]
+          [["Home", "End"], "The week’s first or last day"],
+          [[mod + "A"], "In Transactions, after Select, every transaction shown; Escape stops selecting"]
         ];
       default:
         return [];

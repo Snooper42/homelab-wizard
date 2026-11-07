@@ -12,7 +12,7 @@
 // takes every one shown, so a filter then Select all is a whole import or
 // month) to delete together or give one category.
 import { Fragment } from 'preact';
-import { useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
@@ -174,6 +174,19 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const [sure, setSure] = useState(false);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  // While selecting, outside a field or a sheet: Ctrl+A (⌘A) selects every row shown, Escape stops selecting (Shortcuts.tsx says so).
+  const keyed = useRef({ all: () => {}, stop: () => {} });
+  useLayoutEffect(() => {
+    if (!picking) return undefined;
+    const keys = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || document.documentElement.classList.contains('sheet-open') || !document.getElementById('finances')?.classList.contains('active')) return;
+      if ((e.target as Element).closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
+      if (e.key === 'Escape') { e.preventDefault(); keyed.current.stop(); }
+      else if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); keyed.current.all(); }
+    };
+    document.addEventListener('keydown', keys);
+    return () => document.removeEventListener('keydown', keys);
+  }, [picking]);
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const all = ledger.transactions;
   // What each came to in the plan's currency, so the totals add up (an account may keep another).
@@ -202,6 +215,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const pick = (ids: Set<string>) => { setPicked(ids); setSure(false); setProblem(''); };
   const toggle = (id: string) => { const next = new Set(picked); if (next.has(id)) next.delete(id); else next.add(id); pick(next); };
   const stopPicking = () => { setPicking(false); pick(new Set()); setCatFor(''); };
+  const pickAll = () => pick(new Set([...picked, ...shown.map((t) => t.id)]));
+  keyed.current = { all: pickAll, stop: stopPicking };
   const change = async (txs: finance.Transaction[]) => {
     if (busy || !saveLedger) return;
     setBusy(true);
@@ -278,7 +293,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
           {picking && <div class="fx-txpick" role="group" aria-label="The selected transactions">
             <span class="fx-txpicked" role="status">{chosen.length ? `${plural(chosen.length, 'transaction')} selected` : 'None selected: click a row to select it'}</span>
             {chosen.length < shown.length
-              ? <button type="button" class="small" disabled={busy} onClick={() => pick(new Set([...picked, ...shown.map((t) => t.id)]))}>Select all {shown.length}</button>
+              ? <button type="button" class="small" disabled={busy} onClick={pickAll}>Select all {shown.length}</button>
               : <button type="button" class="small" disabled={busy} onClick={() => pick(new Set())}>Select none</button>}
             {!!chosen.length && <>
               <span class="fx-txpickcat">
