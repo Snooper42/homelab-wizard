@@ -369,3 +369,38 @@ struct StatusAloudTests {
         #expect(DashboardViewModel.listed(["A", "B", "C", "D", "E", "F", "G"]) == "A, B, C, D and 3 more")
     }
 }
+
+#if os(macOS)
+// The theme's colours stay readable as text on a card, in light and dark
+// (WCAG AA for small text: 4.5:1). Theme.swift promises it; this keeps it.
+@Suite("Theme colours")
+struct ThemeContrastTests {
+    /// Relative luminance from a resolved colour, whose components are linear sRGB.
+    private func luminance(_ c: Color.Resolved) -> Double {
+        0.2126 * Double(c.linearRed) + 0.7152 * Double(c.linearGreen) + 0.0722 * Double(c.linearBlue)
+    }
+
+    private func contrast(_ a: Color.Resolved, _ b: Color.Resolved) -> Double {
+        let (x, y) = (luminance(a), luminance(b))
+        return (max(x, y) + 0.05) / (min(x, y) + 0.05)
+    }
+
+    @Test @MainActor func textColoursReadOnTheirCards() throws {
+        var light = EnvironmentValues(), dark = EnvironmentValues()
+        light.colorScheme = .light
+        dark.colorScheme = .dark
+        // The dark values must really be the dark ones, or the check means nothing.
+        #expect(Theme.surface.resolve(in: light) != Theme.surface.resolve(in: dark))
+
+        let colours: [(String, Color)] = [("accent", Theme.accent), ("success", Theme.success), ("warning", Theme.warning),
+                                          ("caution", Theme.caution), ("danger", Theme.danger), ("info", Theme.info)]
+        for (scheme, env) in [("light", light), ("dark", dark)] {
+            let card = Theme.surface.resolve(in: env)
+            for (name, colour) in colours {
+                let ratio = contrast(colour.resolve(in: env), card)
+                #expect(ratio >= 4.5, "\(name) in \(scheme): \(ratio)")
+            }
+        }
+    }
+}
+#endif
