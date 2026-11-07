@@ -1432,6 +1432,11 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:14px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
+/* On Finances every mark is round, as a logo on a coin: each row's, the forms', and the charts'. A logo's own art sits a
+   little further in, so its corners clear the circle; three letters a size smaller. Other screens keep theirs. */
+#finances .fmark { border-radius:50%; }
+#finances .fmark.art img { width:64%; height:64%; }
+#finances .fmark.mono.three { font-size:10px; }
 .fwhos { display:inline-flex; flex:none; }
 .fwho { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--white); background:var(--person-0); box-shadow:0 0 0 2px var(--panel); }
 .fwho.p1 { background:var(--person-1); } .fwho.p2 { background:var(--person-2); } .fwho.p3 { background:var(--person-3); }

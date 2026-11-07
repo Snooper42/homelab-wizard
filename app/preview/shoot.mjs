@@ -6410,6 +6410,20 @@ const smokes = [
       if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
     }
   } })),
+  // On Finances every mark is round, a logo on a coin: a payment's logo on Recurring, an account's on Net worth, a
+  // category's icon on Transactions.
+  { name: 'Finances: logos and icons are round on every row', screen: 'finances', run: async (page) => {
+    const round = (sel) => page.$eval(sel, (e) => getComputedStyle(e).borderRadius === '50%');
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has-text("Netflix") .fmark.logo', { timeout: 5000 });
+    if (!(await round('.fx-payments li:has-text("Netflix") .fmark'))) throw new Error('a payment\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fx-ownlist li:has-text("RAV4") .fmark', { timeout: 5000 });
+    if (!(await round('.fx-ownlist li:has-text("RAV4") .fmark'))) throw new Error('an account\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-txday .fmark', { timeout: 5000 });
+    if (!(await page.$$eval('.fx-txday .fmark', (ms) => ms.every((e) => getComputedStyle(e).borderRadius === '50%')))) throw new Error('a transaction\'s mark is not round');
+  } },
   // One colour per category, everywhere: Food (the third top category, so the third colour) on a transaction with no logo,
   // its budget, its row and bar on Reports, and its box in the money flow; a payment's kind takes its category's colour
   // (Groceries and gas is Shopping, the seventh). The icon reads on its tint at 4.5:1 (lint.mjs checks the tokens).
