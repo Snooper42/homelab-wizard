@@ -9058,6 +9058,7 @@
     }, stop: () => {
     } });
     const latest = A2(ledger);
+    const anchor = A2("");
     latest.current = ledger;
     _2(() => {
       if (!picking) return void 0;
@@ -9090,22 +9091,26 @@
     const want = q2.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const shown6 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || catsOf(t3).includes(category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown6.length !== all.length;
+    const list = [...shown6].reverse();
     const chosen = shown6.filter((t3) => picked.has(t3.id));
     const pick = (ids) => {
       setPicked(ids);
       setSure(false);
       setProblem("");
     };
-    const toggle = (id2) => {
-      const next = new Set(picked);
-      if (next.has(id2)) next.delete(id2);
+    const toggle = (id2, range) => {
+      const next = new Set(picked), order2 = list.map((t3) => t3.id), from2 = anchor.current ? order2.indexOf(anchor.current) : -1, to = order2.indexOf(id2);
+      if (range && from2 >= 0 && to >= 0) for (const x3 of order2.slice(Math.min(from2, to), Math.max(from2, to) + 1)) next.add(x3);
+      else if (next.has(id2)) next.delete(id2);
       else next.add(id2);
+      anchor.current = id2;
       pick(next);
     };
     const stopPicking = () => {
       setPicking(false);
       pick(/* @__PURE__ */ new Set());
       setCatFor("");
+      anchor.current = "";
     };
     const pickAll = () => pick(/* @__PURE__ */ new Set([...picked, ...shown6.map((t3) => t3.id)]));
     keyed.current = { all: pickAll, stop: stopPicking };
@@ -9118,29 +9123,44 @@
       else setProblem("It could not be kept: try again.");
       return ok;
     };
-    const removePicked = async () => {
+    const undoable = async (words5, was, txs) => {
+      if (!await change(txs)) return;
+      showUndo(words5, () => {
+        const now2 = latest.current;
+        if (!now2 || !saveLedger2) return;
+        const back2 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
+        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back2.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
+      });
+    };
+    const removePicked = () => {
       if (!sure) {
         setSure(true);
         return;
       }
-      const gone = chosen, ids = new Set(gone.map((t3) => t3.id));
-      if (!await change(all.filter((t3) => !ids.has(t3.id)))) return;
-      showUndo(`Deleted ${plural(gone.length, "transaction")}`, () => {
-        const now2 = latest.current;
-        if (!now2 || !saveLedger2) return;
-        const there = new Set(now2.transactions.map((t3) => t3.id));
-        saveLedger2({ ...now2, transactions: [...now2.transactions, ...gone.filter((t3) => !there.has(t3.id))] });
-      });
+      const ids = new Set(chosen.map((t3) => t3.id));
+      undoable(`Deleted ${plural(chosen.length, "transaction")}`, chosen, all.filter((t3) => !ids.has(t3.id)));
     };
     const categorize = () => {
-      const ids = new Set(chosen.filter((t3) => !t3.to).map((t3) => t3.id)), c3 = catFor.trim();
+      const was = chosen.filter((t3) => !t3.to), ids = new Set(was.map((t3) => t3.id)), c3 = catFor.trim();
       if (!ids.size) {
         setProblem("Transfers between your accounts take no category.");
         return;
       }
-      change(all.map((t3) => ids.has(t3.id) ? { ...t3, category: c3 || void 0, splits: void 0 } : t3));
+      undoable(
+        c3 ? `${plural(was.length, "transaction")} put in ${c3}` : `Took the category off ${plural(was.length, "transaction")}`,
+        was,
+        all.map((t3) => ids.has(t3.id) ? { ...t3, category: c3 || void 0, splits: void 0 } : t3)
+      );
     };
-    const list = [...shown6].reverse();
+    const moveTo = (acct) => {
+      const was = chosen.filter((t3) => t3.account !== acct && t3.to !== acct), ids = new Set(was.map((t3) => t3.id));
+      if (!ids.size) {
+        setProblem(chosen.some((t3) => t3.to === acct) ? "A transfer can’t come out of the account it goes into." : "They are in it already.");
+        return;
+      }
+      undoable(`Moved ${plural(was.length, "transaction")} to ${L2.account[acct]?.name || acct}`, was, all.map((t3) => ids.has(t3.id) ? { ...t3, account: acct } : t3));
+    };
+    const into2 = (v3.plan.accounts || []).filter((a3) => a3.kind !== "home" && a3.kind !== "car" && a3.kind !== "collectible");
     const now = v3.today.slice(0, 7);
     const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
     const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + amt(t3), 0);
@@ -9218,6 +9238,13 @@
                   /* @__PURE__ */ u3("input", { value: catFor, onInput: (e3) => setCatFor(e3.target.value), list: "fxPickCategories", placeholder: "Category", "aria-label": "Category for the selected" }),
                   /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: categorize, children: catFor.trim() ? "Set category" : "Clear category" })
                 ] }),
+                into2.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-txpickmove", "aria-label": "Move the selected to an account", value: "", disabled: busy2, onChange: (e3) => {
+                  const a3 = e3.target.value;
+                  if (a3) moveTo(a3);
+                }, children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Move to…" }),
+                  into2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))
+                ] }),
                 /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removePicked, children: sure ? `Click again to delete ${plural(chosen.length, "transaction")}` : `Delete ${chosen.length}` })
               ] }),
               problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
@@ -9237,7 +9264,7 @@
                 const where = t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account;
                 const what2 = t3.splits?.length ? t3.splits.map((s3) => s3.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
                 const on2 = picking && picked.has(t3.id);
-                const opens = picking ? () => toggle(t3.id) : edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
+                const opens = picking ? (e3) => toggle(t3.id, e3.shiftKey) : edit ? () => edit("transaction", t3.id) : t3.receipt && readReceipt ? () => look2(t3) : void 0;
                 const open4 = !picking && seen2?.id === t3.id ? seen2 : null;
                 return /* @__PURE__ */ u3(S, { children: [
                   /* @__PURE__ */ u3(

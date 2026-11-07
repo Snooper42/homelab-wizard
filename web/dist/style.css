@@ -2048,7 +2048,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-txpicked { flex:1 1 auto; font-size:13px; font-weight:600; }
 .fx-txpickcat { display:inline-flex; gap:6px; }
 .fx-txpickcat input { font:inherit; font-size:13px; min-height:30px; width:10em; min-width:0; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
-.fx-txpickcat input:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txpickcat input:focus, .fx-txpickmove:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txpickmove { font:inherit; font-size:13px; min-height:30px; max-width:12em; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
 .fx-check { flex:none; width:20px; height:20px; margin-right:2px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--line-strong); background:var(--panel); }
 .fx-check svg { width:14px; height:14px; fill:none; stroke:var(--fin-accent-text); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; visibility:hidden; }
 .fx-check.on { background:var(--fin-accent); border-color:var(--fin-accent); }

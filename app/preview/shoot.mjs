@@ -6451,6 +6451,33 @@ const smokes = [
     await page.keyboard.press((await page.evaluate(() => navigator.platform.startsWith('Mac'))) ? 'Meta+z' : 'Control+z');
     await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
   } },
+  // Shift+click picks a range; Move to puts them in another account, Undo puts them back; a category set is undone too.
+  { name: 'Finances: selected transactions move to another account, a Shift+click range, with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const rows = '.fx-transactions .fx-txday li.opens';
+    const ids = await page.evaluate(() => window.__MOCK.ledger?.transactions?.length);
+    await page.click('.fx-transactions button:text-is("Select")');
+    // The fifth to the seventh rows shown (Trader Joe's, Claude Pro, Verizon): none a transfer.
+    await page.click(`${rows} >> nth=4`);
+    await page.click(`${rows} >> nth=6`, { modifiers: ['Shift'] });
+    await page.waitForSelector('.fx-txpick :text("3 transactions selected")', { timeout: 5000 });
+    await page.selectOption('.fx-txpick select[aria-label="Move the selected to an account"]', { label: 'Amex Gold' });
+    await page.waitForSelector('#undoNote :text("Moved 3 transactions to Amex Gold")', { timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const moved = txs.filter((t) => t.account === 'amex').map((t) => t.id);
+    if (moved.length !== 3) throw new Error(`moved ${JSON.stringify(txs)}`);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((m) => { const t = window.__MOCK.ledgerSaved?.at(-1)?.transactions; return t && !t.some((x) => m.includes(x.id) && x.account === 'amex'); }, moved, { timeout: 5000 });
+    // A category set, then undone: each back to its own.
+    await page.click(`${rows} >> nth=4`);
+    await page.fill('.fx-txpick input[aria-label="Category for the selected"]', 'Fun');
+    await page.click('.fx-txpick button:text-is("Set category")');
+    await page.waitForSelector('#undoNote :text("1 transaction put in Fun")', { timeout: 5000 });
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction(() => !window.__MOCK.ledgerSaved?.at(-1)?.transactions.some((t) => t.category === 'Fun'), null, { timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (ids && txs.length !== ids) throw new Error(`${txs.length} of ${ids}`);
+  } },
   // While selecting, Ctrl+A (⌘A on a Mac) takes every row shown and Escape stops selecting.
   { name: 'Finances: while selecting transactions, Ctrl+A selects them all and Escape stops', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });

@@ -36,7 +36,7 @@ export interface RowProps {
    * button, so it takes no Edit of its own. Only with nothing else to press
    * in it (end holds words and figures, no buttons).
    */
-  onOpen?: () => void;
+  onOpen?: (e: MouseEvent) => void;
   /**
    * What a screen reader hears after the row's own words, for what pressing
    * it does ("edit"). The row's words stay the button's name, so a person

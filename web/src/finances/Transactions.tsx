@@ -10,7 +10,8 @@
 // says so; above them, those that look like one but are not linked yet,
 // each to link with a click or say Not it. Select picks rows (Select all
 // takes every one shown, so a filter then Select all is a whole import or
-// month) to delete together, with Undo after, or give one category.
+// month; Shift+click a range) to delete together, give one category, or
+// move to another account, each with Undo after.
 import { Fragment } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
@@ -179,6 +180,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
   const keyed = useRef({ all: () => {}, stop: () => {} });
   // The ledger as now, for an Undo pressed after it changed.
   const latest = useRef(ledger);
+  // The row last clicked while selecting, where a Shift+click's range starts.
+  const anchor = useRef('');
   latest.current = ledger;
   useLayoutEffect(() => {
     if (!picking) return undefined;
@@ -214,11 +217,19 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
+  const list = [...shown].reverse();
   // What the picked act on: those picked that the filters still show.
   const chosen = shown.filter((t) => picked.has(t.id));
   const pick = (ids: Set<string>) => { setPicked(ids); setSure(false); setProblem(''); };
-  const toggle = (id: string) => { const next = new Set(picked); if (next.has(id)) next.delete(id); else next.add(id); pick(next); };
-  const stopPicking = () => { setPicking(false); pick(new Set()); setCatFor(''); };
+  // A click picks a row or lets it go; Shift+click picks every row from the last one clicked to it, as shown.
+  const toggle = (id: string, range: boolean) => {
+    const next = new Set(picked), order = list.map((t) => t.id), from = anchor.current ? order.indexOf(anchor.current) : -1, to = order.indexOf(id);
+    if (range && from >= 0 && to >= 0) for (const x of order.slice(Math.min(from, to), Math.max(from, to) + 1)) next.add(x);
+    else if (next.has(id)) next.delete(id); else next.add(id);
+    anchor.current = id;
+    pick(next);
+  };
+  const stopPicking = () => { setPicking(false); pick(new Set()); setCatFor(''); anchor.current = ''; };
   const pickAll = () => pick(new Set([...picked, ...shown.map((t) => t.id)]));
   keyed.current = { all: pickAll, stop: stopPicking };
   const change = async (txs: finance.Transaction[]) => {
@@ -229,25 +240,36 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
     if (ok) pick(new Set()); else setProblem('It could not be kept: try again.');
     return ok;
   };
-  // Deleted, they can come back with Undo (or ⌘Z) while its note shows: into the ledger as it is then.
-  const removePicked = async () => {
-    if (!sure) { setSure(true); return; }
-    const gone = chosen, ids = new Set(gone.map((t) => t.id));
-    if (!(await change(all.filter((t) => !ids.has(t.id))))) return;
-    showUndo(`Deleted ${plural(gone.length, 'transaction')}`, () => {
+  // A change to the picked, kept, then undone with Undo (or ⌘Z) while its note shows: each as it was put back
+  // into the ledger as it is then, a deleted one in again.
+  const undoable = async (words: string, was: finance.Transaction[], txs: finance.Transaction[]) => {
+    if (!(await change(txs))) return;
+    showUndo(words, () => {
       const now = latest.current;
       if (!now || !saveLedger) return;
-      const there = new Set(now.transactions.map((t) => t.id));
-      saveLedger({ ...now, transactions: [...now.transactions, ...gone.filter((t) => !there.has(t.id))] });
+      const back = new Map(was.map((t) => [t.id, t])), there = new Set(now.transactions.map((t) => t.id));
+      saveLedger({ ...now, transactions: [...now.transactions.map((t) => back.get(t.id) || t), ...was.filter((t) => !there.has(t.id))] });
     });
+  };
+  const removePicked = () => {
+    if (!sure) { setSure(true); return; }
+    const ids = new Set(chosen.map((t) => t.id));
+    undoable(`Deleted ${plural(chosen.length, 'transaction')}`, chosen, all.filter((t) => !ids.has(t.id)));
   };
   // A category for each picked one that is not a transfer between the household's accounts; its parts, if split, are let go.
   const categorize = () => {
-    const ids = new Set(chosen.filter((t) => !t.to).map((t) => t.id)), c = catFor.trim();
+    const was = chosen.filter((t) => !t.to), ids = new Set(was.map((t) => t.id)), c = catFor.trim();
     if (!ids.size) { setProblem('Transfers between your accounts take no category.'); return; }
-    change(all.map((t) => (ids.has(t.id) ? { ...t, category: c || undefined, splits: undefined } : t)));
+    undoable(c ? `${plural(was.length, 'transaction')} put in ${c}` : `Took the category off ${plural(was.length, 'transaction')}`, was,
+      all.map((t) => (ids.has(t.id) ? { ...t, category: c || undefined, splits: undefined } : t)));
   };
-  const list = [...shown].reverse();
+  // Into another account (a file brought into the wrong one): a transfer keeps the account it went into, so not one into this.
+  const moveTo = (acct: string) => {
+    const was = chosen.filter((t) => t.account !== acct && t.to !== acct), ids = new Set(was.map((t) => t.id));
+    if (!ids.size) { setProblem(chosen.some((t) => t.to === acct) ? 'A transfer can’t come out of the account it goes into.' : 'They are in it already.'); return; }
+    undoable(`Moved ${plural(was.length, 'transaction')} to ${L.account[acct]?.name || acct}`, was, all.map((t) => (ids.has(t.id) ? { ...t, account: acct } : t)));
+  };
+  const into = (v.plan.accounts || []).filter((a) => a.kind !== 'home' && a.kind !== 'car' && a.kind !== 'collectible');
   const now = v.today.slice(0, 7);
   const thisMonth = all.filter((t) => t.date.startsWith(now) && !t.to);
   const sum = (f: (t: finance.Transaction) => boolean) => thisMonth.filter(f).reduce((s, t) => s + amt(t), 0);
@@ -312,6 +334,10 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
                 <input value={catFor} onInput={(e) => setCatFor((e.target as HTMLInputElement).value)} list="fxPickCategories" placeholder="Category" aria-label="Category for the selected" />
                 <button type="button" class="small" disabled={busy} onClick={categorize}>{catFor.trim() ? 'Set category' : 'Clear category'}</button>
               </span>
+              {into.length > 1 && <select class="fx-txpickmove" aria-label="Move the selected to an account" value="" disabled={busy} onChange={(e) => { const a = (e.target as HTMLSelectElement).value; if (a) moveTo(a); }}>
+                <option value="">Move to…</option>
+                {into.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>}
               <button type="button" class="small danger" disabled={busy} onClick={removePicked}>{sure ? `Click again to delete ${plural(chosen.length, 'transaction')}` : `Delete ${chosen.length}`}</button>
             </>}
             {problem && <span class="formerr bad" role="alert">{problem}</span>}
@@ -327,7 +353,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
                   const where = t.to ? `${a?.name || t.account} → ${L.account[t.to]?.name || t.to}` : a?.name || t.account;
                   const what = t.splits?.length ? t.splits.map((s) => s.category).join(', ') : t.category || (t.to ? 'Transfer' : 'No category');
                   const on = picking && picked.has(t.id);
-                  const opens = picking ? () => toggle(t.id) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
+                  const opens = picking ? (e: MouseEvent) => toggle(t.id, e.shiftKey) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
                   const open = !picking && seen?.id === t.id ? seen : null;
                   return <Fragment key={t.id}><Row lead={picking ? <><span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span><TxMark t={t} categories={v.categories} /></> : <TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
                     sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
