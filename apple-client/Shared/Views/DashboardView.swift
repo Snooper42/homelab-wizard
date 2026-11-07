@@ -1,0 +1,677 @@
+import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
+
+/// The unlocked app. Its layout follows the platform:
+/// - iPhone (compact width): a `NavigationStack` with pull to refresh,
+///   push navigation and haptics.
+/// - Mac and iPad (regular width): a three-column `NavigationSplitView`
+///   with a sidebar, the app list and a detail pane.
+struct DashboardView: View {
+    @State private var model: DashboardViewModel
+    /// Lives as long as the dashboard. Locking removes both, and the pending
+    /// states and command output go with them.
+    @State private var actions: AppActionsViewModel
+    @State private var tasks: HomelabTasksViewModel
+    @State private var computer: ComputerViewModel
+    @State private var finances: FinancesViewModel
+    private let api: APIClient
+    /// Asks the computer again what this device may do (`/api/me`).
+    private let refreshDevice: @MainActor () async -> Void
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
+
+    init(coordinator: AppCoordinator) {
+        api = coordinator.api
+        refreshDevice = { [weak coordinator] in await coordinator?.refreshDevice() }
+        let dashboard = DashboardViewModel(api: coordinator.api, liveEvents: coordinator.liveEvents)
+        let device: @MainActor () -> DeviceInfo? = { [weak coordinator] in coordinator?.device }
+        let authorize: @MainActor (String) async -> Bool = { [weak coordinator] reason in
+            await coordinator?.authorizeChange(reason: reason) ?? false
+        }
+        _model = State(initialValue: dashboard)
+        _actions = State(initialValue: AppActionsViewModel(
+            api: coordinator.api,
+            liveEvents: coordinator.liveEvents,
+            device: device,
+            authorize: authorize
+        ))
+        _tasks = State(initialValue: HomelabTasksViewModel(
+            api: coordinator.api,
+            device: device,
+            authorize: authorize,
+            didFinish: { [weak dashboard] task in
+                // Read again what the job changed.
+                switch task {
+                case .backup, .restoreTest: await dashboard?.backups.load()
+                case .fix: await dashboard?.refresh()
+                }
+            }
+        ))
+        _finances = State(initialValue: FinancesViewModel(api: coordinator.api, device: device, authorize: authorize))
+        _computer = State(initialValue: ComputerViewModel(
+            api: coordinator.api,
+            liveEvents: coordinator.liveEvents,
+            device: device,
+            authorize: authorize
+        ))
+    }
+
+    var body: some View {
+        Group {
+            #if os(iOS)
+            if sizeClass == .compact {
+                PhoneDashboard(model: model, computer: computer, finances: finances)
+            } else {
+                SplitDashboard(model: model, computer: computer, finances: finances)
+            }
+            #else
+            SplitDashboard(model: model, computer: computer, finances: finances)
+            #endif
+        }
+        // A haptic when something new needs attention, not when it clears.
+        .sensoryFeedback(.warning, trigger: model.attentionCount) { old, new in new > old }
+        .modifier(AppActionsPresenter(actions: actions))
+        .sheet(item: $model.logsApp) { app in
+            LogsView(app: app, api: api)
+        }
+        .sheet(item: $tasks.output) { output in
+            TaskOutputView(output: output)
+                .environment(tasks)
+        }
+        .sensoryFeedback(.success, trigger: tasks.successCount)
+        .sensoryFeedback(.error, trigger: tasks.failureCount)
+        .environment(actions)
+        .environment(tasks)
+        .environment(model)
+        .environment(model.icons)
+        .task { await model.loadCatalog() }
+        .task { await model.loadForMorning() }
+        // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
+        .onChange(of: model.liveEvents.status) { _, status in
+            guard let status else { return }
+            model.latestApps = status.apps
+            // Status read aloud: VoiceOver hears what changed as it changes.
+            if let words = model.changesToSay(status.apps) {
+                AccessibilityNotification.Announcement(words).post()
+            }
+            // The widget's one line, when it's turned on: a count, never names.
+            if WidgetSummaryStore.save(WidgetSummary(needALook: model.attentionCount, at: Date())) {
+                WidgetSummaryStore.reloadWidget()
+            }
+        }
+        .onDisappear {
+            model.rememberSeen()
+            #if os(macOS)
+            DockBadge.show(0)
+            #endif
+        }
+        #if os(macOS)
+        // How many apps need attention, on the Dock icon, only while unlocked:
+        // the dashboard goes on lock, and the badge with it.
+        .onChange(of: model.attentionCount, initial: true) { _, count in DockBadge.show(count) }
+        #endif
+        // The cards change slowly: read them now, then every 5 minutes while
+        // unlocked. What this device may do is read again with them: the
+        // computer can give a phone its changes for a while only (main #455),
+        // and when that ends it only looks, without telling the phone.
+        .task {
+            var first = true
+            while !Task.isCancelled {
+                if !first { await refreshDevice() }
+                first = false
+                await model.cards.load()
+                try? await Task.sleep(for: .seconds(300))
+            }
+        }
+        // A change that failed may have failed because this device may no
+        // longer make changes: read that again, so the buttons go if so.
+        .onChange(of: actions.failureCount) { Task { await refreshDevice() } }
+        .onChange(of: tasks.failureCount) { Task { await refreshDevice() } }
+    }
+}
+
+// MARK: - iPhone
+
+private struct PhoneDashboard: View {
+    @Bindable var model: DashboardViewModel
+    /// Which groups are open (StatusFolds): names only, kept like the sidebar's place.
+    @SceneStorage("statusFolds") private var folds = ""
+    let computer: ComputerViewModel
+    let finances: FinancesViewModel
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // While searching, only the apps that match.
+                if !model.isSearching {
+                    PhoneOverviewSection(model: model, computer: computer, finances: finances)
+                }
+                let changed = model.isSearching ? [] : model.changedApps
+                if !changed.isEmpty {
+                    Section {
+                        ForEach(changed) { app in
+                            NavigationLink(value: app.id) {
+                                AppRowView(app: app)
+                            }
+                            .appActionControls(for: app)
+                        }
+                    } header: {
+                        HStack {
+                            Text("Changed Since You Looked")
+                            Spacer()
+                            Button("Mark as Seen") { model.markAllSeen() }
+                                .textCase(nil)
+                                .font(.caption)
+                        }
+                    }
+                }
+                // By category, as the computer's Status: what needs a look
+                // first, then the pinned apps. While searching, every match shows.
+                ForEach(model.isSearching ? model.groups(matching: model.search) : model.groups) { group in
+                    let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
+                    Section {
+                        if open {
+                            ForEach(group.apps) { app in
+                                NavigationLink(value: app.id) {
+                                    AppRowView(app: app)
+                                }
+                                .appActionControls(for: app)
+                            }
+                        } else {
+                            FoldedGroupNames(group: group) { folds = StatusFolds.setting(group, open: true, in: folds) }
+                        }
+                    } header: {
+                        GroupHeader(group: group, open: open) {
+                            folds = StatusFolds.setting(group, open: !open, in: folds)
+                        }
+                    }
+                }
+            }
+            .overlay {
+                if !model.hasLoaded {
+                    NotLoadedView(model: model)
+                } else if model.isSearching, !model.apps(for: .all).contains(where: { model.matchesSearch($0) }) {
+                    ContentUnavailableView.search(text: model.search)
+                }
+            }
+            .themedCanvas()
+            .searchable(text: $model.search, prompt: "Apps")
+            .navigationTitle("Homelab")
+            .navigationDestination(for: AppStatus.ID.self) { id in
+                AppDetailView(app: model.app(id: id))
+            }
+            .refreshable { await model.refresh() }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    DeviceMenu()
+                }
+            }
+        }
+    }
+}
+
+/// The iPhone list's first section: the summary, and the way to each screen.
+/// Its own view, so the list's body stays small enough to type-check quickly.
+private struct PhoneOverviewSection: View {
+    let model: DashboardViewModel
+    let computer: ComputerViewModel
+    let finances: FinancesViewModel
+
+    var body: some View {
+        Section {
+            OverviewHeader(model: model)
+            NavigationLink {
+                OverviewView(cards: model.cards, finances: finances)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
+            } label: {
+                Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
+                    .badge(model.failingChecks)
+            }
+            NavigationLink {
+                BackupsView(backups: model.backups)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
+            } label: {
+                Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                    .badge(model.backups.needsAttention)
+            }
+            if finances.canSeePlan {
+                NavigationLink {
+                    FinancesView(finances: finances)
+                        .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
+                } label: {
+                    Label("Finances", systemImage: "banknote")
+                }
+            }
+            NavigationLink {
+                ComputerView(computer: computer)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
+            } label: {
+                Label("Computer", systemImage: "desktopcomputer")
+            }
+        }
+    }
+}
+
+// MARK: - Mac & iPad
+
+private struct SplitDashboard: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    @Environment(AppCoordinator.self) private var coordinator
+    /// The sidebar's choice, kept across launches as the computer keeps each
+    /// screen's place (#417). Only the choice is kept, never what it shows.
+    @SceneStorage("sidebar") private var savedSidebar = "apps:all"
+    /// Which Status groups are open (StatusFolds), as on iPhone.
+    @SceneStorage("statusFolds") private var folds = ""
+    @Bindable var model: DashboardViewModel
+    let computer: ComputerViewModel
+    let finances: FinancesViewModel
+    @State private var columns: NavigationSplitViewVisibility = .all
+
+    var body: some View {
+        NavigationSplitView(columnVisibility: $columns) {
+            List(selection: $model.sidebar) {
+                Section {
+                    Label("Overview", systemImage: "gauge.with.dots.needle.33percent")
+                        .badge(model.failingChecks)
+                        .tag(DashboardViewModel.SidebarItem.overview)
+                    Label("Backups", systemImage: "externaldrive.badge.checkmark")
+                        .badge(model.backups.needsAttention)
+                        .tag(DashboardViewModel.SidebarItem.backups)
+                    if finances.canSeePlan {
+                        Label("Finances", systemImage: "banknote")
+                            .tag(DashboardViewModel.SidebarItem.finances)
+                    }
+                    Label("Computer", systemImage: "desktopcomputer")
+                        .tag(DashboardViewModel.SidebarItem.computer)
+                }
+                Section("Apps") {
+                    ForEach(DashboardViewModel.Filter.allCases) { filter in
+                        Label(filter.title, systemImage: filter.systemImage)
+                            .badge(model.count(for: filter))
+                            .tag(DashboardViewModel.SidebarItem.apps(filter))
+                    }
+                }
+            }
+            .navigationTitle("Homelab")
+            .onAppear { model.sidebar = DashboardViewModel.SidebarItem(storageKey: savedSidebar) ?? .apps(.all) }
+            .onChange(of: model.sidebar) { _, item in
+                if let item { savedSidebar = item.storageKey }
+            }
+            // An app asked for from the menu bar: show it in the full list.
+            .onChange(of: coordinator.requestedAppID, initial: true) { _, id in
+                guard let id else { return }
+                coordinator.requestedAppID = nil
+                model.search = ""
+                model.sidebar = .apps(.all)
+                model.selectedAppID = id
+            }
+            .navigationSplitViewColumnWidth(min: 190, ideal: 220)
+            .safeAreaInset(edge: .bottom) {
+                ConnectionBadge(state: model.liveEvents.connection)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+        } content: {
+            switch model.sidebar {
+            case .overview?:
+                OverviewView(cards: model.cards, finances: finances)
+                    .safeAreaInset(edge: .top) { healthLine }
+                    .navigationSplitViewColumnWidth(min: 300, ideal: 380)
+                    .toolbar { toolbarItems }
+            case .backups?:
+                BackupsView(backups: model.backups)
+                    .safeAreaInset(edge: .top) { healthLine }
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            case .finances?:
+                FinancesView(finances: finances)
+                    .safeAreaInset(edge: .top) { healthLine }
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            case .computer?:
+                ComputerView(computer: computer)
+                    .safeAreaInset(edge: .top) { healthLine }
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            default:
+                appList
+            }
+        } detail: {
+            if let app = model.app(id: model.selectedAppID) {
+                AppDetailView(app: app)
+                    .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
+            } else {
+                ContentUnavailableView(
+                    "No App Selected",
+                    systemImage: "server.rack",
+                    description: Text("Choose an app to see its details.")
+                )
+            }
+        }
+    }
+
+    private var appList: some View {
+        let filter: DashboardViewModel.Filter
+        if case .apps(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
+        let apps = model.apps(for: filter).filter { model.matchesSearch($0) }
+        return List(selection: $model.selectedAppID) {
+            if filter == .all {
+                // All Apps is grouped by category, as the computer's Status.
+                ForEach(model.isSearching ? model.groups(matching: model.search) : model.groups) { group in
+                    let open = model.isSearching || StatusFolds.isOpen(group, in: folds)
+                    Section {
+                        if open {
+                            ForEach(group.apps) { app in
+                                AppRowView(app: app)
+                                    .appActionControls(for: app)
+                            }
+                        } else {
+                            FoldedGroupNames(group: group) { folds = StatusFolds.setting(group, open: true, in: folds) }
+                        }
+                    } header: {
+                        GroupHeader(group: group, open: open) {
+                            folds = StatusFolds.setting(group, open: !open, in: folds)
+                        }
+                    }
+                }
+            } else {
+                ForEach(apps) { app in
+                    AppRowView(app: app)
+                        .appActionControls(for: app)
+                }
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            if model.overnightLine != nil {
+                OvernightLine(model: model)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .background(.bar)
+            }
+        }
+        .overlay {
+            if !model.hasLoaded {
+                NotLoadedView(model: model)
+            } else if apps.isEmpty {
+                if model.isSearching {
+                    ContentUnavailableView.search(text: model.search)
+                } else {
+                    ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage,
+                                           description: filter == .all ? Text("Pick a few on the computer's Choose apps. They show up here as they start.") : nil)
+                }
+            }
+        }
+        .searchable(text: $model.search, prompt: "Filter Apps")
+        .navigationTitle(filter.title)
+        #if os(macOS)
+        .navigationSubtitle(model.summary)
+        #endif
+        .navigationSplitViewColumnWidth(min: 260, ideal: 320)
+        .refreshable { await model.refresh() }
+        .toolbar {
+            toolbarItems
+            ToolbarItem(placement: .automatic) {
+                GroupActionsMenu(apps: apps)
+            }
+            if !model.changedApps.isEmpty {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        model.markAllSeen()
+                    } label: {
+                        Label("Mark as Seen", systemImage: "eye.circle")
+                    }
+                    .help("Clear the dots on rows that changed since you looked")
+                }
+            }
+        }
+    }
+
+    /// Health in one line, with Open Status to the apps that need a look.
+    private var healthLine: some View {
+        HealthLineBar(model: model) { model.sidebar = .apps(.attention) }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            Button {
+                Task { await model.refresh() }
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }
+            .disabled(model.liveEvents.isRefreshing || model.cards.isLoading)
+            .help("Read the status and cards again")
+
+            DeviceMenu()
+        }
+    }
+}
+
+/// Before the first status: reading it, or why it can't be read yet.
+private struct NotLoadedView: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        let live = model.liveEvents
+        if let error = live.refreshError ?? live.connection.problem {
+            ContentUnavailableView {
+                Label("Can't Reach the Computer", systemImage: "wifi.exclamationmark")
+            } description: {
+                Text(error)
+            } actions: {
+                Button("Try Again") {
+                    Task { await model.refresh() }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(live.isRefreshing || model.cards.isLoading)
+            }
+        } else {
+            ProgressView("Reading the status…")
+        }
+    }
+}
+
+/// Health in one line (main #470): atop every screen but Status and an
+/// app's page, "All well" or the one thing that needs you. On iPhone, Back
+/// is the way to Status; on the Mac and iPad, Open Status shows the apps
+/// that need a look.
+struct HealthLineBar: View {
+    let model: DashboardViewModel
+    var open: (@MainActor () -> Void)? = nil
+
+    var body: some View {
+        if let line = model.healthLine {
+            HStack(spacing: 8) {
+                if line.isEmpty {
+                    Label("All well", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(Theme.success)
+                } else {
+                    Label {
+                        Text(verbatim: line).lineLimit(2)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                    }
+                    .foregroundStyle(Theme.danger)
+                }
+                Spacer(minLength: 8)
+                if !line.isEmpty, let open {
+                    Button("Open Status", action: open)
+                        .buttonStyle(.borderless)
+                }
+            }
+            .font(.callout.weight(.medium))
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(.bar)
+            .accessibilityElement(children: .combine)
+        }
+    }
+}
+
+/// A Status group's heading: its fold, its name and how many, and the
+/// group's own Start, Restart and Stop menu.
+struct GroupHeader: View {
+    let group: AppGroup
+    let open: Bool
+    let toggle: @MainActor () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(action: toggle) {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(open ? 90 : 0))
+                    Text(verbatim: group.label)
+                    Text("\(group.apps.count)")
+                        .pill(group.alert ? Theme.danger : .secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text(verbatim: "\(group.label), \(group.apps.count) \(group.apps.count == 1 ? "app" : "apps")"))
+            .accessibilityValue(open ? "Open" : "Folded")
+            .accessibilityHint(open ? "Folds the group" : "Opens the group")
+            Spacer()
+            GroupActionsMenu(apps: group.apps)
+                .font(.caption)
+        }
+        .textCase(nil)
+    }
+}
+
+/// A folded group's apps, by name, on a line of their own (as the computer
+/// shows them since main #474). A tap opens the group.
+struct FoldedGroupNames: View {
+    let group: AppGroup
+    let open: @MainActor () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the group")
+    }
+}
+
+/// The morning's line about the night, with Hide until tomorrow.
+struct OvernightLine: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        if let words = model.overnightLine {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "moon.stars").foregroundStyle(.secondary).accessibilityHidden(true)
+                Text(words).font(.callout)
+                Spacer(minLength: 4)
+                Button("Hide Until Tomorrow") { model.hideOvernight() }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+}
+
+private extension DashboardViewModel.Filter {
+    var emptyTitle: String {
+        switch self {
+        case .all: "No Apps"
+        case .attention: "Nothing Needs a Look"
+        case .running: "Nothing Running"
+        case .stopped: "Nothing Stopped"
+        }
+    }
+}
+
+// MARK: - Shared pieces
+
+private struct OverviewHeader: View {
+    let model: DashboardViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ConnectionBadge(state: model.liveEvents.connection)
+            Text(model.summary)
+                .font(.title3.weight(.semibold))
+            OvernightLine(model: model)
+            if let savings = model.yearlySavings {
+                Text("Replaces \(savings, format: .currency(code: "USD").precision(.fractionLength(0))) a year in subscriptions")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            if let error = model.liveEvents.refreshError {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.warning)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+}
+
+/// The device's menu: what it may do, Lock, and Unpair.
+struct DeviceMenu: View {
+    @Environment(AppCoordinator.self) private var coordinator
+    @State private var confirmingUnpair = false
+
+    var body: some View {
+        Menu {
+            if let device = coordinator.device {
+                Section("Paired as \(device.name)") {
+                    if let server = coordinator.serverName {
+                        Label(server, systemImage: "network")
+                    }
+                    Label(
+                        device.canChange ? "Can make changes" : "Look only",
+                        systemImage: device.canChange ? "hand.tap" : "eye"
+                    )
+                }
+            }
+            Button {
+                coordinator.lock()
+            } label: {
+                Label("Lock Now", systemImage: "lock")
+            }
+            Button(role: .destructive) {
+                confirmingUnpair = true
+            } label: {
+                Label("Unpair This Device…", systemImage: "minus.circle")
+            }
+        } label: {
+            Label("Device", systemImage: "person.badge.shield.checkmark")
+        }
+        .confirmationDialog("Unpair this device?", isPresented: $confirmingUnpair, titleVisibility: .visible) {
+            Button("Unpair", role: .destructive) { coordinator.unpair() }
+        } message: {
+            if let id = coordinator.device?.id {
+                Text("The token is deleted from this device. To revoke it on the computer as well, run: homelab phone remove \(id)")
+            } else {
+                Text("The token is deleted from this device. To revoke it on the computer as well, use homelab phone remove.")
+            }
+        }
+    }
+}
+
+#if os(macOS)
+/// The Dock icon's badge: a count, never a name.
+enum DockBadge {
+    @MainActor static func show(_ count: Int) {
+        NSApplication.shared.dockTile.badgeLabel = label(for: count)
+    }
+
+    nonisolated static func label(for count: Int) -> String? {
+        count > 0 ? (count > 99 ? "99+" : String(count)) : nil
+    }
+}
+#endif

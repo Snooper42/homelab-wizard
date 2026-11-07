@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The app's privacy manifest. Add it to the app target (iOS and macOS).
+
+  - No tracking, and no tracking domains: the app talks only to the one
+    computer it paired with.
+  - No data collected: nothing leaves the device for the developer or
+    anyone else. What the app reads from the person's own computer stays
+    in memory while unlocked; the device token stays in the Keychain.
+  - Required reason APIs: UserDefaults only (CA92.1, the app's own
+    settings: the install marker, the overnight line's "hide today", the
+    hashed "changed since you looked" values, and the Mac's lock delay).
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
