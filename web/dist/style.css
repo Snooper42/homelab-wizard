@@ -1095,7 +1095,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .finishhead .meter { flex:1 1 120px; min-width:80px; margin:0; }
 .finishhead .meter[hidden] { display:none; }
 .checklist > li { grid-template-columns:auto minmax(0,1fr) auto auto; }
-.checklist > li:not(.open) > .body > .sub { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .checklist .sub.detail { margin-top:4px; color:var(--text); }
 .checklist .more { align-self:center; color:var(--muted); }
 .checklist .more .icon { transition:transform .15s; }
