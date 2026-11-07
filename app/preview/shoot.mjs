@@ -2067,6 +2067,7 @@ const smokes = [
     await log.waitFor({ timeout: 5000 });
     const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
     if (wide) throw new Error('a log line runs out of its box');
+  } },
   // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
   // nightly copy skips it; one whose app runs says Back up now tries again.
   ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
