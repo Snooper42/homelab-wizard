@@ -6,6 +6,8 @@ The master prompt for a session that makes Tidy Up solid, one finished fix per r
 
 With no interval, /loop paces itself. Each round re-reads this file, so to steer the loop, edit it, commit and push it to main, and the next round follows.
 
+It has two tracks, taken in turn: **fixes** (*The queue*: bugs and the promises below) and **the look** (*The look*: Tidy Up made to look and feel like the Finances screen, and like the finance app in the owner's reference screenshots).
+
 **Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
 
 **Alongside `features-loop.md`:** both are Account 1. While this loop runs, it owns Tidy Up; the features loop's *Tidy Up focus* defers to it and goes on to Finances. The two share Account 1's limits: **one open PR**, and **at most 3 merges a day**, between them. Before opening a PR, list Account 1's open PRs; if one is open, wait (subscribe to it, as **Waiting on CI** says) or take an item that needs no push (an audit pass).
@@ -52,7 +54,12 @@ These come before everything below; where they disagree with a later section, th
 
 1. **Start:** fetch, open PRs, branches; re-read this file. **Paused** yes: say so, stop.
 2. **Your open PR first** (Account 1's, from this loop or the features loop): green and mergeable, merge it (pinned) and tick its item below in the next PR; red, root-cause it (a job may be re-run once to tell a flaky runner from a real failure; a second failure is real); conflicting, merge main in, `make frontend`, push. Still running: go on to step 3 on a new branch, but open nothing until it merges.
-3. **Pick:** the first of: an owner complaint under **Tidy Up** in `complaints.md`; a Tidy Up item handed to Account 1 by another lane; a promise above with no test; the first unticked item in **The queue**. If all are clear, do **The audit pass** instead and write what it finds into the queue (ranked), then take the first.
+3. **Pick**, the first that applies:
+   1. an owner complaint under **Tidy Up** in `complaints.md`;
+   2. a Tidy Up item handed to Account 1 by another lane;
+   3. a **High** item in **The queue**, or a promise above with no test;
+   4. otherwise the tracks take turns: if the newest entry in **Done** is a fix, take the first unticked item in **The look**; if it is a look item, the first unticked item in **The queue**. If the track whose turn it is has nothing ready (the look waits on references, say), take the other.
+   5. Both empty: do **The audit pass**, which also compares the look (below), write what it finds into the right list (ranked), and take the first.
 4. **Reproduce** it before changing anything: the failing test, or for a screen item the screenshot (`node app/preview/shoot.mjs` with a mock that shows it). An item you can't reproduce goes back with what you tried, under **Couldn't reproduce**.
 5. **Fix** the cause, smallest change that holds; read the code it touches first. Keep the house style: words in plain English (`app/preview/words.mjs`), colours as tokens, shared markup from `web/src/parts`, components draw and `screens/tidy.ts` acts.
 6. **Checks:** `make check`; `make coverage` and `make security` when Go changes; `make frontend` then `make frontend-check` when the frontend changes; `python3 -m unittest discover -s tools/media/tests` when an engine changes (`make check` runs it too); the smoke cases you touched (`SMOKE_ONLY="Tidy Up" node app/preview/shoot.mjs --smoke` runs them all, about 60).
@@ -70,6 +77,7 @@ When the queue is empty, and at least every fifth round regardless, look Tidy Up
 - **Widths and looks:** desktop, 860px, phone (390px); light, dark, more contrast; as Mac, Windows, and Linux (`platform` in the mock). Nothing cut off, overlapping, or off its card's edge.
 - **Keyboard and VoiceOver:** Tab order follows the eye; focus goes somewhere sensible after every sheet, job, and Close; every control has a name; a job's progress is announced by step, not by tick; axe finds nothing serious.
 - **Words:** each card says first what matters most; no command names, codes, or paths where a sentence would do; numbers agree across the screen (P8).
+- **The look:** each tab beside Finances' Dashboard and the references in `docs/images/tidy-reference/`, at the same width and theme. Each difference worth closing goes into **The look**'s list, with the screenshot pair.
 - **The engines:** for each script in `tools/media`, a run against a small fixture library in a throwaway home (stopped half-way with Ctrl-C, then run again; run twice; run with the drive missing). What a household would see if it went wrong is the finding.
 
 ## The queue
@@ -91,6 +99,39 @@ Worst first. Each item: where, what goes wrong (proved, or what to prove), what 
 7. **A job that started yesterday says only "Started at 3:04 AM"** (Low; `RunningCard`, and the stopped-part-way card has no time at all). *Fixed looks like:* "Started yesterday at 3:04 AM" (or the date), using the app's own date words. *Test:* smoke with a `lock.start` a day old.
 8. **The sidebar's Tidy Up badge** counts only something wrong, not *N things need your OK*. The owner's call, asked Nov 6: ask once more in a report if there's no answer in `complaints.md`; build nothing until they say.
 9. **The owner's own machines** (not a code item): `docs/Testing.md`'s Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover, Windows with Docker Desktop. List them in a report once a week until the owner says they're tried.
+
+## The look
+
+The owner wants Tidy Up to look like the Finances screen, and like a finance app whose screenshots they keep in `docs/images/tidy-reference/`. Finances is the house's own model: it already has the parts (`web/src/finances/ui`: `Widget`, `Stat`, `Legend`, `SplitBar`, `Donut` and the charts in `charts.tsx`), and Tidy Up uses some of them already.
+
+### The references
+
+- **Where:** `docs/images/tidy-reference/`. Each picture is beside a line in its `README.md`: the file, and what the owner likes in it, in their words ("the big number on top", "the cards' spacing", "how the list shows each bill's logo"). The owner adds them (on GitHub: that folder, **Add file › Upload files**, commit to main), or sends them in a session that commits them to main.
+- **Read them at the start of every look round**, every picture, with the README. A picture with no line in the README: say what you take from it in the PR, under **Decisions to look at**.
+- **No references yet:** the look track does the **Finances** items below only, and the round's report asks the owner once a week for the pictures and what they like in each.
+- **Take the style, never the app.** Layout, spacing, hierarchy, how a figure leads a card, how a chart reads, how a list row is built: yes. Its name, logo, icons, illustrations, words, colours copied as values, or its pictures in the app: never. Every colour stays a token in `style.css`; every icon is drawn here or comes from where the repo's icons already come from. The reference pictures stay in `docs/` and are never loaded by the app.
+- **What doesn't carry over:** money words, red for a loss, a budget's guilt. Tidy Up's numbers are space won back, things to do, and time; green means won back, amber means look at it, and red only means something failed.
+
+### Each look round
+
+1. **Before:** screenshots of every Tidy Up tab the change touches, light and dark, at desktop (1280), 860px, and phone (390px), and the same of Finances' Dashboard and of the reference it follows. Use the preview (`app/preview`, its mock), at `deviceScaleFactor: 1`. Look at them side by side and write down, in one line each, what differs.
+2. **One change**, from the first unticked item below (or from a reference). Build it from Finances' parts. When Tidy Up needs a part Finances also has, use that one; when it needs a variant, add the variant to the shared part, never a copy. Shared markup stays in `web/src/parts` and `web/src/finances/ui` (`make frontend-check` fails otherwise).
+3. **Keep every promise:** no button, Undo, count, warning, or job state may be lost or hidden to make it look tidier (P2, P7, P8, P10). What a household must act on stays first on the screen. One main button on a screen, never on a step that throws things away.
+4. **A test that fails first:** a smoke case for what the change puts on the screen (*Overview leads with what was won back, as a figure and a chart*), failing on main's build. Run the layout cases too: *every card keeps its contents off its edges*, *every card's heading sits at the same height*, *on a phone the tabs sit in two rows of three*, and axe in both themes.
+5. **After:** the same screenshots. Commit the before and after pairs under `docs/images/tidy-look/<item>/` and show them in the PR (before | after | the reference). Add the screen to the repo's screenshot list (`shots` in `app/preview/shoot.mjs`) if it isn't there: Tidy Up's tabs have none there today.
+6. **Data:** a change that needs a new number the engines don't keep (space over time, say) records it in `data/` through `internal/lockedfile`, never `.env`; old records keep loading; a Go test for each. Mark the item **M** and do the data in its own PR first.
+
+### Finances' style, item by item
+
+What the screenshots (Nov 7) show Tidy Up lacks, worst first. Tick **(done: #PR)**; never delete one. Re-check each against main before starting it.
+
+L1. **A hero card first, as Finances' Dashboard has** (M: needs history). Finances opens with one card: a big figure ("$2,512.40", its small part smaller), a caption in capitals ("TODAY"), a chart over time with a **30 days / 3 months** switch, a figure on the right that matters ("$407.91, lowest… under your cushion", in its colour), and a legend. Tidy Up opens with a to-do list. *Looks like:* "412 GB won back" as the figure, the drive's free space over time as the chart (with each run that won space back as a dot, as paydays are on Finances), and on the right "380 GB more to win back" or the drive's lowest free space. **Needs your OK** goes right under it. The sizes are measured every six hours (`~/.homelab-media/sizes.json`) but only the latest is kept: keep a history first (a point a day, a year at most, in `data/`).
+L2. **Each library's tab leads the same way** (after L1): Music, "13,932 songs" with where the library is in its steps (scanned → built → swapped → checked → freed) as a row of steps; Movies and TV, their size with Lean / Could shrink / With Tdarr as the chart; Books, the books and how many could look tidier; Audiobooks, the books and how many are in pieces.
+L3. **Cards that are half empty** (`docs/images/tidy-look/baseline/tidy-music-light.png`, Nov 7: Music's **Space** card is one number and a blank half-card). A card has a figure, a caption, and something under it (a bar, a short list), or it joins another card.
+L4. **The two-up cards line up as Finances' do:** same height in a row, the same padding, the figure on the same line; the Genres card's dropdown looks like Finances' switch, not a system select box, where it can (keep it a real `select` for the keyboard and VoiceOver if a switch can't hold six libraries).
+L5. **Rows as Finances lists them:** each row's figure on the right in the same place and type as Finances' amounts (today only films' rows show one, "380 GB"); its caption on one line where it fits at 860px; long subtitles (Music's *Lyrics* row runs to two lines) said shorter.
+L6. **The header's button.** Finances has its one action in the header ("+ Add a payment", filled); Tidy Up has **Settings…**. Whether the screen's main button goes in the header is the owner's call (P2: never a step that throws things away): ask once, build nothing until they say.
+L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare every look item at all three widths in both themes before ticking it.
 
 ## Done
 
