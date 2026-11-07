@@ -25,7 +25,15 @@ struct MenuBarView: View {
                             coordinator.requestedAppID = app.id
                             open()
                         } label: {
-                            Text(verbatim: "\(app.name): \(app.detailLine)")
+                            if let icon = BundledLogo.menuIcon(for: app.id) {
+                                Label {
+                                    Text(verbatim: "\(app.name): \(app.detailLine)")
+                                } icon: {
+                                    Image(nsImage: icon)
+                                }
+                            } else {
+                                Text(verbatim: "\(app.name): \(app.detailLine)")
+                            }
                         }
                     }
                 }

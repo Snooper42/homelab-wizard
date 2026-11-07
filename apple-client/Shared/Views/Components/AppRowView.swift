@@ -161,6 +161,18 @@ enum BundledLogo {
         known[id] = has
         return has ? Image(name) : nil
     }
+
+    #if os(macOS)
+    /// The logo at a menu item's size, for the menu bar's Needs a look list
+    /// (a menu shows an image at its own size, not a frame's).
+    static func menuIcon(for id: String) -> NSImage? {
+        guard image(for: id) != nil,
+              let logo = NSImage(named: "AppLogos/\(id)")?.copy() as? NSImage
+        else { return nil }
+        logo.size = NSSize(width: 16, height: 16)
+        return logo
+    }
+    #endif
 }
 
 struct AppStateIcon: View {
