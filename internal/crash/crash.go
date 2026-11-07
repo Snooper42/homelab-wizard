@@ -54,11 +54,14 @@ func pending(dir, who string) string { return filepath.Join(dir, "crash-"+who+".
 // the header alone, which the next Watch or Save drops. who is "app",
 // "tray", or "agent".
 func Watch(dir, who, version string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	// This account's only, one an older version made 0755 included: the
+	// app and the agent each start here.
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
+	_ = os.Chmod(dir, 0o700) // best effort: another account's folder stays as it is
 	Save(dir)
-	f, err := os.Create(pending(dir, who))
+	f, err := os.OpenFile(pending(dir, who), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
@@ -105,7 +108,7 @@ func savePending(dir string) {
 			when = fi.ModTime()
 		}
 		out := filepath.Join(dir, "crash-"+when.Format("2006-01-02")+".log")
-		f, err := os.OpenFile(out, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		f, err := os.OpenFile(out, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
 			continue
 		}

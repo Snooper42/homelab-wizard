@@ -1,60 +1,48 @@
-# Lanes: three accounts, no conflicts
+# Lanes: who owns what
 
-Three loops work on this repository at once, each from its own account. Every loop reads this file at the start of every round. Where it and a loop's own file disagree, this file wins.
+Every loop reads this file at the start of every round. Where it and a loop's own file disagree, this file wins. Only the owner changes it.
 
-| Account | Loop file | Its branches | What it owns |
+## The goal (Nov 6, 2026)
+
+The app is to become clearly easier to use. A round that a household member would not notice is a round wasted, unless it fixes a failure, lost data, or a security hole. The owner's complaints are in `.claude/prompts/complaints.md`; every lane reads it at the start of every round and takes the ones in its area first.
+
+| Account | Loop file | Branches | Owns |
 |---|---|---|---|
-| 1 | `features-loop.md` | `claude/feature-*` | The roadmap's features; `docs/Feature Roadmap.md` |
-| 2 | `maintenance-loop.md` | `claude/fix-*` | Failure issues (*Nightly run failed*, *Catalog share N failed*); how records are stored (`internal/lockedfile`, `internal/envfile`, and the code that reads and writes the files in `data/`); cleanup and dead code; `docs/Decisions.md` |
-| 3 | `audit-loop.md`, as the security team | `claude/audit-security-*` and `claude/security-*` | Security findings and their fixes; `docs/Security.md` |
+| 1 | `features-loop.md` | `claude/feature-*` | Tidy Up and Finances, end to end: `web/src/tidy`, `web/src/screens/tidy.ts`, `web/src/finances`, `web/src/screens/finances.ts`, `internal/media`, `internal/finance`, `tools/media`, their docs and smoke cases |
+| 2 | `maintenance-loop.md` | `claude/fix-*` | Every other screen and what is under it: Setup, Status, Choose and install, an app's page, Updates, Backups, Settings, the menu bar and tray, the phone's screens other than Finances; failure issues; how records are stored, and the SQLite base (ADR-0022) |
+| 3 | `audit-loop.md` | `claude/audit-security-*`, `claude/security-*` | Usability testing of the whole app (findings go to the owning lane); security findings and their fixes; `docs/Security.md`, `docs/Usability.md` |
+| 4 | (its own) | its own | `apple-client/` (the SwiftUI app). No other lane touches it |
+
+A `claude/*` branch that matches no row is no loop's: leave it alone and list it for the owner.
 
 ## Rule 1: your branches only
 
-Never push to, merge, rebase, close, or comment on another lane's branch or PR. A `claude/*` branch that matches no row above is no loop's: leave it alone, and list it for the owner in your report.
+Never push to, merge, rebase, close, or comment on another lane's branch or PR.
 
 ## Rule 2: a file is claimed by an open PR
 
-Each lane has at most one open PR. Before you start an item, and again just before each push:
-
-1. List every other open PR, whatever its branch (other lanes, and sessions with no row above), and the files each one changes (`pull_request_read` with `get_files`).
-2. If your change would touch any file in one of them, don't start it, and don't push it. Take your next item instead, or wait until that PR is merged.
-3. The shared files in Rule 4 are the only exception.
-
-So two open PRs never change the same file, and neither can conflict with the other.
+Each lane has at most one open PR. Before you start an item, and again before each push, list every other open PR's files. If your change would touch one of them, don't push it: take your next item, or wait. The shared files below are the only exception.
 
 ## Rule 3: stay in your own work
 
-- Account 2 does not fix security findings. Account 3 does not take storage, cleanup, or failure issues. Neither builds features.
-- When you find something in another lane, write it in your own loop file under **For Account N**, with what you found and how to show it. Don't fix it, don't open an issue, and don't comment on a PR.
-- At the start of every round, read the **For Account <you>** section in the other two loop files.
-- **A security finding in storage code** (a record written in place, a lock that can be raced): Account 3 writes it up in `docs/Security.md` and under **For Account 2**, with the test that would show the hole. Account 2 takes it next, ahead of its own order (after only failure issues), and writes that test and the fix. Account 3 ticks it in `docs/Security.md` in its next PR, after the fix is merged.
-- Each lane edits only its own loop file. Only the owner changes this file.
+- A problem in another lane's screens or code goes in your loop file under **For Account N**: what you saw, a screenshot path, and the smoke case that would fail. Don't fix it, don't open an issue, don't comment on its PR. Read the **For Account <you>** sections in the other loop files at the start of every round, and take those items ahead of your own order.
+- Account 3 builds no screens. It fixes security holes itself (the smallest fix, in a commit of its own, even in another lane's code when the hole is real and no open PR claims the file). Anything else it finds goes to the owning lane.
+- A security finding in storage code: Account 3 writes it up with the test that shows it; Account 2 takes it next, ahead of its order.
 
 ## Rule 4: shared files
 
-Only these may be changed by two open PRs at once:
-- `CHANGELOG.md`
-- `web/dist/*`
-- `coverage-floors.txt`
-- `docs/Testing.md`
-- `app/preview/shoot.mjs`
-- `app/preview/mock.js`
+Only these may be changed by two open PRs at once, each lane adding its own lines:
+- `CHANGELOG.md`: only under `## [Unreleased]`; Account 1 at the top of **New** or **Improved**, Account 2 at the top of **Fixed** (or **Improved** for a usability change), Account 3 at the bottom of **Fixed**. A conflict there keeps both lines.
+- `web/dist/*`: never merged by hand; after merging main in, `make frontend` with a real `node_modules`, and commit what it builds.
+- `coverage-floors.txt`, `docs/Testing.md`, `app/preview/shoot.mjs`, `app/preview/mock.js`: add lines only; keep both.
 
-How each lane writes to them:
-- **CHANGELOG.md:** only under `## [Unreleased]`, each lane in its own place:
-  - Account 1 at the top of **New** or **Improved**
-  - Account 2 at the top of **Fixed**
-  - Account 3 at the bottom of **Fixed**
-  A conflict there is always resolved by keeping both lines.
-- **`web/dist/*`:** never merged by hand. After merging main in, run `make frontend` with a real `node_modules` (not a symlink: esbuild writes the linked path into the output, and CI's frontend-check fails) and commit what it builds.
-- **The others:** both sides only add lines. Keep both.
+## Rule 5: merging
 
-## Rule 5: one merge at a time, in order
-
-- When more than one lane has a green PR, they merge in this order: **Account 2, then Account 3, then Account 1.** Before you merge, check whether a lane ahead of you has a green, mergeable PR. If one does, don't merge: check again at your next check-in.
-- After any merge to main, every other open PR merges main in and lets CI run again before it may merge. Never merge on a CI run older than main.
-- Always squash-merge with `expectedHeadSha` pinned to the head that CI passed on.
+- **Order** when more than one lane has a green PR at once: Account 2, then Account 3, then Account 1.
+- **A PR merges** when every check is green on its current head, and every commit main gained since that run touches none of its files (a newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict). Otherwise merge main in and let CI run again. Never merge with a red check.
+- Always squash-merge with `expectedHeadSha` pinned to the head CI passed on.
+- **At most 3 merges a day per lane.** Batch related fixes into one PR.
 
 ## Rule 6: issues
 
-Only Account 2 closes failure issues, from the PR that fixes them (`Fixes #N` in its description). The other lanes leave them alone.
+Only Account 2 closes failure issues, from the PR that fixes them (`Fixes #N`).

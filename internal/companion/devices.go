@@ -83,6 +83,9 @@ type Device struct {
 	// and seeing or changing Finances (a wall screen's money card stays).
 	// Zero: until you change it. Reached, the phone only looks.
 	Until time.Time `json:"until,omitzero"`
+	// Kiosk: paired as a wall screen, which anyone walking past can use,
+	// so it only looks (and may show the money card), for good (N26).
+	Kiosk bool `json:"kiosk,omitempty"`
 }
 
 // Phone is a paired phone as the screens show it (no token hash).
@@ -434,6 +437,10 @@ func (s *Store) Remove(idOrName string) (Device, error) {
 // encryption.
 var ErrUnencrypted = errors.New("was paired over the home Wi-Fi without encryption, so it can only look: remove it, then pair it again with the Tailscale (https) link")
 
+// ErrKiosk is changes, or Finances beyond the money card, allowed to a
+// wall screen.
+var ErrKiosk = errors.New("was paired as a wall screen, which anyone walking past can use, so it can only look (and show the money card): pair a phone for more")
+
 // SetCanChange lets a device start, stop, and restart apps and back up, or
 // makes it read-only again. A device paired without encryption stays
 // read-only.
@@ -441,6 +448,9 @@ func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
 	return s.change(idOrName, func(d *Device) error {
 		if on && d.Unencrypted {
 			return fmt.Errorf("%s %w", d.Name, ErrUnencrypted)
+		}
+		if on && d.Kiosk {
+			return fmt.Errorf("%s %w", d.Name, ErrKiosk)
 		}
 		d.CanChange = on
 		return nil
@@ -463,7 +473,22 @@ func (s *Store) SetFinances(idOrName, level string) (Device, error) {
 		if level != "" && d.Unencrypted {
 			return fmt.Errorf("%s %w", d.Name, ErrNoFinances)
 		}
+		if level != "" && level != FinancesCard && d.Kiosk {
+			return fmt.Errorf("%s %w", d.Name, ErrKiosk)
+		}
 		d.Finances = level
+		return nil
+	})
+}
+
+// MarkKiosk notes that a device is a wall screen and takes away its
+// changes and Finances, for good: the Phones page may give it the money
+// card, nothing more (N26).
+func (s *Store) MarkKiosk(id string) (Device, error) {
+	return s.change(id, func(d *Device) error {
+		d.Kiosk = true
+		d.CanChange = false
+		d.Finances = ""
 		return nil
 	})
 }

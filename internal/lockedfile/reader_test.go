@@ -1,11 +1,14 @@
 package lockedfile
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // A save outlasts a reader that opens the file again and again (the agent
@@ -33,5 +36,100 @@ func TestWriteOutlastsAReaderOpeningItAgainAndAgain(t *testing.T) {
 		if err := Write(path, []byte(`{"n":1}`), 0o600); err != nil {
 			t.Fatalf("save %d: %v", i, err)
 		}
+	}
+}
+
+// A reader reading while another process saves again and again gets the
+// old record or the new one, every time: on Windows an open that meets
+// the rename is tried again rather than read as no record at all.
+func TestReadNeverMissesARecordBeingSaved(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "record.json")
+	if err := Write(path, []byte(`{"n":0}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stop atomic.Bool
+	var wg sync.WaitGroup
+	failed := make(chan string, 1)
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for !stop.Load() {
+				data, err := Read(path)
+				if err != nil || (string(data) != `{"n":0}` && string(data) != `{"n":1}`) {
+					select {
+					case failed <- fmt.Sprintf("%q %v", data, err):
+					default:
+					}
+					return
+				}
+			}
+		}()
+	}
+	for i := range 300 {
+		if err := Write(path, []byte(`{"n":`+strconv.Itoa(i%2)+`}`), 0o600); err != nil {
+			t.Fatalf("save %d: %v", i, err)
+		}
+	}
+	stop.Store(true)
+	wg.Wait()
+	select {
+	case got := <-failed:
+		t.Errorf("a reader missed the record: %s", got)
+	default:
+	}
+}
+
+// Off Windows a failed read is final: a file that can't be read now won't
+// be in a moment either.
+func TestReadDoesNotWaitOnAMissingRecord(t *testing.T) {
+	start := time.Now()
+	if _, err := Read(filepath.Join(t.TempDir(), "none.json")); !os.IsNotExist(err) {
+		t.Fatalf("err = %v", err)
+	}
+	if time.Since(start) > RenameWait/2 {
+		t.Errorf("a missing record took %v to report", time.Since(start))
+	}
+}
+
+// On Windows an open that meets a rename is tried again until it reads;
+// one still failing after RenameWait is reported, and any other failure
+// is reported at once.
+func TestReadTriesAgainOnlyWhileTheFileIsBusy(t *testing.T) {
+	was, wasWait, wasRead := onWindows, RenameWait, readFile
+	t.Cleanup(func() { onWindows, RenameWait, readFile = was, wasWait, wasRead })
+	onWindows, RenameWait = true, 50*time.Millisecond
+	inUse := &os.PathError{Op: "open", Path: "record.json", Err: errSharingViolation}
+	denied := &os.PathError{Op: "open", Path: "record.json", Err: os.ErrPermission}
+	always := func(err error) func(int) error { return func(int) error { return err } }
+	for _, tc := range []struct {
+		name  string
+		fail  func(read int) error // the error the read-th read meets, or nil
+		reads int                  // 0: as many as the wait allows
+		ok    bool
+	}{
+		{"in use, then free", func(read int) error {
+			return map[int]error{1: inUse, 2: denied}[read]
+		}, 3, true},
+		{"in use throughout", always(inUse), 0, false},
+		{"missing", always(os.ErrNotExist), 1, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reads := 0
+			readFile = func(string) ([]byte, error) {
+				reads++
+				if err := tc.fail(reads); err != nil {
+					return nil, err
+				}
+				return []byte(`{"n":1}`), nil
+			}
+			data, err := Read("record.json")
+			if (err == nil) != tc.ok || (tc.ok && string(data) != `{"n":1}`) {
+				t.Fatalf("Read = %q, %v", data, err)
+			}
+			if tc.reads > 0 && reads != tc.reads {
+				t.Errorf("%d reads, want %d", reads, tc.reads)
+			}
+		})
 	}
 }

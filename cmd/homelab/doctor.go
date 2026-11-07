@@ -190,6 +190,10 @@ func (h *homelab) doctor(ctx context.Context, _ []string) error {
 	if name, ok := domain.DefaultVPN(); ok {
 		u.Warn("a VPN (%s) carries this machine's traffic, so phones and computers may not reach the homelab: turn the VPN off on this machine, or allow LAN connections and turn off its kill switch", name)
 	}
+	// N25: a domain set up before the companion's proxy key existed.
+	if env := h.envMap(); env["HOMELAB_DOMAIN"] != "" && env["COMPANION_PROXY_KEY"] == "" {
+		u.Warn("phones that open homelab.%s can't yet be told from a device on the Wi-Fi saying it uses https: run Set up the domain once more (homelab domain setup)", env["HOMELAB_DOMAIN"])
+	}
 	if dom := h.envMap()["HOMELAB_DOMAIN"]; dom != "" && lanErr == nil {
 		probe := "npm." + dom
 		lctx, cancel := context.WithTimeout(ctx, 3*time.Second)

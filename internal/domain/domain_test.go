@@ -129,7 +129,7 @@ func TestWithdrawRemovesLocalApps(t *testing.T) {
 	}
 	// What an earlier setup made for Dozzle, beside an app that stays and a
 	// Dozzle host someone gave a second name by hand.
-	for _, names := range [][]string{{"logs.example.com"}, {"vault.example.com"}, {"logs.example.com", "dozzle.lan"}} {
+	for _, names := range [][]string{{"logs.example.com"}, {"passwords.example.com"}, {"logs.example.com", "dozzle.lan"}} {
 		if _, err := c.CreateProxyHost(ctx, npm.ProxyHost{DomainNames: names, ForwardHost: "x", ForwardPort: 1}); err != nil {
 			t.Fatal(err)
 		}
@@ -389,5 +389,57 @@ func TestNetwork(t *testing.T) {
 		if got := network(LANCandidate{IP: net.ParseIP(c.ip).To4(), Mask: c.mask}); got != c.want {
 			t.Errorf("%s: %s, want %s", c.ip, got, c.want)
 		}
+	}
+}
+
+// N25: the companion's proxy host vouches for https itself: it sets
+// X-Forwarded-Proto from what NPM received, not from the client, and adds
+// the companion's key, which no phone has. Every other host is as before,
+// a hand-made advanced setting on one kept.
+func TestTheCompanionsProxyHostVouchesForHTTPS(t *testing.T) {
+	srv := npmtest.NewFakeServer("homelab@example.com", "pw")
+	defer srv.Close()
+	c := npm.New(srv.URL)
+	ctx := context.Background()
+	if err := c.Login(ctx, "homelab@example.com", "pw"); err != nil {
+		t.Fatal(err)
+	}
+	routes := Routes(apps(t, "homelab-companion", "vaultwarden"), "example.com", compose.MapLookup(nil))
+	host := func(name string) npm.ProxyHost {
+		for _, h := range srv.Hosts {
+			if h.DomainNames[0] == name {
+				return h
+			}
+		}
+		t.Fatalf("no proxy host for %s in %+v", name, srv.Hosts)
+		return npm.ProxyHost{}
+	}
+	if _, err := Sync(ctx, c, routes, Settings{}); err != nil {
+		t.Fatal(err)
+	}
+	for id, h := range srv.Hosts {
+		if h.DomainNames[0] == "passwords.example.com" {
+			h.AdvancedConfig = "client_max_body_size 525M;"
+			srv.Hosts[id] = h
+		}
+	}
+	if _, err := Sync(ctx, c, routes, Settings{CompanionKey: "k3yk3yk3y"}); err != nil {
+		t.Fatal(err)
+	}
+	h := host("homelab.example.com")
+	for _, want := range []string{"location / {", "proxy_set_header X-Forwarded-Proto $scheme;", `proxy_set_header X-Homelab-Proxy "k3yk3yk3y";`} {
+		if !strings.Contains(h.AdvancedConfig, want) {
+			t.Errorf("the companion's host lacks %q:\n%s", want, h.AdvancedConfig)
+		}
+	}
+	if h.TrustForwardedProto {
+		t.Error("the companion's host still trusts a client's X-Forwarded-Proto")
+	}
+	if v := host("passwords.example.com"); !v.TrustForwardedProto || v.AdvancedConfig != "client_max_body_size 525M;" {
+		t.Errorf("another host changed: %+v", v)
+	}
+	res, err := Sync(ctx, c, routes, Settings{CompanionKey: "k3yk3yk3y"})
+	if err != nil || res[0].Action != "unchanged" || res[1].Action != "unchanged" {
+		t.Errorf("a second run changes nothing: %+v %v", res, err)
 	}
 }

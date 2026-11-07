@@ -3,6 +3,7 @@ package companion
 import (
 	"bytes"
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,6 +47,9 @@ type Server struct {
 	// Changes are the engine's changes, streamed to paired phones at
 	// /api/events so Status updates as on the computer; nil leaves it out.
 	Changes *engine.Hub
+	// ProxyKey is COMPANION_PROXY_KEY, which the companion's own proxy host
+	// sends in ProxyHeader (N25); nil or "" before a domain is set up again.
+	ProxyKey func() string
 	// Calendar is Finances' calendar feed for a link's key (the paydays and
 	// bills as iCalendar), ok false for a key that is not the plan's; nil
 	// leaves /finances.ics out.
@@ -125,10 +129,43 @@ func Local(r *http.Request) bool {
 // HTTP from the home network is not. The header could be sent by anyone,
 // but only someone holding a pairing code or a token gains by it, and the
 // point is that a token is never sent where others can read it.
+// ProxyHeader carries the companion's proxy host's key.
+const ProxyHeader = "X-Homelab-Proxy"
+
+// encrypted is Encrypted, believing "https" from the proxy only on its
+// key once COMPANION_PROXY_KEY is set (N25): X-Forwarded-Proto alone can be
+// sent by any device on the Wi-Fi, and through the proxy too, which passes
+// a client's own on. The companion's proxy host sets it from what the proxy
+// received and adds the key. With no key yet (a domain set up before), it is
+// Encrypted as it was, until Set up the domain runs again.
+func (s *Server) encrypted(r *http.Request) bool {
+	key := ""
+	if s.ProxyKey != nil {
+		key = s.ProxyKey()
+	}
+	if key == "" {
+		return Encrypted(r)
+	}
+	if r.TLS != nil {
+		return true
+	}
+	if got := r.Header.Get(ProxyHeader); got != "" {
+		return subtle.ConstantTimeCompare([]byte(got), []byte(key)) == 1 && r.Header.Get("X-Forwarded-Proto") == "https"
+	}
+	return direct(r)
+}
+
 func Encrypted(r *http.Request) bool {
 	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
 		return true
 	}
+	return direct(r)
+}
+
+// direct reports whether a request reached the companion straight from
+// where nobody on the Wi-Fi can read it: this machine (Tailscale Serve's
+// https), the tailnet, or OrbStack's address for this Mac.
+func direct(r *http.Request) bool {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		host = r.RemoteAddr
@@ -149,7 +186,7 @@ func (s *Server) calendar(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if !Encrypted(r) {
+	if !s.encrypted(r) {
 		http.Error(w, "the Finances calendar needs the Tailscale (https) link; over the home Wi-Fi it is not sent", http.StatusForbidden)
 		return
 	}
@@ -234,16 +271,14 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, err.Error())
 		return
 	}
-	if err == nil && body.Kiosk && d.CanChange {
+	if err == nil && body.Kiosk {
 		// Kiosk mode hides the buttons, and anyone at the screen could
-		// show them again, so the screen itself may not make changes.
-		d, err = s.Store.SetCanChange(d.ID, false)
+		// show them again, so the screen itself may not make changes, nor
+		// show the household's money to whoever walks past; and it is
+		// remembered as a screen, so neither is given back later (N26).
+		d, err = s.Store.MarkKiosk(d.ID)
 	}
-	if err == nil && body.Kiosk && d.Finances != "" {
-		// Nor show the household's money to whoever walks past.
-		d, err = s.Store.SetFinances(d.ID, "")
-	}
-	if err == nil && !Encrypted(r) {
+	if err == nil && !s.encrypted(r) {
 		// Its token will cross the home Wi-Fi readable with every request
 		// (a page keeps it per address, so this phone keeps using this
 		// one): someone on the Wi-Fi could copy it, so it may only look.
@@ -298,7 +333,7 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the computer")
 		return
 	}
-	if m.Change && d.CanChange && !Encrypted(r) {
+	if m.Change && d.CanChange && !s.encrypted(r) {
 		fail(w, http.StatusForbidden, "changes from a phone need the Tailscale (https) link; over the home Wi-Fi it can only look")
 		return
 	}
@@ -306,7 +341,7 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow "+d.ID)
 		return
 	}
-	if m.Finances != "" && !Encrypted(r) {
+	if m.Finances != "" && !s.encrypted(r) {
 		fail(w, http.StatusForbidden, "Finances on a phone need the Tailscale (https) link; over the home Wi-Fi they are not sent")
 		return
 	}
