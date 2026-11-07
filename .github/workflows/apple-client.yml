@@ -98,11 +98,16 @@ jobs:
         run: ./scripts/test-scripts.sh
 
       # Every compiler warning from the builds above, once each, at the end
-      # of the log where it's easy to find. Warnings don't fail the job.
+      # of the log where it's easy to find. The app builds without any, so a
+      # new one fails the job: in Swift 6 most are data races waiting to be
+      # errors. Xcode's App Intents tool noting the app has none isn't one.
       - name: Warnings
         if: always()
         run: |
           cat "$RUNNER_TEMP"/*.log 2>/dev/null | grep -E "warning:" | grep -v "^ld: warning" \
+            | grep -v "appintentsmetadataprocessor" \
             | sed -E 's#^.*/apple-client/##' | sort -u > "$RUNNER_TEMP/warnings.txt" || true
-          echo "$(wc -l < "$RUNNER_TEMP/warnings.txt" | tr -d ' ') unique warnings"
+          count="$(wc -l < "$RUNNER_TEMP/warnings.txt" | tr -d ' ')"
+          echo "$count unique warnings"
           head -150 "$RUNNER_TEMP/warnings.txt"
+          [ "$count" = 0 ] || { echo "::error::$count compiler warning(s) in the Apple client; fix them (see above)"; exit 1; }
