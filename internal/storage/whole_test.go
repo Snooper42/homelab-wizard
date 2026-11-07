@@ -14,7 +14,7 @@ func TestAReadingIsReplacedWhole(t *testing.T) {
 	if err := (Record{}).Save(path); err != nil {
 		t.Fatal(err)
 	}
-	was, err := os.Stat(path)
+	was, err := statNow(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,4 +31,17 @@ func TestAReadingIsReplacedWhole(t *testing.T) {
 	if now.Mode().Perm() != 0o600 && os.PathSeparator == '/' {
 		t.Errorf("mode %v", now.Mode().Perm())
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }

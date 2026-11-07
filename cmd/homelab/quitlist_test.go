@@ -18,7 +18,7 @@ func TestQuitsListIsReplacedWhole(t *testing.T) {
 	if err := h.saveStopped(stoppedApps{At: time.Now(), Containers: []string{"homelab_photos-immich-1"}}); err != nil {
 		t.Fatal(err)
 	}
-	was, err := os.Stat(h.stoppedFile())
+	was, err := statNow(h.stoppedFile())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,4 +35,17 @@ func TestQuitsListIsReplacedWhole(t *testing.T) {
 	if s, err := h.loadStopped(); err != nil || len(s.Containers) != 2 {
 		t.Errorf("list %+v, %v", s, err)
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }

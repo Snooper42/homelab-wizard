@@ -26,7 +26,7 @@ func TestTheReleasesCacheIsReplacedWhole(t *testing.T) {
 	if _, err := List(context.Background(), path, "o/one"); err != nil {
 		t.Fatal(err)
 	}
-	was, err := os.Stat(path)
+	was, err := statNow(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,4 +45,17 @@ func TestTheReleasesCacheIsReplacedWhole(t *testing.T) {
 	if err := json.Unmarshal(data, &c); err != nil || len(c) != 2 || time.Since(c["o/one"].At) > time.Minute {
 		t.Errorf("cache %s (%v)", data, err)
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }

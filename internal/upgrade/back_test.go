@@ -202,7 +202,7 @@ func TestAMarkReplacesThePointWhole(t *testing.T) {
 	}
 	was := map[string]os.FileInfo{}
 	for _, p := range []string{PointPath(home), first.Kit} {
-		fi, err := os.Stat(p)
+		fi, err := statNow(p)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -227,4 +227,17 @@ func TestAMarkReplacesThePointWhole(t *testing.T) {
 	if left, _ := filepath.Glob(filepath.Join(filepath.Dir(PointPath(home)), "*.tmp*")); len(left) != 0 {
 		t.Errorf("temporary files left: %v", left)
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }

@@ -21,7 +21,7 @@ func TestTheFetchedNoteIsReplacedWhole(t *testing.T) {
 		t.Fatal(err)
 	}
 	note := filepath.Join(BinDir(home), "ffmpeg.json")
-	was, err := os.Stat(note)
+	was, err := statNow(note)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,4 +35,17 @@ func TestTheFetchedNoteIsReplacedWhole(t *testing.T) {
 	if os.SameFile(was, now) {
 		t.Error("ffmpeg.json was rewritten in place")
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }

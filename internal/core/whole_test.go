@@ -15,7 +15,7 @@ func TestTheAPIFallbackNoteIsReplacedWhole(t *testing.T) {
 	if err := SaveAPIFallback(root, docker.Fallback{When: time.Now(), Read: "containers"}); err != nil {
 		t.Fatal(err)
 	}
-	was, err := os.Stat(apiFallbackPath(root))
+	was, err := statNow(apiFallbackPath(root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,4 +29,17 @@ func TestTheAPIFallbackNoteIsReplacedWhole(t *testing.T) {
 	if os.SameFile(was, now) {
 		t.Error("docker-api.json was rewritten in place")
 	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
 }
