@@ -2144,12 +2144,42 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-paymorefield .moneyfield:focus-within { outline:2px solid var(--fin-accent); outline-offset:1px; }
 .fx-paymore .fx-sub { margin:8px 0 0; }
 .fx-ways { margin:8px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:4px; }
-/* Money flow: pay through a month to where it goes, its bands a lighter wash of each node's colour; the legends under it. */
-.fx-flowchart svg { display:block; width:100%; }
-.fx-flowchart .fx-band { fill:var(--fx-hue); opacity:.28; }
-.fx-flowchart .fx-node { fill:var(--fx-hue); }
-.fx-flowlegend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 32px; margin-top:12px; }
-@media (forced-colors: active) { .fx-flowchart .fx-band { fill:GrayText; opacity:.4; } .fx-flowchart .fx-node { fill:CanvasText; } }
+/* Money flow: the month picker and Top N in its heading; income, taxes, expenses, and saved in a strip; the flow; what a picked box holds. */
+.fx-moneyflow .fx-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.fx-period { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; }
+.fx-periodname { min-width:8.5em; text-align:center; font-size:13px; font-weight:600; }
+.fx-top { font-size:13px; }
+.fx-flowstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:4px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.fx-flowtile { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:0; }
+.fx-flowtile + .fx-flowtile { border-left:1px solid var(--line); }
+.fx-flowtile .fx-caption { margin:0; display:flex; align-items:center; gap:6px; }
+.fx-flowfig { font-size:var(--fin-figure-sm); font-weight:700; font-variant-numeric:tabular-nums; }
+@container (max-width: 640px) { .fx-flowstrip { grid-template-columns:repeat(2, minmax(0,1fr)); } .fx-flowtile:nth-child(3) { border-left:0; } .fx-flowtile:nth-child(n+3) { border-top:1px solid var(--line); } }
+.fx-sankey { position:relative; margin:0; width:100%; }
+.fx-sankey svg { display:block; position:absolute; inset:0; overflow:visible; }
+.fx-sband { fill:var(--fx-hue); opacity:.22; transition:opacity .15s; }
+.fx-sband.on { opacity:.45; }
+.fx-sband.off, .fx-snoderect.off { opacity:.08; }
+.fx-snoderect { fill:var(--fx-hue); transition:opacity .15s; }
+.fx-snode { position:absolute; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-start; gap:0; padding:2px 6px; margin:0; border:0; border-radius:8px; background:none; color:var(--text); font:inherit; font-size:14px; line-height:1.25; text-align:left; cursor:pointer; min-width:0; transition:opacity .15s; }
+.fx-snode .fx-sname { font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fx-snode .fx-samt { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fx-snode .fx-spct { color:var(--muted); }
+.fx-snode.one { flex-direction:row; align-items:baseline; gap:6px; font-size:13px; white-space:nowrap; }
+.fx-snode.one .fx-sname { min-width:2.5em; }
+.fx-snode.one .fx-sname { flex:0 1 auto; }
+.fx-snode.pill { transform:translate(-50%, -50%); align-items:center; text-align:center; background:var(--panel); box-shadow:0 0 0 1px var(--line); padding:4px 10px; }
+.fx-snode:hover .fx-sname, .fx-snode.picked .fx-sname { text-decoration:underline; text-underline-offset:3px; }
+.fx-snode.picked { box-shadow:0 0 0 2px var(--fin-accent); }
+.fx-snode.off { opacity:.35; }
+.fx-snode:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.fx-sankey.narrow .fx-snode { font-size:12px; }
+.fx-stip { position:absolute; z-index:3; display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:10px; background:var(--fin-tip); color:var(--fin-tip-text); font-size:12px; pointer-events:none; box-shadow:0 12px 32px var(--shade-25); white-space:nowrap; }
+.fx-flowpick { margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
+.fx-flowpickhead { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.fx-flowpickhead h3 { margin:0; font-size:15px; }
+@media (prefers-reduced-motion: reduce) { .fx-sband, .fx-snoderect, .fx-snode { transition:none; } }
+@media (forced-colors: active) { .fx-sband { fill:GrayText; opacity:.4; } .fx-snoderect { fill:CanvasText; } .fx-snode.picked { outline:2px solid Highlight; } }
 /* Financial independence: an estimate, said first; its figure, its bar, when; the two assumptions to change under it. */
 .fx-firenote { margin:0 0 8px; }
 .fx-firesays, .fx-firewhen { margin:0 0 8px; font-size:14px; }

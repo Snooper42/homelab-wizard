@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Money flow you can click:** the Dashboard shows where a month's money came from and went: your pay and money in, through all of it, to taxes, each kind of spending, and each savings account (the rest kept as cash), with income, taxes, expenses and saved above it as shares of your income. ‹ › step through the months your transactions cover and a typical month from the plan, and **Top 8** keeps the largest of each. Click any box to see the transactions or payments behind it.
 - **A bill that changes, by its average:** a bill marked as changing each time (electric, water), paid three times or more in six months, asks on the Dashboard when its average is off the plan: *Electric has averaged $152.00 over 3 months*, with **Use $152.00** or **Keep $140.00**.
 - **A bill not seen yet:** a bill your transactions have paid before, with nothing for it three days after its day, is said on the Dashboard (*Electric, due Oct 18, 12 days ago*), so one that didn't go through is caught.
 - **A subscription's new price:** when a subscription is charged the same new amount twice in a row, the Dashboard asks: *Netflix is now $17.99, was $15.49*, with **Update to $17.99** or **Keep $15.49**.
