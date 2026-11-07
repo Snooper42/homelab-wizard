@@ -1,8 +1,46 @@
 # Homelab: native Apple client (iOS + macOS)
 
 A SwiftUI Multiplatform client for the Homelab Wizard phone companion
-(`homelab serve`, port 8099). This folder holds only source files. You make
-the Xcode project yourself (steps below).
+(`homelab serve`, port 8099). This folder holds only source files; the
+scripts below make the Xcode project for you.
+
+## Start here
+
+You need a Mac with full Xcode (opened once, with your Apple ID added under
+Xcode › Settings › Apple Accounts; a free one is enough) and this repository
+cloned. Replace `com.yourname` with your own reverse-domain prefix and keep
+using the same one.
+
+**The Mac app**, on the Mac that runs the homelab. It builds, opens, and
+puts a pairing link on the clipboard (paste it into Address, click Pair). Run
+it again any time to update; it stays paired:
+
+```bash
+./apple-client/scripts/run-on-this-mac.sh com.yourname
+```
+
+**The iPhone app.** Plug the iPhone in, unlock it, tap Trust, and turn on
+Settings › Privacy & Security › Developer Mode once. Check the phone's
+address, then build, install, and pair (scan the QR code it shows from the
+app). With a free Apple ID, run it again within 7 days to keep the app
+working:
+
+```bash
+./apple-client/scripts/phone-address.sh
+```
+
+```bash
+./apple-client/scripts/run-on-iphone.sh com.yourname
+```
+
+**Paired devices**: list them, or remove ones that were never used:
+
+```bash
+./apple-client/scripts/phones.sh tidy
+```
+
+Each script says what's wrong and what to do when something isn't ready.
+The rest of this README is the detail.
 
 ```
 apple-client/
