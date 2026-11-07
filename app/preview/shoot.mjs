@@ -912,7 +912,8 @@ const smokes = [
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
     await page.click('#tidy .seg button:text-is("Books")');
-    await page.waitForSelector('#tidyReview :text("Applied 30 minutes ago: the books in it were changed")', { timeout: 5000 });
+    // "Applied … ago": how long ago grows while the suite runs (the fixture's times are set once, at its start).
+    await page.waitForSelector('#tidyReview :text-matches("^Applied .+ ago: the books in it were changed")', { timeout: 5000 });
     if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
     await page.waitForSelector('#tidyReview button:text-is("Undo the last apply")', { timeout: 3000 });
   } },
