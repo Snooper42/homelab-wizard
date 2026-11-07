@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	goruntime "runtime"
 	"strings"
 	"testing"
@@ -137,6 +138,8 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"music", "lyrics", []string{"--check"}, "media music lyrics --check --events json"},
 		{"trash", "restore", []string{"scrubber-scan-1730770000000000000"}, "media restore scrubber-scan-1730770000000000000 --events json"},
 		{"books", "apply", []string{"--skip", "1049"}, "media books apply --skip 1049 --events json"},
+		// Tidy lyrics (Overview's and Music's): the songs' own lyrics set right, asking LRCLIB nothing.
+		{"music", "lyrics", []string{"--tidy"}, "media music lyrics --tidy --events json"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, false)
 		if err != nil || strings.Join(got, " ") != c.want {
@@ -156,6 +159,9 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"trash", "restore", []string{"../../x"}},
 		{"trash", "restore", []string{"a-b-1", "a-b-2"}},
 		{"trash", "restore", nil},
+		// --tidy is music lyrics' alone.
+		{"movies", "scan", []string{"--tidy"}},
+		{"music", "run", []string{"--tidy"}},
 	} {
 		if got, err := tidyArgs(c.kind, c.action, c.args, false); err == nil {
 			t.Errorf("%s %s %v went through: %v", c.kind, c.action, c.args, got)
@@ -296,5 +302,40 @@ func TestTidyLockFollowsAJobItDidNotStart(t *testing.T) {
 	}
 	if got.Now.Step == nil || got.Now.Step.Text != "Swapping in the smaller copies" || got.Now.Progress == nil || got.Now.Progress.Note != "Heat (1995)" {
 		t.Errorf("where it is: %+v %+v", got.Now.Step, got.Now.Progress)
+	}
+}
+
+// Every job a button on Tidy Up sends, with the flags written into the screen's code, is one the app runs. The
+// preview's fake backend runs anything, so a smoke case can't see the app refuse a flag: Tidy lyrics sent --tidy,
+// which the app refused, and every smoke case passed.
+func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
+	call := regexp.MustCompile(`\brun\('([a-z]+)', '([a-z-]+)', \[([^\]]*)\]`)
+	flag := regexp.MustCompile(`'(--[a-z-]+)'`)
+	seen := 0
+	for _, f := range []string{"../web/src/tidy/Tidy.tsx", "../web/src/screens/tidy.ts"} {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range call.FindAllStringSubmatch(string(b), -1) {
+			var args []string
+			for _, a := range flag.FindAllStringSubmatch(m[3], -1) {
+				args = append(args, a[1])
+			}
+			// --skip takes the books' ids, and Undo the run it puts back, which the screen fills in.
+			if len(args) == 1 && args[0] == "--skip" {
+				args = append(args, "1,2")
+			}
+			if m[1] == "trash" {
+				args = append(args, "scrubber-scan-1")
+			}
+			seen++
+			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
+				t.Errorf("%s: run(%q, %q, %v) is refused: %v", f, m[1], m[2], args, err)
+			}
+		}
+	}
+	if seen < 10 {
+		t.Fatalf("found only %d jobs the screen runs: the pattern no longer matches its code", seen)
 	}
 }

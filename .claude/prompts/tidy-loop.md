@@ -25,7 +25,7 @@ Tidy Up moves a household's music, films, and books. A round is worth doing only
 | P3 | Undo puts back only what is still in the Trash, never over something now in its place | `homelab media restore` tests, smoke: *Undo on a sweep* |
 | P4 | One job moves files at a time; a crashed job's lock is taken over and the job carries on | `internal/media` lock tests |
 | P5 | **A job that stopped part-way carries on as the same job**, with the same flags | **missing**: queue item 2 |
-| P6 | **Every argument a button sends is one the app accepts** (the preview's fake backend accepts anything, so a smoke case can't see a refusal) | **missing**: queue item 1 |
+| P6 | **Every argument a button sends is one the app accepts** (the preview's fake backend accepts anything, so a smoke case can't see a refusal) | `TestTidyArgsTakeEveryJobTheScreenSends` in `app/tidy_test.go` (#485) |
 | P7 | The screen never says *done* when nothing was done, never says *everything's tidy* when it couldn't read the record or the review | smoke: *a record that can't be read*, *a books review that can't be read* |
 | P8 | Numbers agree: the first line, **Needs your OK**, the drive, and **Recently done** count the same things the same way (1000 to a KB) | smoke: *a size reads the same…*, *the first line counts what Overview lists* |
 | P9 | A library whose drive is away runs nothing, and says so | smoke: *a library whose folder is gone* |
@@ -84,7 +84,7 @@ When the queue is empty, and at least every fifth round regardless, look Tidy Up
 
 Worst first. Each item: where, what goes wrong (proved, or what to prove), what fixed looks like, and the test that fails today. Tick an item **(done: #PR)** when it merges; never delete one.
 
-1. **Tidy lyrics never runs from the app** (High; proved Nov 7 by Account 3). Overview's and Music's **Tidy lyrics** sends `act.run('music', 'lyrics', ['--tidy'])` (`web/src/tidy/Tidy.tsx`, the `apart > 0` row). The app's guard on what the screen may send, `tidyScreenArgs` in `app/tidy.go`, takes only `--apply`, `--check`, `--skip <ids>`, and one Undo run, so it refuses with `Tidy Up doesn't run a job with "--tidy"`, and the job panel says *didn't finish*. Every smoke case passes, because `mock.js`'s `TidyRun` accepts anything.
+1. (done: #485) **Tidy lyrics never runs from the app** (High; proved Nov 7 by Account 3). Overview's and Music's **Tidy lyrics** sends `act.run('music', 'lyrics', ['--tidy'])` (`web/src/tidy/Tidy.tsx`, the `apart > 0` row). The app's guard on what the screen may send, `tidyScreenArgs` in `app/tidy.go`, takes only `--apply`, `--check`, `--skip <ids>`, and one Undo run, so it refuses with `Tidy Up doesn't run a job with "--tidy"`, and the job panel says *didn't finish*. Every smoke case passes, because `mock.js`'s `TidyRun` accepts anything.
    - *Fixed looks like:* `--tidy` accepted for `music lyrics` only (keep the guard tight: a flag is allowed for the kind and action that use it, not everywhere), and **Tidy lyrics** runs.
    - *Tests that fail today:* a row in `TestTidyArgsTakesOnlyWhatTheScreenSends` for `music lyrics --tidy` (accepted) and `movies scan --tidy` (refused); and promise P6's guard: a Go test in `app/` that reads every `act.run(…, [...])` and `run(…, [...])` call in `web/src/tidy/*.tsx` and `web/src/screens/tidy.ts`, takes each literal flag list, and checks `tidyArgs` accepts it for that kind and action. Then make the mock's `TidyRun` refuse what the app refuses (the same list, with a comment naming the Go test that keeps the two in step), so a smoke case sees a refusal too.
    - The guard is Account 3's (N12, round 17). Loosen it only as above; tell Account 3 in **For Account 3** below when it ships.
@@ -123,11 +123,13 @@ The owner wants Tidy Up to look like the Finances screen, and like a finance app
 
 ### Finances' style, item by item
 
+**The owner's pick (Nov 7): Take 2, built in #485.** After two rounds of mockups, the owner chose this over the Finances look: **Needs your OK** leads with *Next up* (the one thing with the main button, larger) beside the drive as a ring; **Your libraries**, a tile each in its colour, with a bar only where the record can say; each tab opens on its library, and Music's on its five steps. Build on it: the items below stand only where they still fit.
+
 What the screenshots (Nov 7) show Tidy Up lacks, worst first. Tick **(done: #PR)**; never delete one. Re-check each against main before starting it.
 
-L1. **A hero card first, as Finances' Dashboard has** (M: needs history). Finances opens with one card: a big figure ("$2,512.40", its small part smaller), a caption in capitals ("TODAY"), a chart over time with a **30 days / 3 months** switch, a figure on the right that matters ("$407.91, lowest… under your cushion", in its colour), and a legend. Tidy Up opens with a to-do list. *Looks like:* "412 GB won back" as the figure, the drive's free space over time as the chart (with each run that won space back as a dot, as paydays are on Finances), and on the right "380 GB more to win back" or the drive's lowest free space. **Needs your OK** goes right under it. The sizes are measured every six hours (`~/.homelab-media/sizes.json`) but only the latest is kept: keep a history first (a point a day, a year at most, in `data/`).
-L2. **Each library's tab leads the same way** (after L1): Music, "13,932 songs" with where the library is in its steps (scanned → built → swapped → checked → freed) as a row of steps; Movies and TV, their size with Lean / Could shrink / With Tdarr as the chart; Books, the books and how many could look tidier; Audiobooks, the books and how many are in pieces.
-L3. **Cards that are half empty** (`docs/images/tidy-look/baseline/tidy-music-light.png`, Nov 7: Music's **Space** card is one number and a blank half-card). A card has a figure, a caption, and something under it (a bar, a short list), or it joins another card.
+L1. (dropped: the owner chose Take 2's *Next up* over a Finances hero; a size history may still come back as a chart on the drive card) **A hero card first, as Finances' Dashboard has** (M: needs history). Finances opens with one card: a big figure ("$2,512.40", its small part smaller), a caption in capitals ("TODAY"), a chart over time with a **30 days / 3 months** switch, a figure on the right that matters ("$407.91, lowest… under your cushion", in its colour), and a legend. Tidy Up opens with a to-do list. *Looks like:* "412 GB won back" as the figure, the drive's free space over time as the chart (with each run that won space back as a dot, as paydays are on Finances), and on the right "380 GB more to win back" or the drive's lowest free space. **Needs your OK** goes right under it. The sizes are measured every six hours (`~/.homelab-media/sizes.json`) but only the latest is kept: keep a history first (a point a day, a year at most, in `data/`).
+L2. (done: #485, Take 2's header on each tab; Movies' and TV's charts stay on their Space card) **Each library's tab leads the same way** (after L1): Music, "13,932 songs" with where the library is in its steps (scanned → built → swapped → checked → freed) as a row of steps; Movies and TV, their size with Lean / Could shrink / With Tdarr as the chart; Books, the books and how many could look tidier; Audiobooks, the books and how many are in pieces.
+L3. (partly: #485, cards keep their own height; Music's Space card is still one figure, which its header now also shows: fold it in) **Cards that are half empty** (`docs/images/tidy-look/baseline/tidy-music-light.png`, Nov 7: Music's **Space** card is one number and a blank half-card). A card has a figure, a caption, and something under it (a bar, a short list), or it joins another card.
 L4. **The two-up cards line up as Finances' do:** same height in a row, the same padding, the figure on the same line; the Genres card's dropdown looks like Finances' switch, not a system select box, where it can (keep it a real `select` for the keyboard and VoiceOver if a switch can't hold six libraries).
 L5. **Rows as Finances lists them:** each row's figure on the right in the same place and type as Finances' amounts (today only films' rows show one, "380 GB"); its caption on one line where it fits at 860px; long subtitles (Music's *Lyrics* row runs to two lines) said shorter.
 L6. **The header's button.** Finances has its one action in the header ("+ Add a payment", filled); Tidy Up has **Settings…**. Whether the screen's main button goes in the header is the owner's call (P2: never a step that throws things away): ask once, build nothing until they say.
@@ -135,7 +137,7 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 ## Done
 
-(None yet. Move an item here with its PR number when it merges.)
+- #485: queue item 1 (Tidy lyrics runs; P6's guard), and the look: Take 2.
 
 ## Couldn't reproduce
 
@@ -151,7 +153,7 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 ## Open now
 
-Nothing yet: the first round starts at item 1.
+#485 merged (Nov 7). Next: queue item 2, *a job that stopped part-way carries on as another job*. Then the look's L3 (Music's Space card) and the rest of the queue.
 
 ## What earlier sessions learned about Tidy Up
 
