@@ -7,7 +7,7 @@ import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
-import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
+import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
@@ -23,6 +23,7 @@ import { catalog, renderApps, replan, selected } from './choose';
 import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
 import { mountOvernight, nightOf } from '../status/Overnight';
+import { setHealthApps, setHealthChecks } from '../status/healthLine';
 import { backupsData } from './backups';
 import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
@@ -70,6 +71,8 @@ function renderTiles(st: api.Status) {
   });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
+  // Health in one line, at the top of the other screens: these, in their rows' words.
+  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => navigate('status'));
   // The same count on the Dock icon (the Mac), as Mail shows unread mail;
   // a phone has no Dock.
   if (n !== lastAttention && !document.documentElement.classList.contains('companion')) {
@@ -297,6 +300,9 @@ setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60
 // scheduled job. Failing checks are the ones it alerted about.
 function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
+  // The failing checks that are no app's (an app's own trouble is its row's), for the line on the other screens.
+  const apps = new Set((catalog?.apps || []).map((a) => a.id));
+  setHealthChecks((w?.failing || []).map((f) => f.name).filter((name) => !apps.has(name)));
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};

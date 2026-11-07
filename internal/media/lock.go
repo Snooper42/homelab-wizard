@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/proc"
 )
 
 // Lock is homelab.media.lock: one media job at a time moves files. Video
@@ -27,32 +29,18 @@ func LockPath(root string) string { return filepath.Join(root, "data", "homelab.
 // ErrBusy is returned when another media job holds the lock.
 var ErrBusy = errors.New("another Tidy Up job is moving files")
 
-// alive reports whether a process runs; tests replace it.
-var alive = processAlive
-
-// started is when a process started (processStart); tests replace it.
-var started = processStart
-
-// reuseSlack is how much later than a lock's Start its process may seem to
-// have started (ps says it to the second) and still be the job that wrote it.
-const reuseSlack = 5 * time.Second
+// alive and started are this machine's processes (internal/proc); tests
+// replace them.
+var (
+	alive   = proc.Alive
+	started = proc.Started
+)
 
 // holds reports whether pid still runs as the job that wrote a lock at
-// start. A process that started after the lock was written is another
-// program given the same ID later (after the computer restarted, say): the
-// job that held it is gone. Where the start time can't be read, a process
-// that runs is taken for the job.
+// start: a process that started after the lock was written is another
+// program given the same ID later (proc.Process.Holds).
 func holds(pid int, start time.Time) bool {
-	if pid <= 0 || !alive(pid) {
-		return false
-	}
-	if start.IsZero() {
-		return true
-	}
-	if began, ok := started(pid); ok && began.After(start.Add(reuseSlack)) {
-		return false
-	}
-	return true
+	return proc.Process{Alive: alive, Started: started}.Holds(pid, start)
 }
 
 // ReadLock is the lock as written, and whether its process still runs. No
