@@ -78,6 +78,10 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let waitingFor: String?
     let notAnswering: String?
     let settingsChanged: Bool?
+    /// When it stopped by itself (RFC 3339), and why in a few words when
+    /// Docker knows ("it ran out of memory"), main #474.
+    var stoppedAt: String? = nil
+    var stoppedWhy: String? = nil
     /// From the status's `stopped` record, not the app's own JSON.
     var stoppedOnPurpose: StopRecord?
     /// In the status's `batteryPaused`: the battery saver paused it until
@@ -86,7 +90,7 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, state, health, container, url, address, since, restarts, startedBy
-        case updatedAt, held, updateDays, quiet, pinned, waitingFor, notAnswering, settingsChanged
+        case updatedAt, held, updateDays, quiet, pinned, waitingFor, notAnswering, settingsChanged, stoppedAt, stoppedWhy
     }
 
     var isRunning: Bool { state == "running" }

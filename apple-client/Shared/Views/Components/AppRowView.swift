@@ -179,12 +179,36 @@ extension AppStatus {
         if state != "running", pausedOnBattery { return "Paused on battery" }
         if let drive = waitingFor, !drive.isEmpty { return "Waiting for the \(Self.driveName(drive)) drive" }
         if awaitingJobs { return "Starts with the scheduled jobs (Setup)" }
+        // Stopped by itself, not from here: when, and why when Docker knows (main #474).
+        if state == "stopped" { return Self.stoppedByItself(at: stoppedAt.flatMap(GoTime.parse), why: stoppedWhy) }
         switch health {
         case "restarting": return "Restarting"
         case "unhealthy": return "Unhealthy"
         case "starting": return "Starting"
         default: return stateLabel
         }
+    }
+
+    /// "Stopped at 3:12 AM: it ran out of memory", "Stopped yesterday,
+    /// 9:40 PM", "Stopped Tue, 9:40 PM", "Stopped Oct 28", or just "Stopped"
+    /// when Docker didn't say when (`stoppedByItself` in web/src/status/stopFor.ts).
+    static func stoppedByItself(at: Date?, why: String?, now: Date = Date(), calendar: Calendar = .current) -> String {
+        var words = "Stopped"
+        if let at {
+            let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: at), to: calendar.startOfDay(for: now)).day ?? 0
+            let time = at.formatted(date: .omitted, time: .shortened)
+            if days <= 0 {
+                words += " at \(time)"
+            } else if days == 1 {
+                words += " yesterday, \(time)"
+            } else if days < 7 {
+                words += " \(at.formatted(.dateTime.weekday(.abbreviated))), \(time)"
+            } else {
+                words += " \(at.formatted(.dateTime.month(.abbreviated).day()))"
+            }
+        }
+        if let why, !why.isEmpty { words += ": \(why)" }
+        return words
     }
 
     /// A drive as the computer names it: "/Volumes/Media" is "Media".
@@ -210,6 +234,8 @@ extension AppStatus {
     var isDown: Bool {
         health == "restarting" || health == "unhealthy" || state == "missing"
             || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
+            // A crash: it stopped by itself and Docker says why (main #474).
+            || (state == "stopped" && stoppedOnPurpose == nil && !(stoppedWhy ?? "").isEmpty)
     }
 
     var symbolName: String {

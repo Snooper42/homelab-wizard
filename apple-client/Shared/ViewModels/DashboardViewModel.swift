@@ -170,7 +170,7 @@ final class DashboardViewModel {
         let attention = status.apps.filter(\.needsAttention).count
         if attention > 0 { parts.append("\(attention) need\(attention == 1 ? "s" : "") attention") }
         if status.missing > 0 {
-            parts.append(status.missing == 1 ? "1 baseline app is down" : "\(status.missing) baseline apps are down")
+            parts.append(status.missing == 1 ? "1 of the homelab's own apps is down" : "\(status.missing) of the homelab's own apps are down")
         }
         if !status.batteryPaused.isEmpty { parts.append("\(status.batteryPaused.count) paused on battery") }
         if status.checking { parts.append("checking…") }

@@ -381,7 +381,7 @@ private struct SplitDashboard: View {
                     ContentUnavailableView.search(text: model.search)
                 } else {
                     ContentUnavailableView(filter.emptyTitle, systemImage: filter.systemImage,
-                                           description: filter == .all ? Text("Pick a few on the computer's Choose stacks. They show up here as they start.") : nil)
+                                           description: filter == .all ? Text("Pick a few on the computer's Choose apps. They show up here as they start.") : nil)
                 }
             }
         }

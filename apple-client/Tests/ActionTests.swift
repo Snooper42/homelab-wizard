@@ -139,7 +139,7 @@ struct StopChoiceTests {
                  {"id":"homelab-companion","name":"Phone companion","state":"not running"}],
          "missing":1,"batteryPaused":["b"],"checking":true}
         """#.utf8))
-        #expect(DashboardViewModel.summary(of: status) == "1 of 2 running · 1 needs attention · 1 baseline app is down · 1 paused on battery · checking…")
+        #expect(DashboardViewModel.summary(of: status) == "1 of 2 running · 1 needs attention · 1 of the homelab's own apps is down · 1 paused on battery · checking…")
         let empty = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[]}"#.utf8))
         #expect(DashboardViewModel.summary(of: empty) == "No apps yet")
     }
@@ -416,5 +416,34 @@ struct HealthLineTests {
         #expect(DashboardViewModel.healthWords(apps: [], checks: ["a", "b"]) == "2 of the watchdog's checks are failing: a and b")
         #expect(DashboardViewModel.shortList(["A", "B", "C"]) == "A, B and C")
         #expect(DashboardViewModel.shortList(["A", "B", "C", "D", "E"]) == "A, B and 3 more")
+    }
+}
+
+// main #474: a stopped app says when it stopped, and why when Docker knows.
+@Suite("Stopped by itself")
+struct StoppedByItselfTests {
+    private func app(_ json: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func whenAndWhy() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let now = Date()
+        let today = AppStatus.stoppedByItself(at: calendar.startOfDay(for: now).addingTimeInterval(3600), why: "it ran out of memory", now: now, calendar: calendar)
+        #expect(today.hasPrefix("Stopped at ") && today.hasSuffix(": it ran out of memory"))
+        let yesterday = try #require(calendar.date(byAdding: .day, value: -1, to: now))
+        #expect(AppStatus.stoppedByItself(at: yesterday, why: nil, now: now, calendar: calendar).hasPrefix("Stopped yesterday, "))
+        #expect(AppStatus.stoppedByItself(at: nil, why: nil, now: now) == "Stopped")
+        #expect(AppStatus.stoppedByItself(at: nil, why: "Docker couldn't start it", now: now) == "Stopped: Docker couldn't start it")
+    }
+
+    @Test func aCrashIsDownACleanStopIsToLookAt() throws {
+        let crashed = try app(#"{"id":"a","name":"A","state":"stopped","stoppedAt":"2026-11-06T03:12:00Z","stoppedWhy":"it quit with an error"}"#)
+        #expect(crashed.isDown && crashed.symbolName == "xmark.circle.fill")
+        #expect(crashed.detailLine.hasSuffix(": it quit with an error"))
+        let clean = try app(#"{"id":"a","name":"A","state":"stopped","stoppedAt":"2026-11-06T03:12:00Z"}"#)
+        #expect(!clean.isDown && clean.symbolName == "exclamationmark.triangle.fill")
+        #expect(clean.detailLine.hasPrefix("Stopped"))
     }
 }
