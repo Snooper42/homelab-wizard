@@ -148,12 +148,15 @@ type ProxyHost struct {
 }
 
 // Same reports whether two hosts route identically (ignores id/locations/meta).
+// Sync copies a host's own advanced settings into what it wants, so they
+// count only where the homelab writes its own (the companion's, N25).
 func (p ProxyHost) Same(o ProxyHost) bool {
 	return strings.Join(p.DomainNames, ",") == strings.Join(o.DomainNames, ",") &&
 		p.ForwardScheme == o.ForwardScheme && p.ForwardHost == o.ForwardHost && p.ForwardPort == o.ForwardPort &&
 		p.CertificateID == o.CertificateID && p.SSLForced == o.SSLForced && p.HTTP2Support == o.HTTP2Support &&
 		p.TrustForwardedProto == o.TrustForwardedProto &&
-		p.BlockExploits == o.BlockExploits && p.AllowWebsocketUpgrade == o.AllowWebsocketUpgrade
+		p.BlockExploits == o.BlockExploits && p.AllowWebsocketUpgrade == o.AllowWebsocketUpgrade &&
+		p.AdvancedConfig == o.AdvancedConfig
 }
 
 // ProxyHosts lists proxy hosts.
