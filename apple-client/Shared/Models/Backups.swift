@@ -155,8 +155,10 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
     /// fresh, stale, none, or paused.
     let state: String
     let waitingFor: String?
+    /// The catalog app it's a copy of, when the computer knows (main #474).
+    let app: String?
 
-    enum CodingKeys: String, CodingKey { case id, name, volume, newest, size, count, before, shrank, state, waitingFor }
+    enum CodingKeys: String, CodingKey { case id, name, volume, newest, size, count, before, shrank, state, waitingFor, app }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -170,6 +172,22 @@ struct BackupCopy: Decodable, Sendable, Equatable, Identifiable {
         shrank = try c.decodeIfPresent(Bool.self, forKey: .shrank) ?? false
         state = try c.decodeIfPresent(String.self, forKey: .state) ?? "none"
         waitingFor = try c.decodeIfPresent(String.self, forKey: .waitingFor)
+        app = try c.decodeIfPresent(String.self, forKey: .app)
+    }
+
+    /// Why a stale copy is stale, from its app's state, and what helps, in
+    /// the computer's words (`staleWhy`, main #474). Nil when that isn't
+    /// known: not stale, no app, or Status not read yet (`apps` nil).
+    func staleWhy(apps: [AppStatus]?) -> String? {
+        guard state == "stale", let apps, let id = app, !id.isEmpty else { return nil }
+        guard let app = apps.first(where: { $0.id == id }) else {
+            return "It isn't installed any more: its last copies are kept."
+        }
+        if app.state == "stopped" {
+            return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."
+        }
+        if app.state != "running" { return "It isn't running, so the nightly copy skips it." }
+        return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."
     }
 }
 

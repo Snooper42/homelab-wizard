@@ -312,14 +312,29 @@ private struct JobRow: View {
 }
 
 private struct CopyRow: View {
+    @Environment(DashboardViewModel.self) private var dashboard
     let copy: BackupCopy
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: icon).foregroundStyle(tint)
-                .accessibilityLabel(stateWords)
+            // The app's logo with its copy's state as a badge, or the state alone.
+            if let id = copy.app, BundledLogo.image(for: id) != nil {
+                AppLogo(id: id, size: 28)
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: icon)
+                            .font(.system(size: 12))
+                            .foregroundStyle(tint)
+                            .background(Circle().fill(.background).padding(1))
+                            .offset(x: 4, y: 4)
+                    }
+                    .accessibilityElement()
+                    .accessibilityLabel(stateWords)
+            } else {
+                Image(systemName: icon).foregroundStyle(tint)
+                    .accessibilityLabel(stateWords)
+            }
             VStack(alignment: .leading, spacing: 2) {
-                Text(copy.name)
+                Text(verbatim: copy.name)
                 Group {
                     if let drive = copy.waitingFor, !drive.isEmpty {
                         Text("Waiting for the \(AppStatus.driveName(drive)) drive")
@@ -331,6 +346,11 @@ private struct CopyRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                if let why = copy.staleWhy(apps: dashboard.liveEvents.status?.apps) {
+                    Text(verbatim: why)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 if copy.shrank {
                     Text("Less than half the night before's \(copy.before, format: .byteCount(style: .memory)): check that \(copy.name) still has its data.")
                         .font(.caption)

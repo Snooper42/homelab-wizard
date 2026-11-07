@@ -852,3 +852,34 @@ struct AppLogoTests {
         #expect(stray.isEmpty, "Stray files: \(stray)")
     }
 }
+
+@Suite("Why a backup copy is stale")
+struct StaleCopyTests {
+    private func copy(_ state: String, app: String?) throws -> BackupCopy {
+        let field = app.map { #","app":"\#($0)""# } ?? ""
+        return try JSONDecoder.homelab().decode(BackupCopy.self, from: Data(#"{"id":"db","name":"Vikunja","state":"\#(state)"\#(field)}"#.utf8))
+    }
+
+    private func app(_ id: String, _ state: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(#"{"id":"\#(id)","name":"X","state":"\#(state)"}"#.utf8))
+    }
+
+    @Test func saysWhyFromTheAppsState() throws {
+        let stale = try copy("stale", app: "vikunja")
+        let stopped = try app("vikunja", "stopped"), restarting = try app("vikunja", "restarting")
+        let running = try app("vikunja", "running"), other = try app("other", "running")
+        #expect(stale.app == "vikunja")
+        #expect(stale.staleWhy(apps: [stopped])?.hasPrefix("It's stopped, so the nightly copy skips it.") == true)
+        #expect(stale.staleWhy(apps: [restarting]) == "It isn't running, so the nightly copy skips it.")
+        #expect(stale.staleWhy(apps: [running])?.hasPrefix("Last night's copy didn't come.") == true)
+        #expect(stale.staleWhy(apps: [other]) == "It isn't installed any more: its last copies are kept.")
+    }
+
+    @Test func saysNothingWhenItIsntKnown() throws {
+        // Status not read yet, no app on the copy, or not stale.
+        let noStatus = try copy("stale", app: "vikunja"), noApp = try copy("stale", app: nil), fresh = try copy("fresh", app: "vikunja")
+        #expect(noStatus.staleWhy(apps: nil) == nil)
+        #expect(noApp.staleWhy(apps: []) == nil)
+        #expect(fresh.staleWhy(apps: []) == nil)
+    }
+}
