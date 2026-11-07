@@ -331,6 +331,7 @@ declare namespace backup {
   interface Copy {
     id: string;
     name: string;
+    app?: string;
     volume?: boolean;
     newest: string;
     size: number;

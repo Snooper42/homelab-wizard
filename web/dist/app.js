@@ -3758,11 +3758,12 @@
 
   // web/src/settings/Uninstall.tsx
   var none = { data: false, folder: false, backups: false, app: false, everythingElse: false };
+  var inSentence = (machine) => machine.charAt(0).toLowerCase() + machine.slice(1);
   function choices(machine) {
     return [
       { key: "data", label: "Delete the apps’ data", note: "Their volumes and data folders. Without this, Start the homelab brings every app back as it was." },
       { key: "folder", label: "Delete the homelab folder too", note: "With .env: every app’s password, and the passphrase that opens the backups. Print the recovery kit (Backups) first if you may restore them." },
-      { key: "backups", label: "Delete the backups on " + machine.toLowerCase(), note: "A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive." },
+      { key: "backups", label: "Delete the backups on " + inSentence(machine), note: "A backup folder in a cloud drive always stays: deleting it here would delete it on every machine signed in to the drive." },
       { key: "app", label: "Remove Homelab Wizard itself", note: "Its settings and downloads too. It quits when it is done." },
       { key: "everythingElse", label: "Delete everything else in the container runtime", note: "Every other container, image, and volume (with its data), the homelab’s or not: things you run yourself go too.", danger: true }
     ];
@@ -3817,7 +3818,7 @@
     return /* @__PURE__ */ u3("div", { id: "uninstall", class: "uninstall", children: [
       /* @__PURE__ */ u3("h3", { class: "subhead", children: [
         "Take the homelab off ",
-        machine.toLowerCase()
+        inSentence(machine)
       ] }),
       /* @__PURE__ */ u3("p", { class: "muted", children: "Stops and removes every app, the images it pulled, the scheduled jobs, and the tray icon at login. For when another machine runs the homelab now, or to start again. The media drive is never touched." }),
       choices(machine).map((c3) => /* @__PURE__ */ u3("label", { class: "check" + (c3.danger ? " danger" : ""), children: [
@@ -6422,7 +6423,15 @@
     ].filter((g2) => g2.copies.length);
   }
   var changed2 = (c3) => !!c3.before && Math.abs(c3.size - c3.before) >= c3.before / 10;
-  function CopyRows({ o: o3 }) {
+  function staleWhy(c3, apps) {
+    if (!apps || !c3.app) return "";
+    const a3 = apps[c3.app];
+    if (!a3) return "It isn't installed any more: its last copies are kept.";
+    if (a3.state === "stopped") return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
+    if (a3.state !== "running") return "It isn't running, so the nightly copy skips it.";
+    return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+  }
+  function CopyRows({ o: o3, apps }) {
     const [picked, setPicked] = d2({});
     const groups3 = copyGroups(o3);
     if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
@@ -6451,7 +6460,8 @@
               ": check that ",
               c3.name,
               " still has its data"
-            ] })
+            ] }),
+            c3.state === "stale" && staleWhy(c3, apps) && /* @__PURE__ */ u3("span", { class: "note muted", children: staleWhy(c3, apps) })
           ] }),
           /* @__PURE__ */ u3("td", { class: "when muted", children: never(c3.newest) ? "—" : ago(c3.newest) }),
           /* @__PURE__ */ u3("td", { class: "size muted", title: c3.before ? `The night before: ${bytes(c3.before)}` : void 0, children: [
@@ -6582,6 +6592,9 @@
   function loadBackups() {
     return Promise.all([jobsData.load(), backupsData.load()]);
   }
+  function redrawBackups() {
+    if (backupsData.value && !backupsData.error) drawBackups();
+  }
   function drawBackups() {
     if (backupsData.error) {
       mountCopyRows($2("backupRows"), null);
@@ -6592,7 +6605,7 @@
     const testable2 = (jobsData.value || []).some((j3) => j3.name.toLowerCase() === "homelab appdata" && j3.state !== "never");
     const test = () => backupTask("restore-test", "Testing a restore (a few minutes)…", "Restore test passed", "The restore test failed: the log says why");
     mountBackupTiles($2("backupTiles"), { o: o3, os: osName, test: testable2 ? test : void 0 });
-    mountCopyRows($2("backupRows"), { o: o3 });
+    mountCopyRows($2("backupRows"), { o: o3, apps: statusData.value ? statusById : void 0 });
     mountVault($2("vaultCard"), { o: o3 });
     $2("kopiaCard").hidden = !o3.kopia;
     mountKopia($2("kopiaCard"), o3.kopia ? { k: o3.kopia, test: () => backupTask("restore-test-kopia", "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
@@ -6826,6 +6839,7 @@
     statusData.stale();
   }
   statusData.watch(drawStatus);
+  statusData.watch(() => redrawBackups());
   function loadStatus() {
     return statusData.load();
   }
@@ -14308,6 +14322,7 @@ ${pays}
     if (name === "backups") {
       backupsData.fresh(minute);
       jobsData.fresh(minute);
+      statusData.fresh(minute);
     }
     if (name === "setup") {
       hostData.fresh(minute);

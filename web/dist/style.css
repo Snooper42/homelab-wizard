@@ -2315,3 +2315,12 @@ html nav .bgjob button.bgdismiss:hover { background:var(--shade-06); }
   html.companion nav .bgjob button.bgopen { box-shadow:0 8px 24px var(--shade-18); font-size:13px; }
 }
 .bgjob .bgnext { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-top:1px solid var(--line); padding-top:5px; }
+
+/* The phone's Backups: each copy on two lines, its name, then when, its size,
+   and how many are kept on one line under it (on three before, the size alone
+   at the far right). */
+html.companion #copiesCard table.copies tr.copy { display:flex; flex-wrap:wrap; align-items:baseline; }
+html.companion #copiesCard table.copies tr.copy td.name { flex:1 1 100%; }
+html.companion #copiesCard table.copies tr.copy :is(td.when, td.size, td.kept) { display:block; flex:none; width:auto; padding:0 0 2px; text-align:left; white-space:nowrap; }
+html.companion #copiesCard table.copies tr.copy td.when { padding-left:36px; }
+html.companion #copiesCard table.copies tr.copy :is(td.size, td.kept)::before { content:"·"; margin:0 6px; }
