@@ -119,3 +119,50 @@ export function alike(a: string, b: string): boolean {
   const x = named(a), y = new Set(named(b));
   return a.toLowerCase() === b.toLowerCase() || x.some((w) => y.has(w));
 }
+
+/** How far a row may be from a payment's day and still pay it: early or late by two weeks (finance's matchWindow). */
+export const matchDays = 16;
+
+/** How far a row's amount may be from a payment's and still be it: a tenth either way. */
+const near = 0.1;
+
+const dayNo = (s: string) => Math.round(Date.parse(s + 'T00:00:00Z') / 86400000);
+
+/** A planned payment a row of a bank's file pays, and the day of it. */
+export interface Planned { payment: string; due: string }
+
+/**
+ * The planned payment a row plainly pays, or none: money out of this
+ * account (the payment's From, or checking), to a payee alike its name or
+ * of its brand (`same`), for its amount give or take a tenth, within two
+ * weeks of one of its days (View.dues) not paid already (`taken`, by
+ * payment and day). The nearest day wins; a tie between two payments is
+ * no plain answer, so none.
+ */
+export function plannedFor(t: Imported, account: string, payments: finance.Payment[], dues: Record<string, string[]>, checking: string, taken: Set<string>, same: (payee: string, x: finance.Payment) => boolean): Planned | undefined {
+  if (!(t.amount < 0) || !t.payee) return undefined;
+  const paid = -t.amount;
+  let best: (Planned & { gap: number; off: number }) | undefined, tie = false;
+  for (const x of payments) {
+    if (x.card || !(x.amount > 0) || (x.from || checking) !== account || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !same(t.payee, x)) continue;
+    for (const due of dues[x.id] || []) {
+      const gap = Math.abs(dayNo(due) - dayNo(t.date)), off = Math.abs(paid - x.amount);
+      if (gap > matchDays || taken.has(x.id + ' ' + due)) continue;
+      if (!best || gap < best.gap || (gap === best.gap && off < best.off)) { tie = !!best && best.payment !== x.id && gap === best.gap && off === best.off; best = { payment: x.id, due, gap, off }; }
+      else if (gap === best.gap && off === best.off && x.id !== best.payment) tie = true;
+    }
+  }
+  return best && !tie ? { payment: best.payment, due: best.due } : undefined;
+}
+
+/** The payment days the ledger has paid already, as "payment day": each linked transaction's nearest day of its payment. */
+export function paidDays(ledger: finance.Transaction[], dues: Record<string, string[]>): Set<string> {
+  const out = new Set<string>();
+  for (const q of ledger) {
+    const days = q.payment ? dues[q.payment] : undefined;
+    if (!days?.length) continue;
+    const at = days.reduce((a, b) => (Math.abs(dayNo(b) - dayNo(q.date)) < Math.abs(dayNo(a) - dayNo(q.date)) ? b : a));
+    if (Math.abs(dayNo(at) - dayNo(q.date)) <= matchDays) out.add(q.payment + ' ' + at);
+  }
+  return out;
+}

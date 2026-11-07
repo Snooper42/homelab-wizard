@@ -6280,6 +6280,26 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // A row that plainly pays a planned payment (its name or brand, its amount give or take a tenth, near one of its days) is
+  // linked to it, so the plan does not take it out again; the preview says so, and the link can be taken off there.
+  { name: 'Finances: an imported bill paid early is linked to its planned payment, and can be unlinked', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/29/2026,NETFLIX.COM,-15.49\n10/29/2026,PELOTON INTERACTIVE,-60.00\n10/28/2026,ELECTRIC COMPANY,-150.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("3 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Netflix")) .importlink:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Looks like Electric, planned $140.00")', { timeout: 5000 });
+    // $60 is too far from Peloton's $44 to be it.
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Peloton Interactive")) .importlink')) throw new Error('a charge a third over Peloton\'s is linked to it');
+    if (!(await page.isVisible('#finSheet .importnote'))) throw new Error('the preview does not say what a link does');
+    await page.selectOption('#finSheet .importlist li:has(strong:text-is("Electric Company")) select', '');
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Not a planned payment")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-3).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Netflix|netflix,Peloton Interactive|,Electric Company|') throw new Error(`saved ${txs}`);
+  } },
   // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
   // wrote it still shows its logo.
   { name: "Finances: a bank's wording comes in as the payee's own name, with its logo", screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'raw1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' }] } }, run: async (page) => {

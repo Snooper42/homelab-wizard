@@ -2074,6 +2074,11 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .importlist li .grow { flex:1; display:flex; flex-direction:column; min-width:0; font-size:14px; }
 .importlist li small { color:var(--muted); font-size:12px; }
 .importlist li.dup .grow strong { text-decoration:line-through; font-weight:400; }
+/* A row linked to the planned payment it pays: what it looks like, and the pick to change it. */
+.importlist li .importlink { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:4px; }
+.importlist li .importlink small { color:var(--text); }
+.importlist li .importlink select { max-width:100%; font-size:12px; }
+.importnote { margin:0 0 6px; font-size:13px; }
 /* Finances' tags: a transaction's, after its note, and By tag in Reports; the Tag pick beside the stretch. */
 .fx-txtags { display:inline-flex; flex-wrap:wrap; gap:4px; margin-left:6px; vertical-align:baseline; }
 .fx-tag { display:inline-block; border:1px solid var(--line-strong); border-radius:999px; padding:0 7px; font-size:12px; line-height:18px; color:var(--text); background:var(--panel); white-space:nowrap; }

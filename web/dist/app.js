@@ -8435,6 +8435,36 @@
     const x3 = named2(a3), y3 = new Set(named2(b2));
     return a3.toLowerCase() === b2.toLowerCase() || x3.some((w3) => y3.has(w3));
   }
+  var matchDays = 16;
+  var near = 0.1;
+  var dayNo = (s3) => Math.round(Date.parse(s3 + "T00:00:00Z") / 864e5);
+  function plannedFor(t3, account, payments, dues, checking, taken, same2) {
+    if (!(t3.amount < 0) || !t3.payee) return void 0;
+    const paid = -t3.amount;
+    let best, tie = false;
+    for (const x3 of payments) {
+      if (x3.card || !(x3.amount > 0) || (x3.from || checking) !== account || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !same2(t3.payee, x3)) continue;
+      for (const due of dues[x3.id] || []) {
+        const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off = Math.abs(paid - x3.amount);
+        if (gap > matchDays || taken.has(x3.id + " " + due)) continue;
+        if (!best || gap < best.gap || gap === best.gap && off < best.off) {
+          tie = !!best && best.payment !== x3.id && gap === best.gap && off === best.off;
+          best = { payment: x3.id, due, gap, off };
+        } else if (gap === best.gap && off === best.off && x3.id !== best.payment) tie = true;
+      }
+    }
+    return best && !tie ? { payment: best.payment, due: best.due } : void 0;
+  }
+  function paidDays(ledger, dues) {
+    const out = /* @__PURE__ */ new Set();
+    for (const q2 of ledger) {
+      const days = q2.payment ? dues[q2.payment] : void 0;
+      if (!days?.length) continue;
+      const at2 = days.reduce((a3, b2) => Math.abs(dayNo(b2) - dayNo(q2.date)) < Math.abs(dayNo(a3) - dayNo(q2.date)) ? b2 : a3);
+      if (Math.abs(dayNo(at2) - dayNo(q2.date)) <= matchDays) out.add(q2.payment + " " + at2);
+    }
+    return out;
+  }
 
   // web/src/finances/model.ts
   function month(v3, L2) {
@@ -9979,6 +10009,7 @@
     const [cols, setCols] = d2(null);
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
+    const [picked, setPicked] = d2({});
     const ofx = !!text2 && isOfx(text2);
     const rows = text2 && !ofx ? csvRows(text2) : [];
     const header = rows[0] || [];
@@ -9988,6 +10019,7 @@
       setName(f4.name);
       setText(t3);
       setProblem("");
+      setPicked({});
       setCols(isOfx(t3) ? null : guessColumns(csvRows(t3)[0] || []));
     };
     const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
@@ -9999,13 +10031,24 @@
     const fresh = found2.filter((t3) => !already(t3, account, have) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, have)));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
+    const payments = (plan.payments || []).filter((x3) => !x3.card);
+    const same2 = (payee, x3) => alike(payee, x3.name) || !!payeeBrand(void 0, payee) && payeeBrand(void 0, payee) === brandOf(x3.institution, x3.name, x3.kind);
+    const guessed = (() => {
+      const taken = paidDays(have, props.dues || {});
+      return fresh.map((t3) => {
+        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, same2);
+        if (g2) taken.add(g2.payment + " " + g2.due);
+        return g2;
+      });
+    })();
+    const linkOf = (i3) => i3 in picked ? picked[i3] : guessed[i3]?.payment || "";
     const bring = async (e3) => {
       e3.preventDefault();
       if (!fresh.length) {
         setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
-      const added = fresh.map((t3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id }));
+      const added = fresh.map((t3, i3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id, payment: linkOf(i3) || void 0 }));
       setBusy(true);
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...have, ...added] });
       setBusy(false);
@@ -10024,7 +10067,10 @@
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: name ? "Pick another file" : "Pick a file" }),
           name && /* @__PURE__ */ u3("span", { class: "muted", children: name })
         ] }) }),
-        /* @__PURE__ */ u3(AccountSelect, { label: "Into the ledger of", value: account, set: setAccount, accounts }),
+        /* @__PURE__ */ u3(AccountSelect, { label: "Into the ledger of", value: account, set: (a3) => {
+          setAccount(a3);
+          setPicked({});
+        }, accounts }),
         cols && /* @__PURE__ */ u3(S, { children: [
           colPick("Day", "date"),
           colPick("Amount", "amount"),
@@ -10039,8 +10085,10 @@
           " ",
           /* @__PURE__ */ u3("span", { class: "muted", children: found2.length - fresh.length ? `${found2.length - fresh.length} already in, skipped` : "" })
         ] }),
+        guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
-          const dup = !fresh.includes(t3);
+          const k3 = fresh.indexOf(t3), dup = k3 < 0;
+          const g2 = dup ? void 0 : guessed[k3], link = dup ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
             /* @__PURE__ */ u3("span", { class: "grow", children: [
@@ -10049,6 +10097,13 @@
                 t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
                 dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
+              ] }),
+              g2 && /* @__PURE__ */ u3("span", { class: "importlink", children: [
+                /* @__PURE__ */ u3("small", { children: !x3 ? "Not a planned payment" : k3 in picked ? `Pays ${x3.name}` : `Looks like ${x3.name}, planned ${money(x3.amount)}` }),
+                /* @__PURE__ */ u3("select", { "aria-label": `What ${t3.payee} on ${dayLong(t3.date)} pays`, value: link, onChange: (e3) => setPicked({ ...picked, [k3]: e3.target.value }), children: [
+                  /* @__PURE__ */ u3("option", { value: "", children: "Nothing planned" }),
+                  payments.map((q2) => /* @__PURE__ */ u3("option", { value: q2.id, children: q2.name }, q2.id))
+                ] })
               ] })
             ] }),
             /* @__PURE__ */ u3("span", { class: t3.amount > 0 ? "fx-in" : "", children: signed(t3.amount) })
@@ -12869,14 +12924,14 @@ ${pays}
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
       /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
         const x3 = L2.payment[b2.e.payment || ""];
-        const near = daysBetween(v3.today, b2.date) <= 1;
+        const near2 = daysBetween(v3.today, b2.date) <= 1;
         return /* @__PURE__ */ u3(
           Row,
           {
             lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
             title: x3?.name || b2.e.payment,
             sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
-            subTone: near ? "warn" : "",
+            subTone: near2 ? "warn" : "",
             when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
             whenPlain: true
           },
@@ -13091,7 +13146,7 @@ ${pays}
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone
     });
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -13173,7 +13228,7 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

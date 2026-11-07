@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
-import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
+import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -28,6 +28,8 @@ export interface EditProps {
   checking: string;
   /** Each account today as expected, by ID (View.Start): what Update balances starts from. */
   start?: Record<string, number>;
+  /** Each payment's days near today (View.Dues): what a bank's file's rows are matched to. */
+  dues?: Record<string, string[]>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
   /** The categories a transaction is offered (the plan's, or the defaults). */
@@ -938,7 +940,9 @@ function BudgetsForm(props: EditProps) {
  * device and read here (never sent anywhere), into an account. A CSV's
  * columns are guessed from its header and can be picked; a preview lists
  * what would come in, those already in the ledger skipped, each payee with
- * the category it had last.
+ * the category it had last. A row that plainly pays a planned payment is
+ * linked to it, so the plan does not take it out again on its day; the
+ * preview says so, and the link can be changed or taken off there.
  */
 function ImportForm(props: EditProps) {
   const { plan, checking, ledger } = props;
@@ -950,13 +954,14 @@ function ImportForm(props: EditProps) {
   const [cols, setCols] = useState<Columns | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  const [picked, setPicked] = useState<Record<number, string>>({});
   const ofx = !!text && isOfx(text);
   const rows = text && !ofx ? csvRows(text) : [];
   const header = rows[0] || [];
   const read = async (f?: File) => {
     if (!f) return;
     const t = await f.text();
-    setName(f.name); setText(t); setProblem('');
+    setName(f.name); setText(t); setProblem(''); setPicked({});
     setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
@@ -968,10 +973,18 @@ function ImportForm(props: EditProps) {
   const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
   // A logo picked for a payee before goes on with it.
   const lastLogo = (payee: string) => [...have].reverse().find((q) => q.payee && q.institution && q.payee.toLowerCase() === payee.toLowerCase())?.institution;
+  // What each fresh row plainly pays, in the file's order, no planned day paid twice; then what was picked instead (picked, by row).
+  const payments = (plan.payments || []).filter((x) => !x.card);
+  const same = (payee: string, x: finance.Payment) => alike(payee, x.name) || (!!payeeBrand(undefined, payee) && payeeBrand(undefined, payee) === brandOf(x.institution, x.name, x.kind));
+  const guessed: (Planned | undefined)[] = (() => {
+    const taken = paidDays(have, props.dues || {});
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, same); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+  })();
+  const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   const bring = async (e: Event) => {
     e.preventDefault();
     if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
-    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, institution: (t.payee && lastLogo(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id }));
+    const added: finance.Transaction[] = fresh.map((t, i) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, institution: (t.payee && lastLogo(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id, payment: linkOf(i) || undefined }));
     setBusy(true);
     const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
     setBusy(false);
@@ -993,7 +1006,7 @@ function ImportForm(props: EditProps) {
           <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
           {name && <span class="muted">{name}</span>}
         </span></Field>
-        <AccountSelect label="Into the ledger of" value={account} set={setAccount} accounts={accounts} />
+        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); }} accounts={accounts} />
         {cols && <>
           {colPick('Day', 'date')}
           {colPick('Amount', 'amount')}
@@ -1004,12 +1017,20 @@ function ImportForm(props: EditProps) {
       </div>
       {!!text && <>
         <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : ''}</span></h3>
+        {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {
-            const dup = !fresh.includes(t);
+            const k = fresh.indexOf(t), dup = k < 0;
+            const g = dup ? undefined : guessed[k], link = dup ? '' : linkOf(k), x = payments.find((q) => q.id === link);
             return <li key={i} class={dup ? 'dup' : ''}>
               <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" auto={!!t.payee} />
-              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small>
+                {g && <span class="importlink"><small>{!x ? 'Not a planned payment' : k in picked ? `Pays ${x.name}` : `Looks like ${x.name}, planned ${money(x.amount)}`}</small>
+                  <select aria-label={`What ${t.payee} on ${dayLongOf(t.date)} pays`} value={link} onChange={(e) => setPicked({ ...picked, [k]: (e.target as HTMLSelectElement).value })}>
+                    <option value="">Nothing planned</option>
+                    {payments.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+                  </select></span>}
+              </span>
               <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
             </li>;
           })}

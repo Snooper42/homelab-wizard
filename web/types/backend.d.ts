@@ -767,6 +767,7 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    dues?: Record<string, string[]>;
     paid?: finance.Paid[];
     categories: finance.Category[];
     found?: finance.Found[];

@@ -49,6 +49,11 @@ type View struct {
 	// far as a year back: Subscriptions says one was just paid. One that
 	// has not come yet has none.
 	Last map[string]string `json:"last,omitempty"`
+	// Dues are each payment's days from DuesBack days before today to
+	// matchWindow after (YYYY-MM-DD), by ID, so a row of a bank's file can be
+	// linked to the payment it pays. A card paid off with each paycheck, or
+	// a payment of nothing, has none: no amount to know it by.
+	Dues map[string][]string `json:"dues,omitempty"`
 	// Paid are the planned payments the ledger says were paid, each by a
 	// transaction on a day near its own, with what was planned and what it
 	// came to (ProjectWith): its day is then the transaction's, not the plan's.
@@ -507,6 +512,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	v.Worth = worth(p, today)
 	v.Next = nextDays(p, today)
 	v.Last = lastDays(p, today)
+	v.Dues = dueDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	yearOn := today.AddDate(1, 0, 0) // the calendar reads this far (Later)
 	// cardDue is the day a card is next paid from d on: the first day of a
@@ -884,6 +890,27 @@ func lastDays(p Plan, today time.Time) map[string]string {
 	for _, x := range p.Payments {
 		if ds := p.Dates(x.Schedule, today.AddDate(-1, 0, 0), today.AddDate(0, 0, -1)); len(ds) > 0 {
 			out[x.ID] = dateOf(ds[len(ds)-1])
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// DuesBack is how far back View.Dues reads: a bank's file of three months, and some.
+const DuesBack = 120
+
+// dueDays is each payment with a set amount's days from DuesBack before
+// today to matchWindow after.
+func dueDays(p Plan, today time.Time) map[string][]string {
+	out := map[string][]string{}
+	for _, x := range p.Payments {
+		if x.Card != "" || x.Amount <= 0 {
+			continue
+		}
+		for _, d := range p.Dates(x.Schedule, today.AddDate(0, 0, -DuesBack), today.AddDate(0, 0, matchWindow)) {
+			out[x.ID] = append(out[x.ID], dateOf(d))
 		}
 	}
 	if len(out) == 0 {
