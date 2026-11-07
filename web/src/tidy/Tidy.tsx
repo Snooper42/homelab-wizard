@@ -537,6 +537,9 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
 const toolFor: Record<string, string[]> = { all: [...LIBRARIES], video: ['movies', 'tv'], books: ['books'] };
 const TOOLS = new Set(['python', 'ffmpeg', 'calibredb']);
 
+/** A fix without its own "Install Python 3: " at the start, which the row's title already says. */
+const dropTitle = (fix: string, name: string) => (fix.toLowerCase().startsWith(`install ${name.toLowerCase()}: `) ? fix.slice(`install ${name}: `.length) : fix);
+
 /** The tools missing, in one row: "Install Python 3 and ffmpeg", each one's fix under it, and Install when the app can
  * fetch one (ffmpeg). only: the libraries they're for (a tool no library here needs yet isn't asked for). */
 function toolsRow(d: app.TidyUp, act: TidyActions, only: (needs: string) => boolean): Todo[] {
@@ -549,7 +552,7 @@ function toolsRow(d: app.TidyUp, act: TidyActions, only: (needs: string) => bool
   const calibre = missing.length === 1 && missing[0].id === 'calibredb';
   return [{ kind: 'machine', title: `Install ${listed}`, warn: true,
     // Each one's fix, without its own "Install Python 3:" (the row's title says that).
-    sub: missing.map((c) => (missing.length > 1 ? `${short[c.id] || c.name}: ` : '') + (c.fix || c.note || '').replace(/^Install [^:]+: /, '')).join(' · '),
+    sub: missing.map((c) => (missing.length > 1 ? `${short[c.id] || c.name}: ` : '') + dropTitle(c.fix || c.note || '', short[c.id] || c.name)).join(' · '),
     go: fetch ? { label: names.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : 'Install', run: () => act.install() }
       : calibre ? { label: 'Get Calibre', run: () => act.open('https://calibre-ebook.com/download'), quiet: true } : undefined }];
 }

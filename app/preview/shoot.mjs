@@ -483,7 +483,7 @@ const smokes = [
       tidyAfter: { 'install ffmpeg': { tidy, tidyFails: {} } } };
   })(), run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
-    const row = '#tidy .tidyneeds li:has-text("ffmpeg and ffprobe")';
+    const row = '#tidy .tidyneeds li:has-text("Install ffmpeg")';
     await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
     if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
@@ -494,7 +494,7 @@ const smokes = [
     await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: done")', { timeout: 8000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns.map((r) => r.slice(0, 2).join(' ')));
     if (runs.join() !== 'tv scan,install ffmpeg,tv scan') throw new Error('ran: ' + runs.join());
-    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('ffmpeg and ffprobe'), null, { timeout: 5000 })
+    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('Install ffmpeg'), null, { timeout: 5000 })
       .catch(() => { throw new Error('the Install row stayed after ffmpeg was fetched'); });
   } },
   // Calibre missing: its row opens Calibre's download page (it's a whole app, so the app doesn't fetch it).

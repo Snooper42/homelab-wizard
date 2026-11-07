@@ -13434,6 +13434,7 @@ ${pays}
   }
   var toolFor = { all: [...LIBRARIES], video: ["movies", "tv"], books: ["books"] };
   var TOOLS = /* @__PURE__ */ new Set(["python", "ffmpeg", "calibredb"]);
+  var dropTitle = (fix, name) => fix.toLowerCase().startsWith(`install ${name.toLowerCase()}: `) ? fix.slice(`install ${name}: `.length) : fix;
   function toolsRow(d3, act, only) {
     const missing = d3.checks.filter((c3) => !c3.ok && TOOLS.has(c3.id) && only(c3.needs || ""));
     if (!missing.length) return [];
@@ -13447,7 +13448,7 @@ ${pays}
       title: `Install ${listed2}`,
       warn: true,
       // Each one's fix, without its own "Install Python 3:" (the row's title says that).
-      sub: missing.map((c3) => (missing.length > 1 ? `${short[c3.id] || c3.name}: ` : "") + (c3.fix || c3.note || "").replace(/^Install [^:]+: /, "")).join(" · "),
+      sub: missing.map((c3) => (missing.length > 1 ? `${short[c3.id] || c3.name}: ` : "") + dropTitle(c3.fix || c3.note || "", short[c3.id] || c3.name)).join(" · "),
       go: fetch ? { label: names4.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : "Install", run: () => act.install() } : calibre ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
     }];
   }
