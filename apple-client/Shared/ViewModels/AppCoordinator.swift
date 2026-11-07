@@ -330,6 +330,9 @@ final class AppCoordinator {
         }
         device = nil
         serverName = nil
+        // The widget's line goes too, and the widget is off until turned on again.
+        WidgetSummaryStore.isEnabled = false
+        WidgetSummaryStore.reloadWidget()
         route = .pairing
     }
 

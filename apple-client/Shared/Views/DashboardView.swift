@@ -97,6 +97,10 @@ struct DashboardView: View {
             if let words = model.changesToSay(status.apps) {
                 AccessibilityNotification.Announcement(words).post()
             }
+            // The widget's one line, when it's turned on: a count, never names.
+            if WidgetSummaryStore.save(WidgetSummary(needALook: model.attentionCount, at: Date())) {
+                WidgetSummaryStore.reloadWidget()
+            }
         }
         .onDisappear {
             model.rememberSeen()

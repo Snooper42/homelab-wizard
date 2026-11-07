@@ -90,6 +90,22 @@ jobs:
           build iphone-app -project "$RUNNER_TEMP/xcode/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
             -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app"
 
+      # The same apps with the Home Screen and desktop widget (HOMELAB_WIDGET=1),
+      # which people build only when they ask for it.
+      - name: Make the Xcode project with the widget
+        env:
+          HOMELAB_XCODE_DIR: ${{ runner.temp }}/xcode-widget
+          HOMELAB_NO_OPEN: "1"
+          HOMELAB_WIDGET: "1"
+        run: ./scripts/make-xcode-project.sh com.example
+
+      - name: Build the Mac and iPhone apps with the widget
+        run: |
+          build mac-widget -project "$RUNNER_TEMP/xcode-widget/HomelabClient.xcodeproj" -scheme HomelabClient \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/app-widget"
+          build iphone-widget -project "$RUNNER_TEMP/xcode-widget/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app-widget"
+
       # The scripts people run on their Mac: each parses, and each does what
       # it says against stand-ins for Xcode, the iPhone and the homelab.
       - name: Scripts parse

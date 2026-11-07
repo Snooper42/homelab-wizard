@@ -39,6 +39,13 @@ working:
 ./apple-client/scripts/phones.sh tidy
 ```
 
+**The widget** (optional): "All well" or how many apps need a look, on the
+iPhone's Home Screen or the Mac's desktop. Build with it by putting
+`HOMELAB_WIDGET=1` in front of either run script, then turn it on in the app
+under Computer › This Device. It needs an App Group, which a free Apple ID
+may not be able to sign; if the build stops there, run the script again
+without it.
+
 Each script says what's wrong and what to do when something isn't ready.
 The rest of this README is the detail.
 
@@ -202,7 +209,8 @@ hash. The client receives the token itself, once.
 | Card data, logs and alerts in memory | Cards, logs and command output belong to the dashboard, so locking drops them. A late answer after a lock is dropped, not stored. Log lines are shown verbatim (never parsed as Markdown) and marked `privacySensitive`. What the app copies (an address, log lines) stays on this device: on iOS it's local-only, so not on Universal Clipboard, and expires in ten minutes; on the Mac, copied log lines are marked concealed for clipboard-history apps. One card that fails to decode only costs that card. | `CardsViewModel`, `LogsViewModel`, `StatusCard`, `Clipboard` |
 | Finances save losing data, or undoing another device's | Edits change only the fields they mean to (`FinancePlanEdit`) in the plan as the raw JSON sent. Its `rev` goes back, so the computer refuses a stale save, and the phone then reads the latest. The edit level, authentication, a sane amount, and never retried. | `FinancePlanEdit`, `FinancesViewModel.setBalance` |
 | A receipt photo giving away where it was taken | Re-encoded from its pixels alone (`ReceiptCodec.preparePhoto`): no EXIF, GPS or camera details, at most 2000 px and 2 MB. Receipt names must be the computer's hash form before they're sent or shown. | `ReceiptCodec` |
-| What's kept on the device between launches | Only the sidebar's choice and which Status groups are open (scene storage, group names only), the overnight line's hidden day, and "changed since you looked" as HMAC-SHA256 values under a random Keychain key (this device only). No app names, times, or readings are kept readable. | `ChangeMemory`, `KeychainManager.deviceKey` |
+| What's kept on the device between launches | Only the sidebar's choice and which Status groups are open (scene storage, group names only), the widget's one line where it's turned on (below), the overnight line's hidden day, and "changed since you looked" as HMAC-SHA256 values under a random Keychain key (this device only). No app names, times, or readings are kept readable. | `ChangeMemory`, `KeychainManager.deviceKey` |
+| The widget showing the homelab without Face ID | Built only with `HOMELAB_WIDGET=1`, and off on each device until turned on (with Face ID or Touch ID) under Computer › This Device. It shows only "All well" or a count, and when it was read: never app names. The unlocked app writes that one line to the App Group on each Status read; the widget has no token and reads nothing from the network. It's hidden while the device is locked (`privacySensitive`), only the Home Screen size is offered (no Lock Screen widget), and turning it off or unpairing deletes the line. | `WidgetSummaryStore`, `Widget/HomelabWidget.swift` |
 | Fix applied by accident | Fix always runs as a plan first. `fix --apply` runs only from that plan's Fix These button, after authentication. | `HomelabTasksViewModel`, `TaskOutputView` |
 | Diagnostics report leaking secrets | The computer removes secrets before sending. The phone shows the whole report before the share sheet, keeps it only while that sheet is open, and never logs it. | `ComputerViewModel`, `ReportView` |
 | Command output kept or shown | Docker's output is kept only for a failure's Details: the last 400 lines, cleaned, in memory, dropped on lock. It's never logged. | `APIError.sanitizeLog` |

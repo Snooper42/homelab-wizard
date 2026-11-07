@@ -495,3 +495,20 @@ struct StatusGroupTests {
         #expect(StatusFolds.isOpen(other, in: "not json"))             // a bad record is no choice
     }
 }
+
+// The widget's one line: a count, never names; and nothing kept without a widget.
+@Suite("Widget")
+struct WidgetSummaryTests {
+    @Test func aCountNeverNames() {
+        #expect(WidgetSummary(needALook: 0, at: Date()).words == "All well")
+        #expect(WidgetSummary(needALook: 1, at: Date()).words == "1 needs a look")
+        #expect(WidgetSummary(needALook: 3, at: Date()).words == "3 need a look")
+    }
+
+    @Test func aBuildWithoutTheWidgetKeepsNothing() {
+        // The test bundle names no App Group, as the default app doesn't.
+        #expect(!WidgetSummaryStore.isAvailable)
+        #expect(!WidgetSummaryStore.save(WidgetSummary(needALook: 2, at: Date())))
+        #expect(WidgetSummaryStore.load() == nil)
+    }
+}

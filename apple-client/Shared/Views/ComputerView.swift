@@ -5,7 +5,10 @@ import SwiftUI
 struct ComputerView: View {
     let computer: ComputerViewModel
     @Environment(AppCoordinator.self) private var coordinator
+    @Environment(DashboardViewModel.self) private var dashboard
     @State private var confirmingUnpair = false
+    /// The widget, on this device (WidgetSummaryStore).
+    @State private var widgetOn = WidgetSummaryStore.isEnabled
 
     var body: some View {
         @Bindable var computer = computer
@@ -124,6 +127,28 @@ struct ComputerView: View {
         }
     }
 
+    private var widgetName: String {
+        #if os(macOS)
+        "Show on the desktop widget"
+        #else
+        "Show on the Home Screen widget"
+        #endif
+    }
+
+    /// Turning the widget on lets a line show without unlocking, so it asks
+    /// the owner first. Turning it off clears the line at once.
+    private func setWidget(_ on: Bool) async {
+        if on {
+            guard await coordinator.authorizeChange(reason: "Show the homelab's health on the widget.") else { return }
+            WidgetSummaryStore.isEnabled = true
+            WidgetSummaryStore.save(WidgetSummary(needALook: dashboard.attentionCount, at: Date()))
+        } else {
+            WidgetSummaryStore.isEnabled = false
+        }
+        widgetOn = WidgetSummaryStore.isEnabled
+        WidgetSummaryStore.reloadWidget()
+    }
+
     private var deviceSection: some View {
         Section {
             if let device = coordinator.device {
@@ -144,6 +169,16 @@ struct ComputerView: View {
             if let server = coordinator.serverName {
                 LabeledContent("Computer") {
                     Text(verbatim: server).textSelection(.enabled)
+                }
+            }
+            if WidgetSummaryStore.isAvailable {
+                Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(widgetName)
+                        Text("Shows only \"All well\" or how many apps need a look, and when, without Face ID or Touch ID. Never app names. Hidden while the device is locked.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             Button("Unpair This Device…", role: .destructive) { confirmingUnpair = true }
