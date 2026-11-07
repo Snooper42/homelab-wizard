@@ -351,6 +351,8 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     if (lyr && apart > 0) out.push({ kind: 'lyrics', title: `${count(apart, 'song')} show two languages on one line`, sub: 'Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes', go: { label: 'Tidy lyrics', run: () => act.run('music', 'lyrics', ['--tidy']) } });
     if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
     // A check from before Tidy Up counted those: one more, which changes nothing, finds them.
+    // Never checked: say so on Overview too (it was on the Music tab only, so lyrics seemed to have no option at all).
+    if (!lyr) out.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
     if (lyr && lyr.to_clean === undefined && none === 0) out.push({ kind: 'lyrics', title: 'Look over the lyrics again', sub: 'Finds songs that show two languages on one line; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
   } else if (k === 'movies' || k === 'tv') {
     const c = l.counts || {}, bloated = n(c.bloated), withTdarr = n(c.queued) + n(l.waiting);
@@ -627,7 +629,16 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
     if (!genres || n(genres.result?.to_fix) > 0) extra.push({ kind: 'music', title: n(genres?.result?.to_fix) ? `${count(n(genres!.result!.to_fix), 'song')} outside your 14 genres` : 'Fold every song into one of your 14 genres', sub: 'Looks first; you see the list before anything changes', go: { label: 'Check genres', run: () => act.run('music', 'genres'), quiet: true } });
     if ((l.stage === 'swapped' || l.stage === 'verified' || l.stage === 'freed') && !last(l, 'navidrome-cleanup')?.ok) extra.push({ kind: 'music', title: 'Tidy Navidrome after the swap', sub: 'A full scan, and the old paths it still lists removed', go: { label: 'Tidy Navidrome', run: () => act.run('music', 'navidrome-cleanup'), quiet: true } });
     if (!last(l, 'playlists')?.ok) extra.push({ kind: 'music', title: 'A smart playlist for each of your genres', sub: 'Navidrome fills them by itself as music is added', go: { label: 'Make playlists', run: () => act.run('music', 'playlists'), quiet: true } });
-    if (!last(l, 'lyrics')) extra.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    // Lyrics always have a row here once checked: what the last check found, and Check again. Before, a check that found
+    // nothing to tidy or add left no lyrics option anywhere.
+    const lr = last(l, 'lyrics'), ly = lr?.result;
+    if (lr && ly) {
+      const parts = [['synced', 'time-synced'], ['plain', 'plain'], ['none', 'without lyrics'], ['not_found', 'not on LRCLIB yet']]
+        .filter(([key]) => n(ly[key]) > 0).map(([key, words]) => `${count(n(ly[key]), 'song')} ${words}`);
+      const found = n(ly.to_clean) ? `${count(n(ly.to_clean), 'song')} with two languages on one line` : 'none with two languages on one line';
+      extra.push({ kind: 'lyrics', title: 'Lyrics', sub: `${parts.join(' · ') || 'No songs read yet'} · ${found} · checked ${ago(lr.at)}`,
+        go: { label: 'Check again', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
+    }
   }
   // Episodes missing from a season (a gap in its numbering, as the scan read it): said, with nothing to press.
   const gaps = kind === 'tv' && l.found ? n(last(l, 'scan')?.result?.missing) : 0;

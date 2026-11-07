@@ -912,7 +912,8 @@ const smokes = [
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
     await page.click('#tidy .seg button:text-is("Books")');
-    await page.waitForSelector('#tidyReview :text("Applied 30 minutes ago: the books in it were changed")', { timeout: 5000 });
+    // The run's time is fixed when this file loads, so later in a long run it reads 31, 45… minutes ago.
+    await page.waitForSelector('#tidyReview :text-matches("Applied [0-9]+ minutes? ago: the books in it were changed")', { timeout: 5000 });
     if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
     await page.waitForSelector('#tidyReview button:text-is("Undo the last apply")', { timeout: 3000 });
   } },
@@ -2147,6 +2148,26 @@ const smokes = [
         if (got[0] !== "Install Python 3, ffmpeg and Calibre's tools" || got.some((t) => /drive/.test(t))) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
         await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
         await page.waitForSelector(".tidyneeds li:has-text(\"Install Python 3 and Calibre's tools\")", { timeout: 3000 });
+      } },
+    ];
+  })(),
+  // The owner, Nov 7: "I don't see the lyrics option". Never checked: Overview offers the check (it was on the Music tab
+  // only). Checked, with nothing to tidy or add: the Music tab still has a Lyrics row, what the check found, and Check
+  // again (before, no lyrics option was left anywhere).
+  ...(() => {
+    const withLyrics = (result) => ({ ...tidy, libraries: tidy.libraries.map((l) => (l.kind !== 'music' ? l
+      : { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'lyrics').concat(result ? [['lyrics', tidyRun('lyrics', 5, result)]] : [])) })) });
+    return [
+      { name: 'Lyrics never checked: Overview offers the check', screen: 'tidy', mock: { tidy: withLyrics(null) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+        await page.waitForSelector('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")', { timeout: 5000 });
+        await page.click('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")');
+        await page.waitForFunction(() => window.__MOCK.tidyRuns.some((r) => r.slice(0, 3).join(' ') === 'music lyrics --check'), null, { timeout: 5000 });
+      } },
+      { name: 'Lyrics checked, nothing to do: Music still has a Lyrics row and Check again', screen: 'tidy', mock: { tidy: withLyrics({ check: true, synced: 13700, plain: 228, none: 0, to_clean: 0, instrumental: 4 }) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+        const row = '#tidy .tidyneeds li:has-text("Lyrics"):has-text("13,700 songs time-synced")';
+        await page.waitForSelector(`${row}:has-text("none with two languages on one line") button:text-is("Check again")`, { timeout: 5000 });
       } },
     ];
   })(),

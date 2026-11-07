@@ -49,6 +49,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Lyrics are always on Tidy Up:** once a lyrics check found nothing to tidy or add, every lyrics option disappeared, from Overview and from Music. Music now always has a **Lyrics** row with what the last check found and **Check again**, and before the first check Overview offers it too (*See how many songs have lyrics*), not only the Music tab.
 - **Tidy Up starts with two things, not nine:** on a new Mac with the media drive unplugged, Needs your OK listed the drive, each library on it, and each missing tool, nine rows. Now the drive is one row (*Plug in the Media drive: Music, Movies, TV, Books and Audiobooks are on it*, with **Choose folder…** for media kept elsewhere), and the tools are one (*Install Python 3, ffmpeg and Calibre's tools*), asking only for what a library that's here needs: with the drive away, just Python. A library's own tab names the tools it needs.
 - **Tidy Up says when a job picks up where one stopped:** a job that takes over from one cut off part-way (a restart, the app quitting) said so only in Terminal. The Tidy Up screen now says so too.
 - **A books review, once applied:** Overview no longer says the same books *could look tidier*, and Books says the review was applied, with Undo, instead of offering to apply it again.

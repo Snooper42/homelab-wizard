@@ -13245,6 +13245,7 @@ ${pays}
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
       if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
       if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (!lyr) out.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
       if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
       const c3 = l3.counts || {}, bloated = n2(c3.bloated), withTdarr = n2(c3.queued) + n2(l3.waiting);
@@ -13521,7 +13522,17 @@ ${pays}
       if (!genres || n2(genres.result?.to_fix) > 0) extra.push({ kind: "music", title: n2(genres?.result?.to_fix) ? `${count(n2(genres.result.to_fix), "song")} outside your 14 genres` : "Fold every song into one of your 14 genres", sub: "Looks first; you see the list before anything changes", go: { label: "Check genres", run: () => act.run("music", "genres"), quiet: true } });
       if ((l3.stage === "swapped" || l3.stage === "verified" || l3.stage === "freed") && !last(l3, "navidrome-cleanup")?.ok) extra.push({ kind: "music", title: "Tidy Navidrome after the swap", sub: "A full scan, and the old paths it still lists removed", go: { label: "Tidy Navidrome", run: () => act.run("music", "navidrome-cleanup"), quiet: true } });
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
-      if (!last(l3, "lyrics")) extra.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
+      const lr = last(l3, "lyrics"), ly = lr?.result;
+      if (lr && ly) {
+        const parts2 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key5]) => n2(ly[key5]) > 0).map(([key5, words4]) => `${count(n2(ly[key5]), "song")} ${words4}`);
+        const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
+        extra.push({
+          kind: "lyrics",
+          title: "Lyrics",
+          sub: `${parts2.join(" · ") || "No songs read yet"} · ${found2} · checked ${ago(lr.at)}`,
+          go: { label: "Check again", run: () => act.run("music", "lyrics", ["--check"]), quiet: true }
+        });
+      }
     }
     const gaps = kind === "tv" && l3.found ? n2(last(l3, "scan")?.result?.missing) : 0;
     if (gaps) {
