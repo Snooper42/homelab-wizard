@@ -264,6 +264,8 @@ const receiptPicture = async (page) => Buffer.from(await page.evaluate(async () 
 }), 'base64');
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
+// The same household with a share of the mortgage, $900, sent by Sam (outside it) on the 3rd (finance-moneyin.json).
+const moneyIn = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-moneyin.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
 // and Sam's check going into savings on the 12th.
 // The same household with its balances typed in on the 25th: Jordan's
@@ -5032,6 +5034,45 @@ const smokes = [
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
   } },
+  // Money in from someone outside the household: Comes in from someone asks who sends it, and keeps no account it comes out of.
+  { name: 'Finances: add money that comes in from someone', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.click('#finSheet .finway [role=radio]:text-is("Comes in from someone")');
+    if (await page.$('#finSheet label:has-text("Comes out of")') || await page.$('#finSheet label:has-text("Pays off a card")')) throw new Error('money in asks what it comes out of');
+    await page.fill('#finSheet label:has-text("Name") input', 'Mortgage share');
+    await page.fill('#finSheet label:has-text("Amount") input', '900');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Say who sends it")', { timeout: 5000 });
+    await page.fill('#finSheet label:text-is("From") input', 'Sam');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1));
+    const x = saved?.payments.find((q) => q.name === 'Mortgage share');
+    if (!x || x.amount !== 900 || x.payer !== 'Sam' || x.from || x.card || x.to) throw new Error(`saved ${JSON.stringify(x)}`);
+  } },
+  { name: 'The phone, view only: money from someone shows, with nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...moneyIn, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (await page.$('.fx-paycheck li:has-text("Mortgage share") button')) throw new Error('a phone that may only look can open the payment');
+  } },
+  // Money from Sam on the 3rd: in the pay period's rows, Recurring, the month, the money flow, and the calendar, as money in.
+  { name: 'Finances: money from someone shows as money in, everywhere it is planned', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button:text-is("Today")').catch(() => {});
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-monthsum')).includes('and Sam')) throw new Error('a typical month does not count what Sam sends');
+    await page.waitForSelector('.fx-moneyflow :text("Mortgage share, from Sam")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-03"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Mortgage share"):has-text("From Sam"):has-text("+$900.00")', { timeout: 5000 });
+  } },
   // Another device saved after this one read: the save is refused, the
   // latest is read, and the form stays open with what was typed, so Save
   // again keeps both changes.
@@ -6280,6 +6321,174 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // An estimated bill paid three times or more in six months, its average 3% or more off the plan's: the Dashboard asks to
+  // use the average. Use keeps it; Keep is remembered on this device. Twice is too few to ask.
+  ...[['Use $152.00', 152], ['Keep $140.00', 140]].map(([button, want]) => ({ name: `Finances: a bill that changes, its average offered, ${button}`, screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: finances.plan.payments.map((x) => (x.id === 'water' ? { ...x, estimate: true } : x)) }, paid: [
+    { payment: 'electric', due: '2026-07-18', date: '2026-07-17', amount: 148, planned: 140, transaction: 'x1' },
+    { payment: 'electric', due: '2026-08-18', date: '2026-08-18', amount: 161, planned: 140, transaction: 'x2' },
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-19', amount: 147, planned: 140, transaction: 'x3' },
+    { payment: 'water', due: '2026-09-20', date: '2026-09-20', amount: 150, planned: 120, transaction: 'x4' },
+    { payment: 'water', due: '2026-10-20', date: '2026-10-20', amount: 150, planned: 120, transaction: 'x5' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-averages li:has-text("Electric has averaged $152.00 over 3 months")', { timeout: 5000 });
+    if (await page.$('.fx-averages li:has-text("Water")')) throw new Error('two payments are taken as an average');
+    await page.click(`.fx-averages button:text-is("${button}")`);
+    if (want === 152) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'electric'));
+      if (x.amount !== 152 || !x.estimate) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-averages', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+    }
+  } })),
+  // A bill paid in the ledger before with nothing for its last day, three days on: the Dashboard says so. One not followed
+  // in the ledger, or due two days ago, is not said.
+  { name: 'Finances: a bill paid before but not seen yet is said on the Dashboard', screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-17', amount: 140, planned: 140, transaction: 'x1' },
+    { payment: 'hoa', due: '2026-09-28', date: '2026-09-28', amount: 310, planned: 310, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-missing li:has-text("Electric"):has-text("Due Sun, Oct 18, 12 days ago")', { timeout: 5000 });
+    if ((await page.$$('.fx-missing li')).length !== 1) throw new Error('more than Electric is said: ' + await page.textContent('.fx-missing'));
+    await page.click('.fx-missing button:text-is("Transactions")');
+    await page.waitForSelector('.fx-transactions', { timeout: 5000 });
+  } },
+  // A subscription charged the same new price twice in a row: the Dashboard asks to update the plan; Keep is remembered on
+  // this device, Update keeps the new amount. Charged a new price once, it asks nothing.
+  ...[['Update to $17.99', 17.99], ['Keep $15.49', 15.49]].map(([button, want]) => ({ name: `Finances: a subscription's new price, ${button}`, screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' },
+    { payment: 'spotify', due: '2026-10-12', date: '2026-10-12', amount: 12.99, planned: 11.99, transaction: 'x3' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices li:has-text("Spotify")')) throw new Error('one new charge asks to change the plan');
+    await page.click(`.fx-prices button:text-is("${button}")`);
+    if (want === 17.99) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'netflix'));
+      if (x.amount !== 17.99) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-prices', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+      await page.reload();
+      await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+      if (await page.$('.fx-prices')) throw new Error('Keep was not remembered');
+    }
+  } })),
+  { name: 'The phone, view only: a subscription\'s new price is said, with nothing to press', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, paid: [
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices button')) throw new Error('a phone that may only look can change the price');
+  } },
+  // A row that plainly pays a planned payment (its name or brand, its amount give or take a tenth, near one of its days) is
+  // linked to it, so the plan does not take it out again; the preview says so, and the link can be taken off there.
+  { name: 'Finances: an imported bill paid early is linked to its planned payment, and can be unlinked', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/29/2026,NETFLIX.COM,-15.49\n10/29/2026,PELOTON INTERACTIVE,-60.00\n10/28/2026,ELECTRIC COMPANY,-150.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("3 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Netflix")) .importlink:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Looks like Electric, planned $140.00")', { timeout: 5000 });
+    // $60 is too far from Peloton's $44 to be it.
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Peloton Interactive")) .importlink')) throw new Error('a charge a third over Peloton\'s is linked to it');
+    if (!(await page.isVisible('#finSheet .importnote'))) throw new Error('the preview does not say what a link does');
+    await page.selectOption('#finSheet .importlist li:has(strong:text-is("Electric Company")) select', '');
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Not a planned payment")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-3).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Netflix|netflix,Peloton Interactive|,Electric Company|') throw new Error(`saved ${txs}`);
+  } },
+  // Money in from someone, in a bank's file by their name, is linked to what they send as planned.
+  { name: 'Finances: an imported transfer from someone is linked to the money they send', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/30/2026,ZELLE FROM SAM,900.00\n10/30/2026,ZELLE FROM PAT,900.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Zelle From Sam")) .importlink:has-text("Looks like Mortgage share, planned $900.00")', { timeout: 5000 });
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Zelle From Pat")) .importlink')) throw new Error('money from someone else is linked to what Sam sends');
+    await page.click('#finSheet button:text-is("Bring in 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
+  } },
+  // A minus on checking and the same plus on savings a day later look like one transfer: Join makes them one, its arriving
+  // half's bank ID kept, so the savings statement brought in again skips it. Not one transfer keeps them apart.
+  ...['Join', 'Not one transfer'].map((button) => ({ name: `Finances: two rows that look like one transfer, ${button}`, screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'o1', date: '2026-10-28', account: 'chk', amount: -500, payee: 'TRANSFER TO SAVINGS', bank: 'C1' },
+    { id: 'i1', date: '2026-10-29', account: 'sav', amount: 500, payee: 'TRANSFER FROM CHECKING', bank: 'S1' },
+    { id: 'o2', date: '2026-10-20', account: 'chk', amount: -40, payee: 'Gas' },
+    { id: 'i2', date: '2026-10-21', account: 'sav', amount: 45, payee: 'Interest' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-pairs li:has-text("Chase Checking → BofA Savings"):has-text("$500.00")', { timeout: 5000 });
+    if ((await page.$$('.fx-pairs li')).length !== 1) throw new Error('$40 out and $45 in are taken as one transfer');
+    await page.click(`.fx-pairs button:text-is("${button}")`);
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions);
+    const o1 = txs.find((t) => t.id === 'o1'), i1 = txs.find((t) => t.id === 'i1');
+    if (button === 'Join') {
+      if (i1 || o1?.to !== 'sav' || o1.amount !== -500 || o1.toBank !== 'S1' || o1.bank !== 'C1') throw new Error(`joined ${JSON.stringify(txs.slice(-4))}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+      await page.waitForSelector('.fx-txday li:has-text("Chase Checking → BofA Savings")', { timeout: 5000 });
+      // The savings statement again: its half is in already.
+      await page.click('.fx-transactions button:text-is("Import a file")');
+      const ofx = '<OFX><BANKTRANLIST><STMTTRN><DTPOSTED>20261029<TRNAMT>500.00<FITID>S1<NAME>TRANSFER FROM CHECKING</STMTTRN></BANKTRANLIST></OFX>';
+      await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'sav');
+      await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'savings.ofx', mimeType: 'application/x-ofx', buffer: Buffer.from(ofx) });
+      await page.waitForSelector('#finSheet .formsub:has-text("1 already in, skipped")', { timeout: 5000 });
+    } else {
+      if (!o1?.apart || !i1?.apart || o1.to) throw new Error(`apart ${JSON.stringify([o1, i1])}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+    }
+  } })),
+  // Transactions already in the ledger that look like planned payments are offered, each to link or say Not it; once
+  // linked, a row says what it pays. Not it is kept, so it is not offered again.
+  { name: 'Finances: transactions that look like planned payments can be linked, or said not to be', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'e1', date: '2026-10-17', account: 'chk', amount: -142.1, payee: 'Electric Co' },
+    { id: 'n1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' },
+    { id: 'p1', date: '2026-10-29', account: 'chk', amount: -60, payee: 'Peloton' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("Electric Co"):has-text("looks like Electric, planned $140.00 for Oct 18")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM"):has-text("looks like Netflix")', { timeout: 5000 });
+    if (await page.$('.fx-links li:has-text("Peloton")')) throw new Error('$60 to Peloton, planned $44, is offered');
+    await page.waitForSelector('.fx-links button:text-is("Link all 2")', { timeout: 5000 });
+    await page.click('.fx-links li:has-text("NETFLIX.COM") button:text-is("Not it")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const n1 = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions.find((t) => t.id === 'n1'));
+    if (!n1.notPlanned || n1.payment) throw new Error(`Not it saved ${JSON.stringify(n1)}`);
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM")', { state: 'detached', timeout: 5000 });
+    await page.click('.fx-links li:has-text("Electric Co") button:text-is("Link")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 2, null, { timeout: 5000 });
+    const e1 = await page.evaluate(() => window.__MOCK.ledgerSaved[1].transactions.find((t) => t.id === 'e1'));
+    if (e1.payment !== 'electric') throw new Error(`Link saved ${JSON.stringify(e1)}`);
+    await page.waitForSelector('.fx-links', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Electric Co") .fx-txpays:has-text("pays Electric")', { timeout: 5000 });
+  } },
+  // A transaction typed in links itself to what it plainly pays, saying so; picking None keeps it from being offered again.
+  { name: 'Finances: a typed transaction links itself to the planned payment it pays', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Netflix');
+    await page.fill('#finSheet label:has-text("Amount") input', '15.49');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-10-29');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Pays a planned payment") select')) !== 'netflix') throw new Error('the pick does not show the link');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Netflix'));
+    if (t.payment !== 'netflix' || t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+    // Peloton, with None picked: it pays nothing planned, and says so.
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Peloton');
+    await page.fill('#finSheet label:has-text("Amount") input', '44');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-11-04');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Peloton")', { timeout: 5000 });
+    await page.selectOption('#finSheet label:has-text("Pays a planned payment") select', '');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Peloton'));
+    if (t.payment || !t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+  } },
   // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
   // wrote it still shows its logo.
   { name: "Finances: a bank's wording comes in as the payee's own name, with its logo", screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'raw1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' }] } }, run: async (page) => {
@@ -6485,6 +6694,23 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
     const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
     if (saved.waiting?.join() !== 'payment:hoa:2026-10-28,pay:jordan:2026-10-26' || saved.notYet) throw new Error(`waiting ${saved.waiting}, notYet ${saved.notYet}`);
+  } },
+  // A bill due the day the balances were typed in comes out that day; Already in says the balance has it, and is kept.
+  { name: 'Finances: a bill on the day the balances were typed comes out, unless Already in', screen: 'finances', mock: { finances: { ...since, plan: { ...since.plan, waiting: ['payment:hoa:2026-10-28'] }, since: [
+    { key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true },
+    ...since.since,
+  ] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("due the day the balance was typed") [role=radio][aria-checked=true]:text-is("Comes out")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-since .fx-lead')).includes('A bill due that day still comes out')) throw new Error('the list does not say a bill that day comes out');
+    await page.click('.fx-since li:has-text("Netflix") [role=radio]:text-is("Already in")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
+    // What waits stays waiting; the bill is now in the balance.
+    if (saved.inBalance?.join() !== 'payment:netflix:2026-10-25' || saved.waiting?.join() !== 'payment:hoa:2026-10-28') throw new Error(`in the balance ${saved.inBalance}, waiting ${saved.waiting}`);
+  } },
+  { name: 'The phone, view only: what is taken as done is shown, with nothing to mark', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...since, readOnly: true, since: [{ key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true, inBalance: true }, ...since.since] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("already in the balance")', { timeout: 5000 });
+    if (await page.$('.fx-since [role=radio]')) throw new Error('a phone that may only look can mark what is taken as done');
   } },
   { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });

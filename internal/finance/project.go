@@ -49,6 +49,11 @@ type View struct {
 	// far as a year back: Subscriptions says one was just paid. One that
 	// has not come yet has none.
 	Last map[string]string `json:"last,omitempty"`
+	// Dues are each payment's days from DuesBack days before today to
+	// matchWindow after (YYYY-MM-DD), by ID, so a row of a bank's file can be
+	// linked to the payment it pays. A card paid off with each paycheck, or
+	// a payment of nothing, has none: no amount to know it by.
+	Dues map[string][]string `json:"dues,omitempty"`
 	// Paid are the planned payments the ledger says were paid, each by a
 	// transaction on a day near its own, with what was planned and what it
 	// came to (ProjectWith): its day is then the transaction's, not the plan's.
@@ -131,10 +136,15 @@ type Past struct {
 	// In is money into checking; Outside one between other accounts.
 	In      bool `json:"in,omitempty"`
 	Outside bool `json:"outside,omitempty"`
-	// Typed marks one dated the day its balance was typed in, so in it.
+	// Typed marks one dated the day its balance was typed in: a paycheck
+	// that day is taken to be in it, and a payment comes out that day
+	// unless InBalance.
 	Typed bool `json:"typed,omitempty"`
 	// Waiting is one the household said is not in the balances yet: it comes today.
 	Waiting bool `json:"waiting,omitempty"`
+	// InBalance is a payment on the day its balance was typed in that the
+	// household said the balance has already (Plan.InBalance).
+	InBalance bool `json:"inBalance,omitempty"`
 }
 
 // Period is from a paycheck into checking until the day before the next
@@ -318,11 +328,21 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			v.Typed = dateOf(t)
 		}
 	}
-	// counts says whether an event's day is in an account's balance from
-	// now on: after the day it was typed in, or any day for one waiting.
+	inBalance := map[string]bool{}
+	for _, k := range p.InBalance {
+		inBalance[k] = true
+	}
+	// counts says whether an event moves an account's balance as typed in:
+	// one after the day it was typed in, or any day for one waiting. On
+	// that day a paycheck is taken to be in it (balances are typed once the
+	// pay is there), and a payment still comes out unless the household
+	// said the balance has it (Plan.InBalance).
 	counts := func(e *event, account string) bool {
 		t, ok := typed[account]
-		return e.waiting || !ok || e.was.After(t)
+		if e.waiting || !ok || e.was.After(t) {
+			return true
+		}
+		return e.pay != nil && e.was.Equal(t) && !inBalance[e.key]
 	}
 	waiting := map[string]bool{}
 	for _, k := range p.Waiting {
@@ -352,6 +372,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			}
 			return out
 		}
+		// From someone outside: only into its account.
+		if e.pay.Payer != "" {
+			return []side{{toOf(e.pay, v.Checking), e.amt}}
+		}
 		from := e.pay.From
 		if from == "" {
 			from = v.Checking
@@ -372,7 +396,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		if e.was.After(today) {
 			return
 		}
-		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: !e.waiting}
+		past := Past{Key: e.key, Date: dateOf(e.was), Waiting: e.waiting, Typed: !e.waiting, InBalance: e.pay != nil && !e.waiting && inBalance[e.key]}
 		listed := e.waiting
 		for _, s := range sides(e) {
 			t, ok := typed[s.account]
@@ -394,10 +418,10 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			past.In = to == "" || to == v.Checking
 			past.Outside = !past.In
 		} else {
-			from := e.pay.From
+			from, to := e.pay.From, toOf(e.pay, v.Checking)
 			past.Payment, past.Amount = e.pay.ID, cents(e.amt)
-			past.In = from != "" && from != v.Checking && e.pay.To == v.Checking
-			past.Outside = from != "" && from != v.Checking && !past.In
+			past.In = (e.pay.Payer != "" || from != "" && from != v.Checking) && to == v.Checking
+			past.Outside = (e.pay.Payer != "" || from != "" && from != v.Checking) && !past.In
 		}
 		v.Since = append(v.Since, past)
 	}
@@ -492,6 +516,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	v.Worth = worth(p, today)
 	v.Next = nextDays(p, today)
 	v.Last = lastDays(p, today)
+	v.Dues = dueDays(p, today)
 	monthOn := today.AddDate(0, 1, 0)
 	yearOn := today.AddDate(1, 0, 0) // the calendar reads this far (Later)
 	// cardDue is the day a card is next paid from d on: the first day of a
@@ -830,15 +855,15 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 			inChecking = true
 		}
 	}
-	from := e.pay.From
-	if from == "" {
+	from, to := e.pay.From, toOf(e.pay, checking)
+	if from == "" && e.pay.Payer == "" {
 		from = checking
 	}
-	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking]), Saved: Saving(kind[e.pay.To])}
+	r := Row{Date: dateOf(e.was), Payment: e.pay.ID, Amount: cents(e.amt), Estimate: e.pay.Estimate, After: cents(bal[checking]), Saved: e.pay.Payer == "" && Saving(kind[to])}
 	switch {
 	case from == checking && (inChecking || checking == ""):
 		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount}, counted
-	case e.pay.To == checking && inChecking:
+	case to == checking && inChecking:
 		r.Into = true
 		return r, &Event{Payment: e.pay.ID, Amount: r.Amount}, counted
 	}
@@ -848,6 +873,15 @@ func pay(e *event, sides []side, bal map[string]float64, kind map[string]string,
 		return r, &Event{Payment: e.pay.ID, Amount: -r.Amount, Card: from}, counted
 	}
 	return r, nil, counted
+}
+
+// toOf is the account a payment goes into: its To, or for money from
+// someone outside the household with none, checking.
+func toOf(x *Payment, checking string) string {
+	if x.To == "" && x.Payer != "" {
+		return checking
+	}
+	return x.To
 }
 
 // move adds amount to an account: money in for what is there, less owed
@@ -869,6 +903,27 @@ func lastDays(p Plan, today time.Time) map[string]string {
 	for _, x := range p.Payments {
 		if ds := p.Dates(x.Schedule, today.AddDate(-1, 0, 0), today.AddDate(0, 0, -1)); len(ds) > 0 {
 			out[x.ID] = dateOf(ds[len(ds)-1])
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// DuesBack is how far back View.Dues reads: a bank's file of three months, and some.
+const DuesBack = 120
+
+// dueDays is each payment with a set amount's days from DuesBack before
+// today to matchWindow after.
+func dueDays(p Plan, today time.Time) map[string][]string {
+	out := map[string][]string{}
+	for _, x := range p.Payments {
+		if x.Card != "" || x.Amount <= 0 {
+			continue
+		}
+		for _, d := range p.Dates(x.Schedule, today.AddDate(0, 0, -DuesBack), today.AddDate(0, 0, matchWindow)) {
+			out[x.ID] = append(out[x.ID], dateOf(d))
 		}
 	}
 	if len(out) == 0 {

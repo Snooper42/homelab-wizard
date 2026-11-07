@@ -216,7 +216,7 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         {keep && fromWallos && <WallosWidget v={v} read={fromWallos} keep={keep} />}
         <Widget title="A typical month" span="all" kind="fx-monthsum">
           <div class="fx-stats">
-            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}`} />
+            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}${m.others.length ? ` and ${m.others.map((o) => o.payer).filter((p, i, a) => a.indexOf(p) === i).join(' and ')}` : ''}`} />
             <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={`Spent · ${share(m.spent)}`} />
             <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>Saved · {share(m.saved)}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
             <Stat value={<Amount value={m.left} form="whole" tone={m.left < 0 ? 'out' : ''} />} caption="Left over" />
@@ -232,12 +232,12 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
               // Past the paychecks read ahead (a yearly one that just came): its own next day.
               const later = n ? '' : v.next?.[x.id] || '';
               // The paycheck that covers it; money moved into checking needs none.
-              const from = n && (x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
-              const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : '';
+              const from = n && (x.payer ? 'from ' + x.payer : x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
+              const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : x.payer ? ' → ' + (L.account[v.checking]?.name || 'checking') : '';
               return <Row key={x.id} lead={<PayMark x={x} />}
                 title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}{kept(x, n)}{paidLine(x)}</>}
                 end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
-                when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} form="full" />} whenPlain
+                when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} sign={!!x.payer} tone={x.payer ? 'in' : ''} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
             })}
             {!list.length && <li><Empty>{payments.length ? 'None of this kind.' : 'No payments yet: the mortgage, the car, subscriptions, a card\'s balance.'}</Empty></li>}

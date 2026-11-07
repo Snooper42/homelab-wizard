@@ -40,9 +40,10 @@ func icsFold(line string) string {
 // and each bill (not money moved into savings or into checking), dated
 // stamp, with amounts written by money when amounts is on.
 func ICS(v View, amounts bool, stamp time.Time, money func(float64) string) []byte {
-	names := map[string]string{}
+	names, payers := map[string]string{}, map[string]string{}
 	for _, x := range v.Plan.WithCards() {
 		names[x.ID] = x.Name
+		payers[x.ID] = x.Payer
 	}
 	people := map[string]string{}
 	for _, e := range v.Plan.People {
@@ -69,10 +70,14 @@ func ICS(v View, amounts bool, stamp time.Time, money func(float64) string) []by
 	for _, per := range v.Periods {
 		for _, r := range per.Rows {
 			name, ok := names[r.Payment]
-			if !ok || r.Saved || r.Into {
+			// Money moved between the household's own accounts is no event; money from someone is.
+			if !ok || r.Saved || r.Into && payers[r.Payment] == "" {
 				continue
 			}
 			title := name
+			if who := payers[r.Payment]; who != "" {
+				title += " from " + who
+			}
 			if amounts {
 				title += " " + money(r.Amount)
 				if r.Estimate {

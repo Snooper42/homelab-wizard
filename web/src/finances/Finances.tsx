@@ -32,7 +32,7 @@ export interface FinancesProps {
   setTab: (tab: string) => void;
   sel: number;
   pick: (i: number) => void;
-  setWaiting: OverviewProps['setWaiting'];
+  setSince: OverviewProps['setSince'];
   saveSettings: SaveSettings;
   /** Keeps the plan as it is given (Add to the plan); false when it failed. */
   keep: (plan: finance.Plan) => Promise<boolean>;
@@ -46,6 +46,8 @@ export interface FinancesProps {
   fromWallos?: () => Promise<app.AppSubscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
+  /** Keeps the ledger (a link to a planned payment, from Transactions); false when it failed. */
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   /** Saves an export (Reports' CSV, the plan, what's ahead) and says where it went; "" when cancelled. */
   exportFile: (name: string, text: string) => Promise<string>;
   /** Opens a month's page to print (the browser prints it); on a phone, shared or downloaded. Says where it went. */
@@ -91,7 +93,7 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   );
 }
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, running, calendar, fromWallos, phone, toggleHidden, group, setGroup }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
@@ -123,12 +125,12 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
-          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
+          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
+          : <Overview v={v} L={L} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
       </div>
     </>
   );

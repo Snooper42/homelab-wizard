@@ -630,6 +630,7 @@ declare namespace finance {
     outside?: boolean;
     typed?: boolean;
     waiting?: boolean;
+    inBalance?: boolean;
   }
   interface Payday {
     date: string;
@@ -650,6 +651,7 @@ declare namespace finance {
     to?: string;
     card?: string;
     type?: string;
+    payer?: string;
   }
   interface Payoff {
     account: string;
@@ -686,6 +688,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    inBalance?: string[];
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
@@ -745,6 +748,9 @@ declare namespace finance {
     category?: string;
     note?: string;
     payment?: string;
+    notPlanned?: boolean;
+    toBank?: string;
+    apart?: boolean;
     to?: string;
     splits?: finance.Split[];
     tags?: string[];
@@ -765,6 +771,7 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    dues?: Record<string, string[]>;
     paid?: finance.Paid[];
     categories: finance.Category[];
     found?: finance.Found[];
