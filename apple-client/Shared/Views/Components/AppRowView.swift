@@ -112,6 +112,34 @@ extension AppIconView {
     }
 }
 
+/// Just an app's logo, small, beside its name where there's no row of its
+/// own (the memory list): the bundled logo, or a plain tile the same size
+/// so the names line up.
+struct AppLogo: View {
+    let id: String?
+    let size: CGFloat
+
+    var body: some View {
+        Group {
+            if let id, let logo = BundledLogo.image(for: id) {
+                logo
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "shippingbox")
+                    .font(.system(size: size * 0.5))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.secondary.opacity(0.12))
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: size * 0.22, style: .continuous))
+        .accessibilityHidden(true)
+    }
+}
+
 /// The logos the app ships for the homelab's catalog apps
 /// (Shared/Assets.xcassets/AppLogos, from homarr-labs/dashboard-icons,
 /// Apache 2.0; scripts/fetch-app-logos.py). Looked up by app id, once each.

@@ -244,6 +244,7 @@ private struct MemoryPressureView: View {
         ForEach(memory.biggest.indices, id: \.self) { i in
             let big = memory.biggest[i]
             HStack {
+                AppLogo(id: big.id, size: 22)
                 Text(verbatim: big.name)
                 Spacer(minLength: 8)
                 Text(MemoryPressure.text(big.bytes))
