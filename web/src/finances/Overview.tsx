@@ -14,6 +14,7 @@ import { Widget } from './ui/Widget';
 import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
 import { NowWidget } from './widgets/Now';
+import { PricesWidget } from './widgets/Prices';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { RenewingWidget } from './widgets/Subscriptions';
@@ -35,6 +36,8 @@ export interface OverviewProps {
   edit?: (what: 'payment' | 'goal', id: string) => void;
   /** Says what became of a paycheck or payment taken as done: counted, waiting (it comes today), or a bill the balance has already. */
   setSince?: (key: string, state: SinceState) => Promise<boolean>;
+  /** Keeps the plan (a subscription's new price); left out on a phone allowed only to look. */
+  keep?: (plan: finance.Plan) => Promise<boolean>;
   /** Shows Net worth. */
   openWorth: () => void;
   /** Shows Recurring's Subscriptions. */
@@ -47,7 +50,7 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -73,6 +76,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, openWorth, open
       <div class="fx-board">
         {!phone && <NowWidget v={v} L={L} />}
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
+        <PricesWidget v={v} L={L} keep={keep} />
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}

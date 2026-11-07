@@ -6321,6 +6321,33 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // A subscription charged the same new price twice in a row: the Dashboard asks to update the plan; Keep is remembered on
+  // this device, Update keeps the new amount. Charged a new price once, it asks nothing.
+  ...[['Update to $17.99', 17.99], ['Keep $15.49', 15.49]].map(([button, want]) => ({ name: `Finances: a subscription's new price, ${button}`, screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' },
+    { payment: 'spotify', due: '2026-10-12', date: '2026-10-12', amount: 12.99, planned: 11.99, transaction: 'x3' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices li:has-text("Spotify")')) throw new Error('one new charge asks to change the plan');
+    await page.click(`.fx-prices button:text-is("${button}")`);
+    if (want === 17.99) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'netflix'));
+      if (x.amount !== 17.99) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-prices', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+      await page.reload();
+      await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+      if (await page.$('.fx-prices')) throw new Error('Keep was not remembered');
+    }
+  } })),
+  { name: 'The phone, view only: a subscription\'s new price is said, with nothing to press', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, paid: [
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices button')) throw new Error('a phone that may only look can change the price');
+  } },
   // A row that plainly pays a planned payment (its name or brand, its amount give or take a tenth, near one of its days) is
   // linked to it, so the plan does not take it out again; the preview says so, and the link can be taken off there.
   { name: 'Finances: an imported bill paid early is linked to its planned payment, and can be unlinked', screen: 'finances', run: async (page) => {
