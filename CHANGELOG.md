@@ -56,6 +56,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up, redesigned:** Overview starts with the one thing to do next, larger, beside a ring of what's on the drive. Under it, a tile for each library in its own colour says what it holds, how far along it is, and what it waits on; a tile opens its tab, which now starts with that library (Music's with its clean-up step by step).
 - **Transfers between your accounts, joined:** money out of one of your accounts and the same into another within three days are offered on Transactions as one transfer (**Join**, or **Not one transfer**), so they count as neither spending nor income. Bringing in either bank's file again skips its half.
 - **Transactions link to the bills they pay:** Transactions lists those already in that look like a planned payment (*looks like Electric, planned $140*), each with **Link** or **Not it**, and **Link all**; a linked one says *pays Electric*. A transaction you type picks its planned payment by itself, saying so, until you pick another.
 - **A bill paid early isn't taken out twice:** importing a bank's file links each row that plainly pays a planned payment (its name or logo, about its amount, near its day), so the forecast doesn't take that bill out again on its day. The preview says *Looks like Electric, planned $140*, and you can change or remove it before bringing them in.
@@ -155,6 +156,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 - **A wall screen stays a wall screen:** a screen paired in kiosk mode can no longer be given changes or Finances (beyond the money card) later in Settings › Phones, since anyone walking past could use them.
 - **A phone on your Wi-Fi can't pretend it used the secure link:** pairing through your domain's link now checks with the proxy itself whether the phone really came over https, so someone who catches a pairing code on the Wi-Fi gets a phone that only looks. Run Set up the domain once more to turn it on; the doctor reminds you.
 - **Tidy Up installs exactly the music tools it was tested with:** the one-time setup for music on this computer took the newest beets and its helpers from the internet, unchecked. It now installs the versions pinned for your Python, each checked against a fingerprint, and needs Python 3.10 or newer (3.10 to 3.14); a setup made before is brought to them once.
+- **Tidy lyrics runs:** Overview's and Music's **Tidy lyrics** stopped at once with *Tidy Up doesn't run a job with "--tidy"*; it now sets the songs' lyrics right.
 
 ## [0.17.0] - 2026-11-02
 

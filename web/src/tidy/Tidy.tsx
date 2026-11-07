@@ -401,11 +401,18 @@ function TodoRows({ todos, job }: { todos: Todo[]; job: TidyJob | null }) {
   // One main button, on the first thing to do (the list is in the order to do them), never on one that throws things
   // away; the rest are there, quieter.
   const first = todos.findIndex((t) => t.go && !t.go.quiet && !t.go.risky);
+  // Next up: that thing leads the list, drawn larger (style.css, the row with the main button), after only what has to
+  // be put right before anything runs (a drive away, a tool missing). Before, a step that throws things away could
+  // sit above it, and the main button hid in the middle of the list.
+  let warned = 0;
+  while (warned < todos.length && todos[warned].warn) warned++;
+  const order = first > warned ? [...todos.slice(0, warned), todos[first], ...todos.slice(warned, first), ...todos.slice(first + 1)] : todos;
+  const main = first >= 0 ? todos[first] : undefined;
   return (
     <Rows kind="fx-rows tidytodo">
-      {todos.map((t, i) => (
-        <Row key={t.kind + i} lead={<LibIcon kind={t.kind} />} title={t.title} sub={t.sub} subTone={t.warn ? 'warn' : undefined}
-          end={<>{!!t.gain && <><span class="fx-amount fx-in tidygain">{size(t.gain)}</span><span class="sr"> to win back</span></>}{t.go && <Go label={t.go.label} primary={i === first} job={job} onClick={t.go.run} />}</>} />
+      {order.map((t, i) => (
+        <Row key={t.kind + t.title + i} lead={<LibIcon kind={t.kind} />} title={t.title} sub={t.sub} subTone={t.warn ? 'warn' : undefined}
+          end={<>{!!t.gain && <><span class="fx-amount fx-in tidygain">{size(t.gain)}</span><span class="sr"> to win back</span></>}{t.go && <Go label={t.go.label} primary={t === main} job={job} onClick={t.go.run} />}</>} />
       ))}
     </Rows>
   );
@@ -485,11 +492,14 @@ function DriveWidget({ d }: { d: app.TidyUp }) {
   if (!dr) return null;
   const parts = d.libraries.filter((l) => l.size).map((l) => ({ label: names[l.kind], value: l.size || 0, color: looks[l.kind].hue }));
   const measuring = d.libraries.some((l) => l.found && !l.size);
+  const slices = [...parts, { label: 'Free', value: dr.free, color: 'track' as Hue }];
   return (
     <Widget title={dr.name ? `On the ${dr.name} drive` : 'On this machine'} kind="fx-flow tidydrive">
       <Stat value={<span class="fx-amount">{size(dr.free)}<small> free</small></span>} caption={`Of ${size(dr.total)}${d.freed ? ' · ' + size(d.freed) + ' won back so far' : ''}`} />
-      <SplitBar parts={[...parts, { label: 'Free', value: dr.free, color: 'track' }]} label="The drive" />
-      <Legend items={[...parts.map((p) => ({ label: p.label, color: p.color, value: size(p.value) })), { label: 'Free', color: 'track' as Hue, value: size(dr.free) }]} />
+      <div class="fx-donutrow">
+        <Donut slices={slices} size={124} label="The drive" center={<><strong>{dr.total ? Math.round((dr.free / dr.total) * 100) : 0}%</strong>free</>} />
+        <Legend items={slices.map((p) => ({ label: p.label, color: p.color, value: size(p.value) }))} />
+      </div>
       {measuring && <p class="fx-sub">Measuring the rest: it takes a few minutes on a big drive.</p>}
     </Widget>
   );
@@ -511,7 +521,7 @@ function SpaceWidget({ l, d }: { l: app.TidyLibrary; d: app.TidyUp }) {
 }
 
 /** What was done lately, newest first; Undo where an undo exists (the music swap, the books' apply). */
-function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; kind?: string }) {
+function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; kind?: string; span?: 1 | 'all' }) {
   const items = d.activity.map((a, i) => ({ a, i })).filter(({ a }) => !kind || a.kind === kind || (kind === 'music' && a.kind === 'lyrics')).reverse().slice(0, 6);
   const music = lib(d, 'music'), books = lib(d, 'books');
   const swapIdx = d.activity.map((a) => a.text).lastIndexOf('Cleaned library swapped in');
@@ -533,7 +543,7 @@ function DoneWidget({ d, job, act, kind }: { d: app.TidyUp; job: TidyJob | null;
   };
   const check = !kind && <Go label="Check Downloads" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} title="New films, episodes, music, and books in Downloads are filed every minute by themselves" />;
   return (
-    <Widget title="Recently done" span="all" kind="fx-renewing tidydone" actions={check || undefined}>
+    <Widget title="Recently done" span={span} kind="fx-renewing tidydone" actions={check || undefined}>
       {items.length ? (
         <Rows kind="fx-rows tidydone">
           {items.map(({ a, i }) => {
@@ -600,18 +610,125 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
   // What waits on you: the things with a button (a drive away or a tool missing is said, not counted), as the heading counts.
   const waiting = todos.filter((t) => t.go).length;
   const gain = todos.reduce((t, x) => t + (x.gain || 0), 0);
+  // Three questions, in order: what to do now (the list, its first thing larger, beside the drive), how each library is
+  // doing (the shelf), and what was done (beside the genres).
   return (
-    <div class="fx-board">
-      <Widget title="Needs your OK" span="all" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
-        {todos.length ? <TodoRows todos={todos} job={job} /> : (
-          <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
-            <div><strong>Everything's tidy</strong><div class="muted">New downloads are filed as they finish, and anything new to tidy shows up here.</div></div></div>
-        )}
-      </Widget>
-      <GenresWidget d={d} job={job} act={act} />
-      <DriveWidget d={d} />
-      <DoneWidget d={d} job={job} act={act} />
-    </div>
+    <>
+      <div class="fx-board tidytop">
+        <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
+          {todos.length ? <TodoRows todos={todos} job={job} /> : (
+            <div class="tidyclear"><span class="fmark logo tidyicon fx-h-in" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg></span>
+              <div><strong>Everything's tidy</strong><div class="muted">New downloads are filed as they finish, and anything new to tidy shows up here.</div></div></div>
+          )}
+        </Widget>
+        <DriveWidget d={d} />
+      </div>
+      <Shelf d={d} act={act} review={review} pick={pick} />
+      <div class="fx-board tidybottom">
+        <GenresWidget d={d} job={job} act={act} />
+        <DoneWidget d={d} job={job} act={act} span={1} />
+      </div>
+    </>
+  );
+}
+
+/** How far along a library is, where the record can say so: songs with lyrics, videos already lean. Nothing is guessed. */
+function meterOf(l: app.TidyLibrary): { share: number; words: string } | undefined {
+  if (l.kind === 'music') {
+    const ly = last(l, 'lyrics')?.result;
+    if (!ly) return undefined;
+    const has = n(ly.synced) + n(ly.plain), all = has + n(ly.none) + n(ly.not_found);
+    return all ? { share: has / all, words: 'with lyrics' } : undefined;
+  }
+  if (l.kind === 'movies' || l.kind === 'tv') {
+    const c = l.counts || {}, lean = n(c.lean), all = lean + n(c.bloated) + n(c.queued) + n(l.waiting);
+    return all ? { share: lean / all, words: 'already lean' } : undefined;
+  }
+  return undefined;
+}
+
+/** What a library holds, in a few words: "13,929 songs · 520 GB". */
+function factsOf(l: app.TidyLibrary): string {
+  const c = l.counts || {};
+  const many = l.kind === 'music' ? n(last(l, 'run')?.result?.in_library) || n(last(l, 'scan')?.result?.files)
+    : l.kind === 'movies' || l.kind === 'tv' ? n(c.lean) + n(c.bloated) + n(c.queued) + n(l.waiting)
+    : l.kind === 'books' ? n(last(l, 'review')?.result?.books) : 0;
+  return [many ? things(l.kind, many) : '', l.size ? size(l.size) : ''].filter(Boolean).join(' · ');
+}
+
+/** The libraries side by side, each in its colour: what it holds, how far along it is, and what it waits on. A tile
+ * opens its tab. It sits outside the boards: it starts no job, so it never waits on one. */
+function Shelf({ d, act, review, pick }: { d: app.TidyUp; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
+  return (
+    <section class="tidyshelf" aria-labelledby="tidyShelfTitle">
+      <h2 id="tidyShelfTitle">Your libraries</h2>
+      <ul>
+        {LIBRARIES.map((k) => {
+          const l = lib(d, k);
+          if (!l) return null;
+          const todos = l.found ? todosFor(l, d, act, review, pick) : [];
+          const next = todos.find((t) => t.go && !t.go.risky) || todos[0];
+          const m = l.found ? meterOf(l) : undefined;
+          const facts = l.found ? factsOf(l) : '';
+          const pct = m ? Math.round(m.share * 100) : 0;
+          return (
+            <li key={k}>
+              <button type="button" class={'tidytile ' + hue(looks[k].hue) + (l.found ? '' : ' away')} onClick={() => pick(k)}>
+                <LibIcon kind={k} />
+                <span class="tidytilename">{names[k]}</span>
+                <span class="tidytilefacts">{l.found ? facts || 'Not looked at yet' : "Its drive isn't plugged in"}</span>
+                {m && <span class="tidymeter" aria-hidden="true"><span style={{ width: `${pct}%` }} /></span>}
+                <span class="tidytilenext">{m && <strong>{pct}% {m.words}</strong>}{m && next && <br />}{l.found ? next ? next.title : 'Nothing to tidy' : 'Shows up again once it is back'}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/** Music's clean-up, as the steps it goes through: each one done (and when), the next, and those after. */
+const MUSIC_STEPS: [string, string, string][] = [['scanned', 'scan', 'Scanned'], ['built', 'run', 'Tidy copy built'], ['swapped', 'finalize', 'Swapped in'], ['verified', 'verify', 'Every song checked'], ['freed', 'free-space', 'Old library freed']];
+const STAGES = ['new', 'scanned', 'built', 'swapped', 'verified', 'freed'];
+function MusicSteps({ l }: { l: app.TidyLibrary }) {
+  const at = Math.max(0, STAGES.indexOf(l.stage));
+  return (
+    <ol class="tidysteps tidytrack" aria-label="The clean-up, step by step">
+      {MUSIC_STEPS.map(([, action, label], i) => {
+        const done = at > i, now = at === i, r = last(l, action);
+        return (
+          <li key={label} class={done ? 'done' : now ? 'now' : ''}>
+            <span class="num" aria-hidden="true">{done ? <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg> : i + 1}</span>
+            <span class="grow"><strong>{label}</strong><span class="muted">{done ? (r ? ago(r.at) : 'Done') : now ? 'Next' : 'Later'}</span></span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** A library's tab opens on it: its mark and colour, where it is, what it holds, and (music) how far its clean-up is. */
+function LibHero({ l }: { l: app.TidyLibrary }) {
+  const c = l.counts || {};
+  const many = l.kind === 'music' ? n(last(l, 'run')?.result?.in_library) || n(last(l, 'scan')?.result?.files)
+    : l.kind === 'movies' || l.kind === 'tv' ? n(c.lean) + n(c.bloated) + n(c.queued) + n(l.waiting)
+    : l.kind === 'books' ? n(last(l, 'review')?.result?.books) : 0;
+  const m = meterOf(l);
+  const facts: [string, string][] = [
+    ...(many ? [[lead(unit[l.kind][1]), many.toLocaleString()] as [string, string]] : []),
+    ...(l.size ? [['On the drive', size(l.size)] as [string, string]] : []),
+    ...(m ? [[lead(m.words), `${Math.round(m.share * 100)}%`] as [string, string]] : []),
+    ...(l.freed ? [['Won back', size(l.freed)] as [string, string]] : []),
+  ];
+  return (
+    <Widget title={<><LibIcon kind={l.kind} />{names[l.kind]}</>} span="all" kind={'tidyhero ' + hue(looks[l.kind].hue)}>
+      <div class="tidyherorow">
+        <span class="muted tidyfolder">{l.folder}</span>
+        {!!facts.length && <dl class="tidyfacts">{facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
+      </div>
+      {l.kind === 'music' && <MusicSteps l={l} />}
+    </Widget>
   );
 }
 
@@ -664,6 +781,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
     <FolderGone.Provider value={!l.found}>
       <Gone l={l} />
       <div class="fx-board">
+        {l.found && <LibHero l={l} />}
         <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds" actions={again || undefined}>
           {rows.length ? <TodoRows todos={rows} job={job} /> : <Empty>{l.found ? `Your ${names[kind].toLowerCase()} ${kind === 'music' ? 'is' : 'are'} tidy. Anything new shows up here.` : 'Plug in its drive to see what could be tidier.'}</Empty>}
         </Widget>

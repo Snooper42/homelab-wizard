@@ -344,7 +344,7 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 		}
 		cli = []string{"media", kind, action}
 	}
-	rest, err := tidyScreenArgs(kind, args)
+	rest, err := tidyScreenArgs(kind, action, args)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +357,7 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 }
 
 // What the screen sends a job besides its kind and action: Undo's run, the
-// books' ids to leave alone, and --apply or --check. Anything else (another
+// books' ids to leave alone, --apply or --check, and music lyrics' --tidy. Anything else (another
 // library, other settings, files of the page's choosing) is refused, so a
 // bug in the page can't point Tidy Up at any folder but the libraries.
 var (
@@ -365,7 +365,7 @@ var (
 	tidyIDs   = regexp.MustCompile(`^[0-9]+(,[0-9]+)*$`)
 )
 
-func tidyScreenArgs(kind string, args []string) ([]string, error) {
+func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 	var out []string
 	runs := 0
 	for i := 0; i < len(args); i++ {
@@ -373,6 +373,9 @@ func tidyScreenArgs(kind string, args []string) ([]string, error) {
 		case a == "--yes" || a == "-y" || a == "--background":
 			// the screen's yes is its own argument
 		case a == "--apply" || a == "--check":
+			out = append(out, a)
+		case a == "--tidy" && kind == "music" && action == "lyrics":
+			// Tidy lyrics: the songs' own lyrics set right, on this computer.
 			out = append(out, a)
 		case a == "--skip" && i+1 < len(args) && tidyIDs.MatchString(args[i+1]):
 			out = append(out, a, args[i+1])
