@@ -12907,10 +12907,11 @@ ${pays}
         add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-        /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
+        !phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
         phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
+        phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
