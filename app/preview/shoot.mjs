@@ -6321,6 +6321,16 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // A bill paid in the ledger before with nothing for its last day, three days on: the Dashboard says so. One not followed
+  // in the ledger, or due two days ago, is not said.
+  { name: 'Finances: a bill paid before but not seen yet is said on the Dashboard', screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-17', amount: 140, planned: 140, transaction: 'x1' },
+    { payment: 'hoa', due: '2026-09-28', date: '2026-09-28', amount: 310, planned: 310, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-missing li:has-text("Electric"):has-text("Due Sun, Oct 18, 12 days ago")', { timeout: 5000 });
+    if ((await page.$$('.fx-missing li')).length !== 1) throw new Error('more than Electric is said: ' + await page.textContent('.fx-missing'));
+    await page.click('.fx-missing button:text-is("Transactions")');
+    await page.waitForSelector('.fx-transactions', { timeout: 5000 });
+  } },
   // A subscription charged the same new price twice in a row: the Dashboard asks to update the plan; Keep is remembered on
   // this device, Update keeps the new amount. Charged a new price once, it asks nothing.
   ...[['Update to $17.99', 17.99], ['Keep $15.49', 15.49]].map(([button, want]) => ({ name: `Finances: a subscription's new price, ${button}`, screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),

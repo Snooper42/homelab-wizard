@@ -15,6 +15,7 @@ import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
 import { NowWidget } from './widgets/Now';
 import { PricesWidget } from './widgets/Prices';
+import { MissingWidget } from './widgets/Missing';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { RenewingWidget } from './widgets/Subscriptions';
@@ -76,6 +77,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, openWorth
       <div class="fx-board">
         {!phone && <NowWidget v={v} L={L} />}
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
+        <MissingWidget v={v} L={L} open={openTransactions} />
         <PricesWidget v={v} L={L} keep={keep} />
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}

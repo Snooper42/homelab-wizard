@@ -2206,7 +2206,7 @@
   }
 
   // web/src/status/RowMenu.tsx
-  function RowMenu({ a: a3, x: x3, y: y3, native, busy: busy2, companion: companion2, on: on2, close: close3, said }) {
+  function RowMenu({ a: a3, x: x3, y: y3, native, busy: busy2, companion: companion2, on: on2, close: close3, said: said2 }) {
     const box = A2(null);
     const [sure, setSure] = d2(false);
     const [later2, setLater] = d2(false);
@@ -2279,7 +2279,7 @@
           running5 && url && item("Open", pick(() => on2.open(url))),
           running5 && a3.address && !companion2 && item("Open on a phone", pick(() => on2.phone(a3))),
           url && item("Copy address", pick(() => {
-            on2.copy(url).then(() => said("Address copied"), () => said("Could not copy the address"));
+            on2.copy(url).then(() => said2("Address copied"), () => said2("Could not copy the address"));
           })),
           !native && url && /* @__PURE__ */ u3("hr", {}),
           !native && stopped2 && item("Start", pick(() => on2.act(a3, "start")), { disabled: busy2 }),
@@ -2489,7 +2489,7 @@
     const local = a3.address && a3.url ? a3.url : "";
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
   }
-  function Row2({ a: a3, p: p3, menu, setMenu, said, say }) {
+  function Row2({ a: a3, p: p3, menu, setMenu, said: said2, say }) {
     const pend = p3.pending[a3.id];
     const phoneMay = () => {
       const c3 = document.documentElement.classList;
@@ -2596,7 +2596,7 @@
                   /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: () => p3.on.details(a3), children: "Details" })
                 ] })
               ] }),
-              said && /* @__PURE__ */ u3("span", { class: "rowsaid", role: "status", children: said })
+              said2 && /* @__PURE__ */ u3("span", { class: "rowsaid", role: "status", children: said2 })
             ] }),
             /* @__PURE__ */ u3("td", { title: a3.address && a3.url ? "On this machine: " + a3.url : "", children: a3.address ? /* @__PURE__ */ u3(Link, { url: "https://" + a3.address, text: a3.address, open: p3.on.open, copy, os: p3.os }) : a3.url ? /* @__PURE__ */ u3(Link, { url: a3.url, text: a3.url.replace(/^http:\/\//, ""), open: p3.on.open, copy, os: p3.os }) : /* @__PURE__ */ u3("span", { class: "muted", children: "—" }) }),
             /* @__PURE__ */ u3("td", { class: "rowActions", children: [
@@ -2915,7 +2915,7 @@
       el3.setSelectionRange(el3.value.length, el3.value.length);
     });
     if (!f4.on) return null;
-    const said = !f4.text.trim() ? "" : n3.n ? `${n3.n} of ${n3.of} ${n3.of === 1 ? "app" : "apps"}` : "No app has that name";
+    const said2 = !f4.text.trim() ? "" : n3.n ? `${n3.n} of ${n3.of} ${n3.of === 1 ? "app" : "apps"}` : "No app has that name";
     return /* @__PURE__ */ u3("span", { class: "filterbox", children: [
       /* @__PURE__ */ u3(
         "input",
@@ -2944,7 +2944,7 @@
           }
         }
       ),
-      /* @__PURE__ */ u3("span", { class: "muted filtercount", role: "status", children: said })
+      /* @__PURE__ */ u3("span", { class: "muted filtercount", role: "status", children: said2 })
     ] });
   }
   function openGroups(groups3, f4, held3) {
@@ -2976,12 +2976,12 @@
   function AppList(p3) {
     const f4 = useFold();
     const [menu, setMenu] = d2(null);
-    const [said, setSaid] = d2(null);
+    const [said2, setSaid] = d2(null);
     h2(() => {
-      if (!said) return;
+      if (!said2) return;
       const t3 = setTimeout(() => setSaid(null), 3e3);
       return () => clearTimeout(t3);
-    }, [said]);
+    }, [said2]);
     const say = (id2, words5) => setSaid({ id: id2, words: words5 });
     h2(() => sayChanges(p3));
     const q2 = useFilter().text;
@@ -3005,7 +3005,7 @@
         /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: clearFilter, children: "Show every app" })
       ] }) });
     }
-    const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said?.id === a3.id ? said.words : void 0, say }, a3.id);
+    const row = (a3) => /* @__PURE__ */ u3(Row2, { a: a3, p: p3, menu, setMenu, said: said2?.id === a3.id ? said2.words : void 0, say }, a3.id);
     return /* @__PURE__ */ u3(S, { children: kept3 ? kept3.flatMap(({ g: g2, apps: apps2 }) => [/* @__PURE__ */ u3(GroupHead, { g: g2, open: true, toggle: () => {
     }, p: p3 }, "g:" + g2.label), ...apps2.map(row)]) : p3.groups.flatMap((g2) => [
       /* @__PURE__ */ u3(GroupHead, { g: g2, open: open4[g2.label], toggle: () => toggle(g2.label), p: p3 }, "g:" + g2.label),
@@ -6470,12 +6470,12 @@
     const btn = document.getElementById("oneOpen");
     if (!el3 || !text2 || !btn) return;
     const on2 = document.querySelector(".screen.active")?.id;
-    const said = trouble();
+    const said2 = trouble();
     el3.hidden = !apps || on2 === "status" || on2 === "app";
-    el3.classList.toggle("trouble", !!said);
-    text2.className = said ? "bad" : "ok";
-    text2.textContent = said || "✓ All well";
-    btn.hidden = !said;
+    el3.classList.toggle("trouble", !!said2);
+    text2.className = said2 ? "bad" : "ok";
+    text2.textContent = said2 || "✓ All well";
+    btn.hidden = !said2;
     btn.onclick = () => open2?.();
   }
 
@@ -6659,7 +6659,7 @@
   }
   function Vault({ o: o3 }) {
     const plain2 = o3.plainExports || [];
-    const [tone, said] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
+    const [tone, said2] = plain2.length ? ["bad", "A plain export is lying in recovery-staging/secrets: delete it"] : never(o3.vaultExport) ? ["warn", "Never made yet"] : o3.vaultDue ? ["warn", `Due: the last one is from ${ago(o3.vaultExport)}`] : ["ok", `The last one ${ago(o3.vaultExport)}`];
     return /* @__PURE__ */ u3("details", { class: "morerow", open: !!plain2.length, children: [
       /* @__PURE__ */ u3("summary", { children: [
         /* @__PURE__ */ u3("span", { class: "dot " + tone }),
@@ -6667,7 +6667,7 @@
           /* @__PURE__ */ u3("strong", { children: "Password vault export" }),
           /* @__PURE__ */ u3("span", { class: "sub " + (tone === "bad" ? "bad" : "muted"), children: [
             "A copy of your passwords you can open anywhere, once a month. ",
-            said,
+            said2,
             "."
           ] })
         ] }),
@@ -7888,9 +7888,9 @@
   }
   function Week2({ days, outages: outages2, seen: seen2 }) {
     const [, line] = weekWords(days, outages2, Date.now(), seen2);
-    const said = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
+    const said2 = days.map((d3) => `${d3.name}: ${!d3.all ? "not checked" : d3.ok === d3.all ? "up" : `${d3.ok} of ${d3.all} checks passed`}`).join("; ");
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "weekbars", role: "img", "aria-label": said, children: days.map((d3) => /* @__PURE__ */ u3("span", { class: "day" + (d3.today ? " today" : ""), title: said.split("; ")[days.indexOf(d3)], children: [
+      /* @__PURE__ */ u3("div", { class: "weekbars", role: "img", "aria-label": said2, children: days.map((d3) => /* @__PURE__ */ u3("span", { class: "day" + (d3.today ? " today" : ""), title: said2.split("; ")[days.indexOf(d3)], children: [
         /* @__PURE__ */ u3("span", { class: "bar " + dayTone(d3) }),
         d3.letter
       ] }, d3.name)) }),
@@ -7960,12 +7960,12 @@
     ] });
   }
   function CopyButton({ text: text2, copy }) {
-    const [said, setSaid] = d2("");
+    const [said2, setSaid] = d2("");
     return /* @__PURE__ */ u3("button", { class: "small", onClick: () => copy(text2).then((s3) => {
       setSaid(s3);
       setTimeout(() => setSaid(""), 2500);
     }, () => {
-    }), children: said ? /* @__PURE__ */ u3(S, { children: [
+    }), children: said2 ? /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Icon, { name: "check" }),
       "Copied"
     ] }) : "Copy" });
@@ -9091,9 +9091,9 @@
       else close3();
     };
     const asking = sure && !!uses && !!removeAll;
-    const said = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
+    const said2 = leaving && touched ? "Nothing here is saved yet. Cancel again to drop it, or Save." : asking ? `${uses} it. Delete them with it, or keep them: one out of it then comes out of checking, one into it goes nowhere, and a paycheck lands in checking.` : problem;
     return /* @__PURE__ */ u3(S, { children: [
-      said && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving || asking ? "warn" : "bad"), role: "alert", children: said }),
+      said2 && /* @__PURE__ */ u3("p", { class: "formerr " + (leaving || asking ? "warn" : "bad"), role: "alert", children: said2 }),
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         exists && (asking ? /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: removeAll, children: "Delete it and them" }),
@@ -9564,14 +9564,14 @@
         ] })
       ] });
     }
-    const said = name.trim() || (real ? named3(kind, brandName(real)) : "");
+    const said2 = name.trim() || (real ? named3(kind, brandName(real)) : "");
     return /* @__PURE__ */ u3("form", { class: "finform", ref: form2, onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(Mark, { brand: real, kind, name: said || "Account", img, size: "lg" }),
+        /* @__PURE__ */ u3(Mark, { brand: real, kind, name: said2 || "Account", img, size: "lg" }),
         /* @__PURE__ */ u3("div", { class: "grow", children: [
           /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: a3 ? a3.name : `Add ${adding[kind] || "an account"}` }),
           !a3 && /* @__PURE__ */ u3("div", { class: "formsays muted", children: [
-            said || "Its name, below",
+            said2 || "Its name, below",
             balance.trim() && ` · ${owes ? "owes " : ""}${moneyIn(num(balance), sign ? code2 : void 0)}`
           ] })
         ] }),
@@ -9579,7 +9579,7 @@
       ] }),
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
       kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said || "this account" }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account" }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held2(kind) ? "Worth" : "Balance", value: balance, set: setBalance, sign }),
@@ -10432,10 +10432,10 @@ ${pays}
   var onCard = (e3, L2) => `on ${L2.account[e3.card || ""]?.name || "a card"}` + (e3.due ? `, due ${dayShort(e3.due)}` : "");
   var movedText = (m3, L2) => `${L2.person[m3.person]?.name || m3.person}'s payday moved from ${dayLong(m3.from)}: ${m3.why}`;
   function dayLabel(d3, L2, cushion) {
-    const said = [...d3.events.map((e3) => `${named4(e3, L2)} ${signed(e3.amount)}`), ...d3.charges.map((e3) => `${named4(e3, L2)} ${money(-e3.amount)} ${onCard(e3, L2)}`)];
+    const said2 = [...d3.events.map((e3) => `${named4(e3, L2)} ${signed(e3.amount)}`), ...d3.charges.map((e3) => `${named4(e3, L2)} ${money(-e3.amount)} ${onCard(e3, L2)}`)];
     return [
       dayLong(d3.date) + (d3.holiday ? `, ${d3.holiday}` : ""),
-      said.length ? said.join(", ") : "nothing comes or goes",
+      said2.length ? said2.join(", ") : "nothing comes or goes",
       d3.later ? "planned, past where checking is read ahead" : `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
     ].join(". ");
   }
@@ -10683,8 +10683,8 @@ ${pays}
   }
   function SplitBar({ parts: parts2, label, size: size2 = "md" }) {
     const total = parts2.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
-    const said = parts2.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-split " + size2, role: "img", "aria-label": `${label}: ${said}`, children: parts2.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
+    const said2 = parts2.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-split " + size2, role: "img", "aria-label": `${label}: ${said2}`, children: parts2.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
   }
   function Legend({ items, layout = "list" }) {
     return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
@@ -10809,9 +10809,9 @@ ${pays}
     const total = slices.reduce((t3, s3) => t3 + Math.max(0, s3.value), 0) || 1;
     const r3 = 56, c3 = 2 * Math.PI * r3, gap = slices.length > 1 ? 2 : 0;
     let run2 = 0;
-    const said = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
+    const said2 = slices.map((s3) => `${s3.label} ${Math.round(s3.value / total * 100)}%`).join(", ");
     return /* @__PURE__ */ u3("div", { class: "fx-donut", style: { width: `${size2}px`, height: `${size2}px` }, children: [
-      /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said}`, children: slices.map((s3) => {
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 150 150", role: "img", "aria-label": `${label}: ${said2}`, children: slices.map((s3) => {
         const len = Math.max(0, s3.value) / total * c3;
         const el3 = /* @__PURE__ */ u3("circle", { class: "fx-slice " + hue(s3.color), cx: "75", cy: "75", r: r3, "stroke-dasharray": `${Math.max(len - gap, 0.5).toFixed(2)} ${c3.toFixed(2)}`, "stroke-dashoffset": (-run2).toFixed(2) }, s3.label);
         run2 += len;
@@ -11595,7 +11595,7 @@ ${pays}
   function CalendarFeed({ v: v3, calendar, busy: busy2, set: set2 }) {
     const key5 = v3.plan.calendarKey, amounts = !!v3.plan.calendarAmounts;
     const [link, setLink] = d2({});
-    const [said, setSaid] = d2("");
+    const [said2, setSaid] = d2("");
     const [withAmounts, setWithAmounts] = d2(false);
     h2(() => {
       if (!key5 || link.key === key5) return;
@@ -11625,7 +11625,7 @@ ${pays}
           /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: copy, children: "Copy" })
         ] }),
         link.key === key5 && link.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: link.problem }),
-        /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: said2 || "Subscribe to it in your phone's calendar (on an iPhone: Settings › Calendar › Accounts › Add Account › Other › Add Subscribed Calendar). Anyone with the link sees what it shows." }),
         /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: amounts, onClick: (e3) => set2(key5, e3.currentTarget.checked) }),
           " With amounts"
@@ -11967,7 +11967,7 @@ ${pays}
       const x3 = L2.payment[e3.payment];
       return x3 ? /* @__PURE__ */ u3(PayMark, { x: x3, size: "sm" }) : /* @__PURE__ */ u3(Dot, { color: e3.amount > 0 ? "in" : "out" });
     };
-    const said = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
+    const said2 = (e3) => e3.people ? e3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") + "'s paycheck" : L2.payment[e3.payment]?.name || e3.payment;
     return /* @__PURE__ */ u3(
       Widget,
       {
@@ -12009,7 +12009,7 @@ ${pays}
                 ] }),
                 (days[i3].events || []).slice(0, 6).map((e3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
                   lead2(e3),
-                  /* @__PURE__ */ u3("span", { children: said(e3) }),
+                  /* @__PURE__ */ u3("span", { children: said2(e3) }),
                   /* @__PURE__ */ u3("span", { class: e3.amount > 0 ? "fx-in" : "", children: signed(e3.amount) })
                 ] }, k3)),
                 !(days[i3].events || []).length && /* @__PURE__ */ u3("div", { class: "fx-sub", style: { marginTop: "4px" }, children: "Nothing comes or goes" })
@@ -12187,6 +12187,53 @@ ${pays}
         p3.payment
       );
     }) }) });
+  }
+
+  // web/src/finances/widgets/Missing.tsx
+  var grace = 3;
+  var said = 14;
+  function missingBills(v3) {
+    const paid = v3.paid || [];
+    const out = [];
+    for (const x3 of v3.plan.payments || []) {
+      const due = v3.last?.[x3.id];
+      if (!due || x3.card || x3.payer || !(x3.amount > 0)) continue;
+      const late = daysBetween(due, v3.today);
+      if (late < grace || late > said) continue;
+      if (!paid.some((p3) => p3.payment === x3.id && p3.due < due) || paid.some((p3) => p3.payment === x3.id && p3.due === due)) continue;
+      out.push({ payment: x3.id, due });
+    }
+    return out.sort((a3, b2) => a3.due.localeCompare(b2.due));
+  }
+  function MissingWidget({ v: v3, L: L2, open: open4 }) {
+    const list = missingBills(v3).filter((m3) => L2.payment[m3.payment]);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: list.length === 1 ? "A bill not seen yet" : "Bills not seen yet",
+        span: "all",
+        kind: "fx-missing",
+        actions: open4 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open4, children: "Transactions" }),
+        children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: list.length === 1 ? "Paid before, but nothing in your transactions pays it yet. If it went through, link it in Transactions." : "Paid before, but nothing in your transactions pays these yet. If one went through, link it in Transactions." }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((m3) => {
+            const x3 = L2.payment[m3.payment];
+            return /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+                title: x3.name,
+                sub: `Due ${dayLong(m3.due)}, ${daysBetween(m3.due, v3.today)} days ago`,
+                when: /* @__PURE__ */ u3(Amount, { value: -x3.amount, form: "full" }),
+                whenPlain: true
+              },
+              m3.payment
+            );
+          }) })
+        ]
+      }
+    );
   }
 
   // web/src/finances/widgets/Paycheck.tsx
@@ -13127,6 +13174,7 @@ ${pays}
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         !phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }),
+        /* @__PURE__ */ u3(MissingWidget, { v: v3, L: L2, open: openTransactions }),
         /* @__PURE__ */ u3(PricesWidget, { v: v3, L: L2, keep: keep2 }),
         phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
@@ -13146,7 +13194,7 @@ ${pays}
   var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
   function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
-    const [said, setSaid] = d2("");
+    const [said2, setSaid] = d2("");
     const run2 = (go2) => async () => {
       setSaid("Saving…");
       try {
@@ -13164,7 +13212,7 @@ ${pays}
     const label = (m3) => (/* @__PURE__ */ new Date(m3 + "-01T12:00:00")).toLocaleDateString("en-US", { month: "long" });
     const print = (k3) => run2(() => printMonth(monthName2(month3(k3)), monthPage(v3, month3(k3), "Finances")));
     return /* @__PURE__ */ u3("span", { class: "fx-export", children: [
-      said && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: said }),
+      said2 && /* @__PURE__ */ u3("span", { class: "muted fx-exportsaid", role: "status", children: said2 }),
       /* @__PURE__ */ u3(
         MenuButton,
         {
@@ -14521,7 +14569,7 @@ ${pays}
     const [query3, setQuery] = d2("");
     const [at2, setAt] = d2(0);
     const [sure, setSure] = d2(null);
-    const [said, setSaid] = d2("");
+    const [said2, setSaid] = d2("");
     const all = T2(list, []);
     const found2 = T2(() => match(all, query3), [all, query3]);
     const picked = found2[Math.min(at2, found2.length - 1)];
@@ -14634,7 +14682,7 @@ ${pays}
               },
               c3.id
             )) }),
-            /* @__PURE__ */ u3("p", { class: "palfoot muted", role: "status", children: said || (found2.length ? "" : `Nothing has “${query3.trim()}”`) })
+            /* @__PURE__ */ u3("p", { class: "palfoot muted", role: "status", children: said2 || (found2.length ? "" : `Nothing has “${query3.trim()}”`) })
           ]
         }
       )
