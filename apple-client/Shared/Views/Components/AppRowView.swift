@@ -211,6 +211,43 @@ extension AppStatus {
         return words
     }
 
+    /// Why it isn't running, and what helps, for its page, in the computer's
+    /// words (`stoppedNext` in web/src/status/stopFor.ts). Nil while it runs.
+    /// `todo` is empty when nothing needs doing (it starts by itself).
+    func stoppedNext(now: Date = Date()) -> (why: String, todo: String)? {
+        guard state == "stopped" else { return nil }
+        if let held = stoppedOnPurpose {
+            if held.keptRestarting {
+                return ("The watchdog stopped it after Docker restarted it again and again; its log says why.", "Once that is put right, Start tries again.")
+            }
+            if held.until != nil {
+                let when = held.words(now: now).replacingOccurrences(of: "Stopped until ", with: "")
+                return ("You stopped it until \(when): it starts again by itself then.", "Or Start it now.")
+            }
+            return ("You stopped it, so nothing starts it by itself.", "Start starts it again.")
+        }
+        if pausedOnBattery {
+            return ("Paused while this computer is on battery: it starts again by itself once it is plugged in.", "")
+        }
+        if let drive = waitingFor, !drive.isEmpty {
+            return ("Its folders are on the \(Self.driveName(drive)) drive: plug it in and it starts by itself.", "")
+        }
+        let why = stoppedWhy ?? ""
+        if let range = why.range(of: #"port (\d+)$"#, options: .regularExpression) {
+            return ("Another program has port \(why[range].dropFirst("port ".count)).", "Quit it, then Start.")
+        }
+        switch why {
+        case "it ran out of memory":
+            return ("If it runs out again, stop an app you aren't using, or give Docker more memory.", "Start tries again.")
+        case "Docker couldn't start it":
+            return ("Its log may say why.", "Start tries again.")
+        case "it quit with an error":
+            return ("If it stops again, its log says why.", "Start tries again.")
+        default:
+            return ("It was stopped outside the homelab (by Docker, or a shutdown).", "Start starts it again.")
+        }
+    }
+
     /// A drive as the computer names it: "/Volumes/Media" is "Media".
     static func driveName(_ path: String) -> String {
         path.hasPrefix("/Volumes/") ? String(path.dropFirst("/Volumes/".count)) : path

@@ -14,15 +14,29 @@ struct AppDetailView: View {
                 Section {
                     HStack(spacing: 14) {
                         AppIconView(app: app, size: iconSize)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(app.name)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(verbatim: app.name)
                                 .font(.title2.bold())
-                            Text(app.detailLine)
-                                .foregroundStyle(.secondary)
+                            // Its state as a pill in its colour, then the row's own words
+                            // when they say more ("Stopped at 3:12 AM: it ran out of memory").
+                            Label(app.stateLabel, systemImage: app.symbolName)
+                                .labelStyle(.titleAndIcon)
+                                .pill(app.tint)
+                            if app.detailLine != app.stateLabel {
+                                Text(verbatim: app.detailLine)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            } else if app.isRunning, let since = app.startedAt {
+                                Text("Started \(since.formatted(.relative(presentation: .named)))")
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                     .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
                 }
+                .listRowBackground(Color.clear)
 
                 // What's wrong first, then what can be done, then the rest.
                 if let problem = app.notAnswering, !problem.isEmpty {
@@ -37,6 +51,18 @@ struct AppDetailView: View {
                         Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Why it isn't running, and what helps (the watchdog's stop is the Problem above).
+                if let next = app.stoppedNext(), app.stoppedOnPurpose?.keptRestarting != true {
+                    Section("Why It's Stopped") {
+                        Text(next.why)
+                        if !next.todo.isEmpty, actions.canChange {
+                            Text(next.todo)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 

@@ -512,3 +512,23 @@ struct WidgetSummaryTests {
         #expect(WidgetSummaryStore.load() == nil)
     }
 }
+
+// An app's page says why it isn't running, and what helps, as the computer does.
+@Suite("Why it's stopped")
+struct StoppedNextTests {
+    private func app(_ json: String) throws -> AppStatus {
+        try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+    }
+
+    @Test func eachReasonInTheComputersWords() throws {
+        #expect(try app(#"{"id":"a","name":"A","state":"running"}"#).stoppedNext() == nil)
+        let memory = try #require(try app(#"{"id":"a","name":"A","state":"stopped","stoppedWhy":"it ran out of memory"}"#).stoppedNext())
+        #expect(memory.why.contains("give Docker more memory") && memory.todo == "Start tries again.")
+        let port = try #require(try app(#"{"id":"a","name":"A","state":"stopped","stoppedWhy":"another program is using its port 8080"}"#).stoppedNext())
+        #expect(port.why == "Another program has port 8080." && port.todo == "Quit it, then Start.")
+        let drive = try #require(try app(#"{"id":"a","name":"A","state":"stopped","waitingFor":"/Volumes/Media"}"#).stoppedNext())
+        #expect(drive.why.contains("the Media drive") && drive.todo.isEmpty)
+        let outside = try #require(try app(#"{"id":"a","name":"A","state":"stopped"}"#).stoppedNext())
+        #expect(outside.why.hasPrefix("It was stopped outside the homelab"))
+    }
+}
