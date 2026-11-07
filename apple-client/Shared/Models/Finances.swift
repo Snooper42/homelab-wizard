@@ -121,8 +121,15 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
     let categories: [FinanceCategory]
     /// Paychecks and payments taken to be in the balances, or waiting, oldest first.
     let since: [FinancePast]
+    /// How checking at the start of today was reached, from its balance as
+    /// typed in; and checking once the next paycheck into it lands (main
+    /// #482). Nil without a checking account, or no paycheck ahead.
+    let checkingNow: FinanceWorking?
+    let afterPay: FinanceWorking?
 
-    enum CodingKeys: String, CodingKey { case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since }
+    enum CodingKeys: String, CodingKey {
+        case today, checking, start, periods, plan, readOnly, budgets, goals, loans, categories, since, checkingNow, afterPay
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -138,6 +145,8 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
         loans = ((try? c.decodeIfPresent([FinancePayoff].self, forKey: .loans)) ?? nil) ?? []
         categories = ((try? c.decodeIfPresent([FinanceCategory].self, forKey: .categories)) ?? nil) ?? []
         since = ((try? c.decodeIfPresent([FinancePast].self, forKey: .since)) ?? nil) ?? []
+        checkingNow = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .checkingNow)) ?? nil
+        afterPay = (try? c.decodeIfPresent(FinanceWorking.self, forKey: .afterPay)) ?? nil
     }
 
     /// The keys waiting now: what `Plan.waiting` should hold, as the computer reads it.
@@ -145,6 +154,44 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
 
     func payment(_ id: String) -> FinancePayment? { plan.payments.first { $0.id == id } }
     func person(_ id: String) -> String? { plan.people.first { $0.id == id }?.name }
+
+    /// A payment's name as rows show it: "Mortgage share, from Jamie" for
+    /// money from someone outside the household.
+    func paymentTitle(_ id: String) -> String? {
+        guard let payment = payment(id) else { return nil }
+        if let payer = payment.payer, !payer.isEmpty { return "\(payment.name), from \(payer)" }
+        return payment.name
+    }
+
+    /// "Sam and Alex", from people's ids, as the computer joins them.
+    func names(_ people: [String]) -> String {
+        people.map { person($0).flatMap { $0.isEmpty ? nil : $0 } ?? $0 }.joined(separator: " and ")
+    }
+
+    /// What one step of a working was, in the words its row uses elsewhere
+    /// (the computer's `stepName`).
+    func stepName(_ step: FinanceStep) -> String {
+        if !step.people.isEmpty { return "\(names(step.people))'s paycheck" }
+        if let id = step.payment, !id.isEmpty { return paymentTitle(id) ?? id }
+        if step.interest { return "Interest" }
+        if let name = step.name, !name.isEmpty { return name }
+        return "A transaction"
+    }
+
+    /// The paycheck `afterPay` waits for, from the pay period it starts.
+    var nextPay: FinancePayday? {
+        guard let date = afterPay?.dateText else { return nil }
+        return periods.first { $0.pay?.dateText == date }?.pay
+    }
+
+    /// How many payments due on payday come out of that paycheck after it
+    /// lands, so aren't in `afterPay` (as the computer counts them).
+    var paydayPayments: Int {
+        guard let date = afterPay?.dateText,
+              let period = periods.first(where: { $0.pay?.dateText == date })
+        else { return 0 }
+        return period.rows.filter { $0.dateText == date && !$0.outside && !$0.into }.count
+    }
 
     /// What's there less what's owed, today.
     var netWorth: Double {
@@ -282,6 +329,9 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     let estimate: Bool?
     /// A card whose whole balance it pays (`Payment.Card`).
     let card: String?
+    /// Someone outside the household who sends it ("Jamie", for a share of
+    /// the mortgage): money in, from none of the household's accounts (main #483).
+    let payer: String?
 
     /// Whether the phone can change its amount. A card payoff's amount
     /// isn't what the rows show (they show what the card owes), so it's
@@ -329,6 +379,8 @@ struct FinancePeriod: Decodable, Sendable, Equatable, Identifiable {
 
 struct FinancePayday: Decodable, Sendable, Equatable {
     let date: Date?
+    /// The day as the computer wrote it (YYYY-MM-DD), to match it exactly.
+    let dateText: String?
     /// The earners' ids.
     let people: [String]
     /// Into checking.
@@ -338,7 +390,8 @@ struct FinancePayday: Decodable, Sendable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        dateText = try c.decodeIfPresent(String.self, forKey: .date)
+        date = LocalDay.parse(dateText)
         people = try c.decodeIfPresent([String].self, forKey: .people) ?? []
         amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
     }
@@ -347,6 +400,8 @@ struct FinancePayday: Decodable, Sendable, Equatable {
 /// One payment on its day (`finance.Row`).
 struct FinanceRow: Decodable, Sendable, Equatable, Identifiable {
     let date: Date?
+    /// The day as the computer wrote it (YYYY-MM-DD).
+    let dateText: String?
     let payment: String
     let amount: Double
     let estimate: Bool
@@ -365,7 +420,8 @@ struct FinanceRow: Decodable, Sendable, Equatable, Identifiable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        dateText = try c.decodeIfPresent(String.self, forKey: .date)
+        date = LocalDay.parse(dateText)
         payment = try c.decodeIfPresent(String.self, forKey: .payment) ?? ""
         amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
         estimate = try c.decodeIfPresent(Bool.self, forKey: .estimate) ?? false
@@ -373,6 +429,62 @@ struct FinanceRow: Decodable, Sendable, Equatable, Identifiable {
         into = try c.decodeIfPresent(Bool.self, forKey: .into) ?? false
         late = try c.decodeIfPresent(Bool.self, forKey: .late) ?? false
         saved = try c.decodeIfPresent(Bool.self, forKey: .saved) ?? false
+    }
+}
+
+/// How a checking figure was reached, row by row (`finance.Working`):
+/// `start` on `from`, each step, and `result` on `date`. It's the
+/// computer's own sum, so the phone shows it and adds nothing up itself.
+struct FinanceWorking: Decodable, Sendable, Equatable {
+    /// The day of the result, and the day the start is from (YYYY-MM-DD).
+    let dateText: String
+    let fromText: String
+    let start: Double
+    let steps: [FinanceStep]
+    let result: Double
+
+    var date: Date? { LocalDay.parse(dateText) }
+    var from: Date? { LocalDay.parse(fromText) }
+    /// The balance was typed in on the day of the result.
+    var typedSameDay: Bool { !fromText.isEmpty && fromText == dateText }
+
+    enum CodingKeys: String, CodingKey { case date, from, start, steps, result }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        dateText = try c.decodeIfPresent(String.self, forKey: .date) ?? ""
+        fromText = try c.decodeIfPresent(String.self, forKey: .from) ?? ""
+        start = try c.decodeIfPresent(Double.self, forKey: .start) ?? 0
+        // At most a year of steps; a longer list is cut, never refused.
+        steps = Array((try c.decodeIfPresent([FinanceStep].self, forKey: .steps) ?? []).prefix(2000))
+        result = try c.decodeIfPresent(Double.self, forKey: .result) ?? 0
+    }
+}
+
+/// One change to checking (`finance.Step`): a paycheck, a planned payment,
+/// a transaction, or a stretch of interest, and checking after it.
+struct FinanceStep: Decodable, Sendable, Equatable {
+    let date: Date?
+    let people: [String]
+    let payment: String?
+    let transaction: String?
+    let name: String?
+    let interest: Bool
+    let amount: Double
+    let after: Double
+
+    enum CodingKeys: String, CodingKey { case date, people, payment, transaction, name, interest, amount, after }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+        people = try c.decodeIfPresent([String].self, forKey: .people) ?? []
+        payment = try c.decodeIfPresent(String.self, forKey: .payment)
+        transaction = try c.decodeIfPresent(String.self, forKey: .transaction)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        interest = try c.decodeIfPresent(Bool.self, forKey: .interest) ?? false
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+        after = try c.decodeIfPresent(Double.self, forKey: .after) ?? 0
     }
 }
 

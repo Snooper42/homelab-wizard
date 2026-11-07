@@ -559,3 +559,75 @@ struct CushionEditTests {
         #expect(FinancePlanEdit.settingCushion(10, in: .array([])) == nil)
     }
 }
+
+@Suite("Checking now and after payday")
+struct FinanceWorkingTests {
+    // As the computer sends it (finance.Working and finance.Step, main #482):
+    // typed in on the 3rd, a transaction and interest since; then the bills
+    // before Sam's paycheck, Jamie's share, and the paycheck.
+    let json = #"""
+    {"today":"2026-11-07","checking":"chk",
+     "plan":{"people":[{"id":"p1","name":"Sam"},{"id":"p2","name":"Alex"}],
+             "accounts":[{"id":"chk","name":"Checking","kind":"checking"}],
+             "payments":[{"id":"rent","name":"Rent","amount":1200},
+                         {"id":"share","name":"Mortgage share","amount":400,"payer":"Jamie"}],
+             "cushion":0},
+     "periods":[{"now":true,"start":"2026-11-07","last":"2026-11-13","rows":[]},
+                {"start":"2026-11-14","last":"2026-11-27","pay":{"date":"2026-11-14","people":["p1","p2"],"amount":3000},
+                 "rows":[{"date":"2026-11-14","payment":"rent","amount":1200},
+                         {"date":"2026-11-14","payment":"move","amount":100,"outside":true},
+                         {"date":"2026-11-20","payment":"rent","amount":5}]}],
+     "checkingNow":{"date":"2026-11-07","from":"2026-11-03","start":2000,
+       "steps":[{"date":"2026-11-04","transaction":"t1","name":"Corner Shop","amount":-12.5,"after":1987.5},
+                {"date":"2026-11-06","interest":true,"amount":0.12,"after":1987.62}],
+       "result":1987.62},
+     "afterPay":{"date":"2026-11-14","from":"2026-11-07","start":1987.62,
+       "steps":[{"date":"2026-11-10","payment":"share","amount":400,"after":2387.62},
+                {"date":"2026-11-12","payment":"gone","amount":-50,"after":2337.62},
+                {"date":"2026-11-13","amount":-10,"after":2327.62},
+                {"date":"2026-11-14","people":["p1","p2"],"amount":3000,"after":5327.62}],
+       "result":5327.62}}
+    """#
+
+    @Test func readsBothFigures() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let now = try #require(view.checkingNow)
+        #expect(now.result == 1987.62 && now.start == 2000 && now.steps.count == 2)
+        #expect(!now.typedSameDay && now.from != nil)
+        #expect(now.steps[0].transaction == "t1")
+        let pay = try #require(view.afterPay)
+        #expect(pay.result == 5327.62 && pay.steps.count == 4)
+        #expect(view.payment("share")?.payer == "Jamie")
+    }
+
+    @Test func eachStepInTheComputersWords() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let now = try #require(view.checkingNow), pay = try #require(view.afterPay)
+        #expect(view.stepName(now.steps[0]) == "Corner Shop")
+        #expect(view.stepName(now.steps[1]) == "Interest")
+        #expect(view.stepName(pay.steps[0]) == "Mortgage share, from Jamie")
+        #expect(view.stepName(pay.steps[1]) == "gone") // a payment no longer in the plan: its id
+        #expect(view.stepName(pay.steps[2]) == "A transaction")
+        #expect(view.stepName(pay.steps[3]) == "Sam and Alex's paycheck")
+    }
+
+    @Test func whosePaycheckAndWhatComesOutOfIt() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        #expect(view.nextPay.map { view.names($0.people) } == "Sam and Alex")
+        // Rent on payday counts; the move between other accounts and the 20th's don't.
+        #expect(view.paydayPayments == 1)
+    }
+
+    @Test func withoutThemOrWithABadOneTheRestStillReads() throws {
+        let none = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[]}
+        """#.utf8))
+        #expect(none.checkingNow == nil && none.afterPay == nil && none.nextPay == nil && none.paydayPayments == 0)
+        let bad = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[],
+         "checkingNow":{"date":"2026-11-07","steps":"nope"},"afterPay":{"date":"2026-11-14","from":"2026-11-14","steps":[]}}
+        """#.utf8))
+        #expect(bad.checkingNow == nil)
+        #expect(bad.afterPay?.typedSameDay == true && bad.afterPay?.steps.isEmpty == true)
+    }
+}

@@ -16,6 +16,7 @@ struct FinancesView: View {
     var body: some View {
         Form {
             if let view = finances.plan {
+                if let now = view.checkingNow { CheckingSection(now: now, view: view, finances: finances) }
                 accounts(view)
                 Section {
                     NavigationLink {
@@ -376,7 +377,7 @@ private struct SinceSection: View {
 
     private func name(_ past: FinancePast) -> String {
         if let person = past.person { return "\(view.person(person) ?? "Someone")'s paycheck" }
-        if let payment = past.payment { return view.payment(payment)?.name ?? "Payment" }
+        if let payment = past.payment { return view.paymentTitle(payment) ?? "Payment" }
         return "Payment"
     }
 
@@ -456,7 +457,7 @@ private struct RowLine: View {
         layout {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(view.payment(row.payment)?.name ?? "Payment")
+                    Text(verbatim: view.paymentTitle(row.payment) ?? "Payment")
                     if row.late {
                         Text("Late").font(.caption2.bold()).foregroundStyle(Theme.danger)
                     }
@@ -992,6 +993,8 @@ private struct Money: View {
     let value: Double
     let currency: String
     let finances: FinancesViewModel
+    /// "+$40.00" and "-$12.00": a change rather than a balance.
+    var signed = false
 
     var body: some View {
         if finances.amountsHiddenByPlan || !finances.amountsShown {
@@ -999,9 +1002,140 @@ private struct Money: View {
                 .foregroundStyle(.secondary)
                 .accessibilityLabel("Amount hidden")
         } else {
-            Text(value, format: .currency(code: currency))
+            Text(value, format: .currency(code: currency).sign(strategy: signed ? .always() : .automatic))
                 .monospacedDigit()
                 .privacySensitive()
         }
+    }
+}
+
+/// The two figures the household checks against its own sums, as the
+/// computer's Dashboard starts with them (main #482): checking now, and
+/// checking once the next paycheck lands. Each opens how it adds up.
+private struct CheckingSection: View {
+    let now: FinanceWorking
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
+        Section {
+            figure(now, caption: now.typedSameDay
+                       ? "Now, as typed in today"
+                       : "Now, typed in \(Self.short(now.from))",
+                   start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
+            if let pay = view.afterPay {
+                let whose = view.nextPay.map { view.names($0.people) } ?? ""
+                let count = view.paydayPayments
+                figure(pay, caption: "After \(whose.isEmpty ? "the next" : whose + "'s") paycheck, \(Self.short(pay.date))",
+                       start: "Checking now", end: "Once the paycheck is in, \(Self.long(pay.date))",
+                       note: count == 0 ? nil
+                           : count == 1
+                           ? "One payment due \(Self.short(pay.date)) comes out of this paycheck after it lands, so it isn't in this number."
+                           : "\(count) payments due \(Self.short(pay.date)) come out of this paycheck after it lands, so they aren't in this number.")
+            }
+        } header: {
+            Text("Checking")
+        } footer: {
+            Text("Tap one to see how it adds up, row by row.")
+        }
+    }
+
+    private func figure(_ working: FinanceWorking, caption: String, start: String, end: String, note: String?) -> some View {
+        NavigationLink {
+            CheckingWorkingView(working: working, view: view, finances: finances, title: caption, start: start, end: end, note: note)
+        } label: {
+            LabeledContent {
+                Money(value: working.result, currency: view.plan.currency, finances: finances)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(working.result < 0 ? Theme.danger : Color.primary)
+            } label: {
+                Text(verbatim: caption)
+            }
+        }
+    }
+
+    /// "Nov 14", or "a day" when the computer sent none.
+    static func short(_ date: Date?) -> String {
+        date?.formatted(.dateTime.month(.abbreviated).day()) ?? "a day"
+    }
+
+    /// "Friday, November 14".
+    static func long(_ date: Date?) -> String {
+        date?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? "a day"
+    }
+}
+
+/// How a checking figure adds up: where it starts, each thing in and out
+/// with checking after it, and where it ends. The computer's own steps.
+private struct CheckingWorkingView: View {
+    let working: FinanceWorking
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    let title: String
+    let start: String
+    let end: String
+    let note: String?
+
+    var body: some View {
+        Form {
+            Section {
+                LabeledContent {
+                    Money(value: working.start, currency: view.plan.currency, finances: finances)
+                } label: {
+                    Text(verbatim: start).fontWeight(.semibold)
+                }
+            }
+            Section {
+                if working.steps.isEmpty {
+                    Text("Nothing in or out in between")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(Array(working.steps.enumerated()), id: \.offset) { _, step in
+                    stepRow(step)
+                }
+            }
+            Section {
+                LabeledContent {
+                    Money(value: working.result, currency: view.plan.currency, finances: finances)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(working.result < 0 ? Theme.danger : Color.primary)
+                } label: {
+                    Text(verbatim: end).fontWeight(.semibold)
+                }
+            } footer: {
+                if let note { Text(verbatim: note) }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("How It Adds Up")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    private func stepRow(_ step: FinanceStep) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: view.stepName(step))
+                HStack(spacing: 4) {
+                    Text(verbatim: CheckingSection.short(step.date))
+                    if let id = step.transaction, !id.isEmpty {
+                        Text("· in Transactions")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Money(value: step.amount, currency: view.plan.currency, finances: finances, signed: true)
+                    .foregroundStyle(step.amount > 0 ? Theme.success : Color.primary)
+                Money(value: step.after, currency: view.plan.currency, finances: finances)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
