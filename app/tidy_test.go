@@ -272,3 +272,29 @@ func TestDriveName(t *testing.T) {
 		}
 	}
 }
+
+// A job another process runs (the agent's Collect): the lock, and where its log says it is.
+func TestTidyLockFollowsAJobItDidNotStart(t *testing.T) {
+	a, _ := testApp(t)
+	if got := a.TidyLock(); got.Lock != nil {
+		t.Fatalf("nothing running: %+v", got)
+	}
+	if err := os.MkdirAll(media.LogDir(a.root), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	log := filepath.Join(media.LogDir(a.root), "movies-collect-20261106-140200.jsonl")
+	if err := os.WriteFile(log, []byte(`{"type":"step","n":2,"total":2,"text":"Swapping in the smaller copies"}`+"\n"+`{"type":"progress","label":"Films","done":1,"total":4,"note":"Heat (1995)"}`+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := media.Acquire(a.root, "movies", "collect", log); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = media.Release(a.root) }()
+	got := a.TidyLock()
+	if got.Lock == nil || got.Lock.Kind != "movies" || got.Lock.Action != "collect" {
+		t.Fatalf("lock: %+v", got.Lock)
+	}
+	if got.Now.Step == nil || got.Now.Step.Text != "Swapping in the smaller copies" || got.Now.Progress == nil || got.Now.Progress.Note != "Heat (1995)" {
+		t.Errorf("where it is: %+v %+v", got.Now.Step, got.Now.Progress)
+	}
+}

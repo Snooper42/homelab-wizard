@@ -248,6 +248,10 @@ declare namespace app {
     waiting?: number;
     size?: number;
   }
+  interface TidyRunning {
+    lock?: media.Lock | null;
+    now: media.Following;
+  }
   interface TidyUp {
     libraries: app.TidyLibrary[];
     lock?: media.Lock | null;
@@ -841,6 +845,22 @@ declare namespace media {
     needs?: string;
     install?: string;
   }
+  interface Event {
+    type: string;
+    text?: string;
+    sub?: string;
+    n?: number;
+    total?: number;
+    done?: number;
+    label?: string;
+    value?: string;
+    note?: string;
+    eta?: number;
+  }
+  interface Following {
+    step?: media.Event | null;
+    progress?: media.Event | null;
+  }
   interface Lock {
     pid: number;
     kind: string;
@@ -1134,6 +1154,7 @@ interface Backend {
     TailnetDevices(): Promise<tailnet.Device[]>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
+    TidyLock(): Promise<app.TidyRunning>;
     TidyReveal(arg1: string): Promise<void>;
     TidyReview(): Promise<app.TidyBook[]>;
     TidyRun(arg1: string, arg2: string, arg3: string[], arg4: boolean): Promise<void>;
