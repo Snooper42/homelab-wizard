@@ -4567,6 +4567,37 @@ const smokes = [
     await page.waitForTimeout(300);
     if (await page.evaluate(() => (window.__MOCK.financesSaved || []).length)) throw new Error('the shortcut saved from a phone that may only look');
   } },
+  // Checking now and after the next paycheck, each with how it adds up: resting on it, Tab, or a tap shows the start, every row, and the result.
+  { name: 'Finances: checking now and after the next paycheck say how they add up', screen: 'finances', mock: {
+    finances: { ...finances, checkingNow: { date: '2026-10-30', from: '2026-10-27', start: 2560.6, steps: [{ date: '2026-10-28', transaction: 't6', name: 'Shell', amount: -48.2, after: 2512.4 }], result: 2512.4 } },
+  }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-clear #finAfterPay', { timeout: 5000 });
+    const now = await page.textContent('#finNow .fx-figure'), after = await page.textContent('#finAfterPay .fx-figure');
+    if (!now.includes('2,512') || !after.includes('2,557')) throw new Error(`checking now ${now}, after the paycheck ${after}`);
+    if (!(await page.textContent('#finAfterPay .fx-caption')).includes("Alex's paycheck")) throw new Error('the figure does not say whose paycheck');
+    await page.hover('#finAfterPay');
+    const card = '.fx-clear .hovercard:has(.fx-working):visible';
+    await page.waitForSelector(card, { timeout: 5000 });
+    const text = await page.textContent(card);
+    for (const want of ['Checking now', 'Groceries and gas', 'Mortgage', 'Netflix', 'Peloton', "Alex's paycheck", 'Once the paycheck is in', '2,557.91', 'One payment due']) {
+      if (!text.includes(want)) throw new Error(`how it adds up has no ${want}: ${text}`);
+    }
+    // The keyboard reaches the other: its working starts from the balance as typed in, with what has happened since.
+    await page.mouse.move(0, 0);
+    await page.focus('#finNow');
+    await page.waitForSelector(card, { timeout: 5000 });
+    const since = await page.textContent(card);
+    if (!since.includes('Checking, typed in') || !since.includes('Shell') || !since.includes('2,560.60')) throw new Error(`checking now's working: ${since}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(card, { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'The phone, view only: a tap on checking after the paycheck shows how it adds up', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-clear #finAfterPay', { timeout: 5000 });
+    await page.click('#finAfterPay');
+    await page.waitForSelector('.fx-clear .hovercard:has(.fx-working):visible', { timeout: 5000 });
+    const box = await page.$eval('.fx-clear .hovercard:has(.fx-working)', (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
+    if (box.l < 0 || box.r > box.w) throw new Error(`the card leaves the screen: ${JSON.stringify(box)}`);
+  } },
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');

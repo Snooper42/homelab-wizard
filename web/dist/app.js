@@ -500,12 +500,12 @@
     const done = counted.filter((s3) => s3.state === "done").length;
     return { done, total: counted.length, left: counted.length - done, wait: steps.length - counted.length };
   }
-  function Fold({ id: id2, cls, title, names: names4, shown: shown5, toggle }) {
+  function Fold({ id: id2, cls, title, names: names5, shown: shown5, toggle }) {
     return /* @__PURE__ */ u3("li", { class: "fold " + cls, children: [
       /* @__PURE__ */ u3("span", { class: "mark", children: cls === "done" ? /* @__PURE__ */ u3(Icon, { name: "check" }) : /* @__PURE__ */ u3(Icon, { name: "clock" }) }),
       /* @__PURE__ */ u3("div", { class: "body", children: [
         /* @__PURE__ */ u3("strong", { class: "title", children: title }),
-        !shown5 && names4 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names4 })
+        !shown5 && names5 && /* @__PURE__ */ u3("span", { class: "names muted", children: " · " + names5 })
       ] }),
       /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { id: id2, class: "linkbtn small", "aria-expanded": shown5, onClick: toggle, children: shown5 ? "Hide" : "Show" }) })
     ] });
@@ -2810,7 +2810,7 @@
   }
   var heard = /* @__PURE__ */ new Map();
   var heardOnce = false;
-  var listed = (names4) => names4.length <= 5 ? names4.slice(0, -1).join(", ") + (names4.length > 1 ? " and " : "") + names4[names4.length - 1] : `${names4.slice(0, 4).join(", ")} and ${names4.length - 4} more`;
+  var listed = (names5) => names5.length <= 5 ? names5.slice(0, -1).join(", ") + (names5.length > 1 ? " and " : "") + names5[names5.length - 1] : `${names5.slice(0, 4).join(", ")} and ${names5.length - 4} more`;
   function sayChanges(p3) {
     const now = /* @__PURE__ */ new Map();
     for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
@@ -2824,7 +2824,7 @@
     heardOnce = true;
     const el3 = document.getElementById("statusAloud");
     if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
-    const text2 = [...changed3].map(([words5, names4]) => `${listed(names4)}: ${words5}`).join(". ");
+    const text2 = [...changed3].map(([words5, names5]) => `${listed(names5)}: ${words5}`).join(". ");
     el3.textContent = "";
     requestAnimationFrame(() => {
       el3.textContent = text2;
@@ -6049,8 +6049,8 @@
     const known = Object.keys(statusById || {}).length > 0;
     const mine = known ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
     const others2 = known ? apps2.filter((p3) => !mine.includes(p3)) : [];
-    const groups3 = pageGroups.map(([head, names4]) => ({ head, items: names4.filter((n3) => general.includes(n3)) }));
-    const named5 = new Set(pageGroups.flatMap(([, names4]) => names4));
+    const groups3 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
+    const named5 = new Set(pageGroups.flatMap(([, names5]) => names5));
     groups3[0].items.push(...general.filter((n3) => !named5.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
@@ -6312,7 +6312,7 @@
     checks = list;
     drawHealth2();
   }
-  var listed2 = (names4) => names4.length <= 3 ? names4.slice(0, -1).join(", ") + (names4.length > 1 ? " and " : "") + names4[names4.length - 1] : `${names4.slice(0, 2).join(", ")} and ${names4.length - 2} more`;
+  var listed2 = (names5) => names5.length <= 3 ? names5.slice(0, -1).join(", ") + (names5.length > 1 ? " and " : "") + names5[names5.length - 1] : `${names5.slice(0, 2).join(", ")} and ${names5.length - 2} more`;
   function trouble() {
     if (!apps) return "";
     if (apps.length === 1) return `${apps[0].name}: ${apps[0].words}`;
@@ -9867,9 +9867,9 @@
     const ordered = groups3.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups3.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
     const submit = async (e3) => {
       e3.preventDefault();
-      const names4 = rows.map((r3) => r3.name.trim().toLowerCase());
-      const twice = names4.find((n3, i3) => n3 && names4.indexOf(n3) !== i3);
-      const wrong = names4.some((n3) => !n3) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
+      const names5 = rows.map((r3) => r3.name.trim().toLowerCase());
+      const twice = names5.find((n3, i3) => n3 && names5.indexOf(n3) !== i3);
+      const wrong = names5.some((n3) => !n3) ? "Give each category a name, or delete it." : twice ? `Two categories are called “${rows.find((r3) => r3.name.trim().toLowerCase() === twice).name.trim()}”.` : "";
       setProblem(wrong);
       if (wrong) return;
       const renamed = new Map(rows.filter((r3) => r3.was).map((r3) => [r3.was, r3.name.trim()]));
@@ -9927,7 +9927,7 @@
   }
   function BudgetsForm(props) {
     const { plan } = props;
-    const names4 = (props.categories || []).map((c3) => c3.name);
+    const names5 = (props.categories || []).map((c3) => c3.name);
     const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: text(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
@@ -9948,7 +9948,7 @@
       /* @__PURE__ */ u3("ul", { class: "catlist budgetlist", children: rows.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
         /* @__PURE__ */ u3("select", { "aria-label": `Budget ${i3 + 1} category`, value: r3.category, onChange: (ev) => set2(i3, "category", ev.target.value), children: [
           /* @__PURE__ */ u3("option", { value: "", children: "Pick a category" }),
-          [...new Set([...names4, r3.category].filter(Boolean))].map((n3) => /* @__PURE__ */ u3("option", { value: n3, children: n3 }, n3))
+          [...new Set([...names5, r3.category].filter(Boolean))].map((n3) => /* @__PURE__ */ u3("option", { value: n3, children: n3 }, n3))
         ] }),
         /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
@@ -10183,8 +10183,8 @@
       const p3 = plan.payments?.find((x3) => x3.id === e3.payment);
       return [p3?.name || e3.payment, e3.card ? "Card charge" : e3.amount >= 0 ? "Money in" : "Payment"];
     }
-    const names4 = (e3.people || []).map((id2) => plan.people?.find((x3) => x3.id === id2)?.name || id2);
-    return [names4.length ? `${names4.join(" and ")}'s pay` : "Pay", "Payday"];
+    const names5 = (e3.people || []).map((id2) => plan.people?.find((x3) => x3.id === id2)?.name || id2);
+    return [names5.length ? `${names5.join(" and ")}'s pay` : "Pay", "Payday"];
   }
   var accountName = (plan, id2) => id2 ? plan.accounts?.find((a3) => a3.id === id2)?.name || id2 : "";
   function aheadCsv(v3) {
@@ -11104,7 +11104,7 @@ ${pays}
   }
 
   // web/src/finances/widgets/Homelab.tsx
-  var and = (names4) => names4.length < 3 ? names4.join(" and ") : `${names4.slice(0, -1).join(", ")}, and ${names4.at(-1)}`;
+  var and = (names5) => names5.length < 3 ? names5.join(" and ") : `${names5.slice(0, -1).join(", ")}, and ${names5.at(-1)}`;
   function HomelabWidget({ v: v3, replaced, keep: keep2 }) {
     const cancelled = v3.plan.cancelled || [];
     if (!replaced.length && !cancelled.length) return null;
@@ -11165,11 +11165,11 @@ ${pays}
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
-    const names4 = new Set(payments.flatMap((x3) => [flat2(x3.name), flat2(cleanPayee(x3.name))]));
+    const names5 = new Set(payments.flatMap((x3) => [flat2(x3.name), flat2(cleanPayee(x3.name))]));
     const brands2 = new Set(payments.map((x3) => brandOf(x3.institution, x3.name)).filter((b2) => b2 && b2 !== "none"));
     const inPlan = (s3) => {
       const b2 = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
-      return names4.has(flat2(s3.name)) || names4.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
+      return names5.has(flat2(s3.name)) || names5.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
     };
     const out = { add: [], have: [], off: [], odd: [] };
     const seen2 = /* @__PURE__ */ new Set();
@@ -11197,7 +11197,7 @@ ${pays}
     const add = (subs) => keep2({ ...v3.plan, payments: [...v3.plan.payments || [], ...subs.map((s3) => paymentFromWallos(s3, v3.today))] });
     const sorted = got.subs && sortWallos(got.subs, v3.plan);
     const button = /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: got.busy, onClick: pull, children: got.busy ? "Reading Wallos…" : got.subs ? "Read again" : "From Wallos" });
-    const names4 = (list) => list.map((s3) => s3.name).join(", ");
+    const names5 = (list) => list.map((s3) => s3.name).join(", ");
     return /* @__PURE__ */ u3(Widget, { title: "Subscriptions in Wallos", span: "all", kind: "fx-wallos", actions: button, children: [
       !got.subs && !got.problem && /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Wallos is running here. Bring in the subscriptions it keeps that the plan doesn't have yet; Wallos isn't changed." }),
       got.problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: got.problem }),
@@ -11230,7 +11230,7 @@ ${pays}
         !!(sorted.have.length || sorted.odd.length || sorted.off.length) && /* @__PURE__ */ u3("div", { class: "fx-wallosnotes", children: [
           !!sorted.have.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "In the plan already: ",
-            names4(sorted.have),
+            names5(sorted.have),
             "."
           ] }),
           !!sorted.odd.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
@@ -11240,7 +11240,7 @@ ${pays}
           ] }),
           !!sorted.off.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-wallosnote", children: [
             "Turned off in Wallos, so left out: ",
-            names4(sorted.off),
+            names5(sorted.off),
             "."
           ] })
         ] })
@@ -11895,11 +11895,91 @@ ${pays}
     );
   }
 
+  // web/src/finances/widgets/Now.tsx
+  var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+  function stepName(s3, L2) {
+    if (s3.people?.length) return `${names(s3.people, L2)}'s paycheck`;
+    if (s3.payment) return L2.payment[s3.payment]?.name || s3.payment;
+    if (s3.interest) return "Interest";
+    return s3.name || "A transaction";
+  }
+  function Working({ w: w3, L: L2, start, end, note }) {
+    return /* @__PURE__ */ u3("span", { class: "fx-working", children: [
+      /* @__PURE__ */ u3("span", { class: "fx-workrow fx-workhead", children: [
+        /* @__PURE__ */ u3("span", { children: start }),
+        /* @__PURE__ */ u3(Amount, { value: w3.start, form: "full" })
+      ] }),
+      w3.steps.map((s3, i3) => /* @__PURE__ */ u3("span", { class: "fx-workrow", children: [
+        /* @__PURE__ */ u3("span", { children: [
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: dayShort(s3.date) }),
+          " ",
+          stepName(s3, L2),
+          s3.transaction && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (in Transactions)" })
+        ] }),
+        /* @__PURE__ */ u3(Amount, { value: s3.amount, sign: true, tone: s3.amount > 0 ? "in" : "", form: "full" }),
+        /* @__PURE__ */ u3("span", { class: "fx-sub fx-workafter", children: /* @__PURE__ */ u3(Amount, { value: s3.after, form: "full" }) })
+      ] }, i3)),
+      !w3.steps.length && /* @__PURE__ */ u3("span", { class: "fx-workrow fx-sub", children: /* @__PURE__ */ u3("span", { children: "Nothing in or out in between" }) }),
+      /* @__PURE__ */ u3("span", { class: "fx-workrow fx-workhead fx-workend", children: [
+        /* @__PURE__ */ u3("span", { children: end }),
+        /* @__PURE__ */ u3(Amount, { value: w3.result, form: "full", tone: w3.result < 0 ? "out" : "" })
+      ] }),
+      note && /* @__PURE__ */ u3("span", { class: "fx-sub fx-worknote", children: note })
+    ] });
+  }
+  function Figure({ value, caption, tip, id: id2 }) {
+    const { on: on2, card, show: show3 } = useHoverCard(tip, { wide: true });
+    return /* @__PURE__ */ u3("div", { class: "fx-clearfig", children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "fx-clearbtn", id: id2, ...on2, onClick: () => show3(true), children: [
+        /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value, tone: value < 0 ? "out" : "" }), caption }),
+        /* @__PURE__ */ u3("span", { class: "fx-sub fx-clearhow", children: "How it adds up" })
+      ] }),
+      card
+    ] });
+  }
+  function NowWidget({ v: v3, L: L2 }) {
+    const now = v3.checkingNow, pay = v3.afterPay;
+    if (!now) return null;
+    const typedToday = now.from === now.date;
+    const who = pay && v3.periods.find((p3) => p3.pay?.date === pay.date)?.pay;
+    const whose = who ? names(who.people, L2) : "";
+    const sameDay = pay ? v3.periods.find((p3) => p3.pay?.date === pay.date)?.rows.filter((r3) => r3.date === pay.date && !r3.outside && !r3.into).length || 0 : 0;
+    return /* @__PURE__ */ u3(Widget, { title: "Checking", span: "all", kind: "fx-clear", children: /* @__PURE__ */ u3("div", { class: "fx-clearrow", children: [
+      /* @__PURE__ */ u3(
+        Figure,
+        {
+          id: "finNow",
+          value: now.result,
+          caption: typedToday ? "Now, as typed in today" : `Now, typed in ${dayShort(now.from)}`,
+          tip: /* @__PURE__ */ u3(Working, { w: now, L: L2, start: `Checking, typed in ${dayLong(now.from)}`, end: "Checking now" })
+        }
+      ),
+      pay && /* @__PURE__ */ u3(
+        Figure,
+        {
+          id: "finAfterPay",
+          value: pay.result,
+          caption: `After ${whose ? whose + "'s" : "the next"} paycheck, ${dayShort(pay.date)}`,
+          tip: /* @__PURE__ */ u3(
+            Working,
+            {
+              w: pay,
+              L: L2,
+              start: "Checking now",
+              end: `Once the paycheck is in, ${dayLong(pay.date)}`,
+              note: sameDay ? `${sameDay === 1 ? "One payment" : `${sameDay} payments`} due ${dayShort(pay.date)} come${sameDay === 1 ? "s" : ""} out of this paycheck after it lands, so ${sameDay === 1 ? "it is" : "they are"} not in this number.` : void 0
+            }
+          )
+        }
+      )
+    ] }) });
+  }
+
   // web/src/finances/widgets/Paycheck.tsx
   var shown3 = 5;
   var ownTile = ["checking", "savings", "investment", "retirement"];
-  var names = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
-  var periodTitle = (p3, L2) => p3.now ? `Now · until ${dayLong(p3.last)}` : `${names(p3.pay.people, L2)}'s paycheck · ${dayLong(p3.pay.date)}`;
+  var names2 = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+  var periodTitle = (p3, L2) => p3.now ? `Now · until ${dayLong(p3.last)}` : `${names2(p3.pay.people, L2)}'s paycheck · ${dayLong(p3.pay.date)}`;
   function into(v3, L2, p3) {
     const out = {};
     const add = (id2, n3) => {
@@ -12015,7 +12095,7 @@ ${pays}
               Row,
               {
                 lead: /* @__PURE__ */ u3(Who, { name: L2.person[p3.pay.people[0]]?.name, n: L2.order[p3.pay.people[0]] ?? 0 }),
-                title: `${names(p3.pay.people, L2)}'s paycheck`,
+                title: `${names2(p3.pay.people, L2)}'s paycheck`,
                 sub: dayLong(p3.pay.date),
                 when: /* @__PURE__ */ u3(Amount, { value: p3.pay.amount, sign: true, tone: "in", form: "full" }),
                 whenPlain: true
@@ -12827,6 +12907,7 @@ ${pays}
         add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setWaiting2 }),
         phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
@@ -13095,7 +13176,7 @@ ${pays}
   draw4();
 
   // web/src/tidy/Tidy.tsx
-  var names2 = { music: "Music", books: "Books", movies: "Movies", tv: "TV", audiobooks: "Audiobooks", inbox: "Downloads", scrubber: "Leftovers", tdarr: "Tdarr", arr: "Downloads" };
+  var names3 = { music: "Music", books: "Books", movies: "Movies", tv: "TV", audiobooks: "Audiobooks", inbox: "Downloads", scrubber: "Leftovers", tdarr: "Tdarr", arr: "Downloads" };
   var titles = {
     "music scan": "Scanning your music",
     "music run": "Tidying your music",
@@ -13136,7 +13217,7 @@ ${pays}
   };
   function jobTitle(kind, action, args = []) {
     if (kind === "music" && action === "lyrics" && args.includes("--tidy")) return "Tidying lyrics";
-    return titles[`${kind} ${action}`] || `${names2[kind] || kind}: ${action.replace(/-/g, " ")}`;
+    return titles[`${kind} ${action}`] || `${names3[kind] || kind}: ${action.replace(/-/g, " ")}`;
   }
   function size(v3) {
     if (!v3) return "—";
@@ -13171,7 +13252,7 @@ ${pays}
     if (l3.found) return null;
     return /* @__PURE__ */ u3(Card, { kind: "notice", role: "status", children: [
       /* @__PURE__ */ u3("strong", { children: [
-        names2[l3.kind],
+        names3[l3.kind],
         ": its folder isn't there"
       ] }),
       /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -13438,11 +13519,11 @@ ${pays}
       }
       const bare = n2(scan?.posterless), asked = last(l3, "posters");
       if (bare && !(asked?.ok && scanned && asked.at > scanned.at)) {
-        const names4 = scan?.posterless_list || [];
+        const names5 = scan?.posterless_list || [];
         out.push({
           kind: k3,
           title: `${count(bare, k3 === "tv" ? "show" : "film")} ${bare === 1 ? "has" : "have"} no poster in Jellyfin`,
-          sub: names4.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
+          sub: names5.slice(0, 3).join(", ") + (bare > 3 ? `, and ${bare - 3} more` : ""),
           go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
         });
       }
@@ -13506,7 +13587,7 @@ ${pays}
     const top = g2 ? g2.genres.slice(0, 6) : [];
     const rest = g2 ? g2.genres.slice(6).reduce((t3, [, v3]) => t3 + v3, 0) : 0;
     const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
-    const picker = kinds.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names2[x3] }, x3)) });
+    const picker = kinds.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names3[x3] }, x3)) });
     if (!g2) {
       const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);
       if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;
@@ -13529,7 +13610,7 @@ ${pays}
         ] })
       ] }), caption: k3 === "music" ? "In your 14 genres" : g2.source ? `One genre each, from ${g2.source === "Calibre" ? "Calibre's tags" : g2.source}` : "One genre each" }),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
-        /* @__PURE__ */ u3(Donut, { slices, label: `${names2[k3]} by genre`, center: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(Donut, { slices, label: `${names3[k3]} by genre`, center: /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("strong", { children: g2.total.toLocaleString() }),
           genreUnit[k3]
         ] }) }),
@@ -13540,7 +13621,7 @@ ${pays}
   function DriveWidget({ d: d3 }) {
     const dr = d3.drive;
     if (!dr) return null;
-    const parts2 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names2[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue }));
+    const parts2 = d3.libraries.filter((l3) => l3.size).map((l3) => ({ label: names3[l3.kind], value: l3.size || 0, color: looks[l3.kind].hue }));
     const measuring = d3.libraries.some((l3) => l3.found && !l3.size);
     return /* @__PURE__ */ u3(Widget, { title: dr.name ? `On the ${dr.name} drive` : "On this machine", kind: "fx-flow tidydrive", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: [
@@ -13559,7 +13640,7 @@ ${pays}
     return /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: l3.size ? size(l3.size) : total ? things(l3.kind, total) : "—" }), caption: l3.size && total ? things(l3.kind, total) : l3.freed ? size(l3.freed) + " won back" : "Measured after a scan" }),
       total > 0 && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(SplitBar, { parts: parts2, label: names2[l3.kind] }),
+        /* @__PURE__ */ u3(SplitBar, { parts: parts2, label: names3[l3.kind] }),
         /* @__PURE__ */ u3(Legend, { items: parts2.map((p3) => ({ label: p3.label, color: p3.color, value: p3.value.toLocaleString() })) })
       ] }),
       !!l3.freed && total > 0 && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
@@ -13620,8 +13701,8 @@ ${pays}
     const missing = d3.checks.filter((c3) => !c3.ok && TOOLS.has(c3.id) && only(c3.needs || ""));
     if (!missing.length) return [];
     const short = { ffmpeg: "ffmpeg" };
-    const names4 = missing.map((c3) => short[c3.id] || c3.name);
-    const listed3 = names4.length === 1 ? names4[0] : names4.slice(0, -1).join(", ") + " and " + names4[names4.length - 1];
+    const names5 = missing.map((c3) => short[c3.id] || c3.name);
+    const listed3 = names5.length === 1 ? names5[0] : names5.slice(0, -1).join(", ") + " and " + names5[names5.length - 1];
     const fetch = missing.find((c3) => c3.install);
     const calibre = missing.length === 1 && missing[0].id === "calibredb";
     return [{
@@ -13630,7 +13711,7 @@ ${pays}
       warn: true,
       // Each one's fix, without its own "Install Python 3:" (the row's title says that).
       sub: missing.map((c3) => (missing.length > 1 ? `${short[c3.id] || c3.name}: ` : "") + dropTitle(c3.fix || c3.note || "", short[c3.id] || c3.name)).join(" · "),
-      go: fetch ? { label: names4.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : "Install", run: () => act.install() } : calibre ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
+      go: fetch ? { label: names5.length > 1 ? `Install ${short[fetch.id] || fetch.name}` : "Install", run: () => act.install() } : calibre ? { label: "Get Calibre", run: () => act.open("https://calibre-ebook.com/download"), quiet: true } : void 0
     }];
   }
   function needsFor(d3, act, review2, pick) {
@@ -13639,7 +13720,7 @@ ${pays}
     const away2 = d3.libraries.filter((l3) => !l3.found);
     const onIt = root ? away2.filter((l3) => l3.folder === root || l3.folder.startsWith(root.replace(/[\\/]$/, "") + "/") || l3.folder.startsWith(root.replace(/[\\/]$/, "") + "\\")) : [];
     const listed3 = (ls) => {
-      const w3 = ls.map((l3) => names2[l3.kind]);
+      const w3 = ls.map((l3) => names3[l3.kind]);
       return w3.length === 1 ? w3[0] : w3.slice(0, -1).join(", ") + " and " + w3[w3.length - 1];
     };
     const plug = drive ? [{
@@ -13649,7 +13730,7 @@ ${pays}
       sub: `${onIt.length ? `${listed3(onIt)} ${onIt.length === 1 ? "is" : "are"} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
       go: { label: "Choose folder…", run: () => act.settings(["MEDIA_ROOT"]), quiet: true }
     }] : [];
-    const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names2[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
+    const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names3[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
     const here2 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
     const tools = toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).some((k3) => here2.has(k3)));
     const machine = d3.checks.filter((c3) => !c3.ok && c3.needs && c3.id !== "drive" && !TOOLS.has(c3.id)).map((c3) => ({ kind: "machine", title: c3.name, sub: `${c3.note}. ${c3.fix}`, warn: true }));
@@ -13719,7 +13800,7 @@ ${pays}
     return /* @__PURE__ */ u3(FolderGone.Provider, { value: !l3.found, children: [
       /* @__PURE__ */ u3(Gone, { l: l3 }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-        /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names2[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
+        /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names3[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
         kind === "books" && !review2 && reviewError2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReviewError", span: "all", kind: "fx-renewing tidyreview", children: [
           /* @__PURE__ */ u3("p", { class: "warn", role: "alert", children: [
             "Couldn't read the last review: ",
@@ -13760,7 +13841,7 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names2[k3]])] }),
+      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
       other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0 }),
       d3?.stale && !other && !job2 && (() => {
         const c3 = carryOn(d3.stale, d3, act, p3.pick);
@@ -14019,7 +14100,7 @@ ${pays}
   drawSheet();
 
   // web/src/palette/Shortcuts.tsx
-  var names3 = {
+  var names4 = {
     choose: "Choose apps",
     status: "Status",
     backups: "Backups",
@@ -14089,7 +14170,7 @@ ${pays}
       mine.length > 0 && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { children: [
           "On ",
-          names3[screen]
+          names4[screen]
         ] }),
         /* @__PURE__ */ u3(Table, { lines: mine })
       ] }),

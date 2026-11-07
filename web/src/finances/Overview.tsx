@@ -1,5 +1,6 @@
 // Finances › Dashboard: the widgets laid on the board, nothing drawn here.
-// Checking over the next month and the paycheck picked side by side; a
+// First checking now and after the next paycheck, each with how it adds up;
+// then checking over the next month and the paycheck picked side by side; a
 // month's cash flow (its bills pick the paycheck), where the spending goes,
 // and net worth; what the balances are taken to hold, when anything is;
 // and every account after each paycheck. A new household starts with the
@@ -12,6 +13,7 @@ import { Mark } from './Mark';
 import { Widget } from './ui/Widget';
 import type { Lookup } from './money';
 import { CheckingWidget } from './widgets/Checking';
+import { NowWidget } from './widgets/Now';
 import { CashFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
 import { RenewingWidget } from './widgets/Subscriptions';
@@ -69,6 +71,7 @@ export function Overview({ v, L, sel, pick, add, edit, setWaiting, openWorth, op
         </Card>
       )}
       <div class="fx-board">
+        <NowWidget v={v} L={L} />
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setWaiting} />}
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}

@@ -725,6 +725,16 @@ declare namespace finance {
     amount: number;
     note?: string;
   }
+  interface Step {
+    date: string;
+    people?: string[];
+    payment?: string;
+    transaction?: string;
+    name?: string;
+    interest?: boolean;
+    amount: number;
+    after: number;
+  }
   interface Transaction {
     id: string;
     date: string;
@@ -763,6 +773,8 @@ declare namespace finance {
     loans?: finance.Payoff[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
+    checkingNow?: finance.Working | null;
+    afterPay?: finance.Working | null;
   }
   interface Wall {
     payday?: string;
@@ -777,6 +789,13 @@ declare namespace finance {
     institution?: string;
     date: string;
     amount: number;
+  }
+  interface Working {
+    date: string;
+    from: string;
+    start: number;
+    steps: finance.Step[];
+    result: number;
   }
 }
 

@@ -5535,5 +5535,52 @@
   "2027-07-05": "Independence Day",
   "2027-09-06": "Labor Day",
   "2027-10-11": "Columbus Day"
+ },
+ "checkingNow": {
+  "date": "2026-10-30",
+  "from": "2026-10-30",
+  "start": 2512.4,
+  "steps": [],
+  "result": 2512.4
+ },
+ "afterPay": {
+  "date": "2026-11-06",
+  "from": "2026-10-30",
+  "start": 2512.4,
+  "steps": [
+   {
+    "date": "2026-10-31",
+    "payment": "food",
+    "amount": -200,
+    "after": 2312.4
+   },
+   {
+    "date": "2026-11-01",
+    "payment": "mortgagepay",
+    "amount": -1845,
+    "after": 467.4
+   },
+   {
+    "date": "2026-11-03",
+    "payment": "netflix",
+    "amount": -15.49,
+    "after": 451.91
+   },
+   {
+    "date": "2026-11-05",
+    "payment": "peloton",
+    "amount": -44,
+    "after": 407.91
+   },
+   {
+    "date": "2026-11-06",
+    "people": [
+     "alex"
+    ],
+    "amount": 2150,
+    "after": 2557.91
+   }
+  ],
+  "result": 2557.91
  }
 }

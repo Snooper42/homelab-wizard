@@ -73,6 +73,39 @@ type View struct {
 	// ReadOnly: read for a phone allowed only to look, so the screen offers
 	// no Edit or Add.
 	ReadOnly bool `json:"readOnly,omitempty"`
+	// CheckingNow is how checking at the start of today was reached: from
+	// its balance as typed in, each thing since. AfterPay is checking once
+	// the next paycheck into it lands, from now: the bills before it, then
+	// the paycheck (that day's bills come out of it after, so are not in
+	// it). Nil without a checking account, or AfterPay with no paycheck ahead.
+	CheckingNow *Working `json:"checkingNow,omitempty"`
+	AfterPay    *Working `json:"afterPay,omitempty"`
+}
+
+// Working is how a checking figure was reached, row by row, so it can be
+// held next to the household's own sums: Start on From, each Step, and
+// Result on Date.
+type Working struct {
+	Date   string  `json:"date"`
+	From   string  `json:"from"`
+	Start  float64 `json:"start"`
+	Steps  []Step  `json:"steps"`
+	Result float64 `json:"result"`
+}
+
+// Step is one change to checking: a paycheck (its People), a planned
+// payment (Payment, money out a minus, moved in a plus), a transaction in
+// the ledger (its ID and payee), or a stretch of interest. After is
+// checking once it is in.
+type Step struct {
+	Date        string   `json:"date"`
+	People      []string `json:"people,omitempty"`
+	Payment     string   `json:"payment,omitempty"`
+	Transaction string   `json:"transaction,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Interest    bool     `json:"interest,omitempty"`
+	Amount      float64  `json:"amount"`
+	After       float64  `json:"after"`
 }
 
 // Paid is a planned payment's day that a transaction paid.
@@ -476,6 +509,36 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		}
 		return due
 	}
+	// The working of the two checking figures: each change to checking, as
+	// it happens, until the next paycheck into it has landed.
+	var trail []Step
+	recording := v.Checking != ""
+	note := func(d time.Time, s Step, before float64) {
+		n := bal[v.Checking] - before
+		if !recording || math.Abs(n) < 0.005 {
+			return
+		}
+		s.Date, s.After = dateOf(d), cents(bal[v.Checking])
+		if last := len(trail) - 1; s.Interest && last >= 0 && trail[last].Interest {
+			// A day's interest is one row with the days before it.
+			trail[last].Amount += n
+			trail[last].Date, trail[last].After = s.Date, s.After
+			return
+		}
+		s.Amount = n
+		trail = append(trail, s)
+	}
+	settle := func(steps []Step) []Step {
+		out := append([]Step{}, steps...)
+		for i := range out {
+			out[i].Amount = cents(out[i].Amount)
+		}
+		return out
+	}
+	if recording {
+		v.CheckingNow = &Working{From: dateOf(typed[v.Checking]), Start: cents(bal[v.Checking])}
+	}
+	nowAt := 0
 	next := 0
 	for d := start; d.Before(end); d = d.AddDate(0, 0, 1) {
 		k := dateOf(d)
@@ -483,14 +546,20 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		// What the ledger says happened that day, on each account whose
 		// balance was typed in before it (today's is in today's start).
 		for _, t := range happened[k] {
+			before := bal[v.Checking]
 			for _, sd := range txSides(t) {
 				if tt, ok := typed[sd.account]; ok && d.After(tt) {
 					move(bal, kind, sd.account, sd.amount)
 				}
 			}
+			note(d, Step{Transaction: t.ID, Name: t.Payee}, before)
 		}
 		if d.Equal(today) {
 			v.Start = rounded(bal)
+			if v.CheckingNow != nil {
+				nowAt = len(trail)
+				v.CheckingNow.Date, v.CheckingNow.Steps, v.CheckingNow.Result = k, settle(trail), cents(bal[v.Checking])
+			}
 		}
 		var todays []*event
 		for ; next < len(events) && !events[next].day.After(d); next++ {
@@ -544,11 +613,18 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				continue
 			}
 			list(e)
+			before := bal[v.Checking]
 			for _, s := range sides(e) {
 				if counts(e, s.account) {
 					move(bal, kind, s.account, s.amount)
 				}
 			}
+			note(d, Step{People: []string{e.person.ID}}, before)
+		}
+		// The next paycheck into checking is in: the second figure's working ends.
+		if into && recording && v.AfterPay == nil {
+			v.AfterPay = &Working{Date: k, From: dateOf(today), Start: v.Start[v.Checking], Steps: settle(trail[nowAt:]), Result: cents(bal[v.Checking])}
+			recording = false
 		}
 		var ev, charges []Event
 		if ahead {
@@ -582,7 +658,9 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 				continue
 			}
 			list(e)
+			before := bal[v.Checking]
 			r, event, counted := pay(e, sides(e), bal, kind, v.Checking, func(a string) bool { return counts(e, a) })
+			note(d, Step{Payment: e.pay.ID}, before)
 			if !counted || !ahead {
 				continue
 			}
@@ -608,11 +686,13 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		}
 		// A day's interest: earned on savings, charged on a loan, and on a
 		// card that carries a balance (one paid in full each time pays none).
+		before := bal[v.Checking]
 		for _, a := range p.Accounts {
 			if a.Rate > 0 && !inFull[a.ID] && (ahead || d.After(typed[a.ID])) {
 				bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365
 			}
 		}
+		note(d, Step{Interest: true}, before)
 		if ahead && len(v.Days) >= chartDays && d.Before(yearOn) && len(ev)+len(charges) > 0 {
 			v.Later = append(v.Later, Day{Date: k, Events: ev, Charges: charges})
 		}
