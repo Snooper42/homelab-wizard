@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/proc"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/turn"
 )
@@ -27,7 +28,7 @@ func TestAChangeWaitsForAnotherProcesssTurn(t *testing.T) {
 	if err := os.MkdirAll(turn.Dir(root), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	at := time.Now().Add(-time.Minute)
+	at := askedBy(t, os.Getppid())
 	other := filepath.Join(turn.Dir(root), fmt.Sprintf("%020d-%d.json", at.UnixNano(), os.Getppid()))
 	data, _ := json.Marshal(turn.Ticket{PID: os.Getppid(), What: "the nightly update", At: at, Host: hostnameForTest(t)})
 	if err := os.WriteFile(other, data, 0o600); err != nil {
@@ -131,7 +132,7 @@ func TestWatchdogWaitsOutAJob(t *testing.T) {
 	if err := os.MkdirAll(turn.Dir(root), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	at := time.Now().Add(-time.Minute)
+	at := askedBy(t, os.Getppid())
 	other := filepath.Join(turn.Dir(root), fmt.Sprintf("%020d-%d.json", at.UnixNano(), os.Getppid()))
 	data, _ := json.Marshal(turn.Ticket{PID: os.Getppid(), What: "Update all apps now", At: at, Host: hostnameForTest(t)})
 	if err := os.WriteFile(other, data, 0o600); err != nil {
@@ -201,6 +202,18 @@ func hostnameForTest(t *testing.T) string {
 	return h
 }
 
+// askedBy is when a running job's ticket was taken: a minute ago, or when
+// its process started if that was later. A ticket can't be older than its
+// process; one that is was left by another program given the same ID.
+func askedBy(t *testing.T, pid int) time.Time {
+	t.Helper()
+	at := time.Now().Add(-time.Minute)
+	if began, ok := proc.Started(pid); ok && began.After(at) {
+		at = began.Add(time.Second)
+	}
+	return at
+}
+
 // While another job has the turn (an update takes an app down and up
 // again, and Docker may restart it while its database starts), the
 // watchdog does not stop it as a restart loop, which would keep it stopped
@@ -216,7 +229,7 @@ func TestWatchdogLeavesRestartLoopsToAJob(t *testing.T) {
 	if err := os.MkdirAll(turn.Dir(root), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	at := time.Now().Add(-time.Minute)
+	at := askedBy(t, os.Getppid())
 	other := filepath.Join(turn.Dir(root), fmt.Sprintf("%020d-%d.json", at.UnixNano(), os.Getppid()))
 	data, _ := json.Marshal(turn.Ticket{PID: os.Getppid(), What: "Update all apps now", At: at, Host: hostnameForTest(t)})
 	if err := os.WriteFile(other, data, 0o600); err != nil {

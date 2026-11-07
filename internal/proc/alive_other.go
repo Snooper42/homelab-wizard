@@ -1,6 +1,6 @@
 //go:build !windows
 
-package turn
+package proc
 
 import (
 	"errors"

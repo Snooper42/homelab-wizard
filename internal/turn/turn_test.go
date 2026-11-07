@@ -25,12 +25,13 @@ func someone(t *testing.T, root string, p int, what string, at time.Time) string
 }
 
 func fakes(t *testing.T, live map[int]bool) {
-	was, wasAlive, wasPoll := pid, alive, poll
+	was, wasAlive, wasStarted, wasPoll := pid, alive, started, poll
 	pid = func() int { return 100 }
 	alive = func(p int) bool { return p == 100 || live[p] }
+	started = func(int) (time.Time, bool) { return time.Time{}, false }
 	poll = 5 * time.Millisecond
 	t.Setenv(Env, "")
-	t.Cleanup(func() { pid, alive, poll = was, wasAlive, wasPoll })
+	t.Cleanup(func() { pid, alive, started, poll = was, wasAlive, wasStarted, wasPoll })
 }
 
 // Nothing ahead: the job goes at once, its children know they have its
@@ -199,12 +200,31 @@ func TestTakeFailsPlainly(t *testing.T) {
 	}
 }
 
-// This process runs; one that never was does not.
-func TestProcessAlive(t *testing.T) {
-	if !processAlive(os.Getpid()) {
-		t.Error("this process is not running")
+// A job cut off by a restart leaves its ticket, and its process ID is
+// given to another program after it: alive, but started after the ticket.
+// It holds no one up, where it held every change for 12 hours (MaxAge).
+func TestATicketWhoseIDWasReusedHoldsNoOneUp(t *testing.T) {
+	fakes(t, map[int]bool{7: true})
+	root := t.TempDir()
+	asked := time.Now().Add(-time.Hour).UTC()
+	stale := someone(t, root, 7, "update", asked)
+	started = func(p int) (time.Time, bool) {
+		if p == 7 {
+			return asked.Add(30 * time.Minute), true // started after its ticket
+		}
+		return time.Time{}, false
 	}
-	if processAlive(1 << 30) {
-		t.Error("a process that never was is running")
+	if q := Queue(root); len(q) != 0 {
+		t.Fatalf("a ticket from before its process started holds the queue: %+v", q)
 	}
+	if _, err := os.Stat(stale); !os.IsNotExist(err) {
+		t.Errorf("the left-behind ticket stayed: %v", err)
+	}
+	// One whose process started before it asked is that job's: kept.
+	kept := someone(t, root, 7, "backup", time.Now().UTC())
+	started = func(int) (time.Time, bool) { return asked, true }
+	if q := Queue(root); len(q) != 1 || q[0].What != "backup" {
+		t.Errorf("a running job's ticket: %+v", q)
+	}
+	_ = os.Remove(kept)
 }

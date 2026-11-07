@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // API is GitHub's API (tests point it at a fake).
@@ -169,16 +171,16 @@ func List(ctx context.Context, path, repo string) ([]Release, error) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	c = cache{}
-	if data, err := os.ReadFile(path); err == nil {
-		_ = json.Unmarshal(data, &c)
-	}
 	kept.At, kept.Releases = time.Now(), list
-	c[repo] = kept
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {
+	// Read again under the file's lock and replaced whole: the app and
+	// homelab serve each keep this cache, and mu is one process's only.
+	_ = lockedfile.Update(path, 0o644, func(old []byte) ([]byte, bool) {
+		c := cache{}
+		_ = json.Unmarshal(old, &c)
+		c[repo] = kept
 		data, _ := json.MarshalIndent(c, "", "  ")
-		_ = os.WriteFile(path, append(data, '\n'), 0o644)
-	}
+		return append(data, '\n'), true
+	})
 	return list, nil
 }
 

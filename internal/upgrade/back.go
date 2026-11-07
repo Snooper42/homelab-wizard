@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/kit"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Point is the version the folder had before the last upgrade, to go back to.
@@ -50,7 +51,9 @@ func Mark(ctx context.Context, root string, c Check) (Point, error) {
 			files = append(files, f)
 		}
 		sort.Strings(files)
-		f, err := os.Create(p.Kit)
+		// Packed beside the last kit and renamed over it once whole: a
+		// Mark cut short leaves the last point's kit as it was.
+		f, err := os.CreateTemp(dir, "previous-*.tmp")
 		if err != nil {
 			return p, err
 		}
@@ -58,7 +61,11 @@ func Mark(ctx context.Context, root string, c Check) (Point, error) {
 		if cerr := f.Close(); err == nil {
 			err = cerr
 		}
+		if err == nil {
+			err = os.Rename(f.Name(), p.Kit)
+		}
 		if err != nil {
+			_ = os.Remove(f.Name())
 			return p, err
 		}
 	} else {
@@ -69,7 +76,7 @@ func Mark(ctx context.Context, root string, c Check) (Point, error) {
 		p.Commit = head
 	}
 	data, _ := json.MarshalIndent(p, "", "  ")
-	return p, os.WriteFile(PointPath(root), append(data, '\n'), 0o644)
+	return p, lockedfile.Write(PointPath(root), append(data, '\n'), 0o644)
 }
 
 // Back returns the folder to the Point: a git checkout moves back to its

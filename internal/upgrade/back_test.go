@@ -173,3 +173,71 @@ func TestStableChannel(t *testing.T) {
 		t.Fatalf("testing: %+v", c)
 	}
 }
+
+// A Mark replaces the rollback point and its kit whole (each a new file
+// renamed in), never rewriting the last ones in place: a Mark cut short (a
+// power cut, the app quitting) leaves the last point and its kit as they
+// were, and homelab rollback can still use them.
+func TestAMarkReplacesThePointWhole(t *testing.T) {
+	src, home := t.TempDir(), t.TempDir()
+	write(t, filepath.Join(src, "VERSION"), "0.1.0\n")
+	write(t, filepath.Join(src, "compose.yaml"), "services: {}\n")
+	path := filepath.Join(t.TempDir(), kit.FileName)
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := kit.Pack(f, src, []string{"VERSION", "compose.yaml"}, "0.1.0", "aaaaaaaaaa"); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	if _, err := kit.Extract(path, home+"/h"); err != nil {
+		t.Fatal(err)
+	}
+	home += "/h"
+	ctx := context.Background()
+	first, err := Mark(ctx, home, Check{Version: "0.1.0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	was := map[string]os.FileInfo{}
+	for _, p := range []string{PointPath(home), first.Kit} {
+		fi, err := statNow(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		was[p] = fi
+	}
+	again, err := Mark(ctx, home, Check{Version: "0.1.0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for p, fi := range was {
+		now, err := os.Stat(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if os.SameFile(fi, now) {
+			t.Errorf("%s was rewritten in place", filepath.Base(p))
+		}
+	}
+	if p, ok := LoadPoint(home); !ok || p.Kit != again.Kit {
+		t.Errorf("point after the second Mark: %+v", p)
+	}
+	if left, _ := filepath.Glob(filepath.Join(filepath.Dir(PointPath(home)), "*.tmp*")); len(left) != 0 {
+		t.Errorf("temporary files left: %v", left)
+	}
+}
+
+// statNow stats the file at path as it is now. os.Stat on Windows reads
+// the file's identity only when SameFile asks, by path, so it would see
+// whatever file is there by then; a stat through an open file reads it at
+// once.
+func statNow(path string) (os.FileInfo, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return f.Stat()
+}
