@@ -58,8 +58,25 @@ The **one open pull request of yours at a time** rule still holds, so these go o
 - **Then Finances:** the owner updates every balance to now, enters the expenses due before the next paycheck, and wants each account and the total just after that paycheck. Their spreadsheet comes out slightly different and was right on payday (Nov 6), and the forecast drifts after. Before changing anything, write down the rule the app uses for "after the next paycheck", ask the owner for one real example (balances, expenses, paycheck, their result), reproduce it in a Go test that fails where the app differs, and ask which rule is right. Then make "now" and "after payday" the clearest numbers on the screen, each explained on hover. Keep to finances-loop.md's rules.
 - The roadmap's other items wait until the owner says otherwise.
 
-**Open now** (Nov 6, 2026, 17:45 UTC):
-- #470 *Health in one line* (`claude/feature-health-line`): open, the last item built before the focus above. Take it to merged first. After it, nothing else is queued: only the focus above.
+**Tidy Up focus** (Nov 7, 2026; carry on from here):
+- **Fixed in #476** (the owner's Nov 6 audit, with a smoke case each that failed on main):
+  - Jobs: a job started elsewhere (the agent's Collect, Terminal) is followed with its step and bar, and every button waits; **Carry on** asks again, or opens the books review; **Stop** says *Stopping…*; a failure says *didn't finish*, with **Try again**; keyboard focus stays with the job; a job that resumes says so (Account 2's `fix-resume-warn`).
+  - Numbers: sizes are counted 1000 to a KB, as the engines and the Finder do; the first line counts what **Needs your OK** lists.
+  - Dead ends: a failed books review, **Look…** on Books, an unreadable record.
+  - What comes first: one main button, never on a step that throws things away; Music's Space; Tdarr's row; the phone's tabs; VoiceOver hears steps, not ticks.
+  - Engine results: a music check that finds songs missing says whose, with Put it back and Check again; an applied books review isn't offered again.
+- **Open:**
+  - The sidebar's Tidy Up badge counts only something wrong, not the screen's *N things need your OK*: the owner's call, asked Nov 6.
+  - Recently done on Books stays empty after a review.
+  - docs/Testing.md's new Tidy Up rows want a try on the owner's Mac.
+- **Account 2's `claude/fix-tidy-first-run`** (the owner's new Mac: Needs your OK starts with two rows, not nine) is stacked on #476 and opens after it. It is Account 2's PR: read it, don't push to it.
+- **For Account 2** (shared parts):
+  - `web/src/format.ts`'s `bytes` divides by 1024 but says GB and TB (Tidy Up now formats its own sizes, 1000 to a KB);
+  - `parts/Row`'s dot has no words for VoiceOver;
+  - `parts/Segmented` is a radiogroup where each radio is a Tab stop, with no arrow keys.
+- **Then Finances**, in its own session, as the focus above says.
+
+**Open now** (Nov 7, 2026, 01:30 UTC): nothing of Account 1's once #476 and #470 are merged. Branches whose work is on main, for the owner to delete, are listed in the session's report.
 - *Two-step sign-in, nudged* (left for after the focus) is skipped for now: knowing whether each admin app has a second factor needs that app's own API and its admin login, app by app, more than an S, and nothing here can try it. Take it up only with a list of the apps and how each says so.
 - **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
 - Nothing else is queued: every branch built ahead is merged or listed above.
