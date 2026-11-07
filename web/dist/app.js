@@ -11871,7 +11871,7 @@ ${pays}
               " more."
             ] })
           ] }),
-          /* @__PURE__ */ u3("table", { class: "sr", children: [
+          /* @__PURE__ */ u3("div", { class: "sr", children: /* @__PURE__ */ u3("table", { children: [
             /* @__PURE__ */ u3("caption", { children: [
               periodName(p3),
               ": money in and out"
@@ -11886,7 +11886,7 @@ ${pays}
               /* @__PURE__ */ u3("td", { children: f4.nodes.find((n3) => n3.id === l3.to)?.label }),
               /* @__PURE__ */ u3("td", { children: money(l3.value) })
             ] }, l3.from + l3.to)) })
-          ] })
+          ] }) })
         ]
       }
     );

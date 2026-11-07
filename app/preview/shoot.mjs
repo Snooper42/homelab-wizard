@@ -4814,7 +4814,7 @@ const smokes = [
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
     await page.waitForSelector('.fx-moneyflow .fx-sankey svg', { timeout: 5000 });
-    const rows = await page.$$eval('.fx-moneyflow table.sr tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
     for (const want of ["Alex's pay|Total income|$6,608.33", "Jordan's pay|Total income|$2,400.00", 'Total income|Taxes|$1,297.83', 'Expenses|Taken from pay|$255.67', 'Savings|Fidelity 401(k)|$396.50', 'Savings|Kept as cash|$1,110.24']) {
       if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
     }
@@ -4831,7 +4831,7 @@ const smokes = [
   // typical month from the plan, where Top 5 makes the rest Other; the keyboard picks a box too.
   { name: 'Finances: the money flow opens what is behind each box, month by month', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-moneyflow .fx-periodname:text-is("Oct 2026")', { timeout: 5000 });
-    const rows = await page.$$eval('.fx-moneyflow table.sr tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
     for (const want of ["Jordan's paycheck|Total income|$2,400.00", 'Expenses|Food|$149.85', 'Expenses|Car|$48.20', 'Savings|Roth IRA|$250.00']) {
       if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
     }
@@ -4863,8 +4863,8 @@ const smokes = [
   { name: 'Finances: money flow when a month takes more than comes in', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'rent', name: 'Rent', amount: 5000, kind: 'home', schedule: { every: 'month', start: '2026-01-01' } }] } } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
     // Out: taxes, bills with rent, and $1,079.83 into savings accounts; in: $9,008.33; from the accounts, $3,889.76.
-    await page.waitForSelector('.fx-moneyflow table.sr tbody tr:has-text("From your accounts"):has-text("$3,889.76")', { state: 'attached', timeout: 5000 });
-    if ((await page.textContent('.fx-moneyflow table.sr')).includes('Kept as cash')) throw new Error('kept as cash with more out than in');
+    await page.waitForSelector('.fx-moneyflow .sr table tbody tr:has-text("From your accounts"):has-text("$3,889.76")', { state: 'attached', timeout: 5000 });
+    if ((await page.textContent('.fx-moneyflow .sr table')).includes('Kept as cash')) throw new Error('kept as cash with more out than in');
     if (!(await page.textContent('.fx-flowstrip')).includes('Short')) throw new Error('the strip does not say it is short');
   } },
   // Pay more: an extra amount a paycheck on the loan picked, and every debt (a card carrying a balance too) paid down two ways.

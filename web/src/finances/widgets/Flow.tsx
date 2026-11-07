@@ -128,10 +128,11 @@ export function MoneyFlowWidget({ v, L, ledger, edit, title = 'Money flow' }: { 
             </Rows>}
         {items.length > many && <p class="fx-sub">And {items.length - many} more.</p>}
       </section>}
-      <table class="sr"><caption>{periodName(p)}: money in and out</caption>
+      {/* In a box of its own: a table is as wide as its words, and would stick out of the card in a small window. */}
+      <div class="sr"><table><caption>{periodName(p)}: money in and out</caption>
         <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Amount</th></tr></thead>
         <tbody>{f.links.map((l) => <tr key={l.from + l.to}><td>{f.nodes.find((n) => n.id === l.from)?.label}</td><td>{f.nodes.find((n) => n.id === l.to)?.label}</td><td>{money(l.value)}</td></tr>)}</tbody>
-      </table>
+      </table></div>
     </Widget>
   );
 }
