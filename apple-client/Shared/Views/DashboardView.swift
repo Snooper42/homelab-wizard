@@ -231,12 +231,14 @@ private struct PhoneOverviewSection: View {
             OverviewHeader(model: model)
             NavigationLink {
                 OverviewView(cards: model.cards, finances: finances)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
             } label: {
                 Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
                     .badge(model.failingChecks)
             }
             NavigationLink {
                 BackupsView(backups: model.backups)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
             } label: {
                 Label("Backups", systemImage: "externaldrive.badge.checkmark")
                     .badge(model.backups.needsAttention)
@@ -244,12 +246,14 @@ private struct PhoneOverviewSection: View {
             if finances.canSeePlan {
                 NavigationLink {
                     FinancesView(finances: finances)
+                        .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
                 } label: {
                     Label("Finances", systemImage: "banknote")
                 }
             }
             NavigationLink {
                 ComputerView(computer: computer)
+                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
             } label: {
                 Label("Computer", systemImage: "desktopcomputer")
             }
@@ -318,18 +322,22 @@ private struct SplitDashboard: View {
             switch model.sidebar {
             case .overview?:
                 OverviewView(cards: model.cards, finances: finances)
+                    .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 300, ideal: 380)
                     .toolbar { toolbarItems }
             case .backups?:
                 BackupsView(backups: model.backups)
+                    .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .finances?:
                 FinancesView(finances: finances)
+                    .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             case .computer?:
                 ComputerView(computer: computer)
+                    .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
             default:
@@ -402,6 +410,11 @@ private struct SplitDashboard: View {
         }
     }
 
+    /// Health in one line, with Open Status to the apps that need a look.
+    private var healthLine: some View {
+        HealthLineBar(model: model) { model.sidebar = .apps(.attention) }
+    }
+
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
@@ -438,6 +451,43 @@ private struct NotLoadedView: View {
             }
         } else {
             ProgressView("Reading the status…")
+        }
+    }
+}
+
+/// Health in one line (main #470): atop every screen but Status and an
+/// app's page, "All well" or the one thing that needs you. On iPhone, Back
+/// is the way to Status; on the Mac and iPad, Open Status shows the apps
+/// that need a look.
+struct HealthLineBar: View {
+    let model: DashboardViewModel
+    var open: (@MainActor () -> Void)? = nil
+
+    var body: some View {
+        if let line = model.healthLine {
+            HStack(spacing: 8) {
+                if line.isEmpty {
+                    Label("All well", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(Theme.success)
+                } else {
+                    Label {
+                        Text(verbatim: line).lineLimit(2)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                    }
+                    .foregroundStyle(Theme.danger)
+                }
+                Spacer(minLength: 8)
+                if !line.isEmpty, let open {
+                    Button("Open Status", action: open)
+                        .buttonStyle(.borderless)
+                }
+            }
+            .font(.callout.weight(.medium))
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(.bar)
+            .accessibilityElement(children: .combine)
         }
     }
 }

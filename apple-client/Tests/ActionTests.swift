@@ -404,3 +404,17 @@ struct ThemeContrastTests {
     }
 }
 #endif
+
+// main #470: health in one line, as the computer says it.
+@Suite("Health in one line")
+struct HealthLineTests {
+    @Test func theOneThingThatNeedsYou() {
+        #expect(DashboardViewModel.healthWords(apps: [], checks: []) == nil)
+        #expect(DashboardViewModel.healthWords(apps: [("Immich", "Unhealthy")], checks: ["tunnel"]) == "Immich: Unhealthy")
+        #expect(DashboardViewModel.healthWords(apps: [("Immich", "Unhealthy"), ("Plex", "Stopped")], checks: []) == "2 apps need a look: Immich and Plex")
+        #expect(DashboardViewModel.healthWords(apps: [], checks: ["tunnel"]) == "The watchdog's check of tunnel is failing")
+        #expect(DashboardViewModel.healthWords(apps: [], checks: ["a", "b"]) == "2 of the watchdog's checks are failing: a and b")
+        #expect(DashboardViewModel.shortList(["A", "B", "C"]) == "A, B and C")
+        #expect(DashboardViewModel.shortList(["A", "B", "C", "D", "E"]) == "A, B and 3 more")
+    }
+}

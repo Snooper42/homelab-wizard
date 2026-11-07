@@ -301,6 +301,38 @@ final class DashboardViewModel {
     }
 
     /// For the sidebar badge and the phone's overview row: failing checks.
+    // MARK: Health in one line (main #470)
+
+    /// The line atop every screen but Status and an app's page: nil until
+    /// Status has been read, "" when all is well, else the one thing that
+    /// needs you, in the rows' own words.
+    var healthLine: String? {
+        guard let status = liveEvents.status else { return nil }
+        // A failing check that is an app's own is already in its row.
+        let appIDs = Set(status.apps.map(\.id))
+        let apps = status.apps.filter(\.needsAttention).map { (name: $0.name, words: $0.detailLine) }
+        let checks = (cards.watchdog?.failing ?? []).map(\.name).filter { !appIDs.contains($0) }
+        return Self.healthWords(apps: apps, checks: checks) ?? ""
+    }
+
+    /// As the computer says it (`trouble` in web/src/status/healthLine.ts);
+    /// nil when there's nothing to say.
+    nonisolated static func healthWords(apps: [(name: String, words: String)], checks: [String]) -> String? {
+        if apps.count == 1, let app = apps.first { return "\(app.name): \(app.words)" }
+        if !apps.isEmpty { return "\(apps.count) apps need a look: \(shortList(apps.map(\.name)))" }
+        if checks.count == 1, let check = checks.first { return "The watchdog's check of \(check) is failing" }
+        if !checks.isEmpty { return "\(checks.count) of the watchdog's checks are failing: \(shortList(checks))" }
+        return nil
+    }
+
+    /// "A", "A and B", "A, B and C", or "A, B and 3 more".
+    nonisolated static func shortList(_ names: [String]) -> String {
+        guard let last = names.last else { return "" }
+        if names.count > 3 { return names.prefix(2).joined(separator: ", ") + " and \(names.count - 2) more" }
+        if names.count == 1 { return last }
+        return names.dropLast().joined(separator: ", ") + " and " + last
+    }
+
     /// What the Overview's watchdog card has to show: failing checks, and
     /// memory nearly full (main #458).
     var failingChecks: Int {
