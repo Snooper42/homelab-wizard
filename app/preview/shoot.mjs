@@ -6454,6 +6454,11 @@ const smokes = [
     } else {
       await page.waitForSelector('.fx-prices', { state: 'detached', timeout: 5000 });
       if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+      // Opened again: what this device kept is what it starts with. Carried over by hand, as Status's place is: a reloaded
+      // file:// page in this browser can start with empty storage when the machine is busy.
+      const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+      if (!Object.keys(JSON.parse(kept)).some((k) => k.startsWith('homelab.finances.keptPrice.netflix.'))) throw new Error('Keep kept nothing on this device');
+      await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
       await page.reload();
       await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
       if (await page.$('.fx-prices')) throw new Error('Keep was not remembered');
