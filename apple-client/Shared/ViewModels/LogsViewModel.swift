@@ -31,6 +31,13 @@ final class LogsViewModel {
     private(set) var isLoading = false
     private(set) var error: String?
     private(set) var loadedAt: Date?
+    /// Follow: read again every few seconds while the log is open, as a
+    /// terminal's `tail -f`. It stops by itself after a failed read, so it
+    /// never keeps asking a computer that can't answer.
+    var following = false
+
+    /// How often Follow reads the log again.
+    static let followEvery: Duration = .seconds(4)
 
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private var generation = 0
@@ -68,10 +75,22 @@ final class LogsViewModel {
         return .plain
     }
 
-    func load() async {
+    /// Reads the log again and again while Follow is on. Run it from the
+    /// view's task, which ends with the sheet (and so with a lock).
+    func follow() async {
+        while following, !Task.isCancelled {
+            try? await Task.sleep(for: Self.followEvery)
+            guard following, !Task.isCancelled else { return }
+            await load(quietly: true)
+            if error != nil { following = false }
+        }
+    }
+
+    /// - Parameter quietly: Follow's reads show no spinner.
+    func load(quietly: Bool = false) async {
         generation += 1
         let mine = generation
-        isLoading = true
+        if !quietly { isLoading = true }
         defer { if mine == generation { isLoading = false } }
         do {
             let text = try await api.logs(appID: app.id, lines: lineCount)

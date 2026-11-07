@@ -53,6 +53,9 @@ struct LogsView: View {
                                 Text("Last \(count) lines").tag(count)
                             }
                         }
+                        Toggle(isOn: $model.following) {
+                            Label("Follow", systemImage: "dot.radiowaves.left.and.right")
+                        }
                         Toggle(isOn: $model.problemsOnly) {
                             Label("Problems Only (\(model.problemCount))", systemImage: "exclamationmark.triangle")
                         }
@@ -76,6 +79,10 @@ struct LogsView: View {
             }
             .safeAreaInset(edge: .bottom) { footer }
             .task { await model.load() }
+            // Follow: ends when switched off or when the sheet goes (a lock closes it).
+            .task(id: model.following) {
+                if model.following { await model.follow() }
+            }
         }
         #if os(macOS)
         .frame(minWidth: 720, minHeight: 480)
@@ -112,6 +119,11 @@ struct LogsView: View {
                 if let error = model.error {
                     Label(error, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(Theme.warning)
+                } else if model.following {
+                    Label("Following: the newest lines every few seconds", systemImage: "dot.radiowaves.left.and.right")
+                        .foregroundStyle(Theme.accent)
+                    Button("Stop") { model.following = false }
+                        .buttonStyle(.borderless)
                 } else if let at = model.loadedAt {
                     Text("\(model.lines.count) lines · read \(at, format: .relative(presentation: .named))")
                         .foregroundStyle(.secondary)
