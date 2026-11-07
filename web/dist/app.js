@@ -707,6 +707,25 @@
     }
     return `Stopped${when3}${a3.stoppedWhy ? ": " + a3.stoppedWhy : ""}`;
   }
+  function stoppedNext(a3, held3, paused = false, now = /* @__PURE__ */ new Date()) {
+    if (a3.state !== "stopped") return ["", ""];
+    if (held3 && keptRestarting(held3)) return ["The watchdog stopped it after Docker restarted it again and again; its log below says why.", "Once that is put right, Start tries again."];
+    if (held3?.until) return [`You stopped it until ${stoppedWords(held3, now).replace(/^Stopped until /, "")}: it starts again by itself then.`, "Or Start it now."];
+    if (held3) return ["You stopped it, so nothing starts it by itself.", "Start starts it again."];
+    if (paused) return ["Paused while this computer is on battery: it starts again by itself once it is plugged in.", ""];
+    if (a3.waitingFor) return [`Its folders are on the ${a3.waitingFor.replace(/^\/Volumes\//, "")} drive: plug it in and it starts by itself.`, ""];
+    const port = a3.stoppedWhy?.match(/port (\d+)$/)?.[1];
+    if (port) return [`Another program has port ${port}.`, "Quit it, then Start."];
+    switch (a3.stoppedWhy) {
+      case "it ran out of memory":
+        return ["If it runs out again, stop an app you aren't using, or give Docker more memory.", "Start tries again."];
+      case "Docker couldn't start it":
+        return ["Its log below may say why.", "Start tries again."];
+      case "it quit with an error":
+        return ["If it stops again, its log below says why.", "Start tries again."];
+    }
+    return ["It was stopped outside the homelab (by Docker, or a shutdown).", "Start starts it again."];
+  }
 
   // web/src/status/Tiles.tsx
   function Tile({ label, value, sub, tone, id: id2, title }) {
@@ -1771,7 +1790,7 @@
       ] }) }, a3.name)) })
     ] });
   }
-  function Watchdog({ w: w3, openSetup, fix, stop: stop2, snooze }) {
+  function Watchdog({ w: w3, unchecked: unchecked2 = [], openSetup, fix, stop: stop2, snooze }) {
     if (never(w3.lastRun)) {
       return /* @__PURE__ */ u3(CardHead, { title: "Watchdog", children: /* @__PURE__ */ u3("span", { class: "muted", children: [
         "It checks every app, address, and backup every 15 minutes once the jobs are installed. ",
@@ -1796,6 +1815,10 @@
           w3.pending && !failing.length ? `, ${w3.pending} checked again next run` : "",
           " · ",
           ago(w3.lastRun)
+        ] }),
+        !!unchecked2.length && /* @__PURE__ */ u3("span", { class: "warn unchecked", children: [
+          " · Not checked while stopped: ",
+          unchecked2.join(", ")
         ] })
       ] }) }),
       w3.memory && /* @__PURE__ */ u3(MemoryPressure, { m: w3.memory, stop: stop2 }),
@@ -2279,7 +2302,10 @@
     }
     if (a3.state === "elsewhere") return null;
     if (a3.state === "missing") return /* @__PURE__ */ u3("button", { class: "small", onClick: () => on2.install(a3), children: "Install" });
-    if (a3.state !== "running") return /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" });
+    if (a3.state !== "running") return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { class: "small rowmain change", title: `Start ${a3.name}`, disabled: busy2, onClick: () => on2.act(a3, "start"), children: "Start" }),
+      /* @__PURE__ */ u3("span", { class: "lookonly muted", children: "Start it from the computer" })
+    ] });
     const url = a3.address ? "https://" + a3.address : a3.url;
     const local = a3.address && a3.url ? a3.url : "";
     return url ? /* @__PURE__ */ u3("button", { class: "small rowmain", title: local ? `Open ${a3.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, "")})` : `Open ${a3.name}`, onClick: (e3) => on2.open(local && e3.shiftKey ? local : url), children: "Open" }) : null;
@@ -6881,6 +6907,7 @@
     lastStatus = st;
     renderAppList(st);
     drawOvernight();
+    if (lastWatch) drawWatchdog();
     if (st.checking && !kept2) {
       if (st !== boardStatus) answerPages(st);
       else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -6914,8 +6941,10 @@
       showWall();
     }
   }, 6e4);
+  var lastWatch = null;
   function showWatchdog(w3) {
     const card = $2("watchCard");
+    lastWatch = w3;
     if (!w3) {
       card.hidden = true;
       return;
@@ -6926,8 +6955,15 @@
     drawOvernight();
     if (appList && lastStatus) renderAppList(lastStatus);
     card.hidden = false;
-    mountWatchdog(card, {
+    drawWatchdog();
+  }
+  var unchecked = (st, w3) => (st?.apps || []).filter((a3) => a3.state === "stopped" && !held[a3.id] && !batteryPaused.has(a3.id) && !a3.waitingFor && !(w3.failing || []).some((f4) => f4.name === a3.id)).map((a3) => a3.name);
+  function drawWatchdog() {
+    const w3 = lastWatch;
+    if (!w3) return;
+    mountWatchdog($2("watchCard"), {
       w: w3,
+      unchecked: unchecked(lastStatus, w3),
       openSetup: () => {
         navigate("setup");
       },
@@ -7746,6 +7782,14 @@
             ] })
           ] }),
           entry?.description && /* @__PURE__ */ u3("p", { class: "lead", children: entry.description }),
+          p3.next?.[0] && !pending2 && /* @__PURE__ */ u3("p", { class: "stopnext", role: "note", children: [
+            p3.next[0],
+            p3.next[1] && /* @__PURE__ */ u3("span", { class: "change", children: [
+              " ",
+              p3.next[1]
+            ] }),
+            p3.next[1] && /* @__PURE__ */ u3("span", { class: "lookonly", children: " Start it from the computer: this phone can only look." })
+          ] }),
           pending2?.failed && /* @__PURE__ */ u3("p", { class: "rowerr", role: "status", children: [
             "Could not ",
             pending2.action === "rollback" ? "roll back" : pending2.action,
@@ -8132,6 +8176,7 @@
       state: stateOf(a3, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}),
       pending: pendingOf(id),
       busy: appsBusyNow(),
+      next: stoppedNext(a3, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
       usage: a3.state === "running" ? usage : void 0,
       disk,
       days: week(),

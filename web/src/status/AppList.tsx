@@ -244,7 +244,8 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   }
   if (a.state === 'elsewhere') return null;
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
-  if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
+  // A phone that only looks has no Start (html.companion:not(.can-change) hides .change): it says where to start it.
+  if (a.state !== 'running') return <><button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button><span class="lookonly muted">Start it from the computer</span></>;
   const url = a.address ? 'https://' + a.address : a.url;
   // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
   const local = a.address && a.url ? a.url : '';

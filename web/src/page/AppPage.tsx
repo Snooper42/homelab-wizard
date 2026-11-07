@@ -64,6 +64,8 @@ export interface AppPageProps {
   entry?: api.App;
   /** The dot's class and the words for its state (AppList's stateOf). */
   state: [string, string];
+  /** Why it isn't running and what to do (stopFor's stoppedNext): empty while it runs. */
+  next?: [string, string];
   /** Its action since the click, until the runtime confirms it. */
   pending?: Pending;
   /** An app's command runs: the buttons wait. */
@@ -275,6 +277,10 @@ function Header({ p }: { p: AppPageProps }) {
             <span class={'pill ' + tone}><span class={'dot ' + tone} />{words}{up && ` · ${up}`}</span>
           </div>
           {entry?.description && <p class="lead">{entry.description}</p>}
+          {p.next?.[0] && !pending && (
+            <p class="stopnext" role="note">{p.next[0]}{p.next[1] && <span class="change"> {p.next[1]}</span>}
+              {p.next[1] && <span class="lookonly"> Start it from the computer: this phone can only look.</span>}</p>
+          )}
           {pending?.failed && <p class="rowerr" role="status">Could not {pending.action === 'rollback' ? 'roll back' : pending.action}: {pending.failed}{pending.log && <> <button type="button" class="linkbtn" onClick={on.details}>Details</button></>}</p>}
         </div>
       </div>
