@@ -166,6 +166,7 @@ const alerts = [
 // The watchdog's last run, a few minutes ago.
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
+const dayAt = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return d.toISOString(); };
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 // The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
 const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
@@ -1647,6 +1648,25 @@ const smokes = [
     await page.waitForSelector('#copiesTile .value:text-is("None yet")', { timeout: 5000 });
     await page.waitForSelector('#restoreTile .value:text-is("Never")');
     if (await page.isVisible('#restoreTile:has-text("Proven")')) throw new Error('a restore test that never ran is called proven');
+  } },
+  // An app's week says when it was last down, for how long, and why (the watchdog's outages), not "Missed checks on
+  // Thursday": with two, how many times; with misses but no outage, that each passed the next time; from an older agent
+  // with no outages, how many checks it didn't answer.
+  ...[
+    ['its last outage, and why', { vikunja: [{ from: dayAt(5, 14, 0), to: dayAt(5, 14, 30), problem: 'nothing answers on its port' }, { from: dayAt(3, 3, 10), to: dayAt(3, 3, 55), problem: 'HTTP 502' }] },
+      (d) => `Last down ${d} at 3:10 AM for 45 minutes: HTTP 502 · 2 outages`],
+    ['misses that passed the next time', {}, () => 'Each check it missed passed the next time'],
+    ['from an older agent', undefined, (d, long) => `It didn't answer 3 of its checks on ${long}`],
+  ].map(([what, outages, want]) => ({ name: `An app's week says ${what}`, screen: 'app:vikunja', mock: { ...pageMock, watchdog: { ...watchdog, ...(outages ? { outages } : {}) } }, run: async (page) => {
+    const d = new Date(); d.setDate(d.getDate() - 3);
+    const words = want(d.toLocaleDateString('en-US', { weekday: 'short' }), d.toLocaleDateString('en-US', { weekday: 'long' }));
+    await page.waitForSelector(`.tile:has-text("This week"):has-text("${words}")`, { timeout: 5000 });
+  } })),
+  // A stopped app's week, with the watchdog running (Status's header says checks are on): not "once Setup turns it on",
+  // but that the watchdog doesn't check it while it's stopped (Account 3's tester, task 2).
+  { name: "A stopped app's week says it isn't checked while stopped, not to turn Setup on", screen: 'app:mealie', mock: { ...pageMock, watchdog }, run: async (page) => {
+    await page.waitForSelector('.tile:has-text("This week"):has-text("The watchdog doesn\'t check it while it\'s stopped")', { timeout: 5000 });
+    if (await page.isVisible('.tile:has-text("This week"):has-text("once Setup turns it on")')) throw new Error('it says to turn on what is on');
   } },
   { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });

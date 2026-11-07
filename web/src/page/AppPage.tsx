@@ -14,7 +14,7 @@ import { Empty } from '../parts/Empty';
 import { MenuButton } from '../parts/MenuButton';
 import { Row, Rows } from '../parts/Row';
 import { Tile } from '../status/Tiles';
-import type { Pending } from '../status/AppList';
+import { lasted, type Pending } from '../status/AppList';
 import { stopChoices } from '../status/stopFor';
 
 /** What the page does; screens/apppage.ts runs each. */
@@ -75,6 +75,10 @@ export interface AppPageProps {
   /** What it keeps on disk, as the nightly backup last measured it. */
   disk?: number;
   days: Day[];
+  /** The watchdog's outages of it this week (none from an older agent). */
+  outages?: health.Outage[];
+  /** The watchdog has run: its checks are on. */
+  watching?: boolean;
   backup: backup.Overview | null;
   /** The household members who use it; null when it is not one people sign in to. */
   people: people.Person[] | null;
@@ -131,18 +135,41 @@ export function weekShare(days: Day[]): number {
   return all ? ok / all : 1;
 }
 
-/** The week in words: its tile's value and the line under it. */
-export function weekWords(days: Day[]): [string, string] {
+/** The week's last time down in words: "Last down Tue at 3:10 AM for 45
+ * minutes: HTTP 502", or "Down since Tue at 3:10 AM: HTTP 502" while it is,
+ * and "· 2 outages" when it was down more than once. */
+export function lastDown(outages: health.Outage[], weekFrom: number, now = Date.now()): string {
+  const shown = outages.filter((o) => (o.to ? new Date(o.to).getTime() : now) > weekFrom);
+  if (!shown.length) return '';
+  const o = shown.reduce((a, b) => (new Date(b.from) > new Date(a.from) ? b : a));
+  const from = new Date(o.from), at = `${dayText(from, { weekday: 'short' })} at ${clockText(from)}`;
+  const line = o.to ? `Last down ${at} for ${lasted(new Date(o.to).getTime() - from.getTime())}: ${o.problem}` : `Down since ${at}: ${o.problem}`;
+  return shown.length > 1 ? `${line} · ${shown.length} outages` : line;
+}
+
+/** The week in words: its tile's value and the line under it. With the
+ * watchdog's outages (none from an older agent), the last time it was down
+ * and why; without, how many checks it didn't answer, and when. */
+export function weekWords(days: Day[], outages?: health.Outage[], now = Date.now(), seen: { watching?: boolean; stopped?: boolean } = {}): [string, string] {
   const ok = days.reduce((n, d) => n + d.ok, 0), all = days.reduce((n, d) => n + d.all, 0);
-  if (!all) return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  if (!all) {
+    // Not "once Setup turns it on" while the watchdog runs: Status's header says checks are on.
+    if (seen.watching && seen.stopped) return ['Not checked', "The watchdog doesn't check it while it's stopped"];
+    if (seen.watching) return ['Not checked yet', 'The watchdog checks it every 15 minutes, from its next run'];
+    return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  }
   const missed = days.filter((d) => d.all && d.ok < d.all);
   if (!missed.length) return ['Up all week', 'Every check passed, every 15 minutes'];
   const share = Math.floor((ok / all) * 1000) / 10;
-  return [`Up ${share}%`, `Missed checks on ${missed.map((d) => d.weekday).join(', ')}`];
+  const first = new Date(now);
+  const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
+  if (outages) return [`Up ${share}%`, lastDown(outages, weekFrom, now) || 'Each check it missed passed the next time'];
+  const n = missed.reduce((k, d) => k + d.all - d.ok, 0);
+  return [`Up ${share}%`, `It didn't answer ${n} of its checks on ${missed.map((d) => d.weekday).join(', ')}`];
 }
 
-function Week({ days }: { days: Day[] }) {
-  const [, line] = weekWords(days);
+function Week({ days, outages, seen }: { days: Day[]; outages?: health.Outage[]; seen: { watching?: boolean; stopped?: boolean } }) {
+  const [, line] = weekWords(days, outages, Date.now(), seen);
   const said = days.map((d) => `${d.name}: ${!d.all ? 'not checked' : d.ok === d.all ? 'up' : `${d.ok} of ${d.all} checks passed`}`).join('; ');
   return (
     <>
@@ -304,7 +331,8 @@ function Facts({ p }: { p: AppPageProps }) {
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
     : a.address ? 'At home and on your tailnet, not on the internet' : 'On this machine only';
-  const [weekValue] = weekWords(days);
+  const seen = { watching: p.watching, stopped: a.state === 'stopped' };
+  const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
   const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o.restoreTest.lastTest), { day: 'numeric', month: 'short' })}` : 'No restore test yet';
   return (
@@ -313,7 +341,7 @@ function Facts({ p }: { p: AppPageProps }) {
         sub={<>{url ? reach : 'It has no web page'}{url && <CopyButton text={url} copy={on.copy} />}</>} />
       <Tile label="Uses now" value={a.state !== 'running' ? <span class="muted">Nothing</span> : usage ? <>{memory(usage.mem)}<small> of memory</small></> : <span class="muted">{usage === null ? 'Not measured' : '…'}</span>}
         sub={a.state !== 'running' ? 'It is not running' : <>{usage ? `${usage.cpu < 10 ? usage.cpu.toFixed(1) : Math.round(usage.cpu)}% of a processor` : usage === null ? 'The container runtime did not say' : 'Reading what it uses…'}{!!disk && <span>· {bytes(disk)} on disk</span>}</>} />
-      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} />} />
+      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} outages={p.outages} seen={seen} />} />
       <Tile label="Last backup" tone={late ? 'warn' : ''}
         value={!o ? <span class="muted">…</span> : never(o.lastRun) ? <span class="muted">Not yet</span> : <>{when(o.lastRun)}{!late && <span class="ok"> <Icon name="check" /></span>}</>}
         sub={<>{o ? tested : ''}<ActionLink onClick={on.openBackups}>Backups ›</ActionLink></>} />

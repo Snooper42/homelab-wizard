@@ -122,7 +122,7 @@ function draw() {
   mountAppPage($('appPage'), {
     a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
     next: stoppedNext(a, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
-    usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
+    usage: a.state === 'running' ? usage : undefined, disk, days: week(), watching: !!watch && !never(watch.lastRun), outages: watch ? (watch.outages ? watch.outages[id] || [] : undefined) : undefined, switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
     icon: icons[id] || '', explainer,
