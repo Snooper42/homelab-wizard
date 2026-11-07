@@ -16,7 +16,7 @@ import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { Mark, payeeBrand, paysAlike } from './Mark';
-import { suggestLinks } from './importData';
+import { joined, type Pair, pairs, suggestLinks } from './importData';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
@@ -108,6 +108,47 @@ const catsOf = (t: finance.Transaction): string[] => (t.splits?.length ? t.split
 /** The words a search looks through: payee, categories, note, tags, and the accounts. */
 const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name].filter(Boolean).join(' ').toLowerCase();
 
+/**
+ * Rows that look like one transfer between the household's own accounts,
+ * a minus on one and the same plus on another a few days apart: Join
+ * makes them one (neither spending nor income), Not one transfer keeps
+ * them apart and stops asking.
+ */
+function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
+  const [busy, setBusy] = useState(false);
+  const list = pairs(ledger.transactions);
+  if (!list.length) return null;
+  const keep = async (change: (txs: finance.Transaction[]) => finance.Transaction[]) => {
+    if (busy) return;
+    setBusy(true);
+    await save({ ...ledger, transactions: change(ledger.transactions) });
+    setBusy(false);
+  };
+  const join = (ps: Pair[]) => keep((txs) => {
+    const gone = new Set(ps.map((p) => p.in.id)), made = new Map(ps.map((p) => [p.out.id, joined(p)]));
+    return txs.filter((t) => !gone.has(t.id)).map((t) => made.get(t.id) || t);
+  });
+  const apart = (p: Pair) => keep((txs) => txs.map((t) => (t.id === p.out.id || t.id === p.in.id ? { ...t, apart: true } : t)));
+  const name = (id: string) => L.account[id]?.name || id;
+  return (
+    <Widget title="These look like transfers" span="all" kind="fx-pairs"
+      actions={list.length > 1 && <button type="button" class="small" disabled={busy} onClick={() => join(list)}>Join all {list.length}</button>}>
+      <p class="fx-sub fx-lead">Money out of one of your accounts and the same into another: joined, it is one transfer, neither spending nor income.</p>
+      <Rows kind="fx-rows">
+        {list.map((p) => (
+          <Row key={p.out.id + p.in.id} lead={<TxMark t={joined(p)} />} title={`${name(p.out.account)} → ${name(p.in.account)}`}
+            sub={`${p.out.payee || 'Out'}, ${dayShort(p.out.date)} · ${p.in.payee || 'in'}, ${dayShort(p.in.date)}`}
+            when={<Amount value={-p.out.amount} form="full" />} whenPlain
+            end={<span class="fx-linkbtns">
+              <button type="button" class="small" disabled={busy} aria-label={`Join ${money(-p.out.amount)} from ${name(p.out.account)} to ${name(p.in.account)}`} onClick={() => join([p])}>Join</button>
+              <button type="button" class="small" disabled={busy} aria-label={`${money(-p.out.amount)} from ${name(p.out.account)} to ${name(p.in.account)} is not one transfer`} onClick={() => apart(p)}>Not one transfer</button>
+            </span>} />
+        ))}
+      </Rows>
+    </Widget>
+  );
+}
+
 export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: TransactionsProps) {
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
   const [seen, setSeen] = useState<{ id: string; url?: string; problem?: string } | null>(null);
@@ -167,6 +208,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
             <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={plural(thisMonth.length, 'transaction')} />
           </div>
         </Widget>
+        {saveLedger && <PairsWidget L={L} ledger={ledger} save={saveLedger} />}
         {saveLedger && <LinksWidget v={v} L={L} ledger={ledger} save={saveLedger} />}
         <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"

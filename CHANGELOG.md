@@ -55,6 +55,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Transfers between your accounts, joined:** money out of one of your accounts and the same into another within three days are offered on Transactions as one transfer (**Join**, or **Not one transfer**), so they count as neither spending nor income. Bringing in either bank's file again skips its half.
 - **Transactions link to the bills they pay:** Transactions lists those already in that look like a planned payment (*looks like Electric, planned $140*), each with **Link** or **Not it**, and **Link all**; a linked one says *pays Electric*. A transaction you type picks its planned payment by itself, saying so, until you pick another.
 - **A bill paid early isn't taken out twice:** importing a bank's file links each row that plainly pays a planned payment (its name or logo, about its amount, near its day), so the forecast doesn't take that bill out again on its day. The preview says *Looks like Electric, planned $140*, and you can change or remove it before bringing them in.
 - **A bill due the day you typed in your balances comes out:** Finances used to take it as already paid, so the forecast came out too high by that bill. It now comes out on its day; if your balance already had it, mark it **Already in** under *Taken as done*.

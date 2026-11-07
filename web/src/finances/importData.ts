@@ -102,13 +102,52 @@ export const isOfx = (text: string): boolean => /<OFX>|OFXHEADER/i.test(text.sli
 
 /**
  * The same transaction already in the ledger: the bank's own ID on the
- * account, or else on the account, on the day, for the amount, to the same
- * payee (or with no payee on either).
+ * account (or, for a transfer's arriving half, on the account it went
+ * into), or else on the account, on the day, for the amount, to the same
+ * payee (or with no payee on either). A transfer joined from two rows
+ * kept the leaving half's day, so its arriving half may be up to three
+ * days off it.
  */
 export function already(t: Imported, account: string, ledger: finance.Transaction[]): boolean {
   return ledger.some((q) => (q.account === account && t.id && q.bank === t.id)
-    || ((q.account === account || q.to === account) && q.date === t.date && Math.abs((q.to === account ? -q.amount : q.amount) - t.amount) < 0.005
-      && (!q.payee || !t.payee || alike(q.payee, t.payee))));
+    || (q.to === account && t.id && q.toBank === t.id)
+    || ((q.account === account || q.to === account) && (q.date === t.date || (q.to === account && Math.abs(dayNo(q.date) - dayNo(t.date)) <= pairDays))
+      && Math.abs((q.to === account ? -q.amount : q.amount) - t.amount) < 0.005
+      && (!q.payee || !t.payee || alike(q.payee, t.payee) || (q.to === account && !!q.toBank))));
+}
+
+/** How far apart the two halves of a transfer may be: money leaves one account and lands in another a few days on. */
+export const pairDays = 3;
+
+/** A transfer's two halves as two rows: money out of one account, the same into another. */
+export interface Pair { out: finance.Transaction; in: finance.Transaction }
+
+/**
+ * Rows that look like the two halves of one transfer between the
+ * household's own accounts: a minus on one and the same plus on another,
+ * within three days, neither a transfer already, paying a planned payment,
+ * or said to be apart. Each row in one pair at most, the nearest days first.
+ */
+export function pairs(txs: finance.Transaction[]): Pair[] {
+  const free = (t: finance.Transaction) => !t.to && !t.payment && !t.apart && !t.splits?.length;
+  const outs = txs.filter((t) => free(t) && t.amount < 0), ins = txs.filter((t) => free(t) && t.amount > 0);
+  const all: (Pair & { gap: number })[] = [];
+  for (const o of outs) for (const i of ins) {
+    const gap = dayNo(i.date) - dayNo(o.date);
+    if (i.account !== o.account && Math.abs(i.amount + o.amount) < 0.005 && Math.abs(gap) <= pairDays) all.push({ out: o, in: i, gap: Math.abs(gap) });
+  }
+  const used = new Set<string>(), out: Pair[] = [];
+  for (const p of all.sort((a, b) => a.gap - b.gap || a.out.date.localeCompare(b.out.date))) {
+    if (used.has(p.out.id) || used.has(p.in.id)) continue;
+    used.add(p.out.id); used.add(p.in.id);
+    out.push({ out: p.out, in: p.in });
+  }
+  return out.sort((a, b) => b.out.date.localeCompare(a.out.date));
+}
+
+/** Two halves as one transfer: the leaving half's day and payee, into the other's account, its bank ID kept. */
+export function joined(p: Pair): finance.Transaction {
+  return { ...p.out, to: p.in.account, toBank: p.in.bank, payee: p.out.payee || p.in.payee, note: p.out.note || p.in.note, category: undefined, institution: undefined, notPlanned: undefined };
 }
 
 /** The words of a payee that say who it is: three letters or more, no store numbers. */

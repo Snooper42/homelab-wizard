@@ -44,6 +44,13 @@ type Transaction struct {
 	// NotPlanned is one the household said pays no planned payment, though
 	// it looked like one: it is not offered as one again.
 	NotPlanned bool `json:"notPlanned,omitempty"`
+	// ToBank is the bank's own ID for a transfer's arriving half, when it
+	// was joined from a row on each account: that statement brought in
+	// again does not bring it back.
+	ToBank string `json:"toBank,omitempty"`
+	// Apart is one the household said is not half of a transfer, though a
+	// row on another account looked like the other half.
+	Apart bool `json:"apart,omitempty"`
 	// To is the account a transfer goes into: Amount leaves Account (a
 	// minus) and the same arrives in To. It is one transaction, not two.
 	To string `json:"to,omitempty"`
@@ -171,6 +178,12 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 		}
 		// Linked, it pays one.
 		t.NotPlanned = t.NotPlanned && t.Payment == ""
+		// A transfer's arriving half is its To's; one that is no transfer is apart.
+		t.ToBank = strings.TrimSpace(t.ToBank)
+		if t.To == "" {
+			t.ToBank = ""
+		}
+		t.Apart = t.Apart && t.To == ""
 		if len(t.Splits) > 0 {
 			sum := 0.0
 			for j := range t.Splits {

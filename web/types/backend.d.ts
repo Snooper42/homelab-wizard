@@ -749,6 +749,8 @@ declare namespace finance {
     note?: string;
     payment?: string;
     notPlanned?: boolean;
+    toBank?: string;
+    apart?: boolean;
     to?: string;
     splits?: finance.Split[];
     tags?: string[];

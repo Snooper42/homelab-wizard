@@ -1179,7 +1179,28 @@
   }
   var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
   function already(t3, account, ledger) {
-    return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || (q2.account === account || q2.to === account) && q2.date === t3.date && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee)));
+    return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || q2.to === account && t3.id && q2.toBank === t3.id || (q2.account === account || q2.to === account) && (q2.date === t3.date || q2.to === account && Math.abs(dayNo(q2.date) - dayNo(t3.date)) <= pairDays) && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee) || q2.to === account && !!q2.toBank));
+  }
+  var pairDays = 3;
+  function pairs(txs) {
+    const free = (t3) => !t3.to && !t3.payment && !t3.apart && !t3.splits?.length;
+    const outs = txs.filter((t3) => free(t3) && t3.amount < 0), ins = txs.filter((t3) => free(t3) && t3.amount > 0);
+    const all = [];
+    for (const o3 of outs) for (const i3 of ins) {
+      const gap = dayNo(i3.date) - dayNo(o3.date);
+      if (i3.account !== o3.account && Math.abs(i3.amount + o3.amount) < 5e-3 && Math.abs(gap) <= pairDays) all.push({ out: o3, in: i3, gap: Math.abs(gap) });
+    }
+    const used = /* @__PURE__ */ new Set(), out = [];
+    for (const p3 of all.sort((a3, b2) => a3.gap - b2.gap || a3.out.date.localeCompare(b2.out.date))) {
+      if (used.has(p3.out.id) || used.has(p3.in.id)) continue;
+      used.add(p3.out.id);
+      used.add(p3.in.id);
+      out.push({ out: p3.out, in: p3.in });
+    }
+    return out.sort((a3, b2) => b2.out.date.localeCompare(a3.out.date));
+  }
+  function joined(p3) {
+    return { ...p3.out, to: p3.in.account, toBank: p3.in.bank, payee: p3.out.payee || p3.in.payee, note: p3.out.note || p3.in.note, category: void 0, institution: void 0, notPlanned: void 0 };
   }
   var named = (s3) => s3.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w3) => w3.length >= 3 && !["the", "and", "inc", "llc", "payment", "purchase", "card", "debit", "pos"].includes(w3));
   function alike(a3, b2) {
@@ -8910,6 +8931,53 @@
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
   var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
+  function PairsWidget({ L: L2, ledger, save: save2 }) {
+    const [busy2, setBusy] = d2(false);
+    const list = pairs(ledger.transactions);
+    if (!list.length) return null;
+    const keep2 = async (change) => {
+      if (busy2) return;
+      setBusy(true);
+      await save2({ ...ledger, transactions: change(ledger.transactions) });
+      setBusy(false);
+    };
+    const join = (ps) => keep2((txs) => {
+      const gone = new Set(ps.map((p3) => p3.in.id)), made2 = new Map(ps.map((p3) => [p3.out.id, joined(p3)]));
+      return txs.filter((t3) => !gone.has(t3.id)).map((t3) => made2.get(t3.id) || t3);
+    });
+    const apart = (p3) => keep2((txs) => txs.map((t3) => t3.id === p3.out.id || t3.id === p3.in.id ? { ...t3, apart: true } : t3));
+    const name = (id2) => L2.account[id2]?.name || id2;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: "These look like transfers",
+        span: "all",
+        kind: "fx-pairs",
+        actions: list.length > 1 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => join(list), children: [
+          "Join all ",
+          list.length
+        ] }),
+        children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Money out of one of your accounts and the same into another: joined, it is one transfer, neither spending nor income." }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(TxMark, { t: joined(p3) }),
+              title: `${name(p3.out.account)} → ${name(p3.in.account)}`,
+              sub: `${p3.out.payee || "Out"}, ${dayShort(p3.out.date)} · ${p3.in.payee || "in"}, ${dayShort(p3.in.date)}`,
+              when: /* @__PURE__ */ u3(Amount, { value: -p3.out.amount, form: "full" }),
+              whenPlain: true,
+              end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Join ${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)}`, onClick: () => join([p3]), children: "Join" }),
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${money(-p3.out.amount)} from ${name(p3.out.account)} to ${name(p3.in.account)} is not one transfer`, onClick: () => apart(p3), children: "Not one transfer" })
+              ] })
+            },
+            p3.out.id + p3.in.id
+          )) })
+        ]
+      }
+    );
+  }
   function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2 }) {
     const [seen2, setSeen] = d2(null);
     const look2 = async (t3) => {
@@ -8961,6 +9029,7 @@
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural(thisMonth.length, "transaction") })
       ] }) }),
+      saveLedger2 && /* @__PURE__ */ u3(PairsWidget, { L: L2, ledger, save: saveLedger2 }),
       saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
       /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0 }),
       /* @__PURE__ */ u3(
@@ -11293,7 +11362,7 @@ ${pays}
   var flat2 = (s3) => s3.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   function typeFromCategory(cat) {
     const c3 = flat2(cat || "");
-    const pairs = [
+    const pairs2 = [
       [/entertainment|music|video|stream|tv|movie/, "streaming"],
       [/cloud|hosting|storage|backup|vpn/, "cloud"],
       [/software|productivity|technology|app/, "software"],
@@ -11303,7 +11372,7 @@ ${pays}
       [/food|beverage|meal|grocer/, "food"],
       [/phone|mobile|telecom/, "phone"]
     ];
-    return c3 && pairs.find(([re]) => re.test(c3))?.[1] || "";
+    return c3 && pairs2.find(([re]) => re.test(c3))?.[1] || "";
   }
   function paymentFromWallos(s3, today2) {
     const brand = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));

@@ -6411,6 +6411,35 @@ const smokes = [
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
     if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
   } },
+  // A minus on checking and the same plus on savings a day later look like one transfer: Join makes them one, its arriving
+  // half's bank ID kept, so the savings statement brought in again skips it. Not one transfer keeps them apart.
+  ...['Join', 'Not one transfer'].map((button) => ({ name: `Finances: two rows that look like one transfer, ${button}`, screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'o1', date: '2026-10-28', account: 'chk', amount: -500, payee: 'TRANSFER TO SAVINGS', bank: 'C1' },
+    { id: 'i1', date: '2026-10-29', account: 'sav', amount: 500, payee: 'TRANSFER FROM CHECKING', bank: 'S1' },
+    { id: 'o2', date: '2026-10-20', account: 'chk', amount: -40, payee: 'Gas' },
+    { id: 'i2', date: '2026-10-21', account: 'sav', amount: 45, payee: 'Interest' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-pairs li:has-text("Chase Checking → BofA Savings"):has-text("$500.00")', { timeout: 5000 });
+    if ((await page.$$('.fx-pairs li')).length !== 1) throw new Error('$40 out and $45 in are taken as one transfer');
+    await page.click(`.fx-pairs button:text-is("${button}")`);
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions);
+    const o1 = txs.find((t) => t.id === 'o1'), i1 = txs.find((t) => t.id === 'i1');
+    if (button === 'Join') {
+      if (i1 || o1?.to !== 'sav' || o1.amount !== -500 || o1.toBank !== 'S1' || o1.bank !== 'C1') throw new Error(`joined ${JSON.stringify(txs.slice(-4))}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+      await page.waitForSelector('.fx-txday li:has-text("Chase Checking → BofA Savings")', { timeout: 5000 });
+      // The savings statement again: its half is in already.
+      await page.click('.fx-transactions button:text-is("Import a file")');
+      const ofx = '<OFX><BANKTRANLIST><STMTTRN><DTPOSTED>20261029<TRNAMT>500.00<FITID>S1<NAME>TRANSFER FROM CHECKING</STMTTRN></BANKTRANLIST></OFX>';
+      await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'sav');
+      await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'savings.ofx', mimeType: 'application/x-ofx', buffer: Buffer.from(ofx) });
+      await page.waitForSelector('#finSheet .formsub:has-text("1 already in, skipped")', { timeout: 5000 });
+    } else {
+      if (!o1?.apart || !i1?.apart || o1.to) throw new Error(`apart ${JSON.stringify([o1, i1])}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+    }
+  } })),
   // Transactions already in the ledger that look like planned payments are offered, each to link or say Not it; once
   // linked, a row says what it pays. Not it is kept, so it is not offered again.
   { name: 'Finances: transactions that look like planned payments can be linked, or said not to be', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
