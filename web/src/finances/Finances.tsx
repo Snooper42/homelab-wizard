@@ -130,7 +130,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
+          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
       </div>
     </>
   );
@@ -144,7 +144,7 @@ function View({ v, L, phone, ledger, tab, sel, pick, openWorth, openSubscription
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} group={group} setGroup={setGroup} />
-    : <Overview v={v} L={L} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openTransactions={openTransactions} openCalendar={openCalendar} phone={phone} />;
+    : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openTransactions={openTransactions} openCalendar={openCalendar} phone={phone} />;
 }
 
 export function mountFinances(el: Element, props: FinancesProps) { render(<FinancesScreen {...props} />, el); }
