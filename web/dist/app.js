@@ -801,8 +801,8 @@
     if (!st.apps.length) {
       return /* @__PURE__ */ u3(Card, { kind: "emptystate", id: "statusEmpty", children: [
         /* @__PURE__ */ u3("h2", { children: "No apps yet" }),
-        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose stacks. They show up here as they start, with their addresses." }),
-        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose stacks" })
+        /* @__PURE__ */ u3("p", { children: "Pick a few on Choose apps. They show up here as they start, with their addresses." }),
+        /* @__PURE__ */ u3("button", { class: "btn primary", onClick: onChoose, children: "Choose apps" })
       ] });
     }
     const running4 = st.apps.filter((a3) => a3.state === "running");
@@ -821,7 +821,7 @@
               counted
             ] })
           ] }),
-          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 baseline app is down" : `${st.missing} baseline apps are down` }) : "All baseline apps are up"
+          sub: st.missing ? /* @__PURE__ */ u3("span", { class: "bad", children: st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down` }) : "The homelab's own apps are all up"
         }
       ),
       /* @__PURE__ */ u3(
@@ -833,7 +833,10 @@
           sub: trouble.length ? trouble.slice(0, 3).map((a3) => a3.name).join(", ") + (trouble.length > 3 ? "…" : "") : "Nothing unhealthy or stopped"
         }
       ),
-      /* @__PURE__ */ u3(Tile, { label: "Replaces a year", value: /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
+      /* @__PURE__ */ u3(Tile, { label: "Instead of subscriptions", value: /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(SavedHover, { value: st.savings > 0 ? dollars(st.savings) : "$0", history }),
+        /* @__PURE__ */ u3("small", { children: " a year" })
+      ] }), sub: /* @__PURE__ */ u3(SavingsTrend, { history }) }),
       /* @__PURE__ */ u3(
         Tile,
         {
@@ -853,14 +856,14 @@
 
   // web/src/status/UndoNote.tsx
   var undoFor = 1e4;
-  function UndoNote({ words: words4, undo, close: close3 }) {
+  function UndoNote({ words: words5, undo, close: close3 }) {
     const [held3, setHeld] = d2(false);
     const box = A2(null);
     h2(() => {
       if (held3) return;
       const t3 = setTimeout(close3, undoFor);
       return () => clearTimeout(t3);
-    }, [held3, words4]);
+    }, [held3, words5]);
     return /* @__PURE__ */ u3(
       "div",
       {
@@ -872,7 +875,7 @@
         onFocusIn: () => setHeld(true),
         onFocusOut: () => setTimeout(() => setHeld(!!box.current?.matches(":hover") || !!box.current?.contains(document.activeElement))),
         children: [
-          /* @__PURE__ */ u3("span", { class: "undowords", children: words4 }),
+          /* @__PURE__ */ u3("span", { class: "undowords", children: words5 }),
           /* @__PURE__ */ u3("button", { type: "button", class: "undobtn", onClick: undo, children: "Undo" }),
           /* @__PURE__ */ u3("button", { type: "button", class: "iconbtn", "aria-label": "Close", onClick: close3, children: "×" })
         ]
@@ -1751,6 +1754,39 @@
     ] }) });
   }
 
+  // web/src/status/attack.ts
+  var words2 = [
+    [/(^|-)cve-|^vpatch-/i, "Probing for a known security hole"],
+    [/sensitive-files/, "Looking for private files (passwords, backups)"],
+    [/path-traversal/, "Trying to reach files outside the site"],
+    [/sqli/, "Trying to break into a database"],
+    [/xss/, "Trying to plant a script in a page"],
+    [/backdoor/, "Looking for a back door left by other attackers"],
+    [/admin-interface/, "Looking for admin pages"],
+    [/wordpress|wp-/, "Scanning for WordPress holes"],
+    [/bad-user-agent/, "A known attack tool"],
+    [/open-proxy/, "Trying to use the homelab as a proxy"],
+    [/ssh.*bf|ssh-.*brute/, "Guessing an SSH password"],
+    [/(^|-)bf$|bruteforce|brute-force/, "Guessing passwords"],
+    [/crawl/, "Crawling every page"],
+    [/probing/, "Probing for pages that aren't there"]
+  ];
+  function attackWords(scenario) {
+    const s3 = scenario.replace(/^crowdsecurity\//, "");
+    return words2.find(([re]) => re.test(s3))?.[1] || "Suspicious requests";
+  }
+  var regions = null;
+  function attackFrom(a3) {
+    let country = a3.country || "";
+    try {
+      regions ||= new Intl.DisplayNames(["en"], { type: "region" });
+      if (/^[A-Z]{2}$/.test(country)) country = regions.of(country) || country;
+    } catch {
+    }
+    return [country, a3.network].filter(Boolean).join(" · ");
+  }
+  var attackDetail = (a3) => `${a3.scenario}${a3.ip ? " from " + a3.ip : ""}`;
+
   // web/src/status/Cards.tsx
   var wakeText = (t3) => {
     const d3 = new Date(t3);
@@ -1868,8 +1904,8 @@
         Row,
         {
           dot: a3.banned ? "bad" : "",
-          title: a3.scenario,
-          sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
+          title: /* @__PURE__ */ u3("span", { title: attackDetail(a3), children: attackWords(a3.scenario) }),
+          sub: attackFrom(a3),
           end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", children: "Banned" }),
           when: ago(a3.when)
         },
@@ -2171,8 +2207,8 @@
       return ["ok", a3.health === "native" ? "Running (native app)" : "Running"];
     }
     if (a3.state === "not running" && a3.id === "homelab-companion") return ["", "Starts with the scheduled jobs (Setup)"];
-    const words4 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
-    return words4[a3.state] || ["", a3.state];
+    const words5 = { stopped: ["warn", "Stopped"], missing: ["bad", "Not running"], elsewhere: ["warn", "Runs elsewhere"], "not running": ["warn", "Not running"] };
+    return words5[a3.state] || ["", a3.state];
   }
   var doing = { start: "Starting…", stop: "Stopping…", restart: "Restarting…", update: "Updating…", rollback: "Rolling back…" };
   var verb = { start: "start", stop: "stop", restart: "restart", update: "update", rollback: "roll back" };
@@ -2366,7 +2402,7 @@
       setMenu(null);
       if (refocus && from2?.isConnected && from2 !== document.body) from2.focus();
     };
-    const [cls, words4] = rowWords(a3, p3);
+    const [cls, words5] = rowWords(a3, p3);
     const entry = p3.catalog?.apps.find((c3) => c3.id === a3.id);
     const changed3 = changedSince(a3, p3.seen ?? null);
     return (
@@ -2399,7 +2435,7 @@
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
-              words4,
+              words5,
               pend && !pend.failed ? null : a3.state === "elsewhere" ? /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("span", { class: "local", children: [
                   "container ",
@@ -2779,16 +2815,16 @@
     const now = /* @__PURE__ */ new Map();
     for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
     const changed3 = /* @__PURE__ */ new Map();
-    if (heardOnce) for (const [id2, [name, words4]] of now) {
+    if (heardOnce) for (const [id2, [name, words5]] of now) {
       const was = heard.get(id2);
-      if (was !== void 0 && was !== words4) changed3.set(words4, [...changed3.get(words4) || [], name]);
+      if (was !== void 0 && was !== words5) changed3.set(words5, [...changed3.get(words5) || [], name]);
     }
     heard.clear();
-    for (const [id2, [, words4]] of now) heard.set(id2, words4);
+    for (const [id2, [, words5]] of now) heard.set(id2, words5);
     heardOnce = true;
     const el3 = document.getElementById("statusAloud");
     if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
-    const text2 = [...changed3].map(([words4, names4]) => `${listed(names4)}: ${words4}`).join(". ");
+    const text2 = [...changed3].map(([words5, names4]) => `${listed(names4)}: ${words5}`).join(". ");
     el3.textContent = "";
     requestAnimationFrame(() => {
       el3.textContent = text2;
@@ -2803,7 +2839,7 @@
       const t3 = setTimeout(() => setSaid(null), 3e3);
       return () => clearTimeout(t3);
     }, [said]);
-    const say = (id2, words4) => setSaid({ id: id2, words: words4 });
+    const say = (id2, words5) => setSaid({ id: id2, words: words5 });
     h2(() => sayChanges(p3));
     const q2 = useFilter().text;
     const open3 = openGroups(p3.groups, f4, p3.held);
@@ -3240,12 +3276,12 @@
   }
   function Chip({ b: b2 }) {
     const next = jobsWaiting();
-    const words4 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
+    const words5 = b2.state === "done" ? "Done" : b2.state === "failed" ? "Stopped with a problem" : b2.step || "Working…";
     return /* @__PURE__ */ u3("div", { class: "bgjob " + b2.state, children: [
       /* @__PURE__ */ u3("button", { class: "bgopen", onClick: open, title: "Show it", children: [
         /* @__PURE__ */ u3("span", { class: "bgtitle", children: b2.title }),
         /* @__PURE__ */ u3("span", { class: "bgtrack" + (b2.state === "running" && !b2.pct ? " working" : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { class: "bgfill", style: { width: `${b2.state === "running" ? b2.pct : 100}%` } }) }),
-        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words4 }),
+        /* @__PURE__ */ u3("span", { class: "bgstep", role: "status", "aria-live": "polite", children: words5 }),
         !!next.length && /* @__PURE__ */ u3("span", { class: "bgnext", children: [
           "Then: ",
           next[0],
@@ -3354,7 +3390,7 @@
   // web/src/settings/Form.tsx
   var folderKey = /(_ROOT|_DESTINATION|_LOCATION|_DIR)$/;
   function shown(pages, view, wanted, label, checks) {
-    const words4 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
+    const words5 = view.query.toLowerCase().split(/\s+/).filter(Boolean);
     const out = { keys: /* @__PURE__ */ new Set(), counts: {}, pageMore: 0 };
     for (const pg of pages) {
       const here2 = pg.name === view.page;
@@ -3363,7 +3399,7 @@
         if (here2 && more2) out.pageMore++;
         const step2 = checks[s3.key];
         const text2 = [pg.name, label(s3.key), s3.key.replace(/_/g, " "), s3.help || "", step2 ? step2.title : "", "setting-" + s3.key].join(" ").toLowerCase();
-        const match2 = words4.length ? words4.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
+        const match2 = words5.length ? words5.every((w3) => text2.includes(w3)) : here2 && (view.showAll || !more2);
         if (match2) {
           out.keys.add(s3.key);
           out.counts[pg.name] = (out.counts[pg.name] || 0) + 1;
@@ -3373,9 +3409,9 @@
     return out;
   }
   function plainHelp(help, toggle) {
-    const words4 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
-    if (!toggle) return words4;
-    return words4.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
+    const words5 = help.replace(/\s*\((?:\.\/)?homelab [^)]*\)/g, "");
+    if (!toggle) return words5;
+    return words5.split(new RegExp("(?<=\\.)\\s+")).filter((t3) => !/^(true|false)\b/i.test(t3)).join(" ");
   }
   function Row3({ s: s3, p: p3, value, hidden: hidden3, edit }) {
     const [result, setResult] = d2(null);
@@ -4923,7 +4959,7 @@
     btn.textContent = "Installing…";
     mountStarted($2("started"), null);
     mountWiring($2("wiring"), null);
-    const words4 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
+    const words5 = { env: "Saving your settings", folders: "Making the folders", networks: "Getting the network ready" };
     const ilog = $2("installLog");
     ilog.textContent = "";
     $2("installDetails").hidden = true;
@@ -4937,7 +4973,7 @@
       });
       const off = window.runtime.EventsOn("progress", (ev) => {
         if (ev.error) return;
-        const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words4[ev.name];
+        const text2 = ev.name === "start" ? `Starting ${(ev.apps || []).map(appName).join(", ")}` : words5[ev.name];
         cliProgress({ n: ev.step, total: ev.steps + 1, text: text2 });
       });
       try {
@@ -6149,9 +6185,9 @@
   function settingLabel(key5) {
     if (settingLabels[key5]) return settingLabels[key5];
     const app = keyApp(key5);
-    const words4 = (app ? app[1] : key5).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
-    if (app) return [app[0], ...words4].join(" ");
-    const text2 = words4.join(" ");
+    const words5 = (app ? app[1] : key5).split("_").filter(Boolean).map((w3) => wordLabels[w3] || (upper.has(w3) ? w3 : w3.toLowerCase()));
+    if (app) return [app[0], ...words5].join(" ");
+    const text2 = words5.join(" ");
     return text2.charAt(0).toUpperCase() + text2.slice(1);
   }
   function markChanged() {
@@ -6242,15 +6278,15 @@
       return false;
     }
   };
-  function Overnight({ words: words4, hide }) {
+  function Overnight({ words: words5, hide }) {
     return /* @__PURE__ */ u3("p", { class: "overnight", role: "status", children: [
-      /* @__PURE__ */ u3("span", { children: words4 }),
+      /* @__PURE__ */ u3("span", { children: words5 }),
       /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: hide, children: "Hide until tomorrow" })
     ] });
   }
   function mountOvernight(el3, n3) {
-    const words4 = hiddenToday(n3.now) ? null : overnightWords(n3);
-    el3.hidden = !words4;
+    const words5 = hiddenToday(n3.now) ? null : overnightWords(n3);
+    el3.hidden = !words5;
     const hide = () => {
       hiddenOn = today(Date.now());
       try {
@@ -6259,7 +6295,7 @@
       }
       mountOvernight(el3, n3);
     };
-    R(words4 ? /* @__PURE__ */ u3(Overnight, { words: words4, hide }) : null, el3);
+    R(words5 ? /* @__PURE__ */ u3(Overnight, { words: words5, hide }) : null, el3);
   }
 
   // web/src/backups/Backups.tsx
@@ -7140,9 +7176,9 @@
     const cats = new Set(apps.map((a3) => catOf(a3.id)));
     const label = cats.size === 1 ? catalog?.categories.find((c3) => c3.id === [...cats][0])?.label : "";
     const what2 = apps.length === 1 ? apps[0].name : `${apps.length} ${label ? label + " " : ""}apps`;
-    const words4 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
+    const words5 = `Stopped ${what2}` + (until ? " " + stoppedWords({ since: "", until }).replace(/^Stopped /, "") : "");
     undoing = { apps };
-    mountUndoNote($2("undoNote"), { words: words4, undo: undoNow, close: dropUndo });
+    mountUndoNote($2("undoNote"), { words: words5, undo: undoNow, close: dropUndo });
   }
   function dropUndo() {
     undoing = null;
@@ -7756,7 +7792,7 @@
   }
   function Header({ p: p3 }) {
     const { a: a3, entry, pending: pending2, busy: busy2, on: on2 } = p3;
-    const [tone, words4] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
+    const [tone, words5] = pending2 && !pending2.failed ? ["warn", pending2.note || doing2[pending2.action] || "Working…"] : p3.state;
     const up = a3.state === "running" && !pending2 ? uptime(a3.since) : "";
     const url = a3.address ? "https://" + a3.address : a3.url || "";
     const run2 = (action, label, title, danger = false) => /* @__PURE__ */ u3("button", { class: "btn change" + (danger ? " danger" : ""), title, disabled: busy2, onClick: () => on2.act(action), children: label });
@@ -7793,7 +7829,7 @@
             /* @__PURE__ */ u3("h1", { children: a3.name }),
             /* @__PURE__ */ u3("span", { class: "pill " + tone, children: [
               /* @__PURE__ */ u3("span", { class: "dot " + tone }),
-              words4,
+              words5,
               up && ` · ${up}`
             ] })
           ] }),
@@ -7944,8 +7980,8 @@
           Row,
           {
             dot: a3.banned ? "bad" : "",
-            title: a3.scenario,
-            sub: [a3.ip, a3.country, a3.network].filter(Boolean).join(" · "),
+            title: /* @__PURE__ */ u3("span", { title: attackDetail(a3), children: attackWords(a3.scenario) }),
+            sub: attackFrom(a3),
             end: a3.banned && /* @__PURE__ */ u3("span", { class: "badge", title: "A ban on it is still in force", children: "Banned" }),
             when: clockText(new Date(a3.when)),
             whenTitle: ago(a3.when)
@@ -8044,7 +8080,7 @@
           p3.a.name,
           "…"
         ] }),
-        /* @__PURE__ */ u3("span", { class: "muted", children: "A backup first; its data stays, so Choose stacks can bring it back." })
+        /* @__PURE__ */ u3("span", { class: "muted", children: "A backup first; its data stays, so Choose apps can bring it back." })
       ] })
     ] });
   }
@@ -8282,7 +8318,7 @@
     return rows.map((r3) => r3.map((x3) => x3.trim()));
   }
   function guessColumns(header) {
-    const find = (...words4) => header.findIndex((h3) => words4.some((w3) => h3.toLowerCase().includes(w3)));
+    const find = (...words5) => header.findIndex((h3) => words5.some((w3) => h3.toLowerCase().includes(w3)));
     return {
       date: find("date", "posted", "day", "datum"),
       amount: find("amount", "value", "betrag"),
@@ -11160,10 +11196,10 @@ ${pays}
 
   // web/src/finances/homelab.ts
   var generic = /* @__PURE__ */ new Set(["subscription", "plan", "membership", "premium", "family", "standard", "plus", "pro", "basic", "personal", "monthly", "yearly", "annual", "the", "and", "of"]);
-  var words2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+  var words3 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
   function same(payment, service) {
-    const own2 = words2(payment).filter((w3) => !generic.has(w3));
-    const theirs = new Set(words2(service));
+    const own2 = words3(payment).filter((w3) => !generic.has(w3));
+    const theirs = new Set(words3(service));
     return own2.length > 0 && own2.every((w3) => theirs.has(w3));
   }
   function replacedBy(plan, running4) {
@@ -11456,10 +11492,10 @@ ${pays}
       ] }),
       /* @__PURE__ */ u3("fieldset", { class: "finreminders", children: [
         /* @__PURE__ */ u3("legend", { children: "Reminders through the homelab's ntfy" }),
-        reminders.map(([kind, words4]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+        reminders.map(([kind, words5]) => /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
           /* @__PURE__ */ u3("input", { type: "checkbox", disabled: busy2, checked: !quiet2.includes(kind), onClick: remind(kind) }),
           " ",
-          words4
+          words5
         ] }, kind))
       ] }),
       calendar && /* @__PURE__ */ u3(CalendarFeed, { v: v3, calendar, busy: busy2, set: (key5, amounts) => keep2({ currency, holidays, calendarKey: key5, calendarAmounts: amounts }) })
@@ -13700,7 +13736,7 @@ ${pays}
 
   // web/src/palette/Shortcuts.tsx
   var names3 = {
-    choose: "Choose stacks",
+    choose: "Choose apps",
     status: "Status",
     backups: "Backups",
     setup: "Setup",
@@ -13745,7 +13781,7 @@ ${pays}
     return lines;
   }
   var screens = () => [
-    [[mod + "1"], "Choose stacks"],
+    [[mod + "1"], "Choose apps"],
     [[mod + "2"], "Status"],
     [[mod + "3"], "Backups"],
     [[mod + "4"], "Setup"],
@@ -13799,13 +13835,13 @@ ${pays}
   }
 
   // web/src/palette/commands.ts
-  var words3 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  var words4 = (s3) => s3.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   function match(list, query3) {
-    const want = words3(query3);
+    const want = words4(query3);
     if (!want.length) return list;
     const scored = [];
     list.forEach((c3, i3) => {
-      const own2 = words3(c3.label), other = [...own2, ...words3(c3.also || "")];
+      const own2 = words4(c3.label), other = [...own2, ...words4(c3.also || "")];
       if (!want.every((w3) => other.some((o3) => o3.startsWith(w3)))) return;
       let score = want.filter((w3) => own2.some((o3) => o3.startsWith(w3))).length * 2;
       if (own2.join(" ") === want.join(" ")) score += 4;
@@ -13814,7 +13850,7 @@ ${pays}
     return scored.sort((a3, b2) => b2.score - a3.score || a3.i - b2.i).map((s3) => s3.c);
   }
   var screenList = [
-    ["choose", "Choose stacks", "1", "install add apps"],
+    ["choose", "Choose apps", "1", "install add apps"],
     ["status", "Status", "2", "apps running"],
     ["backups", "Backups", "3", "backup restore"],
     ["setup", "Setup", "4", ""],

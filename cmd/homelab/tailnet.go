@@ -56,7 +56,7 @@ func (h *homelab) tailnetSetup(ctx context.Context, auto bool) error {
 		if auto {
 			return nil
 		}
-		return fmt.Errorf("Tailscale is not running: homelab install tailscale (or Choose stacks › Tailscale)")
+		return fmt.Errorf("Tailscale is not running: homelab install tailscale (or Choose apps › Tailscale)")
 	}
 	self, err := tailscaleSelf(ctx, client, ctr.Name)
 	if err != nil {

@@ -153,6 +153,8 @@ Kept from the earlier queue (Nov 6): only the items where a household can lose d
 
 - **A Finances smoke case times out now and then in CI** (Nov 5: #429's first run and #432's, both `smoke (light)`; Nov 6: #454's run on 94b290a, `smoke (dark)`, green on the next run; both passed on a re-run): *Finances: a logo picked on a transaction goes with its payee*, `page.waitForSelector: Timeout 5000ms exceeded (waiting for locator('#finSheet') to be hidden)` after a Save. It passed 10 of 10 times locally (light and dark) and #429 touches no frontend. Worth a look at what the Save waits for before the sheet closes; `SMOKE_ONLY="Finances: a logo picked on a transaction goes with its payee" node app/preview/shoot.mjs --smoke` runs it.
 
+- **"Choose stacks" is "Choose apps"** (Nov 6, `claude/fix-plain-words`, Account 3's usability finding 4): every screen, doc, and CLI hint says *Choose apps* now, but `tools/media/tdarr_setup.py` line 47 still says *Install it from Choose stacks (Media automation)*. Yours to change; `app/preview/words.mjs` now refuses *stacks* and *baseline* in `web/src`, not in `tools/`.
+
 ## For Account 3
 
 - **`data/` is 0755, and several of its records are 0644** (Nov 6): `lockedfile.Update` makes the folder with `MkdirAll(dir, 0o755)`, as do `battery`, `health`, `restartloop`, `heal`, `custom`, and `domain`. Records written 0644 include `media.json` (Tidy Up's record: where every song and film is), Tidy Up's settings and sizes, `releases.json`, and the media lock. Another account on the same computer can list `data/` and read those. The sensitive ones (`phones.json`, Finances, `people.json`) are 0600. To show it: a test on the folder's mode after any save, and on `media.json`'s. Item 27 is the fix, once you have written it up.

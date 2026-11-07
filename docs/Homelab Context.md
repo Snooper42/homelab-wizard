@@ -40,7 +40,7 @@ The facts this project is designed around. Read this before suggesting a change.
 
 ## What runs by default
 
-In a git checkout, `./homelab up` starts the full baseline: the proxy, DNS, security, backups, monitoring, passwords, photos, documents, budget, music, audiobooks, books, and comics. A folder the desktop app makes starts the small baseline instead (updates, backups, and alerts; `HOMELAB_BASELINE=small`), and the household picks the rest in Choose stacks. Everything else is defined, documented, and one command away (`./homelab install <app>`). See [Service Organization](<Service Organization.md>).
+In a git checkout, `./homelab up` starts the full baseline: the proxy, DNS, security, backups, monitoring, passwords, photos, documents, budget, music, audiobooks, books, and comics. A folder the desktop app makes starts the small baseline instead (updates, backups, and alerts; `HOMELAB_BASELINE=small`), and the household picks the rest in Choose apps. Everything else is defined, documented, and one command away (`./homelab install <app>`). See [Service Organization](<Service Organization.md>).
 
 ## The project
 

@@ -96,7 +96,7 @@ export interface TilesProps {
   history: savings.Point[];
   /** Pauses (true) or resumes the nightly updates. */
   onPause: (paused: boolean) => Promise<void>;
-  /** Opens Choose stacks, from a homelab with no apps yet. */
+  /** Opens Choose apps, from a homelab with no apps yet. */
   onChoose: () => void;
 }
 
@@ -106,8 +106,8 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
     return (
       <Card kind="emptystate" id="statusEmpty">
         <h2>No apps yet</h2>
-        <p>Pick a few on Choose stacks. They show up here as they start, with their addresses.</p>
-        <button class="btn primary" onClick={onChoose}>Choose stacks</button>
+        <p>Pick a few on Choose apps. They show up here as they start, with their addresses.</p>
+        <button class="btn primary" onClick={onChoose}>Choose apps</button>
       </Card>
     );
   }
@@ -118,10 +118,10 @@ export function Tiles({ status: st, history, onPause, onChoose }: TilesProps) {
   return (
     <>
       <Tile label="Running" value={<>{running.length}<small> of {counted}</small></>}
-        sub={st.missing ? <span class="bad">{st.missing === 1 ? '1 baseline app is down' : `${st.missing} baseline apps are down`}</span> : 'All baseline apps are up'} />
+        sub={st.missing ? <span class="bad">{st.missing === 1 ? "1 of the homelab's own apps is down" : `${st.missing} of the homelab's own apps are down`}</span> : "The homelab's own apps are all up"} />
       <Tile label="Needs a look" value={String(trouble.length)} tone={trouble.length ? 'warn' : ''}
         sub={trouble.length ? trouble.slice(0, 3).map((a) => a.name).join(', ') + (trouble.length > 3 ? '…' : '') : 'Nothing unhealthy or stopped'} />
-      <Tile label="Replaces a year" value={<SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} />} sub={<SavingsTrend history={history} />} />
+      <Tile label="Instead of subscriptions" value={<><SavedHover value={st.savings > 0 ? dollars(st.savings) : '$0'} history={history} /><small> a year</small></>} sub={<SavingsTrend history={history} />} />
       <Tile label="Nightly updates" value={u?.paused ? 'Paused' : 'On'}
         sub={<>{u?.paused ? 'Until you resume them' : `Run ${u?.schedule}`}<PauseButton paused={!!u?.paused} onPause={onPause} /></>} />
     </>

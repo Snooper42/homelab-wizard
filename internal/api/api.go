@@ -27,7 +27,7 @@ type Catalog struct {
 	Wireable []string `json:"wireable"`
 }
 
-// Category groups apps on the "Choose stacks" screen.
+// Category groups apps on the "Choose apps" screen.
 type Category struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`

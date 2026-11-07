@@ -25,7 +25,7 @@ One place to manage indexers, their credentials, and their health.
 
 ## Setup
 
-1. `./homelab install @arr` (Choose stacks › **Media automation**) installs Prowlarr with Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent with [Gluetun](<Gluetun.md>) (once `PROTONVPN_WIREGUARD_PRIVATE_KEY` is set), and Seerr.
+1. `./homelab install @arr` (Choose apps › **Media automation**) installs Prowlarr with Sonarr, Radarr, Lidarr, Bazarr, FlareSolverr, qBittorrent with [Gluetun](<Gluetun.md>) (once `PROTONVPN_WIREGUARD_PRIVATE_KEY` is set), and Seerr.
 2. Open `https://<TAILSCALE_HOST>:9696` in Home mode, or `https://prowlarr.example.com` with a domain, and set up authentication (Forms, with a username and password).
 3. Settings › Apps: add each app by service name and its API key (from the app's Settings › General):
    - Sonarr `http://sonarr:8989`, Radarr `http://radarr:7878`, Lidarr `http://lidarr:8686`, LazyLibrarian `http://lazylibrarian:5299`

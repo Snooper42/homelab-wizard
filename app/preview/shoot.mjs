@@ -918,8 +918,8 @@ const smokes = [
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(500);
     const said = await page.evaluate(() => document.querySelector('#setup').innerText);
-    if (!/Choose stacks/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
-    await page.click('#firstApps button:has-text("Choose stacks")');
+    if (!/Choose apps/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
+    await page.click('#firstApps button:has-text("Choose apps")');
     await page.waitForSelector('#choose.active', { timeout: 5000 });
   } },
   { name: 'Setup says nothing of first apps once there are apps', screen: 'setup', run: async (page) => {
@@ -947,7 +947,7 @@ const smokes = [
   } },
   // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
   // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
-  { name: 'Choose stacks: suggestions from what you run', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps: suggestions from what you run', screen: 'choose', run: async (page) => {
     await page.click('#more > summary');
     const group = page.locator('.group.suggested');
     await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
@@ -964,7 +964,7 @@ const smokes = [
   } },
   // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
   // from whichever side the pair is written, and an app you run says nothing.
-  { name: 'Choose stacks: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'kavita');
     const kavita = page.locator('label.app:has-text("Kavita")');
     await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
@@ -979,7 +979,7 @@ const smokes = [
     await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
     if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
   } },
-  { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
+  { name: 'Choose apps as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
@@ -998,10 +998,10 @@ const smokes = [
     await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
     await scrollTo(900);
     const chose = await top(), shown = await atTop();
-    if (chose < 800 || !shown) throw new Error(`Choose stacks only scrolls to ${chose} (${shown})`);
+    if (chose < 800 || !shown) throw new Error(`Choose apps only scrolls to ${chose} (${shown})`);
     await page.click('nav button[data-screen=status]');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
-    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose stacks' place`);
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose apps' place`);
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
     await scrollTo(300);
     // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
@@ -1010,12 +1010,12 @@ const smokes = [
     if (status < 250) throw new Error(`Status only scrolls to ${status}`);
     await page.click('nav button[data-screen=choose]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
-    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose stacks at ${await top()}, not ${chose}`);
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose apps at ${await top()}, not ${chose}`);
     if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
     await page.click('nav button[data-screen=status]');
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
-    // Quit and open again (on Choose stacks): it is where it was, and so is Status. Quitting is the page going away
+    // Quit and open again (on Choose apps): it is where it was, and so is Status. Quitting is the page going away
     // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
     // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
     await page.evaluate(() => dispatchEvent(new Event('pagehide')));
@@ -1031,20 +1031,20 @@ const smokes = [
     await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
     if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
   } },
-  { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+  { name: 'Choose apps as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("NVIDIA card")', { timeout: 5000 });
   } },
-  { name: 'Choose stacks as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
+  { name: 'Choose apps as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("a Coral or the graphics")', { timeout: 5000 });
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel")', { timeout: 5000 });
     if (await page.locator('label.app:has-text("Beszel") .sysnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
   } },
-  { name: 'Choose stacks as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+  { name: 'Choose apps as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
@@ -1073,7 +1073,7 @@ const smokes = [
   // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
   // first record, month by month, newest first, and the card is not cut off.
   { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
-    const tile = '#tiles .tile:has-text("Replaces a year") .savedso';
+    const tile = '#tiles .tile:has-text("Instead of subscriptions") .savedso';
     await page.waitForSelector(tile, { timeout: 5000 });
     await page.hover(tile);
     const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
@@ -1379,7 +1379,7 @@ const smokes = [
     await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
     await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
     const first = card.locator('li').first();
-    for (const want of ['vpatch-CVE-2017-9841', '203.0.113.7 · NL · Example Hosting B.V.', 'Banned']) {
+    for (const want of ['Probing for a known security hole', 'Netherlands · Example Hosting B.V.', 'Banned']) {
       if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
     }
     await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
@@ -1641,7 +1641,7 @@ const smokes = [
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
     for (const sel of ['#tiles .tile', '#status table.grouped', '#statusAll']) if (await page.isVisible(sel)) throw new Error(`${sel} shows with no apps`);
-    await page.click('#statusEmpty button:text-is("Choose stacks")');
+    await page.click('#statusEmpty button:text-is("Choose apps")');
     await page.waitForSelector('#choose.screen.active', { timeout: 5000 });
   } },
   { name: 'Backups before the first night: no 0 of 0, and no restore test said to be proven', screen: 'backups', mock: { backups: { ...backups, lastRun: undefined, envCopied: undefined, stale: 0, paused: 0, copies: [], restoreTest: { history: [] } } }, run: async (page) => {
@@ -2047,6 +2047,24 @@ const smokes = [
   ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
     await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
   } })),
+  // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
+  // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
+  ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
+    await page.waitForSelector('#tiles .tile:has-text("Running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
+    await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
+    const said = await page.evaluate(() => document.body.innerText);
+    for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
+    if (!phone.length) await page.waitForSelector('nav button[data-screen="choose"]:has-text("Choose apps")');
+  } })),
+  // Finding 5: on the phone, an app's log wraps its lines: none runs out of its box.
+  { name: "An app's log on the phone wraps its lines, 390px wide", screen: 'app:vikunja', phone: ['companion'], mock: pageMock, run: async (page) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const log = page.locator('#appLog .applog');
+    await log.waitFor({ timeout: 5000 });
+    const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
+    if (wide) throw new Error('a log line runs out of its box');
+  } },
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {
@@ -3108,7 +3126,7 @@ const smokes = [
     });
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
-  ...[['Choose stacks', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+  ...[['Choose apps', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -3423,11 +3441,11 @@ const smokes = [
     if (c.alpha < 1) throw new Error(`the count is see-through (alpha ${c.alpha})`);
     if (!c.onTop) throw new Error('the icon covers the count');
   } })),
-  // Counts in words: "1 baseline app is down", "7 other containers … aren't".
-  ...[[1, 1, '1 baseline app is down', '1 other container on this machine isn’t a catalog app.'], [3, 7, '3 baseline apps are down', '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
+  // Counts in words: "1 of the homelab's own apps is down", "7 other containers … aren't".
+  ...[[1, 1, "1 of the homelab's own apps is down", '1 other container on this machine isn’t a catalog app.'], [3, 7, "3 of the homelab's own apps are down", '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
     await page.waitForSelector('#tiles .tile', { timeout: 5000 });
     const text = await page.$eval('#status', (e) => e.innerText);
-    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|baseline app|other container)[^\n]*/g) || []).join(' | ')})`);
+    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|own apps? (is|are)|other container)[^\n]*/g) || []).join(' | ')})`);
   } })),
   // The phone zoomed in by its browser: 390 px at 150% is a 260 px page, at 175% about 213 px.
   ...[['status', 260], ['backups', 260], ['app:vikunja', 213], ['status', 213], ['backups', 213]].map(([screen, w]) => ({ name: `The phone zoomed in, ${w}px: ${screen === 'app:vikunja' ? 'an app’s page' : screen[0].toUpperCase() + screen.slice(1)} cuts nothing off and does not slide sideways`, screen, phone: ['companion', 'can-change'], mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
@@ -6238,7 +6256,7 @@ const screens = [
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
-  { name: 'Choose stacks', screen: 'choose' },
+  { name: 'Choose apps', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).

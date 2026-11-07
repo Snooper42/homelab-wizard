@@ -13,7 +13,7 @@ export const systemOf = (osName: string, hostOS: string): System =>
 export const systemOfHost = (os: string): System =>
   os.startsWith('macOS') ? 'mac' : os.startsWith('Windows') ? 'windows' : os.includes('SteamOS') ? 'steamos' : 'linux';
 
-/** A line under an app on Choose stacks, where it does less on this system. */
+/** A line under an app on Choose apps, where it does less on this system. */
 export function appNote(id: string, system: System): string {
   if (id === 'beszel' || id === 'beszel-agent') {
     if (system === 'mac') return "On a Mac it sees OrbStack's Linux VM, not the Mac's own processor, memory, and sensors.";

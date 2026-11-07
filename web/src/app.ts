@@ -100,7 +100,7 @@ $$('nav button').forEach((b) => {
 wireNavMenus();
 
 // Keyboard: Cmd (Ctrl elsewhere) with 1-7 picks a screen, comma opens
-// Settings, R refreshes, F finds (Choose stacks, Settings), K opens the
+// Settings, R refreshes, F finds (Choose apps, Settings), K opens the
 // command palette (palette/Palette.tsx); Escape clears a
 // search. On the Mac the View menu has the same shortcuts and sends them as
 // navigate and refresh events.

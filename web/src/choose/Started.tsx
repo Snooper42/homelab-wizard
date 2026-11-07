@@ -1,4 +1,4 @@
-// After an install on Choose stacks: the apps ready to open, and the links
+// After an install on Choose apps: the apps ready to open, and the links
 // the wiring made between them; and the categories a custom app can take.
 import { render } from 'preact';
 import { ActionLink } from '../ActionLink';

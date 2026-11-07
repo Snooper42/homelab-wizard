@@ -1,4 +1,4 @@
-// Choose stacks: the catalog, the picks, the plan, the install, and wiring
+// Choose apps: the catalog, the picks, the plan, the install, and wiring
 // the apps together.
 import { catalogProblem, mountBundles, mountGroups, mountInputs, mountPlan, mountStarters } from '../choose/Choose';
 import { appNote, systemOf } from '../differs';
@@ -11,7 +11,7 @@ import { cliProgress, startJob } from '../jobs';
 import { inTurn, waitWords } from '../job/queue';
 import { $, go, minute, osName, showError } from '../core';
 
-// Choose stacks
+// Choose apps
 export let catalog: api.Catalog | null = null;
 export const selected = new Set<string>();
 const settings: Record<string, string> = {}; // form values, sent with every plan and install

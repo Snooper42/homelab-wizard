@@ -43,7 +43,7 @@ After the first install: the steps that only you can do, in order. For each test
 - [ ] Pair your phone (Settings › **Phones**), and your partner's, each with the https link; pick **Sees Finances** or **Changes Finances** beside the ones that should have them.
 - [ ] Type the household into **Finances**: checking and the cards, who gets paid and when, and the payments that repeat (a subscription on a card **charged to** that card). Then **Update balances** once a week.
 - [ ] Practise a rebuild once the Duplicati jobs have run: `./homelab rebuild <backup folder>` into a spare folder (another account, or a second machine), and note how long it took ([Disaster Recovery](<Disaster Recovery.md#scenario-full-mac-rebuild>)).
-- [ ] Ad blocking on every device: Choose stacks › **Ad blocking**, then the nameserver it shows in Tailscale's DNS settings.
+- [ ] Ad blocking on every device: Choose apps › **Ad blocking**, then the nameserver it shows in Tailscale's DNS settings.
 - [ ] Read the app with VoiceOver on the Mac, and have a second person read the [security review](<Security.md#review-october-2026>).
 
 ## Someday

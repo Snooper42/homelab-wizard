@@ -36,7 +36,7 @@ x-homelab-categories:
 
 # What `up` starts in a folder the desktop app made (HOMELAB_BASELINE=small):
 # backups and alerts (the agent runs the updates). Everything else, the starter picks included,
-# is chosen in Choose stacks. A git checkout starts the full baseline.
+# is chosen in Choose apps. A git checkout starts the full baseline.
 x-homelab-small-baseline: [duplicati, ntfy, uptime-kuma]
 
 x-homelab-bundles:

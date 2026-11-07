@@ -16,6 +16,7 @@ import { Row, Rows } from '../parts/Row';
 import { Tile } from '../status/Tiles';
 import { lasted, type Pending } from '../status/AppList';
 import { stopChoices } from '../status/stopFor';
+import { attackDetail, attackFrom, attackWords } from '../status/attack';
 
 /** What the page does; screens/apppage.ts runs each. */
 export interface AppPageActions {
@@ -385,7 +386,7 @@ function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' 
       {s && (today.length ? (
         <Rows>
           {today.map((a, i) => (
-            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={<span title={attackDetail(a)}>{attackWords(a.scenario)}</span>} sub={attackFrom(a)}
               end={a.banned && <span class="badge" title="A ban on it is still in force">Banned</span>} when={clockText(new Date(a.when))} whenTitle={ago(a.when)} />
           ))}
           {more > 0 && <Row sub={more === 1 ? 'and 1 more today' : `and ${more} more today`} />}
@@ -463,7 +464,7 @@ function More({ p }: { p: AppPageProps }) {
       {container && !p.companion && (
         <div class="remove">
           <button class="small danger change" disabled={p.busy} title="Backs it up first; its container goes, its data stays in the homelab folder" onClick={p.on.remove}>Remove {p.a.name}…</button>
-          <span class="muted">A backup first; its data stays, so Choose stacks can bring it back.</span>
+          <span class="muted">A backup first; its data stays, so Choose apps can bring it back.</span>
         </div>
       )}
     </Card>
