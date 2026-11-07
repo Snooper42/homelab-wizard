@@ -27,7 +27,7 @@ func holdTurn(t *testing.T, root, what string) func() {
 	if err := os.MkdirAll(turn.Dir(root), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	at := time.Now().Add(-time.Minute)
+	at := askedBy(t, os.Getppid())
 	file := filepath.Join(turn.Dir(root), fmt.Sprintf("%020d-%d.json", at.UnixNano(), os.Getppid()))
 	data, _ := json.Marshal(turn.Ticket{PID: os.Getppid(), What: what, At: at, Host: hostnameForTest(t)})
 	if err := os.WriteFile(file, data, 0o600); err != nil {
