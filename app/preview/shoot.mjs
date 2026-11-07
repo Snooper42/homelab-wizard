@@ -483,7 +483,7 @@ const smokes = [
       tidyAfter: { 'install ffmpeg': { tidy, tidyFails: {} } } };
   })(), run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
-    const row = '#tidy .tidyneeds li:has-text("ffmpeg and ffprobe")';
+    const row = '#tidy .tidyneeds li:has-text("Install ffmpeg")';
     await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
     if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
@@ -494,7 +494,7 @@ const smokes = [
     await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: done")', { timeout: 8000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns.map((r) => r.slice(0, 2).join(' ')));
     if (runs.join() !== 'tv scan,install ffmpeg,tv scan') throw new Error('ran: ' + runs.join());
-    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('ffmpeg and ffprobe'), null, { timeout: 5000 })
+    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('Install ffmpeg'), null, { timeout: 5000 })
       .catch(() => { throw new Error('the Install row stayed after ffmpeg was fetched'); });
   } },
   // Calibre missing: its row opens Calibre's download page (it's a whole app, so the app doesn't fetch it).
@@ -2136,6 +2136,59 @@ const smokes = [
     await page.keyboard.press('Escape');
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
   } },
+  // The owner, Nov 6: a new Mac with the media drive unplugged and no Python, ffmpeg, or Calibre had nine rows under
+  // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose folder… for media elsewhere), and the
+  // tools a library here needs, in one row (Python only, while every library is away). Once the drive is back, the
+  // tools row names all three; Calibre's also sits on Books' tab.
+  ...(() => {
+    const fresh = { ...tidy, activity: [], freed: 0, drive: null,
+      libraries: ['music', 'movies', 'tv', 'books', 'audiobooks'].map((kind) => ({ kind, folder: `/Volumes/Media/${kind === 'books' ? 'Books' : kind}`, found: false, stage: 'new', freed: 0 })),
+      checks: tidy.checks.map((c) => (c.id === 'drive' ? { ...c, name: 'The Media drive', ok: false, note: "/Volumes/Media isn't there", fix: 'Plug in the media drive (or set MEDIA_ROOT in Settings)' }
+        : c.id === 'python' ? { ...c, ok: false, note: 'Not found', fix: 'Install Python 3: brew install python (or the installer from python.org)' }
+        : c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix: 'Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh)' }
+        : c.id === 'calibredb' ? { ...c, ok: false, note: 'Not installed', fix: "Install the Calibre app (Calibre-Web doesn't include its tools)" } : c)) };
+    const back = { ...fresh, checks: fresh.checks.map((c) => (c.id === 'drive' ? { ...c, ok: true, note: '/Volumes/Media' } : c)),
+      libraries: fresh.libraries.map((l) => ({ ...l, found: true })) };
+    const rows = (page) => page.$$eval('.tidyneeds li', (li) => li.map((r) => r.querySelector('.title, strong')?.textContent.trim() || r.textContent.trim().slice(0, 60)));
+    return [
+      { name: 'Tidy Up on a new Mac with the drive away: two things, not nine', screen: 'tidy', mock: { tidy: fresh }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (JSON.stringify(got) !== JSON.stringify(['Plug in the Media drive', 'Install Python 3'])) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.waitForSelector('.tidyneeds li:has-text("Music, Movies, TV, Books and Audiobooks are on it (/Volumes/Media)")');
+        await page.waitForSelector('.tidyneeds li:has-text("Install Python 3"):has-text("brew install python (or the installer from python.org)")');
+        await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose folder…")');
+        await page.waitForFunction(() => (window.__MOCK.calls.OpenSettings || window.__MOCK.calls.Settings || 0) >= 1 || !!document.querySelector('#settings.active, .screen.active#settings'), null, { timeout: 3000 });
+      } },
+      { name: 'Tidy Up once the drive is back: the tools in one row, Calibre on Books too', screen: 'tidy', mock: { tidy: back }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (got[0] !== "Install Python 3, ffmpeg and Calibre's tools" || got.some((t) => /drive/.test(t))) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+        await page.waitForSelector(".tidyneeds li:has-text(\"Install Python 3 and Calibre's tools\")", { timeout: 3000 });
+      } },
+    ];
+  })(),
+  // The owner, Nov 7: "I don't see the lyrics option". Never checked: Overview offers the check (it was on the Music tab
+  // only). Checked, with nothing to tidy or add: the Music tab still has a Lyrics row, what the check found, and Check
+  // again (before, no lyrics option was left anywhere).
+  ...(() => {
+    const withLyrics = (result) => ({ ...tidy, libraries: tidy.libraries.map((l) => (l.kind !== 'music' ? l
+      : { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'lyrics').concat(result ? [['lyrics', tidyRun('lyrics', 5, result)]] : [])) })) });
+    return [
+      { name: 'Lyrics never checked: Overview offers the check', screen: 'tidy', mock: { tidy: withLyrics(null) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+        await page.waitForSelector('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")', { timeout: 5000 });
+        await page.click('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")');
+        await page.waitForFunction(() => window.__MOCK.tidyRuns.some((r) => r.slice(0, 3).join(' ') === 'music lyrics --check'), null, { timeout: 5000 });
+      } },
+      { name: 'Lyrics checked, nothing to do: Music still has a Lyrics row and Check again', screen: 'tidy', mock: { tidy: withLyrics({ check: true, synced: 13700, plain: 228, none: 0, to_clean: 0, instrumental: 4 }) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+        const row = '#tidy .tidyneeds li:has-text("Lyrics"):has-text("13,700 songs time-synced")';
+        await page.waitForSelector(`${row}:has-text("none with two languages on one line") button:text-is("Check again")`, { timeout: 5000 });
+      } },
+    ];
+  })(),
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {
