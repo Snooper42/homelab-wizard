@@ -235,6 +235,6 @@ hash. The client receives the token itself, once.
 - When this device's changes end (`homelab phone until`, main #455). `/api/me` doesn't say, so the app can't show it before it happens.
 - Optional: certificate pinning. It's left out on purpose, because Tailscale and Let's Encrypt certificates rotate every 90 days.
 - A look-only home Wi-Fi mode over plain http. It's left out on purpose: the token would cross the Wi-Fi in readable form (the computer makes such a device look-only for good). It's a decision to make before building it.
-- Widgets, App Intents (Shortcuts) and Live Activities. They need targets and entitlements in the Xcode project, and a choice about what may show while the app is locked.
+- App Intents (Shortcuts) and Live Activities. They need targets in the Xcode project, and a choice about what may run or show without unlocking. (The widget is built: see Start here.)
 - Snoozing a failing check's alerts from the phone (main #469): `SnoozeCheck` isn't a phone method, so the phone only shows until when.
 - The iPhone app run against a real `homelab serve`. The Mac app runs on Xcode 27.2, paired with the homelab on the same Mac over `127.0.0.1:8099`. The iPhone app builds on the Mac runner; it hasn't been installed on a phone yet (`run-on-iphone.sh`).
