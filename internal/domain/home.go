@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Home is the address the apps' names lead to at home, as domain setup
@@ -39,7 +41,7 @@ func (h Home) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(h, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return lockedfile.Write(path, append(data, '\n'), 0o644)
 }
 
 // Follows reports whether the names should move to ip: this machine has a

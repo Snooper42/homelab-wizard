@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
+	"github.com/Snooper42/homelab-wizard/internal/proc"
 )
 
 // Env names the ticket a process holds, for its children.
@@ -50,10 +51,11 @@ func hostname() string {
 }
 
 var (
-	pid    = os.Getpid
-	alive  = processAlive
-	poll   = 250 * time.Millisecond
-	MaxAge = 12 * time.Hour
+	pid     = os.Getpid
+	alive   = proc.Alive
+	started = proc.Started
+	poll    = 250 * time.Millisecond
+	MaxAge  = 12 * time.Hour
 	// Ahead is how far a ticket's time may be ahead of this clock (another
 	// process's clock read a moment later) before it is taken for one that
 	// holds no one up.
@@ -141,7 +143,15 @@ func Queue(root string) []Ticket {
 		// else made) would never grow too old: it holds no one up either.
 		bad := json.Unmarshal(data, &t) != nil
 		age := time.Since(t.At)
-		if bad || t.PID <= 0 || t.Host != hostname() || !alive(t.PID) || age > MaxAge || age < -Ahead {
+		// A ticket's process that started after it asked is another program
+		// given the ID later (after a restart): the job is gone. A minute
+		// old at least, so a job waiting its turn doesn't ask ps four times
+		// a second.
+		since := t.At
+		if age < time.Minute {
+			since = time.Time{}
+		}
+		if bad || t.PID <= 0 || t.Host != hostname() || !(proc.Process{Alive: alive, Started: started}).Holds(t.PID, since) || age > MaxAge || age < -Ahead {
 			_ = os.Remove(file)
 			continue
 		}

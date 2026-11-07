@@ -923,7 +923,8 @@ const smokes = [
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
     if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
     await page.click('#tidy .seg button:text-is("Books")');
-    await page.waitForSelector('#tidyReview :text("Applied 30 minutes ago: the books in it were changed")', { timeout: 5000 });
+    // "Applied … ago": how long ago grows while the suite runs (the fixture's times are set once, at its start).
+    await page.waitForSelector('#tidyReview :text-matches("^Applied .+ ago: the books in it were changed")', { timeout: 5000 });
     if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
     await page.waitForSelector('#tidyReview button:text-is("Undo the last apply")', { timeout: 3000 });
   } },
@@ -2020,6 +2021,24 @@ const smokes = [
   { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
     await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
     if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
+  } },
+  // Health in one line: at the top of every screen but Status, the one thing that needs you, or All well.
+  { name: 'Health in one line: on Backups the one app that needs a look, and Open Status', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#oneLine.trouble:has-text("Mealie: Stopped")', { timeout: 5000 });
+    await page.click('#oneOpen');
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    if (await page.isVisible('#oneLine')) throw new Error('the line shows on Status too');
+    await page.click('nav button[data-screen="settings"]');
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.waitForSelector('#oneLine:has-text("Mealie: Stopped")', { timeout: 5000 });
+  } },
+  { name: 'Health in one line: All well, and several apps in one line', screen: 'settings', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) } }, run: async (page) => {
+    await page.waitForSelector('#oneLine:not(.trouble):has-text("All well")', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('status:changed', { status: { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a, i) => (i < 4 ? { ...a, health: 'unhealthy' } : a)) } }));
+    await page.waitForSelector('#oneLine.trouble:has-text("4 apps need a look:"):has-text("and 2 more")', { timeout: 5000 });
+  } },
+  { name: 'Health in one line: a failing check that is no app’s', screen: 'backups', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) }, watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    await page.waitForSelector('#oneLine.trouble:has-text("The watchdog’s check of crowdsec bouncer is failing"), #oneLine.trouble:has-text("check of crowdsec bouncer is failing")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
