@@ -52,6 +52,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Transactions link to the bills they pay:** Transactions lists those already in that look like a planned payment (*looks like Electric, planned $140*), each with **Link** or **Not it**, and **Link all**; a linked one says *pays Electric*. A transaction you type picks its planned payment by itself, saying so, until you pick another.
 - **A bill paid early isn't taken out twice:** importing a bank's file links each row that plainly pays a planned payment (its name or logo, about its amount, near its day), so the forecast doesn't take that bill out again on its day. The preview says *Looks like Electric, planned $140*, and you can change or remove it before bringing them in.
 - **A bill due the day you typed in your balances comes out:** Finances used to take it as already paid, so the forecast came out too high by that bill. It now comes out on its day; if your balance already had it, mark it **Already in** under *Taken as done*.
 - **Something stopped? Each screen says what to do:** a stopped app's page says, under its name, why it isn't running and what helps (Start, quit the program on its port, plug in its drive, or read its log). A phone that can only look says to start it from the computer instead of showing nothing. The watchdog alerts when an app stops by itself, and Status's Watchdog line names a stopped app it doesn't check instead of only *All 47 checks passed*.

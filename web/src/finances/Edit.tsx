@@ -6,10 +6,10 @@ import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned } from './importData';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -706,6 +706,8 @@ function TransactionForm(props: EditProps) {
   const [to, setTo] = useState(t?.to || '');
   const [category, setCategory] = useState(t?.category || '');
   const [payment, setPayment] = useState(t?.payment || '');
+  // Picked by hand (None too); until then, the planned payment it plainly pays, as it is typed.
+  const [paymentPicked, setPaymentPicked] = useState(!!t?.payment || !!t?.notPlanned);
   const [note, setNote] = useState(t?.note || '');
   // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
   const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
@@ -731,7 +733,14 @@ function TransactionForm(props: EditProps) {
   const logoPicked = useRef(!!t?.institution);
   const [picking, setPicking] = useState(false);
   const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); if (!logoPicked.current) setLogo(logoFor(who) || ''); };
+  // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
+  const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
+  const guess = !paymentPicked && way !== 'move' && num(amount) > 0
+    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike) : undefined;
+  const linked = paymentPicked ? payment : guess?.payment || '';
+  const guessed = guess && payments.find((x) => x.id === guess.payment);
   const choose = (id: string) => {
+    setPaymentPicked(true);
     setPayment(id);
     const x = payments.find((q) => q.id === id);
     if (!x) return;
@@ -755,7 +764,7 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
+      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
@@ -781,10 +790,10 @@ function TransactionForm(props: EditProps) {
         <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
         {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}
         {way !== 'move' && !parts.length && <Field label="Category"><input value={category} onInput={input((c) => { catTyped.current = true; setCategory(c); })} list="finCategories" placeholder="Groceries" /></Field>}
-        <Field label="Pays a planned payment"><select value={payment} onChange={input(choose)}>
+        <Field label="Pays a planned payment"><select value={linked} onChange={input(choose)}>
           <option value="">None</option>
           {payments.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-        </select></Field>
+        </select>{guessed && <small class="muted fx-looks">Looks like {guessed.name}, planned {money(guessed.amount)}</small>}</Field>
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
@@ -987,10 +996,9 @@ function ImportForm(props: EditProps) {
   const lastLogo = (payee: string) => [...have].reverse().find((q) => q.payee && q.institution && q.payee.toLowerCase() === payee.toLowerCase())?.institution;
   // What each fresh row plainly pays, in the file's order, no planned day paid twice; then what was picked instead (picked, by row).
   const payments = (plan.payments || []).filter((x) => !x.card);
-  const same = (payee: string, x: finance.Payment) => alike(payee, x.name) || (!!payeeBrand(undefined, payee) && payeeBrand(undefined, payee) === brandOf(x.institution, x.name, x.kind));
   const guessed: (Planned | undefined)[] = (() => {
     const taken = paidDays(have, props.dues || {});
-    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, same); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysAlike); if (g) taken.add(g.payment + ' ' + g.due); return g; });
   })();
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   const bring = async (e: Event) => {

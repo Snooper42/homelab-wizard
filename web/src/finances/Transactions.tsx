@@ -6,17 +6,20 @@
 // a search with filters: words in the payee, category, note, or tags, an
 // account, a category, a tag, a month, and money in or out. A row opens
 // its form; on a phone allowed only to look, only a row with a receipt
-// opens, to show the receipt under it.
+// opens, to show the receipt under it. A row that pays a planned payment
+// says so; above them, those that look like one but are not linked yet,
+// each to link with a click or say Not it.
 import { Fragment } from 'preact';
 import { useState } from 'preact/hooks';
 import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
-import { Mark, payeeBrand } from './Mark';
+import { Mark, payeeBrand, paysAlike } from './Mark';
+import { suggestLinks } from './importData';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
-import { dayLong, type Lookup, monthName, plural } from './money';
+import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
 import { tagsOf } from './reportData';
 
 export interface TransactionsProps {
@@ -28,6 +31,47 @@ export interface TransactionsProps {
   edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import', id?: string) => void;
   /** Reads a receipt by its name, for a phone allowed only to look (its rows open no form). */
   readReceipt?: (name: string) => Promise<string>;
+  /** Keeps the ledger, for a link made or said Not it; none on a phone allowed only to look. */
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
+}
+
+/**
+ * Transactions that look like a planned payment but are not linked to it:
+ * each says which and what was planned, with Link and Not it, and Link all.
+ * A linked one is taken as that payment's, so the plan does not take it
+ * out again on its day.
+ */
+function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
+  const [busy, setBusy] = useState(false);
+  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, paysAlike);
+  if (!found.size) return null;
+  const list = ledger.transactions.filter((t) => found.has(t.id)).reverse();
+  const keep = async (change: (t: finance.Transaction) => finance.Transaction) => {
+    if (busy) return;
+    setBusy(true);
+    await save({ ...ledger, transactions: ledger.transactions.map(change) });
+    setBusy(false);
+  };
+  const link = (ids: string[]) => keep((t) => (ids.includes(t.id) ? { ...t, payment: found.get(t.id)!.payment } : t));
+  const notIt = (id: string) => keep((t) => (t.id === id ? { ...t, notPlanned: true } : t));
+  return (
+    <Widget title="These look like planned payments" span="all" kind="fx-links"
+      actions={list.length > 1 && <button type="button" class="small" disabled={busy} onClick={() => link(list.map((t) => t.id))}>Link all {list.length}</button>}>
+      <p class="fx-sub fx-lead">Linked, one is taken as paying it, so the plan doesn't take it out again on its day.</p>
+      <Rows kind="fx-rows">
+        {list.map((t) => {
+          const g = found.get(t.id)!, x = L.payment[g.payment];
+          return <Row key={t.id} lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
+            sub={`${dayLong(t.date)} · looks like ${x?.name || g.payment}, planned ${money(x?.amount || 0)} for ${dayShort(g.due)}`}
+            when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 ? 'in' : ''} form="full" />} whenPlain
+            end={<span class="fx-linkbtns">
+              <button type="button" class="small" disabled={busy} aria-label={`Link ${t.payee || 'it'} on ${dayLong(t.date)} to ${x?.name}`} onClick={() => link([t.id])}>Link</button>
+              <button type="button" class="small" disabled={busy} aria-label={`${t.payee || 'It'} on ${dayLong(t.date)} is not ${x?.name}`} onClick={() => notIt(t.id)}>Not it</button>
+            </span>} />;
+        })}
+      </Rows>
+    </Widget>
+  );
 }
 
 /** A receipt as kept: a picture, or a PDF in a frame (with words where a frame shows no PDF). */
@@ -64,7 +108,7 @@ const catsOf = (t: finance.Transaction): string[] => (t.splits?.length ? t.split
 /** The words a search looks through: payee, categories, note, tags, and the accounts. */
 const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name].filter(Boolean).join(' ').toLowerCase();
 
-export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsProps) {
+export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: TransactionsProps) {
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
   const [seen, setSeen] = useState<{ id: string; url?: string; problem?: string } | null>(null);
   const look = async (t: finance.Transaction) => {
@@ -123,6 +167,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
             <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={plural(thisMonth.length, 'transaction')} />
           </div>
         </Widget>
+        {saveLedger && <LinksWidget v={v} L={L} ledger={ledger} save={saveLedger} />}
         <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
           actions={edit && <>
@@ -167,7 +212,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt }: TransactionsPr
                   const opens = edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
                   const open = seen?.id === t.id ? seen : null;
                   return <Fragment key={t.id}><Row lead={<TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-                    sub={<>{what} · {where}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
+                    sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
                     onOpen={opens} openLabel={edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
                     {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}

@@ -6354,6 +6354,55 @@ const smokes = [
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
     if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
   } },
+  // Transactions already in the ledger that look like planned payments are offered, each to link or say Not it; once
+  // linked, a row says what it pays. Not it is kept, so it is not offered again.
+  { name: 'Finances: transactions that look like planned payments can be linked, or said not to be', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'e1', date: '2026-10-17', account: 'chk', amount: -142.1, payee: 'Electric Co' },
+    { id: 'n1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' },
+    { id: 'p1', date: '2026-10-29', account: 'chk', amount: -60, payee: 'Peloton' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("Electric Co"):has-text("looks like Electric, planned $140.00 for Oct 18")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM"):has-text("looks like Netflix")', { timeout: 5000 });
+    if (await page.$('.fx-links li:has-text("Peloton")')) throw new Error('$60 to Peloton, planned $44, is offered');
+    await page.waitForSelector('.fx-links button:text-is("Link all 2")', { timeout: 5000 });
+    await page.click('.fx-links li:has-text("NETFLIX.COM") button:text-is("Not it")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const n1 = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions.find((t) => t.id === 'n1'));
+    if (!n1.notPlanned || n1.payment) throw new Error(`Not it saved ${JSON.stringify(n1)}`);
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM")', { state: 'detached', timeout: 5000 });
+    await page.click('.fx-links li:has-text("Electric Co") button:text-is("Link")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 2, null, { timeout: 5000 });
+    const e1 = await page.evaluate(() => window.__MOCK.ledgerSaved[1].transactions.find((t) => t.id === 'e1'));
+    if (e1.payment !== 'electric') throw new Error(`Link saved ${JSON.stringify(e1)}`);
+    await page.waitForSelector('.fx-links', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Electric Co") .fx-txpays:has-text("pays Electric")', { timeout: 5000 });
+  } },
+  // A transaction typed in links itself to what it plainly pays, saying so; picking None keeps it from being offered again.
+  { name: 'Finances: a typed transaction links itself to the planned payment it pays', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Netflix');
+    await page.fill('#finSheet label:has-text("Amount") input', '15.49');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-10-29');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Pays a planned payment") select')) !== 'netflix') throw new Error('the pick does not show the link');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Netflix'));
+    if (t.payment !== 'netflix' || t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+    // Peloton, with None picked: it pays nothing planned, and says so.
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Peloton');
+    await page.fill('#finSheet label:has-text("Amount") input', '44');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-11-04');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Peloton")', { timeout: 5000 });
+    await page.selectOption('#finSheet label:has-text("Pays a planned payment") select', '');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Peloton'));
+    if (t.payment || !t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+  } },
   // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
   // wrote it still shows its logo.
   { name: "Finances: a bank's wording comes in as the payee's own name, with its logo", screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'raw1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' }] } }, run: async (page) => {

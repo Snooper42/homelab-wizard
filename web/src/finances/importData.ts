@@ -171,3 +171,19 @@ export function paidDays(ledger: finance.Transaction[], dues: Record<string, str
   }
   return out;
 }
+
+/**
+ * What each transaction in the ledger plainly pays, by its ID: those linked
+ * to none, not said to pay none (NotPlanned), and not a transfer between
+ * the household's accounts, oldest first, no planned day paid twice.
+ */
+export function suggestLinks(txs: finance.Transaction[], payments: finance.Payment[], dues: Record<string, string[]>, checking: string, same: (payee: string, x: finance.Payment) => boolean): Map<string, Planned> {
+  const taken = paidDays(txs, dues);
+  const out = new Map<string, Planned>();
+  for (const t of [...txs].sort((a, b) => a.date.localeCompare(b.date))) {
+    if (t.payment || t.notPlanned || t.to) continue;
+    const g = plannedFor({ date: t.date, amount: t.amount, payee: t.payee || '' }, t.account, payments, dues, checking, taken, same);
+    if (g) { taken.add(g.payment + ' ' + g.due); out.set(t.id, g); }
+  }
+  return out;
+}

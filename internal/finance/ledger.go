@@ -41,6 +41,9 @@ type Transaction struct {
 	Note        string `json:"note,omitempty"`
 	// Payment is the planned payment it pays, by ID, when it pays one.
 	Payment string `json:"payment,omitempty"`
+	// NotPlanned is one the household said pays no planned payment, though
+	// it looked like one: it is not offered as one again.
+	NotPlanned bool `json:"notPlanned,omitempty"`
 	// To is the account a transfer goes into: Amount leaves Account (a
 	// minus) and the same arrives in To. It is one transaction, not two.
 	To string `json:"to,omitempty"`
@@ -166,6 +169,8 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 		if t.Payment != "" && !payments[t.Payment] {
 			return l, fmt.Errorf("%s: no planned payment %q", what, t.Payment)
 		}
+		// Linked, it pays one.
+		t.NotPlanned = t.NotPlanned && t.Payment == ""
 		if len(t.Splits) > 0 {
 			sum := 0.0
 			for j := range t.Splits {

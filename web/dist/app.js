@@ -970,6 +970,267 @@
     return chain ? chain[1] : ordinary(s3);
   }
 
+  // web/src/finances/money.ts
+  var format = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  var code = "USD";
+  function setCurrency(c3) {
+    const want = (c3 || "USD").toUpperCase();
+    if (want === code) return;
+    try {
+      format = new Intl.NumberFormat("en-US", { style: "currency", currency: want });
+      code = want;
+    } catch {
+    }
+  }
+  var hidden = false;
+  function setHidden(h3) {
+    hidden = !!h3;
+  }
+  var amountsHidden = () => hidden;
+  var mask = (sign) => sign + "•••";
+  var currencyCode = () => code;
+  var others = /* @__PURE__ */ new Map();
+  function moneyIn(n3, currency) {
+    const c3 = (currency || "").toUpperCase();
+    if (!c3 || c3 === code) return money(n3);
+    if (hidden) return mask(signOf(c3));
+    let f4 = others.get(c3);
+    if (!f4) {
+      try {
+        f4 = new Intl.NumberFormat("en-US", { style: "currency", currency: c3 });
+      } catch {
+        return money(n3);
+      }
+      others.set(c3, f4);
+    }
+    return (n3 < -5e-3 ? "−" : "") + f4.format(Math.abs(n3));
+  }
+  function signOf(currency) {
+    if (!currency || currency.toUpperCase() === code) return currencySign();
+    try {
+      return new Intl.NumberFormat("en-US", { style: "currency", currency }).formatToParts(0).find((p3) => p3.type === "currency")?.value || currency;
+    } catch {
+      return currencySign();
+    }
+  }
+  var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
+  var money = (n3) => hidden ? mask(currencySign()) : (n3 < -5e-3 ? "−" : "") + format.format(Math.abs(n3));
+  var whole = (n3) => hidden ? mask(currencySign()) : (n3 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n3)).toLocaleString("en-US");
+  function tick(n3) {
+    if (hidden) return mask(currencySign());
+    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
+    const trim = (x3) => String(+x3.toFixed(2));
+    return sign + currencySign() + (a3 >= 1e6 ? `${trim(a3 / 1e6)}M` : a3 >= 1e3 ? `${trim(a3 / 1e3)}k` : String(Math.round(a3)));
+  }
+  function compact(n3) {
+    if (hidden) return mask(currencySign());
+    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
+    const s3 = a3 >= 1e6 ? `${(a3 / 1e6).toFixed(2)}M` : a3 >= 1e4 ? `${(a3 / 1e3).toFixed(1)}k` : a3 >= 1e3 ? `${(a3 / 1e3).toFixed(2)}k` : String(Math.round(a3));
+    return sign + currencySign() + s3;
+  }
+  function parseAmount(typed) {
+    let t3 = String(typed ?? "").replace(/[\s\u00a0\u202f']/g, "").replace(/[^0-9.,\-−]/g, "").replace("−", "-");
+    const mark = t3.search(/[.,]\d{1,2}$/);
+    if (mark >= 0) t3 = t3.slice(0, mark).replace(/[.,]/g, "") + "." + t3.slice(mark + 1);
+    else t3 = t3.replace(/[.,]/g, "");
+    return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
+  }
+  var signed = (n3) => hidden ? money(n3) : (n3 < -5e-3 ? "−" : "+") + money(Math.abs(n3));
+  function split(n3) {
+    const s3 = money(n3), i3 = s3.lastIndexOf(".");
+    return i3 < 0 ? [s3, ""] : [s3.slice(0, i3), s3.slice(i3)];
+  }
+  var parseDay = (s3) => /* @__PURE__ */ new Date(s3 + "T00:00:00");
+  var dayLong = (s3) => dayText(parseDay(s3), { weekday: "short", day: "numeric", month: "short" });
+  var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
+  var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
+  var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
+  var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+  var todayISO = () => isoDay(/* @__PURE__ */ new Date());
+  var plural = (n3, word) => `${n3} ${word}${n3 === 1 ? "" : "s"}`;
+  var ordinal = (n3) => n3 + (n3 % 10 === 1 && n3 !== 11 ? "st" : n3 % 10 === 2 && n3 !== 12 ? "nd" : n3 % 10 === 3 && n3 !== 13 ? "rd" : "th");
+  function scheduleText(s3, L2) {
+    if (s3?.every === "paycheck") {
+      const who = L2?.person[s3.person]?.name;
+      return who ? `With each of ${who}'s paychecks` : "With each paycheck";
+    }
+    if (!s3?.start) return "";
+    const d3 = parseDay(s3.start);
+    const weekday3 = dayText(d3, { weekday: "long" });
+    switch (s3.every) {
+      case "once":
+        return "Once, " + dayShort(s3.start);
+      case "week":
+        return "Every " + weekday3;
+      case "2 weeks":
+        return "Every other " + weekday3;
+      case "twice a month":
+        return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
+      case "month":
+        return "Monthly on the " + ordinal(d3.getDate());
+      case "3 months":
+        return "Every 3 months on the " + ordinal(d3.getDate());
+      case "year":
+        return "Yearly on " + dayShort(s3.start);
+    }
+    return s3.every;
+  }
+  function perMonth(s3, people, checking) {
+    if (s3?.every === "paycheck" && !s3.person) return (people || []).filter((e3) => !e3.account || e3.account === checking).reduce((t3, e3) => t3 + perMonth(e3.schedule), 0);
+    if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
+    return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
+  }
+  function lookup(p3) {
+    const by = (list) => Object.fromEntries((list || []).map((x3) => [x3.id, x3]));
+    return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(allPayments(p3)) };
+  }
+  var cardOf = (paymentId) => paymentId?.startsWith("card:") ? paymentId.slice(5) : "";
+  function allPayments(p3) {
+    const cards = (p3.accounts || []).filter((a3) => a3.kind === "card" && a3.paidEach).map((a3) => ({ id: "card:" + a3.id, name: a3.name, amount: a3.spend || 0, kind: "cards", institution: a3.institution, card: a3.id, schedule: { every: "paycheck", start: "" } }));
+    return [...p3.payments || [], ...cards];
+  }
+  var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
+  var owed = (kind) => kind === "card" || kind === "loan";
+
+  // web/src/finances/importData.ts
+  function csvRows(text2) {
+    const first = text2.split(/\r?\n/, 1)[0] || "";
+    const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("	") && !first.includes(",") ? "	" : ",";
+    const rows = [];
+    let row = [], cell3 = "", quoted = false;
+    for (let i3 = 0; i3 < text2.length; i3++) {
+      const c3 = text2[i3];
+      if (quoted) {
+        if (c3 === '"' && text2[i3 + 1] === '"') {
+          cell3 += '"';
+          i3++;
+        } else if (c3 === '"') quoted = false;
+        else cell3 += c3;
+      } else if (c3 === '"') quoted = true;
+      else if (c3 === sep) {
+        row.push(cell3);
+        cell3 = "";
+      } else if (c3 === "\n" || c3 === "\r") {
+        if (c3 === "\r" && text2[i3 + 1] === "\n") i3++;
+        row.push(cell3);
+        cell3 = "";
+        if (row.some((x3) => x3.trim())) rows.push(row);
+        row = [];
+      } else cell3 += c3;
+    }
+    row.push(cell3);
+    if (row.some((x3) => x3.trim())) rows.push(row);
+    return rows.map((r3) => r3.map((x3) => x3.trim()));
+  }
+  function guessColumns(header) {
+    const find = (...words5) => header.findIndex((h3) => words5.some((w3) => h3.toLowerCase().includes(w3)));
+    return {
+      date: find("date", "posted", "day", "datum"),
+      amount: find("amount", "value", "betrag"),
+      debit: find("debit", "withdrawal", "money out", "paid out"),
+      credit: find("credit", "deposit", "money in", "paid in"),
+      payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
+      memo: find("memo", "note", "reference", "category")
+    };
+  }
+  function readDay(s3, dayFirst = false) {
+    s3 = s3.trim();
+    let m3 = s3.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m3) return ymd(+m3[1], +m3[2], +m3[3]);
+    m3 = s3.match(/^(\d{1,2})([/.-])(\d{1,2})\2(\d{2,4})/);
+    if (m3) {
+      const year = m3[4].length === 2 ? 2e3 + +m3[4] : +m3[4];
+      const [mo, d3] = m3[2] === "." || dayFirst ? [+m3[3], +m3[1]] : [+m3[1], +m3[3]];
+      return ymd(year, mo, d3);
+    }
+    const t3 = Date.parse(s3);
+    return isNaN(t3) ? "" : isoDay(new Date(t3));
+  }
+  var ymd = (y3, m3, d3) => m3 >= 1 && m3 <= 12 && d3 >= 1 && d3 <= 31 ? `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}` : "";
+  function daysFirst(cells) {
+    return cells.some((c3) => /^\d{1,2}\./.test(c3) || /^(\d{1,2})\//.exec(c3) && +/^(\d{1,2})\//.exec(c3)[1] > 12);
+  }
+  function fromCsv(rows, col) {
+    const body = rows.slice(1);
+    const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
+    const money2 = (s3) => {
+      const n3 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
+      return isNaN(n3) ? 0 : n3;
+    };
+    const out = [];
+    for (const r3 of body) {
+      const date = readDay(r3[col.date] || "", dayFirst);
+      const amount = col.amount >= 0 ? money2(r3[col.amount]) : money2(r3[col.credit]) - Math.abs(money2(r3[col.debit]));
+      if (!date || !amount) continue;
+      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
+    }
+    return out;
+  }
+  function fromOfx(text2) {
+    const out = [];
+    for (const block of text2.split(/<STMTTRN>/i).slice(1)) {
+      const tag = (name) => block.match(new RegExp(`<${name}>([^<\\r\\n]*)`, "i"))?.[1].trim() || "";
+      const d3 = tag("DTPOSTED");
+      const amount = parseFloat(tag("TRNAMT"));
+      if (!/^\d{8}/.test(d3) || isNaN(amount)) continue;
+      out.push({ date: `${d3.slice(0, 4)}-${d3.slice(4, 6)}-${d3.slice(6, 8)}`, amount: Math.round(amount * 100) / 100, payee: (tag("NAME") || tag("MEMO")).replace(/\s+/g, " "), memo: tag("NAME") && tag("MEMO") ? tag("MEMO") : void 0, id: tag("FITID") || void 0 });
+    }
+    return out;
+  }
+  var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
+  function already(t3, account, ledger) {
+    return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || (q2.account === account || q2.to === account) && q2.date === t3.date && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee)));
+  }
+  var named = (s3) => s3.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w3) => w3.length >= 3 && !["the", "and", "inc", "llc", "payment", "purchase", "card", "debit", "pos"].includes(w3));
+  function alike(a3, b2) {
+    const x3 = named(a3), y3 = new Set(named(b2));
+    return a3.toLowerCase() === b2.toLowerCase() || x3.some((w3) => y3.has(w3));
+  }
+  var matchDays = 16;
+  var near = 0.1;
+  var dayNo = (s3) => Math.round(Date.parse(s3 + "T00:00:00Z") / 864e5);
+  function plannedFor(t3, account, payments, dues, checking, taken, same2) {
+    if (!t3.amount || !t3.payee) return void 0;
+    const paid = Math.abs(t3.amount);
+    let best, tie = false;
+    const fits = (x3) => x3.payer ? t3.amount > 0 && (x3.to || checking) === account && (same2(t3.payee, x3) || alike(t3.payee, x3.payer)) : t3.amount < 0 && (x3.from || checking) === account && same2(t3.payee, x3);
+    for (const x3 of payments) {
+      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !fits(x3)) continue;
+      for (const due of dues[x3.id] || []) {
+        const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off = Math.abs(paid - x3.amount);
+        if (gap > matchDays || taken.has(x3.id + " " + due)) continue;
+        if (!best || gap < best.gap || gap === best.gap && off < best.off) {
+          tie = !!best && best.payment !== x3.id && gap === best.gap && off === best.off;
+          best = { payment: x3.id, due, gap, off };
+        } else if (gap === best.gap && off === best.off && x3.id !== best.payment) tie = true;
+      }
+    }
+    return best && !tie ? { payment: best.payment, due: best.due } : void 0;
+  }
+  function paidDays(ledger, dues) {
+    const out = /* @__PURE__ */ new Set();
+    for (const q2 of ledger) {
+      const days = q2.payment ? dues[q2.payment] : void 0;
+      if (!days?.length) continue;
+      const at2 = days.reduce((a3, b2) => Math.abs(dayNo(b2) - dayNo(q2.date)) < Math.abs(dayNo(a3) - dayNo(q2.date)) ? b2 : a3);
+      if (Math.abs(dayNo(at2) - dayNo(q2.date)) <= matchDays) out.add(q2.payment + " " + at2);
+    }
+    return out;
+  }
+  function suggestLinks(txs, payments, dues, checking, same2) {
+    const taken = paidDays(txs, dues);
+    const out = /* @__PURE__ */ new Map();
+    for (const t3 of [...txs].sort((a3, b2) => a3.date.localeCompare(b2.date))) {
+      if (t3.payment || t3.notPlanned || t3.to) continue;
+      const g2 = plannedFor({ date: t3.date, amount: t3.amount, payee: t3.payee || "" }, t3.account, payments, dues, checking, taken, same2);
+      if (g2) {
+        taken.add(g2.payment + " " + g2.due);
+        out.set(t3.id, g2);
+      }
+    }
+    return out;
+  }
+
   // web/src/finances/logos.ts
   var brands = {
     "chase": { name: "Chase", bg: "#117ACA", ink: "#ffffff", kind: "bank", path: "M0 15.415c0 .468.38.85.848.85h5.937V.575L0 7.72v7.695m15.416 8.582c.467 0 .846-.38.846-.849v-5.937H.573l7.146 6.785h7.697M24 8.587a.844.844 0 0 0-.847-.846h-5.938V23.43l6.782-7.148L24 8.586M8.585.003a.847.847 0 0 0-.847.847v5.94h15.688L16.282.003H8.585Z" },
@@ -1448,8 +1709,8 @@
     "nitro": "discord",
     "docker hub": "docker"
   };
-  var named;
-  var brandWords = () => named ??= [
+  var named2;
+  var brandWords = () => named2 ??= [
     ...Object.keys(brands).map((k3) => [words(brands[k3].name), k3]),
     ...Object.entries(aliases).map(([a3, k3]) => [words(a3), k3])
   ].filter(([, k3]) => brands[k3]).sort((a3, b2) => b2[0].length - a3[0].length);
@@ -1519,6 +1780,10 @@
     return m3 && brands[models[m3]] ? models[m3] : void 0;
   }
   var payeeBrand = (institution, payee) => institution === "none" ? void 0 : brandOf(institution, cleanPayee(payee)) || brandOf(void 0, payee);
+  var paysAlike = (payee, x3) => {
+    const b2 = payeeBrand(void 0, payee);
+    return alike(payee, x3.name) || !!b2 && b2 === brandOf(x3.institution, x3.name, x3.kind);
+  };
   function AcctMark({ a: a3, size: size2 }) {
     return /* @__PURE__ */ u3(Mark, { brand: brandOf(a3.institution, a3.name, a3.kind), kind: a3.kind, name: a3.name, size: size2 });
   }
@@ -1573,128 +1838,6 @@
     const t3 = brandTypes[brand];
     return t3 === "phone" ? "utilities" : t3 ? "subscriptions" : void 0;
   }
-
-  // web/src/finances/money.ts
-  var format = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-  var code = "USD";
-  function setCurrency(c3) {
-    const want = (c3 || "USD").toUpperCase();
-    if (want === code) return;
-    try {
-      format = new Intl.NumberFormat("en-US", { style: "currency", currency: want });
-      code = want;
-    } catch {
-    }
-  }
-  var hidden = false;
-  function setHidden(h3) {
-    hidden = !!h3;
-  }
-  var amountsHidden = () => hidden;
-  var mask = (sign) => sign + "•••";
-  var currencyCode = () => code;
-  var others = /* @__PURE__ */ new Map();
-  function moneyIn(n3, currency) {
-    const c3 = (currency || "").toUpperCase();
-    if (!c3 || c3 === code) return money(n3);
-    if (hidden) return mask(signOf(c3));
-    let f4 = others.get(c3);
-    if (!f4) {
-      try {
-        f4 = new Intl.NumberFormat("en-US", { style: "currency", currency: c3 });
-      } catch {
-        return money(n3);
-      }
-      others.set(c3, f4);
-    }
-    return (n3 < -5e-3 ? "−" : "") + f4.format(Math.abs(n3));
-  }
-  function signOf(currency) {
-    if (!currency || currency.toUpperCase() === code) return currencySign();
-    try {
-      return new Intl.NumberFormat("en-US", { style: "currency", currency }).formatToParts(0).find((p3) => p3.type === "currency")?.value || currency;
-    } catch {
-      return currencySign();
-    }
-  }
-  var currencySign = () => format.formatToParts(0).find((p3) => p3.type === "currency")?.value || "$";
-  var money = (n3) => hidden ? mask(currencySign()) : (n3 < -5e-3 ? "−" : "") + format.format(Math.abs(n3));
-  var whole = (n3) => hidden ? mask(currencySign()) : (n3 <= -0.5 ? "−" : "") + currencySign() + Math.round(Math.abs(n3)).toLocaleString("en-US");
-  function tick(n3) {
-    if (hidden) return mask(currencySign());
-    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
-    const trim = (x3) => String(+x3.toFixed(2));
-    return sign + currencySign() + (a3 >= 1e6 ? `${trim(a3 / 1e6)}M` : a3 >= 1e3 ? `${trim(a3 / 1e3)}k` : String(Math.round(a3)));
-  }
-  function compact(n3) {
-    if (hidden) return mask(currencySign());
-    const a3 = Math.abs(n3), sign = n3 <= -0.5 ? "−" : "";
-    const s3 = a3 >= 1e6 ? `${(a3 / 1e6).toFixed(2)}M` : a3 >= 1e4 ? `${(a3 / 1e3).toFixed(1)}k` : a3 >= 1e3 ? `${(a3 / 1e3).toFixed(2)}k` : String(Math.round(a3));
-    return sign + currencySign() + s3;
-  }
-  function parseAmount(typed) {
-    let t3 = String(typed ?? "").replace(/[\s\u00a0\u202f']/g, "").replace(/[^0-9.,\-−]/g, "").replace("−", "-");
-    const mark = t3.search(/[.,]\d{1,2}$/);
-    if (mark >= 0) t3 = t3.slice(0, mark).replace(/[.,]/g, "") + "." + t3.slice(mark + 1);
-    else t3 = t3.replace(/[.,]/g, "");
-    return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
-  }
-  var signed = (n3) => hidden ? money(n3) : (n3 < -5e-3 ? "−" : "+") + money(Math.abs(n3));
-  function split(n3) {
-    const s3 = money(n3), i3 = s3.lastIndexOf(".");
-    return i3 < 0 ? [s3, ""] : [s3.slice(0, i3), s3.slice(i3)];
-  }
-  var parseDay = (s3) => /* @__PURE__ */ new Date(s3 + "T00:00:00");
-  var dayLong = (s3) => dayText(parseDay(s3), { weekday: "short", day: "numeric", month: "short" });
-  var dayShort = (s3) => dayText(parseDay(s3), { day: "numeric", month: "short" });
-  var monthName = (s3) => dayText(parseDay(s3), { month: "long" });
-  var daysBetween = (a3, b2) => Math.round((parseDay(b2).getTime() - parseDay(a3).getTime()) / 864e5);
-  var isoDay = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
-  var todayISO = () => isoDay(/* @__PURE__ */ new Date());
-  var plural = (n3, word) => `${n3} ${word}${n3 === 1 ? "" : "s"}`;
-  var ordinal = (n3) => n3 + (n3 % 10 === 1 && n3 !== 11 ? "st" : n3 % 10 === 2 && n3 !== 12 ? "nd" : n3 % 10 === 3 && n3 !== 13 ? "rd" : "th");
-  function scheduleText(s3, L2) {
-    if (s3?.every === "paycheck") {
-      const who = L2?.person[s3.person]?.name;
-      return who ? `With each of ${who}'s paychecks` : "With each paycheck";
-    }
-    if (!s3?.start) return "";
-    const d3 = parseDay(s3.start);
-    const weekday3 = dayText(d3, { weekday: "long" });
-    switch (s3.every) {
-      case "once":
-        return "Once, " + dayShort(s3.start);
-      case "week":
-        return "Every " + weekday3;
-      case "2 weeks":
-        return "Every other " + weekday3;
-      case "twice a month":
-        return `The ${ordinal(d3.getDate())} and ${ordinal(s3.day2 || 15)}`;
-      case "month":
-        return "Monthly on the " + ordinal(d3.getDate());
-      case "3 months":
-        return "Every 3 months on the " + ordinal(d3.getDate());
-      case "year":
-        return "Yearly on " + dayShort(s3.start);
-    }
-    return s3.every;
-  }
-  function perMonth(s3, people, checking) {
-    if (s3?.every === "paycheck" && !s3.person) return (people || []).filter((e3) => !e3.account || e3.account === checking).reduce((t3, e3) => t3 + perMonth(e3.schedule), 0);
-    if (s3?.every === "paycheck") return perMonth((people || []).find((e3) => e3.id === s3.person)?.schedule);
-    return { week: 52 / 12, "2 weeks": 26 / 12, "twice a month": 2, month: 1, "3 months": 1 / 3, year: 1 / 12 }[s3?.every] || 0;
-  }
-  function lookup(p3) {
-    const by = (list) => Object.fromEntries((list || []).map((x3) => [x3.id, x3]));
-    return { person: by(p3.people), order: Object.fromEntries((p3.people || []).map((e3, i3) => [e3.id, i3 % 4])), account: by(p3.accounts), payment: by(allPayments(p3)) };
-  }
-  var cardOf = (paymentId) => paymentId?.startsWith("card:") ? paymentId.slice(5) : "";
-  function allPayments(p3) {
-    const cards = (p3.accounts || []).filter((a3) => a3.kind === "card" && a3.paidEach).map((a3) => ({ id: "card:" + a3.id, name: a3.name, amount: a3.spend || 0, kind: "cards", institution: a3.institution, card: a3.id, schedule: { every: "paycheck", start: "" } }));
-    return [...p3.payments || [], ...cards];
-  }
-  var saving = (kind) => kind === "savings" || kind === "investment" || kind === "retirement";
-  var owed = (kind) => kind === "card" || kind === "loan";
 
   // web/src/status/WallCard.tsx
   function WallCard({ w: w3 }) {
@@ -8341,132 +8484,6 @@
     if (shown2()) draw3();
   });
 
-  // web/src/finances/importData.ts
-  function csvRows(text2) {
-    const first = text2.split(/\r?\n/, 1)[0] || "";
-    const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : first.includes("	") && !first.includes(",") ? "	" : ",";
-    const rows = [];
-    let row = [], cell3 = "", quoted = false;
-    for (let i3 = 0; i3 < text2.length; i3++) {
-      const c3 = text2[i3];
-      if (quoted) {
-        if (c3 === '"' && text2[i3 + 1] === '"') {
-          cell3 += '"';
-          i3++;
-        } else if (c3 === '"') quoted = false;
-        else cell3 += c3;
-      } else if (c3 === '"') quoted = true;
-      else if (c3 === sep) {
-        row.push(cell3);
-        cell3 = "";
-      } else if (c3 === "\n" || c3 === "\r") {
-        if (c3 === "\r" && text2[i3 + 1] === "\n") i3++;
-        row.push(cell3);
-        cell3 = "";
-        if (row.some((x3) => x3.trim())) rows.push(row);
-        row = [];
-      } else cell3 += c3;
-    }
-    row.push(cell3);
-    if (row.some((x3) => x3.trim())) rows.push(row);
-    return rows.map((r3) => r3.map((x3) => x3.trim()));
-  }
-  function guessColumns(header) {
-    const find = (...words5) => header.findIndex((h3) => words5.some((w3) => h3.toLowerCase().includes(w3)));
-    return {
-      date: find("date", "posted", "day", "datum"),
-      amount: find("amount", "value", "betrag"),
-      debit: find("debit", "withdrawal", "money out", "paid out"),
-      credit: find("credit", "deposit", "money in", "paid in"),
-      payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
-      memo: find("memo", "note", "reference", "category")
-    };
-  }
-  function readDay(s3, dayFirst = false) {
-    s3 = s3.trim();
-    let m3 = s3.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
-    if (m3) return ymd(+m3[1], +m3[2], +m3[3]);
-    m3 = s3.match(/^(\d{1,2})([/.-])(\d{1,2})\2(\d{2,4})/);
-    if (m3) {
-      const year = m3[4].length === 2 ? 2e3 + +m3[4] : +m3[4];
-      const [mo, d3] = m3[2] === "." || dayFirst ? [+m3[3], +m3[1]] : [+m3[1], +m3[3]];
-      return ymd(year, mo, d3);
-    }
-    const t3 = Date.parse(s3);
-    return isNaN(t3) ? "" : isoDay(new Date(t3));
-  }
-  var ymd = (y3, m3, d3) => m3 >= 1 && m3 <= 12 && d3 >= 1 && d3 <= 31 ? `${y3}-${String(m3).padStart(2, "0")}-${String(d3).padStart(2, "0")}` : "";
-  function daysFirst(cells) {
-    return cells.some((c3) => /^\d{1,2}\./.test(c3) || /^(\d{1,2})\//.exec(c3) && +/^(\d{1,2})\//.exec(c3)[1] > 12);
-  }
-  function fromCsv(rows, col) {
-    const body = rows.slice(1);
-    const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
-    const money2 = (s3) => {
-      const n3 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
-      return isNaN(n3) ? 0 : n3;
-    };
-    const out = [];
-    for (const r3 of body) {
-      const date = readDay(r3[col.date] || "", dayFirst);
-      const amount = col.amount >= 0 ? money2(r3[col.amount]) : money2(r3[col.credit]) - Math.abs(money2(r3[col.debit]));
-      if (!date || !amount) continue;
-      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
-    }
-    return out;
-  }
-  function fromOfx(text2) {
-    const out = [];
-    for (const block of text2.split(/<STMTTRN>/i).slice(1)) {
-      const tag = (name) => block.match(new RegExp(`<${name}>([^<\\r\\n]*)`, "i"))?.[1].trim() || "";
-      const d3 = tag("DTPOSTED");
-      const amount = parseFloat(tag("TRNAMT"));
-      if (!/^\d{8}/.test(d3) || isNaN(amount)) continue;
-      out.push({ date: `${d3.slice(0, 4)}-${d3.slice(4, 6)}-${d3.slice(6, 8)}`, amount: Math.round(amount * 100) / 100, payee: (tag("NAME") || tag("MEMO")).replace(/\s+/g, " "), memo: tag("NAME") && tag("MEMO") ? tag("MEMO") : void 0, id: tag("FITID") || void 0 });
-    }
-    return out;
-  }
-  var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
-  function already(t3, account, ledger) {
-    return ledger.some((q2) => q2.account === account && t3.id && q2.bank === t3.id || (q2.account === account || q2.to === account) && q2.date === t3.date && Math.abs((q2.to === account ? -q2.amount : q2.amount) - t3.amount) < 5e-3 && (!q2.payee || !t3.payee || alike(q2.payee, t3.payee)));
-  }
-  var named2 = (s3) => s3.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w3) => w3.length >= 3 && !["the", "and", "inc", "llc", "payment", "purchase", "card", "debit", "pos"].includes(w3));
-  function alike(a3, b2) {
-    const x3 = named2(a3), y3 = new Set(named2(b2));
-    return a3.toLowerCase() === b2.toLowerCase() || x3.some((w3) => y3.has(w3));
-  }
-  var matchDays = 16;
-  var near = 0.1;
-  var dayNo = (s3) => Math.round(Date.parse(s3 + "T00:00:00Z") / 864e5);
-  function plannedFor(t3, account, payments, dues, checking, taken, same2) {
-    if (!t3.amount || !t3.payee) return void 0;
-    const paid = Math.abs(t3.amount);
-    let best, tie = false;
-    const fits = (x3) => x3.payer ? t3.amount > 0 && (x3.to || checking) === account && (same2(t3.payee, x3) || alike(t3.payee, x3.payer)) : t3.amount < 0 && (x3.from || checking) === account && same2(t3.payee, x3);
-    for (const x3 of payments) {
-      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !fits(x3)) continue;
-      for (const due of dues[x3.id] || []) {
-        const gap = Math.abs(dayNo(due) - dayNo(t3.date)), off = Math.abs(paid - x3.amount);
-        if (gap > matchDays || taken.has(x3.id + " " + due)) continue;
-        if (!best || gap < best.gap || gap === best.gap && off < best.off) {
-          tie = !!best && best.payment !== x3.id && gap === best.gap && off === best.off;
-          best = { payment: x3.id, due, gap, off };
-        } else if (gap === best.gap && off === best.off && x3.id !== best.payment) tie = true;
-      }
-    }
-    return best && !tie ? { payment: best.payment, due: best.due } : void 0;
-  }
-  function paidDays(ledger, dues) {
-    const out = /* @__PURE__ */ new Set();
-    for (const q2 of ledger) {
-      const days = q2.payment ? dues[q2.payment] : void 0;
-      if (!days?.length) continue;
-      const at2 = days.reduce((a3, b2) => Math.abs(dayNo(b2) - dayNo(q2.date)) < Math.abs(dayNo(a3) - dayNo(q2.date)) ? b2 : a3);
-      if (Math.abs(dayNo(at2) - dayNo(q2.date)) <= matchDays) out.add(q2.payment + " " + at2);
-    }
-    return out;
-  }
-
   // web/src/finances/model.ts
   function month(v3, L2) {
     const people = v3.plan.people || [];
@@ -8831,6 +8848,53 @@
   }
 
   // web/src/finances/Transactions.tsx
+  function LinksWidget({ v: v3, L: L2, ledger, save: save2 }) {
+    const [busy2, setBusy] = d2(false);
+    const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, paysAlike);
+    if (!found2.size) return null;
+    const list = ledger.transactions.filter((t3) => found2.has(t3.id)).reverse();
+    const keep2 = async (change) => {
+      if (busy2) return;
+      setBusy(true);
+      await save2({ ...ledger, transactions: ledger.transactions.map(change) });
+      setBusy(false);
+    };
+    const link = (ids) => keep2((t3) => ids.includes(t3.id) ? { ...t3, payment: found2.get(t3.id).payment } : t3);
+    const notIt = (id2) => keep2((t3) => t3.id === id2 ? { ...t3, notPlanned: true } : t3);
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: "These look like planned payments",
+        span: "all",
+        kind: "fx-links",
+        actions: list.length > 1 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => link(list.map((t3) => t3.id)), children: [
+          "Link all ",
+          list.length
+        ] }),
+        children: [
+          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: "Linked, one is taken as paying it, so the plan doesn't take it out again on its day." }),
+          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
+            const g2 = found2.get(t3.id), x3 = L2.payment[g2.payment];
+            return /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+                title: txTitle(t3, L2),
+                sub: `${dayLong(t3.date)} · looks like ${x3?.name || g2.payment}, planned ${money(x3?.amount || 0)} for ${dayShort(g2.due)}`,
+                when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 ? "in" : "", form: "full" }),
+                whenPlain: true,
+                end: /* @__PURE__ */ u3("span", { class: "fx-linkbtns", children: [
+                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `Link ${t3.payee || "it"} on ${dayLong(t3.date)} to ${x3?.name}`, onClick: () => link([t3.id]), children: "Link" }),
+                  /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, "aria-label": `${t3.payee || "It"} on ${dayLong(t3.date)} is not ${x3?.name}`, onClick: () => notIt(t3.id), children: "Not it" })
+                ] })
+              },
+              t3.id
+            );
+          }) })
+        ]
+      }
+    );
+  }
   function ReceiptView({ url }) {
     return url.startsWith("data:application/pdf") ? /* @__PURE__ */ u3("object", { class: "receiptview pdf", data: url, type: "application/pdf", "aria-label": "The receipt", children: /* @__PURE__ */ u3("p", { class: "muted", children: "A PDF receipt, kept with this transaction." }) }) : /* @__PURE__ */ u3("img", { class: "receiptview", src: url, alt: "The receipt" });
   }
@@ -8846,7 +8910,7 @@
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
   var wordsOf = (t3, L2) => [t3.payee, ...catsOf(t3), t3.note, ...t3.tags || [], L2.account[t3.account]?.name, t3.to && L2.account[t3.to]?.name].filter(Boolean).join(" ").toLowerCase();
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2 }) {
     const [seen2, setSeen] = d2(null);
     const look2 = async (t3) => {
       if (seen2?.id === t3.id) {
@@ -8897,6 +8961,7 @@
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural(thisMonth.length, "transaction") })
       ] }) }),
+      saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
       /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0 }),
       /* @__PURE__ */ u3(
         Widget,
@@ -8971,6 +9036,10 @@
                         what2,
                         " · ",
                         where,
+                        t3.payment && L2.payment[t3.payment] && /* @__PURE__ */ u3("span", { class: "fx-txpays", children: [
+                          " · pays ",
+                          L2.payment[t3.payment].name
+                        ] }),
                         t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
                         t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
                           " · ",
@@ -9731,6 +9800,7 @@
     const [to, setTo] = d2(t3?.to || "");
     const [category, setCategory] = d2(t3?.category || "");
     const [payment, setPayment] = d2(t3?.payment || "");
+    const [paymentPicked, setPaymentPicked] = d2(!!t3?.payment || !!t3?.notPlanned);
     const [note, setNote] = d2(t3?.note || "");
     const [parts2, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || "" })));
     const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
@@ -9755,7 +9825,12 @@
       if (!catTyped.current) setCategory(lastFor(who) || "");
       if (!logoPicked.current) setLogo(logoFor(who) || "");
     };
+    const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
+    const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysAlike) : void 0;
+    const linked = paymentPicked ? payment : guess?.payment || "";
+    const guessed = guess && payments.find((x3) => x3.id === guess.payment);
     const choose = (id2) => {
+      setPaymentPicked(true);
       setPayment(id2);
       const x3 = payments.find((q2) => q2.id === id2);
       if (!x3) return;
@@ -9786,7 +9861,8 @@
         payee: payee.trim() || void 0,
         category: category.trim() || void 0,
         note: note.trim() || void 0,
-        payment: payment || void 0,
+        payment: linked || void 0,
+        notPlanned: paymentPicked && !payment && (!!t3?.notPlanned || !!plannedFor({ date, amount: way === "in" ? n3 : -n3, payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysAlike)) || void 0,
         to: way === "move" ? to : void 0,
         institution: way === "move" ? void 0 : logo || void 0,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
@@ -9823,10 +9899,18 @@
           catTyped.current = true;
           setCategory(c3);
         }), list: "finCategories", placeholder: "Groceries" }) }),
-        /* @__PURE__ */ u3(Field, { label: "Pays a planned payment", children: /* @__PURE__ */ u3("select", { value: payment, onChange: input(choose), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: "None" }),
-          payments.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id))
-        ] }) }),
+        /* @__PURE__ */ u3(Field, { label: "Pays a planned payment", children: [
+          /* @__PURE__ */ u3("select", { value: linked, onChange: input(choose), children: [
+            /* @__PURE__ */ u3("option", { value: "", children: "None" }),
+            payments.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id))
+          ] }),
+          guessed && /* @__PURE__ */ u3("small", { class: "muted fx-looks", children: [
+            "Looks like ",
+            guessed.name,
+            ", planned ",
+            money(guessed.amount)
+          ] })
+        ] }),
         /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
         /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
       ] }),
@@ -10042,11 +10126,10 @@
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const payments = (plan.payments || []).filter((x3) => !x3.card);
-    const same2 = (payee, x3) => alike(payee, x3.name) || !!payeeBrand(void 0, payee) && payeeBrand(void 0, payee) === brandOf(x3.institution, x3.name, x3.kind);
     const guessed = (() => {
       const taken = paidDays(have, props.dues || {});
       return fresh.map((t3) => {
-        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, same2);
+        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, paysAlike);
         if (g2) taken.add(g2.payment + " " + g2.due);
         return g2;
       });
@@ -13037,7 +13120,7 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep2, edit: open4, exportFile: exportFile2, printMonth, readReceipt, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep2, edit: open4, exportFile: exportFile2, printMonth, readReceipt, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open4("account", cardOf(id2)) : open4(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -13074,7 +13157,7 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setSince: ro ? void 0 : setSince2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, sel: sel2, pick, setSince: ro ? void 0 : setSince2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
@@ -13156,6 +13239,7 @@ ${pays}
       printMonth: async (name, html) => phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`,
       toggleHidden: v3 && !v3.readOnly ? toggleHideAmounts : void 0,
       readReceipt: receipts.read,
+      saveLedger,
       running: runningApps(),
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
       // Wallos's subscriptions, on the computer while Wallos runs.

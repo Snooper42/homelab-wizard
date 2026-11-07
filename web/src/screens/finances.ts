@@ -79,6 +79,7 @@ function draw() {
     printMonth: async (name, html) => (phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`),
     toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
+    saveLedger,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),
     // Wallos's subscriptions, on the computer while Wallos runs.
