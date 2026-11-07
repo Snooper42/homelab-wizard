@@ -139,7 +139,7 @@ struct StopChoiceTests {
                  {"id":"homelab-companion","name":"Phone companion","state":"not running"}],
          "missing":1,"batteryPaused":["b"],"checking":true}
         """#.utf8))
-        #expect(DashboardViewModel.summary(of: status) == "1 of 2 running · 1 needs attention · 1 of the homelab's own apps is down · 1 paused on battery · checking…")
+        #expect(DashboardViewModel.summary(of: status) == "1 of 2 running · 1 needs a look · 1 of the homelab's own apps is down · 1 paused on battery · checking…")
         let empty = try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(#"{"apps":[]}"#.utf8))
         #expect(DashboardViewModel.summary(of: empty) == "No apps yet")
     }

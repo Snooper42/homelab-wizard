@@ -16,9 +16,9 @@ struct MenuBarView: View {
             let attention = status.apps.filter(\.needsAttention)
             Text("\(status.apps.filter(\.isRunning).count) running")
             if attention.isEmpty {
-                Text("Nothing needs attention")
+                Text("All well")
             } else {
-                Section("Needs attention") {
+                Section("Needs a look") {
                     ForEach(attention.prefix(6)) { app in
                         Button {
                             // Opens on this app's page.
@@ -59,7 +59,7 @@ struct MenuBarIcon: View {
         let attention = coordinator.route == .unlocked
             && (coordinator.liveEvents.status?.apps.contains(where: \.needsAttention) ?? false)
         Image(systemName: attention ? "exclamationmark.triangle.fill" : "server.rack")
-            .accessibilityLabel(attention ? "Homelab: something needs attention" : "Homelab")
+            .accessibilityLabel(attention ? "Homelab: something needs a look" : "Homelab")
     }
 }
 #endif

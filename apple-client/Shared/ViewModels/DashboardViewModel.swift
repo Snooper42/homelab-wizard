@@ -12,7 +12,7 @@ final class DashboardViewModel {
         var title: String {
             switch self {
             case .all: "All Apps"
-            case .attention: "Needs Attention"
+            case .attention: "Needs a Look"
             case .running: "Running"
             case .stopped: "Stopped"
             }
@@ -189,7 +189,7 @@ final class DashboardViewModel {
         return liveEvents.status?.apps.first { $0.id == id }
     }
 
-    /// For example, "12 of 14 running · 1 needs attention".
+    /// For example, "12 of 14 running · 1 needs a look", as the computer says it.
     var summary: String {
         guard let status = liveEvents.status else { return "Loading…" }
         return Self.summary(of: status)
@@ -202,7 +202,7 @@ final class DashboardViewModel {
         let counted = status.apps.filter { !$0.awaitingJobs }.count
         var parts = ["\(status.apps.filter(\.isRunning).count) of \(counted) running"]
         let attention = status.apps.filter(\.needsAttention).count
-        if attention > 0 { parts.append("\(attention) need\(attention == 1 ? "s" : "") attention") }
+        if attention > 0 { parts.append("\(attention) need\(attention == 1 ? "s" : "") a look") }
         if status.missing > 0 {
             parts.append(status.missing == 1 ? "1 of the homelab's own apps is down" : "\(status.missing) of the homelab's own apps are down")
         }

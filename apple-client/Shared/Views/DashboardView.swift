@@ -587,7 +587,7 @@ private extension DashboardViewModel.Filter {
     var emptyTitle: String {
         switch self {
         case .all: "No Apps"
-        case .attention: "Nothing Needs Attention"
+        case .attention: "Nothing Needs a Look"
         case .running: "Nothing Running"
         case .stopped: "Nothing Stopped"
         }
