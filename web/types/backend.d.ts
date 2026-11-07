@@ -630,6 +630,7 @@ declare namespace finance {
     outside?: boolean;
     typed?: boolean;
     waiting?: boolean;
+    inBalance?: boolean;
   }
   interface Payday {
     date: string;
@@ -650,6 +651,7 @@ declare namespace finance {
     to?: string;
     card?: string;
     type?: string;
+    payer?: string;
   }
   interface Payoff {
     account: string;
@@ -686,6 +688,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    inBalance?: string[];
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
@@ -725,6 +728,16 @@ declare namespace finance {
     amount: number;
     note?: string;
   }
+  interface Step {
+    date: string;
+    people?: string[];
+    payment?: string;
+    transaction?: string;
+    name?: string;
+    interest?: boolean;
+    amount: number;
+    after: number;
+  }
   interface Transaction {
     id: string;
     date: string;
@@ -735,6 +748,9 @@ declare namespace finance {
     category?: string;
     note?: string;
     payment?: string;
+    notPlanned?: boolean;
+    toBank?: string;
+    apart?: boolean;
     to?: string;
     splits?: finance.Split[];
     tags?: string[];
@@ -755,6 +771,7 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    dues?: Record<string, string[]>;
     paid?: finance.Paid[];
     categories: finance.Category[];
     found?: finance.Found[];
@@ -763,6 +780,8 @@ declare namespace finance {
     loans?: finance.Payoff[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
+    checkingNow?: finance.Working | null;
+    afterPay?: finance.Working | null;
   }
   interface Wall {
     payday?: string;
@@ -777,6 +796,13 @@ declare namespace finance {
     institution?: string;
     date: string;
     amount: number;
+  }
+  interface Working {
+    date: string;
+    from: string;
+    start: number;
+    steps: finance.Step[];
+    result: number;
   }
 }
 

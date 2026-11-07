@@ -53,7 +53,8 @@ export function MoneyFlowWidget({ v, L }: { v: finance.View; L: Lookup }) {
   const m = month(v, L);
   const people = v.plan.people || [];
   if (!people.length || m.in <= 0) return null;
-  const from: FlowPart[] = people.map((e) => ({ label: `${e.name}'s pay`, value: e.net * perMonth(e.schedule), color: 'in' as const }));
+  const from: FlowPart[] = [...people.map((e) => ({ label: `${e.name}'s pay`, value: e.net * perMonth(e.schedule), color: 'in' as const })),
+    ...m.others.map((o) => ({ label: `${o.name}, from ${o.payer}`, value: o.amount, color: 'in' as const }))];
   if (m.left < -0.005) from.push({ label: 'From the accounts', value: -m.left, color: 'muted' });
   const to: FlowPart[] = [...m.byKind.map((k) => ({ label: kindName(k.kind), value: k.amount, color: (kindHue[k.kind] ?? 6) as FlowPart['color'] })),
     { label: 'Saved', value: m.saved, color: 'save' as const }, { label: 'Left over', value: Math.max(0, m.left), color: 'in' as const }].filter((p) => p.value > 0.005);

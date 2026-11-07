@@ -95,6 +95,14 @@ func paidEach() Plan {
 	return p
 }
 
+// moneyInExample is the example household with a share of the mortgage,
+// $900, sent by Sam (outside it) on the 3rd of each month into checking.
+func moneyInExample() Plan {
+	p := example()
+	p.Payments = append(p.Payments, Payment{ID: "share", Name: "Mortgage share", Amount: 900, Kind: "home", Payer: "Sam", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}})
+	return p
+}
+
 // exampleLedger is a week of what actually happened to the example
 // household (app/preview/ledger.json): three planned payments paid (Verizon,
 // Claude Pro, the Roth IRA), groceries, gas, a paycheck, and Costco on the
@@ -138,7 +146,7 @@ func TestPreview(t *testing.T) {
 	}
 	l.Rev = "r1"
 	write("ledger.json", l)
-	for name, plan := range map[string]Plan{"finance.json": example(), "finance-cards.json": paidEach()} {
+	for name, plan := range map[string]Plan{"finance.json": example(), "finance-cards.json": paidEach(), "finance-moneyin.json": moneyInExample()} {
 		p, err := Clean(plan)
 		if err != nil {
 			t.Fatal(err)
