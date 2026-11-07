@@ -6410,6 +6410,24 @@ const smokes = [
       if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
     }
   } })),
+  // One colour per category, everywhere: Food (the third top category, so the third colour) on a transaction with no logo,
+  // its budget, its row and bar on Reports, and its box in the money flow; a payment's kind takes its category's colour
+  // (Groceries and gas is Shopping, the seventh). The icon reads on its tint at 4.5:1 (lint.mjs checks the tokens).
+  { name: 'Finances: a category keeps one colour on every row, budget, report, and chart', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'd1', date: '2026-10-29', account: 'chk', amount: -12.5, payee: 'Corner Deli', category: 'Eating out', institution: 'none' }] } }, run: async (page) => {
+    const tintOf = (sel) => page.$eval(sel, (e) => { const s = getComputedStyle(e); return `${s.backgroundColor}/${s.color}`; });
+    await page.waitForSelector('.fx-moneyflow rect.fx-snoderect.fx-h3', { state: 'attached', timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-budgets li:has-text("Food") .fmark.tint.t3', { timeout: 5000 });
+    const food = await tintOf('.fx-budgets li:has-text("Food") .fmark.tint');
+    await page.waitForSelector('.fx-txday li:has-text("Corner Deli") .fmark.tint.t3', { timeout: 5000 });
+    if ((await tintOf('.fx-txday li:has-text("Corner Deli") .fmark.tint')) !== food) throw new Error('the transaction and its budget differ in colour');
+    await page.click('#finRoot > .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-bycat li:has-text("Food") .fmark.tint.t3', { timeout: 5000 });
+    if ((await tintOf('.fx-bycat li:has-text("Food") .fmark.tint')) !== food) throw new Error('the report row and the budget differ in colour');
+    if (!(await page.$('.fx-bycat li:has-text("Food") .fx-catbar.fx-h3'))) throw new Error('the report bar is not in Food\'s colour');
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has-text("Groceries and gas") .fmark.tint.t7', { timeout: 5000 });
+  } },
   // A bill paid in the ledger before with nothing for its last day, three days on: the Dashboard says so. One not followed
   // in the ledger, or due two days ago, is not said.
   { name: 'Finances: a bill paid before but not seen yet is said on the Dashboard', screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),

@@ -11,6 +11,7 @@ import { Widget } from '../ui/Widget';
 import { Mark } from '../Mark';
 import { iconOf } from '../Transactions';
 import { dayShort, money } from '../money';
+import { categoryHue } from '../hues';
 
 /** How a budget stands: over, ahead of its pace, or fine. */
 export const budgetTone = (b: finance.BudgetNow): 'out' | 'warn' | '' => (b.left < 0 ? 'out' : b.spent > b.pace + 0.005 ? 'warn' : '');
@@ -33,7 +34,8 @@ export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = '
           const share = b.amount > 0 ? Math.min(100, (b.spent / b.amount) * 100) : 100;
           const pace = b.amount > 0 ? Math.min(100, (b.pace / b.amount) * 100) : 0;
           const icon = iconOf(v.categories, b.category);
-          return <Row key={b.category} lead={<Mark kind={icon} type={icon} name={b.category} />} title={b.category}
+          const hue = categoryHue(b.category, v.categories);
+          return <Row key={b.category} lead={<Mark kind={icon} type={icon} name={b.category} hue={hue} />} title={b.category}
             sub={`${b.per === 'paycheck' ? `This pay period, to ${dayShort(b.last)}` : `This month, to ${dayShort(b.last)}`} · ${money(b.spent)} of ${money(b.amount)}${b.rolled ? ` (${b.rolled > 0 ? 'with' : 'less'} ${money(Math.abs(b.rolled))} from last time)` : ''}`}
             when={<span class={'fx-budgetleft' + (tone ? ' fx-' + tone : '')}>{b.left < 0 ? <>{money(-b.left)} over</> : <><Amount value={b.left} form="full" /> left</>}</span>} whenPlain>
             <span class={'fx-budgetbar' + (tone ? ' ' + tone : '')} role="img" aria-label={`${b.category}: ${money(b.spent)} spent of ${money(b.amount)}${tone === 'warn' ? ', ahead of an even pace' : ''}`}>

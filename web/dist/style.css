@@ -22,6 +22,8 @@
   /* Kinds of assets and debts on Finances › Net worth, in a fixed order (a kind keeps its colour); checked for
      colour-blind separation on the light and dark surfaces, each named beside its amount. */
   --cat-1:#2a78d6; --cat-2:#eb6834; --cat-3:#1baf7a; --cat-4:#eda100; --cat-5:#e87ba4; --cat-6:#008300; --cat-7:#6250d6; --cat-8:#e34948;
+  /* A category's icon in its colour (-ink) on its tint (-soft): each pair 4.5:1 or more (lint.mjs checks). */
+  --cat-1-soft:#e1ecf9; --cat-1-ink:#2466b6; --cat-2-soft:#fceae3; --cat-2-ink:#aa4b26; --cat-3-soft:#dff4ec; --cat-3-ink:#137954; --cat-4-soft:#fcf2db; --cat-4-ink:#916300; --cat-5-soft:#fcedf2; --cat-5-ink:#9a526d; --cat-6-soft:#dbeedb; --cat-6-ink:#007900; --cat-7-soft:#e9e6f9; --cat-7-ink:#6250d6; --cat-8-soft:#fbe6e5; --cat-8-ink:#b93c3b;
   /* Finances' own look (finances/ui, the fx- rules): its accent, money in, out, and kept, the chart's
      card, and its scale. Text in --fin-in, --fin-out, and --fin-accent-ink reads at 4.5:1 on --panel and on its own -soft. */
   --fin-accent:#6d4ae0; --fin-accent-ink:#5b3fd6; --fin-accent-soft:#efebfc; --fin-accent-text:#fff;
@@ -44,6 +46,7 @@
     --nav:#070c18; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#14203a;
     --shadow:0 1px 2px rgba(0,0,0,.3);
     --cat-1:#3987e5; --cat-2:#d95926; --cat-3:#199e70; --cat-4:#c98500; --cat-5:#d55181; --cat-6:#008300; --cat-7:#9085e9; --cat-8:#e66767;
+    --cat-1-soft:#1b3255; --cat-1-ink:#64a1eb; --cat-2-soft:#3e282b; --cat-2-ink:#e17d55; --cat-3-soft:#14373b; --cat-3-ink:#43b08a; --cat-4-soft:#3a3222; --cat-4-ink:#cf931d; --cat-5-soft:#3d263f; --cat-5-ink:#de779c; --cat-6-soft:#0e3122; --cat-6-ink:#4ea94e; --cat-7-soft:#2e3256; --cat-7-ink:#9d93ec; --cat-8-soft:#412b39; --cat-8-ink:#ea7e7e;
     --fin-accent:#9c86f5; --fin-accent-ink:#b8a9ff; --fin-accent-soft:#251f3d; --fin-accent-text:#140c33;
     --fin-in:#5bd69c; --fin-in-soft:#12291e; --fin-out:#ff8a73; --fin-out-soft:#2f1a15;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
@@ -1406,6 +1409,17 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark { flex:none; width:32px; height:32px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--shade-06); }
 .fmark svg { width:58%; height:58%; }
 .fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+/* A category's mark in its colour, on its tint: the same colour on every row, budget, report, and chart. */
+.fmark.tint { box-shadow:none; }
+.fmark.tint.t1 { background:var(--cat-1-soft); color:var(--cat-1-ink); }
+.fmark.tint.t2 { background:var(--cat-2-soft); color:var(--cat-2-ink); }
+.fmark.tint.t3 { background:var(--cat-3-soft); color:var(--cat-3-ink); }
+.fmark.tint.t4 { background:var(--cat-4-soft); color:var(--cat-4-ink); }
+.fmark.tint.t5 { background:var(--cat-5-soft); color:var(--cat-5-ink); }
+.fmark.tint.t6 { background:var(--cat-6-soft); color:var(--cat-6-ink); }
+.fmark.tint.t7 { background:var(--cat-7-soft); color:var(--cat-7-ink); }
+.fmark.tint.t8 { background:var(--cat-8-soft); color:var(--cat-8-ink); }
+@media (forced-colors: active) { .fmark.tint { background:Canvas; color:CanvasText; box-shadow:inset 0 0 0 1px CanvasText; } }
 .fmark.logo { box-shadow:none; }
 /* A logo in its own colours (selfh.st): on white in either theme, as an app's icon is. */
 .fmark.art { background:var(--white); box-shadow:inset 0 0 0 1px var(--shade-08); }
@@ -2064,6 +2078,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 @media (forced-colors: active) { .fx-budgetbar > span, .fx-budgetbar > i { forced-color-adjust:none; } }
 /* Reports: a category's bar against the largest, in the accent (spending is no warning here). */
 .fx-catbar > span { background:var(--fin-accent); }
+/* A category's bar in its colour, as its icon. */
+.fx-catbar:is(.fx-h1, .fx-h2, .fx-h3, .fx-h4, .fx-h5, .fx-h6, .fx-h7, .fx-h8) > span { background:var(--fx-hue); }
 .fx-reportsum .fx-actions .seg { font-size:12px; flex-wrap:wrap; }
 /* Importing a bank's file: the file picked, then what would come in, those already in greyed. */
 .importfile { display:flex; align-items:center; gap:8px; min-width:0; margin-top:4px; }

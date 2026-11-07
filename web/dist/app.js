@@ -1598,6 +1598,24 @@
     "dollartree": { name: "Dollar Tree", bg: "#00953B", ink: "#111111", kind: "", letters: "DT" }
   };
 
+  // web/src/finances/hues.ts
+  var hues = 8;
+  var known = [];
+  var setCategories = (categories2) => {
+    known = categories2 || [];
+  };
+  function categoryHue(name, categories2 = known) {
+    if (!name) return 0;
+    const c3 = categories2.find((q2) => q2.name.toLowerCase() === name.toLowerCase());
+    const top = c3?.parent || c3?.name || name;
+    const tops2 = categories2.filter((q2) => !q2.parent && !q2.income);
+    const at2 = tops2.findIndex((q2) => q2.name.toLowerCase() === top.toLowerCase());
+    return at2 < 0 ? 0 : at2 % hues + 1;
+  }
+  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
+  var kindCategory = { home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", spending: "Shopping", other: "Other" };
+  var kindHueOf = (kind, categories2 = known) => categoryHue(kindCategory[kind || "other"], categories2) || kindHue[kind || "other"] || 6;
+
   // web/src/finances/Mark.tsx
   var kindIcons = {
     checking: "M3 21h18M5 21V10l7-6 7 6v11M9 21v-6h6v6",
@@ -1675,9 +1693,10 @@
     own = logos || {};
   };
   var ownKey = (brand, name) => brand && brand !== "none" ? brand : "name:" + words(name || "").trim();
-  function Mark({ brand, kind, name, type, size: size2, img, auto }) {
+  function Mark({ brand, kind, name, type, size: size2, img, auto, hue: hue2 }) {
     const b2 = brand ? brands[brand] : void 0;
     const cls = "fmark" + (size2 ? " " + size2 : "");
+    const tint = hue2 ? ` tint t${hue2}` : "";
     const mine = img ?? own[ownKey(brand, name)];
     if (mine) return /* @__PURE__ */ u3("span", { class: cls + " logo art own", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: mine, alt: "" }) });
     if (b2?.art) return /* @__PURE__ */ u3("span", { class: cls + " logo art", "aria-hidden": "true", children: /* @__PURE__ */ u3("img", { src: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(b2.art), alt: "" }) });
@@ -1691,8 +1710,8 @@
     }
     const glyph = (type && type !== "other" && kindIcons[type] ? type : "") || hintOf(kind, name) || kind;
     const icon = glyph && kindIcons[glyph];
-    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon", "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
-    return /* @__PURE__ */ u3("span", { class: cls + " letter", "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
+    if (icon) return /* @__PURE__ */ u3("span", { class: cls + " icon" + tint, "data-icon": glyph, "aria-hidden": "true", children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", children: /* @__PURE__ */ u3("path", { d: icon }) }) });
+    return /* @__PURE__ */ u3("span", { class: cls + " letter" + tint, "aria-hidden": "true", children: (name || "?").trim().charAt(0).toUpperCase() });
   }
   var words = (s3) => " " + s3.toLowerCase().replace(/\+/g, " plus ").replace(/&/g, " and ").replace(/['’.]/g, "").replace(/[^a-z0-9]+/g, " ").trim() + " ";
   var aliases = {
@@ -1841,7 +1860,7 @@
   }
   var typeOf = (x3) => x3.type || suggestType(x3.institution, x3.name) || "other";
   function PayMark({ x: x3, size: size2 }) {
-    return /* @__PURE__ */ u3(Mark, { brand: brandOf(x3?.institution, x3?.name), kind: x3?.kind, name: x3?.name || "?", type: x3?.kind === "subscriptions" ? x3?.type : void 0, size: size2 });
+    return /* @__PURE__ */ u3(Mark, { brand: brandOf(x3?.institution, x3?.name), kind: x3?.kind, name: x3?.name || "?", type: x3?.kind === "subscriptions" ? x3?.type : void 0, size: size2, hue: x3 ? kindHueOf(x3.kind) : void 0 });
   }
   var brandKinds = Object.fromEntries(Object.entries({
     utilities: "spectrum xfinity cox optimum googlefiber starlink frontier centurylink dukeenergy pge coned",
@@ -6184,9 +6203,9 @@
         if (!p3) general.push(p3 = { name, kind, items: [] });
         return p3;
       }
-      const known = [...byApp.keys()].find((n3) => n3 === name || n3.startsWith(name + " "));
-      if (!byApp.has(known || name)) byApp.set(name, { name, kind, items: [] });
-      return byApp.get(known || name);
+      const known2 = [...byApp.keys()].find((n3) => n3 === name || n3.startsWith(name + " "));
+      if (!byApp.has(known2 || name)) byApp.set(name, { name, kind, items: [] });
+      return byApp.get(known2 || name);
     };
     for (const s3 of list) {
       if (!perApp(s3.section)) {
@@ -6210,9 +6229,9 @@
     const installed2 = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
     const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...extraPages];
     const apps2 = pages.filter((p3) => p3.kind === "app");
-    const known = Object.keys(statusById || {}).length > 0;
-    const mine = known ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
-    const others2 = known ? apps2.filter((p3) => !mine.includes(p3)) : [];
+    const known2 = Object.keys(statusById || {}).length > 0;
+    const mine = known2 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
+    const others2 = known2 ? apps2.filter((p3) => !mine.includes(p3)) : [];
     const groups3 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
     const named5 = new Set(pageGroups.flatMap(([, names5]) => names5));
     groups3[0].items.push(...general.filter((n3) => !named5.has(n3)));
@@ -8718,10 +8737,11 @@
           const share2 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
           const pace = b2.amount > 0 ? Math.min(100, b2.pace / b2.amount * 100) : 0;
           const icon = iconOf(v3.categories, b2.category);
+          const hue2 = categoryHue(b2.category, v3.categories);
           return /* @__PURE__ */ u3(
             Row,
             {
-              lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: b2.category }),
+              lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: b2.category, hue: hue2 }),
               title: b2.category,
               sub: `${b2.per === "paycheck" ? `This pay period, to ${dayShort(b2.last)}` : `This month, to ${dayShort(b2.last)}`} · ${money(b2.spent)} of ${money(b2.amount)}${b2.rolled ? ` (${b2.rolled > 0 ? "with" : "less"} ${money(Math.abs(b2.rolled))} from last time)` : ""}`,
               when: /* @__PURE__ */ u3("span", { class: "fx-budgetleft" + (tone ? " fx-" + tone : ""), children: b2.left < 0 ? /* @__PURE__ */ u3(S, { children: [
@@ -8925,8 +8945,9 @@
   }
   function TxMark({ t: t3, size: size2, categories: categories2 }) {
     const brand = t3.to ? void 0 : payeeBrand(t3.institution, t3.payee);
-    const icon = t3.to ? "savings" : iconOf(categories2, t3.splits?.length ? t3.splits[0].category : t3.category);
-    return /* @__PURE__ */ u3(Mark, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size: size2, auto: !t3.to && !icon && t3.institution !== "none" && !!t3.payee?.trim() });
+    const cat = t3.splits?.length ? t3.splits[0].category : t3.category;
+    const icon = t3.to ? "savings" : iconOf(categories2, cat);
+    return /* @__PURE__ */ u3(Mark, { brand, kind: brand ? void 0 : icon, name: t3.payee || "?", type: brand ? void 0 : icon, size: size2, auto: !t3.to && !icon && t3.institution !== "none" && !!t3.payee?.trim(), hue: t3.to ? void 0 : categoryHue(cat, categories2) });
   }
   var txTitle = (t3, L2) => t3.payee || (t3.to ? `To ${L2.account[t3.to]?.name || "another account"}` : "No payee");
   var catsOf = (t3) => t3.splits?.length ? t3.splits.map((s3) => s3.category) : t3.category ? [t3.category] : [];
@@ -10097,7 +10118,16 @@
       /* @__PURE__ */ u3("ul", { class: "catlist", children: ordered.map((r3) => {
         const i3 = rows.indexOf(r3);
         return /* @__PURE__ */ u3("li", { class: r3.parent ? "sub" : "", "data-was": r3.was || void 0, children: [
-          /* @__PURE__ */ u3(Mark, { kind: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0, type: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0, name: r3.name || "?", size: "sm" }),
+          /* @__PURE__ */ u3(
+            Mark,
+            {
+              kind: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0,
+              type: r3.icon || rows.find((g2) => g2.name === r3.parent)?.icon || void 0,
+              name: r3.name || "?",
+              size: "sm",
+              hue: r3.income ? void 0 : categoryHue(r3.parent || r3.name, rows.map((q2) => ({ name: q2.name, parent: q2.parent || void 0, income: q2.income })))
+            }
+          ),
           /* @__PURE__ */ u3("input", { "aria-label": "Name", value: r3.name, onInput: (ev) => set2(i3, "name", ev.target.value) }),
           /* @__PURE__ */ u3("select", { "aria-label": `${r3.name || "Category"}'s group`, value: r3.parent, onChange: (ev) => set2(i3, "parent", ev.target.value), children: [
             /* @__PURE__ */ u3("option", { value: "", children: "No group" }),
@@ -10939,16 +10969,16 @@ ${pays}
       ] }),
       !txs.length ? /* @__PURE__ */ u3(Widget, { title: "Nothing yet", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Reports read the transactions: add some on Transactions, and they show here." }) }) : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3(Widget, { title: "Spending by category", kind: "fx-bycat", children: groups3.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: groups3.map((g2) => {
-          const icon = iconOf(v3.categories, g2.name);
+          const icon = iconOf(v3.categories, g2.name), hue2 = categoryHue(g2.name, v3.categories);
           return /* @__PURE__ */ u3(
             Row,
             {
-              lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: g2.name }),
+              lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: g2.name, hue: hue2 }),
               title: g2.name,
               sub: g2.children.length ? g2.children.map((c3) => `${c3.name} ${money(c3.amount)}`).join(" · ") : `${Math.round(g2.amount / (spent || 1) * 100)}% of the spending`,
               when: /* @__PURE__ */ u3(Amount, { value: g2.amount, form: "full" }),
               whenPlain: true,
-              children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar fx-catbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(1, g2.amount / most * 100)}%` } }) })
+              children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar fx-catbar" + (hue2 ? " fx-h" + hue2 : ""), "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(1, g2.amount / most * 100)}%` } }) })
             },
             g2.name
           );
@@ -11593,12 +11623,6 @@ ${pays}
 
   // web/src/finances/flowData.ts
   var savedHue = 1;
-  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
-  function categoryHue(categories2, name) {
-    const tops2 = categories2.filter((c3) => !c3.parent && !c3.income);
-    const at2 = tops2.findIndex((c3) => c3.name.toLowerCase() === name.toLowerCase());
-    return at2 < 0 ? 6 : at2 % 8 + 1;
-  }
   var parts2 = (t3) => t3.splits?.length ? t3.splits.map((s3) => ({ category: s3.category, amount: s3.amount })) : [{ category: t3.category || "", amount: t3.amount }];
   var taxing = (name) => /\btax(es)?\b/i.test(name);
   function topOf(nodes, top, id2, hue2) {
@@ -11690,7 +11714,7 @@ ${pays}
           tax.items.push(item(t3, p3.amount));
           continue;
         }
-        add(spend, "cat:" + g2.toLowerCase(), g2, 3, categoryHue(cats, g2), -p3.amount, item(t3, p3.amount));
+        add(spend, "cat:" + g2.toLowerCase(), g2, 3, categoryHue(g2, cats) || 6, -p3.amount, item(t3, p3.amount));
       }
     }
     if (tax && tax.value < 0) tax = null;
@@ -11734,7 +11758,7 @@ ${pays}
       const onCard2 = L2.account[x3.from || ""]?.kind === "card";
       if (!(!x3.from || x3.from === v3.checking || onCard2) || x3.to && x3.to === v3.checking) continue;
       if (kept4(x3.to)) add(into2, "kept:" + x3.to, L2.account[x3.to]?.name || x3.to, savedHue, each(x3), { label: x3.name, amount: each(x3), payment: x3.id });
-      else add(spend, "kind:" + (x3.kind || "other"), kindName(x3.kind || "other"), kindHue[x3.kind || "other"] ?? 6, each(x3), { label: x3.name, amount: -each(x3), payment: x3.id });
+      else add(spend, "kind:" + (x3.kind || "other"), kindName(x3.kind || "other"), kindHueOf(x3.kind, v3.categories || []), each(x3), { label: x3.name, amount: -each(x3), payment: x3.id });
     }
     return build(src, taxes > 5e-3 ? { id: "taxes", label: "Taxes", value: taxes, col: 2, hue: 7, items: taxItems } : null, [...spend.values()], [...into2.values()], top);
   }
@@ -11755,7 +11779,7 @@ ${pays}
   function SpendingWidget({ v: v3, L: L2 }) {
     const m3 = month(v3, L2);
     if (!m3.byKind.length) return null;
-    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHue[k3.kind] ?? 6 }));
+    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHueOf(k3.kind, v3.categories) }));
     return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
@@ -13712,6 +13736,7 @@ ${pays}
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
+    setCategories(v3?.categories);
     const [what2, label] = adds[tab3] || adds.overview;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
@@ -14331,7 +14356,7 @@ ${pays}
     }
     return out;
   }
-  var hues = [7, 1, 8, 2, 3, 5, 6, 4];
+  var hues2 = [7, 1, 8, 2, 3, 5, 6, 4];
   function GenresWidget({ d: d3, job: job2, act, only }) {
     const all = genresOf(d3);
     const kinds = only ? [only] : GENRED.filter((k4) => all[k4]);
@@ -14340,7 +14365,7 @@ ${pays}
     const g2 = all[k3];
     const top = g2 ? g2.genres.slice(0, 6) : [];
     const rest = g2 ? g2.genres.slice(6).reduce((t3, [, v3]) => t3 + v3, 0) : 0;
-    const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
+    const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues2[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
     const picker = kinds.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names3[x3] }, x3)) });
     if (!g2) {
       const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);

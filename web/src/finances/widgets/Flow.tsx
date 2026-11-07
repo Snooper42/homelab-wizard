@@ -10,7 +10,7 @@ import { Sankey } from '../ui/sankey';
 import { Dot, Legend, SplitBar } from '../ui/Legend';
 import { IconButton, Widget } from '../ui/Widget';
 import { kindName, month, surplus } from '../model';
-import { kindHue, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
+import { kindHueOf, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
 import { dayShort, type Lookup, money, monthName, whole } from '../money';
 
 
@@ -33,7 +33,7 @@ export function CashFlowWidget({ v, L }: { v: finance.View; L: Lookup }) {
 export function SpendingWidget({ v, L }: { v: finance.View; L: Lookup }) {
   const m = month(v, L);
   if (!m.byKind.length) return null;
-  const slices = m.byKind.map((k) => ({ label: kindName(k.kind), value: k.amount, color: kindHue[k.kind] ?? 6 }));
+  const slices = m.byKind.map((k) => ({ label: kindName(k.kind), value: k.amount, color: kindHueOf(k.kind, v.categories) }));
   return (
     <Widget title="Where it goes" kind="fx-spend">
       <Stat value={<Amount value={-m.spent} />} caption="Spent in a typical month" />
