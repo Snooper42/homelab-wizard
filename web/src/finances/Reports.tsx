@@ -32,6 +32,8 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
   const [saved, setSaved] = useState('');
   const [tag, setTag] = useState('');
   const [trendOf, setTrendOf] = useState('');
+  // Every payee, not the five largest (Show all); back to five with Show fewer.
+  const [allPayees, setAllPayees] = useState(false);
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const tags = tagsOf(ledger.transactions);
   const picked = tags.includes(tag) ? tag : '';
@@ -43,7 +45,8 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
   const sum = totals(txs, r);
   const groups = byCategory(txs, v.categories || [], r);
   const months = byMonth(txs, r);
-  const payees = topPayees(txs, r);
+  const everyPayee = topPayees(txs, r, Infinity);
+  const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
   const tagged = picked ? [] : byTag(txs, v.categories || [], r);
   const account = (id: string) => v.plan.accounts?.find((a) => a.id === id)?.name || id;
   const save = async () => {
@@ -91,7 +94,7 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
               })}
             </Rows> : <Empty>Nothing spent in this stretch.</Empty>}
           </Widget>
-          <Widget title="Where it went" kind="fx-payees">
+          <Widget title="Where it went" kind="fx-payees" actions={everyPayee.length > 5 && <button type="button" class="small" aria-expanded={allPayees} onClick={() => setAllPayees(!allPayees)}>{allPayees ? 'Show fewer' : `Show all ${everyPayee.length}`}</button>}>
             {payees.length ? <Rows kind="fx-rows">
               {payees.map((p) => <Row key={p.payee} lead={<Mark brand={payeeBrand(undefined, p.payee)} name={p.payee} auto />} title={p.payee} sub={plural(p.count, 'time')}
                 when={<Amount value={p.amount} form="full" />} whenPlain onOpen={opens({ q: p.payee })} openLabel="see its transactions" />)}

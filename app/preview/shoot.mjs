@@ -6201,6 +6201,17 @@ const smokes = [
     await page.waitForSelector('.fx-flow .fx-tiles', { timeout: 5000 });
     if (await page.$('.fx-flow .fx-lastmonths')) throw new Error('six months drawn from one');
   } },
+  // Reports' payees: the five largest, then Show all for every one (six in all of the ledger, Costco twice), and Show fewer.
+  { name: 'Finances: Reports shows every payee on asking', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("All")');
+    const count = () => page.$$eval('.fx-payees li', (l) => l.length);
+    if ((await count()) !== 5) throw new Error(`${await count()} payees at first`);
+    await page.click('.fx-payees button:text-is("Show all 6")');
+    if ((await count()) !== 6) throw new Error(`${await count()} payees with all`);
+    await page.click('.fx-payees button:text-is("Show fewer")');
+    if ((await count()) !== 5) throw new Error(`${await count()} payees with fewer`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

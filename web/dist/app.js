@@ -11878,6 +11878,7 @@ ${pays}
     const [saved, setSaved] = d2("");
     const [tag, setTag] = d2("");
     const [trendOf, setTrendOf] = d2("");
+    const [allPayees, setAllPayees] = d2(false);
     if (!ledger) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Empty, { children: "Reading…" }) });
     const tags = tagsOf(ledger.transactions);
     const picked = tags.includes(tag) ? tag : "";
@@ -11888,7 +11889,8 @@ ${pays}
     const sum = totals(txs, r3);
     const groups3 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3);
-    const payees = topPayees(txs, r3);
+    const everyPayee = topPayees(txs, r3, Infinity);
+    const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
     const tagged = picked ? [] : byTag(txs, v3.categories || [], r3);
     const account = (id2) => v3.plan.accounts?.find((a3) => a3.id === id2)?.name || id2;
     const save2 = async () => {
@@ -11939,7 +11941,7 @@ ${pays}
             g2.name
           );
         }) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing spent in this stretch." }) }),
-        /* @__PURE__ */ u3(Widget, { title: "Where it went", kind: "fx-payees", children: payees.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: payees.map((p3) => /* @__PURE__ */ u3(
+        /* @__PURE__ */ u3(Widget, { title: "Where it went", kind: "fx-payees", actions: everyPayee.length > 5 && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": allPayees, onClick: () => setAllPayees(!allPayees), children: allPayees ? "Show fewer" : `Show all ${everyPayee.length}` }), children: payees.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: payees.map((p3) => /* @__PURE__ */ u3(
           Row,
           {
             lead: /* @__PURE__ */ u3(Mark, { brand: payeeBrand(void 0, p3.payee), name: p3.payee, auto: true }),
