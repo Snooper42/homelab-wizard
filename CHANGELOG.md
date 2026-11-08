@@ -71,6 +71,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Pay, a year at a time:** each person on Finances › Pay says their take-home a year too (*about $55,900 a year*), and one with no gross typed in says what adding it shows, with **Add them**.
 - **Find a charge by its amount:** Finances › Transactions' search finds what a transaction came to too (*86.10*, or *2,400* with its comma).
 - **A day on the checking chart opens it:** click a day on the Dashboard's *Checking* chart and the Calendar opens on it, with what comes and goes that day.
 - **This month against last:** Finances › Transactions' *This month* says how much more or less has gone out than by the same day last month (*$293.05 more out than by Sep 30 last month ($200.00)*).

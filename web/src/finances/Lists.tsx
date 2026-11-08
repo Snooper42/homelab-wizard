@@ -266,7 +266,7 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
     months.at(-1)!.list.push(p);
   }
   // The last month is whole when a payday after it was read; otherwise it is said to run to its last one.
-  const whole = (m: string) => read.some((p) => p.date.slice(0, 7) > m);
+  const wholeMonth = (m: string) => read.some((p) => p.date.slice(0, 7) > m);
   const monthWord = (m: string) => new Date(+m.slice(0, 4), +m.slice(5, 7) - 1, 1).toLocaleDateString(undefined, m.slice(0, 4) === v.today.slice(0, 4) ? { month: 'long' } : { month: 'long', year: 'numeric' });
   const into = (id: string) => { const to = L.person[id]?.account; return to && to !== v.checking ? L.account[to]?.name || to : ''; };
   return (
@@ -278,7 +278,9 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
           return (
             <Widget key={e.id} kind="fx-person" title={<span class="fx-who"><Who name={e.name} n={L.order[e.id] ?? 0} size="lg" /><span>{e.name}<span class="fx-sub">{scheduleText(e.schedule)} · into {L.account[e.account || v.checking]?.name || 'checking'}</span></span></span>}
               actions={edit && <IconButton icon="edit" label={`Edit ${e.name}'s pay`} onClick={() => edit('person', e.id)} />}>
-              <Stat value={<Amount value={e.net} />} caption="Take-home, each paycheck" />
+              <Stat value={<Amount value={e.net} />} caption={<>Take-home, each paycheck · about {whole(e.net * perMonth(e.schedule) * 12)} a year</>} />
+              {/* No gross or deductions yet: say what they would show, and open the form for them. */}
+              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
               {!!e.gross && (() => {
                 const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
                 return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;
@@ -296,7 +298,7 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
           {/* Month by month, each with what it brings in all: a month with a third paycheck stands out. */}
           {months.map(({ month: m, list }) => (
             <section key={m} class="fx-paymonth" aria-label={monthWord(m)}>
-              <h3><span>{monthWord(m)}<span class="fx-sub"> · {plural(list.length, 'paycheck')}{whole(m) ? '' : `, to ${dayShort(list.at(-1)!.date)}`}</span></span>
+              <h3><span>{monthWord(m)}<span class="fx-sub"> · {plural(list.length, 'paycheck')}{wholeMonth(m) ? '' : `, to ${dayShort(list.at(-1)!.date)}`}</span></span>
                 <Amount value={list.reduce((n, p) => n + p.total, 0)} sign tone="in" form="full" /></h3>
               <Rows kind="fx-rows">
                 {list.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}

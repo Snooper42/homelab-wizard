@@ -6230,6 +6230,16 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck")', { timeout: 5000 });
     await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
   } },
+  // Pay: each person's take-home a year too; one with no gross or deductions typed in says what they would show, with
+  // Add them opening the form. None on a phone allowed only to look.
+  { name: 'Finances: Pay says a year\'s take-home, and asks for the gross where none is typed', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-person:has-text("Alex") .fx-caption:text-is("Take-home, each paycheck · about $55,900 a year")', { timeout: 5000 });
+    await page.waitForSelector('.fx-person:has-text("Jordan") .fx-caption:text-is("Take-home, each paycheck · about $28,800 a year")', { timeout: 5000 });
+    if (await page.$('.fx-person:has-text("Alex") .fx-payhint')) throw new Error('Alex, with a gross, is asked for one');
+    await page.click('.fx-person:has-text("Jordan") .fx-payhint button:text-is("Add them")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Jordan")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

@@ -13369,7 +13369,7 @@ ${pays}
       if (months.at(-1)?.month !== p3.date.slice(0, 7)) months.push({ month: p3.date.slice(0, 7), list: [] });
       months.at(-1).list.push(p3);
     }
-    const whole2 = (m3) => read.some((p3) => p3.date.slice(0, 7) > m3);
+    const wholeMonth = (m3) => read.some((p3) => p3.date.slice(0, 7) > m3);
     const monthWord = (m3) => new Date(+m3.slice(0, 4), +m3.slice(5, 7) - 1, 1).toLocaleDateString(void 0, m3.slice(0, 4) === v3.today.slice(0, 4) ? { month: "long" } : { month: "long", year: "numeric" });
     const into2 = (id2) => {
       const to = L2.person[id2]?.account;
@@ -13396,7 +13396,15 @@ ${pays}
             ] }),
             actions: edit && /* @__PURE__ */ u3(IconButton, { icon: "edit", label: `Edit ${e3.name}'s pay`, onClick: () => edit("person", e3.id) }),
             children: [
-              /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: e3.net }), caption: "Take-home, each paycheck" }),
+              /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: e3.net }), caption: /* @__PURE__ */ u3(S, { children: [
+                "Take-home, each paycheck · about ",
+                whole(e3.net * perMonth(e3.schedule) * 12),
+                " a year"
+              ] }) }),
+              !e3.gross && !ded.length && edit && /* @__PURE__ */ u3("p", { class: "fx-sub fx-payhint", children: [
+                "Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. ",
+                /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("person", e3.id), children: "Add them" })
+              ] }),
               !!e3.gross && (() => {
                 const parts3 = [{ label: "Take-home", value: e3.net, color: "in" }, ...ded.map((d3) => ({ label: d3.name, value: d3.amount, color: d3.account ? "save" : "track" })), ...e3.gross - e3.net - taken > 0.5 ? [{ label: "Taxes and the rest", value: e3.gross - e3.net - taken, color: "muted" }] : []];
                 return /* @__PURE__ */ u3(S, { children: [
@@ -13425,7 +13433,7 @@ ${pays}
             /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
               " · ",
               plural(list.length, "paycheck"),
-              whole2(m3) ? "" : `, to ${dayShort(list.at(-1).date)}`
+              wholeMonth(m3) ? "" : `, to ${dayShort(list.at(-1).date)}`
             ] })
           ] }),
           /* @__PURE__ */ u3(Amount, { value: list.reduce((n3, p3) => n3 + p3.total, 0), sign: true, tone: "in", form: "full" })

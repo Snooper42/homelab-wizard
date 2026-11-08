@@ -2144,6 +2144,7 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-txmore { display:flex; align-items:center; gap:12px; margin:14px 0 0; }
 .fx-txvs { margin:0; } .fx-txvs span { font-weight:600; }
 .fx-paytotal { margin:0; }
+.fx-payhint { margin:0; } .fx-payhint button { margin-left:4px; }
 /* Coming up: what of it is due before the next paycheck, under the total. */
 .fx-beforepay { margin:-8px 0 0; }
 .fx-paytotal strong { color:var(--text); }
