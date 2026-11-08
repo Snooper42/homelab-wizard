@@ -257,7 +257,7 @@ jobs:
           cp Screenshots/data.json "$DATA/Documents/screenshot-data.json"
           xcrun simctl status_bar "$UDID" override --time 9:41 --dataNetwork wifi --wifiBars 3 --cellularBars 4 --batteryState charged --batteryLevel 100 || true
           mkdir -p "$RUNNER_TEMP/pictures"
-          shots="status backups finances transactions transaction budgets bills accounts investments goals setup settings"
+          shots="status backups finances spending inbox loading transactions transaction budgets bills recurring accounts investments goals setup settings lock app"
           for look in light dark; do
             xcrun simctl ui "$UDID" appearance "$look"
             for shot in $shots; do
@@ -273,6 +273,15 @@ jobs:
               echo "$look-$shot"
             done
           done
+          # The largest accessibility text size, for what might cut off.
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl ui "$UDID" content_size accessibility-extra-extra-extra-large || true
+          for shot in status finances transactions spending; do
+            xcrun simctl launch --terminate-running-process "$UDID" "$BID" -shot "$shot" > /dev/null || continue
+            sleep 8
+            xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/pictures/large-$shot.png" > /dev/null 2>&1 && echo "large-$shot" || true
+          done
+          xcrun simctl ui "$UDID" content_size large || true
           # Finances as it opens, amounts hidden.
           xcrun simctl ui "$UDID" appearance light
           xcrun simctl launch --terminate-running-process "$UDID" "$BID" -shot finances -hidden > /dev/null && sleep 7 \

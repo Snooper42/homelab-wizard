@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct AppDetailView: View {
-    @ScaledMetric(relativeTo: .title2) private var iconSize: CGFloat = 52
+    @ScaledMetric(relativeTo: .title2) private var iconSize: CGFloat = 84
+    @Environment(\.openURL) private var openURL
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
     @Environment(HomelabTasksViewModel.self) private var tasks
@@ -11,32 +12,37 @@ struct AppDetailView: View {
     var body: some View {
         if let app {
             Form {
+                // Its logo big, its name, and its state, centred, then its round buttons.
                 Section {
-                    HStack(spacing: 14) {
+                    VStack(spacing: 8) {
                         AppIconView(app: app, size: iconSize)
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(verbatim: app.name)
-                                .font(.title2.bold())
-                            // Its state as a pill in its colour, then the row's own words
-                            // when they say more ("Stopped at 3:12 AM: it ran out of memory").
-                            Label(app.stateLabel, systemImage: app.symbolName)
-                                .labelStyle(.titleAndIcon)
-                                .pill(app.tint)
-                            if app.detailLine != app.stateLabel {
-                                Text(verbatim: app.detailLine)
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                            } else if app.isRunning, let since = app.startedAt {
-                                Text("Started \(since.formatted(.relative(presentation: .named)))")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                            }
+                            .shadow(color: Design.shadow.opacity(0.14), radius: 12, y: 8)
+                        Text(verbatim: app.name)
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
+                        // Its state as a pill in its colour, then the row's own words
+                        // when they say more ("Stopped at 3:12 AM: it ran out of memory").
+                        Label(app.stateLabel, systemImage: app.symbolName)
+                            .labelStyle(.titleAndIcon)
+                            .pill(app.tint)
+                        if app.detailLine != app.stateLabel {
+                            Text(verbatim: app.detailLine)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        } else if app.isRunning, let since = app.startedAt {
+                            Text("Started \(since.formatted(.relative(presentation: .named)))")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity)
                     .accessibilityElement(children: .combine)
+                    roundButtons(for: app)
+                        .padding(.top, 10)
                 }
                 .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
                 // What's wrong first, then what can be done, then the rest.
                 if let problem = app.notAnswering, !problem.isEmpty {
@@ -82,15 +88,6 @@ struct AppDetailView: View {
 
                 addressesSection(for: app)
 
-                if app.hasLogs {
-                    Section {
-                        Button {
-                            dashboard.logsApp = app
-                        } label: {
-                            Label("Logs", systemImage: "doc.text")
-                        }
-                    }
-                }
 
                 settingsSection(for: app)
 
@@ -170,7 +167,8 @@ struct AppDetailView: View {
         let available = actions.available(for: app)
         let pending = actions.pending[app.id]
         let hint = actions.lookOnlyHint(for: app)
-        if !available.isEmpty || pending != nil || hint != nil {
+        let rest = available.filter { !Self.roundActions.contains($0) }
+        if !rest.isEmpty || available.contains(.stop) || pending != nil || hint != nil {
             Section {
                 if let pending {
                     PendingActionLine(app: app, pending: pending)
@@ -178,7 +176,8 @@ struct AppDetailView: View {
                         Button("Dismiss") { actions.dismissFailure(for: app) }
                     }
                 }
-                ForEach(available) { action in
+                // Start, Stop and Restart are the round buttons up top; the rest here.
+                ForEach(available.filter { !Self.roundActions.contains($0) }) { action in
                     Button(role: action.needsConfirmation ? .destructive : nil) {
                         actions.request(action, on: app)
                     } label: {
@@ -190,7 +189,7 @@ struct AppDetailView: View {
                     StopForAWhileMenu(app: app)
                 }
             } header: {
-                Text("Actions")
+                if !rest.isEmpty || pending != nil { Text("Actions") }
             } footer: {
                 if let hint {
                     Text(hint)
@@ -201,12 +200,71 @@ struct AppDetailView: View {
         }
     }
 
+    /// The actions the round buttons carry.
+    private static let roundActions: Set<AppAction> = [.start, .stop, .restart]
+
+    /// Open, Start or Stop, Restart and Logs, as round buttons, as the
+    /// mockups have them; each only when it can be done.
+    @ViewBuilder
+    private func roundButtons(for app: AppStatus) -> some View {
+        let available = actions.available(for: app)
+        let url = app.address.flatMap { Self.httpsURL($0) }
+        if url != nil || !available.filter({ Self.roundActions.contains($0) }).isEmpty || app.hasLogs {
+            HStack(alignment: .top, spacing: 20) {
+                if let url {
+                    RoundActionButton(title: "Open", systemImage: "arrow.up.right.square", tint: Theme.accent) { openURL(url) }
+                }
+                ForEach([AppAction.start, .restart, .stop].filter { available.contains($0) }) { action in
+                    RoundActionButton(title: action.title, systemImage: action.systemImage,
+                                      tint: action == .stop ? Theme.danger : action == .start ? Theme.success : Theme.info) {
+                        actions.request(action, on: app)
+                    }
+                    .disabled(actions.isBusy)
+                }
+                if app.hasLogs {
+                    RoundActionButton(title: "Logs", systemImage: "text.alignleft", tint: Color(light: 0x5E5E66, dark: 0x98989F)) {
+                        dashboard.logsApp = app
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// The last seven days, a bar each: green when it answered every check,
+    /// amber on a day it was down, red while it's down now.
+    private func weekBars(_ outages: [WatchdogOutage]) -> some View {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let days = (0..<7).reversed().compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
+        return HStack(spacing: 6) {
+            ForEach(days, id: \.self) { day in
+                let end = calendar.date(byAdding: .day, value: 1, to: day) ?? day
+                let down = outages.filter { $0.from < end && ($0.to ?? Date()) > day }
+                let now = down.contains { $0.to == nil }
+                VStack(spacing: 5) {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(now ? Theme.danger : down.isEmpty ? Design.running : Theme.warning)
+                        .frame(height: 30)
+                    Text(day, format: .dateTime.weekday(.abbreviated))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("\(day.formatted(.dateTime.weekday(.wide))): \(now ? "down now" : down.isEmpty ? "up all day" : "down for a while")"))
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
     /// The watchdog's week for this app, as the computer shows it on hover.
     @ViewBuilder
     private func weekSection(for app: AppStatus) -> some View {
         if let watchdog = dashboard.cards.watchdog, let share = watchdog.week[app.id] {
             let outages = watchdog.outages[app.id] ?? []
             Section {
+                weekBars(outages)
                 LabeledContent("Up this week") {
                     Text(share, format: .percent.precision(.fractionLength(0...1)))
                         .foregroundStyle(share < 0.99 ? Theme.warning : .secondary)
