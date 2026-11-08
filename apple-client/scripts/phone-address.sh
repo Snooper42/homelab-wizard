@@ -49,9 +49,32 @@ if [ -z "$IP" ]; then
 MSG
   exit 1
 fi
+home() { case "$1" in 10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.3[01].*) return 0 ;; *) return 1 ;; esac; }
 case "$IP" in
-  10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.3[01].*) echo "✓ homelab.$DOMAIN is $IP, on the home network" ;;
-  *) echo "! homelab.$DOMAIN is $IP, which isn't a home-network address. The companion only answers at home, so pairing would fail from there." ;;
+  127.*)
+    # This Mac runs the homelab and answers itself; the phone asks the
+    # Wi-Fi's DNS, so ask it too.
+    DNS="$(ipconfig getoption en0 domain_name_server 2>/dev/null || true)"
+    WIFI_IP=""
+    if [ -n "$DNS" ]; then
+      WIFI_IP="$(dig +short +time=2 +tries=1 "homelab.$DOMAIN" "@$DNS" 2>/dev/null | grep -E '^[0-9.]+$' | head -1 || true)"
+    fi
+    if home "$WIFI_IP"; then
+      echo "✓ homelab.$DOMAIN is $IP on this Mac (it answers itself), and $WIFI_IP from the Wi-Fi's DNS, which the phone uses"
+    else
+      SAYS=""
+      if [ -n "$DNS" ] && [ -n "$WIFI_IP" ]; then SAYS=" ($DNS), which says $WIFI_IP"
+      elif [ -n "$DNS" ]; then SAYS=" ($DNS), which didn't answer"
+      fi
+      echo "✓ homelab.$DOMAIN is $IP on this Mac, which answers itself."
+      echo "  The phone asks the Wi-Fi's DNS$SAYS: it should point at this Mac's home address."
+    fi ;;
+  *)
+    if home "$IP"; then
+      echo "✓ homelab.$DOMAIN is $IP, on the home network"
+    else
+      echo "! homelab.$DOMAIN is $IP, which isn't a home-network address. The companion only answers at home, so pairing would fail from there."
+    fi ;;
 esac
 
 # 2. The certificate and the companion behind the proxy. Without a token the

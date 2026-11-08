@@ -57,8 +57,11 @@ case "$*" in *HomelabClient-iOS*) d=Debug-iphoneos ;; *) d=Debug ;; esac
 mkdir -p "$HOMELAB_XCODE_DIR/build/Build/Products/$d/HomelabClient.app"'
 # xcrun devicectl: one iPhone (and a simulator, which is skipped).
 stub system_profiler 'echo "${FAKE_USB:-}"'
+stub ipconfig 'echo "${FAKE_WIFI_DNS:-}"'
+stub dig 'echo "${FAKE_WIFI_IP:-}"'
 stub xcrun 'if [ "$1 $2 $3" = "devicectl list devices" ]; then
 [ -n "${FAKE_NO_PHONE:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}'"'"' >"$5"; exit 0; }
+[ -n "${FAKE_NO_REALITY:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"iPhone"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
 cat >"$5" <<J
 {"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"Test iPhone 2","developerModeStatus":"${FAKE_DEVMODE:-enabled}"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC","reality":"physical"},"connectionProperties":{"pairingState":"paired","tunnelState":"connected"}},{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}
 J
@@ -123,6 +126,10 @@ FAKE_HTTP=403 run "$HERE/phone-address.sh"
 expect "through the tunnel is refused" bash -c '[ "$0" = 1 ] && grep -q "Cloudflare" <<<"$1"' "$RC" "$OUT"
 FAKE_IP=203.0.113.5 run "$HERE/phone-address.sh"
 expect "a public address is called out" says "isn't a home-network address"
+FAKE_IP=127.0.0.1 FAKE_WIFI_DNS=192.168.1.10 FAKE_WIFI_IP=192.168.1.10 run "$HERE/phone-address.sh"
+expect "loopback on the Mac that runs it: asks the Wi-Fi's DNS, which gives a home address" bash -c '[ "$0" = 0 ] && grep -q "from the Wi-Fi.s DNS, which the phone uses" <<<"$1" && ! grep -q "isn.t a home-network" <<<"$1"' "$RC" "$OUT"
+FAKE_IP=127.0.0.1 FAKE_WIFI_DNS=192.168.1.1 run "$HERE/phone-address.sh"
+expect "loopback, and the Wi-Fi's DNS doesn't know it: says so" says "192.168.1.1), which didn't answer"
 
 echo "run-on-iphone.sh"
 run "$HERE/run-on-iphone.sh"
@@ -134,6 +141,8 @@ expect "opens the app" called "xcrun devicectl device process launch --device CO
 expect "pairs with the https link, named for the phone" called "homelab phone pair --name Test iPhone 2 --can-change"
 expect "shows the QR code, not the Safari line" bash -c 'grep -q QRLINE1 <<<"$0" && ! grep -q Safari <<<"$0"' "$OUT"
 expect "gives the address and code to type" says "https://homelab.example.com and the code ABCD2345"
+FAKE_NO_REALITY=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
+expect "a real iPhone that Xcode doesn't mark physical is still found" called "-destination id=00008110-ABC"
 FAKE_NO_PHONE=1 run "$HERE/run-on-iphone.sh" com.example
 expect "no iPhone, none on USB: says to check the cable" bash -c '[ "$0" = 1 ] && grep -q "many only charge" <<<"$1"' "$RC" "$OUT"
 FAKE_NO_PHONE=1 FAKE_USB="iPhone:" run "$HERE/run-on-iphone.sh" com.example

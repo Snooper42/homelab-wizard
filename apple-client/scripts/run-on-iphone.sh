@@ -51,7 +51,9 @@ with open(sys.argv[3], "w") as seen:
         seen.write(f"  {dp.get('name', '?')} ({kind}, {how})\n")
 for d in devices:
     hw, dp, cp = d.get("hardwareProperties", {}), d.get("deviceProperties", {}), d.get("connectionProperties", {})
-    if hw.get("platform") != "iOS" or hw.get("reality") != "physical":
+    # A real iPhone or iPad: not a simulator. Some Xcode versions leave
+    # "reality" out for a real one, so only "virtual" is skipped.
+    if hw.get("platform") != "iOS" or hw.get("reality") == "virtual":
         continue
     name = dp.get("name", "")
     if want and name != want:
@@ -90,11 +92,11 @@ if [ "$COUNT" != 1 ]; then
 fi
 IFS=$'\t' read -r DEVICE UDID NAME DEVMODE PAIRING TUNNEL <"$TMP/device.tsv"
 echo "Found $NAME."
-if [ "$PAIRING" != "paired" ]; then
+if [ -n "$PAIRING" ] && [ "$PAIRING" != "paired" ]; then
   echo "This Mac isn't trusted by $NAME yet. Unlock the phone, tap Trust, enter its passcode, then run this again." >&2
   exit 1
 fi
-if [ "$DEVMODE" != "enabled" ]; then
+if [ "$DEVMODE" = "disabled" ]; then
   cat >&2 <<MSG
 Developer Mode is off on $NAME. On the phone: Settings › Privacy & Security › Developer Mode,
 turn it on, and restart the phone when it asks. (If the switch isn't there, keep the phone
