@@ -56,7 +56,9 @@ stub xcodebuild 'echo "xcodebuild $*" >>"$CALLS"
 case "$*" in *HomelabClient-iOS*) d=Debug-iphoneos ;; *) d=Debug ;; esac
 mkdir -p "$HOMELAB_XCODE_DIR/build/Build/Products/$d/HomelabClient.app"'
 # xcrun devicectl: one iPhone (and a simulator, which is skipped).
+stub system_profiler 'echo "${FAKE_USB:-}"'
 stub xcrun 'if [ "$1 $2 $3" = "devicectl list devices" ]; then
+[ -n "${FAKE_NO_PHONE:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}'"'"' >"$5"; exit 0; }
 cat >"$5" <<J
 {"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"Test iPhone 2","developerModeStatus":"${FAKE_DEVMODE:-enabled}"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC","reality":"physical"},"connectionProperties":{"pairingState":"paired","tunnelState":"connected"}},{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}
 J
@@ -132,6 +134,10 @@ expect "opens the app" called "xcrun devicectl device process launch --device CO
 expect "pairs with the https link, named for the phone" called "homelab phone pair --name Test iPhone 2 --can-change"
 expect "shows the QR code, not the Safari line" bash -c 'grep -q QRLINE1 <<<"$0" && ! grep -q Safari <<<"$0"' "$OUT"
 expect "gives the address and code to type" says "https://homelab.example.com and the code ABCD2345"
+FAKE_NO_PHONE=1 run "$HERE/run-on-iphone.sh" com.example
+expect "no iPhone, none on USB: says to check the cable" bash -c '[ "$0" = 1 ] && grep -q "many only charge" <<<"$1"' "$RC" "$OUT"
+FAKE_NO_PHONE=1 FAKE_USB="iPhone:" run "$HERE/run-on-iphone.sh" com.example
+expect "no iPhone for Xcode, one on USB: says to open Xcode once" bash -c '[ "$0" = 1 ] && grep -q "open -a Xcode" <<<"$1"' "$RC" "$OUT"
 FAKE_DEVMODE=disabled run "$HERE/run-on-iphone.sh" com.example
 expect "Developer Mode off: says where to turn it on" bash -c '[ "$0" = 1 ] && grep -q "Developer Mode" <<<"$1"' "$RC" "$OUT"
 FAKE_BUILD_FAIL=1 run "$HERE/run-on-iphone.sh" com.example

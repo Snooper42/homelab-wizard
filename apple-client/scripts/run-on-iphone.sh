@@ -38,10 +38,17 @@ if ! xcrun devicectl list devices --json-output "$TMP/devices.json" >/dev/null 2
   echo "Xcode's device tool didn't answer. Is Xcode installed and opened once?" >&2
   exit 1
 fi
-/usr/bin/python3 -I - "$TMP/devices.json" "${HOMELAB_DEVICE:-}" >"$TMP/device.tsv" <<'PY'
+/usr/bin/python3 -I - "$TMP/devices.json" "${HOMELAB_DEVICE:-}" "$TMP/seen.txt" >"$TMP/device.tsv" <<'PY'
 import json, sys
 devices = json.load(open(sys.argv[1])).get("result", {}).get("devices", [])
 want = sys.argv[2]
+# Everything Xcode sees, to say what it found when it isn't an iPhone to use.
+with open(sys.argv[3], "w") as seen:
+    for d in devices:
+        hw, dp, cp = d.get("hardwareProperties", {}), d.get("deviceProperties", {}), d.get("connectionProperties", {})
+        kind = "simulator" if hw.get("reality") == "virtual" else (hw.get("platform") or "device")
+        how = cp.get("transportType") or cp.get("tunnelState") or "not connected"
+        seen.write(f"  {dp.get('name', '?')} ({kind}, {how})\n")
 for d in devices:
     hw, dp, cp = d.get("hardwareProperties", {}), d.get("deviceProperties", {}), d.get("connectionProperties", {})
     if hw.get("platform") != "iOS" or hw.get("reality") != "physical":
@@ -55,10 +62,25 @@ for d in devices:
 PY
 COUNT="$(grep -c . "$TMP/device.tsv" || true)"
 if [ "$COUNT" = 0 ]; then
-  cat >&2 <<MSG
-No iPhone found${HOMELAB_DEVICE:+ named "$HOMELAB_DEVICE"}. Plug it in with a cable, unlock it, and tap Trust if it asks.
-Then run this again.
+  echo "No iPhone found${HOMELAB_DEVICE:+ named \"$HOMELAB_DEVICE\"}." >&2
+  if grep -v "simulator" "$TMP/seen.txt" | grep -q .; then
+    echo "Xcode sees only:" >&2
+    grep -v "simulator" "$TMP/seen.txt" >&2
+  fi
+  # What the Mac itself sees on USB, apart from Xcode.
+  if system_profiler SPUSBDataType 2>/dev/null | grep -qi "iPhone"; then
+    cat >&2 <<MSG
+The Mac sees an iPhone on the cable, but Xcode doesn't know it yet. With the phone
+plugged in and unlocked, open Xcode once (open -a Xcode) and wait until it has
+finished preparing the phone (a few minutes the first time). Then run this again.
 MSG
+  else
+    cat >&2 <<MSG
+The Mac doesn't see an iPhone on a cable at all. Unlock the phone and tap Trust if it
+asks. If nothing changes, try another cable (many only charge) plugged straight into
+the Mac, not through a hub or dock. Then run this again.
+MSG
+  fi
   exit 1
 fi
 if [ "$COUNT" != 1 ]; then
