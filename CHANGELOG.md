@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status on the iPhone, at a glance:** it opens with a ring of how many apps are running and the one that needs a look, with its **Start** and **Logs** right there, then tiles for backups, savings, nightly updates and health checks. The tab bar at the bottom shrinks as you scroll.
 - **Ghostfolio, Wallos, and Firefly III that run elsewhere:** an app you started in Docker yourself (Status says *Runs elsewhere*) now counts as running for Finances: Investments reads Ghostfolio once a day as Finances opens, and Update balances and Recurring offer **From Ghostfolio**, **From Firefly III**, and **From Wallos**, as they do for apps the homelab runs.
 - **Payee logos on the iPhone:** each transaction in the iPhone app's Finances shows its payee's logo, the same as on the computer: Netflix, your bank or your grocer in its own colours, or its initials when it has none.
 - **Add a holding is always there:** the Investments card shows **Add a holding** and **Read now** wherever you can change Finances (the computer, and a phone allowed to change it), not only when Status reports Ghostfolio running. If Ghostfolio doesn't answer, the card says so.
