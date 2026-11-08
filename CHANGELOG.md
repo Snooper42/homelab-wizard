@@ -66,6 +66,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Next paychecks, month by month:** Finances › Pay lists the coming paychecks under each month, with how many it has and what they bring in all, so a month with a third paycheck (or one moved in from the next month by a holiday) stands out.
+- **No half-empty rows on Finances:** in a window of usual width, *What you own* and *What you owe* sit side by side, Reports' *By tag* takes the whole row, and in a wide window the calendar's day and month cards stack beside it.
 - **A transaction's note on the iPhone:** the bank's own wording, kept from an import, isn't shown as its note (a memo you wrote before it still is), as on the computer.
 - **Budgets on the iPhone:** the page opens with what's left to spend this month, a bar of what's spent, and about how much a day that leaves.
 - **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.

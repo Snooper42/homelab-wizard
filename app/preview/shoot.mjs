@@ -5971,6 +5971,32 @@ const smokes = [
     const above = await page.evaluate(() => document.querySelector('.fx-monthone').getBoundingClientRect().top < document.querySelector('.fx-calendar').getBoundingClientRect().top);
     if (!above) throw new Error('narrow, the month in all comes after the week list');
   } },
+  // No card alone with half its row empty: at two columns (1280px) What you own and What you owe side by side and By tag
+  // the whole row; at three (1500px), the day picked and the month in all one above the other beside the calendar.
+  { name: 'Finances: no card sits alone with half its row empty', screen: 'finances', run: async (page) => {
+    const box = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width) }; });
+    const row = async (sel) => page.$eval(sel, (e) => { const b = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); return Math.round(r.right - r.left) / Math.round(b.width); });
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const own = await box('.fx-ownlist'), owe = await box('.fx-owelist');
+    if (own.y !== owe.y || owe.x <= own.x) throw new Error(`own ${JSON.stringify(own)}, owe ${JSON.stringify(owe)}`);
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-bytag', { timeout: 5000 });
+    if ((await row('.fx-bytag')) < 0.99) throw new Error('By tag takes half its row');
+    await page.setViewportSize({ width: 1500, height: 900 });
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-monthone', { timeout: 5000 });
+    const cal = await box('.fx-calendar'), day = await box('.fx-dayone'), month = await box('.fx-monthone');
+    if (day.x !== month.x || month.y <= day.y || day.x <= cal.x + cal.w - 1) throw new Error(`calendar ${JSON.stringify(cal)}, day ${JSON.stringify(day)}, month ${JSON.stringify(month)}`);
+  } },
+  // Pay's next paychecks month by month, each with how many and what they bring: December has four (Alex's Jan 1 moved
+  // to Dec 31), and January, read to its end, is whole.
+  { name: 'Finances: the next paychecks by month, each with its total', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    const heads = await page.$$eval('.fx-paydays .fx-paymonth h3', (hs) => hs.map((h) => h.textContent.replace(/\s+/g, ' ').trim()));
+    const want = ['November · 3 paychecks+$6,700.00', 'December · 4 paychecks+$8,850.00', 'January 2027 · 3 paychecks+$6,700.00'];
+    if (JSON.stringify(heads) !== JSON.stringify(want)) throw new Error(`months: ${JSON.stringify(heads)}`);
+    await page.waitForSelector('.fx-paymonth[aria-label="December"] li:has-text("Thu, Dec 31"):has-text("New Year")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

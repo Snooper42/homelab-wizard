@@ -13100,7 +13100,16 @@ ${pays}
   }
   function Pay({ v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) {
     const people = v3.plan.people || [];
-    const paydays = (v3.paydays || []).slice(0, 10);
+    const read = v3.paydays || [];
+    const lastMonth = read[9]?.date.slice(0, 7);
+    const paydays = read.filter((p3, i3) => i3 < 10 || p3.date.slice(0, 7) === lastMonth);
+    const months = [];
+    for (const p3 of paydays) {
+      if (months.at(-1)?.month !== p3.date.slice(0, 7)) months.push({ month: p3.date.slice(0, 7), list: [] });
+      months.at(-1).list.push(p3);
+    }
+    const whole2 = (m3) => read.some((p3) => p3.date.slice(0, 7) > m3);
+    const monthWord = (m3) => new Date(+m3.slice(0, 4), +m3.slice(5, 7) - 1, 1).toLocaleDateString(void 0, m3.slice(0, 4) === v3.today.slice(0, 4) ? { month: "long" } : { month: "long", year: "numeric" });
     const into2 = (id2) => {
       const to = L2.person[id2]?.account;
       return to && to !== v3.checking ? L2.account[to]?.name || to : "";
@@ -13148,22 +13157,35 @@ ${pays}
         "Add someone who gets paid"
       ] }),
       !people.length && !edit && /* @__PURE__ */ u3(Card, { children: /* @__PURE__ */ u3(Empty, { children: "No paychecks typed in yet." }) }),
-      !!paydays.length && /* @__PURE__ */ u3(Widget, { title: "Next paychecks", span: "all", kind: "fx-paydays", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: paydays.map((p3) => /* @__PURE__ */ u3(
-        Row,
-        {
-          lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
-          title: dayLong(p3.date),
-          sub: p3.people.map((id2) => L2.person[id2]?.name + (into2(id2) ? ` (into ${into2(id2)})` : "")).join(" and "),
-          end: (p3.moved || []).map((mv) => /* @__PURE__ */ u3("span", { class: "fx-badge fx-muted", children: [
-            mv.why.charAt(0).toUpperCase() + mv.why.slice(1),
-            ", from ",
-            dayShort(mv.from)
-          ] }, mv.person)),
-          when: /* @__PURE__ */ u3(Amount, { value: p3.total, sign: true, tone: "in", form: "full" }),
-          whenPlain: true
-        },
-        p3.date
-      )) }) }),
+      !!paydays.length && /* @__PURE__ */ u3(Widget, { title: "Next paychecks", span: "all", kind: "fx-paydays", children: months.map(({ month: m3, list }) => /* @__PURE__ */ u3("section", { class: "fx-paymonth", "aria-label": monthWord(m3), children: [
+        /* @__PURE__ */ u3("h3", { children: [
+          /* @__PURE__ */ u3("span", { children: [
+            monthWord(m3),
+            /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+              " · ",
+              plural(list.length, "paycheck"),
+              whole2(m3) ? "" : `, to ${dayShort(list.at(-1).date)}`
+            ] })
+          ] }),
+          /* @__PURE__ */ u3(Amount, { value: list.reduce((n3, p3) => n3 + p3.total, 0), sign: true, tone: "in", form: "full" })
+        ] }),
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((p3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+            title: dayLong(p3.date),
+            sub: p3.people.map((id2) => L2.person[id2]?.name + (into2(id2) ? ` (into ${into2(id2)})` : "")).join(" and "),
+            end: (p3.moved || []).map((mv) => /* @__PURE__ */ u3("span", { class: "fx-badge fx-muted", children: [
+              mv.why.charAt(0).toUpperCase() + mv.why.slice(1),
+              ", from ",
+              dayShort(mv.from)
+            ] }, mv.person)),
+            when: /* @__PURE__ */ u3(Amount, { value: p3.total, sign: true, tone: "in", form: "full" }),
+            whenPlain: true
+          },
+          p3.date
+        )) })
+      ] }, m3)) }),
       /* @__PURE__ */ u3(SetAsideWidget, { v: v3, keep: keep2 }),
       saveSettings && /* @__PURE__ */ u3(Settings2, { v: v3, save: saveSettings, calendar })
     ] }) });

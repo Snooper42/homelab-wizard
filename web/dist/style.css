@@ -1742,6 +1742,12 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-widget.span2 { grid-column:span 2; }
 .fx-widget.spanall { grid-column:1 / -1; }
 @container (max-width: 760px) { .fx-widget.span2 { grid-column:auto; } }
+/* The board is two columns under 1052px (three cards of 340px and their gaps), three from it: a card laid out for three
+   would sit alone at two, half the row empty. At two, What you own and What you owe sit side by side, and By tag
+   takes the row; at three, the calendar takes two rows, the day picked and the month in all one above the other beside it. */
+@container (max-width: 1051px) { .fx-widget.span2.fx-ownlist { grid-column:auto; } }
+@container (min-width: 696px) and (max-width: 1051px) { .fx-board > .fx-bytag { grid-column:1 / -1; } }
+@container (min-width: 1052px) { .fx-calboard > .fx-calendar { grid-row:span 2; } }
 .fx-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; margin-left:auto; }
 .fx-icon { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:8px; background:none; color:var(--muted); cursor:pointer; padding:0; }
 .fx-icon svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
@@ -2104,6 +2110,10 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 /* Transactions: by day, newest first; a day's heading over its rows. */
 .fx-txday + .fx-txday { margin-top:14px; }
 .fx-txday h3 { margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
+/* Pay's next paychecks by month: the month, how many, and what they bring, over its paydays. */
+.fx-paymonth + .fx-paymonth { margin-top:14px; }
+.fx-paymonth h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; padding-bottom:6px; border-bottom:1px solid var(--line); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
+.fx-paymonth h3 .fx-sub { font-weight:400; }
 .fx-txnote { font-style:italic; }
 /* Transactions' search and filters: one row that wraps; the total of what they show under it. */
 .fx-txfilters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }

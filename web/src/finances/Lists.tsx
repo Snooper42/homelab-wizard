@@ -251,7 +251,18 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
 export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { saveSettings?: SaveSettings; keep?: (plan: finance.Plan) => Promise<boolean>; calendar?: () => Promise<string> }) {
   const people = v.plan.people || [];
   // Every paycheck ahead, a check into savings too, which says where it goes.
-  const paydays = (v.paydays || []).slice(0, 10);
+  // The next ten paydays, and the rest of the last one's month when it was read, so each month's total is the whole month.
+  const read = v.paydays || [];
+  const lastMonth = read[9]?.date.slice(0, 7);
+  const paydays = read.filter((p, i) => i < 10 || p.date.slice(0, 7) === lastMonth);
+  const months: { month: string; list: finance.Payday[] }[] = [];
+  for (const p of paydays) {
+    if (months.at(-1)?.month !== p.date.slice(0, 7)) months.push({ month: p.date.slice(0, 7), list: [] });
+    months.at(-1)!.list.push(p);
+  }
+  // The last month is whole when a payday after it was read; otherwise it is said to run to its last one.
+  const whole = (m: string) => read.some((p) => p.date.slice(0, 7) > m);
+  const monthWord = (m: string) => new Date(+m.slice(0, 4), +m.slice(5, 7) - 1, 1).toLocaleDateString(undefined, m.slice(0, 4) === v.today.slice(0, 4) ? { month: 'long' } : { month: 'long', year: 'numeric' });
   const into = (id: string) => { const to = L.person[id]?.account; return to && to !== v.checking ? L.account[to]?.name || to : ''; };
   return (
     <div class="fin">
@@ -277,12 +288,19 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
         {edit && <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>}
         {!people.length && !edit && <Card><Empty>No paychecks typed in yet.</Empty></Card>}
         {!!paydays.length && <Widget title="Next paychecks" span="all" kind="fx-paydays">
-          <Rows kind="fx-rows">
-            {paydays.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
-              title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
-              end={(p.moved || []).map((mv) => <span key={mv.person} class="fx-badge fx-muted">{mv.why.charAt(0).toUpperCase() + mv.why.slice(1)}, from {dayShort(mv.from)}</span>)}
-              when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
-          </Rows>
+          {/* Month by month, each with what it brings in all: a month with a third paycheck stands out. */}
+          {months.map(({ month: m, list }) => (
+            <section key={m} class="fx-paymonth" aria-label={monthWord(m)}>
+              <h3><span>{monthWord(m)}<span class="fx-sub"> · {plural(list.length, 'paycheck')}{whole(m) ? '' : `, to ${dayShort(list.at(-1)!.date)}`}</span></span>
+                <Amount value={list.reduce((n, p) => n + p.total, 0)} sign tone="in" form="full" /></h3>
+              <Rows kind="fx-rows">
+                {list.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+                  title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
+                  end={(p.moved || []).map((mv) => <span key={mv.person} class="fx-badge fx-muted">{mv.why.charAt(0).toUpperCase() + mv.why.slice(1)}, from {dayShort(mv.from)}</span>)}
+                  when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
+              </Rows>
+            </section>
+          ))}
         </Widget>}
         <SetAsideWidget v={v} keep={keep} />
         {saveSettings && <Settings v={v} save={saveSettings} calendar={calendar} />}
