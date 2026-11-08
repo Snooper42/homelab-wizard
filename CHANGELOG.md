@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A budget's daily allowance:** under what a budget has left, Finances says how much a day keeps it on budget to the end of the month or pay period (*$225.08 a day for 2 days*), and the budgets' bars now line up.
 - **Amounts in Finances' boxes, to the cent:** Update balances and the forms start a box with an amount's cents in two places (*2512.40*, not *2512.4*).
 - **Next paychecks, month by month:** Finances › Pay lists the coming paychecks under each month, with how many it has and what they bring in all, so a month with a third paycheck (or one moved in from the next month by a holiday) stands out.
 - **No half-empty rows on Finances:** in a window of usual width, *What you own* and *What you owe* sit side by side, Reports' *By tag* takes the whole row, and in a wide window the calendar's day and month cards stack beside it.

@@ -2150,7 +2150,9 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-budgetbar.warn > span { background:var(--warn); }
 .fx-budgetbar.out > span { background:var(--fin-out); }
 .fx-budgetbar > i { position:absolute; top:-3px; bottom:-3px; width:2px; margin-left:-1px; border-radius:1px; background:var(--text); opacity:.55; }
-.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fx-budgetleft { font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right; min-width:9.5em; }
+/* Under what is left: how much a day keeps it on budget, in grey. */
+.fx-budgetday { display:block; font-size:12px; font-weight:400; color:var(--muted); }
 .budgetlist li { grid-template-columns:minmax(0, 1fr) 8em 9em auto auto; }
 .budgetlist .moneyfield { display:flex; align-items:center; gap:4px; padding:0 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); }
 .budgetlist .moneyfield input { border:0 !important; padding:4px 0 !important; background:none !important; min-height:0; }

@@ -6707,7 +6707,8 @@ const smokes = [
   { name: 'Finances: budgets say what is left, and over in red', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     const left = (cat) => page.textContent(`.fx-budgets li:has(.grow > strong:text-is("${cat}")) .fx-budgetleft`, { timeout: 5000 });
-    for (const [cat, want] of [['Food', '$450.15 left'], ['Car', '$251.80 left'], ['Subscriptions', '$50.00 over']]) {
+    // What is left, and under it how much a day keeps it on budget to the month's end (Oct 30 and 31: two days).
+    for (const [cat, want] of [['Food', '$450.15 left$225.08 a day for 2 days'], ['Car', '$251.80 left$125.90 a day for 2 days'], ['Subscriptions', '$50.00 over']]) {
       if ((await left(cat)).replace(/\s+/g, ' ').trim() !== want) throw new Error(`${cat}: ${await left(cat)}`);
     }
     await page.waitForSelector('.fx-budgets li:has-text("Subscriptions") .fx-budgetleft.fx-out', { timeout: 5000 });

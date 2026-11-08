@@ -9071,19 +9071,24 @@
           const pace = b2.amount > 0 ? Math.min(100, b2.pace / b2.amount * 100) : 0;
           const icon = iconOf(v3.categories, b2.category);
           const hue2 = categoryHue(b2.category, v3.categories);
+          const days = Math.max(1, daysBetween(v3.today, b2.last) + 1);
+          const daily = b2.left > 5e-3 && b2.last >= v3.today ? `${money(b2.left / days)} a day${days > 1 ? ` for ${days} days` : ", today"}` : "";
           return /* @__PURE__ */ u3(
             Row,
             {
               lead: /* @__PURE__ */ u3(Mark, { kind: icon, type: icon, name: b2.category, hue: hue2 }),
               title: b2.category,
               sub: `${b2.per === "paycheck" ? `This pay period, to ${dayShort(b2.last)}` : `This month, to ${dayShort(b2.last)}`} · ${money(b2.spent)} of ${money(b2.amount)}${b2.rolled ? ` (${b2.rolled > 0 ? "with" : "less"} ${money(Math.abs(b2.rolled))} from last time)` : ""}`,
-              when: /* @__PURE__ */ u3("span", { class: "fx-budgetleft" + (tone ? " fx-" + tone : ""), children: b2.left < 0 ? /* @__PURE__ */ u3(S, { children: [
-                money(-b2.left),
-                " over"
-              ] }) : /* @__PURE__ */ u3(S, { children: [
-                /* @__PURE__ */ u3(Amount, { value: b2.left, form: "full" }),
-                " left"
-              ] }) }),
+              when: /* @__PURE__ */ u3("span", { class: "fx-budgetleft" + (tone ? " fx-" + tone : ""), children: [
+                b2.left < 0 ? /* @__PURE__ */ u3(S, { children: [
+                  money(-b2.left),
+                  " over"
+                ] }) : /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3(Amount, { value: b2.left, form: "full" }),
+                  " left"
+                ] }),
+                daily && /* @__PURE__ */ u3("span", { class: "fx-budgetday", children: daily })
+              ] }),
               whenPlain: true,
               children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone ? " " + tone : ""), role: "img", "aria-label": `${b2.category}: ${money(b2.spent)} spent of ${money(b2.amount)}${tone === "warn" ? ", ahead of an even pace" : ""}`, children: [
                 /* @__PURE__ */ u3("span", { style: { width: `${share3}%` } }),
