@@ -74,6 +74,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
   - `web/src/format.ts`'s `bytes` divides by 1024 but says GB and TB (Tidy Up now formats its own sizes, 1000 to a KB);
   - `parts/Row`'s dot has no words for VoiceOver;
   - `parts/Segmented` is a radiogroup where each radio is a Tab stop, with no arrow keys.
+  - `cmd/homelab/agentstate_test.go` (#471) fails on CI's Windows runner, then passes on a re-run: `TestJobLogSplitsAtOnceAllFinish` ("The process cannot access the file because it is being used by another process", #484 and #486, Nov 7) and once `TestAgentStateIsReplacedWhole` ("a reader found half a note (0 bytes)", #484). Both PRs changed no Go code. Windows refuses to open or rename a file another process holds, so `splitLog`'s and `saveAgentState`'s renames race their readers there; the failing check is `test (windows-latest)`.
 - **Then Finances**, in its own session, as the focus above says.
 
 **Open now** (Nov 7, 2026, 01:30 UTC): nothing of Account 1's once #470 (this file's own PR) merges; #476 merged. Branches whose work is on main, for the owner to delete, are listed in the session's report.

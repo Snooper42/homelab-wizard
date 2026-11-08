@@ -12,6 +12,7 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
 import { setOwnLogos } from './Mark';
+import { setCategories } from './hues';
 import { type Running } from './homelab';
 import { Reports } from './Reports';
 import { Transactions } from './Transactions';
@@ -99,6 +100,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   const L = v ? lookup(v.plan) : null;
   setCurrency(v?.plan.currency);
   setOwnLogos(v?.plan.logos);
+  setCategories(v?.categories);
   const [what, label] = adds[tab] || adds.overview;
   const ro = !!v?.readOnly;
   // Every number reads from the balances typed in (the oldest of checking's
