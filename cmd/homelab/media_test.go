@@ -381,6 +381,20 @@ func TestMediaTickRunsTheInboxOnlyWhenDownloadsChanged(t *testing.T) {
 	}
 }
 
+// What I did today's Undo runs inbox.py undo <id>, holding the lock: it
+// moves files, with no --apply to ask for.
+func TestMediaInboxUndo(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "undo", "ok": true}`}})
+	if out, code := homelabCmd(t, root, "", "media", "inbox", "undo", "0123456789ab"); code != 0 {
+		t.Fatalf("undo (exit %d):\n%s", code, out)
+	}
+	c := pythonCalls(t, calls)
+	if len(c) != 1 || !strings.Contains(fmt.Sprint(c[0]["args"]), "inbox.py undo 0123456789ab --config") {
+		t.Fatalf("undo: %v", c)
+	}
+}
+
 func TestScrubDue(t *testing.T) {
 	loc := time.Local
 	day := func(h, m int) time.Time { return time.Date(2026, 11, 3, h, m, 0, 0, loc) }

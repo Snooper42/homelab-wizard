@@ -34,6 +34,7 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
       movies, tv  scan, run (into Tdarr's queue), collect, dedupe, posters, file <paths>, genre-counts, status
       audiobooks  scan, run (one .m4b a book), file <paths>, status
   homelab media inbox [--apply]            file what's finished downloading in Downloads
+  homelab media inbox undo <id>            put one download What I did today filed back where it was
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone
   homelab media tdarr setup [--apply]      Tdarr's space-saving libraries for films and TV
   homelab media restore <run> [--yes]      put back what one run put in %[1]s (Undo on Tidy Up)
@@ -62,6 +63,10 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 	case "install":
 		return h.mediaInstall(ctx, args[1:])
 	case "inbox":
+		// What I did today's Undo: homelab media inbox undo <id>.
+		if len(args) > 1 && args[1] == "undo" {
+			return h.mediaEngine(ctx, "inbox", args[1], args[2:])
+		}
 		return h.mediaEngine(ctx, "inbox", "scan", args[1:])
 	case "scrub":
 		return h.mediaEngine(ctx, "scrubber", "scan", args[1:])
@@ -219,8 +224,10 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 	if err := h.mediaSettings(ctx, py); err != nil {
 		return err
 	}
-	// The inbox and the scrubber only preview without --apply: no lock then.
-	lock := act.Lock && (f.apply || (kind != "inbox" && kind != "scrubber" && kind != "tdarr"))
+	// The inbox's sweep and the scrubber only preview without --apply: no
+	// lock then. The inbox's Undo moves files at once.
+	preview := kind == "inbox" && action == "scan" || kind == "scrubber" || kind == "tdarr"
+	lock := act.Lock && (f.apply || !preview)
 	if kind == "music" && action == "genres" && !f.apply || kind == "music" && action == "lyrics" && slices.Contains(f.rest, "--check") {
 		lock = false
 	}
@@ -331,6 +338,9 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 	switch kind {
 	case "inbox", "scrubber":
 		full = append(full, map[string]string{"inbox": "inbox", "scrubber": "scrub"}[kind])
+		if kind == "inbox" && action != "scan" {
+			full = append(full, action)
+		}
 	case "tdarr":
 		full = append(full, "tdarr", "setup")
 	case "trash":
