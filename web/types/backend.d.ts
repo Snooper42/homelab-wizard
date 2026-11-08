@@ -273,6 +273,8 @@ declare namespace app {
   }
   interface TidyInbox {
     folders: string[];
+    gone?: string[];
+    when: string;
     watching: boolean;
     last?: media.Run | null;
   }
@@ -1242,9 +1244,11 @@ interface Backend {
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
     TidyLock(): Promise<app.TidyRunning>;
+    TidyPickFolder(): Promise<string>;
     TidyReveal(arg1: string): Promise<void>;
     TidyReview(): Promise<app.TidyBook[]>;
     TidyRun(arg1: string, arg2: string, arg3: string[], arg4: boolean): Promise<void>;
+    TidySetInbox(arg1: string[], arg2: string): Promise<app.TidyUp>;
     TidyStop(): Promise<void>;
     TidyUp(): Promise<app.TidyUp>;
     TrayAtLogin(): Promise<boolean>;

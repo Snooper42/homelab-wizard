@@ -1960,7 +1960,11 @@ html.os-mac .fx-balance { padding:4px 8px; }
   :is(#finRoot, #tidyRoot) .fx-widget .fx-actions { max-width:100%; min-width:0; }
   #finRoot .fx-widget .fx-actions .seg { max-width:100%; overflow-x:auto; }
   /* Tidy Up's counts under their heading ("6 things · 380 GB to win back") read as its subtitle, from its left edge. */
-  #tidyRoot .fx-widget.tidyneeds > .row .fx-actions { flex:1 1 100%; justify-content:flex-start; margin:-6px 0 0; }
+  #tidyRoot .fx-widget/* Tidy Up › Inbox: Drop anything here. Its lead line, the when choice beside its label, and Tidy up now across the card. */
+.tidyinboxlead { margin:0 0 12px; }
+.tidyinboxwhen { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0; }
+.tidyinboxgo button { width:100%; justify-content:center; padding:9px 14px; font-size:14px; }
+.tidyneeds > .row .fx-actions { flex:1 1 100%; justify-content:flex-start; margin:-6px 0 0; }
   /* A chart's card across the plot, not beside the point, where beside it would run past the card's edge. */
   #finRoot .fx-plot > .fx-tip { left:0 !important; right:0 !important; min-width:0; max-width:none; }
 }
