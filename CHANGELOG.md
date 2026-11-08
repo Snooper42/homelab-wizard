@@ -64,6 +64,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The native Mac version of the Homelab app is gone:** on the Mac, Homelab Wizard (the desktop app) is the way in. The iPhone and iPad app is unchanged.
 - **Finances on the iPhone, as cards:** checking as a Wallet card with what it is after the next paycheck, net worth with a line you can run a finger along (past month, 3 months or year), what's left to spend and the next bill side by side, the latest transactions, the bills coming up, and the rest of Finances one tap away. The red health line no longer sits atop every tab: what needs a look is on Status and its badge.
 - **Unplugging no longer cuts Tdarr off mid-video:** on battery, the other busy apps still pause at once, but Tdarr finishes the video it's on (starting no new one), then pauses too, so it leaves no half-made copy behind. Plugged in again, it picks up where it was.
 - **Tdarr no longer fills the media drive:** a video Tdarr was stopped part-way through (on battery, or by an update) left a copy as large as the video in its cache, and they added up (81 GB on one drive). Tidy Up now clears those leftovers by itself whenever Tdarr isn't converting anything, and says how much space came back. Your videos are never touched.
