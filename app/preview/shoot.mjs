@@ -6689,7 +6689,8 @@ const smokes = [
     const fpl = by('FPL'), amex = by('American Express'), mazda = by('Mazda'), hoa = by('Sunset Palms Eas Sunset Pal'), cash = by('Apple Cash');
     if (!fpl || fpl.payment !== 'electric' || fpl.category !== 'Electric' || !/FPL DIRECT DEBIT/.test(fpl.note)) throw new Error(`FPL ${JSON.stringify(fpl)}`);
     if (!amex || amex.to !== 'amex' || amex.category) throw new Error(`American Express ${JSON.stringify(amex)}`);
-    if (!mazda || mazda.payment) throw new Error(`Mazda ${JSON.stringify(mazda)}`);
+    // A car's make pays the plan's car payment by what it is (#508), $399 about its planned $412.
+    if (!mazda || mazda.payment !== 'carpay') throw new Error(`Mazda ${JSON.stringify(mazda)}`);
     if (!hoa || hoa.payment !== 'hoa') throw new Error(`HOA ${JSON.stringify(hoa)}`);
     if (!cash || cash.amount !== 107) throw new Error(`Apple Cash ${JSON.stringify(cash)}`);
     // The list shows the clean name, not the bank's wording.
