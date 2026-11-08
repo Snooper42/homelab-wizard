@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app takes https addresses only:** the one exception, plain http to the homelab on the same Mac, was for the Mac version of the app, which is gone.
 - **The iPhone app, smoother:** Finances shows the shapes of its cards while it reads instead of a spinner; an app's page opens with its logo big, round Open, Start or Stop, Restart and Logs buttons, and its week as seven coloured bars; the lock screen shows the new white icon with one Unlock button; and at the largest text sizes Finances' tiles stack instead of cutting off.
 - **Investments on the iPhone, redone:** what they're worth with the gain all time and this month, a line over the past month, 3 months or year you can run a finger along, how the money is split across your holdings, and each holding with its ticker in colour and its gain.
 - **A new icon for the iPhone app:** a violet server rack on a white tile, the other way round from before, like Proton Mail's. The mark on the pairing and lock screens matches.
