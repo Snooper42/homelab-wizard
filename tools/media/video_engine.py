@@ -485,7 +485,10 @@ class VideoEngine:
             self.clear_leftovers(td)
         files = self.state["files"]
         queued = [k for k, r in files.items() if r.get("status") == "queued"]
-        if td and queued and not inner:
+        # On battery the homelab holds Tdarr's workers at nought, so it finishes its video and starts no
+        # other: none is given back until it is plugged in.
+        on_battery = os.environ.get("HOMELAB_MEDIA_ALLOW_BATTERY") != "1" and mc.on_battery()
+        if td and queued and not inner and not on_battery:
             for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
                 ui.ok("Tdarr's node %s had no worker, so nothing was being shrunk: it has one now" % name)
         replaced, failed, waiting, freed, handed, lost = 0, 0, 0, 0, 0, []

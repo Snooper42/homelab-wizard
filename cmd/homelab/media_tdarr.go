@@ -11,7 +11,10 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
@@ -110,4 +113,138 @@ func (h *homelab) tdarrKey(ctx context.Context, env map[string]string) {
 			}
 		}
 	}
+}
+
+// tdarrAPI is Tdarr's API on this machine, with Tidy Up's key or login,
+// for the battery saver: whether Tdarr is converting a file, and its
+// transcode workers held at nought while it finishes one, then given back.
+type tdarrAPI struct {
+	base   string
+	header http.Header
+}
+
+// tdarrAPI signs in to Tdarr as Tidy Up does: its key, else its login.
+func (h *homelab) tdarrAPI(ctx context.Context) *tdarrAPI {
+	env := h.envMap()
+	t := &tdarrAPI{base: "http://127.0.0.1:" + cmp.Or(env["TDARR_PORT"], "8265"), header: http.Header{}}
+	if key := env["TDARR_API_KEY"]; key != "" {
+		t.header.Set("x-api-key", key)
+	} else if env["TDARR_USER"] != "" {
+		var got struct {
+			Token string `json:"token"`
+		}
+		if t.do(ctx, http.MethodPost, "/api/v2/public/auth/login", nil, map[string]string{"username": env["TDARR_USER"], "password": env["TDARR_PASSWORD"]}, &got) == nil && got.Token != "" {
+			t.header.Set("Authorization", "Bearer "+got.Token)
+		}
+	}
+	return t
+}
+
+// do sends one call: data wrapped as Tdarr's API wants it ({"data": …}),
+// or raw sent as it is.
+func (t *tdarrAPI) do(ctx context.Context, method, path string, data, raw, out any) error {
+	var body io.Reader
+	switch {
+	case data != nil:
+		b, _ := json.Marshal(map[string]any{"data": data})
+		body = bytes.NewReader(b)
+	case raw != nil:
+		b, _ := json.Marshal(raw)
+		body = bytes.NewReader(b)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, t.base+path, body)
+	if err != nil {
+		return err
+	}
+	req.Header = t.header.Clone()
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := tdarrClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("Tdarr answered %s", resp.Status)
+	}
+	if out == nil {
+		return nil
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+// tdarrNode is one of Tdarr's nodes: its workers on a file now, and how
+// many of each kind it may run.
+type tdarrNode struct {
+	Workers      map[string]json.RawMessage `json:"workers"`
+	WorkerLimits map[string]any             `json:"workerLimits"`
+}
+
+func (n tdarrNode) limit(kind string) int {
+	f, _ := n.WorkerLimits[kind].(float64)
+	return int(f)
+}
+
+func (t *tdarrAPI) nodes(ctx context.Context) (map[string]tdarrNode, error) {
+	var nodes map[string]tdarrNode
+	err := t.do(ctx, http.MethodGet, "/api/v2/get-nodes", nil, nil, &nodes)
+	return nodes, err
+}
+
+// busy reports whether any node is converting a file; ok is false when
+// Tdarr doesn't answer (and so can't be converting one).
+func (t *tdarrAPI) busy(ctx context.Context) (busy, ok bool) {
+	nodes, err := t.nodes(ctx)
+	if err != nil {
+		return false, false
+	}
+	for _, n := range nodes {
+		if len(n.Workers) > 0 {
+			return true, true
+		}
+	}
+	return false, true
+}
+
+// tdarrTranscode are the worker kinds that convert files (the health checks
+// are light, and left as they are).
+var tdarrTranscode = []string{"transcodecpu", "transcodegpu"}
+
+// hold lowers each node's transcode workers to nought, one at a time as
+// Tdarr's API takes them: it starts no new file and finishes the ones it
+// has. What it lowered, by "node/kind", to give back.
+func (t *tdarrAPI) hold(ctx context.Context) map[string]int {
+	held := map[string]int{}
+	nodes, err := t.nodes(ctx)
+	if err != nil {
+		return held
+	}
+	for id, n := range nodes {
+		for _, kind := range tdarrTranscode {
+			for range n.limit(kind) {
+				if t.do(ctx, http.MethodPost, "/api/v2/alter-worker-limit", map[string]string{"nodeID": id, "process": "decrease", "workerType": kind}, nil, nil) != nil {
+					break
+				}
+				held[id+"/"+kind]++
+			}
+		}
+	}
+	return held
+}
+
+// giveBack raises the workers hold lowered; false when Tdarr doesn't
+// answer yet (just started), for a later run.
+func (t *tdarrAPI) giveBack(ctx context.Context, held map[string]int) bool {
+	for key, n := range held {
+		id, kind, _ := strings.Cut(key, "/")
+		for range n {
+			if t.do(ctx, http.MethodPost, "/api/v2/alter-worker-limit", map[string]string{"nodeID": id, "process": "increase", "workerType": kind}, nil, nil) != nil {
+				return false
+			}
+			held[key]--
+		}
+		delete(held, key)
+	}
+	return true
 }

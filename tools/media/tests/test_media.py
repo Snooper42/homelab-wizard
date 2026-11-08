@@ -1860,3 +1860,32 @@ class TdarrLeftovers(Base):
         self.assertEqual(mc.clear_tdarr_leftovers(mc.Tdarr("http://tdarr:8265"), cache=""), (0, 0))
         self.assertEqual(mc.clear_tdarr_leftovers(mc.Tdarr("http://tdarr:8265"), cache=str(self.tmp / "unplugged")), (0, 0))
         self.assertTrue(all(p.exists() for p in self.old))
+
+
+class TdarrOnBattery(Base):
+    """On battery the homelab holds Tdarr's workers at nought so it finishes its video and starts no
+    other: collecting its work every few minutes doesn't give it a worker back then, only on power."""
+
+    def setUp(self):
+        super().setUp()
+        self.raised = []
+
+        def http(method, url, body=None, headers=None, timeout=None):
+            if url.endswith("/api/v2/get-nodes"):
+                return {"n1": {"nodeName": "homelab", "workerLimits": {"transcodecpu": 0}, "workers": {}}}
+            if url.endswith("/api/v2/alter-worker-limit"):
+                self.raised.append(body["data"])
+            return {}
+        self.http_mock.side_effect = http
+        film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        mc.save_state("movies", {"files": {str(film): {"status": "queued", "size": 10, "queued_at": time.time()}}, "pending": {}})
+
+    def test_no_worker_given_on_battery(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_ALLOW_BATTERY": ""}), mock.patch.object(mc, "on_battery", return_value=True):
+            movies_organizer.Movies().collect()
+        self.assertEqual(self.raised, [])
+
+    def test_a_worker_given_on_power(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_ALLOW_BATTERY": ""}), mock.patch.object(mc, "on_battery", return_value=False):
+            movies_organizer.Movies().collect()
+        self.assertEqual([r["process"] for r in self.raised], ["increase"])
