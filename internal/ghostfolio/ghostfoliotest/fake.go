@@ -1,12 +1,14 @@
 // Package ghostfoliotest is a fake Ghostfolio API for tests: one security
 // token, accounts that hold what was bought into them, a ticker lookup,
-// and the buys and sales put in, kept to look at afterwards.
+// and the buys and sales put in, kept to look at afterwards, each listed,
+// changed or deleted by its id.
 package ghostfoliotest
 
 import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -16,6 +18,7 @@ const Token = "good-token"
 
 // Activity is a buy or a sale the fake was sent.
 type Activity struct {
+	ID         string  `json:"id"`
 	AccountID  string  `json:"accountId"`
 	Currency   string  `json:"currency"`
 	DataSource string  `json:"dataSource"`
@@ -24,6 +27,7 @@ type Activity struct {
 	Symbol     string  `json:"symbol"`
 	Type       string  `json:"type"`
 	UnitPrice  float64 `json:"unitPrice"`
+	Fee        float64 `json:"fee"`
 }
 
 // Fake is a running fake Ghostfolio. Base is what ghostfolio.Base should
@@ -35,6 +39,11 @@ type Fake struct {
 	mu         sync.Mutex
 	accounts   []map[string]any
 	Activities []Activity
+	made       int
+
+	// Behind: an account's worth (GET /account) leaves out the newest buy
+	// or sale, as Ghostfolio's does until it has worked it out again.
+	Behind bool
 }
 
 // New starts a fake with these accounts (each an id, name and currency).
@@ -72,6 +81,7 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	one := strings.TrimPrefix(path, "/activities/")
 	switch {
 	case path == "/account" && r.Method == http.MethodGet:
 		out := []map[string]any{}
@@ -123,9 +133,41 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"message": []string{"accountId must be set"}})
 			return
 		}
+		f.made++
+		a.ID = "act-" + strconv.Itoa(f.made)
 		f.Activities = append(f.Activities, a)
 		w.WriteHeader(http.StatusCreated)
 		_, _ = w.Write([]byte("{}"))
+	case path == "/activities" && r.Method == http.MethodGet:
+		id := r.URL.Query().Get("accounts")
+		out := []map[string]any{}
+		for _, a := range f.Activities {
+			if a.AccountID == id {
+				out = append(out, map[string]any{"id": a.ID, "accountId": a.AccountID, "date": a.Date, "type": a.Type, "quantity": a.Quantity, "unitPrice": a.UnitPrice, "fee": a.Fee, "currency": a.Currency,
+					"assetProfile": map[string]any{"symbol": a.Symbol, "dataSource": a.DataSource, "currency": a.Currency, "name": a.Symbol + " Inc"}})
+			}
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"activities": out, "count": len(out)})
+	case one != path && r.Method == http.MethodPut:
+		var a Activity
+		_ = json.NewDecoder(r.Body).Decode(&a)
+		for i := range f.Activities {
+			if f.Activities[i].ID == one && a.ID == one && a.AccountID != "" {
+				f.Activities[i] = a
+				_ = json.NewEncoder(w).Encode(a)
+				return
+			}
+		}
+		http.NotFound(w, r)
+	case one != path && r.Method == http.MethodDelete:
+		for i := range f.Activities {
+			if f.Activities[i].ID == one {
+				_ = json.NewEncoder(w).Encode(f.Activities[i])
+				f.Activities = append(f.Activities[:i], f.Activities[i+1:]...)
+				return
+			}
+		}
+		http.NotFound(w, r)
 	default:
 		http.NotFound(w, r)
 	}
@@ -134,7 +176,11 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 // worth is what an account's holdings are worth: 100 a share.
 func (f *Fake) worth(id string) float64 {
 	n := 0.0
-	for _, a := range f.Activities {
+	list := f.Activities
+	if f.Behind && len(list) > 0 {
+		list = list[:len(list)-1]
+	}
+	for _, a := range list {
 		if a.AccountID == id {
 			if a.Type == "SELL" {
 				n -= a.Quantity

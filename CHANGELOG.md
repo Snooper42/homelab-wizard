@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Put a buy right, or delete it:** on Net worth's Investments card, open a holding to see its buys and sales as Ghostfolio keeps them. **Change** fixes the shares, what you paid, the day, or bought or sold; **Delete** (asked first) takes it out of Ghostfolio. The card reads Ghostfolio again after each, so its figures follow. A phone allowed to change Finances can do the same.
 - **Real logos from each company's website:** Finances › Transactions › **Logos** lists every payee and account still showing initials, with its website guessed (fpl.com, fidelity.com); **Get them all** fetches each company's own icon from its site, shown before you save. A payee's, account's, or payment's logo picker has **Get the real logo** too. Your computer asks only the websites you click for, only then, and the logos are kept only in your plan.
 - **Homelab on your iPhone, iPad and Mac:** a native app, laid out as Homelab Wizard is: Status, Backups, Finances, Setup and Settings, each app with its logo, locked with Face ID or Touch ID. It pairs as the phone page does, and a phone allowed to make changes can change the everyday settings too; passwords, tokens and the settings a phone connects through stay on the computer. From a Mac with Xcode, `apple-client/scripts/run-on-iphone.sh` puts it on a plugged-in iPhone (apple-client/README.md).
 - **Add investments from Finances:** **Add a holding** on Net worth's Investments card records a buy or a sale without opening Ghostfolio. Pick the account (or make a new one, named the same in both), type a ticker or a name and pick it from what Ghostfolio finds, then the shares, what you paid, and the day. It goes into Ghostfolio on your homelab and the card reads it back. Only the ticker leaves the homelab, when Ghostfolio looks it up.
@@ -62,6 +63,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.
 - **Settings on the iPhone, as the iPhone's own:** your homelab at the top, then switches for nightly updates and the widget, and each section of the homelab's settings with its own coloured icon.
 - **Transactions on the iPhone, like Wallet:** the account's card on top with your other accounts to switch between, each transaction with its company's logo, and new ones marked with a violet dot until you've reviewed them. Tap one for its own page: a big logo and amount, what bill it paid, its category and note, and the other times at that place.
 - **Finances on the iPhone, tidied:** it opens with checking now and after payday, your net worth with its line, then a list like Settings: Transactions, Budgets, Bills, Investments, Accounts, Goals and Loans, each one tap away.

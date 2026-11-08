@@ -217,6 +217,18 @@ declare namespace app {
     date: string;
     sold?: boolean;
   }
+  interface InvestmentTrade {
+    id: string;
+    account: string;
+    symbol: string;
+    dataSource: string;
+    currency: string;
+    shares: number;
+    total: number;
+    fee?: number;
+    date: string;
+    sold?: boolean;
+  }
   interface InvestmentsRead {
     view: finance.View;
     unmatched: string[];
@@ -1155,11 +1167,14 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
+    FinancesChangeInvestment(arg1: app.InvestmentTrade): Promise<app.InvestmentsRead>;
+    FinancesDeleteInvestment(arg1: string, arg2: string): Promise<app.InvestmentsRead>;
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
     FinancesFindSymbol(arg1: string): Promise<app.AppSymbol[]>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
+    FinancesInvestmentTrades(arg1: string, arg2: string): Promise<app.InvestmentTrade[]>;
     FinancesLedger(): Promise<finance.Ledger>;
     FinancesReadInvestments(): Promise<app.InvestmentsRead>;
     FinancesReceipt(arg1: string): Promise<string>;
