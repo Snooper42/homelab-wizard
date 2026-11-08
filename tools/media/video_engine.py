@@ -405,6 +405,7 @@ class VideoEngine:
         lib_id = self.tdarr_library()
         if not td or not lib_id:
             mc.die("Tdarr isn't set up for %s yet." % self.kind, "Run: homelab media tdarr setup --apply")
+        self.clear_leftovers(td)
         if not td.ok():
             mc.die("Tdarr isn't answering at %s." % td.url, "Start it from Status, then run this again.")
         libs = td.libraries()
@@ -456,6 +457,15 @@ class VideoEngine:
         ui.step(3, 3, "Collecting what Tdarr finished")
         self.collect(inner=True)
 
+    def clear_leftovers(self, td):
+        """Tdarr's work folders left by jobs it never finished (it was stopped mid-video), each a copy
+        as large as the video: cleared whenever Tdarr isn't working on anything, and said."""
+        if not td:
+            return
+        n, freed = mc.clear_tdarr_leftovers(td)
+        if n:
+            ui.ok("Cleared %s of Tdarr's unfinished work folders: %s back on the drive" % (mc.fmt_n(n), human(freed)))
+
     # ------------------------------------------------------------------ collect: put Tdarr's results in place
     def output_for(self, original):
         # The record may hold the path as written then (through a link, or a Windows short name).
@@ -471,9 +481,14 @@ class VideoEngine:
             self.load()
             ui.title("%s library" % self.kind.title(), "collecting Tdarr's work")
         td = self.tdarr()
+        if not inner:
+            self.clear_leftovers(td)
         files = self.state["files"]
         queued = [k for k, r in files.items() if r.get("status") == "queued"]
-        if td and queued and not inner:
+        # On battery the homelab holds Tdarr's workers at nought, so it finishes its video and starts no
+        # other: none is given back until it is plugged in.
+        on_battery = os.environ.get("HOMELAB_MEDIA_ALLOW_BATTERY") != "1" and mc.on_battery()
+        if td and queued and not inner and not on_battery:
             for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
                 ui.ok("Tdarr's node %s had no worker, so nothing was being shrunk: it has one now" % name)
         replaced, failed, waiting, freed, handed, lost = 0, 0, 0, 0, 0, []

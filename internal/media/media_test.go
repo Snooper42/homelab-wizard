@@ -92,6 +92,11 @@ func TestSettings(t *testing.T) {
 	if pm := fmt.Sprint(get("tdarr", "path_map")); pm != "[["+filepath.Join("/Volumes/Hobbies", "movies")+" /media/movies] ["+filepath.Join("/Volumes/Hobbies", "tv")+" /media/tv]]" {
 		t.Errorf("tdarr path_map: %s", pm)
 	}
+	// Where Tdarr's container keeps its work (/temp), on the media drive: Tidy Up clears what
+	// unfinished jobs left there.
+	if c := get("tdarr", "cache"); c != filepath.Join("/Volumes/Hobbies", "tdarr-cache") {
+		t.Errorf("tdarr cache: %v", c)
+	}
 	servers := get("servers").(map[string]any)
 	if len(servers) != 4 {
 		t.Errorf("servers: %v", servers)
