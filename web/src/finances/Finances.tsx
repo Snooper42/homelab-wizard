@@ -129,7 +129,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
-          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} />
+          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
