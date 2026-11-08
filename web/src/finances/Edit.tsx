@@ -397,6 +397,7 @@ function PaymentForm(props: EditProps) {
           </>}
         <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
+      {x && <PaidLately x={x} ledger={props.ledger} />}
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
@@ -658,6 +659,33 @@ function PersonForm(props: EditProps) {
       <p><button type="button" class="small addded" onClick={() => setDeds([...deds, { name: '', amount: '', account: '' }])}>Add a deduction</button></p>
       <Actions busy={busy} exists={!!e} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
+  );
+}
+
+/**
+ * A planned payment's last few, from the transactions linked to it: each
+ * day, what it came to, and how far that was from the plan's amount; with
+ * their average when it changes. Read only: a row is changed on Transactions.
+ */
+function PaidLately({ x, ledger }: { x: finance.Payment; ledger?: finance.Ledger | null }) {
+  const paid = (ledger?.transactions || []).filter((t) => t.payment === x.id).sort((a, b) => b.date.localeCompare(a.date));
+  if (!paid.length) return null;
+  const shown = paid.slice(0, 6);
+  const avg = shown.reduce((n, t) => n + Math.abs(t.amount), 0) / shown.length;
+  const differs = shown.some((t) => Math.abs(Math.abs(t.amount) - x.amount) >= 0.005);
+  return (
+    <section class="paidlately" aria-label="Paid lately">
+      <h3>Paid lately{differs && shown.length > 1 && <span class="muted">, {money(avg)} on average</span>}</h3>
+      <ul>
+        {shown.map((t) => {
+          const off = Math.abs(t.amount) - x.amount;
+          return <li key={t.id}><span>{dayLongOf(t.date)}</span><span class="grow muted">{t.payee || ''}</span>
+            {Math.abs(off) >= 0.005 && x.amount > 0 && <span class={off > 0 ? 'bad' : 'ok'}>{off > 0 ? `${money(off)} more` : `${money(-off)} less`}</span>}
+            <strong>{money(Math.abs(t.amount))}</strong></li>;
+        })}
+      </ul>
+      {paid.length > shown.length && <p class="muted">And {paid.length - shown.length} before, on Transactions.</p>}
+    </section>
   );
 }
 

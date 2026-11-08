@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What a bill was paid lately:** open a payment on Finances and its form lists its last few from your transactions, each with how much more or less it was than planned, and their average when they differ (*Paid lately, $141.17 on average*).
 - **A running balance:** pick one account on Finances › Transactions and each day says what it held after (or, for a card, what it owed), worked from the balance you last typed in through the transactions in and out of it.
 - **A month in all, on the calendar:** beside the day you pick, Finances › Calendar sums up the month shown: what its paychecks bring, what its bills take, the lowest checking gets and on which day (said when it's under your cushion), and what your transactions recorded so far. On a narrow window it comes first.
 - **What happened, on the calendar:** Finances › Calendar now shows the days before today too, each with its payees' logos and what it came to from your transactions; pick a day for the list, each opening its transaction, and go back a month for what it came to, as far back as your transactions go.

@@ -6123,6 +6123,22 @@ const smokes = [
     const keys = await page.$$eval('.fx-checking .fx-legend li', (l) => l.map((x) => x.textContent.trim()), { timeout: 5000 });
     if (!keys.includes('Paycheck') || keys.some((k) => k.startsWith('Bill of'))) throw new Error(`keys: ${keys}`);
   } },
+  // A payment's form lists its last few from the transactions linked to it, each with how far it was from the plan,
+  // and their average when they differ; one with none has no such list.
+  { name: 'Finances: a payment\'s form says what it was paid lately', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'e1', date: '2026-08-18', account: 'chk', amount: -140, payee: 'FPL', payment: 'electric' },
+    { id: 'e2', date: '2026-09-18', account: 'chk', amount: -131.1, payee: 'FPL', payment: 'electric' },
+    { id: 'e3', date: '2026-10-18', account: 'chk', amount: -152.4, payee: 'FPL', payment: 'electric' }] } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('.fx-payments li:has(.grow > strong:text-is("Electric")) button');
+    await page.waitForSelector('#finSheet .paidlately h3:has-text("Paid lately, $141.17 on average")', { timeout: 5000 });
+    const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['Sun, Oct 18FPL$12.40 more$152.40', 'Fri, Sep 18FPL$8.90 less$131.10', 'Tue, Aug 18FPL$140.00'])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('.fx-payments li:has(.grow > strong:text-is("Internet")) button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2', { timeout: 5000 });
+    if (await page.$('#finSheet .paidlately')) throw new Error('a payment never paid lists what it was paid');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

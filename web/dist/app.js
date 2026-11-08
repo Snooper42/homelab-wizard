@@ -10099,6 +10099,7 @@
           " The amount changes each time (an estimate)"
         ] })
       ] }),
+      x3 && /* @__PURE__ */ u3(PaidLately, { x: x3, ledger: props.ledger }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!x3, remove, close: props.close, problem, touched })
     ] });
   }
@@ -10394,6 +10395,37 @@
       ] }, i3)),
       /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small addded", onClick: () => setDeds([...deds, { name: "", amount: "", account: "" }]), children: "Add a deduction" }) }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!e3, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function PaidLately({ x: x3, ledger }) {
+    const paid = (ledger?.transactions || []).filter((t3) => t3.payment === x3.id).sort((a3, b2) => b2.date.localeCompare(a3.date));
+    if (!paid.length) return null;
+    const shown6 = paid.slice(0, 6);
+    const avg = shown6.reduce((n3, t3) => n3 + Math.abs(t3.amount), 0) / shown6.length;
+    const differs = shown6.some((t3) => Math.abs(Math.abs(t3.amount) - x3.amount) >= 5e-3);
+    return /* @__PURE__ */ u3("section", { class: "paidlately", "aria-label": "Paid lately", children: [
+      /* @__PURE__ */ u3("h3", { children: [
+        "Paid lately",
+        differs && shown6.length > 1 && /* @__PURE__ */ u3("span", { class: "muted", children: [
+          ", ",
+          money(avg),
+          " on average"
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("ul", { children: shown6.map((t3) => {
+        const off2 = Math.abs(t3.amount) - x3.amount;
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { children: dayLong(t3.date) }),
+          /* @__PURE__ */ u3("span", { class: "grow muted", children: t3.payee || "" }),
+          Math.abs(off2) >= 5e-3 && x3.amount > 0 && /* @__PURE__ */ u3("span", { class: off2 > 0 ? "bad" : "ok", children: off2 > 0 ? `${money(off2)} more` : `${money(-off2)} less` }),
+          /* @__PURE__ */ u3("strong", { children: money(Math.abs(t3.amount)) })
+        ] }, t3.id);
+      }) }),
+      paid.length > shown6.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "And ",
+        paid.length - shown6.length,
+        " before, on Transactions."
+      ] })
     ] });
   }
   function BalancesForm(props) {

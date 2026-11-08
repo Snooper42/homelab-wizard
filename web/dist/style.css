@@ -2089,6 +2089,15 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .balancelist .pendingfield { display:flex; align-items:center; gap:6px; margin:0; }
 .balancelist small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
 .balancelist small .ok { color:var(--ok); } .balancelist small .bad { color:var(--bad); }
+/* A payment's form: its last few from the transactions, each with how far it was from the plan. */
+.paidlately { margin:16px 0 0; }
+.paidlately h3 { margin:0 0 6px; font-size:13px; font-weight:600; }
+.paidlately h3 .muted { font-weight:400; }
+.paidlately ul { list-style:none; margin:0; padding:0; }
+.paidlately li { display:flex; align-items:baseline; gap:12px; padding:6px 0; border-top:1px solid var(--line); font-size:13px; font-variant-numeric:tabular-nums; }
+.paidlately li .grow { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.paidlately li .ok { color:var(--ok); } .paidlately li .bad { color:var(--bad); }
+.paidlately p { margin:6px 0 0; font-size:13px; }
 /* What Save changes, over the cushion: how many differ, and net worth by how much. */
 .balsum { margin:0 0 12px; font-size:13px; font-variant-numeric:tabular-nums; }
 .balsum .ok { color:var(--ok); font-weight:600; } .balsum .bad { color:var(--bad); font-weight:600; }
