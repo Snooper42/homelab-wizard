@@ -1778,3 +1778,114 @@ class TdarrSignIn(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TdarrLeftovers(Base):
+    """Nov 8, the owner: 81 GB in Tdarr's cache, 33 work folders from jobs that never finished (Tdarr
+    was stopped mid-video, each time leaving its copy). Tidy Up clears Tdarr's own work folders that
+    nothing has touched for a while, and only when Tdarr isn't working on anything; nothing else in
+    the cache, and nothing through a link."""
+
+    def setUp(self):
+        super().setUp()
+        self.cache = self.tmp / "Hobbies" / "tdarr-cache"
+        self.cache.mkdir()
+        self.settings["tdarr"]["cache"] = str(self.cache)
+        self.cfg_path.write_text(json.dumps(self.settings))
+        mc.load_settings(str(self.cfg_path))
+        self.workers = {}  # what Tdarr's node is doing now, by worker
+        self.answers = True
+
+        def http(method, url, body=None, headers=None, timeout=None):
+            if not self.answers:
+                raise RuntimeError("can't reach %s" % url)
+            if url.endswith("/api/v2/get-nodes"):
+                return {"n1": {"nodeName": "homelab", "workerLimits": {"transcodecpu": 1}, "workers": self.workers}}
+            if url.endswith("/api/v2/cruddb") and ((body or {}).get("data") or {}).get("mode") == "getAll":
+                return [{"_id": "LIBM"}, {"_id": "LIBT"}]
+            return {}
+        self.http_mock.side_effect = http
+        mock.patch.object(mc, "ffprobe", side_effect=lambda p: facts_info(codec="hevc", size=1_000)).start()
+        hours = 3600
+        self.old = [self.touch(self.cache / ("tdarr-workDir2-%s" % n) / "S01E01-TdarrCacheFile.mkv", size=5000, age=6 * hours)
+                    for n in ("KW12VoA", "qnxfeK9")]
+        # One a worker is writing now: its folder is old, its file isn't.
+        self.fresh = self.touch(self.cache / "tdarr-workDir2-T3kVYTM" / "S01E04-TdarrCacheFile.mkv", size=700)
+        os.utime(str(self.fresh.parent), (time.time() - 6 * hours,) * 2)
+        self.other = self.touch(self.cache / "not-tdarrs" / "keep.mkv", size=10, age=6 * hours)
+        self.loose = self.touch(self.cache / "tdarr-workDir2-loose.txt", size=10, age=6 * hours)
+        elsewhere = self.touch(self.tmp / "elsewhere" / "keep.mkv", size=10, age=6 * hours)
+        self.link = self.cache / "tdarr-workDir2-link"
+        try:
+            self.link.symlink_to(elsewhere.parent, target_is_directory=True)
+        except OSError:
+            self.link = None  # Windows without the right to make links
+        self.elsewhere = elsewhere
+
+    def left(self):
+        return sorted(p.name for p in self.cache.iterdir())
+
+    def kept_safe(self):
+        self.assertTrue(self.fresh.exists(), "a work folder still being written was removed")
+        self.assertTrue(self.other.exists() and self.loose.exists(), "something not Tdarr's work folder was removed")
+        self.assertTrue(self.elsewhere.exists(), "a link was followed")
+
+    def test_old_leftovers_are_cleared_when_tdarr_is_idle(self):
+        movies_organizer.Movies().collect()
+        for p in self.old:
+            self.assertFalse(p.parent.exists(), "%s was left" % p.parent.name)
+        self.kept_safe()
+        self.assertIn("Cleared 2 of Tdarr's unfinished work folders", self.out.getvalue())
+
+    def test_shrink_clears_them_first(self):
+        movies_organizer.Movies().run()
+        self.assertFalse(any(p.parent.exists() for p in self.old))
+        self.kept_safe()
+
+    def test_nothing_is_cleared_while_a_worker_is_busy(self):
+        self.workers = {"w1": {"file": "/media/tv/Show/S01E04.mkv", "percentage": 40}}
+        before = self.left()
+        movies_organizer.Movies().collect()
+        self.assertEqual(self.left(), before)
+        self.assertNotIn("Cleared", self.out.getvalue())
+
+    def test_a_tdarr_that_is_not_running_still_has_its_old_leftovers_cleared(self):
+        self.answers = False
+        n, freed = mc.clear_tdarr_leftovers(mc.Tdarr("http://tdarr:8265"))
+        self.assertEqual((n, freed), (2, 10000))
+        self.assertFalse(any(p.parent.exists() for p in self.old))
+        self.kept_safe()
+
+    def test_nothing_without_a_cache_or_with_a_missing_one(self):
+        self.assertEqual(mc.clear_tdarr_leftovers(mc.Tdarr("http://tdarr:8265"), cache=""), (0, 0))
+        self.assertEqual(mc.clear_tdarr_leftovers(mc.Tdarr("http://tdarr:8265"), cache=str(self.tmp / "unplugged")), (0, 0))
+        self.assertTrue(all(p.exists() for p in self.old))
+
+
+class TdarrOnBattery(Base):
+    """On battery the homelab holds Tdarr's workers at nought so it finishes its video and starts no
+    other: collecting its work every few minutes doesn't give it a worker back then, only on power."""
+
+    def setUp(self):
+        super().setUp()
+        self.raised = []
+
+        def http(method, url, body=None, headers=None, timeout=None):
+            if url.endswith("/api/v2/get-nodes"):
+                return {"n1": {"nodeName": "homelab", "workerLimits": {"transcodecpu": 0}, "workers": {}}}
+            if url.endswith("/api/v2/alter-worker-limit"):
+                self.raised.append(body["data"])
+            return {}
+        self.http_mock.side_effect = http
+        film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        mc.save_state("movies", {"files": {str(film): {"status": "queued", "size": 10, "queued_at": time.time()}}, "pending": {}})
+
+    def test_no_worker_given_on_battery(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_ALLOW_BATTERY": ""}), mock.patch.object(mc, "on_battery", return_value=True):
+            movies_organizer.Movies().collect()
+        self.assertEqual(self.raised, [])
+
+    def test_a_worker_given_on_power(self):
+        with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_ALLOW_BATTERY": ""}), mock.patch.object(mc, "on_battery", return_value=False):
+            movies_organizer.Movies().collect()
+        self.assertEqual([r["process"] for r in self.raised], ["increase"])

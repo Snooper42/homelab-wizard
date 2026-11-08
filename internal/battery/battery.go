@@ -25,11 +25,20 @@ var Heavy = []string{
 	"speedtest-tracker", "changedetection", "open-webui", "paperless-ai",
 }
 
-// State is what the saver paused, and when.
+// State is what the saver paused, and when; what it left running on
+// battery to finish its work (Tdarr's video, which a stop would cut off,
+// leaving its copy behind), stopped at a later run once it has; and the
+// workers it held from Tdarr meanwhile ("node/kind" to how many), given
+// back on power.
 type State struct {
-	Paused []string  `json:"paused"`
-	Since  time.Time `json:"since"`
+	Paused    []string       `json:"paused"`
+	Since     time.Time      `json:"since"`
+	Finishing []string       `json:"finishing,omitempty"`
+	Held      map[string]int `json:"held,omitempty"`
 }
+
+// empty is a state with nothing for the saver to undo.
+func (s State) empty() bool { return len(s.Paused) == 0 && len(s.Finishing) == 0 && len(s.Held) == 0 }
 
 // Path is where the state is kept.
 func Path(root string) string { return filepath.Join(root, "data", "battery.json") }
@@ -44,9 +53,9 @@ func Load(path string) State {
 }
 
 // Save writes the state whole (a reader never meets half of it), only
-// this account's to read, or removes it when nothing is paused.
+// this account's to read, or removes it when nothing is left to undo.
 func (s State) Save(path string) error {
-	if len(s.Paused) == 0 {
+	if s.empty() {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
 			return err
 		}
@@ -69,7 +78,7 @@ func Update(path string, change func(*State) bool) error {
 		if !change(&s) {
 			return nil, false
 		}
-		if len(s.Paused) == 0 {
+		if s.empty() {
 			return nil, true
 		}
 		data, err := json.MarshalIndent(s, "", "  ")
@@ -97,6 +106,43 @@ func Pause(path string, ids []string, now time.Time) error {
 func Resume(path string, ids []string) error {
 	return Update(path, func(s *State) bool {
 		s.Paused = slices.DeleteFunc(s.Paused, func(id string) bool { return slices.Contains(ids, id) })
+		return true
+	})
+}
+
+// Finish records apps left running on battery to finish their work, and
+// the workers held from them meanwhile, added to any held already.
+func Finish(path string, ids []string, held map[string]int) error {
+	return Update(path, func(s *State) bool {
+		for _, id := range ids {
+			if !slices.Contains(s.Finishing, id) {
+				s.Finishing = append(s.Finishing, id)
+			}
+		}
+		slices.Sort(s.Finishing)
+		for k, n := range held {
+			if s.Held == nil {
+				s.Held = map[string]int{}
+			}
+			s.Held[k] += n
+		}
+		return true
+	})
+}
+
+// Finished takes apps off the finishing list (stopped once done, or no
+// longer running).
+func Finished(path string, ids []string) error {
+	return Update(path, func(s *State) bool {
+		s.Finishing = slices.DeleteFunc(s.Finishing, func(id string) bool { return slices.Contains(ids, id) })
+		return true
+	})
+}
+
+// GaveBack forgets the held workers, once given back.
+func GaveBack(path string) error {
+	return Update(path, func(s *State) bool {
+		s.Held = nil
 		return true
 	})
 }
