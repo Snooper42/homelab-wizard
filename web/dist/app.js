@@ -13029,6 +13029,9 @@ ${pays}
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const list = payments.filter((x3) => groups2[filter2](x3.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count2 = (g2) => payments.filter((x3) => groups2[g2](x3.kind)).length;
+    const each = (x3) => x3.amount * perMonth(x3.schedule, v3.plan.people || [], v3.checking);
+    const outMonth = list.filter((x3) => !x3.payer).reduce((t3, x3) => t3 + each(x3), 0);
+    const inMonth = list.filter((x3) => x3.payer).reduce((t3, x3) => t3 + each(x3), 0);
     const paidLine = (x3) => {
       const pd = (v3.paid || []).filter((q2) => q2.payment === x3.id && daysBetween(q2.date, v3.today) <= 42).sort((a3, b2) => b2.date.localeCompare(a3.date))[0];
       if (!pd) return null;
@@ -13094,42 +13097,59 @@ ${pays}
           span: "all",
           kind: "fx-payments",
           actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter2, pick: setFilter2, options: [["all", `All ${count2("all")}`], ["bills", `Bills ${count2("bills")}`], ["cards", `Cards ${count2("cards")}`], ["subscriptions", `Subscriptions ${count2("subscriptions")}`], ["spending", `Spending ${count2("spending")}`], ["saving", `Saving ${count2("saving")}`]] }),
-          children: filter2 === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-            list.map((x3) => {
-              const n3 = next[x3.id];
-              const later2 = n3 ? "" : v3.next?.[x3.id] || "";
-              const from2 = n3 && (x3.payer ? "from " + x3.payer : x3.to && x3.to === v3.checking ? "into checking" : onCard2(x3) ? "on " + L2.account[x3.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
-              const into2 = x3.to ? " → " + (L2.account[x3.to]?.name || x3.to) : x3.payer ? " → " + (L2.account[v3.checking]?.name || "checking") : "";
-              return /* @__PURE__ */ u3(
-                Row,
-                {
-                  lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-                  title: x3.name,
-                  sub: /* @__PURE__ */ u3(S, { children: [
-                    scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : ""),
-                    kept4(x3, n3),
-                    paidLine(x3)
-                  ] }),
-                  end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("span", { children: dayLong(n3.date) }),
-                    /* @__PURE__ */ u3("span", { class: "fx-sub", children: from2 })
-                  ] }) : later2 ? /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("span", { children: [
-                      dayLong(later2),
-                      later2.slice(0, 4) !== v3.today.slice(0, 4) ? ", " + later2.slice(0, 4) : ""
+          children: [
+            filter2 !== "subscriptions" && !!list.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-paytotal", children: [
+              plural(list.length, "payment"),
+              ": about ",
+              /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: outMonth, form: "full" }) }),
+              " a month, ",
+              /* @__PURE__ */ u3(Amount, { value: outMonth * 12, form: "whole" }),
+              " a year",
+              inMonth > 5e-3 && /* @__PURE__ */ u3(S, { children: [
+                "; ",
+                /* @__PURE__ */ u3(Amount, { value: inMonth, form: "full", sign: true, tone: "in" }),
+                " a month comes in"
+              ] }),
+              list.some((x3) => x3.card) && ", with each card's balance as it is now",
+              "."
+            ] }),
+            filter2 === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+              list.map((x3) => {
+                const n3 = next[x3.id];
+                const later2 = n3 ? "" : v3.next?.[x3.id] || "";
+                const from2 = n3 && (x3.payer ? "from " + x3.payer : x3.to && x3.to === v3.checking ? "into checking" : onCard2(x3) ? "on " + L2.account[x3.from].name : n3.period.now ? "from the current balance" : `${n3.period.pay.people.map((id2) => L2.person[id2]?.name).join(" and ")}'s ${dayShort(n3.period.pay.date)} check`);
+                const into2 = x3.to ? " → " + (L2.account[x3.to]?.name || x3.to) : x3.payer ? " → " + (L2.account[v3.checking]?.name || "checking") : "";
+                return /* @__PURE__ */ u3(
+                  Row,
+                  {
+                    lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+                    title: x3.name,
+                    sub: /* @__PURE__ */ u3(S, { children: [
+                      scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : ""),
+                      kept4(x3, n3),
+                      paidLine(x3)
                     ] }),
-                    /* @__PURE__ */ u3("span", { class: "fx-sub", children: after(later2, v3.today) })
-                  ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Nothing ahead" }) }),
-                  when: /* @__PURE__ */ u3(Amount, { value: x3.card && n3?.period ? n3.period.rows.find((r3) => r3.payment === x3.id)?.amount ?? x3.amount : x3.amount, sign: !!x3.payer, tone: x3.payer ? "in" : "", form: "full" }),
-                  whenPlain: true,
-                  onOpen: edit ? () => edit("payment", x3.id) : void 0,
-                  openLabel: "edit"
-                },
-                x3.id
-              );
-            }),
-            !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
-          ] })
+                    end: /* @__PURE__ */ u3("span", { class: "fx-next", children: n3 ? /* @__PURE__ */ u3(S, { children: [
+                      /* @__PURE__ */ u3("span", { children: dayLong(n3.date) }),
+                      /* @__PURE__ */ u3("span", { class: "fx-sub", children: from2 })
+                    ] }) : later2 ? /* @__PURE__ */ u3(S, { children: [
+                      /* @__PURE__ */ u3("span", { children: [
+                        dayLong(later2),
+                        later2.slice(0, 4) !== v3.today.slice(0, 4) ? ", " + later2.slice(0, 4) : ""
+                      ] }),
+                      /* @__PURE__ */ u3("span", { class: "fx-sub", children: after(later2, v3.today) })
+                    ] }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "Nothing ahead" }) }),
+                    when: /* @__PURE__ */ u3(Amount, { value: x3.card && n3?.period ? n3.period.rows.find((r3) => r3.payment === x3.id)?.amount ?? x3.amount : x3.amount, sign: !!x3.payer, tone: x3.payer ? "in" : "", form: "full" }),
+                    whenPlain: true,
+                    onOpen: edit ? () => edit("payment", x3.id) : void 0,
+                    openLabel: "edit"
+                  },
+                  x3.id
+                );
+              }),
+              !list.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: payments.length ? "None of this kind." : "No payments yet: the mortgage, the car, subscriptions, a card's balance." }) })
+            ] })
+          ]
         }
       )
     ] }) });

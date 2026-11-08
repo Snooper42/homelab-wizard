@@ -20,7 +20,7 @@ import { replacedBy, type Running } from './homelab';
 import { MoneyFlowWidget } from './widgets/Flow';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month, todayOf } from './model';
-import { allPayments, currencySign, dayLong, dayShort, daysBetween, type Lookup, money, parseAmount, plural, saving, scheduleText, todayISO, whole } from './money';
+import { allPayments, currencySign, dayLong, dayShort, daysBetween, type Lookup, money, parseAmount, perMonth, plural, saving, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -194,6 +194,10 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
   const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
+  // What the payments shown come to in a typical month and a year: out, and apart from it what comes in from someone.
+  const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, v.plan.people || [], v.checking);
+  const outMonth = list.filter((x) => !x.payer).reduce((t, x) => t + each(x), 0);
+  const inMonth = list.filter((x) => x.payer).reduce((t, x) => t + each(x), 0);
   // Paid, as the ledger says: its latest in the last six weeks, and what it came to when that was not what was planned.
   const paidLine = (x: finance.Payment) => {
     const pd = (v.paid || []).filter((q) => q.payment === x.id && daysBetween(q.date, v.today) <= 42).sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -226,6 +230,7 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         <MoneyFlowWidget v={v} L={L} />
         <Widget title="Payments" span="all" kind="fx-payments"
           actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
+          {filter !== 'subscriptions' && !!list.length && <p class="fx-sub fx-paytotal">{plural(list.length, 'payment')}: about <strong><Amount value={outMonth} form="full" /></strong> a month, <Amount value={outMonth * 12} form="whole" /> a year{inMonth > 0.005 && <>; <Amount value={inMonth} form="full" sign tone="in" /> a month comes in</>}{list.some((x) => x.card) && ', with each card\'s balance as it is now'}.</p>}
           {filter === 'subscriptions' ? <SubscriptionsSummary v={v} L={L} edit={edit ? (w, id) => edit(w, id) : undefined} /> : <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];

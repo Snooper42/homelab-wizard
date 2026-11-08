@@ -5997,6 +5997,17 @@ const smokes = [
     if (JSON.stringify(heads) !== JSON.stringify(want)) throw new Error(`months: ${JSON.stringify(heads)}`);
     await page.waitForSelector('.fx-paymonth[aria-label="December"] li:has-text("Thu, Dec 31"):has-text("New Year")', { timeout: 5000 });
   } },
+  // Recurring's payments say what those shown come to a month and a year (All: the typical month's spent and saved
+  // together), and follow the filter; Subscriptions has its own summary instead.
+  { name: 'Finances: the payments shown say what they come to a month', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    const said = () => page.textContent('.fx-payments .fx-paytotal', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    if ((await said()) !== "18 payments: about $5,948.10 a month, $71,377 a year, with each card's balance as it is now.") throw new Error(`all: ${await said()}`);
+    await page.click('.fx-payments .seg button:has-text("Bills")');
+    if (!/^8 payments: about \$[\d,]+\.\d\d a month, \$[\d,]+ a year\.$/.test(await said())) throw new Error(`bills: ${await said()}`);
+    await page.click('.fx-payments .seg button:has-text("Subscriptions")');
+    if (await page.$('.fx-payments .fx-paytotal')) throw new Error('Subscriptions has a second total');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

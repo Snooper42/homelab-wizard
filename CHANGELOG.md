@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **What the payments come to:** Finances › Recurring › Payments says what those shown add up to a month and a year (*18 payments: about $5,948.10 a month, $71,377 a year*), following Bills, Cards, Spending or Saving when you pick one.
 - **A budget's daily allowance:** under what a budget has left, Finances says how much a day keeps it on budget to the end of the month or pay period (*$225.08 a day for 2 days*), and the budgets' bars now line up.
 - **Amounts in Finances' boxes, to the cent:** Update balances and the forms start a box with an amount's cents in two places (*2512.40*, not *2512.4*).
 - **Next paychecks, month by month:** Finances › Pay lists the coming paychecks under each month, with how many it has and what they bring in all, so a month with a third paycheck (or one moved in from the next month by a holiday) stands out.
