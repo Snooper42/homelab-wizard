@@ -1374,7 +1374,7 @@
       if (x3.payer ? !(t3.amount > 0 && (x3.to || checking) === account) : !(t3.amount < 0 && (x3.from || checking) === account)) continue;
       for (const due of dues[x3.id] || []) {
         const gap2 = Math.abs(dayNo(due) - dayNo(t3.date));
-        if (gap2 <= byAmountDays && !taken.has(x3.id + " " + due)) exact.push({ payment: x3.id, due, gap: gap2 });
+        if (gap2 <= (x3.amount >= bigAmount ? matchDays : byAmountDays) && !taken.has(x3.id + " " + due)) exact.push({ payment: x3.id, due, gap: gap2 });
       }
     }
     if (new Set(exact.map((e3) => e3.payment)).size !== 1) return void 0;
@@ -1382,6 +1382,22 @@
     return { payment: at2.payment, due: at2.due };
   }
   var byAmountDays = 5;
+  var bigAmount = 100;
+  var payeeKey = (s3) => cleanPayee(s3).toLowerCase().replace(/\s+/g, " ").trim();
+  function learnedLinks(txs) {
+    const by = /* @__PURE__ */ new Map();
+    for (const t3 of txs) {
+      if (!t3.payment || !t3.payee?.trim() || t3.to) continue;
+      const k3 = payeeKey(t3.payee);
+      if (!by.has(k3)) by.set(k3, /* @__PURE__ */ new Set());
+      by.get(k3).add(t3.payment);
+    }
+    return (payee, x3) => !!by.get(payeeKey(payee))?.has(x3.id);
+  }
+  var withLearned = (same2, txs) => {
+    const learned = learnedLinks(txs);
+    return (payee, x3) => same2(payee, x3) || learned(payee, x3);
+  };
   function paidDays(ledger, dues) {
     const out = /* @__PURE__ */ new Set();
     for (const q2 of ledger) {
@@ -8978,6 +8994,25 @@
     return Math.round(a3.bought * carFactor(a3.holds, years) * 100) / 100;
   }
 
+  // web/src/finances/ui/Legend.tsx
+  var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
+  function Dot({ color, shape = "round" }) {
+    return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
+  }
+  function SplitBar({ parts: parts3, label, size: size2 = "md" }) {
+    const total = parts3.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
+    const said2 = parts3.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
+    return /* @__PURE__ */ u3("div", { class: "fx-split " + size2, role: "img", "aria-label": `${label}: ${said2}`, children: parts3.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
+  }
+  function Legend({ items, layout = "list" }) {
+    return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
+      /* @__PURE__ */ u3(Dot, { color: it.color, shape: it.shape }),
+      /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: it.label }),
+      it.note !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-sub", children: it.note }),
+      it.value !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-legendvalue", children: it.value })
+    ] }, i3)) });
+  }
+
   // web/src/finances/ui/Amount.tsx
   var toneClass = (tone, n3) => tone === "auto" ? n3 < -5e-3 ? " fx-out" : n3 > 5e-3 ? " fx-in" : "" : tone ? " fx-" + tone : "";
   function Amount({ value, form: form2 = "small", sign, tone, currency }) {
@@ -9242,7 +9277,7 @@
   // web/src/finances/Transactions.tsx
   function LinksWidget({ v: v3, L: L2, ledger, save: save2 }) {
     const [busy2, setBusy] = d2(false);
-    const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, paysBill);
+    const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, withLearned(paysBill, ledger.transactions));
     if (!found2.size) return null;
     const list = ledger.transactions.filter((t3) => found2.has(t3.id)).reverse();
     const keep2 = async (change) => {
@@ -10506,6 +10541,7 @@
       first.current?.focus();
       first.current?.select();
     }, []);
+    const firstShown = groups.flatMap((g2) => accounts.filter((a3) => g2.kinds.includes(a3.kind)))[0]?.id;
     const read = (key5, was) => {
       const n3 = parseAmount(typed[key5] ?? "");
       return typed[key5]?.trim() && !isNaN(n3) ? n3 : was;
@@ -10551,35 +10587,42 @@
         pulled.said && /* @__PURE__ */ u3("span", { class: "muted", role: "status", children: pulled.said }),
         pulled.problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: pulled.problem })
       ] }),
-      /* @__PURE__ */ u3("ul", { class: "balancelist" + (accounts.some((a3) => a3.kind === "card") ? " cards" : ""), children: accounts.map((a3, i3) => {
-        const d3 = read(a3.id, est(a3)) - est(a3);
-        return /* @__PURE__ */ u3("li", { children: [
-          /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
-          /* @__PURE__ */ u3("label", { class: "grow", for: "bal-" + a3.id, children: [
-            /* @__PURE__ */ u3("strong", { children: a3.name }),
-            /* @__PURE__ */ u3("small", { children: [
-              owed(a3.kind) ? "owed" : held2(a3.kind) ? "worth" : "today",
-              " · expected ",
-              moneyIn(est(a3), a3.currency),
-              Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3(S, { children: [
-                ", ",
-                /* @__PURE__ */ u3("span", { class: d3 < 0 === !owed(a3.kind) ? "bad" : "ok", children: (d3 < 0 ? "−" : "+") + moneyIn(Math.abs(d3), a3.currency) })
+      groups.map((g2) => ({ g: g2, list: accounts.filter((a3) => g2.kinds.includes(a3.kind)) })).filter((x3) => x3.list.length).map(({ g: g2, list }) => /* @__PURE__ */ u3("section", { class: "balgroup", "aria-labelledby": "balg-" + g2.key, children: [
+        /* @__PURE__ */ u3("h3", { id: "balg-" + g2.key, class: "balgrouphead", children: [
+          /* @__PURE__ */ u3(Dot, { color: g2.color }),
+          g2.name
+        ] }),
+        /* @__PURE__ */ u3("ul", { class: "balancelist" + (accounts.some((a3) => a3.kind === "card") ? " cards" : ""), children: list.map((a3) => {
+          const d3 = read(a3.id, est(a3)) - est(a3);
+          const i3 = a3.id === firstShown ? 0 : 1;
+          return /* @__PURE__ */ u3("li", { children: [
+            /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
+            /* @__PURE__ */ u3("label", { class: "grow", for: "bal-" + a3.id, children: [
+              /* @__PURE__ */ u3("strong", { children: a3.name }),
+              /* @__PURE__ */ u3("small", { children: [
+                owed(a3.kind) ? "owed" : held2(a3.kind) ? "worth" : "today",
+                " · expected ",
+                moneyIn(est(a3), a3.currency),
+                Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3(S, { children: [
+                  ", ",
+                  /* @__PURE__ */ u3("span", { class: d3 < 0 === !owed(a3.kind) ? "bad" : "ok", children: (d3 < 0 ? "−" : "+") + moneyIn(Math.abs(d3), a3.currency) })
+                ] })
               ] })
-            ] })
-          ] }),
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(a3.currency) }),
-            /* @__PURE__ */ u3("input", { id: "bal-" + a3.id, ref: i3 === 0 ? first : void 0, inputmode: "decimal", value: typed[a3.id], onInput: type(a3.id) })
-          ] }),
-          a3.kind === "card" && /* @__PURE__ */ u3("label", { class: "pendingfield", children: [
+            ] }),
             /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
               /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(a3.currency) }),
-              /* @__PURE__ */ u3("input", { "aria-label": `${a3.name} pending`, inputmode: "decimal", value: typed[a3.id + ":p"], onInput: type(a3.id + ":p") })
+              /* @__PURE__ */ u3("input", { id: "bal-" + a3.id, ref: i3 === 0 ? first : void 0, inputmode: "decimal", value: typed[a3.id], onInput: type(a3.id) })
             ] }),
-            /* @__PURE__ */ u3("small", { "aria-hidden": "true", children: "pending" })
-          ] })
-        ] }, a3.id);
-      }) }),
+            a3.kind === "card" && /* @__PURE__ */ u3("label", { class: "pendingfield", children: [
+              /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+                /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(a3.currency) }),
+                /* @__PURE__ */ u3("input", { "aria-label": `${a3.name} pending`, inputmode: "decimal", value: typed[a3.id + ":p"], onInput: type(a3.id + ":p") })
+              ] }),
+              /* @__PURE__ */ u3("small", { "aria-hidden": "true", children: "pending" })
+            ] })
+          ] }, a3.id);
+        }) })
+      ] }, g2.key)),
       !accounts.length && /* @__PURE__ */ u3("p", { class: "muted", children: "No accounts yet: add one first." }),
       (() => {
         const off2 = accounts.map((a3) => {
@@ -10656,7 +10699,7 @@
     const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
     const [renameAll, setRenameAll] = d2(true);
     const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
-    const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysBill) : void 0;
+    const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), withLearned(paysBill, others2)) : void 0;
     const linked = paymentPicked ? payment : guess?.payment || "";
     const guessed = guess && payments.find((x3) => x3.id === guess.payment);
     const choose = (id2) => {
@@ -10696,7 +10739,7 @@
         category: category.trim() || void 0,
         note: note.trim() || void 0,
         payment: linked || void 0,
-        notPlanned: paymentPicked && !payment && (!!t3?.notPlanned || !!plannedFor({ date, amount: way === "in" ? n3 : -n3, payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysBill)) || void 0,
+        notPlanned: paymentPicked && !payment && (!!t3?.notPlanned || !!plannedFor({ date, amount: way === "in" ? n3 : -n3, payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), withLearned(paysBill, others2))) || void 0,
         to: way === "move" ? to : void 0,
         institution: way === "move" ? void 0 : logo || void 0,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
@@ -11059,8 +11102,9 @@
     const payments = (plan.payments || []).filter((x3) => !x3.card);
     const guessed = (() => {
       const taken = paidDays(have, props.dues || {});
+      const same2 = withLearned(paysBill, have);
       return fresh.map((t3) => {
-        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, paysBill);
+        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, same2);
         if (g2) taken.add(g2.payment + " " + g2.due);
         return g2;
       });
@@ -11794,25 +11838,6 @@ ${pays}
       }) }, w3[0])),
       !busy2.length && /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." })
     ] });
-  }
-
-  // web/src/finances/ui/Legend.tsx
-  var hue = (h3) => typeof h3 === "number" ? `fx-h${h3}` : `fx-h-${h3}`;
-  function Dot({ color, shape = "round" }) {
-    return /* @__PURE__ */ u3("span", { class: `fx-dot ${shape} ${hue(color)}`, "aria-hidden": "true" });
-  }
-  function SplitBar({ parts: parts3, label, size: size2 = "md" }) {
-    const total = parts3.reduce((t3, p3) => t3 + Math.max(0, p3.value), 0);
-    const said2 = parts3.filter((p3) => p3.value > 0).map((p3) => `${p3.label} ${Math.round(p3.value / (total || 1) * 100)}%`).join(", ");
-    return /* @__PURE__ */ u3("div", { class: "fx-split " + size2, role: "img", "aria-label": `${label}: ${said2}`, children: parts3.filter((p3) => p3.value > 0).map((p3) => /* @__PURE__ */ u3("span", { class: hue(p3.color), style: { flexGrow: p3.value } }, p3.label)) });
-  }
-  function Legend({ items, layout = "list" }) {
-    return /* @__PURE__ */ u3("ul", { class: "fx-legend " + layout, children: items.map((it, i3) => /* @__PURE__ */ u3("li", { children: [
-      /* @__PURE__ */ u3(Dot, { color: it.color, shape: it.shape }),
-      /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: it.label }),
-      it.note !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-sub", children: it.note }),
-      it.value !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-legendvalue", children: it.value })
-    ] }, i3)) });
   }
 
   // web/src/finances/ui/charts.tsx
@@ -14000,6 +14025,15 @@ ${pays}
               aside: !p3.now && /* @__PURE__ */ u3(Delta, { value: p3.in - p3.out })
             }
           ),
+          !p3.now && (() => {
+            const day3 = v3.days?.find((d3) => d3.date === p3.pay.date);
+            return day3 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-onpayday", children: [
+              "On payday, ",
+              dayShort(p3.pay.date),
+              ", once its own payments are out: ",
+              /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: day3.balance, form: "full", tone: day3.balance < 0 ? "out" : "" }) })
+            ] });
+          })(),
           /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
             !p3.now && /* @__PURE__ */ u3(
               Row,

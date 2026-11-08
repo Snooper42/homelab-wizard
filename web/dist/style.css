@@ -2099,6 +2099,10 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .balancelist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 9.5em; align-items:center; gap:12px; padding:8px 0; border-top:1px solid var(--line); }
 .balancelist.cards li { grid-template-columns:24px minmax(0, 1fr) 9.5em 12.5em; }
 .balancelist li:first-child { border-top:0; }
+/* Update balances by group: each group's heading with its colour's dot, as the sidebar lists them. */
+.balgroup + .balgroup { margin-top:6px; }
+.balgrouphead { display:flex; align-items:center; gap:8px; margin:14px 0 0; padding-bottom:6px; border-bottom:1px solid var(--line-strong); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+.balgroup .balancelist { margin-top:0; }
 .balancelist label.grow { display:flex; flex-direction:column; gap:2px; min-width:0; margin:0; font-size:14px; }
 .balancelist .pendingfield { display:flex; align-items:center; gap:6px; margin:0; }
 .balancelist small { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
@@ -2149,6 +2153,8 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-txmore { display:flex; align-items:center; gap:12px; margin:14px 0 0; }
 .fx-txvs { margin:0; } .fx-txvs span { font-weight:600; }
 .fx-paytotal { margin:0; }
+/* The pay period's payday figure, under the period's end: checking once payday's own payments are out. */
+.fx-onpayday { margin:-6px 0 0; } .fx-onpayday strong { color:var(--text); }
 .fx-payhint { margin:0; } .fx-payhint button { margin-left:4px; }
 /* Coming up: what of it is due before the next paycheck, under the total. */
 .fx-beforepay { margin:-8px 0 0; }

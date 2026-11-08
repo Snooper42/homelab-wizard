@@ -12,8 +12,9 @@ import { cleanPayee } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory } from './importData';
-import { carFromPrice, rateOf } from './model';
+import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { carFromPrice, groups, rateOf } from './model';
+import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -736,6 +737,8 @@ function BalancesForm(props: EditProps) {
   const [problem, setProblem] = useState('');
   const first = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => { first.current?.focus(); first.current?.select(); }, []);
+  // The first box shown takes the cursor: the first account of the first group with any.
+  const firstShown = groups.flatMap((g) => accounts.filter((a) => g.kinds.includes(a.kind)))[0]?.id;
   const read = (key: string, was: number) => { const n = parseAmount(typed[key] ?? ''); return typed[key]?.trim() && !isNaN(n) ? n : was; };
   const submit = (e: Event) => {
     e.preventDefault();
@@ -775,9 +778,14 @@ function BalancesForm(props: EditProps) {
         {pulled.said && <span class="muted" role="status">{pulled.said}</span>}
         {pulled.problem && <span class="formerr bad" role="alert">{pulled.problem}</span>}
       </div>}
+      {/* Under each group's heading, in its colour (Cash, Credit cards, Investments, Home & Car, Loans), as the sidebar has them. */}
+      {groups.map((g) => ({ g, list: accounts.filter((a) => g.kinds.includes(a.kind)) })).filter((x) => x.list.length).map(({ g, list }) => (
+      <section key={g.key} class="balgroup" aria-labelledby={'balg-' + g.key}>
+      <h3 id={'balg-' + g.key} class="balgrouphead"><Dot color={g.color} />{g.name}</h3>
       <ul class={'balancelist' + (accounts.some((a) => a.kind === 'card') ? ' cards' : '')}>
-        {accounts.map((a, i) => {
+        {list.map((a) => {
           const d = read(a.id, est(a)) - est(a);
+          const i = a.id === firstShown ? 0 : 1;
           return (
             <li key={a.id}>
               <AcctMark a={a} size="sm" />
@@ -790,6 +798,7 @@ function BalancesForm(props: EditProps) {
           );
         })}
       </ul>
+      </section>))}
       {!accounts.length && <p class="muted">No accounts yet: add one first.</p>}
       {(() => {
         // What Save changes in all: how many differ from what was expected, and net worth by how much (in the plan's currency;
@@ -871,7 +880,7 @@ function TransactionForm(props: EditProps) {
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
-    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysBill) : undefined;
+    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), withLearned(paysBill, others)) : undefined;
   const linked = paymentPicked ? payment : guess?.payment || '';
   const guessed = guess && payments.find((x) => x.id === guess.payment);
   const choose = (id: string) => {
@@ -901,7 +910,7 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysBill)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
+      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), withLearned(paysBill, others))) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
@@ -1228,7 +1237,9 @@ function ImportForm(props: EditProps) {
   const payments = (plan.payments || []).filter((x) => !x.card);
   const guessed: (Planned | undefined)[] = (() => {
     const taken = paidDays(have, props.dues || {});
-    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysBill); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+    // A payee linked to a payment before links to it again (learnedLinks).
+    const same = withLearned(paysBill, have);
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, same); if (g) taken.add(g.payment + ' ' + g.due); return g; });
   })();
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   // What each fresh row is for: a category, or a move to or from another of the household's accounts (guessCategory.ts).

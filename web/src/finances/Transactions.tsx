@@ -21,7 +21,7 @@ import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { Mark, payeeBrand } from './Mark';
 import { paysBill } from './guessCategory';
-import { joined, type Pair, pairs, suggestLinks } from './importData';
+import { joined, type Pair, pairs, suggestLinks, withLearned } from './importData';
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
@@ -55,7 +55,7 @@ export interface TransactionsProps {
  */
 function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
   const [busy, setBusy] = useState(false);
-  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, paysBill);
+  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, withLearned(paysBill, ledger.transactions));
   if (!found.size) return null;
   const list = ledger.transactions.filter((t) => found.has(t.id)).reverse();
   const keep = async (change: (t: finance.Transaction) => finance.Transaction) => {

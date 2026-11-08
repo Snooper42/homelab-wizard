@@ -6391,6 +6391,41 @@ const smokes = [
     if (shown.at(-1)[0] !== 'Oct') throw new Error(`this month is not labelled: ${JSON.stringify(shown)}`);
     for (let i = 1; i < shown.length; i++) if (shown[i][1] < shown[i - 1][2] + 4) throw new Error(`${shown[i - 1][0]} and ${shown[i][0]} touch`);
   } },
+  // A payee linked to a payment before links again, its name saying nothing of it: the HOA, paid as Sunset Palms in
+  // September and linked, comes in October ten days early and $5 off. A large amount to the cent links within two weeks
+  // (a $412.00 car payment from a lender named nothing like it, eight days off); a small one only within a few days.
+  { name: 'Finances: an import links a payee it has linked before, and a large amount to the cent', screen: 'finances', mock: { ledger: { ...ledger, transactions: [{ id: 'h0', date: '2026-09-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', payment: 'hoa' }, ...ledger.transactions] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA",-305.00,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/07/2026,"WESTLAKE FIN SVC PMT WEB ID: 77",-412.00,ACH_DEBIT,700.00,,\n'
+      + 'DEBIT,10/12/2026,"ACME STREAM 555",-15.49,DEBIT_CARD,600.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Sunset") :text("Looks like HOA")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Westlake") :text("Looks like Car payment")', { timeout: 5000 });
+    // Netflix's $15.49 nine days from its day, by a name saying nothing of it: too small to link by the cents alone that far off.
+    if (await page.$('#finSheet .importlist li:has-text("Acme") :text("Looks like")')) throw new Error('a small amount linked far from its day');
+  } },
+  // The pay period card says checking at the end of payday, once that day's own payments are out (what a spreadsheet
+  // counting paychecks against a month of bills comes to), beside the period's end; stepping on, the next payday's.
+  { name: 'Finances: the pay period says checking on payday, once its own payments are out', screen: 'finances', run: async (page) => {
+    const want = (day) => page.evaluate((d) => '$' + window.__MOCK.finances.days.find((x) => x.date === d).balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), day);
+    const said = () => page.textContent('.fx-paycheck .fx-onpayday', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    if ((await said()) !== `On payday, Nov 6, once its own payments are out: ${await want('2026-11-06')}`) throw new Error(await said());
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.waitForFunction(() => document.querySelector('.fx-paycheck .fx-onpayday')?.textContent.includes('Nov 20'), null, { timeout: 5000 });
+    if ((await said()) !== `On payday, Nov 20, once its own payments are out: ${await want('2026-11-20')}`) throw new Error(await said());
+  } },
+  // Update balances lists the accounts under their groups, each heading in its colour, the cursor in the first box shown.
+  { name: 'Finances: Update balances lists the accounts by group', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    const heads = await page.$$eval('#finSheet .balgrouphead', (h) => h.map((x) => x.textContent.trim()), { timeout: 5000 });
+    if (JSON.stringify(heads) !== JSON.stringify(['Cash', 'Credit cards', 'Investments', 'Home & Car', 'Loans'])) throw new Error(`groups: ${heads}`);
+    const cards = await page.$$eval('#finSheet .balgroup:has(.balgrouphead:text-is("Credit cards")) li strong', (s) => s.map((x) => x.textContent));
+    if (JSON.stringify(cards) !== JSON.stringify(['Chase Freedom', 'Amex Gold'])) throw new Error(`cards: ${cards}`);
+    await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

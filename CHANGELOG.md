@@ -76,6 +76,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Imports link the bills a name doesn't give away:** a payee you've linked to a planned payment once (an HOA paid as *Sunset Palms Eas…*) links to it again every month, and a bill of $100 or more to the cent links within two weeks of its day, not just five.
+- **Checking on payday, as your spreadsheet counts it:** the Dashboard's pay period card now also says what checking holds at the end of payday, once that day's own payments (savings, a card paid off) are out, beside where it ends the period. Step › to your second paycheck for a sheet's "2 paychecks".
+- **Update balances by group:** the accounts are listed under Cash, Credit cards, Investments, Home & Car and Loans, each heading in its colour.
 - **Back from Transactions:** opened from a report's row or a Dashboard card, Finances › Transactions has **Back to Reports** (or the Dashboard) beside its filters.
 - **What went out, in the weekly summary:** *Homelab this week* ends its Finances lines with what your transactions spent in the last seven days and where most of it went (*Spent this week: $148.20 in 3 transactions, the most at Costco, $100.00*).
 - **Pay, a year at a time:** each person on Finances › Pay says their take-home a year too (*about $55,900 a year*), and one with no gross typed in says what adding it shows, with **Add them**.

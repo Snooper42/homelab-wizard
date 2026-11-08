@@ -3,6 +3,7 @@
 // sent anywhere. Plain functions: the file's text in, rows out, then the
 // rows as transactions, skipping any already in the ledger.
 import { isoDay, parseAmount } from './money';
+import { cleanPayee } from './payees';
 
 /** A row of a bank's file, read: its day, amount (money in a plus), payee, and the bank's own ID when it gives one. */
 export interface Imported { date: string; amount: number; payee: string; memo?: string; id?: string }
@@ -302,7 +303,8 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
     if (x.payer ? !(t.amount > 0 && (x.to || checking) === account) : !(t.amount < 0 && (x.from || checking) === account)) continue;
     for (const due of dues[x.id] || []) {
       const gap = Math.abs(dayNo(due) - dayNo(t.date));
-      if (gap <= byAmountDays && !taken.has(x.id + ' ' + due)) exact.push({ payment: x.id, due, gap });
+      // A large amount to the cent ($780.15, the HOA) is plain enough within the usual two weeks; a small one ($15.49) only within a few days.
+      if (gap <= (x.amount >= bigAmount ? matchDays : byAmountDays) && !taken.has(x.id + ' ' + due)) exact.push({ payment: x.id, due, gap });
     }
   }
   if (new Set(exact.map((e) => e.payment)).size !== 1) return undefined;
@@ -312,6 +314,35 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
 
 /** How far a row may be from a payment's day and pay it by its amount alone (its name saying nothing of the payment). */
 export const byAmountDays = 5;
+
+/** From this amount up, the cents alone make a payment plain enough to link within matchDays of its day. */
+export const bigAmount = 100;
+
+/** A payee as it is known across files: its clean name (payees.ts), lower case, its spaces one. */
+const payeeKey = (s: string): string => cleanPayee(s).toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * The planned payments each payee has paid before, by the ledger's links
+ * (Transaction.Payment, set by an import, Link, or by hand): a payee whose
+ * name says nothing of its bill ("Sunset Palms Eas", the HOA) pays it again,
+ * as a name alike would. Its amount and day still have to fit.
+ */
+export function learnedLinks(txs: finance.Transaction[]): (payee: string, x: finance.Payment) => boolean {
+  const by = new Map<string, Set<string>>();
+  for (const t of txs) {
+    if (!t.payment || !t.payee?.trim() || t.to) continue;
+    const k = payeeKey(t.payee);
+    if (!by.has(k)) by.set(k, new Set());
+    by.get(k)!.add(t.payment);
+  }
+  return (payee, x) => !!by.get(payeeKey(payee))?.has(x.id);
+}
+
+/** A way of telling a payee pays a payment, with what the ledger has learned beside it. */
+export const withLearned = (same: (payee: string, x: finance.Payment) => boolean, txs: finance.Transaction[]): ((payee: string, x: finance.Payment) => boolean) => {
+  const learned = learnedLinks(txs);
+  return (payee, x) => same(payee, x) || learned(payee, x);
+};
 
 /** The payment days the ledger has paid already, as "payment day": each linked transaction's nearest day of its payment. */
 export function paidDays(ledger: finance.Transaction[], dues: Record<string, string[]>): Set<string> {
