@@ -44,12 +44,14 @@ struct FinancesView: View {
                             }
                         }
                     }
-                    if let investments = view.investments {
+                    if view.investments != nil || finances.canEdit {
                         NavigationLink {
                             FinanceInvestmentsPage(finances: finances)
                         } label: {
                             IconTileLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
-                                Money(value: investments.total, currency: view.plan.currency, finances: finances)
+                                if let investments = view.investments {
+                                    Money(value: investments.total, currency: view.plan.currency, finances: finances)
+                                }
                             }
                         }
                     }
@@ -294,20 +296,239 @@ private struct FinanceBillsPage: View {
     }
 }
 
-/// Investments, as Ghostfolio last read them on the computer.
+/// Investments, as Ghostfolio last read them; where Finances may be
+/// changed, Read Now reads Ghostfolio again and Add a Holding records a
+/// buy or a sale there (main #494, #498).
 private struct FinanceInvestmentsPage: View {
     @Bindable var finances: FinancesViewModel
+    @State private var adding = false
 
     var body: some View {
         Form {
+            if finances.canEdit {
+                Section {
+                    Button {
+                        Task { await finances.readInvestments() }
+                    } label: {
+                        HStack {
+                            Label(finances.isReadingInvestments ? "Reading…" : "Read Now", systemImage: "arrow.clockwise")
+                            if finances.isReadingInvestments {
+                                Spacer()
+                                ProgressView().controlSize(.small)
+                            }
+                        }
+                    }
+                    .disabled(finances.isReadingInvestments || finances.isSaving)
+                    Button {
+                        adding = true
+                    } label: {
+                        Label("Add a Holding", systemImage: "plus.circle")
+                    }
+                    .disabled(finances.isReadingInvestments || finances.isSaving)
+                    if let said = finances.investmentsSaid {
+                        Text(verbatim: said).font(.callout).foregroundStyle(.secondary)
+                    }
+                    if let problem = finances.investmentsProblem {
+                        Label {
+                            Text(verbatim: problem)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                        }
+                        .font(.callout)
+                        .foregroundStyle(Theme.danger)
+                    }
+                } footer: {
+                    if !finances.investmentsUnmatched.isEmpty {
+                        Text(verbatim: "In Ghostfolio but matched to no account here: \(finances.investmentsUnmatched.joined(separator: ", ")). Name an account here the same, or pick its Ghostfolio account on the computer.")
+                    }
+                }
+            }
             if let view = finances.plan, let investments = view.investments {
                 InvestmentsSection(investments: investments, view: view, finances: finances)
+            } else if finances.plan != nil {
+                Section {
+                    Text("Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it's worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up.")
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)
         .themedCanvas()
         .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Investments")
+        .sheet(isPresented: $adding) {
+            AddHoldingView(finances: finances)
+        }
+    }
+}
+
+/// Add a holding: a buy or a sale, in which account (or a new one, made in
+/// Ghostfolio and the plan by one name), of what Ghostfolio finds for a
+/// ticker or a name, how many shares, for how much, and on what day.
+private struct AddHoldingView: View {
+    let finances: FinancesViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var sold = false
+    @State private var account = ""
+    @State private var newName = ""
+    @State private var query = ""
+    @State private var found: [InvestmentSymbol] = []
+    @State private var picked: InvestmentSymbol?
+    @State private var searching = false
+    @State private var searchNote: String?
+    @State private var sharesText = ""
+    @State private var totalText = ""
+    @State private var date = Date()
+    @State private var problem: String?
+    @State private var saving = false
+
+    /// The picker's choice for a new account (never an account's id).
+    private static let newAccount = "\u{1}new"
+
+    private var accounts: [FinanceAccount] {
+        (finances.plan?.plan.accounts ?? []).filter { $0.kind == "investment" || $0.kind == "retirement" }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Picker("This is", selection: $sold) {
+                        Text("A buy").tag(false)
+                        Text("A sale").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                Section("Account") {
+                    Picker("Account", selection: $account) {
+                        Text("Choose…").tag("")
+                        ForEach(accounts) { a in
+                            Text(verbatim: a.name).tag(a.id)
+                        }
+                        if !sold { Text("A new account…").tag(Self.newAccount) }
+                    }
+                    if account == Self.newAccount {
+                        TextField("Its name, as in Ghostfolio", text: $newName)
+                            .autocorrectionDisabled()
+                    }
+                }
+                Section {
+                    if let picked {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(verbatim: picked.symbol).font(.headline)
+                                Text(verbatim: "\(picked.name) · \(picked.currency)").font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Change") { self.picked = nil }
+                        }
+                    } else {
+                        TextField("Ticker or name", text: $query)
+                            .autocorrectionDisabled()
+                            #if os(iOS)
+                            .textInputAutocapitalization(.characters)
+                            #endif
+                            .onSubmit { Task { await search() } }
+                        Button(searching ? "Looking…" : "Look It Up") { Task { await search() } }
+                            .disabled(query.trimmingCharacters(in: .whitespaces).isEmpty || searching)
+                        ForEach(found) { symbol in
+                            Button {
+                                picked = symbol
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(verbatim: symbol.symbol).font(.headline).foregroundStyle(Theme.ink)
+                                    Text(verbatim: "\(symbol.name) · \(symbol.currency)").font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        if let searchNote {
+                            Text(verbatim: searchNote).font(.callout).foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("What")
+                } footer: {
+                    Text("Only what you type here leaves the homelab, when Ghostfolio looks it up.")
+                }
+                Section {
+                    TextField("Shares", text: $sharesText)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                    TextField(sold ? "What you got for them all" : "What you paid for them all", text: $totalText)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .privacySensitive()
+                    DatePicker("Day", selection: $date, in: ...Date(), displayedComponents: .date)
+                }
+                if let problem {
+                    Section {
+                        Label {
+                            Text(verbatim: problem)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle")
+                        }
+                        .foregroundStyle(Theme.danger)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .navigationTitle(sold ? "Add a Sale" : "Add a Buy")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if saving {
+                        ProgressView()
+                    } else {
+                        Button("Add") { Task { await save() } }
+                    }
+                }
+            }
+            .onChange(of: sold) { _, isSale in
+                if isSale, account == Self.newAccount { account = "" }
+            }
+        }
+    }
+
+    private func search() async {
+        let text = query.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty, !searching else { return }
+        searching = true
+        defer { searching = false }
+        do {
+            found = try await finances.findSymbols(text)
+            searchNote = found.isEmpty ? "Ghostfolio found nothing for that." : nil
+        } catch {
+            found = []
+            searchNote = APIError.from(error).errorDescription
+        }
+    }
+
+    private func save() async {
+        let add = InvestmentAdd(
+            account: account.isEmpty || account == Self.newAccount ? nil : account,
+            newName: account == Self.newAccount ? newName : nil,
+            symbol: picked,
+            shares: Self.number(sharesText) ?? 0,
+            total: Self.number(totalText) ?? -1,
+            date: date,
+            sold: sold
+        )
+        saving = true
+        problem = await finances.addInvestment(add)
+        saving = false
+        if problem == nil { dismiss() }
+    }
+
+    /// A number as typed here ("1,234.5"), or nil.
+    static func number(_ text: String) -> Double? {
+        let t = text.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return nil }
+        return try? Double(t, format: .number)
     }
 }
 
@@ -1711,8 +1932,7 @@ private struct InvestmentsSection: View {
         } header: {
             Text("Investments")
         } footer: {
-            Text(readWhen.map { "From Ghostfolio, \($0). It's read again on the computer, under Finances › Net worth." }
-                 ?? "From Ghostfolio. It's read again on the computer, under Finances › Net worth.")
+            Text(readWhen.map { "From Ghostfolio, \($0)." } ?? "From Ghostfolio.")
         }
     }
 

@@ -264,6 +264,42 @@ actor APIClient {
         }
     }
 
+    /// Reads Ghostfolio now and keeps what each account holds on the
+    /// plan's account of its name (main #494). It needs the edit level,
+    /// over https, and it's never retried.
+    func financesReadInvestments() async throws -> InvestmentsReadResult {
+        let (request, endpoint) = try callRequest("FinancesReadInvestments", [])
+        Log.network.notice("FinancesReadInvestments")
+        return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
+    /// Ghostfolio's matches for a ticker or a name, up to 8. Only what's
+    /// typed leaves the homelab, when Ghostfolio looks it up.
+    func financesFindSymbol(_ query: String) async throws -> [InvestmentSymbol] {
+        try await call("FinancesFindSymbol", [.string(query)], as: [InvestmentSymbol]?.self) ?? []
+    }
+
+    /// Puts a buy or a sale (InvestmentAdd.json) into Ghostfolio, then reads
+    /// it again. It needs the edit level, and it's never retried.
+    func financesAddInvestment(_ add: JSONValue) async throws -> InvestmentsReadResult {
+        let (request, endpoint) = try callRequest("FinancesAddInvestment", [add])
+        Log.network.notice("FinancesAddInvestment")
+        return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
+    private static func investmentsRead(from data: Data) throws -> InvestmentsReadResult {
+        do {
+            let decoder = JSONDecoder.homelab()
+            let reply = try decoder.decode(CallEnvelope<InvestmentsReply>.self, from: data).result
+            let raw = try decoder.decode(CallEnvelope<RawInvestmentsReply>.self, from: data).result
+            return InvestmentsReadResult(read: FinancesRead(view: reply.view, rawPlan: raw.view.plan),
+                                         unmatched: reply.unmatched ?? [], accounts: reply.accounts ?? 0, holdings: reply.holdings ?? 0)
+        } catch {
+            Log.network.error("The investments answer couldn't be decoded")
+            throw APIError.decoding
+        }
+    }
+
     /// The transactions on record, with the ledger as raw JSON for an
     /// edit to send back whole. It needs the view or edit level.
     func financesLedger() async throws -> LedgerRead {
@@ -517,6 +553,18 @@ private struct ErrorBody: Decodable {
 /// A Finances view with only its plan kept, as raw JSON.
 private struct RawFinancesView: Decodable {
     let plan: JSONValue
+}
+
+/// `FinancesReadInvestments` and `FinancesAddInvestment` answer the view with Ghostfolio's counts.
+private struct InvestmentsReply: Decodable {
+    let view: FinancesPlanView
+    let unmatched: [String]?
+    let accounts: Int?
+    let holdings: Int?
+}
+
+private struct RawInvestmentsReply: Decodable {
+    let view: RawFinancesView
 }
 
 /// The `log` of a call's answer. `result` is ignored (AppAction answers null).
