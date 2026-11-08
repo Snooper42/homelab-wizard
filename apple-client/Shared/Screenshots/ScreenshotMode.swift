@@ -37,7 +37,10 @@ struct ScreenshotCredentials: CredentialStore {
 /// Unlocks without asking.
 struct ScreenshotOwner: OwnerAuthenticator {
     func availableMethod() -> BiometricAuthManager.Method { .faceID }
-    func authenticate(reason: String) async throws {}
+    func authenticate(reason: String) async throws {
+        // The lock screen's picture: it stays locked.
+        if ScreenshotMode.shot == "lock" { throw BiometricAuthManager.AuthError.cancelled }
+    }
 }
 
 /// The sample homelab's answers, by method.

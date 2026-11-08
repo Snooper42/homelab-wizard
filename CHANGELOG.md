@@ -8,6 +8,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Spending on the iPhone:** Finances › Spending shows a month's spending by category as a ring, with how it compares with the month before, the last six months as bars (tap one to see that month), and each category with its bar against its budget; a category opens its transactions. Money moved between your own accounts and money coming in aren't counted, and a refund counts against its category.
+- **To Review on the iPhone:** the transactions new since you looked, as an inbox: swipe right when one's right, or left to pick its category from buttons (it's marked reviewed either way). Finances' home links to it when there are new ones.
 - **Recurring on the iPhone:** Finances › Recurring lists every payment that repeats, with its logo, how often it comes, when next and what it costs, under about what your bills and subscriptions cost a month; money coming in, card payments and savings each have their own group. Tap one to change what it costs.
 - **Put a buy right, or delete it:** on Net worth's Investments card, open a holding to see its buys and sales as Ghostfolio keeps them. **Change** fixes the shares, what you paid, the day, or bought or sold; **Delete** (asked first) takes it out of Ghostfolio. The card reads Ghostfolio again after each, so its figures follow. A phone allowed to change Finances can do the same.
 - **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.
@@ -65,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app, smoother:** Finances shows the shapes of its cards while it reads instead of a spinner; an app's page opens with its logo big, round Open, Start or Stop, Restart and Logs buttons, and its week as seven coloured bars; the lock screen shows the new white icon with one Unlock button; and at the largest text sizes Finances' tiles stack instead of cutting off.
 - **Investments on the iPhone, redone:** what they're worth with the gain all time and this month, a line over the past month, 3 months or year you can run a finger along, how the money is split across your holdings, and each holding with its ticker in colour and its gain.
 - **A new icon for the iPhone app:** a violet server rack on a white tile, the other way round from before, like Proton Mail's. The mark on the pairing and lock screens matches.
 - **The native Mac version of the Homelab app is gone:** on the Mac, Homelab Wizard (the desktop app) is the way in. The iPhone and iPad app is unchanged.

@@ -131,3 +131,85 @@ struct BudgetsTotalTests {
         #expect(BudgetsTotal([], today: today, calendar: calendar).perDay == nil)
     }
 }
+
+// Spending: money out by category in a month, refunds netted, never
+// transfers or money coming in; and a category set from the inbox.
+@Suite("Spending")
+struct SpendingTests {
+    private var calendar: Calendar {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: "UTC")!
+        return c
+    }
+
+    private func ledger() throws -> FinanceLedger {
+        try JSONDecoder.homelab().decode(FinanceLedger.self, from: Data(#"""
+        {"transactions":[
+          {"id":"a","date":"2026-10-02","account":"chk","amount":-100,"payee":"Kroger","category":"Groceries"},
+          {"id":"b","date":"2026-10-03","account":"chk","amount":-40,"payee":"Shell","category":"Gas"},
+          {"id":"c","date":"2026-10-04","account":"chk","amount":15,"payee":"Kroger","category":"Groceries","note":"Returned"},
+          {"id":"d","date":"2026-10-05","account":"chk","amount":2400,"payee":"Paycheck","category":"Income"},
+          {"id":"e","date":"2026-10-06","account":"chk","amount":-500,"payee":"Savings","to":"sav"},
+          {"id":"f","date":"2026-10-07","account":"chk","amount":-30,"payee":"Corner shop"},
+          {"id":"g","date":"2026-10-08","account":"chk","amount":-60,"payee":"Target","splits":[{"category":"Groceries","amount":-20},{"category":"Home","amount":-40}]},
+          {"id":"h","date":"2026-09-20","account":"chk","amount":-80,"payee":"Kroger","category":"Groceries"},
+          {"id":"i","date":"2026-10-09","account":"chk","amount":-12,"payee":"Chipotle","category":"Takeout"}
+        ]}
+        """#.utf8))
+    }
+
+    private let categories: [FinanceCategory] = {
+        let json = #"[{"name":"Groceries"},{"name":"Gas"},{"name":"Home"},{"name":"Food"},{"name":"Takeout","parent":"Food"},{"name":"Income","income":true}]"#
+        return try! JSONDecoder.homelab().decode([FinanceCategory].self, from: Data(json.utf8))
+    }()
+
+    @Test func byCategoryInAMonth() throws {
+        let october = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 15)))
+        let spent = Spending.byCategory(try ledger().transactions, in: october, categories: categories, calendar: calendar)
+        // Groceries: 100 − 15 refunded + 20 of the split; Home: the split's 40;
+        // Gas 40; no category: 30; Takeout counted under its parent, Food.
+        // Not the paycheck, not the move to savings, not September's.
+        #expect(spent.map(\.name) == ["Groceries", "Gas", "Home", "Uncategorized", "Food"])
+        #expect(spent.map(\.spent) == [105, 40, 40, 30, 12])
+    }
+
+    @Test func sixMonthsOldestFirst() throws {
+        let october = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 15)))
+        let months = Spending.months(try ledger().transactions, ending: october, count: 6, categories: categories, calendar: calendar)
+        #expect(months.count == 6)
+        #expect(months.map(\.total).suffix(2) == [80, 227])
+        #expect(months.first?.total == 0)
+    }
+
+    @Test func aCategorysTransactions() throws {
+        let october = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 15)))
+        let ids = Spending.transactions(try ledger().transactions, in: "Groceries", month: october, categories: categories, calendar: calendar).map(\.id)
+        #expect(ids == ["g", "c", "a"])
+    }
+
+    @Test func settingACategoryKeepsTheRest() throws {
+        let raw = try JSONDecoder().decode(JSONValue.self, from: Data(#"""
+        {"rev":"r1","transactions":[
+          {"id":"a","date":"2026-10-02","account":"chk","amount":-100,"payee":"Kroger","bankId":"x1","tags":["weekly"]},
+          {"id":"t","date":"2026-10-06","account":"chk","amount":-500,"payee":"Savings","to":"sav"},
+          {"id":"s","date":"2026-10-08","account":"chk","amount":-60,"payee":"Target","splits":[{"category":"Home","amount":-60}]}
+        ]}
+        """#.utf8))
+        func first(_ ledger: JSONValue?) -> JSONValue? {
+            guard case .array(let all)? = ledger?["transactions"] else { return nil }
+            return all.first
+        }
+        let edited = try #require(LedgerEdit.settingCategory(id: "a", to: " Groceries ", in: raw))
+        let entry = first(edited)
+        #expect(entry?["category"] == .string("Groceries"))
+        #expect(entry?["bankId"] == .string("x1"))
+        #expect(edited["rev"] == .string("r1"))
+        // Cleared with "".
+        let cleared = first(LedgerEdit.settingCategory(id: "a", to: "", in: edited))
+        #expect(cleared != nil && cleared?["category"] == nil)
+        // A transfer, a split one, or one that isn't there: on the computer.
+        #expect(LedgerEdit.settingCategory(id: "t", to: "Home", in: raw) == nil)
+        #expect(LedgerEdit.settingCategory(id: "s", to: "Home", in: raw) == nil)
+        #expect(LedgerEdit.settingCategory(id: "zz", to: "Home", in: raw) == nil)
+    }
+}

@@ -204,7 +204,7 @@ private struct PhoneDashboard: View {
     private var screenshotTab: Screen? {
         switch ScreenshotMode.shot {
         case nil: nil
-        case "status": .status(.all)
+        case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
         case "settings": .settings
@@ -298,6 +298,14 @@ private struct PhoneStatus: View {
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
             }
+            #if SCREENSHOTS
+            .overlay {
+                // The screenshots: an app's page, as if tapped.
+                if ScreenshotMode.shot == "app", let app = model.app(id: "vikunja") ?? model.latestApps.first {
+                    AppDetailView(app: app).background(Theme.canvas)
+                }
+            }
+            #endif
             .refreshable {
                 // Status and its cards (refresh reads them), the backups tile, and the money card.
                 async let money: Void = finances.load()
