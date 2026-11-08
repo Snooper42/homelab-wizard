@@ -52,9 +52,13 @@ jobs:
           fetch-depth: 0
       - name: Did the app change
         id: changed
+        # A pull request is checked out as its merge into the base, whose
+        # first parent is the base; a push says the commit it came after.
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
         run: |
+          if [ "$EVENT" = pull_request ]; then BASE="$(git rev-parse HEAD^1 2>/dev/null || true)"; else BASE="$BEFORE"; fi
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null \
             || git diff --name-only "$BASE" HEAD | grep -qE '^(apple-client/|\.github/workflows/apple-client\.yml$)'; then
             echo "app=true" >> "$GITHUB_OUTPUT"; echo "The app changed"
