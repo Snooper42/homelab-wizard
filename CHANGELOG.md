@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A month in all, on the calendar:** beside the day you pick, Finances › Calendar sums up the month shown: what its paychecks bring, what its bills take, the lowest checking gets and on which day (said when it's under your cushion), and what your transactions recorded so far. On a narrow window it comes first.
 - **What happened, on the calendar:** Finances › Calendar now shows the days before today too, each with its payees' logos and what it came to from your transactions; pick a day for the list, each opening its transaction, and go back a month for what it came to, as far back as your transactions go.
 - **Put a buy right, or delete it:** on Net worth's Investments card, open a holding to see its buys and sales as Ghostfolio keeps them. **Change** fixes the shares, what you paid, the day, or bought or sold; **Delete** (asked first) takes it out of Ghostfolio. The card reads Ghostfolio again after each, so its figures follow. A phone allowed to change Finances can do the same.
 - **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.

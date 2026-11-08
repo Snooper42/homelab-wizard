@@ -2025,6 +2025,8 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 @container (max-width: 600px) {
   #finRoot .fx-calboard .fx-month, #finRoot .fx-calboard .fx-callegend, #finRoot .fx-calboard > .fx-dayone { display:none; }
   .fx-weeks { display:block; margin-top:8px; }
+  /* The month in all first: the week list under it is long. */
+  #finRoot .fx-calboard > .fx-monthone { order:-1; }
 }
 @media (forced-colors: active) { .fx-month td.fx-low { outline:2px solid Mark; } .fx-day[aria-pressed=true] { outline:2px solid Highlight; } }
 /* Recurring › Subscriptions: what they cost together, and each one's due day as a badge. */

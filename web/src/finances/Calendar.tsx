@@ -246,8 +246,45 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
           <WeekList v={v} L={L} days={days} inMonth={inMonth} col={col} cushion={cushion} edit={edit} />
         </Widget>
         {picked && <DayCard v={v} L={L} d={picked} cushion={cushion} edit={edit} read={read} />}
+        <MonthCard L={L} month={month} ds={inMonth.map((d) => days[d]).filter(Boolean)} cushion={cushion} today={v.today} />
       </div>
     </div>
+  );
+}
+
+/**
+ * The month shown in all: what its paychecks bring and its bills take,
+ * the lowest checking gets and on which day, and, for its days before
+ * today, what the transactions recorded. Beside the day picked.
+ */
+function MonthCard({ L, month, ds, cushion, today }: { L: Lookup; month: string; ds: DayInfo[]; cushion: number; today: string }) {
+  const name = parseDay(month + '-01').toLocaleDateString(undefined, { month: 'long' });
+  const events = ds.flatMap((d) => d.events);
+  const pays = events.filter((e) => e.people?.length), bills = events.filter((e) => !e.people?.length && e.amount < 0), comes = events.filter((e) => !e.people?.length && e.amount > 0);
+  const charges = ds.flatMap((d) => d.charges);
+  const sum = (es: finance.Event[]) => es.reduce((n, e) => n + e.amount, 0);
+  const who = [...new Set(pays.flatMap((e) => e.people || []))].map((id) => L.person[id]?.name || id);
+  // The lowest of the days checking is read for, from today on: the past has no balance read.
+  const read = ds.filter((d) => !d.past && !d.later && d.date >= today);
+  const low = read.reduce<DayInfo | undefined>((m, d) => (!m || d.balance < m.balance ? d : m), undefined);
+  const spent = ds.flatMap((d) => d.spent).filter((t) => !t.to && (ds.find((d) => d.date === t.date)?.past || t.date === today));
+  const recIn = spent.filter((t) => t.amount > 0).length, recOut = spent.filter((t) => t.amount < 0).length;
+  const recNet = ds.filter((d) => d.past || d.date === today).reduce((n, d) => n + d.net, 0);
+  const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;
+  const nothing = !pays.length && !bills.length && !comes.length && !charges.length && !low && !spent.length;
+  return (
+    <Widget title={`${name} in all`} kind="fx-monthone">
+      <Rows kind="fx-rows">
+        {!!pays.length && <Row title="Paychecks" sub={`${plural(pays.length, 'paycheck')} · ${who.join(', ')}`} when={<Amount value={sum(pays)} sign tone="in" form="full" />} whenPlain />}
+        {!!comes.length && <Row title="Money coming in" sub={plural(comes.length, 'payment')} when={<Amount value={sum(comes)} sign tone="in" form="full" />} whenPlain />}
+        {!!bills.length && <Row title="Bills and payments" sub={plural(bills.length, 'payment') + ' from checking'} when={<Amount value={sum(bills)} sign form="full" />} whenPlain />}
+        {!!charges.length && <Row title="Charged to cards" sub={`${plural(charges.length, 'charge')}, paid with the card`} when={<Amount value={-sum(charges)} form="full" tone="muted" />} whenPlain />}
+        {low && <Row title="Lowest in checking" sub={dayLong(low.date) + (low.low ? `, under your ${compact(cushion)} cushion` : '')} subTone={low.low ? 'warn' : ''}
+          when={<Amount value={low.balance} tone={low.balance < 0 ? 'out' : low.low ? 'warn' : ''} form="full" />} whenPlain />}
+        {!!spent.length && <Row title="Recorded so far" sub={[recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(', ') + ' · in your transactions'} when={<Amount value={recNet} sign tone="auto" form="full" />} whenPlain />}
+        {nothing && <li><Empty>Nothing comes or goes this month.</Empty></li>}
+      </Rows>
+    </Widget>
   );
 }
 

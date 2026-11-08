@@ -11379,7 +11379,41 @@ ${pays}
           ]
         }
       ),
-      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit, read })
+      picked && /* @__PURE__ */ u3(DayCard, { v: v3, L: L2, d: picked, cushion, edit, read }),
+      /* @__PURE__ */ u3(MonthCard, { L: L2, month: month3, ds: inMonth.map((d3) => days[d3]).filter(Boolean), cushion, today: v3.today })
+    ] }) });
+  }
+  function MonthCard({ L: L2, month: month3, ds, cushion, today: today2 }) {
+    const name = parseDay(month3 + "-01").toLocaleDateString(void 0, { month: "long" });
+    const events = ds.flatMap((d3) => d3.events);
+    const pays = events.filter((e3) => e3.people?.length), bills = events.filter((e3) => !e3.people?.length && e3.amount < 0), comes = events.filter((e3) => !e3.people?.length && e3.amount > 0);
+    const charges = ds.flatMap((d3) => d3.charges);
+    const sum = (es) => es.reduce((n3, e3) => n3 + e3.amount, 0);
+    const who = [...new Set(pays.flatMap((e3) => e3.people || []))].map((id2) => L2.person[id2]?.name || id2);
+    const read = ds.filter((d3) => !d3.past && !d3.later && d3.date >= today2);
+    const low = read.reduce((m3, d3) => !m3 || d3.balance < m3.balance ? d3 : m3, void 0);
+    const spent = ds.flatMap((d3) => d3.spent).filter((t3) => !t3.to && (ds.find((d3) => d3.date === t3.date)?.past || t3.date === today2));
+    const recIn = spent.filter((t3) => t3.amount > 0).length, recOut = spent.filter((t3) => t3.amount < 0).length;
+    const recNet = ds.filter((d3) => d3.past || d3.date === today2).reduce((n3, d3) => n3 + d3.net, 0);
+    const plural3 = (n3, one, many = one + "s") => `${n3} ${n3 === 1 ? one : many}`;
+    const nothing = !pays.length && !bills.length && !comes.length && !charges.length && !low && !spent.length;
+    return /* @__PURE__ */ u3(Widget, { title: `${name} in all`, kind: "fx-monthone", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+      !!pays.length && /* @__PURE__ */ u3(Row, { title: "Paychecks", sub: `${plural3(pays.length, "paycheck")} · ${who.join(", ")}`, when: /* @__PURE__ */ u3(Amount, { value: sum(pays), sign: true, tone: "in", form: "full" }), whenPlain: true }),
+      !!comes.length && /* @__PURE__ */ u3(Row, { title: "Money coming in", sub: plural3(comes.length, "payment"), when: /* @__PURE__ */ u3(Amount, { value: sum(comes), sign: true, tone: "in", form: "full" }), whenPlain: true }),
+      !!bills.length && /* @__PURE__ */ u3(Row, { title: "Bills and payments", sub: plural3(bills.length, "payment") + " from checking", when: /* @__PURE__ */ u3(Amount, { value: sum(bills), sign: true, form: "full" }), whenPlain: true }),
+      !!charges.length && /* @__PURE__ */ u3(Row, { title: "Charged to cards", sub: `${plural3(charges.length, "charge")}, paid with the card`, when: /* @__PURE__ */ u3(Amount, { value: -sum(charges), form: "full", tone: "muted" }), whenPlain: true }),
+      low && /* @__PURE__ */ u3(
+        Row,
+        {
+          title: "Lowest in checking",
+          sub: dayLong(low.date) + (low.low ? `, under your ${compact(cushion)} cushion` : ""),
+          subTone: low.low ? "warn" : "",
+          when: /* @__PURE__ */ u3(Amount, { value: low.balance, tone: low.balance < 0 ? "out" : low.low ? "warn" : "", form: "full" }),
+          whenPlain: true
+        }
+      ),
+      !!spent.length && /* @__PURE__ */ u3(Row, { title: "Recorded so far", sub: [recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(", ") + " · in your transactions", when: /* @__PURE__ */ u3(Amount, { value: recNet, sign: true, tone: "auto", form: "full" }), whenPlain: true }),
+      nothing && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." }) })
     ] }) });
   }
   function pastLead(ds) {

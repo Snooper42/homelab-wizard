@@ -5953,6 +5953,24 @@ const smokes = [
     await page.click('.fx-calendar button:text-is("Today")');
     await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
   } },
+  // The month in all, beside the day: its paychecks, its bills, the lowest checking gets (under the cushion, said), and what was
+  // recorded so far; the month after has no recorded line. Narrow, it comes before the week list.
+  { name: 'Finances: the calendar sums up the month shown', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    const card = '.fx-monthone';
+    await page.waitForSelector(`${card} h2:text-is("October in all")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Lowest in checking"):has-text("Sat, Oct 31"):has-text("$2,312.40")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Recorded so far"):has-text("1 in, 5 out"):has-text("+$1,906.95")`, { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector(`${card} h2:text-is("November in all")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Paychecks"):has-text("3 paychecks · Alex, Jordan"):has-text("+$6,700.00")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Lowest in checking"):has-text("Thu, Nov 5, under your $500 cushion"):has-text("$407.91")`, { timeout: 5000 });
+    if (await page.$(`${card} li:has-text("Recorded so far")`)) throw new Error('a month ahead says what was recorded');
+    await page.setViewportSize({ width: 860, height: 900 });
+    await page.waitForSelector('.fx-weeks', { state: 'visible', timeout: 5000 });
+    const above = await page.evaluate(() => document.querySelector('.fx-monthone').getBoundingClientRect().top < document.querySelector('.fx-calendar').getBoundingClientRect().top);
+    if (!above) throw new Error('narrow, the month in all comes after the week list');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
