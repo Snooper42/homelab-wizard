@@ -907,6 +907,7 @@
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
   var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
   var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
   var chains = [
     ["amzn mktp", "Amazon"],
@@ -961,6 +962,12 @@
     ["disney plus", "Disney+"],
     ["instacart", "Instacart"],
     ["chipotle", "Chipotle"],
+    ["comcast xfinity", "Xfinity"],
+    ["comcast cable", "Xfinity"],
+    ["xfinity", "Xfinity"],
+    ["apple gs savings", "Apple Savings"],
+    ["apple savings", "Apple Savings"],
+    ["verizon wireless", "Verizon"],
     ["lowes", "Lowe's"],
     ["lowe s", "Lowe's"],
     ["the home depot", "The Home Depot"],
@@ -976,6 +983,13 @@
   function cleanPayee(raw) {
     let s3 = (raw || "").replace(/\s+/g, " ").trim();
     if (!s3) return "";
+    const zelle = s3.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);
+    if (zelle) return `Zelle ${zelle[1].toLowerCase()} ${ordinary(zelle[2].trim())}`;
+    const card = s3.match(/^payment to (.+?) card ending in (\d{4})\b/i);
+    if (card) return `Payment to ${ordinary(card[1].trim())} card ••${card[2]}`;
+    if (s3.search(achId) >= 0) {
+      s3 = s3.replace(achId, " ").replace(/(?:^|\s)\S*_\S*(?=\s|$)/g, " ").replace(/(?:^|\s)(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{8,}(?=\s|$)/g, " ").replace(/\s+/g, " ").trim().replace(/(?:\s+(?:PPD|CCD|WEB|TEL))+$/i, "");
+    }
     s3 = s3.replace(leading, "").trim();
     const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
     if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
@@ -1225,6 +1239,24 @@
       }
     });
     return out;
+  }
+  function renameFixes(found2, account, ledger, skip2) {
+    const out = /* @__PURE__ */ new Map(), used = new Set(skip2.values());
+    const words5 = (x3) => x3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+    found2.forEach((t3, i3) => {
+      if (skip2.has(i3) || !t3.payee || !t3.raw) return;
+      const raw = new Set(words5(t3.raw));
+      const q2 = ledger.find((q3) => !used.has(q3.id) && q3.account === account && !q3.to && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && !!q3.payee && q3.payee.toLowerCase() !== t3.payee.toLowerCase() && (q3.note || "").includes(t3.raw) && words5(q3.payee).every((w3) => raw.has(w3)));
+      if (q2) {
+        used.add(q2.id);
+        out.set(i3, q2.id);
+      }
+    });
+    return out;
+  }
+  function noted(t3, account, ledger) {
+    const said2 = t3.raw || t3.payee;
+    return !!said2 && ledger.some((q2) => q2.account === account && !q2.to && q2.date === t3.date && Math.abs(q2.amount - t3.amount) < 5e-3 && (q2.note || "").includes(said2));
   }
   var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
   function already(t3, account, ledger) {
@@ -8573,6 +8605,88 @@
     if (shown3()) draw3();
   });
 
+  // web/src/finances/guessCategory.ts
+  var brandCategory = Object.fromEntries(Object.entries({
+    Groceries: "costco walmart kroger wholefoods traderjoes aldi publix safeway lidl tesco instacart",
+    Gas: "shell chevron exxon bp",
+    "Eating out": "starbucks mcdonalds chipotle tacobell burgerking kfc wendys subway dunkin chickfila pizzahut dominos panerabread doordash grubhub postmates",
+    Shopping: "amazon ebay etsy bestbuy ikea target kohls macys nordstrom gap oldnavy uniqlo hm zara wayfair sephora nike adidas",
+    Repairs: "thehomedepot lowes",
+    Health: "cvs walgreens",
+    Phone: "verizon tmobile atandt mintmobile visiblebyverizon googlefi usmobile boostmobile",
+    Internet: "xfinity spectrum cox optimum googlefiber starlink frontier centurylink",
+    Electric: "dukeenergy pge coned",
+    "Car insurance": "geico progressive statefarm allstate libertymutual",
+    Travel: "delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft",
+    Fitness: "planetfitness peloton strava"
+  }).flatMap(([category, list]) => list.split(" ").map((b2) => [b2, category])));
+  var hintCategory = {
+    internet: "Internet",
+    phone: "Phone",
+    water: "Water",
+    utilities: "Electric",
+    spending: "Groceries",
+    fitness: "Fitness",
+    food: "Eating out",
+    health: "Health",
+    school: "Kids and school",
+    streaming: "Streaming and music",
+    music: "Streaming and music",
+    cloud: "Cloud and homelab",
+    software: "Software and apps",
+    home: "Mortgage or rent"
+  };
+  function paymentCategory(p3) {
+    const out = [];
+    const h3 = hintOf(p3.kind, p3.name);
+    if (h3 && hintCategory[h3]) out.push(hintCategory[h3]);
+    if (p3.kind === "subscriptions") {
+      const t3 = p3.type || suggestType(p3.institution, p3.name);
+      if (t3) out.push(subTypeName(t3));
+      out.push("Subscriptions");
+    }
+    if (p3.kind === "car" && /insurance/i.test(p3.name)) out.push("Car insurance");
+    out.push({ home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", other: "Other" }[p3.kind || ""] || "");
+    return out.filter(Boolean);
+  }
+  var flat2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  function ownAccount(payee, into2, accounts) {
+    const others2 = accounts.filter((a3) => a3.id !== into2 && a3.kind !== "home" && a3.kind !== "car" && a3.kind !== "collectible" && a3.kind !== "other");
+    const card = payee.match(/^Payment to (.+) card ••(\d{4})$/);
+    if (card) {
+      const cards = others2.filter((a3) => a3.kind === "card");
+      const byFour = cards.filter((a3) => (a3.detail || "").includes(card[2]) || a3.name.includes(card[2]));
+      if (byFour.length === 1) return byFour[0].id;
+      const bank = brandOf(void 0, card[1]);
+      const byBank = cards.filter((a3) => bank && brandOf(a3.institution, a3.name) === bank);
+      return byBank.length === 1 ? byBank[0].id : void 0;
+    }
+    const p3 = flat2(payee);
+    if (!p3 || p3.split(" ").length < 2) return void 0;
+    const named5 = others2.filter((a3) => a3.kind !== "card" && a3.kind !== "loan" && flat2(a3.name) === p3);
+    return named5.length === 1 ? named5[0].id : void 0;
+  }
+  function guessFor(t3, into2, plan, categories2, last2, pays) {
+    const payee = t3.payee || "";
+    const moved = payee && ownAccount(payee, into2, plan.accounts || []);
+    if (moved) return { account: moved };
+    const have = new Map(categories2.map((c3) => [c3.name.toLowerCase(), c3]));
+    const pick = (...names5) => {
+      for (const n3 of names5) {
+        const c3 = n3 && have.get(n3.toLowerCase());
+        if (c3 && !!c3.income === t3.amount > 0) return c3.name;
+      }
+      return void 0;
+    };
+    if (last2 && have.has(last2.toLowerCase())) return { category: categories2.find((c3) => c3.name.toLowerCase() === last2.toLowerCase()).name };
+    const words5 = " " + flat2(payee) + " ";
+    const fromWords = t3.amount > 0 ? / (payroll|salary|direct dep|dir dep|paycheck) /.test(words5) ? "Paycheck" : / interest /.test(words5) ? "Interest" : / (refund|return) /.test(words5) ? "Refunds" : void 0 : / (fee|fees|overdraft) /.test(words5) ? "Fees and interest" : void 0;
+    const brand = payee ? brandOf(void 0, payee) : void 0;
+    const sub = brand ? suggestType(brand, payee) : "";
+    const hint = hintOf(void 0, payee);
+    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint]) };
+  }
+
   // web/src/finances/model.ts
   function month(v3, L2) {
     const people = v3.plan.people || [];
@@ -8706,8 +8820,8 @@
     ] });
   }
   function Delta({ value, base, look: look2 = "badge", label, downIsGood, shareOnly }) {
-    const flat3 = Math.abs(value) < 5e-3;
-    const good = flat3 ? null : value > 0 !== !!downIsGood;
+    const flat4 = Math.abs(value) < 5e-3;
+    const good = flat4 ? null : value > 0 !== !!downIsGood;
     const tone = good === null ? "muted" : good ? "in" : "out";
     if (amountsHidden()) return look2 === "badge" ? null : /* @__PURE__ */ u3("span", { class: "fx-delta", children: label && /* @__PURE__ */ u3("span", { class: "fx-sub", children: label }) });
     const pct = base && Math.abs(base) > 5e-3 ? `${value < 0 ? "−" : "+"}${Math.abs(value / Math.abs(base) * 100).toFixed(1)}%` : "";
@@ -8719,7 +8833,7 @@
       ] })
     ] }) });
     return /* @__PURE__ */ u3("span", { class: "fx-delta", children: [
-      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat3 ? "No change" : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { class: "fx-" + tone, children: flat4 ? "No change" : /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: value < 0 ? "↓ " : "↑ " }),
         signed(value),
         pct && ` (${pct})`
@@ -10398,8 +10512,9 @@
     });
     const have = ledger?.transactions || [];
     const fixes = wayOnlyFixes(found2, account, have);
+    const renames = renameFixes(found2, account, have, fixes);
     const fixed = new Set(fixes.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
-    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)));
+    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !renames.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)) && !noted(t3, account, others2));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const payments = (plan.payments || []).filter((x3) => !x3.card);
@@ -10412,18 +10527,37 @@
       });
     })();
     const linkOf = (i3) => i3 in picked ? picked[i3] : guessed[i3]?.payment || "";
+    const cats = props.categories || [];
+    const guesses = fresh.map((t3, i3) => guessFor(t3, account, plan, cats, t3.payee ? lastCat(t3.payee) : void 0, payments.find((q2) => q2.id === linkOf(i3))));
+    const named5 = (i3) => renames.has(i3) ? found2[i3].payee : void 0;
+    const recat = /* @__PURE__ */ new Map();
+    found2.forEach((t3, i3) => {
+      if (fresh.includes(t3) || fixes.has(i3)) return;
+      const q2 = have.find((q3) => !recat.has(q3.id) && q3.account === account && !q3.to && !q3.category && !q3.splits?.length && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && (t3.raw && (q3.note || "").includes(t3.raw) || !!q3.payee && !!t3.payee && alike(q3.payee, t3.payee)));
+      if (!q2) return;
+      const g2 = guessFor({ payee: named5(i3) || q2.payee, amount: q2.amount }, account, plan, cats, named5(i3) || q2.payee ? lastCat(named5(i3) || q2.payee) : void 0, payments.find((x3) => x3.id === q2.payment));
+      if (g2.category) recat.set(q2.id, g2.category);
+    });
+    const nameOf = (id2) => (plan.accounts || []).find((a3) => a3.id === id2)?.name || "another account";
     const bring = async (e3) => {
       e3.preventDefault();
-      if (!fresh.length && !fixes.size) {
+      if (!fresh.length && !fixes.size && !renames.size && !recat.size) {
         setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
       const fix = new Map([...fixes].map(([i3, id2]) => [id2, found2[i3]]));
+      const rename = new Map([...renames].map(([i3, id2]) => [id2, found2[i3].payee]));
       const kept4 = have.map((q2) => {
+        if (rename.has(q2.id) || recat.has(q2.id)) return { ...q2, payee: rename.get(q2.id) || q2.payee, category: q2.category || recat.get(q2.id) };
         const t3 = fix.get(q2.id);
         return t3 ? { ...q2, payee: t3.payee || q2.payee, note: q2.note || (t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo) || void 0, category: q2.category || t3.payee && lastCat(t3.payee) || void 0, institution: q2.institution || t3.payee && lastLogo(t3.payee) || void 0, bank: q2.bank || t3.id } : q2;
       });
-      const added = fresh.map((t3, i3) => ({ id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: t3.payee && lastCat(t3.payee) || void 0, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id, payment: linkOf(i3) || void 0 }));
+      const added = fresh.map((t3, i3) => {
+        const g2 = guesses[i3];
+        const x3 = { id: "", date: t3.date, account, amount: t3.amount, payee: t3.payee || void 0, category: g2.category, institution: t3.payee && lastLogo(t3.payee) || void 0, note: t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo || void 0, bank: t3.id, payment: linkOf(i3) || void 0 };
+        if (!g2.account) return x3;
+        return t3.amount < 0 ? { ...x3, to: g2.account, category: void 0, payment: void 0 } : { ...x3, account: g2.account, to: account, amount: -t3.amount, bank: void 0, toBank: t3.id, category: void 0, payment: void 0 };
+      });
       setBusy(true);
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: [...kept4, ...added] });
       setBusy(false);
@@ -10458,7 +10592,7 @@
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
           found2.length ? `${fresh.length} to bring in` : "Nothing found yet",
           " ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", found2.length - fresh.length - fixes.size ? `${found2.length - fresh.length - fixes.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
+          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", renames.size ? `${renames.size} brought in before, given clearer names` : "", recat.size ? `${recat.size} brought in before, given a category` : "", found2.length - fresh.length - fixes.size - renames.size ? `${found2.length - fresh.length - fixes.size - renames.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
         ] }),
         !ofx && found2.length > 1 && found2.every((t3) => !t3.payee || wayOnly(t3.payee)) && /* @__PURE__ */ u3("p", { class: "formerr bad importnote", role: "alert", children: [
           "No payee here is a name, only ",
@@ -10467,7 +10601,7 @@
         ] }),
         guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
-          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), dup = k3 < 0 && !fixing;
+          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
           const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
@@ -10476,7 +10610,7 @@
               /* @__PURE__ */ u3("small", { children: [
                 t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
-                fixing ? " · gives the CREDIT or DEBIT row its payee" : dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
+                fixing ? " · gives the CREDIT or DEBIT row its payee" : renaming ? " · gives the one brought in before this name" : dup ? " · already in" : guesses[k3]?.account ? ` · moves ${t3.amount < 0 ? "to" : "from"} ${nameOf(guesses[k3].account)}` : guesses[k3]?.category ? ` · ${guesses[k3].category}` : ""
               ] }),
               g2 && /* @__PURE__ */ u3("span", { class: "importlink", children: [
                 /* @__PURE__ */ u3("small", { children: !x3 ? "Not a planned payment" : k3 in picked ? `Pays ${x3.name}` : `Looks like ${x3.name}, planned ${money(x3.amount)}` }),
@@ -10499,7 +10633,7 @@
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size}` : ""].filter(Boolean).join(", ") || "Bring in" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size && !renames.size && !recat.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size + (/* @__PURE__ */ new Set([...renames.values(), ...recat.keys()])).size}` : ""].filter(Boolean).join(", ") || "Bring in" })
       ] })
     ] });
   }
@@ -11538,9 +11672,9 @@ ${pays}
   }
 
   // web/src/finances/widgets/Wallos.tsx
-  var flat2 = (s3) => s3.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  var flat3 = (s3) => s3.toLowerCase().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   function typeFromCategory(cat) {
-    const c3 = flat2(cat || "");
+    const c3 = flat3(cat || "");
     const pairs2 = [
       [/entertainment|music|video|stream|tv|movie/, "streaming"],
       [/cloud|hosting|storage|backup|vpn/, "cloud"],
@@ -11561,17 +11695,17 @@ ${pays}
   }
   function sortWallos(subs, plan) {
     const payments = allPayments(plan);
-    const names5 = new Set(payments.flatMap((x3) => [flat2(x3.name), flat2(cleanPayee(x3.name))]));
+    const names5 = new Set(payments.flatMap((x3) => [flat3(x3.name), flat3(cleanPayee(x3.name))]));
     const brands2 = new Set(payments.map((x3) => brandOf(x3.institution, x3.name)).filter((b2) => b2 && b2 !== "none"));
     const inPlan = (s3) => {
       const b2 = brandOf(void 0, s3.name) || brandOf(void 0, cleanPayee(s3.name));
-      return names5.has(flat2(s3.name)) || names5.has(flat2(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
+      return names5.has(flat3(s3.name)) || names5.has(flat3(cleanPayee(s3.name))) || !!b2 && brands2.has(b2);
     };
     const out = { add: [], have: [], off: [], odd: [] };
     const seen2 = /* @__PURE__ */ new Set();
     for (const s3 of subs) {
-      if (seen2.has(flat2(s3.name))) continue;
-      seen2.add(flat2(s3.name));
+      if (seen2.has(flat3(s3.name))) continue;
+      seen2.add(flat3(s3.name));
       if (s3.off) out.off.push(s3);
       else if (inPlan(s3)) out.have.push(s3);
       else if (!s3.every) out.odd.push(s3);

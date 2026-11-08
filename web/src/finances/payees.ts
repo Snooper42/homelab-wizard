@@ -1,10 +1,14 @@
 // A payee as a bank writes it ("NETFLIX.COM", "AMZN MKTP US*2K4",
 // "SQ *BLUE BOTTLE", "TST* JOE'S CAFE 0042", "PAYPAL *SPOTIFY", "POS DEBIT
-// SHELL OIL 57444 SAN JOSE CA") made into the name a person would write:
+// SHELL OIL 57444 SAN JOSE CA", "ACME CRUISES AD_PAYMENT PPD ID: 1234",
+// "Zelle payment from JANE DOE 1234567890") made into the name a person would write:
 // the card processor's prefix and the merchant's own reference taken off,
 // card and store numbers, dates, phone numbers, ".COM", and a trailing
 // state dropped, a known chain's wording made its name ("WM SUPERCENTER"
-// is Walmart), and capitals made ordinary. Logos then match the clean
+// is Walmart), and capitals made ordinary. A direct debit or deposit
+// (ACH) loses its codes: the PPD or WEB ID, its entry wording
+// (AD_PAYMENT), and a long reference. Zelle says who, and a card paid
+// from checking says which. Logos then match the clean
 // name. A plain function: words in, words out.
 
 /** Processors that write their own name first, the merchant after a star. */
@@ -12,6 +16,9 @@ const processors = new Set(['sq', 'tst', 'sp', 'pp', 'py', 'paypal', 'in', 'ggl'
 
 /** Words a bank puts before the merchant. */
 const leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+
+/** A direct debit's or deposit's code and number ("PPD ID: 1592714849", "WEB ID: 2222"). */
+const achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
 
 /** The states and territories, as a bank ends a line with one. */
 const states = new Set('al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr'.split(' '));
@@ -28,6 +35,7 @@ const chains: [string, string][] = ([
   ['uber eats', 'Uber Eats'], ['uber trip', 'Uber'], ['uber', 'Uber'], ['lyft ride', 'Lyft'], ['lyft', 'Lyft'], ['dd doordash', 'DoorDash'], ['doordash', 'DoorDash'],
   ['cvs pharmacy', 'CVS'], ['cvs', 'CVS'], ['walgreens', 'Walgreens'], ['apple com bill', 'Apple'], ['itunes com', 'Apple'], ['kroger fuel', 'Kroger'], ['kroger', 'Kroger'],
   ['youtubepremium', 'YouTube Premium'], ['youtube premium', 'YouTube Premium'], ['youtube', 'YouTube'], ['apple', 'Apple'], ['netflix', 'Netflix'], ['spotify usa', 'Spotify'], ['spotify', 'Spotify'], ['hulu', 'Hulu'], ['disney plus', 'Disney+'], ['instacart', 'Instacart'], ['chipotle', 'Chipotle'],
+  ['comcast xfinity', 'Xfinity'], ['comcast cable', 'Xfinity'], ['xfinity', 'Xfinity'], ['apple gs savings', 'Apple Savings'], ['apple savings', 'Apple Savings'], ['verizon wireless', 'Verizon'],
   ['lowes', "Lowe's"], ['lowe s', "Lowe's"], ['the home depot', 'The Home Depot'], ['home depot', 'The Home Depot'], ['trader joe s', "Trader Joe's"], ['whole foods', 'Whole Foods'],
 ] as [string, string][]).sort((a, b) => b[0].length - a[0].length);
 
@@ -44,6 +52,20 @@ function ordinary(s: string): string {
 export function cleanPayee(raw: string | undefined): string {
   let s = (raw || '').replace(/\s+/g, ' ').trim();
   if (!s) return '';
+  // Zelle: who it went to or came from, its reference dropped.
+  const zelle = s.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);
+  if (zelle) return `Zelle ${zelle[1].toLowerCase()} ${ordinary(zelle[2].trim())}`;
+  // A card paid from checking: which card, by its last four.
+  const card = s.match(/^payment to (.+?) card ending in (\d{4})\b/i);
+  if (card) return `Payment to ${ordinary(card[1].trim())} card ••${card[2]}`;
+  // A direct debit or deposit: its code and number, its entry wording (AD_PAYMENT), and a long reference (NZTZP5VXA0Y1UPE) go, then a trailing WEB or PPD.
+  if (s.search(achId) >= 0) {
+    s = s.replace(achId, ' ')
+      .replace(/(?:^|\s)\S*_\S*(?=\s|$)/g, ' ')
+      .replace(/(?:^|\s)(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{8,}(?=\s|$)/g, ' ')
+      .replace(/\s+/g, ' ').trim()
+      .replace(/(?:\s+(?:PPD|CCD|WEB|TEL))+$/i, '');
+  }
   s = s.replace(leading, '').trim();
   // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE"); a star after the merchant is its own reference ("…US*2K4").
   const star = s.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
