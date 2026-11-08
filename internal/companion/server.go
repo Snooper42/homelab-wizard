@@ -23,6 +23,11 @@ import (
 type Method struct {
 	// Change: only a device allowed to make changes may call it.
 	Change bool
+	// Private: the household's own setup (the Settings form, with its
+	// addresses, folders, and email in it), sent only over an encrypted
+	// connection and never to a wall screen, which anyone walking past can
+	// read.
+	Private bool
 	// Finances is the Finances level a device needs to call it
 	// (FinancesView or FinancesEdit), over an encrypted connection only;
 	// "" for a method that is not about money.
@@ -339,6 +344,14 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 	}
 	if m.Change && !d.CanChange {
 		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow "+d.ID)
+		return
+	}
+	if m.Private && d.Kiosk {
+		fail(w, http.StatusForbidden, "a wall screen does not see Settings: use a phone, or Homelab Wizard on the computer")
+		return
+	}
+	if m.Private && !s.encrypted(r) {
+		fail(w, http.StatusForbidden, "Settings on a phone need the https link; over the home Wi-Fi they are not sent")
 		return
 	}
 	if m.Finances != "" && !s.encrypted(r) {
