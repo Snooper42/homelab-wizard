@@ -6833,12 +6833,12 @@ const smokes = [
     await page.click('.fx-transactions button:text-is("Import a file")');
     const csv = 'Date,Description,Amount\n10/30/2026,ZELLE FROM SAM,900.00\n10/30/2026,ZELLE FROM PAT,900.00\n';
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
-    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Zelle From Sam")) .importlink:has-text("Looks like Mortgage share, planned $900.00")', { timeout: 5000 });
-    if (await page.$('#finSheet .importlist li:has(strong:text-is("Zelle From Pat")) .importlink')) throw new Error('money from someone else is linked to what Sam sends');
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Zelle from Sam")) .importlink:has-text("Looks like Mortgage share, planned $900.00")', { timeout: 5000 });
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Zelle from Pat")) .importlink')) throw new Error('money from someone else is linked to what Sam sends');
     await page.click('#finSheet button:text-is("Bring in 2")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
-    if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
+    if (txs.join() !== 'Zelle from Sam|share,Zelle from Pat|') throw new Error(`saved ${txs}`);
   } },
   // A minus on checking and the same plus on savings a day later look like one transfer: Join makes them one, its arriving
   // half's bank ID kept, so the savings statement brought in again skips it. Not one transfer keeps them apart.
