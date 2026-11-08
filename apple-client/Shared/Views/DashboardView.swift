@@ -173,7 +173,7 @@ private struct PhoneDashboard: View {
             .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
             .tag(Screen.setup)
             NavigationStack {
-                ComputerView(computer: computer, page: .settings)
+                settingsRoot
             }
             .tabItem { Label("Settings", systemImage: Screen.settings.systemImage) }
             .tag(Screen.settings)
@@ -189,6 +189,19 @@ private struct PhoneDashboard: View {
 
     // What needs a look is on the Status tab and its badge, not in a line
     // atop every other tab (it squeezed their titles and read as an alarm).
+
+    @ViewBuilder
+    private var settingsRoot: some View {
+        #if SCREENSHOTS
+        if ScreenshotMode.shot == "settings-all" {
+            SettingsFormView(computer: computer, section: nil)
+        } else {
+            ComputerView(computer: computer, page: .settings)
+        }
+        #else
+        ComputerView(computer: computer, page: .settings)
+        #endif
+    }
 
     @ViewBuilder
     private var financesRoot: some View {
@@ -207,7 +220,7 @@ private struct PhoneDashboard: View {
         case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
-        case "settings": .settings
+        case "settings", "settings-all": .settings
         default: .finances
         }
     }

@@ -201,7 +201,7 @@ private struct CheckingHero: View {
                                             ? "One payment due \(Self.short(pay.date)) comes out of this paycheck after it lands, so it isn't in this number."
                                             : "\(count) payments due \(Self.short(pay.date)) come out of this paycheck after it lands, so they aren't in this number.")
                 } label: {
-                    HStack(spacing: 12) {
+                    (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 12))) {
                         Image(systemName: "arrow.down.to.line.circle.fill")
                             .font(.system(size: 28))
                             .symbolRenderingMode(.palette)
@@ -226,6 +226,7 @@ private struct CheckingHero: View {
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.tertiary)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
                     .card()
@@ -962,6 +963,7 @@ private struct CategoryPicker: View {
 /// transactions.
 private struct FinanceSpendingPage: View {
     @Bindable var finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
     /// The month shown, its first day; nil for the plan's own month.
     @State private var picked: Date?
 
@@ -1017,7 +1019,7 @@ private struct FinanceSpendingPage: View {
     }
 
     private func ring(_ spent: [SpendingCategory], total: Double, before: Double?, month: Date, view: FinancesPlanView) -> some View {
-        HStack(spacing: 16) {
+        (typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 16)) : AnyLayout(HStackLayout(spacing: 16))) {
             ZStack {
                 if spent.isEmpty {
                     Circle().stroke(Theme.canvas, lineWidth: 18).padding(9)
@@ -1050,6 +1052,7 @@ private struct FinanceSpendingPage: View {
                 .padding(.horizontal, 22)
             }
             .frame(width: 144, height: 144)
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
             .accessibilityElement(children: .combine)
             VStack(alignment: .leading, spacing: 8) {
                 if spent.isEmpty {
@@ -2935,6 +2938,8 @@ private struct AccountSwitcher: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 5)
         }
+        // Small cards: their words stay on them at any text size.
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
     }
 
     private func chip<Mark: View>(id: String?, name: String, amount: String, style: WalletStyle, @ViewBuilder mark: () -> Mark) -> some View {
@@ -3643,7 +3648,7 @@ private struct ScreenshotPage: View {
         case "recurring": FinanceRecurringPage(finances: finances)
         case "spending": FinanceSpendingPage(finances: finances)
         case "inbox": ReviewInboxPage(finances: finances)
-        case "loading": SkeletonCards().padding(.horizontal, 16).frame(maxHeight: .infinity, alignment: .top).background(Theme.canvas).navigationTitle("Finances")
+        case "loading": ScrollView { SkeletonCards().padding(.horizontal, 16) }.background(Theme.canvas).navigationTitle("Finances")
         default: FinancesView(finances: finances)
         }
     }
