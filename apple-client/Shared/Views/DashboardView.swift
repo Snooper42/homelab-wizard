@@ -243,7 +243,9 @@ private struct PhoneStatus: View {
                             StatusHero(model: model)
                             StatusTiles(model: model, openBackups: openBackups)
                         }
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        // Room under the tiles for their shadows, which the row would otherwise cut.
+                        .padding(.bottom, 14)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(Color.clear)
                     }
                 }

@@ -1758,7 +1758,9 @@ struct TransactionsView: View {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
                     AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        // Room under it for its shadow, which the row would otherwise cut.
+                        .padding(.bottom, 14)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                     let accounts = Self.switcherAccounts(view.plan.accounts)
@@ -1823,6 +1825,7 @@ struct TransactionsView: View {
             }
         }
         .themedCanvas()
+        .compactSections()
         .searchable(text: $search, prompt: "Payee, category, note or tag")
         .task {
             await finances.loadLedger()
@@ -2036,12 +2039,19 @@ private struct WalletTransactionRow: View {
     let isNew: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
-            Circle()
-                .fill(isNew ? Theme.accent : .clear)
-                .frame(width: 8, height: 8)
-                .accessibilityHidden(true)
+        HStack(spacing: 12) {
             LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 42)
+                // New since you looked: a violet dot on the logo, as an unread badge.
+                .overlay(alignment: .topLeading) {
+                    if isNew {
+                        Circle()
+                            .fill(Theme.accent)
+                            .frame(width: 11, height: 11)
+                            .overlay(Circle().stroke(Theme.surface, lineWidth: 2))
+                            .offset(x: -2, y: -2)
+                            .accessibilityHidden(true)
+                    }
+                }
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
                     Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
@@ -2052,15 +2062,11 @@ private struct WalletTransactionRow: View {
                             .accessibilityLabel("Receipt kept")
                     }
                 }
-                if let sub = subtitle {
-                    Text(verbatim: sub)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Text(verbatim: TransactionsView.dayWords(transaction.date))
+                // What it was and the day, on one line: two lines a row, as Wallet's.
+                Text(verbatim: [subtitle, TransactionsView.dayWords(transaction.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer(minLength: 8)
             Money(value: transaction.amount, currency: finances.currency, finances: finances)
@@ -2153,8 +2159,7 @@ private struct TransactionDetailView: View {
                         Text(verbatim: finances.accountName(t.account) ?? "Account")
                     }
                 }
-            }
-            Section {
+                // One card of details, as Wallet keeps a transaction's.
                 LabeledContent("Category") {
                     HStack(spacing: 6) {
                         if let tint = Design.category(PayeeLogos.shared.categoryHue(category, in: categories)) {
@@ -2194,6 +2199,7 @@ private struct TransactionDetailView: View {
                             }
                             Spacer()
                             Money(value: other.amount, currency: finances.currency, finances: finances)
+                                .foregroundStyle(other.amount > 0 ? Theme.success : Color.primary)
                         }
                         .accessibilityElement(children: .combine)
                     }
