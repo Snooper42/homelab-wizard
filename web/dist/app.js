@@ -12127,7 +12127,7 @@ ${pays}
               format: tick,
               height: 180,
               label: `${g2.name}: what was spent each of the last 12 months. The table under it has every number.`,
-              columns: trend.map((t3) => ({ label: t3.label, up: [{ value: Math.max(0, t3.amount), color: "out" }], down: [], line: 0 })),
+              columns: trend.map((t3) => ({ label: t3.label, up: [{ value: Math.max(0, t3.amount), color: categoryHue(g2.name, cats) || "out" }], down: [], line: 0 })),
               onPick: open4 && g2.name !== "No category" ? (i3) => open4({ category: g2.name, month: trend[i3].month }) : void 0,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-caption", children: [

@@ -6254,6 +6254,9 @@ const smokes = [
     if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-09') throw new Error('not September');
     await page.click('#finRoot .seg button:text-is("Reports")');
     await page.waitForSelector('.fx-trend h2:text-is("Food, month by month")', { timeout: 5000 });
+    // In Food's own colour, as its rows and its slice are.
+    const hue = await page.$eval('.fx-bycat li:has(.grow > strong:text-is("Food")) .fx-catbar', (e) => [...e.classList].find((c) => /^fx-h\d$/.test(c)));
+    if (!hue || !(await page.$(`.fx-trend .fx-seg.${hue}`))) throw new Error(`the trend is not in Food's ${hue}`);
     await page.locator('.fx-trend .fx-stackcol').last().click();
     await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 13")', { timeout: 5000 });
     if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');

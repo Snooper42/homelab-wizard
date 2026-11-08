@@ -151,7 +151,8 @@ function Trend({ v, txs, groups, group, pick, open }: { v: finance.View; txs: fi
       </p>
       <StackedBars lineless format={tick} height={180}
         label={`${g.name}: what was spent each of the last 12 months. The table under it has every number.`}
-        columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: 'out' }], down: [], line: 0 }))}
+        // In the category's own colour, as it is drawn everywhere else (hues.ts).
+        columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: categoryHue(g.name, cats) || 'out' }], down: [], line: 0 }))}
         onPick={open && g.name !== 'No category' ? (i) => open({ category: g.name, month: trend[i].month }) : undefined}
         tip={(i) => <>
           <div class="fx-caption">{monthName(trend[i].month + '-01')} {trend[i].month.slice(0, 4)}</div>

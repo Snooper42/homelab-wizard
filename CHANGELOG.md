@@ -161,6 +161,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A category's trend in its own colour:** Reports' *month by month* for a category draws its bars in that category's colour, as everywhere else, not the red of all spending.
 - **Cards and Spending told apart:** on the Dashboard's *Where it goes* and the money flow, Cards had Spending's purple and Loans the Car's yellow; each now has a colour of its own.
 - **A new plan reads right:** with nothing owed, Net worth says *Nothing owed* rather than *You owe $0.00* in orange; *A typical month* with no paychecks yet says so, without dangling dots; with no cushion set, the calendar's key isn't drawn as one; and the checking chart's key lists only the marks it has.
 - **Finances' small words:** Transactions' *This month* now says **Kept** over what the month kept, not just how many transactions it was, and Loans' **Pay more** no longer says *about $0.00 a month* before an amount is typed.
