@@ -68,3 +68,60 @@ func (a *App) FinancesAddInvestment(add InvestmentAdd) (InvestmentsRead, error) 
 	}
 	return a.FinancesReadInvestments()
 }
+
+// InvestmentTrade is a buy or a sale Ghostfolio keeps, listed under its
+// holding on the card to put right or delete: its id there, the plan's
+// account, the symbol, how many shares, what was paid (or got) for them in
+// all, in Currency, the fee Ghostfolio has on it, and the day (YYYY-MM-DD).
+type InvestmentTrade struct {
+	ID         string  `json:"id"`
+	Account    string  `json:"account"`
+	Symbol     string  `json:"symbol"`
+	DataSource string  `json:"dataSource"`
+	Currency   string  `json:"currency"`
+	Shares     float64 `json:"shares"`
+	Total      float64 `json:"total"`
+	Fee        float64 `json:"fee,omitempty"`
+	Date       string  `json:"date"`
+	Sold       bool    `json:"sold,omitempty"`
+}
+
+// FinancesInvestmentTrades lists a holding's buys and sales in one of the
+// plan's investment or retirement accounts, as Ghostfolio keeps them, the
+// newest first.
+func (a *App) FinancesInvestmentTrades(account, symbol string) ([]InvestmentTrade, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	list, err := ghostfolio.Trades(ctx, a.root, account, symbol)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]InvestmentTrade, 0, len(list))
+	for _, t := range list {
+		out = append(out, InvestmentTrade(t))
+	}
+	return out, nil
+}
+
+// FinancesChangeInvestment puts a buy or a sale typed wrong right in
+// Ghostfolio (its shares, what was paid, the day, bought or sold), then
+// reads the investments again.
+func (a *App) FinancesChangeInvestment(t InvestmentTrade) (InvestmentsRead, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := ghostfolio.ChangeTrade(ctx, a.root, ghostfolio.Trade(t)); err != nil {
+		return InvestmentsRead{}, err
+	}
+	return a.FinancesReadInvestments()
+}
+
+// FinancesDeleteInvestment deletes a buy or a sale from Ghostfolio, from
+// the plan's account named only, then reads the investments again.
+func (a *App) FinancesDeleteInvestment(account, id string) (InvestmentsRead, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := ghostfolio.DeleteTrade(ctx, a.root, account, id); err != nil {
+		return InvestmentsRead{}, err
+	}
+	return a.FinancesReadInvestments()
+}

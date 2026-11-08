@@ -81,6 +81,22 @@ async function addInvestment(x: app.InvestmentAdd) {
   invest = { said: `Added to Ghostfolio: ${x.sold ? 'sold' : 'bought'} ${x.shares} ${x.symbol}${x.newName ? `, in ${x.newName}` : ''}. Read again at ${time}.`, unmatched: r.unmatched };
   financesData.set(r.view);
 }
+/** A buy or a sale put right, or deleted, in Ghostfolio, then read back. Throws why not, for the card to say. */
+const tradeOps = {
+  list: (account: string, symbol: string) => go().FinancesInvestmentTrades(account, symbol),
+  change: async (t: app.InvestmentTrade) => {
+    const r = await go().FinancesChangeInvestment(t);
+    const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    invest = { said: `Changed in Ghostfolio: the ${t.sold ? 'sale' : 'buy'} of ${t.symbol} on ${t.date}. Read again at ${time}.`, unmatched: r.unmatched };
+    financesData.set(r.view);
+  },
+  remove: async (t: app.InvestmentTrade) => {
+    const r = await go().FinancesDeleteInvestment(t.account, t.id);
+    const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    invest = { said: `Deleted from Ghostfolio: the ${t.sold ? 'sale' : 'buy'} of ${t.symbol} on ${t.date}. Read again at ${time}.`, unmatched: r.unmatched };
+    financesData.set(r.view);
+  },
+};
 function readEachMorning(v: finance.View) {
   const at = new Date(v.plan.holdingsRead || '');
   if (phone || v.readOnly || v.plan.readByHand || isNaN(at.getTime()) || autoTried === v.today || invest.busy) return;
@@ -134,7 +150,7 @@ function draw() {
     phone,
     // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
     // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
-    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) },
+    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q), trades: tradeOps },
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.

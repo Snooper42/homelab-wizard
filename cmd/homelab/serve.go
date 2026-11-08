@@ -392,6 +392,50 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return investmentsRead(root, r), nil, nil
 		}},
+		// A buy or a sale typed wrong, put right from the card: listed under
+		// its holding, changed, or deleted in Ghostfolio, then read again.
+		"FinancesInvestmentTrades": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var account, symbol string
+			if len(args) < 2 || json.Unmarshal(args[0], &account) != nil || json.Unmarshal(args[1], &symbol) != nil {
+				return nil, nil, errors.New("FinancesInvestmentTrades takes the account's id and the holding's symbol")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+			defer cancel()
+			list, err := ghostfolio.Trades(ctx, root, account, symbol)
+			return list, nil, err
+		}},
+		"FinancesChangeInvestment": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var t ghostfolio.Trade
+			if len(args) < 1 || json.Unmarshal(args[0], &t) != nil {
+				return nil, nil, errors.New("FinancesChangeInvestment takes the buy or sale: id, account, shares, total, date, sold")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+			defer cancel()
+			if err := ghostfolio.ChangeTrade(ctx, root, t); err != nil {
+				return nil, nil, err
+			}
+			r, err := ghostfolio.ReadInto(ctx, root)
+			if err != nil {
+				return nil, nil, err
+			}
+			return investmentsRead(root, r), nil, nil
+		}},
+		"FinancesDeleteInvestment": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var account, id string
+			if len(args) < 2 || json.Unmarshal(args[0], &account) != nil || json.Unmarshal(args[1], &id) != nil {
+				return nil, nil, errors.New("FinancesDeleteInvestment takes the account's id and the buy or sale's id")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+			defer cancel()
+			if err := ghostfolio.DeleteTrade(ctx, root, account, id); err != nil {
+				return nil, nil, err
+			}
+			r, err := ghostfolio.ReadInto(ctx, root)
+			if err != nil {
+				return nil, nil, err
+			}
+			return investmentsRead(root, r), nil, nil
+		}},
 		// Receipts go with the ledger: a phone that may change it may keep one
 		// (from its camera), and one that may only look may see them.
 		"FinancesReceipt": {Finances: companion.FinancesView, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {

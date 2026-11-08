@@ -256,19 +256,23 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 		if name == "" || x.ID == "" {
 			continue
 		}
-		worth := float64(x.Balance)
-		if x.Value != nil {
-			worth = float64(*x.Value)
-		}
+		// Ghostfolio's own figure for the account gives the rate from its
+		// base currency to the account's; its worth is added up below.
 		rate := 1.0
-		if base := float64(x.ValueInBaseCurrency); base > 0 && worth > 0 {
-			rate = worth / base
+		if x.Value != nil {
+			if own, base := float64(*x.Value), float64(x.ValueInBaseCurrency); base > 0 && own > 0 {
+				rate = own / base
+			}
 		}
 		found, err := g.holdings(ctx, x.ID)
 		if err != nil {
 			return nil, err
 		}
-		inv := finance.Invested{Name: name, Value: cents(worth), Currency: strings.ToUpper(strings.TrimSpace(x.Currency)), Holdings: []finance.Holding{}}
+		inv := finance.Invested{Name: name, Currency: strings.ToUpper(strings.TrimSpace(x.Currency)), Holdings: []finance.Holding{}}
+		// What the account is worth is its cash and its holdings, as the
+		// card lists them: Ghostfolio's own figure for the account can
+		// lag a buy just put in, while its holdings already have it.
+		worth := float64(x.Balance)
 		for _, h := range found {
 			sym, title, sub := h.Symbol, h.Name, h.AssetSubClass
 			if p := h.AssetProfile; p != nil {
@@ -289,7 +293,9 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 				Paid:   cents(float64(h.Investment) * rate),
 				Value:  cents(value * rate),
 			})
+			worth += cents(value * rate)
 		}
+		inv.Value = cents(worth)
 		sort.SliceStable(inv.Holdings, func(i, j int) bool { return inv.Holdings[i].Value > inv.Holdings[j].Value })
 		out = append(out, inv)
 	}
@@ -448,40 +454,9 @@ func AddInvestment(ctx context.Context, root string, add Add) error {
 	if err != nil {
 		return err
 	}
-	var list struct {
-		Accounts []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		} `json:"accounts"`
-	}
-	if err := g.Read(ctx, "/account", &list); err != nil {
+	id, err := g.accountOf(ctx, acct)
+	if err != nil {
 		return err
-	}
-	// Ghostfolio's account for it: the one picked by hand, else the same
-	// name, else the one name inside the other when only one is.
-	want := strings.TrimSpace(acct.Ghostfolio)
-	if want == "" {
-		want = acct.Name
-	}
-	plain := func(s string) string { return strings.Join(strings.FieldsFunc(strings.ToLower(s), notWordRune), " ") }
-	id := ""
-	for _, x := range list.Accounts {
-		if plain(x.Name) == plain(want) {
-			id = x.ID
-			break
-		}
-	}
-	if id == "" && acct.Ghostfolio == "" {
-		var near []string
-		for _, x := range list.Accounts {
-			n, w := plain(x.Name), plain(want)
-			if n != "" && (strings.Contains(n, w) || strings.Contains(w, n)) {
-				near = append(near, x.ID)
-			}
-		}
-		if len(near) == 1 {
-			id = near[0]
-		}
 	}
 	if id == "" {
 		var made struct {
@@ -526,6 +501,245 @@ func AddInvestment(ctx context.Context, root string, add Add) error {
 		}
 	}
 	return nil
+}
+
+// accountOf is the id of Ghostfolio's account for one of the plan's: the
+// one picked by hand, else the same name, else the one name inside the
+// other when only one is; "" when it has none.
+func (g Session) accountOf(ctx context.Context, acct finance.Account) (string, error) {
+	var list struct {
+		Accounts []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"accounts"`
+	}
+	if err := g.Read(ctx, "/account", &list); err != nil {
+		return "", err
+	}
+	want := strings.TrimSpace(acct.Ghostfolio)
+	if want == "" {
+		want = acct.Name
+	}
+	plain := func(s string) string { return strings.Join(strings.FieldsFunc(strings.ToLower(s), notWordRune), " ") }
+	for _, x := range list.Accounts {
+		if plain(x.Name) == plain(want) {
+			return x.ID, nil
+		}
+	}
+	if acct.Ghostfolio != "" {
+		return "", nil
+	}
+	var near []string
+	for _, x := range list.Accounts {
+		n, w := plain(x.Name), plain(want)
+		if n != "" && (strings.Contains(n, w) || strings.Contains(w, n)) {
+			near = append(near, x.ID)
+		}
+	}
+	if len(near) == 1 {
+		return near[0], nil
+	}
+	return "", nil
+}
+
+// Trade is a buy or a sale Ghostfolio keeps, as the card lists it under
+// its holding to put right: its id there, the plan's account, the symbol
+// as Ghostfolio prices it, how many shares, what was paid (or got) for
+// them in all, in Currency, the fee Ghostfolio has on it, and the day.
+type Trade struct {
+	ID         string  `json:"id"`
+	Account    string  `json:"account"`
+	Symbol     string  `json:"symbol"`
+	DataSource string  `json:"dataSource"`
+	Currency   string  `json:"currency"`
+	Shares     float64 `json:"shares"`
+	Total      float64 `json:"total"`
+	Fee        float64 `json:"fee,omitempty"`
+	Date       string  `json:"date"`
+	Sold       bool    `json:"sold,omitempty"`
+}
+
+// gfActivity is a buy or a sale as Ghostfolio answers: its symbol under
+// assetProfile (since 2.249) or SymbolProfile (before).
+type gfActivity struct {
+	ID        string `json:"id"`
+	AccountID string `json:"accountId"`
+	Date      string `json:"date"`
+	Type      string `json:"type"`
+	Quantity  num    `json:"quantity"`
+	UnitPrice num    `json:"unitPrice"`
+	Fee       num    `json:"fee"`
+	Currency  string `json:"currency"`
+	Profile   *struct {
+		Symbol     string `json:"symbol"`
+		DataSource string `json:"dataSource"`
+		Currency   string `json:"currency"`
+	} `json:"assetProfile"`
+	Old *struct {
+		Symbol     string `json:"symbol"`
+		DataSource string `json:"dataSource"`
+		Currency   string `json:"currency"`
+	} `json:"SymbolProfile"`
+}
+
+// investedAccount is the plan's investment or retirement account by id.
+func investedAccount(p finance.Plan, id string) (finance.Account, error) {
+	for _, a := range p.Accounts {
+		if a.ID == id {
+			if a.Kind != finance.Investment && a.Kind != finance.Retirement {
+				return a, fmt.Errorf("%s is not an investment or retirement account", a.Name)
+			}
+			return a, nil
+		}
+	}
+	return finance.Account{}, errors.New("pick the account it is in")
+}
+
+// trades signs in and lists the buys and sales Ghostfolio keeps in the
+// plan's account (of symbol, when one is given), the newest first, with
+// the session and Ghostfolio's id for the account.
+func trades(ctx context.Context, root, account, symbol string) ([]Trade, Session, string, finance.Account, error) {
+	p, err := finance.Load(finance.Path(root))
+	if err != nil {
+		return nil, Session{}, "", finance.Account{}, err
+	}
+	acct, err := investedAccount(p, account)
+	if err != nil {
+		return nil, Session{}, "", acct, err
+	}
+	g, err := SignIn(ctx, core.Env(root))
+	if err != nil {
+		return nil, g, "", acct, err
+	}
+	id, err := g.accountOf(ctx, acct)
+	if err != nil || id == "" {
+		if err == nil {
+			err = fmt.Errorf("Ghostfolio has no account for %s yet", acct.Name)
+		}
+		return nil, g, "", acct, err
+	}
+	var got struct {
+		Activities []gfActivity `json:"activities"`
+	}
+	// /activities since 2.249; /order before.
+	q := "?accounts=" + url.QueryEscape(id)
+	err = g.Read(ctx, "/activities"+q, &got)
+	if errors.As(err, new(missing)) {
+		err = g.Read(ctx, "/order"+q, &got)
+	}
+	if err != nil {
+		return nil, g, id, acct, err
+	}
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+	out := []Trade{}
+	for _, x := range got.Activities {
+		prof := x.Profile
+		if prof == nil {
+			prof = x.Old
+		}
+		if prof == nil || x.ID == "" || x.AccountID != id || (x.Type != "BUY" && x.Type != "SELL") {
+			continue
+		}
+		sym := strings.ToUpper(strings.TrimSpace(prof.Symbol))
+		if symbol != "" && sym != symbol {
+			continue
+		}
+		code := x.Currency
+		if code == "" {
+			code = prof.Currency
+		}
+		day := x.Date
+		if len(day) > 10 {
+			day = day[:10]
+		}
+		out = append(out, Trade{ID: x.ID, Account: account, Symbol: sym, DataSource: prof.DataSource, Currency: strings.ToUpper(code),
+			Shares: float64(x.Quantity), Total: cents(float64(x.Quantity) * float64(x.UnitPrice)), Fee: float64(x.Fee), Date: day, Sold: x.Type == "SELL"})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].Date > out[j].Date })
+	return out, g, id, acct, nil
+}
+
+// Trades lists the buys and sales of a holding (symbol) in one of the
+// plan's investment or retirement accounts, as Ghostfolio keeps them, the
+// newest first, for the card to put one right or delete it.
+func Trades(ctx context.Context, root, account, symbol string) ([]Trade, error) {
+	out, _, _, _, err := trades(ctx, root, account, symbol)
+	return out, err
+}
+
+// kept is the trade of this id in the account's list, or why not.
+func kept(list []Trade, id string, acct finance.Account) (Trade, error) {
+	for _, t := range list {
+		if t.ID == id {
+			return t, nil
+		}
+	}
+	return Trade{}, fmt.Errorf("that buy or sale is not in %s in Ghostfolio: read again, then try once more", acct.Name)
+}
+
+// ChangeTrade puts a buy or a sale right in Ghostfolio: how many shares,
+// what was paid (or got) in all, the day, and bought or sold. Its
+// account, symbol, and fee stay as Ghostfolio has them; one not in the
+// account named is refused. The caller then reads again (ReadInto).
+func ChangeTrade(ctx context.Context, root string, t Trade) error {
+	day, err := time.ParseInLocation("2006-01-02", t.Date, time.Local)
+	switch {
+	case !(t.Shares > 0) || math.IsInf(t.Shares, 0):
+		return errors.New("how many shares: more than 0")
+	case !(t.Total >= 0) || math.IsInf(t.Total, 0):
+		return errors.New("what was paid: type it without a minus")
+	case err != nil:
+		return fmt.Errorf("the day %q is no date", t.Date)
+	case day.After(time.Now()):
+		return errors.New("the day is still to come: type the day it happened")
+	}
+	list, g, id, acct, err := trades(ctx, root, t.Account, "")
+	if err != nil {
+		return err
+	}
+	was, err := kept(list, t.ID, acct)
+	if err != nil {
+		return err
+	}
+	kind := "BUY"
+	if t.Sold {
+		kind = "SELL"
+	}
+	activity := map[string]any{
+		"id":         was.ID,
+		"accountId":  id,
+		"currency":   was.Currency,
+		"dataSource": was.DataSource,
+		"date":       t.Date + "T00:00:00.000Z",
+		"fee":        was.Fee,
+		"quantity":   t.Shares,
+		"symbol":     was.Symbol,
+		"type":       kind,
+		"unitPrice":  t.Total / t.Shares,
+	}
+	err = g.Call(ctx, http.MethodPut, "/activities/"+url.PathEscape(was.ID), activity, nil)
+	if errors.As(err, new(missing)) {
+		err = g.Call(ctx, http.MethodPut, "/order/"+url.PathEscape(was.ID), activity, nil)
+	}
+	return err
+}
+
+// DeleteTrade deletes a buy or a sale from Ghostfolio, only from the
+// plan's account named. The caller then reads again (ReadInto).
+func DeleteTrade(ctx context.Context, root, account, id string) error {
+	list, g, _, acct, err := trades(ctx, root, account, "")
+	if err != nil {
+		return err
+	}
+	was, err := kept(list, id, acct)
+	if err != nil {
+		return err
+	}
+	err = g.Call(ctx, http.MethodDelete, "/activities/"+url.PathEscape(was.ID), nil, nil)
+	if errors.As(err, new(missing)) {
+		err = g.Call(ctx, http.MethodDelete, "/order/"+url.PathEscape(was.ID), nil, nil)
+	}
+	return err
 }
 
 // notWordRune is a character that is not part of a name's words.

@@ -9,9 +9,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio/ghostfoliotest"
 )
 
 // ghostfolioWriter is a fake Ghostfolio that keeps what is added to it: its
@@ -205,5 +207,53 @@ func TestFinancesAddInvestment(t *testing.T) {
 	}
 	if len(g.activities) != before {
 		t.Errorf("Ghostfolio asked with what was typed wrong: %v", g.activities[before:])
+	}
+}
+
+// A buy typed wrong, put right from the card: listed under its holding,
+// changed, then deleted, each read back; another account's is refused.
+func TestFinancesChangeAndDeleteInvestment(t *testing.T) {
+	a, _ := testApp(t)
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
+	f := ghostfoliotest.New(map[string]any{"id": "gf-ira", "name": "Roth IRA", "currency": "USD", "balance": 0})
+	defer f.Close()
+	ghostfolio.Base = func(map[string]string) string { return f.Base }
+	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := finance.Save(finance.Path(a.root), finance.Plan{Accounts: []finance.Account{
+		{ID: "chk", Name: "Checking", Kind: "checking", Balance: 900},
+		{ID: "ira", Name: "Roth IRA", Kind: "retirement", Balance: 0},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	day := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
+	if _, err := a.FinancesAddInvestment(InvestmentAdd{Account: "ira", Symbol: "VTI", DataSource: "YAHOO", Currency: "USD", Shares: 40, Total: 0, Date: day}); err != nil {
+		t.Fatal(err)
+	}
+	list, err := a.FinancesInvestmentTrades("ira", "VTI")
+	if err != nil || len(list) != 1 || list[0].Shares != 40 || list[0].Total != 0 || list[0].Date != day || list[0].Account != "ira" {
+		t.Fatalf("listed %+v, %v", list, err)
+	}
+	fix := list[0]
+	fix.Shares, fix.Total = 4, 360
+	got, err := a.FinancesChangeInvestment(fix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ira := got.View.Plan.Accounts[1]
+	if len(ira.Holdings) != 1 || ira.Holdings[0].Shares != 4 || ira.Holdings[0].Paid != 360 || ira.Balance != 400 {
+		t.Errorf("after the change: %+v", ira)
+	}
+	if _, err := a.FinancesChangeInvestment(InvestmentTrade{ID: fix.ID, Account: "chk", Shares: 1, Total: 1, Date: day}); err == nil || !strings.Contains(err.Error(), "not an investment") {
+		t.Errorf("a checking account's trade: %v", err)
+	}
+	got, err = a.FinancesDeleteInvestment("ira", fix.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(f.Activities) != 0 || len(got.View.Plan.Accounts[1].Holdings) != 0 {
+		t.Errorf("after the delete: Ghostfolio %+v, plan %+v", f.Activities, got.View.Plan.Accounts[1])
 	}
 }
