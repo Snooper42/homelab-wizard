@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -73,12 +74,30 @@ func ghostfolioSignIn(ctx context.Context, env map[string]string) (ghostfolio, e
 
 // read GETs one of the API's addresses (path and query) into v.
 func (g ghostfolio) read(ctx context.Context, path string, v any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, g.base+path, nil)
+	return g.call(ctx, http.MethodGet, path, nil, v)
+}
+
+// call sends a request to one of the API's addresses, with body as JSON
+// when there is one, and reads its answer into v. What Ghostfolio turns
+// down (400) is said in its own words.
+func (g ghostfolio) call(ctx context.Context, method, path string, body, v any) error {
+	var send io.Reader
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			return err
+		}
+		send = bytes.NewReader(data)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, g.base+path, send)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+g.session)
 	req.Header.Set("Accept", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return errGhostfolioQuiet
@@ -89,8 +108,27 @@ func (g ghostfolio) read(ctx context.Context, path string, v any) error {
 		return errGhostfolioRefused
 	case res.StatusCode == http.StatusNotFound:
 		return ghostfolioMissing{res.Status}
-	case res.StatusCode != http.StatusOK:
+	case res.StatusCode == http.StatusBadRequest:
+		var why struct {
+			Message json.RawMessage `json:"message"`
+		}
+		_ = json.NewDecoder(io.LimitReader(res.Body, 1<<16)).Decode(&why)
+		var one string
+		var many []string
+		if json.Unmarshal(why.Message, &one) == nil && one != "" {
+			many = []string{one}
+		} else {
+			_ = json.Unmarshal(why.Message, &many)
+		}
+		if len(many) == 0 {
+			return fmt.Errorf("Ghostfolio did not take it (%s)", res.Status)
+		}
+		return fmt.Errorf("Ghostfolio did not take it: %s", strings.Join(many, "; "))
+	case res.StatusCode < 200 || res.StatusCode >= 300:
 		return fmt.Errorf("Ghostfolio answered %s", res.Status)
+	}
+	if v == nil {
+		return nil
 	}
 	if err := json.NewDecoder(res.Body).Decode(v); err != nil {
 		return errGhostfolioUnread
