@@ -1467,16 +1467,17 @@ private struct PeriodSection: View {
 
     var body: some View {
         Section {
-            LabeledContent("Comes in") { Money(value: period.moneyIn, currency: view.plan.currency, finances: finances) }
-            LabeledContent("Goes out") { Money(value: period.out, currency: view.plan.currency, finances: finances) }
-            if period.saved > 0 {
-                LabeledContent("Of that, saved") { Money(value: period.saved, currency: view.plan.currency, finances: finances) }
+            // In, out and left side by side, as one line of three figures.
+            let low = view.plan.cushion > 0 && period.left < view.plan.cushion
+            HStack(alignment: .top, spacing: 8) {
+                figure("Comes in", period.moneyIn, tint: Theme.success)
+                figure("Goes out", period.out, tint: Color.primary,
+                       note: period.saved > 0 ? amountText(period.saved, view.plan.currency, finances, whole: true) + " saved" : nil)
+                figure("Left", period.left, tint: period.left < 0 ? Theme.danger : low ? Theme.warning : Color.primary, bold: true)
             }
-            LabeledContent("Left in checking") {
-                Money(value: period.left, currency: view.plan.currency, finances: finances)
-                    .fontWeight(.semibold)
-            }
-            if view.plan.cushion > 0, period.left < view.plan.cushion {
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
+            if low {
                 Label("Below the cushion you set", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(Theme.warning)
             }
@@ -1499,6 +1500,26 @@ private struct PeriodSection: View {
         } header: {
             Text(title)
         }
+    }
+
+    private func figure(_ title: LocalizedStringKey, _ value: Double, tint: Color, bold: Bool = false, note: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(verbatim: amountText(value, view.plan.currency, finances, whole: true))
+                .font(.headline.weight(bold ? .heavy : .semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            if let note {
+                Text(verbatim: note)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var title: String {
