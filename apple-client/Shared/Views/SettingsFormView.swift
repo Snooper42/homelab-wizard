@@ -1,20 +1,21 @@
 import SwiftUI
 
-/// The computer's Settings form (`.env`), as its Settings screen draws it:
-/// each setting by its name for people with its key beside it, a switch for
-/// one that is on or off, its help, and the everyday ones first. A device
-/// allowed changes may change the everyday ones; a secret shows only
-/// whether it is set, and secrets and the settings this device connects
-/// through are changed on the computer (main #491).
+/// The computer's Settings form (`.env`), as iPhone Settings lists its
+/// own: each setting by its name for people with its value, a switch for
+/// one that is on or off (flipped in place), and the everyday ones first.
+/// A setting opens its own page, with what it does, its key, and the field
+/// to change it. A device allowed changes may change the everyday ones; a
+/// secret shows only whether it is set, and secrets and the settings this
+/// device connects through are changed on the computer (main #491).
 struct SettingsFormView: View {
     let computer: ComputerViewModel
     /// One section, or nil for every setting.
     let section: String?
     @Environment(DashboardViewModel.self) private var dashboard
-    /// What was typed and not saved, by key: gone when the screen goes.
-    @State private var edits: [String: String] = [:]
     @State private var search = ""
     @State private var showAll = false
+    /// A switch's own page, opened from its ⓘ.
+    @State private var about: String?
 
     var body: some View {
         Form {
@@ -40,8 +41,8 @@ struct SettingsFormView: View {
                 let more = hiddenCount(in: form)
                 if search.isEmpty, more > 0 || showAll {
                     Section {
-                        Button(showAll ? "Show the Everyday Settings Only" : "Show All Settings (\(more) more)") {
-                            showAll.toggle()
+                        Button(showAll ? "Show Fewer" : "Show All (\(more) more)") {
+                            withAnimation(.snappy) { showAll.toggle() }
                         }
                     }
                 }
@@ -59,27 +60,14 @@ struct SettingsFormView: View {
         .themedCanvas()
         .overlay {
             if computer.form == nil, computer.formError == nil, computer.isLoadingForm {
-                ProgressView("Reading the settings…")
+                ProgressView()
             }
         }
-        .searchable(text: $search, prompt: "Search Settings")
+        .searchable(text: $search, prompt: "Search")
+        .navigationDestination(item: $about) { key in
+            SettingDetailView(computer: computer, key: key, label: SettingWords.label(key, apps: apps))
+        }
         .navigationTitle(section.map(SettingWords.section) ?? "All Settings")
-        .toolbar {
-            if !edits.isEmpty {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Revert") { edits = [:] }
-                        .disabled(computer.isSavingForm)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(edits.count == 1 ? "Save 1 Change" : "Save \(edits.count) Changes") {
-                        Task {
-                            if await computer.saveForm(edits) { edits = [:] }
-                        }
-                    }
-                    .disabled(computer.isSavingForm)
-                }
-            }
-        }
         .sensoryFeedback(.success, trigger: computer.formSavedCount)
         .task { if computer.form == nil { await computer.loadForm() } }
         .refreshable { await computer.loadForm() }
@@ -103,7 +91,7 @@ struct SettingsFormView: View {
         }
         let mine = form.settings.filter { section == nil || $0.section == section }
         if showAll || !mine.contains(where: { SettingWords.everyday.contains($0.key) }) { return mine }
-        return mine.filter { SettingWords.everyday.contains($0.key) || edits[$0.key] != nil }
+        return mine.filter { SettingWords.everyday.contains($0.key) }
     }
 
     private func hiddenCount(in form: HomelabSettingsForm) -> Int {
@@ -119,73 +107,146 @@ struct SettingsFormView: View {
     private func row(_ setting: HomelabSetting, in form: HomelabSettingsForm) -> some View {
         let label = SettingWords.label(setting.key, apps: apps)
         let editable = computer.canChange && form.phoneMayChange(setting)
-        VStack(alignment: .leading, spacing: 6) {
-            if setting.isToggle {
-                Toggle(isOn: toggle(setting)) { Text(verbatim: label) }
-                    .disabled(!editable || computer.isSavingForm)
-            } else if setting.secret {
-                LabeledContent {
-                    Text(setting.set ? "Set" : "Not set").foregroundStyle(.secondary)
-                } label: {
-                    Text(verbatim: label)
-                }
-            } else if editable {
+        if setting.isToggle {
+            // A switch, flipped in place, as iPhone Settings has them; its ⓘ opens what it does.
+            HStack(spacing: 10) {
                 Text(verbatim: label)
-                TextField(text: text(setting), prompt: Text("Empty")) { Text(verbatim: label) }
-                    .labelsHidden()
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    #endif
-                    .font(.body.monospaced())
-                    .disabled(computer.isSavingForm)
-            } else {
+                Button {
+                    about = setting.key
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(Theme.accent)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(Text(verbatim: "About \(label)"))
+                Spacer(minLength: 8)
+                Toggle(isOn: Binding(
+                    get: { setting.value.lowercased() == "true" },
+                    set: { on in Task { _ = await computer.saveForm([setting.key: on ? "true" : "false"]) } }
+                )) {
+                    Text(verbatim: label)
+                }
+                .labelsHidden()
+                .disabled(!editable || computer.isSavingForm)
+            }
+        } else {
+            NavigationLink {
+                SettingDetailView(computer: computer, key: setting.key, label: label)
+            } label: {
                 LabeledContent {
-                    Text(verbatim: setting.value.isEmpty ? "Empty" : setting.value)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .multilineTextAlignment(.trailing)
+                    HStack(spacing: 6) {
+                        Text(verbatim: Self.shownValue(setting))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        if !editable {
+                            Image(systemName: "lock.fill")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .accessibilityLabel("Changed on the computer")
+                        }
+                    }
                 } label: {
                     Text(verbatim: label)
                 }
-            }
-            Text(verbatim: setting.key)
-                .font(.caption2.monospaced())
-                .foregroundStyle(.tertiary)
-            let help = SettingWords.plainHelp(setting.help, toggle: setting.isToggle)
-            if !help.isEmpty {
-                Text(verbatim: help)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            if !form.phoneMayChange(setting) {
-                Label(setting.secret ? "A secret: changed on the computer" : "Changed on the computer: this device connects through it",
-                      systemImage: "lock.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else if edits[setting.key] != nil {
-                Label("Changed, not saved yet", systemImage: "pencil.circle.fill")
-                    .font(.caption)
-                    .foregroundStyle(Theme.accent)
             }
         }
-        .padding(.vertical, 2)
     }
 
-    private func text(_ setting: HomelabSetting) -> Binding<String> {
-        Binding(
-            get: { edits[setting.key] ?? setting.value },
-            set: { typed in edits[setting.key] = typed == setting.value ? nil : typed }
-        )
+    /// A value as its row shows it: "Set" or "Not set" for a secret, "None" when empty.
+    nonisolated static func shownValue(_ setting: HomelabSetting) -> String {
+        if setting.secret { return setting.set ? "Set" : "Not set" }
+        let value = setting.value.trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? "None" : value
     }
+}
 
-    private func toggle(_ setting: HomelabSetting) -> Binding<Bool> {
-        Binding(
-            get: { (edits[setting.key] ?? setting.value).lowercased() == "true" },
-            set: { on in
-                let typed = on ? "true" : "false"
-                edits[setting.key] = typed == setting.value.lowercased() ? nil : typed
+/// One setting on a page of its own, as iPhone Settings opens one: the
+/// field to change it, then what it does, its key, and why it can't be
+/// changed here when it can't.
+private struct SettingDetailView: View {
+    let computer: ComputerViewModel
+    let key: String
+    let label: String
+    @State private var typed: String?
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Form {
+            if let form = computer.form, let setting = form.settings.first(where: { $0.key == key }) {
+                let editable = computer.canChange && form.phoneMayChange(setting)
+                Section {
+                    if setting.isToggle {
+                        Toggle(isOn: Binding(
+                            get: { setting.value.lowercased() == "true" },
+                            set: { on in Task { _ = await computer.saveForm([key: on ? "true" : "false"]) } }
+                        )) {
+                            Text(verbatim: label)
+                        }
+                        .disabled(!editable || computer.isSavingForm)
+                    } else if setting.secret {
+                        LabeledContent(label) {
+                            Text(setting.set ? "Set" : "Not set").foregroundStyle(.secondary)
+                        }
+                    } else if editable {
+                        TextField(text: Binding(get: { typed ?? setting.value }, set: { typed = $0 }), prompt: Text("None")) {
+                            Text(verbatim: label)
+                        }
+                        .autocorrectionDisabled()
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        #endif
+                        .disabled(computer.isSavingForm)
+                        .submitLabel(.done)
+                        .onSubmit { save(setting) }
+                    } else {
+                        Text(verbatim: setting.value.isEmpty ? "None" : setting.value)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                } footer: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        let help = SettingWords.plainHelp(setting.help, toggle: setting.isToggle)
+                        if !help.isEmpty { Text(verbatim: help) }
+                        if !form.phoneMayChange(setting) {
+                            Label(setting.secret ? "Secrets are changed on the computer." : "This device connects through it, so it's changed on the computer.",
+                                  systemImage: "lock.fill")
+                        }
+                        Text(verbatim: setting.key)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.tertiary)
+                            .textSelection(.enabled)
+                    }
+                }
+                if let error = computer.formSaveError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(Theme.danger)
+                    }
+                }
             }
-        )
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle(Text(verbatim: label))
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        .toolbar {
+            if let typed, let setting = computer.form?.settings.first(where: { $0.key == key }), typed != setting.value {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save(setting) }
+                        .disabled(computer.isSavingForm)
+                }
+            }
+        }
+        .sensoryFeedback(.success, trigger: computer.formSavedCount)
+    }
+
+    private func save(_ setting: HomelabSetting) {
+        guard let typed, typed != setting.value else { return }
+        Task {
+            if await computer.saveForm([key: typed]) { self.typed = nil }
+        }
     }
 }
