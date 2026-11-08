@@ -1249,14 +1249,14 @@
   function fromCsv(rows, col) {
     const body = rows.slice(1);
     const dayFirst = daysFirst(body.map((r3) => r3[col.date] || ""));
-    const money2 = (s3) => {
+    const money3 = (s3) => {
       const n3 = parseAmount((s3 || "").replace(/[()]/g, (p3) => p3 === "(" ? "-" : ""));
       return isNaN(n3) ? 0 : n3;
     };
     const out = [];
     for (const r3 of body) {
       const date = readDay(r3[col.date] || "", dayFirst);
-      const amount = col.amount >= 0 ? money2(r3[col.amount]) : money2(r3[col.credit]) - Math.abs(money2(r3[col.debit]));
+      const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
       if (!date || !amount) continue;
       out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
     }
@@ -9621,6 +9621,8 @@
     return isNaN(n3) ? 0 : n3;
   };
   var text = (n3) => n3 ? String(n3) : "";
+  var cents = (n3) => Number.isInteger(n3) ? String(n3) : n3.toFixed(2);
+  var money2 = (n3) => n3 ? cents(n3) : "";
   var input = (set2) => (e3) => set2(e3.target.value);
   var everies = [["month", "Monthly"], ["2 weeks", "Every 2 weeks"], ["week", "Weekly"], ["twice a month", "Twice a month"], ["3 months", "Every 3 months"], ["year", "Yearly"], ["once", "Once"]];
   var categories = [["home", "Home"], ["utilities", "Utilities"], ["car", "Car"], ["subscriptions", "Subscriptions"], ["loans", "Loans"], ["cards", "Cards"], ["spending", "Spending"], ["savings", "Saving"], ["other", "Other"]];
@@ -9927,7 +9929,7 @@
         follow3(b2);
       }
     };
-    const [amount, setAmount] = d2(text(x3?.amount));
+    const [amount, setAmount] = d2(money2(x3?.amount));
     const [estimate, setEstimate] = d2(!!x3?.estimate);
     const [every, setEvery] = d2(x3?.schedule.every || "month");
     const [person, setPerson] = d2(x3?.schedule.person || "");
@@ -10082,10 +10084,10 @@
     const had = plan.logos?.[opened2];
     const [img, setImg] = d2(had);
     const real = brand === "none" ? "" : brand;
-    const [balance, setBalance] = d2(text(a3?.balance));
+    const [balance, setBalance] = d2(money2(a3?.balance));
     const [pending2, setPending2] = d2(text(a3?.pending));
     const [rate, setRate] = d2(text(a3?.rate));
-    const [original, setOriginal] = d2(text(a3?.original));
+    const [original, setOriginal] = d2(money2(a3?.original));
     const [loan, setLoan] = d2(a3?.loan || "");
     const [detail, setDetail] = d2(a3?.detail || "");
     const [paidEach, setPaidEach] = d2(!!a3?.paidEach);
@@ -10240,13 +10242,13 @@
     const { plan, id: id2, checking } = props;
     const e3 = (plan.people || []).find((q2) => q2.id === id2);
     const [name, setName] = d2(e3?.name || "");
-    const [net, setNet] = d2(text(e3?.net));
-    const [gross, setGross] = d2(text(e3?.gross));
+    const [net, setNet] = d2(money2(e3?.net));
+    const [gross, setGross] = d2(money2(e3?.gross));
     const [every, setEvery] = d2(e3?.schedule.every || "2 weeks");
     const [start, setStart] = d2(e3?.schedule.start || todayISO());
     const [day22, setDay2] = d2(String(e3?.schedule.day2 || 15));
     const [account, setAccount] = d2(e3?.account || checking || "");
-    const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: text(d3.amount), account: d3.account || "" })));
+    const [deds, setDeds] = d2((e3?.deductions || []).map((d3) => ({ name: d3.name, amount: money2(d3.amount), account: d3.account || "" })));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const accounts = (plan.accounts || []).filter((a3) => !owed(a3.kind) && !held2(a3.kind));
     const [problem, setProblem] = d2("");
@@ -10310,7 +10312,7 @@
     const accounts = plan.accounts || [];
     const now = (a3) => start?.[a3.id] !== void 0 ? Math.round(start[a3.id] / rateOf(plan, a3) * 100) / 100 : void 0;
     const est = (a3) => owed(a3.kind) ? Math.max(0, Math.round(((now(a3) ?? a3.balance + (a3.pending || 0)) - (a3.pending || 0)) * 100) / 100) : now(a3) ?? a3.balance;
-    const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, String(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", String(a3.pending || 0)]] : []])) }));
+    const [typed, setTyped] = d2(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a3) => [[a3.id, cents(est(a3))], ...a3.kind === "card" ? [[a3.id + ":p", cents(a3.pending || 0)]] : []])) }));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const first = A2(null);
@@ -10345,7 +10347,7 @@
           const a3 = accounts.find((q2) => name(q2.name) === n3) || accounts.find((q2) => n3 && (name(q2.name).includes(n3) || n3.includes(name(q2.name))));
           const code2 = (a3?.currency || currencyCode()).toUpperCase();
           if (a3 && (!f4.currency || f4.currency === code2)) {
-            next[a3.id] = String(f4.balance);
+            next[a3.id] = cents(f4.balance);
             filled2.push(a3.name);
           } else left.push(f4.name);
         }
@@ -10411,7 +10413,7 @@
     const payments = allPayments(plan);
     const [way, setWay] = d2(t3?.to ? "move" : t3 && t3.amount > 0 ? "in" : "out");
     const [payee, setPayee] = d2(t3?.payee || "");
-    const [amount, setAmount] = d2(t3 ? String(Math.abs(t3.amount)) : "");
+    const [amount, setAmount] = d2(t3 ? cents(Math.abs(t3.amount)) : "");
     const [date, setDate] = d2(t3?.date || todayISO());
     const [account, setAccount] = d2(t3?.account || checking || accounts[0]?.id || "");
     const [to, setTo] = d2(t3?.to || "");
@@ -10419,7 +10421,7 @@
     const [payment, setPayment] = d2(t3?.payment || "");
     const [paymentPicked, setPaymentPicked] = d2(!!t3?.payment || !!t3?.notPlanned);
     const [note, setNote] = d2(t3?.note || "");
-    const [parts3, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || "" })));
+    const [parts3, setParts] = d2((t3?.splits || []).map((sp) => ({ category: sp.category, amount: money2(Math.abs(sp.amount)), note: sp.note || "" })));
     const [tagText, setTagText] = d2((t3?.tags || []).join(", "));
     const [receipt, setReceipt] = d2(t3?.receipt);
     const setPart = (i3, k3, val) => setParts(parts3.map((sp, j3) => j3 === i3 ? { ...sp, [k3]: val } : sp));
@@ -10460,7 +10462,7 @@
       const x3 = payments.find((q2) => q2.id === id2);
       if (!x3) return;
       if (!payee.trim()) setPayee(x3.name);
-      if (!amount.trim() && x3.amount) setAmount(String(x3.amount));
+      if (!amount.trim() && x3.amount) setAmount(cents(x3.amount));
       if (!category.trim()) setCategory(categories.find(([k3]) => k3 === x3.kind)?.[1] || "");
       if (x3.card && way !== "move") setWay("out");
     };
@@ -10773,7 +10775,7 @@
   function BudgetsForm(props) {
     const { plan } = props;
     const names5 = (props.categories || []).map((c3) => c3.name);
-    const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: text(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
+    const [rows, setRows] = d2(() => (plan.budgets || []).map((b2) => ({ category: b2.category, amount: money2(b2.amount), per: b2.per || "month", rollover: !!b2.rollover })));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const set2 = (i3, k3, val) => setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
@@ -10979,7 +10981,7 @@
     const accounts = (plan.accounts || []).filter((a3) => goalKinds.includes(a3.kind));
     const taken = (acct) => others2.reduce((t3, q2) => t3 + (q2.shares || []).filter((s3) => s3.account === acct).reduce((u4, s3) => u4 + s3.percent, 0), 0);
     const [name, setName] = d2(g2?.name || "");
-    const [target, setTarget] = d2(text(g2?.target));
+    const [target, setTarget] = d2(money2(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
     const [shares2, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
@@ -12274,7 +12276,7 @@ ${pays}
   var narrowAt = 480;
   var nodeW = 14;
   var gap = 10;
-  function Sankey({ nodes, links, label, money: money2, pick, picked, height }) {
+  function Sankey({ nodes, links, label, money: money3, pick, picked, height }) {
     const box = A2(null);
     const [w3, setW] = d2(0);
     const [on2, setOn] = d2(null);
@@ -12341,7 +12343,7 @@ ${pays}
     const lit2 = (from2, to) => !on2 || (on2.node ? on2.node === from2 || on2.node === to : false);
     const litNode = (id2) => !on2 || (on2.node ? on2.node === id2 || ls.some((l3) => l3.from === on2.node && l3.to === id2 || l3.to === on2.node && l3.from === id2) : on2.link !== void 0 && (bands[on2.link].l.from === id2 || bands[on2.link].l.to === id2));
     const pct = (n3) => `${Math.round(n3 * 100)}%`;
-    const said2 = (p3) => `${p3.label}, ${money2(p3.value)}${p3.share < 0.9995 ? `, ${pct(p3.share)}` : ""}`;
+    const said2 = (p3) => `${p3.label}, ${money3(p3.value)}${p3.share < 0.9995 ? `, ${pct(p3.share)}` : ""}`;
     const tip = on2?.link !== void 0 ? bands[on2.link] : null;
     return /* @__PURE__ */ u3(
       "figure",
@@ -12385,7 +12387,7 @@ ${pays}
                 children: [
                   /* @__PURE__ */ u3("span", { class: "fx-sname", children: p3.label }),
                   /* @__PURE__ */ u3("span", { class: "fx-samt", children: [
-                    money2(p3.value),
+                    money3(p3.value),
                     p3.share < 0.9995 && /* @__PURE__ */ u3("span", { class: "fx-spct", children: [
                       " (",
                       pct(p3.share),
@@ -12403,7 +12405,7 @@ ${pays}
               " → ",
               tip.t.label
             ] }),
-            /* @__PURE__ */ u3("strong", { children: money2(tip.l.value) })
+            /* @__PURE__ */ u3("strong", { children: money3(tip.l.value) })
           ] })
         ] })
       }

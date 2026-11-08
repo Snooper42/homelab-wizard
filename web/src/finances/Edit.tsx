@@ -52,6 +52,9 @@ export interface EditProps {
 
 const num = (s: string) => { const n = parseAmount(s); return isNaN(n) ? 0 : n; };
 const text = (n?: number) => (n ? String(n) : '');
+/** An amount as a box starts with it: its cents in two places when it has any ($2512.40, not 2512.4), none when it has none. */
+const cents = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+const money2 = (n?: number) => (n ? cents(n) : '');
 const input = (set: (s: string) => void) => (e: Event) => set((e.target as HTMLInputElement).value);
 
 const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 weeks'], ['week', 'Weekly'], ['twice a month', 'Twice a month'], ['3 months', 'Every 3 months'], ['year', 'Yearly'], ['once', 'Once']];
@@ -329,7 +332,7 @@ function PaymentForm(props: EditProps) {
   const kindPicked = useRef(!!x);
   const follow = (b: string) => { const k = kindForBrand(b); if (k && !kindPicked.current) setKind(k); };
   const rename = (n: string) => { setName(n); if (!picked.current) { const b = brandOf(undefined, n) || ''; setBrand(b); follow(b); } };
-  const [amount, setAmount] = useState(text(x?.amount));
+  const [amount, setAmount] = useState(money2(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
   const [person, setPerson] = useState(x?.schedule.person || '');
@@ -469,10 +472,10 @@ function AccountForm(props: EditProps) {
   const [img, setImg] = useState(had);
   // "none" is a None picked by hand: no logo, and no bank to name it after.
   const real = brand === 'none' ? '' : brand;
-  const [balance, setBalance] = useState(text(a?.balance));
+  const [balance, setBalance] = useState(money2(a?.balance));
   const [pending, setPending] = useState(text(a?.pending));
   const [rate, setRate] = useState(text(a?.rate));
-  const [original, setOriginal] = useState(text(a?.original));
+  const [original, setOriginal] = useState(money2(a?.original));
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
@@ -604,13 +607,13 @@ function PersonForm(props: EditProps) {
   const { plan, id, checking } = props;
   const e = (plan.people || []).find((q) => q.id === id);
   const [name, setName] = useState(e?.name || '');
-  const [net, setNet] = useState(text(e?.net));
-  const [gross, setGross] = useState(text(e?.gross));
+  const [net, setNet] = useState(money2(e?.net));
+  const [gross, setGross] = useState(money2(e?.gross));
   const [every, setEvery] = useState(e?.schedule.every || '2 weeks');
   const [start, setStart] = useState(e?.schedule.start || todayISO());
   const [day2, setDay2] = useState(String(e?.schedule.day2 || 15));
   const [account, setAccount] = useState(e?.account || checking || '');
-  const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: text(d.amount), account: d.account || '' })));
+  const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: money2(d.amount), account: d.account || '' })));
   const { busy, keep, touched, watch } = useSaving(props);
   const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && !held(a.kind));
   const [problem, setProblem] = useState('');
@@ -670,7 +673,7 @@ function BalancesForm(props: EditProps) {
   // its own currency, as it is typed (the view's figures are the plan's, at the account's rate).
   const now = (a: finance.Account) => (start?.[a.id] !== undefined ? Math.round((start[a.id] / rateOf(plan, a)) * 100) / 100 : undefined);
   const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((now(a) ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : now(a) ?? a.balance);
-  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, String(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', String(a.pending || 0)]] : [])])) }));
+  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, cents(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', cents(a.pending || 0)]] : [])])) }));
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const first = useRef<HTMLInputElement>(null);
@@ -699,7 +702,7 @@ function BalancesForm(props: EditProps) {
         const n = name(f.name);
         const a = accounts.find((q) => name(q.name) === n) || accounts.find((q) => n && (name(q.name).includes(n) || n.includes(name(q.name))));
         const code = (a?.currency || currencyCode()).toUpperCase();
-        if (a && (!f.currency || f.currency === code)) { next[a.id] = String(f.balance); filled.push(a.name); } else left.push(f.name);
+        if (a && (!f.currency || f.currency === code)) { next[a.id] = cents(f.balance); filled.push(a.name); } else left.push(f.name);
       }
       setTyped(next);
       setPulled({ said: `${filled.length ? `Filled from ${app.name}: ${filled.join(', ')}.` : `Nothing in ${app.name} matched these accounts.`}${left.length ? ` Not matched: ${left.join(', ')}.` : ''} Check them, then Save.` });
@@ -752,7 +755,7 @@ function TransactionForm(props: EditProps) {
   const payments = allPayments(plan);
   const [way, setWay] = useState(t?.to ? 'move' : t && t.amount > 0 ? 'in' : 'out');
   const [payee, setPayee] = useState(t?.payee || '');
-  const [amount, setAmount] = useState(t ? String(Math.abs(t.amount)) : '');
+  const [amount, setAmount] = useState(t ? cents(Math.abs(t.amount)) : '');
   const [date, setDate] = useState(t?.date || todayISO());
   const [account, setAccount] = useState(t?.account || checking || accounts[0]?.id || '');
   const [to, setTo] = useState(t?.to || '');
@@ -762,7 +765,7 @@ function TransactionForm(props: EditProps) {
   const [paymentPicked, setPaymentPicked] = useState(!!t?.payment || !!t?.notPlanned);
   const [note, setNote] = useState(t?.note || '');
   // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
-  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
+  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: money2(Math.abs(sp.amount)), note: sp.note || '' })));
   const [tagText, setTagText] = useState((t?.tags || []).join(', '));
   const [receipt, setReceipt] = useState(t?.receipt);
   const setPart = (i: number, k: string, val: string) => setParts(parts.map((sp, j) => (j === i ? { ...sp, [k]: val } : sp)));
@@ -808,7 +811,7 @@ function TransactionForm(props: EditProps) {
     const x = payments.find((q) => q.id === id);
     if (!x) return;
     if (!payee.trim()) setPayee(x.name);
-    if (!amount.trim() && x.amount) setAmount(String(x.amount));
+    if (!amount.trim() && x.amount) setAmount(cents(x.amount));
     if (!category.trim()) setCategory(categories.find(([k]) => k === x.kind)?.[1] || '');
     if (x.card && way !== 'move') setWay('out');
   };
@@ -1059,7 +1062,7 @@ function CategoriesForm(props: EditProps) {
 function BudgetsForm(props: EditProps) {
   const { plan } = props;
   const names = (props.categories || []).map((c) => c.name);
-  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: text(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
+  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: money2(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const set = (i: number, k: string, val: string | boolean) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
@@ -1271,7 +1274,7 @@ function GoalForm(props: EditProps) {
   const accounts = (plan.accounts || []).filter((a) => goalKinds.includes(a.kind));
   const taken = (acct: string) => others.reduce((t, q) => t + (q.shares || []).filter((s) => s.account === acct).reduce((u, s) => u + s.percent, 0), 0);
   const [name, setName] = useState(g?.name || '');
-  const [target, setTarget] = useState(text(g?.target));
+  const [target, setTarget] = useState(money2(g?.target));
   const [date, setDate] = useState(g?.date || '');
   const [shares, setShares] = useState<Record<string, string>>(() => Object.fromEntries((g?.shares || []).map((s) => [s.account, String(s.percent)])));
   const { busy, keep, touched, watch } = useSaving(props);

@@ -5050,7 +5050,7 @@ const smokes = [
     if (await page.$('#finSheet button:text-is("From Firefly III")')) throw new Error('From Firefly III with Firefly III not running');
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Ghostfolio: Robinhood, Fidelity 401(k). Not matched: Trading 212. Check them, then Save.")', { timeout: 5000 });
-    if ((await page.inputValue('#bal-brk')) !== '8420.5' || (await page.inputValue('#bal-k401')) !== '39120' || (await page.inputValue('#bal-chk')) !== '2512.4') throw new Error('the boxes were not filled as read');
+    if ((await page.inputValue('#bal-brk')) !== '8420.50' || (await page.inputValue('#bal-k401')) !== '39120' || (await page.inputValue('#bal-chk')) !== '2512.40') throw new Error('the boxes were not filled as read');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
@@ -5397,7 +5397,7 @@ const smokes = [
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
-    for (const [id, want] of [['chk', '2512.4'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
+    for (const [id, want] of [['chk', '2512.40'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
       const got = await page.inputValue(`#finSheet input#bal-${id}`);
       if (got !== want) throw new Error(`${id} starts at ${got}, not ${want}`);
     }
@@ -6479,7 +6479,7 @@ const smokes = [
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-txday li:has-text("Costco") button');
     await page.click('#finSheet button:text-is("Split it")');
-    if ((await page.inputValue('#finSheet input[aria-label="Part 1 category"]')) !== 'Groceries' || (await page.inputValue('#finSheet input[aria-label="Part 1 amount"]')) !== '86.1') throw new Error('the first part is not the whole');
+    if ((await page.inputValue('#finSheet input[aria-label="Part 1 category"]')) !== 'Groceries' || (await page.inputValue('#finSheet input[aria-label="Part 1 amount"]')) !== '86.10') throw new Error('the first part is not the whole');
     await page.fill('#finSheet input[aria-label="Part 1 amount"]', '60');
     await page.fill('#finSheet input[aria-label="Part 2 category"]', 'Home');
     await page.fill('#finSheet input[aria-label="Part 2 amount"]', '20');
