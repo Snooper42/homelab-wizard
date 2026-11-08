@@ -72,6 +72,8 @@ const App = window.go.main.App;
 const methods = ['Status', 'LastStatus', 'Catalog', 'Backups', 'DuplicatiJobs', 'Host', 'Settings', 'Finances', 'FinancesLedger', 'FinancesWall'];
 const answers = {};
 for (const m of methods) answers[m] = await App[m]();
+// A phone's Settings comes wrapped, with the keys only the computer may change (serve.go's phoneSettings).
+answers.Settings = { settings: answers.Settings, computerOnly: answers.Settings.filter((s) => /TUNNEL|TAILSCALE|DOMAIN|ACME/.test(s.key)).map((s) => s.key) };
 // The cards a phone asks for (StatusCard.phoneCards), as StatusBoard sends them.
 const cards = { watchdog, protection, alerts, savings: savingsHistory };
 for (const [name, fn] of Object.entries({ watchdog: 'Watchdog', protection: 'Protection', alerts: 'Alerts', savings: 'SavingsHistory' })) {

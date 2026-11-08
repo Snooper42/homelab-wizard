@@ -205,6 +205,8 @@ private struct CheckingHero: View {
                             Text(verbatim: title)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             Text(verbatim: Self.long(pay.date))
                                 .font(.caption)
                                 .foregroundStyle(Theme.secondaryInk)
@@ -342,10 +344,16 @@ private struct NetWorthCard: View {
     private func chart(_ series: [NetWorthPoint], picked point: NetWorthPoint?) -> some View {
         let up = (series.last?.value ?? 0) >= (series.first?.value ?? 0)
         let tint = up ? Theme.accent : Theme.danger
+        let values = series.map(\.value)
+        let low = values.min() ?? 0
+        let high = values.max() ?? 0
+        // Room above and below, so a small move isn't drawn as a cliff.
+        let pad = max((high - low) * 0.15, abs(high) * 0.01, 1)
         return Chart {
             ForEach(series, id: \.date) { p in
-                AreaMark(x: .value("Day", p.date), y: .value("Net worth", p.value))
-                    .foregroundStyle(LinearGradient(colors: [tint.opacity(0.28), tint.opacity(0)], startPoint: .top, endPoint: .bottom))
+                // A soft band under the line, down to the lowest point, not to zero.
+                AreaMark(x: .value("Day", p.date), yStart: .value("Low", low), yEnd: .value("Net worth", p.value))
+                    .foregroundStyle(LinearGradient(colors: [tint.opacity(0.22), tint.opacity(0)], startPoint: .top, endPoint: .bottom))
                     .interpolationMethod(.monotone)
                 LineMark(x: .value("Day", p.date), y: .value("Net worth", p.value))
                     .foregroundStyle(tint)
@@ -363,7 +371,7 @@ private struct NetWorthCard: View {
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .chartYScale(domain: .automatic(includesZero: false))
+        .chartYScale(domain: (low - pad)...(high + pad))
         .chartXSelection(value: $picked)
         .sensoryFeedback(.selection, trigger: point?.date)
         .accessibilityLabel("Net worth, \(range.words)")
@@ -2749,8 +2757,25 @@ private struct HoldingView: View {
 extension FinancesView {
     /// The screenshots build only: a page of Finances in place of its home,
     /// by the name given with `-shot`.
-    @ViewBuilder
     static func screenshotRoot(finances: FinancesViewModel) -> some View {
+        ScreenshotPage(finances: finances)
+    }
+}
+
+/// The page asked for, with the plan and the ledger read as the home would have.
+private struct ScreenshotPage: View {
+    let finances: FinancesViewModel
+
+    var body: some View {
+        page
+            .task {
+                if finances.plan == nil { await finances.loadPlan() }
+                if finances.ledger == nil { await finances.loadLedger() }
+            }
+    }
+
+    @ViewBuilder
+    private var page: some View {
         switch ScreenshotMode.shot {
         case "transactions": TransactionsView(finances: finances)
         case "transaction": ScreenshotTransaction(finances: finances)

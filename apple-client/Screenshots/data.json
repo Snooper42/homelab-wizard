@@ -2015,1944 +2015,1955 @@
     }
    ]
   },
-  "Settings": [
-   {
-    "key": "TZ",
-    "section": "This Mac",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "America/New_York"
-   },
-   {
-    "key": "PUID",
-    "section": "This Mac",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "501"
-   },
-   {
-    "key": "PGID",
-    "section": "This Mac",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "20"
-   },
-   {
-    "key": "BIND_IP",
-    "section": "This Mac",
-    "help": "Where app ports listen. Keep 127.0.0.1: other devices go through the proxy.",
-    "secret": false,
-    "set": true,
-    "value": "127.0.0.1"
-   },
-   {
-    "key": "LAN_BIND_IP",
-    "section": "This Mac",
-    "help": "Where the proxy (80/443) and DNS (53) listen. 0.0.0.0 follows the Mac's address, so a new IP (Wi-Fi vs Ethernet) never breaks them.",
-    "secret": false,
-    "set": true,
-    "value": "0.0.0.0"
-   },
-   {
-    "key": "ADGUARD_DNS_BIND_IP",
-    "section": "This Mac",
-    "help": "Where AdGuard Home's DNS (53) listens, when not LAN_BIND_IP. Set to this machine's address on Linux when systemd-resolved holds 127.0.0.53:53, which a 0.0.0.0 bind would collide with.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DOCKER_SOCKET",
-    "section": "This Mac",
-    "help": "Docker's socket, for the apps that talk to Docker (the socket proxy and Beszel's agent). Empty: /var/run/docker.sock. With Docker run as you (SteamOS, homelab runtime install), your own: /run/user/<your id>/docker.sock.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DOCKER_API",
-    "section": "This Mac",
-    "help": "How the homelab reads the containers, their events, and what they use, and runs commands in them (the database copies): auto (the engine's API over its socket, found as the docker CLI finds it, with the docker command whenever that fails) or off (the docker command only). Starting and updating apps is docker compose either way.",
-    "secret": false,
-    "set": true,
-    "value": "auto"
-   },
-   {
-    "key": "HOST_GATEWAY",
-    "section": "This Mac",
-    "help": "How containers reach this machine's own apps (Jellyfin, the phone companion, Ollama) as host.docker.internal. Empty: Docker's host-gateway. With Docker run as you, this machine's address (host-gateway is then Docker's own namespace).",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "KEEP_AWAKE",
-    "section": "This Mac",
-    "help": "Keep this machine from sleeping while it is plugged in, so the apps stay reachable (the screen still turns off). false lets it sleep as set.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "BATTERY_SAVER",
-    "section": "This Mac",
-    "help": "On a laptop running on battery, pause the apps that work hardest in the background (downloads, the *arr apps, photo recognition) and start them again once it is plugged in; the watchdog checks every 15 minutes. false keeps them.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "PHONE_COMPANION",
-    "section": "This Mac",
-    "help": "The phone companion (homelab serve, the serve job): Status and Backups on paired phones, on port 8099, home network and tailnet only. false: off.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "MEDIA_ROOT",
-    "section": "Storage",
-    "help": "The media drive. Apps that use it wait for it to be mounted.",
-    "secret": false,
-    "set": true,
-    "value": "/Volumes/Media"
-   },
-   {
-    "key": "DOWNLOADS_ROOT",
-    "section": "Storage",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "/Volumes/Media/downloads"
-   },
-   {
-    "key": "IMMICH_UPLOAD_LOCATION",
-    "section": "Storage",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "/Volumes/Media/photos"
-   },
-   {
-    "key": "BACKUP_DESTINATION",
-    "section": "Storage",
-    "help": "Where Duplicati writes encrypted backups: your Proton Drive folder, e.g. /Users/you/Library/CloudStorage/ProtonDrive-you@proton.me-folder/homelab-backups",
-    "secret": false,
-    "set": true,
-    "value": "./backups"
-   },
-   {
-    "key": "KOPIA_REPOSITORY",
-    "section": "Storage",
-    "help": "Where Kopia (optional, a second backup beside Duplicati) keeps its repository: best another drive than this machine's own, e.g. /Volumes/Backup/kopia.",
-    "secret": false,
-    "set": true,
-    "value": "./backups-kopia"
-   },
-   {
-    "key": "JELLYFIN_DATA_DIR",
-    "section": "Storage",
-    "help": "Native Jellyfin's data folder (Jellyfin > Dashboard > Paths shows it).",
-    "secret": false,
-    "set": true,
-    "value": "~/.local/share/jellyfin"
-   },
-   {
-    "key": "SYNC_ROOT",
-    "section": "Storage",
-    "help": "Syncthing's shared folders (backed up only if you add it to a Duplicati job).",
-    "secret": false,
-    "set": true,
-    "value": "./data/sync"
-   },
-   {
-    "key": "HOMELAB_BASELINE",
-    "section": "Storage",
-    "help": "small: `up` starts only updates, backups, and alerts (x-homelab-small-baseline in compose.yaml), and you pick every other app; folders the desktop app makes start this way. Empty or full: every app without a profile, as in this repo.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "HOMELAB_DOMAIN",
-    "section": "Domain",
-    "help": "Empty (the default): Home mode, every app at an https address on your tailnet through Tailscale, with no domain, AdGuard rewrites, Cloudflare, or tunnel.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "COMPANION_PROXY_KEY",
-    "section": "Domain",
-    "help": "The phone companion's proxy key, made by Set up the domain: the companion's proxy host sends it, so the companion knows a phone reached it over https and not over the Wi-Fi (docs/Security.md, N25). Left empty until then.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "AUTO_DOMAIN",
-    "section": "Domain",
-    "help": "Give each app its https://<name>.<domain> address in Nginx Proxy Manager (and the tunnel, for public apps) as soon as it is installed, once Set up the domain has run. false: only when you run Set up the domain.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "CLOUDFLARE_API_TOKEN",
-    "section": "Domain",
-    "help": "For the wildcard certificate (./homelab domain setup --ssl) and the tunnel's public hostnames. Token permissions: Zone.Zone:Read, Zone.DNS:Edit, and Account.Cloudflare Tunnel:Edit.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TUNNEL_TOKEN",
-    "section": "Domain",
-    "help": "From Cloudflare Zero Trust > Networks > Tunnels > your tunnel > Docker.",
-    "secret": true,
-    "set": false,
-    "value": ""
-   },
-   {
-    "key": "NPM_VERSION",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "2.16.0"
-   },
-   {
-    "key": "NPM_HTTP_PORT",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "80"
-   },
-   {
-    "key": "NPM_HTTPS_PORT",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "443"
-   },
-   {
-    "key": "NPM_ADMIN_PORT",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8181"
-   },
-   {
-    "key": "NPM_API_EMAIL",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "The account the CLI uses, created on NPM's first start; Let's Encrypt also registers certificates with this email. Keep 2FA off for this account (2FA blocks the API) and make your personal admin with 2FA instead.",
-    "secret": false,
-    "set": true,
-    "value": "homelab@example.com"
-   },
-   {
-    "key": "NPM_API_PASSWORD",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "CROWDSEC_BOUNCER_KEY",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "CROWDSEC_ENROLL_KEY",
-    "section": "Nginx Proxy Manager and CrowdSec",
-    "help": "Optional: enrolls CrowdSec in app.crowdsec.net (console > Engines > Add).",
-    "secret": true,
-    "set": false,
-    "value": ""
-   },
-   {
-    "key": "ADGUARD_PORT",
-    "section": "AdGuard Home",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3003"
-   },
-   {
-    "key": "ADGUARD_SETUP_PORT",
-    "section": "AdGuard Home",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3002"
-   },
-   {
-    "key": "ADGUARD_USER",
-    "section": "AdGuard Home",
-    "help": "AdGuard's login: homelab adguard setup makes it in the first-run wizard, or put in the one you made there. The CLI uses it to add the *.domain rewrite.",
-    "secret": false,
-    "set": true,
-    "value": "admin"
-   },
-   {
-    "key": "ADGUARD_PASSWORD",
-    "section": "AdGuard Home",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DESKTOP_ALERTS",
-    "section": "Notifications",
-    "help": "Alerts also show on this machine's screen (Notification Center on a Mac), even before the phone gets them. false: the phone only.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "QUIET_HOURS",
-    "section": "Notifications",
-    "help": "The night: alerts between these hours reach the phone without a sound, unless they are serious (the vault unreachable, backups failing for two days). 22-7 is 22:00 to 07:00; off sounds every alert.",
-    "secret": false,
-    "set": true,
-    "value": "22-7"
-   },
-   {
-    "key": "HELPER_EMAIL",
-    "section": "Notifications",
-    "help": "Who helps you with the homelab: Setup's Email it to my helper writes to them with the diagnostics report.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NTFY_PORT",
-    "section": "Notifications",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9293"
-   },
-   {
-    "key": "NTFY_PUBLISH_TOKEN",
-    "section": "Notifications",
-    "help": "The publishers' ntfy access token, and the same as a ?auth= parameter for publishers that only take a URL. ./homelab notify setup fills both in.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NTFY_PUBLISH_AUTH",
-    "section": "Notifications",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NTFY_READ_TOKEN",
-    "section": "Notifications",
-    "help": "A read-only token for the desktop app's list of recent alerts (notify setup).",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NTFY_PHONE_PASSWORD",
-    "section": "Notifications",
-    "help": "The phone's ntfy login (user \"phone\"), made by notify setup; copy it from Settings.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "HEARTBEAT_URL",
-    "section": "Notifications",
-    "help": "An external heartbeat, such as a healthchecks.io check's ping URL (period 15 minutes, grace 15 minutes). The watchdog pings it every run and pings /fail when something is down, so you hear about it even when this machine, its runtime, or ntfy is down.",
-    "secret": true,
-    "set": false,
-    "value": ""
-   },
-   {
-    "key": "WATCHTOWER_SCHEDULE",
-    "section": "Notifications",
-    "help": "When the background agent runs the nightly updates (4:00 by default). The name is from Watchtower, which ran them before.",
-    "secret": false,
-    "set": true,
-    "value": "0 0 4 * * *"
-   },
-   {
-    "key": "SOCKET_PROXY_VERSION",
-    "section": "Notifications",
-    "help": "The socket proxy holds Docker's socket, so it stays on this version until you choose a newer one: read the release notes, change the version, then ./homelab update docker-socket-proxy.",
-    "secret": false,
-    "set": true,
-    "value": "v0.5.0"
-   },
-   {
-    "key": "BESZEL_AGENT_VERSION",
-    "section": "Notifications",
-    "help": "The Beszel agent holds Docker's socket too: the same, then ./homelab update beszel-agent.",
-    "secret": false,
-    "set": true,
-    "value": "0.21.1"
-   },
-   {
-    "key": "FRIGATE_VERSION",
-    "section": "Notifications",
-    "help": "Frigate stays on this version until you choose a newer one: read the release notes (a new version can change its settings file), then ./homelab update frigate.",
-    "secret": false,
-    "set": true,
-    "value": "0.18.2"
-   },
-   {
-    "key": "KOPIA_VERSION",
-    "section": "Notifications",
-    "help": "Kopia stays on this version until you choose a newer one: read the release notes, then ./homelab update kopia.",
-    "secret": false,
-    "set": true,
-    "value": "0.23.1"
-   },
-   {
-    "key": "UPDATE_CHANNEL",
-    "section": "Notifications",
-    "help": "Which homelab updates homelab upgrade gets: stable (tagged releases) or testing (every change on main, the default until the first release).",
-    "secret": false,
-    "set": true,
-    "value": "testing"
-   },
-   {
-    "key": "UPDATE_COPY_LIMIT",
-    "section": "Notifications",
-    "help": "The largest folder or volume copied before an app's update, so a rollback can put it back (500MB, 10GB; 0 copies any size). Databases are always dumped.",
-    "secret": false,
-    "set": true,
-    "value": "2GB"
-   },
-   {
-    "key": "AUTO_ROLLBACK",
-    "section": "Notifications",
-    "help": "The watchdog rolls back an app that stays unhealthy after its nightly update, and holds its updates. false: it only alerts.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "AUTO_HEAL",
-    "section": "Notifications",
-    "help": "The watchdog restarts an app that is unhealthy or not answering on two checks in a row (once in 6 hours at most). false: it only alerts.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "OLLAMA_MODEL",
-    "section": "Notifications",
-    "help": "The Ollama model that explains logs (Explain this log), e.g. llama3.2. Empty: the first Llama, Qwen, Gemma, Mistral, or Phi model Ollama has.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "UPDATES_HELD",
-    "section": "Notifications",
-    "help": "Apps whose updates are held after a rollback, or by hand. Written by homelab rollback and homelab updates hold|release.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TIDY_UP",
-    "section": "Tidy Up",
-    "help": "Tidy Up sorts, tags, and shrinks the libraries on the media drive (MEDIA_ROOT): music, books, movies, tv, audiobooks. false turns its background work off (the inbox, Tdarr's finished work, and the nightly scrubber); the screen still works.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "TIDY_INBOX",
-    "section": "Tidy Up",
-    "help": "File what finishes downloading in Downloads, and in DOWNLOADS_ROOT, into the libraries. Other folders to watch instead: TIDY_INBOX_FOLDERS, separated by ;.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "TIDY_INBOX_FOLDERS",
-    "section": "Tidy Up",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TIDY_SCRUB",
-    "section": "Tidy Up",
-    "help": "Every night at 03:00, put leftovers whose film, song, or book is gone (posters, .nfo and subtitle files, empty folders) in the Trash.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "TIDY_KEEP_LANGUAGES",
-    "section": "Tidy Up",
-    "help": "The audio and subtitle languages films and episodes keep (ISO 639-2, e.g. eng, jpn); the rest are removed when Tdarr shrinks them.",
-    "secret": false,
-    "set": true,
-    "value": "eng"
-   },
-   {
-    "key": "TIDY_VIDEO_CODEC",
-    "section": "Tidy Up",
-    "help": "What Tdarr shrinks video to: hevc (plays everywhere) or av1 (smaller, newer players).",
-    "secret": false,
-    "set": true,
-    "value": "hevc"
-   },
-   {
-    "key": "TIDY_SHRINK_LOSSLESS",
-    "section": "Tidy Up",
-    "help": "New lossless music (FLAC, WAV) is stored as 256k AAC, about a fifth of the size. false keeps it lossless.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "TIDY_LYRICS",
-    "section": "Tidy Up",
-    "help": "Lyrics: embed (inside each song file) or lrc (a .lrc file beside each song).",
-    "secret": false,
-    "set": true,
-    "value": "embed"
-   },
-   {
-    "key": "TIDY_MUSIC_ENGINE",
-    "section": "Tidy Up",
-    "help": "Where beets runs for music: local (this computer, fastest) or container (the beets image). Empty: local when Python can make its own environment here.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PLEX_URL",
-    "section": "Tidy Up",
-    "help": "A Plex server to tell about each new or changed file (Plex › Settings › Network shows its address), its token, and how its folders map to this computer's, e.g. /Volumes/Media=/data.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PLEX_TOKEN",
-    "section": "Tidy Up",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PLEX_PATH_MAP",
-    "section": "Tidy Up",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "AUDIOBOOKSHELF_API_KEY",
-    "section": "Tidy Up",
-    "help": "Audiobookshelf's API key (Settings › Users › your user › API token): Tidy Up tells it about new files.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TDARR_API_KEY",
-    "section": "Tidy Up",
-    "help": "Tidy Up's key to Tdarr, generated: Tdarr takes it as its own when it starts (seededApiKey), since Tdarr 3 takes no sign-up.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TDARR_USER",
-    "section": "Tidy Up",
-    "help": "Tdarr's sign-in, for an older Tdarr: made by Tidy Up (user homelab) when Tdarr had no account yet; if you made one in Tdarr first, put its user name and password here.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TDARR_PASSWORD",
-    "section": "Tidy Up",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "VAULTWARDEN_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8087"
-   },
-   {
-    "key": "DUPLICATI_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8200"
-   },
-   {
-    "key": "UPTIME_KUMA_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3001"
-   },
-   {
-    "key": "JELLYFIN_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8096"
-   },
-   {
-    "key": "NAVIDROME_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "4533"
-   },
-   {
-    "key": "FEISHIN_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9180"
-   },
-   {
-    "key": "BEETS_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8337"
-   },
-   {
-    "key": "AUDIOBOOKSHELF_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "13378"
-   },
-   {
-    "key": "CALIBRE_WEB_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8083"
-   },
-   {
-    "key": "KOMGA_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "25600"
-   },
-   {
-    "key": "IMMICH_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8013"
-   },
-   {
-    "key": "PAPERLESS_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8010"
-   },
-   {
-    "key": "PAPERLESS_AI_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8011"
-   },
-   {
-    "key": "MONEYMATTER_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "13480"
-   },
-   {
-    "key": "FIREFLY_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8094"
-   },
-   {
-    "key": "FIREFLY_IMPORTER_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8097"
-   },
-   {
-    "key": "PROWLARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9696"
-   },
-   {
-    "key": "SONARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8989"
-   },
-   {
-    "key": "RADARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "7878"
-   },
-   {
-    "key": "LIDARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8686"
-   },
-   {
-    "key": "BAZARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "6767"
-   },
-   {
-    "key": "TDARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8265"
-   },
-   {
-    "key": "SEERR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5055"
-   },
-   {
-    "key": "LAZYLIBRARIAN_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5299"
-   },
-   {
-    "key": "QBITTORRENT_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8082"
-   },
-   {
-    "key": "FRESHRSS_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8085"
-   },
-   {
-    "key": "MEALIE_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9000"
-   },
-   {
-    "key": "FILEBROWSER_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8086"
-   },
-   {
-    "key": "NEXTCLOUD_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8089"
-   },
-   {
-    "key": "STIRLING_PDF_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8095"
-   },
-   {
-    "key": "KIWIX_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8098"
-   },
-   {
-    "key": "HOMARR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "7575"
-   },
-   {
-    "key": "HOMEPAGE_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3000"
-   },
-   {
-    "key": "KAVITA_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5500"
-   },
-   {
-    "key": "SPEEDTEST_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8765"
-   },
-   {
-    "key": "DOZZLE_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9998"
-   },
-   {
-    "key": "BESZEL_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8090"
-   },
-   {
-    "key": "BESZEL_AGENT_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "45876"
-   },
-   {
-    "key": "SYNCTHING_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8384"
-   },
-   {
-    "key": "OPEN_WEBUI_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3080"
-   },
-   {
-    "key": "HOME_ASSISTANT_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8123"
-   },
-   {
-    "key": "FRIGATE_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8971"
-   },
-   {
-    "key": "GROCY_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "9283"
-   },
-   {
-    "key": "KARAKEEP_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3010"
-   },
-   {
-    "key": "VIKUNJA_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3456"
-   },
-   {
-    "key": "BAIKAL_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5232"
-   },
-   {
-    "key": "PAIRDROP_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3020"
-   },
-   {
-    "key": "PSITRANSFER_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3030"
-   },
-   {
-    "key": "POCKET_ID_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "1411"
-   },
-   {
-    "key": "WALLOS_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8282"
-   },
-   {
-    "key": "CHANGEDETECTION_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5010"
-   },
-   {
-    "key": "MEMOS_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5230"
-   },
-   {
-    "key": "HOMEBOX_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "7745"
-   },
-   {
-    "key": "ROMM_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "7676"
-   },
-   {
-    "key": "GHOSTFOLIO_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3333"
-   },
-   {
-    "key": "DOCMOST_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3040"
-   },
-   {
-    "key": "DAWARICH_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3050"
-   },
-   {
-    "key": "ACTUAL_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "5006"
-   },
-   {
-    "key": "TANDOOR_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "8093"
-   },
-   {
-    "key": "LINKWARDEN_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "3060"
-   },
-   {
-    "key": "KOPIA_PORT",
-    "section": "App ports (the installer moves these if something else holds them)",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "51515"
-   },
-   {
-    "key": "NAVIDROME_MUSIC_PATH",
-    "section": "App settings and secrets",
-    "help": "Where Navidrome sees the music folder in its container. Empty: the same path as on this machine, so playlists with full paths keep working (Mac and Linux). Windows sets /music, since a C:\\ path cannot be one there.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NAVIDROME_ADMIN_USER",
-    "section": "App settings and secrets",
-    "help": "A Navidrome administrator's login, best one of its own (Navidrome › Users › Create, e.g. homelab, with Is Admin on). With it, Settings › People makes each person's Navidrome account and gives them a new password when they need one.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NAVIDROME_ADMIN_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "JELLYFIN_API_KEY",
-    "section": "App settings and secrets",
-    "help": "A Jellyfin API key (Dashboard › API Keys › +, named Homelab). With it, Settings › People makes each person's Jellyfin account (for Infuse and the TV apps too) and gives them a new password when they need one.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "VAULTWARDEN_SIGNUPS_ALLOWED",
-    "section": "App settings and secrets",
-    "help": "Turn on only while creating accounts, then back off (./homelab doctor warns).",
-    "secret": false,
-    "set": true,
-    "value": "false"
-   },
-   {
-    "key": "DUPLICATI_SETTINGS_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DUPLICATI_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DUPLICATI_SECRETS_PASSPHRASE",
-    "section": "App settings and secrets",
-    "help": "The backup jobs' encryption passphrases (homelab duplicati setup uses them). Keep DUPLICATI_SECRETS_PASSPHRASE outside this machine too, in Vaultwarden and on the recovery kit: it opens the Secrets backup, which holds this file.",
-    "secret": false,
-    "set": true,
-    "value": "__REPLACE_ME__"
-   },
-   {
-    "key": "DUPLICATI_PASSPHRASE",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "__REPLACE_ME__"
-   },
-   {
-    "key": "KOPIA_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "Kopia's repository password: it opens every Kopia backup, so keep it outside this machine too, with DUPLICATI_SECRETS_PASSPHRASE. The other is its web page's.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "KOPIA_SERVER_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "IMMICH_VERSION",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "v3"
-   },
-   {
-    "key": "IMMICH_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "18"
-   },
-   {
-    "key": "PAPERLESS_SECRET_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_OCR_LANGUAGE",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "eng"
-   },
-   {
-    "key": "PAPERLESS_AI_PAPERLESS_TOKEN",
-    "section": "App settings and secrets",
-    "help": "A token made in Paperless-ngx (your account › My Profile › API Auth Token); Paperless-AI installs once it is set.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_AI_API_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_AI_JWT_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FRIGATE_MQTT_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "The password Frigate and Home Assistant use on Frigate's event broker.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NEXTCLOUD_ADMIN_USER",
-    "section": "App settings and secrets",
-    "help": "Nextcloud's administrator (made on its first start) and its database.",
-    "secret": false,
-    "set": true,
-    "value": "admin"
-   },
-   {
-    "key": "NEXTCLOUD_ADMIN_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NEXTCLOUD_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NEXTCLOUD_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "18"
-   },
-   {
-    "key": "NEXTCLOUD_VERSION",
-    "section": "App settings and secrets",
-    "help": "Nextcloud's major version: the nightly updates bring its fixes; a new major is set here (one at a time) after a backup, then ./homelab update nextcloud.",
-    "secret": false,
-    "set": true,
-    "value": "35"
-   },
-   {
-    "key": "VIKUNJA_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "POCKET_ID_ENCRYPTION_KEY",
-    "section": "App settings and secrets",
-    "help": "Pocket ID encrypts its keys with this; losing it means re-registering passkeys.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "POCKET_ID_API_KEY",
-    "section": "App settings and secrets",
-    "help": "The key homelab sso setup uses on Pocket ID's API to connect the apps.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "SSO_HOST",
-    "section": "App settings and secrets",
-    "help": "Pocket ID's name, which the apps' containers reach through the proxy here. Written by homelab sso setup.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PSITRANSFER_ADMIN_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "PsiTransfer: the admin page's password, and the one needed to upload (leave the upload one set so only the household can send files).",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PSITRANSFER_UPLOAD_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "HOMEBOX_ALLOW_REGISTRATION",
-    "section": "App settings and secrets",
-    "help": "Homebox: turn off once everyone has an account.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "HOMEBOX_API_KEY_PEPPER",
-    "section": "App settings and secrets",
-    "help": "Homebox signs the API keys it gives with this (32 characters or more); changing it ends every one of them.",
-    "secret": false,
-    "set": true,
-    "value": "__REPLACE_ME__"
-   },
-   {
-    "key": "ROMM_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "ROMM_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "17"
-   },
-   {
-    "key": "ROMM_AUTH_SECRET_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "ROMM_IGDB_CLIENT_ID",
-    "section": "App settings and secrets",
-    "help": "Optional: artwork and game details for RomM (services/media/RomM.md).",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "ROMM_IGDB_CLIENT_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "ROMM_SCREENSCRAPER_USER",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "ROMM_SCREENSCRAPER_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "GHOSTFOLIO_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "GHOSTFOLIO_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "17"
-   },
-   {
-    "key": "GHOSTFOLIO_ACCESS_TOKEN_SALT",
-    "section": "App settings and secrets",
-    "help": "Changing either of these later signs everyone out of Ghostfolio for good.",
-    "secret": false,
-    "set": true,
-    "value": "__REPLACE_ME__"
-   },
-   {
-    "key": "GHOSTFOLIO_JWT_SECRET_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "GHOSTFOLIO_SECURITY_TOKEN",
-    "section": "App settings and secrets",
-    "help": "Your Ghostfolio security token (the one you sign in with): Finances reads your investments with it, on Net worth's Investments card (Read now, then once a day) and in Update balances. Press Read now there to check it works.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DOCMOST_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DOCMOST_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "17"
-   },
-   {
-    "key": "DOCMOST_APP_SECRET",
-    "section": "App settings and secrets",
-    "help": "Changing it later signs everyone out of Docmost.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DAWARICH_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TANDOOR_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TANDOOR_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "18"
-   },
-   {
-    "key": "TANDOOR_SECRET_KEY",
-    "section": "App settings and secrets",
-    "help": "Changing it later signs everyone out of Tandoor.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_FRONTEND_IMAGE",
-    "section": "App settings and secrets",
-    "help": "Empty runs MoneyMatter's Intel images under Rosetta. To run the frontend and backend natively, build them from source (services/finance/MoneyMatter.md) and set homelab/moneymatter-frontend:v0.30.2, homelab/moneymatter-backend:v0.30.2, and linux/arm64.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_BACKEND_IMAGE",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_PLATFORM",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
-    "secret": false,
-    "set": true,
-    "value": "16"
-   },
-   {
-    "key": "MONEYMATTER_JWT_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_SESSION_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_AUTH_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_APP_KEY",
-    "section": "App settings and secrets",
-    "help": "Firefly III encrypts with FIREFLY_APP_KEY (32 characters): keep it with the backup.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "18"
-   },
-   {
-    "key": "FIREFLY_CRON_TOKEN",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_IMPORTER_TOKEN",
-    "section": "App settings and secrets",
-    "help": "A personal access token from Firefly III (Profile › OAuth), for its data importer; Finances › Update balances reads the asset accounts' balances with it too, on a click.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "WALLOS_API_KEY",
-    "section": "App settings and secrets",
-    "help": "Wallos's API key (Profile › API Key): Finances › Recurring reads its subscriptions with it, on a click.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "HOMARR_SECRET_ENCRYPTION_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "BESZEL_EMAIL",
-    "section": "App settings and secrets",
-    "help": "Beszel's first account, made on its first start.",
-    "secret": false,
-    "set": true,
-    "value": "homelab@example.com"
-   },
-   {
-    "key": "BESZEL_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "BESZEL_AGENT_KEY",
-    "section": "App settings and secrets",
-    "help": "The hub's public key, from Beszel's Add System; the agent starts once it is set.",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PROTONVPN_WIREGUARD_PRIVATE_KEY",
-    "section": "App settings and secrets",
-    "help": "Optional qBittorrent VPN (ProtonVPN account > Downloads > WireGuard).",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PROTONVPN_SERVER_COUNTRIES",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TAILSCALE_AUTHKEY",
-    "section": "App settings and secrets",
-    "help": "Tailscale: a reusable auth key from login.tailscale.com > Settings > Keys, and the home network it makes reachable (set from this machine's network; approve the route in the admin).",
-    "secret": true,
-    "set": false,
-    "value": ""
-   },
-   {
-    "key": "TAILSCALE_ROUTES",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "192.168.1.0/24"
-   },
-   {
-    "key": "TAILSCALE_EXTRA_ARGS",
-    "section": "App settings and secrets",
-    "help": "Extra flags for tailscale up, as --login-server=https://headscale.example.com for a tailnet on your own Headscale server. Empty: Tailscale's own.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TAILSCALE_HOST",
-    "section": "App settings and secrets",
-    "help": "Home mode (HOMELAB_DOMAIN empty): this machine's tailnet name, written by homelab tailnet setup. Every app is at https://<TAILSCALE_HOST>:<its port>.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TAILNET_ADMIN_APPS",
-    "section": "App settings and secrets",
-    "help": "Home mode: false keeps the admin apps (the proxy, AdGuard, Duplicati, Dozzle, and the like) off the tailnet, so only this machine opens them; the household apps stay on it. true (the default) serves every app.",
-    "secret": false,
-    "set": true,
-    "value": "true"
-   },
-   {
-    "key": "VAULTWARDEN_URL",
-    "section": "App settings and secrets",
-    "help": "The address each app is opened at, for the apps that need to know it (sign-in, links in emails). Empty: https://<subdomain>.<domain>. In Home mode homelab tailnet setup writes the tailnet address. MoneyMatter only signs in at exactly its address.",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "BESZEL_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NTFY_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "POCKET_ID_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "PAPERLESS_AI_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NEXTCLOUD_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "KARAKEEP_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MONEYMATTER_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "FIREFLY_IMPORTER_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "NAVIDROME_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "OPEN_WEBUI_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "CHANGEDETECTION_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "SPEEDTEST_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "MEALIE_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "VIKUNJA_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "DOCMOST_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "TANDOOR_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "LINKWARDEN_URL",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "SPEEDTEST_APP_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "SPEEDTEST_SCHEDULE",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "0 */6 * * *"
-   },
-   {
-    "key": "OPEN_WEBUI_SECRET_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "KARAKEEP_NEXTAUTH_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "KARAKEEP_MEILI_MASTER_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "LINKWARDEN_DB_PASSWORD",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "LINKWARDEN_DB_VERSION",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": false,
-    "set": true,
-    "value": "18"
-   },
-   {
-    "key": "LINKWARDEN_NEXTAUTH_SECRET",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "LINKWARDEN_MEILI_MASTER_KEY",
-    "section": "App settings and secrets",
-    "help": "",
-    "secret": true,
-    "set": true,
-    "value": ""
-   },
-   {
-    "key": "LINKWARDEN_DISABLE_REGISTRATION",
-    "section": "App settings and secrets",
-    "help": "Off once the household has its accounts (the first one is the administrator).",
-    "secret": false,
-    "set": true,
-    "value": "false"
-   }
-  ],
+  "Settings": {
+   "settings": [
+    {
+     "key": "TZ",
+     "section": "This Mac",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "America/New_York"
+    },
+    {
+     "key": "PUID",
+     "section": "This Mac",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "501"
+    },
+    {
+     "key": "PGID",
+     "section": "This Mac",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "20"
+    },
+    {
+     "key": "BIND_IP",
+     "section": "This Mac",
+     "help": "Where app ports listen. Keep 127.0.0.1: other devices go through the proxy.",
+     "secret": false,
+     "set": true,
+     "value": "127.0.0.1"
+    },
+    {
+     "key": "LAN_BIND_IP",
+     "section": "This Mac",
+     "help": "Where the proxy (80/443) and DNS (53) listen. 0.0.0.0 follows the Mac's address, so a new IP (Wi-Fi vs Ethernet) never breaks them.",
+     "secret": false,
+     "set": true,
+     "value": "0.0.0.0"
+    },
+    {
+     "key": "ADGUARD_DNS_BIND_IP",
+     "section": "This Mac",
+     "help": "Where AdGuard Home's DNS (53) listens, when not LAN_BIND_IP. Set to this machine's address on Linux when systemd-resolved holds 127.0.0.53:53, which a 0.0.0.0 bind would collide with.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DOCKER_SOCKET",
+     "section": "This Mac",
+     "help": "Docker's socket, for the apps that talk to Docker (the socket proxy and Beszel's agent). Empty: /var/run/docker.sock. With Docker run as you (SteamOS, homelab runtime install), your own: /run/user/<your id>/docker.sock.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DOCKER_API",
+     "section": "This Mac",
+     "help": "How the homelab reads the containers, their events, and what they use, and runs commands in them (the database copies): auto (the engine's API over its socket, found as the docker CLI finds it, with the docker command whenever that fails) or off (the docker command only). Starting and updating apps is docker compose either way.",
+     "secret": false,
+     "set": true,
+     "value": "auto"
+    },
+    {
+     "key": "HOST_GATEWAY",
+     "section": "This Mac",
+     "help": "How containers reach this machine's own apps (Jellyfin, the phone companion, Ollama) as host.docker.internal. Empty: Docker's host-gateway. With Docker run as you, this machine's address (host-gateway is then Docker's own namespace).",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "KEEP_AWAKE",
+     "section": "This Mac",
+     "help": "Keep this machine from sleeping while it is plugged in, so the apps stay reachable (the screen still turns off). false lets it sleep as set.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "BATTERY_SAVER",
+     "section": "This Mac",
+     "help": "On a laptop running on battery, pause the apps that work hardest in the background (downloads, the *arr apps, photo recognition) and start them again once it is plugged in; the watchdog checks every 15 minutes. false keeps them.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "PHONE_COMPANION",
+     "section": "This Mac",
+     "help": "The phone companion (homelab serve, the serve job): Status and Backups on paired phones, on port 8099, home network and tailnet only. false: off.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "MEDIA_ROOT",
+     "section": "Storage",
+     "help": "The media drive. Apps that use it wait for it to be mounted.",
+     "secret": false,
+     "set": true,
+     "value": "/Volumes/Media"
+    },
+    {
+     "key": "DOWNLOADS_ROOT",
+     "section": "Storage",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "/Volumes/Media/downloads"
+    },
+    {
+     "key": "IMMICH_UPLOAD_LOCATION",
+     "section": "Storage",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "/Volumes/Media/photos"
+    },
+    {
+     "key": "BACKUP_DESTINATION",
+     "section": "Storage",
+     "help": "Where Duplicati writes encrypted backups: your Proton Drive folder, e.g. /Users/you/Library/CloudStorage/ProtonDrive-you@proton.me-folder/homelab-backups",
+     "secret": false,
+     "set": true,
+     "value": "./backups"
+    },
+    {
+     "key": "KOPIA_REPOSITORY",
+     "section": "Storage",
+     "help": "Where Kopia (optional, a second backup beside Duplicati) keeps its repository: best another drive than this machine's own, e.g. /Volumes/Backup/kopia.",
+     "secret": false,
+     "set": true,
+     "value": "./backups-kopia"
+    },
+    {
+     "key": "JELLYFIN_DATA_DIR",
+     "section": "Storage",
+     "help": "Native Jellyfin's data folder (Jellyfin > Dashboard > Paths shows it).",
+     "secret": false,
+     "set": true,
+     "value": "~/.local/share/jellyfin"
+    },
+    {
+     "key": "SYNC_ROOT",
+     "section": "Storage",
+     "help": "Syncthing's shared folders (backed up only if you add it to a Duplicati job).",
+     "secret": false,
+     "set": true,
+     "value": "./data/sync"
+    },
+    {
+     "key": "HOMELAB_BASELINE",
+     "section": "Storage",
+     "help": "small: `up` starts only updates, backups, and alerts (x-homelab-small-baseline in compose.yaml), and you pick every other app; folders the desktop app makes start this way. Empty or full: every app without a profile, as in this repo.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "HOMELAB_DOMAIN",
+     "section": "Domain",
+     "help": "Empty (the default): Home mode, every app at an https address on your tailnet through Tailscale, with no domain, AdGuard rewrites, Cloudflare, or tunnel.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "COMPANION_PROXY_KEY",
+     "section": "Domain",
+     "help": "The phone companion's proxy key, made by Set up the domain: the companion's proxy host sends it, so the companion knows a phone reached it over https and not over the Wi-Fi (docs/Security.md, N25). Left empty until then.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "AUTO_DOMAIN",
+     "section": "Domain",
+     "help": "Give each app its https://<name>.<domain> address in Nginx Proxy Manager (and the tunnel, for public apps) as soon as it is installed, once Set up the domain has run. false: only when you run Set up the domain.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "CLOUDFLARE_API_TOKEN",
+     "section": "Domain",
+     "help": "For the wildcard certificate (./homelab domain setup --ssl) and the tunnel's public hostnames. Token permissions: Zone.Zone:Read, Zone.DNS:Edit, and Account.Cloudflare Tunnel:Edit.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TUNNEL_TOKEN",
+     "section": "Domain",
+     "help": "From Cloudflare Zero Trust > Networks > Tunnels > your tunnel > Docker.",
+     "secret": true,
+     "set": false,
+     "value": ""
+    },
+    {
+     "key": "NPM_VERSION",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "2.16.0"
+    },
+    {
+     "key": "NPM_HTTP_PORT",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "80"
+    },
+    {
+     "key": "NPM_HTTPS_PORT",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "443"
+    },
+    {
+     "key": "NPM_ADMIN_PORT",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8181"
+    },
+    {
+     "key": "NPM_API_EMAIL",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "The account the CLI uses, created on NPM's first start; Let's Encrypt also registers certificates with this email. Keep 2FA off for this account (2FA blocks the API) and make your personal admin with 2FA instead.",
+     "secret": false,
+     "set": true,
+     "value": "homelab@example.com"
+    },
+    {
+     "key": "NPM_API_PASSWORD",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "CROWDSEC_BOUNCER_KEY",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "CROWDSEC_ENROLL_KEY",
+     "section": "Nginx Proxy Manager and CrowdSec",
+     "help": "Optional: enrolls CrowdSec in app.crowdsec.net (console > Engines > Add).",
+     "secret": true,
+     "set": false,
+     "value": ""
+    },
+    {
+     "key": "ADGUARD_PORT",
+     "section": "AdGuard Home",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3003"
+    },
+    {
+     "key": "ADGUARD_SETUP_PORT",
+     "section": "AdGuard Home",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3002"
+    },
+    {
+     "key": "ADGUARD_USER",
+     "section": "AdGuard Home",
+     "help": "AdGuard's login: homelab adguard setup makes it in the first-run wizard, or put in the one you made there. The CLI uses it to add the *.domain rewrite.",
+     "secret": false,
+     "set": true,
+     "value": "admin"
+    },
+    {
+     "key": "ADGUARD_PASSWORD",
+     "section": "AdGuard Home",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DESKTOP_ALERTS",
+     "section": "Notifications",
+     "help": "Alerts also show on this machine's screen (Notification Center on a Mac), even before the phone gets them. false: the phone only.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "QUIET_HOURS",
+     "section": "Notifications",
+     "help": "The night: alerts between these hours reach the phone without a sound, unless they are serious (the vault unreachable, backups failing for two days). 22-7 is 22:00 to 07:00; off sounds every alert.",
+     "secret": false,
+     "set": true,
+     "value": "22-7"
+    },
+    {
+     "key": "HELPER_EMAIL",
+     "section": "Notifications",
+     "help": "Who helps you with the homelab: Setup's Email it to my helper writes to them with the diagnostics report.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NTFY_PORT",
+     "section": "Notifications",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9293"
+    },
+    {
+     "key": "NTFY_PUBLISH_TOKEN",
+     "section": "Notifications",
+     "help": "The publishers' ntfy access token, and the same as a ?auth= parameter for publishers that only take a URL. ./homelab notify setup fills both in.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NTFY_PUBLISH_AUTH",
+     "section": "Notifications",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NTFY_READ_TOKEN",
+     "section": "Notifications",
+     "help": "A read-only token for the desktop app's list of recent alerts (notify setup).",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NTFY_PHONE_PASSWORD",
+     "section": "Notifications",
+     "help": "The phone's ntfy login (user \"phone\"), made by notify setup; copy it from Settings.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "HEARTBEAT_URL",
+     "section": "Notifications",
+     "help": "An external heartbeat, such as a healthchecks.io check's ping URL (period 15 minutes, grace 15 minutes). The watchdog pings it every run and pings /fail when something is down, so you hear about it even when this machine, its runtime, or ntfy is down.",
+     "secret": true,
+     "set": false,
+     "value": ""
+    },
+    {
+     "key": "WATCHTOWER_SCHEDULE",
+     "section": "Notifications",
+     "help": "When the background agent runs the nightly updates (4:00 by default). The name is from Watchtower, which ran them before.",
+     "secret": false,
+     "set": true,
+     "value": "0 0 4 * * *"
+    },
+    {
+     "key": "SOCKET_PROXY_VERSION",
+     "section": "Notifications",
+     "help": "The socket proxy holds Docker's socket, so it stays on this version until you choose a newer one: read the release notes, change the version, then ./homelab update docker-socket-proxy.",
+     "secret": false,
+     "set": true,
+     "value": "v0.5.0"
+    },
+    {
+     "key": "BESZEL_AGENT_VERSION",
+     "section": "Notifications",
+     "help": "The Beszel agent holds Docker's socket too: the same, then ./homelab update beszel-agent.",
+     "secret": false,
+     "set": true,
+     "value": "0.21.1"
+    },
+    {
+     "key": "FRIGATE_VERSION",
+     "section": "Notifications",
+     "help": "Frigate stays on this version until you choose a newer one: read the release notes (a new version can change its settings file), then ./homelab update frigate.",
+     "secret": false,
+     "set": true,
+     "value": "0.18.2"
+    },
+    {
+     "key": "KOPIA_VERSION",
+     "section": "Notifications",
+     "help": "Kopia stays on this version until you choose a newer one: read the release notes, then ./homelab update kopia.",
+     "secret": false,
+     "set": true,
+     "value": "0.23.1"
+    },
+    {
+     "key": "UPDATE_CHANNEL",
+     "section": "Notifications",
+     "help": "Which homelab updates homelab upgrade gets: stable (tagged releases) or testing (every change on main, the default until the first release).",
+     "secret": false,
+     "set": true,
+     "value": "testing"
+    },
+    {
+     "key": "UPDATE_COPY_LIMIT",
+     "section": "Notifications",
+     "help": "The largest folder or volume copied before an app's update, so a rollback can put it back (500MB, 10GB; 0 copies any size). Databases are always dumped.",
+     "secret": false,
+     "set": true,
+     "value": "2GB"
+    },
+    {
+     "key": "AUTO_ROLLBACK",
+     "section": "Notifications",
+     "help": "The watchdog rolls back an app that stays unhealthy after its nightly update, and holds its updates. false: it only alerts.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "AUTO_HEAL",
+     "section": "Notifications",
+     "help": "The watchdog restarts an app that is unhealthy or not answering on two checks in a row (once in 6 hours at most). false: it only alerts.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "OLLAMA_MODEL",
+     "section": "Notifications",
+     "help": "The Ollama model that explains logs (Explain this log), e.g. llama3.2. Empty: the first Llama, Qwen, Gemma, Mistral, or Phi model Ollama has.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "UPDATES_HELD",
+     "section": "Notifications",
+     "help": "Apps whose updates are held after a rollback, or by hand. Written by homelab rollback and homelab updates hold|release.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TIDY_UP",
+     "section": "Tidy Up",
+     "help": "Tidy Up sorts, tags, and shrinks the libraries on the media drive (MEDIA_ROOT): music, books, movies, tv, audiobooks. false turns its background work off (the inbox, Tdarr's finished work, and the nightly scrubber); the screen still works.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_INBOX",
+     "section": "Tidy Up",
+     "help": "File what finishes downloading in Downloads, and in DOWNLOADS_ROOT, into the libraries. Other folders to watch instead: TIDY_INBOX_FOLDERS, separated by ;.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_INBOX_FOLDERS",
+     "section": "Tidy Up",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TIDY_SCRUB",
+     "section": "Tidy Up",
+     "help": "Every night at 03:00, put leftovers whose film, song, or book is gone (posters, .nfo and subtitle files, empty folders) in the Trash.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_KEEP_LANGUAGES",
+     "section": "Tidy Up",
+     "help": "The audio and subtitle languages films and episodes keep (ISO 639-2, e.g. eng, jpn); the rest are removed when Tdarr shrinks them.",
+     "secret": false,
+     "set": true,
+     "value": "eng"
+    },
+    {
+     "key": "TIDY_VIDEO_CODEC",
+     "section": "Tidy Up",
+     "help": "What Tdarr shrinks video to: hevc (plays everywhere) or av1 (smaller, newer players).",
+     "secret": false,
+     "set": true,
+     "value": "hevc"
+    },
+    {
+     "key": "TIDY_SHRINK_LOSSLESS",
+     "section": "Tidy Up",
+     "help": "New lossless music (FLAC, WAV) is stored as 256k AAC, about a fifth of the size. false keeps it lossless.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "TIDY_LYRICS",
+     "section": "Tidy Up",
+     "help": "Lyrics: embed (inside each song file) or lrc (a .lrc file beside each song).",
+     "secret": false,
+     "set": true,
+     "value": "embed"
+    },
+    {
+     "key": "TIDY_MUSIC_ENGINE",
+     "section": "Tidy Up",
+     "help": "Where beets runs for music: local (this computer, fastest) or container (the beets image). Empty: local when Python can make its own environment here.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PLEX_URL",
+     "section": "Tidy Up",
+     "help": "A Plex server to tell about each new or changed file (Plex › Settings › Network shows its address), its token, and how its folders map to this computer's, e.g. /Volumes/Media=/data.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PLEX_TOKEN",
+     "section": "Tidy Up",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PLEX_PATH_MAP",
+     "section": "Tidy Up",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "AUDIOBOOKSHELF_API_KEY",
+     "section": "Tidy Up",
+     "help": "Audiobookshelf's API key (Settings › Users › your user › API token): Tidy Up tells it about new files.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TDARR_API_KEY",
+     "section": "Tidy Up",
+     "help": "Tidy Up's key to Tdarr, generated: Tdarr takes it as its own when it starts (seededApiKey), since Tdarr 3 takes no sign-up.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TDARR_USER",
+     "section": "Tidy Up",
+     "help": "Tdarr's sign-in, for an older Tdarr: made by Tidy Up (user homelab) when Tdarr had no account yet; if you made one in Tdarr first, put its user name and password here.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TDARR_PASSWORD",
+     "section": "Tidy Up",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "VAULTWARDEN_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8087"
+    },
+    {
+     "key": "DUPLICATI_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8200"
+    },
+    {
+     "key": "UPTIME_KUMA_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3001"
+    },
+    {
+     "key": "JELLYFIN_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8096"
+    },
+    {
+     "key": "NAVIDROME_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "4533"
+    },
+    {
+     "key": "FEISHIN_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9180"
+    },
+    {
+     "key": "BEETS_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8337"
+    },
+    {
+     "key": "AUDIOBOOKSHELF_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "13378"
+    },
+    {
+     "key": "CALIBRE_WEB_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8083"
+    },
+    {
+     "key": "KOMGA_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "25600"
+    },
+    {
+     "key": "IMMICH_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8013"
+    },
+    {
+     "key": "PAPERLESS_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8010"
+    },
+    {
+     "key": "PAPERLESS_AI_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8011"
+    },
+    {
+     "key": "MONEYMATTER_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "13480"
+    },
+    {
+     "key": "FIREFLY_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8094"
+    },
+    {
+     "key": "FIREFLY_IMPORTER_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8097"
+    },
+    {
+     "key": "PROWLARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9696"
+    },
+    {
+     "key": "SONARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8989"
+    },
+    {
+     "key": "RADARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "7878"
+    },
+    {
+     "key": "LIDARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8686"
+    },
+    {
+     "key": "BAZARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "6767"
+    },
+    {
+     "key": "TDARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8265"
+    },
+    {
+     "key": "SEERR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5055"
+    },
+    {
+     "key": "LAZYLIBRARIAN_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5299"
+    },
+    {
+     "key": "QBITTORRENT_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8082"
+    },
+    {
+     "key": "FRESHRSS_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8085"
+    },
+    {
+     "key": "MEALIE_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9000"
+    },
+    {
+     "key": "FILEBROWSER_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8086"
+    },
+    {
+     "key": "NEXTCLOUD_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8089"
+    },
+    {
+     "key": "STIRLING_PDF_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8095"
+    },
+    {
+     "key": "KIWIX_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8098"
+    },
+    {
+     "key": "HOMARR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "7575"
+    },
+    {
+     "key": "HOMEPAGE_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3000"
+    },
+    {
+     "key": "KAVITA_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5500"
+    },
+    {
+     "key": "SPEEDTEST_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8765"
+    },
+    {
+     "key": "DOZZLE_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9998"
+    },
+    {
+     "key": "BESZEL_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8090"
+    },
+    {
+     "key": "BESZEL_AGENT_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "45876"
+    },
+    {
+     "key": "SYNCTHING_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8384"
+    },
+    {
+     "key": "OPEN_WEBUI_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3080"
+    },
+    {
+     "key": "HOME_ASSISTANT_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8123"
+    },
+    {
+     "key": "FRIGATE_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8971"
+    },
+    {
+     "key": "GROCY_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "9283"
+    },
+    {
+     "key": "KARAKEEP_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3010"
+    },
+    {
+     "key": "VIKUNJA_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3456"
+    },
+    {
+     "key": "BAIKAL_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5232"
+    },
+    {
+     "key": "PAIRDROP_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3020"
+    },
+    {
+     "key": "PSITRANSFER_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3030"
+    },
+    {
+     "key": "POCKET_ID_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "1411"
+    },
+    {
+     "key": "WALLOS_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8282"
+    },
+    {
+     "key": "CHANGEDETECTION_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5010"
+    },
+    {
+     "key": "MEMOS_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5230"
+    },
+    {
+     "key": "HOMEBOX_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "7745"
+    },
+    {
+     "key": "ROMM_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "7676"
+    },
+    {
+     "key": "GHOSTFOLIO_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3333"
+    },
+    {
+     "key": "DOCMOST_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3040"
+    },
+    {
+     "key": "DAWARICH_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3050"
+    },
+    {
+     "key": "ACTUAL_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "5006"
+    },
+    {
+     "key": "TANDOOR_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "8093"
+    },
+    {
+     "key": "LINKWARDEN_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "3060"
+    },
+    {
+     "key": "KOPIA_PORT",
+     "section": "App ports (the installer moves these if something else holds them)",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "51515"
+    },
+    {
+     "key": "NAVIDROME_MUSIC_PATH",
+     "section": "App settings and secrets",
+     "help": "Where Navidrome sees the music folder in its container. Empty: the same path as on this machine, so playlists with full paths keep working (Mac and Linux). Windows sets /music, since a C:\\ path cannot be one there.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NAVIDROME_ADMIN_USER",
+     "section": "App settings and secrets",
+     "help": "A Navidrome administrator's login, best one of its own (Navidrome › Users › Create, e.g. homelab, with Is Admin on). With it, Settings › People makes each person's Navidrome account and gives them a new password when they need one.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NAVIDROME_ADMIN_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "JELLYFIN_API_KEY",
+     "section": "App settings and secrets",
+     "help": "A Jellyfin API key (Dashboard › API Keys › +, named Homelab). With it, Settings › People makes each person's Jellyfin account (for Infuse and the TV apps too) and gives them a new password when they need one.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "VAULTWARDEN_SIGNUPS_ALLOWED",
+     "section": "App settings and secrets",
+     "help": "Turn on only while creating accounts, then back off (./homelab doctor warns).",
+     "secret": false,
+     "set": true,
+     "value": "false"
+    },
+    {
+     "key": "DUPLICATI_SETTINGS_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DUPLICATI_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DUPLICATI_SECRETS_PASSPHRASE",
+     "section": "App settings and secrets",
+     "help": "The backup jobs' encryption passphrases (homelab duplicati setup uses them). Keep DUPLICATI_SECRETS_PASSPHRASE outside this machine too, in Vaultwarden and on the recovery kit: it opens the Secrets backup, which holds this file.",
+     "secret": false,
+     "set": true,
+     "value": "__REPLACE_ME__"
+    },
+    {
+     "key": "DUPLICATI_PASSPHRASE",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "__REPLACE_ME__"
+    },
+    {
+     "key": "KOPIA_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "Kopia's repository password: it opens every Kopia backup, so keep it outside this machine too, with DUPLICATI_SECRETS_PASSPHRASE. The other is its web page's.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "KOPIA_SERVER_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "IMMICH_VERSION",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "v3"
+    },
+    {
+     "key": "IMMICH_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "18"
+    },
+    {
+     "key": "PAPERLESS_SECRET_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_OCR_LANGUAGE",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "eng"
+    },
+    {
+     "key": "PAPERLESS_AI_PAPERLESS_TOKEN",
+     "section": "App settings and secrets",
+     "help": "A token made in Paperless-ngx (your account › My Profile › API Auth Token); Paperless-AI installs once it is set.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_AI_API_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_AI_JWT_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FRIGATE_MQTT_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "The password Frigate and Home Assistant use on Frigate's event broker.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NEXTCLOUD_ADMIN_USER",
+     "section": "App settings and secrets",
+     "help": "Nextcloud's administrator (made on its first start) and its database.",
+     "secret": false,
+     "set": true,
+     "value": "admin"
+    },
+    {
+     "key": "NEXTCLOUD_ADMIN_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NEXTCLOUD_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NEXTCLOUD_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "18"
+    },
+    {
+     "key": "NEXTCLOUD_VERSION",
+     "section": "App settings and secrets",
+     "help": "Nextcloud's major version: the nightly updates bring its fixes; a new major is set here (one at a time) after a backup, then ./homelab update nextcloud.",
+     "secret": false,
+     "set": true,
+     "value": "35"
+    },
+    {
+     "key": "VIKUNJA_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "POCKET_ID_ENCRYPTION_KEY",
+     "section": "App settings and secrets",
+     "help": "Pocket ID encrypts its keys with this; losing it means re-registering passkeys.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "POCKET_ID_API_KEY",
+     "section": "App settings and secrets",
+     "help": "The key homelab sso setup uses on Pocket ID's API to connect the apps.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "SSO_HOST",
+     "section": "App settings and secrets",
+     "help": "Pocket ID's name, which the apps' containers reach through the proxy here. Written by homelab sso setup.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PSITRANSFER_ADMIN_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "PsiTransfer: the admin page's password, and the one needed to upload (leave the upload one set so only the household can send files).",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PSITRANSFER_UPLOAD_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "HOMEBOX_ALLOW_REGISTRATION",
+     "section": "App settings and secrets",
+     "help": "Homebox: turn off once everyone has an account.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "HOMEBOX_API_KEY_PEPPER",
+     "section": "App settings and secrets",
+     "help": "Homebox signs the API keys it gives with this (32 characters or more); changing it ends every one of them.",
+     "secret": false,
+     "set": true,
+     "value": "__REPLACE_ME__"
+    },
+    {
+     "key": "ROMM_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "ROMM_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "17"
+    },
+    {
+     "key": "ROMM_AUTH_SECRET_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "ROMM_IGDB_CLIENT_ID",
+     "section": "App settings and secrets",
+     "help": "Optional: artwork and game details for RomM (services/media/RomM.md).",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "ROMM_IGDB_CLIENT_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "ROMM_SCREENSCRAPER_USER",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "ROMM_SCREENSCRAPER_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "GHOSTFOLIO_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "GHOSTFOLIO_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "17"
+    },
+    {
+     "key": "GHOSTFOLIO_ACCESS_TOKEN_SALT",
+     "section": "App settings and secrets",
+     "help": "Changing either of these later signs everyone out of Ghostfolio for good.",
+     "secret": false,
+     "set": true,
+     "value": "__REPLACE_ME__"
+    },
+    {
+     "key": "GHOSTFOLIO_JWT_SECRET_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "GHOSTFOLIO_SECURITY_TOKEN",
+     "section": "App settings and secrets",
+     "help": "Your Ghostfolio security token (the one you sign in with): Finances reads your investments with it, on Net worth's Investments card (Read now, then once a day) and in Update balances. Press Read now there to check it works.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DOCMOST_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DOCMOST_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "17"
+    },
+    {
+     "key": "DOCMOST_APP_SECRET",
+     "section": "App settings and secrets",
+     "help": "Changing it later signs everyone out of Docmost.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DAWARICH_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TANDOOR_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TANDOOR_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "18"
+    },
+    {
+     "key": "TANDOOR_SECRET_KEY",
+     "section": "App settings and secrets",
+     "help": "Changing it later signs everyone out of Tandoor.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_FRONTEND_IMAGE",
+     "section": "App settings and secrets",
+     "help": "Empty runs MoneyMatter's Intel images under Rosetta. To run the frontend and backend natively, build them from source (services/finance/MoneyMatter.md) and set homelab/moneymatter-frontend:v0.30.2, homelab/moneymatter-backend:v0.30.2, and linux/arm64.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_BACKEND_IMAGE",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_PLATFORM",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "Its PostgreSQL major version; change it only with homelab db upgrade.",
+     "secret": false,
+     "set": true,
+     "value": "16"
+    },
+    {
+     "key": "MONEYMATTER_JWT_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_SESSION_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_AUTH_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_APP_KEY",
+     "section": "App settings and secrets",
+     "help": "Firefly III encrypts with FIREFLY_APP_KEY (32 characters): keep it with the backup.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "18"
+    },
+    {
+     "key": "FIREFLY_CRON_TOKEN",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_IMPORTER_TOKEN",
+     "section": "App settings and secrets",
+     "help": "A personal access token from Firefly III (Profile › OAuth), for its data importer; Finances › Update balances reads the asset accounts' balances with it too, on a click.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "WALLOS_API_KEY",
+     "section": "App settings and secrets",
+     "help": "Wallos's API key (Profile › API Key): Finances › Recurring reads its subscriptions with it, on a click.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "HOMARR_SECRET_ENCRYPTION_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "BESZEL_EMAIL",
+     "section": "App settings and secrets",
+     "help": "Beszel's first account, made on its first start.",
+     "secret": false,
+     "set": true,
+     "value": "homelab@example.com"
+    },
+    {
+     "key": "BESZEL_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "BESZEL_AGENT_KEY",
+     "section": "App settings and secrets",
+     "help": "The hub's public key, from Beszel's Add System; the agent starts once it is set.",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PROTONVPN_WIREGUARD_PRIVATE_KEY",
+     "section": "App settings and secrets",
+     "help": "Optional qBittorrent VPN (ProtonVPN account > Downloads > WireGuard).",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PROTONVPN_SERVER_COUNTRIES",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TAILSCALE_AUTHKEY",
+     "section": "App settings and secrets",
+     "help": "Tailscale: a reusable auth key from login.tailscale.com > Settings > Keys, and the home network it makes reachable (set from this machine's network; approve the route in the admin).",
+     "secret": true,
+     "set": false,
+     "value": ""
+    },
+    {
+     "key": "TAILSCALE_ROUTES",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "192.168.1.0/24"
+    },
+    {
+     "key": "TAILSCALE_EXTRA_ARGS",
+     "section": "App settings and secrets",
+     "help": "Extra flags for tailscale up, as --login-server=https://headscale.example.com for a tailnet on your own Headscale server. Empty: Tailscale's own.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TAILSCALE_HOST",
+     "section": "App settings and secrets",
+     "help": "Home mode (HOMELAB_DOMAIN empty): this machine's tailnet name, written by homelab tailnet setup. Every app is at https://<TAILSCALE_HOST>:<its port>.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TAILNET_ADMIN_APPS",
+     "section": "App settings and secrets",
+     "help": "Home mode: false keeps the admin apps (the proxy, AdGuard, Duplicati, Dozzle, and the like) off the tailnet, so only this machine opens them; the household apps stay on it. true (the default) serves every app.",
+     "secret": false,
+     "set": true,
+     "value": "true"
+    },
+    {
+     "key": "VAULTWARDEN_URL",
+     "section": "App settings and secrets",
+     "help": "The address each app is opened at, for the apps that need to know it (sign-in, links in emails). Empty: https://<subdomain>.<domain>. In Home mode homelab tailnet setup writes the tailnet address. MoneyMatter only signs in at exactly its address.",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "BESZEL_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NTFY_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "POCKET_ID_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "PAPERLESS_AI_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NEXTCLOUD_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "KARAKEEP_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MONEYMATTER_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "FIREFLY_IMPORTER_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "NAVIDROME_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "OPEN_WEBUI_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "CHANGEDETECTION_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "SPEEDTEST_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "MEALIE_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "VIKUNJA_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "DOCMOST_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "TANDOOR_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "LINKWARDEN_URL",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "SPEEDTEST_APP_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "SPEEDTEST_SCHEDULE",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "0 */6 * * *"
+    },
+    {
+     "key": "OPEN_WEBUI_SECRET_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "KARAKEEP_NEXTAUTH_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "KARAKEEP_MEILI_MASTER_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "LINKWARDEN_DB_PASSWORD",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "LINKWARDEN_DB_VERSION",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": false,
+     "set": true,
+     "value": "18"
+    },
+    {
+     "key": "LINKWARDEN_NEXTAUTH_SECRET",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "LINKWARDEN_MEILI_MASTER_KEY",
+     "section": "App settings and secrets",
+     "help": "",
+     "secret": true,
+     "set": true,
+     "value": ""
+    },
+    {
+     "key": "LINKWARDEN_DISABLE_REGISTRATION",
+     "section": "App settings and secrets",
+     "help": "Off once the household has its accounts (the first one is the administrator).",
+     "secret": false,
+     "set": true,
+     "value": "false"
+    }
+   ],
+   "computerOnly": [
+    "HOMELAB_DOMAIN",
+    "AUTO_DOMAIN",
+    "TUNNEL_TOKEN",
+    "TAILSCALE_AUTHKEY",
+    "TAILSCALE_ROUTES",
+    "TAILSCALE_EXTRA_ARGS",
+    "TAILSCALE_HOST"
+   ]
+  },
   "Finances": {
    "plan": {
     "people": [
@@ -5071,7 +5082,7 @@
       ]
      }
     ],
-    "holdingsRead": "@ago:818100"
+    "holdingsRead": "@ago:821950"
    },
    "today": "2026-10-30",
    "checking": "chk",
