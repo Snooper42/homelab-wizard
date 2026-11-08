@@ -9354,7 +9354,7 @@
   var showTransactions = (f4) => {
     opening = f4;
   };
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos, back: back2 }) {
     const [first] = d2(() => {
       const f4 = opening;
       opening = {};
@@ -9466,8 +9466,8 @@
       showUndo(words5, () => {
         const now2 = latest2.current;
         if (!now2 || !saveLedger2) return;
-        const back2 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
-        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back2.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
+        const back3 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
+        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back3.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
       });
     };
     const removePicked = () => {
@@ -9606,7 +9606,12 @@
                 setMonthPick("");
                 setWay("");
                 setTag("");
-              }, children: "Show all" })
+              }, children: "Show all" }),
+              back2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back2.go, children: [
+                /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "← " }),
+                "Back to ",
+                back2.label
+              ] })
             ] }),
             picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
               /* @__PURE__ */ u3("span", { class: "fx-txpicked", role: "status", children: chosen.length ? `${plural(chosen.length, "transaction")} selected` : "None selected: click a row to select it" }),
@@ -15620,6 +15625,17 @@ ${pays}
     setOwnLogos(v3?.plan.logos);
     setCategories(v3?.categories);
     const [what2, label] = adds[tab3] || adds.overview;
+    const [from2, setFrom] = d2("");
+    const toTx = (f4) => {
+      showTransactions(f4);
+      setFrom(tab3);
+      setTab("transactions");
+    };
+    const pickTab = (t3) => {
+      setFrom("");
+      setTab(t3);
+    };
+    const back2 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
@@ -15642,47 +15658,35 @@ ${pays}
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab3, pick: setTab, options: tabs }),
+      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab3, pick: pickTab, options: tabs }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back2, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
         if (f4) openOn(f4);
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), showIn: (f4) => {
-        showTransactions(f4);
-        setTab("transactions");
-      }, openCalendar: (day3) => {
+      }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: (f4) => {
-        showTransactions(f4);
-        setTab("transactions");
-      } }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
         if (f4) openOn(f4);
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), showIn: (f4) => {
-        showTransactions(f4);
-        setTab("transactions");
-      }, openCalendar: (day3) => {
+      }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
       }, phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: (f4) => {
-      showTransactions(f4);
-      setTab("transactions");
-    } }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back2, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);

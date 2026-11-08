@@ -75,6 +75,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Back from Transactions:** opened from a report's row or a Dashboard card, Finances › Transactions has **Back to Reports** (or the Dashboard) beside its filters.
 - **What went out, in the weekly summary:** *Homelab this week* ends its Finances lines with what your transactions spent in the last seven days and where most of it went (*Spent this week: $148.20 in 3 transactions, the most at Costco, $100.00*).
 - **Pay, a year at a time:** each person on Finances › Pay says their take-home a year too (*about $55,900 a year*), and one with no gross typed in says what adding it shows, with **Add them**.
 - **Find a charge by its amount or day:** Finances › Transactions' search finds what a transaction came to (*86.10*, or *2,400* with its comma) and its day (*Oct 28*) too. A day with more than one transaction says what they came to together.

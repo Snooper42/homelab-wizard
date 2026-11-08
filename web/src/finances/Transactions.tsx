@@ -38,6 +38,8 @@ export interface TransactionsProps {
   edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import' | 'logos', id?: string) => void;
   /** Whether Logos is offered: the computer can ask a company's website for its real logo; a phone can't. */
   logos?: boolean;
+  /** Opened filtered from another view (a report's row, a Dashboard card): back to it. */
+  back?: { label: string; go: () => void };
   /** Reads a receipt by its name, for a phone allowed only to look (its rows open no form). */
   readReceipt?: (name: string) => Promise<string>;
   /** Keeps the ledger, for a link made or said Not it; none on a phone allowed only to look. */
@@ -167,7 +169,7 @@ export const txPage = 200;
 let opening: { category?: string; month?: string; q?: string } = {};
 export const showTransactions = (f: { category?: string; month?: string; q?: string }) => { opening = f; };
 
-export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos }: TransactionsProps) {
+export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos, back }: TransactionsProps) {
   // Taken once, as it opens: a later visit opens on everything.
   const [first] = useState(() => { const f = opening; opening = {}; return f; });
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
@@ -369,6 +371,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
               <option value="move">Between my accounts</option>
             </select>
             {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
+            {back && <button type="button" class="small" onClick={back.go}><span aria-hidden="true">← </span>Back to {back.label}</button>}
           </div>}
           {picking && <div class="fx-txpick" role="group" aria-label="The selected transactions">
             <span class="fx-txpicked" role="status">{chosen.length ? `${plural(chosen.length, 'transaction')} selected` : 'None selected: click a row to select it'}</span>

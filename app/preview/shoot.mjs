@@ -6326,6 +6326,21 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
     if ((await page.inputValue('#finSheet label:has-text("Day") input')) !== '2026-10-28') throw new Error(`on ${await page.inputValue('#finSheet label:has-text("Day") input')}`);
   } },
+  // Transactions opened from another view has Back to it: from Reports (a payee), and from the Dashboard (See all); picked
+  // from its own tab, none.
+  { name: 'Finances: Transactions opened from a report or a card goes back to it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-payees li:has-text("Shell") button');
+    await page.click('.fx-txfilters button:has-text("Back to Reports")', { timeout: 5000 });
+    await page.waitForSelector('.fx-reportsum', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('.fx-latest button:text-is("See all")');
+    await page.click('.fx-txfilters button:has-text("Back to Dashboard")', { timeout: 5000 });
+    await page.waitForSelector('.fx-latest', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-txfilters', { timeout: 5000 });
+    if (await page.$('.fx-txfilters button:has-text("Back to")')) throw new Error('Back from its own tab');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
