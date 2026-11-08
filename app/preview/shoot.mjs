@@ -970,6 +970,57 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today. Drop something in a watched folder, or press Tidy up now.")', { timeout: 5000 });
   } },
+  // Nov 8, the owner's mockup: Needs a look, between Drop anything here and What I did today: what Tidy Up couldn't place,
+  // with why. A video can be named a film or an episode in a sheet (File it waits for what it needs; a number box takes
+  // digits only), anything can be shown in the file manager or left be; with nothing waiting, the card isn't there.
+  { name: 'Tidy Up: Needs a look names a film or an episode, shows one, and leaves one be', screen: 'tidy', mock: { tidy: { ...tidy, needs: [
+    { path: '/Users/you/Downloads/IMG_2041.mov', name: 'IMG_2041.mov', kind: 'movies', why: "Couldn't tell which film it is from its name." },
+    { path: '/Users/you/Downloads/stuff', name: 'stuff', kind: 'tv', why: 'You put it back. Say what it is, or leave it.' },
+    { path: '/Users/you/Downloads/track01.mp3', name: 'track01.mp3', kind: 'music', why: "Couldn't file it." },
+  ] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    const card = '#tidy .tidyneedslook';
+    await page.waitForSelector(`${card} h2:text-is("Needs a look")`, { timeout: 5000 });
+    const order = await page.$$eval('#tidy .tidybody .fx-board:first-child > .fx-widget h2', (e) => e.map((x) => x.firstChild.textContent.trim()));
+    if (JSON.stringify(order) !== JSON.stringify(['Drop anything here', 'Needs a look', 'What I did today'])) throw new Error(JSON.stringify(order));
+    await page.waitForSelector(`${card} li:has(strong:text-is("IMG_2041.mov")) .warn:has-text("Couldn't tell which film it is from its name.")`, { timeout: 2000 });
+    const song = `${card} li:has(strong:text-is("track01.mp3"))`;
+    if (await page.$(`${song} button:text-is("It's a film…")`)) throw new Error('a song offered as a film');
+    await page.click(`${card} li:has(strong:text-is("IMG_2041.mov")) button:text-is("It's a film…")`);
+    const sheet = '#tidySheet:not([hidden])';
+    await page.waitForSelector(`${sheet} h2:text-is("Which film is IMG_2041.mov?")`, { timeout: 3000 });
+    if (!await page.$(`${sheet} button:text-is("File it")[disabled]`)) throw new Error('File it before a title');
+    await page.fill(`${sheet} label:has-text("Film") input`, 'The Big Lebowski');
+    await page.fill(`${sheet} label:has-text("Year") input`, '19x8');
+    if (!await page.$(`${sheet} button:text-is("File it")[disabled]`)) throw new Error('a year that is not a number');
+    await page.fill(`${sheet} label:has-text("Year") input`, '1998');
+    await page.click(`${sheet} button:text-is("File it")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    let runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/IMG_2041.mov', 'movie', 'The Big Lebowski', '1998']])) throw new Error(JSON.stringify(runs));
+    await page.waitForSelector('#tidySheet', { state: 'hidden', timeout: 3000 });
+    await page.waitForSelector(`${card} button:text-is("It's an episode…"):not([disabled])`, { timeout: 8000 });
+    await page.click(`${card} li:has(strong:text-is("stuff")) button:text-is("It's an episode…")`);
+    await page.waitForSelector(`${sheet} h2:text-is("Which show is stuff?")`, { timeout: 3000 });
+    await page.fill(`${sheet} label:has-text("Show") input`, ' Severance ');
+    await page.fill(`${sheet} label:has-text("Season") input`, '2');
+    await page.click(`${sheet} button:text-is("File it")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 2, null, { timeout: 5000 });
+    runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[1].slice(0, 3)) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/stuff', 'episode', 'Severance', '2']])) throw new Error(JSON.stringify(runs));
+    await page.click(`${song} button:has-text("Show ")`);
+    await page.waitForFunction(() => window.__MOCK.revealed === '/Users/you/Downloads/track01.mp3', null, { timeout: 3000 });
+    await page.waitForSelector(`${song} button:text-is("Leave it"):not([disabled])`, { timeout: 8000 });
+    await page.click(`${song} button:text-is("Leave it")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 3, null, { timeout: 5000 });
+    runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[2].slice(0, 3)) !== JSON.stringify(['inbox', 'leave', ['/Users/you/Downloads/track01.mp3']])) throw new Error(JSON.stringify(runs));
+  } },
+  { name: 'Tidy Up: with nothing to look at, Needs a look is not there', screen: 'tidy', mock: { tidy: { ...tidy, needs: [] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });
+    if (await page.$('#tidy .tidyneedslook')) throw new Error('an empty Needs a look');
+  } },
   // On a phone, the six tabs in two even rows of three.
   { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 390, height: 800 });

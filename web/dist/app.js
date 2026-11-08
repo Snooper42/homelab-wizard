@@ -15346,6 +15346,8 @@ ${pays}
     "books undo": "Undoing the last apply",
     "books build": "Making your Calibre library",
     "inbox undo": "Putting it back",
+    "inbox name": "Filing it as you named it",
+    "inbox leave": "Leaving it be",
     "movies scan": "Scanning your films",
     "movies run": "Handing films to Tdarr",
     "movies collect": "Collecting Tdarr's work",
@@ -15524,7 +15526,13 @@ ${pays}
   }
   function ConfirmSheet({ c: c3, close: close3 }) {
     const [sure, setSure] = d2(false);
-    h2(() => setSure(false), [c3]);
+    const [typed, setTyped] = d2({});
+    h2(() => {
+      setSure(false);
+      setTyped({});
+    }, [c3]);
+    const val = (f4) => (typed[f4.key] || "").trim();
+    const ready2 = (c3?.fields || []).every((f4) => (f4.optional || val(f4)) && (!f4.number || /^\d{0,4}$/.test(val(f4))));
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
       /* @__PURE__ */ u3("h2", { id: "tidySheetTitle", children: c3?.title }),
       /* @__PURE__ */ u3("p", { class: "lead", children: c3?.lead }),
@@ -15533,15 +15541,28 @@ ${pays}
         /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("strong", { children: "Kept either way:" }) }),
         /* @__PURE__ */ u3("ul", { class: "tidykeep", children: c3.keep.map((s3) => /* @__PURE__ */ u3("li", { children: s3 }, s3)) })
       ] }),
+      !!c3?.fields?.length && /* @__PURE__ */ u3("div", { class: "tidyfields", children: c3.fields.map((f4) => /* @__PURE__ */ u3("label", { class: "field" + (f4.number ? " tidynum" : ""), children: [
+        f4.label,
+        f4.optional && /* @__PURE__ */ u3("span", { class: "muted", children: " (if you know it)" }),
+        /* @__PURE__ */ u3(
+          "input",
+          {
+            value: typed[f4.key] || "",
+            inputMode: f4.number ? "numeric" : void 0,
+            maxLength: f4.number ? 4 : 200,
+            onInput: (e3) => setTyped({ ...typed, [f4.key]: e3.target.value })
+          }
+        )
+      ] }, f4.key)) }),
       /* @__PURE__ */ u3("div", { class: "actions", children: [
         /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { class: "primary small" + (sure ? " confirm" : ""), onClick: () => {
+        /* @__PURE__ */ u3("button", { class: "primary small" + (sure ? " confirm" : ""), disabled: !ready2, onClick: () => {
           if (c3?.twice && !sure) {
             setSure(true);
             return;
           }
           close3();
-          c3?.go();
+          c3?.go(Object.fromEntries((c3.fields || []).map((f4) => [f4.key, val(f4)])));
         }, children: c3?.twice && sure ? `Click again: ${c3.action.toLowerCase()}` : c3?.action })
       ] })
     ] });
@@ -15933,6 +15954,7 @@ ${pays}
     return /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }),
+        /* @__PURE__ */ u3(NeedsLookWidget, { d: d3, job: job2, act }),
         /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act })
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidytop", children: [
@@ -15995,6 +16017,48 @@ ${pays}
     ] });
   }
   var clock2 = (at2) => new Date(at2).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  var showIn = osName === "mac" ? "Show in Finder" : osName === "windows" ? "Show in Explorer" : "Show the folder";
+  function NeedsLookWidget({ d: d3, job: job2, act }) {
+    const needs = d3.needs || [];
+    if (!needs.length) return null;
+    const opt = (v3) => v3 ? [v3] : [];
+    const film = (x3) => act.ask({
+      title: `Which film is ${x3.name}?`,
+      lead: "Its title, and its year if you know it: Tidy Up renames it to that and files it in Movies.",
+      action: "File it",
+      fields: [{ key: "title", label: "Film" }, { key: "year", label: "Year", number: true, optional: true }],
+      go: (v3) => act.run("inbox", "name", [x3.path, "movie", v3.title, ...opt(v3.year)])
+    });
+    const episode = (x3) => act.ask({
+      title: `Which show is ${x3.name}?`,
+      lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.",
+      action: "File it",
+      fields: [{ key: "show", label: "Show" }, { key: "season", label: "Season", number: true }, { key: "episode", label: "Episode", number: true, optional: true }],
+      go: (v3) => act.run("inbox", "name", [x3.path, "episode", v3.show, v3.season, ...opt(v3.episode)])
+    });
+    return /* @__PURE__ */ u3(Widget, { title: "Needs a look", span: "all", kind: "tidyneedslook", actions: /* @__PURE__ */ u3("span", { class: "muted", children: [
+      count(needs.length, "thing"),
+      " Tidy Up couldn't place · nothing else waits on ",
+      needs.length === 1 ? "it" : "them"
+    ] }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: needs.map((x3) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(LibIcon, { kind: x3.kind || "inbox" }),
+        title: x3.name,
+        sub: x3.why,
+        subTone: "warn",
+        end: /* @__PURE__ */ u3("span", { class: "tidyneedsgo", children: [
+          (x3.kind === "movies" || x3.kind === "tv") && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3(Go, { label: "It's a film…", job: job2, onClick: () => film(x3) }),
+            /* @__PURE__ */ u3(Go, { label: "It's an episode…", job: job2, onClick: () => episode(x3) })
+          ] }),
+          /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.reveal(x3.path), children: showIn }),
+          /* @__PURE__ */ u3(Go, { label: "Leave it", job: job2, title: `Leave ${x3.name} where it is: Tidy Up won't file it`, onClick: () => act.run("inbox", "leave", [x3.path]) })
+        ] })
+      },
+      x3.path
+    )) }) });
+  }
   function TodayWidget({ d: d3, job: job2, act }) {
     const today2 = d3.today || [];
     return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: "all", kind: "tidytoday", children: today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
