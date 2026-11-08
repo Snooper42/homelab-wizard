@@ -2072,6 +2072,10 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 /* Your own image for a logo: a button under the logos, and the image drawn on white like any picture logo. */
 .ownlogo { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:8px 0 4px; }
 .fmark.own img { width:100%; height:100%; object-fit:contain; border-radius:inherit; }
+/* An image of one's own in a round mark (Finances' rows, the sidebar's accounts, a holding): the whole picture inside the circle, on white,
+   never cut to its shape, as a square logo's corners were. */
+#finances .fmark.own img, .fx-balacct .fmark.own img, .fx-holdbtn .fmark.own img { width:70%; height:70%; border-radius:0; }
+.finform .fcheckbox.renameall { margin:2px 0 10px; }
 /* A person in a row of payments takes a mark's room, so the titles beside them line up. */
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
 /* Transactions: by day, newest first; a day's heading over its rows. */
