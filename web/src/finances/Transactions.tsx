@@ -159,6 +159,9 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
   );
 }
 
+/** How many transactions are drawn at first, and more each time Show more is clicked. */
+export const txPage = 200;
+
 /** What Transactions opens filtered to next (a Reports row picked it): a category or group, a month, words. Then everything again. */
 let opening: { category?: string; month?: string; q?: string } = {};
 export const showTransactions = (f: { category?: string; month?: string; q?: string }) => { opening = f; };
@@ -181,6 +184,9 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const [monthPick, setMonthPick] = useState(first.month || '');
   const [way, setWay] = useState('');
   const [tagPick, setTag] = useState('');
+  // How many rows are drawn, for the filters they were asked for: a year of bank files is thousands, and drawing every
+  // one made typing in the search slow. Another filter starts again from the first page.
+  const [drawn, setDrawn] = useState({ key: '', n: txPage });
   // Picking rows to change together: which are picked, the category typed for them, Delete asked once, saving.
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -234,6 +240,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
   const list = [...shown].reverse();
+  const filterKey = [q, account, category, month, way, tag].join('\u0000');
+  const upTo = drawn.key === filterKey ? drawn.n : txPage;
   // What the picked act on: those picked that the filters still show.
   const chosen = shown.filter((t) => picked.has(t.id));
   const pick = (ids: Set<string>) => { setPicked(ids); setSure(false); setProblem(''); };
@@ -302,7 +310,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   };
   // By day, newest first, each day's transactions as they were entered, latest on top.
   const days: { date: string; list: finance.Transaction[] }[] = [];
-  for (const t of list) {
+  for (const t of list.slice(0, upTo)) {
     if (days.at(-1)?.date !== t.date) days.push({ date: t.date, list: [] });
     days.at(-1)!.list.push(t);
   }
@@ -397,6 +405,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             </section>
           ))}
           {!all.length && <Empty>{edit ? 'No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt.' : 'No transactions yet.'}</Empty>}
+          {list.length > upTo && <p class="fx-txmore"><button type="button" class="small" onClick={() => setDrawn({ key: filterKey, n: upTo + txPage })}>Show {Math.min(txPage, list.length - upTo)} more</button>
+            <span class="fx-sub">{upTo} of {list.length} shown, newest first</span></p>}
           {!!all.length && !shown.length && <Empty>None match: try fewer words, or Show all.</Empty>}
         </Widget>
       </div>

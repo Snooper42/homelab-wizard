@@ -9337,6 +9337,7 @@
       }
     );
   }
+  var txPage = 200;
   var opening = {};
   var showTransactions = (f4) => {
     opening = f4;
@@ -9367,6 +9368,7 @@
     const [monthPick, setMonthPick] = d2(first.month || "");
     const [way, setWay] = d2("");
     const [tagPick, setTag] = d2("");
+    const [drawn, setDrawn] = d2({ key: "", n: txPage });
     const [picking, setPicking] = d2(false);
     const [picked, setPicked] = d2(/* @__PURE__ */ new Set());
     const [catFor, setCatFor] = d2("");
@@ -9414,6 +9416,8 @@
     const shown6 = all.filter((t3) => (!account || t3.account === account || t3.to === account) && (!category || inCategory(t3, category)) && (!month3 || t3.date.startsWith(month3)) && (!tag || !!t3.tags?.includes(tag)) && (!way || (way === "move" ? !!t3.to : !t3.to && (way === "in" ? t3.amount > 0 : t3.amount < 0))) && want.every((w3) => wordsOf(t3, L2).includes(w3)));
     const filtered = shown6.length !== all.length;
     const list = [...shown6].reverse();
+    const filterKey = [q2, account, category, month3, way, tag].join("\0");
+    const upTo = drawn.key === filterKey ? drawn.n : txPage;
     const chosen = shown6.filter((t3) => picked.has(t3.id));
     const pick = (ids) => {
       setPicked(ids);
@@ -9495,7 +9499,7 @@
       return all.reduce((n3, t3) => n3 + (day3 < at2 ? t3.date > day3 && t3.date <= at2 ? -effect(t3) : 0 : t3.date > at2 && t3.date <= day3 ? effect(t3) : 0), acct.balance);
     };
     const days = [];
-    for (const t3 of list) {
+    for (const t3 of list.slice(0, upTo)) {
       if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
       days.at(-1).list.push(t3);
     }
@@ -9654,6 +9658,19 @@
               }) })
             ] }, d3.date)),
             !all.length && /* @__PURE__ */ u3(Empty, { children: edit ? "No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt." : "No transactions yet." }),
+            list.length > upTo && /* @__PURE__ */ u3("p", { class: "fx-txmore", children: [
+              /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setDrawn({ key: filterKey, n: upTo + txPage }), children: [
+                "Show ",
+                Math.min(txPage, list.length - upTo),
+                " more"
+              ] }),
+              /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+                upTo,
+                " of ",
+                list.length,
+                " shown, newest first"
+              ] })
+            ] }),
             !!all.length && !shown6.length && /* @__PURE__ */ u3(Empty, { children: "None match: try fewer words, or Show all." })
           ]
         }

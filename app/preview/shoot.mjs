@@ -6077,6 +6077,23 @@ const smokes = [
     await page.$eval('.finpostscroll', (e) => { e.scrollLeft = e.scrollWidth; });
     if (!(await edge()).end) throw new Error('it does not scroll to its end');
   } },
+  // A long ledger (a year of bank files): the newest 200 drawn, Show more for the next 200, the count and totals of every one
+  // still; another filter starts again from the newest 200.
+  { name: 'Finances: a long ledger draws 200 transactions at a time', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: Array.from({ length: 450 }, (_, i) => ({ id: 'n' + i, date: `2026-${String(10 - Math.floor(i / 60)).padStart(2, '0')}-${String(1 + (i % 28)).padStart(2, '0')}`, account: 'chk', amount: -10, payee: i % 2 ? 'Costco' : 'Shell', category: i % 2 ? 'Groceries' : 'Gas' })) } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const rows = () => page.$$eval('.fx-txday li', (l) => l.length);
+    await page.waitForSelector('.fx-txmore:has-text("200 of 450 shown, newest first")', { timeout: 5000 });
+    if ((await rows()) !== 200) throw new Error(`${await rows()} drawn`);
+    await page.click('.fx-txmore button:text-is("Show 200 more")');
+    await page.waitForSelector('.fx-txmore:has-text("400 of 450 shown")', { timeout: 5000 });
+    await page.click('.fx-txmore button:text-is("Show 50 more")');
+    await page.waitForSelector('.fx-txmore', { state: 'detached', timeout: 5000 });
+    if ((await rows()) !== 450) throw new Error(`${await rows()} drawn after all`);
+    await page.fill('.fx-txsearch', 'Costco');
+    await page.waitForSelector('.fx-transactions h2:text-is("225 transactions of 450")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txmore:has-text("200 of 225 shown")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txtotal:has-text("−$2,250.00")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
