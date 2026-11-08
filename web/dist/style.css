@@ -1962,6 +1962,7 @@ html.os-mac .fx-balance { padding:4px 8px; }
   /* Tidy Up's counts under their heading ("6 things · 380 GB to win back") read as its subtitle, from its left edge. */
   #tidyRoot .fx-widget/* Tidy Up › Inbox: Drop anything here. Its lead line, the when choice beside its label, and Tidy up now across the card. */
 .tidyinboxlead { margin:0 0 12px; }
+.tidyinboxset { margin:0; padding:0; border:0; min-width:0; }
 .tidyinboxwhen { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0; }
 .tidyinboxgo button { width:100%; justify-content:center; padding:9px 14px; font-size:14px; }
 .tidyneeds > .row .fx-actions { flex:1 1 100%; justify-content:flex-start; margin:-6px 0 0; }

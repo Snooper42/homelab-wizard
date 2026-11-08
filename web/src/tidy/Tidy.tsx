@@ -675,10 +675,14 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
     const p = await act.pickFolder();
     if (p && !folders.includes(p)) act.inbox([...folders, p], when);
   };
+  // While a job runs (here or elsewhere), the card's controls wait, as every button on the screen does.
+  const other = useContext(Elsewhere);
+  const waits = busy(job) || !!other;
   const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
   return (
     <Widget title="Drop anything here" span="all" kind="tidyinbox">
       <p class="muted tidyinboxlead">Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library.</p>
+      <fieldset class="tidyinboxset" disabled={waits}>
       <Rows kind="fx-rows tidytodo">
         {folders.map((f) => (
           <Row key={f} lead={<LibIcon kind="folder" />} title={folderName(f)} sub={`${f} · ${state(f)}`} subTone={gone.has(f) ? 'warn' : undefined}
@@ -690,6 +694,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
         <span class="muted">Tidy up</span>
         <Segmented label="When Tidy Up files what's in these folders" value={when} pick={(v) => act.inbox(folders, v)} options={WHENS} />
       </div>
+      </fieldset>
       <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
     </Widget>
   );
