@@ -5,7 +5,9 @@
 // how it splits by account, and a row a holding, each opening its worth at
 // each read. Read now reads Ghostfolio again, on the computer only; after
 // the first, Finances reads it once a day on opening, unless turned off.
-import { useRef, useState } from 'preact/hooks';
+// Where Finances may be changed, an open holding lists its buys and sales
+// as Ghostfolio keeps them, each to put right or delete.
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../../parts/Segmented';
 import { AreaChart } from '../ui/charts';
 import { Amount } from '../ui/Amount';
@@ -36,6 +38,15 @@ export interface InvestmentsProps {
   /** Puts a buy or a sale into Ghostfolio and reads again (throws why not), and looks a ticker up there: wherever Finances may be changed. */
   add?: (x: app.InvestmentAdd) => Promise<void>;
   find?: (query: string) => Promise<app.AppSymbol[]>;
+  /** A holding's buys and sales in Ghostfolio, each to put right or delete (throws why not): wherever Finances may be changed. */
+  trades?: TradeOps;
+}
+
+/** A holding's buys and sales, as Ghostfolio keeps them: listed, changed, deleted; a change or a delete reads Ghostfolio again. */
+export interface TradeOps {
+  list: (account: string, symbol: string) => Promise<app.InvestmentTrade[]>;
+  change: (t: app.InvestmentTrade) => Promise<void>;
+  remove: (t: app.InvestmentTrade) => Promise<void>;
 }
 
 /** "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2". */
@@ -66,7 +77,7 @@ interface Line {
   cash?: number;
 }
 
-export function InvestmentsWidget({ v, read, state = {}, keep, add, find }: InvestmentsProps) {
+export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades }: InvestmentsProps) {
   const [open, setOpen] = useState('');
   const [adding, setAdding] = useState(false);
   const accounts = (v.plan.accounts || []).filter((a) => a.holdings?.length);
@@ -131,7 +142,7 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find }: Inve
       </>}
       <table class="fx-holdings">
         <thead><tr><th scope="col">Holding</th><th scope="col" class="n">Shares</th><th scope="col" class="n">You paid</th><th scope="col" class="n">Worth now</th><th scope="col" class="n">Gain</th></tr></thead>
-        {lines.map((l) => <HoldingRow key={l.key} v={v} l={l} open={open === l.key} toggle={() => setOpen(open === l.key ? '' : l.key)} />)}
+        {lines.map((l) => <HoldingRow key={l.key} v={v} l={l} open={open === l.key} toggle={() => setOpen(open === l.key ? '' : l.key)} trades={trades} />)}
       </table>
       <Unmatched v={v} state={state} keep={keep} read={read} />
       {keep && read && (
@@ -145,7 +156,7 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find }: Inve
 }
 
 /** A holding's row (or an account's cash), and under it, when open, its worth at each read. */
-function HoldingRow({ v, l, open, toggle }: { v: finance.View; l: Line; open: boolean; toggle: () => void }) {
+function HoldingRow({ v, l, open, toggle, trades }: { v: finance.View; l: Line; open: boolean; toggle: () => void; trades?: TradeOps }) {
   const a = l.account, cur = a.currency;
   const symbol = l.h ? l.h.symbol : 'Cash';
   const name = l.h ? l.h.name || l.h.symbol : 'Not in a holding';
@@ -166,7 +177,7 @@ function HoldingRow({ v, l, open, toggle }: { v: finance.View; l: Line; open: bo
         <td class="n fx-holdworth"><Amount value={worth} form="full" currency={cur} /></td>
         <td class="n fx-holdgain">{l.h && <><Amount value={gain} form="full" sign tone="auto" currency={cur} />{!amountsHidden() && <span class="fx-sub"> {share(gain, paid)}</span>}</>}</td>
       </tr>
-      {l.h && open && <tr class="fx-holddetail" id={id}><td colSpan={5}><HoldingHistory v={v} h={l.h} cur={cur} /></td></tr>}
+      {l.h && open && <tr class="fx-holddetail" id={id}><td colSpan={5}><HoldingHistory v={v} h={l.h} cur={cur} />{trades && <Trades account={a} h={l.h} ops={trades} />}</td></tr>}
     </tbody>
   );
 }
@@ -186,6 +197,122 @@ function HoldingHistory({ v, h, cur }: { v: finance.View; h: finance.Holding; cu
         label={`${h.symbol} at each read: ${pts.map((p) => `${dayShort(p.date)} ${moneyIn(p.amount, cur)}`).join(', ')}.`}
         tip={(i) => <><div class="fx-caption">{pts[i].date === v.today ? 'Today' : dayShort(pts[i].date)}</div><div class="fx-tiptotal"><span>{h.symbol}</span><Amount value={pts[i].amount} form="full" currency={cur} /></div></>} />
     </div>
+  );
+}
+
+/** "Nov 8, 2026": a trade's day, with its year, as buys go back years. */
+const dayYear = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+/**
+ * A holding's buys and sales, read from Ghostfolio as it opens: each with
+ * its day, shares, and what was paid (or got) in all, to Change (in a
+ * short form) or Delete (asked first). Either reads Ghostfolio again, so
+ * the card's figures follow.
+ */
+function Trades({ account, h, ops }: { account: finance.Account; h: finance.Holding; ops: TradeOps }) {
+  const [list, setList] = useState<app.InvestmentTrade[] | null>(null);
+  const [problem, setProblem] = useState('');
+  const [editing, setEditing] = useState('');
+  const [asking, setAsking] = useState('');
+  const [busy, setBusy] = useState(false);
+  const live = useRef(true);
+  const why = (e: unknown) => String((e as Error)?.message || e);
+  const load = async () => {
+    try {
+      const r = await ops.list(account.id, h.symbol);
+      if (live.current) { setList(r); setProblem(''); }
+    } catch (e) {
+      if (live.current) setProblem(`Could not read its buys and sales from Ghostfolio: ${why(e)}`);
+    }
+  };
+  useEffect(() => { live.current = true; load(); return () => { live.current = false; }; }, [account.id, h.symbol]);
+  const drop = async (t: app.InvestmentTrade) => {
+    setBusy(true);
+    setProblem('');
+    try {
+      await ops.remove(t);
+      setAsking('');
+      await load();
+    } catch (e) {
+      if (live.current) setProblem(why(e));
+    } finally {
+      if (live.current) setBusy(false);
+    }
+  };
+  const what = (t: app.InvestmentTrade) => `${t.sold ? 'sale' : 'buy'} of ${shares(t.shares)} ${h.symbol} on ${dayYear(t.date)}`;
+  return (
+    <div class="fx-trades">
+      <h4 class="fx-caption">Buys and sales in Ghostfolio</h4>
+      {list === null && !problem && <p class="fx-sub">Reading them from Ghostfolio…</p>}
+      {list && !list.length && <p class="fx-sub">Ghostfolio has none for {h.symbol} in {account.name}.</p>}
+      {list && list.length > 0 && <ul>
+        {list.map((t) => editing === t.id
+          ? <li key={t.id}><TradeForm t={t} symbol={h.symbol} change={ops.change} done={async (saved) => { setEditing(''); if (saved) await load(); }} /></li>
+          : <li key={t.id} class="fx-trade">
+            <span class="fx-tradewhat"><strong>{t.sold ? 'Sold' : 'Bought'}</strong> {shares(t.shares)} shares · {t.sold ? 'got' : 'paid'} <Amount value={t.total} form="full" currency={t.currency} /> <span class="fx-sub">· {dayYear(t.date)}</span></span>
+            {asking === t.id
+              ? <span class="fx-tradeask" role="group" aria-label={`Delete the ${what(t)}?`}>
+                <span>Delete it from Ghostfolio?</span>
+                <span class="fx-tradeacts">
+                  <button type="button" class="small danger" disabled={busy} onClick={() => drop(t)}>{busy ? 'Deleting…' : 'Delete'}</button>
+                  <button type="button" class="small" disabled={busy} onClick={() => setAsking('')}>Keep it</button>
+                </span>
+              </span>
+              : <span class="fx-tradeacts">
+                <button type="button" class="small" disabled={busy || !!editing} aria-label={`Change the ${what(t)}`} onClick={() => { setProblem(''); setEditing(t.id); }}>Change</button>
+                <button type="button" class="small" disabled={busy || !!editing} aria-label={`Delete the ${what(t)}`} onClick={() => { setProblem(''); setAsking(t.id); }}>Delete</button>
+              </span>}
+          </li>)}
+      </ul>}
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+    </div>
+  );
+}
+
+/** A buy or a sale put right: bought or sold, how many shares, what was paid (or got) in all, and the day. */
+function TradeForm({ t, symbol, change, done }: { t: app.InvestmentTrade; symbol: string; change: TradeOps['change']; done: (saved: boolean) => void }) {
+  const [way, setWay] = useState(t.sold ? 'sold' : 'bought');
+  const [count, setCount] = useState(String(t.shares));
+  const [total, setTotal] = useState(t.total.toFixed(2));
+  const [day, setDay] = useState(t.date);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const sold = way === 'sold';
+  const id = 'trade-' + t.id.replace(/[^A-Za-z0-9]+/g, '-');
+  const submit = async (e: Event) => {
+    e.preventDefault();
+    const n = parseAmount(count), m = parseAmount(total);
+    const wrong = !(n > 0) ? 'How many shares: more than 0.'
+      : isNaN(m) || m < 0 ? `What you ${sold ? 'got' : 'paid'} in all: type it without a minus.`
+      : !day || day > todayISO() ? 'Pick the day it happened, today or before.' : '';
+    setProblem(wrong);
+    if (wrong) return;
+    setBusy(true);
+    try {
+      await change({ ...t, shares: n, total: m, date: day, sold: sold || undefined });
+      done(true);
+    } catch (err) {
+      setProblem(String((err as Error)?.message || err));
+      setBusy(false);
+    }
+  };
+  return (
+    <form class="finform fx-investadd fx-tradeform" onSubmit={submit} aria-labelledby={id}>
+      <div class="fx-investaddhead">
+        <h3 id={id}>Change this {t.sold ? 'sale' : 'buy'} of {symbol}</h3>
+        <Segmented label="Bought or sold" value={way} pick={setWay} options={[['bought', 'Bought'], ['sold', 'Sold']]} />
+      </div>
+      <div class="fx-investaddgrid">
+        <label class="field">Shares<input inputmode="decimal" value={count} onInput={(e) => setCount((e.target as HTMLInputElement).value)} /></label>
+        <label class="field">{sold ? 'What you got in all' : 'What you paid in all'}<span class="moneyfield"><span aria-hidden="true">{signOf(t.currency)}</span><input inputmode="decimal" value={total} onInput={(e) => setTotal((e.target as HTMLInputElement).value)} /></span></label>
+        <label class="field">Day<input type="date" value={day} max={todayISO()} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
+      </div>
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+      <div class="fx-investaddactions">
+        <button type="button" class="small" disabled={busy} onClick={() => done(false)}>Cancel</button>
+        <button type="submit" class="small primary" disabled={busy}>{busy ? 'Saving…' : 'Save in Ghostfolio'}</button>
+      </div>
+    </form>
   );
 }
 

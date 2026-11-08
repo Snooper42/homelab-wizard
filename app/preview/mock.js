@@ -16,6 +16,25 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
   const emit = (name, data) => (listeners[name] || []).forEach((fn) => fn(data));
   const updateState = () => ({ state: '', notes: [], files: 0, app: false, downloaded: false, installOnQuit: M.installOnQuit ?? true, canInstallOnQuit: true,
     looked: new Date(Date.now() - 3 * 60e3).toISOString(), ...(M.update || {}) });
+  // Investments read again after a buy or a sale is changed or deleted: the holding's shares and paid from what is left of
+  // its trades (gone with none left), its worth at the price it had; the account's balance its holdings and its cash.
+  const mockTradesRead = (account, symbol) => {
+    const left = (M.investTrades || []).filter((t) => t.account === account && t.symbol === symbol);
+    const accounts = M.finances.plan.accounts.map((a) => {
+      if (a.id !== account) return a;
+      const cash = a.balance - (a.holdings || []).reduce((t, h) => t + h.value, 0);
+      const holdings = (a.holdings || []).flatMap((h) => {
+        if (h.symbol !== symbol) return [h];
+        const shares = left.reduce((t, x) => t + (x.sold ? -x.shares : x.shares), 0);
+        const paid = left.reduce((t, x) => t + (x.sold ? -x.total : x.total), 0);
+        return shares > 0 ? [{ ...h, shares, paid: Math.round(paid * 100) / 100, value: Math.round((h.value / h.shares) * shares * 100) / 100 }] : [];
+      });
+      return { ...a, holdings, balance: Math.round((cash + holdings.reduce((t, h) => t + h.value, 0)) * 100) / 100 };
+    });
+    M.finances = { ...M.finances, plan: { ...M.finances.plan, accounts, holdingsRead: new Date().toISOString() } };
+    const held = accounts.filter((a) => a.holdings?.length);
+    return { view: M.finances, unmatched: [], accounts: held.length, holdings: held.reduce((t, a) => t + a.holdings.length, 0) };
+  };
   // Lets a smoke test stand in for the Mac menu's events.
   window.__emit = emit;
 
@@ -261,6 +280,26 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       (M.investAdded ??= []).push(x);
       if (x.newName) M.finances = { ...M.finances, plan: { ...M.finances.plan, accounts: [...M.finances.plan.accounts, { id: x.newName.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: x.newName, kind: 'investment', balance: 0 }] } };
       return later({ view: M.finances, unmatched: [], accounts: 3, holdings: 9 });
+    },
+    // An open holding's buys and sales (investTrades, else one buy a holding from the example: its shares, at what was paid,
+    // on the day it was first read); a change or a delete keeps what is left (in investChanged, investDeleted) and puts the
+    // holding's shares and paid right from them, at its price; investTradeProblem: why Ghostfolio did not take it.
+    FinancesInvestmentTrades: (account, symbol) => {
+      M.investTrades ??= (M.finances.plan.accounts || []).flatMap((a) => (a.holdings || []).map((h) => ({ id: `${a.id}:${h.symbol}:1`, account: a.id, symbol: h.symbol, dataSource: 'YAHOO', currency: a.currency || 'USD', shares: h.shares, total: h.paid, date: h.history?.[0]?.date || '2025-01-02' })));
+      return later(M.investTrades.filter((t) => t.account === account && t.symbol === symbol).sort((x, y) => (x.date < y.date ? 1 : -1)));
+    },
+    FinancesChangeInvestment: (t) => {
+      if (M.investTradeProblem) return later(null).then(() => { throw new Error(M.investTradeProblem); });
+      (M.investChanged ??= []).push(t);
+      M.investTrades = M.investTrades.map((x) => (x.id === t.id ? { ...x, ...t } : x));
+      return later(mockTradesRead(t.account, t.symbol));
+    },
+    FinancesDeleteInvestment: (account, id) => {
+      if (M.investTradeProblem) return later(null).then(() => { throw new Error(M.investTradeProblem); });
+      (M.investDeleted ??= []).push(id);
+      const gone = M.investTrades.find((x) => x.id === id);
+      M.investTrades = M.investTrades.filter((x) => x.id !== id);
+      return later(mockTradesRead(account, gone?.symbol));
     },
     FinancesFromWallos: () => (M.wallosProblem ? later(null).then(() => { throw new Error(M.wallosProblem); }) : later(M.wallos || [])),
     // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.

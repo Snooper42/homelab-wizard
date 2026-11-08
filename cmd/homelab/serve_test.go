@@ -351,7 +351,8 @@ func TestPhoneInvestments(t *testing.T) {
 	buy, _ := json.Marshal([]any{map[string]any{"account": "brk", "symbol": "VTI", "dataSource": "YAHOO", "currency": "USD", "shares": 2, "total": 180, "date": day}})
 
 	for _, tok := range []string{looker, none} {
-		for _, m := range []struct{ name, body string }{{"FinancesReadInvestments", "[]"}, {"FinancesFindSymbol", `["VTI"]`}, {"FinancesAddInvestment", string(buy)}} {
+		for _, m := range []struct{ name, body string }{{"FinancesReadInvestments", "[]"}, {"FinancesFindSymbol", `["VTI"]`}, {"FinancesAddInvestment", string(buy)},
+			{"FinancesInvestmentTrades", `["brk","VTI"]`}, {"FinancesChangeInvestment", `[{"id":"act-1","account":"brk","shares":1,"total":1,"date":"` + day + `"}]`}, {"FinancesDeleteInvestment", `["brk","act-1"]`}} {
 			if code, _ := call(tok, m.name, m.body); code != http.StatusForbidden {
 				t.Errorf("%s from a phone not allowed to edit Finances: %d", m.name, code)
 			}
@@ -387,7 +388,26 @@ func TestPhoneInvestments(t *testing.T) {
 		t.Errorf("FinancesReadInvestments: %d %s %+v", code, out["error"], got)
 	}
 
+	// A buy typed wrong: listed, put right, then deleted, each read again.
+	code, out = call(editor, "FinancesInvestmentTrades", `["brk","VTI"]`)
+	var trades []ghostfolio.Trade
+	if code != 200 || json.Unmarshal(out["result"], &trades) != nil || len(trades) != 1 || trades[0].Shares != 2 || trades[0].Total != 180 {
+		t.Fatalf("FinancesInvestmentTrades: %d %s %+v", code, out["error"], trades)
+	}
+	fix, _ := json.Marshal([]any{map[string]any{"id": trades[0].ID, "account": "brk", "shares": 3, "total": 270, "date": day}})
+	code, out = call(editor, "FinancesChangeInvestment", string(fix))
+	if code != 200 || json.Unmarshal(out["result"], &got) != nil || len(f.Activities) != 1 || f.Activities[0].Quantity != 3 || f.Activities[0].UnitPrice != 90 {
+		t.Errorf("FinancesChangeInvestment: %d %s, Ghostfolio has %+v", code, out["error"], f.Activities)
+	}
+	code, out = call(editor, "FinancesDeleteInvestment", `["brk","`+trades[0].ID+`"]`)
+	if code != 200 || json.Unmarshal(out["result"], &got) != nil || len(f.Activities) != 0 || got.Holdings != 0 {
+		t.Errorf("FinancesDeleteInvestment: %d %s, Ghostfolio has %+v", code, out["error"], f.Activities)
+	}
+
 	for _, c := range []struct{ name, body, want string }{
+		{"FinancesInvestmentTrades", `["brk"]`, "takes the account's id and the holding's symbol"},
+		{"FinancesChangeInvestment", "[]", "takes the buy or sale"},
+		{"FinancesDeleteInvestment", `["brk"]`, "takes the account's id and the buy or sale's id"},
 		{"FinancesFindSymbol", "[]", "takes what was typed"},
 		{"FinancesAddInvestment", "[]", "takes the buy or sale"},
 		{"FinancesAddInvestment", `[{"account":"chk","symbol":"VTI","dataSource":"YAHOO","currency":"USD","shares":1,"total":1,"date":"` + day + `"}]`, "not an investment"},

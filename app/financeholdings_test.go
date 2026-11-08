@@ -114,8 +114,10 @@ func TestGhostfolioInvestments(t *testing.T) {
 			{Symbol: "VTI", Name: "Vanguard Total Stock Market", Shares: 92.4, Paid: 18210, Value: 26420},
 			{Symbol: "VXUS", Name: "Vanguard Total International", Shares: 120, Paid: 6950, Value: 4460.25},
 		}},
-		// Ghostfolio's base is dollars; the account's own figure is in euros, 1115.04 for 1212.
-		{Name: "Trading 212", Value: 1115.04, Currency: "EUR", Holdings: []finance.Holding{
+		// Ghostfolio's base is dollars; the account's own figure is in euros, 1115.04 for 1212,
+		// which gives the rate. Its worth is what its rows add up to, 920 + 11.04 with no cash:
+		// Ghostfolio's own figure for an account can lag a buy just put in (and here has 184 nothing explains).
+		{Name: "Trading 212", Value: 931.04, Currency: "EUR", Holdings: []finance.Holding{
 			{Symbol: "SAP.DE", Name: "SAP", Shares: 5, Paid: 736, Value: 920},
 			{Symbol: "NEW", Name: "Not priced yet", Shares: 1, Paid: 9.2, Value: 11.04},
 		}},

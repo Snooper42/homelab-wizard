@@ -5170,6 +5170,52 @@ const smokes = [
     const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
     if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 10 || x.total !== 2000 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
   } },
+  // A buy typed wrong, put right from the card: an open holding lists its buys and sales from Ghostfolio, each to Change (what
+  // is typed checked first; Ghostfolio's no said in its words, the form kept) or Delete (asked first; Keep it leaves it). Each
+  // reads Ghostfolio again, so the row and the figures follow; the last buy deleted takes the holding off the card.
+  { name: 'Finances: Investments change a buy typed wrong, and delete one', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    const voo = `${card} tbody.fx-hold:has(strong:text-is("VOO"))`;
+    await page.click(`${voo} button.fx-holdbtn`, { timeout: 5000 });
+    const trades = `${voo} .fx-trades`;
+    await page.waitForSelector(`${trades} h4:text-is("Buys and sales in Ghostfolio")`, { timeout: 2000 });
+    const line = `${trades} li.fx-trade:has-text("Bought 8 shares")`;
+    await page.waitForSelector(`${line}:has-text("paid $3,620.00")`, { timeout: 3000 });
+    await page.click(`${line} button:text-is("Change")`);
+    const form = `${trades} form.fx-tradeform`;
+    await page.waitForSelector(`${form} h3:text-is("Change this buy of VOO")`, { timeout: 2000 });
+    if ((await page.inputValue(`${form} .moneyfield input`)) !== '3620.00') throw new Error('the form does not start from what Ghostfolio has');
+    await page.fill(`${form} label:has-text("Shares") input`, '0');
+    await page.click(`${form} button:text-is("Save in Ghostfolio")`);
+    await page.waitForSelector(`${form} .formerr:text-is("How many shares: more than 0.")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investChanged)) throw new Error('Ghostfolio asked with 0 shares');
+    await page.fill(`${form} label:has-text("Shares") input`, '8');
+    await page.fill(`${form} .moneyfield input`, '4,000');
+    await page.evaluate(() => { window.__MOCK.investTradeProblem = 'Ghostfolio did not take it: date must be a valid ISO 8601 date string'; });
+    await page.click(`${form} button:text-is("Save in Ghostfolio")`);
+    await page.waitForSelector(`${form} .formerr:has-text("date must be a valid")`, { timeout: 3000 });
+    await page.evaluate(() => { window.__MOCK.investTradeProblem = ''; });
+    await page.click(`${form} button:text-is("Save in Ghostfolio")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Changed in Ghostfolio: the buy of VOO on")`, { timeout: 2000 });
+    const x = await page.evaluate(() => window.__MOCK.investChanged[0]);
+    if (x.account !== 'roth' || x.symbol !== 'VOO' || x.shares !== 8 || x.total !== 4000 || x.sold || !x.id) throw new Error(`sent ${JSON.stringify(x)}`);
+    await page.waitForSelector(`${voo} .fx-holdpaid:has-text("$4,000.00")`, { timeout: 3000 });
+    await page.waitForSelector(`${line}:has-text("paid $4,000.00")`, { timeout: 3000 });
+    // Delete: asked first; Keep it leaves it.
+    await page.click(`${line} button:text-is("Delete")`);
+    await page.waitForSelector(`${line} [role=group]:has-text("Delete it from Ghostfolio?")`, { timeout: 2000 });
+    await page.click(`${line} button:text-is("Keep it")`);
+    await page.waitForSelector(`${line} button:text-is("Change")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investDeleted)) throw new Error('deleted after Keep it');
+    await page.click(`${line} button:text-is("Delete")`);
+    await page.click(`${line} .fx-tradeask button:text-is("Delete")`);
+    await page.waitForSelector(voo, { state: 'detached', timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Deleted from Ghostfolio: the buy of VOO on")`, { timeout: 2000 });
+    if ((await page.evaluate(() => window.__MOCK.investDeleted)).length !== 1) throw new Error('not deleted once');
+    await page.waitForSelector(`${card} .fx-investfigs .fx-sub:text-is("8 holdings in 3 accounts")`, { timeout: 2000 });
+  } },
   // A sale into a new account, made in Finances and Ghostfolio by one name; turned down by Ghostfolio first, in its words, the form kept.
   { name: 'Finances: Investments add a sale into a new account, and say why Ghostfolio turned it down', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } }, investAddProblem: 'Ghostfolio did not take it: Could not find a price for the asset AAPL' }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });

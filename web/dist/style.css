@@ -2589,6 +2589,17 @@ button.fx-symbol small { color:var(--muted); }
 .fx-investadd .formerr { margin:8px 0 0; }
 .fx-investaddactions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 @media (forced-colors: active) { button.fx-symbol:focus-visible { outline:2px solid Highlight; } }
+/* An open holding's buys and sales in Ghostfolio: a line each, its Change and Delete at the end (below it when narrow). */
+.fx-trades { margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
+.fx-trades h4 { margin:0 0 6px; }
+.fx-trades > p { margin:0; font-size:13px; }
+.fx-trades ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.fx-trade { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 12px; font-size:13px; }
+.fx-tradewhat { min-width:0; }
+.fx-tradeacts, .fx-tradeask { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fx-tradeask > span:first-child { color:var(--muted); }
+.fx-trades .formerr { margin:8px 0 0; }
+.fx-tradeform { margin:4px 0; }
 
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Only this screen, and not when the system asks for more contrast (that keeps its own colours). */
