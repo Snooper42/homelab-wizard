@@ -35,7 +35,9 @@ export interface TransactionsProps {
   /** The ledger; null until it is read. */
   ledger: finance.Ledger | null;
   /** Opens a transaction's form, or the categories; none on a phone allowed only to look. */
-  edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import', id?: string) => void;
+  edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import' | 'logos', id?: string) => void;
+  /** Whether Logos is offered: the computer can ask a company's website for its real logo; a phone can't. */
+  logos?: boolean;
   /** Reads a receipt by its name, for a phone allowed only to look (its rows open no form). */
   readReceipt?: (name: string) => Promise<string>;
   /** Keeps the ledger, for a link made or said Not it; none on a phone allowed only to look. */
@@ -157,7 +159,7 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
   );
 }
 
-export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: TransactionsProps) {
+export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos }: TransactionsProps) {
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
   const [seen, setSeen] = useState<{ id: string; url?: string; problem?: string } | null>(null);
   const look = async (t: finance.Transaction) => {
@@ -300,6 +302,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
           actions={edit && <>
             {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}
             <button type="button" class="small" onClick={() => edit('import')}>Import a file</button>
+            {logos && !!all.length && <button type="button" class="small" onClick={() => edit('logos')}>Logos</button>}
             <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
           </>}>
           {!!all.length && <div class="fx-txfilters" role="search" aria-label="Find transactions">

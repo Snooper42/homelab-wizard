@@ -6688,6 +6688,39 @@ const smokes = [
     txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
     if (txs.filter((t) => t.payee === 'HOA').length !== 3) throw new Error(`after import ${JSON.stringify(txs)}`);
   } },
+  // Logos: each payee and account showing initials, its website guessed from its brand; Get them all asks each website (the
+  // computer's FinancesFetchLogo), one with none says so, and Save keeps the ones got in the plan under their brand.
+  { name: 'Finances: Logos gets the real logos from each company\'s website, and keeps them', screen: 'finances', mock: { noLogo: ['traderjoes.com'] }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Logos")');
+    await page.waitForSelector('#finSheet h2:text-is("Logos")', { timeout: 5000 });
+    const costco = page.locator('#finSheet .logolist li:has-text("Costco")');
+    if (await costco.locator('input').inputValue() !== 'costco.com') throw new Error('Costco\'s website was not guessed');
+    await page.click('#finSheet button:has-text("Get them all")');
+    await page.waitForSelector('#finSheet .logolist li:has-text("Costco") :text("From costco.com")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .logolist li:has-text("Trader Joe") .bad:has-text("no logo")', { timeout: 5000 });
+    if (!(await costco.locator('.fmark.own img').count())) throw new Error('the logo got is not shown');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const logos = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.logos || {});
+    if (!/^data:image\/(png|webp);base64,/.test(logos.costco || '') || logos.traderjoes) throw new Error(`kept ${Object.keys(logos)}`);
+    const asked = await page.evaluate(() => window.__MOCK.logosFetched);
+    if (!asked.includes('costco.com') || asked.some((s) => /local|192\.168|127\./.test(s))) throw new Error(`asked ${asked}`);
+  } },
+  // A transaction's logo: Change logo offers its website, and the real logo got is kept for that payee with the transaction.
+  { name: 'Finances: a transaction gets its payee\'s real logo from the website', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.click('#finSheet button:text-is("Change logo")');
+    const site = page.locator('#finSheet .getlogo input');
+    if (await site.inputValue() !== 'costco.com') throw new Error(`guessed ${await site.inputValue()}`);
+    await page.click('#finSheet button:text-is("Get the real logo")');
+    await page.waitForSelector('#finSheet .getlogofrom:text("From costco.com")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const logos = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.logos || {});
+    if (!logos.costco || !(await page.evaluate(() => window.__MOCK.ledgerSaved?.length))) throw new Error(`kept ${Object.keys(logos)}`);
+  } },
   { name: 'Finances: a Chase checking CSV takes its payee from Description, not Details', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
@@ -7372,6 +7405,7 @@ const screens = [
   { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'Finances, Logos, got', screen: 'finances', mock: { noLogo: ['traderjoes.com'] }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Logos")'); await page.click('#finSheet button:has-text("Get them all")'); await page.waitForSelector('#finSheet .logolist li:has-text("Costco") :text("From costco.com")'); await page.waitForSelector('#finSheet .logolist .bad'); } },
   { name: 'Finances, Transactions, two selected', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },

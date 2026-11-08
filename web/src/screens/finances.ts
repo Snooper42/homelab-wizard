@@ -131,7 +131,7 @@ function draw() {
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
   mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -180,6 +180,8 @@ async function save(plan: finance.Plan): Promise<boolean> {
 /** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
 /** Receipts, kept on the homelab as soon as one is picked; a transaction names its own. */
 const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
+// A company's real logo from its website, asked by the computer (the desktop app); a phone has none to ask with.
+const fetchLogo = phone ? undefined : (site: string) => go().FinancesFetchLogo(site);
 
 async function saveLedger(l: finance.Ledger): Promise<boolean> {
   try {
@@ -235,7 +237,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
   $('finSheet').hidden = false;
 }
 
