@@ -855,13 +855,19 @@ private struct BalanceEditor: View {
     }
 }
 
-/// What happened, newest first, by month, with a search.
+/// Transactions as Apple's Wallet shows a card's: the account's card on
+/// top with your other accounts as small cards to switch to, then what
+/// happened, newest first, by month, each with its payee's logo. One that
+/// came in since you looked has a violet dot until it's reviewed. Tap one
+/// for its page.
 struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
     @State private var adding = false
-    @State private var receiptFor: FinanceTransaction?
-    @State private var editingTransaction: FinanceTransaction?
+    /// The account shown, by id; nil for all of them.
+    @State private var account: String?
+    /// Only the new ones.
+    @State private var onlyNew = false
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -874,6 +880,8 @@ struct TransactionsView: View {
         let calendar = Calendar.current
         var out: [MonthGroup] = []
         for t in ledger.newestFirst where t.matches(search) {
+            if let account, t.account != account, t.to != account { continue }
+            if onlyNew, !finances.isNew(t) { continue }
             let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
             if out.last?.month == month {
                 out[out.count - 1].items.append(t)
@@ -885,34 +893,62 @@ struct TransactionsView: View {
     }
 
     var body: some View {
+        let newCount = finances.newTransactionCount
         List {
+            if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
+                Section {
+                    VStack(spacing: 14) {
+                        AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
+                        AccountSwitcher(accounts: view.plan.accounts.sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) },
+                                        selection: $account)
+                    }
+                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    .listRowBackground(Color.clear)
+                }
+            }
+            Section {
+                EmptyView()
+            } header: {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Latest Transactions")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Theme.ink)
+                    Spacer()
+                    if newCount > 0 || onlyNew {
+                        Button(onlyNew ? "Show All" : "\(newCount) New") {
+                            withAnimation(.snappy) { onlyNew.toggle() }
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                    }
+                }
+                .textCase(nil)
+            }
             ForEach(months) { group in
                 Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
                     ForEach(group.items) { t in
-                        if finances.canAddTransactions && LedgerEdit.canUpdate(t) {
-                            Button {
-                                finances.clearSaveError()
-                                editingTransaction = t
-                            } label: {
-                                TransactionRow(transaction: t, finances: finances)
+                        let isNew = finances.isNew(t)
+                        NavigationLink {
+                            TransactionDetailView(transaction: t, finances: finances)
+                        } label: {
+                            WalletTransactionRow(transaction: t, finances: finances, isNew: isNew)
+                        }
+                        .swipeActions(edge: .leading) {
+                            if isNew {
+                                Button {
+                                    finances.markReviewed([t])
+                                } label: {
+                                    Label("Reviewed", systemImage: "checkmark")
+                                }
+                                .tint(Theme.accent)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("Change or delete it")
-                        } else if t.hasReceipt {
-                            Button {
-                                receiptFor = t
-                            } label: {
-                                TransactionRow(transaction: t, finances: finances)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("Shows the receipt")
-                        } else {
-                            TransactionRow(transaction: t, finances: finances)
                         }
                     }
                 }
             }
         }
+        .themedCanvas()
         .overlay {
             if finances.ledger == nil {
                 if let error = finances.ledgerError {
@@ -921,10 +957,12 @@ struct TransactionsView: View {
                     ProgressView("Reading the transactions…")
                 }
             } else if months.isEmpty {
-                if search.isEmpty {
-                    ContentUnavailableView("No Transactions", systemImage: "list.bullet.rectangle")
-                } else {
+                if !search.isEmpty {
                     ContentUnavailableView.search(text: search)
+                } else if onlyNew {
+                    ContentUnavailableView("Nothing New", systemImage: "checkmark.circle", description: Text("Every transaction is reviewed."))
+                } else {
+                    ContentUnavailableView("No Transactions", systemImage: "list.bullet.rectangle")
                 }
             }
         }
@@ -937,6 +975,15 @@ struct TransactionsView: View {
         .refreshable { await finances.loadLedger() }
         .navigationTitle("Transactions")
         .toolbar {
+            if newCount > 0 {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button {
+                        finances.markReviewed(finances.ledger?.transactions.filter { finances.isNew($0) } ?? [])
+                    } label: {
+                        Label("Mark All Reviewed", systemImage: "checkmark.circle")
+                    }
+                }
+            }
             if finances.canAddTransactions {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -957,15 +1004,334 @@ struct TransactionsView: View {
         .sheet(isPresented: $adding) {
             AddTransactionView(finances: finances)
         }
-        .sheet(item: $editingTransaction) { t in
+        .sensoryFeedback(.selection, trigger: account)
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// "Today", "Yesterday", a weekday within the week, else "Nov 5".
+    nonisolated static func dayWords(_ date: Date?, now: Date = Date(), calendar: Calendar = .current) -> String {
+        guard let date else { return "" }
+        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 99
+        if (2..<7).contains(days) { return date.formatted(.dateTime.weekday(.wide)) }
+        return date.formatted(.dateTime.month(.abbreviated).day())
+    }
+}
+
+/// The account shown, as a card in a wallet: its name and bank, and its
+/// balance; for all of them, net worth.
+private struct AccountCard: View {
+    let account: FinanceAccount?
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var hidden: Bool { finances.amountsHiddenByPlan || !finances.amountsShown }
+
+    private func money(_ value: Double, _ currency: String? = nil) -> String {
+        hidden ? "••••" : value.formatted(.currency(code: currency ?? view.plan.currency))
+    }
+
+    var body: some View {
+        if let account {
+            let logos = PayeeLogos.shared
+            let brand = logos.brandOf(institution: account.institution, name: account.name, kind: account.kind)
+            WalletCard(title: account.name,
+                       amount: money(view.start[account.id] ?? account.balance ?? 0, account.currency) + (account.isOwed && !hidden ? " owed" : ""),
+                       detail: detail(account),
+                       style: WalletStyle(kind: account.kind),
+                       mark: brand.flatMap { logos.brandsByKey[$0] }.map { LogoContent.brand($0) })
+        } else {
+            WalletCard(title: "All accounts", amount: money(view.netWorth), detail: "Net worth", style: .other)
+        }
+    }
+
+    private func detail(_ account: FinanceAccount) -> String? {
+        if account.id == view.checking, let after = view.afterPay, let date = after.date, !hidden {
+            return "\(money(after.result)) after \(date.formatted(.dateTime.weekday(.wide)))’s pay"
+        }
+        return [account.kindTitle, account.institution.flatMap { logosName($0) }].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    private func logosName(_ key: String) -> String? {
+        PayeeLogos.shared.brandsByKey[key]?.name ?? key
+    }
+}
+
+/// The accounts as small cards in a row, All first; the one shown ringed.
+private struct AccountSwitcher: View {
+    let accounts: [FinanceAccount]
+    @Binding var selection: String?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 12) {
+                chip(id: nil, name: "All") {
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Theme.accent.opacity(0.14))
+                        .overlay(Text("All").font(.caption.weight(.bold)).foregroundStyle(Theme.accent))
+                }
+                ForEach(accounts) { account in
+                    chip(id: account.id, name: account.name) {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .fill(LinearGradient(colors: WalletStyle(kind: account.kind).colours, startPoint: .topLeading, endPoint: .bottomTrailing))
+                    }
+                }
+            }
+            .padding(.horizontal, 2)
+            .padding(.vertical, 4)
+        }
+    }
+
+    private func chip<Card: View>(id: String?, name: String, @ViewBuilder card: () -> Card) -> some View {
+        let picked = selection == id
+        return Button {
+            withAnimation(.snappy) { selection = id }
+        } label: {
+            VStack(spacing: 4) {
+                card()
+                    .frame(width: 56, height: 36)
+                    .shadow(color: Design.shadow.opacity(0.12), radius: 2, y: 1)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder(picked ? Theme.accent : .clear, lineWidth: 2)
+                            .padding(-3)
+                    }
+                Text(verbatim: name)
+                    .font(.caption2.weight(picked ? .semibold : .regular))
+                    .foregroundStyle(picked ? Theme.ink : Theme.secondaryInk)
+                    .lineLimit(1)
+                    .frame(maxWidth: 64)
+            }
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel(Text(verbatim: name))
+        .accessibilityAddTraits(picked ? .isSelected : [])
+    }
+}
+
+/// A transaction as Wallet lists one: its logo, payee, category, and day,
+/// its amount on the right; a violet dot while it's new.
+private struct WalletTransactionRow: View {
+    let transaction: FinanceTransaction
+    let finances: FinancesViewModel
+    let isNew: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(isNew ? Theme.accent : .clear)
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+            LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 42)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
+                        .fontWeight(isNew ? .semibold : .regular)
+                        .lineLimit(1)
+                    if transaction.hasReceipt {
+                        Image(systemName: "paperclip").font(.caption2).foregroundStyle(.secondary)
+                            .accessibilityLabel("Receipt kept")
+                    }
+                }
+                if let sub = subtitle {
+                    Text(verbatim: sub)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Text(verbatim: TransactionsView.dayWords(transaction.date))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            Money(value: transaction.amount, currency: finances.currency, finances: finances)
+                .fontWeight(isNew ? .semibold : .regular)
+                .foregroundStyle(transaction.amount > 0 ? Theme.success : .primary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(isNew ? "New" : "")
+    }
+
+    private var subtitle: String? {
+        if let to = transaction.to, !to.isEmpty {
+            return "\(finances.accountName(transaction.account) ?? "Account") → \(finances.accountName(to) ?? "Account")"
+        }
+        if transaction.isSplit { return "Split" }
+        return transaction.category.isEmpty ? nil : transaction.category
+    }
+}
+
+/// One transaction, as Wallet shows one: its logo big, the payee, the
+/// amount, the day; then what it paid and from which account; its
+/// category, note, tags and receipt; and the other times at that payee.
+private struct TransactionDetailView: View {
+    let transaction: FinanceTransaction
+    @Bindable var finances: FinancesViewModel
+    @State private var editing = false
+    @State private var showingReceipt = false
+    @Environment(\.dismiss) private var dismiss
+
+    /// As it is now in the ledger: changed or reviewed since it was opened.
+    private var t: FinanceTransaction {
+        finances.ledger?.transactions.first { $0.id == transaction.id } ?? transaction
+    }
+
+    private var stillThere: Bool {
+        finances.ledger?.transactions.contains { $0.id == transaction.id } ?? true
+    }
+
+    var body: some View {
+        let t = self.t
+        let categories = finances.plan?.categories ?? []
+        let category = t.isSplit ? (t.splitCategory ?? "") : t.category
+        List {
+            Section {
+                VStack(spacing: 6) {
+                    LogoCircle(transaction: t, categories: categories, size: 76)
+                    Text(verbatim: Self.title(of: t, finances: finances))
+                        .font(.title3.weight(.semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 6)
+                    Money(value: t.amount > 0 ? t.amount : -t.amount, currency: finances.currency, finances: finances, signed: t.amount > 0)
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundStyle(t.amount > 0 ? Theme.success : Theme.ink)
+                        .minimumScaleFactor(0.5)
+                        .lineLimit(1)
+                    if let date = t.date {
+                        Text(date, format: .dateTime.weekday(.wide).month(.wide).day())
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    if finances.isNew(t) {
+                        Button {
+                            finances.markReviewed([t])
+                        } label: {
+                            Label("Mark Reviewed", systemImage: "checkmark")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.capsule)
+                        .padding(.top, 8)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+            }
+            Section {
+                if let id = t.payment, let name = finances.plan?.paymentTitle(id) {
+                    LabeledContent("Paid") {
+                        Label {
+                            Text(verbatim: name)
+                        } icon: {
+                            Image(systemName: "checkmark.circle.fill")
+                        }
+                        .foregroundStyle(Theme.success)
+                    }
+                }
+                LabeledContent("Account") {
+                    if let to = t.to, !to.isEmpty {
+                        Text(verbatim: "\(finances.accountName(t.account) ?? "Account") → \(finances.accountName(to) ?? "Account")")
+                    } else {
+                        Text(verbatim: finances.accountName(t.account) ?? "Account")
+                    }
+                }
+            }
+            Section {
+                LabeledContent("Category") {
+                    HStack(spacing: 6) {
+                        if let tint = Design.category(PayeeLogos.shared.categoryHue(category, in: categories)) {
+                            Circle().fill(tint.base).frame(width: 9, height: 9).accessibilityHidden(true)
+                        }
+                        Text(verbatim: t.isSplit ? "Split" : (category.isEmpty ? "None" : category))
+                    }
+                }
+                if !t.note.isEmpty {
+                    LabeledContent("Note") { Text(verbatim: t.note).multilineTextAlignment(.trailing) }
+                }
+                if !t.tags.isEmpty {
+                    LabeledContent("Tags") { Text(verbatim: t.tags.joined(separator: ", ")) }
+                }
+                if t.hasReceipt {
+                    Button {
+                        showingReceipt = true
+                    } label: {
+                        Label("Receipt", systemImage: "doc.richtext")
+                    }
+                }
+            }
+            let more = TransactionMatching.moreAt(t, in: finances.ledger?.newestFirst ?? [])
+            if !more.isEmpty {
+                Section {
+                    ForEach(more) { other in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                if let date = other.date {
+                                    Text(date, format: .dateTime.month(.wide).day().year())
+                                }
+                                Text(verbatim: finances.accountName(other.account) ?? "Account")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Money(value: other.amount, currency: finances.currency, finances: finances)
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                } header: {
+                    Text(verbatim: "More at \(Self.title(of: t, finances: finances))")
+                }
+            }
+        }
+        .themedCanvas()
+        .navigationTitle("")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        .toolbar {
+            if finances.canAddTransactions && LedgerEdit.canUpdate(t) {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Edit") {
+                        finances.clearSaveError()
+                        editing = true
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $editing) {
             AddTransactionView(finances: finances, editing: t)
         }
-        .sheet(item: $receiptFor) { t in
+        .sheet(isPresented: $showingReceipt) {
             if let name = t.receipt {
                 ReceiptView(name: name, title: t.payee.isEmpty ? "Receipt" : t.payee, finances: finances)
             }
         }
-        .sensoryFeedback(.success, trigger: finances.savedCount)
+        // Deleted from its own Edit: back to the list.
+        .onChange(of: stillThere) { _, there in
+            if !there { dismiss() }
+        }
+    }
+
+    /// What a transaction is, in words: its payee, or where a transfer went.
+    static func title(of t: FinanceTransaction, finances: FinancesViewModel) -> String {
+        if !t.payee.isEmpty { return t.payee }
+        if let to = t.to, !to.isEmpty { return "To \(finances.accountName(to) ?? "another account")" }
+        return "Transaction"
+    }
+}
+
+/// Which transactions go together on a transaction's page.
+enum TransactionMatching {
+    /// The other times at the same payee (its brand, or the same name as a
+    /// person would write it), newest first, five at most; never transfers.
+    static func moreAt(_ t: FinanceTransaction, in newestFirst: [FinanceTransaction], logos: PayeeLogos = .shared) -> [FinanceTransaction] {
+        guard !t.payee.isEmpty, (t.to ?? "").isEmpty else { return [] }
+        let brand = logos.payeeBrand(institution: t.institution, payee: t.payee)
+        let name = logos.cleanPayee(t.payee).lowercased()
+        return Array(newestFirst.lazy.filter { other in
+            guard other.id != t.id, (other.to ?? "").isEmpty, !other.payee.isEmpty else { return false }
+            if let brand, logos.payeeBrand(institution: other.institution, payee: other.payee) == brand { return true }
+            return logos.cleanPayee(other.payee).lowercased() == name
+        }.prefix(5))
     }
 }
 
@@ -1178,55 +1544,6 @@ private struct AddTransactionView: View {
             }
             if saved { dismiss() }
         }
-    }
-}
-
-private struct TransactionRow: View {
-    let transaction: FinanceTransaction
-    let finances: FinancesViewModel
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    /// At the accessibility text sizes the amount goes under the words, and
-    /// the detail line may wrap.
-    private var large: Bool { typeSize.isAccessibilitySize }
-
-    var body: some View {
-        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 12))
-        layout {
-            // The payee's logo, as the computer's Finances shows it (Design.swift).
-            if !large {
-                LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 40)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(transaction.payee.isEmpty ? "Transaction" : transaction.payee)
-                    if transaction.hasReceipt {
-                        Image(systemName: "paperclip").font(.caption2).foregroundStyle(.secondary)
-                            .accessibilityLabel("Receipt kept")
-                    }
-                }
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(large ? 3 : 1)
-            }
-            if !large { Spacer() }
-            Money(value: transaction.amount, currency: finances.currency, finances: finances)
-                .foregroundStyle(transaction.amount > 0 ? Theme.success : .primary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var detail: String {
-        var parts: [String] = []
-        if let date = transaction.date { parts.append(date.formatted(.dateTime.month(.abbreviated).day())) }
-        if let to = transaction.to, !to.isEmpty {
-            parts.append("\(finances.accountName(transaction.account) ?? "Account") → \(finances.accountName(to) ?? "Account")")
-        } else if let account = finances.accountName(transaction.account) {
-            parts.append(account)
-        }
-        if !transaction.category.isEmpty { parts.append(transaction.category) }
-        return parts.joined(separator: " · ")
     }
 }
 
