@@ -12812,10 +12812,11 @@ ${pays}
       /* @__PURE__ */ u3(LastMonths, { v: v3, ledger, open: showIn })
     ] });
   }
-  function SpendingWidget({ v: v3, L: L2, open: open4 }) {
+  var filterOf = (kind) => ({ cards: "cards", subscriptions: "subscriptions", spending: "spending", savings: "saving" })[kind] || "bills";
+  function SpendingWidget({ v: v3, L: L2, open: open4, openKind }) {
     const m3 = month(v3, L2);
     if (!m3.byKind.length) return null;
-    const slices = m3.byKind.map((k3) => ({ label: kindName(k3.kind), value: k3.amount, color: kindHueOf(k3.kind, v3.categories) }));
+    const slices = m3.byKind.map((k3) => ({ kind: k3.kind, label: kindName(k3.kind), value: k3.amount, color: kindHueOf(k3.kind, v3.categories) }));
     return /* @__PURE__ */ u3(Widget, { title: "Where it goes", kind: "fx-spend", actions: open4 && /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Recurring: a typical month, payment by payment", onClick: open4 }), children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -m3.spent }), caption: "Spent in a typical month" }),
       /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
@@ -12823,7 +12824,7 @@ ${pays}
           /* @__PURE__ */ u3("strong", { children: whole(m3.spent) }),
           "a month"
         ] }) }),
-        /* @__PURE__ */ u3(Legend, { items: slices.slice(0, 6).map((s3) => ({ label: s3.label, color: s3.color, value: whole(s3.value) })) })
+        openKind ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-spentrows", children: slices.slice(0, 6).map((s3) => /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Dot, { color: s3.color }), title: s3.label, when: /* @__PURE__ */ u3(Amount, { value: s3.value, form: "whole" }), whenPlain: true, onOpen: () => openKind(filterOf(s3.kind)), openLabel: "see its payments" }, s3.kind)) }) : /* @__PURE__ */ u3(Legend, { items: slices.slice(0, 6).map((s3) => ({ label: s3.label, color: s3.color, value: whole(s3.value) })) })
       ] })
     ] });
   }
@@ -15518,8 +15519,8 @@ ${pays}
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked, openDay: openCalendar }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
         /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
-        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring, ledger, showIn }),
-        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2, open: openRecurring }),
+        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring && (() => openRecurring()), ledger, showIn }),
+        /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2, open: openRecurring && (() => openRecurring()), openKind: openRecurring }),
         /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions }),
         /* @__PURE__ */ u3(SpentWidget, { v: v3, ledger, open: showIn }),
         /* @__PURE__ */ u3(MoneyFlowWidget, { v: v3, L: L2, ledger, edit }),
@@ -15605,7 +15606,10 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), showIn: (f4) => {
+      }, openRecurring: (f4) => {
+        if (f4) openOn(f4);
+        setTab("recurring");
+      }, openTransactions: () => setTab("transactions"), showIn: (f4) => {
         showTransactions(f4);
         setTab("transactions");
       }, openCalendar: (day3) => {
@@ -15617,7 +15621,10 @@ ${pays}
       } }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), showIn: (f4) => {
+      }, openRecurring: (f4) => {
+        if (f4) openOn(f4);
+        setTab("recurring");
+      }, openTransactions: () => setTab("transactions"), showIn: (f4) => {
         showTransactions(f4);
         setTab("transactions");
       }, openCalendar: (day3) => {

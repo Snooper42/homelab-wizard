@@ -49,8 +49,8 @@ export interface OverviewProps {
   openWorth: () => void;
   /** Shows Recurring's Subscriptions. */
   openSubscriptions?: () => void;
-  /** Shows Recurring: a typical month, payment by payment. */
-  openRecurring?: () => void;
+  /** Shows Recurring: a typical month, payment by payment; with a filter, on those payments (Bills, Cards…). */
+  openRecurring?: (filter?: string) => void;
   /** Shows Transactions filtered (a category of this month's spending). */
   showIn?: (f: Parameters<typeof showTransactions>[0]) => void;
   /** Shows Transactions (and its budgets). */
@@ -97,8 +97,8 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
-        <CashFlowWidget v={v} L={L} open={openRecurring} ledger={ledger} showIn={showIn} />
-        <SpendingWidget v={v} L={L} open={openRecurring} />
+        <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} />
+        <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} />
         <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
         <SpentWidget v={v} ledger={ledger} open={showIn} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />

@@ -64,16 +64,22 @@ export function CashFlowWidget({ v, L, open, ledger, showIn }: { v: finance.View
 }
 
 
-export function SpendingWidget({ v, L, open }: { v: finance.View; L: Lookup; open?: () => void }) {
+/** The Recurring filter a payment kind is under (Lists.tsx's groups): Home, Car and the other bills under Bills. */
+const filterOf = (kind: string): string => ({ cards: 'cards', subscriptions: 'subscriptions', spending: 'spending', savings: 'saving' } as Record<string, string>)[kind] || 'bills';
+
+export function SpendingWidget({ v, L, open, openKind }: { v: finance.View; L: Lookup; open?: () => void; openKind?: (filter: string) => void }) {
   const m = month(v, L);
   if (!m.byKind.length) return null;
-  const slices = m.byKind.map((k) => ({ label: kindName(k.kind), value: k.amount, color: kindHueOf(k.kind, v.categories) }));
+  const slices = m.byKind.map((k) => ({ kind: k.kind, label: kindName(k.kind), value: k.amount, color: kindHueOf(k.kind, v.categories) }));
   return (
     <Widget title="Where it goes" kind="fx-spend" actions={open && <IconButton icon="open" label="Open Recurring: a typical month, payment by payment" onClick={open} />}>
       <Stat value={<Amount value={-m.spent} />} caption="Spent in a typical month" />
       <div class="fx-donutrow">
         <Donut slices={slices} label="A typical month's spending" center={<><strong>{whole(m.spent)}</strong>a month</>} />
-        <Legend items={slices.slice(0, 6).map((s) => ({ label: s.label, color: s.color, value: whole(s.value) }))} />
+        {/* Each kind opens Recurring on its payments (Home and the other bills on Bills). */}
+        {openKind ? <Rows kind="fx-rows fx-spentrows">
+          {slices.slice(0, 6).map((s) => <Row key={s.kind} lead={<Dot color={s.color} />} title={s.label} when={<Amount value={s.value} form="whole" />} whenPlain onOpen={() => openKind(filterOf(s.kind))} openLabel="see its payments" />)}
+        </Rows> : <Legend items={slices.slice(0, 6).map((s) => ({ label: s.label, color: s.color, value: whole(s.value) }))} />}
       </div>
     </Widget>
   );

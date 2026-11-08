@@ -6264,10 +6264,18 @@ const smokes = [
   } },
   // Where it goes: every kind its own colour (Cards was Spending's purple, Loans Car's yellow).
   { name: 'Finances: Where it goes draws each kind in a colour of its own', screen: 'finances', run: async (page) => {
-    await page.waitForSelector('.fx-spend .fx-legend li', { timeout: 5000 });
-    const hues = await page.$$eval('.fx-spend .fx-legend li', (l) => l.map((x) => [x.querySelector('.fx-legendlabel').textContent, [...x.querySelector('.fx-dot').classList].find((c) => /^fx-h\d$/.test(c))]));
+    await page.waitForSelector('.fx-spend .fx-spentrows li', { timeout: 5000 });
+    const hues = await page.$$eval('.fx-spend .fx-spentrows li', (l) => l.map((x) => [x.querySelector('.grow').textContent, [...x.querySelector('.fx-dot').classList].find((c) => /^fx-h\d$/.test(c))]));
     const seen = new Map();
     for (const [label, hue] of hues) { if (seen.has(hue)) throw new Error(`${label} and ${seen.get(hue)} are both ${hue}`); seen.set(hue, label); }
+  } },
+  // Where it goes: a kind opens Recurring on its payments (Cards on Cards; Home, a bill, on Bills).
+  { name: 'Finances: a kind on Where it goes opens its payments', screen: 'finances', run: async (page) => {
+    await page.click('.fx-spend li:has-text("Cards") button', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments .seg button[aria-checked=true]:has-text("Cards"), .fx-payments .seg button[aria-pressed=true]:has-text("Cards")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('.fx-spend li:has-text("Home") button');
+    await page.waitForSelector('.fx-payments .seg button[aria-checked=true]:has-text("Bills"), .fx-payments .seg button[aria-pressed=true]:has-text("Bills")', { timeout: 5000 });
   } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
