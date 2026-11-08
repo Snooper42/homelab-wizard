@@ -920,3 +920,32 @@ struct InvestmentsReadResult: Sendable {
         return "Read from Ghostfolio at \(t): \(n(count, "holding", "holdings")) in \(n(held.count, "account", "accounts"))."
     }
 }
+
+// MARK: - Budgets in all (the top of the Budgets page)
+
+/// The budgets together: what they may take, what's spent, and what's left.
+struct BudgetsTotal: Equatable, Sendable {
+    let amount: Double
+    let spent: Double
+    let left: Double
+    /// About how much a day what's left allows until the month ends; nil
+    /// when a budget goes by pay period (its days differ), or none is left.
+    let perDay: Double?
+
+    init(_ budgets: [FinanceBudget], today: Date?, calendar: Calendar = .current) {
+        amount = budgets.reduce(0) { $0 + $1.amount }
+        spent = budgets.reduce(0) { $0 + $1.spent }
+        left = budgets.reduce(0) { $0 + $1.left }
+        if let today, !budgets.isEmpty, budgets.allSatisfy({ $0.per == "month" }), left > 0,
+           let days = calendar.range(of: .day, in: .month, for: today) {
+            let remaining = days.count - calendar.component(.day, from: today) + 1
+            perDay = remaining > 0 ? left / Double(remaining) : nil
+        } else {
+            perDay = nil
+        }
+    }
+
+    /// Spent, as a share of all the budgets, 0 to 1.
+    var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
+    var isOver: Bool { spent > amount }
+}
