@@ -115,8 +115,9 @@ export const txTitle = (t: finance.Transaction, L: Lookup): string => t.payee ||
 /** A transaction's categories: its own, or its parts'. */
 const catsOf = (t: finance.Transaction): string[] => (t.splits?.length ? t.splits.map((s) => s.category) : t.category ? [t.category] : []);
 
-/** The words a search looks through: payee, categories, note, tags, and the accounts. */
-const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name].filter(Boolean).join(' ').toLowerCase();
+/** The words a search looks through: payee, categories, note, tags, the accounts, and the amount as typed and as shown (86.10, 1,240.55), so a charge is found by what it came to. */
+const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name,
+  Math.abs(t.amount).toFixed(2), Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })].filter(Boolean).join(' ').toLowerCase();
 
 /**
  * Rows that look like one transfer between the household's own accounts,
@@ -344,7 +345,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
           </>}>
           {!!all.length && <div class="fx-txfilters" role="search" aria-label="Find transactions">
-            <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, note" aria-label="Search transactions" />
+            <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, note, amount" aria-label="Search transactions" />
             <select aria-label="Account" value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>
               <option value="">Every account</option>
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

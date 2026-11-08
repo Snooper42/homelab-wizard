@@ -6220,6 +6220,16 @@ const smokes = [
     const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
     if (rows.length !== 6 || rows[0] !== 'Fri, Oct 30+$55.50$2,512.40' || rows[5] !== 'Fri, Sep 25+$30.84$2,333.57') throw new Error(`rows: ${JSON.stringify(rows)}`);
   } },
+  // A charge found by what it came to: 86.10 finds Costco, and 2,400 with its comma Jordan's paycheck.
+  { name: 'Finances: a transaction found by its amount', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', '86.10');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', '2,400');
+    await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck")', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
