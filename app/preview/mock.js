@@ -223,14 +223,16 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Firefly III's balances (firefly: [{ name, balance, currency }]); fireflyProblem: why it could not be read.
     FinancesFromFirefly: () => (M.fireflyProblem ? later(null).then(() => { throw new Error(M.fireflyProblem); }) : later(M.firefly || [])),
     FinancesFromGhostfolio: () => (M.ghostfolioProblem ? later(null).then(() => { throw new Error(M.ghostfolioProblem); }) : later(M.ghostfolio || [])),
-    // Investments' Read now: the plan as it is, with investedRead's accounts' holdings (or the example's), and investUnmatched said
-    // back; investProblem: why Ghostfolio could not be read. Each read is counted in investReads.
+    // Investments' Read now: the plan as it is, with investedRead's accounts' holdings (or the example's), investUnmatched said
+    // back, and how many accounts and holdings Ghostfolio has; investProblem: why Ghostfolio could not be read. Each read is counted in investReads.
     FinancesReadInvestments: () => {
       M.investReads = (M.investReads || 0) + 1;
       if (M.investProblem) return later(null).then(() => { throw new Error(M.investProblem); });
       const plan = { ...M.finances.plan, holdingsRead: new Date().toISOString(), accounts: (M.finances.plan.accounts || []).map((a) => (M.investedRead?.[a.id] ? { ...a, ...M.investedRead[a.id] } : a)) };
       M.finances = { ...M.finances, plan };
-      return later({ view: M.finances, unmatched: M.investUnmatched || [] });
+      // What Ghostfolio has (investAccounts, investHoldings): by default, what the plan's accounts hold.
+      const held = plan.accounts.filter((a) => a.holdings?.length);
+      return later({ view: M.finances, unmatched: M.investUnmatched || [], accounts: M.investAccounts ?? held.length + (M.investUnmatched || []).length, holdings: M.investHoldings ?? held.reduce((t, a) => t + a.holdings.length, 0) });
     },
     FinancesFromWallos: () => (M.wallosProblem ? later(null).then(() => { throw new Error(M.wallosProblem); }) : later(M.wallos || [])),
     // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.

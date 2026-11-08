@@ -5128,6 +5128,18 @@ const smokes = [
     await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 2000 });
     if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read before the first Read now');
   } },
+  // A first read of a Ghostfolio with nothing in it yet still says the token worked, and what to add there.
+  { name: 'Finances: Investments say the token worked when Ghostfolio is still empty', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } }, investAccounts: 0, investHoldings: 0 }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Signed in to Ghostfolio at")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("it has no accounts yet. Add yours there, named as they are here, then Read now.")`, { timeout: 2000 });
+    if (await page.$(`${card} .fx-investintro`)) throw new Error('"nothing matched" said beside the read');
+    await page.evaluate(() => { window.__MOCK.investAccounts = 2; });
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForSelector(`${card} [role=status]:has-text("its 2 accounts hold nothing yet. Add a buy for each holding there, then Read now.")`, { timeout: 5000 });
+  } },
   { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     const card = '#finRoot .fx-invest';

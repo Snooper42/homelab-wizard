@@ -226,11 +226,15 @@ func (a *App) ghostfolioInvestments() ([]finance.Invested, error) {
 
 func cents(x float64) float64 { return math.Round(x*100) / 100 }
 
-// InvestmentsRead is the plan after Read now, and the names of
-// Ghostfolio's accounts no account in it matched.
+// InvestmentsRead is the plan after Read now, the names of Ghostfolio's
+// accounts no account in it matched, and how many accounts and holdings
+// Ghostfolio has, matched or not: a read of a Ghostfolio with nothing in
+// it yet still shows the token worked.
 type InvestmentsRead struct {
 	View      finance.View `json:"view"`
 	Unmatched []string     `json:"unmatched"`
+	Accounts  int          `json:"accounts"`
+	Holdings  int          `json:"holdings"`
 }
 
 // FinancesReadInvestments reads what each of Ghostfolio's accounts holds
@@ -254,5 +258,9 @@ func (a *App) FinancesReadInvestments() (InvestmentsRead, error) {
 	if left == nil {
 		left = []string{}
 	}
-	return InvestmentsRead{View: finance.ProjectWith(saved, a.ledger(), time.Now(), finance.Ahead), Unmatched: left}, nil
+	held := 0
+	for _, f := range found {
+		held += len(f.Holdings)
+	}
+	return InvestmentsRead{View: finance.ProjectWith(saved, a.ledger(), time.Now(), finance.Ahead), Unmatched: left, Accounts: len(found), Holdings: held}, nil
 }

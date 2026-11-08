@@ -170,6 +170,10 @@ func TestFinancesReadInvestments(t *testing.T) {
 	if strings.Join(got.Unmatched, ",") != "Trading 212" {
 		t.Errorf("not matched: %q", got.Unmatched)
 	}
+	// What Ghostfolio has, matched or not, so Read now can say the token worked even with nothing in it yet.
+	if got.Accounts != 2 || got.Holdings != 4 {
+		t.Errorf("Ghostfolio has %d accounts and %d holdings, want 2 and 4", got.Accounts, got.Holdings)
+	}
 	k := got.View.Plan.Accounts[1]
 	if k.Balance != 31000.75 || len(k.Holdings) != 2 || k.Holdings[0].Symbol != "VTI" || got.View.Plan.HoldingsRead == "" {
 		t.Errorf("the 401(k): %+v", k)

@@ -13604,7 +13604,7 @@ ${pays}
     ] });
     if (!accounts.length) {
       return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
-        /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
+        !(ever && state2.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
         said2,
         /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep2, read })
       ] });
@@ -14336,7 +14336,9 @@ ${pays}
       const held3 = (r3.view.plan.accounts || []).filter((a3) => a3.holdings?.length);
       const count2 = held3.reduce((t3, a3) => t3 + a3.holdings.length, 0);
       const time = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-      invest = { said: `Read from Ghostfolio at ${time}: ${count2} ${count2 === 1 ? "holding" : "holdings"} in ${held3.length} ${held3.length === 1 ? "account" : "accounts"}.`, unmatched: r3.unmatched };
+      const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
+      const said2 = !r3.accounts ? `Signed in to Ghostfolio at ${time}: it has no accounts yet. Add yours there, named as they are here, then Read now.` : !r3.holdings ? `Signed in to Ghostfolio at ${time}: its ${n3(r3.accounts, "account holds", "accounts hold")} nothing yet. Add a buy for each holding there, then Read now.` : `Read from Ghostfolio at ${time}: ${n3(count2, "holding", "holdings")} in ${n3(held3.length, "account", "accounts")}.`;
+      invest = { said: said2, unmatched: r3.unmatched };
       financesData.set(r3.view);
     } catch (e3) {
       invest = { problem: `Could not read Ghostfolio: ${errorText(e3)}` };
