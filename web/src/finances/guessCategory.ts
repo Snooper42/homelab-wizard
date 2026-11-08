@@ -19,7 +19,7 @@ const brandCategory: Record<string, string> = Object.fromEntries(Object.entries(
   Health: 'cvs walgreens',
   Phone: 'verizon tmobile atandt mintmobile visiblebyverizon googlefi usmobile boostmobile',
   Internet: 'xfinity spectrum cox optimum googlefiber starlink frontier centurylink',
-  Electric: 'dukeenergy pge coned',
+  Electric: 'dukeenergy pge coned fpl',
   'Car insurance': 'geico progressive statefarm allstate libertymutual',
   Travel: 'delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft',
   Fitness: 'planetfitness peloton strava',
@@ -56,10 +56,12 @@ const flat = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
  * The household's own account a transaction moved money to or from: a card
  * paid off ("Payment to Chase card ••1234": the card with those last four,
  * else the only card of that bank), or an account named by the payee
- * ("Apple Savings"). One account, never the one imported into; none
- * when two fit.
+ * ("Apple Savings"), or a card of the payee's company paid off by the
+ * bank's words ("AMERICAN EXPRESS ACH PMT", "APPLECARD GSBANK PAYMENT":
+ * the only card of that brand). One account, never the one imported into;
+ * none when two fit.
  */
-export function ownAccount(payee: string, into: string, accounts: finance.Account[]): string | undefined {
+export function ownAccount(payee: string, into: string, accounts: finance.Account[], raw?: string): string | undefined {
   const others = accounts.filter((a) => a.id !== into && a.kind !== 'home' && a.kind !== 'car' && a.kind !== 'collectible' && a.kind !== 'other');
   const card = payee.match(/^Payment to (.+) card ••(\d{4})$/);
   if (card) {
@@ -69,6 +71,11 @@ export function ownAccount(payee: string, into: string, accounts: finance.Accoun
     const bank = brandOf(undefined, card[1]);
     const byBank = cards.filter((a) => bank && brandOf(a.institution, a.name) === bank);
     return byBank.length === 1 ? byBank[0].id : undefined;
+  }
+  if (raw && /\b(?:pmt|pymt|payment|autopay|epay|e payment)\b/i.test(raw.replace(/[-_]/g, ' '))) {
+    const brand = brandOf(undefined, payee);
+    const cards = others.filter((a) => a.kind === 'card' && brand && brandOf(a.institution, a.name) === brand);
+    if (cards.length === 1) return cards[0].id;
   }
   const p = flat(payee);
   if (!p || p.split(' ').length < 2) return undefined;
@@ -82,9 +89,9 @@ export function ownAccount(payee: string, into: string, accounts: finance.Accoun
  * the household's own account it moved to or from. Only a category in
  * the household's list is given.
  */
-export function guessFor(t: { payee?: string; amount: number }, into: string, plan: finance.Plan, categories: finance.Category[], last?: string, pays?: finance.Payment): Guess {
+export function guessFor(t: { payee?: string; amount: number; raw?: string }, into: string, plan: finance.Plan, categories: finance.Category[], last?: string, pays?: finance.Payment): Guess {
   const payee = t.payee || '';
-  const moved = payee && ownAccount(payee, into, plan.accounts || []);
+  const moved = payee && ownAccount(payee, into, plan.accounts || [], t.amount < 0 ? t.raw : undefined);
   if (moved) return { account: moved };
   const have = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
   const pick = (...names: (string | undefined)[]) => {

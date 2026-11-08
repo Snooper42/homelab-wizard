@@ -10,7 +10,7 @@ import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark,
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
 import { guessFor } from './guessCategory';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes } from './importData';
+import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
@@ -735,6 +735,12 @@ function TransactionForm(props: EditProps) {
   const logoPicked = useRef(!!t?.institution);
   const [picking, setPicking] = useState(false);
   const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); if (!logoPicked.current) setLogo(logoFor(who) || ''); };
+  // A payee renamed (Sunset Palms Eas Sunset Pal to HOA): every other transaction by the old name takes the new one too, unless unticked,
+  // and an import of the same bank wording later comes in by it (importData's renameMemory).
+  const oldPayee = (t?.payee || '').trim();
+  const byOld = (q: finance.Transaction) => !q.to && q.id !== t?.id && !!q.payee && q.payee.trim().toLowerCase() === oldPayee.toLowerCase();
+  const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
+  const [renameAll, setRenameAll] = useState(true);
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
@@ -775,7 +781,9 @@ function TransactionForm(props: EditProps) {
     if (!next.tags!.length) next.tags = undefined;
     // A logo picked by hand is its payee's: every transaction to it takes it, past and to come.
     const same = (q: finance.Transaction) => !q.to && !!q.payee && q.payee.toLowerCase() === (next.payee || '').toLowerCase();
-    const list = (ledger?.transactions || []).map((q) => (logoPicked.current && next.payee && same(q) ? { ...q, institution: next.institution } : q));
+    const list = (ledger?.transactions || [])
+      .map((q) => (renameAll && renamesToo && next.payee && byOld(q) ? { ...q, payee: next.payee } : q))
+      .map((q) => (logoPicked.current && next.payee && same(q) ? { ...q, institution: next.institution } : q));
     const at = list.findIndex((q) => q.id === t?.id);
     if (at >= 0) list[at] = next; else list.push(next);
     keepLedger(list);
@@ -799,6 +807,7 @@ function TransactionForm(props: EditProps) {
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
+      {renamesToo > 0 && <label class="fcheckbox renameall"><input type="checkbox" checked={renameAll} onClick={tick(setRenameAll)} /> Rename {renamesToo === 1 ? 'the other transaction' : `the ${renamesToo} other transactions`} from “{oldPayee}” too, and ones imported later</label>}
       {way !== 'move' && <div class="txlogo">
         <button type="button" class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>{picking ? 'Done with the logo' : 'Change logo'}</button>
         {!picking && logoPicked.current && payee.trim() && <span class="muted">Every transaction to {payee.trim()} shows it.</span>}
@@ -995,9 +1004,14 @@ function ImportForm(props: EditProps) {
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
   const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
-  // The bank's wording is kept only when it says more than the clean name in other capitals.
-  const found = read_.map((t) => { const payee = cleanPayee(t.payee); return { ...t, payee, raw: t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined }; });
+  // The bank's wording is kept only when it says more than the clean name in other capitals. A payee renamed by hand
+  // before (HOA for SUNSET PALMS EAS SUNSET PAL) comes in by that name.
   const have = ledger?.transactions || [];
+  const memory = renameMemory(have, cleanPayee);
+  const found = read_.map((t) => {
+    const payee = cleanPayee(t.payee), raw = t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined;
+    return { ...t, payee: (raw && memory.get(payee.toLowerCase())) || payee, raw };
+  });
   const fixes = wayOnlyFixes(found, account, have);
   const renames = renameFixes(found, account, have, fixes);
   const fixed = new Set(fixes.values()), others = have.filter((q) => !fixed.has(q.id));
