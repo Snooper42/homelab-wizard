@@ -19,7 +19,8 @@ import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
-import { Mark, payeeBrand, paysAlike } from './Mark';
+import { Mark, payeeBrand } from './Mark';
+import { paysBill } from './guessCategory';
 import { joined, type Pair, pairs, suggestLinks } from './importData';
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
@@ -52,7 +53,7 @@ export interface TransactionsProps {
  */
 function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
   const [busy, setBusy] = useState(false);
-  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, paysAlike);
+  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, paysBill);
   if (!found.size) return null;
   const list = ledger.transactions.filter((t) => found.has(t.id)).reverse();
   const keep = async (change: (t: finance.Transaction) => finance.Transaction) => {

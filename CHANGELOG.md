@@ -62,6 +62,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **More imported bills find their planned payment:** a company pays the bill it's for even when the names differ (*FPL* pays your *Electric* bill, *Mazda* your car payment), a bill that changes each time (electric, water) still links when it's well off its planned amount, and last month's bills link too when you only added the payment to your plan this month.
+- **Import a file's buttons stay in sight:** **Bring in** and **Cancel** sit at the foot of the sheet however long the list, the list no longer scrolls inside the sheet, and the sheet doesn't bounce at its ends.
 - **Settings on the iPhone, as the iPhone's own:** your homelab at the top, then switches for nightly updates and the widget, and each section of the homelab's settings with its own coloured icon.
 - **Transactions on the iPhone, like Wallet:** the account's card on top with your other accounts to switch between, each transaction with its company's logo, and new ones marked with a violet dot until you've reviewed them. Tap one for its own page: a big logo and amount, what bill it paid, its category and note, and the other times at that place.
 - **Finances on the iPhone, tidied:** it opens with checking now and after payday, your net worth with its line, then a list like Settings: Transactions, Budgets, Bills, Investments, Accounts, Goals and Loans, each one tap away.

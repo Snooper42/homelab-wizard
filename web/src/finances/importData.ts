@@ -257,6 +257,9 @@ export const matchDays = 16;
 /** How far a row's amount may be from a payment's and still be it: a tenth either way. */
 const near = 0.1;
 
+/** A bill that changes each time (marked so, or a utility: electric, water, gas) may be off its planned amount by up to two fifths. */
+const tolerance = (x: finance.Payment): number => (x.estimate || x.kind === 'utilities' ? 0.4 : near);
+
 const dayNo = (s: string) => Math.round(Date.parse(s + 'T00:00:00Z') / 86400000);
 
 /** A planned payment a row of a bank's file pays, and the day of it. */
@@ -265,8 +268,8 @@ export interface Planned { payment: string; due: string }
 /**
  * The planned payment a row plainly pays, or none: money out of this
  * account (the payment's From, or checking), to a payee alike its name or
- * of its brand (`same`), or money into it from someone outside the
- * household (Payer) by their name or the payment's, for its amount give or take a tenth, within two
+ * of its brand, or what it is (`same`: guessCategory's paysBill), or money into it from someone outside the
+ * household (Payer) by their name or the payment's, for its amount give or take a tenth (two fifths for a bill that changes), within two
  * weeks of one of its days (View.dues) not paid already (`taken`, by
  * payment and day). The nearest day wins; a tie between two payments is
  * no plain answer, so none. A payee whose name says nothing of the
@@ -283,7 +286,7 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
     ? t.amount > 0 && (x.to || checking) === account && (same(t.payee!, x) || alike(t.payee!, x.payer))
     : t.amount < 0 && (x.from || checking) === account && same(t.payee!, x));
   for (const x of payments) {
-    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !fits(x)) continue;
+    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * tolerance(x) + 0.005 || !fits(x)) continue;
     for (const due of dues[x.id] || []) {
       const gap = Math.abs(dayNo(due) - dayNo(t.date)), off = Math.abs(paid - x.amount);
       if (gap > matchDays || taken.has(x.id + ' ' + due)) continue;
