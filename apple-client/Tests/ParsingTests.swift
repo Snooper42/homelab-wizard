@@ -883,3 +883,53 @@ struct StaleCopyTests {
         #expect(fresh.staleWhy(apps: []) == nil)
     }
 }
+
+@Suite("Settings on a phone")
+struct HomelabSettingsTests {
+    // As the computer sends it (main #491): a secret says only that it is set.
+    let json = #"""
+    {"settings":[
+      {"key":"TZ","section":"This Mac","help":"Your time zone.","secret":false,"set":true,"value":"Europe/Lisbon"},
+      {"key":"KEEP_AWAKE","section":"This Mac","help":"Keep it awake (./homelab awake). true: it never sleeps. false: it sleeps as set.","secret":false,"set":true,"value":"true"},
+      {"key":"PHONE_COMPANION","section":"This Mac","help":"","secret":false,"set":true,"value":"true"},
+      {"key":"NPM_API_PASSWORD","section":"Domain","help":"","secret":true,"set":true,"value":"should-never-be-kept"}],
+     "computerOnly":["NPM_API_PASSWORD","PHONE_COMPANION"]}
+    """#
+
+    @Test func readsTheFormAndNeverKeepsASecretsValue() throws {
+        let form = try JSONDecoder.homelab().decode(HomelabSettingsForm.self, from: Data(json.utf8))
+        #expect(form.settings.count == 4)
+        let secret = try #require(form.settings.last)
+        #expect(secret.secret && secret.set && secret.value.isEmpty)
+        #expect(form.sections.map(\.name) == ["This Mac", "Domain"])
+        #expect(SettingWords.section("This Mac") == "This Machine")
+        // Everyday ones change; a secret and what a phone connects through don't.
+        #expect(form.settings.map(form.phoneMayChange) == [true, true, false, false])
+        #expect(form.settings.map(\.isToggle) == [false, true, true, false])
+    }
+
+    @Test func namesAsTheComputersScreen() throws {
+        let apps = try JSONDecoder().decode([CatalogEntry].self, from: Data(#"""
+        [{"id":"open-webui","name":"Open WebUI","kind":"optional"},{"id":"paperless","name":"Paperless-ngx","kind":"optional"}]
+        """#.utf8))
+        #expect(SettingWords.label("TZ", apps: apps) == "Time zone")
+        #expect(SettingWords.label("OPEN_WEBUI_PORT", apps: apps) == "Open WebUI port")
+        #expect(SettingWords.label("PAPERLESS_DB_PASSWORD", apps: apps) == "Paperless-ngx database password")
+        #expect(SettingWords.label("NPM_API_PASSWORD", apps: []) == "Nginx Proxy Manager API password")
+        #expect(SettingWords.envPrefix("Open WebUI") == "OPEN_WEBUI_")
+    }
+
+    @Test func helpWithoutCommandsAndASwitchsTrueAndFalse() {
+        let help = "Keep it awake (./homelab awake). true: it never sleeps. false: it sleeps as set."
+        #expect(SettingWords.plainHelp(help, toggle: false) == "Keep it awake. true: it never sleeps. false: it sleeps as set.")
+        #expect(SettingWords.plainHelp(help, toggle: true) == "Keep it awake.")
+        #expect(SettingWords.plainHelp("Paths like ./data stay. More here.", toggle: true) == "Paths like ./data stay. More here.")
+    }
+
+    @Test func onlyKeysShapedLikeEnvKeysAreSent() {
+        #expect(HomelabSetting.isValidKey("TZ") && HomelabSetting.isValidKey("_X1"))
+        #expect(!HomelabSetting.isValidKey("") && !HomelabSetting.isValidKey("1TZ"))
+        #expect(!HomelabSetting.isValidKey("TZ=x") && !HomelabSetting.isValidKey("A B"))
+        #expect(!HomelabSetting.isValidKey(String(repeating: "A", count: 101)))
+    }
+}

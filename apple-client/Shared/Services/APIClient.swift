@@ -177,6 +177,30 @@ actor APIClient {
         }
     }
 
+    // MARK: Settings (main #491)
+
+    /// The Settings form: every `.env` setting, a secret only as set or not.
+    func settingsForm() async throws -> HomelabSettingsForm {
+        try await call("Settings", as: HomelabSettingsForm.self)
+    }
+
+    /// Saves everyday settings. This is a change, never retried; the
+    /// computer refuses a secret or a setting the phone connects through,
+    /// and saves none if it refuses one. Only the count is logged.
+    func saveSettings(_ values: [String: String]) async throws -> HomelabSettingsForm {
+        guard !values.isEmpty, values.keys.allSatisfy(HomelabSetting.isValidKey),
+              values.values.allSatisfy({ $0.utf8.count <= 1024 && !$0.contains(where: \.isNewline) })
+        else { throw APIError.invalidMethodName }
+        let (request, endpoint) = try callRequest("SaveSettings", [.object(values.mapValues { .string($0) })])
+        Log.network.notice("SaveSettings: \(values.count, privacy: .public) setting(s)")
+        let data = try await send(request, to: endpoint, using: actionSession)
+        do {
+            return try JSONDecoder.homelab().decode(CallEnvelope<HomelabSettingsForm>.self, from: data).result
+        } catch {
+            throw APIError.decoding
+        }
+    }
+
     /// Pauses or resumes the nightly image updates. This is a change.
     func setUpdatesPaused(_ paused: Bool) async throws -> UpdatesState {
         let (request, endpoint) = try callRequest("SetUpdatesPaused", [.bool(paused)])

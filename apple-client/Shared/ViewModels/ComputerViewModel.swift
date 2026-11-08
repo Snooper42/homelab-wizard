@@ -15,6 +15,18 @@ final class ComputerViewModel {
     /// Kept only while its sheet is open.
     var report: DiagnosticsReport?
 
+    // The Settings form (main #491).
+    private(set) var form: HomelabSettingsForm?
+    private(set) var formError: String?
+    /// The computer's Homelab Wizard is older than Settings on a phone: it
+    /// answers that it doesn't serve them.
+    private(set) var formNotServed = false
+    private(set) var isLoadingForm = false
+    private(set) var isSavingForm = false
+    private(set) var formSaveError: String?
+    /// Goes up with each save, for the haptic.
+    private(set) var formSavedCount = 0
+
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private let liveEvents: LiveEventManager
     @ObservationIgnored private let device: @MainActor () -> DeviceInfo?
@@ -60,6 +72,54 @@ final class ComputerViewModel {
             let apiError = APIError.from(error)
             Log.ui.error("SetUpdatesPaused failed: \(apiError.logName, privacy: .public)")
             updatesError = apiError.errorDescription
+        }
+    }
+
+    /// Reads the Settings form again.
+    func loadForm() async {
+        guard !isLoadingForm else { return }
+        isLoadingForm = true
+        defer { isLoadingForm = false }
+        do {
+            form = try await api.settingsForm()
+            formError = nil
+            formNotServed = false
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("Settings failed: \(apiError.logName, privacy: .public)")
+            if case .server(status: 404, _) = apiError {
+                formNotServed = true
+                formError = nil
+            } else {
+                formError = apiError.errorDescription
+            }
+        }
+    }
+
+    /// Saves the everyday settings changed, after the owner authenticates;
+    /// never retried. The computer's answer is the form as it is now.
+    /// Returns whether it saved.
+    func saveForm(_ changes: [String: String]) async -> Bool {
+        guard canChange, !isSavingForm, !changes.isEmpty, let form else { return false }
+        // Only what this phone may change, whatever was typed.
+        let mine = Set(form.settings.filter(form.phoneMayChange).map(\.key))
+        guard changes.keys.allSatisfy(mine.contains) else {
+            formSaveError = "Passwords, tokens and the settings this device connects through are changed on the computer."
+            return false
+        }
+        isSavingForm = true
+        defer { isSavingForm = false }
+        guard await authorize(changes.count == 1 ? "Change a homelab setting." : "Change \(changes.count) homelab settings.") else { return false }
+        do {
+            self.form = try await api.saveSettings(changes)
+            formSaveError = nil
+            formSavedCount += 1
+            return true
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SaveSettings failed: \(apiError.logName, privacy: .public)")
+            formSaveError = apiError.errorDescription
+            return false
         }
     }
 

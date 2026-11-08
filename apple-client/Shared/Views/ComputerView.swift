@@ -27,6 +27,7 @@ struct ComputerView: View {
                 fixSection
             case .settings:
                 updatesSection
+                homelabSettingsSection
                 deviceSection
                 reportSection
                 creditsSection
@@ -34,8 +35,14 @@ struct ComputerView: View {
         }
         .formStyle(.grouped)
         .themedCanvas()
-        .task { await computer.load() }
-        .refreshable { await computer.load() }
+        .task {
+            await computer.load()
+            if page == .settings { await computer.loadForm() }
+        }
+        .refreshable {
+            await computer.load()
+            if page == .settings { await computer.loadForm() }
+        }
         .sheet(item: $computer.report) { report in
             ReportView(report: report)
         }
@@ -46,7 +53,7 @@ struct ComputerView: View {
     private var lead: String {
         switch page {
         case .setup: "What still needs you, and how this machine is doing."
-        case .settings: "This machine's nightly updates, and this device. The rest of the settings are on the computer."
+        case .settings: "The homelab's settings, as the computer's Settings has them. A password or token is never shown."
         }
     }
 
@@ -110,6 +117,47 @@ struct ComputerView: View {
                 } else if updates.paused {
                     Text("Paused: apps keep the versions they run now until you turn this back on.")
                 }
+            }
+        }
+    }
+
+    /// The Settings form, a row a section, as the computer's Settings lists
+    /// its pages (main #491).
+    @ViewBuilder
+    private var homelabSettingsSection: some View {
+        Section {
+            if let form = computer.form {
+                NavigationLink {
+                    SettingsFormView(computer: computer, section: nil)
+                } label: {
+                    Label("Search All Settings", systemImage: "magnifyingglass")
+                }
+                ForEach(form.sections) { section in
+                    NavigationLink {
+                        SettingsFormView(computer: computer, section: section.name)
+                    } label: {
+                        LabeledContent {
+                            Text("\(section.settings.count)")
+                        } label: {
+                            Text(verbatim: SettingWords.section(section.name))
+                        }
+                    }
+                }
+            } else if computer.formNotServed {
+                Text("The computer's Homelab Wizard doesn't send its settings to a phone yet. They come with an update to it.")
+                    .foregroundStyle(.secondary)
+            } else if let error = computer.formError {
+                Text(error).foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+            }
+        } header: {
+            Text("Homelab Settings")
+        } footer: {
+            if computer.form != nil {
+                Text(computer.canChange
+                     ? "Change the everyday ones here. Passwords and tokens, and the settings this device connects through, are changed on the computer."
+                     : "This device can only look.")
             }
         }
     }
