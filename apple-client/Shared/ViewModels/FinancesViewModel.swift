@@ -131,6 +131,65 @@ final class FinancesViewModel {
         }
     }
 
+    // MARK: Investments, from Ghostfolio (main #494, #498)
+
+    /// What Read Now last said, or why it couldn't read, and Ghostfolio's
+    /// accounts nothing here matched.
+    private(set) var investmentsSaid: String?
+    private(set) var investmentsProblem: String?
+    private(set) var investmentsUnmatched: [String] = []
+    private(set) var isReadingInvestments = false
+
+    /// Reads Ghostfolio now, as the computer's Read Now does. It keeps what
+    /// each account holds in the plan, so it asks first, as any change does.
+    func readInvestments() async {
+        guard canEdit, !isReadingInvestments, !isSaving else { return }
+        guard await authorize("Read the investments from Ghostfolio.") else { return }
+        isReadingInvestments = true
+        defer { isReadingInvestments = false }
+        do {
+            apply(try await api.financesReadInvestments())
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesReadInvestments failed: \(apiError.logName, privacy: .public)")
+            investmentsSaid = nil
+            investmentsProblem = "Couldn't read Ghostfolio: \(apiError.errorDescription ?? "no answer")"
+        }
+    }
+
+    /// What Ghostfolio finds for a ticker or a name.
+    func findSymbols(_ query: String) async throws -> [InvestmentSymbol] {
+        guard canEdit else { return [] }
+        return try await api.financesFindSymbol(query)
+    }
+
+    /// Puts a buy or a sale into Ghostfolio and reads it again. Returns why
+    /// not, in words, or nil when it was kept.
+    func addInvestment(_ add: InvestmentAdd) async -> String? {
+        if let problem = add.problem() { return problem }
+        guard canEdit, !isSaving, let json = add.json() else { return "This device can't change Finances." }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize(add.sold ? "Record the sale in Ghostfolio." : "Record the buy in Ghostfolio.") else { return "Not confirmed, so nothing was kept." }
+        do {
+            apply(try await api.financesAddInvestment(json))
+            savedCount += 1
+            return nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesAddInvestment failed: \(apiError.logName, privacy: .public)")
+            return apiError.errorDescription ?? "Ghostfolio didn't take it."
+        }
+    }
+
+    private func apply(_ r: InvestmentsReadResult) {
+        plan = r.read.view
+        rawPlan = r.read.rawPlan
+        investmentsSaid = r.words()
+        investmentsProblem = nil
+        investmentsUnmatched = r.unmatched
+    }
+
     /// Types in an account's balance, as on the computer. Returns whether it saved.
     func setBalance(of account: FinanceAccount, to value: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

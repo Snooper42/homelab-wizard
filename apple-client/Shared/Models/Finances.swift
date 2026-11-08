@@ -838,3 +838,85 @@ extension FinancesPlanView {
         return plan.accounts.reduce(0) { $0 + worth(of: $1) - worth(of: $1, on: first) }
     }
 }
+
+// MARK: - Investments from Ghostfolio, read or added from the phone (main #494, #498)
+
+/// A ticker Ghostfolio found for what was typed (`ghostfolio.Symbol`).
+struct InvestmentSymbol: Decodable, Sendable, Hashable, Identifiable {
+    let symbol: String
+    let name: String
+    let currency: String
+    let dataSource: String
+
+    var id: String { dataSource + ":" + symbol }
+}
+
+/// A buy or a sale to put into Ghostfolio (`ghostfolio.Add`).
+struct InvestmentAdd: Sendable, Equatable {
+    /// The plan's investment or retirement account, by id; or the name of a new one.
+    var account: String?
+    var newName: String?
+    var symbol: InvestmentSymbol?
+    var shares: Double
+    var total: Double
+    var date: Date
+    var sold: Bool
+
+    private var trimmedName: String { (newName ?? "").trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// What's wrong, as the computer would say it, before asking it; nil when it can be sent.
+    func problem(now: Date = Date(), calendar: Calendar = .current) -> String? {
+        if (account ?? "").isEmpty && trimmedName.isEmpty { return "Pick the account it's in, or name a new one." }
+        guard let symbol, !symbol.symbol.isEmpty, !symbol.dataSource.isEmpty, !symbol.currency.isEmpty else {
+            return "Pick what was bought from the list Ghostfolio finds."
+        }
+        if !(shares > 0) || !shares.isFinite { return "How many shares: more than 0." }
+        if !(total >= 0) || !total.isFinite { return "What was paid: type it without a minus." }
+        if calendar.startOfDay(for: date) > calendar.startOfDay(for: now) { return "The day is still to come: pick the day it was bought." }
+        return nil
+    }
+
+    /// As the computer reads it, the day as YYYY-MM-DD here; nil without a symbol.
+    func json(calendar: Calendar = .current) -> JSONValue? {
+        guard let symbol else { return nil }
+        let c = calendar.dateComponents([.year, .month, .day], from: date)
+        let day = String(format: "%04d-%02d-%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0)
+        var o: [String: JSONValue] = [
+            "symbol": .string(symbol.symbol), "dataSource": .string(symbol.dataSource), "currency": .string(symbol.currency),
+            "shares": .number(shares), "total": .number(total), "date": .string(day),
+        ]
+        if !trimmedName.isEmpty {
+            o["newName"] = .string(trimmedName)
+        } else if let account {
+            o["account"] = .string(account)
+        }
+        if sold { o["sold"] = .bool(true) }
+        return .object(o)
+    }
+}
+
+/// Ghostfolio read again (Read Now, or after a buy or sale is added): the
+/// plan with what each account holds, and how much Ghostfolio has.
+struct InvestmentsReadResult: Sendable {
+    let read: FinancesRead
+    /// Ghostfolio's accounts no account here matched.
+    let unmatched: [String]
+    /// How many accounts and holdings Ghostfolio has, matched or not.
+    let accounts: Int
+    let holdings: Int
+
+    /// What it says, as the computer's Finances says it.
+    func words(at time: Date = Date()) -> String {
+        let t = time.formatted(date: .omitted, time: .shortened)
+        func n(_ k: Int, _ one: String, _ many: String) -> String { "\(k) \(k == 1 ? one : many)" }
+        let held = read.view.plan.accounts.filter { !$0.holdings.isEmpty }
+        let count = held.reduce(0) { $0 + $1.holdings.count }
+        if accounts == 0 {
+            return "Signed in to Ghostfolio at \(t): it has no accounts yet. Add yours there, named as they are here, then Read Now."
+        }
+        if holdings == 0 {
+            return "Signed in to Ghostfolio at \(t): its \(n(accounts, "account holds", "accounts hold")) nothing yet. Add a buy for each holding there, then Read Now."
+        }
+        return "Read from Ghostfolio at \(t): \(n(count, "holding", "holdings")) in \(n(held.count, "account", "accounts"))."
+    }
+}
