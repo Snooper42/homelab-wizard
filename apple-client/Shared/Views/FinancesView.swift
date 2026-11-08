@@ -1464,8 +1464,10 @@ private struct TransactionDetailView: View {
                         Text(verbatim: t.isSplit ? "Split" : (category.isEmpty ? "None" : category))
                     }
                 }
-                if !t.note.isEmpty {
-                    LabeledContent("Note") { Text(verbatim: t.note).multilineTextAlignment(.trailing) }
+                // The bank's own wording, kept from an import, stays in the transaction but isn't shown.
+                let note = PayeeLogos.shared.shownNote(t.note, payee: t.payee)
+                if !note.isEmpty {
+                    LabeledContent("Note") { Text(verbatim: note).multilineTextAlignment(.trailing) }
                 }
                 if !t.tags.isEmpty {
                     LabeledContent("Tags") { Text(verbatim: t.tags.joined(separator: ", ")) }

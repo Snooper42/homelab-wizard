@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A transaction's note on the iPhone:** the bank's own wording, kept from an import, isn't shown as its note (a memo you wrote before it still is), as on the computer.
 - **Budgets on the iPhone:** the page opens with what's left to spend this month, a bar of what's spent, and about how much a day that leaves.
 - **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.
 - **Investments from the iPhone:** Finances › Investments has **Read Now**, to read Ghostfolio again, and **Add a Holding**, to record a buy or a sale from your phone, as on the computer.
