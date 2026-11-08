@@ -74,13 +74,16 @@ struct PayeeLogoTests {
             guard b.path != nil else { continue }
             let segments = logos.marks[b.key]
             #expect(segments != nil, "\(b.key): its mark doesn't read")
+            // Every point the mark passes through is in its box; a curve's
+            // control points, which only bend it, may reach a little past.
             for seg in segments ?? [] {
-                let points: [Double] = switch seg {
-                case .move(let x, let y), .line(let x, let y): [x, y]
-                case .curve(let a, let b, let c, let d, let e, let f): [a, b, c, d, e, f]
-                case .close: []
+                let (on, control): ([Double], [Double]) = switch seg {
+                case .move(let x, let y), .line(let x, let y): ([x, y], [])
+                case .curve(let a, let b, let c, let d, let e, let f): ([e, f], [a, b, c, d])
+                case .close: ([], [])
                 }
-                #expect(points.allSatisfy { $0 >= -1 && $0 <= 25 }, "\(b.key): drawn outside its 24 by 24 box")
+                #expect(on.allSatisfy { $0 >= -0.01 && $0 <= 24.01 }, "\(b.key): drawn outside its 24 by 24 box")
+                #expect(control.allSatisfy { $0 >= -8 && $0 <= 32 }, "\(b.key): a curve bent far outside its box")
             }
         }
     }
