@@ -131,6 +131,10 @@ declare namespace app {
     balance: number;
     currency?: string;
   }
+  interface AppLogo {
+    image: string;
+    from: string;
+  }
   interface AppSubscription {
     name: string;
     amount: number;
@@ -1151,6 +1155,7 @@ interface Backend {
     Finances(): Promise<finance.View>;
     FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
+    FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
     FinancesFindSymbol(arg1: string): Promise<app.AppSymbol[]>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;

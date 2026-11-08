@@ -5078,7 +5078,8 @@ const smokes = [
     await page.click(vti);
     await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
     if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
-    if (await page.$(`${card} button:text-is("Add a holding")`)) throw new Error('Add a holding with Ghostfolio stopped');
+    // Add a holding is there whether or not Status reports Ghostfolio running: it may not see the one that answers.
+    await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
@@ -5203,6 +5204,29 @@ const smokes = [
     await page.waitForSelector(form, { state: 'detached', timeout: 2000 });
     await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
+  // A phone allowed to change Finances reads Ghostfolio and adds a holding through the computer, as the computer does.
+  { name: 'The phone: Investments read and add a holding, allowed to change Finances', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.investReads === 1, null, { timeout: 5000 });
+    await page.click(`${card} button:text-is("Add a holding")`);
+    const form = `${card} form.fx-investadd`;
+    await page.fill(`${form} input[placeholder^="A ticker"]`, 'voo');
+    await page.click(`${form} button.fx-symbol:has(strong:text-is("VOO"))`, { timeout: 3000 });
+    await page.fill(`${form} input[placeholder="10"]`, '2');
+    await page.fill(`${form} .moneyfield input`, '1000');
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.investAdded?.[0]?.symbol)) !== 'VOO') throw new Error('not added from the phone');
+  } },
+  // Status not reporting Ghostfolio (it runs elsewhere, or Status has not been read yet): the card still offers a first read and Add.
+  { name: 'Finances: Investments offer a first read and Add a holding with Ghostfolio not on Status', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
+  } },
   { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     const card = '#finRoot .fx-invest';
@@ -5231,7 +5255,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-6);
     const names = txs.map((t) => t.payee).join('|');
-    if (names !== 'Acme Cruises|Mazda Financial|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
+    if (names !== 'Acme Cruises|Mazda|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
     if (!txs[0].note?.includes('ACME CRUISES AD_PAYMENT PPD ID: 1234567890')) throw new Error(`the bank's wording not kept: ${txs[0].note}`);
   } },
   // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
@@ -6635,6 +6659,92 @@ const smokes = [
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
   // Chase's checking CSV: Details (CREDIT or DEBIT) comes before Description, the payee, and each row ends in an empty cell.
+  // A Chase file's bills by their company's name (FPL, Mazda, Apple Cash), a card paid off moving to that card, and a bill
+  // whose name says nothing (FPL paying Electric, the HOA's own wording paying HOA) paying the planned one of its amount to
+  // the cent; the list leaves the bank's wording out (it stays in the note).
+  { name: 'Finances: bills come in by their company, a card payment moves to its card, and an amount to the cent pays its bill', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"FPL DIRECT DEBIT ELEC PYMT PPD ID: 3590247775",-140.00,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/19/2026,"AMERICAN EXPRESS ACH PMT M8056 WEB ID: 2005032111",-300.00,ACH_DEBIT,700.00,,\n'
+      + 'DEBIT,10/15/2026,"MAZDA FINANCIAL WEB NZTZP5VXA0Y1UPE WEB ID: 1111111111",-399.00,ACH_DEBIT,301.00,,\n'
+      + 'DEBIT,10/28/2026,"SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA",-310.00,ACH_DEBIT,0.00,,\n'
+      + 'CREDIT,10/26/2026,"APPLE CASH BANK XFER JANE Q DOE WEB ID: 6192912998",107.00,ACH_CREDIT,107.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("American Express"):has-text("moves to Amex Gold")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 5")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.date >= '2026-10-15' && (t.note || '').length > 20);
+    const by = (p) => txs.find((t) => t.payee === p);
+    const fpl = by('FPL'), amex = by('American Express'), mazda = by('Mazda'), hoa = by('Sunset Palms Eas Sunset Pal'), cash = by('Apple Cash');
+    if (!fpl || fpl.payment !== 'electric' || fpl.category !== 'Electric' || !/FPL DIRECT DEBIT/.test(fpl.note)) throw new Error(`FPL ${JSON.stringify(fpl)}`);
+    if (!amex || amex.to !== 'amex' || amex.category) throw new Error(`American Express ${JSON.stringify(amex)}`);
+    if (!mazda || mazda.payment) throw new Error(`Mazda ${JSON.stringify(mazda)}`);
+    if (!hoa || hoa.payment !== 'hoa') throw new Error(`HOA ${JSON.stringify(hoa)}`);
+    if (!cash || cash.amount !== 107) throw new Error(`Apple Cash ${JSON.stringify(cash)}`);
+    // The list shows the clean name, not the bank's wording.
+    const row = page.locator('.fx-txday li:has-text("FPL")').first();
+    await row.waitFor({ timeout: 5000 });
+    if (/PPD ID|3590247775/.test(await row.innerText())) throw new Error('the bank wording is shown in the list');
+  } },
+  // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
+  { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'h1', date: '2026-09-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', note: 'SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA' },
+    { id: 'h2', date: '2026-10-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', note: 'SUNSET PALMS EAS SUNSET PAL FT446739999 WEB ID: 2HOA' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Sunset Palms") button >> nth=0');
+    const box = page.locator('#finSheet label.field').filter({ hasText: /^Paid to/ }).locator('input');
+    await box.fill('HOA');
+    await page.waitForSelector('#finSheet .renameall:has-text("Rename the other transaction from “Sunset Palms Eas Sunset Pal” too")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.payee === 'HOA').length !== 2) throw new Error(`renamed ${JSON.stringify(txs)}`);
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,10/29/2026,"SUNSET PALMS EAS SUNSET PAL FT447000001 WEB ID: 2HOA",-310.00,ACH_DEBIT,0.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("HOA")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 1")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.payee === 'HOA').length !== 3) throw new Error(`after import ${JSON.stringify(txs)}`);
+  } },
+  // Logos: each payee and account showing initials, its website guessed from its brand; Get them all asks each website (the
+  // computer's FinancesFetchLogo), one with none says so, and Save keeps the ones got in the plan under their brand.
+  { name: 'Finances: Logos gets the real logos from each company\'s website, and keeps them', screen: 'finances', mock: { noLogo: ['traderjoes.com'] }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Logos")');
+    await page.waitForSelector('#finSheet h2:text-is("Logos")', { timeout: 5000 });
+    const costco = page.locator('#finSheet .logolist li:has-text("Costco")');
+    if (await costco.locator('input').inputValue() !== 'costco.com') throw new Error('Costco\'s website was not guessed');
+    await page.click('#finSheet button:has-text("Get them all")');
+    await page.waitForSelector('#finSheet .logolist li:has-text("Costco") :text("From costco.com")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .logolist li:has-text("Trader Joe") .bad:has-text("no logo")', { timeout: 5000 });
+    if (!(await costco.locator('.fmark.own img').count())) throw new Error('the logo got is not shown');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const logos = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.logos || {});
+    if (!/^data:image\/(png|webp);base64,/.test(logos.costco || '') || logos.traderjoes) throw new Error(`kept ${Object.keys(logos)}`);
+    const asked = await page.evaluate(() => window.__MOCK.logosFetched);
+    if (!asked.includes('costco.com') || asked.some((s) => /local|192\.168|127\./.test(s))) throw new Error(`asked ${asked}`);
+  } },
+  // A transaction's logo: Change logo offers its website, and the real logo got is kept for that payee with the transaction.
+  { name: 'Finances: a transaction gets its payee\'s real logo from the website', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Costco") button');
+    await page.click('#finSheet button:text-is("Change logo")');
+    const site = page.locator('#finSheet .getlogo input');
+    if (await site.inputValue() !== 'costco.com') throw new Error(`guessed ${await site.inputValue()}`);
+    await page.click('#finSheet button:text-is("Get the real logo")');
+    await page.waitForSelector('#finSheet .getlogofrom:text("From costco.com")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const logos = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.logos || {});
+    if (!logos.costco || !(await page.evaluate(() => window.__MOCK.ledgerSaved?.length))) throw new Error(`kept ${Object.keys(logos)}`);
+  } },
   { name: 'Finances: a Chase checking CSV takes its payee from Description, not Details', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
@@ -7319,6 +7429,7 @@ const screens = [
   { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'Finances, Logos, got', screen: 'finances', mock: { noLogo: ['traderjoes.com'] }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Logos")'); await page.click('#finSheet button:has-text("Get them all")'); await page.waitForSelector('#finSheet .logolist li:has-text("Costco") :text("From costco.com")'); await page.waitForSelector('#finSheet .logolist .bad'); } },
   { name: 'Finances, Transactions, two selected', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },

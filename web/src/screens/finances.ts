@@ -43,10 +43,10 @@ function fromApps() {
   ];
   return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
 }
-// Net worth › Investments, read from Ghostfolio: on Read now, and after the
-// first, once a day as Finances opens (unless turned off), when the last
-// read is from before today or 12 hours old. On the computer only: a phone
-// shows what was last read.
+// Net worth › Investments, read from Ghostfolio: on Read now (the computer,
+// or a phone allowed to change Finances), and after the first, once a day
+// as Finances opens on the computer while Status sees Ghostfolio running
+// (unless turned off), when the last read is from before today or 12 hours old.
 let invest: InvestState = {};
 let autoTried = '';
 async function readInvestments() {
@@ -127,11 +127,13 @@ function draw() {
     // Wallos's subscriptions, on the computer while Wallos runs.
     fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
-    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest, ...(runs('ghostfolio') ? { add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) } : {}) },
+    // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
+    // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
+    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) },
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
   mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -180,6 +182,8 @@ async function save(plan: finance.Plan): Promise<boolean> {
 /** Keeps the ledger; as with the plan, after a failure it is read again, the form kept open over it. */
 /** Receipts, kept on the homelab as soon as one is picked; a transaction names its own. */
 const receipts = { save: (dataURL: string) => go().SaveFinancesReceipt(dataURL), read: (name: string) => go().FinancesReceipt(name) };
+// A company's real logo from its website, asked by the computer (the desktop app); a phone has none to ask with.
+const fetchLogo = phone ? undefined : (site: string) => go().FinancesFetchLogo(site);
 
 async function saveLedger(l: finance.Ledger): Promise<boolean> {
   try {
@@ -235,7 +239,7 @@ function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close });
   $('finSheet').hidden = false;
 }
 

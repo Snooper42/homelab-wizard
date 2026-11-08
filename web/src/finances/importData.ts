@@ -160,6 +160,29 @@ export function renameFixes(found: (Imported & { raw?: string })[], account: str
   return out;
 }
 
+/** The bank's wording an import kept in a note: the whole note, or the part in brackets after a memo ("memo (WORDING)"). */
+export const wordingOf = (note: string): string => note.match(/\(([^()]+)\)\s*$/)?.[1] || note;
+
+/**
+ * The names the household gave payees by hand, by the clean name of the
+ * bank's wording they came in as: each row whose payee was renamed to
+ * words that are not the bank's ("SUNSET PALMS EAS SUNSET PAL" renamed
+ * HOA), the latest winning, so the next import of that wording comes in
+ * by the household's name.
+ */
+export function renameMemory(ledger: finance.Transaction[], clean: (raw: string) => string): Map<string, string> {
+  const out = new Map<string, string>();
+  const words = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  for (const q of ledger) {
+    if (!q.payee || !q.note || q.to) continue;
+    const said = wordingOf(q.note), from = clean(said);
+    if (!from || from.toLowerCase() === q.payee.toLowerCase() || from.toLowerCase() === said.toLowerCase()) continue;
+    const raw = new Set(words(said));
+    if (!words(q.payee).every((w) => raw.has(w))) out.set(from.toLowerCase(), q.payee);
+  }
+  return out;
+}
+
 /** One already in by the bank's wording kept in its note, on the account, day, and amount: whatever it was renamed since. */
 export function noted(t: Imported & { raw?: string }, account: string, ledger: finance.Transaction[]): boolean {
   const said = t.raw || t.payee;
@@ -246,7 +269,10 @@ export interface Planned { payment: string; due: string }
  * household (Payer) by their name or the payment's, for its amount give or take a tenth, within two
  * weeks of one of its days (View.dues) not paid already (`taken`, by
  * payment and day). The nearest day wins; a tie between two payments is
- * no plain answer, so none.
+ * no plain answer, so none. A payee whose name says nothing of the
+ * payment ("Mazda" paying "Car payment") still pays it when the amount is
+ * the payment's to the cent, within byAmountDays of one of its days, and
+ * no other payment's amount and days fit as well.
  */
 export function plannedFor(t: Imported, account: string, payments: finance.Payment[], dues: Record<string, string[]>, checking: string, taken: Set<string>, same: (payee: string, x: finance.Payment) => boolean): Planned | undefined {
   if (!t.amount || !t.payee) return undefined;
@@ -265,8 +291,24 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
       else if (gap === best.gap && off === best.off && x.id !== best.payment) tie = true;
     }
   }
-  return best && !tie ? { payment: best.payment, due: best.due } : undefined;
+  if (best) return tie ? undefined : { payment: best.payment, due: best.due };
+  // By the amount alone: to the cent, a few days from one of its days, and one payment only.
+  const exact: (Planned & { gap: number })[] = [];
+  for (const x of payments) {
+    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) >= 0.005) continue;
+    if (x.payer ? !(t.amount > 0 && (x.to || checking) === account) : !(t.amount < 0 && (x.from || checking) === account)) continue;
+    for (const due of dues[x.id] || []) {
+      const gap = Math.abs(dayNo(due) - dayNo(t.date));
+      if (gap <= byAmountDays && !taken.has(x.id + ' ' + due)) exact.push({ payment: x.id, due, gap });
+    }
+  }
+  if (new Set(exact.map((e) => e.payment)).size !== 1) return undefined;
+  const at = exact.sort((a, b) => a.gap - b.gap)[0];
+  return { payment: at.payment, due: at.due };
 }
+
+/** How far a row may be from a payment's day and pay it by its amount alone (its name saying nothing of the payment). */
+export const byAmountDays = 5;
 
 /** The payment days the ledger has paid already, as "payment day": each linked transaction's nearest day of its payment. */
 export function paidDays(ledger: finance.Transaction[], dues: Record<string, string[]>): Set<string> {

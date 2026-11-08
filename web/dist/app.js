@@ -968,6 +968,38 @@
     ["apple gs savings", "Apple Savings"],
     ["apple savings", "Apple Savings"],
     ["verizon wireless", "Verizon"],
+    // Bills and card payments, by the name a person says (FPL DIRECT DEBIT ELEC PYMT is FPL; APPLECARD GSBANK PAYMENT, Apple Card).
+    ["fpl", "FPL"],
+    ["florida power light", "FPL"],
+    ["duke energy", "Duke Energy"],
+    ["american express", "American Express"],
+    ["amex epayment", "American Express"],
+    ["applecard gsbank", "Apple Card"],
+    ["applecard", "Apple Card"],
+    ["apple card", "Apple Card"],
+    ["apple cash", "Apple Cash"],
+    ["fid bkg svc", "Fidelity"],
+    ["fidelity investments", "Fidelity"],
+    ["royal caribbean", "Royal Caribbean"],
+    // A car's lender by its make: MAZDA FINANCIAL is Mazda, as its payment is planned.
+    ["mazda financial", "Mazda"],
+    ["toyota financial", "Toyota"],
+    ["toyota motor credit", "Toyota"],
+    ["lexus financial", "Lexus"],
+    ["honda financial", "Honda"],
+    ["american honda finance", "Honda"],
+    ["ford credit", "Ford"],
+    ["ford motor credit", "Ford"],
+    ["nissan motor acceptance", "Nissan"],
+    ["nissan infiniti", "Nissan"],
+    ["hyundai motor finance", "Hyundai"],
+    ["hyundai capital", "Hyundai"],
+    ["kia motors finance", "Kia"],
+    ["kia finance", "Kia"],
+    ["bmw financial", "BMW"],
+    ["subaru motors finance", "Subaru"],
+    ["vw credit", "Volkswagen"],
+    ["volkswagen credit", "Volkswagen"],
     ["lowes", "Lowe's"],
     ["lowe s", "Lowe's"],
     ["the home depot", "The Home Depot"],
@@ -1002,6 +1034,20 @@
     const f4 = flat(s3);
     const chain = chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
     return chain ? chain[1] : ordinary(s3);
+  }
+  function bankWording(note) {
+    const s3 = note.trim();
+    const letters = s3.replace(/[^A-Za-z]/g, "");
+    const shouting = letters.length >= 8 && letters.replace(/[^A-Z]/g, "").length / letters.length > 0.7;
+    return (/\d{5,}/.test(s3) || /\b(?:PPD|CCD|WEB|TEL)\s*ID\b|\bXFER\b/i.test(s3) || shouting) && cleanPayee(s3).toLowerCase() !== s3.toLowerCase();
+  }
+  function shownNote(note, payee) {
+    const s3 = (note || "").trim();
+    const fromIt = (x3) => !!payee && cleanPayee(x3).toLowerCase() === payee.toLowerCase() && cleanPayee(x3).toLowerCase() !== x3.toLowerCase();
+    const bank = (x3) => bankWording(x3) || fromIt(x3);
+    const m3 = s3.match(/^(.*\S)\s+\((.+)\)$/);
+    if (m3 && bank(m3[2])) return bank(m3[1]) ? "" : m3[1];
+    return bank(s3) ? "" : s3;
   }
 
   // web/src/finances/money.ts
@@ -1254,6 +1300,19 @@
     });
     return out;
   }
+  var wordingOf = (note) => note.match(/\(([^()]+)\)\s*$/)?.[1] || note;
+  function renameMemory(ledger, clean) {
+    const out = /* @__PURE__ */ new Map();
+    const words5 = (x3) => x3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+    for (const q2 of ledger) {
+      if (!q2.payee || !q2.note || q2.to) continue;
+      const said2 = wordingOf(q2.note), from2 = clean(said2);
+      if (!from2 || from2.toLowerCase() === q2.payee.toLowerCase() || from2.toLowerCase() === said2.toLowerCase()) continue;
+      const raw = new Set(words5(said2));
+      if (!words5(q2.payee).every((w3) => raw.has(w3))) out.set(from2.toLowerCase(), q2.payee);
+    }
+    return out;
+  }
   function noted(t3, account, ledger) {
     const said2 = t3.raw || t3.payee;
     return !!said2 && ledger.some((q2) => q2.account === account && !q2.to && q2.date === t3.date && Math.abs(q2.amount - t3.amount) < 5e-3 && (q2.note || "").includes(said2));
@@ -1307,8 +1366,21 @@
         } else if (gap2 === best.gap && off2 === best.off && x3.id !== best.payment) tie = true;
       }
     }
-    return best && !tie ? { payment: best.payment, due: best.due } : void 0;
+    if (best) return tie ? void 0 : { payment: best.payment, due: best.due };
+    const exact = [];
+    for (const x3 of payments) {
+      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) >= 5e-3) continue;
+      if (x3.payer ? !(t3.amount > 0 && (x3.to || checking) === account) : !(t3.amount < 0 && (x3.from || checking) === account)) continue;
+      for (const due of dues[x3.id] || []) {
+        const gap2 = Math.abs(dayNo(due) - dayNo(t3.date));
+        if (gap2 <= byAmountDays && !taken.has(x3.id + " " + due)) exact.push({ payment: x3.id, due, gap: gap2 });
+      }
+    }
+    if (new Set(exact.map((e3) => e3.payment)).size !== 1) return void 0;
+    const at2 = exact.sort((a3, b2) => a3.gap - b2.gap)[0];
+    return { payment: at2.payment, due: at2.due };
   }
+  var byAmountDays = 5;
   function paidDays(ledger, dues) {
     const out = /* @__PURE__ */ new Set();
     for (const q2 of ledger) {
@@ -1336,7 +1408,7 @@
   // web/src/finances/logos.ts
   var brands = {
     "chase": { name: "Chase", bg: "#117ACA", ink: "#ffffff", kind: "bank", path: "M0 15.415c0 .468.38.85.848.85h5.937V.575L0 7.72v7.695m15.416 8.582c.467 0 .846-.38.846-.849v-5.937H.573l7.146 6.785h7.697M24 8.587a.844.844 0 0 0-.847-.846h-5.938V23.43l6.782-7.148L24 8.586M8.585.003a.847.847 0 0 0-.847.847v5.94h15.688L16.282.003H8.585Z" },
-    "americanexpress": { name: "American Express", bg: "#2E77BC", ink: "#ffffff", kind: "card", letters: "AX" },
+    "americanexpress": { name: "American Express", bg: "#2E77BC", ink: "#ffffff", kind: "card", path: "M16.015 14.378c0-.32-.135-.496-.344-.622-.21-.12-.464-.135-.81-.135h-1.543v2.82h.675v-1.027h.72c.24 0 .39.024.478.125.12.13.104.38.104.55v.35h.66v-.555c-.002-.25-.017-.376-.108-.516-.06-.08-.18-.18-.33-.234l.02-.008c.18-.072.48-.297.48-.747zm-.87.407l-.028-.002c-.09.053-.195.058-.33.058h-.81v-.63h.824c.12 0 .24 0 .33.05.098.048.156.147.15.255 0 .12-.045.215-.134.27zM20.297 15.837H19v.6h1.304c.676 0 1.05-.278 1.05-.884 0-.28-.066-.448-.187-.582-.153-.133-.392-.193-.73-.207l-.376-.015c-.104 0-.18 0-.255-.03-.09-.03-.15-.105-.15-.21 0-.09.017-.166.09-.21.083-.046.177-.066.272-.06h1.23v-.602h-1.35c-.704 0-.958.437-.958.84 0 .9.776.855 1.407.87.104 0 .18.015.225.06.046.03.082.106.082.18 0 .077-.035.15-.08.18-.06.053-.15.07-.277.07zM0 0v10.096L.81 8.22h1.75l.225.464V8.22h2.043l.45 1.02.437-1.013h6.502c.295 0 .56.057.756.236v-.23h1.787v.23c.307-.17.686-.23 1.12-.23h2.606l.24.466v-.466h1.918l.254.465v-.466h1.858v3.948H20.87l-.36-.6v.585h-2.353l-.256-.63h-.583l-.27.614h-1.213c-.48 0-.84-.104-1.08-.24v.24h-2.89v-.884c0-.12-.03-.12-.105-.135h-.105v1.036H6.067v-.48l-.21.48H4.69l-.202-.48v.465H2.235l-.256-.624H1.4l-.256.624H0V24h23.786v-7.108c-.27.135-.613.18-.973.18H21.09v-.255c-.21.165-.57.255-.914.255H14.71v-.9c0-.12-.018-.12-.12-.12h-.075v1.022h-1.8v-1.066c-.298.136-.643.15-.928.136h-.214v.915h-2.18l-.54-.617-.57.6H4.742v-3.93h3.61l.518.602.554-.6h2.412c.28 0 .74.03.942.225v-.24h2.177c.202 0 .644.045.903.225v-.24h3.265v.24c.163-.164.508-.24.803-.24h1.89v.24c.194-.15.464-.24.84-.24h1.176V0H0zM21.156 14.955c.004.005.006.012.01.016.01.01.024.01.032.02l-.042-.035zM23.828 13.082h.065v.555h-.065zM23.865 15.03v-.005c-.03-.025-.046-.048-.075-.07-.15-.153-.39-.215-.764-.225l-.36-.012c-.12 0-.194-.007-.27-.03-.09-.03-.15-.105-.15-.21 0-.09.03-.16.09-.204.076-.045.15-.05.27-.05h1.223v-.588h-1.283c-.69 0-.96.437-.96.84 0 .9.78.855 1.41.87.104 0 .18.015.224.06.046.03.076.106.076.18 0 .07-.034.138-.09.18-.045.056-.136.07-.27.07h-1.288v.605h1.287c.42 0 .734-.118.9-.36h.03c.09-.134.135-.3.135-.523 0-.24-.045-.39-.135-.526zM18.597 14.208v-.583h-2.235V16.458h2.235v-.585h-1.57v-.57h1.533v-.584h-1.532v-.51M13.51 8.787h.685V11.6h-.684zM13.126 9.543l-.007.006c0-.314-.13-.5-.34-.624-.217-.125-.47-.135-.81-.135H10.43v2.82h.674v-1.034h.72c.24 0 .39.03.487.12.122.136.107.378.107.548v.354h.677v-.553c0-.25-.016-.375-.11-.516-.09-.107-.202-.19-.33-.237.172-.07.472-.3.472-.75zm-.855.396h-.015c-.09.054-.195.056-.33.056H11.1v-.623h.825c.12 0 .24.004.33.05.09.04.15.128.15.25s-.047.22-.134.266zM15.92 9.373h.632v-.6h-.644c-.464 0-.804.105-1.02.33-.286.3-.362.69-.362 1.11 0 .512.123.833.36 1.074.232.238.645.31.97.31h.78l.255-.627h1.39l.262.627h1.36v-2.11l1.272 2.11h.95l.002.002V8.786h-.684v1.963l-1.18-1.96h-1.02V11.4L18.11 8.744h-1.004l-.943 2.22h-.3c-.177 0-.362-.03-.468-.134-.125-.15-.186-.36-.186-.662 0-.285.08-.51.194-.63.133-.135.272-.165.516-.165zm1.668-.108l.464 1.118v.002h-.93l.466-1.12zM2.38 10.97l.254.628H4V9.393l.972 2.205h.584l.973-2.202.015 2.202h.69v-2.81H6.118l-.807 1.904-.876-1.905H3.343v2.663L2.205 8.787h-.997L.01 11.597h.72l.26-.626h1.39zm-.688-1.705l.46 1.118-.003.002h-.915l.457-1.12zM11.856 13.62H9.714l-.85.923-.825-.922H5.346v2.82H8l.855-.932.824.93h1.302v-.94h.838c.6 0 1.17-.164 1.17-.945l-.006-.003c0-.78-.598-.93-1.128-.93zM7.67 15.853l-.014-.002H6.02v-.557h1.47v-.574H6.02v-.51H7.7l.733.82-.764.824zm2.642.33l-1.03-1.147 1.03-1.108v2.253zm1.553-1.258h-.885v-.717h.885c.24 0 .42.098.42.344 0 .243-.15.372-.42.372zM9.967 9.373v-.586H7.73V11.6h2.237v-.58H8.4v-.564h1.527V9.88H8.4v-.507" },
     "bankofamerica": { name: "Bank of America", bg: "#012169", ink: "#ffffff", kind: "bank", path: "M15.194 7.57c.487-.163 1.047-.307 1.534-.451-1.408-.596-3.176-1.227-4.764-1.625-.253.073-1.01.271-1.534.434.541.162 2.328.577 4.764 1.642zm-8.896 6.785c.577.343 1.19.812 1.786 1.209 3.952-3.068 7.85-5.432 12.127-6.767-.596-.307-1.119-.578-1.787-.902-2.562.65-6.947 2.4-12.126 6.46zm-.758-6.46c-2.112.974-4.331 2.31-5.54 3.085.433.199.866.361 1.461.65 2.671-1.805 4.764-2.905 5.594-3.266-.595-.217-1.154-.361-1.515-.47zm8.066.234c-.686-.379-3.068-1.263-4.71-1.642-.487.18-1.173.451-1.642.65.595.162 2.815.758 4.71 1.714.487-.235 1.173-.523 1.642-.722zm-3.374 1.552c-.56-.27-1.173-.523-1.643-.74-1.425.704-3.284 1.769-5.63 3.447.505.27 1.047.595 1.624.92 1.805-1.335 3.627-2.598 5.649-3.627zm1.732 8.825c3.79-3.249 9.113-6.407 12.036-7.544a48.018 48.018 0 00-1.949-1.155c-3.771 1.246-8.174 4.007-12.108 7.129.667.505 1.371 1.028 2.02 1.57zm2.851-.235h-.108l-.18-.27h-.109v.27h-.072v-.596h.27c.055 0 .109 0 .145.036.054.019.072.073.072.127 0 .108-.09.162-.198.162zm-.289-.343c.09 0 .199.018.199-.09 0-.072-.072-.09-.144-.09h-.163v.18zm-.523.036c0-.289.235-.523.541-.523.307 0 .542.234.542.523a.543.543 0 01-.542.542.532.532 0 01-.54-.542m.107 0c0 .235.199.433.451.433a.424.424 0 100-.848c-.27 0-.45.199-.45.415" },
     "wellsfargo": { name: "Wells Fargo", bg: "#D71E28", ink: "#ffffff", kind: "bank", letters: "WF" },
     "robinhood": { name: "Robinhood", bg: "#CCFF00", ink: "#111111", kind: "investment", path: "M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852" },
@@ -1344,7 +1416,7 @@
     "mastercard": { name: "MasterCard", bg: "#EB001B", ink: "#ffffff", kind: "card", path: "M11.343 18.031c.058.049.12.098.181.146-1.177.783-2.59 1.238-4.107 1.238C3.32 19.416 0 16.096 0 12c0-4.095 3.32-7.416 7.416-7.416 1.518 0 2.931.456 4.105 1.238-.06.051-.12.098-.165.15C9.6 7.489 8.595 9.688 8.595 12c0 2.311 1.001 4.51 2.748 6.031zm5.241-13.447c-1.52 0-2.931.456-4.105 1.238.06.051.12.098.165.15C14.4 7.489 15.405 9.688 15.405 12c0 2.31-1.001 4.507-2.748 6.031-.058.049-.12.098-.181.146 1.177.783 2.588 1.238 4.107 1.238C20.68 19.416 24 16.096 24 12c0-4.094-3.32-7.416-7.416-7.416zM12 6.174c-.096.075-.189.15-.28.231C10.156 7.764 9.169 9.765 9.169 12c0 2.236.987 4.236 2.551 5.595.09.08.185.158.28.232.096-.074.189-.152.28-.232 1.563-1.359 2.551-3.359 2.551-5.595 0-2.235-.987-4.236-2.551-5.595-.09-.08-.184-.156-.28-.231z" },
     "visa": { name: "Visa", bg: "#1A1F71", ink: "#ffffff", kind: "card", path: "M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094-.368-.175-.503-.461-.658C1.447 8.864.677 8.627 0 8.479l.046-.217h3.3a.904.904 0 01.894.764l.817 4.338 2.018-5.102zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 011.913.336l.34-1.59a5.207 5.207 0 00-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24l-1.565-7.496h-1.656a.883.883 0 00-.826.55l-2.909 6.946h2.036l.405-1.12h2.488zm-2.163-2.656l1.02-2.815.588 2.815zm-8.16-4.84l-1.603 7.496H8.34l1.605-7.496z" },
     "apple": { name: "Apple", bg: "#000000", ink: "#ffffff", kind: "card", path: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" },
-    "goldmansachs": { name: "Goldman Sachs", bg: "#7399C6", ink: "#111111", kind: "bank", letters: "GS" },
+    "goldmansachs": { name: "Goldman Sachs", bg: "#7399C6", ink: "#111111", kind: "bank", path: "M1.963 9.264h1.452v2.378c-.484.098-.855.148-1.262.148C.561 11.79 0 10.878 0 9.377c0-1.614.778-2.526 2.329-2.526.196 0 .567.014 1.03.084v1.522h-.336l-.19-.582c-.183-.553-.4-.827-.744-.827-.596 0-.912.806-.912 2.315 0 1.515.126 2.23.904 2.23.106 0 .231-.014.351-.048V9.776l-.469-.323v-.189Zm1.424 6.382c0 .954-.651 1.501-1.802 1.501-.315 0-.778-.048-1.213-.119v-1.865h.337l.14.441c.315 1.017.54 1.353.94 1.353.421 0 .722-.371.722-.862 0-.399-.189-.68-.595-.898l-.702-.378c-.541-.287-.835-.736-.835-1.283 0-.828.68-1.326 1.796-1.326.252 0 .547.022 1.016.085v1.521h-.337l-.188-.581c-.19-.618-.393-.842-.764-.842-.415 0-.66.266-.66.652 0 .343.19.589.561.799l.708.399c.596.337.876.786.876 1.403Zm3.101 1.102.14.211v.106H5.556l-.05-.407c-.112.308-.407.491-.786.491-.561 0-.912-.351-.912-.926 0-.561.315-.933 1.283-1.311l.414-.161v-.525c0-.463-.085-.652-.344-.652-.21 0-.329.112-.533.623l-.231.573h-.315v-1.144c.414-.126.828-.21 1.185-.21.792 0 1.221.378 1.221 1.066v2.266Zm.405-6.824c0 1.192-.637 1.866-1.459 1.866-.82 0-1.457-.674-1.457-1.866 0-1.193.637-1.866 1.459-1.866.82 0 1.457.673 1.457 1.866Zm-1.387 6.235v-1.213l-.133.056c-.414.169-.569.547-.569 1.101 0 .414.099.652.329.652.231 0 .373-.225.373-.596Zm.357-6.235c0-1.347-.112-1.704-.427-1.704s-.428.357-.428 1.704c0 1.346.113 1.704.428 1.704s.427-.358.427-1.704Zm3.521 6.269.126.064c-.224.646-.511.89-1.066.89-.904 0-1.409-.679-1.409-1.865 0-1.185.589-1.866 1.55-1.866.258 0 .603.042.897.16v1.193h-.329l-.132-.449c-.176-.596-.273-.75-.449-.75-.281 0-.505.365-.505 1.754 0 1.114.168 1.521.595 1.521.287.001.532-.181.722-.652Zm-.779-4.488H7.342v-.104l.141-.211V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.105Zm1.726.085c-.772 0-1.235-.702-1.235-1.901 0-1.192.483-1.83 1.227-1.83.379 0 .589.147.68.441V7.476l-.141-.21V7.16l1.123-.084v4.313l.14.211v.104h-.996l-.077-.533c-.111.457-.321.619-.721.619Zm2.461 4.958.14.211v.106H11.67v-.106l.14-.211v-2.525c0-.301-.091-.483-.309-.483-.26 0-.449.218-.449.645v2.363l.141.211v.106H9.93v-.106l.14-.211v-3.914l-.14-.21v-.105l1.122-.084v1.451c.127-.301.414-.469.82-.469.576 0 .919.365.919 1.073v2.258h.001Zm-2.664-6.846c0 1.263.112 1.648.421 1.648.385 0 .455-.554.455-1.662 0-1.073-.077-1.606-.449-1.606-.315 0-.427.379-.427 1.62Zm7.041 1.487.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.281-.407-.244 0-.441.219-.441.638v2.371l.14.211v.104h-1.262V11.6l.14-.211V8.787c0-.252-.084-.407-.28-.407-.245 0-.442.219-.442.638v2.371l.141.211v.104h-1.263V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.414-.477.814-.477.427 0 .708.21.834.589.105-.365.435-.589.856-.589.553 0 .904.365.904 1.072v2.259Zm-1.311 4.644c0 .609-.393 1.114-1.339 1.114-.245 0-.575-.028-1.087-.119v-1.304h.287l.091.281c.224.715.441.982.785.982.323 0 .533-.232.533-.59 0-.294-.147-.497-.497-.687l-.603-.323c-.385-.21-.596-.539-.596-.946 0-.638.499-1.024 1.325-1.024.239 0 .547.034.884.105v1.024h-.287l-.148-.373c-.168-.449-.329-.595-.595-.595-.287 0-.456.168-.456.449 0 .238.141.399.484.595l.595.337c.406.232.624.561.624 1.074Zm4.538-4.644.14.211v.104h-1.073l-.048-.407c-.112.309-.407.491-.786.491-.561 0-.911-.35-.911-.926 0-.561.315-.932 1.283-1.311l.413-.16v-.526c0-.463-.084-.652-.343-.652-.211 0-.329.113-.533.624l-.231.575h-.317V8.27c.415-.127.828-.211 1.185-.211.792 0 1.221.379 1.221 1.066v2.264Zm-.982-.589V9.587l-.133.056c-.413.168-.567.547-.567 1.101 0 .414.098.653.329.653.23 0 .371-.225.371-.597Zm4.586.8v.104h-1.263V11.6l.141-.211V8.864c0-.302-.091-.484-.309-.484-.26 0-.449.219-.449.646v2.363l.14.211v.104h-1.262V11.6l.14-.211V8.535l-.14-.169v-.104l1.01-.12h.084l.028.393c.119-.309.407-.477.82-.477.575 0 .918.365.918 1.072v2.259L24 11.6Z" },
     "paypal": { name: "PayPal", bg: "#002991", ink: "#ffffff", kind: "bank", path: "M15.607 4.653H8.941L6.645 19.251H1.82L4.862 0h7.995c3.754 0 6.375 2.294 6.473 5.513-.648-.478-2.105-.86-3.722-.86m6.57 5.546c0 3.41-3.01 6.853-6.958 6.853h-2.493L11.595 24H6.74l1.845-11.538h3.592c4.208 0 7.346-3.634 7.153-6.949a5.24 5.24 0 0 1 2.848 4.686M9.653 5.546h6.408c.907 0 1.942.222 2.363.541-.195 2.741-2.655 5.483-6.441 5.483H8.714Z" },
     "venmo": { name: "Venmo", bg: "#008CFF", ink: "#111111", kind: "bank", letters: "V" },
     "cashapp": { name: "Cash App", bg: "#00C244", ink: "#111111", kind: "bank", path: "M23.59 3.475a5.1 5.1 0 00-3.05-3.05c-1.31-.42-2.5-.42-4.92-.42H8.36c-2.4 0-3.61 0-4.9.4a5.1 5.1 0 00-3.05 3.06C0 4.765 0 5.965 0 8.365v7.27c0 2.41 0 3.6.4 4.9a5.1 5.1 0 003.05 3.05c1.3.41 2.5.41 4.9.41h7.28c2.41 0 3.61 0 4.9-.4a5.1 5.1 0 003.06-3.06c.41-1.3.41-2.5.41-4.9v-7.25c0-2.41 0-3.61-.41-4.91zm-6.17 4.63l-.93.93a.5.5 0 01-.67.01 5 5 0 00-3.22-1.18c-.97 0-1.94.32-1.94 1.21 0 .9 1.04 1.2 2.24 1.65 2.1.7 3.84 1.58 3.84 3.64 0 2.24-1.74 3.78-4.58 3.95l-.26 1.2a.49.49 0 01-.48.39H9.63l-.09-.01a.5.5 0 01-.38-.59l.28-1.27a6.54 6.54 0 01-2.88-1.57v-.01a.48.48 0 010-.68l1-.97a.49.49 0 01.67 0c.91.86 2.13 1.34 3.39 1.32 1.3 0 2.17-.55 2.17-1.42 0-.87-.88-1.1-2.54-1.72-1.76-.63-3.43-1.52-3.43-3.6 0-2.42 2.01-3.6 4.39-3.71l.25-1.23a.48.48 0 01.48-.38h1.78l.1.01c.26.06.43.31.37.57l-.27 1.37c.9.3 1.75.77 2.48 1.39l.02.02c.19.2.19.5 0 .68z" },
@@ -1597,6 +1669,8 @@
     "frontier": { name: "Frontier", bg: "#FF0037", ink: "#111111", kind: "", letters: "F" },
     "centurylink": { name: "CenturyLink", bg: "#00853F", ink: "#ffffff", kind: "", letters: "CL" },
     "dukeenergy": { name: "Duke Energy", bg: "#00A1DE", ink: "#111111", kind: "", letters: "D" },
+    "fpl": { name: "FPL", bg: "#0067B1", ink: "#ffffff", kind: "", letters: "FPL" },
+    "royalcaribbean": { name: "Royal Caribbean", bg: "#0B2D5B", ink: "#ffffff", kind: "", letters: "RC" },
     "pge": { name: "PG&E", bg: "#0072CE", ink: "#ffffff", kind: "", letters: "PG" },
     "coned": { name: "Con Edison", bg: "#0078CF", ink: "#ffffff", kind: "", letters: "CE" },
     "siriusxm": { name: "SiriusXM", bg: "#0000EB", ink: "#ffffff", kind: "", letters: "SXM" },
@@ -1823,6 +1897,14 @@
     "youtube premium": "youtube",
     "amc theatres": "amc",
     "a list": "amc",
+    "fid bkg": "fidelity",
+    "fidelity investments": "fidelity",
+    "florida power": "fpl",
+    "florida power and light": "fpl",
+    "applecard": "apple",
+    "gs bank": "goldmansachs",
+    "gsbank": "goldmansachs",
+    "royal caribbean international": "royalcaribbean",
     "plex pass": "plex",
     "mullvad": "mullvad",
     "aws": "aws",
@@ -8605,6 +8687,89 @@
     if (shown3()) draw3();
   });
 
+  // web/src/finances/sites.ts
+  var sites = {
+    dukeenergy: "duke-energy.com",
+    schwab: "schwab.com",
+    usbank: "usbank.com",
+    navyfederal: "navyfederal.org",
+    mtbank: "mtb.com",
+    redstone: "redfcu.org",
+    disneyplus: "disneyplus.com",
+    amazonprime: "amazon.com",
+    amazonprimevideo: "amazon.com",
+    amazonmusic: "amazon.com",
+    aws: "aws.amazon.com",
+    kindle: "amazon.com",
+    googleone: "one.google.com",
+    microsoft365: "microsoft.com",
+    tmobile: "t-mobile.com",
+    visiblebyverizon: "visible.com",
+    googlefi: "fi.google.com",
+    thenewyorktimes: "nytimes.com",
+    irs: "irs.gov",
+    applepay: "apple.com",
+    googlepay: "pay.google.com",
+    farmers: "farmers.com",
+    bluecross: "bcbs.com",
+    kaiser: "kaiserpermanente.org",
+    unitedhealthcare: "uhc.com",
+    fifththird: "53.com",
+    keybank: "key.com",
+    santander: "santanderbank.com",
+    tdbank: "td.com",
+    citizens: "citizensbank.com",
+    merrill: "merrilledge.com",
+    citi: "citi.com",
+    cryptocom: "crypto.com",
+    googleworkspace: "workspace.google.com",
+    googlefiber: "fiber.google.com",
+    slingtv: "sling.com",
+    chickfila: "chick-fil-a.com",
+    dunkin: "dunkindonuts.com",
+    seveneleven: "7-eleven.com",
+    thehomedepot: "homedepot.com",
+    amc: "amctheatres.com",
+    wholefoods: "wholefoodsmarket.com",
+    xboxgamepass: "xbox.com",
+    nintendoswitch: "nintendo.com",
+    chatgpt: "openai.com",
+    fubotv: "fubo.tv",
+    plex: "plex.tv",
+    tubi: "tubitv.com",
+    peacock: "peacocktv.com",
+    nissan: "nissanusa.com",
+    aldi: "aldi.us",
+    zoom: "zoom.us",
+    etrade: "etrade.com",
+    troweprice: "troweprice.com",
+    interactivebrokers: "interactivebrokers.com",
+    traderepublic: "traderepublic.com",
+    barnesandnoble: "barnesandnoble.com",
+    panerabread: "panerabread.com",
+    dollargeneral: "dollargeneral.com",
+    dollartree: "dollartree.com",
+    oldnavy: "oldnavy.com",
+    pizzahut: "pizzahut.com",
+    epicgames: "epicgames.com",
+    boostmobile: "boostmobile.com",
+    mintmobile: "mintmobile.com",
+    usmobile: "usmobile.com",
+    rocketmortgage: "rocketmortgage.com",
+    mrcooper: "mrcooper.com",
+    edwardjones: "edwardjones.com",
+    creditkarma: "creditkarma.com",
+    planetfitness: "planetfitness.com",
+    libertymutual: "libertymutual.com",
+    statefarm: "statefarm.com",
+    siriusxm: "siriusxm.com",
+    ynab: "ynab.com"
+  };
+  function siteFor(brand, _name) {
+    if (!brand || brand === "none" || !brands[brand]) return "";
+    return sites[brand] || brands[brand].name.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "") + ".com";
+  }
+
   // web/src/finances/guessCategory.ts
   var brandCategory = Object.fromEntries(Object.entries({
     Groceries: "costco walmart kroger wholefoods traderjoes aldi publix safeway lidl tesco instacart",
@@ -8615,7 +8780,7 @@
     Health: "cvs walgreens",
     Phone: "verizon tmobile atandt mintmobile visiblebyverizon googlefi usmobile boostmobile",
     Internet: "xfinity spectrum cox optimum googlefiber starlink frontier centurylink",
-    Electric: "dukeenergy pge coned",
+    Electric: "dukeenergy pge coned fpl",
     "Car insurance": "geico progressive statefarm allstate libertymutual",
     Travel: "delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft",
     Fitness: "planetfitness peloton strava"
@@ -8650,7 +8815,7 @@
     return out.filter(Boolean);
   }
   var flat2 = (s3) => s3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  function ownAccount(payee, into2, accounts) {
+  function ownAccount(payee, into2, accounts, raw) {
     const others2 = accounts.filter((a3) => a3.id !== into2 && a3.kind !== "home" && a3.kind !== "car" && a3.kind !== "collectible" && a3.kind !== "other");
     const card = payee.match(/^Payment to (.+) card ••(\d{4})$/);
     if (card) {
@@ -8661,6 +8826,11 @@
       const byBank = cards.filter((a3) => bank && brandOf(a3.institution, a3.name) === bank);
       return byBank.length === 1 ? byBank[0].id : void 0;
     }
+    if (raw && /\b(?:pmt|pymt|payment|autopay|epay|e payment)\b/i.test(raw.replace(/[-_]/g, " "))) {
+      const brand = brandOf(void 0, payee);
+      const cards = others2.filter((a3) => a3.kind === "card" && brand && brandOf(a3.institution, a3.name) === brand);
+      if (cards.length === 1) return cards[0].id;
+    }
     const p3 = flat2(payee);
     if (!p3 || p3.split(" ").length < 2) return void 0;
     const named5 = others2.filter((a3) => a3.kind !== "card" && a3.kind !== "loan" && flat2(a3.name) === p3);
@@ -8668,7 +8838,7 @@
   }
   function guessFor(t3, into2, plan, categories2, last2, pays) {
     const payee = t3.payee || "";
-    const moved = payee && ownAccount(payee, into2, plan.accounts || []);
+    const moved = payee && ownAccount(payee, into2, plan.accounts || [], t3.amount < 0 ? t3.raw : void 0);
     if (moved) return { account: moved };
     const have = new Map(categories2.map((c3) => [c3.name.toLowerCase(), c3]));
     const pick = (...names5) => {
@@ -9162,7 +9332,7 @@
       }
     );
   }
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2 }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos }) {
     const [seen2, setSeen] = d2(null);
     const look2 = async (t3) => {
       if (seen2?.id === t3.id) {
@@ -9322,6 +9492,7 @@
           actions: edit && /* @__PURE__ */ u3(S, { children: [
             saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
+            logos && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("logos"), children: "Logos" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
           ] }),
           children: [
@@ -9419,9 +9590,9 @@
                           L2.payment[t3.payment].name
                         ] }),
                         t3.receipt && /* @__PURE__ */ u3("span", { class: "fx-txreceipt", children: " · Receipt" }),
-                        t3.note && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
+                        shownNote(t3.note, t3.payee) && /* @__PURE__ */ u3("span", { class: "fx-txnote", children: [
                           " · ",
-                          t3.note
+                          shownNote(t3.note, t3.payee)
                         ] }),
                         !!t3.tags?.length && /* @__PURE__ */ u3("span", { class: "fx-txtags", children: t3.tags.map((x3) => /* @__PURE__ */ u3("span", { class: "fx-tag", children: x3 }, x3)) })
                       ] }),
@@ -9533,6 +9704,28 @@
     r3.onerror = () => bad(r3.error);
     r3.readAsDataURL(b2);
   });
+  async function keptLogo(src) {
+    const img = new Image();
+    img.src = src;
+    try {
+      await img.decode();
+    } catch {
+      throw new Error("The website gave an image this can't read: use your own image instead.");
+    }
+    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale = Math.min(n3 / w0, n3 / h0);
+    const w3 = Math.max(1, Math.round(w0 * scale)), h3 = Math.max(1, Math.round(h0 * scale));
+    const c3 = new OffscreenCanvas(n3, n3);
+    c3.getContext("2d").drawImage(img, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
+    const png = await asDataURL(await c3.convertToBlob({ type: "image/png" }));
+    return png.length < 6e4 ? png : asDataURL(await c3.convertToBlob({ type: "image/webp", quality: 0.85 }));
+  }
+  var hostOf = (u4) => {
+    try {
+      return new URL(u4).hostname.replace(/^www\./, "");
+    } catch {
+      return u4;
+    }
+  };
   var maxReceipt = 2 << 20;
   async function receiptOf(f4) {
     if (f4.type === "application/pdf") {
@@ -9602,25 +9795,70 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function OwnLogo({ value, set: set2, what: what2 }) {
+  function OwnLogo({ value, set: set2, what: what2, fetchLogo: fetchLogo2, guess }) {
     const file = A2(null);
     const [problem, setProblem] = d2("");
+    const [site, setSite] = d2(null);
+    const [getting, setGetting] = d2(false);
+    const [from2, setFrom] = d2("");
     const read = async (f4) => {
       if (!f4) return;
       try {
         set2(await shrink(f4));
         setProblem("");
+        setFrom("");
       } catch {
         setProblem("That file is not a picture this can read: try a PNG or a JPEG.");
       }
+    };
+    const typed = site ?? guess ?? "";
+    const get = async () => {
+      if (!fetchLogo2 || getting) return;
+      setGetting(true);
+      setProblem("");
+      try {
+        const l3 = await fetchLogo2(typed);
+        set2(await keptLogo(l3.image));
+        setFrom(hostOf(l3.from));
+      } catch (e3) {
+        setProblem(String(e3?.message || e3));
+      }
+      setGetting(false);
     };
     return /* @__PURE__ */ u3("div", { class: "ownlogo", children: [
       /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", hidden: true, "aria-label": `Your own image for ${what2}`, onChange: (e3) => {
         read(e3.currentTarget.files?.[0]);
         e3.currentTarget.value = "";
       } }),
+      fetchLogo2 && /* @__PURE__ */ u3("span", { class: "getlogo", children: [
+        /* @__PURE__ */ u3(
+          "input",
+          {
+            value: typed,
+            onInput: (e3) => setSite(e3.target.value),
+            placeholder: "company.com",
+            "aria-label": `${what2}'s website, for its real logo`,
+            spellcheck: false,
+            autocapitalize: "off",
+            onKeyDown: (e3) => {
+              if (e3.key === "Enter") {
+                e3.preventDefault();
+                get();
+              }
+            }
+          }
+        ),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: getting || !typed.trim(), onClick: get, children: getting ? "Getting the logo…" : "Get the real logo" })
+      ] }),
       /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: value ? "Use another image" : `Use your own image for ${what2}` }),
-      value && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => set2(void 0), children: "Remove your image" }),
+      value && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+        set2(void 0);
+        setFrom("");
+      }, children: "Remove your image" }),
+      from2 && /* @__PURE__ */ u3("span", { class: "muted getlogofrom", role: "status", children: [
+        "From ",
+        from2
+      ] }),
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
@@ -9745,7 +9983,7 @@
         follow3(k3);
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment" }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment", fetchLogo: props.fetchLogo, guess: siteFor(brand || brandOf(void 0, name, kind), name) }),
       /* @__PURE__ */ u3("div", { class: "finway", children: /* @__PURE__ */ u3(Segmented, { label: "Which way the money goes", value: way, pick: setWay, options: [["out", "Goes out"], ["in", "Comes in from someone"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: comesIn ? "Mortgage share" : "Mortgage", required: true }) }),
@@ -9958,7 +10196,7 @@
       ] }),
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
       kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account" }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account", fetchLogo: props.fetchLogo, guess: siteFor(real || brandOf(void 0, name, kind), name) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held2(kind) ? "Worth" : "Balance", value: balance, set: setBalance, sign }),
@@ -10199,11 +10437,19 @@
     const [logo, setLogo] = d2(t3?.institution || "");
     const logoPicked = A2(!!t3?.institution);
     const [picking, setPicking] = d2(false);
+    const imgKey = () => ownKey(logo && logo !== "none" ? logo : payeeBrand(void 0, payee.trim()), payee.trim());
+    const openedKey = A2(ownKey(t3?.institution && t3.institution !== "none" ? t3.institution : payeeBrand(void 0, t3?.payee), t3?.payee || ""));
+    const hadImg = plan.logos?.[openedKey.current];
+    const [img, setImg] = d2(hadImg);
     const typePayee = (who) => {
       setPayee(who);
       if (!catTyped.current) setCategory(lastFor(who) || "");
       if (!logoPicked.current) setLogo(logoFor(who) || "");
     };
+    const oldPayee = (t3?.payee || "").trim();
+    const byOld = (q2) => !q2.to && q2.id !== t3?.id && !!q2.payee && q2.payee.trim().toLowerCase() === oldPayee.toLowerCase();
+    const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
+    const [renameAll, setRenameAll] = d2(true);
     const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
     const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysAlike) : void 0;
     const linked = paymentPicked ? payment : guess?.payment || "";
@@ -10220,6 +10466,10 @@
     };
     const keepLedger = async (list) => {
       setSaving(true);
+      if (img !== hadImg && way !== "move" && payee.trim() && !await props.save({ ...plan, logos: withLogo(plan, imgKey(), img, openedKey.current, hadImg) })) {
+        setSaving(false);
+        return;
+      }
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: list });
       setSaving(false);
       if (ok) props.close();
@@ -10252,7 +10502,7 @@
       if (used.length > 1) next.category = void 0;
       if (!next.tags.length) next.tags = void 0;
       const same2 = (q2) => !q2.to && !!q2.payee && q2.payee.toLowerCase() === (next.payee || "").toLowerCase();
-      const list = (ledger?.transactions || []).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
+      const list = (ledger?.transactions || []).map((q2) => renameAll && renamesToo && next.payee && byOld(q2) ? { ...q2, payee: next.payee } : q2).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
       const at2 = list.findIndex((q2) => q2.id === t3?.id);
       if (at2 >= 0) list[at2] = next;
       else list.push(next);
@@ -10261,7 +10511,7 @@
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
+        img && way !== "move" ? /* @__PURE__ */ u3(Mark, { brand: logo && logo !== "none" ? logo : payeeBrand(void 0, payee), name: payee || "?", img, size: "lg" }) : /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: t3 ? t3.payee || "Transfer" : "Add a transaction" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
@@ -10293,6 +10543,14 @@
         /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
         /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
       ] }),
+      renamesToo > 0 && /* @__PURE__ */ u3("label", { class: "fcheckbox renameall", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: renameAll, onClick: tick2(setRenameAll) }),
+        " Rename ",
+        renamesToo === 1 ? "the other transaction" : `the ${renamesToo} other transactions`,
+        " from “",
+        oldPayee,
+        "” too, and ones imported later"
+      ] }),
       way !== "move" && /* @__PURE__ */ u3("div", { class: "txlogo", children: [
         /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: picking ? "Done with the logo" : "Change logo" }),
         !picking && logoPicked.current && payee.trim() && /* @__PURE__ */ u3("span", { class: "muted", children: [
@@ -10303,7 +10561,8 @@
         picking && /* @__PURE__ */ u3(BrandPick, { kind: "", value: logo === "none" ? "" : logo, set: (k3) => {
           logoPicked.current = true;
           setLogo(k3 || "none");
-        }, payment: true })
+        }, payment: true }),
+        picking && payee.trim() && /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: payee.trim(), fetchLogo: props.fetchLogo, guess: siteFor(logo && logo !== "none" ? logo : payeeBrand(void 0, payee.trim()), payee.trim()) })
       ] }),
       way !== "move" && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
@@ -10328,6 +10587,80 @@
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2 || saving2, exists: !!t3, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function LogosForm(props) {
+    const { plan, ledger, fetchLogo: fetchLogo2 } = props;
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const rows = (() => {
+      const seen2 = /* @__PURE__ */ new Map();
+      const add = (brand, name, always) => {
+        const k3 = ownKey(brand, name), b2 = brand ? brands[brand] : void 0;
+        if (!name.trim() || seen2.has(k3) || plan.logos?.[k3] || b2 && !b2.letters || !b2 && !always) return;
+        seen2.set(k3, { key: k3, name: b2 ? b2.name : name.trim(), brand: b2 ? brand : void 0, site: siteFor(brand, name) });
+      };
+      for (const a3 of plan.accounts || []) if (!["home", "car", "collectible", "other"].includes(a3.kind)) add(brandOf(a3.institution, a3.name, a3.kind), a3.name, true);
+      for (const x3 of allPayments(plan)) add(brandOf(x3.institution, x3.name, x3.kind), x3.name, false);
+      for (const q2 of ledger?.transactions || []) if (!q2.to && q2.payee && q2.institution !== "none") add(payeeBrand(q2.institution, q2.payee), q2.payee, true);
+      return [...seen2.values()].sort((a3, b2) => !a3.site === !b2.site ? a3.name.localeCompare(b2.name) : a3.site ? -1 : 1);
+    })();
+    const [sites2, setSites] = d2({});
+    const [got, setGot] = d2({});
+    const [wrong, setWrong] = d2({});
+    const [getting, setGetting] = d2([]);
+    const siteOf = (r3) => sites2[r3.key] ?? r3.site;
+    const get = async (r3) => {
+      if (!fetchLogo2 || !siteOf(r3).trim()) return;
+      setGetting((g2) => [...g2, r3.key]);
+      try {
+        const l3 = await fetchLogo2(siteOf(r3));
+        const img = await keptLogo(l3.image);
+        setGot((g2) => ({ ...g2, [r3.key]: { img, from: hostOf(l3.from) } }));
+        setWrong(({ [r3.key]: _3, ...rest }) => rest);
+      } catch (e3) {
+        setWrong((w3) => ({ ...w3, [r3.key]: String(e3?.message || e3) }));
+      }
+      setGetting((g2) => g2.filter((k3) => k3 !== r3.key));
+    };
+    const getAll = async () => {
+      for (const r3 of rows) if (siteOf(r3).trim() && !got[r3.key]) await get(r3);
+    };
+    const ready2 = rows.filter((r3) => siteOf(r3).trim() && !got[r3.key]).length;
+    const submit = (e3) => {
+      e3.preventDefault();
+      const add = Object.fromEntries(Object.entries(got).map(([k3, v3]) => [k3, v3.img]));
+      if (!Object.keys(add).length) {
+        props.close();
+        return;
+      }
+      keep2({ ...plan, logos: { ...plan.logos || {}, ...add } });
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform finlogos", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Logos" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: [
+        "These show initials. ",
+        /* @__PURE__ */ u3("strong", { children: "Get the real logo" }),
+        " asks that company's website for its own icon, from this computer, only when you click; nothing else is sent, and the logo is kept only in your plan."
+      ] }),
+      fetchLogo2 && ready2 > 1 && /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: getting.length > 0, onClick: getAll, children: getting.length ? "Getting the logos…" : `Get them all (${ready2})` }) }),
+      /* @__PURE__ */ u3("ul", { class: "logolist", children: rows.map((r3) => {
+        const g2 = got[r3.key], busyRow = getting.includes(r3.key);
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3(Mark, { brand: r3.brand, name: r3.name, img: g2?.img, auto: !r3.brand }),
+          /* @__PURE__ */ u3("span", { class: "grow", children: [
+            /* @__PURE__ */ u3("strong", { children: r3.name }),
+            g2 ? /* @__PURE__ */ u3("small", { class: "muted", children: [
+              "From ",
+              g2.from
+            ] }) : wrong[r3.key] ? /* @__PURE__ */ u3("small", { class: "bad", children: wrong[r3.key] }) : !siteOf(r3).trim() ? /* @__PURE__ */ u3("small", { class: "muted", children: "Type its website to get its logo" }) : null
+          ] }),
+          fetchLogo2 && /* @__PURE__ */ u3("input", { value: siteOf(r3), onInput: (e3) => setSites((s3) => ({ ...s3, [r3.key]: e3.target.value })), placeholder: "company.com", "aria-label": `${r3.name}'s website`, spellcheck: false, autocapitalize: "off" }),
+          fetchLogo2 && (g2 ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setGot(({ [r3.key]: _3, ...rest }) => rest), children: "Undo" }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busyRow || !siteOf(r3).trim(), "aria-label": `Get ${r3.name}'s real logo`, onClick: () => get(r3), children: busyRow ? "Getting…" : "Get" }))
+        ] }, r3.key);
+      }) }),
+      !rows.length && /* @__PURE__ */ u3("p", { class: "muted", children: "Every payee and account has a logo already." }),
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
+      }, close: props.close, touched: touched || Object.keys(got).length > 0 })
     ] });
   }
   var categoryIcons = [
@@ -10506,11 +10839,12 @@
       setCols(isOfx(t3) ? null : guessColumns(all[0] || [], all.slice(1)));
     };
     const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
-    const found2 = read_.map((t3) => {
-      const payee = cleanPayee(t3.payee);
-      return { ...t3, payee, raw: t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0 };
-    });
     const have = ledger?.transactions || [];
+    const memory3 = renameMemory(have, cleanPayee);
+    const found2 = read_.map((t3) => {
+      const payee = cleanPayee(t3.payee), raw = t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0;
+      return { ...t3, payee: raw && memory3.get(payee.toLowerCase()) || payee, raw };
+    });
     const fixes = wayOnlyFixes(found2, account, have);
     const renames = renameFixes(found2, account, have, fixes);
     const fixed = new Set(fixes.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
@@ -10713,6 +11047,7 @@
       edit?.what === "categories" && /* @__PURE__ */ u3(CategoriesForm, { ...edit }, "c" + edit.n),
       edit?.what === "budgets" && /* @__PURE__ */ u3(BudgetsForm, { ...edit }, "g" + edit.n),
       edit?.what === "import" && /* @__PURE__ */ u3(ImportForm, { ...edit }, "i" + edit.n),
+      edit?.what === "logos" && /* @__PURE__ */ u3(LogosForm, { ...edit }, "l" + edit.n),
       edit?.what === "goal" && /* @__PURE__ */ u3(GoalForm, { ...edit }, "o" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
@@ -13725,12 +14060,12 @@ ${pays}
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, running: running5, state: state2 = {}, keep: keep2, add, find }) {
+  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep2, add, find }) {
     const [open4, setOpen] = d2("");
     const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
     const ever = !!v3.plan.holdingsRead;
-    if (!accounts.length && !(read && (running5 || ever))) return null;
+    if (!accounts.length && !read) return null;
     const when3 = readWhen(v3.plan.holdingsRead, v3.today);
     const canAdd = !!(add && find);
     const button = /* @__PURE__ */ u3(S, { children: [
@@ -14605,7 +14940,7 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
@@ -14726,10 +15061,12 @@ ${pays}
       // Wallos's subscriptions, on the computer while Wallos runs.
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone,
-      investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest, ...runs("ghostfolio") ? { add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) } : {} }
+      // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
+      // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
+      investments: !v3 || v3.readOnly ? void 0 : { read: readInvestments, state: invest, add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -14774,6 +15111,7 @@ ${pays}
     }
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
+  var fetchLogo = phone ? void 0 : (site) => go().FinancesFetchLogo(site);
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));
@@ -14811,7 +15149,7 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {

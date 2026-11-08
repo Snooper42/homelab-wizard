@@ -234,6 +234,14 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       const held = plan.accounts.filter((a) => a.holdings?.length);
       return later({ view: M.finances, unmatched: M.investUnmatched || [], accounts: M.investAccounts ?? held.length + (M.investUnmatched || []).length, holdings: M.investHoldings ?? held.reduce((t, a) => t + a.holdings.length, 0) });
     },
+    // Get the real logo: a website's icon (here an SVG drawn from its name, kept in logosFetched); one in noLogo has none.
+    FinancesFetchLogo: (site) => {
+      (M.logosFetched ??= []).push(site);
+      const host = String(site).replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
+      if ((M.noLogo || []).includes(host)) return later(null).then(() => { throw new Error(`${host} has no logo it shares as a site icon: use your own image instead`); });
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#2a6f4f"/><text x="32" y="41" font-size="22" text-anchor="middle" fill="#fff" font-family="Arial">${host.slice(0, 3)}</text></svg>`;
+      return later({ image: 'data:image/svg+xml;base64,' + btoa(svg), from: `https://${host}/apple-touch-icon.png` });
+    },
     // Investments' Add a holding: a ticker or a name looked up (symbols, or a few funds and companies; findProblem: why not),
     // and a buy or sale put into Ghostfolio (each kept in investAdded; a new account added to the plan; investAddProblem: why not).
     FinancesFindSymbol: (q) => {
