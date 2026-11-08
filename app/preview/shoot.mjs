@@ -6084,7 +6084,13 @@ const smokes = [
     }
     const first = await page.evaluate(() => [...document.querySelectorAll('#finances .fx-board > .card')].slice(0, 2).map((e) => e.querySelector('h2')?.textContent));
     if (first.join() !== 'Coming up,Goals') throw new Error('the Dashboard opens with ' + first.join(', '));
-    const rows = await page.$$eval('.fx-comingup li', (ls) => ls.map((l) => l.textContent));
+    // A paycheck is a line of its own (its person's initial leading), before the first bill after its day; the rest are bills.
+    const all = await page.$$eval('.fx-comingup li', (ls) => ls.map((l) => ({ pay: !!l.querySelector('.fwhos'), text: l.textContent })));
+    const at = all.findIndex((r) => r.pay);
+    if (at < 0 || !all[at].text.includes("Alex's paycheck") || !all[at].text.includes('In 7 days, Fri, Nov 6') || !all[at].text.includes('+$2,150.00')
+      || !all[at - 1].text.includes('Thu, Nov 5') || !all[at + 1].text.includes('Sat, Nov 7')) throw new Error('the paycheck is not between Nov 5 and Nov 7: ' + all.map((r) => r.text).join(' | '));
+    if (!(await page.textContent('.fx-comingup .fx-beforepay')).includes("$2,104.49 of it before Alex's paycheck on Nov 6")) throw new Error('before payday reads ' + await page.textContent('.fx-comingup .fx-beforepay'));
+    const rows = all.filter((r) => !r.pay).map((r) => r.text);
     if (!rows.some((r) => r.includes('Mortgage') && r.includes('In 2 days, Sun, Nov 1') && r.includes('$1,845.00'))) throw new Error('no Mortgage in 2 days: ' + rows.join(' | '));
     if (!rows[0].includes('Tomorrow, Sat, Oct 31')) throw new Error('the first is not tomorrow’s: ' + rows[0]);
     if (!rows.some((r) => r.includes('Spotify') && r.includes('on Chase Freedom, due Nov 21') && r.includes('$11.99'))) throw new Error('the card’s charge is not on its card: ' + rows.join(' | '));

@@ -15174,24 +15174,49 @@ ${pays}
     const bills = billsAhead(v3, L2);
     const out = bills.filter((b2) => !b2.charge).reduce((t3, b2) => t3 - b2.e.amount, 0);
     const charged = bills.filter((b2) => b2.charge).length;
+    const pays = (v3.paydays || []).filter((p3) => {
+      const n3 = daysBetween(v3.today, p3.date);
+      return n3 >= 0 && n3 < comingDays;
+    });
+    const who = (p3) => p3.people.map((id2) => L2.person[id2]?.name || id2).join(" and ");
+    const first = pays[0];
+    const before3 = first ? bills.filter((b2) => !b2.charge && b2.date < first.date).reduce((t3, b2) => t3 - b2.e.amount, 0) : 0;
+    const payLine = (p3) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3("span", { class: "fwhos", children: p3.people.map((id2) => /* @__PURE__ */ u3(Who, { name: L2.person[id2]?.name, n: L2.order[id2] ?? 0 }, id2)) }),
+        title: `${who(p3)}'s paycheck`,
+        sub: `${soon(v3.today, p3.date)}, ${dayLong(p3.date)}`,
+        when: /* @__PURE__ */ u3(Amount, { value: p3.total, sign: true, tone: "in", form: "full" }),
+        whenPlain: true
+      },
+      "pay" + p3.date
+    );
     return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((b2, i3) => {
-        const x3 = L2.payment[b2.e.payment || ""];
-        const near2 = daysBetween(v3.today, b2.date) <= 1;
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-            title: x3?.name || b2.e.payment,
-            sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
-            subTone: near2 ? "warn" : "",
-            when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
-            whenPlain: true
-          },
-          b2.date + i3
-        );
-      }) })
+      first && /* @__PURE__ */ u3("p", { class: "fx-sub fx-beforepay", children: before3 > 5e-3 ? `${money(before3)} of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` : `None of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` }),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-comingrows", children: [
+        bills.map((b2, i3) => {
+          const x3 = L2.payment[b2.e.payment || ""];
+          const near2 = daysBetween(v3.today, b2.date) <= 1;
+          const landing = pays.filter((p3) => p3.date <= b2.date && (i3 === 0 || bills[i3 - 1].date < p3.date));
+          return /* @__PURE__ */ u3(S, { children: [
+            landing.map(payLine),
+            /* @__PURE__ */ u3(
+              Row,
+              {
+                lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+                title: x3?.name || b2.e.payment,
+                sub: `${soon(v3.today, b2.date)}, ${dayLong(b2.date)}` + (b2.charge ? ` · ${onCard(b2.e, L2)}` : ""),
+                subTone: near2 ? "warn" : "",
+                when: /* @__PURE__ */ u3(Amount, { value: -b2.e.amount, form: "full", tone: b2.charge ? "muted" : "" }),
+                whenPlain: true
+              }
+            )
+          ] }, b2.date + i3);
+        }),
+        pays.filter((p3) => !bills.length || p3.date > bills[bills.length - 1].date).map(payLine)
+      ] })
     ] }) : /* @__PURE__ */ u3(Empty, { children: [
       "Nothing due in the next ",
       comingDays,

@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Payday among the bills, on the phone:** Finances' *Coming up* shows each paycheck of the next two weeks on its day among the bills, and says how much of what's due comes before the next one (*$2,104.49 of it before Alex's paycheck on Nov 6*).
 - **Cash flow and Where it goes open their detail:** on the Finances Dashboard, the arrow on either card opens Recurring, where the typical month is laid out payment by payment.
 - **Reports you can click:** on Finances › Reports, a category or a payee opens Transactions showing just its transactions (this month's or last month's when that's the stretch picked); each category says its share of the spending first, and Transactions' category filter takes a group too (*Food* finds Groceries and Eating out).
 - **What the payments come to:** Finances › Recurring › Payments says what those shown add up to a month and a year (*18 payments: about $5,948.10 a month, $71,377 a year*), following Bills, Cards, Spending or Saving when you pick one.
