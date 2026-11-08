@@ -17,37 +17,16 @@ struct HomelabClientApp: App {
             AppCoordinatorView()
                 .environment(coordinator)
         }
-        #if os(macOS)
-        .defaultSize(width: 1040, height: 700)
-        .windowToolbarStyle(.unified)
-        #endif
         .commands {
             HomelabCommands(coordinator: coordinator)
             AppMenuCommands()
             ScreenCommands()
         }
-
-        #if os(macOS)
-        MenuBarExtra {
-            MenuBarView()
-                .environment(coordinator)
-                .tint(Theme.accent)
-        } label: {
-            MenuBarIcon()
-                .environment(coordinator)
-        }
-        .menuBarExtraStyle(.menu)
-
-        Settings {
-            MacSettingsView()
-                .tint(Theme.accent)
-        }
-        #endif
     }
 }
 
-/// The Homelab menu on the Mac. On iPad, it appears in the hardware
-/// keyboard's shortcut list.
+/// The Homelab menu: on iPad, it appears in the hardware keyboard's
+/// shortcut list.
 struct HomelabCommands: Commands {
     let coordinator: AppCoordinator
 

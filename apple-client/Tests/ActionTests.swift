@@ -325,17 +325,6 @@ struct AppPageTests {
     }
 }
 
-#if os(macOS)
-@Suite("The Dock badge")
-struct DockBadgeTests {
-    @Test func aCountOnlyAndNothingAtZero() {
-        #expect(DockBadge.label(for: 0) == nil)
-        #expect(DockBadge.label(for: 3) == "3")
-        #expect(DockBadge.label(for: 250) == "99+")
-    }
-}
-#endif
-
 // main #449: a state reads by its shape as well as its colour.
 @Suite("State shapes")
 struct StateShapeTests {

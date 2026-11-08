@@ -104,15 +104,7 @@ struct DashboardView: View {
         }
         .onDisappear {
             model.rememberSeen()
-            #if os(macOS)
-            DockBadge.show(0)
-            #endif
         }
-        #if os(macOS)
-        // How many apps need attention, on the Dock icon, only while unlocked:
-        // the dashboard goes on lock, and the badge with it.
-        .onChange(of: model.attentionCount, initial: true) { _, count in DockBadge.show(count) }
-        #endif
         // The cards change slowly: read them now, then every 5 minutes while
         // unlocked. What this device may do is read again with them: the
         // computer can give a phone its changes for a while only (main #455),
@@ -212,7 +204,7 @@ private struct PhoneDashboard: View {
     private var screenshotTab: Screen? {
         switch ScreenshotMode.shot {
         case nil: nil
-        case "status": .status(.all)
+        case "status", "app": .status(.all)
         case "backups": .backups
         case "setup": .setup
         case "settings": .settings
@@ -306,6 +298,14 @@ private struct PhoneStatus: View {
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
             }
+            #if SCREENSHOTS
+            .overlay {
+                // The screenshots: an app's page, as if tapped.
+                if ScreenshotMode.shot == "app", let app = model.app(id: "vikunja") ?? model.latestApps.first {
+                    AppDetailView(app: app).background(Theme.canvas)
+                }
+            }
+            #endif
             .refreshable {
                 // Status and its cards (refresh reads them), the backups tile, and the money card.
                 async let money: Void = finances.load()
@@ -779,15 +779,3 @@ struct DeviceMenu: View {
     }
 }
 
-#if os(macOS)
-/// The Dock icon's badge: a count, never a name.
-enum DockBadge {
-    @MainActor static func show(_ count: Int) {
-        NSApplication.shared.dockTile.badgeLabel = label(for: count)
-    }
-
-    nonisolated static func label(for count: Int) -> String? {
-        count > 0 ? (count > 99 ? "99+" : String(count)) : nil
-    }
-}
-#endif

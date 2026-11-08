@@ -217,6 +217,24 @@ enum LedgerEdit {
         return .object(root)
     }
 
+    /// `ledger` with the transaction `id`'s category set (or cleared, for
+    /// ""), everything else it has kept. Nil when it can't be: an unknown
+    /// id, a bad entry, a category too long, or a transfer or split one.
+    static func settingCategory(id: String, to category: String, in ledger: JSONValue) -> JSONValue? {
+        let category = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard category.count <= 100,
+              case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }),
+              case .object(var entry) = all[index]
+        else { return nil }
+        if case .string(let to)? = entry["to"], !to.isEmpty { return nil }
+        if case .array(let splits)? = entry["splits"], !splits.isEmpty { return nil }
+        entry["category"] = category.isEmpty ? nil : .string(category)
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
     /// Whether the phone can change `t`: not a transfer or a split one.
     static func canUpdate(_ t: FinanceTransaction) -> Bool {
         (t.to ?? "").isEmpty && !t.isSplit

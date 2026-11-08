@@ -1,6 +1,6 @@
-# Homelab: native Apple client (iOS + macOS)
+# Homelab: native iPhone and iPad client
 
-A SwiftUI Multiplatform client for the Homelab Wizard phone companion
+A SwiftUI client for the Homelab Wizard phone companion
 (`homelab serve`, port 8099). This folder holds only source files; the
 scripts below make the Xcode project for you.
 
@@ -11,13 +11,8 @@ Xcode › Settings › Apple Accounts; a free one is enough) and this repository
 cloned. Replace `com.yourname` with your own reverse-domain prefix and keep
 using the same one.
 
-**The Mac app**, on the Mac that runs the homelab. It builds, opens, and
-puts a pairing link on the clipboard (paste it into Address, click Pair). Run
-it again any time to update; it stays paired:
-
-```bash
-./apple-client/scripts/run-on-this-mac.sh com.yourname
-```
+On the Mac itself, Homelab Wizard (the desktop app) is the way in: the
+native Mac version of this app was removed in November 2026.
 
 **The iPhone app.** Plug the iPhone in, unlock it, tap Trust, and turn on
 Settings › Privacy & Security › Developer Mode once. Check the phone's
@@ -40,8 +35,8 @@ working:
 ```
 
 **The widget** (optional): "All well" or how many apps need a look, on the
-iPhone's Home Screen or the Mac's desktop. Build with it by putting
-`HOMELAB_WIDGET=1` in front of either run script, then turn it on in the app
+iPhone's Home Screen. Build with it by putting `HOMELAB_WIDGET=1` in front
+of the run script, then turn it on in the app
 under Settings › This Device. It needs an App Group, which a free Apple ID
 may not be able to sign; if the build stops there, run the script again
 without it.
@@ -52,7 +47,7 @@ The rest of this README is the detail.
 ```
 apple-client/
 ├── Shared/
-│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L), the Mac menu bar item; AppCommands.swift: the App menu (⌥⌘S start, ⌥⌘R restart, ⌥⌘. stop, ⌥⌘L logs)
+│   ├── App/            HomelabClientApp.swift: @main, the Homelab menu (⌘R, ⌘L); AppCommands.swift: the App menu (⌥⌘S start, ⌥⌘R restart, ⌥⌘. stop, ⌥⌘L logs)
 │   ├── Models/         Wire types (Status, AppStatus, EngineChange, …), AppAction, PairingCode, ServerEndpoint, DeviceCredential
 │   ├── ViewModels/     AppCoordinator (lock state machine), PairingViewModel, DashboardViewModel, AppActionsViewModel
 │   ├── Views/          AppCoordinatorView, PairingView, LockScreenView, DashboardView, AppDetailView, Theme (colours, pills, the app mark), Design (cards, logo circles, round buttons, wallet cards, the ring), Components/
@@ -61,7 +56,7 @@ apple-client/
 │   ├── Services/       APIClient, LiveEventManager, SSEParser, APIError, JSONCoding
 │   └── Security/       KeychainManager, BiometricAuthManager, SecureLog
 ├── Tests/              Swift Testing unit tests: parsing, validation, lossless edits, and the lock state machine (with fake keychain and authentication)
-└── scripts/            make-xcode-project.sh (the Xcode project, Mac and iPhone), run-on-this-mac.sh, run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices), test-scripts.sh (runs them all against stand-ins for Xcode, the iPhone and the homelab; CI runs it)
+└── scripts/            make-xcode-project.sh (the Xcode project, iPhone and iPad), run-on-iphone.sh, phone-address.sh (checks the phone's https address), phones.sh (list or remove paired devices), test-scripts.sh (runs them all against stand-ins for Xcode, the iPhone and the homelab; CI runs it)
 ```
 
 ## Where it fits
@@ -69,19 +64,19 @@ apple-client/
 Three ways into the same homelab, in two roles:
 
 - **Homelab Wizard**, the desktop app on the Mac that runs the homelab, is where it's *managed*: setup, Choose apps, installing apps, settings, Tidy Up, and pairing phones.
-- **This app** is a remote control for *keeping an eye on it* from an iPhone, iPad or another Mac: status, alerts, backups, Finances, and quick changes behind Face ID or Touch ID. It does no setup, on purpose.
+- **This app** is a remote control for *keeping an eye on it* from an iPhone or iPad: status, alerts, backups, Finances, and quick changes behind Face ID or Touch ID. It does no setup, on purpose.
 - **The phone web page** (`homelab serve`, built from `web/`) is the same remote control in a browser. It stays a web page: it works on any phone (Android, a partner's, a visitor's) with no install and no Apple account. With a free Apple ID this app can't be shared, and lapses after 7 days.
 
 As main adds phone-facing features to the companion, they're mirrored here (the `main #…` notes below).
 
 ## What it does
 
-It's laid out as Homelab Wizard is on the computer: the same screens, in the same order and with the same names (Status, Backups, Finances, Setup, Settings), in a sidebar on the Mac and iPad with Homelab Wizard's name atop it, and as tabs on iPhone. ⌘2 to ⌘6 pick them, the same numbers as the computer's. Choose apps and Tidy Up are on the computer only, since a phone can't reach them yet.
+It's laid out as Homelab Wizard is on the computer: the same screens, in the same order and with the same names (Status, Backups, Finances, Setup, Settings), in a sidebar on the iPad with Homelab Wizard's name atop it, and as tabs on iPhone. ⌘2 to ⌘6 pick them, the same numbers as the computer's. Choose apps and Tidy Up are on the computer only, since a phone can't reach them yet.
 
-| | iPhone | Mac and iPad |
+| | iPhone | iPad |
 |---|---|---|
 | **Pairing** | The code, the pasted pairing link, or a scan of the computer's QR code. Optionally as a wall screen (look-only for good). | The code or the pasted link |
-| **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | Touch ID / password; also on hide, sleep, screen lock, user switching, window close, and after a while behind other apps (5 minutes; 1 or 15 in Settings) |
+| **Locking** | Face ID / Touch ID / passcode at launch and on every return; an opaque cover in the app switcher | The same |
 | **Status** | On iPhone it opens with a card: a ring of the apps running out of all of them, and the one that needs a look with its Start (or Restart) and Logs, or "All well" and the night's line; then four tiles: Backups (opens the Backups tab), Saved, Updates and Checks. The floating glass tab bar shrinks as you scroll (iOS 26 and later). Then the live list, searchable by name, grouped as the computer's Status: Needs a look first, then the pinned apps, then each category (Media, Photos, …) and Other. A group where all is fine starts folded, its apps' names on one line; what you open or fold is remembered (names only). Each row has its icon, "N% up" and a dot for what changed since you looked; on iPhone those apps are also listed together at the top, and Mark as Seen clears the dots. An app the watchdog stopped because Docker kept restarting it (main #427) reads "Stopped: it restarted 5 times in an hour", in red, and counts as needing a look. One the battery saver paused reads "Paused on battery", and one waiting for its drive "Waiting for the Media drive", both in orange. Start the stopped leaves out all of these, as the computer's Start them does. Needs a look counts as the computer's does: unwell, not answering, missing, or stopped when nobody stopped it on purpose. Rows use the computer's words for each state. The overnight line in the morning. Each state has its own shape as well as colour: a circle when up, a triangle to look at, a cross when down (main #449). With VoiceOver, what changes is said as it changes, in the row's words ("Vikunja and Immich: Restarting", main #451). Atop every other screen, one line says "All well", or the one thing that needs you (main #470). A stopped app nobody stopped says when, and why when Docker knows ("Stopped at 3:12 AM: it ran out of memory"); a crash is a cross (main #474). | The same, in a three-column split view whose sidebar keeps its place, plus a menu bar item whose Needs a look list opens on the app's page, and how many need a look on the Dock icon while unlocked |
 | **An app's page** | What's wrong, its actions, its week (uptime and outages), about it (catalog, and another app here that does much the same job, main #438), its backup (the last nightly run, its copy, the restore test, and Back up now), its updates (when it was last updated, and whether its updates are held), where it can be reached from (home, tailnet, or the internet through the Cloudflare Tunnel), details, why it last started, addresses, logs (filter, errors and warnings in colour, Problems Only, copy with ⇧⌘C), and its settings (nightly updates, alerts, pin) Under Nightly updates, Only on Sundays (or the days set on the computer, "Only on Saturdays and Sundays"), main #457.. Its log can Follow: read again every 4 seconds while open, at the newest line, until switched off, closed, locked, or a read fails | The same, with an App menu (⌥⌘S/R/./L) |
 | **Changes** (allowed devices, re-authenticated) | Start, Stop (confirmed, Undo), Restart, Stop for a while, Roll back, for one app or a whole list; a long press on a row opens its menu, as the phone page's does since main #447. A change waits its turn behind the computer's other jobs (main #425). | The same, plus keyboard shortcuts and a right-click menu |
@@ -98,8 +93,7 @@ A plain iPhone app, as the owner chose: the system's large titles, tab bar, list
 - **Payee logos:** a payee's brand mark in a circle on the brand's colour, its initials on a colour its name picks when it has no brand, else the icon of its category in the category's colour. The brands are the computer's own (`web/src/finances/logos.ts`: simple-icons, CC0, about 335), and so are the rules that read a bank's wording ("SQ *BLUE BOTTLE", "AMZN MKTP US*2K4") and match it to one. `node apple-client/scripts/make-payee-logos.mjs` (after `npm ci` in the repo's root) writes them to `Shared/Resources/PayeeLogos.json`, with the category colours from `web/dist/style.css`, and writes what the computer's functions answer for a few thousand payees to `Tests/Resources/PayeeVectors.json`; the tests check the app's Swift port answers the same, and CI checks both files are current. Nothing is fetched: which bank you use stays on the phone.
 - **Shapes:** states and counts in tinted pills, an app without an icon yet on a soft tile of its state's colour, and rounded bordered buttons.
 - **App logos:** every app the homelab knows has its logo in the app itself, on the same rounded tile (`Shared/Assets.xcassets/AppLogos`, one 180 px PNG each), so the lists look alike on every device and nothing is fetched for them. They're from [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) (Apache 2.0; see `licenses/`), credited under Settings › About. An app without one shows the icon the computer kept from the app itself, and failing that its state on a tile. After apps are added to the catalog, `python3 scripts/fetch-app-logos.py` (Pillow and PyYAML) fetches the new ones; a name the logo set spells differently goes in its `ALIASES`.
-- **The app mark and icon:** a server rack on a violet tile, on the pairing and lock screens, at launch, and on the app-switcher cover. The app icon is the same, with one mint "running" light. `scripts/make-app-icon.py` (Pillow) draws it from shapes into `Shared/Assets.xcassets/AppIcon.appiconset`: one 1024 px iPhone and iPad icon edge to edge with its iOS 18 dark and tinted variants, and the Mac's rounded tile with margin and shadow at 16 to 1024 px.
-- **On the Mac:** the window keeps the system's background, so it still matches the sidebar's vibrancy. Only the accent, pills and colours change.
+- **The app mark and icon:** a violet server rack on a white tile (turned inside out in November 2026, as Proton Mail's icon is), on the pairing and lock screens, at launch, and on the app-switcher cover. The app icon is the same, with one mint "running" light. `scripts/make-app-icon.py` (Pillow) draws it from shapes into `Shared/Assets.xcassets/AppIcon.appiconset`: one 1024 px iPhone and iPad icon edge to edge with its iOS 18 dark and tinted variants.
 
 ## Check it first, without an Xcode project
 
@@ -117,46 +111,32 @@ cd apple-client && xcodebuild -scheme HomelabClient -destination 'generic/platfo
 
 `Package.swift` builds everything in `Shared/` except the `@main` entry point, in Swift 6 language mode, and runs `Tests/`.
 
-The same checks run on every change on GitHub's Mac runner (`.github/workflows/apple-client.yml`): `swift build` and `swift test`, the package for iOS, the Mac and iPhone apps from the generated project (unsigned), and `scripts/test-scripts.sh`. A compiler warning fails the job, since in Swift 6 most are data races waiting to become errors.
+The same checks run on every change on GitHub's Mac runner (`.github/workflows/apple-client.yml`): `swift build` and `swift test`, the package for iOS, the iPhone app from the generated project (unsigned), the screenshots in the simulator, and `scripts/test-scripts.sh`. The package is built and tested for macOS too, where `swift test` runs, though there's no Mac app. A compiler warning fails the job, since in Swift 6 most are data races waiting to become errors.
 
 ## Make the Xcode project
 
-**The quickest way (Mac app, homelab on the same Mac):** `apple-client/scripts/run-on-this-mac.sh com.yourname` makes the project (below), builds and signs it with `xcodebuild -allowProvisioningUpdates` (a free Apple ID signed in to Xcode is enough), opens the app, and puts a pairing link for `localhost:8099` on the clipboard. Paste it into Address and click Pair.
-
 **The quickest way (iPhone app):** `apple-client/scripts/run-on-iphone.sh com.yourname`, with the iPhone plugged in, unlocked, trusting this Mac, and Developer Mode on (Settings › Privacy & Security › Developer Mode). It checks the phone's address first (`phone-address.sh`, below), makes the project, builds and signs for that phone (`-allowProvisioningDeviceRegistration` adds it to a free Personal Team), installs and opens it with `devicectl`, and shows a pairing QR code to scan in the app. With a free Apple ID the app works for 7 days; run it again to renew. The first time, the phone has to trust the Apple ID: Settings › General › VPN & Device Management.
 
-**The quick way (Mac app):** `apple-client/scripts/make-xcode-project.sh com.yourname` makes it with XcodeGen (installed with Homebrew if missing), with every setting below, in `~/Developer/HomelabClient-xcode`, outside the repository, pointing at this checkout's `Shared/`. Then press ⌘R in Xcode. By hand, for both platforms:
+**The quick way (Xcode):** `apple-client/scripts/make-xcode-project.sh com.yourname` makes it with XcodeGen (installed with Homebrew if missing), with every setting below, in `~/Developer/HomelabClient-xcode`, outside the repository, pointing at this checkout's `Shared/`. Then pick an iPhone and press ⌘R in Xcode. By hand:
 
-1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › Multiplatform › App.** Name it `HomelabClient`.
+1. In Xcode 16 or later (its SDKs make `View` main-actor isolated, which these sources rely on): **File › New › Project › iOS › App.** Name it `HomelabClient`.
    Choose SwiftUI and Swift, with no Core Data and no SwiftData.
 2. Delete the template's `ContentView.swift` and `HomelabClientApp.swift`.
 3. Drag `apple-client/Shared` into the project. Choose *Create groups* and
-   add it to the app target, both platforms. Drag `apple-client/Tests` into
+   add it to the app target. Drag `apple-client/Tests` into
    the unit test target.
 4. In **Build settings** for the app target:
-   - iOS Deployment Target **17.0**, macOS Deployment Target **14.0**. `@Observable`, `ContentUnavailableView` and `sensoryFeedback` need these.
+   - iOS Deployment Target **17.0**. `@Observable`, `ContentUnavailableView` and `sensoryFeedback` need these.
    - Swift Language Version **Swift 6**.
    - On Xcode 26, set **Default Actor Isolation = nonisolated**. The new-project default is MainActor, but these sources mark `@MainActor` explicitly where needed. Under a MainActor default, the model and parser types would be main-actor-bound, and the background stream reader couldn't use them.
 5. In **Info** (Info.plist keys):
    - `NSFaceIDUsageDescription`: "Face ID unlocks Homelab, which controls your servers." The Face ID prompt fails without it.
    - `NSCameraUsageDescription` (iOS): "The camera scans the pairing QR code your computer shows." Scanning to pair needs it. The first tap on Scan asks for the camera; if it's refused, the app says how to allow it, and the address and code can still be typed.
-   - `NSLocalNetworkUsageDescription`: "Homelab talks to your homelab on the home network." iOS (and macOS 15) ask before an app reaches a home-network address such as the one `homelab.<your domain>` resolves to; this is the reason the prompt shows. Allow it, or the connection fails. Loopback on the Mac needs no permission.
-   - `NSAppTransportSecurity` › `NSAllowsLocalNetworking` = YES (macOS; in Xcode's Info tab, *App Transport Security Settings › Allow Local Networking*). It's for the companion on the same Mac (`localhost:8099`) only. Add no other exceptions: the app itself refuses plain http to anything but loopback.
+   - `NSLocalNetworkUsageDescription`: "Homelab talks to your homelab on the home network." iOS asks before an app reaches a home-network address such as the one `homelab.<your domain>` resolves to; this is the reason the prompt shows. Allow it, or the connection fails.
    - `ITSAppUsesNonExemptEncryption` = NO. The app's only encryption is the system's HTTPS and Keychain, which is exempt, so App Store Connect stops asking at each upload.
 6. In **Signing & Capabilities**:
-   - Choose a development team on both platforms. On macOS, the data-protection keychain needs a signed app; an unsigned one gets `errSecMissingEntitlement`.
-   - macOS: **App Sandbox › Outgoing Connections (Client)**, and keep the Hardened Runtime on.
-   - macOS: add **Keychain Sharing** (its default group is fine). Without an entitlement like it, Xcode signs with no provisioning profile ("None Required"), and the data-protection Keychain answers -34018 (`errSecMissingEntitlement`) when pairing saves the token. A free Personal Team is enough.
-7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target (both platforms). It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
-
-## Pair with the homelab on the same Mac
-
-The Mac that runs the homelab doesn't need Tailscale or a domain to use the Mac app. On it:
-
-1. In Terminal, in the homelab folder: `./homelab phone pair --name "This Mac" --can-change`. Note the 8-character code.
-2. In the app, click **The Homelab Runs on This Mac** (or type `localhost:8099`), enter the code, and click **Pair**.
-
-The app talks to `http://127.0.0.1:8099`. That never leaves the computer, so the companion counts it as encrypted and lets it make changes. An iPhone, iPad or another Mac still needs the Tailscale or homelab-domain (https) link.
+   - Choose a development team.
+7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target. It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
 
 ## Pair an iPhone over the home network (no Tailscale)
 
@@ -202,8 +182,6 @@ hash. The client receives the token itself, once.
 | Token extracted from the device or backups | Keychain with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, `kSecAttrSynchronizable=false`, and the data-protection keychain on macOS. The accessibility attribute is checked again on every read, and a mismatched item is deleted. | `KeychainManager` |
 | Stale pairing after a reinstall | Keychain items survive app deletion on iOS, so the first launch after an install deletes them. | `AppCoordinator.purgeKeychainIfFreshInstall` |
 | Someone else picks up the unlocked device | Face ID / Touch ID / passcode (`.deviceOwnerAuthentication`) at launch and on every return from the background. A new `LAContext` each time, with no reuse window. With no passcode set, the app refuses to open. | `BiometricAuthManager`, `AppCoordinator` |
-| Mac left unattended | Also locks when the app is hidden, on screen lock, when the screens or the system sleep, on fast user switching, when its window closes, and after a while behind other apps (a Mac app never goes to the background by itself): 5 minutes, or 1 or 15 in Settings (⌘,). There's no Never. These triggers are installed in the coordinator, so they work with only the menu bar item open. ⌘L locks by hand. | `AppCoordinator.installMacLockTriggers` |
-| Menu bar item showing the homelab | It shows only what the unlocked app holds. Locked (including with its window closed), it says so and nothing else. | `MenuBarView` |
 | App switcher snapshot | An opaque shield covers the app whenever the scene isn't active (iOS). | `PrivacyShieldView` |
 | Data left in memory while locked | Locking stops the SSE stream and clears every reading. Late answers that arrive after the lock are dropped. | `LiveEventManager.clear` |
 | Secrets in logs | `os.Logger` only. Tokens and codes are never interpolated. Hosts and server text are `.private`. Error log lines use payload-free `logName`. The secret types print as `<redacted>` even through `print` or `dump`. | `SecureLog`, `APIError.logName` |
@@ -250,4 +228,4 @@ hash. The client receives the token itself, once.
 - A look-only home Wi-Fi mode over plain http. It's left out on purpose: the token would cross the Wi-Fi in readable form (the computer makes such a device look-only for good). It's a decision to make before building it.
 - App Intents (Shortcuts) and Live Activities. They need targets in the Xcode project, and a choice about what may run or show without unlocking. (The widget is built: see Start here.)
 - Snoozing a failing check's alerts from the phone (main #469): `SnoozeCheck` isn't a phone method, so the phone only shows until when.
-- The iPhone app run against a real `homelab serve`. The Mac app runs on Xcode 27.2, paired with the homelab on the same Mac over `127.0.0.1:8099`. The iPhone app builds on the Mac runner; it hasn't been installed on a phone yet (`run-on-iphone.sh`).
+- The iPhone app run against a real `homelab serve`. The iPhone app builds on the Mac runner; it hasn't been installed on a phone yet (`run-on-iphone.sh`).
