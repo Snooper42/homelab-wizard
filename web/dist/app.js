@@ -11835,7 +11835,7 @@ ${pays}
       /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
   }
-  function StackedBars({ columns, height = 260, format: format2, tip, label, lineless }) {
+  function StackedBars({ columns, height = 260, format: format2, tip, label, lineless, onPick }) {
     const last2 = columns.map((c3) => !c3.ahead).lastIndexOf(true);
     const [at2, setAt] = d2(-1);
     const shown6 = at2 >= 0 ? at2 : last2;
@@ -11858,7 +11858,7 @@ ${pays}
           floor < 0 && /* @__PURE__ */ u3("span", { class: "fx-below", style: { top: `${y3(0)}px` } }),
           columns.map((c3, i3) => {
             let up = 0, down = 0;
-            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown6 ? " on" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), children: [
+            return /* @__PURE__ */ u3("div", { class: "fx-stackcol" + (c3.ahead ? " ahead" : "") + (i3 === shown6 ? " on" : "") + (onPick ? " pick" : ""), style: { left: `${i3 / n3 * 100}%`, width: `${100 / n3}%` }, onPointerEnter: () => setAt(i3), onClick: onPick && (() => onPick(i3)), children: [
               c3.up.map((p3, k3) => {
                 const t3 = y3(up + p3.value), h3 = y3(up) - t3;
                 up += p3.value;
@@ -11992,7 +11992,7 @@ ${pays}
           },
           x3.tag
         )) }) }),
-        !!yearGroups.length && /* @__PURE__ */ u3(Trend, { v: v3, txs, groups: yearGroups, group: trendOf, pick: setTrendOf }),
+        !!yearGroups.length && /* @__PURE__ */ u3(Trend, { v: v3, txs, groups: yearGroups, group: trendOf, pick: setTrendOf, open: open4 }),
         months.length > 1 && /* @__PURE__ */ u3(Widget, { title: "In and out, month by month", span: "all", kind: "fx-inout", children: [
           /* @__PURE__ */ u3(
             StackedBars,
@@ -12001,6 +12001,7 @@ ${pays}
               height: 220,
               label: `Money in above the line and out below it, each month ${r3.label.toLowerCase()}; the line is what was kept. The table under it has every number.`,
               columns: months.map((m3) => ({ label: m3.label, up: [{ value: m3.in, color: "in" }], down: [{ value: m3.out, color: "out" }], line: m3.in - m3.out })),
+              onPick: open4 && ((i3) => open4({ month: months[i3].month })),
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-caption", children: [
                   months[i3].label,
@@ -12045,7 +12046,7 @@ ${pays}
       ] })
     ] }) });
   }
-  function Trend({ v: v3, txs, groups: groups3, group: group2, pick }) {
+  function Trend({ v: v3, txs, groups: groups3, group: group2, pick, open: open4 }) {
     const cats = v3.categories || [];
     const g2 = groups3.find((x3) => x3.name === group2) || groups3[0];
     const trend = categoryTrend(txs, cats, g2.name, v3.today);
@@ -12082,6 +12083,7 @@ ${pays}
               height: 180,
               label: `${g2.name}: what was spent each of the last 12 months. The table under it has every number.`,
               columns: trend.map((t3) => ({ label: t3.label, up: [{ value: Math.max(0, t3.amount), color: "out" }], down: [], line: 0 })),
+              onPick: open4 && g2.name !== "No category" ? (i3) => open4({ category: g2.name, month: trend[i3].month }) : void 0,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-caption", children: [
                   monthName(trend[i3].month + "-01"),

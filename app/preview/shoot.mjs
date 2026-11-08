@@ -6240,6 +6240,20 @@ const smokes = [
     await page.click('.fx-person:has-text("Jordan") .fx-payhint button:text-is("Add them")');
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Jordan")', { timeout: 5000 });
   } },
+  // Reports' month columns open what is behind them: In and out's September its transactions, and Food's October (the
+  // largest category over the year, the trend's first) Food's of October.
+  { name: 'Finances: a month on a Reports chart opens its transactions', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("3 months")');
+    await page.locator('.fx-inout .fx-stackcol').nth(1).click({ timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("4 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-09') throw new Error('not September');
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-trend h2:text-is("Food, month by month")', { timeout: 5000 });
+    await page.locator('.fx-trend .fx-stackcol').last().click();
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

@@ -106,11 +106,12 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
                 when={<Amount value={x.amount} form="full" />} whenPlain onOpen={() => setTag(x.tag)} openLabel="see only these" />)}
             </Rows>
           </Widget>}
-          {!!yearGroups.length && <Trend v={v} txs={txs} groups={yearGroups} group={trendOf} pick={setTrendOf} />}
+          {!!yearGroups.length && <Trend v={v} txs={txs} groups={yearGroups} group={trendOf} pick={setTrendOf} open={open} />}
           {months.length > 1 && <Widget title="In and out, month by month" span="all" kind="fx-inout">
             <StackedBars format={tick} height={220}
               label={`Money in above the line and out below it, each month ${r.label.toLowerCase()}; the line is what was kept. The table under it has every number.`}
               columns={months.map((m) => ({ label: m.label, up: [{ value: m.in, color: 'in' }], down: [{ value: m.out, color: 'out' }], line: m.in - m.out }))}
+              onPick={open && ((i) => open({ month: months[i].month }))}
               tip={(i) => <>
                 <div class="fx-caption">{months[i].label} {months[i].month.slice(0, 4)}</div>
                 <div class="fx-tiprow"><Dot color="in" /><span>Money in</span><Amount value={months[i].in} form="full" /></div>
@@ -129,7 +130,7 @@ export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledg
 }
 
 /** A category's last twelve months, bar by bar, with a table for a screen reader; over them, this month so far against the same days a year before. */
-function Trend({ v, txs, groups, group, pick }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void }) {
+function Trend({ v, txs, groups, group, pick, open }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void; open?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   const cats = v.categories || [];
   const g = groups.find((x) => x.name === group) || groups[0];
   const trend = categoryTrend(txs, cats, g.name, v.today);
@@ -151,6 +152,7 @@ function Trend({ v, txs, groups, group, pick }: { v: finance.View; txs: finance.
       <StackedBars lineless format={tick} height={180}
         label={`${g.name}: what was spent each of the last 12 months. The table under it has every number.`}
         columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: 'out' }], down: [], line: 0 }))}
+        onPick={open && g.name !== 'No category' ? (i) => open({ category: g.name, month: trend[i].month }) : undefined}
         tip={(i) => <>
           <div class="fx-caption">{monthName(trend[i].month + '-01')} {trend[i].month.slice(0, 4)}</div>
           <div class="fx-tiptotal"><span>{g.name}</span><Amount value={trend[i].amount} form="full" /></div>
