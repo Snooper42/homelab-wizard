@@ -34,6 +34,7 @@ function here(screen: string): Line[] {
         [['↑', '↓'], 'The week before or after'],
         [['Page Up', 'Page Down'], 'The month before or after'],
         [['Home', 'End'], 'The week’s first or last day'],
+        [[mod + 'F'], 'In Transactions, search them'],
         [[mod + 'A'], 'In Transactions, after Select, every transaction shown; Escape stops selecting'],
       ];
     default:

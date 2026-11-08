@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **⌘F on Transactions:** on Finances › Transactions, ⌘F (Ctrl+F on Windows and Linux) goes to its search, as it does on Choose apps and Settings; the shortcuts sheet (?) lists it.
 - **Payday among the bills, on the phone:** Finances' *Coming up* shows each paycheck of the next two weeks on its day among the bills, and says how much of what's due comes before the next one (*$2,104.49 of it before Alex's paycheck on Nov 6*).
 - **Cash flow and Where it goes open their detail:** on the Finances Dashboard, the arrow on either card opens Recurring, where the typical month is laid out payment by payment.
 - **Reports you can click:** on Finances › Reports, a category or a payee opens Transactions showing just its transactions (this month's or last month's when that's the stretch picked); each category says its share of the spending first, and Transactions' category filter takes a group too (*Food* finds Groceries and Eating out).

@@ -6040,6 +6040,18 @@ const smokes = [
       await page.waitForSelector('.fx-monthsum h2:text-is("A typical month")', { timeout: 5000 });
     }
   } },
+  // ⌘F on Transactions goes to its search, its words picked to type over; elsewhere on Finances it does nothing.
+  { name: 'Keyboard: ⌘F searches Finances’ transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active', { timeout: 5000 });
+    await page.keyboard.press('Meta+f');
+    if (await page.evaluate(() => document.activeElement?.matches('input'))) throw new Error('⌘F on the Dashboard went to a box');
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.fill('.fx-txsearch', 'Shell');
+    await page.click('.fx-transactions h2');
+    await page.keyboard.press('Meta+f');
+    await page.waitForSelector('.fx-txsearch:focus', { timeout: 5000 });
+    if (await page.evaluate(() => { const b = document.querySelector('.fx-txsearch'); return b.selectionEnd - b.selectionStart; }) !== 5) throw new Error('the words typed before are not picked');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

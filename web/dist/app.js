@@ -16638,6 +16638,7 @@ ${pays}
           [["↑", "↓"], "The week before or after"],
           [["Page Up", "Page Down"], "The month before or after"],
           [["Home", "End"], "The week’s first or last day"],
+          [[mod + "F"], "In Transactions, search them"],
           [[mod + "A"], "In Transactions, after Select, every transaction shown; Escape stops selecting"]
         ];
       default:
@@ -17342,6 +17343,12 @@ ${pays}
         e3.preventDefault();
         $2(search).focus();
         $2(search).select();
+      }
+      const box = current === "finances" ? document.querySelector("#finances .fx-txsearch") : null;
+      if (box) {
+        e3.preventDefault();
+        box.focus();
+        box.select();
       }
     }
   });
