@@ -43,10 +43,10 @@ function fromApps() {
   ];
   return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
 }
-// Net worth › Investments, read from Ghostfolio: on Read now, and after the
-// first, once a day as Finances opens (unless turned off), when the last
-// read is from before today or 12 hours old. On the computer only: a phone
-// shows what was last read.
+// Net worth › Investments, read from Ghostfolio: on Read now (the computer,
+// or a phone allowed to change Finances), and after the first, once a day
+// as Finances opens on the computer while Status sees Ghostfolio running
+// (unless turned off), when the last read is from before today or 12 hours old.
 let invest: InvestState = {};
 let autoTried = '';
 async function readInvestments() {
@@ -127,7 +127,9 @@ function draw() {
     // Wallos's subscriptions, on the computer while Wallos runs.
     fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
-    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest, ...(runs('ghostfolio') ? { add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) } : {}) },
+    // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
+    // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
+    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) },
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
