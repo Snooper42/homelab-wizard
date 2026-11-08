@@ -239,7 +239,7 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
           </table>
           <ul class="fx-legend inline fx-callegend" aria-hidden="true">
             {month <= monthOf(from) && first < from && <li><span class="fx-key fx-keypast" /><span class="fx-legendlabel">What your transactions recorded</span></li>}
-            <li><span class="fx-key fx-keylow" /><span class="fx-legendlabel">{cushion ? `Under your ${compact(cushion)} cushion` : 'Checking at the end of the day'}</span></li>
+            <li><span class={'fx-key' + (cushion ? ' fx-keylow' : '')} /><span class="fx-legendlabel">{cushion ? `Under your ${compact(cushion)} cushion` : 'Checking at the end of the day'}</span></li>
             <li><span class="fx-key fx-keyhol" /><span class="fx-legendlabel">Bank holiday</span></li>
             <li><span class="fx-movedtag">moved</span><span class="fx-legendlabel">A payday moved before a weekend or holiday</span></li>
           </ul>

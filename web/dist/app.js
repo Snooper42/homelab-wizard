@@ -11471,7 +11471,7 @@ ${pays}
                 /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "What your transactions recorded" })
               ] }),
               /* @__PURE__ */ u3("li", { children: [
-                /* @__PURE__ */ u3("span", { class: "fx-key fx-keylow" }),
+                /* @__PURE__ */ u3("span", { class: "fx-key" + (cushion ? " fx-keylow" : "") }),
                 /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: cushion ? `Under your ${compact(cushion)} cushion` : "Checking at the end of the day" })
               ] }),
               /* @__PURE__ */ u3("li", { children: [
@@ -13160,11 +13160,10 @@ ${pays}
       keep2 && fromWallos && /* @__PURE__ */ u3(WallosWidget, { v: v3, read: fromWallos, keep: keep2 }),
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share3(m3.spent)}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : (v3.plan.people || []).length ? `${(v3.plan.people || []).length} paychecks` : "no paychecks yet"}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: ["Spent", share3(m3.spent)].filter(Boolean).join(" · ") }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
-            "Saved · ",
-            share3(m3.saved),
+            ["Saved", share3(m3.saved)].filter(Boolean).join(" · "),
             !!m3.viaPay && /* @__PURE__ */ u3("span", { class: "fx-capnote", children: [
               "plus ",
               whole(m3.viaPay),
@@ -14938,7 +14937,7 @@ ${pays}
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
       /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
       /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
-      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: /* @__PURE__ */ u3("p", { class: "fx-say", children: [
+      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
         "You owe ",
         /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
         loans.length ? /* @__PURE__ */ u3(S, { children: [

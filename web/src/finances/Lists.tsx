@@ -220,9 +220,9 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         {keep && fromWallos && <WallosWidget v={v} read={fromWallos} keep={keep} />}
         <Widget title="A typical month" span="all" kind="fx-monthsum">
           <div class="fx-stats">
-            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}${m.others.length ? ` and ${m.others.map((o) => o.payer).filter((p, i, a) => a.indexOf(p) === i).join(' and ')}` : ''}`} />
-            <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={`Spent · ${share(m.spent)}`} />
-            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>Saved · {share(m.saved)}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
+            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : (v.plan.people || []).length ? `${(v.plan.people || []).length} paychecks` : 'no paychecks yet'}${m.others.length ? ` and ${m.others.map((o) => o.payer).filter((p, i, a) => a.indexOf(p) === i).join(' and ')}` : ''}`} />
+            <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={['Spent', share(m.spent)].filter(Boolean).join(' · ')} />
+            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>{['Saved', share(m.saved)].filter(Boolean).join(' · ')}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
             <Stat value={<Amount value={m.left} form="whole" tone={m.left < 0 ? 'out' : ''} />} caption="Left over" />
           </div>
           <SplitBar label="A typical month's pay" parts={[{ label: 'Spent', value: m.spent, color: 'out' }, { label: 'Saved', value: m.saved, color: 'save' }, { label: 'Left', value: Math.max(0, m.left), color: 'in' }]} />

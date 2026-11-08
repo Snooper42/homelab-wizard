@@ -6107,6 +6107,17 @@ const smokes = [
     await page.waitForSelector('.fx-txsum .fx-stat', { timeout: 5000 });
     if (await page.$('.fx-txvs')) throw new Error('it compares with a month that has no transactions');
   } },
+  // A plan with only a checking account and no cushion: nothing owed said plainly, A typical month with no dangling dots,
+  // and the calendar's key for checking not drawn as under a cushion.
+  { name: 'Finances: a new plan, only checking, says so plainly', screen: 'finances', mock: { finances: { ...finances, plan: { accounts: [{ id: 'chk', name: 'Checking', kind: 'checking', balance: 1200, updated: '2026-10-30' }] }, checking: 'chk', periods: finances.periods.slice(0, 1).map((p) => ({ ...p, rows: [], in: 0, out: 0, saved: 0 })), paydays: [], loans: [], goals: [], budgets: [], found: [], investments: undefined } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-say:text-is("Nothing owed: no card balance, no loan.")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    const caps = await page.$$eval('.fx-monthsum .fx-caption', (c) => c.map((x) => x.textContent.trim()));
+    if (caps.some((c) => /·\s*$/.test(c)) || !caps.includes('In · no paychecks yet')) throw new Error(`captions: ${JSON.stringify(caps)}`);
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    if (await page.$('.fx-callegend .fx-keylow')) throw new Error('with no cushion, the key is drawn as under one');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
