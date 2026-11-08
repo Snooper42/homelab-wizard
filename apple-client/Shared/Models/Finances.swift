@@ -280,6 +280,8 @@ struct FinancePast: Decodable, Sendable, Equatable, Identifiable {
 struct FinanceCategory: Decodable, Sendable, Equatable, Identifiable {
     let name: String
     let parent: String?
+    /// What it shows by: one of Mark.tsx's glyphs ("food", "home", "car"…).
+    let icon: String?
     /// Money in: a paycheck, interest, a refund.
     let income: Bool?
 
@@ -667,6 +669,8 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     /// Signed as the account sees it: money in is plus, money out minus.
     let amount: Double
     let payee: String
+    /// The payee's logo picked by hand: a brand's key, or "none" for none.
+    let institution: String?
     let category: String
     let note: String
     /// For a transfer, the account the money went into.
@@ -676,9 +680,11 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let receipt: String?
     /// Divided across categories (changed only on the computer).
     let isSplit: Bool
+    /// The first part's category, when it's divided: what its mark is coloured by.
+    let splitCategory: String?
     var hasReceipt: Bool { receipt != nil }
 
-    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, category, note, to, tags, receipt, splits }
+    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, institution, category, note, to, tags, receipt, splits }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -687,13 +693,16 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         account = try c.decodeIfPresent(String.self, forKey: .account) ?? ""
         amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
         payee = try c.decodeIfPresent(String.self, forKey: .payee) ?? ""
+        institution = try c.decodeIfPresent(String.self, forKey: .institution)
         category = try c.decodeIfPresent(String.self, forKey: .category) ?? ""
         note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
         to = try c.decodeIfPresent(String.self, forKey: .to)
         tags = try c.decodeIfPresent([String].self, forKey: .tags) ?? []
         let name = try c.decodeIfPresent(String.self, forKey: .receipt) ?? ""
         receipt = ReceiptCodec.isValidName(name) ? name : nil
-        isSplit = !(((try? c.decodeIfPresent([JSONValue].self, forKey: .splits)) ?? nil) ?? []).isEmpty
+        let splits = ((try? c.decodeIfPresent([JSONValue].self, forKey: .splits)) ?? nil) ?? []
+        isSplit = !splits.isEmpty
+        if case .string(let first)? = splits.first?["category"] { splitCategory = first } else { splitCategory = nil }
     }
 
     /// Whether `text` is in the payee, the category, the note or a tag.

@@ -2,12 +2,31 @@ name: Apple client
 
 # The native iPhone, iPad and Mac app in apple-client/: compiled and tested
 # on a Mac runner whenever it changes, since it's written away from a Mac.
+# The payee logos are the computer's own (web/src/finances and its colours
+# in web/dist/style.css), so a change there runs the quick check below too;
+# the Mac job runs only when the app itself changed.
 on:
   push:
     branches: [main]
-    paths: ["apple-client/**", ".github/workflows/apple-client.yml"]
+    paths:
+      - "apple-client/**"
+      - ".github/workflows/apple-client.yml"
+      - "web/src/finances/logos.ts"
+      - "web/src/finances/Mark.tsx"
+      - "web/src/finances/payees.ts"
+      - "web/src/finances/hues.ts"
+      - "web/src/finances/importData.ts"
+      - "web/dist/style.css"
   pull_request:
-    paths: ["apple-client/**", ".github/workflows/apple-client.yml"]
+    paths:
+      - "apple-client/**"
+      - ".github/workflows/apple-client.yml"
+      - "web/src/finances/logos.ts"
+      - "web/src/finances/Mark.tsx"
+      - "web/src/finances/payees.ts"
+      - "web/src/finances/hues.ts"
+      - "web/src/finances/importData.ts"
+      - "web/dist/style.css"
 
 permissions:
   contents: read
@@ -17,7 +36,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Shared/Resources/PayeeLogos.json and Tests/Resources/PayeeVectors.json are
+  # made from the computer's own logos and matching by
+  # scripts/make-payee-logos.mjs; this fails when they're out of date. It
+  # also says whether the app changed, so the Mac job is skipped for a
+  # change on the computer's side alone.
+  payee-logos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      app: ${{ steps.changed.outputs.app }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Did the app change
+        id: changed
+        # A pull request is checked out as its merge into the base, whose
+        # first parent is the base; a push says the commit it came after.
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then BASE="$(git rev-parse HEAD^1 2>/dev/null || true)"; else BASE="$BEFORE"; fi
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null \
+            || git diff --name-only "$BASE" HEAD | grep -qE '^(apple-client/|\.github/workflows/apple-client\.yml$)'; then
+            echo "app=true" >> "$GITHUB_OUTPUT"; echo "The app changed"
+          else
+            echo "app=false" >> "$GITHUB_OUTPUT"; echo "Only the computer's side changed"
+          fi
+      - name: The payee logos match the computer's
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          node apple-client/scripts/make-payee-logos.mjs --check
+
   build-and-test:
+    needs: payee-logos
+    if: ${{ !cancelled() && needs.payee-logos.outputs.app == 'true' }}
     runs-on: macos-latest
     timeout-minutes: 45
     defaults:

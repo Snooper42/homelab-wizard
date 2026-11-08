@@ -957,8 +957,12 @@ private struct TransactionRow: View {
     private var large: Bool { typeSize.isAccessibilitySize }
 
     var body: some View {
-        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 12))
         layout {
+            // The payee's logo, as the computer's Finances shows it (Design.swift).
+            if !large {
+                LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 40)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(transaction.payee.isEmpty ? "Transaction" : transaction.payee)

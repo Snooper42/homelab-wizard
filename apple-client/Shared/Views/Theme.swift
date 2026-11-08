@@ -5,13 +5,14 @@ import UIKit
 import AppKit
 #endif
 
-/// The app's look: a violet accent, a warm grey canvas behind white cards
-/// (a deep blue-black behind dark ones), calm status colours, and pills for
-/// states. Every colour has a light and a dark value. As text, each keeps
-/// at least 4.5:1 contrast on the white card and on the dark one.
+/// The app's look: a plain iPhone app, with a violet accent, a warm grey
+/// canvas behind white cards (a deep blue-black behind dark ones), calm
+/// status colours, and pills for states. Every colour has a light and a
+/// dark value. As text, each keeps at least 4.5:1 contrast on the card and
+/// on the canvas, light and dark. The shared pieces built on these are in
+/// Design.swift.
 ///
-/// Inspired by the calm, card-based style of privacy-focused mail apps, but
-/// the app's own: no other product's name, logo or artwork.
+/// The app's own look: no other product's name, logo or artwork.
 enum Theme {
     /// The accent: buttons, links, the selection, the "changed" dot.
     static let accent = Color(light: 0x6A4FF0, dark: 0x8C7BFF)
@@ -22,15 +23,23 @@ enum Theme {
     static let canvas = Color(light: 0xF5F4F2, dark: 0x121019)
     /// A card on the canvas.
     static let surface = Color(light: 0xFFFFFF, dark: 0x1E1B27)
+    /// Text on a card: near-black by day, near-white by night.
+    static let ink = Color(light: 0x1C1C1E, dark: 0xF2F2F7)
+    /// Quieter text on a card or the canvas: a caption, a date.
+    static let secondaryInk = Color(light: 0x5E5E66, dark: 0x98989F)
+    /// A hairline between rows inside a card.
+    static let separator = Color(light: 0xECEAE5, dark: 0x2E2A3D)
 
     static let success = Color(light: 0x137A60, dark: 0x3CC79F)
     static let warning = Color(light: 0xA35700, dark: 0xFFA733)
-    static let caution = Color(light: 0x8A6C00, dark: 0xF2C94C)
+    static let caution = Color(light: 0x846700, dark: 0xF2C94C)
     static let danger = Color(light: 0xD02B4B, dark: 0xFF6B85)
     static let info = Color(light: 0x176FA3, dark: 0x5CC0EE)
 
-    /// The corner radius of cards and of bordered buttons.
+    /// The corner radius of bordered buttons and small boxes.
     static let radius: CGFloat = 10
+    /// The corner radius of a card.
+    static let cardRadius: CGFloat = 20
 }
 
 extension Color {
@@ -99,7 +108,7 @@ extension View {
     }
 }
 
-/// The app's mark: a server rack on a violet tile. Used where the app
+/// The app's mark: a server rack on a violet tile, as the app's icon is. Used where the app
 /// introduces itself (pairing, the lock screen, the privacy cover).
 struct AppMark: View {
     var size: CGFloat = 72
