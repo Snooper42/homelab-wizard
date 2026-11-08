@@ -5183,6 +5183,51 @@ const smokes = [
     const by = (id) => txs.find((t) => t.id === id);
     if (txs.length !== 3 || by('m1').payee !== 'Acme Cruises' || by('m1').category !== 'Pay' || by('m2').payee !== 'Car payment' || by('m3').payee !== 'Apple Savings') throw new Error(`renamed ${JSON.stringify(txs)}`);
   } },
+  // Imported rows take what they are plainly for: a known company's category, a planned payment's, a payroll deposit a
+  // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
+  // payment to someone is left for the household to pick. The preview says each before it comes in.
+  { name: 'Finances: an import fills in what each row is plainly for, and money between your own accounts moves', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'apple', name: 'Apple Savings', kind: 'savings', balance: 1000 }] } } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,11/07/2026,"SHELL OIL 57444",-48.00,DEBIT_CARD,5000.00,,\n'
+      + 'CREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2000.00,ACH_CREDIT,5048.00,,\n'
+      + 'DEBIT,11/05/2026,"Payment to Chase card ending in 1234 11/05",-120.00,LOAN_PMT,3048.00,,\n'
+      + 'CREDIT,11/04/2026,"APPLE GS SAVINGS TRANSFER 123456789012 WEB ID: 2222222222",500.00,ACH_CREDIT,3168.00,,\n'
+      + 'DEBIT,11/03/2026,"Zelle payment to Sam Lee 12345678901",-30.00,QUICKPAY_DEBIT,2668.00,,\n'
+      + 'DEBIT,11/02/2026,"WHOLEFDS MKT 10234 AUSTIN TX",-64.10,DEBIT_CARD,2698.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("6 to bring in")', { timeout: 5000 });
+    for (const [who, said] of [['Shell', ' · Gas'], ['Acme Corp Payroll', ' · Paycheck'], ['Payment to Chase card ••1234', ' · moves to Chase Freedom'], ['Apple Savings', ' · moves from Apple Savings']]) {
+      await page.waitForSelector(`#finSheet .importlist li:has(strong:text-is("${who}")) small:has-text("${said}")`, { timeout: 2000 });
+    }
+    await page.click('#finSheet button:text-is("Bring in 6")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-6);
+    const by = (p) => txs.find((t) => t.payee === p);
+    if (by('Shell')?.category !== 'Gas' || by('Acme Corp Payroll')?.category !== 'Paycheck') throw new Error(`categories ${JSON.stringify(txs)}`);
+    const card = by('Payment to Chase card ••1234'), sav = by('Apple Savings'), zelle = by('Zelle to Sam Lee');
+    if (card?.to !== 'visa' || card.account !== 'chk' || card.amount !== -120 || card.category) throw new Error(`the card payment ${JSON.stringify(card)}`);
+    if (sav?.account !== 'apple' || sav.to !== 'chk' || sav.amount !== -500 || sav.category) throw new Error(`the savings transfer ${JSON.stringify(sav)}`);
+    if (!zelle || zelle.category || zelle.to) throw new Error(`the Zelle payment ${JSON.stringify(zelle)}`);
+  } },
+  // Rows brought in before with no category take one when the same file is imported again; one with a category keeps it.
+  { name: 'Finances: a CSV imported again gives rows brought in before with no category theirs', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'c1', date: '2026-11-07', account: 'chk', amount: -48, payee: 'Shell', note: 'SHELL OIL 57444' },
+    { id: 'c2', date: '2026-11-06', account: 'chk', amount: 2000, payee: 'Acme Corp Payroll', category: 'Refunds', note: 'ACME CORP PAYROLL PPD ID: 12345' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,11/07/2026,"SHELL OIL 57444",-48.00,DEBIT_CARD,5000.00,,\n'
+      + 'CREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2000.00,ACH_CREDIT,5048.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("1 brought in before, given a category")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Fix 1")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.length !== 2 || txs.find((t) => t.id === 'c1').category !== 'Gas' || txs.find((t) => t.id === 'c2').category !== 'Refunds') throw new Error(`categorized ${JSON.stringify(txs)}`);
+  } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
