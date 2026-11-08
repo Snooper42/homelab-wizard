@@ -202,6 +202,9 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 			}
 			continue
 		}
+		if ev.Type == "fail" && ev.Text != "" {
+			run.Why = ev.Text
+		}
 		if ev.Type == "result" {
 			run.Result = ev.Raw
 			if b, ok := ev.Raw["ok"].(bool); ok {

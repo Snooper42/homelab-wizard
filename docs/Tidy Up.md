@@ -18,9 +18,10 @@ The work is done by Python scripts in `tools/media`, run by the homelab with Pyt
 |---|---|
 | `music_organizer.py` | The owner's music organizer, vendored with their two Windows fixes: scan, build a cleaned copy with beets (MusicBrainz, your 14 genres, artwork), swap it in with Navidrome paused and backed up, verify, undo |
 | `books_organizer.py` | The owner's books organizer, vendored with their Windows fix: review (titles, series, publishers, genres, covers, misfiled books), apply with Calibre-Web paused, undo |
+| `books_tidy.py` | Beside it: genre counts from Calibre's database, and **Make a Calibre library** (`build`) for a books folder with no `metadata.db`: each folder holding a book's files moves aside to `<folder> (before Calibre)` on the same drive, `calibredb add --recurse --one-book-per-directory` adds each as one book (its formats together, its `metadata.opf` and cover read) with Calibre-Web paused, and every book is counted in; the copy aside is kept |
 | `music_tidy.py` | What Tidy Up adds around the organizer: free the space once verify says every song is there, Navidrome's full scan and missing entries, a smart playlist (`.nsp`) a genre, LRCLIB lyrics, and new music from Downloads |
 | `movies_organizer.py`, `tv_organizer.py`, `video_engine.py` | Find the videos that waste space, hand them to Tdarr, and swap each checked result in; file new films as `Title (Year)/Title (Year).mkv` and episodes as `Show/Season 01/Show - S01E01.mkv` (`S01E01-E02` for two in one file, `Show - 112` for anime numbered from its first episode) |
-| `audiobook_organizer.py` | Merge a book in many files into one `.m4b` with a chapter a file and one cover (m4b-tool, else ffmpeg) |
+| `audiobook_organizer.py` | Merge a book in many files into one `.m4b` with a chapter a file and one cover (m4b-tool, else ffmpeg); its scan also counts the books that are one file already, so a library with nothing to merge says so |
 | `inbox.py` | Watch Downloads and hand each finished download to its engine |
 | `scrubber.py` | The nightly sweep of leftovers |
 | `tdarr_setup.py` | Tidy Up's two libraries in Tdarr, with the space-saving plugins |

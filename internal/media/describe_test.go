@@ -52,3 +52,28 @@ func TestUndoFromTheTrash(t *testing.T) {
 		t.Errorf("%+v", r.Activity)
 	}
 }
+
+// Nov 8, the owner: Recent said "Movies: collect stopped · The log says
+// why" every five minutes while Tdarr was paused on battery. A run that
+// fails keeps the engine's own reason, and Recent shows it; the background
+// collect that fails makes no line at all (the Movies and TV tabs say
+// Tdarr isn't answering instead); Make a Calibre library is described.
+func TestDescribeSaysWhy(t *testing.T) {
+	if text, sub := Describe("books", Run{Action: "review", Exit: 1, Why: "Calibre is open"}); text != "Books: review stopped" || sub != "Calibre is open" {
+		t.Errorf("with why: %q · %q", text, sub)
+	}
+	if _, sub := Describe("books", Run{Action: "review", Exit: 1}); sub != "The log says why" {
+		t.Errorf("without: %q", sub)
+	}
+	for _, kind := range []string{"movies", "tv"} {
+		if text, _ := Describe(kind, Run{Action: "collect", Exit: 1, Why: "Tdarr isn't answering"}); text != "" {
+			t.Errorf("%s collect stopped: %q", kind, text)
+		}
+	}
+	if text, sub := Describe("books", Run{Action: "build", OK: true, Result: map[string]any{"applied": true, "added": 301.0, "books": 301.0}}); text != "Calibre library made" || sub != "301 books" {
+		t.Errorf("build: %q · %q", text, sub)
+	}
+	if text, _ := Describe("books", Run{Action: "build", OK: true, Result: map[string]any{"applied": false, "books": 301.0}}); text != "" {
+		t.Errorf("a look is no line: %q", text)
+	}
+}

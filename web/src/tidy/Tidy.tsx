@@ -76,7 +76,7 @@ const titles: Record<string, string> = {
   'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
   'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
   'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library',
   'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
   'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
   'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
@@ -381,17 +381,36 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
       out.push({ kind: k, title: `${count(bare, k === 'tv' ? 'show' : 'film')} ${bare === 1 ? 'has' : 'have'} no poster in Jellyfin`, sub: names.slice(0, 3).join(', ') + (bare > 3 ? `, and ${bare - 3} more` : ''),
         go: { label: 'Fetch posters', quiet: true, run: () => act.run(k, 'posters') } });
     }
-    if (withTdarr) out.push({ kind: k, title: `Tdarr is shrinking ${things(k, withTdarr)}`, sub: 'Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect', go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
+    // The last look at Tdarr's work couldn't reach it (paused on battery, or stopped): said, rather than a row that seems stuck.
+    const looked = last(l, 'collect');
+    const away = !!looked && !looked.ok && /answering|reach/i.test(looked.why || '');
+    if (withTdarr) out.push({ kind: k, title: `Tdarr is shrinking ${things(k, withTdarr)}`, warn: away,
+      sub: away ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)"
+        : 'One at a time, on this computer\'s processor: a big library takes days. Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect',
+      go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');
     // Before the review's list is read (it is, on the Books tab), its count says how many.
     const changing = review ? review.filter((b) => !b.held).map((b) => b.title) : [];
     const many = review ? changing.length : Math.max(0, n(rv?.result?.changes) - ((rv?.result?.held as unknown[]) || []).length);
+    // A folder of books with no Calibre library (no metadata.db): made first, or nothing else here can read them.
+    if (l.noCalibre) {
+      const many = n(l.loose);
+      if (many) out.push({ kind: k, title: `Make a Calibre library from your ${things(k, many)}`, sub: 'Each book with its own title, author, series, and cover, so the review and Calibre-Web can read them',
+        go: { label: 'Make it…', run: () => act.ask({ title: `Make a Calibre library from ${things(k, many)}?`, action: 'Make it',
+          lead: `Calibre adds each book with the details and cover beside it. Calibre-Web is paused meanwhile. Nothing is deleted: your books' folders move to "${l.folder.split(/[\\/]/).pop()} (before Calibre)" beside it, and stay there until you've looked.`,
+          steps: ['Their folders move aside, on the same drive', 'Calibre adds each one as a book, its formats together', 'Every book is counted in before it says done'],
+          go: () => act.run('books', 'build', [], true) }) } });
+      else out.push({ kind: k, title: 'Not a Calibre library yet', sub: 'No books in folders of their own were found here: put each book in a folder of its own, or point Books at your Calibre library in Settings', warn: true });
+      return out;
+    }
     if (!rv) out.push({ kind: k, title: 'Look over your books', sub: 'Titles, series, publishers, genres, and covers: nothing changes until you say', go: { label: 'Review', run: () => act.review() } });
     else if (many && !reviewApplied(l)) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
   } else if (k === 'audiobooks') {
     if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: 'A scan finds books split into many files and changes nothing', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
     else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
+    // Nothing split: said with how many are whole, rather than a bare nought.
+    else if (n(scan.whole)) out.push({ kind: k, title: `All ${things(k, n(scan.whole))} are one file each`, sub: 'Nothing to merge. One that comes in split into many files shows up here after the next scan' });
   }
   return out;
 }
@@ -713,7 +732,7 @@ function LibHero({ l }: { l: app.TidyLibrary }) {
   const c = l.counts || {};
   const many = l.kind === 'music' ? n(last(l, 'run')?.result?.in_library) || n(last(l, 'scan')?.result?.files)
     : l.kind === 'movies' || l.kind === 'tv' ? n(c.lean) + n(c.bloated) + n(c.queued) + n(l.waiting)
-    : l.kind === 'books' ? n(last(l, 'review')?.result?.books) : 0;
+    : l.kind === 'books' ? n(last(l, 'review')?.result?.books) || n(l.loose) : 0;
   const m = meterOf(l);
   const facts: [string, string][] = [
     ...(many ? [[lead(unit[l.kind][1]), many.toLocaleString()] as [string, string]] : []),
@@ -785,16 +804,16 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
         <Widget title="Can be tidier" span="all" kind="fx-paycheck tidyneeds" actions={again || undefined}>
           {rows.length ? <TodoRows todos={rows} job={job} /> : <Empty>{l.found ? `Your ${names[kind].toLowerCase()} ${kind === 'music' ? 'is' : 'are'} tidy. Anything new shows up here.` : 'Plug in its drive to see what could be tidier.'}</Empty>}
         </Widget>
-        {kind === 'books' && !review && reviewError && (
+        {kind === 'books' && !l.noCalibre && !review && reviewError && (
           <Widget title="The review" id="tidyReviewError" span="all" kind="fx-renewing tidyreview">
             <p class="warn" role="alert">Couldn't read the last review: {reviewError}</p>
             <div class="actions"><button class="small" onClick={reloadReview}>Try again</button></div>
           </Widget>
         )}
-        {kind === 'books' && !review && !reviewError && last(l, 'review') && (
+        {kind === 'books' && !l.noCalibre && !review && !reviewError && last(l, 'review') && (
           <Widget title="The review" span="all" kind="fx-renewing tidyreview"><Empty>Reading the last review…</Empty></Widget>
         )}
-        {kind === 'books' && review && (
+        {kind === 'books' && !l.noCalibre && review && (
           <Widget title="The review" id="tidyReview" span="all" kind="fx-renewing tidyreview" actions={!!changing.length && !reviewApplied(l) && <Go primary label={`Apply to ${count(changing.length, 'book')}…`} job={job} onClick={apply} />}>
             {reviewApplied(l) ? (
               <Empty>Applied {ago(last(l, 'apply')!.at)}: the books in it were changed. <strong>Review again</strong> to see whether anything is left.</Empty>
@@ -806,7 +825,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
             {reviewApplied(l) && <div class="actions"><Go label="Undo the last apply" job={job} onClick={() => act.ask({ title: 'Undo the last apply?', action: 'Undo', lead: 'Puts back the titles, series, tags, and covers it changed.', go: () => act.run('books', 'undo', [], true) })} /></div>}
           </Widget>
         )}
-        {kind in genreAsk && <GenresWidget d={d} job={job} act={act} only={kind} />}
+        {kind in genreAsk && !l.noCalibre && <GenresWidget d={d} job={job} act={act} only={kind} />}
         {(kind === 'movies' || kind === 'tv') && <SpaceWidget l={l} d={d} />}
         {kind !== 'movies' && kind !== 'tv' && l.size > 0 && (
           <Widget title="Space" kind="fx-flow tidyspace"><Stat value={<span class="fx-amount">{size(l.size)}</span>} caption={l.freed ? size(l.freed) + ' won back so far' : 'On the drive'} /></Widget>

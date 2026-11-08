@@ -39,19 +39,29 @@ def parts_of(folder):
     return sorted(files, key=lambda p: natural(p.relative_to(folder)))
 
 
-def fragmented(lib):
-    """Book folders still split into several files: the deepest folder holding a book's parts."""
+def book_parts(lib):
+    """Each book folder and its audio files: the deepest folder holding a book's parts."""
     books = {}
     for p in mc.walk_files(lib, PARTS_EXT):
         top = p.parent
         if re.match(r"(?i)^(cd|disc|disk|part)\s*\d+$", top.name):
             top = top.parent  # CD1, CD2... belong to the book above them
         books.setdefault(top, []).append(p)
-    out = []
-    for folder, files in sorted(books.items()):
-        if len(files) >= 2 and not any(f.suffix.lower() == ".m4b" for f in files):
-            out.append(folder)
-    return out
+    return books
+
+
+def is_split(files):
+    return len(files) >= 2 and not any(f.suffix.lower() == ".m4b" for f in files)
+
+
+def fragmented(lib):
+    """Book folders still split into several files."""
+    return [folder for folder, files in sorted(book_parts(lib).items()) if is_split(files)]
+
+
+def whole(lib):
+    """How many books are one file already (an .m4b, or a single file), so nothing is left to merge."""
+    return sum(1 for files in book_parts(lib).values() if not is_split(files))
 
 
 def book_tags(files, folder):
@@ -222,8 +232,11 @@ class Audiobooks:
         ui.kv("Their files", "%s  (%s)" % (mc.fmt_n(parts), human(size)))
         for b in books[:20]:
             ui.say("  %s" % mc.pretty_path(b))
+        done = whole(self.lib)
+        if not books:
+            ui.ok("All %s audiobooks are one file each: nothing to merge" % mc.fmt_n(done))
         ui.result(action="scan", ok=True, media="audiobooks", books=len(books), files=parts, bytes=size,
-                  saving=int(size * 0.35))
+                  saving=int(size * 0.35), whole=done)
 
     def run(self):
         self.load()
