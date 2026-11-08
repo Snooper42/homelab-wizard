@@ -57,7 +57,12 @@ async function readInvestments() {
     const held = (r.view.plan.accounts || []).filter((a) => a.holdings?.length);
     const count = held.reduce((t, a) => t + a.holdings!.length, 0);
     const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    invest = { said: `Read from Ghostfolio at ${time}: ${count} ${count === 1 ? 'holding' : 'holdings'} in ${held.length} ${held.length === 1 ? 'account' : 'accounts'}.`, unmatched: r.unmatched };
+    const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
+    // Signed in is said even with nothing in Ghostfolio yet, so the token is known to work.
+    const said = !r.accounts ? `Signed in to Ghostfolio at ${time}: it has no accounts yet. Add yours there, named as they are here, then Read now.`
+      : !r.holdings ? `Signed in to Ghostfolio at ${time}: its ${n(r.accounts, 'account holds', 'accounts hold')} nothing yet. Add a buy for each holding there, then Read now.`
+      : `Read from Ghostfolio at ${time}: ${n(count, 'holding', 'holdings')} in ${n(held.length, 'account', 'accounts')}.`;
+    invest = { said, unmatched: r.unmatched };
     financesData.set(r.view);
   } catch (e) {
     invest = { problem: `Could not read Ghostfolio: ${errorText(e)}` };

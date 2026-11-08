@@ -79,9 +79,9 @@ export function InvestmentsWidget({ v, read, running, state = {}, keep }: Invest
   if (!accounts.length) {
     return (
       <Widget title="Investments" span="all" kind="fx-invest" actions={button}>
-        <p class="fx-sub fx-investintro">{ever
+        {!(ever && state.said) && <p class="fx-sub fx-investintro">{ever
           ? 'Nothing in Ghostfolio matched an investment or retirement account here yet.'
-          : 'Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here.'}</p>
+          : 'Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here.'}</p>}
         {said}
         <Unmatched v={v} state={state} keep={keep} read={read} />
       </Widget>

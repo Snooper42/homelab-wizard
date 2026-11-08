@@ -59,6 +59,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Is Ghostfolio's token right?** Investments' **Read now** says *Signed in to Ghostfolio* even before anything is in it, with what to add there next, or says why it couldn't sign in. Settings › Ghostfolio security token now says what uses it, and to press Read now to check it. An account set up in Ghostfolio with nothing in it yet no longer reads as $0 here: its balance stays as you typed it.
 - **Finances at night:** in dark mode, Finances has a near-black background with its cards a step lighter and thin lines, easier on the eyes and quicker to read at a glance. A system set to more contrast keeps its own colours.
 - **Your accounts in the sidebar:** under each group (Cash, Credit cards, Investments…) the sidebar lists its accounts, each with its round logo and balance; a group's arrow folds them away, and it stays folded. Every logo and category icon on Finances is round now too.
 - **Each category in its own colour:** on Finances, a category's icon is drawn in one colour on every row, budget, report bar, the money flow and the donut (Food is the same green everywhere, Utilities the same orange), so you can tell them apart at a glance, in light and dark.
