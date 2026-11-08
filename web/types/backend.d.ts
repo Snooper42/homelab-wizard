@@ -196,6 +196,10 @@ declare namespace app {
     runtimeInstalled: boolean;
     runtimeDownload?: string;
   }
+  interface InvestmentsRead {
+    view: finance.View;
+    unmatched: string[];
+  }
   interface MenuEntry {
     available: boolean;
     added: boolean;
@@ -509,6 +513,8 @@ declare namespace finance {
     bought?: number;
     boughtOn?: string;
     holds?: string;
+    holdings?: finance.Holding[];
+    ghostfolio?: string;
   }
   interface Budget {
     category: string;
@@ -602,6 +608,14 @@ declare namespace finance {
   interface GoalShare {
     account: string;
     percent: number;
+  }
+  interface Holding {
+    symbol: string;
+    name?: string;
+    shares: number;
+    paid: number;
+    value: number;
+    history?: finance.Point[];
   }
   interface Ledger {
     transactions: finance.Transaction[];
@@ -700,6 +714,8 @@ declare namespace finance {
     calendarKey?: string;
     calendarAmounts?: boolean;
     hideAmounts?: boolean;
+    holdingsRead?: string;
+    readByHand?: boolean;
     rev?: string;
   }
   interface Point {
@@ -1119,6 +1135,7 @@ interface Backend {
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
+    FinancesReadInvestments(): Promise<app.InvestmentsRead>;
     FinancesReceipt(arg1: string): Promise<string>;
     FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;

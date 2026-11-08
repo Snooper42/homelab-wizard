@@ -34,6 +34,7 @@ function here(screen: string): Line[] {
         [['↑', '↓'], 'The week before or after'],
         [['Page Up', 'Page Down'], 'The month before or after'],
         [['Home', 'End'], 'The week’s first or last day'],
+        [[mod + 'A'], 'In Transactions, after Select, every transaction shown; Escape stops selecting'],
       ];
     default:
       return [];
@@ -47,7 +48,7 @@ function everywhere(): Line[] {
     [isMac ? ['⌘R'] : ['Ctrl+R', 'F5'], 'Check the screen again'],
     [[mod + '+', mod + '−', mod + '0'], 'Bigger text, smaller, or the usual size'],
     [[isMac ? '⌘⇧H' : 'Ctrl+Shift+H'], 'Hide every amount, or show them again'],
-    [[mod + 'Z'], 'Undo a stop, while its note shows'],
+    [[mod + 'Z'], 'Undo a stop or a delete, while its note shows'],
     [isMac ? ['Shift+F10'] : ['Shift+F10', 'Menu key'], 'The menu of what has the focus: a screen in the sidebar, an app’s row, a group’s heading'],
     [['Escape'], 'Close a menu or a sheet'],
   ];

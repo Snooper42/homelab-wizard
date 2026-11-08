@@ -7,9 +7,10 @@
 // the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
-import { setHidden, todayISO } from '../finances/money';
+import { isoDay, setHidden, todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
 import type { SinceState } from '../finances/widgets/Ledger';
+import type { InvestState } from '../finances/widgets/Investments';
 import { store } from '../store';
 import { type Running } from '../finances/homelab';
 import { catalog } from './choose';
@@ -41,6 +42,35 @@ function fromApps() {
     { id: 'ghostfolio', name: 'Ghostfolio', read: () => go().FinancesFromGhostfolio() },
   ];
   return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
+}
+// Net worth › Investments, read from Ghostfolio: on Read now, and after the
+// first, once a day as Finances opens (unless turned off), when the last
+// read is from before today or 12 hours old. On the computer only: a phone
+// shows what was last read.
+let invest: InvestState = {};
+let autoTried = '';
+async function readInvestments() {
+  invest = { busy: true };
+  draw();
+  try {
+    const r = await go().FinancesReadInvestments();
+    const held = (r.view.plan.accounts || []).filter((a) => a.holdings?.length);
+    const count = held.reduce((t, a) => t + a.holdings!.length, 0);
+    const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    invest = { said: `Read from Ghostfolio at ${time}: ${count} ${count === 1 ? 'holding' : 'holdings'} in ${held.length} ${held.length === 1 ? 'account' : 'accounts'}.`, unmatched: r.unmatched };
+    financesData.set(r.view);
+  } catch (e) {
+    invest = { problem: `Could not read Ghostfolio: ${errorText(e)}` };
+  }
+  draw();
+}
+function readEachMorning(v: finance.View) {
+  const at = new Date(v.plan.holdingsRead || '');
+  if (phone || v.readOnly || v.plan.readByHand || isNaN(at.getTime()) || autoTried === v.today || invest.busy) return;
+  if (!$('finances').classList.contains('active') || !runs('ghostfolio')) return;
+  if (isoDay(at) >= v.today && Date.now() - at.getTime() < 12 * 3600000) return;
+  autoTried = v.today;
+  readInvestments();
 }
 export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
@@ -85,7 +115,9 @@ function draw() {
     // Wallos's subscriptions, on the computer while Wallos runs.
     fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
+    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest },
   });
+  if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
   if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
