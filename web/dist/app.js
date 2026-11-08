@@ -9490,6 +9490,14 @@
     const now = v3.today.slice(0, 7);
     const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
     const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + amt(t3), 0);
+    const lastMonthDay = (() => {
+      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 2, 1);
+      const end = new Date(d3.getFullYear(), d3.getMonth() + 1, 0).getDate();
+      return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(Math.min(end, +v3.today.slice(8, 10))).padStart(2, "0")}`;
+    })();
+    const before3 = all.filter((t3) => !t3.to && t3.date.startsWith(lastMonthDay.slice(0, 7)) && t3.date <= lastMonthDay);
+    const outBefore = -before3.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + amt(t3), 0);
+    const outNow = -sum((t3) => t3.amount < 0);
     const acct = account ? L2.account[account] : void 0;
     const runs2 = !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
     const after2 = (day3) => {
@@ -9504,11 +9512,29 @@
       days.at(-1).list.push(t3);
     }
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
-      ] }) }),
+      /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
+        ] }),
+        !!before3.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txvs", children: Math.abs(outNow - outBefore) < 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+          "The same out as by ",
+          dayShort(lastMonthDay),
+          " last month."
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("span", { class: outNow > outBefore ? "fx-out" : "fx-in", children: [
+            money(Math.abs(outNow - outBefore)),
+            " ",
+            outNow > outBefore ? "more" : "less"
+          ] }),
+          " out than by ",
+          dayShort(lastMonthDay),
+          " last month (",
+          money(outBefore),
+          ")."
+        ] }) })
+      ] }),
       saveLedger2 && /* @__PURE__ */ u3(PairsWidget, { L: L2, ledger, save: saveLedger2 }),
       saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
       /* @__PURE__ */ u3(BudgetsWidget, { v: v3, edit: edit ? () => edit("budgets") : void 0 }),

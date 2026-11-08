@@ -6094,6 +6094,19 @@ const smokes = [
     await page.waitForSelector('.fx-txmore:has-text("200 of 225 shown")', { timeout: 5000 });
     await page.waitForSelector('.fx-txtotal:has-text("−$2,250.00")', { timeout: 5000 });
   } },
+  // This month's money out against last month's to the same day (Sep 30: Chipotle and Costco, the return being money in);
+  // with no last month in the ledger, nothing is said.
+  { name: 'Finances: this month\'s money out against last month to the same day', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const said = (await page.textContent('.fx-txsum .fx-txvs', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (said !== '$293.05 more out than by Sep 30 last month ($200.00).') throw new Error(said);
+    await page.waitForSelector('.fx-txvs .fx-out', { timeout: 5000 });
+  } },
+  { name: 'Finances: no last month, no comparison', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txsum .fx-stat', { timeout: 5000 });
+    if (await page.$('.fx-txvs')) throw new Error('it compares with a month that has no transactions');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
