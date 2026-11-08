@@ -51,7 +51,7 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 		var finishing []string
 		var held map[string]int
 		if i := slices.IndexFunc(apps, func(a *catalog.App) bool { return a.ID == "tdarr" }); i >= 0 {
-			td := h.tdarrAPI(ctx)
+			td := newTdarrAPI(ctx, h.envMap())
 			if busy, ok := td.busy(ctx); ok && busy {
 				held = td.hold(ctx)
 				finishing = []string{"tdarr"}
@@ -148,7 +148,7 @@ func (h *homelab) batterySaver(ctx context.Context, client *docker.Client, conta
 // work, once Tdarr is converting nothing (or doesn't answer, and so can't
 // be); one no longer running drops off the list.
 func (h *homelab) pauseFinished(ctx context.Context, client *docker.Client, containers []docker.Container, finishing []string) {
-	if busy, ok := h.tdarrAPI(ctx).busy(ctx); ok && busy {
+	if busy, ok := newTdarrAPI(ctx, h.envMap()).busy(ctx); ok && busy {
 		return
 	}
 	path := battery.Path(h.root)
@@ -196,7 +196,7 @@ func (h *homelab) giveBackTdarr(ctx context.Context, path string, st battery.Sta
 		return
 	}
 	left := maps.Clone(st.Held)
-	gave := h.tdarrAPI(ctx).giveBack(ctx, left)
+	gave := newTdarrAPI(ctx, h.envMap()).giveBack(ctx, left)
 	if err := battery.Update(path, func(s *battery.State) bool {
 		s.Held = left
 		if len(left) == 0 {

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -119,14 +120,20 @@ func (h *homelab) tdarrKey(ctx context.Context, env map[string]string) {
 // for the battery saver: whether Tdarr is converting a file, and its
 // transcode workers held at nought while it finishes one, then given back.
 type tdarrAPI struct {
-	base   string
+	port   uint16
 	header http.Header
 }
 
-// tdarrAPI signs in to Tdarr as Tidy Up does: its key, else its login.
-func (h *homelab) tdarrAPI(ctx context.Context) *tdarrAPI {
-	env := h.envMap()
-	t := &tdarrAPI{base: "http://127.0.0.1:" + cmp.Or(env["TDARR_PORT"], "8265"), header: http.Header{}}
+// newTdarrAPI signs in to Tdarr as Tidy Up does, with the homelab's
+// settings (env): its key, else its login.
+func newTdarrAPI(ctx context.Context, env map[string]string) *tdarrAPI {
+	// Only ever this machine: the port is read as a number, and the address
+	// made from it alone.
+	port, err := strconv.ParseUint(cmp.Or(env["TDARR_PORT"], "8265"), 10, 16)
+	if err != nil || port == 0 {
+		port = 8265
+	}
+	t := &tdarrAPI{port: uint16(port), header: http.Header{}}
 	if key := env["TDARR_API_KEY"]; key != "" {
 		t.header.Set("x-api-key", key)
 	} else if env["TDARR_USER"] != "" {
@@ -152,7 +159,7 @@ func (t *tdarrAPI) do(ctx context.Context, method, path string, data, raw, out a
 		b, _ := json.Marshal(raw)
 		body = bytes.NewReader(b)
 	}
-	req, err := http.NewRequestWithContext(ctx, method, t.base+path, body)
+	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf("http://127.0.0.1:%d%s", t.port, path), body)
 	if err != nil {
 		return err
 	}
