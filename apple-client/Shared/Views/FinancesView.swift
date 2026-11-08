@@ -2,48 +2,85 @@ import Charts
 import PhotosUI
 import SwiftUI
 
-/// The Finances plan, read-only on this device: accounts today, then each
-/// pay period ahead with its payments and what's left. Amounts stay
-/// hidden until Show Amounts, and none show at all while Hide amounts is on
-/// at the computer.
+/// Finances' home, as the owner chose it: checking now and after the next
+/// paycheck, net worth with its line, then a list as Settings has one, each
+/// part of Finances one tap away (Transactions, Budgets, Bills,
+/// Investments, Accounts, Goals, Loans). Amounts stay hidden until Show
+/// Amounts, and none show at all while Hide amounts is on at the computer.
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
-    @State private var editing: FinanceAccount?
-    @State private var editingBudget: FinanceBudget?
-    @State private var editingGoal: FinanceGoal?
-    @State private var editingPayment: FinancePayment?
-    @State private var editingCushion = false
 
     var body: some View {
         Form {
             if let view = finances.plan {
                 if let now = view.checkingNow { CheckingSection(now: now, view: view, finances: finances) }
-                accounts(view)
-                if let investments = view.investments {
-                    InvestmentsSection(investments: investments, view: view, finances: finances)
-                }
+                NetWorthSection(view: view, finances: finances)
                 Section {
                     NavigationLink {
                         TransactionsView(finances: finances)
                     } label: {
-                        Label("Transactions", systemImage: "list.bullet.rectangle")
+                        FinanceLinkLabel(title: "Transactions", systemImage: "list.bullet", tint: Theme.accent)
                     }
-                }
-                if !view.since.isEmpty { SinceSection(view: view, finances: finances) }
-                if !view.budgets.isEmpty { budgets(view) }
-                if !view.goals.isEmpty { goals(view) }
-                if !view.loans.isEmpty { loans(view) }
-                ForEach(view.periods.prefix(8)) { period in
-                    PeriodSection(period: period, view: view, finances: finances) { payment in
-                        finances.clearSaveError()
-                        editingPayment = payment
+                    if !view.budgets.isEmpty {
+                        NavigationLink {
+                            FinanceBudgetsPage(finances: finances)
+                        } label: {
+                            FinanceLinkLabel(title: "Budgets", systemImage: "chart.pie.fill", tint: Color(light: 0xC2410C, dark: 0xE8590C)) {
+                                HStack(spacing: 3) {
+                                    Money(value: view.budgets.reduce(0) { $0 + max($1.left, 0) }, currency: view.plan.currency, finances: finances)
+                                    Text("left")
+                                }
+                            }
+                        }
                     }
-                }
-                Section {
-                    EmptyView()
+                    if !view.periods.isEmpty || !view.since.isEmpty {
+                        NavigationLink {
+                            FinanceBillsPage(finances: finances)
+                        } label: {
+                            FinanceLinkLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger) {
+                                if let next = Self.nextBill(view) {
+                                    Text(verbatim: next)
+                                }
+                            }
+                        }
+                    }
+                    if let investments = view.investments {
+                        NavigationLink {
+                            FinanceInvestmentsPage(finances: finances)
+                        } label: {
+                            FinanceLinkLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
+                                Money(value: investments.total, currency: view.plan.currency, finances: finances)
+                            }
+                        }
+                    }
+                    NavigationLink {
+                        FinanceAccountsPage(finances: finances)
+                    } label: {
+                        FinanceLinkLabel(title: "Accounts", systemImage: "building.columns.fill", tint: Theme.info) {
+                            Text("\(view.plan.accounts.count)")
+                        }
+                    }
+                    if !view.goals.isEmpty {
+                        NavigationLink {
+                            FinanceGoalsPage(finances: finances)
+                        } label: {
+                            FinanceLinkLabel(title: "Goals", systemImage: "flag.fill", tint: Color(light: 0x0F766E, dark: 0x14B8A6)) {
+                                Text("\(view.goals.count)")
+                            }
+                        }
+                    }
+                    if !view.loans.isEmpty {
+                        NavigationLink {
+                            FinanceLoansPage(finances: finances)
+                        } label: {
+                            FinanceLinkLabel(title: "Loans", systemImage: "arrow.uturn.backward", tint: Color(light: 0x6E6E73, dark: 0x8E8E93)) {
+                                Text("\(view.loans.count)")
+                            }
+                        }
+                    }
                 } footer: {
                     Text(finances.canEdit
-                         ? "Balances, the cushion, budgets, goals and what a payment costs can be changed here, and transactions added. Change the rest of the plan on the computer."
+                         ? "Balances, the cushion, budgets, goals and what a payment costs can be changed on their pages, and transactions added. Change the rest of the plan on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
                 }
             } else if let error = finances.planError {
@@ -63,40 +100,6 @@ struct FinancesView: View {
         // Again once the device's level is known: right after unlock it may not be yet.
         .task(id: finances.canSeePlan) { await finances.loadPlan() }
         .refreshable { await finances.loadPlan() }
-        .sheet(item: $editing) { account in
-            BalanceEditor(account: account, finances: finances)
-        }
-        .sheet(item: $editingBudget) { budget in
-            AmountEditor(
-                title: "Change Budget", heading: budget.category,
-                footer: budget.per == "paycheck" ? "What it may take each pay period." : "What it may take each month.",
-                finances: finances
-            ) { amount in await finances.setBudget(budget, to: amount) }
-        }
-        .sheet(item: $editingGoal) { goal in
-            AmountEditor(
-                title: "Change Goal", heading: goal.name,
-                footer: "How much it needs in all. What's put by toward it stays as it is.",
-                finances: finances
-            ) { amount in await finances.setGoal(goal, target: amount) }
-        }
-        .sheet(isPresented: $editingCushion) {
-            AmountEditor(
-                title: "Change Cushion", heading: "The least checking should hold",
-                footer: "A pay period that leaves less is flagged. Type 0 to turn that off.",
-                allowsZero: true,
-                finances: finances
-            ) { amount in await finances.setCushion(amount) }
-        }
-        .sheet(item: $editingPayment) { payment in
-            AmountEditor(
-                title: "Change Payment", heading: payment.name,
-                footer: payment.estimate == true
-                    ? "About what it costs each time. Every one still to come changes."
-                    : "What it costs each time. Every one still to come changes.",
-                finances: finances
-            ) { amount in await finances.setPayment(payment, to: amount) }
-        }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Finances")
         .toolbar {
@@ -127,26 +130,142 @@ struct FinancesView: View {
         }
     }
 
-    private func budgets(_ view: FinancesPlanView) -> some View {
+    /// The next bill to come out, and when: "Netflix on Friday". Not money
+    /// moved between the household's own accounts, nor money coming in.
+    nonisolated static func nextBill(_ view: FinancesPlanView) -> String? {
+        let today = view.todayText
+        for period in view.periods {
+            for row in period.rows where !row.outside && !row.into && row.amount > 0 && (row.dateText ?? "") >= today {
+                guard let name = view.paymentTitle(row.payment) else { continue }
+                if row.dateText == today { return "\(name) today" }
+                guard let date = row.date else { return name }
+                return "\(name) on \(date.formatted(.dateTime.weekday(.wide)))"
+            }
+        }
+        return nil
+    }
+}
+
+/// A row of Finances' home: its icon on a coloured tile, as in Settings, its name, and a few words.
+private struct FinanceLinkLabel<Trailing: View>: View {
+    let title: String
+    let systemImage: String
+    let tint: Color
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .background(tint, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .accessibilityHidden(true)
+            Text(title)
+            Spacer(minLength: 8)
+            trailing()
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+}
+
+extension FinanceLinkLabel where Trailing == EmptyView {
+    init(title: String, systemImage: String, tint: Color) {
+        self.init(title: title, systemImage: systemImage, tint: tint) { EmptyView() }
+    }
+}
+
+/// Net worth today, how it moved this month, and its line over the last
+/// three months, from each account's kept balances.
+private struct NetWorthSection: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
+        let series = view.netWorthSeries(days: 92)
         Section {
-            ForEach(view.budgets) { budget in
-                if finances.canEdit {
-                    Button {
-                        finances.clearSaveError()
-                        editingBudget = budget
-                    } label: {
-                        budgetRow(budget, view)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Net worth")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if let month = view.netWorthThisMonth, abs(month) >= 0.5, finances.amountsShown, !finances.amountsHiddenByPlan {
+                        Text("\(month >= 0 ? "+" : "−")\(abs(month), format: .currency(code: view.plan.currency).precision(.fractionLength(0))) this month")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(month >= 0 ? Theme.success : Theme.danger)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Change its amount")
-                } else {
-                    budgetRow(budget, view)
+                }
+                Money(value: view.netWorth, currency: view.plan.currency, finances: finances)
+                    .font(.title2.weight(.bold))
+                if series.count >= 2, finances.amountsShown, !finances.amountsHiddenByPlan {
+                    Chart {
+                        ForEach(series, id: \.date) { point in
+                            AreaMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
+                                .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), Theme.accent.opacity(0)],
+                                                                startPoint: .top, endPoint: .bottom))
+                                .interpolationMethod(.monotone)
+                            LineMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
+                                .foregroundStyle(Theme.accent)
+                                .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round))
+                                .interpolationMethod(.monotone)
+                        }
+                    }
+                    .chartXAxis(.hidden)
+                    .chartYAxis(.hidden)
+                    .chartYScale(domain: .automatic(includesZero: false))
+                    .frame(height: 64)
+                    .padding(.top, 4)
+                    .accessibilityLabel("Net worth over the last three months")
                 }
             }
-        } header: {
-            Text("Budgets")
-        } footer: {
-            if finances.canEdit { Text("Tap a budget to change its amount.") }
+            .padding(.vertical, 4)
+        }
+    }
+}
+
+// MARK: - Pages
+
+/// Budgets: each this month or pay period, tap one to change its amount.
+private struct FinanceBudgetsPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var editingBudget: FinanceBudget?
+
+    var body: some View {
+        Form {
+            if let view = finances.plan {
+                Section {
+                    ForEach(view.budgets) { budget in
+                        if finances.canEdit {
+                            Button {
+                                finances.clearSaveError()
+                                editingBudget = budget
+                            } label: {
+                                budgetRow(budget, view)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Change its amount")
+                        } else {
+                            budgetRow(budget, view)
+                        }
+                    }
+                } footer: {
+                    if finances.canEdit { Text("Tap a budget to change its amount.") }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .navigationTitle("Budgets")
+        .sheet(item: $editingBudget) { budget in
+            AmountEditor(
+                title: "Change Budget", heading: budget.category,
+                footer: budget.per == "paycheck" ? "What it may take each pay period." : "What it may take each month.",
+                finances: finances
+            ) { amount in await finances.setBudget(budget, to: amount) }
         }
     }
 
@@ -168,87 +287,85 @@ struct FinancesView: View {
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
+}
 
-    private func goals(_ view: FinancesPlanView) -> some View {
-        Section {
-            ForEach(view.goals) { goal in
-                if finances.canEdit {
-                    Button {
+/// Bills: what's taken as done since the balances were typed in, then each
+/// pay period ahead with its payments; tap one to change what it costs.
+private struct FinanceBillsPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var editingPayment: FinancePayment?
+
+    var body: some View {
+        Form {
+            if let view = finances.plan {
+                if !view.since.isEmpty { SinceSection(view: view, finances: finances) }
+                ForEach(view.periods.prefix(8)) { period in
+                    PeriodSection(period: period, view: view, finances: finances) { payment in
                         finances.clearSaveError()
-                        editingGoal = goal
-                    } label: {
-                        goalRow(goal, view)
+                        editingPayment = payment
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("Change its target")
-                } else {
-                    goalRow(goal, view)
-                }
-            }
-        } header: {
-            Text("Goals")
-        } footer: {
-            if finances.canEdit { Text("Tap a goal to change its target.") }
-        }
-    }
-
-    private func goalRow(_ goal: FinanceGoal, _ view: FinancesPlanView) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(goal.name)
-                Spacer()
-                Money(value: goal.saved, currency: view.plan.currency, finances: finances)
-                Text(verbatim: "/").foregroundStyle(.secondary)
-                Money(value: goal.target, currency: view.plan.currency, finances: finances)
-            }
-            ProgressView(value: goal.share)
-                .tint(goal.isReached ? Theme.success : .accentColor)
-            Group {
-                if goal.isReached {
-                    Text("Reached")
-                } else if let date = goal.date {
-                    Text("By \(date, format: .dateTime.month(.wide).year())")
-                } else if let reaches = goal.reaches {
-                    Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            if goal.needsMonth > 0, !goal.isReached {
-                HStack(spacing: 4) {
-                    Text("Needs").font(.caption).foregroundStyle(.secondary)
-                    Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
-                    Text("a month").font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .navigationTitle("Bills")
+        .sheet(item: $editingPayment) { payment in
+            AmountEditor(
+                title: "Change Payment", heading: payment.name,
+                footer: payment.estimate == true
+                    ? "About what it costs each time. Every one still to come changes."
+                    : "What it costs each time. Every one still to come changes.",
+                finances: finances
+            ) { amount in await finances.setPayment(payment, to: amount) }
+        }
     }
+}
 
-    private func loans(_ view: FinancesPlanView) -> some View {
-        Section("Loans") {
-            ForEach(view.loans) { loan in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(finances.accountName(loan.account) ?? "Loan")
-                        Spacer()
-                        Money(value: loan.balance, currency: view.plan.currency, finances: finances)
-                    }
-                    if loan.never {
-                        Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundStyle(Theme.danger)
-                    } else if let paidOff = loan.paidOff {
-                        Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else if loan.balance <= 0 {
-                        Text("Paid off").font(.caption).foregroundStyle(Theme.success)
-                    }
-                }
-                .accessibilityElement(children: .combine)
+/// Investments, as Ghostfolio last read them on the computer.
+private struct FinanceInvestmentsPage: View {
+    @Bindable var finances: FinancesViewModel
+
+    var body: some View {
+        Form {
+            if let view = finances.plan, let investments = view.investments {
+                InvestmentsSection(investments: investments, view: view, finances: finances)
             }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .navigationTitle("Investments")
+    }
+}
+
+/// Accounts today, net worth and the cushion; tap an account to type in its balance.
+private struct FinanceAccountsPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var editing: FinanceAccount?
+    @State private var editingCushion = false
+
+    var body: some View {
+        Form {
+            if let view = finances.plan { accounts(view) }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .navigationTitle("Accounts")
+        .sheet(item: $editing) { account in
+            BalanceEditor(account: account, finances: finances)
+        }
+        .sheet(isPresented: $editingCushion) {
+            AmountEditor(
+                title: "Change Cushion", heading: "The least checking should hold",
+                footer: "A pay period that leaves less is flagged. Type 0 to turn that off.",
+                allowsZero: true,
+                finances: finances
+            ) { amount in await finances.setCushion(amount) }
         }
     }
 
@@ -287,7 +404,7 @@ struct FinancesView: View {
                 cushionRow(view)
             }
         } header: {
-            Text("Accounts Today")
+            Text("Today")
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
                 if finances.canEdit {
@@ -312,7 +429,8 @@ struct FinancesView: View {
     }
 
     private func accountRow(_ account: FinanceAccount, _ view: FinancesPlanView) -> some View {
-        HStack {
+        HStack(spacing: 12) {
+            LogoCircle(account: account, size: 36)
             VStack(alignment: .leading, spacing: 2) {
                 Text(account.name)
                 Text([account.kindTitle, account.institution].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
@@ -329,6 +447,122 @@ struct FinancesView: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Goals: what each needs, and by when; tap one to change its target.
+private struct FinanceGoalsPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var editingGoal: FinanceGoal?
+
+    var body: some View {
+        Form {
+            if let view = finances.plan {
+                Section {
+                    ForEach(view.goals) { goal in
+                        if finances.canEdit {
+                            Button {
+                                finances.clearSaveError()
+                                editingGoal = goal
+                            } label: {
+                                goalRow(goal, view)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Change its target")
+                        } else {
+                            goalRow(goal, view)
+                        }
+                    }
+                } footer: {
+                    if finances.canEdit { Text("Tap a goal to change its target.") }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .navigationTitle("Goals")
+        .sheet(item: $editingGoal) { goal in
+            AmountEditor(
+                title: "Change Goal", heading: goal.name,
+                footer: "How much it needs in all. What's put by toward it stays as it is.",
+                finances: finances
+            ) { amount in await finances.setGoal(goal, target: amount) }
+        }
+    }
+
+    private func goalRow(_ goal: FinanceGoal, _ view: FinancesPlanView) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(goal.name)
+                Spacer()
+                Money(value: goal.saved, currency: view.plan.currency, finances: finances)
+                Text(verbatim: "/").foregroundStyle(.secondary)
+                Money(value: goal.target, currency: view.plan.currency, finances: finances)
+            }
+            ProgressView(value: goal.share)
+                .tint(goal.isReached ? Theme.success : .accentColor)
+            Group {
+                if goal.isReached {
+                    Text("Reached")
+                } else if let date = goal.date {
+                    Text("By \(date, format: .dateTime.month(.wide).year())")
+                } else if let reaches = goal.reaches {
+                    Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            if goal.needsMonth > 0, !goal.isReached {
+                HStack(spacing: 4) {
+                    Text("Needs").font(.caption).foregroundStyle(.secondary)
+                    Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
+                    Text("a month").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Loans: what each still owes, and when it's paid off at this pace.
+private struct FinanceLoansPage: View {
+    @Bindable var finances: FinancesViewModel
+
+    var body: some View {
+        Form {
+            if let view = finances.plan {
+                Section {
+                    ForEach(view.loans) { loan in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(finances.accountName(loan.account) ?? "Loan")
+                                Spacer()
+                                Money(value: loan.balance, currency: view.plan.currency, finances: finances)
+                            }
+                            if loan.never {
+                                Label("The payment doesn't keep up with the interest. At this pace it's never paid off.", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.danger)
+                            } else if let paidOff = loan.paidOff {
+                                Text("Paid off \(paidOff, format: .dateTime.month(.wide).year())\(loan.rate > 0 ? " · \(loan.rate.formatted(.number.precision(.fractionLength(0...2))))%" : "")")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else if loan.balance <= 0 {
+                                Text("Paid off").font(.caption).foregroundStyle(Theme.success)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .refreshable { await finances.loadPlan() }
+        .navigationTitle("Loans")
     }
 }
 

@@ -797,3 +797,41 @@ struct FinancePayoff: Decodable, Sendable, Equatable, Identifiable {
         never = try c.decodeIfPresent(Bool.self, forKey: .never) ?? false
     }
 }
+
+// MARK: - Net worth over time (Finances' home)
+
+/// Net worth on a day, for the chart on Finances' home.
+struct NetWorthPoint: Hashable, Sendable {
+    let date: Date
+    let value: Double
+}
+
+extension FinancesPlanView {
+    /// Net worth on each day an account's balance was kept, over the last
+    /// `days` days, then today, oldest first; from each account's kept
+    /// balances, as the computer draws its line.
+    func netWorthSeries(days: Int) -> [NetWorthPoint] {
+        guard let today else { return [] }
+        let from = today.addingTimeInterval(-Double(days) * 86_400)
+        let kept = Set(plan.accounts.flatMap { $0.history.map(\.dateText) })
+            .filter { $0 < todayText }
+            .compactMap { text -> (String, Date)? in
+                guard let date = LocalDay.parse(text), date >= from else { return nil }
+                return (text, date)
+            }
+            .sorted { $0.0 < $1.0 }
+        var out = kept.map { pair in
+            NetWorthPoint(date: pair.1, value: plan.accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
+        }
+        out.append(NetWorthPoint(date: today, value: plan.accounts.reduce(0) { $0 + worth(of: $1) }))
+        return out
+    }
+
+    /// How net worth moved since the first of this month, or nil when no
+    /// account has kept balances to tell.
+    var netWorthThisMonth: Double? {
+        guard todayText.count == 10, plan.accounts.contains(where: { !$0.history.isEmpty }) else { return nil }
+        let first = String(todayText.prefix(8)) + "01"
+        return plan.accounts.reduce(0) { $0 + worth(of: $1) - worth(of: $1, on: first) }
+    }
+}
