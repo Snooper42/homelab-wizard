@@ -5326,6 +5326,14 @@ const smokes = [
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
     if (txs.length !== 2 || txs.find((t) => t.id === 'c1').category !== 'Gas' || txs.find((t) => t.id === 'c2').category !== 'Refunds') throw new Error(`categorized ${JSON.stringify(txs)}`);
   } },
+  // Ghostfolio in a container the homelab did not start (Status: Runs elsewhere) still answers on its port: Finances reads
+  // it once as it opens (the last read being old), and Update balances offers From Ghostfolio, as for one it runs itself.
+  { name: 'Finances: a Ghostfolio that runs elsewhere is read as Finances opens, and offered in Update balances', screen: 'finances', mock: { status: { ...status, apps: [...status.apps, { id: 'ghostfolio', name: 'Ghostfolio', state: 'elsewhere', container: 'my-ghostfolio' }] } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.investReads === 1, null, { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Update balances")');
+    await page.waitForSelector('#finSheet button:text-is("From Ghostfolio")', { timeout: 5000 });
+  } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });

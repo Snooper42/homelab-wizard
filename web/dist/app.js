@@ -14965,7 +14965,7 @@ ${pays}
     const up = new Set((statusData.value?.apps || []).filter((a3) => a3.state === "running").map((a3) => a3.id));
     return (catalog?.apps || []).filter((a3) => up.has(a3.id) && a3.replaces?.length).map((a3) => ({ name: a3.name, replaces: a3.replaces }));
   }
-  var runs = (id2) => (statusData.value?.apps || []).some((a3) => a3.id === id2 && a3.state === "running");
+  var runs = (id2) => (statusData.value?.apps || []).some((a3) => a3.id === id2 && (a3.state === "running" || a3.state === "elsewhere"));
   var wallosRunning = () => runs("wallos");
   function fromApps() {
     if (phone) return void 0;

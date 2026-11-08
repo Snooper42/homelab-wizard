@@ -31,8 +31,13 @@ function runningApps(): Running[] {
   const up = new Set((statusData.value?.apps || []).filter((a) => a.state === 'running').map((a) => a.id));
   return (catalog?.apps || []).filter((a) => up.has(a.id) && a.replaces?.length).map((a) => ({ name: a.name, replaces: a.replaces! }));
 }
-/** Whether an app runs here (Status): Recurring's From Wallos, and Update balances' apps, show only then. */
-const runs = (id: string) => (statusData.value?.apps || []).some((a) => a.id === id && a.state === 'running');
+/**
+ * Whether an app answers here (Status): Recurring's From Wallos, Update
+ * balances' apps, and the morning's read of Ghostfolio only then. One in a
+ * container the homelab did not start (Status: Runs elsewhere) answers on
+ * its port all the same.
+ */
+const runs = (id: string) => (statusData.value?.apps || []).some((a) => a.id === id && (a.state === 'running' || a.state === 'elsewhere'));
 const wallosRunning = () => runs('wallos');
 /** The apps Update balances reads from on a click: on the computer, those running. */
 function fromApps() {
