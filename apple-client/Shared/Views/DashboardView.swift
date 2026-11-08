@@ -734,22 +734,45 @@ struct GroupHeader: View {
     }
 }
 
-/// A folded group's apps, by name, on a line of their own (as the computer
-/// shows them since main #474). A tap opens the group.
+/// A folded group: its apps' logos in a row, as a Home Screen folder
+/// shows its apps, and their names under them. A badge only on one that
+/// isn't simply running. A tap opens the group.
 struct FoldedGroupNames: View {
     let group: AppGroup
     let open: @MainActor () -> Void
+    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 30
+    /// How many logos fit before "+3".
+    private let shown = 6
 
     var body: some View {
         Button(action: open) {
-            Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(group.apps.prefix(shown)) { app in
+                        AppIconView(app: app, size: min(logo, 44), stateBadge: !app.isPlainlyFine)
+                    }
+                    if group.apps.count > shown {
+                        Text(verbatim: "+\(group.apps.count - shown)")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: min(logo, 44), height: min(logo, 44))
+                            .background(Theme.canvas, in: RoundedRectangle(cornerRadius: min(logo, 44) * 0.22, style: .continuous))
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: group.apps.map(\.name).joined(separator: ", ")))
         .accessibilityHint("Opens the group")
     }
 }

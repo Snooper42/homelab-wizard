@@ -70,6 +70,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Folded groups on the iPhone's Status show their apps' logos:** a row of logos, as a Home Screen folder, with the names under them, in place of the plain line of names. Only an app that isn't simply running wears a badge.
 - **Watch Start, Stop and Restart happen on the iPhone:** on an app's page, the button you tapped turns into a spinner and the state reads "Restarting…" in blue, then changes to the new state with a tap you can feel when Status has it (a buzz if it failed). Tapping an app on Status now grows its page out of the row.
 - **The iPhone app at the largest text sizes:** Status's card and tiles, Finances' paycheck line and Spending's ring stack instead of squeezing; the ring's number, Wallet cards and the small account cards keep their words inside them, as Wallet's do.
 - **Settings on the iPhone, tidied like iPhone Settings:** each setting shows only its name and value, switches flip in place, and a setting opens its own page with what it does; the long notes under each section are gone.
