@@ -64,7 +64,7 @@ export function ComingUpWidget({ v, L, calendar }: { v: finance.View; L: Lookup;
     title={`${who(p)}'s paycheck`} sub={`${soon(v.today, p.date)}, ${dayLong(p.date)}`}
     when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />;
   return (
-    <Widget title="Coming up" kind="fx-comingup" actions={calendar && <button type="button" class="small" onClick={calendar}>Calendar</button>}>
+    <Widget title="Coming up" kind="fx-comingup" actions={calendar && <button type="button" class="small" onClick={() => calendar()}>Calendar</button>}>
       {bills.length ? <>
         <Stat value={<Amount value={out} form="full" />} caption={`Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, 'charge')} on cards` : '')} />
         {first && <p class="fx-sub fx-beforepay">{before > 0.005 ? `${money(before)} of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` : `None of it before ${who(first)}'s paycheck on ${dayShort(first.date)}`}</p>}

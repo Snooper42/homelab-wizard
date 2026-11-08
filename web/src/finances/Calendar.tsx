@@ -123,6 +123,10 @@ function dayLabel(d: DayInfo, L: Lookup, cushion: number) {
     d.later ? 'planned, past where checking is read ahead' : `checking ${money(d.balance)} after` + (d.low ? `, under your ${compact(cushion)} cushion` : '')].join('. ');
 }
 
+/** The day the Calendar opens on next (a day picked on the checking chart), then today again. */
+let opening = '';
+export const showDay = (day: string) => { opening = day; };
+
 export function Calendar({ v, L, ledger, edit }: CalendarProps) {
   const days = daysOf(v, ledger);
   const dates = Object.keys(days).sort();
@@ -130,8 +134,10 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
   // The first and last days checking is read for; before, what was recorded; after, only what is planned.
   const from = (v.days || [])[0]?.date || first;
   const read = (v.days || []).at(-1)?.date || last;
-  const [month, setMonth] = useState(monthOf(from));
-  const [sel, setSel] = useState(from);
+  // Taken once, as it opens, if it is a day the calendar has.
+  const [opened] = useState(() => { const d = opening; opening = ''; return d && days[d] ? d : from; });
+  const [month, setMonth] = useState(monthOf(opened));
+  const [sel, setSel] = useState(opened);
   // The day the keys moved to: focused once it is drawn (in another month too).
   const focusing = useRef('');
   const grid = useRef<HTMLTableElement>(null);

@@ -11354,14 +11354,23 @@ ${pays}
       d3.later ? "planned, past where checking is read ahead" : `checking ${money(d3.balance)} after` + (d3.low ? `, under your ${compact(cushion)} cushion` : "")
     ].join(". ");
   }
+  var opening2 = "";
+  var showDay = (day3) => {
+    opening2 = day3;
+  };
   function Calendar({ v: v3, L: L2, ledger, edit }) {
     const days = daysOf(v3, ledger);
     const dates = Object.keys(days).sort();
     const first = dates[0] || v3.today, last2 = dates[dates.length - 1] || v3.today;
     const from2 = (v3.days || [])[0]?.date || first;
     const read = (v3.days || []).at(-1)?.date || last2;
-    const [month3, setMonth] = d2(monthOf(from2));
-    const [sel2, setSel] = d2(from2);
+    const [opened2] = d2(() => {
+      const d3 = opening2;
+      opening2 = "";
+      return d3 && days[d3] ? d3 : from2;
+    });
+    const [month3, setMonth] = d2(monthOf(opened2));
+    const [sel2, setSel] = d2(opened2);
     const focusing = A2("");
     const grid = A2(null);
     h2(() => {
@@ -11738,7 +11747,7 @@ ${pays}
   function Axis({ marks: marks2, y: y3, format: format2 }) {
     return /* @__PURE__ */ u3("div", { class: "fx-axis", "aria-hidden": "true", children: marks2.map((t3) => /* @__PURE__ */ u3("span", { class: t3 === 0 ? "zero" : "", style: { top: `${y3(t3)}px` }, children: format2(t3) }, t3)) });
   }
-  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill }) {
+  function AreaChart({ values, xLabels, marks: marks2 = [], threshold, aheadFrom, band, height = 200, format: format2, tip, label, zero = true, axis: showAxis = true, fill, onPick }) {
     const [at2, setAt] = d2(-1);
     const n3 = values.length;
     const plot = A2(null);
@@ -11766,22 +11775,36 @@ ${pays}
     return /* @__PURE__ */ u3("figure", { class: "fx-chart fx-area" + (fill ? " fill" : ""), "aria-label": label, children: [
       /* @__PURE__ */ u3("div", { class: "fx-plotrow", children: [
         showAxis && /* @__PURE__ */ u3(Axis, { marks: axis.ticks, y: y3, format: format2 }),
-        /* @__PURE__ */ u3("div", { ref: plot, class: "fx-plot", style: fill ? { minHeight: `${height}px` } : { height: `${height}px` }, onPointerMove: move, onPointerLeave: () => setAt(-1), children: [
-          showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
-          band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
-          threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
-          /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
-            /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
-            /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
-            cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
-          ] }),
-          marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
-          at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
-            /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
-            tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
-          ] })
-        ] })
+        /* @__PURE__ */ u3(
+          "div",
+          {
+            ref: plot,
+            class: "fx-plot" + (onPick ? " pick" : ""),
+            style: fill ? { minHeight: `${height}px` } : { height: `${height}px` },
+            onPointerMove: move,
+            onPointerLeave: () => setAt(-1),
+            onClick: onPick && ((e3) => {
+              const r3 = e3.currentTarget.getBoundingClientRect();
+              onPick(Math.max(0, Math.min(n3 - 1, Math.round((e3.clientX - r3.left) / r3.width * (n3 - 1)))));
+            }),
+            children: [
+              showAxis && axis.ticks.map((t3) => /* @__PURE__ */ u3("span", { class: "fx-grid" + (t3 === 0 ? " zero" : ""), style: { top: `${y3(t3)}px` } }, t3)),
+              band && /* @__PURE__ */ u3("span", { class: "fx-band", style: { left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` } }),
+              threshold !== void 0 && /* @__PURE__ */ u3("span", { class: "fx-threshold", style: { top: `${y3(threshold)}px` } }),
+              /* @__PURE__ */ u3("svg", { viewBox: `0 0 1000 ${tall}`, preserveAspectRatio: "none", "aria-hidden": "true", children: [
+                /* @__PURE__ */ u3("path", { class: "fx-areafill", d: `${solid} L${x3(cut).toFixed(1)} ${tall} L0 ${tall} Z` }),
+                /* @__PURE__ */ u3("path", { class: "fx-line", d: solid, "vector-effect": "non-scaling-stroke" }),
+                cut < n3 - 1 && /* @__PURE__ */ u3("path", { class: "fx-line ahead", d: path(cut, n3 - 1), "vector-effect": "non-scaling-stroke" })
+              ] }),
+              marks2.map((m3, k3) => /* @__PURE__ */ u3("span", { class: "fx-mark fx-h-" + m3.tone, style: { left: `${pct(m3.i)}%`, top: `${y3(values[m3.i])}px` } }, k3)),
+              at2 >= 0 && /* @__PURE__ */ u3(S, { children: [
+                /* @__PURE__ */ u3("span", { class: "fx-cross", style: { left: `${pct(at2)}%` } }),
+                /* @__PURE__ */ u3("span", { class: "fx-pin", style: { left: `${pct(at2)}%`, top: `${y3(values[at2])}px` } }),
+                tip && /* @__PURE__ */ u3("div", { class: "fx-tip", style: tipSide(pct(at2)), children: tip(at2) })
+              ] })
+            ]
+          }
+        )
       ] }),
       /* @__PURE__ */ u3("div", { class: "fx-xlabels" + (showAxis ? "" : " bare"), "aria-hidden": "true", children: xLabels.map((l3) => /* @__PURE__ */ u3("span", { style: { left: `${pct(l3.i)}%` }, children: l3.label }, l3.i)) })
     ] });
@@ -13100,9 +13123,9 @@ ${pays}
     for (const p3 of v3.periods) for (const r3 of p3.rows) if (!out[r3.payment]) out[r3.payment] = { date: r3.date, period: p3 };
     return out;
   }
-  var opening2 = "";
+  var opening3 = "";
   var openOn = (filter2) => {
-    opening2 = filter2;
+    opening3 = filter2;
   };
   var kindFromCategory = (cat, cats) => {
     const c3 = (cats || []).find((q2) => q2.name.toLowerCase() === (cat || "").toLowerCase());
@@ -13136,8 +13159,8 @@ ${pays}
   }
   function Recurring({ v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) {
     const [filter2, setFilter2] = d2(() => {
-      const f4 = opening2 || "all";
-      opening2 = "";
+      const f4 = opening3 || "all";
+      opening3 = "";
       return f4;
     });
     const payments = allPayments(v3.plan);
@@ -13366,7 +13389,7 @@ ${pays}
 
   // web/src/finances/widgets/Checking.tsx
   var bigBill = 300;
-  function CheckingWidget({ v: v3, L: L2, sel: sel2 }) {
+  function CheckingWidget({ v: v3, L: L2, sel: sel2, openDay }) {
     const [span, setSpan] = d2("31");
     const days = checkingDays(v3, Number(span));
     if (days.length < 2) return null;
@@ -13417,8 +13440,9 @@ ${pays}
               height: 300,
               threshold: cushion || void 0,
               format: tick,
+              onPick: openDay && ((i3) => openDay(days[i3].date)),
               band: from2 >= 0 && to > from2 ? { from: from2, to } : void 0,
-              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`,
+              label: `Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.${openDay ? " A day clicked opens it on the calendar." : ""}`,
               tip: (i3) => /* @__PURE__ */ u3(S, { children: [
                 /* @__PURE__ */ u3("div", { class: "fx-tiphead", children: [
                   /* @__PURE__ */ u3("span", { children: dayLong(days[i3].date) }),
@@ -15291,7 +15315,7 @@ ${pays}
       },
       "pay" + p3.date
     );
-    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: calendar, children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
+    return /* @__PURE__ */ u3(Widget, { title: "Coming up", kind: "fx-comingup", actions: calendar && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => calendar(), children: "Calendar" }), children: bills.length ? /* @__PURE__ */ u3(S, { children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: out, form: "full" }), caption: `Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, "charge")} on cards` : "") }),
       first && /* @__PURE__ */ u3("p", { class: "fx-sub fx-beforepay", children: before3 > 5e-3 ? `${money(before3)} of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` : `None of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` }),
       /* @__PURE__ */ u3(Rows, { kind: "fx-rows fx-comingrows", children: [
@@ -15380,7 +15404,7 @@ ${pays}
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
         phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
-        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked }),
+        /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked, openDay: openCalendar }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
         /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
         /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring }),
@@ -15469,13 +15493,19 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: (f4) => {
+      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), openCalendar: (day3) => {
+        if (day3) showDay(day3);
+        setTab("calendar");
+      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: (f4) => {
         showTransactions(f4);
         setTab("transactions");
       } }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
+      }, openRecurring: () => setTab("recurring"), openTransactions: () => setTab("transactions"), openCalendar: (day3) => {
+        if (day3) showDay(day3);
+        setTab("calendar");
+      }, phone: phone2 }) })
     ] });
   }
   function View({ v: v3, L: L2, phone: phone2, ledger, setTab, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {

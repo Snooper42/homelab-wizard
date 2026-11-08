@@ -51,8 +51,8 @@ export interface OverviewProps {
   openRecurring?: () => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
-  /** Shows the Calendar. */
-  openCalendar?: () => void;
+  /** Shows the Calendar, on a day when one is given (the checking chart's). */
+  openCalendar?: (day?: string) => void;
   /** Drawn on a phone (the companion): what is coming up first, and the goals. */
   phone?: boolean;
 }
@@ -90,7 +90,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}
         <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
-        <CheckingWidget v={v} L={L} sel={picked} />
+        <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
         <CashFlowWidget v={v} L={L} open={openRecurring} />

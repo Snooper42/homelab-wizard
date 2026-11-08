@@ -69,6 +69,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **A day on the checking chart opens it:** click a day on the Dashboard's *Checking* chart and the Calendar opens on it, with what comes and goes that day.
 - **This month against last:** Finances › Transactions' *This month* says how much more or less has gone out than by the same day last month (*$293.05 more out than by Sep 30 last month ($200.00)*).
 - **Long ledgers stay quick:** Finances › Transactions draws the newest 200 at a time, with **Show more** for the next, so a year of bank files opens about five times faster and the search keeps up as you type; counts, totals and Select all still take in every one.
 - **What Update balances changes:** as you type, a line by **Save** says how many balances differ from what was expected and what that does to your net worth (*2 balances differ from what was expected: net worth +$444.05*).

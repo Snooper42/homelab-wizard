@@ -1808,6 +1808,7 @@ button.kindrow:focus-visible { outline:2px solid var(--accent); outline-offset:-
 .fx-axis span { position:absolute; right:0; transform:translateY(-50%); white-space:nowrap; }
 .fx-axis span.zero { color:var(--text); font-weight:600; }
 .fx-plot { position:relative; flex:1; min-width:0; touch-action:pan-y; }
+.fx-plot.pick { cursor:pointer; }
 .fx-plot > svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 .fx-grid { position:absolute; left:0; right:0; border-top:1px solid var(--line); opacity:.7; }
 .fx-grid.zero { opacity:1; border-top-color:var(--line-strong); }

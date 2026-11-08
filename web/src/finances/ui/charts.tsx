@@ -54,10 +54,12 @@ export interface AreaChartProps {
   axis?: boolean;
   /** It grows into the room its card leaves, height its least (a card stretched to its row's height). */
   fill?: boolean;
+  /** A click on the plot opens its step (the calendar on that day); what is there is in the tip, and reachable elsewhere by keyboard. */
+  onPick?: (i: number) => void;
 }
 
 /** An area over steps, its line in the accent, with marks on it and a card for the step pointed at. */
-export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill }: AreaChartProps) {
+export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick }: AreaChartProps) {
   const [at, setAt] = useState(-1);
   const n = values.length;
   // Filling, the plot is as tall as the room it is given, measured, so the line and the pin stay on its scale.
@@ -87,7 +89,8 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
     <figure class={'fx-chart fx-area' + (fill ? ' fill' : '')} aria-label={label}>
       <div class="fx-plotrow">
         {showAxis && <Axis marks={axis.ticks} y={y} format={format} />}
-        <div ref={plot} class="fx-plot" style={fill ? { minHeight: `${height}px` } : { height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}>
+        <div ref={plot} class={'fx-plot' + (onPick ? ' pick' : '')} style={fill ? { minHeight: `${height}px` } : { height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}
+          onClick={onPick && ((e: MouseEvent) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); onPick(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left) / r.width) * (n - 1))))); })}>
           {showAxis && axis.ticks.map((t) => <span key={t} class={'fx-grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
           {band && <span class="fx-band" style={{ left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` }} />}
           {threshold !== undefined && <span class="fx-threshold" style={{ top: `${y(threshold)}px` }} />}

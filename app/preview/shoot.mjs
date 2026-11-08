@@ -6160,6 +6160,19 @@ const smokes = [
     await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
     if (await page.$('.fx-latest')) throw new Error('an empty card of latest transactions');
   } },
+  // A day clicked on the checking chart opens it on the calendar (Alex's Nov 6 paycheck, its green mark); the Calendar
+  // tab picked after opens on today again.
+  { name: 'Finances: a day clicked on the checking chart opens it on the calendar', screen: 'finances', run: async (page) => {
+    await page.locator('.fx-checking .fx-mark.fx-h-in').first().scrollIntoViewIfNeeded({ timeout: 5000 });
+    const mark = await page.$eval('.fx-checking .fx-mark.fx-h-in', (m) => { const r = m.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, { timeout: 5000 });
+    await page.mouse.click(mark.x, mark.y);
+    await page.waitForSelector('.fx-calendar h2:has-text("November 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone h2:text-is("Fri, Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-11-06"][aria-pressed=true]', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
