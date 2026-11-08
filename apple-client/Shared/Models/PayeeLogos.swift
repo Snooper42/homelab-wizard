@@ -182,9 +182,12 @@ final class PayeeLogos: @unchecked Sendable {
         static let underscored = #"(?:^|\s)\S*_\S*(?=\s|$)"#
         static let longReference = #"(?:^|\s)(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{8,}(?=\s|$)"#
         static let achTail = #"(?:\s+(?:PPD|CCD|WEB|TEL))+$"#
-        static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail]
+        static let longNumber = #"\d{5,}"#
+        static let bankCode = #"\b(?:PPD|CCD|WEB|TEL)\s*ID\b|\bXFER\b"#
+        static let memoAndWording = #"^(.*\S)\s+\((.+)\)$"#
+        static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail, bankCode]
         static let all = [spaces, star, starReference, www, domain, date, phone, cardDigits, store, number, terminal, trailing, wordStart, apostropheS,
-                          zelle, cardPayment, achId, underscored, longReference, achTail]
+                          zelle, cardPayment, achId, underscored, longReference, achTail, longNumber, bankCode, memoAndWording]
     }
 
     private static func compile() -> [String: NSRegularExpression] {
@@ -423,6 +426,41 @@ final class PayeeLogos: @unchecked Sendable {
         guard let re = patterns[pattern],
               let m = re.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) else { return nil }
         return (1..<m.numberOfRanges).map { m.range(at: $0).location == NSNotFound ? "" : ns.substring(with: m.range(at: $0)) }
+    }
+
+    private func matches(_ s: String, _ pattern: String) -> Bool {
+        guard let re = patterns[pattern] else { return false }
+        return re.firstMatch(in: s, range: NSRange(location: 0, length: (s as NSString).length)) != nil
+    }
+
+    // MARK: - Notes
+
+    /// Whether a note is a bank's own wording (kept from an import), not
+    /// words a person wrote: a long number, an ACH code, or a line in
+    /// capitals the payee was made from (payees.ts's `bankWording`).
+    func bankWording(_ note: String) -> Bool {
+        let s = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let letters = s.unicodeScalars.filter { (0x41...0x5A).contains($0.value) || (0x61...0x7A).contains($0.value) }
+        let capitals = letters.filter { (0x41...0x5A).contains($0.value) }.count
+        let shouting = letters.count >= 8 && Double(capitals) / Double(letters.count) > 0.7
+        return (matches(s, P.longNumber) || matches(s, P.bankCode) || shouting) && cleanPayee(s).lowercased() != s.lowercased()
+    }
+
+    /// A note as a transaction's page shows it: the bank's wording left out
+    /// (it stays in the transaction), a memo before it kept; the wording
+    /// the payee was made from is the bank's too (payees.ts's `shownNote`).
+    func shownNote(_ note: String?, payee: String?) -> String {
+        let s = (note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let p = payee ?? ""
+        func fromIt(_ x: String) -> Bool {
+            let clean = cleanPayee(x).lowercased()
+            return !p.isEmpty && clean == p.lowercased() && clean != x.lowercased()
+        }
+        func bank(_ x: String) -> Bool { bankWording(x) || fromIt(x) }
+        if let m = groups(s, P.memoAndWording), m.count == 2, bank(m[1]) {
+            return bank(m[0]) ? "" : m[0]
+        }
+        return bank(s) ? "" : s
     }
 
     // MARK: - Brands
