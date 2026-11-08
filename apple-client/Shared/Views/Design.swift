@@ -541,3 +541,67 @@ extension View {
         #endif
     }
 }
+
+// MARK: - Loading
+
+/// While a page reads: the shapes of its cards in soft grey, with a light
+/// passing over them, in place of a spinner; still when Reduce Motion is on.
+struct SkeletonCards: View {
+    /// A Wallet card first (Finances' home), or cards only.
+    var walletCard = true
+    @State private var phase: CGFloat = -0.6
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        shapes
+            .overlay {
+                GeometryReader { geo in
+                    LinearGradient(colors: [.clear, Color.white.opacity(0.5), .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: geo.size.width * 0.5)
+                        .offset(x: phase * geo.size.width * 1.4)
+                }
+                .mask(shapes)
+                .allowsHitTesting(false)
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) { phase = 1 }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reading")
+    }
+
+    private var shapes: some View {
+        VStack(spacing: 14) {
+            if walletCard {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color(light: 0xDCE0EF, dark: 0x262A3A))
+                    .frame(height: 168)
+                card(height: 62, lines: [0.5])
+            }
+            card(height: 230, lines: [0.3, 0.6, 0.45])
+            HStack(spacing: 12) {
+                card(height: 112, lines: [0.5, 0.7])
+                card(height: 112, lines: [0.4, 0.6])
+            }
+            card(height: 200, lines: [0.35, 0.8, 0.7, 0.75])
+        }
+    }
+
+    private func card(height: CGFloat, lines: [CGFloat]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(Array(lines.enumerated()), id: \.offset) { i, width in
+                GeometryReader { geo in
+                    Capsule()
+                        .fill(Color(light: 0xECEAE5, dark: 0x2C2838))
+                        .frame(width: geo.size.width * width)
+                }
+                .frame(height: i == 1 ? 22 : 11)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+}

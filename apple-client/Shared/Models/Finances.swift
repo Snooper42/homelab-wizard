@@ -705,6 +705,9 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let isSplit: Bool
     /// The first part's category, when it's divided: what its mark is coloured by.
     let splitCategory: String?
+    /// Its parts, when it's divided: each part's category and amount, signed
+    /// as the transaction is.
+    let splits: [FinanceSplit]
     var hasReceipt: Bool { receipt != nil }
 
     enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, institution, payment, category, note, to, tags, receipt, splits }
@@ -727,6 +730,11 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         let splits = ((try? c.decodeIfPresent([JSONValue].self, forKey: .splits)) ?? nil) ?? []
         isSplit = !splits.isEmpty
         if case .string(let first)? = splits.first?["category"] { splitCategory = first } else { splitCategory = nil }
+        self.splits = splits.compactMap { part in
+            guard case .number(let amount)? = part["amount"] else { return nil }
+            if case .string(let category)? = part["category"] { return FinanceSplit(category: category, amount: amount) }
+            return FinanceSplit(category: "", amount: amount)
+        }
     }
 
     /// Whether `text` is in the payee, the category, the note or a tag.
@@ -1117,5 +1125,94 @@ extension FinancesPlanView {
     /// money in, card payoffs, or moving money to the household's own accounts).
     var recurringPerMonth: Double {
         recurring.filter { $0.sort == .bills || $0.sort == .subscriptions }.reduce(0) { $0 + ($1.monthly ?? 0) }
+    }
+}
+
+// MARK: - Spending (the Spending page)
+
+/// One part of a divided transaction.
+struct FinanceSplit: Sendable, Equatable {
+    let category: String
+    let amount: Double
+}
+
+/// What went to one category in a month.
+struct SpendingCategory: Identifiable, Sendable, Equatable {
+    /// The category, or its parent when it has one: "Uncategorized" for none.
+    let name: String
+    let spent: Double
+    var id: String { name }
+}
+
+/// All that was spent in one month.
+struct SpendingMonth: Identifiable, Sendable, Equatable {
+    /// The month's first day.
+    let month: Date
+    let total: Double
+    var id: Date { month }
+}
+
+/// What was spent, from the ledger as it is: money out by category,
+/// refunds netted against their category, never money moved between the
+/// household's own accounts nor money coming in (an income category, or a
+/// category that only took money in).
+enum Spending {
+    static let uncategorized = "Uncategorized"
+
+    /// What each category took in the month holding `month`, largest first.
+    static func byCategory(_ transactions: [FinanceTransaction], in month: Date, categories: [FinanceCategory],
+                           calendar: Calendar = .current) -> [SpendingCategory] {
+        guard let range = calendar.dateInterval(of: .month, for: month) else { return [] }
+        var net: [String: Double] = [:]
+        for t in transactions where (t.to ?? "").isEmpty {
+            guard let date = t.date, range.contains(date) else { continue }
+            let parts = t.splits.isEmpty ? [FinanceSplit(category: t.category, amount: t.amount)] : t.splits
+            for part in parts {
+                let name = top(part.category, in: categories)
+                if isIncome(name, in: categories) { continue }
+                net[name, default: 0] -= part.amount
+            }
+        }
+        return net.filter { $0.value >= 0.005 }
+            .map { SpendingCategory(name: $0.key, spent: $0.value) }
+            .sorted { $0.spent != $1.spent ? $0.spent > $1.spent : $0.name < $1.name }
+    }
+
+    /// The `count` months up to the one holding `month`, oldest first.
+    static func months(_ transactions: [FinanceTransaction], ending month: Date, count: Int, categories: [FinanceCategory],
+                       calendar: Calendar = .current) -> [SpendingMonth] {
+        guard let last = calendar.dateInterval(of: .month, for: month)?.start else { return [] }
+        return (0..<max(count, 0)).reversed().compactMap { back in
+            guard let start = calendar.date(byAdding: .month, value: -back, to: last) else { return nil }
+            let total = byCategory(transactions, in: start, categories: categories, calendar: calendar).reduce(0) { $0 + $1.spent }
+            return SpendingMonth(month: start, total: total)
+        }
+    }
+
+    /// The transactions that went to `category` (or one under it) in the month holding `month`, newest first.
+    static func transactions(_ transactions: [FinanceTransaction], in category: String, month: Date, categories: [FinanceCategory],
+                             calendar: Calendar = .current) -> [FinanceTransaction] {
+        guard let range = calendar.dateInterval(of: .month, for: month) else { return [] }
+        return transactions.filter { t in
+            guard (t.to ?? "").isEmpty, let date = t.date, range.contains(date) else { return false }
+            let names = t.splits.isEmpty ? [t.category] : t.splits.map(\.category)
+            return names.contains { top($0, in: categories) == category }
+        }
+        .sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+    }
+
+    /// A category's top: its parent when it has one.
+    static func top(_ name: String, in categories: [FinanceCategory]) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return uncategorized }
+        if let c = categories.first(where: { $0.name.lowercased() == trimmed.lowercased() }), let parent = c.parent, !parent.isEmpty {
+            return parent
+        }
+        return trimmed
+    }
+
+    private static func isIncome(_ name: String, in categories: [FinanceCategory]) -> Bool {
+        if let c = categories.first(where: { $0.name.lowercased() == name.lowercased() }) { return c.income ?? false }
+        return name.lowercased() == "income"
     }
 }

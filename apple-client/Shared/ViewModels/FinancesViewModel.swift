@@ -230,8 +230,13 @@ final class FinancesViewModel {
 
     /// Whether a transaction came in since this phone last looked, and isn't reviewed yet.
     func isNew(_ t: FinanceTransaction) -> Bool {
+        #if SCREENSHOTS
+        // The screenshots: the five newest, as if they came in since.
+        return ledger?.newestFirst.prefix(5).contains { $0.id == t.id } ?? false
+        #else
         guard let seenKey, let seenTransactions else { return false }
         return seenTransactions.isNew(t.id, key: seenKey)
+        #endif
     }
 
     /// How many transactions are new.
@@ -292,6 +297,18 @@ final class FinancesViewModel {
             return false
         }
         return await saveLedger(edited, reason: "Change a transaction in your Finances.")
+    }
+
+    /// Sets a transaction's category and marks it reviewed. Returns whether it saved.
+    func setCategory(_ t: FinanceTransaction, to category: String) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger else { return false }
+        guard let edited = LedgerEdit.settingCategory(id: t.id, to: category, in: raw) else {
+            saveError = "This transaction is changed on the computer."
+            return false
+        }
+        let saved = await saveLedger(edited, reason: "Change a transaction's category in your Finances.")
+        if saved { markReviewed([t]) }
+        return saved
     }
 
     /// Removes a transaction. Returns whether it saved.
