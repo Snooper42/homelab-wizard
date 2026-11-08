@@ -127,6 +127,8 @@ fi
 echo "Making the project…"
 HOMELAB_NO_OPEN=1 "$HERE/make-xcode-project.sh" "$PREFIX" "${2:-}"
 
+echo "Keep $NAME unlocked, with its screen on, until the app opens: Xcode can't set a locked phone"
+echo "up for development. (Settings › Display & Brightness › Auto-Lock › Never helps, for now.)"
 echo "Building for $NAME (the first time takes a few minutes)…"
 LOG="$OUT/build-ios.log"
 if ! xcodebuild -project "$OUT/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
@@ -134,6 +136,10 @@ if ! xcodebuild -project "$OUT/HomelabClient.xcodeproj" -scheme HomelabClient-iO
      -derivedDataPath "$OUT/build" -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
      build >"$LOG" 2>&1; then
   grep -q "Developer Mode disabled" "$LOG" && devmode_off
+  if grep -qiE "device (was still|is currently) locked|could not be mounted" "$LOG"; then
+    echo "$NAME locked itself while Xcode was setting it up. Unlock it, keep its screen on (Auto-Lock › Never for now), and run this again." >&2
+    exit 1
+  fi
   echo >&2
   echo "The build failed. The errors:" >&2
   grep -E 'error:|No Account|No profiles|requires a development team|maximum number|Developer Mode' "$LOG" | sort -u | head -20 >&2 || tail -30 "$LOG" >&2
