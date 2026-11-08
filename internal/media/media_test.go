@@ -51,7 +51,7 @@ func TestLookup(t *testing.T) {
 	if a, _ := Lookup("movies", "run"); a.Lock || !a.Power {
 		t.Errorf("movies run hands files to Tdarr's queue: no lock, but it waits for power: %+v", a)
 	}
-	if _, err := Lookup("books", "run"); err == nil || !strings.Contains(err.Error(), "apply, genre-counts, init, review, status, undo") {
+	if _, err := Lookup("books", "run"); err == nil || !strings.Contains(err.Error(), "apply, build, genre-counts, init, review, status, undo") {
 		t.Errorf("books run: %v", err)
 	}
 	if _, err := Lookup("films", "scan"); err == nil {
@@ -266,6 +266,14 @@ func TestExecute(t *testing.T) {
 	}
 	if strings.Join(seen, ",") != "step,info,result" {
 		t.Errorf("events: %v", seen)
+	}
+	// What the engine said when it gave up is kept with the run.
+	j = fakeJob(t, "movies", "collect", []string{`{"type":"warn","text":"slow"}`, `{"type":"fail","text":"Tdarr isn't answering at http://localhost:8265"}`}, 1)
+	if run, _ := Execute(context.Background(), j); run.Why != "Tdarr isn't answering at http://localhost:8265" || run.OK {
+		t.Errorf("why: %+v", run)
+	}
+	if a, err := Lookup("books", "build"); err != nil || !a.Lock || !a.Confirm || a.Script != "books_tidy.py" {
+		t.Errorf("books build: %+v %v", a, err)
 	}
 	j = fakeJob(t, "music", "status", []string{`{"stage": "built", "next": "finalize"}`}, 0)
 	run, err = Execute(context.Background(), j)

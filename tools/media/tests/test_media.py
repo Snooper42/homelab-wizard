@@ -1889,3 +1889,128 @@ class TdarrOnBattery(Base):
         with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_ALLOW_BATTERY": ""}), mock.patch.object(mc, "on_battery", return_value=False):
             movies_organizer.Movies().collect()
         self.assertEqual([r["process"] for r in self.raised], ["increase"])
+
+
+class BooksIntoCalibre(Base):
+    """Nov 8, the owner: Books said the folder "isn't a Calibre library (no metadata.db)": it holds each
+    book as Calibre exports them (Author/Title/Title.epub, .azw3, metadata.opf, cover.jpg) with no
+    library database. Make a Calibre library moves those aside on the same drive, adds each folder as
+    one book (its formats together, its metadata.opf read), checks every one came in, and keeps the
+    copy aside. It only looks until it's confirmed; what isn't a book's stays where it was."""
+
+    def setUp(self):
+        super().setUp()
+        self.books = self.lib["books"]
+        self.made = []
+        for author, title in (("Ann Author", "First Book"), ("Ann Author", "Second Book"), ("Bob Writer", "Third Book")):
+            d = self.books / author / title
+            self.touch(d / (title + ".epub"))
+            self.touch(d / "metadata.opf")
+            self.touch(d / "cover.jpg")
+        self.touch(self.books / "Bob Writer" / "Third Book" / "Third Book.azw3")
+        self.touch(self.books / ".calnotes" / "notes.db")
+        self.touch(self.books / "my_script.py")
+        self.touch(self.books / "Read me.txt")
+        self.touch(self.books / "Loose One.epub")
+        self.touch(self.books / "_Kindle_Ready_Sync" / "system" / "collections.json")
+        mock.patch.object(books_tidy.mo, "docker_ok", return_value=False).start()
+        mock.patch("books_organizer.find_bin", return_value="calibredb").start()
+        self.loses = 0  # books Calibre leaves out
+
+        def run(cmd, timeout=None, check=False, env=None):
+            cmd = [str(c) for c in cmd]
+            lib = Path(cmd[cmd.index("--library-path") + 1])
+            db = lib / "metadata.db"
+            if cmd[1] == "add":
+                src = Path(cmd[-1])
+                assert "--recurse" in cmd and "--one-book-per-directory" in cmd, cmd
+                dirs = sorted({p.parent for p in src.rglob("*") if p.suffix in (".epub", ".azw3")})
+                dirs = dirs[:len(dirs) - self.loses]
+                con = sqlite3.connect(str(db))
+                con.execute("CREATE TABLE IF NOT EXISTS books (id INTEGER PRIMARY KEY, path TEXT)")
+                for i, d in enumerate(dirs, 1):
+                    path = "%s/%s (%d)" % (d.parent.name, d.name, i)
+                    (lib / path).mkdir(parents=True)
+                    con.execute("INSERT INTO books (path) VALUES (?)", (path,))
+                    self.made.append(path)
+                con.commit()
+                con.close()
+                return mock.Mock(returncode=0, stdout="Added book ids: %s" % ", ".join(str(i) for i in range(1, len(dirs) + 1)), stderr="")
+            if cmd[1] == "list":
+                con = sqlite3.connect(str(db))
+                ids = [r[0] for r in con.execute("SELECT id FROM books")]
+                con.close()
+                return mock.Mock(returncode=0, stdout=json.dumps([{"id": i} for i in ids]), stderr="")
+            raise AssertionError(cmd)
+        self.run = mock.patch.object(mc, "run", side_effect=run).start()
+
+    def build(self, yes):
+        mc.mo.YES = yes
+        try:
+            books_tidy.build()
+        finally:
+            mc.mo.YES = False
+        return self.results()[-1]
+
+    def test_it_only_looks_until_asked(self):
+        r = self.build(False)
+        self.assertEqual((r["books"], r["applied"]), (3, False))
+        self.assertFalse((self.books / "metadata.db").exists())
+        self.assertTrue((self.books / "Ann Author" / "First Book" / "First Book.epub").exists())
+        self.assertEqual(self.run.call_count, 0)
+
+    def test_a_library_is_made_and_the_old_copy_kept(self):
+        r = self.build(True)
+        self.assertTrue(r["ok"] and r["applied"])
+        self.assertEqual((r["books"], r["added"]), (3, 3))
+        self.assertTrue((self.books / "metadata.db").is_file())
+        aside = self.books.parent / (self.books.name + " (before Calibre)")
+        self.assertEqual(r["aside"], str(aside))
+        # Every book's folder, and Calibre's old notes, went aside whole; what isn't a book's stayed.
+        self.assertTrue((aside / "Ann Author" / "Second Book" / "metadata.opf").exists())
+        self.assertTrue((aside / "Bob Writer" / "Third Book" / "Third Book.azw3").exists())
+        self.assertTrue((aside / ".calnotes" / "notes.db").exists())
+        self.assertTrue((self.books / "my_script.py").exists())
+        self.assertTrue((self.books / "Read me.txt").exists() and (self.books / "Loose One.epub").exists())
+        self.assertTrue((self.books / "_Kindle_Ready_Sync" / "system" / "collections.json").exists())
+        self.assertFalse((self.books / "Ann Author" / "First Book" / "First Book.epub").exists())
+        self.assertEqual(len(self.made), 3)
+
+    def test_one_left_out_is_said(self):
+        self.loses = 1
+        r = self.build(True)
+        self.assertFalse(r["ok"])
+        self.assertEqual((r["books"], r["added"]), (3, 2))
+        self.assertIn("2 of 3 books came in", self.out.getvalue())
+        self.assertTrue((self.books.parent / (self.books.name + " (before Calibre)") / "Bob Writer" / "Third Book").exists())
+
+    def test_a_library_already_is_left_alone(self):
+        sqlite3.connect(str(self.books / "metadata.db")).close()
+        r = self.build(True)
+        self.assertTrue(r["ok"] and r.get("already"))
+        self.assertEqual(self.run.call_count, 0)
+        self.assertTrue((self.books / "Ann Author" / "First Book" / "First Book.epub").exists())
+
+    def test_an_earlier_try_left_aside_stops_it(self):
+        (self.books.parent / (self.books.name + " (before Calibre)")).mkdir()
+        with self.assertRaises(SystemExit):
+            self.build(True)
+        self.assertIn("from an earlier try", self.out.getvalue())
+        self.assertTrue((self.books / "Ann Author" / "First Book" / "First Book.epub").exists())
+
+
+class AudiobooksAlreadyWhole(Base):
+    """Nov 8, the owner: Audiobooks "doesn't really work": its scan said 0 books, of 177 that are one
+    .m4b each already (Author/Title/Title.m4b, as Audiobookshelf keeps them). The scan counts those as
+    whole, so the screen can say there's nothing to merge rather than a bare 0."""
+
+    def test_whole_books_are_counted(self):
+        lib = self.lib["audiobooks"]
+        for author, title in (("Ann Author", "One"), ("Ann Author", "Two"), ("Bob Writer", "Three")):
+            self.touch(lib / author / title / (title + ".m4b"))
+            self.touch(lib / author / title / "metadata.json")
+        self.touch(lib / "Cat Reader" / "Split" / "01.mp3")
+        self.touch(lib / "Cat Reader" / "Split" / "02.mp3")
+        audiobook_organizer.Audiobooks().scan()
+        r = self.results()[-1]
+        self.assertEqual((r["books"], r["whole"]), (1, 3))

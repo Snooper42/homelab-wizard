@@ -52,7 +52,9 @@ var actions = map[string]map[string]Action{
 		"status": {Script: "books_organizer.py"},
 		"review": {Script: "books_organizer.py"},
 		"apply":  {Script: "books_organizer.py", Lock: true, Confirm: true},
-		"undo":   {Script: "books_organizer.py", Lock: true, Confirm: true},
+		// A Calibre library from a folder of books with none: asks first.
+		"build": {Script: "books_tidy.py", Lock: true, Confirm: true},
+		"undo":  {Script: "books_organizer.py", Lock: true, Confirm: true},
 		// Reads Calibre's database, writes nothing: no lock.
 		"genre-counts": {Script: "books_tidy.py"},
 	},

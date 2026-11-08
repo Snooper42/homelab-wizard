@@ -15945,6 +15945,7 @@ ${pays}
     "books review": "Reviewing your books",
     "books apply": "Tidying your books",
     "books undo": "Undoing the last apply",
+    "books build": "Making your Calibre library",
     "movies scan": "Scanning your films",
     "movies run": "Handing films to Tdarr",
     "movies collect": "Collecting Tdarr's work",
@@ -16277,16 +16278,42 @@ ${pays}
           go: { label: "Fetch posters", quiet: true, run: () => act.run(k3, "posters") }
         });
       }
-      if (withTdarr) out.push({ kind: k3, title: `Tdarr is shrinking ${things(k3, withTdarr)}`, sub: "Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect", go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true } });
+      const looked = last(l3, "collect");
+      const away2 = !!looked && !looked.ok && /answering|reach/i.test(looked.why || "");
+      if (withTdarr) out.push({
+        kind: k3,
+        title: `Tdarr is shrinking ${things(k3, withTdarr)}`,
+        warn: away2,
+        sub: away2 ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)" : "One at a time, on this computer's processor: a big library takes days. Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect",
+        go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true }
+      });
     } else if (k3 === "books") {
       const rv = last(l3, "review");
       const changing = review2 ? review2.filter((b2) => !b2.held).map((b2) => b2.title) : [];
       const many = review2 ? changing.length : Math.max(0, n2(rv?.result?.changes) - (rv?.result?.held || []).length);
+      if (l3.noCalibre) {
+        const many2 = n2(l3.loose);
+        if (many2) out.push({
+          kind: k3,
+          title: `Make a Calibre library from your ${things(k3, many2)}`,
+          sub: "Each book with its own title, author, series, and cover, so the review and Calibre-Web can read them",
+          go: { label: "Make it…", run: () => act.ask({
+            title: `Make a Calibre library from ${things(k3, many2)}?`,
+            action: "Make it",
+            lead: `Calibre adds each book with the details and cover beside it. Calibre-Web is paused meanwhile. Nothing is deleted: your books' folders move to "${l3.folder.split(/[\\/]/).pop()} (before Calibre)" beside it, and stay there until you've looked.`,
+            steps: ["Their folders move aside, on the same drive", "Calibre adds each one as a book, its formats together", "Every book is counted in before it says done"],
+            go: () => act.run("books", "build", [], true)
+          }) }
+        });
+        else out.push({ kind: k3, title: "Not a Calibre library yet", sub: "No books in folders of their own were found here: put each book in a folder of its own, or point Books at your Calibre library in Settings", warn: true });
+        return out;
+      }
       if (!rv) out.push({ kind: k3, title: "Look over your books", sub: "Titles, series, publishers, genres, and covers: nothing changes until you say", go: { label: "Review", run: () => act.review() } });
       else if (many && !reviewApplied(l3)) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => act.review() } });
     } else if (k3 === "audiobooks") {
       if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "A scan finds books split into many files and changes nothing", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
       else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
+      else if (n2(scan.whole)) out.push({ kind: k3, title: `All ${things(k3, n2(scan.whole))} are one file each`, sub: "Nothing to merge. One that comes in split into many files shows up here after the next scan" });
     }
     return out;
   }
@@ -16588,7 +16615,7 @@ ${pays}
   }
   function LibHero({ l: l3 }) {
     const c3 = l3.counts || {};
-    const many = l3.kind === "music" ? n2(last(l3, "run")?.result?.in_library) || n2(last(l3, "scan")?.result?.files) : l3.kind === "movies" || l3.kind === "tv" ? n2(c3.lean) + n2(c3.bloated) + n2(c3.queued) + n2(l3.waiting) : l3.kind === "books" ? n2(last(l3, "review")?.result?.books) : 0;
+    const many = l3.kind === "music" ? n2(last(l3, "run")?.result?.in_library) || n2(last(l3, "scan")?.result?.files) : l3.kind === "movies" || l3.kind === "tv" ? n2(c3.lean) + n2(c3.bloated) + n2(c3.queued) + n2(l3.waiting) : l3.kind === "books" ? n2(last(l3, "review")?.result?.books) || n2(l3.loose) : 0;
     const m3 = meterOf(l3);
     const facts2 = [
       ...many ? [[lead(unit[l3.kind][1]), many.toLocaleString()]] : [],
@@ -16656,15 +16683,15 @@ ${pays}
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         l3.found && /* @__PURE__ */ u3(LibHero, { l: l3 }),
         /* @__PURE__ */ u3(Widget, { title: "Can be tidier", span: "all", kind: "fx-paycheck tidyneeds", actions: again || void 0, children: rows.length ? /* @__PURE__ */ u3(TodoRows, { todos: rows, job: job2 }) : /* @__PURE__ */ u3(Empty, { children: l3.found ? `Your ${names3[kind].toLowerCase()} ${kind === "music" ? "is" : "are"} tidy. Anything new shows up here.` : "Plug in its drive to see what could be tidier." }) }),
-        kind === "books" && !review2 && reviewError2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReviewError", span: "all", kind: "fx-renewing tidyreview", children: [
+        kind === "books" && !l3.noCalibre && !review2 && reviewError2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReviewError", span: "all", kind: "fx-renewing tidyreview", children: [
           /* @__PURE__ */ u3("p", { class: "warn", role: "alert", children: [
             "Couldn't read the last review: ",
             reviewError2
           ] }),
           /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: reloadReview, children: "Try again" }) })
         ] }),
-        kind === "books" && !review2 && !reviewError2 && last(l3, "review") && /* @__PURE__ */ u3(Widget, { title: "The review", span: "all", kind: "fx-renewing tidyreview", children: /* @__PURE__ */ u3(Empty, { children: "Reading the last review…" }) }),
-        kind === "books" && review2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReview", span: "all", kind: "fx-renewing tidyreview", actions: !!changing.length && !reviewApplied(l3) && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }), children: [
+        kind === "books" && !l3.noCalibre && !review2 && !reviewError2 && last(l3, "review") && /* @__PURE__ */ u3(Widget, { title: "The review", span: "all", kind: "fx-renewing tidyreview", children: /* @__PURE__ */ u3(Empty, { children: "Reading the last review…" }) }),
+        kind === "books" && !l3.noCalibre && review2 && /* @__PURE__ */ u3(Widget, { title: "The review", id: "tidyReview", span: "all", kind: "fx-renewing tidyreview", actions: !!changing.length && !reviewApplied(l3) && /* @__PURE__ */ u3(Go, { primary: true, label: `Apply to ${count(changing.length, "book")}…`, job: job2, onClick: apply }), children: [
           reviewApplied(l3) ? /* @__PURE__ */ u3(Empty, { children: [
             "Applied ",
             ago(last(l3, "apply").at),
@@ -16674,7 +16701,7 @@ ${pays}
           ] }) : review2.length ? /* @__PURE__ */ u3(Rows, { kind: "tidybooks", children: review2.map((b2) => /* @__PURE__ */ u3(BookRow, { b: b2, on: !b2.held && !skip2.has(b2.id), toggle: () => toggle(b2.id), cover: act.cover }, b2.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Every book already looks tidy." }),
           reviewApplied(l3) && /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3(Go, { label: "Undo the last apply", job: job2, onClick: () => act.ask({ title: "Undo the last apply?", action: "Undo", lead: "Puts back the titles, series, tags, and covers it changed.", go: () => act.run("books", "undo", [], true) }) }) })
         ] }),
-        kind in genreAsk && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
+        kind in genreAsk && !l3.noCalibre && /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act, only: kind }),
         (kind === "movies" || kind === "tv") && /* @__PURE__ */ u3(SpaceWidget, { l: l3, d: d3 }),
         kind !== "movies" && kind !== "tv" && l3.size > 0 && /* @__PURE__ */ u3(Widget, { title: "Space", kind: "fx-flow tidyspace", children: /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3("span", { class: "fx-amount", children: size(l3.size) }), caption: l3.freed ? size(l3.freed) + " won back so far" : "On the drive" }) }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, kind })
