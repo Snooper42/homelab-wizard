@@ -5,7 +5,8 @@
 // how it splits by account, and a row a holding, each opening its worth at
 // each read. Read now reads Ghostfolio again, on the computer only; after
 // the first, Finances reads it once a day on opening, unless turned off.
-import { useState } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
+import { Segmented } from '../../parts/Segmented';
 import { AreaChart } from '../ui/charts';
 import { Amount } from '../ui/Amount';
 import { type Hue, Legend, SplitBar } from '../ui/Legend';
@@ -13,7 +14,7 @@ import { Widget } from '../ui/Widget';
 import { Mark } from '../Mark';
 import { tickerBrand } from '../tickers';
 import { rateOf, worthOf, worthOn } from '../model';
-import { amountsHidden, dayShort, isoDay, money, moneyIn, tick } from '../money';
+import { amountsHidden, dayShort, isoDay, money, moneyIn, parseAmount, signOf, tick, todayISO } from '../money';
 
 /** What Read now is doing, or last said. */
 export interface InvestState {
@@ -34,6 +35,9 @@ export interface InvestmentsProps {
   state?: InvestState;
   /** Keeps the plan (a match picked by hand, the morning's read on or off); none on a phone allowed only to look. */
   keep?: (plan: finance.Plan) => Promise<boolean>;
+  /** Puts a buy or a sale into Ghostfolio and reads again (throws why not), and looks a ticker up there: on the computer while Ghostfolio runs. */
+  add?: (x: app.InvestmentAdd) => Promise<void>;
+  find?: (query: string) => Promise<app.AppSymbol[]>;
 }
 
 /** "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2". */
@@ -64,14 +68,20 @@ interface Line {
   cash?: number;
 }
 
-export function InvestmentsWidget({ v, read, running, state = {}, keep }: InvestmentsProps) {
+export function InvestmentsWidget({ v, read, running, state = {}, keep, add, find }: InvestmentsProps) {
   const [open, setOpen] = useState('');
+  const [adding, setAdding] = useState(false);
   const accounts = (v.plan.accounts || []).filter((a) => a.holdings?.length);
   const ever = !!v.plan.holdingsRead;
   // Never read: a first read is offered on the computer while Ghostfolio runs; otherwise nothing is shown.
   if (!accounts.length && !(read && (running || ever))) return null;
   const when = readWhen(v.plan.holdingsRead, v.today);
-  const button = read && <button type="button" class="small" disabled={state.busy} onClick={read}>{state.busy ? 'Reading…' : 'Read now'}</button>;
+  const canAdd = !!(add && find);
+  const button = <>
+    {canAdd && !adding && <button type="button" class="small" disabled={state.busy} onClick={() => setAdding(true)}>Add a holding</button>}
+    {read && <button type="button" class="small" disabled={state.busy} onClick={read}>{state.busy ? 'Reading…' : 'Read now'}</button>}
+  </>;
+  const form = adding && add && find && <AddForm v={v} add={add} find={find} close={() => setAdding(false)} />;
   const said = <>
     {state.said && <p class="fx-sub fx-investsaid" role="status">{state.said}</p>}
     {state.problem && <p class="formerr bad fx-investsaid" role="alert">{state.problem}</p>}
@@ -79,8 +89,9 @@ export function InvestmentsWidget({ v, read, running, state = {}, keep }: Invest
   if (!accounts.length) {
     return (
       <Widget title="Investments" span="all" kind="fx-invest" actions={button}>
-        {!(ever && state.said) && <p class="fx-sub fx-investintro">{ever
-          ? 'Nothing in Ghostfolio matched an investment or retirement account here yet.'
+        {form}
+        {!form && !(ever && state.said) && <p class="fx-sub fx-investintro">{ever
+          ? canAdd ? 'Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there.' : 'Nothing in Ghostfolio matched an investment or retirement account here yet.'
           : 'Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here.'}</p>}
         {said}
         <Unmatched v={v} state={state} keep={keep} read={read} />
@@ -108,6 +119,7 @@ export function InvestmentsWidget({ v, read, running, state = {}, keep }: Invest
   const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
   return (
     <Widget title={<>Investments <span class="fx-sub">from Ghostfolio{when ? `, ${when}` : ''}</span></>} span="all" kind="fx-invest" actions={button}>
+      {form}
       {said}
       <div class="fx-investfigs">
         <div><div class="fx-caption">Total value</div><div class="fx-investfig"><Amount value={total} form="full" /></div><div class="fx-sub">{n(holdings, 'holding', 'holdings')} in {n(accounts.length, 'account', 'accounts')}</div></div>
@@ -209,5 +221,106 @@ function Unmatched({ v, state, keep, read }: { v: finance.View; state: InvestSta
         ))}
       </ul>
     </div>
+  );
+}
+
+/**
+ * Add a holding: bought or sold, into which account (or a new one, made
+ * in Finances and Ghostfolio by one name), what (a ticker or a name,
+ * picked from what Ghostfolio finds), how many shares, what was paid (or
+ * got) in all, and the day. Ghostfolio keeps it; the card reads it back.
+ */
+function AddForm({ v, add, find, close }: { v: finance.View; add: NonNullable<InvestmentsProps['add']>; find: NonNullable<InvestmentsProps['find']>; close: () => void }) {
+  const invest = (v.plan.accounts || []).filter((a) => a.kind === 'investment' || a.kind === 'retirement');
+  const [way, setWay] = useState('bought');
+  const [account, setAccount] = useState(invest[0]?.id || 'new');
+  const [newName, setNewName] = useState('');
+  const [query, setQuery] = useState('');
+  const [found, setFound] = useState<app.AppSymbol[]>([]);
+  const [looking, setLooking] = useState(false);
+  const [picked, setPicked] = useState<app.AppSymbol | null>(null);
+  const [shares, setShares] = useState('');
+  const [total, setTotal] = useState('');
+  const [day, setDay] = useState(todayISO());
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState('');
+  const timer = useRef(0);
+  const asked = useRef(0);
+  const why = (e: unknown) => String((e as Error)?.message || e);
+  // Looked up as it is typed, once typing stops; only the latest answer counts.
+  const type = (q: string) => {
+    setQuery(q);
+    setPicked(null);
+    clearTimeout(timer.current);
+    if (!q.trim()) { setFound([]); return; }
+    timer.current = window.setTimeout(async () => {
+      const n = ++asked.current;
+      setLooking(true);
+      try {
+        const r = await find(q);
+        if (n === asked.current) { setFound(r); setProblem(''); }
+      } catch (e) {
+        if (n === asked.current) setProblem(why(e));
+      } finally {
+        if (n === asked.current) setLooking(false);
+      }
+    }, 350);
+  };
+  const sold = way === 'sold';
+  const submit = async (e: Event) => {
+    e.preventDefault();
+    const n = parseAmount(shares), t = parseAmount(total);
+    const wrong = account === 'new' && !newName.trim() ? 'Name the new account.'
+      : !picked ? 'Type a ticker or a name, then pick it from the list.'
+      : !(n > 0) ? 'How many shares: more than 0.'
+      : isNaN(t) || t < 0 ? `What you ${sold ? 'got' : 'paid'} in all: type it without a minus.`
+      : !day || day > todayISO() ? 'Pick the day it happened, today or before.' : '';
+    setProblem(wrong);
+    if (wrong || !picked) return;
+    setBusy(true);
+    try {
+      await add({ account: account === 'new' ? undefined : account, newName: account === 'new' ? newName.trim() : undefined, symbol: picked.symbol, dataSource: picked.dataSource, currency: picked.currency, shares: n, total: t, date: day, sold: sold || undefined });
+      close();
+    } catch (err) {
+      setProblem(why(err));
+      setBusy(false);
+    }
+  };
+  return (
+    <form class="finform fx-investadd" onSubmit={submit} aria-labelledby="investAddTitle">
+      <div class="fx-investaddhead">
+        <h3 id="investAddTitle">Add a holding</h3>
+        <Segmented label="Bought or sold" value={way} pick={setWay} options={[['bought', 'Bought'], ['sold', 'Sold']]} />
+      </div>
+      <div class="fx-investaddgrid">
+        <label class="field">Account
+          <select value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>
+            {invest.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            <option value="new">A new account…</option>
+          </select>
+        </label>
+        {account === 'new' && <label class="field">Its name<input value={newName} placeholder="Roth IRA" onInput={(e) => setNewName((e.target as HTMLInputElement).value)} /></label>}
+        <label class="field wide">What you {sold ? 'sold' : 'bought'}
+          <input value={query} placeholder="A ticker, like VTI, or a name" autocomplete="off" aria-describedby="investFound" onInput={(e) => type((e.target as HTMLInputElement).value)} />
+        </label>
+      </div>
+      <div id="investFound" class="fx-symbols" aria-live="polite">
+        {picked ? <p class="fx-symbolpicked"><strong>{picked.symbol}</strong> {picked.name} <span class="fx-sub">· {picked.currency}</span> <button type="button" class="small" onClick={() => { setPicked(null); }}>Change</button></p>
+          : looking ? <p class="fx-sub">Looking it up in Ghostfolio…</p>
+          : query.trim() && !found.length ? <p class="fx-sub">Ghostfolio found nothing for “{query.trim()}”.</p>
+          : found.map((s) => <button key={s.dataSource + s.symbol} type="button" class="fx-symbol" onClick={() => { setPicked(s); setQuery(s.symbol); setFound([]); }}><strong>{s.symbol}</strong><span>{s.name}</span><small>{s.currency}</small></button>)}
+      </div>
+      <div class="fx-investaddgrid">
+        <label class="field">Shares<input inputmode="decimal" value={shares} placeholder="10" onInput={(e) => setShares((e.target as HTMLInputElement).value)} /></label>
+        <label class="field">{sold ? 'What you got in all' : 'What you paid in all'}<span class="moneyfield"><span aria-hidden="true">{signOf(picked?.currency)}</span><input inputmode="decimal" value={total} placeholder="0.00" onInput={(e) => setTotal((e.target as HTMLInputElement).value)} /></span></label>
+        <label class="field">Day<input type="date" value={day} max={todayISO()} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
+      </div>
+      <p class="fx-sub fx-investaddnote">It goes into Ghostfolio on this computer{account === 'new' ? ', and the new account into Finances too, by the same name' : ''}. Only the ticker leaves the homelab, when Ghostfolio looks it up.</p>
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+      <div class="fx-investaddactions">
+        <button type="button" class="small" disabled={busy} onClick={close}>Cancel</button>
+        <button type="submit" class="small primary" disabled={busy}>{busy ? 'Adding…' : 'Add to Ghostfolio'}</button>
+      </div>
+    </form>
   );
 }

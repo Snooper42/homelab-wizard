@@ -69,6 +69,13 @@ async function readInvestments() {
   }
   draw();
 }
+/** A buy or a sale typed on the card: into Ghostfolio, then read back. Throws why not, for the form to say. */
+async function addInvestment(x: app.InvestmentAdd) {
+  const r = await go().FinancesAddInvestment(x);
+  const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  invest = { said: `Added to Ghostfolio: ${x.sold ? 'sold' : 'bought'} ${x.shares} ${x.symbol}${x.newName ? `, in ${x.newName}` : ''}. Read again at ${time}.`, unmatched: r.unmatched };
+  financesData.set(r.view);
+}
 function readEachMorning(v: finance.View) {
   const at = new Date(v.plan.holdingsRead || '');
   if (phone || v.readOnly || v.plan.readByHand || isNaN(at.getTime()) || autoTried === v.today || invest.busy) return;
@@ -120,7 +127,7 @@ function draw() {
     // Wallos's subscriptions, on the computer while Wallos runs.
     fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
-    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest },
+    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest, ...(runs('ghostfolio') ? { add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q) } : {}) },
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
