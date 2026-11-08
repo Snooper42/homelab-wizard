@@ -111,6 +111,11 @@ type Plan struct {
 	// a screenshot or a screen others can see. Kept in the plan so each
 	// device that shows it follows; none (older files) shows them.
 	HideAmounts bool `json:"hideAmounts,omitempty"`
+	// HoldingsRead is when the investments were last read from Ghostfolio
+	// (RFC 3339), none before the first Read now. After it, Finances reads
+	// them again on opening once a day, unless ReadByHand.
+	HoldingsRead string `json:"holdingsRead,omitempty"`
+	ReadByHand   bool   `json:"readByHand,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -190,6 +195,11 @@ type Account struct {
 	Bought   float64 `json:"bought,omitempty"`
 	BoughtOn string  `json:"boughtOn,omitempty"`
 	Holds    string  `json:"holds,omitempty"`
+	// Holdings are what an investment account holds, as Ghostfolio last
+	// read them (holdings.go); Ghostfolio is the name of its account there
+	// when the household matched it by hand, its own name not matching.
+	Holdings   []Holding `json:"holdings,omitempty"`
+	Ghostfolio string    `json:"ghostfolio,omitempty"`
 }
 
 // Cancelled is a payment stopped because an app on the homelab does its
@@ -399,6 +409,9 @@ func Clean(p Plan) (Plan, error) {
 		if err := cleanCar(a); err != nil {
 			return p, err
 		}
+		if err := cleanHoldings(a); err != nil {
+			return p, err
+		}
 		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()
@@ -414,6 +427,9 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
 		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
+	}
+	if _, err := time.Parse(time.RFC3339, p.HoldingsRead); p.HoldingsRead != "" && err != nil {
+		return p, fmt.Errorf("investments read at %q, which is no time", p.HoldingsRead)
 	}
 	if err := calendarError(p.CalendarKey); err != nil {
 		return p, err

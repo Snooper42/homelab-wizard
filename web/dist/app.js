@@ -2037,14 +2037,14 @@
   }
   var memText = (n3) => n3 >= 2 ** 30 ? `${(n3 / 2 ** 30).toFixed(1)} GB` : `${Math.round(n3 / 2 ** 20)} MB`;
   function MemoryPressure({ m: m3, stop: stop2 }) {
-    const share2 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
+    const share3 = m3.total ? Math.round(m3.used / m3.total * 100) : 0;
     return /* @__PURE__ */ u3("div", { id: "memoryPressure", children: [
       /* @__PURE__ */ u3("div", { class: "row more", children: /* @__PURE__ */ u3("span", { children: [
         /* @__PURE__ */ u3("span", { class: "bad", children: "Memory nearly full:" }),
         " ",
         /* @__PURE__ */ u3("span", { class: "muted", children: [
           "the apps use ",
-          share2,
+          share3,
           "% of the ",
           memText(m3.total),
           " Docker has, high since ",
@@ -4302,7 +4302,7 @@
   }
   var rgb = (hex) => [1, 3, 5].map((i3) => parseInt(hex.slice(i3, i3 + 2), 16));
   var toHex = (c3) => "#" + c3.map((v3) => Math.round(v3).toString(16).padStart(2, "0")).join("");
-  var mix = (a3, b2, share2) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share2));
+  var mix = (a3, b2, share3) => toHex(rgb(a3).map((v3, i3) => v3 + (rgb(b2)[i3] - v3) * share3));
   function luminance(hex) {
     const [r3, g2, b2] = rgb(hex).map((v3) => {
       const c3 = v3 / 255;
@@ -7968,12 +7968,12 @@
     }
     const missed2 = days.filter((d3) => d3.all && d3.ok < d3.all);
     if (!missed2.length) return ["Up all week", "Every check passed, every 15 minutes"];
-    const share2 = Math.floor(ok / all * 1e3) / 10;
+    const share3 = Math.floor(ok / all * 1e3) / 10;
     const first = new Date(now);
     const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
-    if (outages2) return [`Up ${share2}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
+    if (outages2) return [`Up ${share3}%`, lastDown(outages2, weekFrom, now) || "Each check it missed passed the next time"];
     const n3 = missed2.reduce((k3, d3) => k3 + d3.all - d3.ok, 0);
-    return [`Up ${share2}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
+    return [`Up ${share3}%`, `It didn't answer ${n3} of its checks on ${missed2.map((d3) => d3.weekday).join(", ")}`];
   }
   function Week2({ days, outages: outages2, seen: seen2 }) {
     const [, line] = weekWords(days, outages2, Date.now(), seen2);
@@ -8783,7 +8783,7 @@
         ] }),
         children: list.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((b2) => {
           const tone = budgetTone(b2);
-          const share2 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
+          const share3 = b2.amount > 0 ? Math.min(100, b2.spent / b2.amount * 100) : 100;
           const pace = b2.amount > 0 ? Math.min(100, b2.pace / b2.amount * 100) : 0;
           const icon = iconOf(v3.categories, b2.category);
           const hue2 = categoryHue(b2.category, v3.categories);
@@ -8802,7 +8802,7 @@
               ] }) }),
               whenPlain: true,
               children: /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone ? " " + tone : ""), role: "img", "aria-label": `${b2.category}: ${money(b2.spent)} spent of ${money(b2.amount)}${tone === "warn" ? ", ahead of an even pace" : ""}`, children: [
-                /* @__PURE__ */ u3("span", { style: { width: `${share2}%` } }),
+                /* @__PURE__ */ u3("span", { style: { width: `${share3}%` } }),
                 /* @__PURE__ */ u3("i", { style: { left: `${pace}%` } })
               ] })
             },
@@ -10513,7 +10513,7 @@
     const [name, setName] = d2(g2?.name || "");
     const [target, setTarget] = d2(text(g2?.target));
     const [date, setDate] = d2(g2?.date || "");
-    const [shares, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
+    const [shares2, setShares] = d2(() => Object.fromEntries((g2?.shares || []).map((s3) => [s3.account, String(s3.percent)])));
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
     const [problem, setProblem] = d2("");
     const toggle = (acct) => (on2) => setShares((s3) => {
@@ -10524,7 +10524,7 @@
     });
     const submit = (e3) => {
       e3.preventDefault();
-      const list = Object.entries(shares).map(([account, pct]) => ({ account, percent: num(pct) }));
+      const list = Object.entries(shares2).map(([account, pct]) => ({ account, percent: num(pct) }));
       const over = list.find((s3) => s3.percent + taken(s3.account) > 100.0001);
       const wrong = !name.trim() ? "Give it a name." : !(num(target) > 0) ? "Type how much it needs." : list.some((s3) => !(s3.percent > 0) || s3.percent > 100) ? "Each share is more than nothing and at most 100%." : over ? `${accounts.find((a3) => a3.id === over.account)?.name}: the other goals have ${taken(over.account)}% of it, so this one can have ${Math.max(0, 100 - taken(over.account))}% at most.` : "";
       setProblem(wrong);
@@ -10547,7 +10547,7 @@
       ] }),
       /* @__PURE__ */ u3("h3", { class: "formsub", children: "What counts toward it" }),
       accounts.length ? /* @__PURE__ */ u3("ul", { class: "goalshares", children: accounts.map((a3) => {
-        const on2 = a3.id in shares, rest = taken(a3.id);
+        const on2 = a3.id in shares2, rest = taken(a3.id);
         return /* @__PURE__ */ u3("li", { children: [
           /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
             /* @__PURE__ */ u3("input", { type: "checkbox", checked: on2, onClick: tick2(toggle(a3.id)) }),
@@ -10557,7 +10557,7 @@
             a3.name
           ] }),
           on2 && /* @__PURE__ */ u3("span", { class: "pctfield", children: [
-            /* @__PURE__ */ u3("input", { "aria-label": `Share of ${a3.name}, %`, inputmode: "decimal", value: shares[a3.id], onInput: (e3) => setShares({ ...shares, [a3.id]: e3.target.value }) }),
+            /* @__PURE__ */ u3("input", { "aria-label": `Share of ${a3.name}, %`, inputmode: "decimal", value: shares2[a3.id], onInput: (e3) => setShares({ ...shares2, [a3.id]: e3.target.value }) }),
             /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "%" })
           ] }),
           rest > 0 && /* @__PURE__ */ u3("small", { class: "muted", children: [
@@ -11418,7 +11418,7 @@ ${pays}
         " short."
       ] }),
       goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
-        const share2 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
+        const share3 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
         const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
         return /* @__PURE__ */ u3(
           Row,
@@ -11436,7 +11436,7 @@ ${pays}
             onOpen: edit ? () => edit("goal", g2.id) : void 0,
             openLabel: edit ? "edit" : void 0,
             children: [
-              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, g2.saved > 0 ? 1 : 0)}%` } }) }),
+              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, g2.saved > 0 ? 1 : 0)}%` } }) }),
               /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
                 money(g2.saved),
                 " of ",
@@ -11995,7 +11995,7 @@ ${pays}
       if (p3 === typical && !months.length) return null;
     }
     const node = f4.nodes.find((n3) => n3.id === picked);
-    const share2 = (n3) => f4.income > 5e-3 ? `${Math.round(n3 / f4.income * 100)}%` : "";
+    const share3 = (n3) => f4.income > 5e-3 ? `${Math.round(n3 / f4.income * 100)}%` : "";
     const go2 = (i3) => {
       setPeriod(periods[i3]);
       setPicked("");
@@ -12022,9 +12022,9 @@ ${pays}
         children: [
           /* @__PURE__ */ u3("div", { class: "fx-flowstrip", children: [
             { label: "Income", hue: "in", value: f4.income, sub: p3 === typical ? "a month, before taxes" : "this month" },
-            { label: "Taxes", hue: 7, value: f4.taxes, sub: `${share2(f4.taxes)} of income` },
-            { label: "Expenses", hue: "out", value: f4.expenses, sub: `${share2(f4.expenses)} of income` },
-            { label: f4.saved < 0 ? "Short" : "Saved", hue: savedHue, value: Math.abs(f4.saved), sub: f4.saved < 0 ? "more out than in" : `${share2(f4.saved)} savings rate` }
+            { label: "Taxes", hue: 7, value: f4.taxes, sub: `${share3(f4.taxes)} of income` },
+            { label: "Expenses", hue: "out", value: f4.expenses, sub: `${share3(f4.expenses)} of income` },
+            { label: f4.saved < 0 ? "Short" : "Saved", hue: savedHue, value: Math.abs(f4.saved), sub: f4.saved < 0 ? "more out than in" : `${share3(f4.saved)} savings rate` }
           ].map((t3) => /* @__PURE__ */ u3("div", { class: "fx-flowtile", children: [
             /* @__PURE__ */ u3("span", { class: "fx-caption", children: [
               /* @__PURE__ */ u3(Dot, { color: t3.hue, shape: "square" }),
@@ -12388,7 +12388,7 @@ ${pays}
     const payments = allPayments(v3.plan);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
-    const share2 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
+    const share3 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
     const list = payments.filter((x3) => groups2[filter2](x3.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count2 = (g2) => payments.filter((x3) => groups2[g2](x3.kind)).length;
@@ -12435,10 +12435,10 @@ ${pays}
       /* @__PURE__ */ u3(Widget, { title: "A typical month", span: "all", kind: "fx-monthsum", children: [
         /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.in, form: "whole", tone: "in" }), caption: `In · ${(v3.plan.people || []).length === 1 ? "1 paycheck" : `${(v3.plan.people || []).length} paychecks`}${m3.others.length ? ` and ${m3.others.map((o3) => o3.payer).filter((p3, i3, a3) => a3.indexOf(p3) === i3).join(" and ")}` : ""}` }),
-          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share2(m3.spent)}` }),
+          /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.spent, form: "whole", tone: "out" }), caption: `Spent · ${share3(m3.spent)}` }),
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.saved, form: "whole", tone: "save" }), caption: /* @__PURE__ */ u3(S, { children: [
             "Saved · ",
-            share2(m3.saved),
+            share3(m3.saved),
             !!m3.viaPay && /* @__PURE__ */ u3("span", { class: "fx-capnote", children: [
               "plus ",
               whole(m3.viaPay),
@@ -13218,7 +13218,7 @@ ${pays}
     const monthly = m3.saved + m3.viaPay;
     if (m3.spent <= 0) return null;
     const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
-    const share2 = Math.min(100, have / f4.target * 100);
+    const share3 = Math.min(100, have / f4.target * 100);
     const set2 = (key5, text2, lo, hi) => {
       const n3 = parseAmount(text2);
       if (isNaN(n3) || n3 < lo || n3 > hi || key5 === "withdraw" && n3 === 0) {
@@ -13242,10 +13242,10 @@ ${pays}
         "The investment and retirement accounts hold ",
         whole(have),
         ", ",
-        Math.round(share2),
+        Math.round(share3),
         "% of it."
       ] }),
-      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share2, have > 0 ? 1 : 0)}%` } }) }),
+      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, have > 0 ? 1 : 0)}%` } }) }),
       /* @__PURE__ */ u3("p", { class: "fx-firewhen", role: "status", children: f4.months === 0 ? "There already, at this estimate." : f4.months === null ? `Not within a hundred years at ${whole(monthly)} a month put by and ${growth}% growth a year.` : /* @__PURE__ */ u3(S, { children: [
         "At ",
         whole(monthly),
@@ -13468,6 +13468,339 @@ ${pays}
     ] });
   }
 
+  // web/src/finances/tickers.ts
+  var funds = {
+    vanguard: ["VTI", "VOO", "VXUS", "BND", "BNDX", "VT", "VUG", "VTV", "VIG", "VYM", "VNQ", "VGT", "VB", "VO", "VEA", "VWO", "VTEB", "VGIT", "VGSH", "VTSAX", "VFIAX", "VTIAX", "VBTLX", "VTWAX", "VFFVX", "VTTSX", "VTHRX", "VTTVX", "VTIVX", "VFIFX"],
+    fidelity: ["FXAIX", "FZROX", "FZILX", "FSKAX", "FTIHX", "FXNAX", "FBALX", "FDVV", "FSPSX", "FNILX", "FCNTX", "FBGRX", "FDGRX", "FSMDX", "FSSNX"],
+    schwab: ["SCHW", "SCHB", "SCHD", "SCHX", "SCHF", "SCHG", "SCHA", "SCHE", "SCHZ", "SCHP", "SWTSX", "SWPPX", "SWISX", "SWAGX"],
+    troweprice: ["TROW", "PRGFX", "TRBCX", "PRWCX"]
+  };
+  var companies = {
+    AAPL: "apple",
+    AMZN: "amazon",
+    GOOGL: "google",
+    GOOG: "google",
+    TSLA: "tesla",
+    NFLX: "netflix",
+    SPOT: "spotify",
+    COST: "costco",
+    WMT: "walmart",
+    TGT: "target",
+    SBUX: "starbucks",
+    NKE: "nike",
+    MCD: "mcdonalds",
+    CMG: "chipotle",
+    HOOD: "robinhood",
+    COIN: "coinbase",
+    PYPL: "paypal",
+    MA: "mastercard",
+    V: "visa",
+    AXP: "americanexpress",
+    JPM: "chase",
+    BAC: "bankofamerica",
+    WFC: "wellsfargo",
+    GS: "goldmansachs",
+    C: "citi",
+    MS: "morganstanley",
+    COF: "capitalone",
+    SOFI: "sofi",
+    ALLY: "ally",
+    PNC: "pnc",
+    USB: "usbank",
+    TFC: "truist",
+    SYF: "synchrony",
+    HD: "thehomedepot",
+    LOW: "lowes",
+    BBY: "bestbuy",
+    KR: "kroger",
+    CVS: "cvs",
+    WBA: "walgreens",
+    GME: "gamestop",
+    XOM: "exxon",
+    CVX: "chevron",
+    BP: "bp",
+    SHEL: "shell",
+    SHOP: "shopify",
+    ABNB: "airbnb",
+    UBER: "uber",
+    LYFT: "lyft",
+    DASH: "doordash",
+    EBAY: "ebay",
+    ETSY: "etsy",
+    ADBE: "adobe",
+    ZM: "zoom",
+    NET: "cloudflare",
+    DOCN: "digitalocean",
+    F: "ford",
+    TM: "toyota",
+    HMC: "honda",
+    MAR: "marriott",
+    HLT: "hilton",
+    DAL: "delta",
+    UAL: "unitedairlines",
+    AAL: "americanairlines",
+    LUV: "southwestairlines",
+    JBLU: "jetblue",
+    EA: "ea",
+    RBLX: "roblox",
+    SIRI: "siriusxm",
+    AMP: "ameriprise",
+    MET: "metlife",
+    PRU: "prudential",
+    ALL: "allstate",
+    CI: "cigna",
+    HUM: "humana",
+    UNH: "unitedhealthcare",
+    DIS: "disneyplus",
+    DPZ: "dominos",
+    DG: "dollargeneral",
+    DLTR: "dollartree",
+    W: "wayfair",
+    CHWY: "chewy",
+    GRMN: "garmin",
+    DUK: "dukeenergy",
+    PCG: "pge",
+    ED: "coned",
+    T: "atandt",
+    VZ: "verizon",
+    TMUS: "tmobile",
+    LMND: "lemonade",
+    AFRM: "affirm",
+    SQ: "square"
+  };
+  var bySymbol = Object.fromEntries([
+    ...Object.entries(funds).flatMap(([brand, list]) => list.map((s3) => [s3, brand])),
+    ...Object.entries(companies).filter(([, b2]) => b2)
+  ]);
+  function tickerBrand(symbol) {
+    const b2 = bySymbol[symbol.toUpperCase().replace(/\..*$/, "")];
+    return b2 && brands[b2] ? b2 : void 0;
+  }
+
+  // web/src/finances/widgets/Investments.tsx
+  function readWhen(at2, today2) {
+    if (!at2) return "";
+    const d3 = new Date(at2);
+    if (isNaN(d3.getTime())) return "";
+    const day3 = isoDay(d3);
+    const time = d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    const y3 = /* @__PURE__ */ new Date(today2 + "T12:00:00");
+    y3.setDate(y3.getDate() - 1);
+    const yesterday = isoDay(y3);
+    return day3 === today2 ? `read ${time} today` : day3 === yesterday ? `read yesterday at ${time}` : `read ${dayShort(day3)}`;
+  }
+  var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
+  var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
+  function InvestmentsWidget({ v: v3, read, running: running5, state: state2 = {}, keep: keep2 }) {
+    const [open4, setOpen] = d2("");
+    const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
+    const ever = !!v3.plan.holdingsRead;
+    if (!accounts.length && !(read && (running5 || ever))) return null;
+    const when3 = readWhen(v3.plan.holdingsRead, v3.today);
+    const button = read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" });
+    const said2 = /* @__PURE__ */ u3(S, { children: [
+      state2.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state2.said }),
+      state2.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state2.problem })
+    ] });
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
+        /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
+        said2,
+        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep2, read })
+      ] });
+    }
+    const own2 = (a3) => worthOf(v3, a3);
+    accounts.sort((a3, b2) => own2(b2) - own2(a3));
+    const lines = accounts.flatMap((a3, i3) => {
+      const hue2 = i3 % 7 + 1;
+      const held3 = [...a3.holdings].sort((x3, y3) => y3.value - x3.value);
+      const cash = Math.round((a3.balance - held3.reduce((t3, h3) => t3 + h3.value, 0)) * 100) / 100;
+      return [...held3.map((h3) => ({ key: a3.id + ":" + h3.symbol, account: a3, hue: hue2, h: h3 })), ...cash >= 0.01 ? [{ key: a3.id + ":cash", account: a3, hue: hue2, cash }] : []];
+    });
+    const inHome2 = (l3, n4) => n4 * rateOf(v3.plan, l3.account);
+    const total = accounts.reduce((t3, a3) => t3 + own2(a3), 0);
+    const paid = lines.reduce((t3, l3) => t3 + inHome2(l3, l3.h ? l3.h.paid : l3.cash), 0);
+    const gain = total - paid;
+    const first = v3.today.slice(0, 8) + "01";
+    const month3 = accounts.reduce((t3, a3) => t3 + own2(a3) - worthOn(v3, a3, first), 0);
+    const before3 = total - month3;
+    const holdings = lines.filter((l3) => l3.h).length;
+    const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
+    return /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+      "Investments ",
+      /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+        "from Ghostfolio",
+        when3 ? `, ${when3}` : ""
+      ] })
+    ] }), span: "all", kind: "fx-invest", actions: button, children: [
+      said2,
+      /* @__PURE__ */ u3("div", { class: "fx-investfigs", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Total value" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: total, form: "full" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+            n3(holdings, "holding", "holdings"),
+            " in ",
+            n3(accounts.length, "account", "accounts")
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "You paid" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: paid, form: "full" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: "what went in" })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Gain" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: amountsHidden() ? "on what you paid" : `${share2(gain, paid)} on what you paid` })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "This month" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: month3, form: "full", sign: true, tone: "auto" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+            amountsHidden() ? "" : share2(month3, before3) + " ",
+            "since ",
+            dayShort(first)
+          ] })
+        ] })
+      ] }),
+      accounts.length > 1 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(SplitBar, { label: "What each account holds", parts: accounts.map((a3, i3) => ({ label: a3.name, value: own2(a3), color: i3 % 7 + 1 })) }),
+        /* @__PURE__ */ u3(Legend, { layout: "inline", items: accounts.map((a3, i3) => ({ label: a3.name, color: i3 % 7 + 1, value: /* @__PURE__ */ u3(Amount, { value: own2(a3), form: "whole" }) })) })
+      ] }),
+      /* @__PURE__ */ u3("table", { class: "fx-holdings", children: [
+        /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+          /* @__PURE__ */ u3("th", { scope: "col", children: "Holding" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Shares" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "You paid" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Worth now" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" })
+        ] }) }),
+        lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key) }, l3.key))
+      ] }),
+      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep2, read }),
+      keep2 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep2({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
+        "Read Ghostfolio once a day when Finances opens"
+      ] })
+    ] });
+  }
+  function HoldingRow({ v: v3, l: l3, open: open4, toggle }) {
+    const a3 = l3.account, cur = a3.currency;
+    const symbol = l3.h ? l3.h.symbol : "Cash";
+    const name = l3.h ? l3.h.name || l3.h.symbol : "Not in a holding";
+    const paid = l3.h ? l3.h.paid : l3.cash, worth = l3.h ? l3.h.value : l3.cash;
+    const gain = worth - paid;
+    const id2 = "hold-" + l3.key.replace(/[^A-Za-z0-9]+/g, "-");
+    const mark = l3.h ? /* @__PURE__ */ u3(Mark, { brand: tickerBrand(l3.h.symbol), name: l3.h.symbol, auto: true, size: "sm" }) : /* @__PURE__ */ u3(Mark, { name: "Cash", auto: true, size: "sm" });
+    const who = /* @__PURE__ */ u3("span", { class: "fx-holdwho", children: [
+      /* @__PURE__ */ u3("strong", { children: symbol }),
+      /* @__PURE__ */ u3("small", { children: [
+        l3.h ? `${name} · ` : "",
+        a3.name
+      ] })
+    ] });
+    return /* @__PURE__ */ u3("tbody", { class: "fx-hold" + (open4 ? " open" : ""), children: [
+      /* @__PURE__ */ u3("tr", { onClick: l3.h ? toggle : void 0, children: [
+        /* @__PURE__ */ u3("th", { scope: "row", children: l3.h ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-holdbtn", "aria-expanded": open4, "aria-controls": id2, onClick: (e3) => {
+          e3.stopPropagation();
+          toggle();
+        }, children: [
+          mark,
+          who
+        ] }) : /* @__PURE__ */ u3("span", { class: "fx-holdbtn", children: [
+          mark,
+          who
+        ] }) }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdshares", children: l3.h ? shares(l3.h.shares) : "" }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdpaid", children: [
+          /* @__PURE__ */ u3("span", { class: "fx-holdunit", children: [
+            l3.h ? `${shares(l3.h.shares)} shares · ` : "",
+            "paid "
+          ] }),
+          /* @__PURE__ */ u3(Amount, { value: paid, form: "full", currency: cur })
+        ] }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdworth", children: /* @__PURE__ */ u3(Amount, { value: worth, form: "full", currency: cur }) }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdgain", children: l3.h && /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto", currency: cur }),
+          !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+            " ",
+            share2(gain, paid)
+          ] })
+        ] }) })
+      ] }),
+      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 5, children: /* @__PURE__ */ u3(HoldingHistory, { v: v3, h: l3.h, cur }) }) })
+    ] });
+  }
+  function HoldingHistory({ v: v3, h: h3, cur }) {
+    const pts = h3.history || [];
+    const each = (n3) => h3.shares > 0 ? amountsHidden() ? money(0) : moneyIn(n3 / h3.shares, cur) : "";
+    const facts2 = h3.shares > 0 ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+      "A share is worth ",
+      each(h3.value),
+      " now; they cost ",
+      each(h3.paid),
+      " each on average."
+    ] }) : null;
+    if (pts.length < 2) {
+      return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
+        facts2,
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+          pts.length ? `Read once so far, on ${dayShort(pts[0].date)}.` : "Not read yet.",
+          " Each read from now on adds its day here."
+        ] })
+      ] });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
+      facts2,
+      /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values: pts.map((p3) => p3.amount),
+          xLabels: [{ i: 0, label: dayShort(pts[0].date) }, { i: pts.length - 1, label: dayShort(pts[pts.length - 1].date) }],
+          format: tick,
+          height: 140,
+          zero: false,
+          label: `${h3.symbol} at each read: ${pts.map((p3) => `${dayShort(p3.date)} ${moneyIn(p3.amount, cur)}`).join(", ")}.`,
+          tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("div", { class: "fx-caption", children: pts[i3].date === v3.today ? "Today" : dayShort(pts[i3].date) }),
+            /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+              /* @__PURE__ */ u3("span", { children: h3.symbol }),
+              /* @__PURE__ */ u3(Amount, { value: pts[i3].amount, form: "full", currency: cur })
+            ] })
+          ] })
+        }
+      )
+    ] });
+  }
+  function Unmatched({ v: v3, state: state2, keep: keep2, read }) {
+    const left = state2.unmatched || [];
+    if (!left.length || !keep2 || !read) return null;
+    const free = (v3.plan.accounts || []).filter((a3) => (a3.kind === "investment" || a3.kind === "retirement") && !a3.ghostfolio);
+    const pick = async (name, to) => {
+      if (!to) return;
+      const plan = v3.plan;
+      const accounts = to === "new" ? [...plan.accounts || [], { id: "", name, kind: "investment", balance: 0, ghostfolio: name }] : (plan.accounts || []).map((a3) => a3.id === to ? { ...a3, ghostfolio: name } : a3);
+      if (await keep2({ ...plan, accounts })) read();
+    };
+    return /* @__PURE__ */ u3("div", { class: "fx-investleft", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account here yet, so not shown: pick which account each is." }),
+      /* @__PURE__ */ u3("ul", { children: left.map((name) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("label", { children: [
+        /* @__PURE__ */ u3("strong", { children: name }),
+        " in Ghostfolio is",
+        /* @__PURE__ */ u3("select", { disabled: state2.busy, onChange: (e3) => pick(name, e3.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Pick an account…" }),
+          free.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
+          /* @__PURE__ */ u3("option", { value: "new", children: [
+            "A new account, “",
+            name,
+            "”"
+          ] })
+        ] })
+      ] }) }, name)) })
+    ] });
+  }
+
   // web/src/finances/Worth.tsx
   var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
   function ago2(day3, today2) {
@@ -13476,7 +13809,7 @@ ${pays}
     return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
   }
   var month2 = (day3) => monthName(day3).slice(0, 3);
-  function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update, keep: keep2, group: group2, setGroup }) {
+  function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update, keep: keep2, group: group2, setGroup, invest: invest2 }) {
     const [range, setRange] = d2("3");
     const [counted, setCounted] = d2("all");
     const accounts = v3.plan.accounts || [];
@@ -13621,6 +13954,7 @@ ${pays}
           ]
         }
       ),
+      (!focus || focus.key === "investments") && /* @__PURE__ */ u3(InvestmentsWidget, { v: v3, keep: keep2, ...invest2 }),
       (!focus || focus.accounts.some((a3) => !owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
         "What you own ",
         /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owned.filter(inFocus).reduce((t3, a3) => t3 + worthOf(v3, a3), 0), form: "whole" }) })
@@ -13919,7 +14253,7 @@ ${pays}
       )
     ] });
   }
-  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep2, edit: open4, exportFile: exportFile2, printMonth, readReceipt, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup }) {
+  function FinancesScreen({ v: v3, ledger, error, retry, tab: tab3, setTab, sel: sel2, pick, setSince: setSince2, saveSettings, keep: keep2, edit: open4, exportFile: exportFile2, printMonth, readReceipt, saveLedger: saveLedger2, running: running5, calendar, fromWallos, phone: phone2, toggleHidden, group: group2, setGroup, investments }) {
     const edit = (what3, id2, kind) => cardOf(id2) ? open4("account", cardOf(id2)) : open4(what3, id2, kind);
     const L2 = v3 ? lookup(v3.plan) : null;
     setCurrency(v3?.plan.currency);
@@ -13957,7 +14291,7 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
@@ -13991,6 +14325,31 @@ ${pays}
       { id: "ghostfolio", name: "Ghostfolio", read: () => go().FinancesFromGhostfolio() }
     ];
     return all.filter((a3) => runs(a3.id)).map(({ name, read }) => ({ name, read }));
+  }
+  var invest = {};
+  var autoTried = "";
+  async function readInvestments() {
+    invest = { busy: true };
+    draw4();
+    try {
+      const r3 = await go().FinancesReadInvestments();
+      const held3 = (r3.view.plan.accounts || []).filter((a3) => a3.holdings?.length);
+      const count2 = held3.reduce((t3, a3) => t3 + a3.holdings.length, 0);
+      const time = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      invest = { said: `Read from Ghostfolio at ${time}: ${count2} ${count2 === 1 ? "holding" : "holdings"} in ${held3.length} ${held3.length === 1 ? "account" : "accounts"}.`, unmatched: r3.unmatched };
+      financesData.set(r3.view);
+    } catch (e3) {
+      invest = { problem: `Could not read Ghostfolio: ${errorText(e3)}` };
+    }
+    draw4();
+  }
+  function readEachMorning(v3) {
+    const at2 = new Date(v3.plan.holdingsRead || "");
+    if (phone || v3.readOnly || v3.plan.readByHand || isNaN(at2.getTime()) || autoTried === v3.today || invest.busy) return;
+    if (!$2("finances").classList.contains("active") || !runs("ghostfolio")) return;
+    if (isoDay(at2) >= v3.today && Date.now() - at2.getTime() < 12 * 36e5) return;
+    autoTried = v3.today;
+    readInvestments();
   }
   function loadFinances() {
     statusData.fresh(5 * 6e4);
@@ -14044,8 +14403,10 @@ ${pays}
       calendar: phone ? void 0 : () => go().FinancesCalendar(),
       // Wallos's subscriptions, on the computer while Wallos runs.
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
-      phone
+      phone,
+      investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest }
     });
+    if (v3) readEachMorning(v3);
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, (g2) => {
       tab = "worth";

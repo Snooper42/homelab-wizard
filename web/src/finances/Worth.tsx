@@ -20,10 +20,11 @@ import { PostPayWidget } from './widgets/Ledger';
 import { FireWidget } from './widgets/Fire';
 import { GoalsWidget } from './widgets/Goals';
 import { LoansWidget } from './widgets/Loans';
+import { InvestmentsWidget, type InvestmentsProps } from './widgets/Investments';
 import { firstKept, grouped, groups, netWorth, rateOf, todayOf, type WorthMonth, worthByMonth, worthOf, worthOn } from './model';
 import { compact, daysBetween, dayShort, type Lookup, money, moneyIn, monthName, owed, parseDay, tick, whole } from './money';
 
-interface WorthProps {
+export interface NetWorthProps {
   v: finance.View;
   L: Lookup;
   /** Opens the form for one, or a new one; none on a phone allowed only to look. */
@@ -38,6 +39,8 @@ interface WorthProps {
   /** One group of accounts shown on its own (a sidebar balance opens it): its accounts month by month, and only them listed. */
   group?: string;
   setGroup?: (group: string) => void;
+  /** Investments' Read now and what it said: on the computer only. */
+  invest?: Omit<InvestmentsProps, 'v' | 'keep'>;
 }
 
 /** How far back the chart goes: months. */
@@ -52,7 +55,7 @@ export function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup }: WorthProps) {
+export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup, invest }: NetWorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -160,6 +163,7 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup 
           ]} />
         </Widget>
 
+        {(!focus || focus.key === 'investments') && <InvestmentsWidget v={v} keep={keep} {...invest} />}
         {(!focus || focus.accounts.some((a) => !owed(a.kind))) && (
           <Widget title={<>What you own <span class="fx-sub"><Amount value={owned.filter(inFocus).reduce((t, a) => t + worthOf(v, a), 0)} form="whole" /></span></>} kind="fx-ownlist" span={focus && !focus.accounts.some((a) => owed(a.kind)) ? 'all' : 2}>
             <Rows kind="fx-rows">{sorted(owned.filter(inFocus)).map(row)}</Rows>
