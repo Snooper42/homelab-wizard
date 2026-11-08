@@ -9478,7 +9478,7 @@
       /* @__PURE__ */ u3(Widget, { title: "This month", span: "all", kind: "fx-txsum", children: /* @__PURE__ */ u3("div", { class: "fx-stats", children: [
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum((t3) => t3.amount > 0), form: "whole", tone: "in" }), caption: "Money in" }),
         /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: -sum((t3) => t3.amount < 0), form: "whole", tone: "out" }), caption: "Money out" }),
-        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: plural(thisMonth.length, "transaction") })
+        /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum(() => true), form: "whole", sign: true, tone: "auto" }), caption: `Kept · ${plural(thisMonth.length, "transaction")}` })
       ] }) }),
       saveLedger2 && /* @__PURE__ */ u3(PairsWidget, { L: L2, ledger, save: saveLedger2 }),
       saveLedger2 && /* @__PURE__ */ u3(LinksWidget, { v: v3, L: L2, ledger, save: saveLedger2 }),
@@ -13821,9 +13821,8 @@ ${pays}
           /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
           /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "More a paycheck", value: text2, placeholder: "100", onInput: (e3) => setText(e3.target.value) })
         ] }),
-        " more a paycheck (about ",
-        money(extra),
-        " a month)"
+        " more a paycheck",
+        extra > 0 && ` (about ${money(extra)} a month)`
       ] }),
       /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
         !one && "Type an amount to see what it saves. Nothing is saved.",

@@ -4899,6 +4899,8 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.waitForSelector('.fx-loans h2:text-is("Loans and cards carrying a balance")', { timeout: 5000 });
     await page.waitForSelector('.fx-paymore [role=status]:has-text("Nothing is saved")', { timeout: 5000 });
+    // Nothing typed, no figure a month: not "about $0.00 a month".
+    if (/about/.test(await page.textContent('.fx-paymore label'))) throw new Error(`with nothing typed: ${await page.textContent('.fx-paymore label')}`);
     await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100');
     await page.waitForSelector('.fx-paymore label:has-text("(about $306.96 a month)")', { timeout: 5000 });
     await page.waitForSelector('.fx-paymore [role=status]:text-is("Mortgage paid off Nov 2045, 93 months sooner, $99,595.13 less interest.")', { timeout: 5000 });
@@ -6355,7 +6357,7 @@ const smokes = [
   // neither); a row opens its form; a new one is added, one changed, one deleted, each saved to the ledger.
   { name: 'Finances: transactions, newest first, with this month in and out', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
-    for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['6 transactions', '+$1,907']]) {
+    for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['Kept · 6 transactions', '+$1,907']]) {
       const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
       if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
     }

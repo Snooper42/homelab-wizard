@@ -292,7 +292,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
           <div class="fx-stats">
             <Stat value={<Amount value={sum((t) => t.amount > 0)} form="whole" tone="in" />} caption="Money in" />
             <Stat value={<Amount value={-sum((t) => t.amount < 0)} form="whole" tone="out" />} caption="Money out" />
-            <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={plural(thisMonth.length, 'transaction')} />
+            {/* What's kept, as Reports says it, with how many transactions it is. */}
+            <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={`Kept · ${plural(thisMonth.length, 'transaction')}`} />
           </div>
         </Widget>
         {saveLedger && <PairsWidget L={L} ledger={ledger} save={saveLedger} />}
