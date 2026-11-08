@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Transactions on the iPhone, like Wallet:** the account's card on top with your other accounts to switch between, each transaction with its company's logo, and new ones marked with a violet dot until you've reviewed them. Tap one for its own page: a big logo and amount, what bill it paid, its category and note, and the other times at that place.
 - **Finances on the iPhone, tidied:** it opens with checking now and after payday, your net worth with its line, then a list like Settings: Transactions, Budgets, Bills, Investments, Accounts, Goals and Loans, each one tap away.
 - **Status on the iPhone, at a glance:** it opens with a ring of how many apps are running and the one that needs a look, with its **Start** and **Logs** right there, then tiles for backups, savings, nightly updates and health checks. The tab bar at the bottom shrinks as you scroll.
 - **Ghostfolio, Wallos, and Firefly III that run elsewhere:** an app you started in Docker yourself (Status says *Runs elsewhere*) now counts as running for Finances: Investments reads Ghostfolio once a day as Finances opens, and Update balances and Recurring offer **From Ghostfolio**, **From Firefly III**, and **From Wallos**, as they do for apps the homelab runs.

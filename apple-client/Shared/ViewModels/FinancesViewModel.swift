@@ -25,6 +25,10 @@ final class FinancesViewModel {
     private(set) var isLoadingLedger = false
     /// Amounts show only after a tap, and hide again on lock.
     var amountsShown = false
+    /// Which transactions this phone has seen (TransactionsSeen); nil
+    /// before the first look, or without this device's key.
+    private(set) var seenTransactions: TransactionsSeen? = TransactionsSeen.load()
+    @ObservationIgnored private let seenKey = ChangeMemory.deviceKey()
 
     @ObservationIgnored private let api: APIClient
     @ObservationIgnored private let device: @MainActor () -> DeviceInfo?
@@ -153,6 +157,7 @@ final class FinancesViewModel {
             ledger = read.ledger
             rawLedger = read.raw
             ledgerError = nil
+            noteSeen(in: read.ledger)
         } catch {
             let apiError = APIError.from(error)
             if case .forbidden = apiError {
@@ -161,6 +166,37 @@ final class FinancesViewModel {
             }
             Log.ui.error("Ledger failed: \(apiError.logName, privacy: .public)")
             ledgerError = apiError.errorDescription
+        }
+    }
+
+    /// Whether a transaction came in since this phone last looked, and isn't reviewed yet.
+    func isNew(_ t: FinanceTransaction) -> Bool {
+        guard let seenKey, let seenTransactions else { return false }
+        return seenTransactions.isNew(t.id, key: seenKey)
+    }
+
+    /// How many transactions are new.
+    var newTransactionCount: Int { ledger?.transactions.filter { isNew($0) }.count ?? 0 }
+
+    /// Reviewed: they lose their dot, on this phone.
+    func markReviewed(_ transactions: [FinanceTransaction]) {
+        guard let seenKey, !transactions.isEmpty else { return }
+        var seen = seenTransactions ?? TransactionsSeen(hashes: [])
+        seen.see(transactions.map(\.id), key: seenKey)
+        seenTransactions = seen
+        seen.save()
+    }
+
+    /// The first look marks every transaction as seen; afterwards, only
+    /// those still in the ledger stay remembered.
+    private func noteSeen(in ledger: FinanceLedger) {
+        guard let seenKey else { return }
+        let ids = ledger.transactions.map(\.id)
+        var seen = seenTransactions ?? .firstLook(ids, key: seenKey)
+        seen.keep(only: ids, key: seenKey)
+        if seen != seenTransactions {
+            seenTransactions = seen
+            seen.save()
         }
     }
 
