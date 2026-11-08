@@ -124,6 +124,9 @@ struct RoundActionButton: View {
     let systemImage: String
     var tint: Color = Theme.accent
     var size: CGFloat = 56
+    /// While what it does is under way: a spinner in its place, and it
+    /// stays at full colour though the others dim.
+    var busy = false
     let action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
@@ -135,23 +138,33 @@ struct RoundActionButton: View {
             action()
         } label: {
             VStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.system(size: size * 0.39, weight: .semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: size, height: size)
-                    .background {
-                        Circle()
-                            .fill(Theme.surface)
-                            .shadow(color: Design.shadow.opacity(0.05), radius: 1, y: 1)
-                            .shadow(color: Design.shadow.opacity(0.07), radius: 11, y: 8)
+                ZStack {
+                    if busy {
+                        ProgressView()
+                            .tint(tint)
+                            .transition(.scale.combined(with: .opacity))
+                    } else {
+                        Image(systemName: systemImage)
+                            .font(.system(size: size * 0.39, weight: .semibold))
+                            .foregroundStyle(tint)
+                            .transition(.scale.combined(with: .opacity))
                     }
+                }
+                .frame(width: size, height: size)
+                .background {
+                    Circle()
+                        .fill(Theme.surface)
+                        .shadow(color: Design.shadow.opacity(0.05), radius: 1, y: 1)
+                        .shadow(color: Design.shadow.opacity(0.07), radius: 11, y: 8)
+                }
                 Text(title)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .opacity(isEnabled ? 1 : 0.4)
+            .opacity(isEnabled || busy ? 1 : 0.4)
+            .animation(.smooth(duration: 0.25), value: busy)
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())

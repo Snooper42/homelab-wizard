@@ -237,6 +237,8 @@ private struct PhoneStatus: View {
     var openBackups: @MainActor () -> Void = {}
     /// Which groups are open (StatusFolds): names only, kept like the tab.
     @SceneStorage("statusFolds") private var folds = ""
+    /// An app's page grows out of its row (iOS 18).
+    @Namespace private var zoom
 
     var body: some View {
         NavigationStack {
@@ -261,6 +263,7 @@ private struct PhoneStatus: View {
                             NavigationLink(value: app.id) {
                                 AppRowView(app: app)
                             }
+                            .zoomSource(id: app.id, in: zoom)
                             .appActionControls(for: app)
                         }
                     } header: {
@@ -283,6 +286,7 @@ private struct PhoneStatus: View {
                                 NavigationLink(value: app.id) {
                                     AppRowView(app: app)
                                 }
+                                .zoomSource(id: app.id, in: zoom)
                                 .appActionControls(for: app)
                             }
                         } else {
@@ -310,6 +314,7 @@ private struct PhoneStatus: View {
             .navigationTitle("Status")
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
+                    .zoomTransition(id: id, in: zoom)
             }
             #if SCREENSHOTS
             .overlay {
