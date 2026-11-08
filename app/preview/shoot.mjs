@@ -5078,6 +5078,7 @@ const smokes = [
     await page.click(vti);
     await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
     if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
+    if (await page.$(`${card} button:text-is("Add a holding")`)) throw new Error('Add a holding with Ghostfolio stopped');
   } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
@@ -5128,6 +5129,79 @@ const smokes = [
     await page.waitForSelector(`${card} .fx-investintro:has-text("Only ticker symbols leave the homelab")`, { timeout: 5000 });
     await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 2000 });
     if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read before the first Read now');
+  } },
+  // A first read of a Ghostfolio with nothing in it yet still says the token worked, and what to add there.
+  { name: 'Finances: Investments say the token worked when Ghostfolio is still empty', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } }, investAccounts: 0, investHoldings: 0 }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Signed in to Ghostfolio at")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("it has no accounts yet. Add yours there, named as they are here, then Read now.")`, { timeout: 2000 });
+    if (await page.$(`${card} .fx-investintro`)) throw new Error('"nothing matched" said beside the read');
+    await page.evaluate(() => { window.__MOCK.investAccounts = 2; });
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForSelector(`${card} [role=status]:has-text("its 2 accounts hold nothing yet. Add a buy for each holding there, then Read now.")`, { timeout: 5000 });
+  } },
+  // Add a holding: a buy typed on the card, the ticker picked from what Ghostfolio finds, put into Ghostfolio, then read back.
+  { name: 'Finances: Investments add a buy to Ghostfolio from the card', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Add a holding")`, { timeout: 5000 });
+    const form = `${card} form.fx-investadd`;
+    await page.waitForSelector(`${form} h3:text-is("Add a holding")`, { timeout: 2000 });
+    // Nothing picked yet: said, and Ghostfolio is not asked.
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(`${form} .formerr:text-is("Type a ticker or a name, then pick it from the list.")`, { timeout: 2000 });
+    await page.selectOption(`${form} select`, 'k401');
+    await page.fill(`${form} input[placeholder^="A ticker"]`, 'vti');
+    await page.click(`${form} button.fx-symbol:has(strong:text-is("VTI"))`, { timeout: 3000 });
+    await page.waitForSelector(`${form} .fx-symbolpicked:has-text("Vanguard Total Stock Market")`, { timeout: 2000 });
+    if ((await page.inputValue(`${form} input[placeholder^="A ticker"]`)) !== 'VTI') throw new Error('the box does not say what was picked');
+    await page.fill(`${form} input[placeholder="10"]`, '0');
+    await page.fill(`${form} .moneyfield input`, '2000');
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(`${form} .formerr:text-is("How many shares: more than 0.")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investAdded)) throw new Error('Ghostfolio asked with 0 shares');
+    await page.fill(`${form} input[placeholder="10"]`, '10');
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: bought 10 VTI. Read again at")`, { timeout: 2000 });
+    const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
+    if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 10 || x.total !== 2000 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
+  } },
+  // A sale into a new account, made in Finances and Ghostfolio by one name; turned down by Ghostfolio first, in its words, the form kept.
+  { name: 'Finances: Investments add a sale into a new account, and say why Ghostfolio turned it down', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } }, investAddProblem: 'Ghostfolio did not take it: Could not find a price for the asset AAPL' }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Add a holding")`, { timeout: 5000 });
+    const form = `${card} form.fx-investadd`;
+    await page.click(`${form} .seg button:text-is("Sold")`);
+    await page.waitForSelector(`${form} label:has-text("What you got in all")`, { timeout: 2000 });
+    await page.selectOption(`${form} select`, 'new');
+    await page.fill(`${form} input[placeholder="Roth IRA"]`, 'Coinbase');
+    await page.fill(`${form} input[placeholder^="A ticker"]`, 'apple');
+    await page.click(`${form} button.fx-symbol:has(strong:text-is("AAPL"))`, { timeout: 3000 });
+    await page.fill(`${form} input[placeholder="10"]`, '2');
+    await page.fill(`${form} .moneyfield input`, '450');
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(`${form} .formerr:text-is("Ghostfolio did not take it: Could not find a price for the asset AAPL")`, { timeout: 5000 });
+    await page.evaluate(() => { window.__MOCK.investAddProblem = ''; });
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: sold 2 AAPL, in Coinbase.")`, { timeout: 2000 });
+    const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
+    if (x.account || x.newName !== 'Coinbase' || !x.sold || x.shares !== 2 || x.total !== 450) throw new Error(`sent ${JSON.stringify(x)}`);
+  } },
+  { name: 'Finances: Investments say when Ghostfolio finds nothing, and Cancel closes the form', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Add a holding")`, { timeout: 5000 });
+    const form = `${card} form.fx-investadd`;
+    await page.fill(`${form} input[placeholder^="A ticker"]`, 'zzzz');
+    await page.waitForSelector(`${form} #investFound:has-text("Ghostfolio found nothing for “zzzz”.")`, { timeout: 3000 });
+    await page.click(`${form} button:text-is("Cancel")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 2000 });
+    await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
   { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });

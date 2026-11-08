@@ -158,3 +158,38 @@ func TestHoldingsOlderFile(t *testing.T) {
 		t.Fatalf("read back: %+v, %v", back, err)
 	}
 }
+
+// A Ghostfolio account set up but with nothing in it yet (no holdings, no
+// cash) never puts $0 over the balance typed in here, nor its day: it is
+// matched, but its balance and history are left as they were. One with
+// cash only is worth its cash.
+func TestTakeHoldingsEmptyAccountKeepsBalance(t *testing.T) {
+	p := investing()
+	now := time.Date(2026, 11, 8, 9, 0, 0, 0, time.UTC)
+	got, left := TakeHoldings(p, []Invested{
+		{Name: "Fidelity 401(k)", Value: 0, Currency: "USD", Holdings: []Holding{}},
+		{Name: "Vanguard IRA", Value: 0},
+		{Name: "Robinhood", Value: 250, Holdings: []Holding{}},
+	}, now)
+	if len(left) != 0 {
+		t.Errorf("not matched: %q", left)
+	}
+	if k := got.Accounts[1]; k.Balance != 30000 || k.Updated != "2026-11-01" || k.Holdings != nil {
+		t.Errorf("an empty Ghostfolio account changed the 401(k): %+v", k)
+	}
+	if r := got.Accounts[2]; r.Balance != 14000 {
+		t.Errorf("an empty Ghostfolio account changed the Roth IRA: %+v", r)
+	}
+	if b := got.Accounts[3]; b.Balance != 250 || b.Updated != "2026-11-08" || b.Holdings == nil || len(b.Holdings) != 0 {
+		t.Errorf("cash only, sold out of Apple and Tesla: %+v", b)
+	}
+	cleaned, err := Clean(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, pt := range cleaned.Accounts[1].History {
+		if pt.Amount == 0 {
+			t.Errorf("a $0 day kept in the 401(k)'s history: %+v", cleaned.Accounts[1].History)
+		}
+	}
+}

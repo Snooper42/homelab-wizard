@@ -140,6 +140,12 @@ declare namespace app {
     category?: string;
     off?: boolean;
   }
+  interface AppSymbol {
+    symbol: string;
+    name: string;
+    currency: string;
+    dataSource: string;
+  }
   interface AppUpdate {
     commit: string;
     version?: string;
@@ -196,9 +202,22 @@ declare namespace app {
     runtimeInstalled: boolean;
     runtimeDownload?: string;
   }
+  interface InvestmentAdd {
+    account?: string;
+    newName?: string;
+    symbol: string;
+    dataSource: string;
+    currency: string;
+    shares: number;
+    total: number;
+    date: string;
+    sold?: boolean;
+  }
   interface InvestmentsRead {
     view: finance.View;
     unmatched: string[];
+    accounts: number;
+    holdings: number;
   }
   interface MenuEntry {
     available: boolean;
@@ -1130,7 +1149,9 @@ interface Backend {
     Explainer(): Promise<string>;
     ExportFinances(arg1: string, arg2: string): Promise<string>;
     Finances(): Promise<finance.View>;
+    FinancesAddInvestment(arg1: app.InvestmentAdd): Promise<app.InvestmentsRead>;
     FinancesCalendar(): Promise<string>;
+    FinancesFindSymbol(arg1: string): Promise<app.AppSymbol[]>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;

@@ -13591,20 +13591,27 @@ ${pays}
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, running: running5, state: state2 = {}, keep: keep2 }) {
+  function InvestmentsWidget({ v: v3, read, running: running5, state: state2 = {}, keep: keep2, add, find }) {
     const [open4, setOpen] = d2("");
+    const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
     const ever = !!v3.plan.holdingsRead;
     if (!accounts.length && !(read && (running5 || ever))) return null;
     const when3 = readWhen(v3.plan.holdingsRead, v3.today);
-    const button = read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" });
+    const canAdd = !!(add && find);
+    const button = /* @__PURE__ */ u3(S, { children: [
+      canAdd && !adding2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: () => setAdding(true), children: "Add a holding" }),
+      read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" })
+    ] });
+    const form2 = adding2 && add && find && /* @__PURE__ */ u3(AddForm, { v: v3, add, find, close: () => setAdding(false) });
     const said2 = /* @__PURE__ */ u3(S, { children: [
       state2.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state2.said }),
       state2.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state2.problem })
     ] });
     if (!accounts.length) {
       return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
-        /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
+        form2,
+        !form2 && !(ever && state2.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
         said2,
         /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep2, read })
       ] });
@@ -13633,6 +13640,7 @@ ${pays}
         when3 ? `, ${when3}` : ""
       ] })
     ] }), span: "all", kind: "fx-invest", actions: button, children: [
+      form2,
       said2,
       /* @__PURE__ */ u3("div", { class: "fx-investfigs", children: [
         /* @__PURE__ */ u3("div", { children: [
@@ -13798,6 +13806,141 @@ ${pays}
           ] })
         ] })
       ] }) }, name)) })
+    ] });
+  }
+  function AddForm({ v: v3, add, find, close: close3 }) {
+    const invest2 = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
+    const [way, setWay] = d2("bought");
+    const [account, setAccount] = d2(invest2[0]?.id || "new");
+    const [newName, setNewName] = d2("");
+    const [query3, setQuery] = d2("");
+    const [found2, setFound2] = d2([]);
+    const [looking2, setLooking] = d2(false);
+    const [picked, setPicked] = d2(null);
+    const [shares2, setShares] = d2("");
+    const [total, setTotal] = d2("");
+    const [day3, setDay] = d2(todayISO());
+    const [busy2, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
+    const timer = A2(0);
+    const asked = A2(0);
+    const why = (e3) => String(e3?.message || e3);
+    const type = (q2) => {
+      setQuery(q2);
+      setPicked(null);
+      clearTimeout(timer.current);
+      if (!q2.trim()) {
+        setFound2([]);
+        return;
+      }
+      timer.current = window.setTimeout(async () => {
+        const n3 = ++asked.current;
+        setLooking(true);
+        try {
+          const r3 = await find(q2);
+          if (n3 === asked.current) {
+            setFound2(r3);
+            setProblem("");
+          }
+        } catch (e3) {
+          if (n3 === asked.current) setProblem(why(e3));
+        } finally {
+          if (n3 === asked.current) setLooking(false);
+        }
+      }, 350);
+    };
+    const sold = way === "sold";
+    const submit = async (e3) => {
+      e3.preventDefault();
+      const n3 = parseAmount(shares2), t3 = parseAmount(total);
+      const wrong = account === "new" && !newName.trim() ? "Name the new account." : !picked ? "Type a ticker or a name, then pick it from the list." : !(n3 > 0) ? "How many shares: more than 0." : isNaN(t3) || t3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
+      setProblem(wrong);
+      if (wrong || !picked) return;
+      setBusy(true);
+      try {
+        await add({ account: account === "new" ? void 0 : account, newName: account === "new" ? newName.trim() : void 0, symbol: picked.symbol, dataSource: picked.dataSource, currency: picked.currency, shares: n3, total: t3, date: day3, sold: sold || void 0 });
+        close3();
+      } catch (err) {
+        setProblem(why(err));
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform fx-investadd", onSubmit: submit, "aria-labelledby": "investAddTitle", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-investaddhead", children: [
+        /* @__PURE__ */ u3("h3", { id: "investAddTitle", children: "Add a holding" }),
+        /* @__PURE__ */ u3(Segmented, { label: "Bought or sold", value: way, pick: setWay, options: [["bought", "Bought"], ["sold", "Sold"]] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Account",
+          /* @__PURE__ */ u3("select", { value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+            invest2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
+            /* @__PURE__ */ u3("option", { value: "new", children: "A new account…" })
+          ] })
+        ] }),
+        account === "new" && /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Its name",
+          /* @__PURE__ */ u3("input", { value: newName, placeholder: "Roth IRA", onInput: (e3) => setNewName(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field wide", children: [
+          "What you ",
+          sold ? "sold" : "bought",
+          /* @__PURE__ */ u3("input", { value: query3, placeholder: "A ticker, like VTI, or a name", autocomplete: "off", "aria-describedby": "investFound", onInput: (e3) => type(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { id: "investFound", class: "fx-symbols", "aria-live": "polite", children: picked ? /* @__PURE__ */ u3("p", { class: "fx-symbolpicked", children: [
+        /* @__PURE__ */ u3("strong", { children: picked.symbol }),
+        " ",
+        picked.name,
+        " ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+          "· ",
+          picked.currency
+        ] }),
+        " ",
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+          setPicked(null);
+        }, children: "Change" })
+      ] }) : looking2 ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Looking it up in Ghostfolio…" }) : query3.trim() && !found2.length ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "Ghostfolio found nothing for “",
+        query3.trim(),
+        "”."
+      ] }) : found2.map((s3) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-symbol", onClick: () => {
+        setPicked(s3);
+        setQuery(s3.symbol);
+        setFound2([]);
+      }, children: [
+        /* @__PURE__ */ u3("strong", { children: s3.symbol }),
+        /* @__PURE__ */ u3("span", { children: s3.name }),
+        /* @__PURE__ */ u3("small", { children: s3.currency })
+      ] }, s3.dataSource + s3.symbol)) }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Shares",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: shares2, placeholder: "10", onInput: (e3) => setShares(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          sold ? "What you got in all" : "What you paid in all",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(picked?.currency) }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: total, placeholder: "0.00", onInput: (e3) => setTotal(e3.target.value) })
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Day",
+          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-investaddnote", children: [
+        "It goes into Ghostfolio on this computer",
+        account === "new" ? ", and the new account into Finances too, by the same name" : "",
+        ". Only the ticker leaves the homelab, when Ghostfolio looks it up."
+      ] }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: close3, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "small primary", disabled: busy2, children: busy2 ? "Adding…" : "Add to Ghostfolio" })
+      ] })
     ] });
   }
 
@@ -14373,12 +14516,20 @@ ${pays}
       const held3 = (r3.view.plan.accounts || []).filter((a3) => a3.holdings?.length);
       const count2 = held3.reduce((t3, a3) => t3 + a3.holdings.length, 0);
       const time = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-      invest = { said: `Read from Ghostfolio at ${time}: ${count2} ${count2 === 1 ? "holding" : "holdings"} in ${held3.length} ${held3.length === 1 ? "account" : "accounts"}.`, unmatched: r3.unmatched };
+      const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
+      const said2 = !r3.accounts ? `Signed in to Ghostfolio at ${time}: it has no accounts yet. Add yours there, named as they are here, then Read now.` : !r3.holdings ? `Signed in to Ghostfolio at ${time}: its ${n3(r3.accounts, "account holds", "accounts hold")} nothing yet. Add a buy for each holding there, then Read now.` : `Read from Ghostfolio at ${time}: ${n3(count2, "holding", "holdings")} in ${n3(held3.length, "account", "accounts")}.`;
+      invest = { said: said2, unmatched: r3.unmatched };
       financesData.set(r3.view);
     } catch (e3) {
       invest = { problem: `Could not read Ghostfolio: ${errorText(e3)}` };
     }
     draw4();
+  }
+  async function addInvestment(x3) {
+    const r3 = await go().FinancesAddInvestment(x3);
+    const time = (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    invest = { said: `Added to Ghostfolio: ${x3.sold ? "sold" : "bought"} ${x3.shares} ${x3.symbol}${x3.newName ? `, in ${x3.newName}` : ""}. Read again at ${time}.`, unmatched: r3.unmatched };
+    financesData.set(r3.view);
   }
   function readEachMorning(v3) {
     const at2 = new Date(v3.plan.holdingsRead || "");
@@ -14441,7 +14592,7 @@ ${pays}
       // Wallos's subscriptions, on the computer while Wallos runs.
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone,
-      investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest }
+      investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest, ...runs("ghostfolio") ? { add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) } : {} }
     });
     if (v3) readEachMorning(v3);
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
