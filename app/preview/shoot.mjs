@@ -6348,6 +6348,12 @@ const smokes = [
     await page.waitForSelector('.fx-txfilters', { timeout: 5000 });
     if (await page.$('.fx-txfilters button:has-text("Back to")')) throw new Error('Back from its own tab');
   } },
+  // On a phone, a budget's figures take only the room they need: each bar keeps most of the row, the same as the others.
+  { name: 'The phone: budgets keep their bars wide', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
+    if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
