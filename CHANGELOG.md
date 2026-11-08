@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.
 - **Investments from the iPhone:** Finances › Investments has **Read Now**, to read Ghostfolio again, and **Add a Holding**, to record a buy or a sale from your phone, as on the computer.
 - **Settings on the iPhone, as the iPhone's own:** your homelab at the top, then switches for nightly updates and the widget, and each section of the homelab's settings with its own coloured icon.
 - **Transactions on the iPhone, like Wallet:** the account's card on top with your other accounts to switch between, each transaction with its company's logo, and new ones marked with a violet dot until you've reviewed them. Tap one for its own page: a big logo and amount, what bill it paid, its category and note, and the other times at that place.
