@@ -58,6 +58,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances at night:** in dark mode, Finances has a near-black background with its cards a step lighter and thin lines, easier on the eyes and quicker to read at a glance. A system set to more contrast keeps its own colours.
 - **Your accounts in the sidebar:** under each group (Cash, Credit cards, Investments…) the sidebar lists its accounts, each with its round logo and balance; a group's arrow folds them away, and it stays folded. Every logo and category icon on Finances is round now too.
 - **Each category in its own colour:** on Finances, a category's icon is drawn in one colour on every row, budget, report bar, the money flow and the donut (Food is the same green everywhere, Utilities the same orange), so you can tell them apart at a glance, in light and dark.
 - **Tidy Up, redesigned:** Overview starts with the one thing to do next, larger, beside a ring of what's on the drive. Under it, a tile for each library in its own colour says what it holds, how far along it is, and what it waits on; a tile opens its tab, which now starts with that library (Music's with its clean-up step by step).
