@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 )
 
 // Finances reads from the homelab's own apps, on a click and only reading:
@@ -234,15 +235,6 @@ func (a *App) FinancesFromWallos() ([]AppSubscription, error) {
 	return out, nil
 }
 
-// ghostfolioBase is Ghostfolio's API on this machine, at its port.
-var ghostfolioBase = func(env map[string]string) string {
-	port := env["GHOSTFOLIO_PORT"]
-	if port == "" {
-		port = "3333"
-	}
-	return "http://127.0.0.1:" + port + "/api/v1"
-}
-
 // FinancesFromGhostfolio reads what each of Ghostfolio's accounts is worth
 // (its cash and holdings, in the account's currency), signing in with the
 // household's security token (GHOSTFOLIO_SECURITY_TOKEN), for Update
@@ -250,7 +242,7 @@ var ghostfolioBase = func(env map[string]string) string {
 func (a *App) FinancesFromGhostfolio() ([]AppBalance, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	g, err := ghostfolioSignIn(ctx, core.Env(a.root))
+	g, err := ghostfolio.SignIn(ctx, core.Env(a.root))
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +254,7 @@ func (a *App) FinancesFromGhostfolio() ([]AppBalance, error) {
 			Currency string   `json:"currency"`
 		} `json:"accounts"`
 	}
-	if err := g.read(ctx, "/account", &list); err != nil {
+	if err := g.Read(ctx, "/account", &list); err != nil {
 		return nil, err
 	}
 	out := []AppBalance{}

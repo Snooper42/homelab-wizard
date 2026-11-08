@@ -285,6 +285,10 @@ for (const [glyph, list] of m.hints) for (const w of list) names.add(`${w[0].toU
   'Groceries and gas', 'XX1234 TARGET T-0123', 'Card ending ****4321', 'store #12 Kroger', '555-123-4567 CALL ME', '11/05/2026 PAYMENT', 'The Home Depot',
   '   ', '', '*', '1234', 'café de flore', 'ÉCOLE', 'Mazda 3', 'CX-5', 'F-150', 'My Camry', 'Model Y', 'Chevy truck', 'BMW X5', 'an old ring', 'Joe Smith', 'Kitchen',
   'A', 'the a an of and', 'O’Reilly Auto', "o'reilly", 'Pay-Pal', 'NYT', 'ny times', 'game pass', 'PS Plus', 'prime', 'bofa', 'amex platinum',
+  'ACME CRUISES AD_PAYMENT PPD ID: 1234', 'Zelle payment from JANE DOE 1234567890', 'Zelle payment to Sam Lee', 'ZELLE TO BOB SMITH JPM99A8B7C6D',
+  'zelle transfer from Ann', 'Payment to Chase card ending in 4321 11/05', 'PAYMENT TO CAPITAL ONE CARD ENDING IN 0042', 'MAZDA FINANCIAL PYMT WEB ID: 2222',
+  'GUSTO PAYROLL NZTZP5VXA0Y1UPE CCD', 'COMCAST CABLE 8495 PPD ID:0000', 'APPLE GS SAVINGS TRANSFER', 'VERIZON WIRELESS PAYMENTS PPD', 'IRS USATAXPYMT PPD ID: 3387702000',
+  'ach credit WEB ID 99 ACME_CORP DIR DEP', 'Pay to card ending in 12'
 ].forEach((n) => names.add(n));
 
 const kinds = [undefined, 'car', 'other', 'collectible', 'checking', 'subscriptions', 'utilities'];

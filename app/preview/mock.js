@@ -234,6 +234,26 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       const held = plan.accounts.filter((a) => a.holdings?.length);
       return later({ view: M.finances, unmatched: M.investUnmatched || [], accounts: M.investAccounts ?? held.length + (M.investUnmatched || []).length, holdings: M.investHoldings ?? held.reduce((t, a) => t + a.holdings.length, 0) });
     },
+    // Investments' Add a holding: a ticker or a name looked up (symbols, or a few funds and companies; findProblem: why not),
+    // and a buy or sale put into Ghostfolio (each kept in investAdded; a new account added to the plan; investAddProblem: why not).
+    FinancesFindSymbol: (q) => {
+      if (M.findProblem) return later(null).then(() => { throw new Error(M.findProblem); });
+      const all = M.symbols || [
+        { symbol: 'VTI', name: 'Vanguard Total Stock Market Index Fund ETF Shares', currency: 'USD', dataSource: 'YAHOO' },
+        { symbol: 'VTIAX', name: 'Vanguard Total International Stock Index Fund Admiral Shares', currency: 'USD', dataSource: 'YAHOO' },
+        { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', currency: 'USD', dataSource: 'YAHOO' },
+        { symbol: 'AAPL', name: 'Apple Inc.', currency: 'USD', dataSource: 'YAHOO' },
+        { symbol: 'BTCUSD', name: 'Bitcoin', currency: 'USD', dataSource: 'COINGECKO' },
+      ];
+      const t = String(q).trim().toLowerCase();
+      return later(t ? all.filter((s) => s.symbol.toLowerCase().startsWith(t) || s.name.toLowerCase().includes(t)) : []);
+    },
+    FinancesAddInvestment: (x) => {
+      if (M.investAddProblem) return later(null).then(() => { throw new Error(M.investAddProblem); });
+      (M.investAdded ??= []).push(x);
+      if (x.newName) M.finances = { ...M.finances, plan: { ...M.finances.plan, accounts: [...M.finances.plan.accounts, { id: x.newName.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: x.newName, kind: 'investment', balance: 0 }] } };
+      return later({ view: M.finances, unmatched: [], accounts: 3, holdings: 9 });
+    },
     FinancesFromWallos: () => (M.wallosProblem ? later(null).then(() => { throw new Error(M.wallosProblem); }) : later(M.wallos || [])),
     // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.
     FinancesCalendar: () => (M.calendarProblem ? later(null).then(() => { throw new Error(M.calendarProblem); })

@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/engine"
 	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -350,6 +351,47 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return saved, nil, nil
 		}},
+		// Investments, as the card on the computer has them (internal/ghostfolio):
+		// Read now, a ticker looked up, and a buy or a sale put into Ghostfolio.
+		// Each writes the plan (or Ghostfolio), so a phone needs Finances' edit
+		// level, over the https link, as for any save. Read now answers as the
+		// app's does: the plan read forward, the Ghostfolio accounts nothing
+		// matched, and how many accounts and holdings Ghostfolio has.
+		"FinancesReadInvestments": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			r, err := ghostfolio.ReadInto(ctx, root)
+			if err != nil {
+				return nil, nil, err
+			}
+			return investmentsRead(root, r), nil, nil
+		}},
+		"FinancesFindSymbol": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var query string
+			if len(args) < 1 || json.Unmarshal(args[0], &query) != nil {
+				return nil, nil, errors.New("FinancesFindSymbol takes what was typed: a ticker or a name")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+			found, err := ghostfolio.FindSymbol(ctx, core.Env(root), query)
+			return found, nil, err
+		}},
+		"FinancesAddInvestment": {Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			var add ghostfolio.Add
+			if len(args) < 1 || json.Unmarshal(args[0], &add) != nil {
+				return nil, nil, errors.New("FinancesAddInvestment takes the buy or sale: account (or newName), symbol, dataSource, currency, shares, total, date, sold")
+			}
+			ctx, cancel := context.WithTimeout(ctx, 45*time.Second)
+			defer cancel()
+			if err := ghostfolio.AddInvestment(ctx, root, add); err != nil {
+				return nil, nil, err
+			}
+			r, err := ghostfolio.ReadInto(ctx, root)
+			if err != nil {
+				return nil, nil, err
+			}
+			return investmentsRead(root, r), nil, nil
+		}},
 		// Receipts go with the ledger: a phone that may change it may keep one
 		// (from its camera), and one that may only look may see them.
 		"FinancesReceipt": {Finances: companion.FinancesView, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
@@ -669,4 +711,23 @@ func parseFor(s string) (time.Duration, error) {
 		}
 	}
 	return 0, fmt.Errorf("%q is not a length of time: 12h, 7d, or 2w", s)
+}
+
+// phoneInvestments is what Read now (or a buy or a sale) answers a phone,
+// as the desktop app's InvestmentsRead does: the plan read forward, the
+// names of Ghostfolio's accounts no account in it matched, and how many
+// accounts and holdings Ghostfolio has, matched or not.
+type phoneInvestments struct {
+	View      finance.View `json:"view"`
+	Unmatched []string     `json:"unmatched"`
+	Accounts  int          `json:"accounts"`
+	Holdings  int          `json:"holdings"`
+}
+
+func investmentsRead(root string, r ghostfolio.Read) phoneInvestments {
+	l, err := finance.LoadLedger(finance.LedgerPath(root))
+	if err != nil {
+		l = finance.Ledger{}
+	}
+	return phoneInvestments{View: finance.ProjectWith(r.Plan, l, time.Now(), finance.Ahead), Unmatched: r.Unmatched, Accounts: r.Accounts, Holdings: r.Holdings}
 }

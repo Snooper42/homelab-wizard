@@ -176,8 +176,15 @@ final class PayeeLogos: @unchecked Sendable {
         static let trailing = #"[\s,.;:-]+$"#
         static let wordStart = #"(^|[\s(&/-])([a-z])"#
         static let apostropheS = #"'S\b"#
-        static let caseless: Set<String> = [www, domain, cardDigits, store]
-        static let all = [spaces, star, starReference, www, domain, date, phone, cardDigits, store, number, terminal, trailing, wordStart, apostropheS]
+        static let zelle = #"^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$"#
+        static let cardPayment = #"^payment to (.+?) card ending in (\d{4})\b"#
+        static let achId = #"\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*"#
+        static let underscored = #"(?:^|\s)\S*_\S*(?=\s|$)"#
+        static let longReference = #"(?:^|\s)(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{8,}(?=\s|$)"#
+        static let achTail = #"(?:\s+(?:PPD|CCD|WEB|TEL))+$"#
+        static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail]
+        static let all = [spaces, star, starReference, www, domain, date, phone, cardDigits, store, number, terminal, trailing, wordStart, apostropheS,
+                          zelle, cardPayment, achId, underscored, longReference, achTail]
     }
 
     private static func compile() -> [String: NSRegularExpression] {
@@ -330,6 +337,23 @@ final class PayeeLogos: @unchecked Sendable {
         let raw = raw ?? ""
         var s = replace(raw, P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return "" }
+        // Zelle: who it went to or came from, its reference dropped.
+        if let z = groups(s, P.zelle) {
+            return "Zelle \(z[0].lowercased()) \(ordinary(z[1].trimmingCharacters(in: .whitespacesAndNewlines)))"
+        }
+        // A card paid from checking: which card, by its last four.
+        if let c = groups(s, P.cardPayment) {
+            return "Payment to \(ordinary(c[0].trimmingCharacters(in: .whitespacesAndNewlines))) card \u{2022}\u{2022}\(c[1])"
+        }
+        // A direct debit or deposit: its code and number, its entry wording
+        // (AD_PAYMENT), and a long reference go, then a trailing WEB or PPD.
+        if groups(s, P.achId) != nil {
+            s = replace(s, P.achId, with: " ")
+            s = replace(s, P.underscored, with: " ")
+            s = replace(s, P.longReference, with: " ")
+            s = replace(s, P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+            s = replaceFirst(s, P.achTail, with: "")
+        }
         if let leading {
             let ns = s as NSString
             if let m = leading.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) {

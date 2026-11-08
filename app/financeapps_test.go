@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 )
 
 // Firefly III's asset accounts read with its token: active ones, their
@@ -162,8 +164,8 @@ func TestWallosEvery(t *testing.T) {
 // the token.
 func TestFinancesFromGhostfolio(t *testing.T) {
 	a, _ := testApp(t)
-	saved := ghostfolioBase
-	t.Cleanup(func() { ghostfolioBase = saved })
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
 	var signedIn string
 	session := "jwt-1"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +198,7 @@ func TestFinancesFromGhostfolio(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	ghostfolio.Base = func(map[string]string) string { return srv.URL + "/api/v1" }
 	env := func(s string) {
 		if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte(s), 0o600); err != nil {
 			t.Fatal(err)

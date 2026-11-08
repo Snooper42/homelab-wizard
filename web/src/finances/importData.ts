@@ -139,6 +139,33 @@ export function wayOnlyFixes(found: Imported[], account: string, ledger: finance
   return out;
 }
 
+/**
+ * Rows brought in before whose payee is only the bank's own words, which
+ * reads better now ("Royal Caribbean Ad_payment Ppd Id" is Royal
+ * Caribbean): by this file's row, the transaction to give its clearer
+ * name. Only one on the account, the day, and the amount, its note holding
+ * this row's wording, and every word of its payee among that wording's: a
+ * payee typed in by hand is never touched. Rows in skip are left out.
+ */
+export function renameFixes(found: (Imported & { raw?: string })[], account: string, ledger: finance.Transaction[], skip: Map<number, string>): Map<number, string> {
+  const out = new Map<number, string>(), used = new Set(skip.values());
+  const words = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+  found.forEach((t, i) => {
+    if (skip.has(i) || !t.payee || !t.raw) return;
+    const raw = new Set(words(t.raw));
+    const q = ledger.find((q) => !used.has(q.id) && q.account === account && !q.to && q.date === t.date && Math.abs(q.amount - t.amount) < 0.005
+      && !!q.payee && q.payee.toLowerCase() !== t.payee!.toLowerCase() && (q.note || '').includes(t.raw!) && words(q.payee).every((w) => raw.has(w)));
+    if (q) { used.add(q.id); out.set(i, q.id); }
+  });
+  return out;
+}
+
+/** One already in by the bank's wording kept in its note, on the account, day, and amount: whatever it was renamed since. */
+export function noted(t: Imported & { raw?: string }, account: string, ledger: finance.Transaction[]): boolean {
+  const said = t.raw || t.payee;
+  return !!said && ledger.some((q) => q.account === account && !q.to && q.date === t.date && Math.abs(q.amount - t.amount) < 0.005 && (q.note || '').includes(said));
+}
+
 /** Whether a file's text is an OFX or QFX statement rather than a CSV. */
 export const isOfx = (text: string): boolean => /<OFX>|OFXHEADER/i.test(text.slice(0, 2000));
 

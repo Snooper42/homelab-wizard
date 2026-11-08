@@ -2553,6 +2553,26 @@ button.fx-holdbtn { cursor:pointer; }
   .fx-holdgain { grid-area:gain; font-size:13px; align-self:end; }
   .fx-holdunit { display:inline; }
 }
+/* Investments › Add a holding: a short form in the card, its fields in a row on a wide card and stacked in a narrow one; what Ghostfolio finds as buttons to pick. */
+.fx-investadd { margin:0 0 16px; padding:14px 16px; border:1px solid var(--line); border-radius:var(--fin-radius-sm); background:var(--sunken); }
+.fx-investaddhead { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.fx-investaddhead h3 { margin:0; font-size:15px; }
+.fx-investaddgrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap:0 14px; }
+.fx-investaddgrid .field.wide { grid-column:1 / -1; }
+.fx-investadd select { width:100%; margin-top:4px; padding:7px 9px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); font:inherit; font-weight:400; }
+.fx-investadd label.field input { background:var(--panel); }
+.fx-investadd .moneyfield { background:var(--panel); }
+.fx-symbols { display:flex; flex-direction:column; gap:4px; margin:-4px 0 6px; }
+.fx-symbols > p { margin:0; font-size:13px; }
+button.fx-symbol { display:grid; grid-template-columns:5.5em minmax(0, 1fr) auto; align-items:center; gap:10px; width:100%; padding:7px 10px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--text); font:inherit; text-align:left; cursor:pointer; }
+button.fx-symbol:hover { border-color:var(--line-strong); }
+button.fx-symbol span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13px; }
+button.fx-symbol small { color:var(--muted); }
+.fx-symbolpicked { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fx-investaddnote { font-size:12px; margin:6px 0 0; }
+.fx-investadd .formerr { margin:8px 0 0; }
+.fx-investaddactions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+@media (forced-colors: active) { button.fx-symbol:focus-visible { outline:2px solid Highlight; } }
 
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Only this screen, and not when the system asks for more contrast (that keeps its own colours). */
