@@ -74,6 +74,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **What went out, in the weekly summary:** *Homelab this week* ends its Finances lines with what your transactions spent in the last seven days and where most of it went (*Spent this week: $148.20 in 3 transactions, the most at Costco, $100.00*).
 - **Pay, a year at a time:** each person on Finances › Pay says their take-home a year too (*about $55,900 a year*), and one with no gross typed in says what adding it shows, with **Add them**.
 - **Find a charge by its amount:** Finances › Transactions' search finds what a transaction came to too (*86.10*, or *2,400* with its comma). A day with more than one transaction says what they came to together.
 - **A day on the checking chart opens it:** click a day on the Dashboard's *Checking* chart and the Calendar opens on it, with what comes and goes that day.

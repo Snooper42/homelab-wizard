@@ -62,6 +62,20 @@ func TestSendFinanceReminders(t *testing.T) {
 	if len(lines) < 2 || !strings.HasPrefix(lines[0], "Finances: the paycheck on Fri, Nov 6 leaves checking at $") || lines[1] != "Before it: Mortgage $1,845.00" {
 		t.Errorf("the weekly lines: %q", lines)
 	}
+	if strings.Contains(strings.Join(lines, "\n"), "Spent this week") {
+		t.Errorf("spent with no transactions: %q", lines)
+	}
+	// With transactions, what went out this week closes them.
+	saved, err := finance.Load(finance.Path(root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := finance.SaveLedger(finance.LedgerPath(root), finance.Ledger{Transactions: []finance.Transaction{{Date: "2026-10-29", Account: saved.Accounts[0].ID, Amount: -48.2, Payee: "Shell"}}}, saved); err != nil {
+		t.Fatal(err)
+	}
+	if lines := h.financeLines(oct31); lines[len(lines)-1] != "Spent this week: $48.20 in 1 transaction" {
+		t.Errorf("with a transaction: %q", lines)
+	}
 }
 
 // homelab serve's calendar: the plan's key and nothing else, the paydays
