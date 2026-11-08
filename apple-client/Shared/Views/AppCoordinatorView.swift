@@ -31,7 +31,7 @@ struct AppCoordinatorView: View {
             }
         }
         .animation(.default, value: coordinator.route)
-        // The look (Theme.swift): the blue accent, and rounded bordered buttons.
+        // The look (Theme.swift): the violet accent, and rounded bordered buttons.
         .tint(Theme.accent)
         .buttonBorderShape(.roundedRectangle(radius: Theme.radius))
         #if os(iOS)

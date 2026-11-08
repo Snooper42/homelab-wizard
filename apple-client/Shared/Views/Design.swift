@@ -1,10 +1,8 @@
 import SwiftUI
 
-// The pieces every screen is built from, in the style the owner chose in
-// the mockups ("The whole app in the same style", and Finances' "wallet
-// style"): white cards with a soft shadow and no hard borders, round logo
-// circles, round action buttons, gradient wallet cards in a stack, and a
-// ring. Colours are Theme's; the payee logos and category colours are
+// The pieces every screen is built from, as a plain iPhone app would have
+// them: white cards with a soft shadow, round logo circles, round action
+// buttons, the ring, state pills, and (for later) gradient wallet cards. Colours are Theme's; the payee logos and category colours are
 // PayeeLogos'. Text from the homelab is shown verbatim, never as a
 // localization key or markdown.
 
