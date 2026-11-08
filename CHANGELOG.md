@@ -64,6 +64,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 ### Improved
 
 - **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.
+- **Budgets on the iPhone:** the page opens with what's left to spend this month, a bar of what's spent, and about how much a day that leaves.
 - **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.
 - **Investments from the iPhone:** Finances › Investments has **Read Now**, to read Ghostfolio again, and **Add a Holding**, to record a buy or a sale from your phone, as on the computer.
 - **Settings on the iPhone, as the iPhone's own:** your homelab at the top, then switches for nightly updates and the widget, and each section of the homelab's settings with its own coloured icon.
