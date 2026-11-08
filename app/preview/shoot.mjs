@@ -5078,7 +5078,8 @@ const smokes = [
     await page.click(vti);
     await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
     if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
-    if (await page.$(`${card} button:text-is("Add a holding")`)) throw new Error('Add a holding with Ghostfolio stopped');
+    // Add a holding is there whether or not Status reports Ghostfolio running: it may not see the one that answers.
+    await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
@@ -5201,6 +5202,29 @@ const smokes = [
     await page.waitForSelector(`${form} #investFound:has-text("Ghostfolio found nothing for “zzzz”.")`, { timeout: 3000 });
     await page.click(`${form} button:text-is("Cancel")`);
     await page.waitForSelector(form, { state: 'detached', timeout: 2000 });
+    await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
+  } },
+  // A phone allowed to change Finances reads Ghostfolio and adds a holding through the computer, as the computer does.
+  { name: 'The phone: Investments read and add a holding, allowed to change Finances', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForFunction(() => window.__MOCK.investReads === 1, null, { timeout: 5000 });
+    await page.click(`${card} button:text-is("Add a holding")`);
+    const form = `${card} form.fx-investadd`;
+    await page.fill(`${form} input[placeholder^="A ticker"]`, 'voo');
+    await page.click(`${form} button.fx-symbol:has(strong:text-is("VOO"))`, { timeout: 3000 });
+    await page.fill(`${form} input[placeholder="10"]`, '2');
+    await page.fill(`${form} .moneyfield input`, '1000');
+    await page.click(`${form} button:text-is("Add to Ghostfolio")`);
+    await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.investAdded?.[0]?.symbol)) !== 'VOO') throw new Error('not added from the phone');
+  } },
+  // Status not reporting Ghostfolio (it runs elsewhere, or Status has not been read yet): the card still offers a first read and Add.
+  { name: 'Finances: Investments offer a first read and Add a holding with Ghostfolio not on Status', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 5000 });
     await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
   { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {

@@ -14060,12 +14060,12 @@ ${pays}
   }
   var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
   var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, running: running5, state: state2 = {}, keep: keep2, add, find }) {
+  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep2, add, find }) {
     const [open4, setOpen] = d2("");
     const [adding2, setAdding] = d2(false);
     const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
     const ever = !!v3.plan.holdingsRead;
-    if (!accounts.length && !(read && (running5 || ever))) return null;
+    if (!accounts.length && !read) return null;
     const when3 = readWhen(v3.plan.holdingsRead, v3.today);
     const canAdd = !!(add && find);
     const button = /* @__PURE__ */ u3(S, { children: [
@@ -15061,7 +15061,9 @@ ${pays}
       // Wallos's subscriptions, on the computer while Wallos runs.
       fromWallos: phone || !wallosRunning() ? void 0 : () => go().FinancesFromWallos(),
       phone,
-      investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest, ...runs("ghostfolio") ? { add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) } : {} }
+      // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
+      // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
+      investments: !v3 || v3.readOnly ? void 0 : { read: readInvestments, state: invest, add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) }
     });
     if (v3) readEachMorning(v3);
     if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });

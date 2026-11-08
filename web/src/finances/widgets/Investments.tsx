@@ -30,12 +30,10 @@ export interface InvestmentsProps {
   v: finance.View;
   /** Reads Ghostfolio now: on the computer only. */
   read?: () => void;
-  /** Whether Ghostfolio runs here (Status): the card offers a first read only then. */
-  running?: boolean;
   state?: InvestState;
   /** Keeps the plan (a match picked by hand, the morning's read on or off); none on a phone allowed only to look. */
   keep?: (plan: finance.Plan) => Promise<boolean>;
-  /** Puts a buy or a sale into Ghostfolio and reads again (throws why not), and looks a ticker up there: on the computer while Ghostfolio runs. */
+  /** Puts a buy or a sale into Ghostfolio and reads again (throws why not), and looks a ticker up there: wherever Finances may be changed. */
   add?: (x: app.InvestmentAdd) => Promise<void>;
   find?: (query: string) => Promise<app.AppSymbol[]>;
 }
@@ -68,13 +66,13 @@ interface Line {
   cash?: number;
 }
 
-export function InvestmentsWidget({ v, read, running, state = {}, keep, add, find }: InvestmentsProps) {
+export function InvestmentsWidget({ v, read, state = {}, keep, add, find }: InvestmentsProps) {
   const [open, setOpen] = useState('');
   const [adding, setAdding] = useState(false);
   const accounts = (v.plan.accounts || []).filter((a) => a.holdings?.length);
   const ever = !!v.plan.holdingsRead;
-  // Never read: a first read is offered on the computer while Ghostfolio runs; otherwise nothing is shown.
-  if (!accounts.length && !(read && (running || ever))) return null;
+  // Never read: a first read is offered wherever one can be made; on a phone allowed only to look, nothing is shown.
+  if (!accounts.length && !read) return null;
   const when = readWhen(v.plan.holdingsRead, v.today);
   const canAdd = !!(add && find);
   const button = <>
