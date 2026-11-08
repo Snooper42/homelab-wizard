@@ -222,13 +222,17 @@ jobs:
           xcrun simctl list devices available -j > "$RUNNER_TEMP/devices.json"
           UDID="$(/usr/bin/python3 -I - "$RUNNER_TEMP/devices.json" <<'PY'
           import json, re, sys
-          devices = [d for runtime, ds in json.load(open(sys.argv[1]))["devices"].items() if "iOS" in runtime for d in ds]
-          def rank(d):
+          def version(runtime):
+              m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+              return (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+          devices = [(version(r), d) for r, ds in json.load(open(sys.argv[1]))["devices"].items() if "iOS" in r for d in ds if d["name"].startswith("iPhone")]
+          def rank(item):
+              v, d = item
               m = re.match(r"iPhone (\d+) Pro$", d["name"])
-              return (1, int(m.group(1))) if m else (0, 0)
-          best = max(devices, key=rank)
+              return (v, 1 if m else 0, int(m.group(1)) if m else 0)
+          v, best = max(devices, key=rank)
           print(best["udid"])
-          print(best["name"], file=sys.stderr)
+          print(best["name"], v, file=sys.stderr)
           PY
           )"
           echo "UDID=$UDID" >> "$GITHUB_ENV"
@@ -239,7 +243,7 @@ jobs:
         run: |
           set -o pipefail
           if ! xcodebuild -project "$RUNNER_TEMP/xcode/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
-              -destination "id=$UDID" -derivedDataPath "$RUNNER_TEMP/shots" \
+              -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/shots" \
               CODE_SIGNING_ALLOWED=NO 'SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) SCREENSHOTS' build > "$RUNNER_TEMP/shots.log" 2>&1; then
             grep -E "error:|fatal error" "$RUNNER_TEMP/shots.log" | sort -u | head -100
             tail -30 "$RUNNER_TEMP/shots.log"
