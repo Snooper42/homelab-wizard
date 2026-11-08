@@ -3972,8 +3972,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), and checking's two figures (each shows how it adds up).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), and a holding on Investments (it opens its worth at each read).
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -5057,6 +5057,86 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("refused the security token")', { timeout: 5000 });
+  } },
+  // Net worth › Investments: what Ghostfolio last read, kept in the plan, shown with Ghostfolio stopped: four figures, the
+  // split by account, a row a holding (the 401(k)'s cash a row of its own); a holding opens its worth at each read.
+  { name: 'Finances: Investments on Net worth, from what was last read', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read 7:02 AM")`, { timeout: 5000 });
+    for (const t of ['Total value', 'You paid', 'Gain', 'This month']) await page.waitForSelector(`${card} .fx-investfigs .fx-caption:text-is("${t}")`, { timeout: 2000 });
+    await page.waitForSelector(`${card} .fx-investfigs .fx-sub:text-is("9 holdings in 3 accounts")`, { timeout: 2000 });
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('not a row a holding and the cash');
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("Cash")):has-text("Fidelity 401(k)")`, { timeout: 2000 });
+    if (await page.$(`${card} .fx-investsaid`)) throw new Error('a read said with nothing read');
+    const vti = `${card} button.fx-holdbtn:has(strong:text-is("VTI"))`;
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail figure[aria-label^="VTI at each read"] svg`, { timeout: 2000 });
+    if ((await page.getAttribute(vti, 'aria-expanded')) !== 'true') throw new Error('VTI not said open');
+    await page.waitForSelector(`${card} .fx-holddetail :text("A share is worth")`, { timeout: 2000 });
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
+    if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
+  } },
+  // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
+  // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
+  // (here, as a new account), kept, and read again.
+  { name: 'Finances: Investments read once as Finances opens, Read now, and a match by hand', screen: 'finances', mock: { status: runningToo('ghostfolio'), investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} [role=status]:has-text("Read from Ghostfolio at")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text(": 9 holdings in 3 accounts.")`, { timeout: 2000 });
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('not read once on opening');
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForTimeout(300);
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('read again on coming back');
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForFunction(() => window.__MOCK.investReads === 2, null, { timeout: 5000 });
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read")`, { timeout: 2000 });
+    await page.selectOption(`${card} .fx-investleft select`, 'new');
+    await page.waitForFunction(() => window.__MOCK.investReads === 3, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const added = plan.accounts.find((a) => a.ghostfolio === 'Coinbase');
+    if (!added || added.name !== 'Coinbase' || added.kind !== 'investment') throw new Error('Coinbase not added as an account matched by hand');
+  } },
+  { name: 'Finances: Investments say why Ghostfolio could not be read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } }, investProblem: 'Ghostfolio does not answer on this machine: is it running? (Status)' }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} .formerr[role=alert]:text-is("Could not read Ghostfolio: Ghostfolio does not answer on this machine: is it running? (Status)")`, { timeout: 5000 });
+    // What was last read is still shown.
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('the holdings went with the failed read');
+  } },
+  // Read only on Read now, when so set: opening Finances reads nothing; the box turns the morning's read back on.
+  { name: 'Finances: Investments read only on Read now, when so set', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const box = '#finRoot .fx-invest .fx-investauto input[type=checkbox]';
+    await page.waitForSelector(box, { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on opening, set to read by hand');
+    if (await page.isChecked(box)) throw new Error('the box says it reads each day');
+    await page.click(box);
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).readByHand)) throw new Error('still read by hand');
+  } },
+  // Never read: with Ghostfolio running, the card says what it would read and that only symbols leave the homelab.
+  { name: 'Finances: Investments never read offer a first read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} .fx-investintro:has-text("Only ticker symbols leave the homelab")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read before the first Read now');
+  } },
+  { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`, { timeout: 5000 });
+    if (await page.$(`${card} button:text-is("Read now")`) || await page.$(`${card} .fx-investauto`) || await page.$(`${card} select`)) throw new Error('something to read or change on a phone allowed only to look');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on a phone');
+    await page.click(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`);
+    await page.waitForSelector(`${card} .fx-holddetail svg`, { timeout: 2000 });
   } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });

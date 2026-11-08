@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -249,56 +248,11 @@ var ghostfolioBase = func(env map[string]string) string {
 // household's security token (GHOSTFOLIO_SECURITY_TOKEN), for Update
 // balances to offer; nothing is changed in either.
 func (a *App) FinancesFromGhostfolio() ([]AppBalance, error) {
-	env := core.Env(a.root)
-	token := strings.TrimSpace(env["GHOSTFOLIO_SECURITY_TOKEN"])
-	if token == "" {
-		return nil, errors.New("Ghostfolio's security token is not set: put the one you sign in to Ghostfolio with in Settings › GHOSTFOLIO_SECURITY_TOKEN")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	base := ghostfolioBase(env)
-	refused := errors.New("Ghostfolio refused the security token: put the one you sign in with in Settings › GHOSTFOLIO_SECURITY_TOKEN")
-	quiet := errors.New("Ghostfolio does not answer on this machine: is it running? (Status)")
-	// Signing in: the security token for a session's token.
-	body, _ := json.Marshal(map[string]string{"accessToken": token})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/auth/anonymous", bytes.NewReader(body))
-	if err != nil {
-		return nil, errors.New("Ghostfolio's address could not be made from GHOSTFOLIO_PORT")
-	}
-	req.Header.Set("Content-Type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, quiet
-	}
-	var auth struct {
-		AuthToken string `json:"authToken"`
-	}
-	err = json.NewDecoder(res.Body).Decode(&auth)
-	res.Body.Close()
-	switch {
-	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
-		return nil, refused
-	case res.StatusCode >= 300:
-		return nil, fmt.Errorf("Ghostfolio answered %s", res.Status)
-	case err != nil || auth.AuthToken == "":
-		return nil, errors.New("Ghostfolio's answer could not be read: is GHOSTFOLIO_PORT Ghostfolio's port?")
-	}
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, base+"/account", nil)
+	g, err := ghostfolioSignIn(ctx, core.Env(a.root))
 	if err != nil {
 		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
-	req.Header.Set("Accept", "application/json")
-	res, err = http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, quiet
-	}
-	defer res.Body.Close()
-	switch {
-	case res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden:
-		return nil, refused
-	case res.StatusCode != http.StatusOK:
-		return nil, fmt.Errorf("Ghostfolio answered %s", res.Status)
 	}
 	var list struct {
 		Accounts []struct {
@@ -308,8 +262,8 @@ func (a *App) FinancesFromGhostfolio() ([]AppBalance, error) {
 			Currency string   `json:"currency"`
 		} `json:"accounts"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&list); err != nil {
-		return nil, errors.New("Ghostfolio's answer could not be read: is GHOSTFOLIO_PORT Ghostfolio's port?")
+	if err := g.read(ctx, "/account", &list); err != nil {
+		return nil, err
 	}
 	out := []AppBalance{}
 	for _, x := range list.Accounts {
