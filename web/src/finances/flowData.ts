@@ -6,6 +6,7 @@
 // Plain functions of the view and ledger; the chart (ui/charts Sankey)
 // knows nothing of them.
 import type { Hue } from './ui/Legend';
+import { categoryHue, kindHueOf } from './hues';
 import { inHome, kindName } from './model';
 import { allPayments, type Lookup, perMonth, saving } from './money';
 
@@ -30,15 +31,7 @@ export interface Flow {
 /** Saved, and each account it went into: blue, apart from taxes' purple. */
 export const savedHue: Hue = 1;
 
-/** Each kind of spending keeps one colour, on the donut, the flow, and in its legend. */
-export const kindHue: Record<string, number> = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
-
-/** A category's colour: each top category of the household's in turn, the same everywhere it is drawn. */
-export function categoryHue(categories: finance.Category[], name: string): number {
-  const tops = categories.filter((c) => !c.parent && !c.income);
-  const at = tops.findIndex((c) => c.name.toLowerCase() === name.toLowerCase());
-  return at < 0 ? 6 : (at % 8) + 1;
-}
+export { categoryHue, kindHue, kindHueOf } from './hues';
 
 /** A transaction's parts: its splits, or itself whole. */
 const parts = (t: finance.Transaction) => (t.splits?.length ? t.splits.map((s) => ({ category: s.category, amount: s.amount })) : [{ category: t.category || '', amount: t.amount }]);
@@ -134,7 +127,7 @@ export function monthFlow(v: finance.View, L: Lookup, ledger: finance.Ledger, mo
         tax.value -= p.amount; tax.items.push(item(t, p.amount));
         continue;
       }
-      add(spend, 'cat:' + g.toLowerCase(), g, 3, categoryHue(cats, g), -p.amount, item(t, p.amount));
+      add(spend, 'cat:' + g.toLowerCase(), g, 3, categoryHue(g, cats) || 6, -p.amount, item(t, p.amount));
     }
   }
   if (tax && (tax as FlowNode).value < 0) tax = null;
@@ -177,7 +170,7 @@ export function typicalFlow(v: finance.View, L: Lookup, top: number): Flow {
     const onCard = L.account[x.from || '']?.kind === 'card';
     if (!(!x.from || x.from === v.checking || onCard) || (x.to && x.to === v.checking)) continue;
     if (kept(x.to)) add(into, 'kept:' + x.to, L.account[x.to!]?.name || x.to!, savedHue, each(x), { label: x.name, amount: each(x), payment: x.id });
-    else add(spend, 'kind:' + (x.kind || 'other'), kindName(x.kind || 'other'), kindHue[x.kind || 'other'] ?? 6, each(x), { label: x.name, amount: -each(x), payment: x.id });
+    else add(spend, 'kind:' + (x.kind || 'other'), kindName(x.kind || 'other'), kindHueOf(x.kind, v.categories || []), each(x), { label: x.name, amount: -each(x), payment: x.id });
   }
   return build(src, taxes > 0.005 ? { id: 'taxes', label: 'Taxes', value: taxes, col: 2, hue: 7, items: taxItems } : null, [...spend.values()], [...into.values()], top);
 }

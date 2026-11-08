@@ -22,6 +22,7 @@ import { iconOf } from './Transactions';
 import { inHome } from './model';
 import { currencyCode, dayShort, money, monthName, parseDay, plural, tick } from './money';
 import { byCategory, byMonth, byTag, categoryTrend, csvName, ranges, tagsOf, toCsv, topPayees, totals, twelveMonths, yearOnYear } from './reportData';
+import { categoryHue } from './hues';
 
 export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string> }) {
   const [key, setKey] = useState('month');
@@ -74,11 +75,11 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
           <Widget title="Spending by category" kind="fx-bycat">
             {groups.length ? <Rows kind="fx-rows">
               {groups.map((g) => {
-                const icon = iconOf(v.categories, g.name);
-                return <Row key={g.name} lead={<Mark kind={icon} type={icon} name={g.name} />} title={g.name}
+                const icon = iconOf(v.categories, g.name), hue = categoryHue(g.name, v.categories);
+                return <Row key={g.name} lead={<Mark kind={icon} type={icon} name={g.name} hue={hue} />} title={g.name}
                   sub={g.children.length ? g.children.map((c) => `${c.name} ${money(c.amount)}`).join(' · ') : `${Math.round((g.amount / (spent || 1)) * 100)}% of the spending`}
                   when={<Amount value={g.amount} form="full" />} whenPlain>
-                  <span class="fx-budgetbar fx-catbar" aria-hidden="true"><span style={{ width: `${Math.max(1, (g.amount / most) * 100)}%` }} /></span>
+                  <span class={'fx-budgetbar fx-catbar' + (hue ? ' fx-h' + hue : '')} aria-hidden="true"><span style={{ width: `${Math.max(1, (g.amount / most) * 100)}%` }} /></span>
                 </Row>;
               })}
             </Rows> : <Empty>Nothing spent in this stretch.</Empty>}
