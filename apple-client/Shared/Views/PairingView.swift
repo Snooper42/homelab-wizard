@@ -119,21 +119,10 @@ struct PairingView: View {
                 .focused($focus, equals: .server)
                 .submitLabel(.next)
                 .onSubmit { focus = .code }
-            #if os(macOS)
-            // The companion on this Mac: loopback never leaves the computer.
-            Button("The Homelab Runs on This Mac") {
-                model.setServerAddress("localhost:8099")
-                focus = .code
-            }
-            #endif
         } header: {
             Text("Computer")
         } footer: {
-            #if os(macOS)
-            Text("Use your homelab domain (https://homelab.your-domain.com) or the Tailscale link, or localhost:8099 when the homelab runs on this Mac. You can paste the whole pairing link. Plain http to another computer isn't accepted, because your device token would cross the network in readable form.")
-            #else
             Text("Use your homelab domain (https://homelab.your-domain.com), or the Tailscale link if you use it. You can paste the whole pairing link. Plain http isn't accepted, because your device token would cross the network in readable form.")
-            #endif
         }
     }
 
@@ -220,14 +209,7 @@ struct PairingView: View {
 
     // MARK: Bindings & actions
 
-    /// On the Mac, the homelab is most often on the same computer.
-    private static var addressHint: String {
-        #if os(macOS)
-        "localhost:8099"
-        #else
-        "https://homelab.your-domain.com"
-        #endif
-    }
+    private static let addressHint = "https://homelab.your-domain.com"
 
     private var serverBinding: Binding<String> {
         Binding(get: { model.serverAddress }, set: { model.setServerAddress($0) })
