@@ -18,14 +18,15 @@ import { PayMark, Who } from './Mark';
 import { inHome, kindName } from './model';
 import { compact, dayLong, dayShort, isoDay, type Lookup, money, parseDay, signed } from './money';
 import { TxMark, txTitle } from './Transactions';
+import { startOn } from './Edit';
 
 export interface CalendarProps {
   v: finance.View;
   L: Lookup;
   /** What actually happened: the days before today show it. */
   ledger?: finance.Ledger | null;
-  /** Opens a payment's or a transaction's form; none on a phone allowed only to look. */
-  edit?: (what: 'payment' | 'transaction', id: string) => void;
+  /** Opens a payment's or a transaction's form, or a new one (no id); none on a phone allowed only to look. */
+  edit?: (what: 'payment' | 'transaction', id?: string) => void;
 }
 
 /** What one day holds, for its cell, its row, and its card. */
@@ -306,14 +307,17 @@ function pastLead(ds: DayInfo[]): string {
 /** The day picked: checking after it, and each paycheck and payment on it; before today, what was recorded. */
 function DayCard({ v, L, d, cushion, edit, read }: { v: finance.View; L: Lookup; d: DayInfo; cushion: number; edit?: CalendarProps['edit']; read: string }) {
   if (d.past) return (
-    <Widget title={dayLong(d.date)} kind="fx-dayone">
+    <Widget title={dayLong(d.date)} kind="fx-dayone" actions={edit && <button type="button" class="small" onClick={() => { startOn(d.date); edit('transaction'); }}>Add a transaction</button>}>
       <Stat value={<Amount value={d.net} sign tone={d.net > 0 ? 'in' : ''} />} caption="What your transactions recorded" />
       {d.holiday && <p class="fx-sub fx-daynote">{d.holiday}: the banks were closed.</p>}
       <TxRows v={v} L={L} d={d} edit={edit} />
     </Widget>
   );
   return (
-    <Widget title={dayLong(d.date) + (d.date === v.today ? ', today' : '')} kind="fx-dayone">
+    <Widget title={dayLong(d.date) + (d.date === v.today ? ', today' : '')} kind="fx-dayone"
+      actions={edit && (d.date <= v.today
+        ? <button type="button" class="small" onClick={() => { startOn(d.date); edit('transaction'); }}>Add a transaction</button>
+        : <button type="button" class="small" onClick={() => { startOn(d.date); edit('payment'); }}>Add a payment</button>)}>
       {d.later ? <p class="fx-sub fx-daynote">What is planned for the day. Checking is read ahead to {dayShort(read)}, so its balance is not shown.</p> : <Stat value={<Amount value={d.balance} tone={d.balance < 0 ? 'out' : d.low ? 'warn' : ''} />}
         caption={<>In checking at the end of the day{d.low && <span>, under your {compact(cushion)} cushion</span>}</>} />}
       {(d.holiday || !!d.moved.length) && <p class="fx-sub fx-daynote">{[d.holiday && `${d.holiday}: the banks are closed.`, ...d.moved.map((m) => movedText(m, L) + '.')].filter(Boolean).join(' ')}</p>}

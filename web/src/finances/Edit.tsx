@@ -50,6 +50,11 @@ export interface EditProps {
   close: () => void;
 }
 
+/** The day the next new payment or transaction starts on (a calendar day's Add), taken once by the form that opens. */
+let firstDay = '';
+export const startOn = (day: string) => { firstDay = day; };
+const takeDay = () => { const d = firstDay; firstDay = ''; return d; };
+
 const num = (s: string) => { const n = parseAmount(s); return isNaN(n) ? 0 : n; };
 const text = (n?: number) => (n ? String(n) : '');
 /** An amount as a box starts with it: its cents in two places when it has any ($2512.40, not 2512.4), none when it has none. */
@@ -336,7 +341,7 @@ function PaymentForm(props: EditProps) {
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
   const [person, setPerson] = useState(x?.schedule.person || '');
-  const [start, setStart] = useState(x?.schedule.start || todayISO());
+  const [start, setStart] = useState(() => x?.schedule.start || takeDay() || todayISO());
   const [day2, setDay2] = useState(String(x?.schedule.day2 || 15));
   const [kind, setKind] = useState(x?.kind || 'home');
   const [from, setFrom] = useState(x?.from || checking || '');
@@ -820,7 +825,7 @@ function TransactionForm(props: EditProps) {
   const [way, setWay] = useState(t?.to ? 'move' : t && t.amount > 0 ? 'in' : 'out');
   const [payee, setPayee] = useState(t?.payee || '');
   const [amount, setAmount] = useState(t ? cents(Math.abs(t.amount)) : '');
-  const [date, setDate] = useState(t?.date || todayISO());
+  const [date, setDate] = useState(() => t?.date || takeDay() || todayISO());
   const [account, setAccount] = useState(t?.account || checking || accounts[0]?.id || '');
   const [to, setTo] = useState(t?.to || '');
   const [category, setCategory] = useState(t?.category || '');

@@ -6298,6 +6298,26 @@ const smokes = [
     const big = await names();
     if (JSON.stringify(big.slice(0, 3)) !== JSON.stringify(['Mortgage', 'Chase Freedom', 'Groceries and gas'])) throw new Error(`largest: ${big}`);
   } },
+  // A calendar day adds on itself: a day ahead a payment starting on it, a day before today (or today) a transaction on it;
+  // a new payment from the header afterwards starts today again.
+  { name: 'Finances: a calendar day adds a payment or a transaction on itself', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-12"]');
+    await page.click('.fx-dayone button:text-is("Add a payment")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Next on") input')) !== '2026-11-12') throw new Error(`starts ${await page.inputValue('#finSheet label:has-text("Next on") input')}`);
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('#finRoot .toolbar button:has-text("Add a payment")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Next on") input')) === '2026-11-12') throw new Error('the day stuck to the next form');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('.fx-calendar button:text-is("Today")');
+    await page.click('.fx-month button[data-day="2026-10-28"]');
+    await page.click('.fx-dayone button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Day") input')) !== '2026-10-28') throw new Error(`on ${await page.inputValue('#finSheet label:has-text("Day") input')}`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

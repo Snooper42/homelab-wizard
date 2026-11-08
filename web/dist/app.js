@@ -9727,6 +9727,15 @@
   }
 
   // web/src/finances/Edit.tsx
+  var firstDay = "";
+  var startOn = (day3) => {
+    firstDay = day3;
+  };
+  var takeDay = () => {
+    const d3 = firstDay;
+    firstDay = "";
+    return d3;
+  };
   var num = (s3) => {
     const n3 = parseAmount(s3);
     return isNaN(n3) ? 0 : n3;
@@ -10044,7 +10053,7 @@
     const [estimate, setEstimate] = d2(!!x3?.estimate);
     const [every, setEvery] = d2(x3?.schedule.every || "month");
     const [person, setPerson] = d2(x3?.schedule.person || "");
-    const [start, setStart] = d2(x3?.schedule.start || todayISO());
+    const [start, setStart] = d2(() => x3?.schedule.start || takeDay() || todayISO());
     const [day22, setDay2] = d2(String(x3?.schedule.day2 || 15));
     const [kind, setKind] = d2(x3?.kind || "home");
     const [from2, setFrom] = d2(x3?.from || checking || "");
@@ -10591,7 +10600,7 @@
     const [way, setWay] = d2(t3?.to ? "move" : t3 && t3.amount > 0 ? "in" : "out");
     const [payee, setPayee] = d2(t3?.payee || "");
     const [amount, setAmount] = d2(t3 ? cents(Math.abs(t3.amount)) : "");
-    const [date, setDate] = d2(t3?.date || todayISO());
+    const [date, setDate] = d2(() => t3?.date || takeDay() || todayISO());
     const [account, setAccount] = d2(t3?.account || checking || accounts[0]?.id || "");
     const [to, setTo] = d2(t3?.to || "");
     const [category, setCategory] = d2(t3?.category || "");
@@ -11612,7 +11621,10 @@ ${pays}
     return `What your transactions recorded: ${out === 1 ? "1 payment" : `${out} payments`} out, ${signed(net)} in all.`;
   }
   function DayCard({ v: v3, L: L2, d: d3, cushion, edit, read }) {
-    if (d3.past) return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date), kind: "fx-dayone", children: [
+    if (d3.past) return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date), kind: "fx-dayone", actions: edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+      startOn(d3.date);
+      edit("transaction");
+    }, children: "Add a transaction" }), children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: d3.net, sign: true, tone: d3.net > 0 ? "in" : "" }), caption: "What your transactions recorded" }),
       d3.holiday && /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
         d3.holiday,
@@ -11620,32 +11632,46 @@ ${pays}
       ] }),
       /* @__PURE__ */ u3(TxRows, { v: v3, L: L2, d: d3, edit })
     ] });
-    return /* @__PURE__ */ u3(Widget, { title: dayLong(d3.date) + (d3.date === v3.today ? ", today" : ""), kind: "fx-dayone", children: [
-      d3.later ? /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
-        "What is planned for the day. Checking is read ahead to ",
-        dayShort(read),
-        ", so its balance is not shown."
-      ] }) : /* @__PURE__ */ u3(
-        Stat,
-        {
-          value: /* @__PURE__ */ u3(Amount, { value: d3.balance, tone: d3.balance < 0 ? "out" : d3.low ? "warn" : "" }),
-          caption: /* @__PURE__ */ u3(S, { children: [
-            "In checking at the end of the day",
-            d3.low && /* @__PURE__ */ u3("span", { children: [
-              ", under your ",
-              compact(cushion),
-              " cushion"
-            ] })
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: dayLong(d3.date) + (d3.date === v3.today ? ", today" : ""),
+        kind: "fx-dayone",
+        actions: edit && (d3.date <= v3.today ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+          startOn(d3.date);
+          edit("transaction");
+        }, children: "Add a transaction" }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+          startOn(d3.date);
+          edit("payment");
+        }, children: "Add a payment" })),
+        children: [
+          d3.later ? /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [
+            "What is planned for the day. Checking is read ahead to ",
+            dayShort(read),
+            ", so its balance is not shown."
+          ] }) : /* @__PURE__ */ u3(
+            Stat,
+            {
+              value: /* @__PURE__ */ u3(Amount, { value: d3.balance, tone: d3.balance < 0 ? "out" : d3.low ? "warn" : "" }),
+              caption: /* @__PURE__ */ u3(S, { children: [
+                "In checking at the end of the day",
+                d3.low && /* @__PURE__ */ u3("span", { children: [
+                  ", under your ",
+                  compact(cushion),
+                  " cushion"
+                ] })
+              ] })
+            }
+          ),
+          (d3.holiday || !!d3.moved.length) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [d3.holiday && `${d3.holiday}: the banks are closed.`, ...d3.moved.map((m3) => movedText(m3, L2) + ".")].filter(Boolean).join(" ") }),
+          /* @__PURE__ */ u3(DayRows, { L: L2, d: d3, edit }),
+          !!d3.spent.length && /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("h3", { class: "fx-daysub", children: "Recorded today" }),
+            /* @__PURE__ */ u3(TxRows, { v: v3, L: L2, d: d3, edit })
           ] })
-        }
-      ),
-      (d3.holiday || !!d3.moved.length) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-daynote", children: [d3.holiday && `${d3.holiday}: the banks are closed.`, ...d3.moved.map((m3) => movedText(m3, L2) + ".")].filter(Boolean).join(" ") }),
-      /* @__PURE__ */ u3(DayRows, { L: L2, d: d3, edit }),
-      !!d3.spent.length && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("h3", { class: "fx-daysub", children: "Recorded today" }),
-        /* @__PURE__ */ u3(TxRows, { v: v3, L: L2, d: d3, edit })
-      ] })
-    ] });
+        ]
+      }
+    );
   }
   function TxRows({ v: v3, L: L2, d: d3, edit }) {
     return /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
