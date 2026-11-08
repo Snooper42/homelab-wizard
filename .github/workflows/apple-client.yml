@@ -1,0 +1,129 @@
+name: Apple client
+
+# The native iPhone, iPad and Mac app in apple-client/: compiled and tested
+# on a Mac runner whenever it changes, since it's written away from a Mac.
+on:
+  push:
+    branches: [main]
+    paths: ["apple-client/**", ".github/workflows/apple-client.yml"]
+  pull_request:
+    paths: ["apple-client/**", ".github/workflows/apple-client.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apple-client-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apple-client
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The newest released Xcode on the runner: the sources need Swift 6 and
+      # SwiftUI's macros, which only full Xcode has.
+      - name: Pick the newest Xcode
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | grep -viE 'beta|release_candidate|_rc' | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          swift --version
+          # build <name> <xcodebuild args>: the whole log is kept, and on a
+          # failure every error in it is printed, wherever it came.
+          cat > "$RUNNER_TEMP/build.sh" <<'SH'
+          build() {
+            local name="$1"; shift
+            local log="$RUNNER_TEMP/$name.log"
+            if xcodebuild "$@" CODE_SIGNING_ALLOWED=NO build >"$log" 2>&1; then
+              tail -3 "$log"
+            else
+              echo "::group::Errors"; grep -E "error:|fatal error" "$log" | sort -u | head -100; echo "::endgroup::"
+              tail -30 "$log"
+              return 1
+            fi
+          }
+          SH
+          echo "BASH_ENV=$RUNNER_TEMP/build.sh" >> "$GITHUB_ENV"
+
+      - name: Build the package for macOS (Swift 6 mode)
+        run: |
+          set -o pipefail
+          swift build 2>&1 | tee "$RUNNER_TEMP/swift-build.log"
+
+      - name: Run the tests
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
+
+      # The iOS-only parts (the QR scanner, haptics, keyboard types) compile
+      # only for iOS.
+      - name: Build the package for iOS
+        run: |
+          build package-ios -scheme HomelabClient -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/package-ios"
+
+      # The app as people build it: the project make-xcode-project.sh
+      # writes (Info.plist keys, entitlements, the asset catalog and icon),
+      # both targets, without signing.
+      - name: Make the Xcode project
+        env:
+          HOMELAB_XCODE_DIR: ${{ runner.temp }}/xcode
+          HOMELAB_NO_OPEN: "1"
+        run: |
+          brew install xcodegen
+          ./scripts/make-xcode-project.sh com.example
+
+      - name: Build the Mac app
+        run: |
+          build mac-app -project "$RUNNER_TEMP/xcode/HomelabClient.xcodeproj" -scheme HomelabClient \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/app"
+
+      - name: Build the iPhone app
+        run: |
+          build iphone-app -project "$RUNNER_TEMP/xcode/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app"
+
+      # The same apps with the Home Screen and desktop widget (HOMELAB_WIDGET=1),
+      # which people build only when they ask for it.
+      - name: Make the Xcode project with the widget
+        env:
+          HOMELAB_XCODE_DIR: ${{ runner.temp }}/xcode-widget
+          HOMELAB_NO_OPEN: "1"
+          HOMELAB_WIDGET: "1"
+        run: ./scripts/make-xcode-project.sh com.example
+
+      - name: Build the Mac and iPhone apps with the widget
+        run: |
+          build mac-widget -project "$RUNNER_TEMP/xcode-widget/HomelabClient.xcodeproj" -scheme HomelabClient \
+            -destination 'generic/platform=macOS' -derivedDataPath "$RUNNER_TEMP/app-widget"
+          build iphone-widget -project "$RUNNER_TEMP/xcode-widget/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app-widget"
+
+      # The scripts people run on their Mac: each parses, and each does what
+      # it says against stand-ins for Xcode, the iPhone and the homelab.
+      - name: Scripts parse
+        run: for f in scripts/*.sh; do bash -n "$f"; done
+      - name: Scripts behave
+        run: ./scripts/test-scripts.sh
+
+      # Every compiler warning from the builds above, once each, at the end
+      # of the log where it's easy to find. The app builds without any, so a
+      # new one fails the job: in Swift 6 most are data races waiting to be
+      # errors. Xcode's App Intents tool noting the app has none isn't one.
+      - name: Warnings
+        if: always()
+        run: |
+          cat "$RUNNER_TEMP"/*.log 2>/dev/null | grep -E "warning:" | grep -v "^ld: warning" \
+            | grep -v "appintentsmetadataprocessor" \
+            | sed -E 's#^.*/apple-client/##' | sort -u > "$RUNNER_TEMP/warnings.txt" || true
+          count="$(wc -l < "$RUNNER_TEMP/warnings.txt" | tr -d ' ')"
+          echo "$count unique warnings"
+          head -150 "$RUNNER_TEMP/warnings.txt"
+          [ "$count" = 0 ] || { echo "::error::$count compiler warning(s) in the Apple client; fix them (see above)"; exit 1; }
