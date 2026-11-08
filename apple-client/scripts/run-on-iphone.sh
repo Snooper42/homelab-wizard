@@ -106,14 +106,17 @@ MSG
   fi
   echo "✓ $NAME trusts this Mac."
 fi
-if [ "$DEVMODE" = "disabled" ]; then
+devmode_off() {
   cat >&2 <<MSG
-Developer Mode is off on $NAME. On the phone: Settings › Privacy & Security › Developer Mode,
-turn it on, and restart the phone when it asks. (If the switch isn't there, keep the phone
-plugged in and unlocked, open Xcode once, and look again.) Then run this again.
+Developer Mode is off on $NAME. On the phone: Settings › Privacy & Security › Developer Mode
+(at the bottom), turn it on, and tap Restart. Once it has restarted, unlock it and tap
+Turn On when it asks. (If the switch isn't there, keep the phone plugged in and unlocked,
+run open -a Xcode, wait a minute, and look again.) Then run this again.
 MSG
   exit 1
-fi
+}
+# Some Xcode versions don't say before building; the build says it then.
+[ "$DEVMODE" = "disabled" ] && devmode_off
 [ -n "$UDID" ] || { echo "Xcode didn't give $NAME's UDID. Unlock the phone and run this again." >&2; exit 1; }
 
 if pgrep -x Xcode >/dev/null; then
@@ -130,6 +133,7 @@ if ! xcodebuild -project "$OUT/HomelabClient.xcodeproj" -scheme HomelabClient-iO
      -configuration Debug -destination "id=$UDID" \
      -derivedDataPath "$OUT/build" -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
      build >"$LOG" 2>&1; then
+  grep -q "Developer Mode disabled" "$LOG" && devmode_off
   echo >&2
   echo "The build failed. The errors:" >&2
   grep -E 'error:|No Account|No profiles|requires a development team|maximum number|Developer Mode' "$LOG" | sort -u | head -20 >&2 || tail -30 "$LOG" >&2

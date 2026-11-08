@@ -53,6 +53,7 @@ stub xcodegen 'mkdir -p HomelabClient.xcodeproj'
 # xcodebuild: makes the app where the scheme's build puts it.
 stub xcodebuild 'echo "xcodebuild $*" >>"$CALLS"
 [ -n "${FAKE_BUILD_FAIL:-}" ] && { echo "Foo.swift:1:1: error: cannot find x in scope"; exit 65; }
+[ -n "${FAKE_BUILD_DEVMODE:-}" ] && { echo "{ platform:iOS, name:iPhone, error:Developer Mode disabled To use iPhone for development, enable Developer Mode }"; exit 70; }
 case "$*" in *HomelabClient-iOS*) d=Debug-iphoneos ;; *) d=Debug ;; esac
 mkdir -p "$HOMELAB_XCODE_DIR/build/Build/Products/$d/HomelabClient.app"'
 # xcrun devicectl: one iPhone (and a simulator, which is skipped).
@@ -152,6 +153,8 @@ FAKE_NO_PHONE=1 FAKE_USB="iPhone:" run "$HERE/run-on-iphone.sh" com.example
 expect "no iPhone for Xcode, one on USB: says to open Xcode once" bash -c '[ "$0" = 1 ] && grep -q "open -a Xcode" <<<"$1"' "$RC" "$OUT"
 FAKE_DEVMODE=disabled run "$HERE/run-on-iphone.sh" com.example
 expect "Developer Mode off: says where to turn it on" bash -c '[ "$0" = 1 ] && grep -q "Developer Mode" <<<"$1"' "$RC" "$OUT"
+FAKE_BUILD_DEVMODE=1 run "$HERE/run-on-iphone.sh" com.example
+expect "Developer Mode off, found only by the build: says where to turn it on" bash -c '[ "$0" = 1 ] && grep -q "Turn On when it asks" <<<"$1"' "$RC" "$OUT"
 FAKE_BUILD_FAIL=1 run "$HERE/run-on-iphone.sh" com.example
 expect "a failed build shows the compiler's error" bash -c '[ "$0" = 1 ] && grep -q "cannot find x in scope" <<<"$1"' "$RC" "$OUT"
 
