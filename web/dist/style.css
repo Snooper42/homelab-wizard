@@ -31,6 +31,8 @@
   --auto-0:#1d4ed8; --auto-1:#047857; --auto-2:#b91c1c; --auto-3:#6d28d9; --auto-4:#c2410c; --auto-5:#0f766e; --auto-6:#be185d; --auto-7:#4338ca;
   --fin-in:#157a3a; --fin-in-soft:#e7f6ee; --fin-out:#c2410c; --fin-out-soft:#fdeee6;
   --fin-tip:#18181b; --fin-tip-text:#fafafa; --fin-tip-muted:#a1a1aa;
+  /* The edge of a table that scrolls sideways, where more of it is: a shade in the light, a glow in the dark. */
+  --fin-edge:var(--shade-1);
   /* A chart's area and the stretch picked: the accent, see-through in the dark so it sits on any system's panel. */
   --fin-area:var(--fin-accent-soft); --fin-band:color-mix(in srgb, var(--fin-accent-soft) 55%, transparent);
   --fin-radius:16px; --fin-radius-sm:10px; --fin-gap:16px; --fin-pad:20px;
@@ -52,6 +54,7 @@
     /* Finances in the dark, as a money app: near-black behind, its cards a step lighter, thin lines (#finances only). */
     --fin-night:#0d0d0f; --fin-night-card:#17171a; --fin-night-sunken:#121215; --fin-night-line:#26262b; --fin-night-line-strong:#3a3a42;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
+    --fin-edge:var(--glow-18);
     --fin-area:color-mix(in srgb, var(--fin-accent) 16%, transparent); --fin-band:color-mix(in srgb, var(--fin-accent) 10%, transparent);
     color-scheme: dark;
   }
@@ -1938,6 +1941,9 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .alertlist.fx-rows .when { font-size:14px; font-weight:600; }
 .alertlist.fx-rows .grow > strong { font-weight:500; }
 .fx-widget .finpostscroll { margin:0 calc(-1 * var(--fin-pad) - 2px); }
+/* More paychecks past the right edge: a shadow there (a Mac's scroll bar hides until scrolled), covered once scrolled to
+   the end by the panel's colour, which moves with the table (local). */
+.finpostscroll { background:linear-gradient(to left, var(--panel) 45%, transparent) right center / 44px 100% no-repeat local, linear-gradient(to left, var(--fin-edge), transparent) right center / 18px 100% no-repeat scroll; }
 .fx-widget table.finpost :is(th, td):first-child { padding-left:calc(var(--fin-pad) + 2px); }
 .fx-widget table.finpost :is(th, td):last-child { padding-right:calc(var(--fin-pad) + 2px); }
 .fx-pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:auto; padding-top:14px; border-top:1px solid var(--line); }

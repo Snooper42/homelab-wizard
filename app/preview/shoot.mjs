@@ -6054,6 +6054,19 @@ const smokes = [
     await page.waitForSelector('.fx-txsearch:focus', { timeout: 5000 });
     if (await page.evaluate(() => { const b = document.querySelector('.fx-txsearch'); return b.selectionEnd - b.selectionStart; }) !== 5) throw new Error('the words typed before are not picked');
   } },
+  // Net worth's paycheck-by-paycheck table, wider than its card: its right edge is shaded while more columns lie past it
+  // (a Mac hides its scroll bar), and the shade is gone once scrolled to the end.
+  { name: 'Finances: the paycheck-by-paycheck table shows there is more to its right', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const edge = () => page.$eval('.finpostscroll', (e) => {
+      const bg = getComputedStyle(e).backgroundImage;
+      return { more: e.scrollWidth > e.clientWidth + 1, end: e.scrollLeft + e.clientWidth >= e.scrollWidth - 1, layers: (bg.match(/gradient/g) || []).length, local: getComputedStyle(e).backgroundAttachment };
+    });
+    const a = await edge();
+    if (!a.more || a.end || a.layers !== 2 || !/local/.test(a.local)) throw new Error(`at the start: ${JSON.stringify(a)}`);
+    await page.$eval('.finpostscroll', (e) => { e.scrollLeft = e.scrollWidth; });
+    if (!(await edge()).end) throw new Error('it does not scroll to its end');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
