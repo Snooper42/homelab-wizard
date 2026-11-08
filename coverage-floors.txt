@@ -60,6 +60,7 @@ internal/rootless 73
 internal/savings 91
 internal/schedule 78
 internal/selector 88
+internal/sitelogo 88
 internal/selfupdate 83  # target 80
 internal/settings 90
 internal/setup 79

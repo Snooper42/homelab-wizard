@@ -9,13 +9,15 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
+import { siteFor } from './sites';
+import { brands } from './logos';
 import { guessFor } from './guessCategory';
 import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal' | 'logos';
 
 export interface EditProps {
   what: What;
@@ -43,6 +45,8 @@ export interface EditProps {
   fromApps?: { name: string; read: () => Promise<{ name: string; balance: number; currency?: string }[]> }[];
   /** Keeps a receipt (a data URL) and gives its name; reads one back by its name. */
   receipts?: { save: (dataURL: string) => Promise<string>; read: (name: string) => Promise<string> };
+  /** Finds a company's real logo on its website (the desktop app's FinancesFetchLogo, internal/sitelogo); none on a phone. */
+  fetchLogo?: (site: string) => Promise<{ image: string; from: string }>;
   close: () => void;
 }
 
@@ -134,6 +138,26 @@ async function shrink(f: File): Promise<string> {
 /** A file as a data URL. */
 const asDataURL = (b: Blob) => new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => bad(r.error); r.readAsDataURL(b); });
 
+/**
+ * A logo a website gave (PNG, ICO, SVG, …, as a data URL) as one to keep:
+ * drawn by the browser into 96 px, its shape whole, as a PNG (or WebP when
+ * that is too large), as internal/finance keeps an image of one's own.
+ */
+async function keptLogo(src: string): Promise<string> {
+  const img = new Image();
+  img.src = src;
+  try { await img.decode(); } catch { throw new Error('The website gave an image this can\'t read: use your own image instead.'); }
+  const n = 96, w0 = img.naturalWidth || n, h0 = img.naturalHeight || n, scale = Math.min(n / w0, n / h0);
+  const w = Math.max(1, Math.round(w0 * scale)), h = Math.max(1, Math.round(h0 * scale));
+  const c = new OffscreenCanvas(n, n);
+  c.getContext('2d')!.drawImage(img, (n - w) / 2, (n - h) / 2, w, h);
+  const png = await asDataURL(await c.convertToBlob({ type: 'image/png' }));
+  return png.length < 60000 ? png : asDataURL(await c.convertToBlob({ type: 'image/webp', quality: 0.85 }));
+}
+
+/** The website a logo is asked of, shown as its name (fpl.com). */
+const hostOf = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
+
 /** The most a receipt may hold (internal/finance's MaxReceipt). */
 const maxReceipt = 2 << 20;
 
@@ -202,19 +226,45 @@ function Receipt({ name, set, receipts }: { name?: string; set: (name: string | 
   );
 }
 
-/** Your own image for a logo: picked from a file, shown at once, and kept with the plan when it is saved. */
-function OwnLogo({ value, set, what }: { value?: string; set: (img: string | undefined) => void; what: string }) {
+/**
+ * Your own image for a logo: picked from a file, or the company's real
+ * logo got from its website (on the computer: fetchLogo), shown at once,
+ * and kept with the plan when it is saved. The website starts as a guess
+ * (sites.ts) and nothing is asked of it until Get the real logo.
+ */
+function OwnLogo({ value, set, what, fetchLogo, guess }: { value?: string; set: (img: string | undefined) => void; what: string; fetchLogo?: EditProps['fetchLogo']; guess?: string }) {
   const file = useRef<HTMLInputElement>(null);
   const [problem, setProblem] = useState('');
+  const [site, setSite] = useState<string | null>(null);
+  const [getting, setGetting] = useState(false);
+  const [from, setFrom] = useState('');
   const read = async (f?: File) => {
     if (!f) return;
-    try { set(await shrink(f)); setProblem(''); } catch { setProblem('That file is not a picture this can read: try a PNG or a JPEG.'); }
+    try { set(await shrink(f)); setProblem(''); setFrom(''); } catch { setProblem('That file is not a picture this can read: try a PNG or a JPEG.'); }
+  };
+  const typed = site ?? guess ?? '';
+  const get = async () => {
+    if (!fetchLogo || getting) return;
+    setGetting(true);
+    setProblem('');
+    try {
+      const l = await fetchLogo(typed);
+      set(await keptLogo(l.image));
+      setFrom(hostOf(l.from));
+    } catch (e) { setProblem(String((e as Error)?.message || e)); }
+    setGetting(false);
   };
   return (
     <div class="ownlogo">
       <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden aria-label={`Your own image for ${what}`} onChange={(e) => { read(e.currentTarget.files?.[0]); e.currentTarget.value = ''; }} />
+      {fetchLogo && <span class="getlogo">
+        <input value={typed} onInput={(e) => setSite((e.target as HTMLInputElement).value)} placeholder="company.com" aria-label={`${what}'s website, for its real logo`} spellcheck={false} autocapitalize="off"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); get(); } }} />
+        <button type="button" class="small" disabled={getting || !typed.trim()} onClick={get}>{getting ? 'Getting the logo…' : 'Get the real logo'}</button>
+      </span>}
       <button type="button" class="small" onClick={() => file.current?.click()}>{value ? 'Use another image' : `Use your own image for ${what}`}</button>
-      {value && <button type="button" class="small" onClick={() => set(undefined)}>Remove your image</button>}
+      {value && <button type="button" class="small" onClick={() => { set(undefined); setFrom(''); }}>Remove your image</button>}
+      {from && <span class="muted getlogofrom" role="status">From {from}</span>}
       {problem && <span class="formerr bad" role="alert">{problem}</span>}
     </div>
   );
@@ -323,7 +373,7 @@ function PaymentForm(props: EditProps) {
     <form class="finform" onSubmit={submit} {...watch}>
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
-      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
+      <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} fetchLogo={props.fetchLogo} guess={siteFor(brand || brandOf(undefined, name, kind), name)} />
       <div class="finway"><Segmented label="Which way the money goes" value={way} pick={setWay} options={[['out', 'Goes out'], ['in', 'Comes in from someone']]} /></div>
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={comesIn ? 'Mortgage share' : 'Mortgage'} required /></Field>
@@ -520,7 +570,7 @@ function AccountForm(props: EditProps) {
           (jewelry typed in as Other before there were collectibles). */}
       {a && (a.kind === 'other' || a.kind === 'collectible') && <div class="kindswap"><Segmented label="Kind" value={kind} pick={setKind} options={[['collectible', 'Collectibles'], ['other', 'Something else']]} /></div>}
       {kind !== 'other' && kind !== 'collectible' && <BrandPick kind={kind} value={real} set={pickBrand} />}
-      <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} />
+      <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} fetchLogo={props.fetchLogo} guess={siteFor(real || brandOf(undefined, name, kind), name)} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
         <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} sign={sign} />
@@ -734,6 +784,11 @@ function TransactionForm(props: EditProps) {
   const [logo, setLogo] = useState(t?.institution || '');
   const logoPicked = useRef(!!t?.institution);
   const [picking, setPicking] = useState(false);
+  // The payee's own image (a file, or its real logo from its website): kept in the plan, under its brand or its name.
+  const imgKey = () => ownKey(logo && logo !== 'none' ? logo : payeeBrand(undefined, payee.trim()), payee.trim());
+  const openedKey = useRef(ownKey(t?.institution && t.institution !== 'none' ? t.institution : payeeBrand(undefined, t?.payee), t?.payee || ''));
+  const hadImg = plan.logos?.[openedKey.current];
+  const [img, setImg] = useState(hadImg);
   const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); if (!logoPicked.current) setLogo(logoFor(who) || ''); };
   // A payee renamed (Sunset Palms Eas Sunset Pal to HOA): every other transaction by the old name takes the new one too, unless unticked,
   // and an import of the same bank wording later comes in by it (importData's renameMemory).
@@ -759,6 +814,8 @@ function TransactionForm(props: EditProps) {
   };
   const keepLedger = async (list: finance.Transaction[]) => {
     setSaving(true);
+    // An image picked or got for the payee goes into the plan first; the transaction is kept only once it is.
+    if (img !== hadImg && way !== 'move' && payee.trim() && !(await props.save({ ...plan, logos: withLogo(plan, imgKey(), img, openedKey.current, hadImg) }))) { setSaving(false); return; }
     const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: list });
     setSaving(false);
     if (ok) props.close();
@@ -791,7 +848,7 @@ function TransactionForm(props: EditProps) {
   const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
   return (
     <form class="finform" onSubmit={submit} {...watch}>
-      <div class="formhead"><TxMark t={{ id: '', date, account, amount: 0, payee, institution: logo || undefined, category, to: way === 'move' ? to || 'x' : undefined }} categories={props.categories} size="lg" /><h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
+      <div class="formhead">{img && way !== 'move' ? <Mark brand={logo && logo !== 'none' ? logo : payeeBrand(undefined, payee)} name={payee || '?'} img={img} size="lg" /> : <TxMark t={{ id: '', date, account, amount: 0, payee, institution: logo || undefined, category, to: way === 'move' ? to || 'x' : undefined }} categories={props.categories} size="lg" />}<h2 id="finSheetTitle">{t ? (t.payee || 'Transfer') : 'Add a transaction'}</h2></div>
       <div class="kindswap"><Segmented label="What it was" value={way} pick={setWay} options={[['out', 'Money out'], ['in', 'Money in'], ['move', 'Between my accounts']]} /></div>
       <div class="formgrid">
         <Field label={way === 'in' ? 'From' : way === 'move' ? 'What for (optional)' : 'Paid to'}><input value={payee} onInput={input(typePayee)} list="finPayees" placeholder={way === 'in' ? 'Alex\'s paycheck' : way === 'move' ? 'Emergency fund' : 'Costco'} /></Field>
@@ -812,6 +869,7 @@ function TransactionForm(props: EditProps) {
         <button type="button" class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>{picking ? 'Done with the logo' : 'Change logo'}</button>
         {!picking && logoPicked.current && payee.trim() && <span class="muted">Every transaction to {payee.trim()} shows it.</span>}
         {picking && <BrandPick kind="" value={logo === 'none' ? '' : logo} set={(k) => { logoPicked.current = true; setLogo(k || 'none'); }} payment />}
+        {picking && payee.trim() && <OwnLogo value={img} set={setImg} what={payee.trim()} fetchLogo={props.fetchLogo} guess={siteFor(logo && logo !== 'none' ? logo : payeeBrand(undefined, payee.trim()), payee.trim())} />}
       </div>}
       {way !== 'move' && <>
         <h3 class="formsub">Split across categories <span class="muted">{parts.length ? (Math.abs(placed - num(amount)) < 0.005 ? 'all of it placed' : `${money(num(amount) - placed)} left to place`) : ''}</span></h3>
@@ -832,6 +890,80 @@ function TransactionForm(props: EditProps) {
       <datalist id="finPayees">{past((q) => q.payee).map((x) => <option key={x} value={x} />)}</datalist>
       <datalist id="finCategories">{categoryList.map((x) => <option key={x} value={x} />)}</datalist>
       <Actions busy={busy || saving} exists={!!t} remove={remove} close={props.close} problem={problem} touched={touched} />
+    </form>
+  );
+}
+
+/**
+ * Finances › Transactions › Logos: every payee, account, and payment that
+ * shows initials (no mark of its brand's own and no image of the
+ * household's), with its website guessed (sites.ts). Get the real logo
+ * asks that website for its icon, from this computer, one at a time or
+ * all at once; each is shown here before Save keeps them in the plan.
+ */
+function LogosForm(props: EditProps) {
+  const { plan, ledger, fetchLogo } = props;
+  const { busy, keep, touched, watch } = useSaving(props);
+  type Who = { key: string; name: string; brand?: string; site: string };
+  const rows: Who[] = (() => {
+    const seen = new Map<string, Who>();
+    const add = (brand: string | undefined, name: string, always: boolean) => {
+      const k = ownKey(brand, name), b = brand ? brands[brand] : undefined;
+      if (!name.trim() || seen.has(k) || plan.logos?.[k] || (b && !b.letters) || (!b && !always)) return;
+      seen.set(k, { key: k, name: b ? b.name : name.trim(), brand: b ? brand : undefined, site: siteFor(brand, name) });
+    };
+    // Accounts at a bank or a broker (their kind's icon until then), payments of a brand, and every payee.
+    for (const a of plan.accounts || []) if (!['home', 'car', 'collectible', 'other'].includes(a.kind)) add(brandOf(a.institution, a.name, a.kind), a.name, true);
+    for (const x of allPayments(plan)) add(brandOf(x.institution, x.name, x.kind), x.name, false);
+    for (const q of ledger?.transactions || []) if (!q.to && q.payee && q.institution !== 'none') add(payeeBrand(q.institution, q.payee), q.payee, true);
+    return [...seen.values()].sort((a, b) => (!a.site === !b.site ? a.name.localeCompare(b.name) : a.site ? -1 : 1));
+  })();
+  const [sites, setSites] = useState<Record<string, string>>({});
+  const [got, setGot] = useState<Record<string, { img: string; from: string }>>({});
+  const [wrong, setWrong] = useState<Record<string, string>>({});
+  const [getting, setGetting] = useState<string[]>([]);
+  const siteOf = (r: Who) => sites[r.key] ?? r.site;
+  const get = async (r: Who) => {
+    if (!fetchLogo || !siteOf(r).trim()) return;
+    setGetting((g) => [...g, r.key]);
+    try {
+      const l = await fetchLogo(siteOf(r));
+      const img = await keptLogo(l.image);
+      setGot((g) => ({ ...g, [r.key]: { img, from: hostOf(l.from) } }));
+      setWrong(({ [r.key]: _, ...rest }) => rest);
+    } catch (e) { setWrong((w) => ({ ...w, [r.key]: String((e as Error)?.message || e) })); }
+    setGetting((g) => g.filter((k) => k !== r.key));
+  };
+  // All at once: one website after another, each said as it comes.
+  const getAll = async () => { for (const r of rows) if (siteOf(r).trim() && !got[r.key]) await get(r); };
+  const ready = rows.filter((r) => siteOf(r).trim() && !got[r.key]).length;
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const add = Object.fromEntries(Object.entries(got).map(([k, v]) => [k, v.img]));
+    if (!Object.keys(add).length) { props.close(); return; }
+    keep({ ...plan, logos: { ...(plan.logos || {}), ...add } });
+  };
+  return (
+    <form class="finform finlogos" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Logos</h2></div>
+      <p class="formsub muted">These show initials. <strong>Get the real logo</strong> asks that company's website for its own icon, from this computer, only when you click; nothing else is sent, and the logo is kept only in your plan.</p>
+      {fetchLogo && ready > 1 && <p><button type="button" class="small" disabled={getting.length > 0} onClick={getAll}>{getting.length ? 'Getting the logos…' : `Get them all (${ready})`}</button></p>}
+      <ul class="logolist">
+        {rows.map((r) => {
+          const g = got[r.key], busyRow = getting.includes(r.key);
+          return <li key={r.key}>
+            <Mark brand={r.brand} name={r.name} img={g?.img} auto={!r.brand} />
+            <span class="grow"><strong>{r.name}</strong>
+              {g ? <small class="muted">From {g.from}</small> : wrong[r.key] ? <small class="bad">{wrong[r.key]}</small> : !siteOf(r).trim() ? <small class="muted">Type its website to get its logo</small> : null}</span>
+            {fetchLogo && <input value={siteOf(r)} onInput={(e) => setSites((s) => ({ ...s, [r.key]: (e.target as HTMLInputElement).value }))} placeholder="company.com" aria-label={`${r.name}'s website`} spellcheck={false} autocapitalize="off" />}
+            {fetchLogo && (g
+              ? <button type="button" class="small" onClick={() => setGot(({ [r.key]: _, ...rest }) => rest)}>Undo</button>
+              : <button type="button" class="small" disabled={busyRow || !siteOf(r).trim()} aria-label={`Get ${r.name}'s real logo`} onClick={() => get(r)}>{busyRow ? 'Getting…' : 'Get'}</button>)}
+          </li>;
+        })}
+      </ul>
+      {!rows.length && <p class="muted">Every payee and account has a logo already.</p>}
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || Object.keys(got).length > 0} />
     </form>
   );
 }
@@ -1199,6 +1331,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'categories' && <CategoriesForm key={'c' + edit.n} {...edit} />}
       {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
       {edit?.what === 'import' && <ImportForm key={'i' + edit.n} {...edit} />}
+      {edit?.what === 'logos' && <LogosForm key={'l' + edit.n} {...edit} />}
       {edit?.what === 'goal' && <GoalForm key={'o' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>

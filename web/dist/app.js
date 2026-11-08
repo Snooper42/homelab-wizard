@@ -8687,6 +8687,89 @@
     if (shown3()) draw3();
   });
 
+  // web/src/finances/sites.ts
+  var sites = {
+    dukeenergy: "duke-energy.com",
+    schwab: "schwab.com",
+    usbank: "usbank.com",
+    navyfederal: "navyfederal.org",
+    mtbank: "mtb.com",
+    redstone: "redfcu.org",
+    disneyplus: "disneyplus.com",
+    amazonprime: "amazon.com",
+    amazonprimevideo: "amazon.com",
+    amazonmusic: "amazon.com",
+    aws: "aws.amazon.com",
+    kindle: "amazon.com",
+    googleone: "one.google.com",
+    microsoft365: "microsoft.com",
+    tmobile: "t-mobile.com",
+    visiblebyverizon: "visible.com",
+    googlefi: "fi.google.com",
+    thenewyorktimes: "nytimes.com",
+    irs: "irs.gov",
+    applepay: "apple.com",
+    googlepay: "pay.google.com",
+    farmers: "farmers.com",
+    bluecross: "bcbs.com",
+    kaiser: "kaiserpermanente.org",
+    unitedhealthcare: "uhc.com",
+    fifththird: "53.com",
+    keybank: "key.com",
+    santander: "santanderbank.com",
+    tdbank: "td.com",
+    citizens: "citizensbank.com",
+    merrill: "merrilledge.com",
+    citi: "citi.com",
+    cryptocom: "crypto.com",
+    googleworkspace: "workspace.google.com",
+    googlefiber: "fiber.google.com",
+    slingtv: "sling.com",
+    chickfila: "chick-fil-a.com",
+    dunkin: "dunkindonuts.com",
+    seveneleven: "7-eleven.com",
+    thehomedepot: "homedepot.com",
+    amc: "amctheatres.com",
+    wholefoods: "wholefoodsmarket.com",
+    xboxgamepass: "xbox.com",
+    nintendoswitch: "nintendo.com",
+    chatgpt: "openai.com",
+    fubotv: "fubo.tv",
+    plex: "plex.tv",
+    tubi: "tubitv.com",
+    peacock: "peacocktv.com",
+    nissan: "nissanusa.com",
+    aldi: "aldi.us",
+    zoom: "zoom.us",
+    etrade: "etrade.com",
+    troweprice: "troweprice.com",
+    interactivebrokers: "interactivebrokers.com",
+    traderepublic: "traderepublic.com",
+    barnesandnoble: "barnesandnoble.com",
+    panerabread: "panerabread.com",
+    dollargeneral: "dollargeneral.com",
+    dollartree: "dollartree.com",
+    oldnavy: "oldnavy.com",
+    pizzahut: "pizzahut.com",
+    epicgames: "epicgames.com",
+    boostmobile: "boostmobile.com",
+    mintmobile: "mintmobile.com",
+    usmobile: "usmobile.com",
+    rocketmortgage: "rocketmortgage.com",
+    mrcooper: "mrcooper.com",
+    edwardjones: "edwardjones.com",
+    creditkarma: "creditkarma.com",
+    planetfitness: "planetfitness.com",
+    libertymutual: "libertymutual.com",
+    statefarm: "statefarm.com",
+    siriusxm: "siriusxm.com",
+    ynab: "ynab.com"
+  };
+  function siteFor(brand, _name) {
+    if (!brand || brand === "none" || !brands[brand]) return "";
+    return sites[brand] || brands[brand].name.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "") + ".com";
+  }
+
   // web/src/finances/guessCategory.ts
   var brandCategory = Object.fromEntries(Object.entries({
     Groceries: "costco walmart kroger wholefoods traderjoes aldi publix safeway lidl tesco instacart",
@@ -9249,7 +9332,7 @@
       }
     );
   }
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2 }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos }) {
     const [seen2, setSeen] = d2(null);
     const look2 = async (t3) => {
       if (seen2?.id === t3.id) {
@@ -9409,6 +9492,7 @@
           actions: edit && /* @__PURE__ */ u3(S, { children: [
             saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
+            logos && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("logos"), children: "Logos" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
           ] }),
           children: [
@@ -9620,6 +9704,28 @@
     r3.onerror = () => bad(r3.error);
     r3.readAsDataURL(b2);
   });
+  async function keptLogo(src) {
+    const img = new Image();
+    img.src = src;
+    try {
+      await img.decode();
+    } catch {
+      throw new Error("The website gave an image this can't read: use your own image instead.");
+    }
+    const n3 = 96, w0 = img.naturalWidth || n3, h0 = img.naturalHeight || n3, scale = Math.min(n3 / w0, n3 / h0);
+    const w3 = Math.max(1, Math.round(w0 * scale)), h3 = Math.max(1, Math.round(h0 * scale));
+    const c3 = new OffscreenCanvas(n3, n3);
+    c3.getContext("2d").drawImage(img, (n3 - w3) / 2, (n3 - h3) / 2, w3, h3);
+    const png = await asDataURL(await c3.convertToBlob({ type: "image/png" }));
+    return png.length < 6e4 ? png : asDataURL(await c3.convertToBlob({ type: "image/webp", quality: 0.85 }));
+  }
+  var hostOf = (u4) => {
+    try {
+      return new URL(u4).hostname.replace(/^www\./, "");
+    } catch {
+      return u4;
+    }
+  };
   var maxReceipt = 2 << 20;
   async function receiptOf(f4) {
     if (f4.type === "application/pdf") {
@@ -9689,25 +9795,70 @@
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
-  function OwnLogo({ value, set: set2, what: what2 }) {
+  function OwnLogo({ value, set: set2, what: what2, fetchLogo: fetchLogo2, guess }) {
     const file = A2(null);
     const [problem, setProblem] = d2("");
+    const [site, setSite] = d2(null);
+    const [getting, setGetting] = d2(false);
+    const [from2, setFrom] = d2("");
     const read = async (f4) => {
       if (!f4) return;
       try {
         set2(await shrink(f4));
         setProblem("");
+        setFrom("");
       } catch {
         setProblem("That file is not a picture this can read: try a PNG or a JPEG.");
       }
+    };
+    const typed = site ?? guess ?? "";
+    const get = async () => {
+      if (!fetchLogo2 || getting) return;
+      setGetting(true);
+      setProblem("");
+      try {
+        const l3 = await fetchLogo2(typed);
+        set2(await keptLogo(l3.image));
+        setFrom(hostOf(l3.from));
+      } catch (e3) {
+        setProblem(String(e3?.message || e3));
+      }
+      setGetting(false);
     };
     return /* @__PURE__ */ u3("div", { class: "ownlogo", children: [
       /* @__PURE__ */ u3("input", { ref: file, type: "file", accept: "image/png,image/jpeg,image/webp,image/gif", hidden: true, "aria-label": `Your own image for ${what2}`, onChange: (e3) => {
         read(e3.currentTarget.files?.[0]);
         e3.currentTarget.value = "";
       } }),
+      fetchLogo2 && /* @__PURE__ */ u3("span", { class: "getlogo", children: [
+        /* @__PURE__ */ u3(
+          "input",
+          {
+            value: typed,
+            onInput: (e3) => setSite(e3.target.value),
+            placeholder: "company.com",
+            "aria-label": `${what2}'s website, for its real logo`,
+            spellcheck: false,
+            autocapitalize: "off",
+            onKeyDown: (e3) => {
+              if (e3.key === "Enter") {
+                e3.preventDefault();
+                get();
+              }
+            }
+          }
+        ),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: getting || !typed.trim(), onClick: get, children: getting ? "Getting the logo…" : "Get the real logo" })
+      ] }),
       /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => file.current?.click(), children: value ? "Use another image" : `Use your own image for ${what2}` }),
-      value && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => set2(void 0), children: "Remove your image" }),
+      value && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+        set2(void 0);
+        setFrom("");
+      }, children: "Remove your image" }),
+      from2 && /* @__PURE__ */ u3("span", { class: "muted getlogofrom", role: "status", children: [
+        "From ",
+        from2
+      ] }),
       problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
@@ -9832,7 +9983,7 @@
         follow3(k3);
         if (k3 && !name.trim()) setName(brandName(k3));
       }, payment: true }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment" }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: brand && brand !== "none" ? brandName(brand) : name.trim() || "this payment", fetchLogo: props.fetchLogo, guess: siteFor(brand || brandOf(void 0, name, kind), name) }),
       /* @__PURE__ */ u3("div", { class: "finway", children: /* @__PURE__ */ u3(Segmented, { label: "Which way the money goes", value: way, pick: setWay, options: [["out", "Goes out"], ["in", "Comes in from someone"]] }) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: comesIn ? "Mortgage share" : "Mortgage", required: true }) }),
@@ -10045,7 +10196,7 @@
       ] }),
       a3 && (a3.kind === "other" || a3.kind === "collectible") && /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "Kind", value: kind, pick: setKind, options: [["collectible", "Collectibles"], ["other", "Something else"]] }) }),
       kind !== "other" && kind !== "collectible" && /* @__PURE__ */ u3(BrandPick, { kind, value: real, set: pickBrand }),
-      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account" }),
+      /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: real ? brandName(real) : said2 || "this account", fetchLogo: props.fetchLogo, guess: siteFor(real || brandOf(void 0, name, kind), name) }),
       /* @__PURE__ */ u3("div", { class: "formgrid", children: [
         /* @__PURE__ */ u3(Field, { label: "Name", children: /* @__PURE__ */ u3("input", { value: name, onInput: input(rename), placeholder: real ? named3(kind, brandName(brand)) : { checking: "Chase Checking", savings: "Savings", card: "Chase Freedom", investment: "Brokerage", retirement: "401(k)", loan: "Car loan", home: "Home", car: "2022 RAV4", collectible: "Trading cards, jewelry", other: "A boat" }[kind], required: !brand }) }),
         /* @__PURE__ */ u3(MoneyField, { label: owes ? "Owed" : held2(kind) ? "Worth" : "Balance", value: balance, set: setBalance, sign }),
@@ -10286,6 +10437,10 @@
     const [logo, setLogo] = d2(t3?.institution || "");
     const logoPicked = A2(!!t3?.institution);
     const [picking, setPicking] = d2(false);
+    const imgKey = () => ownKey(logo && logo !== "none" ? logo : payeeBrand(void 0, payee.trim()), payee.trim());
+    const openedKey = A2(ownKey(t3?.institution && t3.institution !== "none" ? t3.institution : payeeBrand(void 0, t3?.payee), t3?.payee || ""));
+    const hadImg = plan.logos?.[openedKey.current];
+    const [img, setImg] = d2(hadImg);
     const typePayee = (who) => {
       setPayee(who);
       if (!catTyped.current) setCategory(lastFor(who) || "");
@@ -10311,6 +10466,10 @@
     };
     const keepLedger = async (list) => {
       setSaving(true);
+      if (img !== hadImg && way !== "move" && payee.trim() && !await props.save({ ...plan, logos: withLogo(plan, imgKey(), img, openedKey.current, hadImg) })) {
+        setSaving(false);
+        return;
+      }
       const ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions: list });
       setSaving(false);
       if (ok) props.close();
@@ -10352,7 +10511,7 @@
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: [
-        /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
+        img && way !== "move" ? /* @__PURE__ */ u3(Mark, { brand: logo && logo !== "none" ? logo : payeeBrand(void 0, payee), name: payee || "?", img, size: "lg" }) : /* @__PURE__ */ u3(TxMark, { t: { id: "", date, account, amount: 0, payee, institution: logo || void 0, category, to: way === "move" ? to || "x" : void 0 }, categories: props.categories, size: "lg" }),
         /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: t3 ? t3.payee || "Transfer" : "Add a transaction" })
       ] }),
       /* @__PURE__ */ u3("div", { class: "kindswap", children: /* @__PURE__ */ u3(Segmented, { label: "What it was", value: way, pick: setWay, options: [["out", "Money out"], ["in", "Money in"], ["move", "Between my accounts"]] }) }),
@@ -10402,7 +10561,8 @@
         picking && /* @__PURE__ */ u3(BrandPick, { kind: "", value: logo === "none" ? "" : logo, set: (k3) => {
           logoPicked.current = true;
           setLogo(k3 || "none");
-        }, payment: true })
+        }, payment: true }),
+        picking && payee.trim() && /* @__PURE__ */ u3(OwnLogo, { value: img, set: setImg, what: payee.trim(), fetchLogo: props.fetchLogo, guess: siteFor(logo && logo !== "none" ? logo : payeeBrand(void 0, payee.trim()), payee.trim()) })
       ] }),
       way !== "move" && /* @__PURE__ */ u3(S, { children: [
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
@@ -10427,6 +10587,80 @@
       /* @__PURE__ */ u3("datalist", { id: "finPayees", children: past((q2) => q2.payee).map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
       /* @__PURE__ */ u3("datalist", { id: "finCategories", children: categoryList.map((x3) => /* @__PURE__ */ u3("option", { value: x3 }, x3)) }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2 || saving2, exists: !!t3, remove, close: props.close, problem, touched })
+    ] });
+  }
+  function LogosForm(props) {
+    const { plan, ledger, fetchLogo: fetchLogo2 } = props;
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const rows = (() => {
+      const seen2 = /* @__PURE__ */ new Map();
+      const add = (brand, name, always) => {
+        const k3 = ownKey(brand, name), b2 = brand ? brands[brand] : void 0;
+        if (!name.trim() || seen2.has(k3) || plan.logos?.[k3] || b2 && !b2.letters || !b2 && !always) return;
+        seen2.set(k3, { key: k3, name: b2 ? b2.name : name.trim(), brand: b2 ? brand : void 0, site: siteFor(brand, name) });
+      };
+      for (const a3 of plan.accounts || []) if (!["home", "car", "collectible", "other"].includes(a3.kind)) add(brandOf(a3.institution, a3.name, a3.kind), a3.name, true);
+      for (const x3 of allPayments(plan)) add(brandOf(x3.institution, x3.name, x3.kind), x3.name, false);
+      for (const q2 of ledger?.transactions || []) if (!q2.to && q2.payee && q2.institution !== "none") add(payeeBrand(q2.institution, q2.payee), q2.payee, true);
+      return [...seen2.values()].sort((a3, b2) => !a3.site === !b2.site ? a3.name.localeCompare(b2.name) : a3.site ? -1 : 1);
+    })();
+    const [sites2, setSites] = d2({});
+    const [got, setGot] = d2({});
+    const [wrong, setWrong] = d2({});
+    const [getting, setGetting] = d2([]);
+    const siteOf = (r3) => sites2[r3.key] ?? r3.site;
+    const get = async (r3) => {
+      if (!fetchLogo2 || !siteOf(r3).trim()) return;
+      setGetting((g2) => [...g2, r3.key]);
+      try {
+        const l3 = await fetchLogo2(siteOf(r3));
+        const img = await keptLogo(l3.image);
+        setGot((g2) => ({ ...g2, [r3.key]: { img, from: hostOf(l3.from) } }));
+        setWrong(({ [r3.key]: _3, ...rest }) => rest);
+      } catch (e3) {
+        setWrong((w3) => ({ ...w3, [r3.key]: String(e3?.message || e3) }));
+      }
+      setGetting((g2) => g2.filter((k3) => k3 !== r3.key));
+    };
+    const getAll = async () => {
+      for (const r3 of rows) if (siteOf(r3).trim() && !got[r3.key]) await get(r3);
+    };
+    const ready2 = rows.filter((r3) => siteOf(r3).trim() && !got[r3.key]).length;
+    const submit = (e3) => {
+      e3.preventDefault();
+      const add = Object.fromEntries(Object.entries(got).map(([k3, v3]) => [k3, v3.img]));
+      if (!Object.keys(add).length) {
+        props.close();
+        return;
+      }
+      keep2({ ...plan, logos: { ...plan.logos || {}, ...add } });
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform finlogos", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Logos" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: [
+        "These show initials. ",
+        /* @__PURE__ */ u3("strong", { children: "Get the real logo" }),
+        " asks that company's website for its own icon, from this computer, only when you click; nothing else is sent, and the logo is kept only in your plan."
+      ] }),
+      fetchLogo2 && ready2 > 1 && /* @__PURE__ */ u3("p", { children: /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: getting.length > 0, onClick: getAll, children: getting.length ? "Getting the logos…" : `Get them all (${ready2})` }) }),
+      /* @__PURE__ */ u3("ul", { class: "logolist", children: rows.map((r3) => {
+        const g2 = got[r3.key], busyRow = getting.includes(r3.key);
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3(Mark, { brand: r3.brand, name: r3.name, img: g2?.img, auto: !r3.brand }),
+          /* @__PURE__ */ u3("span", { class: "grow", children: [
+            /* @__PURE__ */ u3("strong", { children: r3.name }),
+            g2 ? /* @__PURE__ */ u3("small", { class: "muted", children: [
+              "From ",
+              g2.from
+            ] }) : wrong[r3.key] ? /* @__PURE__ */ u3("small", { class: "bad", children: wrong[r3.key] }) : !siteOf(r3).trim() ? /* @__PURE__ */ u3("small", { class: "muted", children: "Type its website to get its logo" }) : null
+          ] }),
+          fetchLogo2 && /* @__PURE__ */ u3("input", { value: siteOf(r3), onInput: (e3) => setSites((s3) => ({ ...s3, [r3.key]: e3.target.value })), placeholder: "company.com", "aria-label": `${r3.name}'s website`, spellcheck: false, autocapitalize: "off" }),
+          fetchLogo2 && (g2 ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setGot(({ [r3.key]: _3, ...rest }) => rest), children: "Undo" }) : /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busyRow || !siteOf(r3).trim(), "aria-label": `Get ${r3.name}'s real logo`, onClick: () => get(r3), children: busyRow ? "Getting…" : "Get" }))
+        ] }, r3.key);
+      }) }),
+      !rows.length && /* @__PURE__ */ u3("p", { class: "muted", children: "Every payee and account has a logo already." }),
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
+      }, close: props.close, touched: touched || Object.keys(got).length > 0 })
     ] });
   }
   var categoryIcons = [
@@ -10813,6 +11047,7 @@
       edit?.what === "categories" && /* @__PURE__ */ u3(CategoriesForm, { ...edit }, "c" + edit.n),
       edit?.what === "budgets" && /* @__PURE__ */ u3(BudgetsForm, { ...edit }, "g" + edit.n),
       edit?.what === "import" && /* @__PURE__ */ u3(ImportForm, { ...edit }, "i" + edit.n),
+      edit?.what === "logos" && /* @__PURE__ */ u3(LogosForm, { ...edit }, "l" + edit.n),
       edit?.what === "goal" && /* @__PURE__ */ u3(GoalForm, { ...edit }, "o" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });
@@ -14705,7 +14940,7 @@ ${pays}
       ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
-      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2 }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openTransactions: () => setTab("transactions"), openCalendar: () => setTab("calendar"), phone: phone2 }) })
@@ -14829,7 +15064,7 @@ ${pays}
       investments: phone ? void 0 : { read: readInvestments, running: runs("ghostfolio"), state: invest, ...runs("ghostfolio") ? { add: addInvestment, find: (q2) => go().FinancesFindSymbol(q2) } : {} }
     });
     if (v3) readEachMorning(v3);
-    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    if (editing && v3 && !v3.readOnly) mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
     mountBalances($2("finNav"), v3, (g2) => {
       tab = "worth";
       group = g2;
@@ -14874,6 +15109,7 @@ ${pays}
     }
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
+  var fetchLogo = phone ? void 0 : (site) => go().FinancesFetchLogo(site);
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));
@@ -14911,7 +15147,7 @@ ${pays}
     const v3 = financesData.value;
     if (!v3 || v3.readOnly) return;
     editing = { what: what2, id: id2, kind, n: ++opened };
-    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close: close2 });
+    mountFinanceSheet($2("finSheetBox"), { ...editing, plan: v3.plan, checking: v3.checking, start: v3.start, dues: v3.dues, categories: v3.categories, ledger: ledgerData.value, save, saveLedger, receipts, fetchLogo, fromApps: fromApps(), close: close2 });
     $2("finSheet").hidden = false;
   }
   function close2() {
