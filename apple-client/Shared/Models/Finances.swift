@@ -361,6 +361,27 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     /// Someone outside the household who sends it ("Jamie", for a share of
     /// the mortgage): money in, from none of the household's accounts (main #483).
     let payer: String?
+    /// How often it comes (`finance.Schedule`).
+    var schedule: FinanceSchedule? = nil
+    /// The household's own account it moves money into (savings, a Roth IRA).
+    var to: String? = nil
+
+    enum CodingKeys: String, CodingKey { case id, name, kind, institution, amount, estimate, card, payer, schedule, to }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decodeIfPresent(String.self, forKey: .kind)
+        institution = try c.decodeIfPresent(String.self, forKey: .institution)
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount)
+        estimate = try c.decodeIfPresent(Bool.self, forKey: .estimate)
+        card = try c.decodeIfPresent(String.self, forKey: .card)
+        payer = try c.decodeIfPresent(String.self, forKey: .payer)
+        // Extras: one that doesn't read costs only itself, never the payment.
+        schedule = (try? c.decodeIfPresent(FinanceSchedule.self, forKey: .schedule)) ?? nil
+        to = (try? c.decodeIfPresent(String.self, forKey: .to)) ?? nil
+    }
 
     /// Whether the phone can change its amount. A card payoff's amount
     /// isn't what the rows show (they show what the card owes), so it's
@@ -684,6 +705,9 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let isSplit: Bool
     /// The first part's category, when it's divided: what its mark is coloured by.
     let splitCategory: String?
+    /// Its parts, when it's divided: each part's category and amount, signed
+    /// as the transaction is.
+    let splits: [FinanceSplit]
     var hasReceipt: Bool { receipt != nil }
 
     enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, institution, payment, category, note, to, tags, receipt, splits }
@@ -706,6 +730,11 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         let splits = ((try? c.decodeIfPresent([JSONValue].self, forKey: .splits)) ?? nil) ?? []
         isSplit = !splits.isEmpty
         if case .string(let first)? = splits.first?["category"] { splitCategory = first } else { splitCategory = nil }
+        self.splits = splits.compactMap { part in
+            guard case .number(let amount)? = part["amount"] else { return nil }
+            if case .string(let category)? = part["category"] { return FinanceSplit(category: category, amount: amount) }
+            return FinanceSplit(category: "", amount: amount)
+        }
     }
 
     /// Whether `text` is in the payee, the category, the note or a tag.
@@ -814,9 +843,15 @@ extension FinancesPlanView {
     /// `days` days, then today, oldest first; from each account's kept
     /// balances, as the computer draws its line.
     func netWorthSeries(days: Int) -> [NetWorthPoint] {
+        worthSeries(days: days, of: plan.accounts)
+    }
+
+    /// What some accounts were worth together on each day one of their
+    /// balances was kept, over the last `days`, then today.
+    func worthSeries(days: Int, of accounts: [FinanceAccount]) -> [NetWorthPoint] {
         guard let today else { return [] }
         let from = today.addingTimeInterval(-Double(days) * 86_400)
-        let kept = Set(plan.accounts.flatMap { $0.history.map(\.dateText) })
+        let kept = Set(accounts.flatMap { $0.history.map(\.dateText) })
             .filter { $0 < todayText }
             .compactMap { text -> (String, Date)? in
                 guard let date = LocalDay.parse(text), date >= from else { return nil }
@@ -824,9 +859,9 @@ extension FinancesPlanView {
             }
             .sorted { $0.0 < $1.0 }
         var out = kept.map { pair in
-            NetWorthPoint(date: pair.1, value: plan.accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
+            NetWorthPoint(date: pair.1, value: accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
         }
-        out.append(NetWorthPoint(date: today, value: plan.accounts.reduce(0) { $0 + worth(of: $1) }))
+        out.append(NetWorthPoint(date: today, value: accounts.reduce(0) { $0 + worth(of: $1) }))
         return out
     }
 
@@ -948,4 +983,236 @@ struct BudgetsTotal: Equatable, Sendable {
     /// Spent, as a share of all the budgets, 0 to 1.
     var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
     var isOver: Bool { spent > amount }
+}
+
+// MARK: - Accounts by kind (the Accounts page)
+
+/// Accounts of one sort together, with what they hold (or owe) in all.
+struct AccountGroup: Identifiable, Sendable, Equatable {
+    let title: String
+    let accounts: [FinanceAccount]
+    /// What they hold, or for cards and loans what they owe, as a positive amount.
+    let total: Double
+    let owed: Bool
+    var id: String { title }
+}
+
+extension FinancesPlanView {
+    /// Cash, cards, investments, loans, then property and the rest, each
+    /// sorted by name; a sort with no accounts is left out.
+    var accountGroups: [AccountGroup] {
+        let sorts: [(String, Set<String>, Bool)] = [
+            ("Cash", ["checking", "savings"], false),
+            ("Credit Cards", ["card"], true),
+            ("Investments", ["investment", "retirement"], false),
+            ("Loans", ["loan"], true),
+            ("Property and Other", ["home", "car", "collectible", "other"], false),
+        ]
+        let known = sorts.reduce(into: Set<String>()) { $0.formUnion($1.1) }
+        return sorts.compactMap { title, kinds, owed in
+            let accounts = plan.accounts
+                .filter { kinds.contains($0.kind) || (title == "Property and Other" && !known.contains($0.kind)) }
+                .sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) }
+            guard !accounts.isEmpty else { return nil }
+            return AccountGroup(title: title, accounts: accounts, total: accounts.reduce(0) { $0 + (start[$1.id] ?? 0) }, owed: owed)
+        }
+    }
+
+    /// What the household has, before what it owes.
+    var assets: Double { plan.accounts.filter { !$0.isOwed }.reduce(0) { $0 + (start[$1.id] ?? 0) } }
+    /// What it owes on cards and loans.
+    var liabilities: Double { plan.accounts.filter(\.isOwed).reduce(0) { $0 + (start[$1.id] ?? 0) } }
+}
+
+// MARK: - Recurring (the Recurring page)
+
+/// How often a payment comes (`finance.Schedule`).
+struct FinanceSchedule: Decodable, Sendable, Equatable {
+    /// once, week, 2 weeks, twice a month, month, 3 months, year, paycheck.
+    let every: String
+    let start: String?
+
+    /// "Monthly", "Every 2 weeks", "Each paycheck".
+    var words: String {
+        switch every {
+        case "week": "Weekly"
+        case "2 weeks": "Every 2 weeks"
+        case "twice a month": "Twice a month"
+        case "month": "Monthly"
+        case "3 months": "Every 3 months"
+        case "year": "Yearly"
+        case "paycheck": "Each paycheck"
+        case "once": "Once"
+        default: every.capitalized
+        }
+    }
+
+    /// How many times a month it comes, on average; nil when it can't be
+    /// said (once, or with each paycheck, whose count varies).
+    var perMonth: Double? {
+        switch every {
+        case "week": 52.0 / 12
+        case "2 weeks": 26.0 / 12
+        case "twice a month": 2
+        case "month": 1
+        case "3 months": 1.0 / 3
+        case "year": 1.0 / 12
+        default: nil
+        }
+    }
+}
+
+/// A payment that repeats, with when it next comes and about what it costs a month.
+struct RecurringItem: Identifiable, Sendable, Equatable {
+    enum Sort: Int, Sendable, CaseIterable {
+        case moneyIn, subscriptions, bills, cards, savings
+
+        var title: String {
+            switch self {
+            case .moneyIn: "Coming In"
+            case .subscriptions: "Subscriptions"
+            case .bills: "Bills"
+            case .cards: "Card Payments"
+            case .savings: "Savings and Transfers"
+            }
+        }
+    }
+
+    let payment: FinancePayment
+    let sort: Sort
+    /// When it next comes, from the pay periods ahead; nil past them.
+    let next: Date?
+    /// About what it costs (or brings in) a month; nil when that can't be said.
+    let monthly: Double?
+    var id: String { payment.id }
+}
+
+extension FinancesPlanView {
+    /// Every payment that repeats (not one-offs), in sorts: money in,
+    /// subscriptions, bills, card payments, then savings and transfers,
+    /// each soonest first.
+    var recurring: [RecurringItem] {
+        let today = todayText
+        var nextOf: [String: Date] = [:]
+        for period in periods {
+            for row in period.rows where (row.dateText ?? "") >= today && nextOf[row.payment] == nil {
+                if let date = row.date { nextOf[row.payment] = date }
+            }
+        }
+        let items = plan.payments.compactMap { p -> RecurringItem? in
+            guard let schedule = p.schedule, schedule.every != "once" else { return nil }
+            let sort: RecurringItem.Sort =
+                !(p.payer ?? "").isEmpty ? .moneyIn
+                : !(p.card ?? "").isEmpty ? .cards
+                : !(p.to ?? "").isEmpty ? .savings
+                : (p.kind == "subscriptions" || p.kind == "subscription") ? .subscriptions
+                : .bills
+            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.perMonth.flatMap { f in p.amount.map { $0 * f } } : nil
+            return RecurringItem(payment: p, sort: sort, next: nextOf[p.id], monthly: monthly)
+        }
+        return items.sorted {
+            if $0.sort != $1.sort { return $0.sort.rawValue < $1.sort.rawValue }
+            switch ($0.next, $1.next) {
+            case let (a?, b?) where a != b: return a < b
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: return $0.payment.name.localizedLowercase < $1.payment.name.localizedLowercase
+            }
+        }
+    }
+
+    /// About what the bills and subscriptions cost a month, all told (not
+    /// money in, card payoffs, or moving money to the household's own accounts).
+    var recurringPerMonth: Double {
+        recurring.filter { $0.sort == .bills || $0.sort == .subscriptions }.reduce(0) { $0 + ($1.monthly ?? 0) }
+    }
+}
+
+// MARK: - Spending (the Spending page)
+
+/// One part of a divided transaction.
+struct FinanceSplit: Sendable, Equatable {
+    let category: String
+    let amount: Double
+}
+
+/// What went to one category in a month.
+struct SpendingCategory: Identifiable, Sendable, Equatable {
+    /// The category, or its parent when it has one: "Uncategorized" for none.
+    let name: String
+    let spent: Double
+    var id: String { name }
+}
+
+/// All that was spent in one month.
+struct SpendingMonth: Identifiable, Sendable, Equatable {
+    /// The month's first day.
+    let month: Date
+    let total: Double
+    var id: Date { month }
+}
+
+/// What was spent, from the ledger as it is: money out by category,
+/// refunds netted against their category, never money moved between the
+/// household's own accounts nor money coming in (an income category, or a
+/// category that only took money in).
+enum Spending {
+    static let uncategorized = "Uncategorized"
+
+    /// What each category took in the month holding `month`, largest first.
+    static func byCategory(_ transactions: [FinanceTransaction], in month: Date, categories: [FinanceCategory],
+                           calendar: Calendar = .current) -> [SpendingCategory] {
+        guard let range = calendar.dateInterval(of: .month, for: month) else { return [] }
+        var net: [String: Double] = [:]
+        for t in transactions where (t.to ?? "").isEmpty {
+            guard let date = t.date, range.contains(date) else { continue }
+            let parts = t.splits.isEmpty ? [FinanceSplit(category: t.category, amount: t.amount)] : t.splits
+            for part in parts {
+                let name = top(part.category, in: categories)
+                if isIncome(name, in: categories) { continue }
+                net[name, default: 0] -= part.amount
+            }
+        }
+        return net.filter { $0.value >= 0.005 }
+            .map { SpendingCategory(name: $0.key, spent: $0.value) }
+            .sorted { $0.spent != $1.spent ? $0.spent > $1.spent : $0.name < $1.name }
+    }
+
+    /// The `count` months up to the one holding `month`, oldest first.
+    static func months(_ transactions: [FinanceTransaction], ending month: Date, count: Int, categories: [FinanceCategory],
+                       calendar: Calendar = .current) -> [SpendingMonth] {
+        guard let last = calendar.dateInterval(of: .month, for: month)?.start else { return [] }
+        return (0..<max(count, 0)).reversed().compactMap { back in
+            guard let start = calendar.date(byAdding: .month, value: -back, to: last) else { return nil }
+            let total = byCategory(transactions, in: start, categories: categories, calendar: calendar).reduce(0) { $0 + $1.spent }
+            return SpendingMonth(month: start, total: total)
+        }
+    }
+
+    /// The transactions that went to `category` (or one under it) in the month holding `month`, newest first.
+    static func transactions(_ transactions: [FinanceTransaction], in category: String, month: Date, categories: [FinanceCategory],
+                             calendar: Calendar = .current) -> [FinanceTransaction] {
+        guard let range = calendar.dateInterval(of: .month, for: month) else { return [] }
+        return transactions.filter { t in
+            guard (t.to ?? "").isEmpty, let date = t.date, range.contains(date) else { return false }
+            let names = t.splits.isEmpty ? [t.category] : t.splits.map(\.category)
+            return names.contains { top($0, in: categories) == category }
+        }
+        .sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
+    }
+
+    /// A category's top: its parent when it has one.
+    static func top(_ name: String, in categories: [FinanceCategory]) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return uncategorized }
+        if let c = categories.first(where: { $0.name.lowercased() == trimmed.lowercased() }), let parent = c.parent, !parent.isEmpty {
+            return parent
+        }
+        return trimmed
+    }
+
+    private static func isIncome(_ name: String, in categories: [FinanceCategory]) -> Bool {
+        if let c = categories.first(where: { $0.name.lowercased() == name.lowercased() }) { return c.income ?? false }
+        return name.lowercased() == "income"
+    }
 }

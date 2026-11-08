@@ -326,6 +326,13 @@ extension LogoCircle {
         self.init(content: logos.mark(brand: brand, kind: nil, name: payee, auto: institution != "none"), size: size)
     }
 
+    /// A payment's logo: its brand's (picked, or in its name), else its kind's icon.
+    init(payment: FinancePayment, size: CGFloat = Design.logoInList) {
+        let logos = PayeeLogos.shared
+        let brand = logos.brandOf(institution: payment.institution, name: payment.name, kind: payment.kind)
+        self.init(content: logos.mark(brand: brand, kind: payment.kind, name: payment.name), size: size)
+    }
+
     /// An account's logo: its bank's (picked, or in its name), else its kind's icon.
     init(account: FinanceAccount, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared
@@ -504,4 +511,97 @@ enum TileColour {
     static let teal = Color(light: 0x0E7490, dark: 0x30B0C7)
     static let grey = Color(light: 0x6E6E73, dark: 0x8E8E93)
     static let purple = Color(light: 0x8944AB, dark: 0xBF5AF2)
+}
+
+// MARK: - Zoom
+
+extension View {
+    /// Where a zoom into a page starts (iOS 18): the row or card tapped.
+    @ViewBuilder
+    func zoomSource(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18, macOS 15, *) {
+            matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
+        }
+    }
+
+    /// A page that grows out of what was tapped, as Wallet opens a card (iOS 18);
+    /// a plain push before that, and on the Mac.
+    @ViewBuilder
+    func zoomTransition(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        #if os(iOS)
+        if #available(iOS 18, *) {
+            navigationTransition(.zoom(sourceID: id, in: namespace))
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+}
+
+// MARK: - Loading
+
+/// While a page reads: the shapes of its cards in soft grey, with a light
+/// passing over them, in place of a spinner; still when Reduce Motion is on.
+struct SkeletonCards: View {
+    /// A Wallet card first (Finances' home), or cards only.
+    var walletCard = true
+    @State private var phase: CGFloat = -0.6
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        shapes
+            .overlay {
+                GeometryReader { geo in
+                    LinearGradient(colors: [.clear, Color.white.opacity(0.5), .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: geo.size.width * 0.5)
+                        .offset(x: phase * geo.size.width * 1.4)
+                }
+                .mask(shapes)
+                .allowsHitTesting(false)
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) { phase = 1 }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Reading")
+    }
+
+    private var shapes: some View {
+        VStack(spacing: 14) {
+            if walletCard {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Color(light: 0xDCE0EF, dark: 0x262A3A))
+                    .frame(height: 168)
+                card(height: 62, lines: [0.5])
+            }
+            card(height: 230, lines: [0.3, 0.6, 0.45])
+            HStack(spacing: 12) {
+                card(height: 112, lines: [0.5, 0.7])
+                card(height: 112, lines: [0.4, 0.6])
+            }
+            card(height: 200, lines: [0.35, 0.8, 0.7, 0.75])
+        }
+    }
+
+    private func card(height: CGFloat, lines: [CGFloat]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ForEach(Array(lines.enumerated()), id: \.offset) { i, width in
+                GeometryReader { geo in
+                    Capsule()
+                        .fill(Color(light: 0xECEAE5, dark: 0x2C2838))
+                        .frame(width: geo.size.width * width)
+                }
+                .frame(height: i == 1 ? 22 : 11)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
 }

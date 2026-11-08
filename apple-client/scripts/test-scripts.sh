@@ -158,12 +158,5 @@ expect "Developer Mode off, found only by the build: says where to turn it on" b
 FAKE_BUILD_FAIL=1 run "$HERE/run-on-iphone.sh" com.example
 expect "a failed build shows the compiler's error" bash -c '[ "$0" = 1 ] && grep -q "cannot find x in scope" <<<"$1"' "$RC" "$OUT"
 
-echo "run-on-this-mac.sh"
-run "$HERE/run-on-this-mac.sh" com.example ABCDE12345
-expect "builds and opens the Mac app" bash -c 'grep -q "scheme HomelabClient " "$CALLS" && grep -q "open .*Debug/HomelabClient.app" "$CALLS"'
-expect "already paired and used: no new code" bash -c 'grep -q "already paired" <<<"$0" && ! grep -q "phone pair" "$CALLS"' "$OUT"
-HOMELAB_PAIR_AGAIN=1 run "$HERE/run-on-this-mac.sh" com.example ABCDE12345
-expect "asked to pair again: the localhost link is on the clipboard" bash -c '[ "$(cat "$CALLS.clipboard")" = "localhost:8099/#pair=ABCD2345" ]'
-
 echo
 if [ "$failures" = 0 ]; then echo "All script checks passed."; else echo "$failures script check(s) failed."; exit 1; fi

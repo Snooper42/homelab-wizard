@@ -2,107 +2,67 @@ import Charts
 import PhotosUI
 import SwiftUI
 
-/// Finances' home, as the owner chose it: checking now and after the next
-/// paycheck, net worth with its line, then a list as Settings has one, each
-/// part of Finances one tap away (Transactions, Budgets, Bills,
-/// Investments, Accounts, Goals, Loans). Amounts stay hidden until Show
-/// Amounts, and none show at all while Hide amounts is on at the computer.
+/// Finances' home, as cards: checking as a Wallet card with what it is
+/// after the next paycheck, net worth with a line to run a finger along,
+/// what's left to spend and the next bill side by side, the latest
+/// transactions, the bills coming, and the rest of Finances one tap away.
+/// Amounts stay hidden until Show Amounts, and none show at all while Hide
+/// amounts is on at the computer.
 struct FinancesView: View {
     @Bindable var finances: FinancesViewModel
 
     var body: some View {
-        Form {
+        ScrollView {
             if let view = finances.plan {
-                if let now = view.checkingNow { CheckingSection(now: now, view: view, finances: finances) }
-                NetWorthSection(view: view, finances: finances)
-                Section {
-                    NavigationLink {
-                        TransactionsView(finances: finances)
-                    } label: {
-                        IconTileLabel(title: "Transactions", systemImage: "list.bullet", tint: Theme.accent)
-                    }
-                    if !view.budgets.isEmpty {
-                        NavigationLink {
-                            FinanceBudgetsPage(finances: finances)
-                        } label: {
-                            IconTileLabel(title: "Budgets", systemImage: "chart.pie.fill", tint: Color(light: 0xC2410C, dark: 0xE8590C)) {
-                                HStack(spacing: 3) {
-                                    Money(value: view.budgets.reduce(0) { $0 + max($1.left, 0) }, currency: view.plan.currency, finances: finances)
-                                    Text("left")
-                                }
-                            }
-                        }
-                    }
-                    if !view.periods.isEmpty || !view.since.isEmpty {
-                        NavigationLink {
-                            FinanceBillsPage(finances: finances)
-                        } label: {
-                            IconTileLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger) {
-                                if let next = Self.nextBill(view) {
-                                    Text(verbatim: next)
-                                }
-                            }
-                        }
-                    }
-                    if view.investments != nil || finances.canEdit {
-                        NavigationLink {
-                            FinanceInvestmentsPage(finances: finances)
-                        } label: {
-                            IconTileLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
-                                if let investments = view.investments {
-                                    Money(value: investments.total, currency: view.plan.currency, finances: finances)
-                                }
-                            }
-                        }
-                    }
-                    NavigationLink {
-                        FinanceAccountsPage(finances: finances)
-                    } label: {
-                        IconTileLabel(title: "Accounts", systemImage: "building.columns.fill", tint: Theme.info) {
-                            Text("\(view.plan.accounts.count)")
-                        }
-                    }
-                    if !view.goals.isEmpty {
-                        NavigationLink {
-                            FinanceGoalsPage(finances: finances)
-                        } label: {
-                            IconTileLabel(title: "Goals", systemImage: "flag.fill", tint: Color(light: 0x0F766E, dark: 0x14B8A6)) {
-                                Text("\(view.goals.count)")
-                            }
-                        }
-                    }
-                    if !view.loans.isEmpty {
-                        NavigationLink {
-                            FinanceLoansPage(finances: finances)
-                        } label: {
-                            IconTileLabel(title: "Loans", systemImage: "arrow.uturn.backward", tint: Color(light: 0x6E6E73, dark: 0x8E8E93)) {
-                                Text("\(view.loans.count)")
-                            }
-                        }
-                    }
-                } footer: {
+                VStack(spacing: 18) {
+                    if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    NetWorthCard(view: view, finances: finances)
+                    GlanceTiles(view: view, finances: finances)
+                    RecentTransactionsCard(view: view, finances: finances)
+                    UpcomingBillsCard(view: view, finances: finances)
+                    MoreFinancesCard(view: view, finances: finances)
                     Text(finances.canEdit
-                         ? "Balances, the cushion, budgets, goals and what a payment costs can be changed on their pages, and transactions added. Change the rest of the plan on the computer."
+                         ? "Balances, the cushion, budgets, goals and what a payment costs change on their pages. The rest of the plan is on the computer."
                          : "Read-only on this device. Change the plan on the computer.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+                .padding(.bottom, 28)
             } else if let error = finances.planError {
-                Section { Text(error).foregroundStyle(.secondary) }
+                ContentUnavailableView("Couldn't Read Finances", systemImage: "banknote", description: Text(verbatim: error))
+                    .padding(.top, 80)
+            } else if finances.canSeePlan {
+                // The cards' shapes while the plan is read, not a spinner.
+                SkeletonCards()
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .transition(.opacity)
             }
         }
-        .formStyle(.grouped)
-        .themedCanvas()
+        .background(Theme.canvas.ignoresSafeArea())
+        .animation(.smooth(duration: 0.3), value: finances.plan == nil)
         .overlay {
             if !finances.canSeePlan {
                 ContentUnavailableView("Finances Aren't on This Device", systemImage: "banknote",
                                        description: Text("On the computer, Settings › Phones, let this device see Finances."))
-            } else if finances.plan == nil, finances.planError == nil {
-                ProgressView("Reading the plan…")
             }
         }
         // Again once the device's level is known: right after unlock it may not be yet.
         .task(id: finances.canSeePlan) { await finances.loadPlan() }
-        .refreshable { await finances.loadPlan() }
+        // The latest transactions, once there's a plan to show them with.
+        .task(id: finances.plan == nil) {
+            if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }
+        }
+        .refreshable {
+            await finances.loadPlan()
+            await finances.loadLedger()
+        }
         .sensoryFeedback(.success, trigger: finances.savedCount)
+        .animation(.smooth, value: finances.amountsShown)
         .navigationTitle("Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -113,6 +73,7 @@ struct FinancesView: View {
                         Label(finances.amountsShown ? "Hide Amounts" : "Show Amounts",
                               systemImage: finances.amountsShown ? "eye.slash" : "eye")
                     }
+                    .sensoryFeedback(.selection, trigger: finances.amountsShown)
                 }
             }
             if finances.canEdit {
@@ -135,65 +96,554 @@ struct FinancesView: View {
     /// The next bill to come out, and when: "Netflix on Friday". Not money
     /// moved between the household's own accounts, nor money coming in.
     nonisolated static func nextBill(_ view: FinancesPlanView) -> String? {
+        guard let row = upcomingBills(view, limit: 1).first, let name = view.paymentTitle(row.payment) else { return nil }
+        if row.dateText == view.todayText { return "\(name) today" }
+        guard let date = row.date else { return name }
+        return "\(name) on \(date.formatted(.dateTime.weekday(.wide)))"
+    }
+
+    /// The bills still to come, soonest first: not money moved between the
+    /// household's own accounts, nor money coming in, nor a payment the
+    /// plan no longer has.
+    nonisolated static func upcomingBills(_ view: FinancesPlanView, limit: Int) -> [FinanceRow] {
+        var out: [FinanceRow] = []
         let today = view.todayText
         for period in view.periods {
             for row in period.rows where !row.outside && !row.into && row.amount > 0 && (row.dateText ?? "") >= today {
-                guard let name = view.paymentTitle(row.payment) else { continue }
-                if row.dateText == today { return "\(name) today" }
-                guard let date = row.date else { return name }
-                return "\(name) on \(date.formatted(.dateTime.weekday(.wide)))"
+                guard view.paymentTitle(row.payment) != nil else { continue }
+                out.append(row)
+                if out.count >= limit { return out }
             }
         }
-        return nil
+        return out
     }
 }
 
-/// Net worth today, how it moved this month, and its line over the last
-/// three months, from each account's kept balances.
-private struct NetWorthSection: View {
+/// An amount as a card's text: "••••" while amounts are hidden.
+@MainActor
+private func amountText(_ value: Double, _ currency: String, _ finances: FinancesViewModel, whole: Bool = false) -> String {
+    if finances.amountsHiddenByPlan || !finances.amountsShown { return "••••" }
+    let style = FloatingPointFormatStyle<Double>.Currency(code: currency)
+    return whole ? value.formatted(style.precision(.fractionLength(0))) : value.formatted(style)
+}
+
+/// A card's heading: its name, and a link or a note on the right.
+private struct CardHeading<Trailing: View>: View {
+    let title: LocalizedStringKey
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.title3.weight(.bold))
+                .foregroundStyle(Theme.ink)
+            Spacer(minLength: 8)
+            trailing()
+                .font(.subheadline.weight(.semibold))
+        }
+    }
+}
+
+extension CardHeading where Trailing == EmptyView {
+    init(_ title: LocalizedStringKey) { self.init(title: title) { EmptyView() } }
+}
+
+/// "See All" on a card, in the accent.
+private struct SeeAll: View {
+    var body: some View {
+        HStack(spacing: 3) {
+            Text("See All")
+            Image(systemName: "chevron.right").font(.caption.weight(.bold))
+        }
+        .foregroundStyle(Theme.accent)
+    }
+}
+
+/// Checking, as the computer's Dashboard starts with it (main #482): a
+/// Wallet card with its balance now, and under it checking once the next
+/// paycheck lands. Each opens how it adds up, row by row.
+private struct CheckingHero: View {
+    let now: FinanceWorking
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @Namespace private var zoom
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let account = view.plan.accounts.first { $0.id == view.checking }
+        let logos = PayeeLogos.shared
+        let brand = account.flatMap { logos.brandOf(institution: $0.institution, name: $0.name, kind: $0.kind) }
+        let caption = now.typedSameDay ? "Now, as typed in today" : "Now, typed in \(Self.short(now.from))"
+        VStack(spacing: 10) {
+            NavigationLink {
+                CheckingWorkingView(working: now, view: view, finances: finances, title: caption,
+                                    start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
+                    .zoomTransition(id: "checking", in: zoom)
+            } label: {
+                WalletCard(title: account?.name ?? "Checking",
+                           amount: amountText(now.result, view.plan.currency, finances),
+                           detail: caption,
+                           style: .checking,
+                           mark: brand.flatMap { logos.brandsByKey[$0] }.map { LogoContent.brand($0) })
+                    .zoomSource(id: "checking", in: zoom)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .accessibilityHint("How it adds up")
+            if let pay = view.afterPay {
+                let whose = view.nextPay.map { view.names($0.people) } ?? ""
+                let count = view.paydayPayments
+                let title = "After \(whose.isEmpty ? "the next" : whose + "'s") paycheck"
+                NavigationLink {
+                    CheckingWorkingView(working: pay, view: view, finances: finances, title: "\(title), \(Self.short(pay.date))",
+                                        start: "Checking now", end: "Once the paycheck is in, \(Self.long(pay.date))",
+                                        note: count == 0 ? nil
+                                            : count == 1
+                                            ? "One payment due \(Self.short(pay.date)) comes out of this paycheck after it lands, so it isn't in this number."
+                                            : "\(count) payments due \(Self.short(pay.date)) come out of this paycheck after it lands, so they aren't in this number.")
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "arrow.down.to.line.circle.fill")
+                            .font(.system(size: 28))
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Theme.success)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: title)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
+                                .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.8)
+                            Text(verbatim: Self.long(pay.date))
+                                .font(.caption)
+                                .foregroundStyle(Theme.secondaryInk)
+                        }
+                        Spacer(minLength: 8)
+                        Money(value: pay.result, currency: view.plan.currency, finances: finances)
+                            .font(.headline)
+                            .foregroundStyle(pay.result < 0 ? Theme.danger : Theme.ink)
+                            .contentTransition(.numericText())
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .card()
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+        }
+    }
+
+    /// "Nov 14", or "a day" when the computer sent none.
+    static func short(_ date: Date?) -> String {
+        date?.formatted(.dateTime.month(.abbreviated).day()) ?? "a day"
+    }
+
+    /// "Friday, November 14".
+    static func long(_ date: Date?) -> String {
+        date?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? "a day"
+    }
+}
+
+/// How far back net worth's line goes.
+enum NetWorthRange: Int, CaseIterable, Identifiable, Sendable {
+    case month = 31
+    case threeMonths = 92
+    case year = 366
+
+    var id: Int { rawValue }
+    var label: String {
+        switch self {
+        case .month: "1M"
+        case .threeMonths: "3M"
+        case .year: "1Y"
+        }
+    }
+    var words: String {
+        switch self {
+        case .month: "past month"
+        case .threeMonths: "past 3 months"
+        case .year: "past year"
+        }
+    }
+}
+
+/// Net worth today and how it moved, with its line from each account's
+/// kept balances: a finger on the line reads the day under it.
+private struct NetWorthCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @State private var range: NetWorthRange = .threeMonths
+    @State private var picked: Date?
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        let series = view.netWorthSeries(days: range.rawValue)
+        let point = TrendChart.point(in: series, at: picked)
+        let change = series.count >= 2 ? (series.last?.value ?? 0) - (series.first?.value ?? 0) : nil
+        VStack(alignment: .leading, spacing: 0) {
+            NavigationLink {
+                FinanceAccountsPage(finances: finances)
+            } label: {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) } ?? "Net worth")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.secondaryInk)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    Text(verbatim: amountText(point?.value ?? view.netWorth, view.plan.currency, finances))
+                        .font(.system(size: 34, weight: .heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
+                        .contentTransition(.numericText())
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                    if shown, let change, abs(change) >= 0.5, point == nil {
+                        HStack(spacing: 4) {
+                            Image(systemName: change >= 0 ? "arrow.up.right" : "arrow.down.right")
+                                .font(.caption.weight(.bold))
+                            Text(verbatim: amountText(abs(change), view.plan.currency, finances, whole: true))
+                            Text(verbatim: range.words)
+                                .foregroundStyle(Theme.secondaryInk)
+                                .fontWeight(.regular)
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(change >= 0 ? Theme.success : Theme.danger)
+                        .contentTransition(.numericText())
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableButtonStyle())
+            .padding(.horizontal, 18)
+            .padding(.top, 18)
+            // The line and its range sit outside the link, so a finger on the line reads it.
+            if shown {
+                VStack(spacing: 12) {
+                    if series.count >= 2 {
+                        TrendChart(series: series, picked: $picked)
+                            .frame(height: 120)
+                            .padding(.horizontal, 6)
+                    }
+                    RangePicker(range: $range)
+                        .padding(.horizontal, 18)
+                }
+                .padding(.top, series.count >= 2 ? 10 : 14)
+                .padding(.bottom, 16)
+            } else {
+                Spacer().frame(height: 18)
+            }
+        }
+        .card(radius: 24)
+        .animation(.smooth(duration: 0.35), value: range)
+    }
+}
+
+/// What's left to spend and the next bill, side by side.
+private struct GlanceTiles: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        let next = FinancesView.upcomingBills(view, limit: 1).first
+        // Side by side, or one above the other at the largest text sizes.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        if !view.budgets.isEmpty || next != nil {
+            layout {
+                if !view.budgets.isEmpty {
+                    let total = BudgetsTotal(view.budgets, today: view.today)
+                    NavigationLink {
+                        FinanceBudgetsPage(finances: finances)
+                    } label: {
+                        tile(title: total.isOver ? "Over budget" : "Left to spend", systemImage: "chart.pie.fill",
+                             tint: total.isOver ? Theme.danger : Color(light: 0xC2410C, dark: 0xF07B3F)) {
+                            Text(verbatim: amountText(abs(total.left), view.plan.currency, finances, whole: true))
+                                .font(.title2.weight(.heavy))
+                                .monospacedDigit()
+                                .foregroundStyle(total.isOver ? Theme.danger : Theme.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                                .contentTransition(.numericText())
+                            ProgressView(value: total.share)
+                                .tint(total.isOver ? Theme.danger : Theme.accent)
+                                .padding(.top, 2)
+                        }
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+                if let next, let name = view.paymentTitle(next.payment) {
+                    NavigationLink {
+                        FinanceBillsPage(finances: finances)
+                    } label: {
+                        tile(title: "Next bill", systemImage: "calendar", tint: Theme.danger) {
+                            HStack(spacing: 8) {
+                                if let payment = view.payment(next.payment) {
+                                    LogoCircle(payment: payment, size: 30)
+                                }
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(verbatim: name)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(Theme.ink)
+                                        .lineLimit(1)
+                                    Text(verbatim: Self.when(next, view))
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.secondaryInk)
+                                        .lineLimit(1)
+                                }
+                            }
+                            Text(verbatim: amountText(next.amount, view.plan.currency, finances))
+                                .font(.headline)
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.ink)
+                                .contentTransition(.numericText())
+                        }
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+            }
+        }
+    }
+
+    /// "Today", "Tomorrow", else "Fri, Nov 14".
+    static func when(_ row: FinanceRow, _ view: FinancesPlanView) -> String {
+        if row.dateText == view.todayText { return "Today" }
+        if let date = row.date, let today = view.today, let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today),
+           Calendar.current.isDate(date, inSameDayAs: tomorrow) { return "Tomorrow" }
+        return row.date?.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()) ?? ""
+    }
+
+    private func tile<Content: View>(title: LocalizedStringKey, systemImage: String, tint: Color, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: systemImage)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(tint, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .accessibilityHidden(true)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            content()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .topLeading)
+        .card(radius: 20)
+        .contentShape(Rectangle())
+    }
+}
+
+/// The latest transactions, as Wallet lists them; See All opens them all.
+private struct RecentTransactionsCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @Namespace private var zoom
+
+    var body: some View {
+        let latest = Array((finances.ledger?.newestFirst ?? []).prefix(4))
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                NavigationLink {
+                    TransactionsView(finances: finances)
+                } label: {
+                    Text("Transactions")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                if finances.newTransactionCount > 0 {
+                    // New ones go to the inbox.
+                    NavigationLink {
+                        ReviewInboxPage(finances: finances)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("\(finances.newTransactionCount) to review")
+                            Image(systemName: "chevron.right").font(.caption.weight(.bold))
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Theme.accent, in: Capsule())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                } else {
+                    NavigationLink {
+                        TransactionsView(finances: finances)
+                    } label: {
+                        SeeAll().font(.subheadline.weight(.semibold))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.bottom, 6)
+            if finances.ledger == nil {
+                HStack {
+                    Spacer()
+                    if finances.ledgerError == nil { ProgressView() } else { Text("Couldn't read the transactions.").foregroundStyle(Theme.secondaryInk) }
+                    Spacer()
+                }
+                .padding(.vertical, 16)
+            } else if latest.isEmpty {
+                Text("No transactions yet.")
+                    .foregroundStyle(Theme.secondaryInk)
+                    .padding(.vertical, 12)
+            }
+            ForEach(Array(latest.enumerated()), id: \.element.id) { i, t in
+                if i > 0 { Divider().padding(.leading, 58) }
+                NavigationLink {
+                    TransactionDetailView(transaction: t, finances: finances)
+                        .zoomTransition(id: t.id, in: zoom)
+                } label: {
+                    WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t))
+                        .contentShape(Rectangle())
+                        .zoomSource(id: t.id, in: zoom)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(16)
+        .card(radius: 24)
+    }
+}
+
+/// The next bills to come out, each with its logo, day and amount.
+private struct UpcomingBillsCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
 
     var body: some View {
-        let series = view.netWorthSeries(days: 92)
-        Section {
+        let rows = FinancesView.upcomingBills(view, limit: 4)
+        if !rows.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Net worth")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if let month = view.netWorthThisMonth, abs(month) >= 0.5, finances.amountsShown, !finances.amountsHiddenByPlan {
-                        Text("\(month >= 0 ? "+" : "−")\(abs(month), format: .currency(code: view.plan.currency).precision(.fractionLength(0))) this month")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(month >= 0 ? Theme.success : Theme.danger)
-                    }
+                NavigationLink {
+                    FinanceBillsPage(finances: finances)
+                } label: {
+                    CardHeading(title: "Coming Up") { SeeAll() }
+                        .contentShape(Rectangle())
                 }
-                Money(value: view.netWorth, currency: view.plan.currency, finances: finances)
-                    .font(.title2.weight(.bold))
-                if series.count >= 2, finances.amountsShown, !finances.amountsHiddenByPlan {
-                    Chart {
-                        ForEach(series, id: \.date) { point in
-                            AreaMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
-                                .foregroundStyle(LinearGradient(colors: [Theme.accent.opacity(0.25), Theme.accent.opacity(0)],
-                                                                startPoint: .top, endPoint: .bottom))
-                                .interpolationMethod(.monotone)
-                            LineMark(x: .value("Day", point.date), y: .value("Net worth", point.value))
-                                .foregroundStyle(Theme.accent)
-                                .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round))
-                                .interpolationMethod(.monotone)
+                .buttonStyle(.plain)
+                .padding(.bottom, 6)
+                ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
+                    if i > 0 { Divider().padding(.leading, 52) }
+                    HStack(spacing: 12) {
+                        if let payment = view.payment(row.payment) {
+                            LogoCircle(payment: payment, size: 40)
                         }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: view.paymentTitle(row.payment) ?? "Payment")
+                                .font(.body.weight(.medium))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                            Text(verbatim: GlanceTiles.when(row, view))
+                                .font(.caption)
+                                .foregroundStyle(row.late ? Theme.danger : Theme.secondaryInk)
+                        }
+                        Spacer(minLength: 8)
+                        HStack(spacing: 2) {
+                            if row.estimate { Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk).accessibilityLabel("About") }
+                            Text(verbatim: amountText(row.amount, view.plan.currency, finances))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.ink)
+                        }
+                        .font(.body.weight(.semibold))
                     }
-                    .chartXAxis(.hidden)
-                    .chartYAxis(.hidden)
-                    .chartYScale(domain: .automatic(includesZero: false))
-                    .frame(height: 64)
-                    .padding(.top, 4)
-                    .accessibilityLabel("Net worth over the last three months")
+                    .padding(.vertical, 6)
+                    .accessibilityElement(children: .combine)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(16)
+            .card(radius: 24)
         }
+    }
+}
+
+/// The rest of Finances, a row each, as Settings lists its parts.
+private struct MoreFinancesCard: View {
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    var body: some View {
+        VStack(spacing: 0) {
+            row { FinanceSpendingPage(finances: finances) } label: {
+                IconTileLabel(title: "Spending", systemImage: "chart.pie.fill", tint: Color(light: 0x0F9D8A, dark: 0x2EC4B0))
+            }
+            if !view.budgets.isEmpty {
+                row { FinanceBudgetsPage(finances: finances) } label: {
+                    IconTileLabel(title: "Budgets", systemImage: "gauge.with.dots.needle.67percent", tint: Color(light: 0xC2410C, dark: 0xF07B3F))
+                }
+            }
+            if !view.periods.isEmpty || !view.since.isEmpty {
+                row { FinanceBillsPage(finances: finances) } label: {
+                    IconTileLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger)
+                }
+            }
+            if !view.recurring.isEmpty {
+                row { FinanceRecurringPage(finances: finances) } label: {
+                    IconTileLabel(title: "Recurring", systemImage: "repeat", tint: Color(light: 0x7C3AED, dark: 0xA78BFA)) {
+                        Text(verbatim: "≈ \(amountText(view.recurringPerMonth, view.plan.currency, finances, whole: true))/mo")
+                            .monospacedDigit()
+                    }
+                }
+            }
+            if view.investments != nil || finances.canEdit {
+                row { FinanceInvestmentsPage(finances: finances) } label: {
+                    IconTileLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
+                        if let investments = view.investments {
+                            Text(verbatim: amountText(investments.total, view.plan.currency, finances, whole: true))
+                                .monospacedDigit()
+                        }
+                    }
+                }
+            }
+            row { FinanceAccountsPage(finances: finances) } label: {
+                IconTileLabel(title: "Accounts", systemImage: "building.columns.fill", tint: Theme.info) {
+                    Text("\(view.plan.accounts.count)")
+                }
+            }
+            if !view.goals.isEmpty {
+                row { FinanceGoalsPage(finances: finances) } label: {
+                    IconTileLabel(title: "Goals", systemImage: "flag.fill", tint: Color(light: 0x0F766E, dark: 0x14B8A6)) {
+                        Text("\(view.goals.count)")
+                    }
+                }
+            }
+            if !view.loans.isEmpty {
+                row { FinanceLoansPage(finances: finances) } label: {
+                    IconTileLabel(title: "Loans", systemImage: "arrow.uturn.backward", tint: Color(light: 0x6E6E73, dark: 0x8E8E93)) {
+                        Text("\(view.loans.count)")
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 6)
+        .card(radius: 24)
+    }
+
+    private func row<Destination: View, Label: View>(@ViewBuilder _ destination: @escaping () -> Destination, @ViewBuilder label: () -> Label) -> some View {
+        NavigationLink(destination: destination) {
+            HStack(spacing: 8) {
+                label()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -215,8 +665,8 @@ private struct FinanceBudgetsPage: View {
                             .foregroundStyle(total.isOver ? Theme.danger : .secondary)
                         Money(value: abs(total.left), currency: view.plan.currency, finances: finances)
                             .font(.largeTitle.weight(.bold))
-                        ProgressView(value: total.share)
-                            .tint(total.isOver ? Theme.danger : Theme.accent)
+                        BudgetBar(share: total.share, tint: total.isOver ? Theme.danger : Theme.accent)
+                            .padding(.vertical, 2)
                         HStack(spacing: 4) {
                             Money(value: total.spent, currency: view.plan.currency, finances: finances)
                             Text("of")
@@ -270,22 +720,53 @@ private struct FinanceBudgetsPage: View {
     }
 
     private func budgetRow(_ budget: FinanceBudget, _ view: FinancesPlanView) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(budget.category)
-                Spacer()
-                Money(value: budget.spent, currency: view.plan.currency, finances: finances)
-                Text(verbatim: "/").foregroundStyle(.secondary)
-                Money(value: budget.amount, currency: view.plan.currency, finances: finances)
+        let tint = budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.success
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(verbatim: budget.category)
+                    .font(.body.weight(.medium))
+                Spacer(minLength: 8)
+                HStack(spacing: 3) {
+                    Money(value: abs(budget.left), currency: view.plan.currency, finances: finances)
+                        .fontWeight(.semibold)
+                    Text(budget.isOver ? "over" : "left")
+                        .foregroundStyle(.secondary)
+                }
+                .foregroundStyle(budget.isOver ? Theme.danger : Color.primary)
             }
-            ProgressView(value: budget.share)
-                .tint(budget.isOver ? Theme.danger : budget.isAhead ? Theme.warning : Theme.success)
-            Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
-                .font(.caption)
-                .foregroundStyle(budget.isOver ? Theme.danger : .secondary)
+            BudgetBar(share: budget.share, tint: tint)
+            HStack(spacing: 3) {
+                Money(value: budget.spent, currency: view.plan.currency, finances: finances)
+                Text("of")
+                Money(value: budget.amount, currency: view.plan.currency, finances: finances)
+                Spacer(minLength: 8)
+                Text(budget.isOver ? "Over budget" : budget.isAhead ? "Ahead of an even pace" : (budget.per == "paycheck" ? "This pay period" : "This month"))
+            }
+            .font(.caption)
+            .foregroundStyle(budget.isOver ? Theme.danger : .secondary)
         }
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A budget's bar: what's spent of it, rounded, on a soft track of its colour.
+private struct BudgetBar: View {
+    let share: Double
+    let tint: Color
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(tint.opacity(0.16))
+                Capsule().fill(tint)
+                    .frame(width: max(8, geo.size.width * (share.isFinite ? min(max(share, 0), 1) : 0)))
+            }
+        }
+        .frame(height: 8)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: share)
+        .accessibilityHidden(true)
     }
 }
 
@@ -324,6 +805,584 @@ private struct FinanceBillsPage: View {
     }
 }
 
+/// New since you looked, as an inbox: swipe right when it's right (it's
+/// marked reviewed), left to pick its category (and it's marked reviewed
+/// too). Reviewed ones leave the list; Mark All Reviewed empties it.
+private struct ReviewInboxPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var categorizing: FinanceTransaction?
+    @Namespace private var zoom
+
+    var body: some View {
+        let items = (finances.ledger?.newestFirst ?? []).filter { finances.isNew($0) }
+        List {
+            if !items.isEmpty {
+                Section {
+                    ForEach(items) { t in
+                        NavigationLink {
+                            TransactionDetailView(transaction: t, finances: finances)
+                                .zoomTransition(id: t.id, in: zoom)
+                        } label: {
+                            WalletTransactionRow(transaction: t, finances: finances, isNew: true)
+                                .zoomSource(id: t.id, in: zoom)
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                withAnimation(.snappy) { finances.markReviewed([t]) }
+                            } label: {
+                                Label("Reviewed", systemImage: "checkmark")
+                            }
+                            .tint(Theme.success)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            if finances.canAddTransactions, LedgerEdit.canUpdate(t) {
+                                Button {
+                                    finances.clearSaveError()
+                                    categorizing = t
+                                } label: {
+                                    Label("Category", systemImage: "tag")
+                                }
+                                .tint(Theme.accent)
+                            }
+                        }
+                    }
+                } header: {
+                    Text(items.count == 1
+                         ? "1 new since you looked. Swipe right when it’s right, left to change its category."
+                         : "\(items.count) new since you looked. Swipe right when it’s right, left to change its category.")
+                        .textCase(nil)
+                        .font(.subheadline)
+                }
+            }
+        }
+        .themedCanvas()
+        .overlay {
+            if finances.ledger != nil, items.isEmpty {
+                ContentUnavailableView("All Reviewed", systemImage: "checkmark.circle",
+                                       description: Text("New transactions show here as they come in."))
+            } else if finances.ledger == nil {
+                ProgressView()
+            }
+        }
+        .animation(.snappy, value: items.map(\.id))
+        .navigationTitle("To Review")
+        .toolbar {
+            if !items.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Mark All Reviewed") {
+                        withAnimation(.snappy) { finances.markReviewed(items) }
+                    }
+                }
+            }
+        }
+        .sheet(item: $categorizing) { t in
+            CategoryPicker(transaction: t, finances: finances)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .task { if finances.ledger == nil { await finances.loadLedger() } }
+    }
+}
+
+/// A transaction's category, picked from the plan's own as buttons; the
+/// transaction is marked reviewed when it's saved.
+private struct CategoryPicker: View {
+    let transaction: FinanceTransaction
+    let finances: FinancesViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        let categories = (finances.plan?.categories ?? []).filter { !($0.income ?? false) }
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 12) {
+                        LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
+                                .font(.headline)
+                            Money(value: transaction.amount, currency: finances.currency, finances: finances)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], alignment: .leading, spacing: 8) {
+                        ForEach(categories) { c in
+                            let picked = c.name.lowercased() == transaction.category.lowercased()
+                            let tint = Design.category(PayeeLogos.shared.categoryHue(c.name, in: finances.plan?.categories ?? []))
+                            Button {
+                                Task {
+                                    if await finances.setCategory(transaction, to: c.name) { dismiss() }
+                                }
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Circle().fill(picked ? Color.white : (tint?.base ?? Theme.accent)).frame(width: 8, height: 8)
+                                    Text(verbatim: c.name)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                }
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(picked ? Color.white : (tint?.ink ?? Theme.accent))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 9)
+                                .frame(maxWidth: .infinity)
+                                .background(picked ? Theme.accent : (tint?.soft ?? Theme.accent.opacity(0.14)), in: Capsule())
+                            }
+                            .buttonStyle(PressableButtonStyle())
+                            .disabled(finances.isSaving)
+                        }
+                    }
+                    if let error = finances.saveError {
+                        Label { Text(verbatim: error) } icon: { Image(systemName: "exclamationmark.triangle.fill") }
+                            .font(.callout)
+                            .foregroundStyle(Theme.danger)
+                    }
+                }
+                .padding(20)
+            }
+            .navigationTitle("Category")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                if finances.isSaving {
+                    ToolbarItem(placement: .primaryAction) { ProgressView() }
+                }
+            }
+        }
+    }
+}
+
+/// Spending, as Monarch shows it: a month's money out by category as a
+/// ring, with how it compares with the month before; the last six months
+/// as bars (tap one to see that month); and each category with its bar,
+/// against its budget where it has one this month. A category opens its
+/// transactions.
+private struct FinanceSpendingPage: View {
+    @Bindable var finances: FinancesViewModel
+    /// The month shown, its first day; nil for the plan's own month.
+    @State private var picked: Date?
+
+    var body: some View {
+        ScrollView {
+            if let view = finances.plan, let ledger = finances.ledger {
+                let calendar = Calendar.current
+                let thisMonth = calendar.dateInterval(of: .month, for: view.today ?? Date())?.start ?? Date()
+                let month = picked ?? thisMonth
+                let categories = view.categories
+                let spent = Spending.byCategory(ledger.transactions, in: month, categories: categories)
+                let months = Spending.months(ledger.transactions, ending: thisMonth, count: 6, categories: categories)
+                let total = spent.reduce(0) { $0 + $1.spent }
+                let before = calendar.date(byAdding: .month, value: -1, to: month).map {
+                    Spending.byCategory(ledger.transactions, in: $0, categories: categories).reduce(0) { $0 + $1.spent }
+                }
+                VStack(spacing: 18) {
+                    ring(spent, total: total, before: before, month: month, view: view)
+                    bars(months, month: month, view: view)
+                    if !spent.isEmpty {
+                        list(spent, month: month, isThisMonth: month == thisMonth, view: view)
+                    }
+                    Text("From the transactions on your computer. Money moved between your own accounts and money coming in aren’t counted; a refund counts against its category.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+                .animation(.smooth(duration: 0.35), value: month)
+            } else if finances.ledgerError != nil {
+                ContentUnavailableView("Couldn't Read the Transactions", systemImage: "chart.pie", description: Text(verbatim: finances.ledgerError ?? ""))
+                    .padding(.top, 80)
+            } else {
+                SkeletonCards(walletCard: false).padding(.horizontal, 16)
+            }
+        }
+        .background(Theme.canvas.ignoresSafeArea())
+        .task {
+            if finances.plan == nil { await finances.loadPlan() }
+            if finances.ledger == nil { await finances.loadLedger() }
+        }
+        .refreshable { await finances.loadLedger() }
+        .navigationTitle("Spending")
+        .sensoryFeedback(.selection, trigger: picked)
+    }
+
+    private func tint(_ name: String, _ index: Int, _ view: FinancesPlanView) -> Color {
+        if name == Spending.uncategorized { return Color(light: 0x8E8E93, dark: 0x8E8E93) }
+        let hue = PayeeLogos.shared.categoryHue(name, in: view.categories)
+        return Design.category(hue > 0 ? hue : index % 8 + 1)?.base ?? Theme.accent
+    }
+
+    private func ring(_ spent: [SpendingCategory], total: Double, before: Double?, month: Date, view: FinancesPlanView) -> some View {
+        HStack(spacing: 16) {
+            ZStack {
+                if spent.isEmpty {
+                    Circle().stroke(Theme.canvas, lineWidth: 18).padding(9)
+                } else {
+                    Chart(Array(spent.enumerated()), id: \.element.id) { i, c in
+                        SectorMark(angle: .value("Spent", c.spent), innerRadius: .ratio(0.72), angularInset: 1.5)
+                            .cornerRadius(3)
+                            .foregroundStyle(tint(c.name, i, view))
+                    }
+                    .chartLegend(.hidden)
+                }
+                VStack(spacing: 1) {
+                    Text(month, format: .dateTime.month(.wide))
+                        .font(.caption2)
+                        .foregroundStyle(Theme.secondaryInk)
+                    Text(verbatim: amountText(total, view.plan.currency, finances, whole: true))
+                        .font(.title3.weight(.heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                        .contentTransition(.numericText())
+                    if let before, before > 0, finances.amountsShown, !finances.amountsHiddenByPlan {
+                        let change = total - before
+                        Text(verbatim: "\(change > 0 ? "+" : "−")\(amountText(abs(change), view.plan.currency, finances, whole: true))")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(change > 0 ? Theme.danger : Theme.success)
+                    }
+                }
+                .padding(.horizontal, 22)
+            }
+            .frame(width: 144, height: 144)
+            .accessibilityElement(children: .combine)
+            VStack(alignment: .leading, spacing: 8) {
+                if spent.isEmpty {
+                    Text("Nothing spent this month yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                ForEach(Array(spent.prefix(5).enumerated()), id: \.element.id) { i, c in
+                    HStack(spacing: 6) {
+                        Circle().fill(tint(c.name, i, view)).frame(width: 9, height: 9)
+                        Text(verbatim: c.name)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.ink)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        Text(c.spent / max(total, 0.01), format: .percent.precision(.fractionLength(0)))
+                            .font(.subheadline)
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.secondaryInk)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 24)
+    }
+
+    private func bars(_ months: [SpendingMonth], month: Date, view: FinancesPlanView) -> some View {
+        let shown = months.filter { $0.total > 0 }
+        let average = shown.isEmpty ? 0 : shown.reduce(0) { $0 + $1.total } / Double(shown.count)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                CardHeading("Each Month")
+                Spacer()
+                if average > 0 {
+                    Text(verbatim: "About \(amountText(average, view.plan.currency, finances, whole: true)) a month")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            HStack(alignment: .bottom, spacing: 10) {
+                let high = max(months.map(\.total).max() ?? 0, 1)
+                ForEach(months) { m in
+                    let isPicked = m.month == month
+                    Button {
+                        withAnimation(.snappy) { picked = m.month }
+                    } label: {
+                        VStack(spacing: 6) {
+                            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                .fill(isPicked ? Theme.accent : Theme.accent.opacity(0.22))
+                                .frame(height: max(6, 96 * m.total / high))
+                                .frame(maxWidth: 30)
+                            Text(m.month, format: .dateTime.month(.abbreviated))
+                                .font(.caption2.weight(isPicked ? .bold : .regular))
+                                .foregroundStyle(isPicked ? Theme.ink : Theme.secondaryInk)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(Text(verbatim: "\(m.month.formatted(.dateTime.month(.wide))): \(amountText(m.total, view.plan.currency, finances, whole: true))"))
+                    .accessibilityAddTraits(isPicked ? .isSelected : [])
+                }
+            }
+            .frame(height: 122)
+        }
+        .padding(16)
+        .card(radius: 24)
+    }
+
+    private func list(_ spent: [SpendingCategory], month: Date, isThisMonth: Bool, view: FinancesPlanView) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(spent.enumerated()), id: \.element.id) { i, c in
+                if i > 0 { Divider().padding(.leading, 64) }
+                let budget = isThisMonth ? view.budgets.first { $0.category.lowercased() == c.name.lowercased() } : nil
+                let color = tint(c.name, i, view)
+                NavigationLink {
+                    SpendingCategoryPage(name: c.name, month: month, finances: finances)
+                } label: {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(color.opacity(0.16))
+                            .frame(width: 38, height: 38)
+                            .overlay(Circle().fill(color).frame(width: 12, height: 12))
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text(verbatim: c.name)
+                                    .font(.body.weight(.medium))
+                                    .foregroundStyle(Theme.ink)
+                                    .lineLimit(1)
+                                Spacer(minLength: 8)
+                                Text(verbatim: amountText(c.spent, view.plan.currency, finances))
+                                    .font(.body.weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundStyle(Theme.ink)
+                            }
+                            if let budget, budget.amount > 0 {
+                                BudgetBar(share: c.spent / budget.amount, tint: c.spent > budget.amount ? Theme.danger : color)
+                                Text(verbatim: c.spent > budget.amount
+                                     ? "Over by \(amountText(c.spent - budget.amount, view.plan.currency, finances, whole: true))"
+                                     : "\(amountText(budget.amount - c.spent, view.plan.currency, finances, whole: true)) left of \(amountText(budget.amount, view.plan.currency, finances, whole: true))")
+                                    .font(.caption)
+                                    .foregroundStyle(c.spent > budget.amount ? Theme.danger : Theme.secondaryInk)
+                            } else {
+                                BudgetBar(share: c.spent / max(spent.first?.spent ?? 1, 0.01), tint: color)
+                            }
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, 4)
+        .card(radius: 24)
+    }
+}
+
+/// One category's transactions in a month, newest first, as Wallet lists them.
+private struct SpendingCategoryPage: View {
+    let name: String
+    let month: Date
+    let finances: FinancesViewModel
+    @Namespace private var zoom
+
+    var body: some View {
+        let categories = finances.plan?.categories ?? []
+        let items = Spending.transactions(finances.ledger?.transactions ?? [], in: name, month: month, categories: categories)
+        List {
+            Section {
+                ForEach(items) { t in
+                    NavigationLink {
+                        TransactionDetailView(transaction: t, finances: finances)
+                            .zoomTransition(id: t.id, in: zoom)
+                    } label: {
+                        WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t))
+                            .zoomSource(id: t.id, in: zoom)
+                    }
+                }
+            } header: {
+                Text(month, format: .dateTime.month(.wide).year())
+            }
+        }
+        .themedCanvas()
+        .navigationTitle(Text(verbatim: name))
+        .overlay {
+            if items.isEmpty { ContentUnavailableView("Nothing Here", systemImage: "tray") }
+        }
+    }
+}
+
+/// Recurring: every payment that repeats, as Monarch lists them: about
+/// what the bills and subscriptions cost a month, then money coming in,
+/// subscriptions, bills, card payments, and savings, each with its logo,
+/// how often it comes, when next, and what it costs. Tap one to change
+/// what it costs.
+private struct FinanceRecurringPage: View {
+    @Bindable var finances: FinancesViewModel
+    @State private var editing: FinancePayment?
+
+    var body: some View {
+        ScrollView {
+            if let view = finances.plan {
+                let items = view.recurring
+                VStack(spacing: 18) {
+                    summary(view, items)
+                    ForEach(RecurringItem.Sort.allCases, id: \.self) { sort in
+                        let rows = items.filter { $0.sort == sort }
+                        if !rows.isEmpty { group(sort, rows, view) }
+                    }
+                    if items.isEmpty {
+                        Text("Nothing repeats yet. Payments added to the plan on the computer show here with how often they come.")
+                            .foregroundStyle(Theme.secondaryInk)
+                            .padding(18)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .card(radius: 24)
+                    }
+                    if finances.canEdit, !items.isEmpty {
+                        Text("Tap one to change what it costs. Add or remove them on the computer.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.secondaryInk)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 4)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+            }
+        }
+        .background(Theme.canvas.ignoresSafeArea())
+        .refreshable { await finances.loadPlan() }
+        .sensoryFeedback(.success, trigger: finances.savedCount)
+        .navigationTitle("Recurring")
+        .sheet(item: $editing) { payment in
+            AmountEditor(
+                title: "Change Payment", heading: payment.name,
+                footer: payment.estimate == true
+                    ? "About what it costs each time. Every one still to come changes."
+                    : "What it costs each time. Every one still to come changes.",
+                finances: finances
+            ) { amount in await finances.setPayment(payment, to: amount) }
+        }
+    }
+
+    /// About what they cost a month, and how many there are of each sort.
+    private func summary(_ view: FinancesPlanView, _ items: [RecurringItem]) -> some View {
+        let subscriptions = items.filter { $0.sort == .subscriptions }
+        let subsMonthly = subscriptions.reduce(0) { $0 + ($1.monthly ?? 0) }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Bills and subscriptions, a month")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk)
+                Text(verbatim: amountText(view.recurringPerMonth, view.plan.currency, finances, whole: true))
+                    .font(.system(size: 34, weight: .heavy))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.ink)
+                    .contentTransition(.numericText())
+            }
+            HStack(spacing: 8) {
+                chip("\(items.filter { $0.sort == .bills }.count) bills", Theme.danger)
+                if !subscriptions.isEmpty {
+                    chip("\(subscriptions.count) subscriptions · \(amountText(subsMonthly, view.plan.currency, finances, whole: true))/mo", Theme.accent)
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 24)
+    }
+
+    private func chip(_ words: String, _ tint: Color) -> some View {
+        Text(verbatim: words)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(tint.opacity(0.12), in: Capsule())
+    }
+
+    private func group(_ sort: RecurringItem.Sort, _ rows: [RecurringItem], _ view: FinancesPlanView) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(verbatim: sort.title)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                let monthly = rows.reduce(0) { $0 + ($1.monthly ?? 0) }
+                if monthly > 0 {
+                    Text(verbatim: "≈ \(amountText(monthly, view.plan.currency, finances, whole: true))/mo")
+                        .font(.subheadline.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            .padding(.bottom, 6)
+            ForEach(Array(rows.enumerated()), id: \.element.id) { i, item in
+                if i > 0 { Divider().padding(.leading, 54) }
+                if finances.canEdit, item.payment.canChangeAmount {
+                    Button {
+                        finances.clearSaveError()
+                        editing = item.payment
+                    } label: {
+                        row(item, view)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityHint("Change what it costs")
+                } else {
+                    row(item, view)
+                }
+            }
+        }
+        .padding(16)
+        .card(radius: 24)
+    }
+
+    private func row(_ item: RecurringItem, _ view: FinancesPlanView) -> some View {
+        let p = item.payment
+        let into = item.sort == .moneyIn
+        return HStack(spacing: 12) {
+            LogoCircle(payment: p, size: 42)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: p.name)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Text(verbatim: [p.schedule?.words, item.next.map { "next \(Self.when($0, view))" }, into ? p.payer.map { "from \($0)" } : nil]
+                    .compactMap { $0 }.joined(separator: " · "))
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 2) {
+                if !(p.card ?? "").isEmpty {
+                    Text("The whole balance")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                } else if let amount = p.amount {
+                    HStack(spacing: 2) {
+                        if p.estimate == true { Text(verbatim: "≈").foregroundStyle(Theme.secondaryInk).accessibilityLabel("About") }
+                        Text(verbatim: (into ? "+" : "") + amountText(amount, view.plan.currency, finances))
+                            .monospacedDigit()
+                            .foregroundStyle(into ? Theme.success : Theme.ink)
+                    }
+                    .font(.body.weight(.semibold))
+                }
+            }
+        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "today", "tomorrow", else "Fri, Nov 14".
+    static func when(_ date: Date, _ view: FinancesPlanView) -> String {
+        let calendar = Calendar.current
+        if let today = view.today {
+            if calendar.isDate(date, inSameDayAs: today) { return "today" }
+            if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today), calendar.isDate(date, inSameDayAs: tomorrow) { return "tomorrow" }
+        }
+        return date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+    }
+}
+
 /// Investments, as Ghostfolio last read them; where Finances may be
 /// changed, Read Now reads Ghostfolio again and Add a Holding records a
 /// buy or a sale there (main #494, #498).
@@ -332,62 +1391,437 @@ private struct FinanceInvestmentsPage: View {
     @State private var adding = false
 
     var body: some View {
-        Form {
-            if finances.canEdit {
-                Section {
-                    Button {
-                        Task { await finances.readInvestments() }
-                    } label: {
-                        HStack {
-                            Label(finances.isReadingInvestments ? "Reading…" : "Read Now", systemImage: "arrow.clockwise")
-                            if finances.isReadingInvestments {
-                                Spacer()
-                                ProgressView().controlSize(.small)
-                            }
-                        }
+        ScrollView {
+            VStack(spacing: 18) {
+                if let view = finances.plan, let investments = view.investments {
+                    InvestmentsHero(investments: investments, view: view, finances: finances) {
+                        if finances.canEdit { actions }
                     }
-                    .disabled(finances.isReadingInvestments || finances.isSaving)
-                    Button {
-                        adding = true
-                    } label: {
-                        Label("Add a Holding", systemImage: "plus.circle")
+                    readNote
+                    AllocationCard(investments: investments, view: view, finances: finances)
+                    HoldingsCard(investments: investments, view: view, finances: finances)
+                    Text(Self.readWhen(view).map { "From Ghostfolio, \($0)." } ?? "From Ghostfolio.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.secondaryInk)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
+                } else if finances.plan != nil {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundStyle(Theme.accent)
+                        Text("Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it's worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up.")
+                            .foregroundStyle(Theme.secondaryInk)
+                        if finances.canEdit { actions }
                     }
-                    .disabled(finances.isReadingInvestments || finances.isSaving)
-                    if let said = finances.investmentsSaid {
-                        Text(verbatim: said).font(.callout).foregroundStyle(.secondary)
-                    }
-                    if let problem = finances.investmentsProblem {
-                        Label {
-                            Text(verbatim: problem)
-                        } icon: {
-                            Image(systemName: "exclamationmark.triangle")
-                        }
-                        .font(.callout)
-                        .foregroundStyle(Theme.danger)
-                    }
-                } footer: {
-                    if !finances.investmentsUnmatched.isEmpty {
-                        Text(verbatim: "In Ghostfolio but matched to no account here: \(finances.investmentsUnmatched.joined(separator: ", ")). Name an account here the same, or pick its Ghostfolio account on the computer.")
-                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .card(radius: 24)
+                    readNote
                 }
             }
-            if let view = finances.plan, let investments = view.investments {
-                InvestmentsSection(investments: investments, view: view, finances: finances)
-            } else if finances.plan != nil {
-                Section {
-                    Text("Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it's worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up.")
-                        .foregroundStyle(.secondary)
-                }
-            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 28)
         }
-        .formStyle(.grouped)
-        .themedCanvas()
+        .background(Theme.canvas.ignoresSafeArea())
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Investments")
         .sheet(isPresented: $adding) {
             AddHoldingView(finances: finances)
         }
+    }
+
+    /// Read Now and Add a Holding, as two capsules.
+    private var actions: some View {
+        HStack(spacing: 10) {
+            Button {
+                Task { await finances.readInvestments() }
+            } label: {
+                HStack(spacing: 6) {
+                    if finances.isReadingInvestments {
+                        ProgressView().controlSize(.small).tint(.white)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    Text(finances.isReadingInvestments ? "Reading…" : "Read Now")
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 9)
+                .background(Theme.accent, in: Capsule())
+            }
+            .buttonStyle(PressableButtonStyle())
+            Button {
+                adding = true
+            } label: {
+                Label("Add a Holding", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 9)
+                    .background(Theme.accent.opacity(0.14), in: Capsule())
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+        .disabled(finances.isReadingInvestments || finances.isSaving)
+    }
+
+    /// What the last read said, a problem, or Ghostfolio's accounts matched to none here.
+    @ViewBuilder
+    private var readNote: some View {
+        if finances.investmentsSaid != nil || finances.investmentsProblem != nil || !finances.investmentsUnmatched.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                if let said = finances.investmentsSaid {
+                    Label { Text(verbatim: said) } icon: { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.success) }
+                }
+                if let problem = finances.investmentsProblem {
+                    Label { Text(verbatim: problem) } icon: { Image(systemName: "exclamationmark.triangle.fill") }
+                        .foregroundStyle(Theme.danger)
+                }
+                if !finances.investmentsUnmatched.isEmpty {
+                    Text(verbatim: "In Ghostfolio but matched to no account here: \(finances.investmentsUnmatched.joined(separator: ", ")). Name an account here the same, or pick its Ghostfolio account on the computer.")
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            .font(.callout)
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .card(radius: 18)
+        }
+    }
+
+    /// "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2".
+    static func readWhen(_ view: FinancesPlanView) -> String? {
+        guard let at = view.plan.holdingsRead else { return nil }
+        let calendar = Calendar.current
+        let time = at.formatted(date: .omitted, time: .shortened)
+        if calendar.isDateInToday(at) { return "read \(time) today" }
+        if calendar.isDateInYesterday(at) { return "read yesterday at \(time)" }
+        return "read \(at.formatted(.dateTime.month(.abbreviated).day()))"
+    }
+}
+
+/// A line over time with a finger to read a day, and a range to pick:
+/// net worth's and the investments'.
+private struct TrendChart: View {
+    let series: [NetWorthPoint]
+    @Binding var picked: Date?
+
+    var body: some View {
+        let values = series.map(\.value)
+        let low = values.min() ?? 0
+        let high = values.max() ?? 0
+        let pad = max((high - low) * 0.15, abs(high) * 0.01, 1)
+        let up = (series.last?.value ?? 0) >= (series.first?.value ?? 0)
+        let tint = up ? Theme.accent : Theme.danger
+        let point = TrendChart.point(in: series, at: picked)
+        Chart {
+            ForEach(series, id: \.date) { p in
+                AreaMark(x: .value("Day", p.date), yStart: .value("Low", low), yEnd: .value("Value", p.value))
+                    .foregroundStyle(LinearGradient(colors: [tint.opacity(0.22), tint.opacity(0)], startPoint: .top, endPoint: .bottom))
+                    .interpolationMethod(.monotone)
+                LineMark(x: .value("Day", p.date), y: .value("Value", p.value))
+                    .foregroundStyle(tint)
+                    .lineStyle(StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.monotone)
+            }
+            if let point {
+                RuleMark(x: .value("Day", point.date))
+                    .foregroundStyle(Theme.secondaryInk.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                PointMark(x: .value("Day", point.date), y: .value("Value", point.value))
+                    .foregroundStyle(tint)
+                    .symbolSize(70)
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartYScale(domain: (low - pad)...(high + pad))
+        .chartXSelection(value: $picked)
+        .sensoryFeedback(.selection, trigger: point?.date)
+    }
+
+    /// The day nearest a finger, or nil.
+    static func point(in series: [NetWorthPoint], at day: Date?) -> NetWorthPoint? {
+        day.flatMap { day in series.min { abs($0.date.timeIntervalSince(day)) < abs($1.date.timeIntervalSince(day)) } }
+    }
+}
+
+/// 1M, 3M, 1Y as a capsule switch that slides.
+private struct RangePicker: View {
+    @Binding var range: NetWorthRange
+    @Namespace private var pill
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(NetWorthRange.allCases) { r in
+                Button {
+                    withAnimation(.snappy) { range = r }
+                } label: {
+                    Text(verbatim: r.label)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(range == r ? Theme.ink : Theme.secondaryInk)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background {
+                            if range == r {
+                                Capsule()
+                                    .fill(Theme.surface)
+                                    .shadow(color: Design.shadow.opacity(0.12), radius: 3, y: 1)
+                                    .matchedGeometryEffect(id: "range", in: pill)
+                            }
+                        }
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(range == r ? .isSelected : [])
+            }
+        }
+        .padding(3)
+        .background(Theme.canvas, in: Capsule())
+        .sensoryFeedback(.selection, trigger: range)
+    }
+}
+
+/// What the investments are worth, their gain, and their line over time.
+private struct InvestmentsHero<Actions: View>: View {
+    let investments: FinanceInvestments
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+    @ViewBuilder var actions: () -> Actions
+    @State private var range: NetWorthRange = .threeMonths
+    @State private var picked: Date?
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        let series = view.worthSeries(days: range.rawValue, of: investments.accounts.map(\.account))
+        let point = TrendChart.point(in: series, at: picked)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(point.map { $0.date.formatted(.dateTime.month(.abbreviated).day().year()) }
+                 ?? "\(investments.holdingCount) \(investments.holdingCount == 1 ? "holding" : "holdings") in \(investments.accounts.count) \(investments.accounts.count == 1 ? "account" : "accounts")")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+            Text(verbatim: amountText(point?.value ?? investments.total, view.plan.currency, finances))
+                .font(.system(size: 34, weight: .heavy))
+                .monospacedDigit()
+                .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if shown, point == nil {
+                // Side by side when they fit, else one under the other.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        gainPill(investments.gain, of: investments.paid, words: "all time")
+                        gainPill(investments.month, of: investments.total - investments.month, words: "this month")
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        gainPill(investments.gain, of: investments.paid, words: "all time")
+                        gainPill(investments.month, of: investments.total - investments.month, words: "this month")
+                    }
+                }
+            }
+            if shown, series.count >= 2 {
+                TrendChart(series: series, picked: $picked)
+                    .frame(height: 130)
+                    .padding(.horizontal, -12)
+                    .padding(.top, 8)
+                RangePicker(range: $range)
+                    .padding(.top, 4)
+            }
+            actions()
+                .padding(.top, 10)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 24)
+        .animation(.smooth(duration: 0.35), value: range)
+    }
+
+    private func gainPill(_ value: Double, of base: Double, words: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: value >= 0 ? "arrow.up.right" : "arrow.down.right")
+                .font(.caption2.weight(.bold))
+            Text(verbatim: [amountText(abs(value), view.plan.currency, finances, whole: true), FinanceInvestments.share(value, of: base)]
+                .compactMap { $0 }.joined(separator: " · "))
+                .lineLimit(1)
+            Text(verbatim: words).fontWeight(.regular).opacity(0.75)
+                .lineLimit(1)
+        }
+        .fixedSize()
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(value < 0 ? Theme.danger : Theme.success)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background((value < 0 ? Theme.danger : Theme.success).opacity(0.12), in: Capsule())
+    }
+}
+
+/// How the money is split: one bar of the largest holdings, each with its share.
+private struct AllocationCard: View {
+    let investments: FinanceInvestments
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    struct Slice: Identifiable {
+        let name: String
+        let value: Double
+        let tint: Color
+        var id: String { name }
+    }
+
+    /// The six largest holdings, then the rest (cash and smaller ones) together.
+    private var slices: [Slice] {
+        var byName: [String: Double] = [:]
+        for line in investments.lines {
+            let name = line.holding?.symbol ?? "Cash"
+            byName[name, default: 0] += max(line.holding?.value ?? line.cash, 0)
+        }
+        let sorted = byName.sorted { $0.value > $1.value }.filter { $0.value > 0 }
+        var out = sorted.prefix(6).enumerated().map { i, kv in
+            Slice(name: kv.key, value: kv.value, tint: Design.category(i + 1)?.base ?? Theme.accent)
+        }
+        let rest = sorted.dropFirst(6).reduce(0) { $0 + $1.value }
+        if rest > 0 { out.append(Slice(name: "Other", value: rest, tint: Design.plainCircle)) }
+        return out
+    }
+
+    var body: some View {
+        let slices = self.slices
+        let total = slices.reduce(0) { $0 + $1.value }
+        if total > 0, slices.count > 1 {
+            VStack(alignment: .leading, spacing: 12) {
+                CardHeading("Allocation")
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(slices) { slice in
+                            Rectangle()
+                                .fill(slice.tint)
+                                .frame(width: max(3, (geo.size.width - CGFloat(slices.count - 1) * 2) * slice.value / total))
+                        }
+                    }
+                    .clipShape(Capsule())
+                }
+                .frame(height: 12)
+                .accessibilityHidden(true)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], alignment: .leading, spacing: 8) {
+                    ForEach(slices) { slice in
+                        HStack(spacing: 6) {
+                            Circle().fill(slice.tint).frame(width: 9, height: 9)
+                            Text(verbatim: slice.name)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Theme.ink)
+                                .lineLimit(1)
+                            Spacer(minLength: 4)
+                            Text(slice.value / total, format: .percent.precision(.fractionLength(0)))
+                                .font(.subheadline)
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.secondaryInk)
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
+            }
+            .padding(16)
+            .card(radius: 24)
+        }
+    }
+}
+
+/// Each holding: a ticker badge in its colour, what it is and where, its
+/// worth and its gain.
+private struct HoldingsCard: View {
+    let investments: FinanceInvestments
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            CardHeading("Holdings")
+                .padding(.bottom, 6)
+            ForEach(Array(investments.lines.enumerated()), id: \.offset) { i, line in
+                if i > 0 { Divider().padding(.leading, 56) }
+                if let holding = line.holding {
+                    NavigationLink {
+                        HoldingView(holding: holding, account: line.account, view: view, finances: finances)
+                    } label: {
+                        row(line)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    row(line)
+                }
+            }
+        }
+        .padding(16)
+        .card(radius: 24)
+    }
+
+    private func currency(_ account: FinanceAccount) -> String {
+        if let code = account.currency, !code.isEmpty { return code }
+        return view.plan.currency
+    }
+
+    private func row(_ line: FinanceInvestments.Line) -> some View {
+        HStack(spacing: 12) {
+            TickerBadge(symbol: line.holding?.symbol ?? "$")
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: line.holding?.symbol ?? "Cash")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                Text(verbatim: line.holding.map { "\($0.title) · \(line.account.name)" } ?? "Not in a holding · \(line.account.name)")
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 3) {
+                Money(value: line.holding?.value ?? line.cash, currency: currency(line.account), finances: finances)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                if let holding = line.holding, shown {
+                    Text(verbatim: FinanceInvestments.share(holding.gain, of: holding.paid) ?? amountText(holding.gain, currency(line.account), finances, whole: true))
+                        .font(.caption.weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(holding.gain < 0 ? Theme.danger : Theme.success)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background((holding.gain < 0 ? Theme.danger : Theme.success).opacity(0.12), in: Capsule())
+                }
+            }
+            if line.holding != nil {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A ticker in a rounded square of a colour its letters pick, as a broker's app shows one.
+private struct TickerBadge: View {
+    let symbol: String
+
+    var body: some View {
+        let letters = String(symbol.prefix(symbol.count <= 4 ? 4 : 3)).uppercased()
+        let hue = symbol.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF }
+        let tint = Design.category(hue % 8 + 1)
+        Text(verbatim: letters)
+            .font(.system(size: letters.count >= 4 ? 11 : 13, weight: .heavy, design: .rounded))
+            .foregroundStyle(tint?.ink ?? Theme.accent)
+            .minimumScaleFactor(0.6)
+            .lineLimit(1)
+            .frame(width: 42, height: 42)
+            .background(tint?.soft ?? Theme.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .accessibilityHidden(true)
     }
 }
 
@@ -567,11 +2001,32 @@ private struct FinanceAccountsPage: View {
     @State private var editingCushion = false
 
     var body: some View {
-        Form {
-            if let view = finances.plan { accounts(view) }
+        ScrollView {
+            if let view = finances.plan {
+                VStack(spacing: 18) {
+                    summary(view)
+                    ForEach(view.accountGroups) { group in
+                        groupCard(group, view)
+                    }
+                    if finances.canEdit || view.plan.cushion > 0 { cushionCard(view) }
+                    VStack(alignment: .leading, spacing: 4) {
+                        if finances.canEdit {
+                            Text("Tap an account to type in its balance.")
+                        }
+                        if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
+                            Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
+                        }
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 28)
+            }
         }
-        .formStyle(.grouped)
-        .themedCanvas()
+        .background(Theme.canvas.ignoresSafeArea())
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .navigationTitle("Accounts")
@@ -588,82 +2043,154 @@ private struct FinanceAccountsPage: View {
         }
     }
 
-    private func accounts(_ view: FinancesPlanView) -> some View {
-        let sorted = view.plan.accounts.sorted {
-            ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase)
+    /// Net worth, and what's had against what's owed as one bar.
+    private func summary(_ view: FinancesPlanView) -> some View {
+        let shown = finances.amountsShown && !finances.amountsHiddenByPlan
+        let assets = view.assets, owed = view.liabilities
+        let share = assets + owed > 0 ? assets / (assets + owed) : 1
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Net worth")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.secondaryInk)
+            Text(verbatim: amountText(view.netWorth, view.plan.currency, finances))
+                .font(.system(size: 34, weight: .heavy))
+                .monospacedDigit()
+                .foregroundStyle(shown ? Theme.ink : Theme.secondaryInk)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+            if shown, assets + owed > 0 {
+                GeometryReader { geo in
+                    HStack(spacing: 3) {
+                        Capsule().fill(Theme.success).frame(width: max(6, (geo.size.width - 3) * share))
+                        Capsule().fill(Theme.danger.opacity(0.85))
+                    }
+                }
+                .frame(height: 10)
+                .accessibilityHidden(true)
+                HStack {
+                    legend("Assets", assets, Theme.success, view)
+                    Spacer()
+                    legend("Liabilities", owed, Theme.danger, view)
+                }
+            }
         }
-        return Section {
-            ForEach(sorted) { account in
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 24)
+    }
+
+    private func legend(_ title: LocalizedStringKey, _ value: Double, _ tint: Color, _ view: FinancesPlanView) -> some View {
+        HStack(spacing: 6) {
+            Circle().fill(tint).frame(width: 8, height: 8)
+            Text(title).foregroundStyle(Theme.secondaryInk)
+            Text(verbatim: amountText(value, view.plan.currency, finances, whole: true))
+                .monospacedDigit()
+                .fontWeight(.semibold)
+                .foregroundStyle(Theme.ink)
+        }
+        .font(.footnote)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func groupCard(_ group: AccountGroup, _ view: FinancesPlanView) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(verbatim: group.title)
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Text(verbatim: amountText(group.total, view.plan.currency, finances, whole: true))
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.secondaryInk)
+            }
+            .padding(.bottom, 6)
+            ForEach(Array(group.accounts.enumerated()), id: \.element.id) { i, account in
+                if i > 0 { Divider().padding(.leading, 54) }
                 if finances.canEdit {
                     Button {
                         editing = account
                     } label: {
                         accountRow(account, view)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableButtonStyle())
                     .accessibilityHint("Update its balance")
                 } else {
                     accountRow(account, view)
                 }
             }
-            LabeledContent("Net worth") {
-                Money(value: view.netWorth, currency: view.plan.currency, finances: finances)
-                    .fontWeight(.semibold)
-            }
-            if finances.canEdit {
-                Button {
-                    finances.clearSaveError()
-                    editingCushion = true
-                } label: {
-                    cushionRow(view)
-                }
-                .buttonStyle(.plain)
-                .accessibilityHint("Change the least checking should hold")
-            } else if view.plan.cushion > 0 {
-                cushionRow(view)
-            }
-        } header: {
-            Text("Today")
-        } footer: {
-            VStack(alignment: .leading, spacing: 4) {
-                if finances.canEdit {
-                    Text("Tap an account to type in its balance.")
-                }
-                if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
-                    Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
-                }
-            }
         }
+        .padding(16)
+        .card(radius: 24)
     }
 
-    private func cushionRow(_ view: FinancesPlanView) -> some View {
-        LabeledContent("Cushion") {
-            if view.plan.cushion > 0 {
-                Money(value: view.plan.cushion, currency: view.plan.currency, finances: finances)
-            } else {
-                Text("None")
+    private func cushionCard(_ view: FinancesPlanView) -> some View {
+        Button {
+            finances.clearSaveError()
+            editingCushion = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "shield.lefthalf.filled")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(Theme.info, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Cushion").foregroundStyle(Theme.ink)
+                    Text("The least checking should hold")
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                Spacer(minLength: 8)
+                if view.plan.cushion > 0 {
+                    Money(value: view.plan.cushion, currency: view.plan.currency, finances: finances)
+                        .foregroundStyle(Theme.secondaryInk)
+                } else {
+                    Text("None").foregroundStyle(Theme.secondaryInk)
+                }
+                if finances.canEdit {
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
             }
+            .padding(16)
+            .card(radius: 20)
+            .contentShape(Rectangle())
         }
-        .contentShape(Rectangle())
+        .buttonStyle(PressableButtonStyle())
+        .disabled(!finances.canEdit)
+        .accessibilityHint(finances.canEdit ? "Change the least checking should hold" : "")
     }
 
     private func accountRow(_ account: FinanceAccount, _ view: FinancesPlanView) -> some View {
         HStack(spacing: 12) {
-            LogoCircle(account: account, size: 36)
+            LogoCircle(account: account, size: 42)
             VStack(alignment: .leading, spacing: 2) {
-                Text(account.name)
-                Text([account.kindTitle, account.institution].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                Text(verbatim: account.name)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+                Text(verbatim: [account.kindTitle, account.institution.map { PayeeLogos.shared.brandsByKey[$0]?.name ?? $0 }]
+                    .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(1)
             }
-            Spacer()
+            Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
                 Money(value: view.start[account.id] ?? 0, currency: account.currency ?? view.plan.currency, finances: finances)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.ink)
+                    .contentTransition(.numericText())
                 if account.isOwed {
-                    Text("owed").font(.caption2).foregroundStyle(.secondary)
+                    Text("owed").font(.caption2).foregroundStyle(Theme.secondaryInk)
                 }
             }
         }
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -712,35 +2239,50 @@ private struct FinanceGoalsPage: View {
     }
 
     private func goalRow(_ goal: FinanceGoal, _ view: FinancesPlanView) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(goal.name)
-                Spacer()
-                Money(value: goal.saved, currency: view.plan.currency, finances: finances)
-                Text(verbatim: "/").foregroundStyle(.secondary)
-                Money(value: goal.target, currency: view.plan.currency, finances: finances)
+        let tint = goal.isReached ? Theme.success : Theme.accent
+        return HStack(spacing: 14) {
+            ProgressRing(value: goal.share, lineWidth: 6, tint: tint, track: tint.opacity(0.16)) {
+                Text(goal.share, format: .percent.precision(.fractionLength(0)))
+                    .font(.caption2.weight(.bold))
+                    .monospacedDigit()
             }
-            ProgressView(value: goal.share)
-                .tint(goal.isReached ? Theme.success : .accentColor)
-            Group {
-                if goal.isReached {
-                    Text("Reached")
-                } else if let date = goal.date {
-                    Text("By \(date, format: .dateTime.month(.wide).year())")
-                } else if let reaches = goal.reaches {
-                    Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+            .frame(width: 52, height: 52)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: goal.name)
+                    .font(.body.weight(.medium))
+                HStack(spacing: 3) {
+                    Money(value: goal.saved, currency: view.plan.currency, finances: finances)
+                        .fontWeight(.semibold)
+                    Text("of")
+                        .foregroundStyle(.secondary)
+                    Money(value: goal.target, currency: view.plan.currency, finances: finances)
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+                Group {
+                    if goal.isReached {
+                        Text("Reached")
+                    } else if let date = goal.date {
+                        Text("By \(date, format: .dateTime.month(.wide).year())")
+                    } else if let reaches = goal.reaches {
+                        Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(goal.isReached ? Theme.success : .secondary)
+                if goal.needsMonth > 0, !goal.isReached {
+                    HStack(spacing: 4) {
+                        Text("Needs")
+                        Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances)
+                        Text("a month")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            if goal.needsMonth > 0, !goal.isReached {
-                HStack(spacing: 4) {
-                    Text("Needs").font(.caption).foregroundStyle(.secondary)
-                    Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
-                    Text("a month").font(.caption).foregroundStyle(.secondary)
-                }
-            }
+            Spacer(minLength: 0)
         }
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -853,16 +2395,17 @@ private struct PeriodSection: View {
 
     var body: some View {
         Section {
-            LabeledContent("Comes in") { Money(value: period.moneyIn, currency: view.plan.currency, finances: finances) }
-            LabeledContent("Goes out") { Money(value: period.out, currency: view.plan.currency, finances: finances) }
-            if period.saved > 0 {
-                LabeledContent("Of that, saved") { Money(value: period.saved, currency: view.plan.currency, finances: finances) }
+            // In, out and left side by side, as one line of three figures.
+            let low = view.plan.cushion > 0 && period.left < view.plan.cushion
+            HStack(alignment: .top, spacing: 8) {
+                figure("Comes in", period.moneyIn, tint: Theme.success)
+                figure("Goes out", period.out, tint: Color.primary,
+                       note: period.saved > 0 ? amountText(period.saved, view.plan.currency, finances, whole: true) + " saved" : nil)
+                figure("Left", period.left, tint: period.left < 0 ? Theme.danger : low ? Theme.warning : Color.primary, bold: true)
             }
-            LabeledContent("Left in checking") {
-                Money(value: period.left, currency: view.plan.currency, finances: finances)
-                    .fontWeight(.semibold)
-            }
-            if view.plan.cushion > 0, period.left < view.plan.cushion {
+            .padding(.vertical, 4)
+            .accessibilityElement(children: .combine)
+            if low {
                 Label("Below the cushion you set", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(Theme.warning)
             }
@@ -885,6 +2428,26 @@ private struct PeriodSection: View {
         } header: {
             Text(title)
         }
+    }
+
+    private func figure(_ title: LocalizedStringKey, _ value: Double, tint: Color, bold: Bool = false, note: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(verbatim: amountText(value, view.plan.currency, finances, whole: true))
+                .font(.headline.weight(bold ? .heavy : .semibold))
+                .monospacedDigit()
+                .foregroundStyle(tint)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            if let note {
+                Text(verbatim: note)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var title: String {
@@ -910,8 +2473,11 @@ private struct RowLine: View {
     var body: some View {
         // At the accessibility text sizes the amount goes under the name.
         let large = typeSize.isAccessibilitySize
-        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
+        let layout = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 12))
         layout {
+            if !large, let payment = view.payment(row.payment) {
+                LogoCircle(payment: payment, size: 36)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(verbatim: view.paymentTitle(row.payment) ?? "Payment")
@@ -1088,6 +2654,7 @@ struct TransactionsView: View {
     @State private var picked: String??
     /// Only the new ones.
     @State private var onlyNew = false
+    @Namespace private var zoom
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -1140,7 +2707,9 @@ struct TransactionsView: View {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
                     AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        // Room under it for its shadow, which the row would otherwise cut.
+                        .padding(.bottom, 14)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
                     let accounts = Self.switcherAccounts(view.plan.accounts)
@@ -1185,8 +2754,10 @@ struct TransactionsView: View {
                         let isNew = finances.isNew(t)
                         NavigationLink {
                             TransactionDetailView(transaction: t, finances: finances)
+                                .zoomTransition(id: t.id, in: zoom)
                         } label: {
                             WalletTransactionRow(transaction: t, finances: finances, isNew: isNew)
+                                .zoomSource(id: t.id, in: zoom)
                         }
                         .swipeActions(edge: .leading) {
                             if isNew {
@@ -1203,6 +2774,7 @@ struct TransactionsView: View {
             }
         }
         .themedCanvas()
+        .compactSections()
         .searchable(text: $search, prompt: "Payee, category, note or tag")
         .task {
             await finances.loadLedger()
@@ -1416,12 +2988,19 @@ private struct WalletTransactionRow: View {
     let isNew: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
-            Circle()
-                .fill(isNew ? Theme.accent : .clear)
-                .frame(width: 8, height: 8)
-                .accessibilityHidden(true)
+        HStack(spacing: 12) {
             LogoCircle(transaction: transaction, categories: finances.plan?.categories ?? [], size: 42)
+                // New since you looked: a violet dot on the logo, as an unread badge.
+                .overlay(alignment: .topLeading) {
+                    if isNew {
+                        Circle()
+                            .fill(Theme.accent)
+                            .frame(width: 11, height: 11)
+                            .overlay(Circle().stroke(Theme.surface, lineWidth: 2))
+                            .offset(x: -2, y: -2)
+                            .accessibilityHidden(true)
+                    }
+                }
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 4) {
                     Text(verbatim: TransactionDetailView.title(of: transaction, finances: finances))
@@ -1432,15 +3011,11 @@ private struct WalletTransactionRow: View {
                             .accessibilityLabel("Receipt kept")
                     }
                 }
-                if let sub = subtitle {
-                    Text(verbatim: sub)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Text(verbatim: TransactionsView.dayWords(transaction.date))
+                // What it was and the day, on one line: two lines a row, as Wallet's.
+                Text(verbatim: [subtitle, TransactionsView.dayWords(transaction.date)].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             Spacer(minLength: 8)
             Money(value: transaction.amount, currency: finances.currency, finances: finances)
@@ -1533,8 +3108,7 @@ private struct TransactionDetailView: View {
                         Text(verbatim: finances.accountName(t.account) ?? "Account")
                     }
                 }
-            }
-            Section {
+                // One card of details, as Wallet keeps a transaction's.
                 LabeledContent("Category") {
                     HStack(spacing: 6) {
                         if let tint = Design.category(PayeeLogos.shared.categoryHue(category, in: categories)) {
@@ -1574,6 +3148,7 @@ private struct TransactionDetailView: View {
                             }
                             Spacer()
                             Money(value: other.amount, currency: finances.currency, finances: finances)
+                                .foregroundStyle(other.amount > 0 ? Theme.success : Color.primary)
                         }
                         .accessibilityElement(children: .combine)
                     }
@@ -1612,8 +3187,15 @@ private struct TransactionDetailView: View {
     }
 
     /// What a transaction is, in words: its payee, or where a transfer went.
+    /// A payee as the bank wrote it ("NETFLIX.COM", "STARBUCKS STORE 01234")
+    /// is shown as a person would write it; one typed by a person as typed.
     static func title(of t: FinanceTransaction, finances: FinancesViewModel) -> String {
-        if !t.payee.isEmpty { return t.payee }
+        if !t.payee.isEmpty {
+            let logos = PayeeLogos.shared
+            guard logos.bankWording(t.payee) else { return t.payee }
+            let clean = logos.cleanPayee(t.payee)
+            return clean.isEmpty ? t.payee : clean
+        }
         if let to = t.to, !to.isEmpty { return "To \(finances.accountName(to) ?? "another account")" }
         return "Transaction"
     }
@@ -1868,62 +3450,6 @@ private struct Money: View {
     }
 }
 
-/// The two figures the household checks against its own sums, as the
-/// computer's Dashboard starts with them (main #482): checking now, and
-/// checking once the next paycheck lands. Each opens how it adds up.
-private struct CheckingSection: View {
-    let now: FinanceWorking
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-
-    var body: some View {
-        Section {
-            figure(now, caption: now.typedSameDay
-                       ? "Now, as typed in today"
-                       : "Now, typed in \(Self.short(now.from))",
-                   start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
-            if let pay = view.afterPay {
-                let whose = view.nextPay.map { view.names($0.people) } ?? ""
-                let count = view.paydayPayments
-                figure(pay, caption: "After \(whose.isEmpty ? "the next" : whose + "'s") paycheck, \(Self.short(pay.date))",
-                       start: "Checking now", end: "Once the paycheck is in, \(Self.long(pay.date))",
-                       note: count == 0 ? nil
-                           : count == 1
-                           ? "One payment due \(Self.short(pay.date)) comes out of this paycheck after it lands, so it isn't in this number."
-                           : "\(count) payments due \(Self.short(pay.date)) come out of this paycheck after it lands, so they aren't in this number.")
-            }
-        } header: {
-            Text("Checking")
-        } footer: {
-            Text("Tap one to see how it adds up, row by row.")
-        }
-    }
-
-    private func figure(_ working: FinanceWorking, caption: String, start: String, end: String, note: String?) -> some View {
-        NavigationLink {
-            CheckingWorkingView(working: working, view: view, finances: finances, title: caption, start: start, end: end, note: note)
-        } label: {
-            LabeledContent {
-                Money(value: working.result, currency: view.plan.currency, finances: finances)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(working.result < 0 ? Theme.danger : Color.primary)
-            } label: {
-                Text(verbatim: caption)
-            }
-        }
-    }
-
-    /// "Nov 14", or "a day" when the computer sent none.
-    static func short(_ date: Date?) -> String {
-        date?.formatted(.dateTime.month(.abbreviated).day()) ?? "a day"
-    }
-
-    /// "Friday, November 14".
-    static func long(_ date: Date?) -> String {
-        date?.formatted(.dateTime.weekday(.wide).month(.wide).day()) ?? "a day"
-    }
-}
-
 /// How a checking figure adds up: where it starts, each thing in and out
 /// with checking after it, and where it ends. The computer's own steps.
 private struct CheckingWorkingView: View {
@@ -1978,7 +3504,7 @@ private struct CheckingWorkingView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: view.stepName(step))
                 HStack(spacing: 4) {
-                    Text(verbatim: CheckingSection.short(step.date))
+                    Text(verbatim: CheckingHero.short(step.date))
                     if let id = step.transaction, !id.isEmpty {
                         Text("· in Transactions")
                     }
@@ -1996,105 +3522,6 @@ private struct CheckingWorkingView: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// What the investment accounts hold, as Ghostfolio last read them on the
-/// computer (main #489): kept in the plan, so it shows here. Read again on
-/// the computer; the phone only shows it.
-private struct InvestmentsSection: View {
-    let investments: FinanceInvestments
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-
-    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
-
-    var body: some View {
-        Section {
-            LabeledContent {
-                Money(value: investments.total, currency: view.plan.currency, finances: finances)
-                    .fontWeight(.semibold)
-            } label: {
-                Text("Total value")
-                Text("\(investments.holdingCount) \(investments.holdingCount == 1 ? "holding" : "holdings") in \(investments.accounts.count) \(investments.accounts.count == 1 ? "account" : "accounts")")
-            }
-            LabeledContent {
-                Money(value: investments.paid, currency: view.plan.currency, finances: finances)
-            } label: {
-                Text("You paid")
-                Text("What went in")
-            }
-            change("Gain", investments.gain, of: investments.paid, note: "on what you paid")
-            change("This month", investments.month, of: investments.total - investments.month,
-                   note: investments.since.map { "since \($0.formatted(.dateTime.month(.abbreviated).day()))" } ?? "")
-            ForEach(Array(investments.lines.enumerated()), id: \.offset) { _, line in
-                if let holding = line.holding {
-                    NavigationLink {
-                        HoldingView(holding: holding, account: line.account, view: view, finances: finances)
-                    } label: {
-                        row(line)
-                    }
-                } else {
-                    row(line)
-                }
-            }
-        } header: {
-            Text("Investments")
-        } footer: {
-            Text(readWhen.map { "From Ghostfolio, \($0)." } ?? "From Ghostfolio.")
-        }
-    }
-
-    private func currency(_ account: FinanceAccount) -> String {
-        if let code = account.currency, !code.isEmpty { return code }
-        return view.plan.currency
-    }
-
-    private func change(_ title: String, _ value: Double, of base: Double, note: String) -> some View {
-        LabeledContent {
-            Money(value: value, currency: view.plan.currency, finances: finances, signed: true)
-                .foregroundStyle(value < 0 ? Theme.danger : value > 0 ? Theme.success : Color.primary)
-        } label: {
-            Text(verbatim: title)
-            Text(verbatim: [shown ? FinanceInvestments.share(value, of: base) : nil, note]
-                .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "))
-        }
-    }
-
-    private func row(_ line: FinanceInvestments.Line) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: line.holding?.symbol ?? "Cash").fontWeight(.semibold)
-                Text(verbatim: line.holding.map { "\($0.title) · \(line.account.name)" } ?? "Not in a holding · \(line.account.name)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Money(value: line.holding?.value ?? line.cash, currency: currency(line.account), finances: finances)
-                if let holding = line.holding {
-                    HStack(spacing: 4) {
-                        Money(value: holding.gain, currency: currency(line.account), finances: finances, signed: true)
-                        if shown, let share = FinanceInvestments.share(holding.gain, of: holding.paid) {
-                            Text(verbatim: share)
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(holding.gain < 0 ? Theme.danger : Theme.success)
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    /// "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2".
-    private var readWhen: String? {
-        guard let at = view.plan.holdingsRead else { return nil }
-        let calendar = Calendar.current
-        let time = at.formatted(date: .omitted, time: .shortened)
-        if calendar.isDateInToday(at) { return "read \(time) today" }
-        if calendar.isDateInYesterday(at) { return "read yesterday at \(time)" }
-        return "read \(at.formatted(.dateTime.month(.abbreviated).day()))"
     }
 }
 
@@ -2179,3 +3606,65 @@ private struct HoldingView: View {
         #endif
     }
 }
+
+#if SCREENSHOTS
+// MARK: - Screenshots
+
+extension FinancesView {
+    /// The screenshots build only: a page of Finances in place of its home,
+    /// by the name given with `-shot`.
+    static func screenshotRoot(finances: FinancesViewModel) -> some View {
+        ScreenshotPage(finances: finances)
+    }
+}
+
+/// The page asked for, with the plan and the ledger read as the home would have.
+private struct ScreenshotPage: View {
+    let finances: FinancesViewModel
+
+    var body: some View {
+        page
+            .task {
+                if finances.plan == nil { await finances.loadPlan() }
+                if finances.ledger == nil { await finances.loadLedger() }
+            }
+    }
+
+    @ViewBuilder
+    private var page: some View {
+        switch ScreenshotMode.shot {
+        case "transactions": TransactionsView(finances: finances)
+        case "transaction": ScreenshotTransaction(finances: finances)
+        case "budgets": FinanceBudgetsPage(finances: finances)
+        case "bills": FinanceBillsPage(finances: finances)
+        case "accounts": FinanceAccountsPage(finances: finances)
+        case "investments": FinanceInvestmentsPage(finances: finances)
+        case "goals": FinanceGoalsPage(finances: finances)
+        case "recurring": FinanceRecurringPage(finances: finances)
+        case "spending": FinanceSpendingPage(finances: finances)
+        case "inbox": ReviewInboxPage(finances: finances)
+        case "loading": SkeletonCards().padding(.horizontal, 16).frame(maxHeight: .infinity, alignment: .top).background(Theme.canvas).navigationTitle("Finances")
+        default: FinancesView(finances: finances)
+        }
+    }
+}
+
+/// A transaction's page, for the newest spending with a payee's logo.
+private struct ScreenshotTransaction: View {
+    let finances: FinancesViewModel
+
+    var body: some View {
+        Group {
+            if let t = finances.ledger?.newestFirst.first(where: { $0.to == nil && $0.amount < 0 && !$0.payee.isEmpty }) {
+                TransactionDetailView(transaction: t, finances: finances)
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            if finances.plan == nil { await finances.loadPlan() }
+            await finances.loadLedger()
+        }
+    }
+}
+#endif

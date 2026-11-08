@@ -94,6 +94,15 @@ struct Pill: ViewModifier {
 extension View {
     func pill(_ tint: Color) -> some View { modifier(Pill(tint: tint)) }
 
+    /// Sections closer together than a grouped list's default (iPhone and iPad).
+    func compactSections() -> some View {
+        #if os(iOS)
+        listSectionSpacing(14)
+        #else
+        self
+        #endif
+    }
+
     /// Lists and forms on the warm canvas, their rows as white cards. On the
     /// Mac the system's own window background stays, so the window still
     /// matches the sidebar's vibrancy.
@@ -108,7 +117,7 @@ extension View {
     }
 }
 
-/// The app's mark: a server rack on a violet tile, as the app's icon is. Used where the app
+/// The app's mark: a violet server rack on a white tile, as the app's icon is. Used where the app
 /// introduces itself (pairing, the lock screen, the privacy cover).
 struct AppMark: View {
     var size: CGFloat = 72
@@ -116,14 +125,20 @@ struct AppMark: View {
     var badge: String?
 
     var body: some View {
+        // As the app icon: a violet rack on a white tile (Nov 2026, "more like Proton Mail").
         RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
-            .fill(LinearGradient(colors: [Theme.accent, Theme.accentDeep],
+            .fill(LinearGradient(colors: [.white, Color(light: 0xEEEBFB, dark: 0xEEEBFB)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
             .frame(width: size, height: size)
             .overlay {
+                RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                    .strokeBorder(Theme.accentDeep.opacity(0.10), lineWidth: 1)
+            }
+            .overlay {
                 Image(systemName: "server.rack")
-                    .font(.system(size: size * 0.44, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .font(.system(size: size * 0.5, weight: .semibold))
+                    .foregroundStyle(LinearGradient(colors: [Theme.accent, Theme.accentDeep],
+                                                    startPoint: .top, endPoint: .bottom))
             }
             .overlay(alignment: .bottomTrailing) {
                 if let badge {
