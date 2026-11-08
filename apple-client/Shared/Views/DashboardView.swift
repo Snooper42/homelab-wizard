@@ -135,19 +135,87 @@ struct DashboardView: View {
 
 // MARK: - iPhone
 
+/// The iPhone's tabs: the computer's screens, in its order (Status,
+/// Backups, Finances, Setup, Settings). Choose apps and Tidy Up are the
+/// computer's only.
 private struct PhoneDashboard: View {
+    typealias Screen = DashboardViewModel.SidebarItem
     @Bindable var model: DashboardViewModel
-    /// Which groups are open (StatusFolds): names only, kept like the sidebar's place.
-    @SceneStorage("statusFolds") private var folds = ""
     let computer: ComputerViewModel
     let finances: FinancesViewModel
+    /// The tab, kept between launches as the computer keeps its screen: a name only.
+    @SceneStorage("tab") private var savedTab = "apps:all"
+
+    private var tab: Binding<Screen> {
+        Binding(
+            get: {
+                let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
+                return screen == .finances && !finances.canSeePlan ? .status(.all) : screen
+            },
+            set: { savedTab = $0.storageKey }
+        )
+    }
+
+    var body: some View {
+        TabView(selection: tab) {
+            PhoneStatus(model: model, finances: finances)
+                .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
+                .badge(model.attentionCount)
+                .tag(Screen.status(.all))
+            NavigationStack {
+                BackupsView(backups: model.backups)
+                    .safeAreaInset(edge: .top) { healthLine }
+            }
+            .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
+            .badge(model.backups.needsAttention)
+            .tag(Screen.backups)
+            if finances.canSeePlan {
+                NavigationStack {
+                    FinancesView(finances: finances)
+                        .safeAreaInset(edge: .top) { healthLine }
+                }
+                .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
+                .tag(Screen.finances)
+            }
+            NavigationStack {
+                ComputerView(computer: computer, page: .setup)
+                    .safeAreaInset(edge: .top) { healthLine }
+            }
+            .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
+            .tag(Screen.setup)
+            NavigationStack {
+                ComputerView(computer: computer, page: .settings)
+                    .safeAreaInset(edge: .top) { healthLine }
+            }
+            .tabItem { Label("Settings", systemImage: Screen.settings.systemImage) }
+            .tag(Screen.settings)
+        }
+    }
+
+    /// Health in one line, as atop every screen but Status on the computer;
+    /// Open Status goes to the Status tab.
+    private var healthLine: some View {
+        HealthLineBar(model: model) { savedTab = Screen.status(.all).storageKey }
+    }
+}
+
+/// Status on iPhone: the summary, what changed, the apps by category as
+/// the computer groups them, and the cards under them, as the computer has
+/// them below its table.
+private struct PhoneStatus: View {
+    @Bindable var model: DashboardViewModel
+    let finances: FinancesViewModel
+    /// Which groups are open (StatusFolds): names only, kept like the tab.
+    @SceneStorage("statusFolds") private var folds = ""
 
     var body: some View {
         NavigationStack {
             List {
                 // While searching, only the apps that match.
                 if !model.isSearching {
-                    PhoneOverviewSection(model: model, computer: computer, finances: finances)
+                    Section {
+                        OverviewHeader(model: model)
+                    }
                 }
                 let changed = model.isSearching ? [] : model.changedApps
                 if !changed.isEmpty {
@@ -189,6 +257,9 @@ private struct PhoneDashboard: View {
                         }
                     }
                 }
+                if !model.isSearching, model.hasLoaded {
+                    StatusCards(cards: model.cards, finances: finances)
+                }
             }
             .overlay {
                 if !model.hasLoaded {
@@ -199,11 +270,18 @@ private struct PhoneDashboard: View {
             }
             .themedCanvas()
             .searchable(text: $model.search, prompt: "Apps")
-            .navigationTitle("Homelab")
+            .navigationTitle("Status")
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
             }
-            .refreshable { await model.refresh() }
+            .refreshable {
+                // Status and its cards (refresh reads them), and the money card.
+                async let money: Void = finances.load()
+                await model.refresh()
+                await money
+            }
+            // Again once the device's level is known: right after unlock it may not be yet.
+            .task(id: finances.canSeeMoney) { await finances.load() }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     DeviceMenu()
@@ -213,51 +291,30 @@ private struct PhoneDashboard: View {
     }
 }
 
-/// The iPhone list's first section: the summary, and the way to each screen.
-/// Its own view, so the list's body stays small enough to type-check quickly.
-private struct PhoneOverviewSection: View {
-    let model: DashboardViewModel
-    let computer: ComputerViewModel
-    let finances: FinancesViewModel
+// MARK: - Mac & iPad
 
+/// Homelab Wizard's name and line, atop the sidebar as on the computer.
+private struct BrandHeader: View {
     var body: some View {
-        Section {
-            OverviewHeader(model: model)
-            NavigationLink {
-                OverviewView(cards: model.cards, finances: finances)
-                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
-            } label: {
-                Label(finances.canSeeMoney ? "Money, Watchdog & Alerts" : "Watchdog, Protection & Alerts", systemImage: "gauge.with.dots.needle.33percent")
-                    .badge(model.failingChecks)
-            }
-            NavigationLink {
-                BackupsView(backups: model.backups)
-                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
-            } label: {
-                Label("Backups", systemImage: "externaldrive.badge.checkmark")
-                    .badge(model.backups.needsAttention)
-            }
-            if finances.canSeePlan {
-                NavigationLink {
-                    FinancesView(finances: finances)
-                        .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
-                } label: {
-                    Label("Finances", systemImage: "banknote")
-                }
-            }
-            NavigationLink {
-                ComputerView(computer: computer)
-                    .safeAreaInset(edge: .top) { HealthLineBar(model: model) }
-            } label: {
-                Label("Computer", systemImage: "desktopcomputer")
+        HStack(spacing: 10) {
+            AppMark(size: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Homelab Wizard")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Text("Your apps, at home")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
+        .textCase(nil)
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
     }
 }
 
-// MARK: - Mac & iPad
-
 private struct SplitDashboard: View {
+    typealias Screen = DashboardViewModel.SidebarItem
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(AppCoordinator.self) private var coordinator
     /// The sidebar's choice, kept across launches as the computer keeps each
@@ -270,42 +327,48 @@ private struct SplitDashboard: View {
     let finances: FinancesViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
 
+    /// The computer's screens a phone can reach, in its sidebar's order.
+    private var screens: [Screen] {
+        [.status(.all), .backups] + (finances.canSeePlan ? [.finances] : []) + [.setup, .settings]
+    }
+
+    /// The highlighted row: Status for any of its filters. Picking Status
+    /// again keeps the filter it shows.
+    private var row: Binding<Screen?> {
+        Binding(
+            get: { model.sidebar?.row },
+            set: { picked in if picked != model.sidebar?.row { model.sidebar = picked } }
+        )
+    }
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
-            List(selection: $model.sidebar) {
+            List(selection: row) {
                 Section {
-                    Label("Overview", systemImage: "gauge.with.dots.needle.33percent")
-                        .badge(model.failingChecks)
-                        .tag(DashboardViewModel.SidebarItem.overview)
-                    Label("Backups", systemImage: "externaldrive.badge.checkmark")
-                        .badge(model.backups.needsAttention)
-                        .tag(DashboardViewModel.SidebarItem.backups)
-                    if finances.canSeePlan {
-                        Label("Finances", systemImage: "banknote")
-                            .tag(DashboardViewModel.SidebarItem.finances)
+                    ForEach(screens, id: \.self) { screen in
+                        Label(screen.title, systemImage: screen.systemImage)
+                            .badge(badge(for: screen))
+                            .tag(screen)
                     }
-                    Label("Computer", systemImage: "desktopcomputer")
-                        .tag(DashboardViewModel.SidebarItem.computer)
-                }
-                Section("Apps") {
-                    ForEach(DashboardViewModel.Filter.allCases) { filter in
-                        Label(filter.title, systemImage: filter.systemImage)
-                            .badge(model.count(for: filter))
-                            .tag(DashboardViewModel.SidebarItem.apps(filter))
-                    }
+                } header: {
+                    BrandHeader()
                 }
             }
-            .navigationTitle("Homelab")
-            .onAppear { model.sidebar = DashboardViewModel.SidebarItem(storageKey: savedSidebar) ?? .apps(.all) }
+            .navigationTitle("Homelab Wizard")
+            .onAppear { model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all) }
             .onChange(of: model.sidebar) { _, item in
                 if let item { savedSidebar = item.storageKey }
+            }
+            // Finances gone from this device: back to Status.
+            .onChange(of: finances.canSeePlan) { _, can in
+                if !can, model.sidebar == .finances { model.sidebar = .status(.all) }
             }
             // An app asked for from the menu bar: show it in the full list.
             .onChange(of: coordinator.requestedAppID, initial: true) { _, id in
                 guard let id else { return }
                 coordinator.requestedAppID = nil
                 model.search = ""
-                model.sidebar = .apps(.all)
+                model.sidebar = .status(.all)
                 model.selectedAppID = id
             }
             .navigationSplitViewColumnWidth(min: 190, ideal: 220)
@@ -316,11 +379,6 @@ private struct SplitDashboard: View {
             }
         } content: {
             switch model.sidebar {
-            case .overview?:
-                OverviewView(cards: model.cards, finances: finances)
-                    .safeAreaInset(edge: .top) { healthLine }
-                    .navigationSplitViewColumnWidth(min: 300, ideal: 380)
-                    .toolbar { toolbarItems }
             case .backups?:
                 BackupsView(backups: model.backups)
                     .safeAreaInset(edge: .top) { healthLine }
@@ -331,8 +389,13 @@ private struct SplitDashboard: View {
                     .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
-            case .computer?:
-                ComputerView(computer: computer)
+            case .setup?:
+                ComputerView(computer: computer, page: .setup)
+                    .safeAreaInset(edge: .top) { healthLine }
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
+                    .toolbar { toolbarItems }
+            case .settings?:
+                ComputerView(computer: computer, page: .settings)
                     .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
@@ -351,11 +414,23 @@ private struct SplitDashboard: View {
                 )
             }
         }
+        // ⌘2 to ⌘6, as the computer's: the View menu (ScreenCommands).
+        .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
+            model.sidebar = screen
+        })
+    }
+
+    private func badge(for screen: Screen) -> Int {
+        switch screen {
+        case .status: model.attentionCount
+        case .backups: model.backups.needsAttention
+        default: 0
+        }
     }
 
     private var appList: some View {
         let filter: DashboardViewModel.Filter
-        if case .apps(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
+        if case .status(let chosen)? = model.sidebar { filter = chosen } else { filter = .all }
         let apps = model.apps(for: filter).filter { model.matchesSearch($0) }
         return List(selection: $model.selectedAppID) {
             if filter == .all {
@@ -383,7 +458,15 @@ private struct SplitDashboard: View {
                         .appActionControls(for: app)
                 }
             }
+            // The cards, below the apps as on the computer's Status.
+            if filter == .all, !model.isSearching, model.hasLoaded {
+                // Not rows to select: the selection is an app.
+                StatusCards(cards: model.cards, finances: finances)
+                    .selectionDisabled()
+            }
         }
+        // Again once the device's level is known: right after unlock it may not be yet.
+        .task(id: finances.canSeeMoney) { await finances.load() }
         .safeAreaInset(edge: .top) {
             if model.overnightLine != nil {
                 OvernightLine(model: model)
@@ -405,14 +488,30 @@ private struct SplitDashboard: View {
             }
         }
         .searchable(text: $model.search, prompt: "Filter Apps")
-        .navigationTitle(filter.title)
+        .navigationTitle(filter == .all ? "Status" : filter.title)
         #if os(macOS)
         .navigationSubtitle(model.summary)
         #endif
         .navigationSplitViewColumnWidth(min: 260, ideal: 320)
-        .refreshable { await model.refresh() }
+        .refreshable {
+            // Status and its cards (refresh reads them), and the money card.
+            async let money: Void = finances.load()
+            await model.refresh()
+            await money
+        }
         .toolbar {
             toolbarItems
+            // The filters the sidebar listed before: here, as Status's own.
+            ToolbarItem(placement: .automatic) {
+                Picker("Show", selection: Binding(get: { filter }, set: { model.sidebar = .status($0) })) {
+                    ForEach(DashboardViewModel.Filter.allCases) { choice in
+                        Label("\(choice.title) (\(model.count(for: choice)))", systemImage: choice.systemImage)
+                            .tag(choice)
+                    }
+                }
+                .pickerStyle(.menu)
+                .help("Which apps Status shows")
+            }
             ToolbarItem(placement: .automatic) {
                 GroupActionsMenu(apps: apps)
             }
@@ -431,7 +530,7 @@ private struct SplitDashboard: View {
 
     /// Health in one line, with Open Status to the apps that need a look.
     private var healthLine: some View {
-        HealthLineBar(model: model) { model.sidebar = .apps(.attention) }
+        HealthLineBar(model: model) { model.sidebar = .status(.attention) }
     }
 
     @ToolbarContentBuilder

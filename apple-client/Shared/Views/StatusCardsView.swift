@@ -1,47 +1,48 @@
 import Charts
 import SwiftUI
 
-/// The cards beside Status: the watchdog, protection, recent alerts and
-/// savings. On iPhone it's pushed from the dashboard. On Mac and iPad it's
-/// the Overview item in the sidebar.
-struct OverviewView: View {
+/// The cards under Status's app list, as the computer has them below its
+/// table: money (by this device's level), the watchdog, protection,
+/// storage, recent alerts, savings and the week. Sections, so they go into
+/// Status's own list on every device.
+struct StatusCards: View {
     let cards: CardsViewModel
     let finances: FinancesViewModel
 
     var body: some View {
-        Form {
-            if finances.canSeeMoney {
-                MoneySection(finances: finances)
+        if finances.canSeeMoney {
+            MoneySection(finances: finances)
+        }
+        ForEach(cards.shown) { card in
+            CardSection(card: card)
+        }
+        if let error = cards.error {
+            Section {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .foregroundStyle(Theme.warning)
             }
-            ForEach(cards.shown) { card in
-                CardSection(card: card)
-            }
-            if let error = cards.error {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(Theme.warning)
-                }
+        } else if cards.shown.isEmpty, cards.isLoading {
+            Section {
+                ProgressView("Reading the cards…")
+                    .frame(maxWidth: .infinity)
             }
         }
-        .formStyle(.grouped)
-        .themedCanvas()
-        .overlay {
-            if cards.shown.isEmpty {
-                if cards.isLoading {
-                    ProgressView("Reading the cards…")
-                } else if cards.error == nil {
-                    ContentUnavailableView("No Cards", systemImage: "rectangle.stack")
-                }
-            }
+    }
+}
+
+/// The line under a screen's heading, as the computer has one on each.
+struct ScreenLead: View {
+    let text: String
+
+    var body: some View {
+        Section {
+            EmptyView()
+        } header: {
+            Text(verbatim: text)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .textCase(nil)
         }
-        .refreshable {
-            async let money: Void = finances.load()
-            await cards.load()
-            await money
-        }
-        // Again once the device's level is known: right after unlock it may not be yet.
-        .task(id: finances.canSeeMoney) { await finances.load() }
-        .navigationTitle("Overview")
     }
 }
 

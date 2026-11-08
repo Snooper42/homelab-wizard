@@ -1,9 +1,16 @@
 import SwiftUI
 
-/// The computer: what it runs, the nightly updates, Look for problems,
-/// and a diagnostics report for whoever helps.
+/// The computer app's Setup and Settings screens, with what a phone can
+/// reach of them. Setup: what still needs you, and how this machine is
+/// doing (its system, Look for problems). Settings: this machine's nightly
+/// updates, this device, help, and where the logos come from.
 struct ComputerView: View {
+    enum Page {
+        case setup, settings
+    }
+
     let computer: ComputerViewModel
+    var page: Page = .settings
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(DashboardViewModel.self) private var dashboard
     @State private var confirmingUnpair = false
@@ -13,12 +20,17 @@ struct ComputerView: View {
     var body: some View {
         @Bindable var computer = computer
         Form {
-            hostSection
-            updatesSection
-            fixSection
-            reportSection
-            deviceSection
-            creditsSection
+            ScreenLead(text: lead)
+            switch page {
+            case .setup:
+                hostSection
+                fixSection
+            case .settings:
+                updatesSection
+                deviceSection
+                reportSection
+                creditsSection
+            }
         }
         .formStyle(.grouped)
         .themedCanvas()
@@ -27,14 +39,22 @@ struct ComputerView: View {
         .sheet(item: $computer.report) { report in
             ReportView(report: report)
         }
-        .navigationTitle("Computer")
+        .navigationTitle(page == .setup ? "Setup" : "Settings")
+    }
+
+    /// The line under the computer's heading for each screen.
+    private var lead: String {
+        switch page {
+        case .setup: "What still needs you, and how this machine is doing."
+        case .settings: "This machine's nightly updates, and this device. The rest of the settings are on the computer."
+        }
     }
 
     // MARK: Sections
 
     @ViewBuilder
     private var hostSection: some View {
-        Section("This Computer") {
+        Section("This Machine") {
             if let host = computer.host {
                 LabeledContent("System", value: [host.os, host.machine].filter { !$0.isEmpty }.joined(separator: " · "))
                 LabeledContent("Containers") {

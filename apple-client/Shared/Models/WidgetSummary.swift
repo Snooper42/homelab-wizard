@@ -9,7 +9,7 @@ import WidgetKit
 ///
 /// The widget runs without Face ID or Touch ID, so this is the one reading
 /// kept past a lock, and only on a device where the person turned it on
-/// (Computer › This Device). It's written by the unlocked app on each Status
+/// (Settings › This Device). It's written by the unlocked app on each Status
 /// read, into the App Group the app and widget share, and deleted when the
 /// widget is turned off and when the device is unpaired. The widget has no
 /// token and reads nothing from the network.

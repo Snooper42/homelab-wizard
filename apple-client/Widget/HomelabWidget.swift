@@ -5,7 +5,7 @@ import WidgetKit
 // how many apps need a look, and when that was read. It reads only the line
 // the unlocked app left in the shared App Group (WidgetSummaryStore); it has
 // no token and asks the network nothing. Off until turned on in the app
-// (Computer › This Device). Built only with HOMELAB_WIDGET=1.
+// (Settings › This Device). Built only with HOMELAB_WIDGET=1.
 
 struct HealthEntry: TimelineEntry, Sendable {
     let date: Date
@@ -50,7 +50,7 @@ struct HealthWidgetView: View {
             }
             Spacer(minLength: 0)
             if !entry.enabled {
-                Text("Turn on in Homelab › Computer › This Device.")
+                Text("Turn on in Homelab › Settings › This Device.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else if let summary = entry.summary {

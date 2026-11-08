@@ -260,12 +260,28 @@ struct PinnedTests {
 @Suite("The sidebar's place")
 struct SidebarPlaceTests {
     @Test func roundTrips() {
-        let all: [DashboardViewModel.SidebarItem] = [.overview, .backups, .finances, .computer] + DashboardViewModel.Filter.allCases.map { .apps($0) }
+        let all: [DashboardViewModel.SidebarItem] = [.backups, .finances, .setup, .settings] + DashboardViewModel.Filter.allCases.map { .status($0) }
         for item in all {
             #expect(DashboardViewModel.SidebarItem(storageKey: item.storageKey) == item)
         }
         #expect(DashboardViewModel.SidebarItem(storageKey: "apps:nope") == nil)
         #expect(DashboardViewModel.SidebarItem(storageKey: "") == nil)
+    }
+
+    @Test func aPlaceKeptBeforeTheScreensMatchedTheComputersStillOpens() {
+        // The cards moved to Status; Computer became Setup and Settings.
+        #expect(DashboardViewModel.SidebarItem(storageKey: "overview") == .status(.all))
+        #expect(DashboardViewModel.SidebarItem(storageKey: "computer") == .settings)
+    }
+
+    @Test func theComputersOrderNamesAndShortcuts() {
+        let screens: [DashboardViewModel.SidebarItem] = [.status(.all), .backups, .finances, .setup, .settings]
+        #expect(screens.map(\.title) == ["Status", "Backups", "Finances", "Setup", "Settings"])
+        // As on the computer: ⌘2 Status, ⌘3 Backups, ⌘4 Setup, ⌘5 Settings, ⌘6 Finances.
+        #expect(screens.map(\.shortcut) == ["2", "3", "6", "4", "5"])
+        // Every Status filter highlights the one Status row.
+        #expect(DashboardViewModel.SidebarItem.status(.attention).row == .status(.all))
+        #expect(DashboardViewModel.SidebarItem.backups.row == .backups)
     }
 }
 

@@ -37,40 +37,86 @@ final class DashboardViewModel {
         }
     }
 
-    /// What the sidebar can show (Mac and iPad).
+    /// The screens, as the computer's sidebar has them (web/dist/index.html),
+    /// in its order: Status, Backups, Finances, Setup, Settings. Choose apps
+    /// and Tidy Up are the computer's only; a phone can't reach them.
     enum SidebarItem: Hashable {
-        case overview
+        /// Status, showing every app or one filter of them.
+        case status(Filter)
         case backups
         case finances
-        case computer
-        case apps(Filter)
+        case setup
+        case settings
 
         /// How the choice is kept between launches: a name, nothing more.
         var storageKey: String {
             switch self {
-            case .overview: "overview"
+            case .status(let filter): "apps:" + filter.rawValue
             case .backups: "backups"
             case .finances: "finances"
-            case .computer: "computer"
-            case .apps(let filter): "apps:" + filter.rawValue
+            case .setup: "setup"
+            case .settings: "settings"
             }
         }
 
         init?(storageKey: String) {
             switch storageKey {
-            case "overview": self = .overview
+            // Before the screens matched the computer's: the cards were on
+            // Overview (now under Status), and Computer is Setup and Settings.
+            case "overview": self = .status(.all)
+            case "computer": self = .settings
             case "backups": self = .backups
             case "finances": self = .finances
-            case "computer": self = .computer
+            case "setup": self = .setup
+            case "settings": self = .settings
             default:
                 guard storageKey.hasPrefix("apps:"), let filter = Filter(rawValue: String(storageKey.dropFirst(5))) else { return nil }
-                self = .apps(filter)
+                self = .status(filter)
+            }
+        }
+
+        /// The sidebar row it highlights: any Status filter is the Status row.
+        var row: SidebarItem {
+            if case .status = self { return .status(.all) }
+            return self
+        }
+
+        /// The computer's shortcut for it, ⌘ and this number (web/src/app.ts:
+        /// Choose apps is 1 and Tidy Up 7, on the computer only).
+        var shortcut: Character {
+            switch self {
+            case .status: "2"
+            case .backups: "3"
+            case .setup: "4"
+            case .settings: "5"
+            case .finances: "6"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .status: "Status"
+            case .backups: "Backups"
+            case .finances: "Finances"
+            case .setup: "Setup"
+            case .settings: "Settings"
+            }
+        }
+
+        /// The computer's icon for it, as near as SF Symbols has it.
+        var systemImage: String {
+            switch self {
+            case .status: "waveform.path.ecg"
+            case .backups: "archivebox"
+            case .finances: "dollarsign"
+            case .setup: "checkmark.circle"
+            case .settings: "slider.horizontal.3"
             }
         }
     }
 
     /// The selection in the sidebar (Mac and iPad).
-    var sidebar: SidebarItem? = .apps(.all)
+    var sidebar: SidebarItem? = .status(.all)
     /// The selected app (Mac and iPad). Stored by id, so the detail follows live updates.
     var selectedAppID: AppStatus.ID?
     /// The app whose log is open in a sheet.

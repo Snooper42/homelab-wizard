@@ -18,6 +18,7 @@ struct HomelabClientApp: App {
         .commands {
             HomelabCommands(coordinator: coordinator)
             AppMenuCommands()
+            ScreenCommands()
         }
 
         #if os(macOS)

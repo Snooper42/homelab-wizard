@@ -14,8 +14,40 @@ struct SelectedAppFocus {
     let showLogs: @MainActor () -> Void
 }
 
+/// Picks a screen in the window in front (Mac and iPad): set by the dashboard.
+struct ScreenChoice {
+    let canSeeFinances: Bool
+    let pick: @MainActor (DashboardViewModel.SidebarItem) -> Void
+}
+
 extension FocusedValues {
     @Entry var selectedApp: SelectedAppFocus?
+    @Entry var screenChoice: ScreenChoice?
+}
+
+/// ⌘2 to ⌘6 pick a screen, the same numbers as on the computer (Choose apps
+/// is its ⌘1 and Tidy Up its ⌘7, there only). In the View menu, as there.
+struct ScreenCommands: Commands {
+    @FocusedValue(\.screenChoice) private var choice
+
+    var body: some Commands {
+        CommandGroup(after: .sidebar) {
+            Divider()
+            button(.status(.all))
+            button(.backups)
+            button(.setup)
+            button(.settings)
+            button(.finances)
+                .disabled(!(choice?.canSeeFinances ?? false))
+            Divider()
+        }
+    }
+
+    private func button(_ screen: DashboardViewModel.SidebarItem) -> some View {
+        Button(screen.title) { choice?.pick(screen) }
+            .keyboardShortcut(KeyEquivalent(screen.shortcut))
+            .disabled(choice == nil)
+    }
 }
 
 /// The App menu (Mac, and iPad with a keyboard): the selected app's
