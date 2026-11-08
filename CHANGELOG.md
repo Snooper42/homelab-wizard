@@ -64,6 +64,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tdarr no longer fills the media drive:** a video Tdarr was stopped part-way through (on battery, or by an update) left a copy as large as the video in its cache, and they added up (81 GB on one drive). Tidy Up now clears those leftovers by itself whenever Tdarr isn't converting anything, and says how much space came back. Your videos are never touched.
 - **A transaction's note on the iPhone:** the bank's own wording, kept from an import, isn't shown as its note (a memo you wrote before it still is), as on the computer.
 - **Budgets on the iPhone:** the page opens with what's left to spend this month, a bar of what's spent, and about how much a day that leaves.
 - **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.

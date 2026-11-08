@@ -40,7 +40,7 @@ Try it on a copy of a few files first, in a folder of their own: a converted fil
 
 - **Processor:** converting on the processor uses every core it is given, for roughly as long as the film runs, and longer on an older machine. A library of a few hundred films is weeks of nights. Each **Transcode CPU** worker is one file at a time; one worker is enough on a machine that also runs the other apps.
 - **Memory:** about 100 MB idle, and a gigabyte or more while a file converts.
-- **Disk:** a converted file is written in full to the cache (`tdarr-cache` on the media drive) before it replaces the original, so leave free space the size of the largest film.
+- **Disk:** a converted file is written in full to the cache (`tdarr-cache` on the media drive) before it replaces the original, so leave free space the size of the largest film. A file Tdarr was stopped part-way through (on battery, by an update or a restart) leaves its copy there; Tidy Up clears such a work folder once nothing has written to it for two hours, whenever Tdarr isn't converting a file (on Shrink, and each time it collects Tdarr's work).
 - **At night only:** in the library's **Schedule** tab, untick the daytime hours (for example 07:00 to 23:00 every day); outside the ticked hours it starts nothing new. The homelab also pauses it while a laptop is on battery.
 - **On each system:** on the Mac, containers cannot use Apple's video encoder, so it converts on the processor. On Linux and SteamOS, an Intel or AMD graphics chip can do the work (see Tinkering ideas). On Windows, only an NVIDIA graphics card can, through WSL 2.
 

@@ -119,6 +119,9 @@ func Settings(in Inputs) map[string]any {
 			// isn't in it, and the engines say so rather than hand Tdarr a path it
 			// can't open.
 			"path_map": [][]string{{filepath.Join(mediaRoot, "movies"), "/media/movies"}, {filepath.Join(mediaRoot, "tv"), "/media/tv"}},
+			// Where its container keeps the copies it is making (/temp): a job
+			// stopped mid-video leaves its copy there, which Tidy Up clears.
+			"cache": filepath.Join(mediaRoot, "tdarr-cache"),
 		}
 	}
 	servers := map[string]any{}

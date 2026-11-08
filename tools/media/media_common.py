@@ -733,6 +733,18 @@ class Tdarr:
         except RuntimeError:
             return {}
 
+    def busy(self):
+        """Whether any of Tdarr's nodes is working on a file now; None when Tdarr doesn't answer (stopped,
+        paused on battery) and so can't say."""
+        try:
+            nodes = self._call("GET", "/api/v2/get-nodes", timeout=15)
+        except (Expected, RuntimeError):
+            return None
+        for node in (nodes.values() if isinstance(nodes, dict) else ()):
+            if isinstance(node, dict) and node.get("workers"):
+                return True
+        return False
+
     def give_workers(self, gpu, apply=True):
         """A node with no transcode worker does nothing, and a new Tdarr's node starts with none: each
         such node gets one (on the graphics card when there is one, else the processor), which
@@ -770,6 +782,65 @@ class Tdarr:
         if not isinstance(doc, dict):
             return None
         return doc.get("TranscodeDecisionMaker") or None
+
+
+# Tdarr's own work folders in its cache: one a job, holding the copy being made. Tdarr removes one when
+# its job ends, but not when Tdarr is stopped mid-video (by the battery saver, an update, a restart): each
+# such job leaves a copy as large as the video behind (Nov 8, the owner: 33 of them, 81 GB).
+TDARR_WORKDIR = "tdarr-workDir"
+# A work folder nothing has written to for this long belongs to no running job: a transcode writes its
+# copy all the time.
+LEFTOVER_AFTER = 2 * 3600
+
+
+def _newest(folder):
+    """When anything in folder was last written, the folder itself included; links aren't followed."""
+    newest = folder.lstat().st_mtime
+    for dirpath, dirs, files in os.walk(str(folder)):
+        for name in dirs + files:
+            try:
+                newest = max(newest, os.lstat(os.path.join(dirpath, name)).st_mtime)
+            except OSError:
+                pass
+    return newest
+
+
+def _size(folder):
+    total = 0
+    for dirpath, _, files in os.walk(str(folder)):
+        for name in files:
+            try:
+                total += os.lstat(os.path.join(dirpath, name)).st_size
+            except OSError:
+                pass
+    return total
+
+
+def clear_tdarr_leftovers(td, cache=None, now=None):
+    """Removes Tdarr's work folders (tdarr-workDir*) in its cache that nothing has written to for
+    LEFTOVER_AFTER, unless one of Tdarr's nodes is working on a file now. Only those folders: nothing
+    else in the cache, nothing through a link. A Tdarr that doesn't answer can't be working, so its old
+    folders go too. How many were removed, and the bytes they held."""
+    cache = cfg("tdarr", "cache") if cache is None else cache
+    root = Path(cache) if cache else None
+    if not root or not root.is_dir():
+        return 0, 0
+    if td is not None and td.busy():
+        return 0, 0
+    now = time.time() if now is None else now
+    count, freed = 0, 0
+    for d in sorted(root.iterdir()):
+        if not d.name.startswith(TDARR_WORKDIR) or d.is_symlink() or not d.is_dir():
+            continue
+        try:
+            if now - _newest(d) < LEFTOVER_AFTER:
+                continue
+            size = _size(d)
+            shutil.rmtree(str(d))
+        except OSError:
+            continue
+        count, freed = count + 1, freed + size
+    return count, freed
 
 
 def plugin_stack(gpu, keep_langs, target="hevc"):
