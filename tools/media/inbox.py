@@ -6,6 +6,11 @@ The inbox: watches Downloads, and files every finished download into the right l
   python3 inbox.py scan --apply      file what's ready (the homelab runs this every minute)
   python3 inbox.py undo <id>         put what one entry of What I did today filed back where it came
                                      from; the sweep then leaves it there until it changes
+  python3 inbox.py name <path> movie "<title>" [<year>]
+  python3 inbox.py name <path> episode "<show>" <season> [<episode>]
+                                     a download Tidy Up couldn't place (Needs a look): rename it as you
+                                     say, and file it
+  python3 inbox.py leave <path>      Needs a look's Leave it: the sweep never touches it again
 
 A download is ready once nothing in it has changed for 5 minutes and no partial file (.part,
 .crdownload, .!qB...) is left; macOS's ._ files are ignored. A .zip is unpacked into a hidden
@@ -37,6 +42,7 @@ from pathlib import Path
 
 import media_common as mc
 from tv_organizer import parse_episode, PACK_RE, SEASON_DIR_RE
+from video_engine import SAMPLE_RE
 
 mo = mc.mo
 ui = mc.ui
@@ -187,13 +193,15 @@ def engine(kind, paths, apply):
         cmd.append("--apply")
     if mo.CFG_PATH:
         cmd += ["--config", str(mo.CFG_PATH)]
-    result = {}
+    result, why = {}, ""
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
     for line in p.stdout:
         try:
             ev = json.loads(line)
         except ValueError:
             continue
+        if ev.get("type") in ("warn", "fail") and ev.get("text"):
+            why = ev["text"]  # the last one says why a download was left
         if ev.get("type") == "result":
             result = ev
         elif ui.events:
@@ -202,6 +210,7 @@ def engine(kind, paths, apply):
         elif ev.get("text"):
             ui.say(ev["text"])
     rc = p.wait()
+    result.setdefault("why", why)
     return rc == 0 and result.get("ok", True), result
 
 
@@ -279,10 +288,155 @@ def undo(entry_id):
         mc.remove_empty_dirs(f.parent, keep_root=False) if f.parent.exists() else None
     tried = mc.load_state("inbox", {"failed": {}})
     tried.setdefault("kept", {})[str(dest)] = dest.stat().st_mtime
-    mc.save_state("inbox", tried)
+    # In Needs a look, in case it went to the wrong place: say what it is, or leave it.
+    note_why(tried, dest, entry.get("kind") or "", "You put it back. Say what it is, or leave it.")
+    save(tried)
     mc.note_filed({"undone": entry_id, "title": entry["title"]})
     ui.ok("Put %s back in %s" % (entry["title"], mc.pretty_path(dest.parent)))
     ui.result(action="undo", ok=True, id=entry_id, to=str(dest))
+
+
+# ============================================================== Needs a look
+VIDEO_KINDS = ("movies", "tv")
+
+
+def note_why(tried, path, kind, why):
+    tried.setdefault("why", {})[str(path)] = {"kind": kind, "why": why, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+
+
+def friendly_why(kind, text):
+    """The engine's warning, said for Needs a look."""
+    if not text or "from its name" in text:
+        return {"movies": "Couldn't tell which film it is from its name.",
+                "tv": "Couldn't tell which show and episode it is from its name."}.get(kind, "Couldn't file it.")
+    return text
+
+
+def needs_list(tried):
+    """What's waiting for a person: downloads an engine couldn't place, and what Undo put back; not what
+    Leave it left, nor what's gone."""
+    out, left, why = [], tried.get("left") or {}, tried.get("why") or {}
+    for p in dict.fromkeys(list(tried.get("failed") or {}) + list(tried.get("kept") or {})):
+        path = Path(p)
+        if p in left or not path.exists():
+            continue
+        w = why.get(p) or {}
+        out.append({"path": p, "name": path.name, "kind": w.get("kind") or "", "why": w.get("why") or "Couldn't file it.",
+                    "since": w.get("at") or ""})
+    return out
+
+
+def save(tried):
+    """The inbox's record, and Needs a look's copy of it for the app (HOMELAB_MEDIA_NEEDS)."""
+    for key in ("failed", "kept", "why", "left"):
+        tried[key] = {k: v for k, v in (tried.get(key) or {}).items() if Path(k).exists()}
+    mc.save_state("inbox", tried)
+    target = os.environ.get("HOMELAB_MEDIA_NEEDS")
+    if target:
+        t = Path(target)
+        t.parent.mkdir(parents=True, exist_ok=True)
+        tmp = t.with_suffix(".tmp")
+        tmp.write_text(json.dumps(needs_list(tried), ensure_ascii=False), encoding="utf-8")
+        os.replace(str(tmp), str(t))
+
+
+def forget(tried, path):
+    for key in ("failed", "kept", "why", "left"):
+        (tried.get(key) or {}).pop(str(path), None)
+
+
+def leave(path):
+    """Leave it: the sweep never files it, and Needs a look stops asking."""
+    item = Path(path)
+    if not item.exists():
+        mc.die("%s isn't there any more" % item.name)
+    tried = mc.load_state("inbox", {"failed": {}})
+    forget(tried, item)
+    tried.setdefault("kept", {})[str(item)] = item.stat().st_mtime
+    tried.setdefault("left", {})[str(item)] = True
+    save(tried)
+    ui.ok("Left %s where it is" % item.name)
+    ui.result(action="leave", ok=True, path=str(item))
+
+
+def episode_name(show, season, ep):
+    return "%s S%02dE%s" % (show, season, "E".join("%02d" % e for e in ep))
+
+
+def name_as(path, what, words):
+    """Rename a download as the person says (a film's title and year, a show's season and episode) so the
+    engine can place it, and file it. A folder of episodes keeps each file's own episode number."""
+    item = Path(path)
+    if not item.exists():
+        mc.die("%s isn't there any more" % item.name)
+    kind = {"movie": "movies", "episode": "tv"}.get(what)
+    if not kind or not words or not mc.safe_name(words[0]).strip():
+        mc.die('Say what it is: name <path> movie "<title>" [<year>], or episode "<show>" <season> [<episode>]')
+    title = mc.safe_name(words[0]).strip()
+    try:
+        nums = [int(w) for w in words[1:3]]
+    except ValueError:
+        mc.die("The year, season and episode are numbers")
+    if kind == "tv" and not nums:
+        mc.die("Which season?")
+    ui.title("Inbox", "filing %s as you named it" % item.name)
+    videos = [item] if item.is_file() else [v for v in mc.walk_files(item, mc.VIDEO_EXT)
+                                             if not SAMPLE_RE.search(v.stem)]
+    if not videos:
+        mc.die("There's no video in %s" % item.name)
+    if kind == "movies":
+        base = "%s (%d)" % (title, nums[0]) if nums else title
+        renames = {max(videos, key=lambda v: v.stat().st_size): base}
+    else:
+        season = nums[0]
+        if len(videos) == 1:
+            ep = [nums[1]] if len(nums) > 1 else (parse_episode(videos[0].name, videos[0].parent) or {}).get("episodes")
+            if not ep:
+                mc.die("Which episode?")
+            renames = {videos[0]: episode_name(title, season, ep)}
+        else:
+            renames = {}
+            for v in videos:
+                ep = (parse_episode(v.name, v.parent) or {}).get("episodes")
+                if ep:
+                    renames[v] = episode_name(title, season, ep)
+            if not renames:
+                mc.die("None of its videos says which episode it is")
+        base = "%s S%02d" % (title, season)
+    tried = mc.load_state("inbox", {"failed": {}})
+    forget(tried, item)
+    moved = {}
+    for v, stem in renames.items():
+        to = v.with_name(stem + v.suffix.lower())
+        if to != v:
+            to = mc.unique_path(to)
+            os.rename(str(v), str(to))
+        moved[v] = to
+    work = moved.get(item, item)
+    if item.is_dir():
+        work = item.with_name(mc.safe_name(base)) if item.name != mc.safe_name(base) else item
+        if work != item:
+            work = mc.unique_path(work)
+            os.rename(str(item), str(work))
+    ok, res = engine(kind, [work], True)
+    files = res.get("filed") or []
+    if ok and files:
+        entry = describe(kind, item, files, res)
+        entry["did"] = ["named by you, then filed"] + [d for d in entry["did"] if d != "renamed and filed"]
+        mc.note_filed(entry)
+        if work.is_dir() and leftovers_only(work):
+            mc.trash(work)
+        elif work.is_dir():
+            mc.remove_empty_dirs(work, keep_root=False)
+    elif work.exists():
+        tried.setdefault("failed", {})[str(work)] = work.stat().st_mtime
+        note_why(tried, work, kind, "Still couldn't place it: " + friendly_why(kind, res.get("why")))
+    save(tried)
+    if ok and files:
+        ui.ok("Filed %s as %s" % (item.name, base))
+    ui.result(action="name", ok=bool(ok and files), filed=files, path=str(work), why=res.get("why") or "")
+    if not (ok and files):
+        sys.exit(1)
 
 
 def add_books(books, apply):
@@ -372,7 +526,7 @@ def sweep(apply):
             if tried["failed"].get(str(item)) == item.stat().st_mtime:
                 continue
             # Put back by Undo: left alone until it changes.
-            if (tried.get("kept") or {}).get(str(item)) == item.stat().st_mtime:
+            if (tried.get("kept") or {}).get(str(item)) == item.stat().st_mtime or str(item) in (tried.get("left") or {}):
                 continue
             work, zipped = item, False
             if item.is_file() and item.suffix.lower() == ".zip":
@@ -411,6 +565,7 @@ def sweep(apply):
                 if not ok:
                     failed.append(str(item))
                     tried["failed"][str(item)] = item.stat().st_mtime
+                    note_why(tried, item, kind, friendly_why(kind, res.get("why")))
             if not apply:
                 continue
             if zipped:
@@ -431,8 +586,7 @@ def sweep(apply):
             for d in mc.remove_empty_dirs(folder, keep_root=True):
                 ui.to_log("       removed empty folder %s" % d)
     if apply:
-        tried["failed"] = {k: v for k, v in tried["failed"].items() if Path(k).exists()}
-        mc.save_state("inbox", tried)
+        save(tried)
     n = sum(len(v) for v in filed.values())
     if apply:
         ui.ok("Filed %s from the inbox%s" % (mc.fmt_n(n), "; %d waiting" % len(waiting) if waiting else ""))
@@ -443,13 +597,23 @@ def sweep(apply):
 
 
 def main():
-    ap = mc.base_parser("inbox.py", __doc__, ["scan", "undo"])
+    ap = mc.base_parser("inbox.py", __doc__, ["scan", "undo", "name", "leave"])
     args = ap.parse_args()
-    mc.begin(args, "inbox", "inbox %s" % (args.action if args.action == "undo" else "apply" if args.apply else "preview"))
+    mc.begin(args, "inbox", "inbox %s" % (args.action if args.action != "scan" else "apply" if args.apply else "preview"))
     if args.action == "undo":
         if not args.paths:
             mc.die("Which one? inbox.py undo <id>")
         undo(args.paths[0])
+        return
+    if args.action == "leave":
+        if not args.paths:
+            mc.die("Which one? inbox.py leave <path>")
+        leave(args.paths[0])
+        return
+    if args.action == "name":
+        if len(args.paths) < 3:
+            mc.die('inbox.py name <path> movie "<title>" [<year>], or episode "<show>" <season> [<episode>]')
+        name_as(args.paths[0], args.paths[1], args.paths[2:])
         return
     sweep(args.apply)
 
