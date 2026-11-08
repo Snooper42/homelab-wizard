@@ -6118,6 +6118,11 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Calendar")');
     if (await page.$('.fx-callegend .fx-keylow')) throw new Error('with no cushion, the key is drawn as under one');
   } },
+  // The checking chart's key names only the marks it has: no bill of $300 or more ahead, no key for one.
+  { name: 'Finances: the checking chart keys only what it marks', screen: 'finances', mock: { finances: { ...finances, days: finances.days.map((d) => ({ ...d, events: (d.events || []).filter((e) => e.people?.length || Math.abs(e.amount) < 300) })) } }, run: async (page) => {
+    const keys = await page.$$eval('.fx-checking .fx-legend li', (l) => l.map((x) => x.textContent.trim()), { timeout: 5000 });
+    if (!keys.includes('Paycheck') || keys.some((k) => k.startsWith('Bill of'))) throw new Error(`keys: ${keys}`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

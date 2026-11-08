@@ -143,7 +143,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
-- **A new plan reads right:** with nothing owed, Net worth says *Nothing owed* rather than *You owe $0.00* in orange; *A typical month* with no paychecks yet says so, without dangling dots; and with no cushion set, the calendar's key isn't drawn as one.
+- **A new plan reads right:** with nothing owed, Net worth says *Nothing owed* rather than *You owe $0.00* in orange; *A typical month* with no paychecks yet says so, without dangling dots; with no cushion set, the calendar's key isn't drawn as one; and the checking chart's key lists only the marks it has.
 - **Finances' small words:** Transactions' *This month* now says **Kept** over what the month kept, not just how many transactions it was, and Loans' **Pay more** no longer says *about $0.00 a month* before an amount is typed.
 - **Transactions on the iPhone:** the page opens on checking, not on an account with no transactions; homes, cars and collectibles are left out of the account cards, and each small card shows its logo, balance and whole name. "No Transactions" now sits under the heading instead of over it, with **Show All Accounts**.
 - A Chase checking account's CSV now comes in with each payee from its Description, not as CREDIT or DEBIT. Importing the same file again gives rows already brought in as CREDIT or DEBIT their payees, keeping any category you gave them, rather than adding them twice. A bank's file whose payee column only says which way the money went has its names read from another column, and the import says so when no payee is a name.

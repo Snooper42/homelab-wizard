@@ -50,8 +50,9 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
           {!(days[i].events || []).length && <div class="fx-sub" style={{ marginTop: '4px' }}>Nothing comes or goes</div>}
         </>} />
       <ul class="fx-legend inline" aria-hidden="true">
-        <li><Dot color="in" /><span class="fx-legendlabel">Paycheck</span></li>
-        <li><Dot color="out" /><span class="fx-legendlabel">Bill of {compact(bigBill)} or more</span></li>
+        {/* Only the marks the chart has: no big bill in the stretch, no key for one. */}
+        {marks.some((m) => m.tone === 'in') && <li><Dot color="in" /><span class="fx-legendlabel">Paycheck</span></li>}
+        {marks.some((m) => m.tone === 'out') && <li><Dot color="out" /><span class="fx-legendlabel">Bill of {compact(bigBill)} or more</span></li>}
         {!!cushion && <li><Dot color="out" shape="dash" /><span class="fx-legendlabel">{compact(cushion)} cushion</span></li>}
         {from >= 0 && <li><Dot color="accent" shape="square" /><span class="fx-legendlabel">The paycheck picked</span></li>}
       </ul>

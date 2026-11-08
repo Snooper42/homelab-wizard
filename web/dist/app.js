@@ -13402,11 +13402,11 @@ ${pays}
             }
           ),
           /* @__PURE__ */ u3("ul", { class: "fx-legend inline", "aria-hidden": "true", children: [
-            /* @__PURE__ */ u3("li", { children: [
+            marks2.some((m3) => m3.tone === "in") && /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3(Dot, { color: "in" }),
               /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Paycheck" })
             ] }),
-            /* @__PURE__ */ u3("li", { children: [
+            marks2.some((m3) => m3.tone === "out") && /* @__PURE__ */ u3("li", { children: [
               /* @__PURE__ */ u3(Dot, { color: "out" }),
               /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: [
                 "Bill of ",
