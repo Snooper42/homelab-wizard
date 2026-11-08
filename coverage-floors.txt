@@ -38,6 +38,7 @@ internal/envfile 79
 internal/explain 83
 internal/export 78
 internal/finance 95
+internal/ghostfolio 72
 internal/health 86
 internal/homepage 93
 internal/host 92  # target 60

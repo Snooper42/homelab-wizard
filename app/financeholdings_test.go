@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 )
 
 // ghostfolioHoldings is a fake Ghostfolio: two accounts, one in euros, each
@@ -97,12 +100,12 @@ func ghostfolioHoldings(t *testing.T, shape *string, holdingsStatus *int) *httpt
 // sold, left out; an account with no name passed over.
 func TestGhostfolioInvestments(t *testing.T) {
 	a, _ := testApp(t)
-	saved := ghostfolioBase
-	t.Cleanup(func() { ghostfolioBase = saved })
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
 	shape, status := "new", 0
 	srv := ghostfolioHoldings(t, &shape, &status)
 	defer srv.Close()
-	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	ghostfolio.Base = func(map[string]string) string { return srv.URL + "/api/v1" }
 	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN=good\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -119,17 +122,17 @@ func TestGhostfolioInvestments(t *testing.T) {
 	}
 	for _, s := range []string{"new", "old", "oldest"} {
 		shape = s
-		got, err := a.ghostfolioInvestments()
+		got, err := ghostfolio.Investments(context.Background(), core.Env(a.root))
 		if err != nil || !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: %+v, %v", s, got, err)
 		}
 	}
 	shape, status = "new", http.StatusUnauthorized
-	if _, err := a.ghostfolioInvestments(); err == nil || !strings.Contains(err.Error(), "refused the security token") {
+	if _, err := ghostfolio.Investments(context.Background(), core.Env(a.root)); err == nil || !strings.Contains(err.Error(), "refused the security token") {
 		t.Errorf("holdings refused: %v", err)
 	}
 	status = http.StatusInternalServerError
-	if _, err := a.ghostfolioInvestments(); err == nil || !strings.Contains(err.Error(), "Ghostfolio answered 500") {
+	if _, err := ghostfolio.Investments(context.Background(), core.Env(a.root)); err == nil || !strings.Contains(err.Error(), "Ghostfolio answered 500") {
 		t.Errorf("holdings failing: %v", err)
 	}
 }
@@ -139,12 +142,12 @@ func TestGhostfolioInvestments(t *testing.T) {
 // it was, and why is said, never with the token.
 func TestFinancesReadInvestments(t *testing.T) {
 	a, _ := testApp(t)
-	saved := ghostfolioBase
-	t.Cleanup(func() { ghostfolioBase = saved })
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
 	shape, status := "new", 0
 	srv := ghostfolioHoldings(t, &shape, &status)
 	defer srv.Close()
-	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	ghostfolio.Base = func(map[string]string) string { return srv.URL + "/api/v1" }
 	env := func(s string) {
 		if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte(s), 0o600); err != nil {
 			t.Fatal(err)

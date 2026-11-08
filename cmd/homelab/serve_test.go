@@ -11,9 +11,12 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio/ghostfoliotest"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
@@ -294,5 +297,103 @@ func TestPhoneSettings(t *testing.T) {
 	}
 	if _, err := call("SaveSettings"); err == nil {
 		t.Error("SaveSettings without the settings")
+	}
+}
+
+// Investments from a phone, as the card on the computer has them: a phone
+// that may edit Finances reads them now, looks a ticker up, and puts a
+// buy into Ghostfolio, answered with the plan read forward; one that may
+// only look, or sees no Finances, is refused, and nothing reaches
+// Ghostfolio; what is wrong with a buy is said.
+func TestPhoneInvestments(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
+	ghostfolio.Base = func(map[string]string) string { return f.Base }
+	root, _ := repoCopy(t, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token)
+	if _, err := finance.Save(finance.Path(root), finance.Plan{Accounts: []finance.Account{
+		{ID: "chk", Name: "Checking", Kind: finance.Checking, Balance: 1200},
+		{ID: "brk", Name: "Robinhood", Kind: finance.Investment, Balance: 0},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := companion.NewStore(companion.StorePath(root))
+	srv := httptest.NewServer((&companion.Server{Store: store, Methods: h.phoneMethods()}).Handler())
+	defer srv.Close()
+	pair := func(name, level string) string {
+		code, _ := store.NewPairing(name, false, level)
+		_, token, err := store.Pair(code, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return token
+	}
+	call := func(token, method, body string) (int, map[string]json.RawMessage) {
+		t.Helper()
+		req, _ := http.NewRequest(http.MethodPost, srv.URL+"/api/call/"+method, strings.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+token)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var out map[string]json.RawMessage
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		return resp.StatusCode, out
+	}
+	looker, editor, none := pair("Kitchen iPad", "view"), pair("Anna's iPhone", "edit"), pair("Guest phone", "")
+	day := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	buy, _ := json.Marshal([]any{map[string]any{"account": "brk", "symbol": "VTI", "dataSource": "YAHOO", "currency": "USD", "shares": 2, "total": 180, "date": day}})
+
+	for _, tok := range []string{looker, none} {
+		for _, m := range []struct{ name, body string }{{"FinancesReadInvestments", "[]"}, {"FinancesFindSymbol", `["VTI"]`}, {"FinancesAddInvestment", string(buy)}} {
+			if code, _ := call(tok, m.name, m.body); code != http.StatusForbidden {
+				t.Errorf("%s from a phone not allowed to edit Finances: %d", m.name, code)
+			}
+		}
+	}
+	if len(f.Activities) != 0 {
+		t.Fatalf("a refused phone reached Ghostfolio: %+v", f.Activities)
+	}
+
+	code, out := call(editor, "FinancesFindSymbol", `["vti"]`)
+	var found []ghostfolio.Symbol
+	if code != 200 || json.Unmarshal(out["result"], &found) != nil || len(found) != 1 || found[0].Symbol != "VTI" {
+		t.Fatalf("FinancesFindSymbol: %d %s %+v", code, out["error"], found)
+	}
+
+	code, out = call(editor, "FinancesAddInvestment", string(buy))
+	var got phoneInvestments
+	if code != 200 || json.Unmarshal(out["result"], &got) != nil {
+		t.Fatalf("FinancesAddInvestment: %d %s", code, out["error"])
+	}
+	var rh finance.Account
+	for _, a := range got.View.Plan.Accounts {
+		if a.ID == "brk" {
+			rh = a
+		}
+	}
+	if len(f.Activities) != 1 || f.Activities[0].AccountID != "gf-rh" || got.Accounts != 1 || got.Holdings != 1 || len(rh.Holdings) != 1 || rh.Balance != 200 || len(got.View.Periods) == 0 {
+		t.Errorf("after a buy: sent %+v, answered %d accounts %d holdings, Robinhood %+v", f.Activities, got.Accounts, got.Holdings, rh)
+	}
+
+	code, out = call(editor, "FinancesReadInvestments", "[]")
+	if code != 200 || json.Unmarshal(out["result"], &got) != nil || got.Holdings != 1 || got.Unmatched == nil {
+		t.Errorf("FinancesReadInvestments: %d %s %+v", code, out["error"], got)
+	}
+
+	for _, c := range []struct{ name, body, want string }{
+		{"FinancesFindSymbol", "[]", "takes what was typed"},
+		{"FinancesAddInvestment", "[]", "takes the buy or sale"},
+		{"FinancesAddInvestment", `[{"account":"chk","symbol":"VTI","dataSource":"YAHOO","currency":"USD","shares":1,"total":1,"date":"` + day + `"}]`, "not an investment"},
+	} {
+		if code, out := call(editor, c.name, c.body); code != 500 || !strings.Contains(string(out["error"]), c.want) {
+			t.Errorf("%s %s: %d %s, want %q", c.name, c.body, code, out["error"], c.want)
+		}
 	}
 }

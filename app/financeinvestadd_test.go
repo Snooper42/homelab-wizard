@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/finance"
+	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 )
 
 // ghostfolioWriter is a fake Ghostfolio that keeps what is added to it: its
@@ -89,12 +90,12 @@ func (g *ghostfolioWriter) server(t *testing.T) *httptest.Server {
 // currency, and where Ghostfolio prices it; one with no symbol left out.
 func TestFinancesFindSymbol(t *testing.T) {
 	a, _ := testApp(t)
-	saved := ghostfolioBase
-	t.Cleanup(func() { ghostfolioBase = saved })
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
 	g := &ghostfolioWriter{}
 	srv := g.server(t)
 	defer srv.Close()
-	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	ghostfolio.Base = func(map[string]string) string { return srv.URL + "/api/v1" }
 	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN=good\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -120,12 +121,12 @@ func TestFinancesFindSymbol(t *testing.T) {
 // the plan.
 func TestFinancesAddInvestment(t *testing.T) {
 	a, _ := testApp(t)
-	saved := ghostfolioBase
-	t.Cleanup(func() { ghostfolioBase = saved })
+	saved := ghostfolio.Base
+	t.Cleanup(func() { ghostfolio.Base = saved })
 	g := &ghostfolioWriter{accounts: []map[string]any{{"id": "fid", "name": "Fidelity 401(k)", "currency": "USD", "balance": 0}}}
 	srv := g.server(t)
 	defer srv.Close()
-	ghostfolioBase = func(map[string]string) string { return srv.URL + "/api/v1" }
+	ghostfolio.Base = func(map[string]string) string { return srv.URL + "/api/v1" }
 	if err := os.WriteFile(filepath.Join(a.root, ".env"), []byte("TZ=UTC\nGHOSTFOLIO_SECURITY_TOKEN=good\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
