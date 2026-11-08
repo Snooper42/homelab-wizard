@@ -631,3 +631,68 @@ struct FinanceWorkingTests {
         #expect(bad.afterPay?.typedSameDay == true && bad.afterPay?.steps.isEmpty == true)
     }
 }
+
+@Suite("Investments from Ghostfolio")
+struct FinanceInvestmentsTests {
+    // As the plan keeps them (main #489): a brokerage with two holdings and
+    // $50 of cash, and an IRA with one; checking has none.
+    let json = #"""
+    {"today":"2026-11-08","checking":"chk",
+     "start":{"chk":1000,"brk":10050,"ira":3000},
+     "plan":{"people":[],"payments":[],"cushion":0,"holdingsRead":"2026-11-08T07:02:00.123456789-05:00",
+       "accounts":[
+         {"id":"chk","name":"Checking","kind":"checking","balance":1000},
+         {"id":"ira","name":"IRA","kind":"retirement","balance":3000,
+          "history":[{"date":"2026-10-15","amount":2700},{"date":"2026-11-08","amount":3000}],
+          "holdings":[{"symbol":"VTI","name":"Vanguard Total Stock Market","shares":10,"paid":2500,"value":3000}]},
+         {"id":"brk","name":"Brokerage","kind":"investment","balance":10050,
+          "history":[{"date":"2026-11-03","amount":9000},{"date":"2026-11-08","amount":10050}],
+          "holdings":[{"symbol":"AAPL","shares":20,"paid":3000,"value":4000,"history":[{"date":"2026-11-03","amount":3500},{"date":"2026-11-08","amount":4000}]},
+                      {"symbol":"MSFT","name":"Microsoft","shares":12.5,"paid":5000,"value":6000}]}]},
+     "periods":[]}
+    """#
+
+    @Test func theFourFiguresAsTheComputerWorksThemOut() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let i = try #require(view.investments)
+        #expect(view.plan.holdingsRead != nil)
+        // Largest account first.
+        #expect(i.accounts.map { $0.account.id } == ["brk", "ira"])
+        #expect(i.total == 13050)
+        // What went in: each holding's, and the brokerage's cash as it is.
+        #expect(i.paid == 3000 + 5000 + 50 + 2500)
+        #expect(i.gain == 13050 - 10550)
+        // Since the 1st: the IRA from its balance kept Oct 15, the
+        // brokerage (nothing kept before the 1st) from its first.
+        #expect(i.month == (10050 - 9000) + (3000 - 2700))
+        #expect(i.holdingCount == 3)
+    }
+
+    @Test func aLineAHoldingLargestFirstThenTheCash() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(json.utf8))
+        let lines = try #require(view.investments).lines
+        #expect(lines.map { $0.holding?.symbol ?? "cash:" + $0.account.id } == ["MSFT", "AAPL", "cash:brk", "VTI"])
+        #expect(lines[2].cash == 50)
+        #expect(lines[1].holding?.title == "AAPL" && lines[0].holding?.title == "Microsoft")
+        #expect(lines[1].holding?.history.count == 2)
+    }
+
+    @Test func sharesAsTheComputerWritesThem() {
+        #expect(FinanceInvestments.share(2500, of: 10550) == "+23.7%")
+        #expect(FinanceInvestments.share(-31, of: 1000) == "−3.1%")
+        #expect(FinanceInvestments.share(5, of: 0) == nil)
+    }
+
+    @Test func nothingReadNoCardAndABadHoldingCostsOnlyItself() throws {
+        let none = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"payments":[],"cushion":0,"accounts":[{"id":"a","name":"A","kind":"investment","balance":5}]},"periods":[]}
+        """#.utf8))
+        #expect(none.investments == nil && none.plan.holdingsRead == nil)
+        let bad = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"plan":{"people":[],"payments":[],"cushion":0,"holdingsRead":"not a time",
+          "accounts":[{"id":"a","name":"A","kind":"investment","balance":5,"holdings":[{"name":"no symbol"}]}]},"periods":[]}
+        """#.utf8))
+        #expect(bad.plan.accounts.count == 1 && bad.plan.accounts[0].balance == 5)
+        #expect(bad.investments == nil && bad.plan.holdingsRead == nil)
+    }
+}

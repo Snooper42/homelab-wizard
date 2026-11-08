@@ -1,3 +1,4 @@
+import Charts
 import PhotosUI
 import SwiftUI
 
@@ -18,6 +19,9 @@ struct FinancesView: View {
             if let view = finances.plan {
                 if let now = view.checkingNow { CheckingSection(now: now, view: view, finances: finances) }
                 accounts(view)
+                if let investments = view.investments {
+                    InvestmentsSection(investments: investments, view: view, finances: finances)
+                }
                 Section {
                     NavigationLink {
                         TransactionsView(finances: finances)
@@ -1137,5 +1141,187 @@ private struct CheckingWorkingView: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// What the investment accounts hold, as Ghostfolio last read them on the
+/// computer (main #489): kept in the plan, so it shows here. Read again on
+/// the computer; the phone only shows it.
+private struct InvestmentsSection: View {
+    let investments: FinanceInvestments
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+
+    var body: some View {
+        Section {
+            LabeledContent {
+                Money(value: investments.total, currency: view.plan.currency, finances: finances)
+                    .fontWeight(.semibold)
+            } label: {
+                Text("Total value")
+                Text("\(investments.holdingCount) \(investments.holdingCount == 1 ? "holding" : "holdings") in \(investments.accounts.count) \(investments.accounts.count == 1 ? "account" : "accounts")")
+            }
+            LabeledContent {
+                Money(value: investments.paid, currency: view.plan.currency, finances: finances)
+            } label: {
+                Text("You paid")
+                Text("What went in")
+            }
+            change("Gain", investments.gain, of: investments.paid, note: "on what you paid")
+            change("This month", investments.month, of: investments.total - investments.month,
+                   note: investments.since.map { "since \($0.formatted(.dateTime.month(.abbreviated).day()))" } ?? "")
+            ForEach(Array(investments.lines.enumerated()), id: \.offset) { _, line in
+                if let holding = line.holding {
+                    NavigationLink {
+                        HoldingView(holding: holding, account: line.account, view: view, finances: finances)
+                    } label: {
+                        row(line)
+                    }
+                } else {
+                    row(line)
+                }
+            }
+        } header: {
+            Text("Investments")
+        } footer: {
+            Text(readWhen.map { "From Ghostfolio, \($0). It's read again on the computer, under Finances › Net worth." }
+                 ?? "From Ghostfolio. It's read again on the computer, under Finances › Net worth.")
+        }
+    }
+
+    private func currency(_ account: FinanceAccount) -> String {
+        if let code = account.currency, !code.isEmpty { return code }
+        return view.plan.currency
+    }
+
+    private func change(_ title: String, _ value: Double, of base: Double, note: String) -> some View {
+        LabeledContent {
+            Money(value: value, currency: view.plan.currency, finances: finances, signed: true)
+                .foregroundStyle(value < 0 ? Theme.danger : value > 0 ? Theme.success : Color.primary)
+        } label: {
+            Text(verbatim: title)
+            Text(verbatim: [shown ? FinanceInvestments.share(value, of: base) : nil, note]
+                .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " "))
+        }
+    }
+
+    private func row(_ line: FinanceInvestments.Line) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: line.holding?.symbol ?? "Cash").fontWeight(.semibold)
+                Text(verbatim: line.holding.map { "\($0.title) · \(line.account.name)" } ?? "Not in a holding · \(line.account.name)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Money(value: line.holding?.value ?? line.cash, currency: currency(line.account), finances: finances)
+                if let holding = line.holding {
+                    HStack(spacing: 4) {
+                        Money(value: holding.gain, currency: currency(line.account), finances: finances, signed: true)
+                        if shown, let share = FinanceInvestments.share(holding.gain, of: holding.paid) {
+                            Text(verbatim: share)
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(holding.gain < 0 ? Theme.danger : Theme.success)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "read 7:02 AM today", "read yesterday at 7:02 AM", "read Nov 2".
+    private var readWhen: String? {
+        guard let at = view.plan.holdingsRead else { return nil }
+        let calendar = Calendar.current
+        let time = at.formatted(date: .omitted, time: .shortened)
+        if calendar.isDateInToday(at) { return "read \(time) today" }
+        if calendar.isDateInYesterday(at) { return "read yesterday at \(time)" }
+        return "read \(at.formatted(.dateTime.month(.abbreviated).day()))"
+    }
+}
+
+/// One holding: its shares, what went in, its worth, and its worth at each read.
+private struct HoldingView: View {
+    let holding: FinanceHolding
+    let account: FinanceAccount
+    let view: FinancesPlanView
+    let finances: FinancesViewModel
+
+    private var shown: Bool { finances.amountsShown && !finances.amountsHiddenByPlan }
+    private var currency: String {
+        if let code = account.currency, !code.isEmpty { return code }
+        return view.plan.currency
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                LabeledContent("Shares") {
+                    if shown {
+                        Text(holding.shares, format: .number.precision(.fractionLength(0...(holding.shares < 1 ? 4 : 3))))
+                            .monospacedDigit()
+                            .privacySensitive()
+                    } else {
+                        Text(verbatim: "•••").foregroundStyle(.secondary)
+                    }
+                }
+                LabeledContent("You paid") { Money(value: holding.paid, currency: currency, finances: finances) }
+                LabeledContent("Worth now") { Money(value: holding.value, currency: currency, finances: finances) }
+                LabeledContent {
+                    Money(value: holding.gain, currency: currency, finances: finances, signed: true)
+                        .foregroundStyle(holding.gain < 0 ? Theme.danger : Theme.success)
+                } label: {
+                    Text("Gain")
+                    if shown, let share = FinanceInvestments.share(holding.gain, of: holding.paid) {
+                        Text(verbatim: share)
+                    }
+                }
+            } header: {
+                Text(verbatim: holding.title)
+            } footer: {
+                if shown, holding.shares > 0 {
+                    Text("A share is worth \((holding.value / holding.shares).formatted(.currency(code: currency))) now; they cost \((holding.paid / holding.shares).formatted(.currency(code: currency))) each on average.")
+                }
+            }
+            Section {
+                let points = holding.history.filter { $0.date != nil }
+                if points.count >= 2, shown {
+                    Chart(Array(points.enumerated()), id: \.offset) { _, point in
+                        LineMark(x: .value("Day", point.date ?? .distantPast), y: .value("Worth", point.amount))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .chartYScale(domain: .automatic(includesZero: false))
+                    .frame(height: 160)
+                    .privacySensitive()
+                    .accessibilityLabel("\(holding.symbol) at each read")
+                }
+                if points.isEmpty {
+                    Text("Not read yet. Each read from now on adds its day here.")
+                        .foregroundStyle(.secondary)
+                } else if points.count == 1 {
+                    Text("Read once so far. Each read from now on adds its day here.")
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(Array(points.suffix(30).reversed().enumerated()), id: \.offset) { _, point in
+                    LabeledContent {
+                        Money(value: point.amount, currency: currency, finances: finances)
+                    } label: {
+                        Text(point.date ?? .distantPast, format: .dateTime.weekday(.abbreviated).month().day().year())
+                    }
+                }
+            } header: {
+                Text("At Each Read")
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle(Text(verbatim: holding.symbol))
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }

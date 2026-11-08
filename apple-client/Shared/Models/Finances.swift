@@ -105,6 +105,8 @@ struct FinancesRead: Sendable {
 /// ignores them.
 struct FinancesPlanView: Decodable, Sendable, Equatable {
     let today: Date?
+    /// Today as the computer wrote it (YYYY-MM-DD).
+    let todayText: String
     /// The checking account's id ("" before there's one).
     let checking: String
     /// Each account at the start of today, by id. For a card or a loan,
@@ -133,7 +135,8 @@ struct FinancesPlanView: Decodable, Sendable, Equatable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        today = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .today))
+        todayText = try c.decodeIfPresent(String.self, forKey: .today) ?? ""
+        today = LocalDay.parse(todayText)
         checking = try c.decodeIfPresent(String.self, forKey: .checking) ?? ""
         start = try c.decodeIfPresent([String: Double].self, forKey: .start) ?? [:]
         periods = try c.decodeIfPresent([FinancePeriod].self, forKey: .periods) ?? []
@@ -211,8 +214,10 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     let currency: String
     /// Every device follows this: no amounts are shown at all while it's on.
     let hideAmounts: Bool
+    /// When the investments were last read from Ghostfolio (main #489).
+    let holdingsRead: Date?
 
-    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts }
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -222,6 +227,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         cushion = try c.decodeIfPresent(Double.self, forKey: .cushion) ?? 0
         currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
         hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
+        holdingsRead = ((try? c.decodeIfPresent(String.self, forKey: .holdingsRead)) ?? nil).flatMap(GoTime.parse)
     }
 }
 
@@ -293,6 +299,27 @@ struct FinanceAccount: Decodable, Sendable, Equatable, Identifiable {
     let institution: String?
     /// Its own currency, when it isn't the plan's.
     let currency: String?
+    /// Its balance as typed in (or as Ghostfolio read it).
+    let balance: Double?
+    /// Its balance on each day it was kept, oldest first.
+    let history: [FinancePoint]
+    /// What an investment account holds, as Ghostfolio last read it (main #489).
+    let holdings: [FinanceHolding]
+
+    enum CodingKeys: String, CodingKey { case id, name, kind, institution, currency, balance, history, holdings }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decode(String.self, forKey: .kind)
+        institution = try c.decodeIfPresent(String.self, forKey: .institution)
+        currency = try c.decodeIfPresent(String.self, forKey: .currency)
+        // Extras: one that doesn't read costs only itself, never the account.
+        balance = (try? c.decodeIfPresent(Double.self, forKey: .balance)) ?? nil
+        history = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .history)) ?? nil) ?? []
+        holdings = Array((((try? c.decodeIfPresent([FinanceHolding].self, forKey: .holdings)) ?? nil) ?? []).prefix(500))
+    }
 
     /// A card or a loan: its balance is what it owes.
     var isOwed: Bool { kind == "card" || kind == "loan" }
@@ -485,6 +512,124 @@ struct FinanceStep: Decodable, Sendable, Equatable {
         interest = try c.decodeIfPresent(Bool.self, forKey: .interest) ?? false
         amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
         after = try c.decodeIfPresent(Double.self, forKey: .after) ?? 0
+    }
+}
+
+/// An amount on a day (`finance.Point`).
+struct FinancePoint: Decodable, Sendable, Equatable {
+    /// YYYY-MM-DD, as the computer wrote it.
+    let dateText: String
+    let amount: Double
+
+    var date: Date? { LocalDay.parse(dateText) }
+
+    enum CodingKeys: String, CodingKey { case date, amount }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        dateText = try c.decodeIfPresent(String.self, forKey: .date) ?? ""
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+    }
+}
+
+/// A fund or a company's shares an account holds (`finance.Holding`): how
+/// many, what went in, and what they were worth when read, with that worth
+/// on each day it was read.
+struct FinanceHolding: Decodable, Sendable, Equatable {
+    let symbol: String
+    let name: String?
+    let shares: Double
+    let paid: Double
+    let value: Double
+    let history: [FinancePoint]
+
+    var gain: Double { value - paid }
+    var title: String {
+        if let name, !name.isEmpty { return name }
+        return symbol
+    }
+
+    enum CodingKeys: String, CodingKey { case symbol, name, shares, paid, value, history }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        symbol = try c.decode(String.self, forKey: .symbol)
+        name = try c.decodeIfPresent(String.self, forKey: .name)
+        shares = try c.decodeIfPresent(Double.self, forKey: .shares) ?? 0
+        paid = try c.decodeIfPresent(Double.self, forKey: .paid) ?? 0
+        value = try c.decodeIfPresent(Double.self, forKey: .value) ?? 0
+        history = Array((((try? c.decodeIfPresent([FinancePoint].self, forKey: .history)) ?? nil) ?? []).suffix(800))
+    }
+}
+
+/// The Investments card's figures, as the computer works them out
+/// (web/src/finances/widgets/Investments.tsx): what's held, what went in,
+/// the gain, and this month's change, with a line a holding and each
+/// account's cash besides.
+struct FinanceInvestments: Sendable {
+    struct Line: Sendable, Equatable {
+        let account: FinanceAccount
+        /// Nil for the account's cash: what it holds besides its holdings.
+        let holding: FinanceHolding?
+        let cash: Double
+    }
+
+    /// Largest first, with their worth today.
+    let accounts: [(account: FinanceAccount, worth: Double)]
+    let lines: [Line]
+    let total: Double
+    let paid: Double
+    let month: Double
+    /// The first of this month, which `month` is counted from.
+    let since: Date?
+
+    var gain: Double { total - paid }
+    var holdingCount: Int { lines.filter { $0.holding != nil }.count }
+
+    /// "+24.4%", "−3.1%"; nil without what went in.
+    static func share(_ gain: Double, of paid: Double) -> String? {
+        guard abs(paid) >= 0.005 else { return nil }
+        let percent = abs(gain / abs(paid) * 100)
+        return "\(gain < 0 ? "−" : "+")\(percent.formatted(.number.precision(.fractionLength(1))))%"
+    }
+}
+
+extension FinancesPlanView {
+    /// An account's worth today, as the computer reads it for Net worth.
+    func worth(of account: FinanceAccount) -> Double {
+        let today = start[account.id] ?? account.balance ?? 0
+        return account.isOwed ? -today : today
+    }
+
+    /// Its worth on a day: its last kept balance on or before it, else its first, else today's.
+    func worth(of account: FinanceAccount, on day: String) -> Double {
+        var at: Double?
+        for point in account.history where point.dateText <= day { at = point.amount }
+        guard let kept = at ?? account.history.first?.amount else { return worth(of: account) }
+        return account.isOwed ? -kept : kept
+    }
+
+    /// The Investments card, or nil when no account holds anything read from Ghostfolio.
+    var investments: FinanceInvestments? {
+        let held = plan.accounts.filter { !$0.holdings.isEmpty }
+            .map { (account: $0, worth: worth(of: $0)) }
+            .sorted { $0.worth > $1.worth }
+        guard !held.isEmpty else { return nil }
+        var lines: [FinanceInvestments.Line] = []
+        for (account, _) in held {
+            let holdings = account.holdings.sorted { $0.value > $1.value }
+            lines += holdings.map { FinanceInvestments.Line(account: account, holding: $0, cash: 0) }
+            let cash = ((account.balance ?? 0) - holdings.reduce(0) { $0 + $1.value }) * 100
+            let rounded = cash.rounded() / 100
+            if rounded >= 0.01 { lines.append(FinanceInvestments.Line(account: account, holding: nil, cash: rounded)) }
+        }
+        let total = held.reduce(0) { $0 + $1.worth }
+        let paid = lines.reduce(0) { $0 + ($1.holding?.paid ?? $1.cash) }
+        // This month: from the first, by each account's kept balances.
+        let first = todayText.count == 10 ? String(todayText.prefix(8)) + "01" : nil
+        let month = first.map { day in held.reduce(0) { $0 + $1.worth - worth(of: $1.account, on: day) } } ?? 0
+        return FinanceInvestments(accounts: held, lines: lines, total: total, paid: paid, month: month,
+                                  since: first.flatMap(LocalDay.parse))
     }
 }
 
