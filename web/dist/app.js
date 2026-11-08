@@ -907,6 +907,7 @@
   // web/src/finances/payees.ts
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
   var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
   var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
   var chains = [
     ["amzn mktp", "Amazon"],
@@ -961,6 +962,12 @@
     ["disney plus", "Disney+"],
     ["instacart", "Instacart"],
     ["chipotle", "Chipotle"],
+    ["comcast xfinity", "Xfinity"],
+    ["comcast cable", "Xfinity"],
+    ["xfinity", "Xfinity"],
+    ["apple gs savings", "Apple Savings"],
+    ["apple savings", "Apple Savings"],
+    ["verizon wireless", "Verizon"],
     ["lowes", "Lowe's"],
     ["lowe s", "Lowe's"],
     ["the home depot", "The Home Depot"],
@@ -976,6 +983,13 @@
   function cleanPayee(raw) {
     let s3 = (raw || "").replace(/\s+/g, " ").trim();
     if (!s3) return "";
+    const zelle = s3.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);
+    if (zelle) return `Zelle ${zelle[1].toLowerCase()} ${ordinary(zelle[2].trim())}`;
+    const card = s3.match(/^payment to (.+?) card ending in (\d{4})\b/i);
+    if (card) return `Payment to ${ordinary(card[1].trim())} card ••${card[2]}`;
+    if (s3.search(achId) >= 0) {
+      s3 = s3.replace(achId, " ").replace(/(?:^|\s)\S*_\S*(?=\s|$)/g, " ").replace(/(?:^|\s)(?=[A-Za-z0-9]*\d)(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{8,}(?=\s|$)/g, " ").replace(/\s+/g, " ").trim().replace(/(?:\s+(?:PPD|CCD|WEB|TEL))+$/i, "");
+    }
     s3 = s3.replace(leading, "").trim();
     const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
     if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
@@ -1225,6 +1239,24 @@
       }
     });
     return out;
+  }
+  function renameFixes(found2, account, ledger, skip2) {
+    const out = /* @__PURE__ */ new Map(), used = new Set(skip2.values());
+    const words5 = (x3) => x3.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(Boolean);
+    found2.forEach((t3, i3) => {
+      if (skip2.has(i3) || !t3.payee || !t3.raw) return;
+      const raw = new Set(words5(t3.raw));
+      const q2 = ledger.find((q3) => !used.has(q3.id) && q3.account === account && !q3.to && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && !!q3.payee && q3.payee.toLowerCase() !== t3.payee.toLowerCase() && (q3.note || "").includes(t3.raw) && words5(q3.payee).every((w3) => raw.has(w3)));
+      if (q2) {
+        used.add(q2.id);
+        out.set(i3, q2.id);
+      }
+    });
+    return out;
+  }
+  function noted(t3, account, ledger) {
+    const said2 = t3.raw || t3.payee;
+    return !!said2 && ledger.some((q2) => q2.account === account && !q2.to && q2.date === t3.date && Math.abs(q2.amount - t3.amount) < 5e-3 && (q2.note || "").includes(said2));
   }
   var isOfx = (text2) => /<OFX>|OFXHEADER/i.test(text2.slice(0, 2e3));
   function already(t3, account, ledger) {
@@ -10398,8 +10430,9 @@
     });
     const have = ledger?.transactions || [];
     const fixes = wayOnlyFixes(found2, account, have);
+    const renames = renameFixes(found2, account, have, fixes);
     const fixed = new Set(fixes.values()), others2 = have.filter((q2) => !fixed.has(q2.id));
-    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)));
+    const fresh = found2.filter((t3, i3) => !fixes.has(i3) && !renames.has(i3) && !already(t3, account, others2) && !(t3.raw && already({ ...t3, payee: t3.raw }, account, others2)) && !noted(t3, account, others2));
     const lastCat = (payee) => [...have].reverse().find((q2) => q2.payee && q2.category && q2.payee.toLowerCase() === payee.toLowerCase())?.category;
     const lastLogo = (payee) => [...have].reverse().find((q2) => q2.payee && q2.institution && q2.payee.toLowerCase() === payee.toLowerCase())?.institution;
     const payments = (plan.payments || []).filter((x3) => !x3.card);
@@ -10414,12 +10447,14 @@
     const linkOf = (i3) => i3 in picked ? picked[i3] : guessed[i3]?.payment || "";
     const bring = async (e3) => {
       e3.preventDefault();
-      if (!fresh.length && !fixes.size) {
+      if (!fresh.length && !fixes.size && !renames.size) {
         setProblem(found2.length ? "All of them are in already." : "Nothing in this file reads as a transaction: check the columns.");
         return;
       }
       const fix = new Map([...fixes].map(([i3, id2]) => [id2, found2[i3]]));
+      const rename = new Map([...renames].map(([i3, id2]) => [id2, found2[i3].payee]));
       const kept4 = have.map((q2) => {
+        if (rename.has(q2.id)) return { ...q2, payee: rename.get(q2.id) };
         const t3 = fix.get(q2.id);
         return t3 ? { ...q2, payee: t3.payee || q2.payee, note: q2.note || (t3.raw ? t3.memo ? `${t3.memo} (${t3.raw})` : t3.raw : t3.memo) || void 0, category: q2.category || t3.payee && lastCat(t3.payee) || void 0, institution: q2.institution || t3.payee && lastLogo(t3.payee) || void 0, bank: q2.bank || t3.id } : q2;
       });
@@ -10458,7 +10493,7 @@
         /* @__PURE__ */ u3("h3", { class: "formsub", children: [
           found2.length ? `${fresh.length} to bring in` : "Nothing found yet",
           " ",
-          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", found2.length - fresh.length - fixes.size ? `${found2.length - fresh.length - fixes.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
+          /* @__PURE__ */ u3("span", { class: "muted", children: [fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : "", renames.size ? `${renames.size} brought in before, given clearer names` : "", found2.length - fresh.length - fixes.size - renames.size ? `${found2.length - fresh.length - fixes.size - renames.size} already in, skipped` : ""].filter(Boolean).join(" · ") })
         ] }),
         !ofx && found2.length > 1 && found2.every((t3) => !t3.payee || wayOnly(t3.payee)) && /* @__PURE__ */ u3("p", { class: "formerr bad importnote", role: "alert", children: [
           "No payee here is a name, only ",
@@ -10467,7 +10502,7 @@
         ] }),
         guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
-          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), dup = k3 < 0 && !fixing;
+          const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;
           const g2 = k3 < 0 ? void 0 : guessed[k3], link = k3 < 0 ? "" : linkOf(k3), x3 = payments.find((q2) => q2.id === link);
           return /* @__PURE__ */ u3("li", { class: dup ? "dup" : "", children: [
             /* @__PURE__ */ u3(Mark, { brand: payeeBrand(t3.payee ? lastLogo(t3.payee) : void 0, t3.payee), name: t3.payee || "?", size: "sm", auto: !!t3.payee }),
@@ -10476,7 +10511,7 @@
               /* @__PURE__ */ u3("small", { children: [
                 t3.raw ? `${t3.raw} · ` : "",
                 dayLong(t3.date),
-                fixing ? " · gives the CREDIT or DEBIT row its payee" : dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
+                fixing ? " · gives the CREDIT or DEBIT row its payee" : renaming ? " · gives the one brought in before this name" : dup ? " · already in" : t3.payee && lastCat(t3.payee) ? ` · ${lastCat(t3.payee)}` : ""
               ] }),
               g2 && /* @__PURE__ */ u3("span", { class: "importlink", children: [
                 /* @__PURE__ */ u3("small", { children: !x3 ? "Not a planned payment" : k3 in picked ? `Pays ${x3.name}` : `Looks like ${x3.name}, planned ${money(x3.amount)}` }),
@@ -10499,7 +10534,7 @@
       /* @__PURE__ */ u3("div", { class: "actions finactions", children: [
         /* @__PURE__ */ u3("span", { class: "grow" }),
         /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: props.close, disabled: busy2, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size}` : ""].filter(Boolean).join(", ") || "Bring in" })
+        /* @__PURE__ */ u3("button", { type: "submit", class: "primary small", disabled: busy2 || !fresh.length && !fixes.size && !renames.size, children: [fresh.length ? `Bring in ${fresh.length}` : "", fixes.size + renames.size ? `${fresh.length ? "fix" : "Fix"} ${fixes.size + renames.size}` : ""].filter(Boolean).join(", ") || "Bring in" })
       ] })
     ] });
   }

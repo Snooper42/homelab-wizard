@@ -5139,6 +5139,50 @@ const smokes = [
     await page.click(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`);
     await page.waitForSelector(`${card} .fx-holddetail svg`, { timeout: 2000 });
   } },
+  // A direct debit or deposit loses its codes (PPD or WEB ID, its entry wording, a long reference); Zelle says who, in
+  // ordinary capitals; a card paid from checking says which; Comcast's wording is Xfinity, Apple's savings transfer Apple Savings.
+  { name: "Finances: a Chase CSV's direct debits, Zelle, and card payments come in by the names a person would write", screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'CREDIT,11/06/2026,"ACME CRUISES AD_PAYMENT PPD ID: 1234567890",1500.00,ACH_CREDIT,5000.00,,\n'
+      + 'DEBIT,11/05/2026,"MAZDA FINANCIAL WEB ABCD1234EFGH5 WEB ID: 1111111111",-250.00,ACH_DEBIT,3500.00,,\n'
+      + 'DEBIT,11/04/2026,"COMCAST-XFINITY CABLE SVCS PPD ID: 0000000001",-80.00,ACH_DEBIT,3750.00,,\n'
+      + 'DEBIT,11/03/2026,"APPLE GS SAVINGS TRANSFER 123456789012 WEB ID: 2222222222",-300.00,ACH_DEBIT,3830.00,,\n'
+      + 'DEBIT,11/02/2026,"Payment to Chase card ending in 1234 11/02",-120.00,LOAN_PMT,4130.00,,\n'
+      + 'CREDIT,11/01/2026,"Zelle payment from JANE Q DOE 12345678901",40.00,QUICKPAY_CREDIT,4250.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("6 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 6")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-6);
+    const names = txs.map((t) => t.payee).join('|');
+    if (names !== 'Acme Cruises|Mazda Financial|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
+    if (!txs[0].note?.includes('ACME CRUISES AD_PAYMENT PPD ID: 1234567890')) throw new Error(`the bank's wording not kept: ${txs[0].note}`);
+  } },
+  // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
+  // name, keeping their category; a payee typed in by hand stays as it is; nothing comes in twice.
+  { name: 'Finances: a CSV imported again gives rows named with the bank\'s codes clearer names, never one typed by hand', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'm1', date: '2026-11-06', account: 'chk', amount: 1500, payee: 'Acme Cruises Ad_payment Ppd Id', category: 'Pay', note: 'ACME CRUISES AD_PAYMENT PPD ID: 1234567890' },
+    { id: 'm2', date: '2026-11-05', account: 'chk', amount: -250, payee: 'Car payment', note: 'MAZDA FINANCIAL WEB ABCD1234EFGH5 WEB ID: 1111111111' },
+    { id: 'm3', date: '2026-11-03', account: 'chk', amount: -300, payee: 'Apple', note: 'APPLE GS SAVINGS TRANSFER 123456789012 WEB ID: 2222222222' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'CREDIT,11/06/2026,"ACME CRUISES AD_PAYMENT PPD ID: 1234567890",1500.00,ACH_CREDIT,5000.00,,\n'
+      + 'DEBIT,11/05/2026,"MAZDA FINANCIAL WEB ABCD1234EFGH5 WEB ID: 1111111111",-250.00,ACH_DEBIT,3500.00,,\n'
+      + 'DEBIT,11/03/2026,"APPLE GS SAVINGS TRANSFER 123456789012 WEB ID: 2222222222",-300.00,ACH_DEBIT,3830.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("0 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .formsub:has-text("2 brought in before, given clearer names")', { timeout: 2000 });
+    await page.waitForSelector('#finSheet .formsub:has-text("1 already in, skipped")', { timeout: 2000 });
+    await page.click('#finSheet button:text-is("Fix 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const by = (id) => txs.find((t) => t.id === id);
+    if (txs.length !== 3 || by('m1').payee !== 'Acme Cruises' || by('m1').category !== 'Pay' || by('m2').payee !== 'Car payment' || by('m3').payee !== 'Apple Savings') throw new Error(`renamed ${JSON.stringify(txs)}`);
+  } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });

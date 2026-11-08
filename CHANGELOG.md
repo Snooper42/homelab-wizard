@@ -59,6 +59,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Clearer names on imported transactions:** a bank file's direct debits and deposits come in without the bank's codes (*Mazda Financial*, not *Mazda Financial Web …Web Id*); Zelle says who (*Zelle from Jane Doe*), a card payment which card (*Payment to Chase card ••1234*), and Comcast is Xfinity. Importing the same file again gives the ones already in their clearer names, keeping their categories, and never adds one you renamed a second time.
 - **Finances at night:** in dark mode, Finances has a near-black background with its cards a step lighter and thin lines, easier on the eyes and quicker to read at a glance. A system set to more contrast keeps its own colours.
 - **Your accounts in the sidebar:** under each group (Cash, Credit cards, Investments…) the sidebar lists its accounts, each with its round logo and balance; a group's arrow folds them away, and it stays folded. Every logo and category icon on Finances is round now too.
 - **Each category in its own colour:** on Finances, a category's icon is drawn in one colour on every row, budget, report bar, the money flow and the donut (Food is the same green everywhere, Utilities the same orange), so you can tell them apart at a glance, in light and dark.

@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
-import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned, wayOnly, wayOnlyFixes } from './importData';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
@@ -967,7 +967,9 @@ function BudgetsForm(props: EditProps) {
  * linked to it, so the plan does not take it out again on its day; the
  * preview says so, and the link can be changed or taken off there. A row
  * brought in before with only CREDIT or DEBIT as its payee (a Chase file,
- * read wrongly) takes this file's payee for it, rather than coming in twice.
+ * read wrongly) takes this file's payee for it, rather than coming in twice;
+ * one whose payee was the bank's own words (its codes left in) takes the
+ * clearer name this file's row now reads as.
  */
 function ImportForm(props: EditProps) {
   const { plan, checking, ledger } = props;
@@ -996,8 +998,10 @@ function ImportForm(props: EditProps) {
   const found = read_.map((t) => { const payee = cleanPayee(t.payee); return { ...t, payee, raw: t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined }; });
   const have = ledger?.transactions || [];
   const fixes = wayOnlyFixes(found, account, have);
+  const renames = renameFixes(found, account, have, fixes);
   const fixed = new Set(fixes.values()), others = have.filter((q) => !fixed.has(q.id));
-  const fresh = found.filter((t, i) => !fixes.has(i) && !already(t, account, others) && !(t.raw && already({ ...t, payee: t.raw }, account, others)));
+  // Already in: by its bank ID, day, amount, and a payee alike; or by the bank's wording in its note, however it was renamed since.
+  const fresh = found.filter((t, i) => !fixes.has(i) && !renames.has(i) && !already(t, account, others) && !(t.raw && already({ ...t, payee: t.raw }, account, others)) && !noted(t, account, others));
   const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
   // A logo picked for a payee before goes on with it.
   const lastLogo = (payee: string) => [...have].reverse().find((q) => q.payee && q.institution && q.payee.toLowerCase() === payee.toLowerCase())?.institution;
@@ -1010,10 +1014,13 @@ function ImportForm(props: EditProps) {
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   const bring = async (e: Event) => {
     e.preventDefault();
-    if (!fresh.length && !fixes.size) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
+    if (!fresh.length && !fixes.size && !renames.size) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
     // Each CREDIT or DEBIT row takes its payee, the bank's wording as a note, and the payee's last category and logo where it has none.
     const fix = new Map([...fixes].map(([i, id]) => [id, found[i]]));
+    // A payee that was the bank's own words takes the clearer name; its category, logo, and note stay.
+    const rename = new Map([...renames].map(([i, id]) => [id, found[i].payee!]));
     const kept = have.map((q) => {
+      if (rename.has(q.id)) return { ...q, payee: rename.get(q.id) };
       const t = fix.get(q.id);
       return t ? { ...q, payee: t.payee || q.payee, note: q.note || (t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo) || undefined, category: q.category || (t.payee && lastCat(t.payee)) || undefined, institution: q.institution || (t.payee && lastLogo(t.payee)) || undefined, bank: q.bank || t.id } : q;
     });
@@ -1049,16 +1056,16 @@ function ImportForm(props: EditProps) {
         </>}
       </div>
       {!!text && <>
-        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{[fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : '', found.length - fresh.length - fixes.size ? `${found.length - fresh.length - fixes.size} already in, skipped` : ''].filter(Boolean).join(' · ')}</span></h3>
+        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{[fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : '', renames.size ? `${renames.size} brought in before, given clearer names` : '', found.length - fresh.length - fixes.size - renames.size ? `${found.length - fresh.length - fixes.size - renames.size} already in, skipped` : ''].filter(Boolean).join(' · ')}</span></h3>
         {!ofx && found.length > 1 && found.every((t) => !t.payee || wayOnly(t.payee)) && <p class="formerr bad importnote" role="alert">No payee here is a name, only {found.find((t) => t.payee)?.payee ? `“${found.find((t) => t.payee)!.payee}”` : 'empty'}: pick the column with the names under Payee.</p>}
         {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {
-            const k = fresh.indexOf(t), fixing = fixes.has(i), dup = k < 0 && !fixing;
+            const k = fresh.indexOf(t), fixing = fixes.has(i), renaming = renames.has(i), dup = k < 0 && !fixing && !renaming;
             const g = k < 0 ? undefined : guessed[k], link = k < 0 ? '' : linkOf(k), x = payments.find((q) => q.id === link);
             return <li key={i} class={dup ? 'dup' : ''}>
               <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" auto={!!t.payee} />
-              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{fixing ? ' · gives the CREDIT or DEBIT row its payee' : dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small>
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{fixing ? ' · gives the CREDIT or DEBIT row its payee' : renaming ? ' · gives the one brought in before this name' : dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small>
                 {g && <span class="importlink"><small>{!x ? 'Not a planned payment' : k in picked ? `Pays ${x.name}` : `Looks like ${x.name}, planned ${money(x.amount)}`}</small>
                   <select aria-label={`What ${t.payee} on ${dayLongOf(t.date)} pays`} value={link} onChange={(e) => setPicked({ ...picked, [k]: (e.target as HTMLSelectElement).value })}>
                     <option value="">Nothing planned</option>
@@ -1074,7 +1081,7 @@ function ImportForm(props: EditProps) {
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <div class="actions finactions"><span class="grow" />
         <button type="button" class="small" onClick={props.close} disabled={busy}>Cancel</button>
-        <button type="submit" class="primary small" disabled={busy || (!fresh.length && !fixes.size)}>{[fresh.length ? `Bring in ${fresh.length}` : '', fixes.size ? `${fresh.length ? 'fix' : 'Fix'} ${fixes.size}` : ''].filter(Boolean).join(', ') || 'Bring in'}</button>
+        <button type="submit" class="primary small" disabled={busy || (!fresh.length && !fixes.size && !renames.size)}>{[fresh.length ? `Bring in ${fresh.length}` : '', fixes.size + renames.size ? `${fresh.length ? 'fix' : 'Fix'} ${fixes.size + renames.size}` : ''].filter(Boolean).join(', ') || 'Bring in'}</button>
       </div>
     </form>
   );
