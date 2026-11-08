@@ -46,6 +46,8 @@ export interface OverviewProps {
   openWorth: () => void;
   /** Shows Recurring's Subscriptions. */
   openSubscriptions?: () => void;
+  /** Shows Recurring: a typical month, payment by payment. */
+  openRecurring?: () => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
   /** Shows the Calendar. */
@@ -54,7 +56,7 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -90,8 +92,8 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         <CheckingWidget v={v} L={L} sel={picked} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
-        <CashFlowWidget v={v} L={L} />
-        <SpendingWidget v={v} L={L} />
+        <CashFlowWidget v={v} L={L} open={openRecurring} />
+        <SpendingWidget v={v} L={L} open={openRecurring} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>

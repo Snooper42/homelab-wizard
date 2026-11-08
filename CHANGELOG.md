@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Cash flow and Where it goes open their detail:** on the Finances Dashboard, the arrow on either card opens Recurring, where the typical month is laid out payment by payment.
 - **Reports you can click:** on Finances › Reports, a category or a payee opens Transactions showing just its transactions (this month's or last month's when that's the stretch picked); each category says its share of the spending first, and Transactions' category filter takes a group too (*Food* finds Groceries and Eating out).
 - **What the payments come to:** Finances › Recurring › Payments says what those shown add up to a month and a year (*18 payments: about $5,948.10 a month, $71,377 a year*), following Bills, Cards, Spending or Saving when you pick one.
 - **A budget's daily allowance:** under what a budget has left, Finances says how much a day keeps it on budget to the end of the month or pay period (*$225.08 a day for 2 days*), and the budgets' bars now line up.

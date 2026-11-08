@@ -6031,6 +6031,15 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Transactions")');
     await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
   } },
+  // The Dashboard's Cash flow and Where it goes each open Recurring, where the typical month is, payment by payment.
+  { name: 'Finances: Cash flow and Where it goes open Recurring', screen: 'finances', run: async (page) => {
+    for (const card of ['.fx-flow', '.fx-spend']) {
+      await page.click('#finRoot .seg button:text-is("Dashboard")', { timeout: 5000 });
+      await page.click(`${card} button[aria-label^="Open Recurring"]`, { timeout: 5000 });
+      await page.waitForSelector('#finRoot .seg button:text-is("Recurring")[aria-checked=true], #finRoot .seg button:text-is("Recurring")[aria-pressed=true]', { timeout: 5000 });
+      await page.waitForSelector('.fx-monthsum h2:text-is("A typical month")', { timeout: 5000 });
+    }
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
