@@ -6262,6 +6262,13 @@ const smokes = [
     if (sum !== '−$60.70 in all that day') throw new Error(`Oct 28: ${sum}`);
     if (await page.$('.fx-txday[aria-label="Thu, Oct 22"] .fx-txdaysum')) throw new Error('a day of one has a total');
   } },
+  // Where it goes: every kind its own colour (Cards was Spending's purple, Loans Car's yellow).
+  { name: 'Finances: Where it goes draws each kind in a colour of its own', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-spend .fx-legend li', { timeout: 5000 });
+    const hues = await page.$$eval('.fx-spend .fx-legend li', (l) => l.map((x) => [x.querySelector('.fx-legendlabel').textContent, [...x.querySelector('.fx-dot').classList].find((c) => /^fx-h\d$/.test(c))]));
+    const seen = new Map();
+    for (const [label, hue] of hues) { if (seen.has(hue)) throw new Error(`${label} and ${seen.get(hue)} are both ${hue}`); seen.set(hue, label); }
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

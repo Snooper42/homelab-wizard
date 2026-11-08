@@ -158,6 +158,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Cards and Spending told apart:** on the Dashboard's *Where it goes* and the money flow, Cards had Spending's purple and Loans the Car's yellow; each now has a colour of its own.
 - **A new plan reads right:** with nothing owed, Net worth says *Nothing owed* rather than *You owe $0.00* in orange; *A typical month* with no paychecks yet says so, without dangling dots; with no cushion set, the calendar's key isn't drawn as one; and the checking chart's key lists only the marks it has.
 - **Finances' small words:** Transactions' *This month* now says **Kept** over what the month kept, not just how many transactions it was, and Loans' **Pay more** no longer says *about $0.00 a month* before an amount is typed.
 - **On Windows, a backup no longer starts by mistake:** the agent's note of the last backup could read as missing for an instant while another part of the app saved it, which made a backup start at once. It now waits that instant and reads it again.

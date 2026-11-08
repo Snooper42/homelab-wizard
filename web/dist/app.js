@@ -1767,7 +1767,7 @@
     const at2 = tops2.findIndex((q2) => q2.name.toLowerCase() === top.toLowerCase());
     return at2 < 0 ? 0 : at2 % hues + 1;
   }
-  var kindHue = { home: 8, cards: 7, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 4, other: 6 };
+  var kindHue = { home: 8, cards: 8, spending: 2, car: 1, utilities: 3, subscriptions: 5, loans: 6, other: 6 };
   var kindCategory = { home: "Home", utilities: "Utilities", car: "Car", subscriptions: "Subscriptions", spending: "Shopping", other: "Other" };
   var kindHueOf = (kind, categories2 = known) => categoryHue(kindCategory[kind || "other"], categories2) || kindHue[kind || "other"] || 6;
 
