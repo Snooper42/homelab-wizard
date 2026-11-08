@@ -682,7 +682,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
       <Rows kind="fx-rows tidytodo">
         {folders.map((f) => (
           <Row key={f} lead={<LibIcon kind="folder" />} title={folderName(f)} sub={`${f} · ${state(f)}`} subTone={gone.has(f) ? 'warn' : undefined}
-            end={folders.length > 1 && <button class="small" aria-label={`Stop watching ${folderName(f)}`} onClick={() => act.inbox(folders.filter((x) => x !== f), when)}>Remove</button>} />
+            end={folders.length > 1 && <button class="small" aria-label={`Remove ${folderName(f)}`} onClick={() => act.inbox(folders.filter((x) => x !== f), when)}>Remove</button>} />
         ))}
         <Row lead={<LibIcon kind="inbox" />} title="Add a folder…" sub="Another folder, or a folder on a drive, for Tidy Up to watch" end={<button class="small" onClick={add}>Add…</button>} />
       </Rows>

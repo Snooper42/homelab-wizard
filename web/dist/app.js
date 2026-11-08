@@ -15973,7 +15973,7 @@ ${pays}
             title: folderName(f4),
             sub: `${f4} · ${state2(f4)}`,
             subTone: gone.has(f4) ? "warn" : void 0,
-            end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Stop watching ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
+            end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
           },
           f4
         )),
