@@ -2179,3 +2179,44 @@ private struct HoldingView: View {
         #endif
     }
 }
+
+#if SCREENSHOTS
+// MARK: - Screenshots
+
+extension FinancesView {
+    /// The screenshots build only: a page of Finances in place of its home,
+    /// by the name given with `-shot`.
+    @ViewBuilder
+    static func screenshotRoot(finances: FinancesViewModel) -> some View {
+        switch ScreenshotMode.shot {
+        case "transactions": TransactionsView(finances: finances)
+        case "transaction": ScreenshotTransaction(finances: finances)
+        case "budgets": FinanceBudgetsPage(finances: finances)
+        case "bills": FinanceBillsPage(finances: finances)
+        case "accounts": FinanceAccountsPage(finances: finances)
+        case "investments": FinanceInvestmentsPage(finances: finances)
+        case "goals": FinanceGoalsPage(finances: finances)
+        default: FinancesView(finances: finances)
+        }
+    }
+}
+
+/// A transaction's page, for the newest spending with a payee's logo.
+private struct ScreenshotTransaction: View {
+    let finances: FinancesViewModel
+
+    var body: some View {
+        Group {
+            if let t = finances.ledger?.newestFirst.first(where: { $0.to == nil && $0.amount < 0 && !$0.payee.isEmpty }) {
+                TransactionDetailView(transaction: t, finances: finances)
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            if finances.plan == nil { await finances.loadPlan() }
+            await finances.loadLedger()
+        }
+    }
+}
+#endif

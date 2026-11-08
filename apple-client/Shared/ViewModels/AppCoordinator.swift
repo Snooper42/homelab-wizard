@@ -73,15 +73,18 @@ final class AppCoordinator {
 
     private static let installMarkerKey = "installMarker.v1"
 
+    /// - Parameter protocolClasses: for tests and the screenshots build only,
+    ///   URL protocols that answer in place of the network.
     init(
         keychain: any CredentialStore = KeychainManager(),
         biometrics: any OwnerAuthenticator = BiometricAuthManager(),
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        protocolClasses: [AnyClass] = []
     ) {
         self.keychain = keychain
         self.biometrics = biometrics
         self.defaults = defaults
-        api = APIClient(keychain: keychain)
+        api = APIClient(keychain: keychain, protocolClasses: protocolClasses)
         liveEvents = LiveEventManager(api: api)
         liveEvents.onUnauthorized = { [weak self] in self?.handleUnauthorized() }
         #if os(macOS)
