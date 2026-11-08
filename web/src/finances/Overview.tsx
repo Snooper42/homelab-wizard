@@ -25,6 +25,7 @@ import { NetWorthWidget } from './widgets/Worth';
 import { SinceWidget, type SinceState } from './widgets/Ledger';
 import { ComingUpWidget } from './widgets/ComingUp';
 import { GoalsWidget } from './widgets/Goals';
+import { LatestWidget } from './widgets/Latest';
 
 /** What the dashboard draws; add, edit, and setSince are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
@@ -94,6 +95,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
         <CashFlowWidget v={v} L={L} open={openRecurring} />
         <SpendingWidget v={v} L={L} open={openRecurring} />
+        <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>

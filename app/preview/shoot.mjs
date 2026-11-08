@@ -6139,6 +6139,27 @@ const smokes = [
     await page.waitForSelector('#finSheet:not([hidden]) h2', { timeout: 5000 });
     if (await page.$('#finSheet .paidlately')) throw new Error('a payment never paid lists what it was paid');
   } },
+  // The Dashboard's latest transactions: the five newest (today's Costco first, Claude Pro on Oct 23 left out), each opening its form; See all opens
+  // Transactions. With no ledger, no card; on a phone allowed only to look, the rows open nothing.
+  { name: 'Finances: the Dashboard lists the latest transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-latest li', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-latest li .grow', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['CostcoToday · Groceries · Chase Freedom', 'ShellOct 28 · Gas · Chase Checking', 'Roth IRAOct 27 · Transfer · Chase Checking → Roth IRA', "Jordan's paycheckOct 26 · Income · Chase Checking", "Trader Joe'sOct 24 · Groceries · Chase Checking"])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    await page.click('.fx-latest li:has-text("Shell") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Shell")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.click('.fx-latest button:text-is("See all")');
+    await page.waitForSelector('.fx-transactions', { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the latest transactions open nothing', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-latest li', { timeout: 5000 });
+    if (await page.$('.fx-latest li button')) throw new Error('a row can be opened to change');
+  } },
+  { name: 'Finances: no ledger, no latest transactions', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [] } }, run: async (page) => {
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    if (await page.$('.fx-latest')) throw new Error('an empty card of latest transactions');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

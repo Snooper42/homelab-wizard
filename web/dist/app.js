@@ -9378,9 +9378,9 @@
     const keyed = A2({ all: () => {
     }, stop: () => {
     } });
-    const latest = A2(ledger);
+    const latest2 = A2(ledger);
     const anchor = A2("");
-    latest.current = ledger;
+    latest2.current = ledger;
     _2(() => {
       if (!picking) return void 0;
       const keys2 = (e3) => {
@@ -9452,7 +9452,7 @@
     const undoable = async (words5, was, txs) => {
       if (!await change(txs)) return;
       showUndo(words5, () => {
-        const now2 = latest.current;
+        const now2 = latest2.current;
         if (!now2 || !saveLedger2) return;
         const back2 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
         saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back2.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
@@ -15323,6 +15323,33 @@ ${pays}
     ] }) });
   }
 
+  // web/src/finances/widgets/Latest.tsx
+  var latestCount = 5;
+  function latest(txs, n3 = latestCount) {
+    return txs.map((t3, i3) => ({ t: t3, i: i3 })).sort((a3, b2) => b2.t.date.localeCompare(a3.t.date) || b2.i - a3.i).slice(0, n3).map((x3) => x3.t);
+  }
+  function LatestWidget({ v: v3, L: L2, ledger, edit, all }) {
+    const list = latest(ledger?.transactions || []);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-latest", actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => {
+      const a3 = L2.account[t3.account];
+      const what2 = t3.splits?.length ? t3.splits.map((sp) => sp.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+          title: txTitle(t3, L2),
+          sub: `${t3.date === v3.today ? "Today" : dayShort(t3.date)} · ${what2} · ${t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account}`,
+          when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("transaction", t3.id) : void 0,
+          openLabel: edit ? "edit" : void 0
+        },
+        t3.id
+      );
+    }) }) });
+  }
+
   // web/src/finances/Overview.tsx
   function Overview({ v: v3, L: L2, sel: sel2, pick, add, edit, setSince: setSince2, keep: keep2, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, phone: phone2 }) {
     const picked = Math.min(sel2, v3.periods.length - 1);
@@ -15358,6 +15385,7 @@ ${pays}
         /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
         /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring }),
         /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2, open: openRecurring }),
+        /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions }),
         /* @__PURE__ */ u3(MoneyFlowWidget, { v: v3, L: L2, ledger, edit }),
         /* @__PURE__ */ u3(NetWorthWidget, { v: v3, open: openWorth })
       ] })
