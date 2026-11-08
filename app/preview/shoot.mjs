@@ -1911,7 +1911,8 @@ const smokes = [
   ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
-    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
+    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
     const plain = await shot();
     await tabTo('nav button[data-screen="backups"]');
     const elsewhere = await shot();
@@ -6683,6 +6684,42 @@ const smokes = [
       if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
     }
   } })),
+  // The sidebar lists each group's accounts under it, each with its round logo and balance; a group's arrow folds them away,
+  // and they stay folded when the app opens again; an account opens Net worth on its group.
+  { name: 'The sidebar lists each account under its group, and a group folds away', screen: 'status', run: async (page) => {
+    await page.waitForSelector('.fx-balances .fx-balgroup:has-text("Cash") .fx-balacct:has-text("Chase Checking") .fmark', { timeout: 5000 });
+    if (!(await page.$eval('.fx-balances .fx-balacct:has-text("Chase Checking") .fmark', (e) => getComputedStyle(e).borderRadius === '50%'))) throw new Error('an account\'s logo in the sidebar is not round');
+    const arrow = '.fx-balances .fx-balgroup:has-text("Cash") .fx-balfold';
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'true') throw new Error('Cash starts folded');
+    await page.click(arrow);
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Chase Checking")', { state: 'detached', timeout: 5000 });
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'false') throw new Error('the arrow does not say Cash is folded');
+    if (!(await page.$('.fx-balances .fx-balacct:has-text("Robinhood")'))) throw new Error('folding Cash folded Investments too');
+    // Opened again: still folded. Carried over by hand, as Status's place is: a reloaded file:// page in this browser can
+    // start with empty storage when the machine is busy.
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.finances.foldedGroups']?.includes('cash')) throw new Error('the fold is not kept on this device');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Robinhood")', { timeout: 5000 });
+    if (await page.$('.fx-balances .fx-balacct:has-text("Chase Checking")')) throw new Error('Cash opened again by itself');
+    await page.click('.fx-balances .fx-balacct:has-text("Robinhood")');
+    await page.waitForSelector('#finances.active .fx-ownlist li:has-text("Robinhood")', { timeout: 5000 });
+  } },
+  // On Finances every mark is round, a logo on a coin: a payment's logo on Recurring, an account's on Net worth, a
+  // category's icon on Transactions.
+  { name: 'Finances: logos and icons are round on every row', screen: 'finances', run: async (page) => {
+    const round = (sel) => page.$eval(sel, (e) => getComputedStyle(e).borderRadius === '50%');
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has-text("Netflix") .fmark.logo', { timeout: 5000 });
+    if (!(await round('.fx-payments li:has-text("Netflix") .fmark'))) throw new Error('a payment\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fx-ownlist li:has-text("RAV4") .fmark', { timeout: 5000 });
+    if (!(await round('.fx-ownlist li:has-text("RAV4") .fmark'))) throw new Error('an account\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-txday .fmark', { timeout: 5000 });
+    if (!(await page.$$eval('.fx-txday .fmark', (ms) => ms.every((e) => getComputedStyle(e).borderRadius === '50%')))) throw new Error('a transaction\'s mark is not round');
+  } },
   // One colour per category, everywhere: Food (the third top category, so the third colour) on a transaction with no logo,
   // its budget, its row and bar on Reports, and its box in the money flow; a payment's kind takes its category's colour
   // (Groceries and gas is Shopping, the seventh). The icon reads on its tint at 4.5:1 (lint.mjs checks the tokens).

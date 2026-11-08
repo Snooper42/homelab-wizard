@@ -1432,6 +1432,11 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:14px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
+/* On Finances every mark is round, as a logo on a coin: each row's, the forms', and the charts'. A logo's own art sits a
+   little further in, so its corners clear the circle; three letters a size smaller. Other screens keep theirs. */
+#finances .fmark { border-radius:50%; }
+#finances .fmark.art img { width:64%; height:64%; }
+#finances .fmark.mono.three { font-size:10px; }
 .fwhos { display:inline-flex; flex:none; }
 .fwho { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--white); background:var(--person-0); box-shadow:0 0 0 2px var(--panel); }
 .fwho.p1 { background:var(--person-1); } .fwho.p2 { background:var(--person-2); } .fwho.p3 { background:var(--person-3); }
@@ -1871,8 +1876,30 @@ button.fx-balance:focus-visible { outline:2px solid var(--fin-accent); outline-o
 .fx-hoveracct .fx-hoverwhen { grid-column:1 / -1; margin-top:-5px; color:var(--muted); }
 .fx-hoveracct.stale .fx-hoverwhen { color:var(--warn); }
 .fx-staledot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--warn); }
-.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; }
+.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; padding-left:28px; }
 .fx-balance.total .fx-legendlabel { padding-left:19px; }
+/* A group's row: its arrow, then the group; under it, its accounts, each with its round logo, a name cut short to fit, and its balance. */
+.fx-balrow { display:flex; align-items:center; }
+.fx-balances .fx-balrow > .fx-balance { flex:1; min-width:0; gap:7px; padding-left:2px; }
+.fx-balrow .fx-legendlabel { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-balances .fx-balfold { all:unset; box-sizing:border-box; flex:none; width:16px; height:26px; margin-left:2px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; color:var(--nav-muted); cursor:pointer; }
+.fx-balances .fx-balfold svg { flex:none; width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+.fx-balfold[aria-expanded="true"] svg { transform:rotate(90deg); }
+.fx-balfold:hover { background:var(--nav-active); color:var(--white); }
+.fx-balfold:focus-visible, .fx-balacct:focus-visible { outline:2px solid var(--fin-accent); outline-offset:-2px; }
+.fx-balaccts { list-style:none; margin:0 0 4px; padding:0 0 0 22px; display:flex; flex-direction:column; gap:1px; }
+.fx-balances .fx-balacct { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; padding:3px 10px 3px 6px; border-radius:8px; font-size:12.5px; cursor:pointer; }
+.fx-balacct .fmark { border-radius:50%; }
+.fx-balacct .fx-balname { flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
+.fx-balacct .fx-balname > span:last-child { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.fx-balacct .fx-amount { font-size:12px; }
+.fx-balacct .fx-amount.fx-out { color:inherit; }
+.fx-balacct:hover { background:var(--nav-active); color:var(--white); }
+html:is(.os-mac, .os-windows, .os-linux) .fx-balfold { color:var(--muted); }
+html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--shade-05); color:inherit; }
+@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--glow-06); } }
+@media (prefers-reduced-motion: reduce) { .fx-balfold svg { transition:none; } }
+@media (forced-colors: active) { :is(.fx-balfold, .fx-balacct):focus-visible { outline-color:Highlight; } }
 /* The systems' own sidebars are light (dark in dark mode), their text the page's. */
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances { border-color:var(--shade-08); }
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances > .fx-caption { color:var(--muted); }

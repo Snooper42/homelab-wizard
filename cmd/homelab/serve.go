@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
@@ -77,6 +79,87 @@ type phoneHost struct {
 	RootOK    bool   `json:"rootOK"`
 	RuntimeOK bool   `json:"runtimeOK"`
 	Version   string `json:"version"`
+}
+
+// phoneSettings is the Settings form a phone gets: the .env settings as
+// the computer lists them (a secret only says whether it is set), and the
+// keys a phone may not change.
+type phoneSettings struct {
+	Settings     []settings.Setting `json:"settings"`
+	ComputerOnly []string           `json:"computerOnly"`
+}
+
+// phoneConnects are the settings a phone reaches the homelab through: the
+// companion itself, where it and the proxy listen, the domain and its key,
+// the address the proxy reaches the companion at, the DNS the phone asks,
+// and Tailscale. A phone could cut itself off, or every phone, with one of
+// these, so they are changed on the computer, as every secret is.
+var phoneConnects = map[string]bool{
+	"PHONE_COMPANION": true, "LAN_BIND_IP": true, "BIND_IP": true, "HOST_GATEWAY": true,
+	"HOMELAB_DOMAIN": true, "COMPANION_PROXY_KEY": true, "NPM_HTTP_PORT": true, "NPM_HTTPS_PORT": true,
+	"ADGUARD_DNS_BIND_IP": true, "TAILSCALE_HOST": true, "TAILSCALE_ROUTES": true, "TAILSCALE_EXTRA_ARGS": true,
+}
+
+// phoneMayChange reports whether a phone allowed to make changes may change
+// a setting: an everyday one, not a secret nor one it connects through.
+func phoneMayChange(s settings.Setting) bool {
+	return !s.Secret && !phoneConnects[s.Key] && !strings.HasPrefix(s.Key, "TAILSCALE_")
+}
+
+// listPhoneSettings is the Settings form as a phone gets it.
+func listPhoneSettings(root string) (phoneSettings, error) {
+	list, err := settings.List(root)
+	if err != nil {
+		return phoneSettings{}, err
+	}
+	out := phoneSettings{Settings: list, ComputerOnly: []string{}}
+	for _, s := range list {
+		if !phoneMayChange(s) {
+			out.ComputerOnly = append(out.ComputerOnly, s.Key)
+		}
+	}
+	return out, nil
+}
+
+// maxPhoneSetting is the longest value a phone may save for a setting: a
+// path or an address, never a file's worth.
+const maxPhoneSetting = 1024
+
+// savePhoneSettings saves what a phone changed: only everyday settings
+// .env.example knows, each checked before any is written, so a refused one
+// saves none. The error names the key, never the value.
+func savePhoneSettings(root string, values map[string]string) (phoneSettings, error) {
+	if len(values) == 0 {
+		return phoneSettings{}, errors.New("SaveSettings takes the settings to change")
+	}
+	list, err := settings.List(root)
+	if err != nil {
+		return phoneSettings{}, err
+	}
+	known := map[string]settings.Setting{}
+	for _, s := range list {
+		known[s.Key] = s
+	}
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		s, ok := known[k]
+		switch {
+		case !ok:
+			return phoneSettings{}, fmt.Errorf("%s is not a homelab setting", k)
+		case !phoneMayChange(s):
+			return phoneSettings{}, fmt.Errorf("%s is changed on the computer, not from a phone", k)
+		case len(values[k]) > maxPhoneSetting:
+			return phoneSettings{}, fmt.Errorf("%s is longer than a setting can be", k)
+		}
+	}
+	if err := settings.Save(root, values); err != nil {
+		return phoneSettings{}, err
+	}
+	return listPhoneSettings(root)
 }
 
 // phoneMethods are the desktop app's methods a phone may call: reading
@@ -284,6 +367,26 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			name, err := finance.SaveReceipt(finance.ReceiptsDir(root), data)
 			return name, nil, err
+		}},
+		// The Settings form (.env), for the native app's Settings screen:
+		// read by any paired phone but a wall screen, over the https link
+		// only; everyday settings changed by one allowed to make changes.
+		// Secrets, and the settings a phone connects through, stay on the
+		// computer (phoneMayChange).
+		"Settings": {Private: true, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
+			v, err := listPhoneSettings(root)
+			return v, nil, err
+		}},
+		"SaveSettings": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var values map[string]string
+			if len(args) < 1 || json.Unmarshal(args[0], &values) != nil {
+				return nil, nil, errors.New("SaveSettings takes the settings to change")
+			}
+			v, err := savePhoneSettings(root, values)
+			if err != nil {
+				return nil, nil, err
+			}
+			return v, nil, nil
 		}},
 		"SetUpdatesPaused": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var paused bool
