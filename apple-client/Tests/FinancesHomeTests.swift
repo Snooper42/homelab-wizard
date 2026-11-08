@@ -48,6 +48,28 @@ struct FinancesHomeTests {
         {"today":"2026-11-20","plan":{"people":[],"accounts":[],"payments":[],"cushion":0},"periods":[]}
         """#.utf8))
         #expect(FinancesView.nextBill(none) == nil)
+        // Coming up: soonest first, the same rule.
+        #expect(FinancesView.upcomingBills(view, limit: 4).map(\.payment) == ["rent"])
+    }
+
+    @Test func accountsBySort() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"today":"2026-11-20","start":{"chk":2400,"sav":10000,"visa":500,"car":18000,"rav":21000,"x":7},
+         "plan":{"people":[],"payments":[],"cushion":0,"accounts":[
+           {"id":"visa","name":"Visa","kind":"card"},{"id":"sav","name":"Rainy day","kind":"savings"},
+           {"id":"chk","name":"Everyday","kind":"checking"},{"id":"car","name":"Car loan","kind":"loan"},
+           {"id":"rav","name":"RAV4","kind":"car"},{"id":"x","name":"Odd","kind":"something new"}]},
+         "periods":[]}
+        """#.utf8))
+        let groups = view.accountGroups
+        #expect(groups.map(\.title) == ["Cash", "Credit Cards", "Loans", "Property and Other"])
+        #expect(groups[0].accounts.map(\.id) == ["chk", "sav"])
+        #expect(groups[0].total == 12400)
+        // A kind the app doesn't know yet still shows, with property.
+        #expect(groups[3].accounts.map(\.id) == ["rav", "x"])
+        #expect(view.assets == 33407)
+        #expect(view.liabilities == 18500)
+        #expect(view.netWorth == 33407 - 18500)
     }
 }
 

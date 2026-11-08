@@ -949,3 +949,42 @@ struct BudgetsTotal: Equatable, Sendable {
     var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
     var isOver: Bool { spent > amount }
 }
+
+// MARK: - Accounts by kind (the Accounts page)
+
+/// Accounts of one sort together, with what they hold (or owe) in all.
+struct AccountGroup: Identifiable, Sendable, Equatable {
+    let title: String
+    let accounts: [FinanceAccount]
+    /// What they hold, or for cards and loans what they owe, as a positive amount.
+    let total: Double
+    let owed: Bool
+    var id: String { title }
+}
+
+extension FinancesPlanView {
+    /// Cash, cards, investments, loans, then property and the rest, each
+    /// sorted by name; a sort with no accounts is left out.
+    var accountGroups: [AccountGroup] {
+        let sorts: [(String, Set<String>, Bool)] = [
+            ("Cash", ["checking", "savings"], false),
+            ("Credit Cards", ["card"], true),
+            ("Investments", ["investment", "retirement"], false),
+            ("Loans", ["loan"], true),
+            ("Property and Other", ["home", "car", "collectible", "other"], false),
+        ]
+        let known = sorts.reduce(into: Set<String>()) { $0.formUnion($1.1) }
+        return sorts.compactMap { title, kinds, owed in
+            let accounts = plan.accounts
+                .filter { kinds.contains($0.kind) || (title == "Property and Other" && !known.contains($0.kind)) }
+                .sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) }
+            guard !accounts.isEmpty else { return nil }
+            return AccountGroup(title: title, accounts: accounts, total: accounts.reduce(0) { $0 + (start[$1.id] ?? 0) }, owed: owed)
+        }
+    }
+
+    /// What the household has, before what it owes.
+    var assets: Double { plan.accounts.filter { !$0.isOwed }.reduce(0) { $0 + (start[$1.id] ?? 0) } }
+    /// What it owes on cards and loans.
+    var liabilities: Double { plan.accounts.filter(\.isOwed).reduce(0) { $0 + (start[$1.id] ?? 0) } }
+}
