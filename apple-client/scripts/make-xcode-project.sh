@@ -1,5 +1,5 @@
 #!/bin/bash
-# Makes the Xcode project for the Mac and iPhone apps, with every setting the README's
+# Makes the Xcode project for the iPhone and iPad app, with every setting the README's
 # "Make the Xcode project" steps describe, using XcodeGen. The project is
 # written outside the repository (by default ~/Developer/HomelabClient-xcode),
 # so no .xcodeproj is ever committed. It points at this checkout's Shared/
@@ -49,52 +49,20 @@ fi
   | openssl x509 -noout -subject 2>/dev/null \
   | sed -n 's/.*OU *= *\([A-Z0-9]\{10\}\).*/\1/p' | head -1 || true)"
 
-# The Home Screen and desktop widget (Widget/), only with HOMELAB_WIDGET=1:
+# The Home Screen widget (Widget/), only with HOMELAB_WIDGET=1:
 # it needs an App Group, which a free Apple ID may not sign, so the default
 # project leaves it out and can't fail on it. The pieces below stay empty
 # without it, and the project comes out as before.
-MAC_WIDGET_DEP="" IOS_WIDGET_DEP="" MAC_GROUP_INFO="" IOS_GROUP_INFO=""
-MAC_GROUP_ENT="" IOS_GROUP_ENT="" WIDGET_TARGETS=""
+IOS_WIDGET_DEP="" IOS_GROUP_INFO="" IOS_GROUP_ENT="" WIDGET_TARGETS=""
 if [ -n "${HOMELAB_WIDGET:-}" ]; then
-  # The Mac's App Groups carry the team's prefix; iPhone's start with "group.".
-  MAC_GROUP="\$(TeamIdentifierPrefix)$PREFIX.HomelabClient"
+  # iPhone's App Groups start with "group.".
   IOS_GROUP="group.$PREFIX.HomelabClient"
-  MAC_WIDGET_DEP="    dependencies:
-      - target: HomelabWidget"
   IOS_WIDGET_DEP="    dependencies:
       - target: HomelabWidget-iOS"
-  MAC_GROUP_INFO="        HomelabAppGroup: \"$MAC_GROUP\""
   IOS_GROUP_INFO="        HomelabAppGroup: \"$IOS_GROUP\""
-  MAC_GROUP_ENT="        com.apple.security.application-groups:
-          - \"$MAC_GROUP\""
   IOS_GROUP_ENT="        com.apple.security.application-groups:
           - \"$IOS_GROUP\""
-  WIDGET_TARGETS="  # The desktop widget: \"All well\" or how many need a look (Widget/).
-  HomelabWidget:
-    type: app-extension
-    platform: macOS
-    sources:
-      - path: \"$HERE/Widget\"
-      - path: \"$SHARED/Views/Theme.swift\"
-      - path: \"$SHARED/Models/WidgetSummary.swift\"
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient.Widget
-        PRODUCT_NAME: HomelabWidget
-        ENABLE_HARDENED_RUNTIME: YES
-    info:
-      path: Widget-macOS.plist
-      properties:
-        CFBundleDisplayName: Homelab
-$MAC_GROUP_INFO
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
-    entitlements:
-      path: HomelabWidget.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
-$MAC_GROUP_ENT
-  # The Home Screen widget, the same on iPhone and iPad.
+  WIDGET_TARGETS="  # The Home Screen widget, the same on iPhone and iPad.
   HomelabWidget-iOS:
     type: app-extension
     platform: iOS
@@ -126,7 +94,6 @@ name: HomelabClient
 options:
   bundleIdPrefix: $PREFIX
   deploymentTarget:
-    macOS: "14.0"
     iOS: "17.0"
 settings:
   base:
@@ -141,44 +108,7 @@ settings:
     # Shared/Assets.xcassets/AppIcon (drawn by make-app-icon.py).
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 targets:
-  # The Mac app.
-  HomelabClient:
-    type: application
-    platform: macOS
-    sources:
-      - path: "$SHARED"
-    scheme:
-      gatherCoverageData: false
-$MAC_WIDGET_DEP
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient
-        PRODUCT_NAME: HomelabClient
-        ENABLE_HARDENED_RUNTIME: YES
-    info:
-      path: Info.plist
-      properties:
-        CFBundleDisplayName: Homelab
-$MAC_GROUP_INFO
-        LSApplicationCategoryType: public.app-category.utilities
-        NSFaceIDUsageDescription: Touch ID unlocks Homelab, which controls your servers.
-        NSLocalNetworkUsageDescription: Homelab talks to your homelab on the home network.
-        ITSAppUsesNonExemptEncryption: false
-        # For the companion on this Mac only (http://127.0.0.1:8099). The app's
-        # own ServerEndpoint still refuses plain http to anything but loopback.
-        NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
-    entitlements:
-      path: HomelabClient.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
-        com.apple.security.network.client: true
-        # Makes Xcode sign with a provisioning profile, which the
-        # data-protection Keychain needs (else errSecMissingEntitlement, -34018).
-        keychain-access-groups:
-          - "\$(AppIdentifierPrefix)$PREFIX.HomelabClient"
-$MAC_GROUP_ENT
-  # The iPhone and iPad app: the same sources, https only (no ATS exception).
+  # The iPhone and iPad app: https only (no ATS exception).
   HomelabClient-iOS:
     type: application
     platform: iOS

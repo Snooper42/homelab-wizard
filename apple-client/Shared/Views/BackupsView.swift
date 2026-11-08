@@ -79,15 +79,15 @@ struct BackupsView: View {
                     Text("Not copied yet").foregroundStyle(Theme.warning)
                 }
             }
-            LabeledContent("Goes to") {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(BackupOverview.placeName(o.destination))
-                    Text(o.destination)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .multilineTextAlignment(.trailing)
-                }
+            VStack(alignment: .leading, spacing: 4) {
+                LabeledContent("Goes to") { Text(verbatim: BackupOverview.placeName(o.destination)) }
+                // The whole folder, under it: too long to sit beside the label.
+                Text(verbatim: o.destination)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
             }
             if !o.destinationOK {
                 Label("The backups are on the same disk as the data. Choose another drive on the computer, under Backups.", systemImage: "exclamationmark.triangle")

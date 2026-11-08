@@ -202,6 +202,8 @@ struct ConnectionBadge: View {
         .padding(.horizontal, 9)
         .padding(.vertical, 4)
         .background(color.opacity(0.12), in: Capsule())
+        // Its whole word, never squeezed to a letter by the toolbar.
+        .fixedSize()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Connection: \(state.label)")
     }
