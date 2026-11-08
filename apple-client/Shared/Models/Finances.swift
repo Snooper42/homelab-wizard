@@ -361,6 +361,27 @@ struct FinancePayment: Decodable, Sendable, Equatable, Identifiable {
     /// Someone outside the household who sends it ("Jamie", for a share of
     /// the mortgage): money in, from none of the household's accounts (main #483).
     let payer: String?
+    /// How often it comes (`finance.Schedule`).
+    var schedule: FinanceSchedule? = nil
+    /// The household's own account it moves money into (savings, a Roth IRA).
+    var to: String? = nil
+
+    enum CodingKeys: String, CodingKey { case id, name, kind, institution, amount, estimate, card, payer, schedule, to }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decodeIfPresent(String.self, forKey: .kind)
+        institution = try c.decodeIfPresent(String.self, forKey: .institution)
+        amount = try c.decodeIfPresent(Double.self, forKey: .amount)
+        estimate = try c.decodeIfPresent(Bool.self, forKey: .estimate)
+        card = try c.decodeIfPresent(String.self, forKey: .card)
+        payer = try c.decodeIfPresent(String.self, forKey: .payer)
+        // Extras: one that doesn't read costs only itself, never the payment.
+        schedule = (try? c.decodeIfPresent(FinanceSchedule.self, forKey: .schedule)) ?? nil
+        to = (try? c.decodeIfPresent(String.self, forKey: .to)) ?? nil
+    }
 
     /// Whether the phone can change its amount. A card payoff's amount
     /// isn't what the rows show (they show what the card owes), so it's
@@ -814,9 +835,15 @@ extension FinancesPlanView {
     /// `days` days, then today, oldest first; from each account's kept
     /// balances, as the computer draws its line.
     func netWorthSeries(days: Int) -> [NetWorthPoint] {
+        worthSeries(days: days, of: plan.accounts)
+    }
+
+    /// What some accounts were worth together on each day one of their
+    /// balances was kept, over the last `days`, then today.
+    func worthSeries(days: Int, of accounts: [FinanceAccount]) -> [NetWorthPoint] {
         guard let today else { return [] }
         let from = today.addingTimeInterval(-Double(days) * 86_400)
-        let kept = Set(plan.accounts.flatMap { $0.history.map(\.dateText) })
+        let kept = Set(accounts.flatMap { $0.history.map(\.dateText) })
             .filter { $0 < todayText }
             .compactMap { text -> (String, Date)? in
                 guard let date = LocalDay.parse(text), date >= from else { return nil }
@@ -824,9 +851,9 @@ extension FinancesPlanView {
             }
             .sorted { $0.0 < $1.0 }
         var out = kept.map { pair in
-            NetWorthPoint(date: pair.1, value: plan.accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
+            NetWorthPoint(date: pair.1, value: accounts.reduce(0) { $0 + worth(of: $1, on: pair.0) })
         }
-        out.append(NetWorthPoint(date: today, value: plan.accounts.reduce(0) { $0 + worth(of: $1) }))
+        out.append(NetWorthPoint(date: today, value: accounts.reduce(0) { $0 + worth(of: $1) }))
         return out
     }
 
@@ -987,4 +1014,108 @@ extension FinancesPlanView {
     var assets: Double { plan.accounts.filter { !$0.isOwed }.reduce(0) { $0 + (start[$1.id] ?? 0) } }
     /// What it owes on cards and loans.
     var liabilities: Double { plan.accounts.filter(\.isOwed).reduce(0) { $0 + (start[$1.id] ?? 0) } }
+}
+
+// MARK: - Recurring (the Recurring page)
+
+/// How often a payment comes (`finance.Schedule`).
+struct FinanceSchedule: Decodable, Sendable, Equatable {
+    /// once, week, 2 weeks, twice a month, month, 3 months, year, paycheck.
+    let every: String
+    let start: String?
+
+    /// "Monthly", "Every 2 weeks", "Each paycheck".
+    var words: String {
+        switch every {
+        case "week": "Weekly"
+        case "2 weeks": "Every 2 weeks"
+        case "twice a month": "Twice a month"
+        case "month": "Monthly"
+        case "3 months": "Every 3 months"
+        case "year": "Yearly"
+        case "paycheck": "Each paycheck"
+        case "once": "Once"
+        default: every.capitalized
+        }
+    }
+
+    /// How many times a month it comes, on average; nil when it can't be
+    /// said (once, or with each paycheck, whose count varies).
+    var perMonth: Double? {
+        switch every {
+        case "week": 52.0 / 12
+        case "2 weeks": 26.0 / 12
+        case "twice a month": 2
+        case "month": 1
+        case "3 months": 1.0 / 3
+        case "year": 1.0 / 12
+        default: nil
+        }
+    }
+}
+
+/// A payment that repeats, with when it next comes and about what it costs a month.
+struct RecurringItem: Identifiable, Sendable, Equatable {
+    enum Sort: Int, Sendable, CaseIterable {
+        case moneyIn, subscriptions, bills, cards, savings
+
+        var title: String {
+            switch self {
+            case .moneyIn: "Coming In"
+            case .subscriptions: "Subscriptions"
+            case .bills: "Bills"
+            case .cards: "Card Payments"
+            case .savings: "Savings and Transfers"
+            }
+        }
+    }
+
+    let payment: FinancePayment
+    let sort: Sort
+    /// When it next comes, from the pay periods ahead; nil past them.
+    let next: Date?
+    /// About what it costs (or brings in) a month; nil when that can't be said.
+    let monthly: Double?
+    var id: String { payment.id }
+}
+
+extension FinancesPlanView {
+    /// Every payment that repeats (not one-offs), in sorts: money in,
+    /// subscriptions, bills, card payments, then savings and transfers,
+    /// each soonest first.
+    var recurring: [RecurringItem] {
+        let today = todayText
+        var nextOf: [String: Date] = [:]
+        for period in periods {
+            for row in period.rows where (row.dateText ?? "") >= today && nextOf[row.payment] == nil {
+                if let date = row.date { nextOf[row.payment] = date }
+            }
+        }
+        let items = plan.payments.compactMap { p -> RecurringItem? in
+            guard let schedule = p.schedule, schedule.every != "once" else { return nil }
+            let sort: RecurringItem.Sort =
+                !(p.payer ?? "").isEmpty ? .moneyIn
+                : !(p.card ?? "").isEmpty ? .cards
+                : !(p.to ?? "").isEmpty ? .savings
+                : (p.kind == "subscriptions" || p.kind == "subscription") ? .subscriptions
+                : .bills
+            let monthly: Double? = (p.card ?? "").isEmpty ? schedule.perMonth.flatMap { f in p.amount.map { $0 * f } } : nil
+            return RecurringItem(payment: p, sort: sort, next: nextOf[p.id], monthly: monthly)
+        }
+        return items.sorted {
+            if $0.sort != $1.sort { return $0.sort.rawValue < $1.sort.rawValue }
+            switch ($0.next, $1.next) {
+            case let (a?, b?) where a != b: return a < b
+            case (_?, nil): return true
+            case (nil, _?): return false
+            default: return $0.payment.name.localizedLowercase < $1.payment.name.localizedLowercase
+            }
+        }
+    }
+
+    /// About what the bills and subscriptions cost a month, all told (not
+    /// money in, card payoffs, or moving money to the household's own accounts).
+    var recurringPerMonth: Double {
+        recurring.filter { $0.sort == .bills || $0.sort == .subscriptions }.reduce(0) { $0 + ($1.monthly ?? 0) }
+    }
 }
