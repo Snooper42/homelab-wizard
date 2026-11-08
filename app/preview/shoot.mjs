@@ -5924,6 +5924,41 @@ const smokes = [
     for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
     await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
   } },
+  // Before today: what the ledger recorded on each day, its payees' marks and the day's total, back to its first month;
+  // a day picked lists them, each opening its form; a month before reads what it came to; a transfer is in no total.
+  { name: 'Finances: the calendar shows what was recorded on the days before today', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month td.fx-past button[data-day="2026-10-28"] .fmark.logo', { timeout: 5000 });
+    const bal = await page.textContent('.fx-month button[data-day="2026-10-28"] .fx-daybal');
+    if (bal !== '−$48') throw new Error(`Oct 28 shows ${bal}`);
+    // Jordan's paycheck is money in; the Roth IRA transfer moves money between the household's own accounts: no total.
+    await page.waitForSelector('.fx-month button[data-day="2026-10-26"] .fx-daybal.fx-in:text-is("+$2.40k")', { timeout: 5000 });
+    if (await page.$('.fx-month button[data-day="2026-10-27"] .fx-daybal')) throw new Error('a transfer has a total');
+    const label = await page.textContent('.fx-month button[data-day="2026-10-28"] .fx-hidden');
+    if (!label.includes('Shell −$48.20') || !label.includes('in all')) throw new Error(`Oct 28 reads out as: ${label}`);
+    await page.click('.fx-month button[data-day="2026-10-28"]');
+    await page.waitForSelector('.fx-dayone .fx-stat:has-text("What your transactions recorded")', { timeout: 5000 });
+    await page.click('.fx-dayone li:has-text("Shell") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Shell")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    // The month before: September, read from the ledger, and no further back than its first month (August).
+    await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("September 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar .fx-lead:text-is("What your transactions recorded: 2 payments out, +$2,225.00 in all.")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("August 2026")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month before"]'))) throw new Error('the calendar goes back past the ledger\'s first month');
+    await page.click('.fx-calendar button:text-is("Today")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+  } },
+  // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
+  { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    const gap = await page.$eval('.fx-month button[data-day="2026-10-30"]', (b) => { const c = b.parentElement.getBoundingClientRect(), r = b.getBoundingClientRect(); return Math.max(Math.abs(c.top - r.top), Math.abs(c.left - r.left), Math.abs(c.width - r.width)); });
+    if (gap > 1) throw new Error(`the day is ${gap}px inside its cell`);
+  } },
   // A bill charged to a card moves no checking money, yet shows on its day, on its card and with the card's due day, apart
   // from checking: its mark in the cell, a row in the day's card, and read out; on the phone, in the day's list.
   ...[[false, 'Finances: a card’s charge shows on its day, on its card'], [true, 'The phone: a card’s charge shows in the day’s list']].map(([phone, name]) => ({ name, screen: 'finances', ...(phone ? { phone: ['companion', 'finances'] } : {}),

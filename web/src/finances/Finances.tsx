@@ -128,7 +128,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} group={group} setGroup={setGroup} />
-          : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
+          : tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
           : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
@@ -142,7 +142,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything (an export changes nothing). */
 function View({ v, L, phone, ledger, tab, sel, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile, readReceipt, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openTransactions: () => void; openCalendar: () => void; group?: string; setGroup?: (group: string) => void }) {
-  return tab === 'calendar' ? <Calendar v={v} L={L} />
+  return tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} />
     : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} />
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
