@@ -1612,9 +1612,16 @@ private struct InvestmentsHero<Actions: View>: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
             if shown, point == nil {
-                HStack(spacing: 8) {
-                    gainPill(investments.gain, of: investments.paid, words: "all time")
-                    gainPill(investments.month, of: investments.total - investments.month, words: "this month")
+                // Side by side when they fit, else one under the other.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        gainPill(investments.gain, of: investments.paid, words: "all time")
+                        gainPill(investments.month, of: investments.total - investments.month, words: "this month")
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        gainPill(investments.gain, of: investments.paid, words: "all time")
+                        gainPill(investments.month, of: investments.total - investments.month, words: "this month")
+                    }
                 }
             }
             if shown, series.count >= 2 {
@@ -1640,8 +1647,11 @@ private struct InvestmentsHero<Actions: View>: View {
                 .font(.caption2.weight(.bold))
             Text(verbatim: [amountText(abs(value), view.plan.currency, finances, whole: true), FinanceInvestments.share(value, of: base)]
                 .compactMap { $0 }.joined(separator: " · "))
+                .lineLimit(1)
             Text(verbatim: words).fontWeight(.regular).opacity(0.75)
+                .lineLimit(1)
         }
+        .fixedSize()
         .font(.caption.weight(.semibold))
         .foregroundStyle(value < 0 ? Theme.danger : Theme.success)
         .padding(.horizontal, 9)
