@@ -733,6 +733,17 @@ function BalancesForm(props: EditProps) {
         })}
       </ul>
       {!accounts.length && <p class="muted">No accounts yet: add one first.</p>}
+      {(() => {
+        // What Save changes in all: how many differ from what was expected, and net worth by how much (in the plan's currency;
+        // a card owes its balance and its pending together).
+        const off = accounts.map((a) => {
+          const d = read(a.id, est(a)) - est(a), p = a.kind === 'card' ? read(a.id + ':p', a.pending || 0) - (a.pending || 0) : 0;
+          return { moved: Math.abs(d) >= 0.005 || Math.abs(p) >= 0.005, worth: (owed(a.kind) ? -(d + p) : d) * rateOf(plan, a) };
+        }).filter((x) => x.moved);
+        if (!off.length) return null;
+        const worth = off.reduce((t, x) => t + x.worth, 0);
+        return <p class="muted balsum" role="status">{off.length === 1 ? '1 balance differs' : `${off.length} balances differ`} from what was expected{Math.abs(worth) >= 0.005 ? <>: net worth <span class={worth < 0 ? 'bad' : 'ok'}>{(worth < 0 ? '−' : '+') + money(Math.abs(worth))}</span></> : ', net worth the same'}.</p>;
+      })()}
       <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={typed.cushion} onInput={type('cushion')} /></span></label>
       <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
     </form>

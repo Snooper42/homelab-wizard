@@ -5405,6 +5405,16 @@ const smokes = [
     }
     await page.fill('#finSheet input#bal-chk', '3000');
     await page.waitForSelector('#finSheet .balancelist li:has(#bal-chk) small:has-text("expected $2,512.40, +$487.60")', { timeout: 5000 });
+    // What Save changes in all: nothing else differs yet; then the card owing $59.45 more, and its pending $15.90 less.
+    if (await page.$('#finSheet .balsum')) {
+      if ((await page.textContent('#finSheet .balsum')).trim() !== '1 balance differs from what was expected: net worth +$487.60.') throw new Error(await page.textContent('#finSheet .balsum'));
+    } else throw new Error('no line says what Save changes');
+    await page.fill('#finSheet input#bal-visa', '1300');
+    await page.fill('#finSheet input[aria-label="Chase Freedom pending"]', '68.20');
+    await page.waitForFunction(() => document.querySelector('#finSheet .balsum')?.textContent.trim() === '2 balances differ from what was expected: net worth +$444.05.', null, { timeout: 5000 })
+      .catch(async () => { throw new Error(`two changed: ${await page.textContent('#finSheet .balsum')}`); });
+    await page.fill('#finSheet input#bal-visa', '1240.55');
+    await page.fill('#finSheet input[aria-label="Chase Freedom pending"]', '84.10');
     await page.fill('#finSheet label:has-text("Flag checking under") input', '600');
     // Enter keeps them, as Save does.
     await page.press('#finSheet input#bal-chk', 'Enter');

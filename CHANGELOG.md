@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **What Update balances changes:** as you type, a line by **Save** says how many balances differ from what was expected and what that does to your net worth (*2 balances differ from what was expected: net worth +$444.05*).
 - **More paychecks to the right:** Net worth's *Accounts, paycheck by paycheck* shades its right edge while more paychecks lie past it, so it's clear the table scrolls sideways even where the scroll bar hides.
 - **Goals, easier to read:** each goal says what it needs a paycheck first (*$90.16 a paycheck ($274.91 a month) to be there by Jun 30, 2028*), and under its bar what's saved and its pace lately (*$889.78 a month lately: there by May 2027*), in amber when that's late.
 - **⌘F on Transactions:** on Finances › Transactions, ⌘F (Ctrl+F on Windows and Linux) goes to its search, as it does on Choose apps and Settings; the shortcuts sheet (?) lists it.

@@ -10441,6 +10441,23 @@
         ] }, a3.id);
       }) }),
       !accounts.length && /* @__PURE__ */ u3("p", { class: "muted", children: "No accounts yet: add one first." }),
+      (() => {
+        const off2 = accounts.map((a3) => {
+          const d3 = read(a3.id, est(a3)) - est(a3), p3 = a3.kind === "card" ? read(a3.id + ":p", a3.pending || 0) - (a3.pending || 0) : 0;
+          return { moved: Math.abs(d3) >= 5e-3 || Math.abs(p3) >= 5e-3, worth: (owed(a3.kind) ? -(d3 + p3) : d3) * rateOf(plan, a3) };
+        }).filter((x3) => x3.moved);
+        if (!off2.length) return null;
+        const worth = off2.reduce((t3, x3) => t3 + x3.worth, 0);
+        return /* @__PURE__ */ u3("p", { class: "muted balsum", role: "status", children: [
+          off2.length === 1 ? "1 balance differs" : `${off2.length} balances differ`,
+          " from what was expected",
+          Math.abs(worth) >= 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+            ": net worth ",
+            /* @__PURE__ */ u3("span", { class: worth < 0 ? "bad" : "ok", children: (worth < 0 ? "−" : "+") + money(Math.abs(worth)) })
+          ] }) : ", net worth the same",
+          "."
+        ] });
+      })(),
       /* @__PURE__ */ u3("label", { class: "field cushion", children: [
         "Flag checking under ",
         /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
