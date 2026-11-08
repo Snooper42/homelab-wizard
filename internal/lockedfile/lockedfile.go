@@ -182,10 +182,8 @@ var (
 	readFile  = os.ReadFile
 )
 
+// busy is asked only on Windows (Read returns at once elsewhere).
 func busy(err error) bool {
-	if !onWindows {
-		return false
-	}
 	var errno syscall.Errno
 	return os.IsPermission(err) || (errors.As(err, &errno) && (errno == errSharingViolation || errno == errDeletePending))
 }

@@ -182,3 +182,11 @@ func TestReadWaitsForASaveUnderWay(t *testing.T) {
 		t.Errorf("a missing record with a stale save beside it took %d reads and %v", reads, time.Since(start))
 	}
 }
+
+// A folder that can't be listed says no save is under way, so a missing
+// record there is reported rather than waited on.
+func TestBeingSavedInAFolderThatIsNotThere(t *testing.T) {
+	if beingSaved(filepath.Join(t.TempDir(), "gone", "agent.json")) {
+		t.Error("a missing folder reads as a save under way")
+	}
+}
