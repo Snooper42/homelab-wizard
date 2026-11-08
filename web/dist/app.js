@@ -13381,7 +13381,7 @@ ${pays}
                     lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
                     title: x3.name,
                     sub: /* @__PURE__ */ u3(S, { children: [
-                      scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : ""),
+                      scheduleText(x3.schedule, L2) + into2 + (x3.card ? " · the card's balance" : x3.estimate ? " · about" : "") + (!x3.card && Math.abs(perMonth(x3.schedule, v3.plan.people || [], v3.checking) - 1) > 1e-3 && monthly(x3) > 5e-3 ? ` · ${money(monthly(x3))} a month` : ""),
                       kept4(x3, n3),
                       paidLine(x3)
                     ] }),

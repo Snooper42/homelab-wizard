@@ -6298,6 +6298,10 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
     const names = () => page.$$eval('.fx-payments li .grow > strong', (s) => s.map((x) => x.textContent));
     if ((await names())[0] !== 'Groceries and gas') throw new Error(`soonest: ${await names()}`);
+    // A payment not monthly says what it comes to a month; a monthly one does not.
+    const sub = (name) => page.textContent(`.fx-payments li:has(.grow > strong:text-is("${name}")) .grow`).then((t) => t.replace(/\s+/g, ' '));
+    if (!(await sub('Groceries and gas')).includes('Every Saturday · $866.67 a month') || !(await sub('Claude Pro')).includes('Yearly on Oct 23 · $16.67 a month')) throw new Error(`${await sub('Groceries and gas')} | ${await sub('Claude Pro')}`);
+    if ((await sub('Netflix')).includes('a month')) throw new Error(await sub('Netflix'));
     await page.selectOption('.fx-payments select[aria-label="Order"]', 'size');
     const big = await names();
     if (JSON.stringify(big.slice(0, 3)) !== JSON.stringify(['Mortgage', 'Chase Freedom', 'Groceries and gas'])) throw new Error(`largest: ${big}`);

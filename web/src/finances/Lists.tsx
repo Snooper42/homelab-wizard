@@ -246,7 +246,9 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
               const from = n && (x.payer ? 'from ' + x.payer : x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
               const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : x.payer ? ' → ' + (L.account[v.checking]?.name || 'checking') : '';
               return <Row key={x.id} lead={<PayMark x={x} />}
-                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}{kept(x, n)}{paidLine(x)}</>}
+                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')
+                  // Not monthly (weekly, every 3 months, yearly…): what it comes to a month, as Largest first orders by.
+                  + (!x.card && Math.abs(perMonth(x.schedule, v.plan.people || [], v.checking) - 1) > 0.001 && monthly(x) > 0.005 ? ` · ${money(monthly(x))} a month` : '')}{kept(x, n)}{paidLine(x)}</>}
                 end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} sign={!!x.payer} tone={x.payer ? 'in' : ''} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
