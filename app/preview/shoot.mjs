@@ -6011,6 +6011,26 @@ const smokes = [
     await page.click('.fx-payments .seg button:has-text("Subscriptions")');
     if (await page.$('.fx-payments .fx-paytotal')) throw new Error('Subscriptions has a second total');
   } },
+  // A Reports row opens what is behind it: a category (a group finds its own, Food its Groceries) or a payee, on Transactions,
+  // this month's; a category's line leads with its share of the spending, its own categories after.
+  { name: 'Finances: a Reports row opens its transactions', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    const sub = (await page.textContent('.fx-bycat li:has(.grow > strong:text-is("Food")) .grow')).replace(/\s+/g, ' ');
+    if (!sub.includes('30% of the spending · Groceries $149.85')) throw new Error(`Food says ${sub}`);
+    await page.click('.fx-bycat li:has(.grow > strong:text-is("Food")) button');
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not filtered to Food in October');
+    const payees = await page.$$eval('.fx-txday li .grow > strong', (s) => s.map((x) => x.textContent));
+    if (JSON.stringify(payees) !== JSON.stringify(['Costco', "Trader Joe's"])) throw new Error(`Food shows ${payees}`);
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.click('.fx-payees li:has-text("Shell") button');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txsearch')) !== 'Shell') throw new Error('not searched for Shell');
+    // Opened again from its tab, Transactions shows everything.
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.click('#finRoot .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

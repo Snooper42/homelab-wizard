@@ -159,7 +159,13 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
   );
 }
 
+/** What Transactions opens filtered to next (a Reports row picked it): a category or group, a month, words. Then everything again. */
+let opening: { category?: string; month?: string; q?: string } = {};
+export const showTransactions = (f: { category?: string; month?: string; q?: string }) => { opening = f; };
+
 export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos }: TransactionsProps) {
+  // Taken once, as it opens: a later visit opens on everything.
+  const [first] = useState(() => { const f = opening; opening = {}; return f; });
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
   const [seen, setSeen] = useState<{ id: string; url?: string; problem?: string } | null>(null);
   const look = async (t: finance.Transaction) => {
@@ -169,10 +175,10 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     const still = (next: { id: string; url?: string; problem?: string }) => setSeen((now) => (now?.id === t.id ? next : now));
     try { still({ id: t.id, url: await readReceipt!(t.receipt!) }); } catch (e) { still({ id: t.id, problem: String((e as Error)?.message || e) }); }
   };
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(first.q || '');
   const [accountPick, setAccount] = useState('');
-  const [categoryPick, setCategory] = useState('');
-  const [monthPick, setMonthPick] = useState('');
+  const [categoryPick, setCategory] = useState(first.category || '');
+  const [monthPick, setMonthPick] = useState(first.month || '');
   const [way, setWay] = useState('');
   const [tagPick, setTag] = useState('');
   // Picking rows to change together: which are picked, the category typed for them, Delete asked once, saving.
@@ -205,7 +211,11 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   // What each came to in the plan's currency, so the totals add up (an account may keep another).
   const home = new Map(inHome(v.plan, all).map((t) => [t.id, t.amount]));
   const amt = (t: finance.Transaction) => home.get(t.id) ?? t.amount;
-  const cats = [...new Set(all.flatMap(catsOf))].sort();
+  // Each category in the ledger, and the group of any that has one (Food, for Groceries and Eating out): a group finds all of its own.
+  const groupOf = new Map((v.categories || []).filter((c) => c.parent).map((c) => [c.name.toLowerCase(), c.parent!]));
+  const used = [...new Set(all.flatMap(catsOf))];
+  const cats = [...new Set([...used, ...used.map((c) => groupOf.get(c.toLowerCase())).filter((g): g is string => !!g)])].sort();
+  const inCategory = (t: finance.Transaction, c: string) => catsOf(t).some((x) => x === c || groupOf.get(x.toLowerCase())?.toLowerCase() === c.toLowerCase());
   const tags = tagsOf(all);
   const months = [...new Set(all.map((t) => t.date.slice(0, 7)))].sort().reverse();
   const accounts = (v.plan.accounts || []).filter((a) => all.some((t) => t.account === a.id || t.to === a.id));
@@ -217,7 +227,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const tag = tags.includes(tagPick) ? tagPick : '';
   const want = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = all.filter((t) => (!account || t.account === account || t.to === account)
-    && (!category || catsOf(t).includes(category))
+    && (!category || inCategory(t, category))
     && (!month || t.date.startsWith(month))
     && (!tag || !!t.tags?.includes(tag))
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))

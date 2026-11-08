@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Reports you can click:** on Finances › Reports, a category or a payee opens Transactions showing just its transactions (this month's or last month's when that's the stretch picked); each category says its share of the spending first, and Transactions' category filter takes a group too (*Food* finds Groceries and Eating out).
 - **What the payments come to:** Finances › Recurring › Payments says what those shown add up to a month and a year (*18 payments: about $5,948.10 a month, $71,377 a year*), following Bills, Cards, Spending or Saving when you pick one.
 - **A budget's daily allowance:** under what a budget has left, Finances says how much a day keeps it on budget to the end of the month or pay period (*$225.08 a day for 2 days*), and the budgets' bars now line up.
 - **Amounts in Finances' boxes, to the cent:** Update balances and the forms start a box with an amount's cents in two places (*2512.40*, not *2512.4*).
