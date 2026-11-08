@@ -36,16 +36,18 @@ export interface RowProps {
    * button, so it takes no Edit of its own. Only with nothing else to press
    * in it (end holds words and figures, no buttons).
    */
-  onOpen?: () => void;
+  onOpen?: (e: MouseEvent) => void;
   /**
    * What a screen reader hears after the row's own words, for what pressing
    * it does ("edit"). The row's words stay the button's name, so a person
    * who says what they see (voice control) can press it.
    */
   openLabel?: string;
+  /** With onOpen, the row is a toggle and this whether it is on (picked, in a list being picked from). */
+  pressed?: boolean;
 }
 
-export function Row({ dot, lead, title, sub, subTone, children, end, when, whenTitle, whenPlain, onOpen, openLabel }: RowProps) {
+export function Row({ dot, lead, title, sub, subTone, children, end, when, whenTitle, whenPlain, onOpen, openLabel, pressed }: RowProps) {
   // Inside a button only phrasing content may go: the same layout, in spans.
   const Box = onOpen ? 'span' : 'div';
   const body = <>
@@ -60,5 +62,5 @@ export function Row({ dot, lead, title, sub, subTone, children, end, when, whenT
     {when !== undefined && <span class={whenPlain ? 'when' : 'when muted'} title={whenTitle}>{when}</span>}
   </>;
   if (!onOpen) return <li>{body}</li>;
-  return <li class="opens"><button type="button" class="rowopen" onClick={onOpen}>{body}{openLabel && <span class="sr">, {openLabel}</span>}</button></li>;
+  return <li class={'opens' + (pressed ? ' on' : '')}><button type="button" class="rowopen" aria-pressed={pressed} onClick={onOpen}>{body}{openLabel && <span class="sr">, {openLabel}</span>}</button></li>;
 }

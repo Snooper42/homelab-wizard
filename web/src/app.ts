@@ -18,6 +18,7 @@ import { loadTidy, tidyData } from './screens/tidy';
 import { cliProgress, jobApp } from './jobs';
 import { openPalette } from './palette/Palette';
 import { openShortcuts } from './palette/Shortcuts';
+import { undoShown } from './status/UndoNote';
 import { arrivePlace, leavePlace } from './place';
 import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
@@ -161,7 +162,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   // ⌘Z (Ctrl+Z) undoes the last stop while its note shows; in a field, it is the field's own undo.
-  if (!e.shiftKey && e.key.toLowerCase() === 'z' && !target.closest?.('input, textarea, select, [contenteditable]') && undoNow()) {
+  if (!e.shiftKey && e.key.toLowerCase() === 'z' && !target.closest?.('input, textarea, select, [contenteditable]') && (undoShown() || undoNow())) {
     e.preventDefault();
     return;
   }

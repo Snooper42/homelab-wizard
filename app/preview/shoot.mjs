@@ -1911,7 +1911,8 @@ const smokes = [
   ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
-    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
+    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
     const plain = await shot();
     await tabTo('nav button[data-screen="backups"]');
     const elsewhere = await shot();
@@ -3972,8 +3973,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), and checking's two figures (each shows how it adds up).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), and a holding on Investments (it opens its worth at each read).
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -5057,6 +5058,86 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("refused the security token")', { timeout: 5000 });
+  } },
+  // Net worth › Investments: what Ghostfolio last read, kept in the plan, shown with Ghostfolio stopped: four figures, the
+  // split by account, a row a holding (the 401(k)'s cash a row of its own); a holding opens its worth at each read.
+  { name: 'Finances: Investments on Net worth, from what was last read', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read 7:02 AM")`, { timeout: 5000 });
+    for (const t of ['Total value', 'You paid', 'Gain', 'This month']) await page.waitForSelector(`${card} .fx-investfigs .fx-caption:text-is("${t}")`, { timeout: 2000 });
+    await page.waitForSelector(`${card} .fx-investfigs .fx-sub:text-is("9 holdings in 3 accounts")`, { timeout: 2000 });
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('not a row a holding and the cash');
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("Cash")):has-text("Fidelity 401(k)")`, { timeout: 2000 });
+    if (await page.$(`${card} .fx-investsaid`)) throw new Error('a read said with nothing read');
+    const vti = `${card} button.fx-holdbtn:has(strong:text-is("VTI"))`;
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail figure[aria-label^="VTI at each read"] svg`, { timeout: 2000 });
+    if ((await page.getAttribute(vti, 'aria-expanded')) !== 'true') throw new Error('VTI not said open');
+    await page.waitForSelector(`${card} .fx-holddetail :text("A share is worth")`, { timeout: 2000 });
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
+    if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
+  } },
+  // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
+  // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
+  // (here, as a new account), kept, and read again.
+  { name: 'Finances: Investments read once as Finances opens, Read now, and a match by hand', screen: 'finances', mock: { status: runningToo('ghostfolio'), investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} [role=status]:has-text("Read from Ghostfolio at")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text(": 9 holdings in 3 accounts.")`, { timeout: 2000 });
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('not read once on opening');
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForTimeout(300);
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('read again on coming back');
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForFunction(() => window.__MOCK.investReads === 2, null, { timeout: 5000 });
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read")`, { timeout: 2000 });
+    await page.selectOption(`${card} .fx-investleft select`, 'new');
+    await page.waitForFunction(() => window.__MOCK.investReads === 3, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const added = plan.accounts.find((a) => a.ghostfolio === 'Coinbase');
+    if (!added || added.name !== 'Coinbase' || added.kind !== 'investment') throw new Error('Coinbase not added as an account matched by hand');
+  } },
+  { name: 'Finances: Investments say why Ghostfolio could not be read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } }, investProblem: 'Ghostfolio does not answer on this machine: is it running? (Status)' }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} .formerr[role=alert]:text-is("Could not read Ghostfolio: Ghostfolio does not answer on this machine: is it running? (Status)")`, { timeout: 5000 });
+    // What was last read is still shown.
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('the holdings went with the failed read');
+  } },
+  // Read only on Read now, when so set: opening Finances reads nothing; the box turns the morning's read back on.
+  { name: 'Finances: Investments read only on Read now, when so set', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const box = '#finRoot .fx-invest .fx-investauto input[type=checkbox]';
+    await page.waitForSelector(box, { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on opening, set to read by hand');
+    if (await page.isChecked(box)) throw new Error('the box says it reads each day');
+    await page.click(box);
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).readByHand)) throw new Error('still read by hand');
+  } },
+  // Never read: with Ghostfolio running, the card says what it would read and that only symbols leave the homelab.
+  { name: 'Finances: Investments never read offer a first read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} .fx-investintro:has-text("Only ticker symbols leave the homelab")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read before the first Read now');
+  } },
+  { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`, { timeout: 5000 });
+    if (await page.$(`${card} button:text-is("Read now")`) || await page.$(`${card} .fx-investauto`) || await page.$(`${card} select`)) throw new Error('something to read or change on a phone allowed only to look');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on a phone');
+    await page.click(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`);
+    await page.waitForSelector(`${card} .fx-holddetail svg`, { timeout: 2000 });
   } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
@@ -6390,6 +6471,125 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // Chase's checking CSV: Details (CREDIT or DEBIT) comes before Description, the payee, and each row ends in an empty cell.
+  { name: 'Finances: a Chase checking CSV takes its payee from Description, not Details', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,11/06/2026,"COSTCO WHSE #0123",-236.15,DEBIT_CARD,4321.00,,\nCREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2169.24,ACH_CREDIT,4557.15,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("2 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-2);
+    if (txs.some((t) => /^(CREDIT|DEBIT)$/i.test(t.payee || '')) || txs[0].amount !== -236.15 || txs[1].amount !== 2169.24) throw new Error(`brought in ${JSON.stringify(txs)}`);
+  } },
+  // A Chase file read before as CREDIT and DEBIT, imported again: those rows take their payees (and keep a category given
+  // them since), rather than coming in twice; a row not in the ledger yet still comes in.
+  { name: 'Finances: a Chase CSV imported again gives rows brought in as CREDIT or DEBIT their payees', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'w1', date: '2026-11-06', account: 'chk', amount: -236.15, payee: 'DEBIT', category: 'Groceries' },
+    { id: 'w2', date: '2026-11-06', account: 'chk', amount: 2169.24, payee: 'CREDIT' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,11/06/2026,"COSTCO WHSE #0123",-236.15,DEBIT_CARD,4321.00,,\nCREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2169.24,ACH_CREDIT,4557.15,,\nDEBIT,11/04/2026,"SHELL OIL 57444",-48.00,DEBIT_CARD,4569.15,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("1 to bring in"):has-text("2 brought in before as CREDIT or DEBIT")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 1, fix 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const w1 = txs.find((t) => t.id === 'w1'), w2 = txs.find((t) => t.id === 'w2');
+    if (txs.length !== 3 || !/costco/i.test(w1?.payee || '') || w1.category !== 'Groceries' || !/acme/i.test(w2?.payee || '') || !txs.some((t) => /shell/i.test(t.payee || ''))) throw new Error(`fixed ${JSON.stringify(txs)}`);
+  } },
+  // A file whose Payee column only says which way the money went: the names come from the column that has them, and
+  // a payee column picked by hand that has none is said to have none.
+  { name: 'Finances: a CSV whose payee column says only Withdrawal or Deposit reads names from another column', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Payee,Amount,Text\n11/02/2026,Withdrawal,-12.50,CORNER BAKERY 44\n11/03/2026,Deposit,300.00,REFUND FROM ACME\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Corner Bakery")', { timeout: 5000 });
+    if (await page.locator('#finSheet .importnote.bad').count()) throw new Error('warned with names found');
+    await page.locator('#finSheet label.field').filter({ hasText: /^Payee/ }).locator('select').selectOption({ label: 'Payee' });
+    await page.waitForSelector('#finSheet .importnote.bad:has-text("No payee here is a name")', { timeout: 5000 });
+  } },
+  // Deleted, they come back with Undo; and with Ctrl+Z (⌘Z) after another delete.
+  { name: 'Finances: deleted transactions come back with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    const del = async (count) => {
+      await page.click('.fx-transactions button:text-is("Select")');
+      for (let i = 0; i < count; i++) await page.click(`.fx-transactions .fx-txday li.opens >> nth=${i}`);
+      await page.click(`.fx-txpick button:text-is("Delete ${count}")`);
+      await page.click(`.fx-txpick button:has-text("Click again to delete")`);
+      await page.waitForSelector(`#undoNote :text("Deleted ${count === 1 ? '1 transaction' : count + ' transactions'}")`, { timeout: 5000 });
+      await page.click('.fx-transactions button:text-is("Done")');
+    };
+    await del(2);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+    await page.waitForSelector('#undoNote .undonote', { state: 'detached', timeout: 5000 });
+    await del(1);
+    await page.keyboard.press((await page.evaluate(() => navigator.platform.startsWith('Mac'))) ? 'Meta+z' : 'Control+z');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+  } },
+  // Shift+click picks a range; Move to puts them in another account, Undo puts them back; a category set is undone too.
+  { name: 'Finances: selected transactions move to another account, a Shift+click range, with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const rows = '.fx-transactions .fx-txday li.opens';
+    const ids = await page.evaluate(() => window.__MOCK.ledger?.transactions?.length);
+    await page.click('.fx-transactions button:text-is("Select")');
+    // The fifth to the seventh rows shown (Trader Joe's, Claude Pro, Verizon): none a transfer.
+    await page.click(`${rows} >> nth=4`);
+    await page.click(`${rows} >> nth=6`, { modifiers: ['Shift'] });
+    await page.waitForSelector('.fx-txpick :text("3 transactions selected")', { timeout: 5000 });
+    await page.selectOption('.fx-txpick select[aria-label="Move the selected to an account"]', { label: 'Amex Gold' });
+    await page.waitForSelector('#undoNote :text("Moved 3 transactions to Amex Gold")', { timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const moved = txs.filter((t) => t.account === 'amex').map((t) => t.id);
+    if (moved.length !== 3) throw new Error(`moved ${JSON.stringify(txs)}`);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((m) => { const t = window.__MOCK.ledgerSaved?.at(-1)?.transactions; return t && !t.some((x) => m.includes(x.id) && x.account === 'amex'); }, moved, { timeout: 5000 });
+    // A category set, then undone: each back to its own.
+    await page.click(`${rows} >> nth=4`);
+    await page.fill('.fx-txpick input[aria-label="Category for the selected"]', 'Fun');
+    await page.click('.fx-txpick button:text-is("Set category")');
+    await page.waitForSelector('#undoNote :text("1 transaction put in Fun")', { timeout: 5000 });
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction(() => !window.__MOCK.ledgerSaved?.at(-1)?.transactions.some((t) => t.category === 'Fun'), null, { timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (ids && txs.length !== ids) throw new Error(`${txs.length} of ${ids}`);
+  } },
+  // While selecting, Ctrl+A (⌘A on a Mac) takes every row shown and Escape stops selecting.
+  { name: 'Finances: while selecting transactions, Ctrl+A selects them all and Escape stops', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    await page.click('.fx-transactions button:text-is("Select")');
+    await page.waitForSelector('.fx-txpick :text("None selected")', { timeout: 5000 });
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.waitForSelector(`.fx-txpick :text("${n} transactions selected")`, { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.fx-txpick', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions button:text-is("Select")', { timeout: 5000 });
+  } },
+  // Select: rows picked by a click, or every one a filter shows; Delete asks once more, then they go; a category given to each.
+  { name: 'Finances: transactions selected together are deleted or given a category', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const before = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    await page.click('.fx-transactions button:text-is("Select")');
+    await page.click('.fx-transactions .fx-txday li.opens >> nth=0');
+    await page.click('.fx-transactions .fx-txday li.opens >> nth=1');
+    await page.waitForSelector('.fx-txpick :text("2 transactions selected")', { timeout: 5000 });
+    if (await page.locator('.fx-transactions .rowopen[aria-pressed=true]').count() !== 2) throw new Error('two rows should be pressed');
+    await page.fill('.fx-txpick input[aria-label="Category for the selected"]', 'Fun');
+    await page.click('.fx-txpick button:text-is("Set category")');
+    await page.waitForSelector('.fx-txpick :text("None selected")', { timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.category === 'Fun').length < 2) throw new Error(`categories ${JSON.stringify(txs)}`);
+    await page.click(`.fx-txpick button:text-is("Select all ${before}")`);
+    await page.click(`.fx-txpick button:text-is("Delete ${before}")`);
+    await page.click(`.fx-txpick button:text-is("Click again to delete ${before} transactions")`);
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === 0, null, { timeout: 5000 });
+  } },
   // An estimated bill paid three times or more in six months, its average 3% or more off the plan's: the Dashboard asks to
   // use the average. Use keeps it; Keep is remembered on this device. Twice is too few to ask.
   ...[['Use $152.00', 152], ['Keep $140.00', 140]].map(([button, want]) => ({ name: `Finances: a bill that changes, its average offered, ${button}`, screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: finances.plan.payments.map((x) => (x.id === 'water' ? { ...x, estimate: true } : x)) }, paid: [
@@ -6956,6 +7156,7 @@ const screens = [
   { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'Finances, Transactions, two selected', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
@@ -6976,6 +7177,7 @@ const screens = [
   { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
   { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
   { name: 'The phone, Finances, Transactions', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'The phone, Finances, Transactions, two selected', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'The phone, Finances, Reports', screen: 'finances', phone: ['companion', 'finances'], mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'The phone, Finances, Calendar', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
 ];

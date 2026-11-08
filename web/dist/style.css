@@ -2086,6 +2086,18 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
 .fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
+/* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
+.fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
+.fx-txpicked { flex:1 1 auto; font-size:13px; font-weight:600; }
+.fx-txpickcat { display:inline-flex; gap:6px; }
+.fx-txpickcat input { font:inherit; font-size:13px; min-height:30px; width:10em; min-width:0; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-txpickcat input:focus, .fx-txpickmove:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txpickmove { font:inherit; font-size:13px; min-height:30px; max-width:12em; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-check { flex:none; width:20px; height:20px; margin-right:2px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--line-strong); background:var(--panel); }
+.fx-check svg { width:14px; height:14px; fill:none; stroke:var(--fin-accent-text); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; visibility:hidden; }
+.fx-check.on { background:var(--fin-accent); border-color:var(--fin-accent); }
+.fx-check.on svg { visibility:visible; }
+.alertlist.fx-rows > li.opens.on > .rowopen { background:var(--fin-accent-soft); }
 /* Categories: one row each, a group's own under it, indented; name, group, icon, Delete. */
 .catlist { list-style:none; margin:8px 0 12px; padding:0; }
 .catlist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 11em 10.5em auto; align-items:center; gap:8px; padding:5px 0; }
@@ -2485,6 +2497,62 @@ html.companion #copiesCard table.copies tr.copy td.name { flex:1 1 100%; }
 html.companion #copiesCard table.copies tr.copy :is(td.when, td.size, td.kept) { display:block; flex:none; width:auto; padding:0 0 2px; text-align:left; white-space:nowrap; }
 html.companion #copiesCard table.copies tr.copy td.when { padding-left:36px; }
 html.companion #copiesCard table.copies tr.copy :is(td.size, td.kept)::before { content:"·"; margin:0 6px; }
+/* Finances › Net worth › Investments: four figures, the split by account, and a row a holding (a table in a wide card, a list of rows in a card under 720px, whatever the window or text size), each opening its worth at each read. */
+.fx-invest { container:invest / inline-size; }
+.fx-invest .fx-investsaid { margin:0 0 10px; font-size:13px; }
+.fx-invest .fx-investintro { margin:0 0 12px; max-width:62ch; }
+.fx-investfigs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:0 0 18px; }
+.fx-investfigs > div { padding:12px 14px; min-width:0; }
+.fx-investfigs > div + div { border-left:1px solid var(--line); }
+.fx-investfigs .fx-caption { margin:0 0 6px; }
+.fx-investfig { font-size:var(--fin-figure-sm); font-weight:700; font-variant-numeric:tabular-nums; }
+.fx-investfigs .fx-sub { font-size:13px; margin-top:4px; }
+.fx-invest > .fx-split { margin:0 0 8px; }
+.fx-invest .fx-legend { margin-bottom:14px; }
+.fx-holdings { width:100%; table-layout:fixed; border-collapse:collapse; font-variant-numeric:tabular-nums; border:1px solid var(--line); border-radius:var(--fin-radius-sm); border-spacing:0; overflow:hidden; }
+.fx-holdings thead th { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); }
+.fx-holdings .n { text-align:right; white-space:nowrap; }
+.fx-holdings thead th:nth-child(2) { width:6.5em; } .fx-holdings thead th:nth-child(3), .fx-holdings thead th:nth-child(4) { width:9.5em; } .fx-holdings thead th:nth-child(5) { width:15em; }
+.fx-holdings tbody tr > th { overflow:clip; }
+.fx-holdings tbody + tbody { border-top:1px solid var(--line); }
+.fx-holdings tbody tr > * { padding:9px 14px; font-weight:400; text-align:left; vertical-align:middle; }
+.fx-holdings tbody tr > .n { text-align:right; }
+.fx-holdings tbody tr:first-child:has(button):hover { background:var(--shade-025); cursor:pointer; }
+.fx-hold.open > tr:first-child { background:var(--shade-025); }
+.fx-holdbtn { display:flex; align-items:center; gap:10px; min-width:0; padding:0; margin:0; border:0; background:none; color:inherit; font:inherit; text-align:left; border-radius:6px; }
+button.fx-holdbtn { cursor:pointer; }
+.fx-holdbtn .fmark { border-radius:50%; }
+.fx-holdbtn { max-width:100%; }
+#finRoot .fx-holdings tbody tr:hover > td { background:none; }
+.fx-holdwho { display:flex; flex-direction:column; min-width:0; }
+.fx-holdwho strong { font-size:14px; }
+.fx-holdwho small { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-holdunit { display:none; }
+.fx-holdgain .fx-sub { font-size:12px; }
+.fx-holddetail > td { padding:4px 14px 14px !important; }
+.fx-holdhist .fx-sub { margin:4px 0 8px; font-size:13px; }
+.fx-investleft { margin-top:14px; }
+.fx-investleft p { margin:0 0 6px; }
+.fx-investleft ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.fx-investleft label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.fx-investauto { display:flex; align-items:center; gap:8px; margin-top:14px; font-size:13px; color:var(--muted); }
+@media (prefers-color-scheme: dark) { .fx-holdings tbody tr:first-child:has(button):hover, .fx-hold.open > tr:first-child { background:var(--glow-04); } }
+@media (forced-colors: active) { .fx-holdbtn:focus-visible { outline:2px solid Highlight; } }
+@container invest (max-width: 720px) {
+  .fx-investfigs { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .fx-investfigs > div:nth-child(3) { border-left:0; }
+  .fx-investfigs > div:nth-child(n+3) { border-top:1px solid var(--line); }
+  .fx-holdings, .fx-holdings tbody, .fx-holdings tr, .fx-holdings td, .fx-holdings th { display:block; }
+  .fx-holdings thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .fx-holdings tbody tr:first-child { display:grid; grid-template-columns:minmax(0, 1fr) auto; grid-template-areas:"who worth" "paid gain"; column-gap:12px; row-gap:2px; padding:10px 14px; }
+  .fx-holdings tbody tr:first-child > * { padding:0; border:0; background:none; min-width:0; }
+  .fx-holdings tbody tr > th { grid-area:who; }
+  .fx-holdshares { display:none !important; }
+  .fx-holdpaid { grid-area:paid; text-align:left !important; white-space:normal !important; font-size:13px; color:var(--muted); padding-left:42px !important; }
+  .fx-holdworth { grid-area:worth; align-self:center; font-weight:600; }
+  .fx-holdgain { grid-area:gain; font-size:13px; align-self:end; }
+  .fx-holdunit { display:inline; }
+}
 
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Only this screen, and not when the system asks for more contrast (that keeps its own colours). */

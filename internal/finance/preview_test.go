@@ -45,6 +45,24 @@ func example() Plan {
 			a.History = append(a.History, Point{dateOf(date("2026-10-30").AddDate(0, 0, -7*w)), cents(a.Balance - float64(w)*step + wobble)})
 		}
 	}
+	// What Ghostfolio read for the investment accounts (Net worth ›
+	// Investments): four weekly reads, the 401(k) with some cash besides,
+	// NVDA with no logo of its own, BND below what went in.
+	p.HoldingsRead = "2026-10-30T07:02:00Z"
+	held := map[string][]Holding{
+		"k401": {{Symbol: "VTI", Name: "Vanguard Total Stock Market ETF", Shares: 92.4, Paid: 18210, Value: 26420}, {Symbol: "VXUS", Name: "Vanguard Total International Stock ETF", Shares: 120, Paid: 6950, Value: 7380}, {Symbol: "FXAIX", Name: "Fidelity 500 Index Fund", Shares: 21.5, Paid: 3900, Value: 4400}},
+		"roth": {{Symbol: "BND", Name: "Vanguard Total Bond Market ETF", Shares: 140, Paid: 10480, Value: 10150}, {Symbol: "VOO", Name: "Vanguard S&P 500 ETF", Shares: 8, Paid: 3620, Value: 4450}},
+		"brk":  {{Symbol: "AAPL", Name: "Apple", Shares: 14, Paid: 2310, Value: 3290}, {Symbol: "AMZN", Name: "Amazon", Shares: 12, Paid: 1980, Value: 2610}, {Symbol: "GOOGL", Name: "Alphabet", Shares: 9, Paid: 1450, Value: 1660}, {Symbol: "NVDA", Name: "NVIDIA", Shares: 3, Paid: 400, Value: 640}},
+	}
+	for i := range p.Accounts {
+		a := &p.Accounts[i]
+		for _, h := range held[a.ID] {
+			for w, f := range []float64{0.94, 0.97, 0.955, 1} {
+				h.History = append(h.History, Point{dateOf(date("2026-10-30").AddDate(0, 0, -7*(3-w))), cents(h.Value * f)})
+			}
+			a.Holdings = append(a.Holdings, h)
+		}
+	}
 	p.Payments = []Payment{
 		{ID: "mortgagepay", Name: "Mortgage", Amount: 1845, Kind: "home", Institution: "wellsfargo", To: "mortgage", Schedule: Schedule{Every: Monthly, Start: "2026-01-01"}},
 		{ID: "netflix", Name: "Netflix", Amount: 15.49, Kind: "subscriptions", Institution: "netflix", Schedule: Schedule{Every: Monthly, Start: "2026-01-03"}},

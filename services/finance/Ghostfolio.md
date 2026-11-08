@@ -99,6 +99,7 @@ curl -s -X POST -H "Content-Type: application/json" -d '{"accessToken":"YOUR_SEC
 - **Export everything:** `curl -s -H "Authorization: Bearer YOUR_AUTH_TOKEN" http://localhost:3333/api/v1/export`
 - **Import:** `POST /api/v1/import` with the same JSON format the export produces. The endpoints are listed in the README on GitHub.
 - **Finances:** put your security token in Settings › `GHOSTFOLIO_SECURITY_TOKEN`, and Finances › Update balances has **From Ghostfolio** while Ghostfolio runs. It signs in on this machine, reads what each account is worth (`/api/v1/account`), only reading, and fills the boxes of the accounts with the same name and currency.
+- **Finances › Net worth › Investments:** **Read now** signs in the same way and reads what each account holds (`/api/v1/portfolio/holdings` for each account, or `/api/v1/portfolio/details` on an older Ghostfolio): each fund and share, how many, what went in, and what it is worth. Each account is matched to the investment or retirement account in Finances with its name (one that does not match is picked by hand once), and what was read is kept with the plan, so the card shows with Ghostfolio stopped and on a phone. After the first read, Finances reads again once a day as it opens, unless that box is unticked. Ghostfolio looks prices up by ticker symbol itself; amounts and accounts never leave the homelab.
 
 ## Learn more
 
