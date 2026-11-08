@@ -42,6 +42,17 @@ func TestPersonAddAndRemove(t *testing.T) {
 			t.Errorf("the welcome page lacks %q", want)
 		}
 	}
+	// The sheet for the fridge, beside it and linked from it: the apps and their codes, never the sign-in link.
+	sheet, err := os.ReadFile(people.SheetPath(root, "anna"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(sheet), "https://photos.example.com") || !strings.Contains(string(sheet), `src="data:image/svg`) || strings.Contains(string(sheet), "abcdef123456") {
+		t.Errorf("the sheet for the fridge:\n%s", sheet)
+	}
+	if !strings.Contains(string(page), `href="anna-sheet.html"`) {
+		t.Error("the welcome page does not link to the sheet")
+	}
 	if out, code := homelabCmd(t, root, "", "person", "add", "Anna Jones", "--apply"); code == 0 || !strings.Contains(out, "already") {
 		t.Errorf("the same username twice (exit %d):\n%s", code, out)
 	}
@@ -61,6 +72,9 @@ func TestPersonAddAndRemove(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, "data", "people", "anna.html")); err == nil {
 		t.Error("the welcome page of someone removed is still there")
+	}
+	if _, err := os.Stat(people.SheetPath(root, "anna")); err == nil {
+		t.Error("the sheet of someone removed is still there")
 	}
 }
 

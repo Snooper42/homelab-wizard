@@ -12,6 +12,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // A receipt is a picture or PDF kept with a transaction: made small on the
@@ -78,23 +80,7 @@ func SaveReceipt(dir, dataURL string) (string, error) {
 		now := time.Now()
 		return name, os.Chtimes(path, now, now)
 	}
-	tmp, err := os.CreateTemp(dir, ".receipt-*")
-	if err != nil {
-		return "", err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err := tmp.Write(b); err != nil {
-		tmp.Close()
-		return "", err
-	}
-	if err := tmp.Chmod(0o600); err != nil {
-		tmp.Close()
-		return "", err
-	}
-	if err := tmp.Close(); err != nil {
-		return "", err
-	}
-	return name, os.Rename(tmp.Name(), path)
+	return name, lockedfile.Write(path, b, 0o600)
 }
 
 // ReadReceipt returns a kept receipt as a data URL.

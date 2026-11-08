@@ -122,7 +122,10 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     AppIcon: (id) => later(M.icons?.[id] || ''),
     Explainer: () => later(M.explainer || ''),
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),
-    Backups: () => later(M.backups),
+    // backupsError: Backups fails with it (a database that can't be read, a computer that can't be reached).
+    Backups: () => (M.backupsError ? Promise.reject(new Error(M.backupsError)) : later(M.backups)),
+    // Devices on the tailnet: none unless a case gives them (Tailscale not running).
+    TailnetDevices: () => (M.tailnetDevices ? later(M.tailnetDevices) : Promise.reject(new Error('Tailscale is not running'))),
     DuplicatiJobs: () => (M.duplicatiError ? Promise.reject(new Error(M.duplicatiError)) : later(M.duplicatiJobs || [])),
     Alerts: () => later(M.alerts || []),
     Protection: () => (M.protection ? later(M.protection) : Promise.reject(new Error('CrowdSec and the proxy are not both running'))),
@@ -134,6 +137,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Offered only by the Linux AppImage (mock: menuEntry set).
     MenuEntry: () => later(M.menuEntry ? { available: true, added: !!M.menuEntry.added } : { available: false, added: false }),
     SetMenuEntry: (on) => { M.menuEntry = { added: on }; return later(null); },
+    // Snooze a failing check's alerts: kept on the watchdog's summary, as the app does.
+    SnoozeCheck: (check, hours) => { const w = M.watchdog || {}; const z = { ...(w.snoozed || {}) }; if (hours) z[check] = new Date(Date.now() + hours * 36e5).toISOString(); else delete z[check]; M.watchdog = { ...w, snoozed: z }; return later(null); },
     Watchdog: () => later(M.watchdog || { lastRun: '0001-01-01T00:00:00Z', checks: 0, failing: [], pending: 0 }),
     RevealReport: () => later(null),
     RecoveryKit: () => later(null),
@@ -218,6 +223,15 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     // Firefly III's balances (firefly: [{ name, balance, currency }]); fireflyProblem: why it could not be read.
     FinancesFromFirefly: () => (M.fireflyProblem ? later(null).then(() => { throw new Error(M.fireflyProblem); }) : later(M.firefly || [])),
     FinancesFromGhostfolio: () => (M.ghostfolioProblem ? later(null).then(() => { throw new Error(M.ghostfolioProblem); }) : later(M.ghostfolio || [])),
+    // Investments' Read now: the plan as it is, with investedRead's accounts' holdings (or the example's), and investUnmatched said
+    // back; investProblem: why Ghostfolio could not be read. Each read is counted in investReads.
+    FinancesReadInvestments: () => {
+      M.investReads = (M.investReads || 0) + 1;
+      if (M.investProblem) return later(null).then(() => { throw new Error(M.investProblem); });
+      const plan = { ...M.finances.plan, holdingsRead: new Date().toISOString(), accounts: (M.finances.plan.accounts || []).map((a) => (M.investedRead?.[a.id] ? { ...a, ...M.investedRead[a.id] } : a)) };
+      M.finances = { ...M.finances, plan };
+      return later({ view: M.finances, unmatched: M.investUnmatched || [] });
+    },
     FinancesFromWallos: () => (M.wallosProblem ? later(null).then(() => { throw new Error(M.wallosProblem); }) : later(M.wallos || [])),
     // The calendar feed's link for the plan's key, over the tailnet; calendarProblem: no https address to give.
     FinancesCalendar: () => (M.calendarProblem ? later(null).then(() => { throw new Error(M.calendarProblem); })
@@ -245,6 +259,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       for (const [i, text] of steps.entries()) { await later(null, 80); emit('cli:step', { n: i + 1, total: steps.length, text }); }
       for (const line of M.cliLog[action] || ['Nothing to do.']) { await later(null, 80); emit('cli:log', line.replace('%s', target)); }
       if (apply && M.jobApps?.[action]) await this.playApps(M.jobApps[action]);
+      // homelabDelay: a long command (ms more once applied), to hide it while it runs.
+      if (apply && M.homelabDelay) await later(null, M.homelabDelay);
       // Remove from an app's page: its container goes (missing on Status).
       if (apply && action === 'remove') M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === target ? { ...a, state: 'missing', health: undefined, since: undefined } : a)) };
     },
@@ -253,6 +269,15 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       (M.settingsSet ||= []).push([id, setting, on]);
       if (M.settingDelay) await later(null, M.settingDelay);
       if (M.settingError) throw new Error(M.settingError);
+      if (setting === 'pinned') {
+        const pinned = (M.status.pinned || []).filter((x) => x !== id).concat(on ? [id] : []);
+        M.status = { ...M.status, pinned, apps: M.status.apps.map((a) => (a.id === id ? { ...a, pinned: on } : a)) };
+        return;
+      }
+      if (setting === 'sundays') {
+        M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, updateDays: on ? ['sun'] : undefined } : a)) };
+        return;
+      }
       const key = setting === 'updates' ? 'held' : 'quiet';
       M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === id ? { ...a, [key]: !on } : a)) };
     },
@@ -295,6 +320,7 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       { name: 'Internet', date: '2026-11-09', amount: 70 }] }),
     SetPhoneFinances(id, level) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, finances: level || undefined } : p)); return later(M.phones); },
     SetPhoneCanChange(id, on) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, canChange: on } : p)); return later(M.phones); },
+    SetPhoneUntil(id, hours) { M.phones = M.phones.map((p) => (p.id === id ? { ...p, until: hours ? new Date(Date.now() + hours * 36e5).toISOString() : undefined } : p)); return later(M.phones); },
     RemovePhone(id) { M.phones = M.phones.filter((p) => p.id !== id); return later(M.phones); },
     Report: () => later({ text: 'Homelab report\n', helper: '' }, 300),
     // Tidy Up (M.tidy): what the screen reads, and its jobs: each run is kept
@@ -304,6 +330,17 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     TidyCover: () => later(''),
     TidyReveal: (path) => { M.revealed = path; return later(null); },
     TidyStop: () => { M.tidyStopped = true; return later(null); },
+    // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
+    TidyLock: () => {
+      const r = M.tidyLocks?.length ? M.tidyLocks.shift() : (M.tidy?.lock ? { lock: M.tidy.lock, now: {} } : { now: {} });
+      if (!r.lock && M.tidy) M.tidy = { ...M.tidy, lock: undefined };
+      return later(r);
+    },
+    // M.tidyStopSlow: the engine takes that many ms to reach a safe point after Stop.
+    ...(M.tidyStopSlow ? { TidyStop: () => { setTimeout(() => { M.tidyStopped = true; }, M.tidyStopSlow); return later(null); } } : {}),
+    // M.tidyUpFails, M.tidyReviewFails: how many reads fail first (then they answer), and M.tidyFailWhy what they say.
+    ...(M.tidyUpFails ? { TidyUp: () => (M.tidyUpFails-- > 0 ? Promise.reject(new Error(M.tidyFailWhy || 'open data/media.json: permission denied')) : later(M.tidy)) } : {}),
+    ...(M.tidyReviewFails ? { TidyReview: () => (M.tidyReviewFails-- > 0 ? Promise.reject(new Error(M.tidyFailWhy || "Calibre's database is locked")) : later(M.tidyReview || [])) } : {}),
     async TidyRun(kind, action, args, yes) {
       (M.tidyRuns ??= []).push([kind, action, args, yes]);
       for (const ev of M.tidyEvents?.[`${kind} ${action}`] || [{ type: 'ok', text: 'Done' }, { type: 'result', action, ok: true }]) { await later(null, 60); emit('media:event', ev); }

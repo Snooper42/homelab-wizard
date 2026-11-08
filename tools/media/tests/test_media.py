@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import sqlite3
 import sys
@@ -31,9 +32,10 @@ import trash_restore  # noqa: E402
 
 # The two vendored engines are the owner's, unchanged: any edit shows here first.
 # The owner's two organizers, as they gave them, with the two Windows fixes they agreed to on
-# Nov 3, 2026 (pausing the apps under Docker Desktop, beets on this machine): change them only so.
+# Nov 3, 2026 (pausing the apps under Docker Desktop, beets on this machine), and N28's pinned beets
+# setup they approved on Nov 6 (Python 3.10 or newer, requirements/): change them only so.
 VENDORED = {
-    "music_organizer.py": "81a431693b506b5e5ae708e15dcb0a6d44cddaf458c5df9699f5ad0853587db9",
+    "music_organizer.py": "c472548f14921dfa1b51b0335e7447359a64a090ac0313f11bda86316cabc195",
     "books_organizer.py": "6ca72b3a2a411b7099305a3dcfd4e219190718484bc75643536d01292ef6a79e",
 }
 
@@ -312,6 +314,19 @@ class Trash(Base):
         self.assertFalse(f.exists())
         self.assertIsNone(mc.trash(self.home / "missing"))
         self.trash.start()
+
+    def test_undo_takes_back_only_from_where_things_are_thrown(self):
+        film = self.lib["movies"] / "Gone (2001)" / "film.mkv"  # gone, and its folder too
+        day = Path(self.tmp.anchor) / ".tidy-trash" / "2026-11-05"
+        with mock.patch.object(mc, "IS_WINDOWS", True):  # a USB drive's own trash, a dated folder a day
+            self.assertTrue(mc.trashed_from(film, day / "film.mkv"))
+            self.assertFalse(mc.trashed_from(film, day / "deeper" / "film.mkv"))
+            self.assertFalse(mc.trashed_from(film, self.tmp / "homelab" / "film.mkv"))
+        if not mc.IS_WINDOWS and not mc.IS_MAC:  # the freedesktop Trash in this test's home
+            files = self.home / ".local" / "share" / "Trash" / "files"
+            self.assertTrue(mc.trashed_from(self.home / "film.mkv", files / "film.mkv"))
+        self.assertFalse(mc.trashed_from(self.home / "film.mkv", self.home / "film 2.mkv"))
+        self.assertFalse(mc.trashed_from("film.mkv", "film 2.mkv"), "a relative path is no one's")
 
     def test_windows_uses_the_recycle_bin(self):
         f = self.touch(self.tmp / "E" / "film.mkv")
@@ -716,6 +731,26 @@ class UndoTrash(Base):
         self.assertIn("A.nfo: something else is in its place", res["stayed"])
         self.assertFalse(b.exists(), "another run's stays in the Trash")
 
+    def test_a_crafted_log_moves_nothing_that_is_not_in_the_trash(self):
+        # A homelab moved in from a file someone else made brings its data/ (this log, and the run
+        # Undo offers). A line whose "to" is a file it brought, and whose "from" is where a login
+        # item goes, would have Undo plant it there. Only what sits where trash() puts things goes back.
+        planted = self.touch(self.tmp / "homelab" / "appdata" / "evil.plist")
+        nested = self.touch(self.home / ".local" / "share" / "Trash" / "files" / "dir" / "evil.sh")
+        agent = self.home / "Library" / "LaunchAgents" / "com.evil.plist"
+        rc = self.home / ".config" / "autostart" / "evil.desktop"
+        lines = [{"run": "scrubber-scan-1", "from": str(agent), "to": str(planted)},
+                 {"run": "scrubber-scan-1", "from": str(rc), "to": str(nested)},
+                 {"run": "scrubber-scan-1", "from": "Library/LaunchAgents/rel.plist", "to": "appdata/evil.plist"}]
+        self.log.parent.mkdir(parents=True, exist_ok=True)
+        self.log.write_text("".join(json.dumps(l) + "\n" for l in lines))
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        res = self.results()[-1]
+        self.assertEqual(res["restored"], 0)
+        self.assertFalse(agent.exists() or rc.exists(), "nothing planted")
+        self.assertTrue(planted.exists() and nested.exists(), "nothing moved")
+        self.assertIn("com.evil.plist: not where Tidy Up puts what it throws away", res["stayed"])
+
     def test_without_a_run_nothing_is_noted(self):
         with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": ""}):
             mc.trash(self.touch(self.lib["movies"] / "A.nfo"))
@@ -1067,6 +1102,137 @@ class Playlists(Base):
         self.assertEqual(rock["name"], "Rock & Metal")
 
 
+class NeedVenv(Base):
+    """A beets venv whose Python is gone (upgraded away) is made again before music_tidy relaunches."""
+
+    def test_a_broken_venv_is_made_again(self):
+        if os.name == "nt":
+            self.skipTest("a venv's Python is a link only off Windows")
+        py = music_tidy.venv_python()
+        py.parent.mkdir(parents=True)
+        os.symlink(str(self.tmp / "gone" / "python3.13"), str(py))
+        keep = self.home / ".music-cleanup" / "library.db"
+        keep.write_text("beets")
+        made = []
+
+        def bootstrap():
+            made.append(os.path.lexists(str(py)))
+            py.parent.mkdir(parents=True, exist_ok=True)
+            py.write_text("#!/bin/sh\nexit 0\n")
+            py.chmod(0o755)
+
+        with mock.patch.object(music_tidy.mo, "bootstrap", side_effect=bootstrap), \
+                mock.patch.dict(sys.modules, {"no_such_module_here": None}), \
+                mock.patch.object(music_tidy.subprocess, "call", return_value=0) as call, \
+                mock.patch.dict(os.environ, {"MUSIC_TIDY_CHILD": ""}):
+            with self.assertRaises(SystemExit) as done:
+                music_tidy.need(["no_such_module_here"])
+        self.assertEqual(done.exception.code, 0)
+        self.assertEqual(made, [False], "the broken venv went before the setup ran")
+        self.assertEqual(call.call_args[0][0][0], str(py))
+        self.assertTrue(keep.exists(), "beets' own files stay")
+
+    def test_a_working_venv_is_kept(self):
+        if os.name == "nt":
+            self.skipTest("a shell script stands in for Python only off Windows")
+        py = music_tidy.venv_python()
+        py.parent.mkdir(parents=True)
+        py.write_text("#!/bin/sh\nexit 0\n")
+        py.chmod(0o755)
+        with mock.patch.object(music_tidy.mo, "bootstrap") as bootstrap, \
+                mock.patch.dict(sys.modules, {"no_such_module_here": None}), \
+                mock.patch.object(music_tidy.subprocess, "call", return_value=0), \
+                mock.patch.dict(os.environ, {"MUSIC_TIDY_CHILD": ""}):
+            with self.assertRaises(SystemExit):
+                music_tidy.need(["no_such_module_here"])
+        bootstrap.assert_not_called()
+        self.assertTrue(py.exists())
+
+
+class PinnedBeets(Base):
+    """N28: the music jobs' venv installs only the versions pinned, with their hashes, for its Python."""
+
+    PINS = HERE / "requirements"
+
+    def venv_py(self):
+        return self.home / ".music-cleanup" / "venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+    def bootstrap(self, version=(3, 12, 4), imports_ok=lambda calls: len(calls) > 1):
+        """Run the one-time setup with nothing real installed: returns every command it ran."""
+        self.calls = calls = []
+        py = self.venv_py()
+
+        def run(cmd, **kw):
+            cmd = [str(c) for c in cmd]
+            calls.append(cmd)
+            if cmd[1:3] == ["-m", "venv"]:
+                py.parent.mkdir(parents=True, exist_ok=True)
+                py.write_text("")
+                (py.parent.parent / "pyvenv.cfg").write_text("home = /usr/bin\nversion = %d.%d.%d\n" % version)
+            ok = "-c" not in cmd or imports_ok(calls)
+            return mock.Mock(returncode=0 if ok else 1, stdout="", stderr="")
+
+        with mock.patch.object(sys, "version_info", version), \
+                mock.patch.object(mc.mo.subprocess, "run", side_effect=run), \
+                mock.patch.object(mc.mo, "relaunch") as relaunch, \
+                mock.patch.object(mc.mo.shutil, "which", return_value=None), \
+                mock.patch.dict(os.environ, {"MUSIC_CLEANUP_CHILD": "", "HOMELAB_MEDIA_IN_CONTAINER": ""}), \
+                mock.patch.dict(sys.modules, {"beets": None}):
+            mc.mo.bootstrap()
+        relaunch.assert_called_once_with(str(py))
+        return calls
+
+    def installs(self, calls):
+        return [c for c in calls if c[1:4] == ["-m", "pip", "install"]]
+
+    def test_each_supported_python_has_its_pins_with_hashes(self):
+        for v in ("3.10", "3.11", "3.12", "3.13", "3.14"):
+            f = self.PINS / ("music-%s.txt" % v)
+            self.assertTrue(f.exists(), "no pins for Python %s" % v)
+            reqs = [r for r in re.sub(r"\\\n", " ", f.read_text()).splitlines()
+                    if r.strip() and not r.lstrip().startswith("#")]
+            names = set()
+            for r in reqs:
+                name, sep, rest = r.partition("==")
+                self.assertTrue(sep, "%s: %s is not pinned to one version" % (f.name, r[:60]))
+                self.assertIn("--hash=sha256:", rest, "%s: %s has no hash" % (f.name, name))
+                names.add(name.strip().lower())
+            self.assertLessEqual({"beets", "mediafile", "requests", "pylast", "pillow", "pyacoustid"}, names, f.name)
+
+    def test_the_setup_installs_only_the_pins_for_its_python(self):
+        calls = self.bootstrap()
+        installs = self.installs(calls)
+        self.assertTrue(installs, "beets was installed")
+        for c in installs:
+            self.assertIn("--require-hashes", c, "every install is checked against the pinned hashes")
+            args = c[4:]
+            self.assertEqual(args[args.index("-r") + 1], str(self.PINS / "music-3.12.txt"))
+            self.assertEqual([a for a in args if not a.startswith("-") and a != args[args.index("-r") + 1]], [],
+                             "nothing is named outside the pinned file (pip itself included)")
+
+    def test_a_venv_from_before_the_pins_is_brought_to_them_once(self):
+        py = self.venv_py()
+        py.parent.mkdir(parents=True)
+        py.write_text("")
+        (py.parent.parent / "pyvenv.cfg").write_text("home = /usr/bin\nversion = 3.11.9\n")
+        calls = self.bootstrap(imports_ok=lambda calls: True)
+        installs = self.installs(calls)
+        self.assertEqual(len(installs), 1, "an unpinned venv is brought to the pins")
+        self.assertIn(str(self.PINS / "music-3.11.txt"), installs[0], "the pins of the venv's own Python")
+        self.assertEqual(self.installs(self.bootstrap(imports_ok=lambda calls: True)), [], "and only once")
+
+    def test_python_older_than_3_10_is_told_plainly(self):
+        with self.assertRaises(SystemExit):
+            self.bootstrap(version=(3, 9, 6))
+        self.assertIn("3.10", self.out.getvalue())
+
+    def test_a_python_without_pins_installs_nothing(self):
+        with self.assertRaises(SystemExit):
+            self.bootstrap(version=(3, 15, 0))
+        self.assertEqual(self.installs(self.calls), [])
+        self.assertIn("3.10 to 3.14", self.out.getvalue())
+
+
 class GenreCounts(Base):
     def test_counts_each_song_under_one_of_your_genres(self):
         lib = self.tmp / "Music"
@@ -1167,6 +1333,120 @@ class Lyrics(Base):
                 music_tidy.write_lyrics(song, "[00:01.00] x", "embed")
         self.assertEqual(order, ["ape", "write"])
 
+    def test_a_translation_after_each_caret_gets_a_line_of_its_own(self):
+        have = "[ar:Bad Bunny]\n[00:01.00]¡NUEVAYoL!^NEW YORK!\n[00:04.50]Si te quieres divertir^If you want to have fun\n[00:08.00]\n"
+        writes, res = self.run_lyrics((have, True), None)
+        self.assertEqual(len(writes), 1, "rewritten without asking LRCLIB")
+        self.assertEqual((res["cleaned"], res["synced"], res["added"]), (1, 1, 0))
+        self.assertIn("each is on its own line under its original now", self.out.getvalue())
+
+    def test_the_check_counts_songs_with_two_languages_on_a_line(self):
+        # The check changes nothing, but says how many songs a run would set apart, so Tidy Up's Overview
+        # can offer it even when every song has lyrics already.
+        have = "[00:01.00]¡NUEVAYoL!^NEW YORK!\n[00:04.50]Si te quieres divertir^If you want to have fun\n"
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
+        writes = []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", return_value=(have, True)).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(p)).start()
+        music_tidy.lyrics(mock.Mock(library=None, check=True), files=[song])
+        res = self.results()[-1]
+        self.assertEqual(writes, [], "a check writes nothing")
+        self.assertEqual((res["synced"], res["to_clean"], res["cleaned"]), (1, 1, 0))
+        self.assertIn("translation after a caret", self.out.getvalue())
+
+    def test_lyrics_without_carets_are_left_alone(self):
+        writes, res = self.run_lyrics(("[00:01.00] one ^ two\n[00:02.00] three\n[00:03.00] four", True), None)
+        self.assertEqual((writes, res["cleaned"]), ([], 0), "one caret in a song is a word, not a translation")
+
+    def test_plain_lyrics_with_carets_get_synced_ones(self):
+        writes, res = self.run_lyrics(("¡NUEVAYoL!^NEW YORK!\nSi te quieres divertir^If you want to have fun", False),
+                                      {"syncedLyrics": "[00:01.00]¡NUEVAYoL!\n[00:04.50]Si te quieres divertir"})
+        self.assertEqual(writes[-1][1], "[00:01.00]¡NUEVAYoL!\n[00:04.50]Si te quieres divertir")
+        self.assertEqual((res["upgraded"], res["synced"]), (1, 1))
+
+    def test_lyrics_are_tidied_when_lrclib_does_not_answer(self):
+        # Nov 6, the owner: thousands of songs kept two languages on one line. Each was asked about first, and
+        # when LRCLIB didn't answer (blocked, slow, down) the song was skipped and never set apart.
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
+        writes = []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", return_value=("¡NUEVAYoL!^NEW YORK!\nSi te quieres divertir^If you want to have fun", False)).start()
+        mock.patch.object(music_tidy, "lrclib", side_effect=RuntimeError("GET https://lrclib.net/api/get: timed out")).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(t)).start()
+        mock.patch.object(music_tidy.time, "sleep").start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False, tidy=False), files=[song])
+        res = self.results()[-1]
+        self.assertEqual(len(writes), 1, "set apart though LRCLIB didn't answer")
+        self.assertEqual((res["cleaned"], res["failed"]), (1, 1))
+
+    def test_tidying_alone_asks_lrclib_nothing(self):
+        # lyrics --tidy: the songs' own lyrics set right on this computer, every one, in minutes, with no
+        # question to LRCLIB, so thousands of songs never wait on the network.
+        songs = [self.touch(self.lib["music"] / "A" / "B" / ("%02d Song.mp3" % i)) for i in (1, 2)]
+        have = {str(songs[0]): ("¡NUEVAYoL!^NEW YORK!\nSi te quieres divertir^If you want to have fun", False), str(songs[1]): ("", False)}
+        writes, asked = [], []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", side_effect=lambda p: have[str(p)]).start()
+        mock.patch.object(music_tidy, "lrclib", side_effect=lambda info: asked.append(info) or None).start()
+        mock.patch.object(music_tidy, "write_lyrics", side_effect=lambda p, t, w: writes.append(p)).start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False, tidy=True), files=songs)
+        res = self.results()[-1]
+        self.assertEqual((asked, writes), ([], [songs[0]]))
+        self.assertEqual((res["cleaned"], res["none"], res["tidy"]), (1, 1, True))
+        self.assertIn("languages on one line set apart in 1 songs", self.out.getvalue())
+
+    def test_songs_remembered_by_the_older_lookup_are_asked_again(self):
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 Song.mp3")
+        mc.mo.state_dir().mkdir(parents=True, exist_ok=True)
+        music_tidy._not_found_path().write_text(json.dumps({str(song): time.time()}), encoding="utf-8")
+        asked = []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "song_info", return_value={"title": "Song", "artist": "A", "album": "B", "duration": 200}).start()
+        mock.patch.object(music_tidy, "read_lyrics", return_value=("words", False)).start()
+        mock.patch.object(music_tidy, "lrclib", side_effect=lambda info: asked.append(info) or None).start()
+        mock.patch.object(music_tidy.time, "sleep").start()
+        music_tidy.lyrics(mock.Mock(library=None, check=False), files=[song])
+        self.assertEqual(len(asked), 1)
+        saved = json.loads(music_tidy._not_found_path().read_text(encoding="utf-8"))
+        self.assertEqual((saved["version"], list(saved["songs"])), (music_tidy.NOT_FOUND_VERSION, [str(song)]))
+
+
+class LyricsText(Base):
+    def test_synced_is_read_through_a_byte_order_mark_and_old_line_endings(self):
+        self.assertTrue(music_tidy.is_synced("\ufeff[00:01.00]one"))
+        self.assertTrue(music_tidy.is_synced("[ti:x]\r[00:01.00]one\r[00:02.00]two"))
+        self.assertTrue(music_tidy.is_synced("[00:01,50]one"))
+        self.assertFalse(music_tidy.is_synced("one\ntwo [00:01] three"))
+
+    def test_normalize_keeps_times_and_tags(self):
+        got = music_tidy.normalize_lyrics("\ufeff[ar:A]\r\n[00:01.00]Hola^Hello\r\n[00:02.00]\r\n[00:03.00]Adiós^Bye")
+        self.assertEqual(got, "[ar:A]\n[00:01.00]Hola\n[00:01.00]Hello\n[00:02.00]\n[00:03.00]Adiós\n[00:03.00]Bye",
+                         "both languages, the translation under its original at the same time")
+        self.assertEqual(music_tidy.normalize_lyrics("Hola^Hello\nAdiós^Bye"), "Hola\nHello\nAdiós\nBye")
+        self.assertEqual(music_tidy.normalize_lyrics("[00:01.00][00:09.00]Hola^Hello\n[00:02.00]Sí^"),
+                         "[00:01.00][00:09.00]Hola\n[00:01.00][00:09.00]Hello\n[00:02.00]Sí", "a line's every time; no empty translation")
+
+    def test_a_lyrics_file_beside_the_song_comes_first_as_in_navidrome(self):
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 NUEVAYoL.m4a")
+        song.with_suffix(".txt").write_text("¡NUEVAYoL!^NEW YORK!\n", encoding="utf-8")
+        self.assertEqual(music_tidy.read_lyrics(song), ("¡NUEVAYoL!^NEW YORK!\n", False))
+        song.with_suffix(".lrc").write_text("[00:01.00]¡NUEVAYoL!\n", encoding="utf-8")
+        self.assertEqual(music_tidy.read_lyrics(song)[1], True, ".lrc before .txt")
+
+    def test_lyrics_go_beside_the_song_when_a_file_there_would_hide_the_tags(self):
+        song = self.touch(self.lib["music"] / "A" / "B" / "01 NUEVAYoL.m4a")
+        song.with_suffix(".txt").write_text("¡NUEVAYoL!^NEW YORK!\n", encoding="utf-8")
+        fake = mock.MagicMock()
+        with mock.patch.dict(sys.modules, {"mutagen": fake}):
+            music_tidy.write_lyrics(song, "[00:01.00]¡NUEVAYoL!^NEW YORK!\r\n[00:02.00]Si^If", "embed")
+        fake.File.assert_not_called()
+        self.assertEqual(song.with_suffix(".lrc").read_text(encoding="utf-8"), "[00:01.00]¡NUEVAYoL!\n[00:01.00]NEW YORK!\n[00:02.00]Si\n[00:02.00]If")
+        self.assertTrue(music_tidy.read_lyrics(song)[1])
+
 
 
 class LrclibLookup(unittest.TestCase):
@@ -1210,6 +1490,20 @@ class LrclibLookup(unittest.TestCase):
         got = music_tidy.lrclib({"title": "Hey Jude", "artist": "The Beatles", "album": "", "duration": 0})
         self.assertEqual(got["plainLyrics"], "Hey Jude")
         self.assertTrue(all("/api/search?" in c for c in calls), "/api/get needs all four: never asked without them")
+
+    def test_an_exact_record_with_plain_lyrics_alone_looks_for_synced_ones(self):
+        exact = {"trackName": "NUEVAYoL", "artistName": "Bad Bunny", "plainLyrics": "¡NUEVAYoL!^NEW YORK!", "syncedLyrics": None}
+        hits = [{"trackName": "NUEVAYoL", "artistName": "Bad Bunny", "duration": 183, "syncedLyrics": "[00:01.00]¡NUEVAYoL!^NEW YORK!"},
+                {"trackName": "NUEVAYoL", "artistName": "Bad Bunny", "duration": 184, "syncedLyrics": "[00:01.00]¡NUEVAYoL!"}]
+        calls = self.answer({"get": exact, "search": hits})
+        got = music_tidy.lrclib({"title": "NUEVAYoL", "artist": "Bad Bunny", "album": "DeBÍ TiRAR MáS FOToS", "duration": 183})
+        self.assertEqual(got["syncedLyrics"], "[00:01.00]¡NUEVAYoL!^NEW YORK!", "synced, the closest length; a translation is kept")
+        self.assertEqual(len(calls), 2)
+
+    def test_an_exact_record_with_plain_lyrics_is_kept_when_none_are_synced(self):
+        exact = {"plainLyrics": "words", "syncedLyrics": None}
+        self.answer({"get": exact, "search": [{"trackName": "Song", "artistName": "A", "duration": 200, "plainLyrics": "other"}]})
+        self.assertEqual(music_tidy.lrclib({"title": "Song", "artist": "A", "album": "B", "duration": 200}), exact)
 
     def test_nothing_close_is_nothing(self):
         self.answer({"get": RuntimeError("GET https://lrclib.net/api/get answered 404"),
@@ -1287,6 +1581,129 @@ class Tdarr(Base):
         self.assertEqual(body["data"]["docID"], "/media/x.mkv")
         self.assertEqual(self.http_mock.call_args[0][3], {"x-api-key": "k"})
 
+
+
+class TdarrHanding(Base):
+    """Films reach Tdarr: the ones that came in since the last scan, the ones it never took (handed
+    again), and none it can't open."""
+
+    def setUp(self):
+        super().setUp()
+        self.libs = [{"_id": "LIBM"}, {"_id": "LIBT"}]
+        self.known = {}  # Tdarr's own record of each file, by its path there
+        self.handed = []
+        self.tdarr_takes = True
+        mock.patch.object(ve, "TAKE_WAIT", 0).start()
+
+        def http(method, url, body=None, headers=None, timeout=None):
+            data = (body or {}).get("data") or {}
+            if url.endswith("/api/v2/scan-files"):
+                cfg = data["scanConfig"]
+                self.handed += cfg["arrayOrPath"]
+                # As Tdarr 3 does (tried, Nov 6): a list of files is read only as its folder watcher
+                # sends them; scanFindNew with a list reads none of them, and says nothing.
+                if self.tdarr_takes and cfg.get("mode") == "scanFolderWatcher":
+                    for p in cfg["arrayOrPath"]:
+                        self.known.setdefault(p, {"TranscodeDecisionMaker": "Queued"})
+                return {}
+            if url.endswith("/api/v2/cruddb") and data.get("mode") == "getAll":
+                return self.libs
+            if url.endswith("/api/v2/cruddb") and data.get("mode") == "getById":
+                return self.known.get(data["docID"]) or {}
+            return {}
+        self.http_mock.side_effect = http
+        mock.patch.object(mc, "ffprobe", side_effect=lambda p: facts_info(codec="h264", size=9_000_000_000)).start()
+
+    def test_shrink_reads_the_films_added_since_the_scan(self):
+        old = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        mc.save_state("movies", {"files": {str(old): {"status": "bloated", "size": 10}}, "pending": {}})
+        # Radarr filed this one straight into the library after the scan.
+        new = self.touch(self.lib["movies"] / "Dune (2021)" / "Dune (2021).mkv")
+        movies_organizer.Movies().run()
+        self.assertEqual(sorted(self.handed), ["/media/movies/Dune (2021)/Dune (2021).mkv", "/media/movies/Heat (1995)/Heat (1995).mkv"])
+        files = mc.load_state("movies")["files"]
+        self.assertEqual((files[str(old)]["status"], files[str(new)]["status"]), ("queued", "queued"))
+        self.assertEqual(mc.ffprobe.call_count, 1, "a film read before isn't read again")
+
+    def test_the_films_handed_are_the_ones_tdarr_has(self):
+        # Nov 6, the owner: Shrink said "Tdarr has 4 videos in its queue", and Tdarr had none. Each film
+        # handed is in Tdarr's own record after, as its folder watcher hands them.
+        films = [self.touch(self.lib["movies"] / n / (n + ".mkv")) for n in ("Heat (1995)", "Dune (2021)")]
+        movies_organizer.Movies().run()
+        self.assertEqual(sorted(self.known), sorted("/media/movies/%s/%s.mkv" % (f.parent.name, f.parent.name) for f in films))
+        self.assertIn("Tdarr has 2 videos in its queue", self.out.getvalue())
+
+    def test_shrink_says_only_what_tdarr_took(self):
+        # A Tdarr that records none of them is said, not counted as having them.
+        self.tdarr_takes = False
+        for n in ("Heat (1995)", "Dune (2021)"):
+            self.touch(self.lib["movies"] / n / (n + ".mkv"))
+        movies_organizer.Movies().run()
+        out = self.out.getvalue()
+        self.assertNotIn("videos in its queue", out)
+        self.assertIn("Tdarr hasn't taken 2 of the videos handed to it", out)
+
+    def test_shrink_says_when_tdarrs_library_is_gone(self):
+        self.libs = [{"_id": "someone-elses"}]
+        self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        with self.assertRaises(SystemExit):
+            movies_organizer.Movies().run()
+        self.assertEqual(self.handed, [])
+        self.assertIn("Set up Tdarr again", self.out.getvalue())
+
+    def test_a_film_tdarr_never_recorded_is_handed_again_then_left_for_shrink(self):
+        self.tdarr_takes = False  # a Tdarr that never records it, however it's handed
+        film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        long_ago = time.time() - 3600
+        mc.save_state("movies", {"files": {str(film): {"status": "queued", "size": 10, "queued_at": long_ago}}, "pending": {}})
+        movies_organizer.Movies().collect()
+        self.assertEqual(self.handed, ["/media/movies/Heat (1995)/Heat (1995).mkv"])
+        rec = mc.load_state("movies")["files"][str(film)]
+        self.assertEqual((rec["status"], rec["tries"]), ("queued", 2))
+        self.assertEqual(self.results()[-1]["handed_again"], 1)
+        movies_organizer.Movies().collect()
+        self.assertEqual(len(self.handed), 1, "handed again only once it has had time to take it")
+        st = mc.load_state("movies")
+        st["files"][str(film)].update(queued_at=long_ago, tries=3)
+        mc.save_state("movies", st)
+        movies_organizer.Movies().collect()
+        self.assertEqual(mc.load_state("movies")["files"][str(film)]["status"], "bloated", "Shrink hands it again")
+        self.assertEqual(self.results()[-1]["not_taken"], 1)
+        self.assertIn("Tdarr never took 1", self.out.getvalue())
+
+    def test_a_film_tdarr_has_is_not_handed_again(self):
+        film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        self.known["/media/movies/Heat (1995)/Heat (1995).mkv"] = {"TranscodeDecisionMaker": "Queued"}
+        mc.save_state("movies", {"files": {str(film): {"status": "queued", "size": 10, "queued_at": 0}}, "pending": {}})
+        movies_organizer.Movies().collect()
+        self.assertEqual(self.handed, [])
+
+    def test_a_download_tdarr_never_took_is_filed_as_it_is(self):
+        self.tdarr_takes = False  # a Tdarr that never records it, however it's handed
+        stage = self.touch(self.lib["movies"] / ".tidy-staging" / "Heat (1995)" / "Heat (1995).mkv")
+        dest = self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv"
+        mc.save_state("movies", {"files": {}, "pending": {str(stage): {"dest": str(dest), "replaces": [], "since": time.time() - 3600}}})
+        with mock.patch.object(mc, "which", return_value=None):
+            movies_organizer.Movies().collect()
+            self.assertEqual(self.handed, ["/media/movies/.tidy-staging/Heat (1995)/Heat (1995).mkv"])
+            self.assertFalse(dest.exists())
+            st = mc.load_state("movies")
+            st["pending"][str(stage)].update(since=time.time() - 3600, tries=3)
+            mc.save_state("movies", st)
+            movies_organizer.Movies().collect()
+        self.assertTrue(dest.exists(), "it doesn't stay hidden in the staging folder")
+        self.assertEqual(mc.load_state("movies")["pending"], {})
+
+    def test_a_library_tdarr_cannot_open_is_said_not_handed(self):
+        other = self.tmp / "Elsewhere" / "Films"
+        film = self.touch(other / "Heat (1995)" / "Heat (1995).mkv")
+        self.settings["movies"]["library"] = str(other)
+        self.cfg_path.write_text(json.dumps(self.settings))
+        mc.load_settings(str(self.cfg_path))
+        movies_organizer.Movies().run()
+        self.assertEqual(self.handed, [])
+        self.assertEqual(mc.load_state("movies")["files"][str(film)]["status"], "bloated")
+        self.assertIn("Tdarr can't open 1 video", self.out.getvalue())
 
 
 class TdarrSignIn(unittest.TestCase):

@@ -7,19 +7,25 @@ import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
-import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending } from '../status/AppList';
+import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
 import { mountStatusNote } from '../parts/Notes';
 import { Buttons, mountSheet, mountSheets, PhoneCode, type SheetButton, SignIns } from '../sheets/Sheet';
+import { bgEnd, bgHide, bgProgress, bgStart, waitForBg } from '../job/Background';
+import { inTurn, waitWords } from '../job/queue';
 import { mountCrashNote } from '../status/CrashNote';
 import { type History as UsageHistory, mountUsage, record as recordUsage } from '../status/Usage';
 import { memoryByApp } from '../status/memory';
 import { settingLabel, showSettingsPage } from './settings';
 import { catalog, renderApps, replan, selected } from './choose';
-import { cliProgress, startJob } from '../jobs';
+import { clearJob, cliProgress, startJob } from '../jobs';
 import { navigate } from '../app';
+import { mountOvernight, nightOf } from '../status/Overnight';
+import { setHealthApps, setHealthChecks } from '../status/healthLine';
+import { backupsData, redrawBackups } from './backups';
+import { loadSeen, saveSeen } from '../status/changed';
 import { $, errorText, go, notOnPhone, osName, showError, thisMachine } from '../core';
 
 // Status
@@ -31,6 +37,22 @@ let held: Record<string, stopped.Stop> = {};
 // Each app's share of the watchdog's passing checks this week (0 to 1).
 let weekUp = {};
 let outages: Record<string, health.Outage[]> = {};
+// What happened overnight (status/Overnight.tsx), in the morning: the alerts and whether the watchdog was read.
+let lastEvents: notify.Event[] = [];
+let watched = false;
+let backupsAsked = 0;
+function drawOvernight() {
+  if (!lastStatus) return;
+  const now = Date.now();
+  // The night's database copies come from Backups, read for it only in the
+  // morning, and asked again at most once a minute: a read that fails is
+  // drawn here too (backupsData.watch), and must not ask again at once.
+  if (nightOf(now) && !backupsData.value && now - backupsAsked > 60000) { backupsAsked = now; backupsData.fresh(10 * 60000); }
+  mountOvernight($('overnightLine'), { now, apps: lastStatus.apps, events: lastEvents, outages, copies: backupsData.value?.copies || null, watched });
+}
+backupsData.watch(drawOvernight);
+// Each app as you last saw it on Status, for the dots on what changed since (status/changed.ts).
+let seen = loadSeen();
 
 // The savings trend: a sparkline of the last 90 recorded days and the
 // change since the first of them (the nightly backup records one a day).
@@ -49,6 +71,8 @@ function renderTiles(st: api.Status) {
   });
   const n = trouble.length;
   $('statusCount').textContent = n ? String(n) : '';
+  // Health in one line, at the top of the other screens: these, in their rows' words.
+  setHealthApps(trouble.map((a) => ({ id: a.id, name: a.name, words: stateOf(a, batteryPaused, held)[1] })), () => navigate('status'));
   // The same count on the Dock icon (the Mac), as Mail shows unread mail;
   // a phone has no Dock.
   if (n !== lastAttention && !document.documentElement.classList.contains('companion')) {
@@ -66,14 +90,19 @@ mountShowAll($('statusAllBox'));
 // is the list's own (AppList.tsx), so it never asks the runtime.
 let lastStatus: api.Status | null = null;
 function renderAppList(st: api.Status) {
-  // Grouped by category, as on Choose stacks; what needs a look comes
+  // Grouped by category, as on Choose apps; what needs a look comes
   // first, in a group of its own.
+  // The apps pinned to the top come next, in the order pinned, and in no other group.
   const trouble = (a) => a.health === 'unhealthy' || a.health === 'restarting' || a.state === 'missing';
   const catOf = Object.fromEntries((catalog?.apps || []).map((x) => [x.id, x.category]));
-  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
-    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => !trouble(a) && catOf[a.id] === c.id) })),
-    { label: 'Other', apps: st.apps.filter((a) => !trouble(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
-  appList = { groups, pending, catalog, weekUp, outages, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
+  const byId = Object.fromEntries(st.apps.map((a) => [a.id, a]));
+  const pinned = (st.pinned || []).map((id) => byId[id]).filter((a) => a && !trouble(a));
+  const rest = (a: api.AppStatus) => !trouble(a) && !pinned.includes(a);
+  const groups: { label: string; apps: api.AppStatus[]; alert?: boolean; pinned?: boolean }[] = [{ label: 'Needs a look', apps: st.apps.filter(trouble), alert: true },
+    { label: 'Pinned', apps: pinned, pinned: true },
+    ...(catalog?.categories || []).map((c) => ({ label: c.label, apps: st.apps.filter((a) => rest(a) && catOf[a.id] === c.id) })),
+    { label: 'Other', apps: st.apps.filter((a) => rest(a) && !(catalog?.categories || []).some((c) => c.id === catOf[a.id])) }].filter((g) => g.apps.length);
+  appList = { groups, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains('companion'), os: osName, on: appListActions, memory };
   mountAppList($('statusRows'), appList);
 }
 
@@ -130,6 +159,8 @@ export async function drawRemembered(last: Promise<api.Reading | null>) {
   statusData.stale(); // read when Status shows
 }
 statusData.watch(drawStatus);
+// Backups says why a stale copy is stale from its app's state: drawn again as it changes.
+statusData.watch(() => redrawBackups());
 export function loadStatus() { return statusData.load(); }
 
 // One request for Status and the cards beside it (StatusBoard): Status
@@ -229,7 +260,7 @@ function drawStatus() {
   }
   const st = statusData.value!;
   statusById = Object.fromEntries(st.apps.map((a) => [a.id, a]));
-  if (catalog) renderApps(); // Choose stacks ticks what runs
+  if (catalog) renderApps(); // Choose apps ticks what runs
   batteryPaused = new Set(st.batteryPaused || []);
   held = st.stopped || {};
   renderTiles(st);
@@ -237,6 +268,8 @@ function drawStatus() {
   $('statusRows').closest('table').hidden = false;
   lastStatus = st;
   renderAppList(st);
+  drawOvernight();
+  if (lastWatch) drawWatchdog(); // the apps it doesn't check, as they change
   if (st.checking && !kept) {
     if (st !== boardStatus) answerPages(st);
     else if (boardAnswers) applyAnswers(st, boardAnswers);
@@ -268,14 +301,38 @@ setInterval(() => { if (!$('wallCard').hidden) { wallAt = 0; showWall(); } }, 60
 // The watchdog's last run: every app, public address, database copy,
 // Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
 // scheduled job. Failing checks are the ones it alerted about.
+let lastWatch: health.Summary | null = null;
 function showWatchdog(w: health.Summary | null) {
   const card = $('watchCard');
+  lastWatch = w;
+  // The failing checks that are no app's (an app's own trouble is its row's), for the line on the other screens.
+  const apps = new Set((catalog?.apps || []).map((a) => a.id));
+  setHealthChecks((w?.failing || []).map((f) => f.name).filter((name) => !apps.has(name)));
   if (!w) { card.hidden = true; return; }
   weekUp = w.week || {};
   outages = w.outages || {};
+  watched = true;
+  drawOvernight();
   if (appList && lastStatus) renderAppList(lastStatus); // the week on the rows
   card.hidden = false;
-  mountWatchdog(card, { w, openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these') });
+  drawWatchdog();
+}
+
+/** The apps stopped, not on purpose, that the watchdog doesn't check (one
+ * that stopped by itself is a failing check of its own). */
+const unchecked = (st: api.Status | null, w: health.Summary) => (st?.apps || []).filter((a) =>
+  a.state === 'stopped' && !held[a.id] && !batteryPaused.has(a.id) && !a.waitingFor && !(w.failing || []).some((f) => f.name === a.id)).map((a) => a.name);
+
+function drawWatchdog() {
+  const w = lastWatch;
+  if (!w) return;
+  mountWatchdog($('watchCard'), {
+    w, unchecked: unchecked(lastStatus, w), openSetup: () => { navigate('setup'); }, fix: () => cliFlow('Fix it', 'fix', '', 'Fix these'),
+    // Memory nearly full: Stop on one of the biggest, as its row's Stop.
+    stop: (id) => { const a = lastStatus?.apps.find((x) => x.id === id); if (a) void runAppAction(a, 'stop'); },
+    // Snooze a failing check's alerts, then draw the card again with it.
+    snooze: async (check, hours) => { try { await go().SnoozeCheck(check, hours); showWatchdog(await go().Watchdog()); } catch (e) { showError(e); } },
+  });
 }
 
 // Protection: whether the proxy enforces CrowdSec's bans, and the attacks
@@ -339,6 +396,8 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
   const card = $('alertsCard');
   const openSetup = () => { navigate('setup'); };
   card.hidden = false;
+  lastEvents = events || [];
+  drawOvernight();
   if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
   else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
 }
@@ -349,6 +408,7 @@ const appListActions: AppListActions = {
   openNative: (a) => go().OpenNativeApp(a.id).then(() => { setTimeout(loadStatus, 3000); }, (err) => { showError(err); throw err; }),
   install: (a) => { selected.add(a.id); navigate('choose'); renderApps(); replan(); },
   adopt: (a) => cliFlow(`Move ${a.name} into the homelab`, 'adopt', a.id, 'Move it'),
+  releaseNotes: (id) => go().ReleaseNotes(id),
   open: (url) => go().Open(url),
   page: (a) => pageOpener.open(a.id),
   startAll: (apps, progress) => groupAct(apps, 'start', progress),
@@ -367,11 +427,26 @@ const appListActions: AppListActions = {
     // Backups runs it, in its own panel with its progress.
     backupNow: () => { navigate('backups'); $('backupNow').click(); },
     alerts: async (a, on) => {
-      try { await go().SetAppSetting(a.id, 'alerts', on); } catch (e) { showError(e); }
+      try { await inTurn(`${a.name}'s alerts`, () => go().SetAppSetting(a.id, 'alerts', on)); } catch (e) { showError(e); }
+      await loadStatus();
+    },
+    pin: async (a, on) => {
+      try { await go().SetAppSetting(a.id, 'pinned', on); } catch (e) { showError(e); }
       await loadStatus();
     },
   },
 };
+/**
+ * Leaving Status (for another screen, or closing the app): what it shows now
+ * is what you saw, so the next visit's dots are what changed after it.
+ */
+export function leftStatus() {
+  if (!lastStatus) return;
+  saveSeen(lastStatus.apps);
+  seen = loadSeen();
+  renderAppList(lastStatus);
+}
+
 /** The rows' actions, for the command palette. */
 export const rowActions = appListActions;
 /** The apps the battery saver paused, from the last Status. */
@@ -381,9 +456,10 @@ export const batteryPausedNow = () => batteryPaused;
 // fails stops the rest and says why under its row. A stop with until is
 // for a while: each starts again then.
 async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'restart', progress: (i: number) => void, until?: string) {
-  setAppsBusy(true);
   const done: api.AppStatus[] = [];
-  try {
+  for (const a of apps) setPending(a.id, { action });
+  // One turn for the group (job/queue.ts): each row says what it waits for meanwhile.
+  await inTurn(`${actionTitle[action]} ${apps.length === 1 ? apps[0].name : `${apps.length} apps`}`, async () => {
     for (const [i, a] of apps.entries()) {
       progress(i);
       setPending(a.id, { action });
@@ -393,9 +469,7 @@ async function groupAct(apps: api.AppStatus[], action: 'start' | 'stop' | 'resta
       }
       done.push(a);
     }
-  } finally {
-    setAppsBusy(false);
-  }
+  }, (behind) => { for (const a of apps) setPending(a.id, { action, note: waitWords(behind) }); });
   await loadStatus();
   for (const a of apps) if (!pending[a.id]?.failed) setPending(a.id, null);
   if (action === 'stop' && done.length) offerUndo(done, until);
@@ -417,7 +491,7 @@ function offerUndo(apps: api.AppStatus[], until?: string) {
 function dropUndo() { undoing = null; mountUndoNote($('undoNote'), null); }
 /** Undoes the last stop while its note shows (Undo, or ⌘Z); false when there is none. */
 export function undoNow(): boolean {
-  if (!undoing || appsBusy) return false;
+  if (!undoing) return false;
   const { apps } = undoing;
   dropUndo();
   groupAct(apps, 'start', () => {});
@@ -434,15 +508,11 @@ export const appsBusyNow = () => appsBusy;
 const rowWatchers: (() => void)[] = [];
 /** Calls fn when a row's action starts, ends, or fails. */
 export function watchRows(fn: () => void) { rowWatchers.push(fn); }
-// The list as last shown, and whether an app's command runs (every row's
-// buttons wait meanwhile).
+// The list as last shown. An app's command no longer holds every row's
+// buttons: another row's waits its turn (job/queue.ts), and a row's own
+// buttons wait while its action is pending.
 let appList: AppListProps | null = null;
-let appsBusy = false;
-function setAppsBusy(busy: boolean) {
-  appsBusy = busy;
-  if (appList) mountAppList($('statusRows'), (appList = { ...appList, busy }));
-  rowWatchers.forEach((fn) => fn());
-}
+const appsBusy = false;
 // A click answers at once: the row says what it is doing ("Starting…")
 // until Status confirms it, or goes back as it was and says why it failed.
 const pending: Record<string, Pending> = {};
@@ -454,6 +524,7 @@ function setPending(id: string, p: Pending | null) {
 
 // Open on a phone: the app's address as a QR code for the phone's camera.
 async function showQR(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), url = 'https://' + a.address;
   if (cliStop) cliStop();
   let img;
@@ -467,11 +538,26 @@ async function showQR(a) {
 // Closes the command sheet, its log ready for the next command.
 function closeCli() { $('cliPanel').hidden = true; $('cliLog').hidden = false; }
 // The command sheet's buttons, in place of what it showed.
-const cliButtons = (buttons: SheetButton[]) => mountSheet($('cliActions'), vnode(Buttons, { buttons }));
+// A new set is a new row (its key): a button that replaced a running one is
+// not taken for it. A row that held the focus hands it to the new row's
+// first button, so it never falls out of the sheet onto the page.
+function cliButtons(buttons: SheetButton[]) {
+  const row = $('cliActions'), had = row.contains(document.activeElement);
+  mountSheet(row, vnode(Buttons, { buttons, key: buttons.map((b) => b.label).join('|') }));
+  if (had && !row.contains(document.activeElement)) (row.querySelector('button') || $('cliPanel')).focus();
+}
+// A command running in the sheet can be hidden: it carries on, its bar in
+// the sidebar (job/Background.tsx), and the sheet comes back from there.
+const hideButton: SheetButton = { label: 'Hide', title: 'It carries on, its bar in the sidebar', onClick: () => { bgHide(); $('cliPanel').hidden = true; } };
+const runInSheet = (title: string) => bgStart(title, () => { $('cliPanel').hidden = false; });
+// While one runs, nothing else takes the sheet (its log and bar are the
+// running one's): it says to wait instead.
+const sheetBusy = waitForBg;
 
 // Sign in: the user name the homelab set up the app with, and the password
 // copied (it never reaches the page), from .env.
 async function showSignIn(a, keys) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   let list = [];
@@ -505,27 +591,35 @@ const lastLog: Record<string, string> = {}; // each app's last command's output,
 const downloading = /\b(Pulling|Downloading|Download complete|Extracting|Pull complete)\b/;
 async function runAppAction(a, action, until?: string) {
   if (quiet.has(action)) return runQuietly(a, action, until);
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = `${actionTitle[action]} ${a.name}…`;
   log.textContent = '';
-  startJob('cli');
-  cliButtons([]);
+  clearJob('cli');
+  const title = `${actionTitle[action]} ${a.name}`;
+  runInSheet(title);
+  cliButtons([hideButton]);
   setPending(a.id, { action });
-  setAppsBusy(true);
   panel.scrollIntoView({ block: 'nearest' });
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let failed = '';
-  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); showError(e); }
+  // In its turn (job/queue.ts): the bar and log are its own only then.
+  await inTurn(title, async () => {
+    setPending(a.id, { action });
+    startJob('cli');
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); showError(e); } finally {
+      if (typeof off === 'function') off();
+      cliProgress(failed ? 'failed' : 'done');
+      bgEnd(!!failed);
+    }
+  }, (behind) => { setPending(a.id, { action, note: waitWords(behind) }); log.textContent = waitWords(behind) + '…\n'; bgProgress(0, waitWords(behind)); });
   // A failure puts the row back at once, saying why; a success waits for
   // the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed });
-  setAppsBusy(false);
   if (!failed && action === 'stop') offerUndo([a], until);
-  if (typeof off === 'function') off();
-  cliProgress(failed ? 'failed' : 'done');
   $('cliTitle').textContent = failed ? `${actionTitle[action]} ${a.name} failed` : `${a.name}: ${action} done`;
   cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
   await loadStatus();
@@ -535,20 +629,23 @@ async function runAppAction(a, action, until?: string) {
 async function runQuietly(a, action, until?: string) {
   let log = `$ homelab ${action} ${a.id}${until ? ' --until ' + until : ''}\n`;
   setPending(a.id, { action });
-  setAppsBusy(true);
-  const off = window.runtime.EventsOn('cli:log', (line: string) => {
-    log += line + '\n';
-    // An image coming down before the app can start: said in place of "Starting…".
-    if (downloading.test(line) && !pending[a.id]?.note) setPending(a.id, { action, note: 'Downloading the app…' });
-  });
   let failed = '';
-  try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); }
-  if (typeof off === 'function') off();
+  // In its turn (job/queue.ts): the row says what it waits for meanwhile.
+  await inTurn(`${actionTitle[action]} ${a.name}`, async () => {
+    setPending(a.id, { action });
+    const off = window.runtime.EventsOn('cli:log', (line: string) => {
+      log += line + '\n';
+      // An image coming down before the app can start: said in place of "Starting…".
+      if (downloading.test(line) && !pending[a.id]?.note) setPending(a.id, { action, note: 'Downloading the app…' });
+    });
+    try { await (until ? go().StopUntil(a.id, until) : go().AppAction(a.id, action)); } catch (e) { failed = errorText(e); } finally {
+      if (typeof off === 'function') off();
+    }
+  }, (behind) => setPending(a.id, { action, note: waitWords(behind) }));
   lastLog[a.id] = log;
   // A failure puts the row back at once, saying why, with Details; a
   // success waits for the runtime to confirm it.
   if (failed) setPending(a.id, { action, failed, log: true });
-  setAppsBusy(false);
   if (!failed && action === 'stop') offerUndo([a], until);
   await loadStatus();
   if (!failed) setPending(a.id, null);
@@ -556,6 +653,7 @@ async function runQuietly(a, action, until?: string) {
 
 // Details: the last command's output for an app, in the command sheet.
 function showDetails(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -569,6 +667,7 @@ function showDetails(a) {
 // Update: what it brings first (its newer releases' notes), then Update
 // runs it in the same panel.
 function showUpdate(a) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel');
   if (cliStop) cliStop();
   panel.hidden = false;
@@ -594,37 +693,61 @@ mountSheets($('sheets'), () => { if (missed) refreshStatus(); });
 // A homelab command with a preview: show its plan, then run it on confirm.
 let cliStop = null; // the open flow's log listener
 export async function cliFlow(title, action, target, confirmLabel) {
+  if (sheetBusy()) return;
   const panel = $('cliPanel'), log = $('cliLog');
   log.hidden = false;
   if (cliStop) cliStop();
   panel.hidden = false;
   $('cliTitle').textContent = title;
   log.textContent = '';
-  startJob('cli');
-  cliButtons([]);
-  // The CLI's "run again with --apply" is the confirm button here.
-  const off = window.runtime.EventsOn('cli:log', (line) => {
-    if (/^Preview only: nothing was changed/.test(line.trim())) return;
-    log.textContent += line + '\n';
-    log.scrollTop = log.scrollHeight;
-  });
-  const stop = () => { if (typeof off === 'function') off(); if (cliStop === stop) cliStop = null; };
+  clearJob('cli');
+  // Its preview and its run each take their turn (job/queue.ts): the log
+  // is the command's own only then. Cancel while it waits drops it.
+  let off: any = null, cancelled = false;
+  const listen = () => {
+    // The CLI's "run again with --apply" is the confirm button here.
+    off = window.runtime.EventsOn('cli:log', (line) => {
+      if (/^Preview only: nothing was changed/.test(line.trim())) return;
+      log.textContent += line + '\n';
+      log.scrollTop = log.scrollHeight;
+    });
+  };
+  const unlisten = () => { if (typeof off === 'function') off(); off = null; };
+  const stop = () => { cancelled = true; unlisten(); if (cliStop === stop) cliStop = null; };
   cliStop = stop;
+  cliButtons([{ label: 'Cancel', onClick: () => { stop(); panel.hidden = true; } }]);
   try {
-    await go().Homelab(action, target, false);
+    await inTurn(title, async () => {
+      if (cancelled) return;
+      log.textContent = '';
+      startJob('cli');
+      listen();
+      try { await go().Homelab(action, target, false); } finally { unlisten(); }
+    }, (behind) => { log.textContent = waitWords(behind) + ', then this shows what it would do…\n'; });
   } catch (e) {
     showError(e);
     stop();
     return;
   }
+  if (cancelled) return;
   cliButtons([
     { label: confirmLabel, primary: true, onClick: async () => {
       log.textContent += '\n';
-      // Running, it can no longer be cancelled: no buttons until it ends.
-      cliButtons([]);
+      // Running, it can no longer be cancelled, but it can be hidden: it carries on.
+      runInSheet(title);
+      cliButtons([hideButton]);
       let failed = false;
-      try { await go().Homelab(action, target, true); } catch (err) { failed = true; showError(err); }
-      cliProgress(failed ? 'failed' : 'done');
+      try {
+        await inTurn(title, async () => {
+          startJob('cli');
+          listen();
+          try { await go().Homelab(action, target, true); } catch (err) { failed = true; throw err; } finally {
+            unlisten();
+            cliProgress(failed ? 'failed' : 'done');
+            bgEnd(failed);
+          }
+        }, (behind) => { log.textContent += waitWords(behind) + '…\n'; bgProgress(0, waitWords(behind)); });
+      } catch (err) { showError(err); }
       stop();
       cliButtons([{ label: 'Close', onClick: () => { panel.hidden = true; } }]);
       loadStatus();

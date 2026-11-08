@@ -16,6 +16,7 @@ const StaleAfter = 26 * time.Hour
 type Source struct {
 	ID     string // the app, or the volume
 	Name   string // what a person calls it
+	App    string // the app it is of (a volume's app)
 	Volume bool
 	// WaitingFor is the drive its app waits for, stopped until the drive
 	// is plugged in ("/Volumes/Hobbies"): the backup cannot copy it then.
@@ -24,17 +25,32 @@ type Source struct {
 
 // Copy is one source's newest copy in recovery-staging.
 type Copy struct {
-	ID     string    `json:"id"`
-	Name   string    `json:"name"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// App is the app it is of: its state says why a copy is stale.
+	App    string    `json:"app,omitempty"`
 	Volume bool      `json:"volume,omitempty"`
 	Newest time.Time `json:"newest"` // zero when there is none yet
 	Size   int64     `json:"size"`
 	Count  int       `json:"count"`
-	State  string    `json:"state"` // fresh, stale, none, or paused
+	// Before is the size of the copy before the newest (the night before's),
+	// 0 when there is only one; Shrank says the newest is less than half of
+	// it, from at least ShrinkFrom: an app that may have lost its data.
+	Before int64  `json:"before,omitempty"`
+	Shrank bool   `json:"shrank,omitempty"`
+	State  string `json:"state"` // fresh, stale, none, or paused
 	// WaitingFor is the drive its app waits for; its copy is then paused,
 	// not stale.
 	WaitingFor string `json:"waitingFor,omitempty"`
 }
+
+// ShrinkFrom is the smallest copy whose halving is worth a warning: a few
+// kilobytes of a small app's database come and go.
+const ShrinkFrom = 1 << 20
+
+// Shrank says a copy of size is less than half of the one before it, when
+// that one was at least ShrinkFrom.
+func Shrank(size, before int64) bool { return before >= ShrinkFrom && size*2 < before }
 
 // Overview is the state of the backups, read from the files the nightly
 // job leaves in recovery-staging and from the restore-test log.
@@ -46,6 +62,7 @@ type Overview struct {
 	Copies          []Copy     `json:"copies"`
 	Stale           int        `json:"stale"`
 	Paused          int        `json:"paused"` // not fresh, while their apps wait for a drive
+	Shrank          int        `json:"shrank"` // copies less than half the night before's
 	RestoreTest     RestoreLog `json:"restoreTest"`
 	RestoreDue      bool       `json:"restoreDue"` // none in the last 30 days
 	StaleAfterHours int        `json:"staleAfterHours"`
@@ -93,21 +110,29 @@ func Read(root string, sources []Source, env map[string]string, now time.Time) O
 		o.LastRun = o.EnvCopied
 	}
 	for _, s := range sources {
-		c := Copy{ID: s.ID, Name: s.Name, Volume: s.Volume, State: "none", WaitingFor: s.WaitingFor}
+		c := Copy{ID: s.ID, Name: s.Name, App: s.App, Volume: s.Volume, State: "none", WaitingFor: s.WaitingFor}
 		dir := filepath.Join(staging, "databases", s.ID)
 		if s.Volume {
 			dir = filepath.Join(staging, "volumes", s.ID)
 		}
 		files, _ := filepath.Glob(filepath.Join(dir, s.ID+"-*"))
+		var before time.Time
 		for _, f := range files {
 			fi, err := os.Stat(f)
 			if err != nil || fi.IsDir() || strings.HasSuffix(f, ".partial") {
 				continue
 			}
 			c.Count++
-			if fi.ModTime().After(c.Newest) {
-				c.Newest, c.Size = fi.ModTime(), fi.Size()
+			switch at := fi.ModTime(); {
+			case at.After(c.Newest):
+				before, c.Before = c.Newest, c.Size
+				c.Newest, c.Size = at, fi.Size()
+			case at.After(before):
+				before, c.Before = at, fi.Size()
 			}
+		}
+		if c.Shrank = Shrank(c.Size, c.Before); c.Shrank {
+			o.Shrank++
 		}
 		if !c.Newest.IsZero() {
 			c.State = "fresh"

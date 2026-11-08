@@ -1,12 +1,16 @@
 package stopped
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 func TestParseUntil(t *testing.T) {
@@ -83,5 +87,150 @@ func TestRecord(t *testing.T) {
 	os.WriteFile(path, []byte("not json"), 0o644)
 	if r := Load(path); r == nil || len(r) != 0 {
 		t.Fatalf("a bad file: %v", r)
+	}
+}
+
+// Save never writes the record in place: another process reading it at that
+// moment (the watchdog, the battery saver) must see the old record or the
+// new one whole, never a half-written file it reads as "nothing stopped",
+// which would start every app stopped on purpose. A link to the old file
+// still holds the old record after a save, and the record is yours alone.
+func TestSaveReplacesTheRecordWhole(t *testing.T) {
+	path := Path(t.TempDir())
+	now := time.Date(2026, 11, 5, 9, 0, 0, 0, time.UTC)
+	if err := (Record{"sonarr": {Since: now}}).Save(path); err != nil {
+		t.Fatal(err)
+	}
+	old := path + ".old"
+	if err := os.Link(path, old); err != nil {
+		t.Skipf("no hard links here: %v", err)
+	}
+	if err := (Record{"sonarr": {Since: now}, "radarr": {Since: now}}).Save(path); err != nil {
+		t.Fatal(err)
+	}
+	if got := Load(old).IDs(); !slices.Equal(got, []string{"sonarr"}) {
+		t.Errorf("the record was written in place: the old file now holds %v", got)
+	}
+	if got := Load(path).IDs(); !slices.Equal(got, []string{"radarr", "sonarr"}) {
+		t.Errorf("saved %v", got)
+	}
+	if fi, err := os.Stat(path); err != nil || (runtimeHasModes && fi.Mode().Perm() != 0o600) {
+		t.Errorf("the record's mode: %v %v, want 0600", fi.Mode().Perm(), err)
+	}
+	left, _ := filepath.Glob(filepath.Join(filepath.Dir(path), "*.tmp*"))
+	if len(left) > 0 {
+		t.Errorf("left behind: %v", left)
+	}
+}
+
+// Writers at the same moment each keep their change: Update holds the
+// record's lock from reading it to saving it.
+func TestUpdateLosesNoChange(t *testing.T) {
+	path := Path(t.TempDir())
+	var wg sync.WaitGroup
+	errs := make(chan error, 40)
+	for i := range 40 {
+		wg.Go(func() {
+			errs <- Update(path, func(r Record) bool {
+				r[fmt.Sprintf("app%02d", i)] = Stop{Since: time.Now()}
+				return true
+			})
+		})
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := len(Load(path)); got != 40 {
+		t.Errorf("%d of 40 stops kept", got)
+	}
+	if _, err := os.Stat(path + ".lock"); !os.IsNotExist(err) {
+		t.Errorf("the lock was left: %v", err)
+	}
+}
+
+// A lock left by a writer that died is taken over once it is stale.
+func TestUpdateTakesOverAStaleLock(t *testing.T) {
+	path := Path(t.TempDir())
+	_ = os.MkdirAll(filepath.Dir(path), 0o755)
+	if err := os.WriteFile(path+".lock", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old := time.Now().Add(-time.Hour)
+	_ = os.Chtimes(path+".lock", old, old)
+	if err := Update(path, func(r Record) bool { r["sonarr"] = Stop{Since: time.Now()}; return true }); err != nil {
+		t.Fatal(err)
+	}
+	if !Load(path).Has("sonarr") {
+		t.Error("not saved")
+	}
+}
+
+// A lock another writer holds now makes Update wait, then say so rather
+// than write without it; a change that changes nothing writes nothing.
+func TestUpdateWaitsForAnotherWriter(t *testing.T) {
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
+	path := Path(t.TempDir())
+	if err := Update(path, func(Record) bool { return false }); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("a change of nothing wrote the record: %v", err)
+	}
+	if err := os.WriteFile(path+".lock", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	called := false
+	err := Update(path, func(Record) bool { called = true; return true })
+	if err == nil || !strings.Contains(err.Error(), "try again") || called {
+		t.Errorf("with the lock held: %v, changed %v", err, called)
+	}
+}
+
+// Where the record cannot be written, Save and Update say why and leave no
+// file of their own behind.
+func TestSaveAndUpdateFailPlainly(t *testing.T) {
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
+	dir := t.TempDir()
+	file := filepath.Join(dir, "file")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// Its folder is a file.
+	under := filepath.Join(file, "data", "stopped.json")
+	if err := (Record{"sonarr": {}}).Save(under); err == nil {
+		t.Error("saved under a file")
+	}
+	if err := Update(under, func(Record) bool { return true }); err == nil {
+		t.Error("updated under a file")
+	}
+	// The record's place is a folder: the rename fails, the new file goes.
+	path := filepath.Join(dir, "data", "stopped.json")
+	if err := os.MkdirAll(filepath.Join(path, "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := (Record{"sonarr": {}}).Save(path); err == nil {
+		t.Error("saved over a folder")
+	}
+	if left, _ := filepath.Glob(path + ".tmp*"); len(left) > 0 {
+		t.Errorf("left behind: %v", left)
+	}
+	// Nothing to keep, but the record's place cannot be removed.
+	if err := (Record{}).Save(path); err == nil {
+		t.Error("removed a folder that is not empty")
+	}
+	// The lock's place is a folder.
+	if err := os.MkdirAll(filepath.Join(dir, "other", "stopped.json.lock", "x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := Update(filepath.Join(dir, "other", "stopped.json"), func(Record) bool { return true }); err == nil {
+		t.Error("updated without its lock")
 	}
 }

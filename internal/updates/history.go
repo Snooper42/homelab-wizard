@@ -2,12 +2,16 @@ package updates
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Keep is how long the image an app ran before an update stays, ready to
@@ -61,13 +65,61 @@ func LoadHistory(path string) History {
 	return h
 }
 
-// Save writes the history.
+// Save writes the history whole (Status reads it at any moment), only
+// this account's to read. A run that read it a while ago saves with
+// SaveChanges instead.
 func (h History) Save(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
 	data, _ := json.MarshalIndent(h, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return lockedfile.Write(path, append(data, '\n'), 0o600)
+}
+
+// Clone is a copy of the history whose records can change on their own.
+func (h History) Clone() History {
+	c := History{Apps: make(map[string]*Record, len(h.Apps))}
+	for id, r := range h.Apps {
+		if r != nil {
+			cp := *r
+			c.Apps[id] = &cp
+		}
+	}
+	return c
+}
+
+// SaveChanges saves what changed from before to after (a record changed,
+// added, or dropped) onto the history as it is now, under the lock beside
+// it. The watchdog's look at updates, homelab update, and homelab rollback
+// each read the history, work with Docker for a while, and save it; this
+// way none of them saves over what another did to another app meanwhile.
+func SaveChanges(path string, before, after History) error {
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		cur := History{}
+		_ = json.Unmarshal(old, &cur)
+		if cur.Apps == nil {
+			cur.Apps = map[string]*Record{}
+		}
+		changed := false
+		for _, id := range slices.Concat(slices.Collect(maps.Keys(before.Apps)), slices.Collect(maps.Keys(after.Apps))) {
+			was, now := before.Apps[id], after.Apps[id]
+			if reflect.DeepEqual(was, now) {
+				continue
+			}
+			changed = true
+			if now == nil {
+				delete(cur.Apps, id)
+			} else {
+				cp := *now
+				cur.Apps[id] = &cp
+			}
+		}
+		if !changed && old != nil {
+			return nil, false
+		}
+		data, err := json.MarshalIndent(cur, "", "  ")
+		return append(data, '\n'), err == nil
+	})
 }
 
 // RollbackRef is the name the image an app ran before its last update is

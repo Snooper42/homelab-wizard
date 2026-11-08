@@ -10,6 +10,7 @@ import { catalog } from '../screens/choose';
 import { financesData, toggleHideAmounts } from '../screens/finances';
 import { navigate, reloadScreen } from '../app';
 import { $, isMac, mod, onPhone } from '../core';
+import { openShortcuts } from './Shortcuts';
 
 export interface Command {
   id: string;
@@ -47,7 +48,7 @@ export function match(list: Command[], query: string): Command[] {
 }
 
 const screenList: [string, string, string, string][] = [
-  ['choose', 'Choose stacks', '1', 'install add apps'],
+  ['choose', 'Choose apps', '1', 'install add apps'],
   ['status', 'Status', '2', 'apps running'],
   ['backups', 'Backups', '3', 'backup restore'],
   ['setup', 'Setup', '4', ''],
@@ -72,6 +73,8 @@ export function commands(): Command[] {
   if (!$('fixIt').hidden) add({ id: 'fixit', label: 'Fix it', also: 'repair what is wrong', run: onStatus(() => $('fixIt').click()) });
   const fin = financesData.value;
   if (fin && !fin.readOnly) add({ id: 'hide', label: fin.plan.hideAmounts ? 'Show amounts' : 'Hide amounts', hint: isMac ? '⌘⇧H' : 'Ctrl+Shift+H', also: 'money privacy blur', run: toggleHideAmounts });
+  // Opened once the palette has closed and put the focus back, where the sheet returns it.
+  if (!phone) add({ id: 'shortcuts', label: 'Keyboard shortcuts', hint: '?', also: 'keys help', run: () => { requestAnimationFrame(() => requestAnimationFrame(() => openShortcuts())); } });
   for (const [id, label, key, also] of screenList) {
     if (phone && (id === 'setup' || id === 'choose')) continue;
     add({ id: 'screen:' + id, label, hint: mod + key, also: 'screen go ' + also, run: () => navigate(id) });

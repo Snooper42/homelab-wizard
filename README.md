@@ -59,7 +59,7 @@ You need a computer that stays on (a Mac, a Windows 10 or 11 PC, a Linux machine
 
    Both download the newest build from [Releases](https://github.com/Snooper42/homelab-wizard/releases/latest), check it against GitHub's SHA-256 checksum, install it, and open it. The line is there because the builds aren't signed yet: a browser download gets blocked, a download from Terminal or PowerShell doesn't. Both scripts are short enough to read first ([install.sh](install.sh), [install.ps1](install.ps1)).
 2. **Open it and choose Set it up for me.** It makes the homelab folder (`~/Homelab`), with a strong password for every app, and starts the essentials (updates, backups, alerts).
-3. **Pick what you want** on Choose stacks (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install**.
+3. **Pick what you want** on Choose apps (Photos, Passwords, Movies and TV, Music, Files, or anything from the full list) and click **Install**.
 4. **Finish on Setup.** **Do the N I can do for you** runs every step that is ready; the rest say in one line what they give you. Signing in to Tailscale and installing it on your phones is the part only you can do.
 
 You are done when Setup leaves the sidebar (it comes back by itself if a step comes undone) and every app on **Status** has a green dot. Then put Tailscale and the apps' own phone apps on each phone ([Getting Started › Set up each person's phone](docs/Getting%20Started.md#4-set-up-each-persons-phone)).
@@ -117,7 +117,7 @@ Each in the app, then the same from a terminal in the homelab folder (`homelab.c
 
 | To… | In the app | In a terminal | More |
 |---|---|---|---|
-| Add an app | Choose stacks › tick it › **Install** | `./homelab install <app>` | [Services](docs/Services.md) |
+| Add an app | Choose apps › tick it › **Install** | `./homelab install <app>` | [Services](docs/Services.md) |
 | Open an app on a phone | Status › the app's page › **Open on a phone** (a QR code) | `./homelab status` lists the addresses | [Inventory](docs/Inventory.md) |
 | Put right what is down | Status › **Fix it** (the plan first) | `./homelab fix` | [Troubleshooting](docs/Troubleshooting.md) |
 | Read an app's log, in plain words | Status › the app's page › its log › **Explain this** | `./homelab logs <app> --explain` | [Monitoring](docs/Monitoring.md) |
@@ -194,7 +194,7 @@ It runs a real household on a Mac. Windows, Linux, and SteamOS are built, tested
 
 ## What runs
 
-Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are a tick in Choose stacks (or `./homelab install <app>`) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.
+Over 70 apps in nine categories: the baseline ones start with the homelab, the rest are a tick in Choose apps (or `./homelab install <app>`) away. Each name links to the app's own page: ports, data folders, everyday use, useful commands, its API, and how it is backed up and fixed.
 
 <details>
 <summary><strong>Every app, by category: what it does, how it starts, its address, and what it replaces</strong></summary>
@@ -329,9 +329,9 @@ Over 70 apps in nine categories: the baseline ones start with the homelab, the r
 
 <table>
 <tr>
-<td width="50%"><strong>Choose stacks</strong><br>Pick a starter or a bundle, or tick apps; the plan says in one line what it installs.<br><br><picture>
+<td width="50%"><strong>Choose apps</strong><br>Pick a starter or a bundle, or tick apps; the plan says in one line what it installs.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-choose-dark.png">
-  <img alt="Choose stacks: apps by category with what each replaces, and the install plan" src="docs/images/app-choose.png">
+  <img alt="Choose apps: apps by category with what each replaces, and the install plan" src="docs/images/app-choose.png">
 </picture></td>
 <td width="50%"><strong>Setup</strong><br>Only while something needs you: how this machine looks after the homelab, then <strong>Finish setting up</strong>, checked live. <strong>Do the N I can do for you</strong> runs every ready step.<br><br><picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/app-setup-dark.png">
@@ -443,7 +443,7 @@ See [Architecture](docs/Architecture.md) and [Decisions](docs/Decisions.md).
 <details>
 <summary><strong>Adding your own app, or one to the catalog</strong></summary>
 
-The quick way, for any container image: **Add your own app** at the bottom of the app's Choose stacks screen, or
+The quick way, for any container image: **Add your own app** at the bottom of the app's Choose apps screen, or
 
 ```bash
 ./homelab custom add wiki --image ghcr.io/requarks/wiki:2 --port 3000 --volume /wiki/data --install

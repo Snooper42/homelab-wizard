@@ -15,13 +15,15 @@
   --shade-025:rgba(0,0,0,.025); --shade-04:rgba(0,0,0,.04); --shade-05:rgba(0,0,0,.05); --shade-055:rgba(0,0,0,.055); --shade-06:rgba(0,0,0,.06); --shade-07:rgba(0,0,0,.07); --shade-08:rgba(0,0,0,.08); --shade-09:rgba(0,0,0,.09); --shade-1:rgba(0,0,0,.1); --shade-12:rgba(0,0,0,.12); --shade-14:rgba(0,0,0,.14); --shade-18:rgba(0,0,0,.18); --shade-2:rgba(0,0,0,.2); --shade-25:rgba(0,0,0,.25); --shade-28:rgba(0,0,0,.28); --shade-3:rgba(0,0,0,.3); --shade-45:rgba(0,0,0,.45); --shade-5:rgba(0,0,0,.5);
   --glow-04:rgba(255,255,255,.04); --glow-06:rgba(255,255,255,.06); --glow-07:rgba(255,255,255,.07); --glow-08:rgba(255,255,255,.08); --glow-1:rgba(255,255,255,.1); --glow-12:rgba(255,255,255,.12); --glow-14:rgba(255,255,255,.14); --glow-16:rgba(255,255,255,.16); --glow-18:rgba(255,255,255,.18); --glow-22:rgba(255,255,255,.22); --glow-28:rgba(255,255,255,.28); --glow-3:rgba(255,255,255,.3); --glow-35:rgba(255,255,255,.35); --glow-45:rgba(255,255,255,.45);
   --amber:#f59e0b; --amber-ink:#1f1300; --blue:#2563eb; --bright-blue:#3b82f6; --cyan:#06b6d4; --green:#22c55e; --mac-desktop-dark:#2a2a2e; --mac-desktop-light:#e6e6ea; --mac-grey:#8e8e93; --nav-line:#1b263d; --navy-shade-14:rgba(15,23,42,.14); --pink:#ec4899; --red:#ef4444; --sky:#38bdf8; --slate:#94a3b8; --violet:#8b5cf6; --white:#fff; --yellow:#eab308;
-  /* The starters' tints on Choose stacks, as the system colours of an app's icon in System Settings. */
+  /* The starters' tints on Choose apps, as the system colours of an app's icon in System Settings. */
   --tint-orange:#ff9500; --tint-green:#34c759; --tint-red:#ff3b30; --tint-pink:#ff2d55; --tint-blue:#007aff;
   /* Each person on Finances, in their colour: white reads on all four (4.5:1). */
   --person-0:#0f766e; --person-1:#6d28d9; --person-2:#b45309; --person-3:#be185d;
   /* Kinds of assets and debts on Finances › Net worth, in a fixed order (a kind keeps its colour); checked for
      colour-blind separation on the light and dark surfaces, each named beside its amount. */
   --cat-1:#2a78d6; --cat-2:#eb6834; --cat-3:#1baf7a; --cat-4:#eda100; --cat-5:#e87ba4; --cat-6:#008300; --cat-7:#6250d6; --cat-8:#e34948;
+  /* A category's icon in its colour (-ink) on its tint (-soft): each pair 4.5:1 or more (lint.mjs checks). */
+  --cat-1-soft:#e1ecf9; --cat-1-ink:#2466b6; --cat-2-soft:#fceae3; --cat-2-ink:#aa4b26; --cat-3-soft:#dff4ec; --cat-3-ink:#137954; --cat-4-soft:#fcf2db; --cat-4-ink:#916300; --cat-5-soft:#fcedf2; --cat-5-ink:#9a526d; --cat-6-soft:#dbeedb; --cat-6-ink:#007900; --cat-7-soft:#e9e6f9; --cat-7-ink:#6250d6; --cat-8-soft:#fbe6e5; --cat-8-ink:#b93c3b;
   /* Finances' own look (finances/ui, the fx- rules): its accent, money in, out, and kept, the chart's
      card, and its scale. Text in --fin-in, --fin-out, and --fin-accent-ink reads at 4.5:1 on --panel and on its own -soft. */
   --fin-accent:#6d4ae0; --fin-accent-ink:#5b3fd6; --fin-accent-soft:#efebfc; --fin-accent-text:#fff;
@@ -44,6 +46,7 @@
     --nav:#070c18; --nav-text:#cbd5e1; --nav-muted:#7c8aa5; --nav-active:#14203a;
     --shadow:0 1px 2px rgba(0,0,0,.3);
     --cat-1:#3987e5; --cat-2:#d95926; --cat-3:#199e70; --cat-4:#c98500; --cat-5:#d55181; --cat-6:#008300; --cat-7:#9085e9; --cat-8:#e66767;
+    --cat-1-soft:#1b3255; --cat-1-ink:#64a1eb; --cat-2-soft:#3e282b; --cat-2-ink:#e17d55; --cat-3-soft:#14373b; --cat-3-ink:#43b08a; --cat-4-soft:#3a3222; --cat-4-ink:#cf931d; --cat-5-soft:#3d263f; --cat-5-ink:#de779c; --cat-6-soft:#0e3122; --cat-6-ink:#4ea94e; --cat-7-soft:#2e3256; --cat-7-ink:#9d93ec; --cat-8-soft:#412b39; --cat-8-ink:#ea7e7e;
     --fin-accent:#9c86f5; --fin-accent-ink:#b8a9ff; --fin-accent-soft:#251f3d; --fin-accent-text:#140c33;
     --fin-in:#5bd69c; --fin-in-soft:#12291e; --fin-out:#ff8a73; --fin-out-soft:#2f1a15;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
@@ -94,7 +97,7 @@ h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(-
 .btn, button.small { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); line-height:1.3; white-space:nowrap; }
 button.small { padding:4px 10px; font-size:13px; }
 /* Settings › Phones' Finances pick, beside a phone's buttons and alike. */
-select.finpick { padding:4px 8px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; line-height:1.3; }
+select.finpick, select.untilpick, select.snoozepick { padding:4px 8px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; font-size:13px; line-height:1.3; }
 .btn:hover, button.small:hover { border-color:var(--accent); color:var(--link); }
 .btn:disabled, button.small:disabled { opacity:.5; cursor:default; border-color:var(--line-strong); color:var(--text); }
 button.primary { width:100%; margin-top:14px; padding:10px; border:0; border-radius:9px; background:var(--primary); color:var(--primary-text); font-weight:600; }
@@ -111,6 +114,10 @@ button.primary.small { width:auto; margin:0; padding:6px 14px; font-size:13px; }
 .badge.ok { color:var(--ok); background:var(--ok-soft); border-color:transparent; } .badge.warn { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
 .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; background:var(--muted); vertical-align:1px; }
 .dot.ok { background:var(--ok); box-shadow:0 0 0 3px var(--ok-soft); } .dot.warn { background:var(--warn); box-shadow:0 0 0 3px var(--warn-soft); } .dot.bad { background:var(--bad); box-shadow:0 0 0 3px var(--bad-soft); }
+/* Shapes as well as colours: a state reads without telling green from red. Up is a circle, needs a look a triangle,
+   down a cross (and in forced colours, where every dot is one colour, the shape is all that tells them apart). */
+.dot.warn { border-radius:0; clip-path:polygon(50% 0, 100% 100%, 0 100%); }
+.dot.bad { border-radius:0; clip-path:polygon(20% 0, 50% 30%, 80% 0, 100% 20%, 70% 50%, 100% 80%, 80% 100%, 50% 70%, 20% 100%, 0 80%, 30% 50%, 0 20%); }
 .saving { display:inline-block; padding:4px 10px; border-radius:8px; background:var(--ok-soft); color:var(--ok); font-weight:500; }
 
 /* Status */
@@ -133,7 +140,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .rowActions { white-space:nowrap; text-align:right; width:1%; }
 .rowActions .iconbtn, .rowActions button.small { margin-left:2px; }
 
-/* Choose stacks */
+/* Choose apps */
 .cols { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start; }
 /* It stays in view while the list scrolls, and scrolls itself when a long
    plan is taller than the window, so Install is always in reach. */
@@ -171,7 +178,7 @@ td.state .rowerr { display:block; white-space:normal; font-size:12px; color:var(
 .app input { margin-top:4px; accent-color:var(--accent); width:15px; height:15px; }
 .app .grow { flex:1; min-width:0; }
 .app .desc { color:var(--muted); font-size:13px; }
-.app .sysnote { font-size:12.5px; margin-top:2px; }
+.app :is(.sysnote, .samejob, .goeswith) { font-size:12.5px; margin-top:2px; }
 #trayNote { font-size:12.5px; margin-top:4px; }
 .app .replaces { font-size:12px; color:var(--ok); margin-top:2px; }
 .app .links-inline { display:flex; gap:14px; font-size:13px; padding-top:2px; white-space:nowrap; }
@@ -245,7 +252,7 @@ dl { margin:0; }
 .alertlist { list-style:none; margin:0; padding:0; }
 .alertlist li { display:flex; align-items:baseline; gap:10px; padding:8px 0; border-top:1px solid var(--line); }
 .alertlist li:first-child { border-top:0; }
-.alertlist .grow { flex:1; min-width:0; }
+.alertlist .grow { flex:1; min-width:0; overflow-wrap:anywhere; }
 .alertlist .grow .muted { font-size:13px; overflow-wrap:anywhere; }
 .alertlist .when { font-size:12px; white-space:nowrap; }
 .usage .bar { height:6px; border-radius:3px; background:var(--line); margin-top:6px; overflow:hidden; }
@@ -269,6 +276,12 @@ dl { margin:0; }
 .usage .spark { width:72px; height:20px; margin:0 6px 0 14px; color:var(--link); align-self:center; }
 .tile .sub .trend { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .notice { padding:14px 18px; border-left:4px solid var(--warn); display:flex; flex-direction:column; gap:4px; color:var(--text); }
+/* The last Status, offline (companion.js): a line above the screen while the phone shows the Status it kept. */
+/* Health in one line (status/healthLine.ts): at the top of every screen but Status. */
+.oneline { margin:0 0 12px; font-size:13px; color:var(--muted); }
+.oneline.trouble { padding:8px 12px; border-radius:var(--radius); background:var(--bad-soft); color:var(--text); }
+.oneline .linkbtn { margin-left:6px; }
+.awaynote { margin:0 0 14px; padding:10px 14px; border-radius:var(--radius); border-left:4px solid var(--warn); background:var(--warn-soft); color:var(--text); font-size:14px; }
 /* Setup › Disk space: one line per disk, with how to free some when low. */
 .disks > div + div { margin-top:4px; }
 .disks .small { font-size:12px; margin:2px 0 0 16px; white-space:normal; }
@@ -313,7 +326,7 @@ html.os-mac .foot { color:var(--muted); border-top:0; }
 html.os-mac main { background:var(--bg); box-shadow:inset 1px 0 0 var(--line); padding-top:34px; --wails-draggable:drag; }
 html.os-mac main > * { --wails-draggable:no-drag; }
 html.os-mac .btn, html.os-mac button.small { border-radius:6px; padding:3px 10px; border-color:var(--shade-14); box-shadow:0 .5px 1.5px var(--shade-12); }
-html.os-mac select.finpick { border-radius:6px; padding:3px 8px; border-color:var(--shade-14); box-shadow:0 .5px 1.5px var(--shade-12); }
+html.os-mac select.finpick, html.os-mac select.untilpick, html.os-mac select.snoozepick { border-radius:6px; padding:3px 8px; border-color:var(--shade-14); box-shadow:0 .5px 1.5px var(--shade-12); }
 html.os-mac button.primary { border-radius:6px; }
 @media (prefers-color-scheme: dark) {
   html.os-mac.preview body { background:var(--mac-desktop-dark); }
@@ -484,6 +497,9 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .hovers:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 .hovercard { position:fixed; z-index:40; display:flex; flex-direction:column; gap:6px; width:max-content; max-width:min(320px, calc(100vw - 16px)); padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); box-shadow:0 8px 24px var(--navy-shade-14); font-size:12px; font-weight:400; line-height:1.4; text-align:left; white-space:normal; cursor:auto; }
 .hovercard.wide { width:300px; }
+.hovercard .savedmonths { list-style:none; margin:0; padding:0; display:grid; gap:2px; }
+.hovercard .savedmonths li { display:flex; justify-content:space-between; gap:16px; }
+.hovercard .savedmonths li span:last-child { font-variant-numeric:tabular-nums; }
 /* The week's outages: the 7 days as a strip, each time down a red mark on it (one going on, amber), then each in words. */
 .outstrip { position:relative; display:block; height:26px; border-bottom:1px solid var(--line); }
 .outstrip .outday { position:absolute; bottom:-1px; height:26px; padding-left:3px; border-left:1px solid var(--line); color:var(--muted); font-size:10px; line-height:12px; }
@@ -498,6 +514,8 @@ button.small.tint { background:var(--accent-soft); border-color:transparent; col
 .pagecard .foot { margin:8px 0 0; font-size:12px; }
 .applog { margin:6px 0 0; max-height:320px; overflow:auto; background:var(--sunken); border:1px solid var(--line); border-radius:8px; padding:8px 0; font:12px/1.65 var(--mono); white-space:pre; }
 .applog .line { display:block; padding:0 12px; }
+/* On a phone a log line wraps: cut off at the box's edge, its end was lost. */
+html.companion .applog { white-space:pre-wrap; overflow-wrap:anywhere; }
 .applog .line.warn { background:var(--warn-soft); } .applog .line.bad { background:var(--bad-soft); }
 .explained { margin-top:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--panel); box-shadow:var(--shadow); }
 .explained .answer { margin:0 0 10px; white-space:pre-wrap; font-size:14px; }
@@ -536,6 +554,11 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 .pairing ul { margin:0 0 8px; padding-left:18px; }
 .pairing code { overflow-wrap:anywhere; }
 html:not(.companion) .companion-only { display:none; }
+/* Memory nearly full (the watchdog card): Stop only where this phone may make changes. */
+html.companion:not(.can-change) .memstop { display:none; }
+/* Snooze needs the desktop app (the phone's server does not offer it). */
+html.companion .snoozepick { display:none; }
+#memoryPressure .alertlist button.memstop { margin-left:8px; }
 
 /* The phone companion (homelab serve, html.companion): Status and Backups,
    Finances where this phone may see them (html.finances), and only the
@@ -544,12 +567,20 @@ html.companion #choose, html.companion:not(.finances) #finances, html.companion:
 html.companion #weekCard, html.companion .menuwrap, html.companion #updateAll, html.companion #openDuplicati, html.companion #moveCard, html.companion .rowActions button.small:not(.rowmain) { display:none; }
 /* Finances' Export changes nothing: its menu shows on a phone, even one allowed only to look. */
 html.companion .fx-export .menuwrap { display:inline-block; }
+/* Quick actions: a finger held on a row opens its menu, so on a phone that may make changes the row's text isn't selected
+   and iOS shows no callout under that finger at the same moment. */
+html.companion.can-change:not(.kiosk) #statusRows tr { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 .fx-export { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
 /* Export and the toolbar's capsule at the header's top, as the capsule is elsewhere, level by their middles. */
 .header .fx-headtools { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-left:auto; align-self:flex-start; }
 html:is(.os-mac, .os-windows, .os-linux) .header .fx-headtools > .toolbar:not(:has(input)) { align-self:auto; }
 html.companion:not(.can-change) #fixIt, html.companion:not(.can-change) #backupNow, html.companion:not(.can-change) #restoreTest,
 html.companion:not(.can-change) .change { display:none !important; }
+/* What a phone that only looks says instead of a button it has not got. */
+.lookonly { display:none; }
+html.companion:not(.can-change) .lookonly { display:inline; }
+html.companion:not(.can-change) td.rowActions .lookonly { display:inline-block; max-width:8.5em; font-size:13px; line-height:1.3; text-align:right; vertical-align:middle; }
+.stopnext { margin:6px 0 0; color:var(--text); }
 html.unpaired nav, html.unpaired main { display:none; }
 
 /* Kiosk mode (the companion with #kiosk, for a TV or a wall screen): Status
@@ -878,6 +909,10 @@ html:is(.os-mac, .os-windows, .os-linux) .card.howto.fold { padding:12px 16px; }
   html.companion td:first-child { flex:1 1 100%; }
   html.companion td.state { flex:none; padding-right:6px; }
   html.companion td:nth-child(3) { flex:1 1 0; padding-left:0; padding-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* A folded group's names, on a line of their own under its name and cut
+     short there: inline, as on a computer, they pushed the page sideways. */
+  html.companion table.grouped tr.grouphead th { flex:1 1 100%; min-width:0; }
+  html.companion table.grouped tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; }
 }
 @media (max-width: 700px) {
   html.companion.os-mac table.grouped tbody td, html.companion table.grouped tbody td { padding-top:1px; padding-bottom:1px; }
@@ -972,7 +1007,7 @@ html.os-linux.de-kde ::-webkit-scrollbar-thumb:hover { background:var(--accent);
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary { width:auto; margin-top:0; background:var(--primary); color:var(--primary-text); font-weight:500; }
 html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.primary:hover { background:var(--primary); filter:brightness(1.08); }
 
-/* Choose stacks while searching: the matches first, without the starters
+/* Choose apps while searching: the matches first, without the starters
    and presets above them. */
 #choose.searching #starterBox, #choose.searching #more > h2, #choose.searching #presets { display:none; }
 
@@ -981,6 +1016,15 @@ html:is(.os-mac, .os-windows, .os-linux) .header .toolbar:not(:has(input)) .btn.
 .panel.sheet:not([hidden]) { position:fixed; z-index:40; left:50%; top:max(24px, calc(9vh / var(--zoom, 1))); transform:translateX(-50%); width:min(720px, calc(100vw / var(--zoom, 1) - 48px)); overscroll-behavior:contain; max-height:min(calc(78vh / var(--zoom, 1)), 720px); margin:0; overflow:auto; box-shadow:0 18px 50px var(--shade-28); animation:sheet-in .18s ease-out; }
 .panel.sheet pre { max-height:calc(46vh / var(--zoom, 1)); overflow:auto; }
 .panel.sheet:focus { outline:none; }
+/* The sheet of shortcuts (palette/Shortcuts.tsx): each key beside what it does, the screen's own first. */
+#keysSheet h3 { margin:18px 0 6px; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+#keysSheet h2 + h3 { margin-top:6px; }
+#keysSheet table.keys { box-shadow:none; }
+#keysSheet table.keys th, #keysSheet table.keys td { padding:7px 12px; font-size:13px; }
+#keysSheet table.keys th { width:34%; background:none; text-transform:none; letter-spacing:0; font-weight:400; color:var(--text); white-space:nowrap; }
+#keysSheet table.keys :is(th, td) { border:0; }
+#keysSheet table.keys tr + tr > :is(th, td) { border-top:1px solid var(--line); }
+#keysSheet kbd { display:inline-block; min-width:1.6em; padding:1px 6px; border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; background:var(--sunken); font:inherit; font-size:12px; text-align:center; }
 @keyframes sheet-in { from { opacity:0; transform:translate(-50%, 8px) scale(.98); } }
 /* A sheet holds still while it fills: it hangs from the top and grows down, and a job's rows scroll in a box of their own under its bar, so the bar and the buttons stay where they are. */
 .panel.sheet .jobapps { max-height:min(calc(42vh / var(--zoom, 1)), 380px); overflow:auto; overscroll-behavior:contain; }
@@ -1048,6 +1092,9 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .tiles.health .sub .storagebar { display:block; height:5px; margin:3px 0 5px; }
 .tiles.health .sub button { display:block; margin-top:8px; }
 .healthline { display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; margin:-4px 0 14px; font-size:13px; }
+/* What happened overnight (status/Overnight.tsx): the morning's first line, above the machine's. */
+.overnight { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; margin:-6px 0 12px; font-size:14px; font-weight:500; }
+.overnight .linkbtn { font-size:12px; font-weight:400; }
 .healthline .label { color:var(--muted); font-weight:600; }
 .healthline .item { display:inline-flex; align-items:center; color:var(--muted); }
 .healthline .item.warn { color:var(--warn); } .healthline .item.bad { color:var(--bad); }
@@ -1057,7 +1104,6 @@ html.companion .panel.sheet:not([hidden]) { width:calc(100vw - 24px); max-height
 .finishhead .meter { flex:1 1 120px; min-width:80px; margin:0; }
 .finishhead .meter[hidden] { display:none; }
 .checklist > li { grid-template-columns:auto minmax(0,1fr) auto auto; }
-.checklist > li:not(.open) > .body > .sub { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .checklist .sub.detail { margin-top:4px; color:var(--text); }
 .checklist .more { align-self:center; color:var(--muted); }
 .checklist .more .icon { transition:transform .15s; }
@@ -1186,7 +1232,7 @@ html:is(.os-mac, .os-windows) .header .toolbar:not(:has(input)) { flex-wrap:nowr
 .tile .sub { flex-wrap:wrap; }
 .tile .sub .trend { flex:none; max-width:100%; }
 /* Two columns only when the screen has room for both at the text size
-   (a 1100px window at text size 1): Choose stacks' list and plan, Status'
+   (a 1100px window at text size 1): Choose apps' list and plan, Status'
    paired cards, an app page's log and settings. */
 @container (max-width: 824px) {
   #choose .cols { grid-template-columns:1fr; }
@@ -1328,6 +1374,7 @@ table.copies tr.copy td.name { white-space:normal; width:100%; padding-left:32px
 table.copies tr.copy td.size, table.copies tr.copy td.kept { text-align:right; font-variant-numeric:tabular-nums; }
 table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy td.kept { font-size:13px; }
 #copiesCard table.copies tr.grouphead .names { display:block; max-width:none; margin:2px 0 0 18px; white-space:normal; }
+#copiesCard table.copies tr.copy td.name .note { display:block; font-size:12px; margin:2px 0 0 18px; white-space:normal; }
 .alertlist.jobs li { align-items:center; }
 .alertlist.jobs .size { font-size:13px; white-space:nowrap; min-width:4.5em; text-align:right; font-variant-numeric:tabular-nums; }
 .alertlist.jobs .when { min-width:8em; text-align:right; }
@@ -1362,6 +1409,17 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark { flex:none; width:32px; height:32px; border-radius:9px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--shade-06); }
 .fmark svg { width:58%; height:58%; }
 .fmark.icon svg { width:52%; height:52%; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+/* A category's mark in its colour, on its tint: the same colour on every row, budget, report, and chart. */
+.fmark.tint { box-shadow:none; }
+.fmark.tint.t1 { background:var(--cat-1-soft); color:var(--cat-1-ink); }
+.fmark.tint.t2 { background:var(--cat-2-soft); color:var(--cat-2-ink); }
+.fmark.tint.t3 { background:var(--cat-3-soft); color:var(--cat-3-ink); }
+.fmark.tint.t4 { background:var(--cat-4-soft); color:var(--cat-4-ink); }
+.fmark.tint.t5 { background:var(--cat-5-soft); color:var(--cat-5-ink); }
+.fmark.tint.t6 { background:var(--cat-6-soft); color:var(--cat-6-ink); }
+.fmark.tint.t7 { background:var(--cat-7-soft); color:var(--cat-7-ink); }
+.fmark.tint.t8 { background:var(--cat-8-soft); color:var(--cat-8-ink); }
+@media (forced-colors: active) { .fmark.tint { background:Canvas; color:CanvasText; box-shadow:inset 0 0 0 1px CanvasText; } }
 .fmark.logo { box-shadow:none; }
 /* A logo in its own colours (selfh.st): on white in either theme, as an app's icon is. */
 .fmark.art { background:var(--white); box-shadow:inset 0 0 0 1px var(--shade-08); }
@@ -1374,6 +1432,11 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
 .fmark.lg.mono { font-size:19px; } .fmark.lg.mono.two { font-size:15px; } .fmark.lg.mono.three { font-size:14px; }
 .fmark.sm { width:24px; height:24px; border-radius:7px; font-size:11px; }
 .fmark.lg { width:42px; height:42px; border-radius:11px; font-size:17px; }
+/* On Finances every mark is round, as a logo on a coin: each row's, the forms', and the charts'. A logo's own art sits a
+   little further in, so its corners clear the circle; three letters a size smaller. Other screens keep theirs. */
+#finances .fmark { border-radius:50%; }
+#finances .fmark.art img { width:64%; height:64%; }
+#finances .fmark.mono.three { font-size:10px; }
 .fwhos { display:inline-flex; flex:none; }
 .fwho { width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--white); background:var(--person-0); box-shadow:0 0 0 2px var(--panel); }
 .fwho.p1 { background:var(--person-1); } .fwho.p2 { background:var(--person-2); } .fwho.p3 { background:var(--person-3); }
@@ -1805,8 +1868,38 @@ html.companion .fx-navbalances { display:none !important; }
 .fx-balance .fx-amount.fx-out { color:inherit; }
 button.fx-balance:hover { background:var(--nav-active); color:var(--white); }
 button.fx-balance:focus-visible { outline:2px solid var(--fin-accent); outline-offset:-2px; }
-.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; }
+/* A group's accounts on hover: each name and balance, how long since it was typed in under it; a dot on one older than a month. */
+.fx-hoveraccts { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:14px; row-gap:6px; min-width:220px; }
+.fx-hoveracct { display:contents; }
+.fx-hoveracct .fx-hovername { display:flex; align-items:center; gap:6px; font-weight:500; min-width:0; }
+.fx-hoveracct .fx-amount { text-align:right; font-weight:500; }
+.fx-hoveracct .fx-hoverwhen { grid-column:1 / -1; margin-top:-5px; color:var(--muted); }
+.fx-hoveracct.stale .fx-hoverwhen { color:var(--warn); }
+.fx-staledot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--warn); }
+.fx-balance.total { cursor:default; font-weight:600; margin-top:4px; padding-left:28px; }
 .fx-balance.total .fx-legendlabel { padding-left:19px; }
+/* A group's row: its arrow, then the group; under it, its accounts, each with its round logo, a name cut short to fit, and its balance. */
+.fx-balrow { display:flex; align-items:center; }
+.fx-balances .fx-balrow > .fx-balance { flex:1; min-width:0; gap:7px; padding-left:2px; }
+.fx-balrow .fx-legendlabel { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-balances .fx-balfold { all:unset; box-sizing:border-box; flex:none; width:16px; height:26px; margin-left:2px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; color:var(--nav-muted); cursor:pointer; }
+.fx-balances .fx-balfold svg { flex:none; width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+.fx-balfold[aria-expanded="true"] svg { transform:rotate(90deg); }
+.fx-balfold:hover { background:var(--nav-active); color:var(--white); }
+.fx-balfold:focus-visible, .fx-balacct:focus-visible { outline:2px solid var(--fin-accent); outline-offset:-2px; }
+.fx-balaccts { list-style:none; margin:0 0 4px; padding:0 0 0 22px; display:flex; flex-direction:column; gap:1px; }
+.fx-balances .fx-balacct { all:unset; box-sizing:border-box; display:flex; align-items:center; gap:8px; width:100%; padding:3px 10px 3px 6px; border-radius:8px; font-size:12.5px; cursor:pointer; }
+.fx-balacct .fmark { border-radius:50%; }
+.fx-balacct .fx-balname { flex:1; min-width:0; display:flex; align-items:center; gap:5px; }
+.fx-balacct .fx-balname > span:last-child { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.fx-balacct .fx-amount { font-size:12px; }
+.fx-balacct .fx-amount.fx-out { color:inherit; }
+.fx-balacct:hover { background:var(--nav-active); color:var(--white); }
+html:is(.os-mac, .os-windows, .os-linux) .fx-balfold { color:var(--muted); }
+html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--shade-05); color:inherit; }
+@media (prefers-color-scheme: dark) { html:is(.os-mac, .os-windows, .os-linux) :is(.fx-balfold, .fx-balacct):hover { background:var(--glow-06); } }
+@media (prefers-reduced-motion: reduce) { .fx-balfold svg { transition:none; } }
+@media (forced-colors: active) { :is(.fx-balfold, .fx-balacct):focus-visible { outline-color:Highlight; } }
 /* The systems' own sidebars are light (dark in dark mode), their text the page's. */
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances { border-color:var(--shade-08); }
 html:is(.os-mac, .os-windows, .os-linux) .fx-balances > .fx-caption { color:var(--muted); }
@@ -1864,6 +1957,8 @@ html.os-mac .fx-balance { padding:4px 8px; }
   :is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:wrap; row-gap:10px; }
   :is(#finRoot, #tidyRoot) .fx-widget .fx-actions { max-width:100%; min-width:0; }
   #finRoot .fx-widget .fx-actions .seg { max-width:100%; overflow-x:auto; }
+  /* Tidy Up's counts under their heading ("6 things · 380 GB to win back") read as its subtitle, from its left edge. */
+  #tidyRoot .fx-widget.tidyneeds > .row .fx-actions { flex:1 1 100%; justify-content:flex-start; margin:-6px 0 0; }
   /* A chart's card across the plot, not beside the point, where beside it would run past the card's edge. */
   #finRoot .fx-plot > .fx-tip { left:0 !important; right:0 !important; min-width:0; max-width:none; }
 }
@@ -1927,6 +2022,23 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-subs .fx-rows { margin-top:12px; }
 .fx-subtypes { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
 .fx-subtypes .fx-legend.inline { justify-content:flex-start; }
+/* Checking now and after the next paycheck: two figures side by side (one under the other when narrow), each a button whose card shows how it adds up. */
+.fx-clearrow { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
+.fx-clearfig { min-width:0; }
+.fx-clearbtn { all:unset; box-sizing:border-box; display:flex; flex-direction:column; gap:6px; width:100%; padding:12px 14px; border-radius:var(--fin-radius-sm); box-shadow:inset 0 0 0 1px var(--line); cursor:pointer; }
+.fx-clearbtn:hover { box-shadow:inset 0 0 0 1px var(--fin-accent); }
+.fx-clearbtn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.fx-clearbtn .fx-figure { text-decoration:underline dotted var(--muted); text-underline-offset:6px; text-decoration-thickness:2px; }
+.fx-clearhow { font-size:12px; }
+.fx-working { display:flex; flex-direction:column; gap:3px; font-variant-numeric:tabular-nums; }
+.fx-workrow { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px; align-items:baseline; }
+.fx-workrow > span:first-child { min-width:0; overflow-wrap:anywhere; }
+.fx-workafter { min-width:64px; text-align:right; }
+.fx-workhead { grid-template-columns:minmax(0,1fr) auto; font-weight:600; }
+.fx-workend { margin-top:4px; padding-top:6px; border-top:1px solid var(--line); }
+.fx-worknote { display:block; margin-top:4px; }
+.hovercard .fx-working { width:100%; }
+.hovercard.wide:has(.fx-working) { width:340px; }
 /* The pay period card: its dates, and the accounts side by side after its bills; one money goes into is lit. */
 .fx-paycheck .fx-actions { gap:4px; }
 .fx-paycheck .fx-actions button.small { margin-right:4px; }
@@ -1972,6 +2084,18 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
 .fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
+/* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
+.fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
+.fx-txpicked { flex:1 1 auto; font-size:13px; font-weight:600; }
+.fx-txpickcat { display:inline-flex; gap:6px; }
+.fx-txpickcat input { font:inherit; font-size:13px; min-height:30px; width:10em; min-width:0; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-txpickcat input:focus, .fx-txpickmove:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txpickmove { font:inherit; font-size:13px; min-height:30px; max-width:12em; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-check { flex:none; width:20px; height:20px; margin-right:2px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--line-strong); background:var(--panel); }
+.fx-check svg { width:14px; height:14px; fill:none; stroke:var(--fin-accent-text); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; visibility:hidden; }
+.fx-check.on { background:var(--fin-accent); border-color:var(--fin-accent); }
+.fx-check.on svg { visibility:visible; }
+.alertlist.fx-rows > li.opens.on > .rowopen { background:var(--fin-accent-soft); }
 /* Categories: one row each, a group's own under it, indented; name, group, icon, Delete. */
 .catlist { list-style:none; margin:8px 0 12px; padding:0; }
 .catlist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 11em 10.5em auto; align-items:center; gap:8px; padding:5px 0; }
@@ -1993,6 +2117,8 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 @media (forced-colors: active) { .fx-budgetbar > span, .fx-budgetbar > i { forced-color-adjust:none; } }
 /* Reports: a category's bar against the largest, in the accent (spending is no warning here). */
 .fx-catbar > span { background:var(--fin-accent); }
+/* A category's bar in its colour, as its icon. */
+.fx-catbar:is(.fx-h1, .fx-h2, .fx-h3, .fx-h4, .fx-h5, .fx-h6, .fx-h7, .fx-h8) > span { background:var(--fx-hue); }
 .fx-reportsum .fx-actions .seg { font-size:12px; flex-wrap:wrap; }
 /* Importing a bank's file: the file picked, then what would come in, those already in greyed. */
 .importfile { display:flex; align-items:center; gap:8px; min-width:0; margin-top:4px; }
@@ -2003,6 +2129,16 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .importlist li .grow { flex:1; display:flex; flex-direction:column; min-width:0; font-size:14px; }
 .importlist li small { color:var(--muted); font-size:12px; }
 .importlist li.dup .grow strong { text-decoration:line-through; font-weight:400; }
+/* A row linked to the planned payment it pays: what it looks like, and the pick to change it. */
+.importlist li .importlink { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:4px; }
+.importlist li .importlink small { color:var(--text); }
+.importlist li .importlink select { max-width:100%; font-size:12px; }
+.importnote { margin:0 0 6px; font-size:13px; }
+/* A payment's form: which way the money goes, above its fields. */
+.finform .finway { margin:0 0 12px; }
+/* Transactions that look like planned payments: Link and Not it at the row's end; what a typed one looks like, under its pick. */
+.fx-linkbtns { display:flex; flex-wrap:wrap; gap:6px; }
+.finform .fx-looks { display:block; margin-top:4px; font-size:12px; }
 /* Finances' tags: a transaction's, after its note, and By tag in Reports; the Tag pick beside the stretch. */
 .fx-txtags { display:inline-flex; flex-wrap:wrap; gap:4px; margin-left:6px; vertical-align:baseline; }
 .fx-tag { display:inline-block; border:1px solid var(--line-strong); border-radius:999px; padding:0 7px; font-size:12px; line-height:18px; color:var(--text); background:var(--panel); white-space:nowrap; }
@@ -2063,12 +2199,42 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-paymorefield .moneyfield:focus-within { outline:2px solid var(--fin-accent); outline-offset:1px; }
 .fx-paymore .fx-sub { margin:8px 0 0; }
 .fx-ways { margin:8px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:4px; }
-/* Money flow: pay through a month to where it goes, its bands a lighter wash of each node's colour; the legends under it. */
-.fx-flowchart svg { display:block; width:100%; }
-.fx-flowchart .fx-band { fill:var(--fx-hue); opacity:.28; }
-.fx-flowchart .fx-node { fill:var(--fx-hue); }
-.fx-flowlegend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px 32px; margin-top:12px; }
-@media (forced-colors: active) { .fx-flowchart .fx-band { fill:GrayText; opacity:.4; } .fx-flowchart .fx-node { fill:CanvasText; } }
+/* Money flow: the month picker and Top N in its heading; income, taxes, expenses, and saved in a strip; the flow; what a picked box holds. */
+.fx-moneyflow .fx-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.fx-period { display:inline-flex; align-items:center; gap:2px; padding:2px; border:1px solid var(--line); border-radius:10px; }
+.fx-periodname { min-width:8.5em; text-align:center; font-size:13px; font-weight:600; }
+.fx-top { font-size:13px; }
+.fx-flowstrip { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); margin:4px 0 18px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.fx-flowtile { display:flex; flex-direction:column; gap:4px; padding:12px 14px; min-width:0; }
+.fx-flowtile + .fx-flowtile { border-left:1px solid var(--line); }
+.fx-flowtile .fx-caption { margin:0; display:flex; align-items:center; gap:6px; }
+.fx-flowfig { font-size:var(--fin-figure-sm); font-weight:700; font-variant-numeric:tabular-nums; }
+@container (max-width: 640px) { .fx-flowstrip { grid-template-columns:repeat(2, minmax(0,1fr)); } .fx-flowtile:nth-child(3) { border-left:0; } .fx-flowtile:nth-child(n+3) { border-top:1px solid var(--line); } }
+.fx-sankey { position:relative; margin:0; width:100%; }
+.fx-sankey svg { display:block; position:absolute; inset:0; overflow:visible; }
+.fx-sband { fill:var(--fx-hue); opacity:.22; transition:opacity .15s; }
+.fx-sband.on { opacity:.45; }
+.fx-sband.off, .fx-snoderect.off { opacity:.08; }
+.fx-snoderect { fill:var(--fx-hue); transition:opacity .15s; }
+.fx-snode { position:absolute; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-start; gap:0; padding:2px 6px; margin:0; border:0; border-radius:8px; background:none; color:var(--text); font:inherit; font-size:14px; line-height:1.25; text-align:left; cursor:pointer; min-width:0; transition:opacity .15s; }
+.fx-snode .fx-sname { font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fx-snode .fx-samt { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.fx-snode .fx-spct { color:var(--muted); }
+.fx-snode.one { flex-direction:row; align-items:baseline; gap:6px; font-size:13px; white-space:nowrap; }
+.fx-snode.one .fx-sname { min-width:2.5em; }
+.fx-snode.one .fx-sname { flex:0 1 auto; }
+.fx-snode.pill { transform:translate(-50%, -50%); align-items:center; text-align:center; background:var(--panel); box-shadow:0 0 0 1px var(--line); padding:4px 10px; }
+.fx-snode:hover .fx-sname, .fx-snode.picked .fx-sname { text-decoration:underline; text-underline-offset:3px; }
+.fx-snode.picked { box-shadow:0 0 0 2px var(--fin-accent); }
+.fx-snode.off { opacity:.35; }
+.fx-snode:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.fx-sankey.narrow .fx-snode { font-size:12px; }
+.fx-stip { position:absolute; z-index:3; display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:10px; background:var(--fin-tip); color:var(--fin-tip-text); font-size:12px; pointer-events:none; box-shadow:0 12px 32px var(--shade-25); white-space:nowrap; }
+.fx-flowpick { margin-top:16px; padding-top:12px; border-top:1px solid var(--line); }
+.fx-flowpickhead { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.fx-flowpickhead h3 { margin:0; font-size:15px; }
+@media (prefers-reduced-motion: reduce) { .fx-sband, .fx-snoderect, .fx-snode { transition:none; } }
+@media (forced-colors: active) { .fx-sband { fill:GrayText; opacity:.4; } .fx-snoderect { fill:CanvasText; } .fx-snode.picked { outline:2px solid Highlight; } }
 /* Financial independence: an estimate, said first; its figure, its bar, when; the two assumptions to change under it. */
 .fx-firenote { margin:0 0 8px; }
 .fx-firesays, .fx-firewhen { margin:0 0 8px; font-size:14px; }
@@ -2144,6 +2310,9 @@ table.grouped tr.grouphead .groupmenulist.up { top:auto; bottom:calc(100% + 6px)
 .rowmenu .check { color:var(--link); }
 tr.menued > td { background:var(--accent-soft); }
 .rowsaid { display:block; font-size:12px; color:var(--ok); margin-top:2px; }
+/* What changed since you looked (status/changed.ts): a dot after the app's name, until you leave Status. */
+.changedot { display:inline-block; width:7px; height:7px; margin-left:7px; border-radius:50%; background:var(--accent); vertical-align:middle; cursor:help; }
+@media (forced-colors: active) { .changedot { forced-color-adjust:none; background:Highlight; } }
 
 /* The money card on a wall screen's Status (status/WallCard.tsx). */
 #wallCard { margin-bottom:16px; }
@@ -2199,7 +2368,17 @@ select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8
 .tidysteps li.now { border-color:var(--link); background:var(--accent-soft); }
 .tidysteps li.now .num { background:var(--primary); color:var(--primary-text); }
 .tidysteps li.now .muted { color:var(--text); }
-.card.tidyjob { margin:0 0 14px; }
+.card.tidyjob, #tidyRoot > .card.notice { margin:0 0 14px; }
+.card.tidyjob > .row:first-child .actions { display:flex; gap:8px; margin:0; }
+/* Its log is Tidy Up's own, not Docker's (Status's job panel shares .jobdetails). */
+#tidyJob .jobdetails:not([open]) > summary::after { content:none; }
+/* A card's notes under its chart sit at the card's own gap, not a paragraph's margin on top of it. */
+#tidyRoot .card.fx-widget > p.fx-sub { margin:0; }
+/* On a phone, the six tabs in two even rows of three, not five and one. */
+@media (max-width: 520px) {
+  #tidy .seg { display:grid; grid-template-columns:repeat(3, 1fr); width:100%; box-sizing:border-box; }
+  #tidy .seg button { padding:6px 4px; }
+}
 .tidystep { margin:2px 0 8px; font-size:12px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
 .tidynow { margin:0 0 8px; overflow-wrap:anywhere; }
 .tidyplan, .tidykeep { margin:6px 0 14px; padding-left:22px; }
@@ -2207,6 +2386,49 @@ select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8
 .tidycovers { display:inline-flex; align-items:center; gap:6px; margin-right:10px; color:var(--muted); }
 .tidycovers img, .tidycovers .nocover { width:36px; height:54px; object-fit:cover; border-radius:3px; border:1px solid var(--line); }
 .tidycovers .nocover { display:inline-grid; place-items:center; font-size:9px; text-align:center; background:var(--sunken); }
+/* Tidy Up, take 2 (Nov 7, the owner's ask): the next thing to do leads, beside the drive; the libraries sit on a
+   shelf, each in its colour; a library's tab opens on that library; what was done sits beside the genres. */
+.fx-board.tidytop { grid-template-columns:minmax(0, 2fr) minmax(0, 1fr); align-items:start; }
+.fx-board.tidybottom { grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr); }
+@container (max-width: 1040px) { .fx-board.tidytop, .fx-board.tidybottom { grid-template-columns:minmax(0, 1fr); } }
+/* Next up: the row with the screen's one main button, larger, on a wash of the accent. */
+.tidytodo > li:has(button.primary) { margin:2px -12px 8px; padding:16px 12px; border-radius:14px; background:var(--accent-soft); border-top:0; }
+.tidytodo > li:has(button.primary) + li { border-top:0; }
+.tidytodo > li:has(button.primary) .tidyicon { width:44px; height:44px; border-radius:12px; }
+.tidytodo > li:has(button.primary) .grow > strong { font-size:17px; letter-spacing:-.01em; }
+.tidytodo > li:has(button.primary) .grow::before { content:"Next up"; display:block; margin-bottom:3px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--link); }
+.tidytodo > li:has(button.primary) .tidygain { font-size:18px; }
+/* The shelf: a tile a library, in its own colour; it opens the library's tab. */
+.tidyshelf { margin:var(--fin-gap) 0; }
+#tidyRoot .tidyshelf > h2 { margin:0 0 12px; font-size:18px; font-weight:700; letter-spacing:-.01em; }
+.tidyshelf > ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap:12px; }
+.tidyshelf > ul > li { display:flex; min-width:0; }
+.tidytile { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:4px; margin:0; padding:16px; border:0; border-radius:var(--fin-radius); background:color-mix(in srgb, var(--fx-hue) 12%, var(--panel)); color:var(--text); font:inherit; text-align:left; box-shadow:none; }
+.tidytile:hover { background:color-mix(in srgb, var(--fx-hue) 18%, var(--panel)); }
+.tidytile .tidyicon { width:36px; height:36px; border-radius:10px; margin-bottom:8px; }
+.tidytilename { font-size:16px; font-weight:700; letter-spacing:-.01em; }
+.tidytilefacts { font-size:13px; }
+.tidymeter { display:block; width:100%; height:6px; margin-top:10px; border-radius:3px; background:color-mix(in srgb, var(--fx-hue) 24%, var(--panel)); overflow:hidden; }
+.tidymeter > span { display:block; height:100%; border-radius:3px; background:var(--fx-hue); }
+.tidytilenext { margin-top:auto; padding-top:8px; font-size:13px; line-height:1.4; overflow-wrap:anywhere; }
+.tidytile.away { background:var(--panel); box-shadow:inset 0 0 0 1.5px var(--line-strong); }
+.tidytile.away .tidyicon { background:var(--line); color:var(--text); }
+.tidytile.away .tidytilefacts { color:var(--warn); }
+/* A library's tab opens on it: its mark, its colour, what it holds, and (music) its steps. */
+#tidyRoot .card.fx-widget.tidyhero { background:color-mix(in srgb, var(--fx-hue) 10%, var(--panel)); }
+#tidyRoot .card.fx-widget.tidyhero > h2, #tidyRoot .card.fx-widget.tidyhero > .row h2 { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
+/* A card keeps its own height: a short one beside a tall one (Space beside Genres) no longer stretches half empty. */
+#tidyRoot .tidybody .fx-board { align-items:start; }
+.tidyhero h2 .tidyicon { width:36px; height:36px; border-radius:10px; }
+.tidyherorow { display:flex; justify-content:space-between; align-items:flex-end; gap:12px 24px; flex-wrap:wrap; }
+.tidyhero .tidyfolder { color:var(--text); font-size:13px; }
+.tidyfacts { display:flex; gap:12px 28px; flex-wrap:wrap; margin:0; }
+.tidyfacts dt { font-size:12px; }
+.tidyfacts dd { margin:2px 0 0; font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+.tidysteps.tidytrack { margin:2px 0 0; grid-template-columns:repeat(auto-fit, minmax(min(100%, 120px), 1fr)); }
+.tidytrack li { background:var(--panel); border-color:transparent; }
+.tidytrack li .muted { color:var(--text); }
+.tidysteps .num svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
 label.switch { display:inline-flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap; cursor:pointer; }
 @media (max-width: 960px) {
   .tidycols { grid-template-columns:minmax(0, 1fr); }
@@ -2237,3 +2459,95 @@ html.palette-open #palette::before { content:""; position:fixed; inset:0; z-inde
 .palette .palfoot { margin:0; padding:0 16px; font-size:13px; }
 .palette .palfoot:not(:empty) { padding:10px 16px; border-top:1px solid var(--line); }
 @media (forced-colors: active) { .palette { border:1px solid CanvasText; } .palette .pallist li.picked { outline:2px solid Highlight; } }
+
+/* A command carrying on with its sheet hidden (job/Background.tsx): a
+   chip at the foot of the sidebar with its title, bar, and step; above
+   the tab bar on a phone. */
+#bgJob:empty { display:none; }
+.bgjob { position:relative; margin:8px 0 4px; }
+html nav .bgjob button.bgopen, html nav .bgjob button.bgopen:hover { display:flex; flex-direction:column; align-items:stretch; gap:5px; width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--text); font-size:12px; font-weight:400; text-align:left; }
+html nav .bgjob button.bgopen:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+.bgjob .bgtitle { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:16px; }
+.bgjob .bgstep { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bgjob .bgtrack { display:block; height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
+.bgjob .bgfill { display:block; height:100%; background:var(--accent); border-radius:2px; transition:width .3s ease; }
+.bgjob .bgtrack.working .bgfill { width:30% !important; animation:bg-working 1.4s ease-in-out infinite; }
+@keyframes bg-working { from { transform:translateX(-100%); } to { transform:translateX(340%); } }
+.bgjob.done .bgfill { background:var(--ok); }
+.bgjob.failed .bgfill { background:var(--bad); }
+.bgjob.failed .bgstep { color:var(--bad); }
+html nav .bgjob button.bgdismiss, html nav .bgjob button.bgdismiss:hover { position:absolute; top:4px; right:4px; width:22px; height:22px; padding:0; justify-content:center; border-radius:6px; color:var(--muted); font-size:15px; line-height:1; }
+html nav .bgjob button.bgdismiss:hover { background:var(--shade-06); }
+@media (prefers-reduced-motion: reduce) { .bgjob .bgtrack.working .bgfill { animation:none; width:100% !important; opacity:.5; } }
+@media (forced-colors: active) { .bgjob .bgfill { forced-color-adjust:none; background:Highlight; } }
+@media (max-width: 700px) {
+  html.companion #bgJob { position:fixed; left:12px; right:12px; bottom:calc(64px + env(safe-area-inset-bottom)); z-index:30; }
+  html.companion .bgjob { margin:0; }
+  html.companion nav .bgjob button.bgopen { box-shadow:0 8px 24px var(--shade-18); font-size:13px; }
+}
+.bgjob .bgnext { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; border-top:1px solid var(--line); padding-top:5px; }
+
+/* The phone's Backups: each copy on two lines, its name, then when, its size,
+   and how many are kept on one line under it (on three before, the size alone
+   at the far right). */
+html.companion #copiesCard table.copies tr.copy { display:flex; flex-wrap:wrap; align-items:baseline; }
+html.companion #copiesCard table.copies tr.copy td.name { flex:1 1 100%; }
+html.companion #copiesCard table.copies tr.copy :is(td.when, td.size, td.kept) { display:block; flex:none; width:auto; padding:0 0 2px; text-align:left; white-space:nowrap; }
+html.companion #copiesCard table.copies tr.copy td.when { padding-left:36px; }
+html.companion #copiesCard table.copies tr.copy :is(td.size, td.kept)::before { content:"·"; margin:0 6px; }
+/* Finances › Net worth › Investments: four figures, the split by account, and a row a holding (a table in a wide card, a list of rows in a card under 720px, whatever the window or text size), each opening its worth at each read. */
+.fx-invest { container:invest / inline-size; }
+.fx-invest .fx-investsaid { margin:0 0 10px; font-size:13px; }
+.fx-invest .fx-investintro { margin:0 0 12px; max-width:62ch; }
+.fx-investfigs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:0 0 18px; }
+.fx-investfigs > div { padding:12px 14px; min-width:0; }
+.fx-investfigs > div + div { border-left:1px solid var(--line); }
+.fx-investfigs .fx-caption { margin:0 0 6px; }
+.fx-investfig { font-size:var(--fin-figure-sm); font-weight:700; font-variant-numeric:tabular-nums; }
+.fx-investfigs .fx-sub { font-size:13px; margin-top:4px; }
+.fx-invest > .fx-split { margin:0 0 8px; }
+.fx-invest .fx-legend { margin-bottom:14px; }
+.fx-holdings { width:100%; table-layout:fixed; border-collapse:collapse; font-variant-numeric:tabular-nums; border:1px solid var(--line); border-radius:var(--fin-radius-sm); border-spacing:0; overflow:hidden; }
+.fx-holdings thead th { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); }
+.fx-holdings .n { text-align:right; white-space:nowrap; }
+.fx-holdings thead th:nth-child(2) { width:6.5em; } .fx-holdings thead th:nth-child(3), .fx-holdings thead th:nth-child(4) { width:9.5em; } .fx-holdings thead th:nth-child(5) { width:15em; }
+.fx-holdings tbody tr > th { overflow:clip; }
+.fx-holdings tbody + tbody { border-top:1px solid var(--line); }
+.fx-holdings tbody tr > * { padding:9px 14px; font-weight:400; text-align:left; vertical-align:middle; }
+.fx-holdings tbody tr > .n { text-align:right; }
+.fx-holdings tbody tr:first-child:has(button):hover { background:var(--shade-025); cursor:pointer; }
+.fx-hold.open > tr:first-child { background:var(--shade-025); }
+.fx-holdbtn { display:flex; align-items:center; gap:10px; min-width:0; padding:0; margin:0; border:0; background:none; color:inherit; font:inherit; text-align:left; border-radius:6px; }
+button.fx-holdbtn { cursor:pointer; }
+.fx-holdbtn .fmark { border-radius:50%; }
+.fx-holdbtn { max-width:100%; }
+#finRoot .fx-holdings tbody tr:hover > td { background:none; }
+.fx-holdwho { display:flex; flex-direction:column; min-width:0; }
+.fx-holdwho strong { font-size:14px; }
+.fx-holdwho small { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fx-holdunit { display:none; }
+.fx-holdgain .fx-sub { font-size:12px; }
+.fx-holddetail > td { padding:4px 14px 14px !important; }
+.fx-holdhist .fx-sub { margin:4px 0 8px; font-size:13px; }
+.fx-investleft { margin-top:14px; }
+.fx-investleft p { margin:0 0 6px; }
+.fx-investleft ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.fx-investleft label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.fx-investauto { display:flex; align-items:center; gap:8px; margin-top:14px; font-size:13px; color:var(--muted); }
+@media (prefers-color-scheme: dark) { .fx-holdings tbody tr:first-child:has(button):hover, .fx-hold.open > tr:first-child { background:var(--glow-04); } }
+@media (forced-colors: active) { .fx-holdbtn:focus-visible { outline:2px solid Highlight; } }
+@container invest (max-width: 720px) {
+  .fx-investfigs { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .fx-investfigs > div:nth-child(3) { border-left:0; }
+  .fx-investfigs > div:nth-child(n+3) { border-top:1px solid var(--line); }
+  .fx-holdings, .fx-holdings tbody, .fx-holdings tr, .fx-holdings td, .fx-holdings th { display:block; }
+  .fx-holdings thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .fx-holdings tbody tr:first-child { display:grid; grid-template-columns:minmax(0, 1fr) auto; grid-template-areas:"who worth" "paid gain"; column-gap:12px; row-gap:2px; padding:10px 14px; }
+  .fx-holdings tbody tr:first-child > * { padding:0; border:0; background:none; min-width:0; }
+  .fx-holdings tbody tr > th { grid-area:who; }
+  .fx-holdshares { display:none !important; }
+  .fx-holdpaid { grid-area:paid; text-align:left !important; white-space:normal !important; font-size:13px; color:var(--muted); padding-left:42px !important; }
+  .fx-holdworth { grid-area:worth; align-self:center; font-weight:600; }
+  .fx-holdgain { grid-area:gain; font-size:13px; align-self:end; }
+  .fx-holdunit { display:inline; }
+}

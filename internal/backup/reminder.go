@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // RestoreLog records restore tests and reminders, so the nightly backup can
@@ -101,7 +103,7 @@ func (l RestoreLog) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(l, "", "  ")
-	return os.WriteFile(path, data, 0o644)
+	return lockedfile.Write(path, data, 0o644)
 }
 
 // ReminderDue reports whether to remind about the restore test: none in the

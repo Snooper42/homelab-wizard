@@ -29,6 +29,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/npm/npmtest"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/releases"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -338,8 +339,15 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 
 	npmURL, _ := url.Parse(npmSrv.URL)
 	agURL, _ := url.Parse(agSrv.URL)
+	// Immich already has its administrator, so it may go on the internet
+	// (an Immich no one has signed up to stays off it: claim.go).
+	immichSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"isInitialized":true}`))
+	}))
+	defer immichSrv.Close()
+	immichURL, _ := url.Parse(immichSrv.URL)
 	token := base64.StdEncoding.EncodeToString([]byte(`{"a":"acct","t":"tun-1","s":"c2VjcmV0"}`))
-	root, _ := repoCopy(t,
+	root, _ := repoCopy(t, "IMMICH_PORT="+immichURL.Port(),
 		"NPM_ADMIN_PORT="+npmURL.Port(), "NPM_API_EMAIL=homelab@example.com", "NPM_API_PASSWORD=npm-pw",
 		"ADGUARD_PORT="+agURL.Port(), "ADGUARD_USER=admin", "ADGUARD_PASSWORD=ag-pw",
 		"TUNNEL_TOKEN="+token, "CLOUDFLARE_API_TOKEN=cf-token", "HOMELAB_DOMAIN=example.com")
@@ -371,9 +379,22 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		if h.CertificateID == 0 || !h.SSLForced {
 			t.Errorf("%s should use the wildcard certificate", h.DomainNames[0])
 		}
+		if h.DomainNames[0] == "homelab.example.com" {
+			// The phone companion's host vouches for https itself (N25): the
+			// tunnel never carries it, so it trusts no client's word, and it
+			// sends the key now saved in .env.
+			key := envValue(t, root, "COMPANION_PROXY_KEY")
+			if h.TrustForwardedProto || len(key) < 24 || !strings.Contains(h.AdvancedConfig, `"`+key+`"`) {
+				t.Errorf("the companion's host should carry the key saved in .env (%q), not trust X-Forwarded-Proto: %+v", key, h)
+			}
+			continue
+		}
 		if !h.TrustForwardedProto {
 			t.Errorf("%s should trust X-Forwarded-Proto from the tunnel", h.DomainNames[0])
 		}
+	}
+	if _, ok := hosts["homelab.example.com"]; !ok {
+		t.Errorf("no proxy host for the phone companion (all: %v)", hosts)
 	}
 	for host, target := range map[string]string{
 		"photos.example.com":    "immich-server",
@@ -686,6 +707,31 @@ func TestWatchdogChecksEveryApp(t *testing.T) {
 	}
 }
 
+// An app that stopped by itself (out of memory here) is a failing check,
+// with why, so the household hears of it and Status's watchdog line counts
+// it; before, every stopped app was skipped as stopped by hand. It is not
+// restarted. One stopped cleanly, or stopped on purpose, is still left.
+func TestWatchdogSaysWhenAnAppStoppedByItself(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_security-vaultwarden-1", Image: "vaultwarden/server:latest", Project: "homelab_security", Service: "vaultwarden", ExitCode: 137, OOMKilled: true},
+		{Name: "homelab_security-ntfy-1", Image: "binwiederhier/ntfy:latest", Project: "homelab_security", Service: "ntfy", ExitCode: 143},
+		{Name: "homelab_household-mealie-1", Image: "mealie", Project: "homelab_household", Service: "mealie", ExitCode: 1},
+	})
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	if err := (stopped.Record{"mealie": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {
+		t.Fatal(err)
+	}
+	out, _ := homelabCmd(t, root, "", "watchdog")
+	if !strings.Contains(out, "vaultwarden: stopped: it ran out of memory") {
+		t.Errorf("an app out of memory isn't a failing check:\n%s", out)
+	}
+	for _, unwanted := range []string{"ntfy: stopped", "mealie", "restarted Vaultwarden"} {
+		if strings.Contains(out, unwanted) {
+			t.Errorf("%q:\n%s", unwanted, out)
+		}
+	}
+}
+
 // An app whose alerts are off (homelab notify off) is still checked and
 // shown, but left out of the watchdog's alerts.
 func TestWatchdogLeavesQuietAppsOutOfItsAlerts(t *testing.T) {
@@ -725,6 +771,19 @@ func TestWatchdogLeavesQuietAppsOutOfItsAlerts(t *testing.T) {
 	}
 	if env, _ := envfile.Load(filepath.Join(root, ".env")); env.Map()["ALERTS_OFF"] != "" {
 		t.Errorf("ALERTS_OFF=%q after notify on", env.Map()["ALERTS_OFF"])
+	}
+	// Kept in data/, not in .env.
+	if quiet := notify.LoadQuiet(root, nil); len(quiet) != 0 {
+		t.Errorf("still quiet after notify on: %v", quiet)
+	}
+	if _, code := homelabCmd(t, root, "", "notify", "off", "vaultwarden"); code != 0 {
+		t.Fatal("notify off failed")
+	}
+	if env, _ := envfile.Load(filepath.Join(root, ".env")); env.Map()["ALERTS_OFF"] != "" {
+		t.Errorf("notify off wrote .env: ALERTS_OFF=%q", env.Map()["ALERTS_OFF"])
+	}
+	if quiet := notify.LoadQuiet(root, nil); len(quiet) != 1 || quiet[0] != "vaultwarden" {
+		t.Errorf("data/alerts-off.json: %v", quiet)
 	}
 }
 
@@ -1067,4 +1126,19 @@ func TestStartupAsksTheRuntimeToStart(t *testing.T) {
 	if code != 0 || asked != 1 {
 		t.Fatalf("asked %d time(s), exit %d:\n%s", asked, code, out)
 	}
+}
+
+// envValue is key's value in the homelab's .env.
+func envValue(t *testing.T, root, key string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(root, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if v, ok := strings.CutPrefix(line, key+"="); ok {
+			return strings.Trim(v, `"`)
+		}
+	}
+	return ""
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 )
 
 func TestWatchdogRestartsAHungApp(t *testing.T) {
@@ -21,6 +22,10 @@ func TestWatchdogRestartsAHungApp(t *testing.T) {
 	out, _ := homelabCmd(t, root, "", "watchdog")
 	if n := restarts(); n != 1 || !strings.Contains(out, "restarted Vaultwarden (container unhealthy), unwell on two checks in a row") {
 		t.Fatalf("not restarted once on the second failing check (%d):\n%s", n, out)
+	}
+	// Status's "up 9 minutes" says the watchdog restarted it.
+	if s := started.Load(started.Path(root))["vaultwarden"]; s.Why != started.Watchdog {
+		t.Fatalf("kept why it started: %+v", s)
 	}
 	homelabCmd(t, root, "", "watchdog")
 	if n := restarts(); n != 1 {
@@ -133,5 +138,21 @@ func TestWatchdogMakesAGoneOptionalAppAgain(t *testing.T) {
 	out, _ = homelabCmd(t, root, "", "watchdog")
 	if strings.Contains(readCalls(t, calls), "no-deps wallos") || strings.Contains(out, "wallos: not running") {
 		t.Errorf("an app taken out with remove was brought back or missed:\n%s", out)
+	}
+}
+
+// TestFixCopiesBeforeNewSettings: an app whose settings changed since it
+// started has its database dumped before Fix it recreates it on them.
+func TestFixCopiesBeforeNewSettings(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		{Name: "karakeep", Image: "ghcr.io/karakeep-app/karakeep:release", Running: true, Health: "healthy", Project: "homelab_karakeep", Service: "karakeep", ConfigHash: "old"},
+	})
+	t.Setenv("FAKE_CONFIG_HASHES", "karakeep new\\n")
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
+	out, _ := homelabCmd(t, root, "", "fix", "--apply")
+	log := readCalls(t, calls)
+	dump, up := strings.Index(log, "--volumes-from karakeep homelab/sqlite"), strings.Index(log, "up --detach --no-deps karakeep")
+	if dump < 0 || up < 0 || dump > up || !strings.Contains(out, "dumping karakeep first, before they start on their new settings") {
+		t.Errorf("no dump before the recreate (dump at %d, recreate at %d):\n%s\n%s", dump, up, out, log)
 	}
 }

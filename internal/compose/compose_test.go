@@ -120,6 +120,11 @@ services:
         source: /etc/hosts
         target: /hosts
         read_only: true
+      - type: bind
+        source: ${MEDIA:-/Volumes/Media}/books
+        target: /books
+        bind:
+          create_host_path: false
   other:
     <<: *base
     labels:
@@ -131,7 +136,7 @@ networks:
 		t.Fatal(err)
 	}
 	app := f.Services["app"]
-	if app.Labels["a"] != "1" || len(app.Networks) != 2 || len(app.Volumes) != 5 {
+	if app.Labels["a"] != "1" || len(app.Networks) != 2 || len(app.Volumes) != 6 {
 		t.Fatalf("app: labels %v networks %v volumes %d", app.Labels, app.Networks, len(app.Volumes))
 	}
 	if other := f.Services["other"]; other.Labels["b"] != "2" || other.Labels["a"] != "" {
@@ -147,6 +152,7 @@ networks:
 		{Source: "cache", Target: "/cache"},
 		{Source: host("/Users/me/x"), Target: "/x", Bind: true},
 		{Source: host("/etc/hosts"), Target: "/hosts", Bind: true},
+		{Source: host("/Volumes/Media/books"), Target: "/books", Bind: true},
 	}
 	for i, v := range app.Volumes {
 		got, err := v.Resolve(lookup, f.Dir, "/Users/me")
@@ -159,6 +165,12 @@ networks:
 	}
 	if app.Volumes[4].Type != "bind" || app.Volumes[0].Type != "" {
 		t.Errorf("types: %q %q", app.Volumes[4].Type, app.Volumes[0].Type)
+	}
+	// Only a bind that says so is left for the homelab to make.
+	for i, v := range app.Volumes {
+		if v.NoCreate != (i == 5) {
+			t.Errorf("volume %d (%s): NoCreate %v", i, v.Raw, v.NoCreate)
+		}
 	}
 	if nw := f.Networks["homelab"]; !nw.External || nw.Name != "homelab" {
 		t.Fatalf("network: %+v", nw)

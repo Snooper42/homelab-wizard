@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -33,6 +34,19 @@ type Job struct {
 	Size         string    `json:"size,omitempty"` // what it holds at the destination, e.g. "12.3 GB"
 	State        string    `json:"state"`          // ok, failed, stale, or never
 	NextRun      time.Time `json:"nextRun"`        // when Duplicati will run it next; zero when not scheduled
+	// What its last run was, for a hover on Backups: how long it took
+	// (seconds; 0 when Duplicati did not say), what it holds of yours (its
+	// sources' size, e.g. "48.2 GB", and how many files), how many
+	// versions it keeps, and the folders it copies.
+	Took     int      `json:"took,omitempty"`
+	Holds    string   `json:"holds,omitempty"`
+	Files    int      `json:"files,omitempty"`
+	Versions int      `json:"versions,omitempty"`
+	Sources  []string `json:"sources,omitempty"`
+	// Its last weekly check (homelab backup-check): when, and what
+	// Duplicati found wrong (empty: its files matched).
+	Checked      time.Time `json:"checked,omitzero"`
+	CheckProblem string    `json:"checkProblem,omitempty"`
 }
 
 // Client is a signed-in session with one Duplicati.
@@ -76,6 +90,7 @@ func (c *Client) Jobs(ctx context.Context, now time.Time) ([]Job, error) {
 		Backup struct {
 			ID       string
 			Name     string
+			Sources  []string
 			Metadata map[string]string
 		}
 	}
@@ -85,7 +100,11 @@ func (c *Client) Jobs(ctx context.Context, now time.Time) ([]Job, error) {
 	jobs := make([]Job, 0, len(list))
 	for _, item := range list {
 		m := item.Backup.Metadata
-		j := Job{ID: item.Backup.ID, Name: item.Backup.Name, LastFinished: parse(m["LastBackupFinished"]), LastError: parse(m["LastErrorDate"]), Size: m["TargetSizeString"]}
+		j := Job{ID: item.Backup.ID, Name: item.Backup.Name, LastFinished: parse(m["LastBackupFinished"]), LastError: parse(m["LastErrorDate"]), Size: m["TargetSizeString"],
+			Holds: m["SourceSizeString"], Files: count(m["SourceFilesCount"]), Versions: count(m["BackupListCount"]), Sources: item.Backup.Sources}
+		if started := parse(m["LastBackupStarted"]); !started.IsZero() && j.LastFinished.After(started) {
+			j.Took = int(j.LastFinished.Sub(started).Round(time.Second) / time.Second)
+		}
 		switch {
 		case !j.LastError.IsZero() && j.LastError.After(j.LastFinished):
 			j.State, j.ErrorMessage = "failed", m["LastErrorMessage"]
@@ -133,6 +152,15 @@ func (c *Client) nextRuns(ctx context.Context) (map[string]time.Time, error) {
 }
 
 // parse reads Duplicati's serialized dates (yyyyMMddTHHmmssZ, in UTC).
+// count reads a number Duplicati keeps as text ("4210"); 0 when it is not one.
+func count(s string) int {
+	n, err := strconv.Atoi(strings.TrimSpace(s))
+	if err != nil || n < 0 {
+		return 0
+	}
+	return n
+}
+
 func parse(s string) time.Time {
 	t, err := time.Parse("20060102T150405Z07:00", s)
 	if err != nil {
@@ -166,33 +194,63 @@ func (c *Client) Restore(ctx context.Context, job string, paths []string, restor
 	if err := c.call(ctx, http.MethodPost, "/api/v1/backup/"+id+"/restore", body, &started); err != nil {
 		return err
 	}
+	failed, err := c.waitTask(ctx, started.ID, "restore", wait)
+	if err != nil {
+		return err
+	}
+	if failed != "" {
+		return fmt.Errorf("Duplicati's restore failed: %s", failed)
+	}
+	return nil
+}
+
+// Verify runs Duplicati's own check of job id's backup (its test, as
+// Verify files on its page does): it downloads a sample of the backup's
+// files and compares each with the hash it recorded. problem is what
+// Duplicati said when the check failed (a damaged file is "Hash mismatch
+// on file …"), empty when it passed; err is the check not running at all.
+// It waits up to wait: Duplicati retries a bad file a few times first.
+func (c *Client) Verify(ctx context.Context, id string, wait time.Duration) (problem string, err error) {
+	var started struct{ ID int64 }
+	if err := c.call(ctx, http.MethodPost, "/api/v1/backup/"+id+"/verify", []byte("{}"), &started); err != nil {
+		return "", err
+	}
+	return c.waitTask(ctx, started.ID, "check", wait)
+}
+
+// waitTask waits for one of Duplicati's tasks to end: failed is its error
+// when it failed, empty when it completed.
+func (c *Client) waitTask(ctx context.Context, task int64, what string, wait time.Duration) (failed string, err error) {
 	deadline := time.Now().Add(wait)
 	for {
 		var st struct {
 			Status       string
 			ErrorMessage string
 		}
-		if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/api/v1/task/%d", started.ID), nil, &st); err != nil {
-			return err
+		if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/api/v1/task/%d", task), nil, &st); err != nil {
+			return "", err
 		}
 		switch st.Status {
 		case "Completed":
-			return nil
+			return "", nil
 		case "Failed":
-			return fmt.Errorf("Duplicati's restore failed: %s", st.ErrorMessage)
+			if st.ErrorMessage == "" {
+				st.ErrorMessage = "no reason given; see Duplicati's log"
+			}
+			return st.ErrorMessage, nil
 		}
 		if time.Now().After(deadline) {
-			return fmt.Errorf("the restore was still %s after %s; see Duplicati's log", strings.ToLower(st.Status), wait)
+			return "", fmt.Errorf("the %s was still %s after %s; see Duplicati's log", what, strings.ToLower(st.Status), wait)
 		}
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return "", ctx.Err()
 		case <-time.After(pollEvery):
 		}
 	}
 }
 
-// pollEvery is how often Restore asks whether the task finished.
+// pollEvery is how often Restore and Verify ask whether the task finished.
 var pollEvery = 2 * time.Second
 
 func (c *Client) call(ctx context.Context, method, path string, body []byte, out any) error {

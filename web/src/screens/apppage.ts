@@ -2,8 +2,10 @@
 // what it shows beside the Status already read (its usage, the watchdog's
 // week, the last backup, who uses it), and its buttons run the rows'
 // actions (screens/status.ts), so a row and the page say the same.
+import { inTurn } from '../job/queue';
 import { type Day, mountAppPage } from '../page/AppPage';
 import { stateOf } from '../status/AppList';
+import { stoppedNext } from '../status/stopFor';
 import { appActions, appsBusyNow, cliFlow, pageOpener, pendingOf, statusById, statusData, watchRows } from './status';
 import { backupsData } from './backups';
 import { catalog } from './choose';
@@ -19,12 +21,15 @@ let disk: number | undefined;
 let watch: health.Summary | null = null;
 let household: people.Person[] | null = null;
 let explainer = '';
+// The proxy's and CrowdSec's pages say what CrowdSec stopped today.
+const guards = new Set(['nginx-proxy-manager', 'crowdsec']);
+let stopped: crowdsec.Protection | null | 'reading' = 'reading';
 // Its settings switched since the click, by app, until Status says so.
 const switching: Record<string, Record<string, boolean>> = {};
 async function setSetting(appId: string, setting: string, on: boolean) {
   switching[appId] = { ...switching[appId], [setting]: on };
   draw();
-  try { await go().SetAppSetting(appId, setting, on); } catch (e) { showError(e); }
+  try { await inTurn(`${statusById[appId]?.name || appId}: ${setting}`, () => go().SetAppSetting(appId, setting, on)); } catch (e) { showError(e); }
   await statusData.load().catch(() => {});
   const { [setting]: _, ...rest } = switching[appId] || {};
   switching[appId] = rest;
@@ -38,7 +43,7 @@ const shown = () => !!id && $('app').classList.contains('active');
 
 /** Opens an app's page, from its row or the app's --screen app:<id>. */
 export function openApp(appId: string) {
-  if (appId !== id) { usage = undefined; disk = undefined; household = null; }
+  if (appId !== id) { usage = undefined; disk = undefined; household = null; stopped = 'reading'; }
   id = appId;
   navigate('app');
   const h1 = $1('#app h1');
@@ -93,8 +98,9 @@ async function readIcon(of: string) {
 
 async function readRest() {
   const at = id;
-  const [w, st, ppl, ex] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer()]);
+  const [w, st, ppl, ex, pr] = await Promise.allSettled([go().Watchdog(), go().Storage(), go().People(), go().Explainer(), guards.has(at) ? go().Protection() : Promise.resolve(null)]);
   if (at !== id) return;
+  stopped = pr.status === 'fulfilled' ? pr.value : null;
   watch = w.status === 'fulfilled' ? w.value : null;
   disk = st.status === 'fulfilled' ? st.value?.apps?.find((x) => x.app === id)?.bytes : undefined;
   household = ppl.status === 'fulfilled' ? (ppl.value || []).filter((p) => never(p.removed) && (!p.apps?.length || p.apps.includes(id))) : null;
@@ -115,13 +121,15 @@ function draw() {
   const companion = document.documentElement.classList.contains('companion');
   mountAppPage($('appPage'), {
     a, entry, state: stateOf(a, new Set(statusData.value?.batteryPaused || []), statusData.value?.stopped || {}), pending: pendingOf(id), busy: appsBusyNow(),
-    usage: a.state === 'running' ? usage : undefined, disk, days: week(), switching: switching[id] || {},
+    next: stoppedNext(a, statusData.value?.stopped?.[id], (statusData.value?.batteryPaused || []).includes(id)),
+    usage: a.state === 'running' ? usage : undefined, disk, days: week(), watching: !!watch && !never(watch.lastRun), outages: watch ? (watch.outages ? watch.outages[id] || [] : undefined) : undefined, switching: switching[id] || {},
     backup: backupsData.value || null,
     people: usedByPeople(a, entry) && household ? household : null,
     icon: icons[id] || '', explainer,
     // Dozzle is kept to this computer (docs/Security.md, L1): not on a phone.
     dozzle: !companion && statusById.dozzle?.state === 'running' ? statusById.dozzle.url || '' : '',
     machine: thisMachine.replace(/^This/, 'this'), companion,
+    stopped: guards.has(id) ? stopped : undefined,
     on: {
       back: () => navigate('status'),
       act: (action) => appActions.act(a, action),

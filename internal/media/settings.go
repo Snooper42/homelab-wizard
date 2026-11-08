@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Inputs are what the engines' settings are made from.
@@ -112,8 +114,11 @@ func Settings(in Inputs) map[string]any {
 			"codec":     strings.ToLower(or(env["TIDY_VIDEO_CODEC"], "hevc")),
 			"gpu":       in.GPU,
 			"libraries": in.Record.TdarrLibraries,
-			"path_map": [][]string{{lib("movies"), "/media/movies"}, {lib("tv"), "/media/tv"},
-				{filepath.Join(mediaRoot, "movies"), "/media/movies"}, {filepath.Join(mediaRoot, "tv"), "/media/tv"}},
+			// What Tdarr's container mounts (compose/media-automation.yaml), and
+			// nothing else: a films or TV library set elsewhere (TIDY_MOVIES_LIBRARY)
+			// isn't in it, and the engines say so rather than hand Tdarr a path it
+			// can't open.
+			"path_map": [][]string{{filepath.Join(mediaRoot, "movies"), "/media/movies"}, {filepath.Join(mediaRoot, "tv"), "/media/tv"}},
 		}
 	}
 	servers := map[string]any{}
@@ -155,11 +160,7 @@ func Write(root string, s map[string]any) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o644); err != nil {
-		return "", err
-	}
-	return path, os.Rename(tmp, path)
+	return path, lockedfile.Write(path, append(data, '\n'), 0o644)
 }
 
 // SecretKeys are the .env keys the engines read from their environment

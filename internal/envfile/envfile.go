@@ -27,6 +27,7 @@ type File struct {
 	loaded  []string          // the lines as read, to notice another writer
 	changed map[string]string // keys set since loading, in their raw form
 	order   []string          // changed keys in the order they were set
+	deleted []string          // keys deleted since loading
 }
 
 var assign = regexp.MustCompile(`^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$`)
@@ -117,6 +118,43 @@ func (f *File) Set(key, value string) {
 	f.set(key, value)
 }
 
+// Delete takes key out of the file, with the note just above it (the
+// comment lines up to a blank line, a setting, or a "# ---" heading), for
+// a setting the homelab no longer keeps here. It reports whether the key
+// was there.
+func (f *File) Delete(key string) bool {
+	if _, ok := f.changed[key]; ok {
+		delete(f.changed, key)
+		f.order = slices.DeleteFunc(f.order, func(k string) bool { return k == key })
+	}
+	if !slices.Contains(f.deleted, key) {
+		f.deleted = append(f.deleted, key)
+	}
+	return f.delete(key)
+}
+
+func (f *File) delete(key string) bool {
+	found := false
+	for i := 0; i < len(f.lines); i++ {
+		m := assign.FindStringSubmatch(f.lines[i])
+		if m == nil || m[1] != key {
+			continue
+		}
+		start := i
+		for start > 0 {
+			l := strings.TrimSpace(f.lines[start-1])
+			if !strings.HasPrefix(l, "#") || strings.HasPrefix(l, "# ---") {
+				break
+			}
+			start--
+		}
+		f.lines = append(f.lines[:start], f.lines[i+1:]...)
+		i = start - 1
+		found = true
+	}
+	return found
+}
+
 // Comment appends lines of comment (a "# " is added to each that has
 // none; an empty one is a blank line), as the heading of what is set next.
 func (f *File) Comment(lines ...string) {
@@ -161,6 +199,9 @@ func (f *File) Save() error {
 		for _, k := range f.order {
 			cur.set(k, f.changed[k])
 		}
+		for _, k := range f.deleted {
+			cur.delete(k)
+		}
 		lines = cur.lines
 	}
 	tmp, err := os.CreateTemp(dir, ".env-*.tmp")
@@ -191,7 +232,7 @@ func (f *File) Save() error {
 		return err
 	}
 	f.lines, f.loaded = lines, append([]string(nil), lines...)
-	f.changed, f.order = nil, nil
+	f.changed, f.order, f.deleted = nil, nil, nil
 	return nil
 }
 
@@ -523,6 +564,11 @@ func Rehome(envPath string, id Identity) ([]Change, error) {
 // for encryption/secret keys, otherwise 32 alphanumeric characters.
 func NewSecret(key string) (string, error) {
 	upper := strings.ToUpper(key)
+	if upper == "TDARR_API_KEY" {
+		// Tdarr takes a seeded key only in its own shape (tried, 3.06).
+		s, err := NewSecret("TDARR_KEY")
+		return "tapi_" + s, err
+	}
 	if strings.Contains(upper, "ENCRYPTION_KEY") || strings.Contains(upper, "SECRET_KEY") {
 		b := make([]byte, 32)
 		if _, err := rand.Read(b); err != nil {

@@ -54,6 +54,8 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
+	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 	"github.com/Snooper42/homelab-wizard/internal/upgrade"
@@ -534,6 +536,15 @@ func (a *App) Install(tokens []string, settings map[string]string) ([]api.Starte
 		return nil, errors.New("an install is already running")
 	}
 	defer a.install.Unlock()
+	// Its turn behind any other change, from a phone or the nightly jobs
+	// (internal/turn); the commands it runs after have it too.
+	release, err := turn.Take(a.ctx, a.root, "installing apps", func(ahead turn.Ticket) {
+		emitEvent(a.ctx, "install:log", "Waiting for “"+ahead.What+"” to finish first…")
+	})
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	c, client, p, err := a.plan(tokens, settings)
 	if err != nil {
 		return nil, err
@@ -734,7 +745,30 @@ func (a *App) Alerts() ([]notify.Event, error) {
 // Watchdog is the watchdog's last run (every 15 minutes once the jobs are
 // installed): how many checks ran, and those failing with what they said.
 func (a *App) Watchdog() health.Summary {
-	return health.LoadState(health.StatePath(a.root)).Summary()
+	return core.WatchdogSummary(a.root)
+}
+
+// SnoozeCheck stops the watchdog alerting about one failing check for
+// hours (Status › Watchdog › Snooze); 0 wakes it. It goes on checking it,
+// and alerts when the snooze ends if it still fails.
+func (a *App) SnoozeCheck(check string, hours int) error {
+	if hours < 0 || hours > 24*7 {
+		return fmt.Errorf("a snooze is up to a week, not %d hours", hours)
+	}
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	return notify.Snooze(a.root, check, until)
+}
+
+// TailnetDevices is every device on the household's tailnet, when
+// last seen, with each one's page in Tailscale's admin console (Remove).
+// It fails with "not running" until Tailscale runs.
+func (a *App) TailnetDevices() ([]tailnet.Device, error) {
+	ctx, cancel := a.timed()
+	defer cancel()
+	return core.TailnetDevices(ctx, a.root)
 }
 
 // Protection is CrowdSec's view: whether the proxy enforces its bans, and
@@ -1176,6 +1210,18 @@ func (a *App) SetPhoneFinances(id, level string) ([]companion.Phone, error) {
 	return store.Phones(), err
 }
 
+// SetPhoneUntil ends what a phone may do beyond looking (changes, and
+// Finances) in hours from now; 0 keeps it until you change it.
+func (a *App) SetPhoneUntil(id string, hours int) ([]companion.Phone, error) {
+	store := companion.NewStore(companion.StorePath(a.root))
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	_, err := store.SetUntil(id, until)
+	return store.Phones(), err
+}
+
 // RemovePhone unpairs a phone: its token stops working at once.
 func (a *App) RemovePhone(id string) ([]companion.Phone, error) {
 	store := companion.NewStore(companion.StorePath(a.root))
@@ -1471,8 +1517,10 @@ func (a *App) StopUntil(id, until string) error {
 
 // SetAppSetting turns one of an app's own settings on or off, from its
 // page: "updates" (the nightly update; off holds it, homelab updates
-// hold|release) or "alerts" (the watchdog's alerts about it, homelab
-// notify on|off). Status says the new state.
+// hold|release), "sundays" (its update window: Sundays only, or every
+// night, homelab updates days), "alerts" (the watchdog's alerts about it, homelab
+// notify on|off), or "pinned" (at the top of Status and the menu bar's
+// Open an app, homelab pin|unpin). Status says the new state.
 func (a *App) SetAppSetting(id, setting string, on bool) error {
 	c, err := a.catalog()
 	if err != nil {
@@ -1491,10 +1539,24 @@ func (a *App) SetAppSetting(id, setting string, on bool) error {
 		if on {
 			args[1] = "release"
 		}
+	case "sundays":
+		// Its update window: the nightly update takes it on Sundays only, or every night.
+		if err := a.container(id); err != nil {
+			return err
+		}
+		args = []string{"updates", "days", id, "every"}
+		if on {
+			args[3] = "sun"
+		}
 	case "alerts":
 		args = []string{"notify", "off", id}
 		if on {
 			args[1] = "on"
+		}
+	case "pinned":
+		args = []string{"unpin", id}
+		if on {
+			args[0] = "pin"
 		}
 	default:
 		return fmt.Errorf("unknown setting %q", setting)

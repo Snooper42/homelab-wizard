@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
@@ -33,6 +34,15 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 		}
 		if held := updates.Held(h.envMap()); len(held) > 0 && !u.JSON {
 			u.Printf("Held (not updated): %s (homelab updates release <app>).\n", strings.Join(held, ", "))
+		}
+		if days := updates.LoadDays(updates.DaysPath(h.root)); len(days) > 0 && !u.JSON {
+			var on []string
+			for _, a := range h.catalog.Apps {
+				if d, ok := days[a.ID]; ok {
+					on = append(on, a.Name()+" on "+updates.DaysText(d))
+				}
+			}
+			u.Printf("On their own days: %s (homelab updates days <app> every).\n", strings.Join(on, ", "))
 		}
 	}
 	switch action {
@@ -76,6 +86,38 @@ func (h *homelab) updates(ctx context.Context, args []string) error {
 			u.OK("%s is updated nightly again", a.Name())
 		}
 		return nil
+	case "days":
+		// homelab updates days immich sun: the nightly update takes Immich
+		// on Sundays only; every puts it back to every night.
+		if len(rest) < 2 {
+			return fmt.Errorf("usage: homelab updates days <app> [sun|sat+sun|weekend|every]")
+		}
+		a, ok := h.catalog.Get(rest[1])
+		if !ok || a.Native() != nil {
+			return fmt.Errorf("unknown container app %q", rest[1])
+		}
+		if len(rest) == 2 {
+			u.Printf("%s is updated %s.\n", a.Name(), onDays(updates.LoadDays(updates.DaysPath(h.root))[a.ID]))
+			return nil
+		}
+		days, err := updates.ParseDays(strings.Join(rest[2:], " "))
+		if err != nil {
+			return err
+		}
+		if err := updates.SaveDays(updates.DaysPath(h.root), a.ID, days); err != nil {
+			return err
+		}
+		u.OK("%s is updated %s", a.Name(), onDays(days))
+		return nil
 	}
-	return fmt.Errorf("unknown updates command %q (status, pause, resume, notes, hold, release)", action)
+	return fmt.Errorf("unknown updates command %q (status, pause, resume, notes, hold, release, days)", action)
+}
+
+// onDays says when the nightly update takes an app: "every night", or "by
+// the nightly update on Sundays only".
+func onDays(days []time.Weekday) string {
+	if len(days) == 0 {
+		return "every night"
+	}
+	return "by the nightly update on " + updates.DaysText(days) + " only"
 }

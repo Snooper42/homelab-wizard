@@ -73,6 +73,7 @@ Every command that takes apps (`install`, `plan`, `start`, `stop`, `restart`, `u
 ./homelab updates resume
 ./homelab updates hold <app>     # leave one app out of nightly updates
 ./homelab updates release <app>  # put it back (after a rollback too)
+./homelab updates days immich sun  # update Immich on Sundays only (sat+sun, weekend; every: each night)
 ./homelab updates notes <app>    # what updating it brings: its newer releases' notes
 ./homelab wire                   # connect running apps: Prowlarr, FlareSolverr, qBittorrent, root folders, Bazarr, Seerr
 ./homelab move out --to /Volumes/Drive/homelab.tar   # moving machines: back up, stop, pack it into one file
@@ -165,6 +166,7 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab phone allow <id>                # may start, stop, restart, and back up
 ./homelab phone read-only <id>
 ./homelab phone finances <id> view        # it sees Finances (edit: it may change them too; card: a wall screen's money card only; off: hidden again)
+./homelab phone until <id> 7d             # its changes and Finances end in a week (12h, 2w); then it only looks. never: no end
 ./homelab phone remove <id>               # its token stops working
 ./homelab serve                           # the companion itself (the serve job runs it)
 ```
@@ -184,6 +186,7 @@ The companion also serves Finances' calendar feed, `/finances.ics?key=…`: the 
 ./homelab notify setup             # write grants for the alert topics
 ./homelab notify test duplicati-alerts
 ./homelab notify off vikunja        # checked, but no alerts about it (on: alerts again)
+./homelab notify snooze "crowdsec bouncer" 1h  # one check not alerted about for an hour (1d: a day; off: now); alerted then if it still fails
 ./homelab digest                   # the weekly summary; --send sends it now
 ./homelab schedule install         # the startup, backup, watchdog, awake, and serve jobs
 ./homelab schedule status

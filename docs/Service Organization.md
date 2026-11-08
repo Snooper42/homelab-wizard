@@ -27,12 +27,12 @@ Network and System apps manage the homelab, so `validate` refuses to publish the
 | | Baseline | Optional |
 |---|---|---|
 | In compose | No `profiles` | `profiles: [optional]` |
-| Started by | `./homelab up`, and the startup job after every login | `./homelab install <app>` or Choose stacks; after that its restart policy brings it back with OrbStack |
+| Started by | `./homelab up`, and the startup job after every login | `./homelab install <app>` or Choose apps; after that its restart policy brings it back with OrbStack |
 | Purpose | What the household needs every day | Ready to slot in, fully configured and documented |
 
 Baseline today: Nginx Proxy Manager, AdGuard Home, CrowdSec, Duplicati, Cloudflare Tunnel, Vaultwarden, Uptime Kuma, ntfy, Immich, Paperless-ngx, MoneyMatter, Navidrome, Feishin, Audiobookshelf, Calibre-Web, and Komga, plus Jellyfin and the phone companion natively.
 
-Small baseline: a folder the desktop app makes (or any with `HOMELAB_BASELINE=small`) starts only Duplicati, ntfy, and Uptime Kuma (`x-homelab-small-baseline` in `compose.yaml`); the household picks every other app, the baseline ones included, in Choose stacks.
+Small baseline: a folder the desktop app makes (or any with `HOMELAB_BASELINE=small`) starts only Duplicati, ntfy, and Uptime Kuma (`x-homelab-small-baseline` in `compose.yaml`); the household picks every other app, the baseline ones included, in Choose apps.
 
 Optional: every other app. `./homelab apps` lists each one as baseline, optional, or native, and [Inventory](<Inventory.md>) has their addresses.
 
@@ -47,7 +47,7 @@ Moving an app between the two is one line: add or remove `profiles: [optional]`.
 
 ## Bundles and selection
 
-Bundles name a set of apps, declared in `x-homelab-bundles`. The ones marked `starter: true` are the **Start here** cards in Choose stacks.
+Bundles name a set of apps, declared in `x-homelab-bundles`. The ones marked `starter: true` are the **Start here** cards in Choose apps.
 
 | Bundle | Apps | Select with |
 |---|---|---|

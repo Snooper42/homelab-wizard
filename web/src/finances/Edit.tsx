@@ -6,11 +6,12 @@ import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
-import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx } from './importData';
+import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned, wayOnly, wayOnlyFixes } from './importData';
 import { carFromPrice, rateOf } from './model';
+import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
 export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal';
@@ -28,6 +29,8 @@ export interface EditProps {
   checking: string;
   /** Each account today as expected, by ID (View.Start): what Update balances starts from. */
   start?: Record<string, number>;
+  /** Each payment's days near today (View.Dues): what a bank's file's rows are matched to. */
+  dues?: Record<string, string[]>;
   /** Keeps the plan; false when it failed (the screen says why). */
   save: (plan: finance.Plan) => Promise<boolean>;
   /** The categories a transaction is offered (the plan's, or the defaults). */
@@ -85,7 +88,8 @@ function Actions({ busy, exists, remove, close, problem, touched, uses, removeAl
       </> : <button type="button" class="small danger" disabled={busy} onClick={() => { if (sure) remove(); else setSure(true); }}>{sure ? 'Click again to delete' : 'Delete'}</button>)}
       <span class="grow" />
       <button type="button" class="small" onClick={cancel} disabled={busy}>Cancel</button>
-      <button type="submit" class="primary small" disabled={busy}>Save</button>
+      {/* Save (a click, or Enter in a box) ends a Cancel or Delete asked about, so what stops the save is what shows. */}
+      <button type="submit" class="primary small" disabled={busy} onClick={() => { setLeaving(false); setSure(false); }}>Save</button>
     </div>
     </>
   );
@@ -284,6 +288,10 @@ function PaymentForm(props: EditProps) {
   const [from, setFrom] = useState(x?.from || checking || '');
   const [to, setTo] = useState(x?.to || '');
   const [card, setCard] = useState(x?.card || '');
+  // Money that goes out of the household's accounts, or comes in from someone outside it (who sends it).
+  const [way, setWay] = useState(x?.payer ? 'in' : 'out');
+  const [payer, setPayer] = useState(x?.payer || '');
+  const comesIn = way === 'in';
   // A subscription's type: the one picked, or "" for the one suggested from its logo or name as they change.
   const [type, setType] = useState(x?.type || '');
   // The household's own image for its logo, as it opened (its brand's, or its name's).
@@ -296,11 +304,13 @@ function PaymentForm(props: EditProps) {
   const accounts = plan.accounts || [];
   const submit = (e: Event) => {
     e.preventDefault();
-    const wrong = !name.trim() ? 'Give it a name.' : !card && num(amount) <= 0 ? 'Type how much it is.' : card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
+    const wrong = !name.trim() ? 'Give it a name.' : comesIn && !payer.trim() ? 'Say who sends it.' : (comesIn || !card) && num(amount) <= 0 ? 'Type how much it is.' : !comesIn && card && card === from ? 'A card can\'t pay itself off: pick the account it comes out of.' : every === 'twice a month' && !(num(day2) >= 1 && num(day2) <= 31) ? 'The second day is 1 to 31.' : every === 'twice a month' && num(day2) === parseDay(start).getDate() ? 'The second day is the first one again: pick another.' : '';
     setProblem(wrong);
     if (wrong) return;
     const p: finance.Payment = { id: x?.id || '', name: name.trim(), amount: num(amount), estimate, kind, institution: brand || undefined,
-      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined }, from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined,
+      schedule: { every, start, day2: every === 'twice a month' ? num(day2) : undefined, person: every === 'paycheck' ? person : undefined },
+      // From someone outside: out of none of the household's accounts, into checking unless another is picked.
+      ...(comesIn ? { payer: payer.trim(), to: to && to !== checking ? to : undefined } : { from: from === checking ? undefined : from || undefined, to: to || undefined, card: card || undefined }),
       type: kind === 'subscriptions' && type ? type : undefined };
     const list = (plan.payments || []).slice();
     const at = list.findIndex((q) => q.id === x?.id);
@@ -313,18 +323,24 @@ function PaymentForm(props: EditProps) {
       <div class="formhead"><Mark brand={brand === 'none' ? '' : brand} kind={kind} name={name || 'Payment'} type={kind === 'subscriptions' ? type || suggested : undefined} img={img} size="lg" /><h2 id="finSheetTitle">{x ? x.name : 'Add a payment'}</h2></div>
       <BrandPick kind={kind} value={brand === 'none' ? '' : brand} set={(k) => { picked.current = true; setBrand(k || 'none'); follow(k); if (k && !name.trim()) setName(brandName(k)); }} payment />
       <OwnLogo value={img} set={setImg} what={brand && brand !== 'none' ? brandName(brand) : name.trim() || 'this payment'} />
+      <div class="finway"><Segmented label="Which way the money goes" value={way} pick={setWay} options={[['out', 'Goes out'], ['in', 'Comes in from someone']]} /></div>
       <div class="formgrid">
-        <Field label="Name"><input value={name} onInput={input(rename)} placeholder="Mortgage" required /></Field>
-        <MoneyField label={card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
+        <Field label="Name"><input value={name} onInput={input(rename)} placeholder={comesIn ? 'Mortgage share' : 'Mortgage'} required /></Field>
+        {comesIn && <Field label="From"><input value={payer} onInput={input(setPayer)} placeholder="Who sends it" /></Field>}
+        <MoneyField label={!comesIn && card ? 'Other spending on it each time (each pays the balance)' : 'Amount'} value={amount} set={setAmount} />
         <Field label="Category"><select value={kind} onChange={input((k) => { kindPicked.current = true; setKind(k); })}>{categories.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select></Field>
         {kind === 'subscriptions' && <Field label="Type"><select value={type} onChange={input(setType)}>
           <option value="">{suggested ? `${subTypeName(suggested)} (from its ${brand && brand !== 'none' ? 'logo' : 'name'})` : 'Other (pick one)'}</option>
           {subTypes.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
         </select></Field>}
         <ScheduleFields every={every} setEvery={setEvery} start={start} setStart={setStart} day2={day2} setDay2={setDay2} startLabel={x ? 'Starting' : 'Next on'} people={plan.people} person={person} setPerson={setPerson} />
-        <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
-        <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
-        <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
+        {comesIn
+          ? <AccountSelect label="Comes into" value={to || checking} set={setTo} accounts={accounts.filter((a) => !owed(a.kind) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
+          : <>
+            <AccountSelect label="Comes out of, or is charged to" value={from} set={setFrom} accounts={accounts.filter((a) => (a.kind === 'card' || !owed(a.kind)) && !held(a.kind))} none={accounts.length ? undefined : 'Checking'} />
+            <AccountSelect label="Goes into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== from && !held(a.kind))} none="Nowhere (a bill)" />
+            <AccountSelect label="Pays off a card" value={card} set={setCard} accounts={accounts.filter((a) => a.kind === 'card')} none="No" />
+          </>}
         <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
@@ -691,6 +707,8 @@ function TransactionForm(props: EditProps) {
   const [to, setTo] = useState(t?.to || '');
   const [category, setCategory] = useState(t?.category || '');
   const [payment, setPayment] = useState(t?.payment || '');
+  // Picked by hand (None too); until then, the planned payment it plainly pays, as it is typed.
+  const [paymentPicked, setPaymentPicked] = useState(!!t?.payment || !!t?.notPlanned);
   const [note, setNote] = useState(t?.note || '');
   // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
   const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
@@ -716,7 +734,14 @@ function TransactionForm(props: EditProps) {
   const logoPicked = useRef(!!t?.institution);
   const [picking, setPicking] = useState(false);
   const typePayee = (who: string) => { setPayee(who); if (!catTyped.current) setCategory(lastFor(who) || ''); if (!logoPicked.current) setLogo(logoFor(who) || ''); };
+  // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
+  const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
+  const guess = !paymentPicked && way !== 'move' && num(amount) > 0
+    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike) : undefined;
+  const linked = paymentPicked ? payment : guess?.payment || '';
+  const guessed = guess && payments.find((x) => x.id === guess.payment);
   const choose = (id: string) => {
+    setPaymentPicked(true);
     setPayment(id);
     const x = payments.find((q) => q.id === id);
     if (!x) return;
@@ -740,7 +765,7 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: payment || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
+      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
@@ -766,10 +791,10 @@ function TransactionForm(props: EditProps) {
         <AccountSelect label={way === 'in' ? 'Into' : way === 'move' ? 'Out of' : 'Out of, or charged to'} value={account} set={setAccount} accounts={accounts} />
         {way === 'move' && <AccountSelect label="Into" value={to} set={setTo} accounts={accounts.filter((a) => a.id !== account)} none="Pick one" />}
         {way !== 'move' && !parts.length && <Field label="Category"><input value={category} onInput={input((c) => { catTyped.current = true; setCategory(c); })} list="finCategories" placeholder="Groceries" /></Field>}
-        <Field label="Pays a planned payment"><select value={payment} onChange={input(choose)}>
+        <Field label="Pays a planned payment"><select value={linked} onChange={input(choose)}>
           <option value="">None</option>
           {payments.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
-        </select></Field>
+        </select>{guessed && <small class="muted fx-looks">Looks like {guessed.name}, planned {money(guessed.amount)}</small>}</Field>
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
@@ -864,7 +889,8 @@ function CategoriesForm(props: EditProps) {
           return (
             <li key={i} class={r.parent ? 'sub' : ''} data-was={r.was || undefined}>
               {/* With no icon of its own, its group's, as its transactions show. */}
-              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm" />
+              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm"
+                hue={r.income ? undefined : categoryHue(r.parent || r.name, rows.map((q) => ({ name: q.name, parent: q.parent || undefined, income: q.income })))} />
               <input aria-label="Name" value={r.name} onInput={(ev) => set(i, 'name', (ev.target as HTMLInputElement).value)} />
               <select aria-label={`${r.name || 'Category'}'s group`} value={r.parent} onChange={(ev) => set(i, 'parent', (ev.target as HTMLSelectElement).value)}>
                 <option value="">No group</option>
@@ -937,7 +963,11 @@ function BudgetsForm(props: EditProps) {
  * device and read here (never sent anywhere), into an account. A CSV's
  * columns are guessed from its header and can be picked; a preview lists
  * what would come in, those already in the ledger skipped, each payee with
- * the category it had last.
+ * the category it had last. A row that plainly pays a planned payment is
+ * linked to it, so the plan does not take it out again on its day; the
+ * preview says so, and the link can be changed or taken off there. A row
+ * brought in before with only CREDIT or DEBIT as its payee (a Chase file,
+ * read wrongly) takes this file's payee for it, rather than coming in twice.
  */
 function ImportForm(props: EditProps) {
   const { plan, checking, ledger } = props;
@@ -949,30 +979,47 @@ function ImportForm(props: EditProps) {
   const [cols, setCols] = useState<Columns | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  const [picked, setPicked] = useState<Record<number, string>>({});
   const ofx = !!text && isOfx(text);
   const rows = text && !ofx ? csvRows(text) : [];
   const header = rows[0] || [];
   const read = async (f?: File) => {
     if (!f) return;
     const t = await f.text();
-    setName(f.name); setText(t); setProblem('');
-    setCols(isOfx(t) ? null : guessColumns(csvRows(t)[0] || []));
+    setName(f.name); setText(t); setProblem(''); setPicked({});
+    const all = isOfx(t) ? [] : csvRows(t);
+    setCols(isOfx(t) ? null : guessColumns(all[0] || [], all.slice(1)));
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
   const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
   // The bank's wording is kept only when it says more than the clean name in other capitals.
   const found = read_.map((t) => { const payee = cleanPayee(t.payee); return { ...t, payee, raw: t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined }; });
   const have = ledger?.transactions || [];
-  const fresh = found.filter((t) => !already(t, account, have) && !(t.raw && already({ ...t, payee: t.raw }, account, have)));
+  const fixes = wayOnlyFixes(found, account, have);
+  const fixed = new Set(fixes.values()), others = have.filter((q) => !fixed.has(q.id));
+  const fresh = found.filter((t, i) => !fixes.has(i) && !already(t, account, others) && !(t.raw && already({ ...t, payee: t.raw }, account, others)));
   const lastCat = (payee: string) => [...have].reverse().find((q) => q.payee && q.category && q.payee.toLowerCase() === payee.toLowerCase())?.category;
   // A logo picked for a payee before goes on with it.
   const lastLogo = (payee: string) => [...have].reverse().find((q) => q.payee && q.institution && q.payee.toLowerCase() === payee.toLowerCase())?.institution;
+  // What each fresh row plainly pays, in the file's order, no planned day paid twice; then what was picked instead (picked, by row).
+  const payments = (plan.payments || []).filter((x) => !x.card);
+  const guessed: (Planned | undefined)[] = (() => {
+    const taken = paidDays(have, props.dues || {});
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysAlike); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+  })();
+  const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   const bring = async (e: Event) => {
     e.preventDefault();
-    if (!fresh.length) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
-    const added: finance.Transaction[] = fresh.map((t) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, institution: (t.payee && lastLogo(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id }));
+    if (!fresh.length && !fixes.size) { setProblem(found.length ? 'All of them are in already.' : 'Nothing in this file reads as a transaction: check the columns.'); return; }
+    // Each CREDIT or DEBIT row takes its payee, the bank's wording as a note, and the payee's last category and logo where it has none.
+    const fix = new Map([...fixes].map(([i, id]) => [id, found[i]]));
+    const kept = have.map((q) => {
+      const t = fix.get(q.id);
+      return t ? { ...q, payee: t.payee || q.payee, note: q.note || (t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo) || undefined, category: q.category || (t.payee && lastCat(t.payee)) || undefined, institution: q.institution || (t.payee && lastLogo(t.payee)) || undefined, bank: q.bank || t.id } : q;
+    });
+    const added: finance.Transaction[] = fresh.map((t, i) => ({ id: '', date: t.date, account, amount: t.amount, payee: t.payee || undefined, category: (t.payee && lastCat(t.payee)) || undefined, institution: (t.payee && lastLogo(t.payee)) || undefined, note: t.raw ? (t.memo ? `${t.memo} (${t.raw})` : t.raw) : t.memo || undefined, bank: t.id, payment: linkOf(i) || undefined }));
     setBusy(true);
-    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...have, ...added] });
+    const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: [...kept, ...added] });
     setBusy(false);
     if (ok) props.close();
   };
@@ -992,7 +1039,7 @@ function ImportForm(props: EditProps) {
           <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
           {name && <span class="muted">{name}</span>}
         </span></Field>
-        <AccountSelect label="Into the ledger of" value={account} set={setAccount} accounts={accounts} />
+        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); }} accounts={accounts} />
         {cols && <>
           {colPick('Day', 'date')}
           {colPick('Amount', 'amount')}
@@ -1002,13 +1049,22 @@ function ImportForm(props: EditProps) {
         </>}
       </div>
       {!!text && <>
-        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{found.length - fresh.length ? `${found.length - fresh.length} already in, skipped` : ''}</span></h3>
+        <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{[fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : '', found.length - fresh.length - fixes.size ? `${found.length - fresh.length - fixes.size} already in, skipped` : ''].filter(Boolean).join(' · ')}</span></h3>
+        {!ofx && found.length > 1 && found.every((t) => !t.payee || wayOnly(t.payee)) && <p class="formerr bad importnote" role="alert">No payee here is a name, only {found.find((t) => t.payee)?.payee ? `“${found.find((t) => t.payee)!.payee}”` : 'empty'}: pick the column with the names under Payee.</p>}
+        {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {
-            const dup = !fresh.includes(t);
+            const k = fresh.indexOf(t), fixing = fixes.has(i), dup = k < 0 && !fixing;
+            const g = k < 0 ? undefined : guessed[k], link = k < 0 ? '' : linkOf(k), x = payments.find((q) => q.id === link);
             return <li key={i} class={dup ? 'dup' : ''}>
               <Mark brand={payeeBrand(t.payee ? lastLogo(t.payee) : undefined, t.payee)} name={t.payee || '?'} size="sm" auto={!!t.payee} />
-              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small></span>
+              <span class="grow"><strong>{t.payee || 'No payee'}</strong><small>{t.raw ? `${t.raw} · ` : ''}{dayLongOf(t.date)}{fixing ? ' · gives the CREDIT or DEBIT row its payee' : dup ? ' · already in' : t.payee && lastCat(t.payee) ? ` · ${lastCat(t.payee)}` : ''}</small>
+                {g && <span class="importlink"><small>{!x ? 'Not a planned payment' : k in picked ? `Pays ${x.name}` : `Looks like ${x.name}, planned ${money(x.amount)}`}</small>
+                  <select aria-label={`What ${t.payee} on ${dayLongOf(t.date)} pays`} value={link} onChange={(e) => setPicked({ ...picked, [k]: (e.target as HTMLSelectElement).value })}>
+                    <option value="">Nothing planned</option>
+                    {payments.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+                  </select></span>}
+              </span>
               <span class={t.amount > 0 ? 'fx-in' : ''}>{signedOf(t.amount)}</span>
             </li>;
           })}
@@ -1018,7 +1074,7 @@ function ImportForm(props: EditProps) {
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <div class="actions finactions"><span class="grow" />
         <button type="button" class="small" onClick={props.close} disabled={busy}>Cancel</button>
-        <button type="submit" class="primary small" disabled={busy || !fresh.length}>{fresh.length ? `Bring in ${fresh.length}` : 'Bring in'}</button>
+        <button type="submit" class="primary small" disabled={busy || (!fresh.length && !fixes.size)}>{[fresh.length ? `Bring in ${fresh.length}` : '', fixes.size ? `${fresh.length ? 'fix' : 'Fix'} ${fixes.size}` : ''].filter(Boolean).join(', ') || 'Bring in'}</button>
       </div>
     </form>
   );

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // stoppedApps is what homelab quit stopped, kept in scripts/logs/stopped.json
@@ -70,7 +71,7 @@ func (h *homelab) quit(ctx context.Context, args []string) error {
 	if core.QuitTray() {
 		u.OK("quit %s", tray)
 	}
-	if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+	if err := h.makeLogsDir(); err != nil {
 		return err
 	}
 	// Quit twice: the first one's list still counts.
@@ -113,9 +114,14 @@ func (h *homelab) quit(ctx context.Context, args []string) error {
 	return nil
 }
 
+// saveStopped replaces the list whole: one torn by a quit cut short would
+// be unreadable, and startStopped would start nothing. It is apart from
+// internal/stopped's data/stopped.json on purpose: that one is apps a
+// person stopped, which nothing starts by itself; this one is everything
+// quit stopped, all started again together.
 func (h *homelab) saveStopped(s stoppedApps) error {
 	data, _ := json.MarshalIndent(s, "", "  ")
-	return os.WriteFile(h.stoppedFile(), data, 0o644)
+	return lockedfile.Write(h.stoppedFile(), data, 0o644)
 }
 
 // resume undoes homelab quit: the background agent runs again, and the

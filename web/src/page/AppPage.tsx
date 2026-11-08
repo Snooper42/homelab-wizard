@@ -14,8 +14,9 @@ import { Empty } from '../parts/Empty';
 import { MenuButton } from '../parts/MenuButton';
 import { Row, Rows } from '../parts/Row';
 import { Tile } from '../status/Tiles';
-import type { Pending } from '../status/AppList';
+import { lasted, type Pending } from '../status/AppList';
 import { stopChoices } from '../status/stopFor';
+import { attackDetail, attackFrom, attackWords } from '../status/attack';
 
 /** What the page does; screens/apppage.ts runs each. */
 export interface AppPageActions {
@@ -64,6 +65,8 @@ export interface AppPageProps {
   entry?: api.App;
   /** The dot's class and the words for its state (AppList's stateOf). */
   state: [string, string];
+  /** Why it isn't running and what to do (stopFor's stoppedNext): empty while it runs. */
+  next?: [string, string];
   /** Its action since the click, until the runtime confirms it. */
   pending?: Pending;
   /** An app's command runs: the buttons wait. */
@@ -73,6 +76,10 @@ export interface AppPageProps {
   /** What it keeps on disk, as the nightly backup last measured it. */
   disk?: number;
   days: Day[];
+  /** The watchdog's outages of it this week (none from an older agent). */
+  outages?: health.Outage[];
+  /** The watchdog has run: its checks are on. */
+  watching?: boolean;
   backup: backup.Overview | null;
   /** The household members who use it; null when it is not one people sign in to. */
   people: people.Person[] | null;
@@ -88,6 +95,8 @@ export interface AppPageProps {
   icon: string;
   /** The phone companion: no Open on a phone. */
   companion: boolean;
+  /** The proxy's and CrowdSec's pages: what CrowdSec stopped ('reading' until it answers, null when it could not be read). Left out on other apps' pages. */
+  stopped?: crowdsec.Protection | null | 'reading';
   on: AppPageActions;
 }
 
@@ -127,18 +136,41 @@ export function weekShare(days: Day[]): number {
   return all ? ok / all : 1;
 }
 
-/** The week in words: its tile's value and the line under it. */
-export function weekWords(days: Day[]): [string, string] {
+/** The week's last time down in words: "Last down Tue at 3:10 AM for 45
+ * minutes: HTTP 502", or "Down since Tue at 3:10 AM: HTTP 502" while it is,
+ * and "· 2 outages" when it was down more than once. */
+export function lastDown(outages: health.Outage[], weekFrom: number, now = Date.now()): string {
+  const shown = outages.filter((o) => (o.to ? new Date(o.to).getTime() : now) > weekFrom);
+  if (!shown.length) return '';
+  const o = shown.reduce((a, b) => (new Date(b.from) > new Date(a.from) ? b : a));
+  const from = new Date(o.from), at = `${dayText(from, { weekday: 'short' })} at ${clockText(from)}`;
+  const line = o.to ? `Last down ${at} for ${lasted(new Date(o.to).getTime() - from.getTime())}: ${o.problem}` : `Down since ${at}: ${o.problem}`;
+  return shown.length > 1 ? `${line} · ${shown.length} outages` : line;
+}
+
+/** The week in words: its tile's value and the line under it. With the
+ * watchdog's outages (none from an older agent), the last time it was down
+ * and why; without, how many checks it didn't answer, and when. */
+export function weekWords(days: Day[], outages?: health.Outage[], now = Date.now(), seen: { watching?: boolean; stopped?: boolean } = {}): [string, string] {
   const ok = days.reduce((n, d) => n + d.ok, 0), all = days.reduce((n, d) => n + d.all, 0);
-  if (!all) return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  if (!all) {
+    // Not "once Setup turns it on" while the watchdog runs: Status's header says checks are on.
+    if (seen.watching && seen.stopped) return ['Not checked', "The watchdog doesn't check it while it's stopped"];
+    if (seen.watching) return ['Not checked yet', 'The watchdog checks it every 15 minutes, from its next run'];
+    return ['Not checked yet', 'The watchdog checks it every 15 minutes once Setup turns it on'];
+  }
   const missed = days.filter((d) => d.all && d.ok < d.all);
   if (!missed.length) return ['Up all week', 'Every check passed, every 15 minutes'];
   const share = Math.floor((ok / all) * 1000) / 10;
-  return [`Up ${share}%`, `Missed checks on ${missed.map((d) => d.weekday).join(', ')}`];
+  const first = new Date(now);
+  const weekFrom = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 6).getTime();
+  if (outages) return [`Up ${share}%`, lastDown(outages, weekFrom, now) || 'Each check it missed passed the next time'];
+  const n = missed.reduce((k, d) => k + d.all - d.ok, 0);
+  return [`Up ${share}%`, `It didn't answer ${n} of its checks on ${missed.map((d) => d.weekday).join(', ')}`];
 }
 
-function Week({ days }: { days: Day[] }) {
-  const [, line] = weekWords(days);
+function Week({ days, outages, seen }: { days: Day[]; outages?: health.Outage[]; seen: { watching?: boolean; stopped?: boolean } }) {
+  const [, line] = weekWords(days, outages, Date.now(), seen);
   const said = days.map((d) => `${d.name}: ${!d.all ? 'not checked' : d.ok === d.all ? 'up' : `${d.ok} of ${d.all} checks passed`}`).join('; ');
   return (
     <>
@@ -273,6 +305,10 @@ function Header({ p }: { p: AppPageProps }) {
             <span class={'pill ' + tone}><span class={'dot ' + tone} />{words}{up && ` · ${up}`}</span>
           </div>
           {entry?.description && <p class="lead">{entry.description}</p>}
+          {p.next?.[0] && !pending && (
+            <p class="stopnext" role="note">{p.next[0]}{p.next[1] && <span class="change"> {p.next[1]}</span>}
+              {p.next[1] && <span class="lookonly"> Start it from the computer: this phone can only look.</span>}</p>
+          )}
           {pending?.failed && <p class="rowerr" role="status">Could not {pending.action === 'rollback' ? 'roll back' : pending.action}: {pending.failed}{pending.log && <> <button type="button" class="linkbtn" onClick={on.details}>Details</button></>}</p>}
         </div>
       </div>
@@ -296,7 +332,8 @@ function Facts({ p }: { p: AppPageProps }) {
   const url = a.address ? 'https://' + a.address : a.url || '';
   const reach = entry?.public ? 'At home, and on the internet through the Cloudflare Tunnel'
     : a.address ? 'At home and on your tailnet, not on the internet' : 'On this machine only';
-  const [weekValue] = weekWords(days);
+  const seen = { watching: p.watching, stopped: a.state === 'stopped' };
+  const [weekValue] = weekWords(days, p.outages, Date.now(), seen);
   const late = o && !never(o.lastRun) && Date.now() - new Date(o.lastRun).getTime() > (o.staleAfterHours || 30) * 36e5;
   const tested = o && !never(o.restoreTest?.lastTest) ? `Restore test passed ${dayText(new Date(o.restoreTest.lastTest), { day: 'numeric', month: 'short' })}` : 'No restore test yet';
   return (
@@ -305,7 +342,7 @@ function Facts({ p }: { p: AppPageProps }) {
         sub={<>{url ? reach : 'It has no web page'}{url && <CopyButton text={url} copy={on.copy} />}</>} />
       <Tile label="Uses now" value={a.state !== 'running' ? <span class="muted">Nothing</span> : usage ? <>{memory(usage.mem)}<small> of memory</small></> : <span class="muted">{usage === null ? 'Not measured' : '…'}</span>}
         sub={a.state !== 'running' ? 'It is not running' : <>{usage ? `${usage.cpu < 10 ? usage.cpu.toFixed(1) : Math.round(usage.cpu)}% of a processor` : usage === null ? 'The container runtime did not say' : 'Reading what it uses…'}{!!disk && <span>· {bytes(disk)} on disk</span>}</>} />
-      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} />} />
+      <Tile label="This week" value={weekValue} tone={weekShare(days) < 0.99 ? 'warn' : ''} sub={<Week days={days} outages={p.outages} seen={seen} />} />
       <Tile label="Last backup" tone={late ? 'warn' : ''}
         value={!o ? <span class="muted">…</span> : never(o.lastRun) ? <span class="muted">Not yet</span> : <>{when(o.lastRun)}{!late && <span class="ok"> <Icon name="check" /></span>}</>}
         sub={<>{o ? tested : ''}<ActionLink onClick={on.openBackups}>Backups ›</ActionLink></>} />
@@ -327,6 +364,34 @@ function Updates({ p }: { p: AppPageProps }) {
         {a.state === 'running' && <button class="small change" disabled={busy} title="Shows what it brings first: its newer releases' notes" onClick={on.update}>Check for an update</button>}
       </CardHead>
       {rows.length ? <Rows>{rows}</Rows> : <Empty>No update since the homelab last started it. The nightly update dumps its database first, then updates it.</Empty>}
+    </Card>
+  );
+}
+
+/** The proxy's and CrowdSec's pages: every address CrowdSec stopped today, where it came from, and what it tried. */
+function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' }) {
+  const reading = stopped === 'reading', s = reading ? null : stopped;
+  const today = s?.today || [];
+  const more = (s?.todayCount || 0) - today.length;
+  const head = s && (s.todayCount === 1 ? '1 today' : `${s.todayCount} today`) + (s.bannedNow ? ` · ${s.bannedNow} banned now` : '');
+  const quiet = !s ? '' : s.week ? `Nothing yet today; ${s.week === 1 ? '1' : s.week} this week${s.recent?.[0] ? `, the last ${ago(s.recent[0].when)}` : ''}.` : 'Nothing this week.';
+  return (
+    <Card kind="alerts pagecard" id="appStopped">
+      <CardHead title="What CrowdSec stopped today">{head && <span class="muted">{head}</span>}</CardHead>
+      {reading && <Empty>Asking CrowdSec…</Empty>}
+      {!s && !reading && <Empty>CrowdSec can't be read right now: it and the proxy both need to be running.</Empty>}
+      {s && !s.enforced && (
+        <Rows><Row dot="bad" title="Bans aren't reaching the proxy" sub={`${s.bouncer}. Status › Protection › Fix reconnects them.`} /></Rows>
+      )}
+      {s && (today.length ? (
+        <Rows>
+          {today.map((a, i) => (
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={<span title={attackDetail(a)}>{attackWords(a.scenario)}</span>} sub={attackFrom(a)}
+              end={a.banned && <span class="badge" title="A ban on it is still in force">Banned</span>} when={clockText(new Date(a.when))} whenTitle={ago(a.when)} />
+          ))}
+          {more > 0 && <Row sub={more === 1 ? 'and 1 more today' : `and ${more} more today`} />}
+        </Rows>
+      ) : <Empty>{quiet}</Empty>)}
     </Card>
   );
 }
@@ -363,6 +428,9 @@ function Settings({ p }: { p: AppPageProps }) {
   const { a, entry, busy, backup: o, switching, on } = p;
   const container = entry?.kind !== 'native' && a.state !== 'missing' && a.state !== 'elsewhere';
   const updates = switching.updates ?? !a.held, alerts = switching.alerts ?? !a.quiet;
+  // Its update window: Sundays only (homelab updates days sets any days; the switch says those, and off is every night).
+  const days = a.updateDays || [], ownDays = switching.sundays ?? days.length > 0;
+  const daysText = switching.sundays || !days.length ? 'Sundays' : weekdaysText(days);
   // What the nightly backup keeps of it: its database's copy (its own, or
   // the database it uses), and its files in the homelab folder.
   const ids = [a.id, ...(entry?.dependsOn || [])];
@@ -373,7 +441,9 @@ function Settings({ p }: { p: AppPageProps }) {
       <CardHead title="Settings">{null}</CardHead>
       <Rows>
         {container && <Switch label="Nightly updates" disabled={busy || 'updates' in switching} on={updates} set={(v) => on.setting('updates', v)}
-          sub={updates ? 'Every night, with a backup of its data first' : 'Held: the nightly update leaves it out'} />}
+          sub={!updates ? 'Held: the nightly update leaves it out' : ownDays ? `On ${daysText} only, with a backup of its data first` : 'Every night, with a backup of its data first'} />}
+        {container && updates && <Switch label={`Only on ${daysText}`} disabled={busy || 'sundays' in switching} on={ownDays} set={(v) => on.setting('sundays', v)}
+          sub={ownDays ? 'The other nights leave it alone; updating it by hand still works any day' : 'For an app you would rather not see change midweek'} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
           sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />
@@ -394,7 +464,7 @@ function More({ p }: { p: AppPageProps }) {
       {container && !p.companion && (
         <div class="remove">
           <button class="small danger change" disabled={p.busy} title="Backs it up first; its container goes, its data stays in the homelab folder" onClick={p.on.remove}>Remove {p.a.name}…</button>
-          <span class="muted">A backup first; its data stays, so Choose stacks can bring it back.</span>
+          <span class="muted">A backup first; its data stays, so Choose apps can bring it back.</span>
         </div>
       )}
     </Card>
@@ -410,6 +480,7 @@ export function AppPage(p: AppPageProps) {
       <div class="pagecols">
         <div class="pagecol">
           {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
+          {p.stopped !== undefined && <Stopped stopped={p.stopped} />}
           <Updates p={p} />
         </div>
         <div class="pagecol">
@@ -427,3 +498,10 @@ export function AppPage(p: AppPageProps) {
  * log, an answer, a Copied) is ever drawn on another's, not even for a frame,
  * and an answer that comes back after the page moved on is dropped. */
 export function mountAppPage(el: Element, props: AppPageProps | null) { render(props ? <AppPage key={props.a.id} {...props} /> : null, el); }
+
+const dayWords: Record<string, string> = { mon: 'Mondays', tue: 'Tuesdays', wed: 'Wednesdays', thu: 'Thursdays', fri: 'Fridays', sat: 'Saturdays', sun: 'Sundays' };
+/** "Sundays", "Saturdays and Sundays", as the CLI says them. */
+export function weekdaysText(days: string[]): string {
+  const w = days.map((d) => dayWords[d] || d);
+  return w.length < 2 ? w.join('') : `${w.slice(0, -1).join(', ')} and ${w[w.length - 1]}`;
+}

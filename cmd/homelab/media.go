@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"slices"
 	"strings"
@@ -207,7 +206,10 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 	}
 	// Python was found above (HOMELAB_PYTHON, or the probe): the other checks.
 	checks := slices.DeleteFunc(media.Preflight(ctx, mediaProbe(), env, homeDir()), func(c media.Check) bool { return c.ID == "python" })
-	if c := media.Blocking(checks, kind, act.Power); c != nil {
+	// Lyrics set right on this computer (--tidy), or counted (--check), are
+	// light: only asking LRCLIB about every song waits for power.
+	heavy := act.Power && !(kind == "music" && action == "lyrics" && (slices.Contains(f.rest, "--tidy") || slices.Contains(f.rest, "--check")))
+	if c := media.Blocking(checks, kind, heavy); c != nil {
 		if c.ID == "power" {
 			return media.ErrOnBattery
 		}
@@ -226,13 +228,22 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		return err
 	}
 	defer logf.Close()
+	// warn tells the household: in a terminal, or to the app as an event.
+	warn := func(msg string) {
+		if f.events {
+			line, _ := json.Marshal(media.Event{Type: "warn", Text: msg})
+			fmt.Fprintln(h.ui.Out, string(line))
+			return
+		}
+		h.ui.Warn("%s", msg)
+	}
 	if lock {
 		stale, err := media.Acquire(h.root, kind, action, logf.Name())
 		if err != nil {
 			return err
 		}
-		if stale != nil && !f.events {
-			h.ui.Warn("%s %s stopped part-way at %s; this run carries on from there", stale.Kind, stale.Action, stale.Start.Local().Format("15:04"))
+		if stale != nil {
+			warn(fmt.Sprintf("%s %s stopped part-way at %s; this run carries on from there", stale.Kind, stale.Action, stale.Start.Local().Format("15:04")))
 		}
 		h.pauseDuplicati(ctx)
 		defer func() {
@@ -240,14 +251,25 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 			h.resumeDuplicati(ctx)
 		}()
 	}
+	// A beets venv left pointing at a Python that was upgraded away fails
+	// every music job: it goes, and the engine makes it again.
+	if removed, rerr := media.RepairVenv(ctx, homeDir()); rerr != nil || removed {
+		msg := "Tidy Up's beets setup stopped working (its Python was updated); it's installed again on this run, which takes about a minute"
+		if rerr != nil {
+			msg = fmt.Sprintf("Tidy Up's beets setup in %s doesn't work and couldn't be removed (%v). Delete that folder and run again", media.VenvPath(homeDir()), rerr)
+		}
+		warn(msg)
+	}
 	job := media.Job{Root: h.root, Kind: kind, Action: action, Args: f.rest, Env: env, Python: py, Yes: f.yes, Log: logf,
 		Out: func(ev media.Event, line string) {
 			if f.events {
 				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
-			if ev.Type == "info" && strings.HasPrefix(strings.TrimSpace(line), "{") {
-				fmt.Fprintln(h.ui.Out, line) // status --json: printed as it is
+			// status --json: printed as it is. An engine's own info events
+			// are JSON lines too, and are shown as text like the rest.
+			if ev.Raw == nil && strings.HasPrefix(strings.TrimSpace(line), "{") {
+				fmt.Fprintln(h.ui.Out, line)
 				return
 			}
 			if l := ev.Line(); l != "" {
@@ -276,6 +298,13 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		}
 		if serr := rec.Save(h.root); serr != nil {
 			h.ui.Warn("Tidy Up's record: %v", serr)
+		}
+		// Still under the media lock, which the engines write the trash
+		// log under: what Undo can no longer reach goes.
+		if lock {
+			if terr := media.TrimTrashLog(h.root, rec, time.Now()); terr != nil {
+				h.ui.Warn("Tidy Up's trash log: %v", terr)
+			}
 		}
 	}
 	return err
@@ -311,7 +340,9 @@ func (h *homelab) mediaBackground(kind, action string, args []string) error {
 	if err := os.MkdirAll(media.LogDir(h.root), 0o755); err != nil {
 		return err
 	}
-	out, err := os.OpenFile(filepath.Join(media.LogDir(h.root), "background.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	// Kept as the agent's job logs are: past jobLogLimit its older half
+	// moves to background.1.log.
+	out, err := openJobLog(media.LogDir(h.root), "background", jobLogLimit)
 	if err != nil {
 		return err
 	}

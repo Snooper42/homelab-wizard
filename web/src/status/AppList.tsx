@@ -13,14 +13,17 @@ import { Address } from '../parts/Address';
 import { Hover } from '../parts/Hover';
 import { awaitingJobs } from './Tiles';
 import { formatMem } from './memory';
-import { stopChoices, stoppedWords } from './stopFor';
+import { keptRestarting, stopChoices, stoppedByItself, stoppedWords } from './stopFor';
 import { RowMenu, type RowMenuActions } from './RowMenu';
+import { changedSince, type Seen } from './changed';
 
 export interface Group {
   label: string;
   apps: api.AppStatus[];
   /** What needs a look: its count in red, never folded by default. */
   alert?: boolean;
+  /** The apps pinned to the top: open by default, as the point of them is a glance. */
+  pinned?: boolean;
 }
 
 /** What the rows do; app.ts runs each. */
@@ -31,6 +34,8 @@ export interface AppListActions {
   install: (a: api.AppStatus) => void;
   adopt: (a: api.AppStatus) => void;
   open: (url: string) => void;
+  /** Its project's releases newer than what it runs (GitHub), for "updates held" on hover. */
+  releaseNotes: (id: string) => Promise<releases.Preview>;
   /** Opens the app's page. */
   page: (a: api.AppStatus) => void;
   /** Starts each app in turn; reports which is at hand. */
@@ -64,6 +69,8 @@ export interface AppListProps {
   weekUp: Record<string, number>;
   /** Each app's times down this week, oldest first (the watchdog's). */
   outages?: Record<string, health.Outage[]>;
+  /** Each app as Status last showed it before this visit (changed.ts): a row that changed since has a dot. */
+  seen?: Seen | null;
   batteryPaused: Set<string>;
   /** The apps stopped on purpose, and until when: nothing starts them by itself. */
   held: Record<string, stopped.Stop>;
@@ -79,10 +86,12 @@ export interface AppListProps {
 
 /** One dot class and a few words for an app's state and health. */
 export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Record<string, stopped.Stop> = {}): [string, string] {
-  // Stopped on purpose is no trouble: a plain dot.
-  if (a.state === 'stopped' && held[a.id]) return ['', stoppedWords(held[a.id])];
+  // Stopped on purpose is no trouble: a plain dot. Stopped by the watchdog for restarting over and over is.
+  if (a.state === 'stopped' && held[a.id]) return [keptRestarting(held[a.id]) ? 'bad' : '', stoppedWords(held[a.id])];
   if (a.state !== 'running' && batteryPaused.has(a.id)) return ['warn', 'Paused on battery'];
   if (a.state === 'stopped' && a.waitingFor) return ['warn', `Waiting for the ${a.waitingFor.replace(/^\/Volumes\//, '')} drive`];
+  // Stopped by itself, not from here: when, and why when Docker knows (a crash needs a look: a red dot).
+  if (a.state === 'stopped') return [a.stoppedWhy ? 'bad' : 'warn', stoppedByItself(a)];
   if (a.state === 'running') {
     if (a.health === 'unhealthy') return ['bad', 'Unhealthy'];
     if (a.health === 'restarting') return ['bad', 'Restarting'];
@@ -100,9 +109,20 @@ export function stateOf(a: api.AppStatus, batteryPaused: Set<string>, held: Reco
 const doing: Record<string, string> = { start: 'Starting…', stop: 'Stopping…', restart: 'Restarting…', update: 'Updating…', rollback: 'Rolling back…' };
 const verb: Record<string, string> = { start: 'start', stop: 'stop', restart: 'restart', update: 'update', rollback: 'roll back' };
 
+/** The dot and the words a row shows: what its button is doing while it works, else its state. */
+const rowWords = (a: api.AppStatus, p: AppListProps): [string, string] => {
+  const pend = p.pending[a.id];
+  return pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+};
+
 /** A link that opens in the browser. */
-function Link({ url, text, open }: { url: string; text: string; open: (url: string) => void }) {
-  return <ActionLink onClick={() => open(url)}><Address text={text} /></ActionLink>;
+/** The modifier key's name as each system says it: ⌥ (Option) on a Mac, Alt elsewhere. */
+const alt = (os: string) => (os === 'mac' ? '⌥' : 'Alt-');
+const shift = (os: string) => (os === 'mac' ? '⇧' : 'Shift-');
+
+/** A row's address: a click opens it; ⌥-click (Alt-click) copies it, and says so under the row. */
+function Link({ url, text, open, copy, os }: { url: string; text: string; open: (url: string) => void; copy: (url: string) => void; os: string }) {
+  return <ActionLink title={`${alt(os)}click copies it`} onClick={(e) => (e?.altKey ? copy(url) : open(url))}><Address text={text} /></ActionLink>;
 }
 
 const clock = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -142,16 +162,66 @@ export function WeekOutages({ outages = [], now = Date.now() }: { outages?: heal
   );
 }
 
+/** The first lines of a release's notes, as plain words: no headings' #, no list marks, no links' addresses. */
+export function firstLines(notes = '', n = 2): string[] {
+  return notes.split('\n').map((l) => l.replace(/^\s*(#+|[-*+]|\d+\.)\s+/, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*_`]/g, '').trim())
+    .filter((l) => l && !/^(what'?s changed|changelog|release notes?)$/i.test(l)).slice(0, n);
+}
+
+/** Each app's newest release, once read, for this run of the app. */
+const newest: Record<string, Promise<releases.Preview>> = {};
+
+/** "updates held" on hover: why, how to put it back, and what its newest release says, read when the card opens. */
+function HeldNotes({ a, load }: { a: api.AppStatus; load: (id: string) => Promise<releases.Preview> }) {
+  const [p, setP] = useState<releases.Preview | null>(null);
+  const [problem, setProblem] = useState('');
+  useEffect(() => {
+    let live = true;
+    (newest[a.id] ||= load(a.id)).then((v) => live && setP(v), (e) => { delete newest[a.id]; if (live) setProblem(String(e?.message || e)); });
+    return () => { live = false; };
+  }, [a.id]);
+  const r = p?.releases?.[0];
+  const when = r && new Date(r.when);
+  return (
+    <>
+      <span class="outline">Left out of the nightly updates after a rollback, so it stays on what works. Nightly updates on its page puts it back.</span>
+      {problem ? <span class="outline muted">Could not read its releases: {problem}</span>
+        : !p ? <span class="outline muted">Reading its newest release…</span>
+        : !r ? <span class="outline muted">Its project has published no releases{p.repo ? '' : ' that its image names'}.</span>
+        : <>
+          <span class="outline"><strong>Newest: {r.name && r.name !== r.tag ? `${r.tag}, ${r.name}` : r.tag}</strong>{when && !isNaN(when.getTime()) ? ` · ${when.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}{p.running ? ` (it runs ${p.running})` : ''}</span>
+          {firstLines(r.notes).map((l, i) => <span key={i} class="outline muted">{l}</span>)}
+        </>}
+    </>
+  );
+}
+
+/** Why an app last started, for "up 9 minutes" on hover (AppStatus.startedBy). */
+export const startedWords: Record<string, string> = {
+  you: 'You started it',
+  updated: 'You updated it, so it started on its new version',
+  nightly: 'The nightly update moved it to its new version',
+  update: 'It was updated, and started on its new version',
+  fix: 'Fix it restarted it',
+  watchdog: 'The watchdog restarted it: it was unwell on two checks in a row',
+  battery: 'It started again when the power came back (the battery saver had paused it)',
+  drive: 'It started once its drive was plugged in again',
+  timer: 'It started again at the time you set when you stopped it',
+  docker: 'Docker started it again after it stopped on its own; its log says why',
+};
+
 /** How long a running app has been up, and badges for what to know about it. */
-function Uptime({ a, week, outages }: { a: api.AppStatus; week?: number; outages?: health.Outage[] }) {
+function Uptime({ a, week, outages, load }: { a: api.AppStatus; week?: number; outages?: health.Outage[]; load: (id: string) => Promise<releases.Preview> }) {
   if (a.state !== 'running' || !a.since) return null;
   const mins = Math.max(0, Math.round((Date.now() - new Date(a.since).getTime()) / 60000)), hours = Math.round(mins / 60);
   const up = mins < 60 ? (mins <= 1 ? 'up a minute' : `up ${mins} minutes`) : hours < 48 ? (hours === 1 ? 'up an hour' : `up ${hours} hours`) : `up ${Math.round(hours / 24)} days`;
   return (
     <>
-      <span class="local">{up}</span>
+      {a.startedBy && startedWords[a.startedBy]
+        ? <Hover cls="local" label={up} tip={<><span class="outline">{startedWords[a.startedBy]}</span><span class="outfoot">{weekday(new Date(a.since))} {clock(new Date(a.since))}</span></>} />
+        : <span class="local">{up}</span>}
       {!!a.restarts && <span class="badge warn" title="Docker restarted it after it stopped on its own; its log says why">restarted {a.restarts}×</span>}
-      {a.held && <span class="badge" title={`Left out of nightly updates after a rollback; homelab updates release ${a.id} puts it back`}>updates held</span>}
+      {a.held && <Hover cls="badge" wide lazy label="updates held" tip={<HeldNotes a={a} load={load} />} />}
       {a.settingsChanged && <span class="badge warn" title="Its settings (.env or its compose file) changed since it started, so it still runs the old ones; Fix it recreates it with the new ones">settings changed</span>}
       {week !== undefined && week < 0.99 && <Hover cls="badge warn" wide label={`${Math.floor(week * 1000) / 10}% up this week`} tip={<WeekOutages outages={outages} />} />}
     </>
@@ -174,9 +244,12 @@ function Actions({ a, entry, busy, os, on }: { a: api.AppStatus; entry?: api.App
   }
   if (a.state === 'elsewhere') return null;
   if (a.state === 'missing') return <button class="small" onClick={() => on.install(a)}>Install</button>;
-  if (a.state !== 'running') return <button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button>;
+  // A phone that only looks has no Start (html.companion:not(.can-change) hides .change): it says where to start it.
+  if (a.state !== 'running') return <><button class="small rowmain change" title={`Start ${a.name}`} disabled={busy} onClick={() => on.act(a, 'start')}>Start</button><span class="lookonly muted">Start it from the computer</span></>;
   const url = a.address ? 'https://' + a.address : a.url;
-  return url ? <button class="small rowmain" title={`Open ${a.name}`} onClick={() => on.open(url)}>Open</button> : null;
+  // ⇧-click (Shift-click): its address on this machine instead of the domain, for when the domain does not answer.
+  const local = a.address && a.url ? a.url : '';
+  return url ? <button class="small rowmain" title={local ? `Open ${a.name} (${shift(os)}click: on this machine, ${local.replace(/^http:\/\//, '')})` : `Open ${a.name}`} onClick={(e) => on.open(local && e.shiftKey ? local : url)}>Open</button> : null;
 }
 
 /** Where a row's menu is open, and which row: one at a time. */
@@ -184,46 +257,80 @@ interface MenuAt { id: string; x: number; y: number; from: Element | null }
 
 function Row({ a, p, menu, setMenu, said, say }: { a: api.AppStatus; p: AppListProps; menu: MenuAt | null; setMenu: (m: MenuAt | null) => void; said?: string; say: (id: string, words: string) => void }) {
   const pend = p.pending[a.id];
-  // Its menu: none on the phone or a wall screen, nor for an app not installed or run elsewhere.
-  const menuable = !p.companion && a.state !== 'missing' && a.state !== 'elsewhere';
+  // Its menu: on this computer, and on a phone that may make changes (a
+  // long press); never on a look-only phone or a wall screen, nor for an
+  // app not installed or run elsewhere.
+  // The phone's level is read when the finger is down: it can come after the rows were drawn, and change.
+  const phoneMay = () => { const c = document.documentElement.classList; return c.contains('can-change') && !c.contains('kiosk'); };
+  const menuable = a.state !== 'missing' && a.state !== 'elsewhere';
   const openMenu = (x: number, y: number) => setMenu({ id: a.id, x, y, from: document.activeElement });
+  // A long press, as on the phone's own Home Screen: half a second held
+  // still opens the row's menu where the finger is, and the click that
+  // follows the press is not taken as opening the app's page. Listened for
+  // by name, so it works wherever touch events come, not only where the
+  // browser says it has a touchscreen.
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  const opener = useRef(openMenu);
+  opener.current = openMenu;
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el || !menuable || !p.companion) return;
+    let at: { timer: number; x: number; y: number; opened: boolean } | null = null;
+    const stop = () => { if (at) clearTimeout(at.timer); at = null; };
+    const start = (e: TouchEvent) => {
+      if (!phoneMay() || (e.target as Element).closest('.rowmenu') || e.touches.length !== 1) return;
+      const t = e.touches[0], press = { x: t.clientX, y: t.clientY, opened: false, timer: 0 };
+      press.timer = window.setTimeout(() => { press.opened = true; opener.current(press.x, press.y); }, 500);
+      at = press;
+    };
+    const move = (e: TouchEvent) => { const t = e.touches[0]; if (at && t && Math.hypot(t.clientX - at.x, t.clientY - at.y) > 10) stop(); };
+    const end = (e: TouchEvent) => { if (at?.opened) e.preventDefault(); stop(); };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', stop);
+    return () => { stop(); el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move); el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', stop); };
+  }, [menuable, p.companion]);
+  // ⌥-click on its address: copied, as the menu's Copy address does.
+  const copy = (url: string) => { p.on.menu.copy(url).then(() => say(a.id, 'Address copied'), () => say(a.id, 'Could not copy the address')); };
   const close = (refocus?: boolean) => {
     const from = menu?.from as HTMLElement | null;
     setMenu(null);
     if (refocus && from?.isConnected && from !== document.body) from.focus();
   };
   // Clicked and not confirmed yet: what it is doing, at once.
-  const [cls, words] = pend && !pend.failed ? ['warn', pend.note || doing[pend.action] || 'Working…'] : stateOf(a, p.batteryPaused, p.held);
+  const [cls, words] = rowWords(a, p);
   const entry = p.catalog?.apps.find((c) => c.id === a.id);
+  const changed = changedSince(a, p.seen ?? null);
   return (
     // A click anywhere on the row (not on its links and buttons), or Return
     // on it, opens the app's page.
-    <tr aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
+    <tr ref={rowRef} aria-busy={pend && !pend.failed ? true : undefined} class={(a.state !== 'missing' ? 'topage' : '') + (menu?.id === a.id ? ' menued' : '') || undefined}
       onClick={a.state !== 'missing' ? (e) => { if (!(e.target as Element).closest('a, button, .rowmenu, .hovers')) p.on.page(a); } : undefined}
-      onContextMenu={menuable ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
-      onKeyDown={menuable ? (e) => {
+      onContextMenu={menuable && (!p.companion || phoneMay()) ? (e) => { if ((e.target as Element).closest('.rowmenu')) return; e.preventDefault(); openMenu(e.clientX, e.clientY); } : undefined}
+      onKeyDown={menuable && !p.companion ? (e) => {
         // Shift+F10 and the context-menu key: under the app's name.
         if (!(e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) || (e.target as Element).closest('.rowmenu')) return;
         e.preventDefault();
         const r = (e.currentTarget as HTMLElement).querySelector('strong')!.getBoundingClientRect();
         openMenu(r.left, r.bottom + 4);
       } : undefined}>
-      <td><strong>{a.name}</strong></td>
+      <td><strong>{a.name}</strong>{changed && <span class="changedot" role="img" aria-label={changed} title={changed} />}</td>
       <td class="state">
         <span class={'dot ' + cls} />{words}
         {pend && !pend.failed ? null : a.state === 'elsewhere'
           ? <><span class="local">container {a.container}</span><button class="small" onClick={() => p.on.adopt(a)}>Move in</button></>
-          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} />}
+          : <Uptime a={a} week={p.weekUp[a.id]} outages={p.outages?.[a.id]} load={p.on.releaseNotes} />}
         {pend?.failed && <span class="rowerr" role="status">Could not {verb[pend.action] || pend.action}: {pend.failed}{pend.log && <> <button type="button" class="linkbtn" onClick={() => p.on.details(a)}>Details</button></>}</span>}
         {said && <span class="rowsaid" role="status">{said}</span>}
       </td>
       {/* One address: the app's own name when it has one (its address on this machine is in the tooltip), else the local one. */}
       <td title={a.address && a.url ? 'On this machine: ' + a.url : ''}>
-        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} />
-          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} />
+        {a.address ? <Link url={'https://' + a.address} text={a.address} open={p.on.open} copy={copy} os={p.os} />
+          : a.url ? <Link url={a.url} text={a.url.replace(/^http:\/\//, '')} open={p.on.open} copy={copy} os={p.os} />
           : <span class="muted">—</span>}
       </td>
-      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
+      <td class="rowActions"><Actions a={a} entry={entry} busy={p.busy || (!!pend && !pend.failed)} os={p.os} on={p.on} />{a.state !== 'missing' && <button class="iconbtn topage" title={`${a.name}: its page`} aria-label={`${a.name}: its page`} onClick={() => p.on.page(a)}><Icon name="chevron" /></button>}
         {menu?.id === a.id && <RowMenu a={a} x={menu.x} y={menu.y} native={entry?.kind === 'native'} busy={p.busy} companion={p.companion} on={p.on.menu} close={close} said={(w) => say(a.id, w)} />}</td>
     </tr>
   );
@@ -275,7 +382,7 @@ function GroupMenu({ g, p, count }: { g: Group; p: AppListProps; count: string }
   const containers = g.apps.filter((a) => !isNative(p, a));
   const running = containers.filter((a) => a.state === 'running');
   const stopped = containers.filter((a) => startable(p, a));
-  const held = containers.filter((a) => a.state === 'stopped' && p.held[a.id]);
+  const held = containers.filter((a) => a.state === 'stopped' && p.held[a.id] && !keptRestarting(p.held[a.id]));
   const items = () => [...(wrap.current?.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not([disabled])') || [])];
   const close = (refocus?: boolean) => { setOpen(false); setSure(false); setLater(false); if (refocus) btn.current?.focus(); };
   // The times in place of the menu, or the menu back: the focus moves with it.
@@ -492,7 +599,8 @@ document.addEventListener('keydown', (e) => {
   const t = e.target as Element;
   if (status.querySelector('.menu:not([hidden])')) return;
   if (e.key === 'Escape' && filter.on && !t.closest?.('.filterbox')) { clearFilter(); return; }
-  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ') return;
+  // ? is the keyboard shortcuts' (app.ts), not a letter to filter by.
+  if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1 || e.key === ' ' || e.key === '?') return;
   if (t.closest?.('input, textarea, select, [contenteditable], [role=menu], dialog, .sheet')) return;
   e.preventDefault();
   if (!filter.on) before = document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null;
@@ -535,8 +643,32 @@ export function FilterBox() {
 
 /** Whether each group is unfolded: until the user picks, one where everything runs is folded, and what needs a look stays open. */
 function openGroups(groups: Group[], f: Fold, held: Record<string, stopped.Stop>): Record<string, boolean> {
-  const fine = (g: Group) => !g.alert && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id]));
+  const fine = (g: Group) => !g.alert && !g.pinned && g.apps.every((a) => a.state === 'running' || awaitingJobs(a) || (a.state === 'stopped' && held[a.id] && !keptRestarting(held[a.id])));
   return Object.fromEntries(groups.map((g) => [g.label, f.all || (g.label in f.picked ? f.picked[g.label] : !fine(g))]));
+}
+
+// Status read aloud: a screen reader hears each row's change as it is drawn,
+// a job's step as well as its end (Vikunja: Restarting…, then Vikunja:
+// Running), and an app that goes down while Status is open. The words are
+// the row's own; apps that change to the same words are said together. Not
+// on the first draw, nor while Status is not the screen shown.
+const heard = new Map<string, string>();
+let heardOnce = false;
+const listed = (names: string[]) => (names.length <= 5 ? names.slice(0, -1).join(', ') + (names.length > 1 ? ' and ' : '') + names[names.length - 1] : `${names.slice(0, 4).join(', ')} and ${names.length - 4} more`);
+function sayChanges(p: AppListProps) {
+  const now = new Map<string, [string, string]>();
+  for (const g of p.groups) for (const a of g.apps) now.set(a.id, [a.name, rowWords(a, p)[1]]);
+  const changed = new Map<string, string[]>();
+  if (heardOnce) for (const [id, [name, words]] of now) { const was = heard.get(id); if (was !== undefined && was !== words) changed.set(words, [...(changed.get(words) || []), name]); }
+  heard.clear();
+  for (const [id, [, words]] of now) heard.set(id, words);
+  heardOnce = true;
+  const el = document.getElementById('statusAloud');
+  if (!changed.size || !el || !document.getElementById('status')?.classList.contains('active')) return;
+  const text = [...changed].map(([words, names]) => `${listed(names)}: ${words}`).join('. ');
+  // Emptied first, so the same words said again (a second restart) are heard again.
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = text; });
 }
 
 export function AppList(p: AppListProps) {
@@ -546,6 +678,7 @@ export function AppList(p: AppListProps) {
   const [said, setSaid] = useState<{ id: string; words: string } | null>(null);
   useEffect(() => { if (!said) return; const t = setTimeout(() => setSaid(null), 3000); return () => clearTimeout(t); }, [said]);
   const say = (id: string, words: string) => setSaid({ id, words });
+  useEffect(() => sayChanges(p));
   const q = useFilter().text;
   const open = openGroups(p.groups, f, p.held);
   // Folding one after Show every app keeps the others as they are shown.

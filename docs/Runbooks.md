@@ -38,7 +38,7 @@ The same order as the app's Setup screen and `./homelab setup`, which check each
 
 ## Add an optional app
 
-1. In the app, **Choose stacks**, tick the app, and install; the plan shows what will start. In Terminal, `./homelab plan <app>`, then `./homelab install <app>`.
+1. In the app, **Choose apps**, tick the app, and install; the plan shows what will start. In Terminal, `./homelab plan <app>`, then `./homelab install <app>`.
 2. Its address comes by itself: on the tailnet in Home mode; *with a domain*, a proxy host once **Set up the domain** has run once (a public app's hostname still needs `./homelab domain setup`).
 3. Sign in, set a password, and store it in Vaultwarden.
 4. Optionally, add an Uptime Kuma monitor.
@@ -133,6 +133,8 @@ When the old machine is gone and only the backup folder is left.
 2. Beside the phone, pick **Sees Finances** (look only) or **Changes Finances** (`./homelab phone finances <id> view`, or `edit`).
 
 **Check:** Finances is in the phone's tab bar; with **Sees Finances**, *view only* under its heading and no Edit. **No Finances** (`off`) takes it away again.
+
+For a guest's phone, or one lent for a while, pick **For a day**, **For a week**, or **For a month** beside it (`./homelab phone until <id> 7d`): its row says until when, and then it only looks, with no Finances, without anyone remembering to take them back. A wall screen keeps its money card.
 
 ## Restart the Mac safely
 

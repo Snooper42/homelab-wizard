@@ -23,6 +23,13 @@ ui = mc.ui
 SAMPLE_RE = re.compile(r"(?i)(^|[\W_])(sample|trailer|featurette|behind[\W_]the[\W_]scenes)([\W_]|$)")
 OUTPUT_DIR = ".tdarr-output"
 STAGING_DIR = ".tidy-staging"
+# Tdarr records a file it was handed within seconds (it reads it first). One it still has no record of
+# after this long never reached it (Tdarr was restarting, or its scan dropped it): it's handed again, up
+# to HAND_TRIES times in all.
+REHAND_AFTER = 20 * 60
+HAND_TRIES = 3
+# How long Shrink waits for Tdarr to record the videos it was handed, before saying which it has.
+TAKE_WAIT = 30
 
 
 class VideoEngine:
@@ -62,6 +69,26 @@ class VideoEngine:
 
     def tdarr_path(self, p):
         return mc.Servers.server_path(p, mc.cfg("tdarr", "path_map") or [])
+
+    def tdarr_sees(self, p):
+        """Whether Tdarr's container can open p: its path there is under a folder Tdarr mounts. A path
+        that isn't (a library outside the media drive's films or TV folder) would be handed to Tdarr
+        and never found by it, so it is said instead."""
+        inside = [str(i).rstrip("/") for _, i in (mc.cfg("tdarr", "path_map") or [])]
+        if not inside:
+            return True
+        tp = self.tdarr_path(p)
+        return any(tp == i or tp.startswith(i + "/") for i in inside)
+
+    def tdarr_unseen(self, paths):
+        if not paths:
+            return
+        mounts = [mc.pretty_path(h) for h, inside in (mc.cfg("tdarr", "path_map") or [])
+                  if str(inside).rstrip("/").endswith("/" + self.kind)]
+        ui.warn("Tdarr can't open %s %s: its container sees %s alone, and this library is %s. Keep the %s "
+                "library in that folder (MEDIA_ROOT in Settings is the drive it's on), then run this again"
+                % (mc.fmt_n(len(paths)), "video" if len(paths) == 1 else "videos",
+                   " and ".join(mounts) or "the media drive", mc.pretty_path(self.lib), self.kind))
 
     def load(self):
         self.lib = mc.library_dir(self.section)
@@ -233,8 +260,36 @@ class VideoEngine:
         self.load()
         ui.title("%s library" % self.kind.title(), "scan only, nothing will be changed")
         ui.kv("Library", self.lib)
-        files = [p for p in mc.walk_files(self.lib, mc.VIDEO_EXT) if not SAMPLE_RE.search(p.stem)]
+        files = self.videos()
         ui.step(1, 2, "Reading %s videos" % mc.fmt_n(len(files)))
+        known = self.state["files"]
+        bloated, total, saving, unreadable = self.read(files, ("queued", "failed"))
+        ui.step(2, 2, "What I found")
+        ui.kv("Videos", "%s  (%s)" % (mc.fmt_n(len(files)), human(total)))
+        ui.kv("Wasting space", mc.fmt_n(len(bloated)))
+        ui.kv("Could free", "about %s" % human(saving))
+        if unreadable:
+            ui.kv("Unreadable", mc.fmt_n(unreadable))
+        why = {}
+        for k in bloated:
+            for r in known[k].get("reasons") or []:
+                key = r.split(" (")[0]
+                why[key] = why.get(key, 0) + 1
+        for r, n in sorted(why.items(), key=lambda kv: -kv[1]):
+            ui.kv("  " + r, mc.fmt_n(n))
+        dupes = self.duplicates(files, known)
+        if dupes:
+            ui.kv("Twice in the library", "%s (%s in the extra copies)" % (mc.fmt_n(len(dupes)), human(sum(d["bytes"] for d in dupes))))
+        ui.result(action="scan", ok=True, media=self.kind, files=len(files), bytes=total, bloated=len(bloated),
+                  saving=saving, unreadable=unreadable, reasons=why, duplicates=len(dupes),
+                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50], **self.scan_more(files))
+
+    def videos(self):
+        return [p for p in mc.walk_files(self.lib, mc.VIDEO_EXT) if not SAMPLE_RE.search(p.stem)]
+
+    def read(self, files, trusted):
+        """Each video's record: read again with ffprobe, unless its record has a status in trusted and
+        the file is the size it was then. (bloated paths, bytes, bytes it could free, unreadable)."""
         known = self.state["files"]
         bloated, total, saving, unreadable = [], 0, 0, 0
         with ui.progress(len(files), "Reading") as bar:
@@ -242,10 +297,10 @@ class VideoEngine:
                 key = str(p)
                 rec = known.get(key) or {}
                 size = p.stat().st_size
-                if rec.get("status") in ("queued", "failed") and rec.get("size") == size:
+                if rec.get("status") in trusted and rec.get("size") == size:
                     bar.update(note=p.name)
                     total += size
-                    if rec.get("status") == "queued":
+                    if rec.get("status") in ("queued", "bloated"):
                         bloated.append(key)
                     continue
                 try:
@@ -267,25 +322,7 @@ class VideoEngine:
         for gone in [k for k in known if not Path(k).exists()]:
             del known[gone]
         self.save()
-        ui.step(2, 2, "What I found")
-        ui.kv("Videos", "%s  (%s)" % (mc.fmt_n(len(files)), human(total)))
-        ui.kv("Wasting space", mc.fmt_n(len(bloated)))
-        ui.kv("Could free", "about %s" % human(saving))
-        if unreadable:
-            ui.kv("Unreadable", mc.fmt_n(unreadable))
-        why = {}
-        for k in bloated:
-            for r in known[k].get("reasons") or []:
-                key = r.split(" (")[0]
-                why[key] = why.get(key, 0) + 1
-        for r, n in sorted(why.items(), key=lambda kv: -kv[1]):
-            ui.kv("  " + r, mc.fmt_n(n))
-        dupes = self.duplicates(files, known)
-        if dupes:
-            ui.kv("Twice in the library", "%s (%s in the extra copies)" % (mc.fmt_n(len(dupes)), human(sum(d["bytes"] for d in dupes))))
-        ui.result(action="scan", ok=True, media=self.kind, files=len(files), bytes=total, bloated=len(bloated),
-                  saving=saving, unreadable=unreadable, reasons=why, duplicates=len(dupes),
-                  duplicate_bytes=sum(d["bytes"] for d in dupes), duplicate_list=dupes[:50], **self.scan_more(files))
+        return bloated, total, saving, unreadable
 
     def scan_more(self, files):
         """More a scan says: the posters Jellyfin is missing, and what a kind adds (TV: the episodes missing)."""
@@ -370,22 +407,53 @@ class VideoEngine:
             mc.die("Tdarr isn't set up for %s yet." % self.kind, "Run: homelab media tdarr setup --apply")
         if not td.ok():
             mc.die("Tdarr isn't answering at %s." % td.url, "Start it from Status, then run this again.")
+        libs = td.libraries()
+        if isinstance(libs, list) and lib_id not in {l.get("_id") for l in libs if isinstance(l, dict)}:
+            # Tdarr's data was cleared, or it was installed again: the library Tidy Up made is gone, and
+            # files handed to it would go nowhere.
+            mc.die("Tdarr has no Tidy Up library for %s any more." % self.kind,
+                   "Run Set up Tdarr again (homelab media tdarr setup --apply), then Shrink.")
         # A node with no worker would leave everything in Tdarr's queue: given one first.
         for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
             ui.ok("Tdarr's node %s had no worker: it has one now (raise it on Tdarr's page)" % name)
+        # Films and episodes that came in since the last scan (Radarr and Sonarr file straight into the
+        # library) are read first, so they are handed too; the ones read before aren't read again.
+        files = self.videos()
+        fresh = [p for p in files if (self.state["files"].get(str(p)) or {}).get("size") != p.stat().st_size]
+        ui.step(1, 3, "Reading %s new videos" % mc.fmt_n(len(fresh)))
+        self.read(files, ("queued", "failed", "bloated", "lean"))
         todo = [k for k, r in self.state["files"].items() if r.get("status") == "bloated" and Path(k).exists()]
-        if not todo:
+        unseen = [k for k in todo if not self.tdarr_sees(k)]
+        todo = [k for k in todo if k not in unseen]
+        if not todo and not unseen:
             ui.ok("Nothing waiting: every video is already lean, or with Tdarr.")
-        ui.step(1, 2, "Handing %s videos to Tdarr" % mc.fmt_n(len(todo)))
+        ui.step(2, 3, "Handing %s videos to Tdarr" % mc.fmt_n(len(todo)))
         for i in range(0, len(todo), 50):
             batch = todo[i:i + 50]
             td.queue(lib_id, [self.tdarr_path(p) for p in batch])
             for k in batch:
-                self.state["files"][k].update(status="queued", queued_at=time.time())
+                self.state["files"][k].update(status="queued", queued_at=time.time(), tries=1)
             self.save()
         if todo:
-            ui.ok("Tdarr has %s videos in its queue; its nodes take them one by one" % mc.fmt_n(len(todo)))
-        ui.step(2, 2, "Collecting what Tdarr finished")
+            # Tdarr reads what it's handed in the background: only what it has recorded is said to be with
+            # it. One it hasn't is handed again by the homelab's next run (collect), then said.
+            waiting_for = {k: self.tdarr_path(k) for k in todo}
+            deadline = time.time() + TAKE_WAIT
+            while True:
+                waiting_for = {k: tp for k, tp in waiting_for.items() if td.status(tp) is None}
+                if not waiting_for or time.time() >= deadline:
+                    break
+                time.sleep(2)
+            taken = len(todo) - len(waiting_for)
+            if taken:
+                ui.ok("Tdarr has %s videos in its queue; its nodes take them one by one" % mc.fmt_n(taken))
+            if waiting_for:
+                names = [Path(k).name for k in waiting_for]
+                ui.warn("Tdarr hasn't taken %s of the videos handed to it yet (%s): the homelab hands them again in a "
+                        "few minutes. If it never does, open Tdarr's page and check its Tidy Up library and its node"
+                        % (mc.fmt_n(len(waiting_for)), ", ".join(names[:3]) + (", …" if len(names) > 3 else "")))
+        self.tdarr_unseen(unseen)
+        ui.step(3, 3, "Collecting what Tdarr finished")
         self.collect(inner=True)
 
     # ------------------------------------------------------------------ collect: put Tdarr's results in place
@@ -408,11 +476,26 @@ class VideoEngine:
         if td and queued and not inner:
             for name in td.give_workers(bool((mc.cfg("tdarr") or {}).get("gpu"))):
                 ui.ok("Tdarr's node %s had no worker, so nothing was being shrunk: it has one now" % name)
-        replaced, failed, waiting, freed = 0, 0, 0, 0
+        replaced, failed, waiting, freed, handed, lost = 0, 0, 0, 0, 0, []
         servers = mc.Servers()
+        lib_id = self.tdarr_library()
         for k in queued:
             verdict = td.status(self.tdarr_path(k)) if td else None
             rec = files[k]
+            if verdict is None and td and lib_id and Path(k).exists() and not self.output_for(k) and \
+                    time.time() - float(rec.get("queued_at") or 0) >= REHAND_AFTER:
+                # Tdarr has no record of it: it never took it. Handed again, or, after a few tries, left
+                # for the next Shrink and said.
+                if int(rec.get("tries") or 1) >= HAND_TRIES:
+                    rec["status"] = "bloated"
+                    lost.append(k)
+                else:
+                    td.queue(lib_id, [self.tdarr_path(k)])
+                    rec.update(queued_at=time.time(), tries=int(rec.get("tries") or 1) + 1)
+                    handed += 1
+                    waiting += 1
+                self.save()
+                continue
             if verdict in mc.Tdarr.SKIPPED:
                 rec["status"] = "lean"
                 continue
@@ -446,10 +529,16 @@ class VideoEngine:
             mc.remove_empty_dirs(d, keep_root=True)
         if replaced:
             ui.ok("Replaced %s videos with their smaller copies, %s freed" % (mc.fmt_n(replaced), human(freed)))
+        if handed:
+            ui.say("Tdarr had no record of %s it was given: handed to it again" % mc.fmt_n(handed))
+        if lost:
+            ui.warn("Tdarr never took %s after %d tries (%s): they stay as they are, and Shrink hands them "
+                    "again. Check Tdarr's page for its Tidy Up library and that its node is running"
+                    % (mc.fmt_n(len(lost)), HAND_TRIES, ", ".join(Path(k).name for k in lost[:3]) + (", …" if len(lost) > 3 else "")))
         if waiting:
             ui.say("%s still with Tdarr; they're collected on the next run (the homelab checks every few minutes)" % mc.fmt_n(waiting))
         ui.result(action="collect", ok=True, media=self.kind, replaced=replaced, failed=failed, waiting=waiting,
-                  freed=freed, filed=staged_done, told=servers.sent)
+                  freed=freed, filed=staged_done, told=servers.sent, handed_again=handed, not_taken=len(lost))
 
     def replace(self, original, out, servers):
         """Check Tdarr's copy, then swap it in and trash the original. Returns the bytes freed, or None."""
@@ -495,6 +584,7 @@ class VideoEngine:
             videos += [p] if p.is_file() else mc.walk_files(p, mc.VIDEO_EXT)
         filed, replaced, discarded, staged, unknown = [], 0, 0, 0, []
         td, lib_id = self.tdarr(), self.tdarr_library()
+        stage_seen, unseen = self.tdarr_sees(self.lib / STAGING_DIR), []
         for v in videos:
             if v.suffix.lower() not in mc.VIDEO_EXT:
                 continue
@@ -541,7 +631,9 @@ class VideoEngine:
             if not apply:
                 ui.kv(v.name, "→ %s%s" % (mc.pretty_path(dest), "  (through Tdarr first)" if reasons else ""))
                 continue
-            if reasons and td and lib_id:
+            if reasons and td and lib_id and not stage_seen:
+                unseen.append(str(v))  # filed as it is: Tdarr couldn't open it in the staging folder
+            if reasons and td and lib_id and stage_seen:
                 # Bloated: it waits in the hidden staging folder until Tdarr's copy is ready.
                 stage = mc.unique_path(self.lib / STAGING_DIR / dest.relative_to(self.lib).parent / (dest.stem + v.suffix))
                 mc.move_file(v, stage)
@@ -563,6 +655,7 @@ class VideoEngine:
             filed.append(str(final))
             self.note("filed", path=str(final))
             ui.ok("Filed %s" % mc.pretty_path(final))
+        self.tdarr_unseen(unseen)
         self.save()
         ui.result(action="file", ok=not unknown, media=self.kind, filed=filed, replaced=replaced, discarded=discarded,
                   shrinking=staged, unknown=unknown, told=servers.sent)
@@ -594,6 +687,17 @@ class VideoEngine:
             outs = [p for p in out_dir.glob(glob_escape(sp.stem) + ".*")] if out_dir.is_dir() else []
             if verdict in mc.Tdarr.FAILED or verdict in mc.Tdarr.SKIPPED:
                 outs = [sp]  # Tdarr couldn't (or needn't) shrink it: file it as it is
+            if not outs and verdict is None and td and time.time() - float(rec.get("since") or 0) >= REHAND_AFTER:
+                # Tdarr has no record of it: handed again; after a few tries, filed as it is, so a new
+                # film doesn't stay hidden in the staging folder (Shrink can take it later).
+                lib_id = self.tdarr_library()
+                if lib_id and int(rec.get("tries") or 1) < HAND_TRIES:
+                    td.queue(lib_id, [self.tdarr_path(sp)])
+                    rec.update(since=time.time(), tries=int(rec.get("tries") or 1) + 1)
+                    self.save()
+                    continue
+                ui.warn("Tdarr never took %s: filed as it is" % sp.name)
+                outs = [sp]
             if not outs:
                 continue
             out = outs[0]

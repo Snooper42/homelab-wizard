@@ -34,10 +34,17 @@ export function csvRows(text: string): string[][] {
 /** Which column holds what: indexes into a row, -1 for none. Debit and credit are a bank's two money columns. */
 export interface Columns { date: number; amount: number; debit: number; credit: number; payee: number; memo: number }
 
-/** The columns guessed from a header row's words. */
-export function guessColumns(header: string[]): Columns {
-  const find = (...words: string[]) => header.findIndex((h) => words.some((w) => h.toLowerCase().includes(w)));
-  return {
+/**
+ * The columns guessed from a header row's words, the first word given
+ * winning over the next wherever its column is: Chase's Details (CREDIT or
+ * DEBIT) comes before its Description, which is the payee. With the rows
+ * under it, a payee column that holds no names (only which way the money
+ * went, or figures) gives way to the column with the most different words.
+ */
+export function guessColumns(header: string[], body: string[][] = []): Columns {
+  const lower = header.map((h) => h.toLowerCase());
+  const find = (...words: string[]) => { for (const w of words) { const i = lower.findIndex((h) => h.includes(w)); if (i >= 0) return i; } return -1; };
+  const col: Columns = {
     date: find('date', 'posted', 'day', 'datum'),
     amount: find('amount', 'value', 'betrag'),
     debit: find('debit', 'withdrawal', 'money out', 'paid out'),
@@ -45,7 +52,23 @@ export function guessColumns(header: string[]): Columns {
     payee: find('payee', 'description', 'name', 'merchant', 'details', 'empfänger', 'beschreibung'),
     memo: find('memo', 'note', 'reference', 'category'),
   };
+  if (body.length && !namesIn(body, col.payee)) {
+    const taken = new Set([col.date, col.amount, col.debit, col.credit, col.memo]);
+    const better = header.map((_, i) => i).filter((i) => !taken.has(i) && namesIn(body, i))
+      .sort((a, b) => kinds(body, b) - kinds(body, a))[0];
+    if (better !== undefined) col.payee = better;
+  }
+  return col;
 }
+
+/** The cells of a column with something in them. */
+const cellsOf = (body: string[][], i: number) => body.map((r) => (r[i] || '').trim()).filter(Boolean);
+
+/** How many different words a column holds. */
+const kinds = (body: string[][], i: number) => new Set(cellsOf(body, i).map((c) => c.toLowerCase())).size;
+
+/** Whether a column holds names: some cell that is not which way the money went, a figure, or a day. */
+const namesIn = (body: string[][], i: number) => i >= 0 && cellsOf(body, i).some((c) => !wayOnly(c) && !/^[-+()$€£\d.,\s/:]+$/.test(c));
 
 /** A day as a bank writes it: 2026-10-30, 10/30/2026 (or 30/10/2026 when dayFirst), 30.10.2026, Oct 30 2026; "" when it is none. */
 export function readDay(s: string, dayFirst = false): string {
@@ -97,18 +120,76 @@ export function fromOfx(text: string): Imported[] {
   return out;
 }
 
+/** A payee that is only a bank's word for which way the money went: CREDIT, DEBIT (Chase's Details column, read as the payee before). */
+export const wayOnly = (payee?: string): boolean => /^(credit|debit|dr|cr|withdrawal|deposit)$/i.test((payee || '').trim());
+
+/**
+ * Rows brought in before with only CREDIT or DEBIT as their payee, each
+ * matched to the row of this file it was (on the account, the same day,
+ * the same amount, with a real payee): by the file's row index, the
+ * ledger's transaction ID. Each ledger row is matched once.
+ */
+export function wayOnlyFixes(found: Imported[], account: string, ledger: finance.Transaction[]): Map<number, string> {
+  const out = new Map<number, string>(), used = new Set<string>();
+  found.forEach((t, i) => {
+    if (!t.payee || wayOnly(t.payee)) return;
+    const q = ledger.find((q) => !used.has(q.id) && q.account === account && !q.to && q.date === t.date && Math.abs(q.amount - t.amount) < 0.005 && wayOnly(q.payee));
+    if (q) { used.add(q.id); out.set(i, q.id); }
+  });
+  return out;
+}
+
 /** Whether a file's text is an OFX or QFX statement rather than a CSV. */
 export const isOfx = (text: string): boolean => /<OFX>|OFXHEADER/i.test(text.slice(0, 2000));
 
 /**
  * The same transaction already in the ledger: the bank's own ID on the
- * account, or else on the account, on the day, for the amount, to the same
- * payee (or with no payee on either).
+ * account (or, for a transfer's arriving half, on the account it went
+ * into), or else on the account, on the day, for the amount, to the same
+ * payee (or with no payee on either). A transfer joined from two rows
+ * kept the leaving half's day, so its arriving half may be up to three
+ * days off it.
  */
 export function already(t: Imported, account: string, ledger: finance.Transaction[]): boolean {
   return ledger.some((q) => (q.account === account && t.id && q.bank === t.id)
-    || ((q.account === account || q.to === account) && q.date === t.date && Math.abs((q.to === account ? -q.amount : q.amount) - t.amount) < 0.005
-      && (!q.payee || !t.payee || alike(q.payee, t.payee))));
+    || (q.to === account && t.id && q.toBank === t.id)
+    || ((q.account === account || q.to === account) && (q.date === t.date || (q.to === account && Math.abs(dayNo(q.date) - dayNo(t.date)) <= pairDays))
+      && Math.abs((q.to === account ? -q.amount : q.amount) - t.amount) < 0.005
+      && (!q.payee || !t.payee || alike(q.payee, t.payee) || (q.to === account && !!q.toBank))));
+}
+
+/** How far apart the two halves of a transfer may be: money leaves one account and lands in another a few days on. */
+export const pairDays = 3;
+
+/** A transfer's two halves as two rows: money out of one account, the same into another. */
+export interface Pair { out: finance.Transaction; in: finance.Transaction }
+
+/**
+ * Rows that look like the two halves of one transfer between the
+ * household's own accounts: a minus on one and the same plus on another,
+ * within three days, neither a transfer already, paying a planned payment,
+ * or said to be apart. Each row in one pair at most, the nearest days first.
+ */
+export function pairs(txs: finance.Transaction[]): Pair[] {
+  const free = (t: finance.Transaction) => !t.to && !t.payment && !t.apart && !t.splits?.length;
+  const outs = txs.filter((t) => free(t) && t.amount < 0), ins = txs.filter((t) => free(t) && t.amount > 0);
+  const all: (Pair & { gap: number })[] = [];
+  for (const o of outs) for (const i of ins) {
+    const gap = dayNo(i.date) - dayNo(o.date);
+    if (i.account !== o.account && Math.abs(i.amount + o.amount) < 0.005 && Math.abs(gap) <= pairDays) all.push({ out: o, in: i, gap: Math.abs(gap) });
+  }
+  const used = new Set<string>(), out: Pair[] = [];
+  for (const p of all.sort((a, b) => a.gap - b.gap || a.out.date.localeCompare(b.out.date))) {
+    if (used.has(p.out.id) || used.has(p.in.id)) continue;
+    used.add(p.out.id); used.add(p.in.id);
+    out.push({ out: p.out, in: p.in });
+  }
+  return out.sort((a, b) => b.out.date.localeCompare(a.out.date));
+}
+
+/** Two halves as one transfer: the leaving half's day and payee, into the other's account, its bank ID kept. */
+export function joined(p: Pair): finance.Transaction {
+  return { ...p.out, to: p.in.account, toBank: p.in.bank, payee: p.out.payee || p.in.payee, note: p.out.note || p.in.note, category: undefined, institution: undefined, notPlanned: undefined };
 }
 
 /** The words of a payee that say who it is: three letters or more, no store numbers. */
@@ -118,4 +199,72 @@ const named = (s: string): string[] => s.toLowerCase().replace(/[^a-z\s]/g, ' ')
 export function alike(a: string, b: string): boolean {
   const x = named(a), y = new Set(named(b));
   return a.toLowerCase() === b.toLowerCase() || x.some((w) => y.has(w));
+}
+
+/** How far a row may be from a payment's day and still pay it: early or late by two weeks (finance's matchWindow). */
+export const matchDays = 16;
+
+/** How far a row's amount may be from a payment's and still be it: a tenth either way. */
+const near = 0.1;
+
+const dayNo = (s: string) => Math.round(Date.parse(s + 'T00:00:00Z') / 86400000);
+
+/** A planned payment a row of a bank's file pays, and the day of it. */
+export interface Planned { payment: string; due: string }
+
+/**
+ * The planned payment a row plainly pays, or none: money out of this
+ * account (the payment's From, or checking), to a payee alike its name or
+ * of its brand (`same`), or money into it from someone outside the
+ * household (Payer) by their name or the payment's, for its amount give or take a tenth, within two
+ * weeks of one of its days (View.dues) not paid already (`taken`, by
+ * payment and day). The nearest day wins; a tie between two payments is
+ * no plain answer, so none.
+ */
+export function plannedFor(t: Imported, account: string, payments: finance.Payment[], dues: Record<string, string[]>, checking: string, taken: Set<string>, same: (payee: string, x: finance.Payment) => boolean): Planned | undefined {
+  if (!t.amount || !t.payee) return undefined;
+  const paid = Math.abs(t.amount);
+  let best: (Planned & { gap: number; off: number }) | undefined, tie = false;
+  // Money out pays a bill out of this account; money in is from someone outside, by their name or the payment's.
+  const fits = (x: finance.Payment) => (x.payer
+    ? t.amount > 0 && (x.to || checking) === account && (same(t.payee!, x) || alike(t.payee!, x.payer))
+    : t.amount < 0 && (x.from || checking) === account && same(t.payee!, x));
+  for (const x of payments) {
+    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !fits(x)) continue;
+    for (const due of dues[x.id] || []) {
+      const gap = Math.abs(dayNo(due) - dayNo(t.date)), off = Math.abs(paid - x.amount);
+      if (gap > matchDays || taken.has(x.id + ' ' + due)) continue;
+      if (!best || gap < best.gap || (gap === best.gap && off < best.off)) { tie = !!best && best.payment !== x.id && gap === best.gap && off === best.off; best = { payment: x.id, due, gap, off }; }
+      else if (gap === best.gap && off === best.off && x.id !== best.payment) tie = true;
+    }
+  }
+  return best && !tie ? { payment: best.payment, due: best.due } : undefined;
+}
+
+/** The payment days the ledger has paid already, as "payment day": each linked transaction's nearest day of its payment. */
+export function paidDays(ledger: finance.Transaction[], dues: Record<string, string[]>): Set<string> {
+  const out = new Set<string>();
+  for (const q of ledger) {
+    const days = q.payment ? dues[q.payment] : undefined;
+    if (!days?.length) continue;
+    const at = days.reduce((a, b) => (Math.abs(dayNo(b) - dayNo(q.date)) < Math.abs(dayNo(a) - dayNo(q.date)) ? b : a));
+    if (Math.abs(dayNo(at) - dayNo(q.date)) <= matchDays) out.add(q.payment + ' ' + at);
+  }
+  return out;
+}
+
+/**
+ * What each transaction in the ledger plainly pays, by its ID: those linked
+ * to none, not said to pay none (NotPlanned), and not a transfer between
+ * the household's accounts, oldest first, no planned day paid twice.
+ */
+export function suggestLinks(txs: finance.Transaction[], payments: finance.Payment[], dues: Record<string, string[]>, checking: string, same: (payee: string, x: finance.Payment) => boolean): Map<string, Planned> {
+  const taken = paidDays(txs, dues);
+  const out = new Map<string, Planned>();
+  for (const t of [...txs].sort((a, b) => a.date.localeCompare(b.date))) {
+    if (t.payment || t.notPlanned || t.to) continue;
+    const g = plannedFor({ date: t.date, amount: t.amount, payee: t.payee || '' }, t.account, payments, dues, checking, taken, same);
+    if (g) { taken.add(g.payment + ' ' + g.due); out.set(t.id, g); }
+  }
+  return out;
 }

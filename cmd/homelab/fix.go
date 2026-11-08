@@ -15,6 +15,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
@@ -103,7 +104,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 
 	var plan []string
 	if len(down) > 0 {
-		plan = append(plan, "start the baseline apps that are down: "+names(down))
+		plan = append(plan, "start the homelab's own apps that are down: "+names(down))
 	}
 	if len(unwell) > 0 {
 		plan = append(plan, "restart the apps that are unwell, and recreate any that stay unwell: "+names(unwell))
@@ -121,7 +122,7 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		plan = append(plan, "install the scheduled jobs that are missing: "+strings.Join(jobsMissing, ", "))
 	}
 	if len(plan) == 0 {
-		u.OK("nothing to fix: every baseline app is running and well with its current settings, there is room on the disks, and the jobs are installed")
+		u.OK("nothing to fix: every one of the homelab's own apps is running and well with its current settings, there is room on the disks, and the jobs are installed")
 		return nil
 	}
 	for _, p := range plan {
@@ -151,6 +152,8 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 		p := h.project(pa.file)
 		if err := client.Compose(ctx, p, pa.profiles, append([]string{"restart"}, pa.ids...)...); err != nil {
 			warn("restart %s: %v", strings.Join(pa.ids, ", "), err)
+		} else {
+			h.noteStarted(started.Fix, pa.ids...)
 		}
 	}
 	if len(unwell) > 0 {
@@ -160,6 +163,8 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 			u.Info("still unwell after a restart, recreating: %s", strings.Join(pa.ids, ", "))
 			if err := client.Compose(ctx, p, pa.profiles, append([]string{"up", "--detach", "--force-recreate", "--no-deps"}, pa.ids...)...); err != nil {
 				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)
+			} else {
+				h.noteStarted(started.Fix, pa.ids...)
 			}
 		}
 		if still = h.stillUnwell(ctx, still); len(still) > 0 {
@@ -168,6 +173,11 @@ func (h *homelab) fix(ctx context.Context, args []string) error {
 	}
 	if len(changed) > 0 {
 		step("Recreating the apps whose settings changed")
+		// A copy first: what they hold just before they start on the new settings.
+		if err := h.dumpBefore(ctx, client, changed, "they start on their new settings"); err != nil {
+			warn("%v", err)
+			changed = nil
+		}
 		for _, pa := range h.byProject(changed) {
 			if err := client.Compose(ctx, h.project(pa.file), pa.profiles, append([]string{"up", "--detach", "--no-deps"}, pa.ids...)...); err != nil {
 				warn("recreate %s: %v", strings.Join(pa.ids, ", "), err)

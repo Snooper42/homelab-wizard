@@ -16,10 +16,10 @@ func SourcesFor(c *catalog.Catalog, installed func(*catalog.App) bool, waiting f
 			drive = waiting(app)
 		}
 		if app.Meta.Dump != "" {
-			sources = append(sources, Source{ID: app.ID, Name: app.Name(), WaitingFor: drive})
+			sources = append(sources, Source{ID: app.ID, Name: app.Name(), App: app.ID, WaitingFor: drive})
 		}
 		for _, v := range app.Meta.Archive {
-			sources = append(sources, Source{ID: v, Name: app.Name() + " (" + v + ")", Volume: true, WaitingFor: drive})
+			sources = append(sources, Source{ID: v, Name: app.Name() + " (" + v + ")", App: app.ID, Volume: true, WaitingFor: drive})
 		}
 	}
 	return sources

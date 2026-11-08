@@ -60,6 +60,7 @@ Apps:
   homelab compose <app|stack> <args>   docker compose for that app's project
   homelab updates [pause|resume]       the nightly updates the agent runs
   homelab updates hold|release <app>   leave one app out of them, or put it back
+  homelab updates days <app> sun       update one app on its own days only (every: each night)
   homelab updates notes <app>          what updating it brings: its newer releases' notes
   homelab wire                         connect running apps: Prowlarr, FlareSolverr,
                                        qBittorrent (QBITTORRENT_PASSWORD), the libraries'
@@ -86,9 +87,12 @@ Jobs (launchd on macOS, systemd user units on Linux, Task Scheduler on Windows):
   homelab backup                       dump databases, archive volumes, copy .env
   homelab watchdog                     check the tunnel and public apps; alert via ntfy
   homelab restore-test --auto [--engine duplicati|kopia] | <restored> <original>
+  homelab backup-check                 Duplicati's own check of each backup (weekly, on Sundays)
   homelab duplicati setup|jobs         create the backup jobs (passphrases in .env) / list them
   homelab kopia repository <folder>    where Kopia keeps its second copy (KOPIA_REPOSITORY)
   homelab notify setup|test|on|off     ntfy write grants for alert topics / test message / an app's alerts
+  homelab notify snooze <check> 1h|1d  no alerts about one check for a while (off: alerts again)
+  homelab pin|unpin <app>              an app at the top of Status and the menu bar's Open an app, or back in its group
   homelab digest [--send]              the weekly summary the nightly backup sends on Sundays
   homelab schedule install|status|remove
   homelab agent                        the background job: starts the apps at login, keeps awake,
@@ -111,6 +115,7 @@ Phones:
   homelab phone finances <id> off|card|view|edit
                                        hide Finances from a phone, show only the money
                                        card (a wall screen), show them, or let it change them
+  homelab phone until <id> 7d|never    its changes and Finances end then; it only looks
   homelab phone remove <id>            unpair a phone; its token stops working
 
 Tidy Up (homelab media help for more):
@@ -252,12 +257,15 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"domain":       h.domain,
 		"backup":       h.backup,
 		"restore-test": h.restoreTest,
+		"backup-check": h.backupCheck,
 		"duplicati":    h.duplicatiCmd,
 		"kopia":        h.kopiaCmd,
 		"homepage":     h.homepageCmd,
 		"digest":       h.digestCmd,
 		"watchdog":     h.watchdog,
 		"notify":       h.notify,
+		"pin":          h.pin(true),
+		"unpin":        h.pin(false),
 		"schedule":     h.schedule,
 		"doctor":       h.doctor,
 		"report":       h.report,
@@ -291,6 +299,15 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 	if !ok {
 		u.Fail("unknown command %q (see: homelab help)", cmd)
 		return 2
+	}
+	// A command that changes the homelab waits its turn behind any other
+	// changing it (turn.go); a plan answered yes in a terminal takes it then.
+	h.turnAs, h.turnCtx = h.turnWhat(cmd, cmdArgs), ctx
+	defer h.releaseTurn()
+	if changes(cmd, cmdArgs) {
+		if err := h.takeTurn(ctx); err != nil {
+			return exit(u, err)
+		}
 	}
 	return exit(u, fn(ctx, cmdArgs))
 }
@@ -351,6 +368,11 @@ type homelab struct {
 	// rows shows Compose's lines as a line per app, in a terminal (rows.go).
 	rows *appRows
 	host host.Profile
+	// The command's turn to change the homelab (turn.go): what it is as
+	// others waiting see it, its context, and the turn while held.
+	turnAs   string
+	turnCtx  context.Context
+	turnHeld func()
 }
 
 func newHomelab(u *ui.UI, root string) (*homelab, error) {
@@ -483,6 +505,9 @@ func (h *homelab) goAhead(apply bool, question string) error {
 	}
 	if !h.ui.Confirm(question, true) {
 		return errCancelled
+	}
+	if h.turnCtx != nil {
+		return h.takeTurn(h.turnCtx)
 	}
 	return nil
 }

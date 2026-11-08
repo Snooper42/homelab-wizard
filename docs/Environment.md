@@ -94,20 +94,21 @@ Every new homelab starts in Home mode: `HOMELAB_DOMAIN` is empty, and a domain i
 | `NTFY_PUBLISH_TOKEN`, `NTFY_PUBLISH_AUTH` | empty | Secrets, filled in by `homelab notify setup`: the publishers' access token, and the same as an `?auth=` parameter for publishers that only take a URL |
 | `NTFY_READ_TOKEN` | empty | Secret, made by `notify setup`: read-only access for the app's list of recent alerts |
 | `DESKTOP_ALERTS` | `true` | Alerts also show on this machine's screen (Notification Center on a Mac). `false`: the phone only |
+| `QUIET_HOURS` | `22-7` | The night: alerts between these hours (22:00 to 07:00) reach the phone at ntfy's low priority, without a sound, unless serious (the vault unreachable, backups failing for two days). `13-15` for other hours; `off` sounds every alert |
 | `HELPER_EMAIL` | empty | Who helps you with the homelab: **Email it to my helper** writes to them with the diagnostics report |
 | `HEARTBEAT_URL` | empty | An external heartbeat (such as a healthchecks.io ping URL, period and grace 15 minutes). The watchdog pings it every run and pings `/fail` when something is down |
 | `WATCHTOWER_SCHEDULE` | `0 0 4 * * *` | When the background agent runs the nightly updates (a cron with seconds): 4:00 AM daily, after the 03:30 backup. Named for Watchtower, which ran them before |
 | `SOCKET_PROXY_VERSION` | `v0.5.0` | `docker-socket-proxy`'s version, chosen by hand: it controls Docker for Homarr and Dozzle, so it never updates itself nightly ([Security](<Security.md>), M6) |
+| `BESZEL_AGENT_VERSION` | `0.21.1` | The Beszel agent's version, chosen by hand: it holds Docker's socket, so it never updates itself nightly ([Security](<Security.md>), N18) |
 | `FRIGATE_VERSION`, `KOPIA_VERSION`, `NEXTCLOUD_VERSION` | `0.18.2`, `0.23.1`, `35` | Kept until you choose a newer one: read the release notes, change the setting, then `./homelab update <app>`. For Nextcloud this is the major version (the nightly updates bring its fixes); move it one major at a time |
 | `UPDATE_CHANNEL` | `testing` | What `homelab upgrade` and the app's update get: `testing` (every build of `main`, numbered `v0.9.4-beta` and on) or `stable` (only a new minor or major version, `vX.Y.0`). Before the first such version, stable has nothing to move to |
 | `UPDATES_PAUSED` | not in the template | Written by `homelab updates pause` (removed by `resume`): the agent runs no nightly update until it is resumed |
 | `UPDATE_COPY_LIMIT` | `2GB` | The largest folder or volume `homelab update` copies before an app's update, for its rollback (`500MB`, `10GB`; `0` copies any size). A larger one is left out and named in the update's output; databases are dumped whatever their size |
 | `AUTO_ROLLBACK` | `true` | The watchdog rolls back an app that stays unhealthy, keeps restarting, or does not answer 20 minutes to 6 hours after its update, and holds its updates; with its data from before the update only if it was never well after it. `false`: it only alerts |
-| `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most). `false`: it only alerts |
+| `AUTO_HEAL` | `true` | The watchdog restarts an app that is unhealthy or not answering on two checks in a row, and makes one whose container is gone again (once in 6 hours at most); it stops an app Docker restarted 3 times in an hour, with its last log lines in the alert. `false`: it only alerts |
 | `OLLAMA_MODEL` | empty | The Ollama model that explains logs (**Explain this** under an app's log, `homelab logs <app> --explain`), such as `llama3.2`. Empty: the first of Llama, Qwen, Gemma, Mistral, or Phi that Ollama has. Ollama's own `OLLAMA_HOST` says where it runs (this machine by default) |
 | `<APP>_DIGEST` (`PAPERLESS_DIGEST`, `VAULTWARDEN_DIGEST`, …) | not in the template | The version each app the nightly update moves forward runs: its image and that image's digest (`ghcr.io/paperless-ngx/paperless-ngx:latest@sha256:…`). Written by `homelab update`, a rollback, and the watchdog when what runs changes; `homelab up`, `install`, a move, and a rebuild start that version again, so a restore or a new machine opens the data with the version that wrote it. A version you choose by hand (`IMMICH_VERSION`) wins: a kept line for another image is left alone until the app runs the new one. Delete a line to let that app start on its newest version |
 | `UPDATES_HELD` | empty | Apps left out of nightly updates (after a rollback, or `homelab updates hold`). Written by the CLI; `homelab updates release <app>` takes one off |
-| `ALERTS_OFF` | empty | Apps the watchdog still checks and shows on Status, but does not alert about. Written by `homelab notify off <app>` (an app's page › **Tell me if it stops**); `homelab notify on <app>` takes one off |
 
 ## App ports
 
@@ -134,7 +135,7 @@ Each app's port on this machine is a variable named `<APP>_PORT` (for example `V
 | `ROMM_DB_PASSWORD`, `ROMM_AUTH_SECRET_KEY` | Secrets |
 | `ROMM_IGDB_CLIENT_ID`, `ROMM_IGDB_CLIENT_SECRET`, `ROMM_SCREENSCRAPER_USER`, `ROMM_SCREENSCRAPER_PASSWORD` | Optional: artwork and game details for RomM |
 | `GHOSTFOLIO_DB_PASSWORD`, `GHOSTFOLIO_ACCESS_TOKEN_SALT`, `GHOSTFOLIO_JWT_SECRET_KEY` | Secrets. Changing the last two later signs everyone out of Ghostfolio for good |
-| `GHOSTFOLIO_SECURITY_TOKEN` | Optional: your Ghostfolio security token (the one you sign in with), for Finances › Update balances to read what each account is worth, on a click |
+| `GHOSTFOLIO_SECURITY_TOKEN` | Optional: your Ghostfolio security token (the one you sign in with), for Finances › Update balances to read what each account is worth, and Net worth › Investments to read what each holds, on a click (and once a day after the first) |
 | `DOCMOST_DB_PASSWORD`, `DOCMOST_APP_SECRET` | Secrets. Changing the app secret later signs everyone out of Docmost |
 | `DAWARICH_DB_PASSWORD` | Secret |
 | `KOPIA_PASSWORD`, `KOPIA_SERVER_PASSWORD` | Secrets. The first opens every Kopia backup: keep it outside this machine too, with `DUPLICATI_SECRETS_PASSPHRASE`. The second is its web page's |

@@ -7,6 +7,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/api"
 	"github.com/Snooper42/homelab-wizard/internal/backup"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // The menu's lines, read from a Status: what is said first, at a glance,
@@ -78,6 +79,11 @@ func Looks(st api.Status, n int) []string {
 		switch {
 		case a.Health == "restarting":
 			out = append(out, a.Name+" keeps restarting")
+		case a.State == "stopped" && st.Stopped[a.ID].Why == stopped.KeptRestarting:
+			out = append(out, a.Name+" was stopped: it kept restarting")
+		case a.State == "stopped" && a.StoppedWhy != "" && !heldBy(st, a.ID):
+			// It stopped by itself: out of memory, an error, its port taken.
+			out = append(out, a.Name+" stopped: "+a.StoppedWhy)
 		case a.Health == "unhealthy":
 			out = append(out, a.Name+" is unwell")
 		case a.NotAnswering != "":
@@ -105,9 +111,12 @@ type Entry struct {
 }
 
 // Entries are the installed apps by category, in the catalog's order of
-// categories, at most n lines with the categories' names counted.
+// categories, at most n lines with the categories' names counted. The
+// pinned apps come first, under Pinned, in the order they were pinned,
+// and not again in their category.
 func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 	byCat := map[string][]Entry{}
+	pinned := map[string]Entry{}
 	for _, a := range st.Apps {
 		if a.State == "missing" {
 			continue
@@ -137,6 +146,10 @@ func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 				e.URL = a.URL
 			}
 		}
+		if a.Pinned {
+			pinned[a.ID] = e
+			continue
+		}
 		byCat[cat] = append(byCat[cat], e)
 	}
 	var order []string
@@ -147,6 +160,16 @@ func Entries(st api.Status, c *catalog.Catalog, n int) []Entry {
 	}
 	order = append(order, "other")
 	var out []Entry
+	for _, id := range st.Pinned {
+		e, ok := pinned[id]
+		if !ok || len(out) == n || len(out) == 0 && n < 2 {
+			continue
+		}
+		if len(out) == 0 {
+			out = append(out, Entry{Title: "Pinned", Header: true})
+		}
+		out = append(out, e)
+	}
 	seen := map[string]bool{}
 	for _, cat := range order {
 		apps := byCat[cat]
@@ -215,4 +238,11 @@ func plural(n int, one, many string) string {
 		return one
 	}
 	return many
+}
+
+// heldBy reports whether the app was stopped on purpose (by you, or for a
+// while), which is no trouble.
+func heldBy(st api.Status, id string) bool {
+	_, ok := st.Stopped[id]
+	return ok
 }

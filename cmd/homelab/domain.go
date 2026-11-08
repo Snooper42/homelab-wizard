@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -307,8 +309,10 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 			return err
 		}
 		for _, r := range routes {
-			if publishable(r.App.ID, r.App.Public(), envMap) {
+			if ok, why := h.mayPublish(ctx, r.App, envMap); ok {
 				public = append(public, r)
+			} else if why != "" {
+				tunnelNote = why
 			} else if r.App.Public() {
 				tunnelNote = r.App.Name() + " stays off the internet until homelab notify setup has run (it needs the publishers' token)"
 			}
@@ -356,7 +360,7 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	var rows [][]string
 	for _, r := range routes {
 		flag := ""
-		if publishable(r.App.ID, r.App.Public(), envMap) && len(public) > 0 {
+		if len(public) > 0 && slices.ContainsFunc(public, func(p domain.Route) bool { return p.Host == r.Host }) {
 			flag = u.Green("public")
 		}
 		rows = append(rows, []string{u.Cyan(scheme + "://" + r.Host), u.Dim("→ " + r.ForwardHost + ":" + strconv.Itoa(r.ForwardPort)), flag})
@@ -424,10 +428,26 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		scheme = "https"
 	}
 
-	// 4. Proxy hosts.
+	// 4. Proxy hosts. The phone companion's host carries its key, the
+	// companion's only proof that a phone reached it over https (N25):
+	// made here, and saved once the proxy holds it, so the companion never
+	// asks for a key its proxy host does not send.
+	companionKey, newKey := envMap["COMPANION_PROXY_KEY"], false
+	if !companionKeyOK(companionKey) {
+		if companionKey, err = envfile.NewSecret("COMPANION_PROXY_KEY"); err != nil {
+			return err
+		}
+		newKey = true
+	}
+	settings.CompanionKey = companionKey
 	results, err := domain.Sync(ctx, api, routes, settings)
 	if err != nil {
 		return err
+	}
+	if newKey {
+		if err := h.setEnv("COMPANION_PROXY_KEY", companionKey); err != nil {
+			return err
+		}
 	}
 	removed, err := domain.Withdraw(ctx, api, h.catalog.Apps, dom)
 	if err != nil {
@@ -581,8 +601,13 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 	report := detect.Analyze(h.catalog, containers)
 	var public []string
 	for _, a := range h.catalog.Apps {
-		if st, _ := report.State(a.ID); st == detect.Running && publishable(a.ID, a.Public(), env) {
+		if st, _ := report.State(a.ID); st != detect.Running {
+			continue
+		}
+		if ok, why := h.mayPublish(ctx, a, env); ok {
 			public = append(public, a.Subdomain()+"."+dom)
+		} else if why != "" && env["TUNNEL_TOKEN"] != "" {
+			u.Info("%s", why)
 		}
 	}
 	sort.Strings(public)
@@ -629,3 +654,7 @@ const cloudflarePermissions = "Zone › Zone › Read, Zone › DNS › Edit, an
 func publishable(id string, public bool, env map[string]string) bool {
 	return public && (id != "ntfy" || env["NTFY_PUBLISH_TOKEN"] != "")
 }
+
+// companionKeyOK is a COMPANION_PROXY_KEY the proxy host may carry: long,
+// and letters and digits only, as it is written into nginx's settings.
+var companionKeyOK = regexp.MustCompile(`^[A-Za-z0-9]{24,128}$`).MatchString

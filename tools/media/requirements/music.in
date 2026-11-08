@@ -1,0 +1,7 @@
+# What the music jobs install into ~/.music-cleanup/venv (music_organizer.py's one-time setup).
+# The pinned files beside it, one per Python, come from this: make music-pins (N28).
+beets
+requests
+pylast
+pillow
+pyacoustid

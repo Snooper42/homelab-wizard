@@ -8,6 +8,15 @@ on:
 permissions:
   contents: read
 
+# A pull request's newer push cancels its older run (one group per PR,
+# by its ref; the PR's own text never goes in), which no longer
+# decides anything, so a branch pushed several times in a row does not
+# hold every runner (Nov 5, 2026: six runs of one PR kept the others
+# queued for an hour). Main's runs always finish.
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -201,7 +210,7 @@ jobs:
         scheme: [light, dark]
     runs-on: ubuntu-24.04
     # Every screen as every system, both contrasts, through axe: about
-    # 27 minutes on main in November 2026, so room to grow.
+    # 27 minutes on main in November 2026 one at a time, so room to grow.
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -212,8 +221,21 @@ jobs:
         run: |
           npm ci
           npx --no-install playwright install --with-deps chromium
+      # Three at once, each every third check (SMOKE_SHARD): together every
+      # check, in about a third of the time on the runner's four cores (Nov
+      # 6, the Finances checks here: 983 s one at a time, 348 s three at
+      # once, the same 681 passing). Each line says its shard as it comes.
       - name: Click through, and check each screen
-        run: node app/preview/shoot.mjs --smoke ${{ matrix.scheme }}
+        run: |
+          for i in 1 2 3; do
+            ( SMOKE_SHARD=$i/3 node app/preview/shoot.mjs --smoke ${{ matrix.scheme }} 2>&1; echo $? > "smoke-$i.exit" ) | sed -u "s|^|[$i/3] |" &
+          done
+          wait
+          failed=0
+          for i in 1 2 3; do
+            [ "$(cat "smoke-$i.exit" 2>/dev/null)" = 0 ] || failed=1
+          done
+          exit $failed
       - name: Keep the screenshots of what failed
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

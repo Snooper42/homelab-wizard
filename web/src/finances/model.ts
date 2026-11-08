@@ -15,12 +15,16 @@ export interface Month {
   viaPay: number;
   /** What is spent, by the payment's kind (home, cards, …), largest first. */
   byKind: { kind: string; amount: number }[];
+  /** Money from someone outside the household (a share of the mortgage), each a month: in In too. */
+  others: { name: string; payer: string; amount: number }[];
 }
 
 /**
  * A month on average. A bill charged to a card is spent through the card's
  * payment (which pays it with the card's other spending); payments between
- * other accounts, and money moved into checking, are neither.
+ * other accounts, and money moved into checking, are neither. Money from
+ * someone outside the household is in, as pay is (and saved, when it goes
+ * into savings).
  */
 export function month(v: finance.View, L: Lookup): Month {
   const people = v.plan.people || [];
@@ -29,16 +33,19 @@ export function month(v: finance.View, L: Lookup): Month {
   const income = people.reduce((t, e) => t + e.net * perMonth(e.schedule), 0);
   const kept = (id?: string) => saving(L.account[id || '']?.kind);
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
-  const fromPay = payments.filter((x) => (!x.from || x.from === v.checking || onCard(x)) && !(x.to && x.to === v.checking));
+  const fromPay = payments.filter((x) => !x.payer && (!x.from || x.from === v.checking || onCard(x)) && !(x.to && x.to === v.checking));
   const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, people, v.checking);
+  const fromOthers = payments.filter((x) => x.payer);
+  const others = fromOthers.map((x) => ({ name: x.name, payer: x.payer!, amount: each(x) }));
   const spentList = fromPay.filter((x) => !kept(x.to));
   const spent = spentList.reduce((t, x) => t + each(x), 0);
-  const saved = fromPay.filter((x) => kept(x.to)).reduce((t, x) => t + each(x), 0);
+  const saved = [...fromPay, ...fromOthers].filter((x) => kept(x.to)).reduce((t, x) => t + each(x), 0);
   const viaPay = people.reduce((t, e) => t + (e.deductions || []).filter((d) => kept(d.account)).reduce((u, d) => u + d.amount, 0) * perMonth(e.schedule), 0);
   const kinds: Record<string, number> = {};
   for (const x of spentList) kinds[x.kind || 'other'] = (kinds[x.kind || 'other'] || 0) + each(x);
   const byKind = Object.entries(kinds).map(([kind, amount]) => ({ kind, amount })).filter((k) => k.amount > 0.005).sort((a, b) => b.amount - a.amount);
-  return { in: income, spent, saved, left: income - spent - saved, viaPay, byKind };
+  const all = income + others.reduce((t, o) => t + o.amount, 0);
+  return { in: all, spent, saved, left: all - spent - saved, viaPay, byKind, others };
 }
 
 /** A payment kind as people say it. */

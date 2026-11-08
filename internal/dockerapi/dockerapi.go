@@ -166,12 +166,6 @@ type Error struct {
 
 func (e *Error) Error() string { return fmt.Sprintf("engine API %d: %s", e.Status, e.Message) }
 
-// Ping is whether the engine answers.
-func (c *Client) Ping(ctx context.Context) error {
-	_, err := c.get(ctx, "/_ping", nil)
-	return err
-}
-
 // Info is the engine's own description, as docker info --format json.
 func (c *Client) Info(ctx context.Context) ([]byte, error) { return c.get(ctx, "/info", nil) }
 

@@ -12,7 +12,10 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
+	"github.com/Snooper42/homelab-wizard/internal/turn"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -29,11 +32,18 @@ func healPath(root string) string { return filepath.Join(root, "data", "healed.j
 // Apps updated lately are left to the rollback. Among missing (their
 // container is gone), those the watchdog saw running in the last week are
 // made again, on the same terms; one never started is left alone, and so
-// is one stopped on purpose (data/stopped.json). It
+// is one stopped on purpose (data/stopped.json), and none while another
+// job has the turn (internal/turn). It
 // returns a line per app restarted, for the alert. AUTO_HEAL=false turns it
 // off.
 func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missing []string, state health.State, env map[string]string, now time.Time) []string {
 	if strings.EqualFold(env["AUTO_HEAL"], "false") || len(unwell)+len(missing) == 0 {
+		return nil
+	}
+	// Another job changing the homelab (an update takes an app down and up
+	// again) has the turn: its apps are left to it, and looked at again on
+	// the next round. A watchdog run by that job itself has its turn.
+	if _, busy := turn.First(h.root); busy && os.Getenv(turn.Env) == "" {
 		return nil
 	}
 	path := healPath(h.root)
@@ -45,6 +55,7 @@ func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missi
 	rollback := !strings.EqualFold(env["AUTO_ROLLBACK"], "false")
 	held := stopped.Load(stopped.Path(h.root))
 	var done []string
+	healed := map[string]time.Time{}
 	for _, id := range append(slices.Clone(unwell), missing...) {
 		a, ok := h.catalog.Get(id)
 		if !ok || !state.Confirmed(id) || now.Sub(last[id]) < healEvery || held.Has(id) {
@@ -67,6 +78,8 @@ func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missi
 				continue
 			}
 			last[id] = now
+			healed[id] = now
+			h.noteStarted(started.Watchdog, id)
 			line := a.Name() + " (" + state.Problems[id] + ")"
 			if verb[0] == "up" {
 				line = a.Name() + " (its container was gone, so it was made again)"
@@ -75,18 +88,34 @@ func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missi
 			done = append(done, line)
 		}
 	}
-	for id, t := range last {
-		if now.Sub(t) > 7*24*time.Hour {
-			delete(last, id)
-		}
-	}
 	if len(done) > 0 {
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {
-			data, _ := json.MarshalIndent(last, "", "  ")
-			_ = os.WriteFile(path, append(data, '\n'), 0o644)
-		}
+		h.noteHealed(path, healed, now)
 	}
 	return done
+}
+
+// noteHealed adds this run's restarts to the note, read again under its
+// lock: another watchdog run (the agent's, and the one after sleep) may
+// have noted its own meanwhile, and losing it would let that app be
+// restarted again before healEvery is up. Notes a week old go.
+func (h *homelab) noteHealed(path string, healed map[string]time.Time, now time.Time) {
+	err := lockedfile.Update(path, 0o644, func(old []byte) ([]byte, bool) {
+		last := map[string]time.Time{}
+		_ = json.Unmarshal(old, &last)
+		for id, t := range healed {
+			last[id] = t
+		}
+		for id, t := range last {
+			if now.Sub(t) > 7*24*time.Hour {
+				delete(last, id)
+			}
+		}
+		data, _ := json.MarshalIndent(last, "", "  ")
+		return append(data, '\n'), true
+	})
+	if err != nil {
+		h.ui.Warn("watchdog: couldn't note the restarts: %v", err)
+	}
 }
 
 // ranThisWeek says whether id passed a watchdog check on a kept day.

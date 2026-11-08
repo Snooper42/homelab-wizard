@@ -54,11 +54,14 @@ func pending(dir, who string) string { return filepath.Join(dir, "crash-"+who+".
 // the header alone, which the next Watch or Save drops. who is "app",
 // "tray", or "agent".
 func Watch(dir, who, version string) error {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	// This account's only, one an older version made 0755 included: the
+	// app and the agent each start here.
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
+	_ = os.Chmod(dir, 0o700) // best effort: another account's folder stays as it is
 	Save(dir)
-	f, err := os.Create(pending(dir, who))
+	f, err := os.OpenFile(pending(dir, who), os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
@@ -69,8 +72,27 @@ func Watch(dir, who, version string) error {
 // Save moves each crash a pending file holds into crash-<date>.log (the
 // day it crashed, added to that day's file). A pending file with nothing
 // after its header belongs to a run that is still going or ended
-// normally, and is left as it is.
+// normally, and is left as it is. A day's log goes after KeepDays.
 func Save(dir string) {
+	savePending(dir)
+	dropOld(dir, time.Now())
+}
+
+// KeepDays is how long a day's crash log stays.
+const KeepDays = 90
+
+// dropOld removes the crash logs of days more than KeepDays before now.
+func dropOld(dir string, now time.Time) {
+	files, _ := filepath.Glob(filepath.Join(dir, "crash-????-??-??.log"))
+	cutoff := now.AddDate(0, 0, -KeepDays).Format("2006-01-02")
+	for _, p := range files {
+		if day := strings.TrimSuffix(strings.TrimPrefix(filepath.Base(p), "crash-"), ".log"); day < cutoff {
+			_ = os.Remove(p)
+		}
+	}
+}
+
+func savePending(dir string) {
 	files, _ := filepath.Glob(filepath.Join(dir, "crash-*.pending"))
 	for _, p := range files {
 		data, err := os.ReadFile(p)
@@ -86,7 +108,7 @@ func Save(dir string) {
 			when = fi.ModTime()
 		}
 		out := filepath.Join(dir, "crash-"+when.Format("2006-01-02")+".log")
-		f, err := os.OpenFile(out, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+		f, err := os.OpenFile(out, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
 			continue
 		}

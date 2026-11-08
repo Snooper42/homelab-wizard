@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,9 +16,41 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
+
+// startedBy is why a running container last started, for "up 9 minutes"
+// on hover: what the homelab noted then (data/started.json); an update
+// noticed about then; Docker's restart policy after it stopped on its own
+// (DockerRestart); or "" when none of them says.
+func startedBy(why started.Record, hist updates.History, id string, c docker.Container) string {
+	if w := why.Why(id, c.StartedAt); w != "" {
+		return w
+	}
+	if r := hist.Apps[id]; r != nil && !c.StartedAt.IsZero() && !r.Updated.IsZero() {
+		if d := r.Updated.Sub(c.StartedAt); d >= -started.Near && d <= updateNoticed {
+			return Updated
+		}
+	}
+	if c.Restarts > 0 {
+		return DockerRestart
+	}
+	return ""
+}
+
+// StartedBy's own reasons, besides internal/started's: Docker started it
+// again by itself after it stopped on its own (its restart policy); or an
+// update the homelab noticed about then, by whoever made it.
+const (
+	DockerRestart = "docker"
+	Updated       = "update"
+)
+
+// updateNoticed is how long after a container starts its update may be
+// noticed (the next look at the images) and still be why it started.
+const updateNoticed = 30 * time.Minute
 
 // StatusOf is the state of every app, given the running containers and the
 // .env settings; helpers only with all. Optional apps that were never
@@ -46,15 +79,26 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	}
 	// What updates left to go back to, and which are held.
 	hist := updates.History{}
+	why := started.Record{}             // why the homelab last started each app
+	days := map[string][]time.Weekday{} // each app's update days, when not every night
 	if c.Root != "" {
 		hist = updates.LoadHistory(updates.HistoryPath(c.Root))
+		why = started.Load(started.Path(c.Root))
+		days = updates.LoadDays(updates.DaysPath(c.Root))
 	}
 	held := map[string]bool{}
 	for _, id := range updates.Held(env) {
 		held[id] = true
 	}
+	pinned := map[string]bool{}
+	for _, id := range Pinned(c.Root, env) {
+		if _, ok := c.Get(id); ok {
+			pinned[id] = true
+			st.Pinned = append(st.Pinned, id)
+		}
+	}
 	quiet := map[string]bool{}
-	for _, id := range notify.Quiet(env) {
+	for _, id := range notify.LoadQuiet(c.Root, env) {
 		quiet[id] = true
 	}
 	for _, a := range c.Apps {
@@ -86,9 +130,16 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 					s.Since = m.Container.StartedAt.UTC().Format(time.RFC3339)
 				}
 				s.Restarts = m.Container.Restarts
+				s.StartedBy = startedBy(why, hist, a.ID, m.Container)
 			case detect.Stopped:
 				s.State = "stopped"
 				s.WaitingFor = diskspace.MissingDrive(m.Container.Binds)
+				if !m.Container.FinishedAt.IsZero() {
+					s.StoppedAt = m.Container.FinishedAt.UTC().Format(time.RFC3339)
+				}
+				if s.WaitingFor == "" {
+					s.StoppedWhy = StoppedWhy(m.Container)
+				}
 			case detect.External:
 				s.State, s.Container = "elsewhere", m.Container.Name
 			default:
@@ -110,7 +161,9 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 			s.UpdatedAt = r.Updated.UTC().Format(time.RFC3339)
 		}
 		s.Held = held[a.ID]
+		s.UpdateDays = updates.DayNames(days[a.ID])
 		s.Quiet = quiet[a.ID]
+		s.Pinned = pinned[a.ID]
 		st.Apps = append(st.Apps, s)
 	}
 	if ask {
@@ -146,4 +199,31 @@ func NativeUp(ctx context.Context, port int) bool {
 	}
 	resp.Body.Close()
 	return true
+}
+
+// portTaken finds the port in Docker's error when another program has it:
+// "Bind for 0.0.0.0:9925 failed: port is already allocated", "listen tcp
+// 0.0.0.0:9925: bind: address already in use", or Docker 29's "failed to
+// bind host port 0.0.0.0:9925/tcp: address already in use".
+var portTaken = regexp.MustCompile(`:(\d+)(?:/(?:tcp|udp))?(?: failed)?: (?:bind: )?(?:address already in use|port is already allocated)`)
+
+// StoppedWhy says in a few words why a stopped container stopped, when
+// Docker knows: "it ran out of memory", "another program is using its port
+// 9925", "Docker couldn't start it", or "it quit with an error". It is ""
+// for one stopped cleanly (by hand, or by a shutdown), which needs no look.
+func StoppedWhy(c docker.Container) string {
+	switch {
+	case c.OOMKilled:
+		return "it ran out of memory"
+	case c.Error != "":
+		if m := portTaken.FindStringSubmatch(c.Error); m != nil {
+			return "another program is using its port " + m[1]
+		}
+		return "Docker couldn't start it"
+	}
+	switch c.ExitCode {
+	case 0, 137, 143: // it finished, or was stopped (docker stop, a shutdown)
+		return ""
+	}
+	return "it quit with an error"
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -41,11 +42,21 @@ func TestSummaryAndLooks(t *testing.T) {
 		{Name: "Uptime Kuma", State: "missing"},
 		{Name: "ntfy", State: "missing"},
 		{Name: "Syncthing", State: "stopped"},
-	}, Missing: 2}
-	if got := Looks(loop, 5); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running" {
+		{ID: "mealie", Name: "Mealie", State: "stopped"},
+	}, Missing: 2, Stopped: stopped.Record{"mealie": {Why: stopped.KeptRestarting, Restarts: 4}}}
+	if got := Looks(loop, 6); strings.Join(got, "|") != "File Browser keeps restarting|Immich does not answer|Sonarr is unwell|Uptime Kuma is not running|ntfy is not running|Mealie was stopped: it kept restarting" {
 		t.Errorf("looks %q", got)
 	}
-	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 3 more need a look" {
+	// One that stopped by itself says why; one you stopped needs no look,
+	// whatever Docker said when it stopped.
+	crashed := api.Status{Apps: []api.AppStatus{
+		{ID: "mealie", Name: "Mealie", State: "stopped", StoppedWhy: "it ran out of memory"},
+		{ID: "vikunja", Name: "Vikunja", State: "stopped", StoppedWhy: "it quit with an error"},
+	}, Stopped: stopped.Record{"vikunja": {}}}
+	if got := Looks(crashed, 6); strings.Join(got, "|") != "Mealie stopped: it ran out of memory" {
+		t.Errorf("looks, stopped by itself: %q", got)
+	}
+	if got := Looks(loop, 3); len(got) != 3 || got[2] != "and 4 more need a look" {
 		t.Errorf("looks, at most 3: %q", got)
 	}
 	if got := Looks(api.Status{Apps: st.Apps[:1]}, 3); len(got) != 0 {
@@ -131,6 +142,18 @@ func TestEntries(t *testing.T) {
 	}
 	if none := Entries(st, nil, slots); len(none) != 6 || none[0].Title != "Other" {
 		t.Errorf("without a catalog, one list: %+v", none)
+	}
+	// Pinned apps first, in the order pinned, and not again in their category.
+	for i := range st.Apps {
+		st.Apps[i].Pinned = st.Apps[i].ID == "navidrome" || st.Apps[i].ID == "filebrowser"
+	}
+	st.Pinned = []string{"navidrome", "filebrowser"}
+	var titles []string
+	for _, e := range Entries(st, c, slots) {
+		titles = append(titles, e.Title)
+	}
+	if got := strings.Join(titles, " | "); got != "Pinned | Navidrome | File Browser · restarting | Cloud & Files | Syncthing · stopped | Media | Jellyfin | Other | My app" {
+		t.Errorf("pinned: %s", got)
 	}
 }
 

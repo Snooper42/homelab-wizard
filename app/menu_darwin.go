@@ -22,7 +22,7 @@ func appMenu(a *App) *menu.Menu {
 	go2 := func(screen string) menu.Callback {
 		return func(*menu.CallbackData) { runtime.EventsEmit(a.ctx, "navigate", screen) }
 	}
-	view.AddText("Choose Stacks", keys.CmdOrCtrl("1"), go2("choose"))
+	view.AddText("Choose Apps", keys.CmdOrCtrl("1"), go2("choose"))
 	view.AddText("Status", keys.CmdOrCtrl("2"), go2("status"))
 	view.AddText("Backups", keys.CmdOrCtrl("3"), go2("backups"))
 	view.AddText("Setup", keys.CmdOrCtrl("4"), go2("setup"))

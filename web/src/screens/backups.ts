@@ -2,8 +2,9 @@
 // screen's commands.
 import { mountBackupTiles, mountCopyRows, mountJobs, mountKopia, mountVault, placeName } from '../backups/Backups';
 import { store } from '../store';
-import { statusById } from './status';
+import { statusById, statusData } from './status';
 import { cliProgress, endJob, startJob } from '../jobs';
+import { inTurn, waitWords } from '../job/queue';
 import { $, go, osName, showError } from '../core';
 
 // Backups: the newest copy of each database and volume, the destination,
@@ -19,6 +20,9 @@ backupsData.watch(() => { drawBackups(); drawJobs(); });
 jobsData.watch(() => { if (backupsData.value && !backupsData.error) drawBackups(); drawJobs(); });
 export function loadBackups() { return Promise.all([jobsData.load(), backupsData.load()]); }
 
+/** Draws Backups again with the apps' state, which says why a stale copy is stale (status.ts calls it as that changes). */
+export function redrawBackups() { if (backupsData.value && !backupsData.error) drawBackups(); }
+
 function drawBackups() {
   if (backupsData.error) { mountCopyRows($('backupRows'), null); showError(backupsData.error); return; }
   const o = backupsData.value!;
@@ -26,7 +30,7 @@ function drawBackups() {
   const testable = (jobsData.value || []).some((j) => j.name.toLowerCase() === 'homelab appdata' && j.state !== 'never');
   const test = () => backupTask('restore-test', 'Testing a restore (a few minutes)…', 'Restore test passed', 'The restore test failed: the log says why');
   mountBackupTiles($('backupTiles'), { o, os: osName, test: testable ? test : undefined });
-  mountCopyRows($('backupRows'), { o });
+  mountCopyRows($('backupRows'), { o, apps: statusData.value ? statusById : undefined });
   mountVault($('vaultCard'), { o });
   $('kopiaCard').hidden = !o.kopia;
   mountKopia($('kopiaCard'), o.kopia ? { k: o.kopia, test: () => backupTask('restore-test-kopia', "Testing Kopia's restore (a few minutes)…", "Kopia's restore test passed", "Kopia's restore test failed: the log says why") } : null);
@@ -61,14 +65,19 @@ async function backupTask(action, busy, done, failed) {
   panel.hidden = false;
   $('backupTitle').textContent = busy;
   log.textContent = '';
-  startJob('backup');
   btns().forEach((b) => { b.disabled = true; });
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
   let ok = true;
-  try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); }
-  cliProgress(ok ? 'done' : 'failed');
-  endJob();
-  if (typeof off === 'function') off();
+  // In its turn (job/queue.ts): the panel says what it waits for meanwhile.
+  await inTurn(busy.replace(/…$/, ''), async () => {
+    $('backupTitle').textContent = busy;
+    startJob('backup');
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { await go().Homelab(action, '', action === 'backup'); } catch (e) { ok = false; showError(e); } finally {
+      cliProgress(ok ? 'done' : 'failed');
+      endJob();
+      if (typeof off === 'function') off();
+    }
+  }, (behind) => { $('backupTitle').textContent = `${waitWords(behind)}, then: ${busy}`; });
   $('backupTitle').textContent = ok ? done : failed;
   btns().forEach((b) => { b.disabled = false; });
   loadBackups();
@@ -85,10 +94,13 @@ async function moveTask(direction, button) {
   panel.hidden = false;
   $('backupTitle').textContent = direction === 'out' ? 'Moving out (a backup first, then packing)…' : 'Moving in…';
   log.textContent = '';
-  const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+  const busy = $('backupTitle').textContent;
   let file = '', ok = true;
-  try { file = await go().Move(direction); } catch (e) { ok = false; showError(e); }
-  if (typeof off === 'function') off();
+  await inTurn(direction === 'out' ? 'Moving out' : 'Moving in', async () => {
+    $('backupTitle').textContent = busy;
+    const off = window.runtime.EventsOn('cli:log', (line) => { log.textContent += line + '\n'; log.scrollTop = log.scrollHeight; });
+    try { file = await go().Move(direction); } catch (e) { ok = false; showError(e); } finally { if (typeof off === 'function') off(); }
+  }, (behind) => { $('backupTitle').textContent = `${waitWords(behind)}, then: ${busy}`; });
   button.disabled = false;
   delete button.dataset.sure;
   button.textContent = direction === 'out' ? 'Move out…' : 'Move in…';

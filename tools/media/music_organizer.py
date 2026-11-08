@@ -747,8 +747,8 @@ def bootstrap():
     """Make sure beets is importable; inside a beets container use the existing install."""
     if os.environ.get("MUSIC_CLEANUP_CHILD") == "1":
         return
-    if sys.version_info < (3, 8):
-        die("Python 3.8 or newer is needed (found %s)." % sys.version.split()[0])
+    if sys.version_info < (3, 10):
+        die("Python 3.10 or newer is needed for music (found %d.%d)." % sys.version_info[:2], newer_python())
     try:
         import beets  # noqa: F401
         import mediafile  # noqa: F401
@@ -774,27 +774,69 @@ def bootstrap():
     venv = Path.home() / ".music-cleanup" / "venv"
     py = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     check = [str(py), "-c", "import beets, mediafile, requests, pylast"]
-    if not py.exists() or subprocess.run(check, capture_output=True).returncode != 0:
+    # Only the versions pinned for the venv's Python, each checked against its hashes (N28).
+    pins = beets_pins(venv_python_version(venv) if py.exists() else sys.version_info[:2])
+    if not pins.exists():
+        die("Python %s can't install beets for music here: Python %s can." % (pins.stem[6:], pinned_pythons()),
+            newer_python())
+    pinned = hashlib.sha256(pins.read_bytes()).hexdigest()
+    mark = venv / "homelab-pins"
+    if not py.exists() or subprocess.run(check, capture_output=True).returncode != 0 or \
+            not mark.exists() or mark.read_text().strip() != pinned:
         with ui.spinner("One-time setup: installing beets (about a minute)") as sp:
             if not py.exists():
                 r = subprocess.run([sys.executable, "-m", "venv", str(venv)], capture_output=True, text=True)
                 if r.returncode != 0:
                     raise RuntimeError("couldn't create %s: %s" % (venv, r.stderr[-400:]))
             pip = [str(py), "-m", "pip", "install", "--quiet", "--disable-pip-version-check",
-                   "--no-warn-script-location"]
-            subprocess.run(pip + ["--upgrade", "pip"], capture_output=True)
-            r = subprocess.run(pip + ["beets", "requests", "pylast"], capture_output=True, text=True)
+                   "--no-warn-script-location", "--require-hashes", "-r", str(pins)]
+            r = subprocess.run(pip, capture_output=True, text=True)
             if r.returncode != 0:
                 tail = (r.stderr or r.stdout).strip().splitlines()[-3:]
                 raise RuntimeError("couldn't install beets (%s). Check the internet connection."
                                    % " / ".join(tail))
-            subprocess.run(pip + ["Pillow"], capture_output=True)  # optional: resizes artwork
-            if shutil.which("fpcalc"):
-                subprocess.run(pip + ["pyacoustid"], capture_output=True)
             if subprocess.run(check, capture_output=True).returncode != 0:
                 raise RuntimeError("beets installed but won't load. Delete %s and run again." % venv)
+            mark.write_text(pinned + "\n")
             sp.summary = "One-time setup done"
     relaunch(str(py))
+
+
+PINS = Path(__file__).resolve().parent / "requirements"
+
+
+def beets_pins(version):
+    """The pinned packages, with their hashes, for one Python: requirements/music-3.12.txt."""
+    return PINS / ("music-%d.%d.txt" % tuple(version[:2]))
+
+
+def pinned_pythons():
+    """The Pythons that have pins, as "3.10 to 3.14"."""
+    vs = sorted(tuple(int(n) for n in f.stem[6:].split(".")) for f in PINS.glob("music-*.txt"))
+    return "%d.%d to %d.%d" % (vs[0] + vs[-1]) if vs else "none"
+
+
+def venv_python_version(venv):
+    """The Python the venv was made with (its pyvenv.cfg), else this one."""
+    try:
+        for line in (venv / "pyvenv.cfg").read_text().splitlines():
+            k, _, v = line.partition("=")
+            if k.strip() in ("version", "version_info"):
+                return tuple(int(n) for n in v.strip().split(".")[:2])
+    except (OSError, ValueError):
+        pass
+    return sys.version_info[:2]
+
+
+def newer_python():
+    if sys.platform == "darwin":
+        how = "brew install python@3.13 in Terminal (or the installer from python.org)"
+    elif os.name == "nt":
+        how = "winget install Python.Python.3.13 in a terminal"
+    else:
+        how = "your package manager"
+    return "Install Python 3.13 (any from %s works) with %s, then run again." % (pinned_pythons(), how) + (
+        "" if os.name == "nt" else "\nOr add the beets app: music then runs in its container, with its own Python.")
 
 
 def relaunch(py):

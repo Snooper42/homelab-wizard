@@ -115,7 +115,7 @@ func TestHomeModeSetupWalked(t *testing.T) {
 		t.Fatalf("a new folder's first step is %+v, not The homelab is started to do", s)
 	}
 	l.doTheSteps(ran)
-	// The password manager, picked in Choose stacks (the small baseline
+	// The password manager, picked in Choose apps (the small baseline
 	// leaves it out), brings its own steps.
 	l.run("install", "vaultwarden", "--apply")
 	l.doTheSteps(ran)

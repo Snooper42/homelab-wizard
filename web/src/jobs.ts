@@ -3,6 +3,7 @@
 import { mountJobApps, overall } from './job/Apps';
 import { catalog } from './screens/choose';
 import { $ } from './core';
+import { bgProgress } from './job/Background';
 
 // The window running a job (cli, backup, setup, or install): a bar with
 // the step at hand in words, a row per app (job:app, from what Compose
@@ -18,10 +19,15 @@ export function startJob(box: string) {
   jobBox = box;
   jobRows = {};
   jobSteps = false;
+  clearJob(box);
+}
+/** A job window drawn empty (its rows, bar, and details) without taking the bar from the job that has it: a job waiting its turn (job/queue.ts). */
+export function clearJob(box: string) {
   mountJobApps($(box + 'Apps'), []);
   const d = $(box + 'Details');
   if (d) { d.open = true; delete d.dataset.touched; }
-  cliProgress(null);
+  const p = $(box + 'Progress');
+  if (p) p.hidden = true;
 }
 export function jobApp(u: progress.Update) {
   const fresh = !jobRows[u.app];
@@ -38,6 +44,7 @@ export function jobApp(u: progress.Update) {
   box.classList.remove('failed');
   box.querySelector('.fill').style.width = `${Math.round(overall(rows) * 100)}%`;
   box.querySelector('.step').textContent = rows.length === 1 ? rows[0].words : `${ready} of ${rows.length} apps ready`;
+  mirror();
 }
 // Opening Show details by hand keeps it open.
 document.addEventListener('click', (e) => {
@@ -71,4 +78,12 @@ export function cliProgress(s) {
   const within = s.percent ? s.percent / 100 : 0.5;
   fill.style.width = `${Math.round(((s.n - 1 + within) / s.total) * 100)}%`;
   step.textContent = `${namesFor(s.text)}${s.percent ? ` · ${s.percent}%` : ''} · ${s.n} of ${s.total}`;
+  mirror();
+}
+
+// The command sheet's bar and step, for its chip while it is hidden.
+function mirror() {
+  if (jobBox !== 'cli') return;
+  const box = $('cliProgress');
+  bgProgress(parseFloat(box.querySelector('.fill').style.width) || 0, box.querySelector('.step').textContent || '');
 }

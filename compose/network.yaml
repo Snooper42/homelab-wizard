@@ -116,6 +116,8 @@ services:
       timeout: 10s
       retries: 3
     x-homelab:
+      goes_with:
+        tailscale: "Blocks ads on your Tailscale phones and laptops too, through AdGuard Home."
       name: Ad blocking on the tailnet
       category: network
       description: Sends DNS from your Tailscale devices to AdGuard Home, so ads are blocked at home and away

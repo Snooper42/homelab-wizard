@@ -67,7 +67,7 @@ func (h *homelab) pinImages(ctx context.Context, client *docker.Client) []string
 		if id, err := client.ImageID(ctx, rec.Ref); err == nil && id == rec.ImageID {
 			continue
 		}
-		if _, err := client.Runner.Output(ctx, client.Bin, "pull", "--quiet", rec.Digest); err != nil {
+		if err := client.Pull(ctx, rec.Digest); err != nil {
 			h.ui.Warn("%s: the version from the backup (%s) could not be pulled, so it starts on the newest: %v", a.ID, shortDigest(rec.Digest), err)
 			continue
 		}

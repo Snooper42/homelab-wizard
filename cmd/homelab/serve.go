@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/api"
@@ -27,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
+	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
@@ -52,7 +53,8 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	// One follower of the engine (the agent's, else the runtime's) for every phone.
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
-	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar}
+	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
+		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
 		<-ctx.Done()
@@ -79,6 +81,87 @@ type phoneHost struct {
 	Version   string `json:"version"`
 }
 
+// phoneSettings is the Settings form a phone gets: the .env settings as
+// the computer lists them (a secret only says whether it is set), and the
+// keys a phone may not change.
+type phoneSettings struct {
+	Settings     []settings.Setting `json:"settings"`
+	ComputerOnly []string           `json:"computerOnly"`
+}
+
+// phoneConnects are the settings a phone reaches the homelab through: the
+// companion itself, where it and the proxy listen, the domain and its key,
+// the address the proxy reaches the companion at, the DNS the phone asks,
+// and Tailscale. A phone could cut itself off, or every phone, with one of
+// these, so they are changed on the computer, as every secret is.
+var phoneConnects = map[string]bool{
+	"PHONE_COMPANION": true, "LAN_BIND_IP": true, "BIND_IP": true, "HOST_GATEWAY": true,
+	"HOMELAB_DOMAIN": true, "COMPANION_PROXY_KEY": true, "NPM_HTTP_PORT": true, "NPM_HTTPS_PORT": true,
+	"ADGUARD_DNS_BIND_IP": true, "TAILSCALE_HOST": true, "TAILSCALE_ROUTES": true, "TAILSCALE_EXTRA_ARGS": true,
+}
+
+// phoneMayChange reports whether a phone allowed to make changes may change
+// a setting: an everyday one, not a secret nor one it connects through.
+func phoneMayChange(s settings.Setting) bool {
+	return !s.Secret && !phoneConnects[s.Key] && !strings.HasPrefix(s.Key, "TAILSCALE_")
+}
+
+// listPhoneSettings is the Settings form as a phone gets it.
+func listPhoneSettings(root string) (phoneSettings, error) {
+	list, err := settings.List(root)
+	if err != nil {
+		return phoneSettings{}, err
+	}
+	out := phoneSettings{Settings: list, ComputerOnly: []string{}}
+	for _, s := range list {
+		if !phoneMayChange(s) {
+			out.ComputerOnly = append(out.ComputerOnly, s.Key)
+		}
+	}
+	return out, nil
+}
+
+// maxPhoneSetting is the longest value a phone may save for a setting: a
+// path or an address, never a file's worth.
+const maxPhoneSetting = 1024
+
+// savePhoneSettings saves what a phone changed: only everyday settings
+// .env.example knows, each checked before any is written, so a refused one
+// saves none. The error names the key, never the value.
+func savePhoneSettings(root string, values map[string]string) (phoneSettings, error) {
+	if len(values) == 0 {
+		return phoneSettings{}, errors.New("SaveSettings takes the settings to change")
+	}
+	list, err := settings.List(root)
+	if err != nil {
+		return phoneSettings{}, err
+	}
+	known := map[string]settings.Setting{}
+	for _, s := range list {
+		known[s.Key] = s
+	}
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		s, ok := known[k]
+		switch {
+		case !ok:
+			return phoneSettings{}, fmt.Errorf("%s is not a homelab setting", k)
+		case !phoneMayChange(s):
+			return phoneSettings{}, fmt.Errorf("%s is changed on the computer, not from a phone", k)
+		case len(values[k]) > maxPhoneSetting:
+			return phoneSettings{}, fmt.Errorf("%s is longer than a setting can be", k)
+		}
+	}
+	if err := settings.Save(root, values); err != nil {
+		return phoneSettings{}, err
+	}
+	return listPhoneSettings(root)
+}
+
 // phoneMethods are the desktop app's methods a phone may call: reading
 // for every paired phone; starting, stopping, restarting, and backing up
 // for one allowed to make changes.
@@ -92,12 +175,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return v, nil, err
 		}}
 	}
-	var busy sync.Mutex
+	// A change from a phone waits its turn (turn.go) behind any other,
+	// from a phone, the app, or the nightly jobs, as the command it runs.
 	run := func(ctx context.Context, args ...string) ([]string, error) {
-		if !busy.TryLock() {
-			return nil, errors.New("another change from a phone is running")
-		}
-		defer busy.Unlock()
 		lines, err := h.runSelf(ctx, args...)
 		return append([]string{"$ homelab " + strings.Join(args, " ")}, lines...), err
 	}
@@ -288,6 +368,26 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			name, err := finance.SaveReceipt(finance.ReceiptsDir(root), data)
 			return name, nil, err
 		}},
+		// The Settings form (.env), for the native app's Settings screen:
+		// read by any paired phone but a wall screen, over the https link
+		// only; everyday settings changed by one allowed to make changes.
+		// Secrets, and the settings a phone connects through, stay on the
+		// computer (phoneMayChange).
+		"Settings": {Private: true, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
+			v, err := listPhoneSettings(root)
+			return v, nil, err
+		}},
+		"SaveSettings": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var values map[string]string
+			if len(args) < 1 || json.Unmarshal(args[0], &values) != nil {
+				return nil, nil, errors.New("SaveSettings takes the settings to change")
+			}
+			v, err := savePhoneSettings(root, values)
+			if err != nil {
+				return nil, nil, err
+			}
+			return v, nil, nil
+		}},
 		"SetUpdatesPaused": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var paused bool
 			if len(args) < 1 || json.Unmarshal(args[0], &paused) != nil {
@@ -327,8 +427,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			log, err := run(ctx, "stop", id, "--until", until)
 			return nil, log, err
 		}},
-		// An app's own settings, from its page: its nightly update and
-		// the watchdog's alerts about it (as the computer's SetAppSetting).
+		// An app's own settings, from its page: its nightly update, the
+		// watchdog's alerts about it, and whether it is pinned to the top
+		// (as the computer's SetAppSetting).
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id, setting string
 			var on bool
@@ -345,8 +446,15 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 					return nil, nil, err
 				}
 				cmd = []string{"updates", map[bool]string{true: "release", false: "hold"}[on], id}
+			case "sundays":
+				if err := h.containerApp(id); err != nil {
+					return nil, nil, err
+				}
+				cmd = []string{"updates", "days", id, map[bool]string{true: "sun", false: "every"}[on]}
 			case "alerts":
 				cmd = []string{"notify", map[bool]string{true: "on", false: "off"}[on], id}
+			case "pinned":
+				cmd = []string{map[bool]string{true: "pin", false: "unpin"}[on], id}
 			default:
 				return nil, nil, fmt.Errorf("unknown setting %q", setting)
 			}
@@ -481,6 +589,9 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 				seen = d.LastSeen.Local().Format("2 Jan 15:04")
 			}
 			money := map[string]string{"": "no finances", companion.FinancesView: "sees finances", companion.FinancesEdit: "edits finances"}[d.Finances]
+			if !d.Until.IsZero() {
+				can += " until " + d.Until.Local().Format("2 Jan 15:04")
+			}
 			rows = append(rows, []string{d.ID, d.Name, can, money, "paired " + d.Paired.Local().Format("2 Jan 2006"), "last seen " + seen})
 		}
 		u.Table(nil, rows)
@@ -520,6 +631,42 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			u.OK("%s no longer sees Finances", d.Name)
 		}
 		return err
+	case "until":
+		// homelab phone until <phone> 7d: its changes and Finances end in a
+		// week, and it only looks; never takes the end off.
+		if len(args) != 2 {
+			return fmt.Errorf("usage: homelab phone until <id or name> 12h|7d|2w|never")
+		}
+		var until time.Time
+		if args[1] != "never" {
+			d, err := parseFor(args[1])
+			if err != nil {
+				return err
+			}
+			until = time.Now().Add(d)
+		}
+		d, err := store.SetUntil(args[0], until)
+		switch {
+		case err != nil:
+		case until.IsZero():
+			u.OK("%s keeps what it may do until you change it", d.Name)
+		default:
+			u.OK("%s may do more than look until %s; then it only looks", d.Name, until.Local().Format("Mon 2 Jan 15:04"))
+		}
+		return err
 	}
-	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|remove")
+	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|until|remove")
+}
+
+// parseFor reads how long, as homelab phone until takes it: 12h, 7d, 2w.
+func parseFor(s string) (time.Duration, error) {
+	unit := map[byte]time.Duration{'h': time.Hour, 'd': 24 * time.Hour, 'w': 7 * 24 * time.Hour}
+	if len(s) >= 2 {
+		if u, ok := unit[s[len(s)-1]]; ok {
+			if n, err := strconv.Atoi(s[:len(s)-1]); err == nil && n > 0 {
+				return time.Duration(n) * u, nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("%q is not a length of time: 12h, 7d, or 2w", s)
 }

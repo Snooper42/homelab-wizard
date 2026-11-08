@@ -3,7 +3,7 @@ COMPOSE_FILES := compose.yaml $(wildcard stacks/*/compose.yaml)
 # One project per category, run from the homelab folder.
 CATEGORY_FILES := $(wildcard compose/*.yaml)
 
-.PHONY: build test lint check coverage security compose-config app app-check screenshots frontend frontend-check app-smoke help
+.PHONY: build test lint check coverage music-pins music-pins-check security compose-config app app-check screenshots frontend frontend-check app-smoke help
 
 build:
 	go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/homelab ./cmd/homelab
@@ -33,6 +33,27 @@ coverage:
 	cd app && go test -count=1 -coverprofile=../bin/cover-app.out ./... > /dev/null
 	tail -n +2 bin/cover-app.out >> bin/cover.out
 	go run ./internal/tools/coverfloor bin/cover.out coverage-floors.txt
+
+# Tidy Up's music setup installs only these, checked against their hashes (N28): one file per
+# Python it supports. Remake them with uv; then try each in a fresh venv made the way the setup
+# makes it (python -m venv, its own pip, --require-hashes), with each Python uv can find here.
+MUSIC_PYTHONS := 3.10 3.11 3.12 3.13 3.14
+music-pins:
+	for v in $(MUSIC_PYTHONS); do { \
+		echo "# Tidy Up's music setup for Python $$v: every package pinned, with its hashes (N28)."; \
+		echo "# Made by make music-pins from music.in; tried in a fresh venv by make music-pins-check."; \
+		uv pip compile -q --universal --python-version $$v --generate-hashes --no-header \
+			--index-url https://pypi.org/simple tools/media/requirements/music.in; \
+	} > tools/media/requirements/music-$$v.txt || exit 1; done
+
+music-pins-check:
+	for v in $(MUSIC_PYTHONS); do \
+		py=$$(uv python find $$v) && "$$py" -m venv --clear build/music-pins/$$v && \
+		build/music-pins/$$v/bin/python -m pip install --quiet --disable-pip-version-check --require-hashes \
+			-r tools/media/requirements/music-$$v.txt && \
+		BEETSDIR=build/music-pins/$$v/beets build/music-pins/$$v/bin/python -c "import beets, mediafile, requests, pylast, PIL, acoustid; \
+			from beets.ui import main; main(['version'])" && \
+		echo "Python $$v: the pins install and beets runs" || exit 1; done
 
 # Known vulnerabilities in the Go code, its dependencies, and the Go it is
 # built with (govulncheck, for macOS, Linux, and Windows), risky patterns

@@ -63,7 +63,14 @@ func (h *homelab) financeView(now time.Time) (finance.View, func(float64) string
 	if err != nil {
 		l = finance.Ledger{}
 	}
-	return finance.ProjectWith(p, l, now, finance.Ahead), moneyIn(p.Currency), true
+	money := moneyIn(p.Currency)
+	// Hide amounts covers the phones' alerts too: a lock screen shows
+	// them, and ntfy keeps them.
+	if p.HideAmounts {
+		sign := strings.TrimSuffix(money(0), "0.00")
+		money = func(float64) string { return sign + "•••" }
+	}
+	return finance.ProjectWith(p, l, now, finance.Ahead), money, true
 }
 
 // sendFinanceReminders sends what Finances has to tell the household today
@@ -90,10 +97,7 @@ func (h *homelab) sendFinanceReminders(ctx context.Context, now time.Time) {
 		h.alert(ctx, digestTopic, notify.Message{Title: r.Title, Body: r.Body, Priority: 3, Tags: []string{"moneybag"}})
 	}
 	last.Day = today
-	if data, err := json.Marshal(last); err == nil {
-		_ = os.MkdirAll(filepath.Dir(state), 0o755)
-		_ = os.WriteFile(state, data, 0o644)
-	}
+	h.noteSent(state, "Finances' reminders", last)
 }
 
 // financeLines are Finances' lines for the weekly summary; none with no plan.

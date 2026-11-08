@@ -128,7 +128,7 @@ func (h *homelab) useKeptVersions(ctx context.Context, client *docker.Client, ap
 			continue
 		}
 		if _, err := client.ImageID(ctx, pin); err != nil {
-			if _, err := client.Runner.Output(ctx, client.Bin, "pull", "--quiet", pin); err != nil {
+			if err := client.Pull(ctx, pin); err != nil {
 				h.ui.Warn("%s: the version .env keeps (%s) could not be pulled, so it starts on the image here or the newest: %v", a.ID, shortDigest(pin), err)
 				continue
 			}

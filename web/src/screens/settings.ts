@@ -1,8 +1,10 @@
 // Settings: .env as a form in pages, with Appearance, People, and Phones
 // beside it.
+import { inTurn, waitWords } from '../job/queue';
 import { type FormActions, formProblem, type FormProps, mountForm, type Page as FormPage, shown as shownSettings, type View as FormView } from '../settings/Form';
 import { mountPeople, type PeopleActions, type PeopleProps } from '../settings/People';
 import { mountPhones, type PhonesActions } from '../settings/Phones';
+import { mountTailnetDevices } from '../settings/TailnetDevices';
 import { mountUninstall, type UninstallActions } from '../settings/Uninstall';
 import { store } from '../store';
 import { mountNav, type NavGroup } from '../settings/Nav';
@@ -27,10 +29,21 @@ async function loadPhones() {
   card.hidden = false;
   mountPhones(card, { phones: phones || [], on: phonesActions });
 }
+// Devices on your tailnet (Phones' page): Tailscale's own list; hidden
+// while Tailscale is not running here.
+async function loadTailnet() {
+  const card = $('tailnetCard');
+  let devices: tailnet.Device[];
+  try { devices = await go().TailnetDevices(); } catch { card.hidden = true; return; }
+  card.hidden = !devices?.length;
+  mountTailnetDevices(card, { devices: devices || [], open: (url) => { Promise.resolve(go().Open(url)).catch(showError); } });
+}
+
 const phonesActions: PhonesActions = {
   setCanChange: async (id, can) => { try { await go().SetPhoneCanChange(id, can); } catch (e) { showError(e); } loadPhones(); },
   remove: async (id) => { try { await go().RemovePhone(id); } catch (e) { showError(e); } loadPhones(); },
   setFinances: async (id, level) => { try { await go().SetPhoneFinances(id, level); } catch (e) { showError(e); } loadPhones(); },
+  setUntil: async (id, hours) => { try { await go().SetPhoneUntil(id, hours); } catch (e) { showError(e); } loadPhones(); },
   pair: async (name, can, finances) => { try { return await go().PairPhone(name, can, finances); } catch (e) { showError(e); throw e; } },
   reload: () => loadPhones(),
 };
@@ -60,10 +73,13 @@ const peopleActions: PeopleActions = {
   act: async (action, who, mail = '', apps = []) => {
     peopleLog = '';
     renderPeople();
-    const off = window.runtime.EventsOn('cli:log', (line) => { peopleLog += line + '\n'; renderPeople(); });
     let ok = true;
-    try { await go().PersonAction(action, who, mail, apps); } catch (e) { ok = false; showError(e); }
-    if (typeof off === 'function') off();
+    // In its turn (job/queue.ts): the log says what it waits for meanwhile.
+    await inTurn(`${action === 'add' ? 'Adding' : action === 'remove' ? 'Removing' : 'Changing'} ${who}`, async () => {
+      peopleLog = '';
+      const off = window.runtime.EventsOn('cli:log', (line) => { peopleLog += line + '\n'; renderPeople(); });
+      try { await go().PersonAction(action, who, mail, apps); } catch (e) { ok = false; showError(e); } finally { if (typeof off === 'function') off(); }
+    }, (behind) => { peopleLog = `${waitWords(behind)}…\n`; renderPeople(); });
     return ok;
   },
   openWelcome: (username) => { go().OpenWelcome(username).catch(showError); },
@@ -80,8 +96,12 @@ const peopleActions: PeopleActions = {
 const uninstallActions: UninstallActions = {
   plan: async (o) => { try { return await go().UninstallPlan(o); } catch (e) { showError(e); throw e; } },
   run: async (o, onLine) => {
-    const off = window.runtime.EventsOn('cli:log', onLine);
-    try { await go().Uninstall(o); } catch (e) { showError(e); throw e; } finally { if (typeof off === 'function') off(); }
+    try {
+      await inTurn('Taking the homelab off this machine', async () => {
+        const off = window.runtime.EventsOn('cli:log', onLine);
+        try { await go().Uninstall(o); } finally { if (typeof off === 'function') off(); }
+      }, (behind) => onLine(`${waitWords(behind)}…`));
+    } catch (e) { showError(e); throw e; }
   },
 };
 mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions });
@@ -91,6 +111,7 @@ mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions 
 let settingsFocus: string[] = [];
 export const settingsData = store(async () => {
   loadPhones();
+  loadTailnet();
   loadPeople();
   // Which settings have a Test, asked once, beside the settings.
   const tests = testable ? null : go().SettingTests().catch(() => []);
@@ -288,7 +309,7 @@ export function showSettingsPage(name) {
 // uses, and how it behaves. Apps' own inputs and Setup's steps join them.
 const everyday = new Set(['TZ', 'HOMELAB_DOMAIN', 'MEDIA_ROOT', 'DOWNLOADS_ROOT', 'IMMICH_UPLOAD_LOCATION', 'BACKUP_DESTINATION',
   'JELLYFIN_DATA_DIR', 'SYNC_ROOT', 'KEEP_AWAKE', 'BATTERY_SAVER', 'PHONE_COMPANION', 'AUTO_DOMAIN', 'CLOUDFLARE_API_TOKEN', 'TUNNEL_TOKEN',
-  'ADGUARD_USER', 'ADGUARD_PASSWORD', 'HELPER_EMAIL', 'HEARTBEAT_URL', 'DESKTOP_ALERTS', 'UPDATES_PAUSED', 'AUTO_ROLLBACK', 'AUTO_HEAL',
+  'ADGUARD_USER', 'ADGUARD_PASSWORD', 'HELPER_EMAIL', 'HEARTBEAT_URL', 'DESKTOP_ALERTS', 'QUIET_HOURS', 'UPDATES_PAUSED', 'AUTO_ROLLBACK', 'AUTO_HEAL',
   'UPDATE_CHANNEL', 'VAULTWARDEN_SIGNUPS_ALLOWED', 'DUPLICATI_SECRETS_PASSPHRASE', 'NTFY_PHONE_PASSWORD', 'TAILSCALE_AUTHKEY',
   'PROTONVPN_WIREGUARD_PRIVATE_KEY', 'PROTONVPN_SERVER_COUNTRIES', 'QBITTORRENT_PASSWORD', 'CROWDSEC_ENROLL_KEY',
   'ROMM_IGDB_CLIENT_ID', 'ROMM_IGDB_CLIENT_SECRET', 'ROMM_SCREENSCRAPER_USER', 'ROMM_SCREENSCRAPER_PASSWORD']);
@@ -303,7 +324,7 @@ const settingLabels = {
   KEEP_AWAKE: 'Keep this machine awake', BATTERY_SAVER: 'Battery saver', MEDIA_ROOT: 'Media drive', DOWNLOADS_ROOT: 'Downloads folder',
   IMMICH_UPLOAD_LOCATION: 'Photos folder', BACKUP_DESTINATION: 'Backups go to', JELLYFIN_DATA_DIR: 'Jellyfin data folder',
   SYNC_ROOT: 'Syncthing folder', HOMELAB_DOMAIN: 'Domain (empty: addresses on your tailnet)', HOMELAB_BASELINE: 'Apps that always start (small or full)', AUTO_DOMAIN: 'Give new apps their addresses',
-  CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Cloudflare Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen',
+  CLOUDFLARE_API_TOKEN: 'Cloudflare API token', TUNNEL_TOKEN: 'Cloudflare Tunnel token', DESKTOP_ALERTS: 'Alerts on this screen', QUIET_HOURS: 'Quiet hours (no sound at night)',
   HELPER_EMAIL: "Your helper's email", HEARTBEAT_URL: 'Heartbeat ping URL', UPDATES_PAUSED: 'Pause nightly updates',
   VAULTWARDEN_SIGNUPS_ALLOWED: 'Vaultwarden sign-ups open', TAILSCALE_AUTHKEY: 'Tailscale auth key (optional)', TAILSCALE_HOST: 'This machine on the tailnet', TAILNET_ADMIN_APPS: 'Admin apps on the tailnet',
   PROTONVPN_WIREGUARD_PRIVATE_KEY: 'ProtonVPN WireGuard key', PROTONVPN_SERVER_COUNTRIES: 'ProtonVPN server countries',
@@ -359,7 +380,7 @@ function filterSettings() {
   mountForm($('settingsForm'), form, formVersion);
   const searching = !!form.view.query.trim();
   const sh = shownSettings(form.pages, form.view, form.wanted, form.label, form.checks);
-  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
+  for (const [id, name] of [['thisMacCard', thisMachine], ['appearanceCard', 'Appearance'], ['peopleCard', 'People'], ['phonesCard', 'Phones'], ['tailnetCard', 'Phones']]) $(id).classList.toggle('offpage', searching || settingsPage !== name);
   mountNav($('settingsNav'), { groups: navGroups, active: settingsPage, counts: searching ? sh.counts : null, pick: pickSettingsPage });
   $('settingsForm').classList.toggle('searching', searching);
   $('settingsNone').hidden = sh.keys.size > 0 || !searching;

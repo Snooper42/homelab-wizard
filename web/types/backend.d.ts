@@ -13,6 +13,8 @@ declare namespace api {
     aliases?: string[];
     dependsOn?: string[];
     conflicts?: string[];
+    goesWith?: Record<string, string>;
+    sameJob?: Record<string, string>;
     inputs?: string[];
     login?: string[];
     public: boolean;
@@ -31,10 +33,15 @@ declare namespace api {
     address?: string;
     since?: string;
     restarts?: number;
+    startedBy?: string;
     updatedAt?: string;
     held?: boolean;
+    updateDays?: string[];
     quiet?: boolean;
+    pinned?: boolean;
     waitingFor?: string;
+    stoppedAt?: string;
+    stoppedWhy?: string;
     notAnswering?: string;
     settingsChanged?: boolean;
   }
@@ -105,6 +112,7 @@ declare namespace api {
     missing: number;
     unmatched: number;
     savings: number;
+    pinned?: string[];
     updates: updates.State;
     batteryPaused?: string[];
     stopped?: Record<string, stopped.Stop>;
@@ -188,6 +196,10 @@ declare namespace app {
     runtimeInstalled: boolean;
     runtimeDownload?: string;
   }
+  interface InvestmentsRead {
+    view: finance.View;
+    unmatched: string[];
+  }
   interface MenuEntry {
     available: boolean;
     added: boolean;
@@ -239,6 +251,10 @@ declare namespace app {
     counts?: Record<string, number>;
     waiting?: number;
     size?: number;
+  }
+  interface TidyRunning {
+    lock?: media.Lock | null;
+    now: media.Following;
   }
   interface TidyUp {
     libraries: app.TidyLibrary[];
@@ -323,10 +339,13 @@ declare namespace backup {
   interface Copy {
     id: string;
     name: string;
+    app?: string;
     volume?: boolean;
     newest: string;
     size: number;
     count: number;
+    before?: number;
+    shrank?: boolean;
     state: string;
     waitingFor?: string;
   }
@@ -344,6 +363,7 @@ declare namespace backup {
     copies: backup.Copy[];
     stale: number;
     paused: number;
+    shrank: number;
     restoreTest: backup.RestoreLog;
     restoreDue: boolean;
     staleAfterHours: number;
@@ -389,6 +409,7 @@ declare namespace companion {
     unencrypted?: boolean;
     paired: string;
     lastSeen: string;
+    until?: string;
   }
 }
 
@@ -417,6 +438,8 @@ declare namespace crowdsec {
     week: number;
     bannedNow: number;
     recent: crowdsec.Attack[];
+    today: crowdsec.Attack[];
+    todayCount: number;
   }
 }
 
@@ -451,6 +474,13 @@ declare namespace duplicati {
     size?: string;
     state: string;
     nextRun: string;
+    took?: number;
+    holds?: string;
+    files?: number;
+    versions?: number;
+    sources?: string[];
+    checked?: string;
+    checkProblem?: string;
   }
 }
 
@@ -483,6 +513,8 @@ declare namespace finance {
     bought?: number;
     boughtOn?: string;
     holds?: string;
+    holdings?: finance.Holding[];
+    ghostfolio?: string;
   }
   interface Budget {
     category: string;
@@ -577,6 +609,14 @@ declare namespace finance {
     account: string;
     percent: number;
   }
+  interface Holding {
+    symbol: string;
+    name?: string;
+    shares: number;
+    paid: number;
+    value: number;
+    history?: finance.Point[];
+  }
   interface Ledger {
     transactions: finance.Transaction[];
     rev?: string;
@@ -604,6 +644,7 @@ declare namespace finance {
     outside?: boolean;
     typed?: boolean;
     waiting?: boolean;
+    inBalance?: boolean;
   }
   interface Payday {
     date: string;
@@ -624,6 +665,7 @@ declare namespace finance {
     to?: string;
     card?: string;
     type?: string;
+    payer?: string;
   }
   interface Payoff {
     account: string;
@@ -660,6 +702,7 @@ declare namespace finance {
     holidays?: string;
     waiting?: string[];
     notYet?: string;
+    inBalance?: string[];
     logos?: Record<string, string>;
     categories?: finance.Category[];
     budgets?: finance.Budget[];
@@ -671,6 +714,8 @@ declare namespace finance {
     calendarKey?: string;
     calendarAmounts?: boolean;
     hideAmounts?: boolean;
+    holdingsRead?: string;
+    readByHand?: boolean;
     rev?: string;
   }
   interface Point {
@@ -699,6 +744,16 @@ declare namespace finance {
     amount: number;
     note?: string;
   }
+  interface Step {
+    date: string;
+    people?: string[];
+    payment?: string;
+    transaction?: string;
+    name?: string;
+    interest?: boolean;
+    amount: number;
+    after: number;
+  }
   interface Transaction {
     id: string;
     date: string;
@@ -709,6 +764,9 @@ declare namespace finance {
     category?: string;
     note?: string;
     payment?: string;
+    notPlanned?: boolean;
+    toBank?: string;
+    apart?: boolean;
     to?: string;
     splits?: finance.Split[];
     tags?: string[];
@@ -729,6 +787,7 @@ declare namespace finance {
     worth: finance.Point[];
     next: Record<string, string>;
     last?: Record<string, string>;
+    dues?: Record<string, string[]>;
     paid?: finance.Paid[];
     categories: finance.Category[];
     found?: finance.Found[];
@@ -737,6 +796,8 @@ declare namespace finance {
     loans?: finance.Payoff[];
     holidays?: Record<string, string>;
     readOnly?: boolean;
+    checkingNow?: finance.Working | null;
+    afterPay?: finance.Working | null;
   }
   interface Wall {
     payday?: string;
@@ -752,13 +813,32 @@ declare namespace finance {
     date: string;
     amount: number;
   }
+  interface Working {
+    date: string;
+    from: string;
+    start: number;
+    steps: finance.Step[];
+    result: number;
+  }
 }
 
 declare namespace health {
+  interface AppMemory {
+    id?: string;
+    name: string;
+    bytes: number;
+  }
   interface Failure {
     name: string;
     problem: string;
     since: string;
+  }
+  interface Memory {
+    used: number;
+    total: number;
+    since?: string;
+    alerted?: boolean;
+    biggest?: health.AppMemory[];
   }
   interface Outage {
     from: string;
@@ -773,6 +853,8 @@ declare namespace health {
     week: Record<string, number>;
     days?: Record<string, Record<string, number[]>>;
     outages?: Record<string, health.Outage[]>;
+    memory?: health.Memory | null;
+    snoozed?: Record<string, string>;
   }
 }
 
@@ -804,6 +886,22 @@ declare namespace media {
     fix?: string;
     needs?: string;
     install?: string;
+  }
+  interface Event {
+    type: string;
+    text?: string;
+    sub?: string;
+    n?: number;
+    total?: number;
+    done?: number;
+    label?: string;
+    value?: string;
+    note?: string;
+    eta?: number;
+  }
+  interface Following {
+    step?: media.Event | null;
+    progress?: media.Event | null;
   }
   interface Lock {
     pid: number;
@@ -925,6 +1023,8 @@ declare namespace stopped {
   interface Stop {
     since: string;
     until?: string;
+    why?: string;
+    restarts?: number;
   }
 }
 
@@ -942,6 +1042,18 @@ declare namespace storage {
     when: string;
     photos: storage.Person[];
     apps: storage.Folder[];
+  }
+}
+
+declare namespace tailnet {
+  interface Device {
+    name: string;
+    os?: string;
+    ip?: string;
+    online: boolean;
+    lastSeen?: string;
+    self?: boolean;
+    admin?: string;
   }
 }
 
@@ -1023,6 +1135,7 @@ interface Backend {
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;
     FinancesLedger(): Promise<finance.Ledger>;
+    FinancesReadInvestments(): Promise<app.InvestmentsRead>;
     FinancesReceipt(arg1: string): Promise<string>;
     FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
@@ -1068,19 +1181,23 @@ interface Backend {
     SetMenuEntry(arg1: boolean): Promise<void>;
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
     SetPhoneFinances(arg1: string, arg2: string): Promise<companion.Phone[]>;
+    SetPhoneUntil(arg1: string, arg2: number): Promise<companion.Phone[]>;
     SetTrayAtLogin(arg1: boolean): Promise<void>;
     SetUpdatesPaused(arg1: boolean): Promise<updates.State>;
     SettingTests(): Promise<string[]>;
     Settings(): Promise<settings.Setting[]>;
     Setup(): Promise<setup.Step[]>;
+    SnoozeCheck(arg1: string, arg2: number): Promise<void>;
     StartAgent(): Promise<void>;
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
     StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
     StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
+    TailnetDevices(): Promise<tailnet.Device[]>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
+    TidyLock(): Promise<app.TidyRunning>;
     TidyReveal(arg1: string): Promise<void>;
     TidyReview(): Promise<app.TidyBook[]>;
     TidyRun(arg1: string, arg2: string, arg3: string[], arg4: boolean): Promise<void>;

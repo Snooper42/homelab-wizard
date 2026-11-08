@@ -41,6 +41,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
 	"github.com/Snooper42/homelab-wizard/internal/setup"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
+	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
 )
 
@@ -380,14 +381,18 @@ func WaitingFor(report *detect.Report, app *catalog.App) string {
 }
 
 // DuplicatiJobs is each Duplicati backup job's last run, read with
-// DUPLICATI_PASSWORD from Duplicati's API.
+// DUPLICATI_PASSWORD from Duplicati's API, with its last weekly check.
 func DuplicatiJobs(ctx context.Context, root string) ([]duplicati.Job, error) {
 	env := Env(root)
 	port := env["DUPLICATI_PORT"]
 	if port == "" {
 		port = "8200"
 	}
-	return duplicati.Jobs(ctx, "http://127.0.0.1:"+port, env["DUPLICATI_PASSWORD"], time.Now())
+	jobs, err := duplicati.Jobs(ctx, "http://127.0.0.1:"+port, env["DUPLICATI_PASSWORD"], time.Now())
+	if err != nil {
+		return nil, err
+	}
+	return duplicati.WithChecks(jobs, duplicati.LoadChecks(duplicati.CheckPath(root))), nil
 }
 
 // ErrNoCrowdSec means CrowdSec or the proxy is not running, so there is no
@@ -415,6 +420,32 @@ func Protection(ctx context.Context, root string) (crowdsec.Protection, error) {
 		return client.Exec(ctx, cs.Container.Name, args...)
 	}
 	return crowdsec.Read(ctx, run, time.Now())
+}
+
+// ErrNoTailscale means Tailscale is not running here, so there is no
+// tailnet to list.
+var ErrNoTailscale = errors.New("Tailscale is not running")
+
+// TailnetDevices is every device on the household's tailnet, from
+// Tailscale's status in its container: Settings › Devices on your tailnet.
+func TailnetDevices(ctx context.Context, root string) ([]tailnet.Device, error) {
+	c, err := Catalog(root)
+	if err != nil {
+		return nil, err
+	}
+	client, containers, err := Containers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	st, ts := detect.Analyze(c, containers).State("tailscale")
+	if st != detect.Running || ts == nil {
+		return nil, ErrNoTailscale
+	}
+	out, err := client.Exec(ctx, ts.Container.Name, "tailscale", "status", "--json")
+	if err != nil {
+		return nil, fmt.Errorf("reading Tailscale's status: %w", err)
+	}
+	return tailnet.ParseDevices(out)
 }
 
 // ErrNoReadToken means alerts cannot be read yet: notify setup has not made

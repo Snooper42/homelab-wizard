@@ -6,6 +6,7 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ago, bytes, dateTimeText, dayText, never, untilText } from '../format';
 import { CardHead } from '../parts/Card';
+import { Hover } from '../parts/Hover';
 import { Row, Rows, type Tone } from '../parts/Row';
 import { Tile } from '../status/Tiles';
 
@@ -59,6 +60,24 @@ function RestoreTile({ t, due, test }: { t: backup.RestoreLog; due: boolean; tes
     </>} />;
 }
 
+/** A job's folders, by name: /source/appdata/immich/ is "immich". */
+const sourceNames = (sources: string[]) => sources.map((s) => s.split('/').filter(Boolean).pop() || s).join(', ');
+
+/** A job's last run on hover: when, how long it took, what it holds, the versions kept, its folders, and its next run. */
+export function JobRun({ j }: { j: duplicati.Job }) {
+  const line = (text: string, cls = 'outline') => <span class={cls}>{text}</span>;
+  return (
+    <>
+      {line(never(j.lastFinished) ? 'Never ran' : `Last ran ${dateTimeText(new Date(j.lastFinished))}` + (j.took ? `, in ${tookText(j.took)}` : ''))}
+      {j.holds && line(`Holds ${j.holds} of yours` + (j.files ? `, ${j.files.toLocaleString('en-US')} ${j.files === 1 ? 'file' : 'files'}` : ''))}
+      {(j.size || j.versions) && line([j.size && `${sizeText(j.size)} where it is kept`, j.versions && `${j.versions} ${j.versions === 1 ? 'version' : 'versions'} to go back to`].filter(Boolean).join(', '))}
+      {!!j.sources?.length && line(`Copies ${sourceNames(j.sources)}`)}
+      {!never(j.checked) && line(j.checkProblem ? `Checked ${dateTimeText(new Date(j.checked!))}: a file is damaged` : `Checked ${dateTimeText(new Date(j.checked!))}: a sample of its files matched`)}
+      {!never(j.nextRun) && line(`Next run ${dateTimeText(new Date(j.nextRun))}`, 'outfoot')}
+    </>
+  );
+}
+
 /** The drives the paused copies' apps wait for, in words. */
 const drivesOf = (copies: backup.Copy[]) => [...new Set(copies.map((c) => driveName(c.waitingFor || '')))].join(' and ');
 
@@ -100,8 +119,21 @@ export function copyGroups(o: backup.Overview): CopyGroup[] {
   ].filter((g) => g.copies.length);
 }
 
+/** Whether a copy's size moved by a tenth or more since the night before's: then both are shown. */
+const changed = (c: backup.Copy) => !!c.before && Math.abs(c.size - c.before) >= c.before / 10;
+
+/** Why a copy is stale, from its app's state, and what helps: "" when that isn't known. */
+export function staleWhy(c: backup.Copy, apps?: Record<string, api.AppStatus>): string {
+  if (!apps || !c.app) return '';
+  const a = apps[c.app];
+  if (!a) return "It isn't installed any more: its last copies are kept.";
+  if (a.state === 'stopped') return "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up.";
+  if (a.state !== 'running') return "It isn't running, so the nightly copy skips it.";
+  return "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why.";
+}
+
 /** Each database copy or volume archive, in groups; stale and up to date open, the rest folded with their names. */
-export function CopyRows({ o }: { o: backup.Overview }) {
+export function CopyRows({ o, apps }: { o: backup.Overview; apps?: Record<string, api.AppStatus> }) {
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const groups = copyGroups(o);
   if (!groups.length) return <tr><td colSpan={4} class="muted">No installed app has a database to dump yet.</td></tr>;
@@ -121,10 +153,15 @@ export function CopyRows({ o }: { o: backup.Overview }) {
             </th>
           </tr>,
           ...(open ? g.copies.map((c) => (
-            <tr key={c.id} class={'copy ' + c.state}>
-              <td class="name"><span class={'dot ' + g.tone} />{c.name}</td>
+            <tr key={c.id} class={'copy ' + c.state + (c.shrank ? ' shrank' : '')}>
+              <td class="name"><span class={'dot ' + (c.shrank ? 'bad' : g.tone)} />{c.name}
+                {c.shrank && <span class="note bad">Less than half the night before's {bytes(c.before || 0)}: check that {c.name} still has its data</span>}
+                {c.state === 'stale' && staleWhy(c, apps) && <span class="note muted">{staleWhy(c, apps)}</span>}
+              </td>
               <td class="when muted">{never(c.newest) ? '—' : ago(c.newest)}</td>
-              <td class="size muted">{bytes(c.size)}</td>
+              <td class="size muted" title={c.before ? `The night before: ${bytes(c.before)}` : undefined}>
+                {bytes(c.size)}{!c.shrank && changed(c) && <span class="was"> (was {bytes(c.before || 0)})</span>}
+              </td>
               <td class="kept muted">{c.count ? `${c.count} kept` : '—'}</td>
             </tr>
           )) : []),
@@ -189,19 +226,21 @@ export function Jobs({ jobs, place, problem, waitingFor, create }: JobsProps) {
       </>
     );
   }
-  const bad = jobs.filter((j) => j.state !== 'ok').length;
+  const bad = jobs.filter((j) => j.state !== 'ok' || j.checkProblem).length;
   const newest = jobs.map((j) => j.lastFinished).filter((t) => !never(t)).sort().pop();
   return (
     <>
       <CardHead title={title}>{bad ? <span class="warn">{bad} need a look</span> : <span class="ok">✓ All {jobs.length} ran{newest ? ' ' + ago(newest) : ''}</span>}</CardHead>
       <Rows kind="jobs">
         {jobs.map((j) => {
-          const [tone, word] = jobMark[j.state] || ['', j.state];
+          const [mark, word] = jobMark[j.state] || ['', j.state];
+          // Sunday's check (homelab backup-check) found a damaged file: a version may not restore.
+          const damaged = j.checkProblem && j.state === 'ok' ? `Failed its check ${dateTimeText(new Date(j.checked!))}: ${j.checkProblem}. A version may not restore: open the job in Duplicati.` : '';
+          const tone = damaged ? 'bad' : mark;
           return (
-            <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || (j.state !== 'ok' && word)} subTone={j.errorMessage ? 'bad' : undefined}
+            <Row key={j.id} dot={tone} title={j.name} sub={j.errorMessage || damaged || (j.state !== 'ok' && word)} subTone={j.errorMessage || damaged ? 'bad' : undefined}
               end={j.size && <span class="size muted">{sizeText(j.size)}</span>}
-              whenTitle={(never(j.lastFinished) ? 'Never ran' : 'Last ran ' + dateTimeText(new Date(j.lastFinished))) + (never(j.nextRun) ? '' : '\nNext run ' + dateTimeText(new Date(j.nextRun)))}
-              when={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} />
+              when={<Hover label={never(j.nextRun) ? (never(j.lastFinished) ? 'never ran' : 'ran ' + ago(j.lastFinished)) : <span class="next">next {untilText(j.nextRun)}</span>} tip={<JobRun j={j} />} />} />
           );
         })}
       </Rows>
@@ -229,6 +268,6 @@ export function KopiaLine({ k, test }: { k: backup.Engine; test: () => void }) {
 
 export const mountKopia = (el: Element, props: { k: backup.Engine; test: () => void } | null) => render(props && <KopiaLine {...props} />, el);
 export const mountBackupTiles = (el: Element, props: { o: backup.Overview; os: string; test?: () => void }) => render(<BackupTiles {...props} />, el);
-export const mountCopyRows = (el: Element, props: { o: backup.Overview } | null) => render(props && <CopyRows {...props} />, el);
+export const mountCopyRows = (el: Element, props: { o: backup.Overview; apps?: Record<string, api.AppStatus> } | null) => render(props && <CopyRows {...props} />, el);
 export const mountVault = (el: Element, props: { o: backup.Overview }) => render(<Vault {...props} />, el);
 export const mountJobs = (el: Element, props: JobsProps) => render(<Jobs {...props} />, el);

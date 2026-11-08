@@ -34,6 +34,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/schedule"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/storage"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
 	"github.com/Snooper42/homelab-wizard/internal/updates"
@@ -45,6 +46,19 @@ func (h *homelab) stagingDir(parts ...string) string {
 }
 
 func (h *homelab) logsDir() string { return filepath.Join(h.root, "scripts", "logs") }
+
+// makeLogsDir makes scripts/logs this account's only (0700), tightening one
+// an older version made 0755: the jobs' logs and crash notes are the
+// household's diagnostics, not for another account on the computer.
+func (h *homelab) makeLogsDir() error {
+	if err := os.MkdirAll(h.logsDir(), 0o700); err != nil {
+		return err
+	}
+	// Best effort: a folder another account owns (made with sudo) can't be
+	// changed, and the jobs still write their logs.
+	_ = os.Chmod(h.logsDir(), 0o700)
+	return nil
+}
 
 func (h *homelab) ntfy() *notify.Client {
 	port := h.envMap()["NTFY_PORT"]
@@ -59,6 +73,9 @@ func (h *homelab) ntfy() *notify.Client {
 // desktopNotify shows an alert on this machine's screen; tests replace it.
 var desktopNotify = notify.Desktop
 
+// alertNow is the time an alert is sent at, for its quiet hours; tests set it.
+var alertNow = time.Now
+
 // alert publishes best-effort; failures are reported but never fatal. It
 // also shows on this machine's screen (DESKTOP_ALERTS, on by default), so
 // alerts reach someone before the phone is set up, or when ntfy is down.
@@ -70,9 +87,30 @@ func (h *homelab) alert(ctx context.Context, topic string, m notify.Message) {
 	if env["NTFY_PUBLISH_TOKEN"] == "" {
 		return // phone alerts are not set up yet (Set up the alert token)
 	}
+	// Overnight (QUIET_HOURS, 22-7 by default) it reaches the phone without
+	// a sound, unless it is serious.
+	m = notify.Hush(m, env[notify.QuietHoursKey], alertNow())
 	if err := h.ntfy().Publish(ctx, topic, m); err != nil {
 		h.ui.Warn("could not send the alert: %v", err)
 	}
+}
+
+// downPriority is the down alert's priority: the vault unreachable is
+// serious, so it sounds in the quiet hours too; anything else is high.
+func downPriority(failed []health.Result) int {
+	if slices.ContainsFunc(failed, func(r health.Result) bool { return r.Name == "vaultwarden" }) {
+		return notify.Serious
+	}
+	return 4
+}
+
+// daysFailing says an app's newest copy is two nights old or more: the
+// backup has been failing for days, not only tonight. A copy paused while
+// its app waits for a drive is not failing.
+func daysFailing(o backup.Overview, now time.Time) bool {
+	return slices.ContainsFunc(o.Copies, func(c backup.Copy) bool {
+		return c.State == "stale" && now.Sub(c.Newest) >= 48*time.Hour
+	})
 }
 
 // backup dumps every running database marked `dump: postgres`, archives the
@@ -277,7 +315,18 @@ func (h *homelab) backup(ctx context.Context, args []string) error {
 	// Finances' reminders go whatever became of the backup.
 	h.sendFinanceReminders(ctx, time.Now())
 	if len(failures) > 0 {
-		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: 4, Tags: []string{"warning"}})
+		// Failing for days (a copy two nights old) is serious: it sounds
+		// in the quiet hours too.
+		priority := 4
+		installed := func(a *catalog.App) bool {
+			st, _ := report.State(a.ID)
+			return st == detect.Running || st == detect.Stopped
+		}
+		waiting := func(a *catalog.App) string { return core.WaitingFor(report, a) }
+		if daysFailing(backup.Read(h.root, backup.SourcesFor(h.catalog, installed, waiting), h.envMap(), time.Now()), time.Now()) {
+			priority = notify.Serious
+		}
+		h.alert(ctx, "duplicati-alerts", notify.Message{Title: core.BackupFailedTitle, Body: strings.Join(failures, "\n"), Priority: priority, Tags: []string{"warning"}})
 		return fmt.Errorf("%d backup step(s) failed", len(failures))
 	}
 	h.remindRestoreTest(ctx)
@@ -667,6 +716,8 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	var unwell []string  // running apps a restart may help
 	var missing []string // apps whose container is gone
 	engineUp := true
+	var mem health.Memory // the apps' memory, when memOK
+	memOK := false
 	client, err := h.docker(ctx)
 	if err != nil {
 		engineUp = false
@@ -699,8 +750,20 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 			}
 		}
 		apps, sick, gone := h.appChecks(ctx, containers, env, health.LoadState(health.StatePath(h.root)))
+		// An app Docker keeps restarting is stopped instead, and said once,
+		// with why: no longer a failing check, as one stopped by hand.
+		if loops, lines := h.stopRestartLoops(ctx, client, containers, env, time.Now()); len(loops) > 0 {
+			apps = slices.DeleteFunc(apps, func(r health.Result) bool { return slices.Contains(loops, r.Name) })
+			h.alert(ctx, "tunnel-watchdog", notify.Message{
+				Title:    "Homelab: stopped an app that kept restarting",
+				Body:     strings.Join(lines, "\n\n") + "\n\nIt stays stopped until you start it again, from Status or homelab start, once its log says what to fix (AUTO_HEAL=false leaves it to Docker).",
+				Priority: 4,
+				Tags:     []string{"octagonal_sign"},
+			})
+		}
 		results, unwell, missing = append(results, apps...), sick, gone
 		report := detect.Analyze(h.catalog, containers)
+		mem, memOK = memoryNow(ctx, client, report)
 		results = append(results, h.dumpAgeChecks(report, time.Now())...)
 		results = append(results, h.duplicatiChecks(ctx, report, env, time.Now())...)
 		if checked, ok, msg := crowdsecBouncer(ctx, client, report, time.Now()); checked {
@@ -756,11 +819,29 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	if drives, err := checkDrives(ctx); err == nil {
 		results = append(results, driveChecks(drives)...)
 	}
-	statePath := health.StatePath(h.root)
-	state := health.LoadState(statePath)
-	failed, recovered := state.Update(results, time.Now())
-	if err := state.Save(statePath); err != nil {
+	// Under the state's lock: another watchdog run, or homelab remove
+	// forgetting an app, is never saved over.
+	var state health.State
+	var failed []health.Result
+	var recovered []string
+	var memHigh, memBack bool
+	now := time.Now()
+	if err := health.UpdateState(health.StatePath(h.root), func(s *health.State) {
+		failed, recovered = s.Update(results, now)
+		if memOK {
+			memHigh, memBack = s.StepMemory(mem, now)
+		}
+		state = *s
+	}); err != nil {
 		h.ui.Warn("could not save watchdog state: %v", err)
+	}
+	// Memory pressure: once, when it has stayed high; once, when it is down.
+	switch {
+	case memHigh && state.Memory != nil:
+		h.ui.Warn("memory: the apps use %d%% of what Docker has", percent(*state.Memory))
+		h.alert(ctx, "tunnel-watchdog", memoryAlert(*state.Memory, now))
+	case memBack:
+		h.alert(ctx, "tunnel-watchdog", memoryBack(mem))
 	}
 	if engineUp {
 		if healed := h.heal(ctx, client, unwell, missing, state, env, time.Now()); len(healed) > 0 {
@@ -796,17 +877,35 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 	// Apps whose alerts are off (homelab notify off) are still checked,
 	// and shown, but not alerted about.
 	off := map[string]bool{}
-	for _, id := range notify.Quiet(env) {
+	for _, id := range notify.LoadQuiet(h.root, env) {
 		off[id] = true
 	}
 	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return off[r.Name] })
 	recovered = slices.DeleteFunc(recovered, func(name string) bool { return off[name] })
+	// A snoozed check (homelab notify snooze, or Snooze on Status) is not
+	// alerted about until it wakes; one still failing then is, since it
+	// would otherwise never be (it alerted only when it began to fail).
+	snoozed := notify.LoadSnoozes(h.root)
+	failed = slices.DeleteFunc(failed, func(r health.Result) bool { return snoozed.Active(r.Name, now) })
+	recovered = slices.DeleteFunc(recovered, func(name string) bool { return snoozed.Active(name, now) })
+	if woken, err := notify.Woken(h.root, now); err == nil {
+		for _, name := range woken {
+			if off[name] || slices.ContainsFunc(failed, func(r health.Result) bool { return r.Name == name }) {
+				continue
+			}
+			for _, r := range results {
+				if r.Name == name && !r.OK() && state.Confirmed(name) {
+					failed = append(failed, r)
+				}
+			}
+		}
+	}
 	if len(failed) > 0 && engineUp {
 		var lines []string
 		for _, r := range failed {
 			lines = append(lines, core.DownLine(r))
 		}
-		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: 4, Tags: []string{"warning"}})
+		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: downPriority(failed), Tags: []string{"warning"}})
 	}
 	if len(recovered) > 0 && engineUp {
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: recovered", Body: strings.Join(recovered, ", ") + " answering again", Tags: []string{"white_check_mark"}})
@@ -832,6 +931,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 // it running this week (seen); one never installed is left alone.
 func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, env map[string]string, seen health.State) (out []health.Result, unwell, missing []string) {
 	st := api.StatusOf(ctx, h.catalog, containers, env, true)
+	held := stopped.Load(stopped.Path(h.root))
 	local := &http.Client{Timeout: 10 * time.Second}
 	for _, s := range st.Apps {
 		a, ok := h.catalog.Get(s.ID)
@@ -850,8 +950,12 @@ func (h *homelab) appChecks(ctx context.Context, containers []docker.Container, 
 				unwell = append(unwell, s.ID)
 			}
 		case s.State == "running" || s.State == "elsewhere":
+		case s.State == "stopped" && s.StoppedWhy != "" && !held.Has(s.ID):
+			// It stopped by itself (out of memory, an error, its port
+			// taken): an alert, not a restart, which may not help.
+			r.Err = fmt.Errorf("stopped: %s", s.StoppedWhy)
 		case s.State == "stopped":
-			continue // stopped by hand: every service restarts unless stopped
+			continue // stopped by hand, or on purpose: every service restarts unless stopped
 		case a.Optional() || a.Internal():
 			continue // stopped or not installed: the user's choice
 		case a.ID == tunnelID && env["TUNNEL_TOKEN"] == "":
@@ -926,16 +1030,23 @@ func (h *homelab) duplicatiChecks(ctx context.Context, report *detect.Report, en
 	if err != nil {
 		return []health.Result{{Name: "duplicati jobs", Err: err}}
 	}
+	// With Sunday's checks (WithChecks sorts out which failure is a check's).
+	jobs = duplicati.WithChecks(jobs, duplicati.LoadChecks(duplicati.CheckPath(h.root)))
 	var out []health.Result
 	for _, j := range jobs {
 		r := health.Result{Name: "duplicati " + j.Name, Status: 200}
 		switch j.State {
 		case "failed":
-			r.Err = fmt.Errorf("the last run failed: %s", j.ErrorMessage)
+			r.Err = fmt.Errorf("the last run failed: %s", duplicati.ShortProblem(j.ErrorMessage))
 		case "stale":
 			r.Err = fmt.Errorf("no successful run since %s", j.LastFinished.Local().Format("2 January"))
 		case "never":
 			continue
+		}
+		// A damaged file: a version may not restore, until a check passes
+		// again (later runs leave old files as they are).
+		if r.Err == nil && j.CheckProblem != "" {
+			r.Err = fmt.Errorf("the check of its backup on %s failed: %s (a version may not restore: open the job in Duplicati, or homelab report for help)", j.Checked.Local().Format("Monday 2 January"), j.CheckProblem)
 		}
 		out = append(out, r)
 	}
@@ -1017,9 +1128,32 @@ func ntfyTokenAdd(label, user string) string {
 // notify manages ntfy: write grants for the alert topics, and a test message.
 func (h *homelab) notify(ctx context.Context, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic] | homelab notify on|off <app>")
+		return fmt.Errorf("usage: homelab notify setup | homelab notify test [topic] | homelab notify on|off <app> | homelab notify snooze <check> 1h|1d|off")
 	}
 	switch args[0] {
+	case "snooze":
+		// One check (as homelab watchdog names it) not alerted about for a
+		// while: a failure you already know of.
+		if len(args) != 3 {
+			return fmt.Errorf("usage: homelab notify snooze <check> 1h|1d|off (the check as homelab watchdog names it)")
+		}
+		var until time.Time
+		if args[2] != "off" {
+			d, err := parseFor(args[2])
+			if err != nil {
+				return err
+			}
+			until = time.Now().Add(d)
+		}
+		if err := notify.Snooze(h.root, args[1], until); err != nil {
+			return err
+		}
+		if until.IsZero() {
+			h.ui.OK("the watchdog alerts about %s again (on its next run, if it still fails)", args[1])
+		} else {
+			h.ui.OK("no alerts about %s until %s; the watchdog still checks it, and alerts then if it still fails", args[1], until.Local().Format("Mon 2 Jan 15:04"))
+		}
+		return nil
 	case "on", "off":
 		if len(args) != 2 {
 			return fmt.Errorf("usage: homelab notify %s <app>", args[0])
@@ -1028,12 +1162,20 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		if !ok {
 			return fmt.Errorf("unknown app %q", args[1])
 		}
+		// Kept in data/alerts-off.json; a list still in .env from before
+		// goes there first.
 		f, err := envfile.Load(h.envFile)
 		if err != nil {
 			return err
 		}
-		f.Set(notify.QuietKey, notify.SetQuiet(f.Map(), a.ID, args[0] == "off"))
-		if err := f.Save(); err != nil {
+		if moved, err := notify.CarryQuiet(h.root, f); err != nil {
+			return err
+		} else if moved {
+			if err := f.Save(); err != nil {
+				return err
+			}
+		}
+		if err := notify.SetQuiet(h.root, a.ID, args[0] == "off"); err != nil {
 			return err
 		}
 		if args[0] == "off" {
@@ -1277,7 +1419,7 @@ func (h *homelab) schedule(_ context.Context, args []string) error {
 		if err := h.goAhead(*apply, "\nInstall?"); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(h.logsDir(), 0o755); err != nil {
+		if err := h.makeLogsDir(); err != nil {
 			return err
 		}
 		for _, j := range jobs() {

@@ -27,7 +27,7 @@ type Catalog struct {
 	Wireable []string `json:"wireable"`
 }
 
-// Category groups apps on the "Choose stacks" screen.
+// Category groups apps on the "Choose apps" screen.
 type Category struct {
 	ID    string `json:"id"`
 	Label string `json:"label"`
@@ -44,6 +44,12 @@ type App struct {
 	Aliases     []string `json:"aliases,omitempty"`
 	DependsOn   []string `json:"dependsOn,omitempty"`
 	Conflicts   []string `json:"conflicts,omitempty"`
+	// GoesWith are the apps this one adds to, by ID, each with what it
+	// brings them (x-homelab goes_with): suggested to those who run one.
+	GoesWith map[string]string `json:"goesWith,omitempty"`
+	// SameJob are apps that do much the same, by ID, each with why you
+	// might keep one or both (x-homelab same_job; said from one side).
+	SameJob map[string]string `json:"sameJob,omitempty"`
 	// Inputs are the .env settings the app needs before it can start; a
 	// form collects them and passes them back with --set.
 	Inputs []string `json:"inputs,omitempty"`
@@ -125,7 +131,7 @@ func appOf(c *catalog.Catalog, a *catalog.App) App {
 	}
 	out := App{
 		ID: a.ID, Name: a.Name(), Category: a.Category(), Description: a.Meta.Description, Kind: kind,
-		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts,
+		Aliases: a.Meta.Aliases, DependsOn: a.DependsOn, Conflicts: a.Meta.Conflicts, GoesWith: a.Meta.GoesWith, SameJob: a.Meta.SameJob,
 		Inputs: a.Meta.Requires, Login: a.Meta.Login, Phone: a.Phone(), Public: a.Public(), Warning: a.Meta.Warning,
 	}
 	out.Stack = a.Stack()
@@ -248,6 +254,9 @@ type Status struct {
 	// Savings is what the running apps replace in subscriptions a year,
 	// from docs/Savings.md.
 	Savings float64 `json:"savings"`
+	// Pinned are the apps pinned to the top, in the order they were
+	// pinned (only those in the catalog).
+	Pinned []string `json:"pinned,omitempty"`
 	// Updates is whether nightly image updates run, and when.
 	Updates updates.State `json:"updates"`
 	// BatteryPaused are the apps the battery saver paused until power
@@ -280,16 +289,32 @@ type AppStatus struct {
 	Address   string `json:"address,omitempty"`  // on the homelab domain
 	Since     string `json:"since,omitempty"`    // when it last started (RFC 3339), while running
 	Restarts  int    `json:"restarts,omitempty"` // restarts by its restart policy since it was created
+	// StartedBy is why it last started, while running: you, updated,
+	// nightly, fix, watchdog, battery, drive, timer (internal/started);
+	// update (one noticed then, by whoever made it); or docker (its restart
+	// policy, after it stopped on its own); "" when nothing says.
+	StartedBy string `json:"startedBy,omitempty"`
 	// UpdatedAt is when its last update was noticed, while the image it ran
 	// before is kept to go back to (homelab rollback); RFC 3339.
 	UpdatedAt string `json:"updatedAt,omitempty"`
 	// Held: its updates are held after a rollback (homelab updates release).
 	Held bool `json:"held,omitempty"`
+	// UpdateDays are the days the nightly update takes it ("sun", "sat"),
+	// when not every night (homelab updates days).
+	UpdateDays []string `json:"updateDays,omitempty"`
 	// Quiet: the watchdog does not alert about it (homelab notify on).
 	Quiet bool `json:"quiet,omitempty"`
+	// Pinned: at the top of Status and of the menu bar's Open an app
+	// (homelab pin); Status lists the apps in their pinned order.
+	Pinned bool `json:"pinned,omitempty"`
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`
+	// StoppedAt is when a stopped app stopped (RFC 3339), and StoppedWhy
+	// why, in a few words, when Docker knows (StoppedWhy): an app that
+	// stopped by itself, not from the app or for a missing drive.
+	StoppedAt  string `json:"stoppedAt,omitempty"`
+	StoppedWhy string `json:"stoppedWhy,omitempty"`
 	// NotAnswering is why a running app's web address on this machine
 	// does not answer ("connection refused", "HTTP 502"): the container
 	// runs, but the app does not work.

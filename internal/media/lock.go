@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/proc"
 )
 
 // Lock is homelab.media.lock: one media job at a time moves files. Video
@@ -27,8 +29,19 @@ func LockPath(root string) string { return filepath.Join(root, "data", "homelab.
 // ErrBusy is returned when another media job holds the lock.
 var ErrBusy = errors.New("another Tidy Up job is moving files")
 
-// alive reports whether a process runs; tests replace it.
-var alive = processAlive
+// alive and started are this machine's processes (internal/proc); tests
+// replace them.
+var (
+	alive   = proc.Alive
+	started = proc.Started
+)
+
+// holds reports whether pid still runs as the job that wrote a lock at
+// start: a process that started after the lock was written is another
+// program given the same ID later (proc.Process.Holds).
+func holds(pid int, start time.Time) bool {
+	return proc.Process{Alive: alive, Started: started}.Holds(pid, start)
+}
 
 // ReadLock is the lock as written, and whether its process still runs. No
 // lock is a zero Lock and false.
@@ -41,7 +54,7 @@ func ReadLock(root string) (Lock, bool) {
 	if json.Unmarshal(data, &l) != nil {
 		return Lock{}, false
 	}
-	return l, l.PID > 0 && alive(l.PID)
+	return l, holds(l.PID, l.Start)
 }
 
 // Held reports whether a running media job holds the lock: the nightly

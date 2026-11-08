@@ -7,8 +7,10 @@
 // the latest is read with the form kept open over it.
 import { mountFinanceSheet, type What } from '../finances/Edit';
 import { mountFinances } from '../finances/Finances';
-import { setHidden, todayISO } from '../finances/money';
+import { isoDay, setHidden, todayISO } from '../finances/money';
 import { mountBalances } from '../finances/widgets/Worth';
+import type { SinceState } from '../finances/widgets/Ledger';
+import type { InvestState } from '../finances/widgets/Investments';
 import { store } from '../store';
 import { type Running } from '../finances/homelab';
 import { catalog } from './choose';
@@ -41,6 +43,35 @@ function fromApps() {
   ];
   return all.filter((a) => runs(a.id)).map(({ name, read }) => ({ name, read }));
 }
+// Net worth › Investments, read from Ghostfolio: on Read now, and after the
+// first, once a day as Finances opens (unless turned off), when the last
+// read is from before today or 12 hours old. On the computer only: a phone
+// shows what was last read.
+let invest: InvestState = {};
+let autoTried = '';
+async function readInvestments() {
+  invest = { busy: true };
+  draw();
+  try {
+    const r = await go().FinancesReadInvestments();
+    const held = (r.view.plan.accounts || []).filter((a) => a.holdings?.length);
+    const count = held.reduce((t, a) => t + a.holdings!.length, 0);
+    const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    invest = { said: `Read from Ghostfolio at ${time}: ${count} ${count === 1 ? 'holding' : 'holdings'} in ${held.length} ${held.length === 1 ? 'account' : 'accounts'}.`, unmatched: r.unmatched };
+    financesData.set(r.view);
+  } catch (e) {
+    invest = { problem: `Could not read Ghostfolio: ${errorText(e)}` };
+  }
+  draw();
+}
+function readEachMorning(v: finance.View) {
+  const at = new Date(v.plan.holdingsRead || '');
+  if (phone || v.readOnly || v.plan.readByHand || isNaN(at.getTime()) || autoTried === v.today || invest.busy) return;
+  if (!$('finances').classList.contains('active') || !runs('ghostfolio')) return;
+  if (isoDay(at) >= v.today && Date.now() - at.getTime() < 12 * 3600000) return;
+  autoTried = v.today;
+  readInvestments();
+}
 export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all([financesData.load(), ledgerData.load()]).then(() => {}); }
 
 // The view shown and the paycheck picked, kept between visits; until one
@@ -70,7 +101,7 @@ function draw() {
     setGroup: (g) => { group = g; draw(); },
     pick: (i) => { sel = i; draw(); },
     edit: open,
-    setWaiting,
+    setSince,
     saveSettings: (s) => save({ ...financesData.value!.plan, currency: s.currency, holidays: s.holidays, rates: s.rates, quiet: s.quiet?.length ? s.quiet : undefined, calendarKey: s.calendarKey, calendarAmounts: s.calendarKey ? s.calendarAmounts || undefined : undefined }),
     keep: save,
     exportFile,
@@ -78,14 +109,17 @@ function draw() {
     printMonth: async (name, html) => (phone ? exportFile(name, html) : `Opened ${await go().PrintFinances(name, html)} to print`),
     toggleHidden: v && !v.readOnly ? toggleHideAmounts : undefined,
     readReceipt: receipts.read,
+    saveLedger,
     running: runningApps(),
     calendar: phone ? undefined : () => go().FinancesCalendar(),
     // Wallos's subscriptions, on the computer while Wallos runs.
     fromWallos: phone || !wallosRunning() ? undefined : () => go().FinancesFromWallos(),
     phone,
+    investments: phone ? undefined : { read: readInvestments, running: runs('ghostfolio'), state: invest },
   });
+  if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.
-  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  if (editing && v && !v.readOnly) mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   // The sidebar's balances, on every screen: a group opens Finances › Net worth.
   mountBalances($('finNav'), v, (g) => { tab = 'worth'; group = g; navigate('finances'); draw(); $('finRoot').querySelector('.fx-groupcard')?.scrollIntoView({ block: 'start' }); }, v && !v.readOnly ? toggleHideAmounts : undefined);
   // The sidebar counts the paychecks that leave checking under the cushion.
@@ -148,13 +182,21 @@ async function saveLedger(l: finance.Ledger): Promise<boolean> {
   }
 }
 
-/** Marks a paycheck or payment taken as done as not happened yet (it comes today), or back. */
-function setWaiting(key: string, waiting: boolean) {
+/**
+ * Says what became of a paycheck or payment taken as done: counted (it
+ * happened, or a bill on the day balances were typed comes out), waiting
+ * (not yet: it comes today), or a bill on that day the balance has already.
+ */
+function setSince(key: string, state: SinceState) {
   const v = financesData.value!;
-  // What waits now, by its key (NotYet, the day's paychecks before, is one of them).
-  const keys = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
-  if (waiting) keys.add(key); else keys.delete(key);
-  return save({ ...v.plan, waiting: [...keys], notYet: undefined });
+  // What waits now, by its key (NotYet, the day's paychecks before, is one of them), and what the balances have.
+  const waiting = new Set((v.since || []).filter((s) => s.waiting).map((s) => s.key));
+  const held = new Set((v.since || []).filter((s) => s.inBalance).map((s) => s.key));
+  waiting.delete(key);
+  held.delete(key);
+  if (state === 'waiting') waiting.add(key);
+  if (state === 'inBalance') held.add(key);
+  return save({ ...v.plan, waiting: [...waiting], inBalance: held.size ? [...held] : undefined, notYet: undefined });
 }
 
 // The menu's item and the window's own shortcut can both see one ⌘⇧H: a
@@ -174,11 +216,14 @@ export function toggleHideAmounts() {
   save(plan);
 }
 
+/** Opens a Finances form (Add a transaction, Update balances), as the screen's own buttons do; nothing on a phone that may only look. */
+export function openFinanceForm(what: What, id?: string, kind?: string) { open(what, id, kind); }
+
 function open(what: What, id?: string, kind?: string) {
   const v = financesData.value;
   if (!v || v.readOnly) return;
   editing = { what, id, kind, n: ++opened };
-  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
+  mountFinanceSheet($('finSheetBox'), { ...editing, plan: v.plan, checking: v.checking, start: v.start, dues: v.dues, categories: v.categories, ledger: ledgerData.value, save, saveLedger, receipts, fromApps: fromApps(), close });
   $('finSheet').hidden = false;
 }
 

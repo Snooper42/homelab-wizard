@@ -20,6 +20,8 @@ export interface RowMenuActions {
   backupNow: () => void;
   /** The watchdog's alerts about it, on or off. */
   alerts: (a: api.AppStatus, on: boolean) => void;
+  /** Pinned to the top of Status (and the menu bar's Open an app), or back in its group. */
+  pin: (a: api.AppStatus, on: boolean) => void;
 }
 
 export interface RowMenuProps {
@@ -97,10 +99,16 @@ export function RowMenu({ a, x, y, native, busy, companion, on, close, said }: R
           {!native && running && <button type="button" role="menuitem" class="stoplater" aria-haspopup="menu" disabled={busy} onClick={() => showLater(true)}>Stop for a while ›</button>}
           {!native && <hr />}
           {!native && item('Logs', pick(() => on.logs(a)))}
-          {item('Back up now', pick(() => on.backupNow()))}
-          {!native && (
+          {/* On the phone, the quick ones: what is done to this app now. */}
+          {!companion && item('Back up now', pick(() => on.backupNow()))}
+          {!native && !companion && (
             <button type="button" role="menuitemcheckbox" aria-checked={!a.quiet} onClick={pick(() => on.alerts(a, !!a.quiet))}>
               Tell me if it stops<span class="check" aria-hidden="true">{a.quiet ? '' : '✓'}</span>
+            </button>
+          )}
+          {!companion && (
+            <button type="button" role="menuitemcheckbox" aria-checked={!!a.pinned} onClick={pick(() => on.pin(a, !a.pinned))}>
+              Pin to the top<span class="check" aria-hidden="true">{a.pinned ? '✓' : ''}</span>
             </button>
           )}
         </>

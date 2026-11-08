@@ -143,17 +143,20 @@ const backups = {
   ] },
   vaultExport: hoursAgo(9 * 24), vaultDue: false,
   copies: [
-    ...dumped.map(([id, name, size]) => ({ id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
-    { id: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
-    { id: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
-    { id: 'moneymatter-attachments', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
+    ...dumped.map(([id, name, size]) => ({ id, app: id, name, newest: hoursAgo(7.5), size, count: 7, state: 'fresh' })),
+    { id: 'mealie', app: 'mealie', name: 'Mealie', newest: hoursAgo(80), size: 640e3, count: 7, state: 'stale' },
+    { id: 'komga', app: 'komga', name: 'Komga', newest: hoursAgo(13 * 24), size: 4.6e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'kavita', app: 'kavita', name: 'Kavita', newest: hoursAgo(13 * 24), size: 1.2e6, count: 7, state: 'paused', waitingFor: '/Volumes/Hobbies' },
+    { id: 'moneymatter-attachments', app: 'moneymatter', name: 'MoneyMatter (attachments)', volume: true, newest: hoursAgo(7.5), size: 22e6, count: 7, state: 'fresh' },
   ],
 };
 const duplicatiJobs = [
   ['Homelab AppData', 6.7, '3.311 GiB'], ['Homelab Databases', 7.1, '412 MB'], ['Homelab Infrastructure', 3 * 24, '18.4 MB'],
   ['Homelab Photos', 11, '286 GB'], ['Homelab Secrets', 7.1, '1.20 MB'], ['Homelab Stack Data', 6.6, '96.2 MB'],
-].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok' }));
+].map(([name, h, size]) => ({ id: name, name, lastFinished: hoursAgo(h), nextRun: hoursAgo(h - (h > 24 ? 168 : 24)), size, state: 'ok',
+  // What its last run was (Duplicati's metadata): Photos' is the long one.
+  ...(name === 'Homelab Photos' ? { took: 2460, holds: '301.2 GB', files: 48211, versions: 9, sources: ['/source/photos/library/', '/source/photos/upload/'] }
+    : name === 'Homelab AppData' ? { took: 212, holds: '3.6 GB', files: 18342, versions: 14, sources: ['/source/appdata/'] } : {}) }));
 const cliLog = { remove: ['Remove the containers for %s? App data on disk is kept.'], 'update-all': ['Updates now what the nightly update would (3 apps): navidrome, vikunja, mealie.', '→ dumping mealie-db first', '✓ updated navidrome, vikunja, mealie'], backup: ['→ dump vaultwarden → recovery-staging/databases/vaultwarden', '✓ vaultwarden: vaultwarden-20261010-091502.sqlite.gz (96 KB)', '✓ immich-database: immich-database-20261010-091503.sql.gz (58.2 MB)', '✓ .env copied and verified'], upgrade: ['Homelab files', '  → 3 change(s) on origin/main:', '  ✓ now at origin/main', 'Start the homelab', '  ✓ nothing to change'], fix: ['Fix it', '  • restart the apps that are unwell, and recreate any that stay unwell: Navidrome', '  ✓ done; homelab doctor checks the rest'], 'restore-test': ['→ asking Duplicati to restore 12 file(s) from "Homelab AppData" into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'], 'restore-test-kopia': ['→ restoring 12 file(s) from Kopia\'s newest snapshot into recovery-staging/restore-test', '✓ 12 of 12 sampled files identical'] };
 const alerts = [
   { id: 'a1', time: hoursAgo(0.6), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'photos.example.com answering again', tags: ['white_check_mark'] },
@@ -163,7 +166,11 @@ const alerts = [
 // The watchdog's last run, a few minutes ago.
 // The watchdog's runs per day this week (96 a day, one every 15 minutes):
 // Vikunja missed a few on the fourth day, restarting for its update.
+const dayAt = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return d.toISOString(); };
 const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+// The apps above 90% of the memory Docker has, alerted: the three biggest (health.Memory).
+const memoryHigh = { used: 7.52 * 2 ** 30, total: 8 * 2 ** 30, since: hoursAgo(0.5), alerted: true, biggest: [
+  { id: 'immich-server', name: 'Immich', bytes: 2.5 * 2 ** 30 }, { name: 'someones-own', bytes: 1.2 * 2 ** 30 }, { id: 'paperless', name: 'Paperless-ngx', bytes: 900 * 2 ** 20 }] };
 const watchdog = { lastRun: hoursAgo(0.07), checks: 47, failing: [], pending: 0, week: { vikunja: 0.996 },
   days: { vikunja: Object.fromEntries([6, 5, 4, 3, 2, 1, 0].map((n) => [dayKey(n), n === 3 ? [93, 96] : n === 0 ? [40, 40] : [96, 96]])) } };
 // The household, for an app's Who uses it.
@@ -188,6 +195,12 @@ const protection = {
     { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
     { scenario: 'http-bad-user-agent', ip: '192.0.2.150', country: 'SG', network: 'Example Transit', when: hoursAgo(19) },
   ],
+  // Today's, for the proxy's page: the first two of five (the rest are past MaxToday in this picture).
+  today: [
+    { scenario: 'vpatch-CVE-2017-9841', ip: '203.0.113.7', country: 'NL', network: 'Example Hosting B.V.', when: hoursAgo(0.8), banned: true },
+    { scenario: 'http-probing', ip: '198.51.100.23', country: 'US', network: 'Example Cloud', when: hoursAgo(2.5), banned: true },
+  ],
+  todayCount: 5,
 };
 // Savings recorded nightly: apps added over two months.
 const savingsHistory = Array.from({ length: 60 }, (_, i) => ({
@@ -251,6 +264,8 @@ const receiptPicture = async (page) => Buffer.from(await page.evaluate(async () 
 }), 'base64');
 // The same household with both cards paid off in full with each paycheck (finance-cards.json).
 const paidCards = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-cards.json'), 'utf8'));
+// The same household with a share of the mortgage, $900, sent by Sam (outside it) on the 3rd (finance-moneyin.json).
+const moneyIn = JSON.parse(readFileSync(join(root, 'app', 'preview', 'finance-moneyin.json'), 'utf8'));
 // The same household with $500 moved from savings into checking on Nov 8,
 // and Sam's check going into savings on the 12th.
 // The same household with its balances typed in on the 25th: Jordan's
@@ -376,6 +391,9 @@ const shots = [
     await page.click('#appLog button:has-text("Explain this")', { timeout: 5000 });
     await page.waitForSelector('#appLog .explained .answer', { timeout: 5000 });
   } },
+  // Tidy Up: what to do next beside the drive, the shelf of libraries, and Music's own tab with its steps.
+  { name: 'tidy', screen: 'tidy' },
+  { name: 'tidy-music', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidytrack', { timeout: 5000 }); } },
 ];
 
 // Clicks through the buttons that run commands, against the fake backend
@@ -383,6 +401,29 @@ const shots = [
 // with its success text and no script error.
 // A crash of the background agent yesterday, as LastCrash returns it.
 const crashed = { who: 'the background agent', version: '0.9.7-beta', when: new Date(Date.now() - 864e5).toISOString(), doing: 'main.(*homelab).watchdog', file: 'scripts/logs/crash-2026-10-25.log' };
+// A finger held on a Status row for ms, as a touchscreen sends it: touchstart, then touchend (and the click it makes).
+const longPress = (page, name, ms) => page.evaluate(async ([name, ms]) => {
+  const row = [...document.querySelectorAll('#statusRows tr')].find((r) => r.querySelector('strong')?.textContent === name);
+  const cell = row.querySelector('td.state');
+  cell.scrollIntoView({ block: 'center' });
+  const r = cell.getBoundingClientRect();
+  const touch = new Touch({ identifier: 1, target: cell, clientX: r.left + 20, clientY: r.top + r.height / 2 });
+  cell.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true }));
+  await new Promise((done) => setTimeout(done, ms));
+  const end = new TouchEvent('touchend', { touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true });
+  cell.dispatchEvent(end);
+  if (!end.defaultPrevented) cell.click();
+}, [name, ms]);
+// Mealie stopped by itself at 3:12 this morning, out of memory; Vikunja stopped last night with no reason Docker
+// gave (a shutdown, or docker stop by hand). Neither was stopped from the app.
+function stoppedByItself() {
+  const now = new Date();
+  const at = (days, h, m) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, h, m).toISOString();
+  return { statusOpen: '', status: { ...status, apps: status.apps.map((a) =>
+    a.id === 'mealie' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(0, 3, 12), stoppedWhy: 'it ran out of memory' }
+      : a.id === 'vikunja' ? { ...a, state: 'stopped', health: '', since: undefined, stoppedAt: at(-1, 21, 40) } : a) } };
+}
+
 const smokes = [
   // Every card on Tidy Up holds its words and buttons inside its edges, as Status's do (its own cards once had none),
   // on every tab and while a job runs.
@@ -437,10 +478,10 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
     const rows = await page.$$eval('#tidy .tidyneeds li', (ls) => ls.map((l) => [l.querySelector('strong')?.textContent.trim(), l.querySelector('button')?.textContent.trim() || '']));
-    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Collect what Tdarr has finished', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
+    const want = [['Free the old music library', 'Free it…'], ['2,402 songs could get lyrics', 'Add lyrics'], ['Shrink 42 films', 'Shrink'], ['Tdarr is shrinking 4 films', 'Collect'], ['2 books could look tidier', 'Look…'], ['Look at your TV first', 'Scan'], ['Audiobooks: its drive isn\'t plugged in', '']];
     const sorted = (a) => JSON.stringify([...a].sort((x, y) => x[0].localeCompare(y[0])));
     if (sorted(rows) !== sorted(want)) throw new Error('rows: ' + JSON.stringify(rows));
-    if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('354 GB')) throw new Error('the shrink does not say what it wins back');
+    if (!(await page.textContent('#tidy .tidyneeds li:has-text("Shrink 42 films")')).includes('380 GB')) throw new Error('the shrink does not say what it wins back');
     const head = (await page.textContent('#tidy .header .lead')).trim(), card = (await page.textContent('#tidy .tidyneeds .fx-actions')).trim();
     if (!head.includes('6 things need your OK') || !card.startsWith('6 things')) throw new Error(`the heading says “${head}”, the card “${card}”`);
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
@@ -458,18 +499,18 @@ const smokes = [
       tidyAfter: { 'install ffmpeg': { tidy, tidyFails: {} } } };
   })(), run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
-    const row = '#tidy .tidyneeds li:has-text("ffmpeg and ffprobe")';
+    const row = '#tidy .tidyneeds li:has-text("Install ffmpeg")';
     await page.waitForSelector(`${row} button:text-is("Install")`, { timeout: 5000 });
     if (!(await page.textContent(row)).includes('from ffmpeg.martin-riedl.de')) throw new Error('the row does not say where it comes from');
     await page.click('#tidy .tidyneeds li:has-text("Look at your TV first") button:text-is("Scan")');
-    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: stopped")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: didn\'t finish")', { timeout: 5000 });
     const why = (await page.textContent('#tidyJob p.bad')).trim();
     if (!why.startsWith('ffmpeg and ffprobe: Not installed.')) throw new Error('the card says ' + why);
     await page.click('#tidyJob .tidyfix button:text-is("Install ffmpeg")');
     await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: done")', { timeout: 8000 });
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns.map((r) => r.slice(0, 2).join(' ')));
     if (runs.join() !== 'tv scan,install ffmpeg,tv scan') throw new Error('ran: ' + runs.join());
-    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('ffmpeg and ffprobe'), null, { timeout: 5000 })
+    await page.waitForFunction(() => !document.querySelector('#tidy .tidyneeds li button')?.closest('li')?.textContent.includes('Install ffmpeg'), null, { timeout: 5000 })
       .catch(() => { throw new Error('the Install row stayed after ffmpeg was fetched'); });
   } },
   // Calibre missing: its row opens Calibre's download page (it's a whole app, so the app doesn't fetch it).
@@ -513,11 +554,52 @@ const smokes = [
     const lines = await page.$$eval('#tidyJob .tidylines li', (ls) => ls.map((l) => [l.querySelector('.dot')?.className.trim(), l.textContent.trim()]));
     const note = lines.find((l) => l[1].includes('aren’t on LRCLIB yet'));
     if (!note || note[0] !== 'dot') throw new Error('the note line: ' + JSON.stringify(lines));
-    if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
+    if (!lines.some((l) => l[0] === 'dot ok' && l[1].startsWith('Done: Lyrics added'))) throw new Error('lines: ' + JSON.stringify(lines));
+  } },
+  // Every song has lyrics, but some show two languages on one line (a translation after a caret): Overview still
+  // offers to set them apart, which the lyrics job does.
+  { name: 'Tidy Up: songs with two languages on one line are offered on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 12 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'ok', text: 'Lyrics added to 0 songs; 0 plain ones replaced by time-synced' },
+      { type: 'note', text: '12 had a translation after a caret on each line: each is on its own line under its original now' }, { type: 'result', action: 'lyrics', ok: true }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const text = await page.textContent(row);
+    if (!text.includes('12 songs show two languages on one line')) throw new Error('the row says ' + text);
+    await page.click(`${row} button:text-is("Tidy lyrics")`);
+    await page.waitForSelector('#tidyJob h2:text-is("Tidying lyrics: done")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    // Set right on this computer: never a wait on LRCLIB.
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // Thousands of songs with no lyrics yet, and some with two languages on one line (Nov 6, the owner): setting those
+  // apart is offered on its own, not only inside Add lyrics, which asks LRCLIB about every song first.
+  { name: 'Tidy Up: two languages on one line are tidied even with songs still to ask LRCLIB about', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 9120, none: 2402, to_clean: 3150 }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const tidyRow = '#tidy .tidyneeds li:has-text("two languages on one line")';
+    await page.waitForSelector(tidyRow, { timeout: 5000 });
+    if (!(await page.textContent(tidyRow)).includes('3,150 songs show two languages on one line')) throw new Error('the row says ' + (await page.textContent(tidyRow)));
+    if (!(await page.isVisible('#tidy .tidyneeds li:has-text("2,402 songs could get lyrics") button:text-is("Add lyrics")'))) throw new Error('no Add lyrics beside it');
+    await page.click(`${tidyRow} button:text-is("Tidy lyrics")`);
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (!ran.some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--tidy'))) throw new Error('ran ' + JSON.stringify(ran));
+  } },
+  // A lyrics check from before the count of songs with two languages on one line: Overview offers one more check,
+  // which changes nothing, so those songs are found.
+  { name: 'Tidy Up: an older lyrics check is offered again on Overview', screen: 'tidy', mock: {
+    tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, last: { ...l.last, lyrics: tidyRun('lyrics', 5, { synced: 13932, none: 0, cleaned: 0 }) } } : l)) },
+    tidyEvents: { 'music lyrics': [{ type: 'result', action: 'lyrics', ok: true, check: true, to_clean: 12 }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("Look over the lyrics again")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    await page.click(`${row} button:text-is("Check lyrics")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).some((r) => r[0] === 'music' && r[1] === 'lyrics' && (r[2] || []).includes('--check')), null, { timeout: 5000 });
   } },
   // With nothing waiting, Overview says everything is tidy, and the heading says it too.
   { name: 'Tidy Up: with nothing to do, Overview says everything is tidy', screen: 'tidy', mock: { tidy: { ...tidy, libraries: [
-    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0 }) } },
+    { ...tidy.libraries[0], stage: 'freed', last: { ...tidy.libraries[0].last, lyrics: tidyRun('lyrics', 5, { check: true, synced: 13932, none: 0, to_clean: 0 }) } },
     { ...tidy.libraries[1], last: { review: tidyRun('review', 1, { books: 412, changes: 0 }) } },
     { ...tidy.libraries[2], counts: { lean: 352 }, waiting: 0, last: { scan: tidyRun('scan', 3, { files: 352, bloated: 0 }) } },
     { ...tidy.libraries[3], last: { scan: tidyRun('scan', 3, { files: 800, bloated: 0 }) } },
@@ -582,7 +664,7 @@ const smokes = [
     duplicate_list: [{ keep: '/Volumes/Hobbies/movies/Heat (1995)/Heat (1995).mkv', extra: ['/Volumes/Hobbies/movies/Heat (1995)/Heat.1995.1080p.x264.mkv'], bytes: 9e9 }, { keep: '/Volumes/Hobbies/movies/Ronin (1998)/Ronin.1998.2160p.mkv', extra: ['/Volumes/Hobbies/movies/Ronin (1998)/Ronin (1998).mkv'], bytes: 4e9 }] } } } } : l)) } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     const row = '#tidy .tidyneeds li:has-text("2 films are in the library twice")';
-    if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '12 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
+    if ((await page.textContent(`${row} .tidygain`, { timeout: 3000 })).trim() !== '13 GB') throw new Error('the row does not say what the copies take: ' + (await page.textContent(row)));
     await page.click(`${row} button:text-is("Remove extras…")`);
     await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the extra copies in the Trash?")', { timeout: 5000 });
     await page.waitForSelector('#tidySheet li:text-is("Heat.1995.1080p.x264.mkv goes; Heat (1995).mkv stays")', { timeout: 3000 });
@@ -630,7 +712,7 @@ const smokes = [
   { name: 'Tidy Up: the drive card names the drive and what each library takes', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
     const t = await page.textContent('#tidy .tidydrive', { timeout: 5000 });
-    for (const w of ['On the Hobbies drive', '1.1 TB free', 'Of 3.6 TB', 'Movies1.3 TB', 'Music484 GB', 'Free1.1 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
+    for (const w of ['On the Hobbies drive', '1.2 TB free', 'Of 4 TB', 'Movies1.4 TB', 'Music520 GB', 'Free1.2 TB']) if (!t.includes(w)) throw new Error(`the drive card has no “${w}”: ${t}`);
   } },
   // Undo on the swap asks first, then puts the old library back.
   { name: 'Tidy Up: Undo on the swap asks first, then puts the old library back', screen: 'tidy', run: async (page) => {
@@ -660,7 +742,7 @@ const smokes = [
     await page.waitForSelector('#tidy .tidydone li:has-text("Nothing went missing")', { timeout: 3000 });
     if (await page.$('#tidy .tidydone li:has-text("Nothing went missing") .warn')) throw new Error('Nothing went missing reads as a warning');
     await page.click('#tidy .seg button:text-is("Movies")');
-    await page.waitForSelector('#tidy .tidyneeds li:has-text("1 film with Tdarr now")', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("Tdarr is shrinking 1 film")', { timeout: 3000 });
     if (!(await page.textContent('#tidy .tidyspace')).includes('Tdarr: HEVC, English only')) throw new Error('the language is not named: ' + (await page.textContent('#tidy .tidyspace')));
     if (!(await page.textContent('#tidy .tidyneeds')).includes('H.264')) throw new Error('the reason is not given');
     if (await page.$('#tidy li:has-text("H264")')) throw new Error('H264 is written without its dot');
@@ -726,6 +808,211 @@ const smokes = [
     await page.waitForSelector('#tidyJob .bad:has-text("Tdarr isn\'t answering")', { timeout: 5000 });
     await page.click('#tidyJob button:text-is("Close")');
     if (await page.locator('#tidyJob').count()) throw new Error('the panel stayed');
+  } },
+  // A job that ends on its own without finishing isn't "stopped" (that's what Stop does): it says so and why, with Try again;
+  // the keyboard's place stays in the panel the whole time, and its log isn't called Docker's.
+  { name: 'Tidy Up: a job that didn’t finish says so, with Try again, and the keyboard stays with it', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.focus('#tidy .tidyneeds button:text-is("Collect")');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#tidyJob h2:text-is("Collecting Tdarr\'s work: didn\'t finish")', { timeout: 5000 });
+    await page.waitForSelector('#tidyJob .bad:has-text("Tdarr isn\'t answering")', { timeout: 5000 });
+    const where = await page.evaluate(() => document.activeElement?.closest('#tidyJob') ? document.activeElement.textContent : document.activeElement?.tagName);
+    if (where !== 'Try again') throw new Error(`the keyboard went to ${where}`);
+    const after = await page.evaluate(() => getComputedStyle(document.querySelector('#tidyJob .jobdetails > summary'), '::after').content);
+    if (/Docker/.test(after)) throw new Error(`its details say ${after}`);
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 2, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[1]);
+    if (JSON.stringify(ran) !== JSON.stringify(['movies', 'collect', [], false])) throw new Error(`Try again ran ${JSON.stringify(ran)}`);
+    await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
+    await page.click('#tidyJob button:text-is("Close")');
+    if (await page.evaluate(() => document.activeElement === document.body)) throw new Error('Close left the keyboard at the top of the window');
+  } },
+  // One figure, one way: the screen counts sizes as the engines do (1000 to a KB, as the Finder counts a drive).
+  { name: 'Tidy Up: a size reads the same on the first line, the drive, and Recently done', screen: 'tidy', run: async (page) => {
+    const lead = await page.textContent('#tidy .header .lead', { timeout: 5000 });
+    if (!lead.startsWith('412 GB won back so far')) throw new Error(`the first line: ${lead}`);
+    await page.waitForSelector('#tidy .tidydone .fx-rows :text("12 files replaced · 412 GB freed")', { timeout: 5000 });
+    const drive = await page.textContent('#tidy .tidydrive');
+    if (!drive.includes('Of 4 TB · 412 GB won back so far')) throw new Error(`the drive: ${drive}`);
+    const gain = await page.textContent('#tidy .tidyneeds .tidygain');
+    if (gain !== '380 GB') throw new Error(`what Shrink wins back: ${gain} (the scan's saving is 380e9)`);
+  } },
+  // Install counts as a thing to OK on Overview, so the first line counts it too.
+  { name: 'Tidy Up: the first line counts what Overview lists, a tool to install included', screen: 'tidy', mock: { tidy: { ...tidy, checks: tidy.checks.map((c) => (c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix: 'Install runs brew install ffmpeg for you', install: true } : c)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds button:text-is("Install")', { timeout: 5000 });
+    const card = (await page.textContent('#tidy .tidyneeds .muted')).split(' · ')[0];
+    const lead = await page.textContent('#tidy .header .lead');
+    if (card !== '7 things' || !lead.includes('7 things need your OK')) throw new Error(`card: ${card}; first line: ${lead}`);
+  } },
+  // A review that can't be read says so, with Try again; it never says every book looks tidy.
+  { name: 'Tidy Up: a books review that can’t be read says why, with Try again', screen: 'tidy', mock: { tidyReviewFails: 1 }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReviewError [role=alert]:text-is("Couldn\'t read the last review: Calibre\'s database is locked")', { timeout: 5000 });
+    if (await page.locator('#tidy :text("Every book already looks tidy"), #tidy :text("Your books are tidy")').count()) throw new Error('it says the books are tidy');
+    const lead = await page.textContent('#tidy .header .lead');
+    if (!lead.includes('6 things need your OK')) throw new Error(`the count changed: ${lead}`);
+    await page.click('#tidyReviewError button:text-is("Try again")');
+    await page.waitForSelector('#tidyReview :text-is("Project Hail Mary (Unabridged)")', { timeout: 5000 });
+  } },
+  // Look… on the Books tab used to open the tab it was on: it shows the review and takes the keyboard there.
+  { name: 'Tidy Up: Look… on Books shows the review and moves the keyboard to it', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReview', { timeout: 5000 });
+    await page.focus('#tidy .tidyneeds button:text-is("Look…")');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !!document.activeElement?.closest('#tidyReview'), null, { timeout: 5000 });
+  } },
+  // A record that can't be read says nothing changed, with Try again.
+  { name: 'Tidy Up: a record that can’t be read has Try again', screen: 'tidy', mock: { tidyUpFails: 1 }, run: async (page) => {
+    await page.waitForSelector('#tidyError strong:text-is("Tidy Up couldn\'t read its record")', { timeout: 5000 });
+    await page.click('#tidyError button:text-is("Try again")');
+    await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
+    if (await page.locator('#tidyError').count()) throw new Error('the error stayed');
+  } },
+  // What the screen says first: one main button, on the first thing to do, never on a step that throws things away.
+  { name: 'Tidy Up: Overview has one main button, and never on a step that throws things away', screen: 'tidy', run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds button:text-is("Free it…")', { timeout: 5000 });
+    const main = await page.$$eval('#tidy .tidyneeds button.primary', (b) => b.map((x) => x.textContent));
+    if (main.length !== 1 || main[0] !== 'Add lyrics') throw new Error(`main buttons: ${JSON.stringify(main)}`);
+  } },
+  // Music's tab shows its space beside its genres (it left half the row empty), and Tdarr's row says what it holds,
+  // not that it has finished it.
+  { name: 'Tidy Up: Music shows its space, and Tdarr’s row says what it is shrinking', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyspace .fx-amount:text-is("520 GB")', { timeout: 5000 });
+    await page.click('#tidy .seg button:text-is("Movies")');
+    await page.waitForSelector('#tidy .tidyneeds strong:text-is("Tdarr is shrinking 4 films")', { timeout: 5000 });
+    // The Space card's notes sit at the card's own gap.
+    const gaps = await page.$$eval('#tidy .tidyspace > p.fx-sub', (ps) => ps.map((p) => parseFloat(getComputedStyle(p).marginTop) + parseFloat(getComputedStyle(p).marginBottom)));
+    if (gaps.some((g) => g > 0)) throw new Error(`margins on the Space card's notes: ${gaps}`);
+  } },
+  // On a phone, the six tabs in two even rows of three.
+  { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.waitForSelector('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    const rows = await page.$$eval('#tidy .seg button', (b) => b.reduce((m, x) => { const t = Math.round(x.getBoundingClientRect().top); m[t] = (m[t] || 0) + 1; return m; }, {}));
+    if (JSON.stringify(Object.values(rows)) !== '[3,3]') throw new Error(`tabs per row: ${JSON.stringify(rows)}`);
+    // Needs your OK's count reads as its subtitle, from the heading's left edge, not alone at the right.
+    const [h, c] = await page.$$eval('#tidy .tidyneeds > .row h2, #tidy .tidyneeds > .row .fx-actions > *', (e) => e.map((x) => Math.round(x.getBoundingClientRect().left)));
+    if (h !== c) throw new Error(`the heading starts at ${h}, its count at ${c}`);
+  } },
+  // VoiceOver: a running job is read when its step changes and when it ends, not on every file; a line's dot has words.
+  { name: 'Tidy Up: VoiceOver hears each step and the end, not every tick, and what each line’s dot means', screen: 'tidy', mock: { tidyFails: { 'movies collect': 'Tdarr isn\'t answering at http://localhost:8265.' }, tidyEvents: { 'movies collect': [{ type: 'step', n: 1, total: 2, text: 'Asking Tdarr what it finished' }, { type: 'progress', label: 'Films', done: 1, total: 4 }, { type: 'fail', text: 'Tdarr isn\'t answering' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.click('#tidy .tidyneeds button:text-is("Collect")');
+    await page.waitForSelector('#tidyJob h2:has-text("didn\'t finish")', { timeout: 5000 });
+    const live = await page.$$eval('#tidyJob [role=status], #tidyJob [aria-live], #tidyJob[role]', (e) => e.map((x) => `${x.className}: ${x.textContent}`));
+    if (live.length !== 1 || !/^sr: Collecting Tdarr's work: didn't finish/.test(live[0])) throw new Error(`what is read out: ${JSON.stringify(live)}`);
+    const said = await page.textContent('#tidyJob .tidylines li strong');
+    if (said !== 'Failed: Tdarr isn\'t answering') throw new Error(`a failed line reads "${said}"`);
+  } },
+  // A check that found songs missing isn't asked for again as if it never ran: it says how many and whose, and offers
+  // putting the old library back (asked first) or checking again; Free it… isn't offered.
+  { name: 'Tidy Up: a music check that found songs missing says so, with Put it back and Check again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'music' ? { ...l, stage: 'swapped', last: { ...l.last, verify: tidyRun('verify', 1, { original: 14000, new: 13929, set_aside: 68, missing: 3, artists_with_fewer: [{ artist: 'Radiohead', fewer: 2 }, { artist: 'Björk', fewer: 1, folder_missing: true }] }, false) } } : l)) } }, run: async (page) => {
+    const row = '#tidy .tidyneeds li:has-text("3 songs didn\'t make it into the new library")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    const sub = await page.textContent(`${row} .warn`);
+    if (!sub.startsWith('Radiohead (2 fewer), Björk (all of it) · ')) throw new Error(`it says: ${sub}`);
+    if (await page.locator('#tidy .tidyneeds li:has-text("Check nothing went missing"), #tidy button:text-is("Free it…")').count()) throw new Error('it asks for the check again as if it never ran, or offers to free the space');
+    await page.click(`${row} button:text-is("Put the old library back…")`);
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Put the old library back?")', { timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the OK');
+    await page.click('#tidySheet button:text-is("Put it back")');
+    await page.waitForFunction(() => JSON.stringify((window.__MOCK.tidyRuns || [])[0]) === JSON.stringify(['music', 'undo', [], true]), null, { timeout: 5000 });
+  } },
+  // A review that was applied lists what was changed, not what could be: Overview doesn't offer it again, Books says it
+  // was applied with Undo and no second Apply; after an Undo, the review is offered again.
+  { name: 'Tidy Up: once a books review is applied, it isn’t offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, stage: 'applied', last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }) } } : l)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
+    if (await page.locator('#tidy .tidyneeds li:has-text("could look tidier")').count()) throw new Error('Overview offers the applied review again');
+    await page.click('#tidy .seg button:text-is("Books")');
+    // "Applied … ago": how long ago grows while the suite runs (the fixture's times are set once, at its start).
+    await page.waitForSelector('#tidyReview :text-matches("^Applied .+ ago: the books in it were changed")', { timeout: 5000 });
+    if (await page.locator('#tidyReview button:has-text("Apply to")').count()) throw new Error('it offers to apply the same changes again');
+    await page.waitForSelector('#tidyReview button:text-is("Undo the last apply")', { timeout: 3000 });
+  } },
+  { name: 'Tidy Up: after an apply is undone, the review is offered again', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2 }), undo: tidyRun('undo', 0.2, {}) } } : l)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("2 books could look tidier")', { timeout: 5000 });
+    await page.click('#tidy .seg button:text-is("Books")');
+    await page.waitForSelector('#tidyReview button:text-is("Apply to 2 books…")', { timeout: 5000 });
+  } },
+  // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
+  { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
+    const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };
+    return { tidy: { ...tidy, lock }, tidyLocks: [
+      { lock, now: { step: { type: 'step', n: 2, total: 2, text: 'Swapping in the smaller copies' }, progress: { type: 'progress', label: 'Films', done: 1, total: 4, note: 'Heat (1995)' } } },
+      { now: {} },
+    ] };
+  })(), run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning h2:text-is("Collecting Tdarr\'s work")', { timeout: 5000 });
+    const shrink = '#tidy .tidyneeds button:text-is("Shrink")';
+    if (!(await page.isDisabled(shrink))) throw new Error('Shrink could start while another job holds the lock');
+    const why = await page.getAttribute(shrink, 'title');
+    if (why !== "Waits for collecting Tdarr's work to finish") throw new Error(`Shrink's hover: ${why}`);
+    // The first ask, a few seconds in: where the job has got to.
+    await page.waitForSelector('#tidyRunning .tidystep:text-is("Step 2 of 2 · Swapping in the smaller copies")', { timeout: 8000 });
+    await page.waitForSelector('#tidyRunning [role=progressbar][aria-valuenow="25"]', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning .tidynow:text-is("Now: Heat (1995)")', { timeout: 5000 });
+    // The next: it's done, the card goes, and the buttons are back, with no click.
+    await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 8000 });
+    await page.waitForSelector(`${shrink}:enabled`, { timeout: 5000 });
+  } },
+  // A swap that stopped part-way asked for an OK when it started: Carry on asks again, then runs with it (never without, which fails).
+  { name: 'Tidy Up: a swap that stopped part-way asks again, then carries on with its OK', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'music', action: 'finalize', start: tidyAt(3) } } }, run: async (page) => {
+    await page.waitForSelector('#tidyStale strong:text-is("Swapping in your cleaned library: stopped part-way")', { timeout: 5000 });
+    await page.click('#tidyStale button:text-is("Carry on…")');
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Carry on: swapping in your cleaned library?")', { timeout: 5000 });
+    if (await page.evaluate(() => (window.__MOCK.tidyRuns || []).length)) throw new Error('it ran before the OK');
+    await page.click('#tidySheet button:text-is("Carry on")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[0]);
+    if (JSON.stringify(ran) !== JSON.stringify(['music', 'finalize', [], true])) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } },
+  // Which books were left alone isn't kept with the job, so a books apply never carries on by itself: the review opens.
+  { name: 'Tidy Up: a books apply that stopped part-way opens the review, and applies nothing by itself', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'books', action: 'apply', start: tidyAt(3) } } }, run: async (page) => {
+    await page.waitForSelector('#tidyStale strong:text-is("Tidying your books: stopped part-way")', { timeout: 5000 });
+    await page.click('#tidyStale button:text-is("Open the review")');
+    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Books")', { timeout: 5000 });
+    await page.waitForSelector('#tidyReview', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns || []);
+    if (ran.length) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } },
+  // Stop waits for a safe point, which can take minutes: until then, the panel says it's stopping and Stop can't be pressed again.
+  { name: 'Tidy Up: Stop says it is stopping until the job reaches a safe point', screen: 'tidy', mock: { tidyHold: true, tidyStopSlow: 1500, tidyEvents: { 'tv scan': [{ type: 'step', n: 1, total: 2, text: 'Reading' }, { type: 'progress', label: 'Episodes', done: 5, total: 800, note: 'Frieren S01E05' }] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
+    await page.click('#tidy .tidyneeds button:text-is("Scan")');
+    await page.waitForSelector('#tidyJob .tidynow:text-is("Now: Frieren S01E05")', { timeout: 5000 });
+    await page.click('#tidyJob button:text-is("Stop")');
+    await page.waitForSelector('#tidyJob h2:text-is("Scanning your TV: stopping")', { timeout: 2000 });
+    if (!(await page.isDisabled('#tidyJob button:text-is("Stopping…")'))) throw new Error('Stop could be pressed again');
+    await page.waitForSelector('#tidyJob .tidynow:has-text("Stopping at the next safe point")', { timeout: 2000 });
+    await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });
+  } },
+  // Take 2 (Nov 7, the owner's ask): the thing to do next leads Needs your OK, above a step that throws things away;
+  // the libraries sit on a shelf, each with what it holds, how far along it is (only what the record can say), and
+  // what it waits on; a tile opens its tab, which opens on that library.
+  { name: 'Tidy Up: Overview leads with the next thing to do, and the shelf opens each library', screen: 'tidy', run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds li', { timeout: 5000 });
+    const first = await page.$eval('#tidy .tidyneeds li', (li) => [li.querySelector('strong')?.textContent.trim(), !!li.querySelector('button.primary')]);
+    if (first[0] !== '2,402 songs could get lyrics' || !first[1]) throw new Error(`Needs your OK starts with ${JSON.stringify(first)}`);
+    const tiles = await page.$$eval('#tidy .tidyshelf .tidytile', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    const want = ['Music13,932 songs · 520 GB83% with lyrics', 'Movies356 films · 1.4 TB87% already lean', 'TV820 GB', 'Books412 books · 12 GB', "AudiobooksIts drive isn't plugged in"];
+    if (tiles.length !== 5 || want.some((w, i) => !tiles[i].startsWith(w))) throw new Error(`the shelf: ${JSON.stringify(tiles)}`);
+    if (!tiles[0].includes('2,402 songs could get lyrics') || !tiles[1].includes('Shrink 42 films')) throw new Error(`the tiles don't say what waits: ${JSON.stringify(tiles)}`);
+    await page.click('#tidy .tidyshelf .tidytile:has-text("Movies")');
+    await page.waitForSelector('#tidy .seg button[aria-checked="true"]:text-is("Movies")', { timeout: 3000 });
+    await page.waitForSelector('#tidy .tidyhero h2:has-text("Movies")', { timeout: 3000 });
+  } },
+  { name: 'Tidy Up: Music opens on its steps, each done one with when, and freeing the space next', screen: 'tidy', run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyhero .tidytrack', { timeout: 3000 });
+    const steps = await page.$$eval('#tidy .tidytrack li', (ls) => ls.map((l) => `${l.className}:${l.querySelector('strong').textContent}`));
+    if (JSON.stringify(steps) !== JSON.stringify(['done:Scanned', 'done:Tidy copy built', 'done:Swapped in', 'done:Every song checked', 'now:Old library freed'])) throw new Error(`steps: ${JSON.stringify(steps)}`);
+    const facts = (await page.textContent('#tidy .tidyhero .tidyfacts')).replace(/\s+/g, '');
+    if (!facts.includes('Songs13,932') || !facts.includes('Onthedrive520GB') || !facts.includes('Withlyrics83%')) throw new Error(`the facts: ${facts}`);
   } },
   { name: 'After a crash, Status says so and sends the report', screen: 'status', mock: { crash: crashed }, run: async (page) => {
     await page.waitForSelector('#crashNote:not([hidden]) strong:has-text("The background agent stopped unexpectedly yesterday")', { timeout: 5000 });
@@ -815,6 +1102,23 @@ const smokes = [
     await page.click('#checklist button:has-text("Set up backups")');
     await page.waitForSelector('#checklist li:has-text("Back up to a drive") .failed', { state: 'detached', timeout: 2000 });
   } },
+  // What a step gives you, and why it failed and what next, are read in full: before, each was cut to one line with
+  // "…" (in an 860px window, every step's), and what to press next after a failure went with it. In a normal window,
+  // and in a narrow one with big text.
+  { name: 'First run: a failed step says why in full, not cut off', screen: 'setup', mock: {
+    setup: [{ id: 'backups', title: 'Back up to a drive', why: 'A copy of everything on a drive of its own, made every night while you sleep, and checked each week.', state: 'todo', run: [['backup', 'setup', '--apply']], runLabel: 'Set up backups' }],
+    runFails: { backups: 'the backup drive /Volumes/Backup is not plugged in, or is formatted for Windows (NTFS) and this computer can only read it' },
+  }, run: async (page) => {
+    await page.click('#checklist button:has-text("Set up backups")', { timeout: 5000 });
+    const line = page.locator('#checklist li:has-text("Back up to a drive") .failed');
+    await line.waitFor({ timeout: 5000 });
+    for (const [w, zoom] of [[1280, '1'], [860, '1.5']]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
+      const cut = await page.$$eval('#checklist li .body > .sub', (es) => es.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent.trim()));
+      if (cut.length) throw new Error(`at ${w}px, text ${zoom}×, cut off: ${cut.join(' | ')}`);
+    }
+  } },
   // Once the homelab is made with no apps yet, Setup says the next thing
   // is picking them, and takes you there; with apps, it says nothing.
   { name: 'First run: once the homelab is made, Setup points to the first apps', screen: 'setup', mock: { status: { ...status, apps: [] }, host: { ...host, rootOK: false, root: '', disks: [], kit: true, newRoot: '/Users/you/Homelab' } }, run: async (page) => {
@@ -824,8 +1128,8 @@ const smokes = [
     await page.waitForSelector('#checklist li', { state: 'visible', timeout: 5000 });
     await page.waitForTimeout(500);
     const said = await page.evaluate(() => document.querySelector('#setup').innerText);
-    if (!/Choose stacks/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
-    await page.click('#firstApps button:has-text("Choose stacks")');
+    if (!/Choose apps/.test(said)) throw new Error('once the homelab is made, nothing on Setup points to picking the first apps');
+    await page.click('#firstApps button:has-text("Choose apps")');
     await page.waitForSelector('#choose.active', { timeout: 5000 });
   } },
   { name: 'Setup says nothing of first apps once there are apps', screen: 'setup', run: async (page) => {
@@ -851,26 +1155,106 @@ const smokes = [
     await page.fill('#search', 'spotify');
     await page.waitForSelector('label.app:has-text("Navidrome")', { timeout: 5000 });
   } },
-  { name: 'Choose stacks as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
+  // Suggestions from what you use: Add more opens on the apps that go with ones you run, each saying what it brings;
+  // one whose partner you don't run is not suggested, and ticking a suggestion picks it.
+  { name: 'Choose apps: suggestions from what you run', screen: 'choose', run: async (page) => {
+    await page.click('#more > summary');
+    const group = page.locator('.group.suggested');
+    await group.locator('h2:has-text("Suggested for what you run")').waitFor({ timeout: 5000 });
+    await group.locator('label.app:has-text("Beets") .goeswith').filter({ hasText: 'Goes with Navidrome, which you run: Tags and sorts the music' }).waitFor({ timeout: 3000 });
+    await group.locator('.goeswith').filter({ hasText: 'Goes with Paperless-ngx, which you run: Titles, tags, and correspondents' }).waitFor({ timeout: 3000 });
+    if (await group.locator('label.app:has-text("Bazarr")').count()) throw new Error('Bazarr is suggested without Sonarr or Radarr');
+    if (await group.locator('label.app strong:text-is("Navidrome")').count()) throw new Error('an app you run is suggested');
+    await group.locator('label.app:has-text("Beets") input').check();
+    if (!(await page.isChecked('.group:not(.suggested) label.app:has-text("Beets") input'))) throw new Error('ticking a suggestion did not pick the app');
+    // Searching hides the group; the row still says it.
+    await page.fill('#search', 'beets');
+    await page.waitForSelector('.group.suggested', { state: 'detached', timeout: 3000 });
+    await page.locator('label.app:has-text("Beets") .goeswith').waitFor({ timeout: 3000 });
+  } },
+  // Two apps that do the same job: an app's row says which one you already run and why one might keep one or both,
+  // from whichever side the pair is written, and an app you run says nothing.
+  { name: 'Choose apps: an app that does what one you run does says so', screen: 'choose', run: async (page) => {
+    await page.fill('#search', 'kavita');
+    const kavita = page.locator('label.app:has-text("Kavita")');
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Komga: Both read comics and manga from the same folders' }).waitFor({ timeout: 5000 });
+    await kavita.locator('.samejob').filter({ hasText: 'You already run Calibre-Web: Both serve your e-books' }).waitFor({ timeout: 3000 });
+    // Written on Mealie's side, said on Tandoor's; Mealie is installed though stopped.
+    await page.fill('#search', 'tandoor');
+    await page.locator('label.app:has-text("Tandoor") .samejob').filter({ hasText: 'You already run Mealie: Both keep recipes' }).waitFor({ timeout: 3000 });
+    await page.fill('#search', 'kopia');
+    await page.locator('label.app:has-text("Kopia") .samejob').filter({ hasText: 'You already run Duplicati: Meant to run beside it' }).waitFor({ timeout: 3000 });
+    // Komga runs: its own row names nothing.
+    await page.fill('#search', 'komga');
+    await page.waitForSelector('label.app:has-text("Komga")', { timeout: 3000 });
+    if (await page.locator('label.app:has-text("Komga") .samejob').count()) throw new Error('an app you run says it does what another does');
+  } },
+  { name: 'Choose apps as a Mac: Beszel sees the VM, Frigate the processor', screen: 'choose', run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("OrbStack\'s Linux VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("containers reach no Coral")', { timeout: 5000 });
   } },
-  { name: 'Choose stacks as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+  // Remember where you were: each screen keeps its own scroll and open sections between visits (another screen starts at its
+  // own place, not this one's) and after the app is opened again.
+  { name: 'Each screen keeps where you were: its scroll and open sections, after quitting too', screen: 'choose', run: async (page) => {
+    const top = () => page.evaluate(() => Math.round(document.querySelector('main').scrollTop));
+    const scrollTo = (y) => page.evaluate((v) => { document.querySelector('main').scrollTop = v; }, y);
+    // What is at the top of the window: the same after opening again, though a card drawn late above moves the pixels.
+    const atTop = () => page.evaluate(() => { const m = document.querySelector('main').getBoundingClientRect(); return document.elementFromPoint(m.left + m.width / 2, m.top + 60)?.closest('label, li, h2, summary, p')?.textContent.trim().slice(0, 60) || ''; });
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.click('#more > summary');
+    await page.waitForFunction(() => document.querySelector('#more').open, null, { timeout: 2000 });
+    await page.waitForFunction(() => document.querySelector('main').scrollHeight > 2000, null, { timeout: 5000 });
+    await scrollTo(900);
+    const chose = await top(), shown = await atTop();
+    if (chose < 800 || !shown) throw new Error(`Choose apps only scrolls to ${chose} (${shown})`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await top()) !== 0) throw new Error(`Status opened ${await top()}px down, Choose apps' place`);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+    await scrollTo(300);
+    // Where it is as it is left (a card drawn late above moves it, keeping the rows in view).
+    await page.waitForTimeout(500);
+    const status = await top();
+    if (status < 250) throw new Error(`Status only scrolls to ${status}`);
+    await page.click('nav button[data-screen=choose]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, chose, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - chose) > 1) throw new Error(`back on Choose apps at ${await top()}, not ${chose}`);
+    if (!(await page.evaluate(() => document.querySelector('#more').open))) throw new Error('Add more closed again');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`back on Status at ${await top()}, not ${status}`);
+    // Quit and open again (on Choose apps): it is where it was, and so is Status. Quitting is the page going away
+    // (pagehide keeps Status's place); what it kept is what the app's storage holds when it opens again. Carried over by
+    // hand: a reloaded file:// page in this browser can start with empty storage when the machine is busy.
+    await page.evaluate(() => dispatchEvent(new Event('pagehide')));
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.place']) throw new Error('nothing kept on quitting');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('#choose.active #more', { timeout: 5000 });
+    await page.waitForFunction((y) => document.querySelector('main').scrollTop >= y - 1, chose, { timeout: 3000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    if ((await atTop()) !== shown || !(await page.evaluate(() => document.querySelector('#more').open))) throw new Error(`after opening again: at ${await top()} showing "${await atTop()}", not "${shown}"; Add more open ${await page.evaluate(() => document.querySelector('#more').open)}`);
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction((y) => Math.abs(document.querySelector('main').scrollTop - y) <= 1, status, { timeout: 3000 }).catch(() => {});
+    if (Math.abs((await top()) - status) > 1) throw new Error(`Status after opening again at ${await top()}, not ${status}`);
+  } },
+  { name: 'Choose apps as Windows: what Beszel and Frigate do there', screen: 'choose', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel") .sysnote:has-text("Docker Desktop\'s WSL VM")', { timeout: 5000 });
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("NVIDIA card")', { timeout: 5000 });
   } },
-  { name: 'Choose stacks as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
+  { name: 'Choose apps as Linux: Beszel as everywhere, Frigate by hand', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Ubuntu 24.04', machine: 'this machine' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("a Coral or the graphics")', { timeout: 5000 });
     await page.fill('#search', 'beszel');
     await page.waitForSelector('label.app:has-text("Beszel")', { timeout: 5000 });
     if (await page.locator('label.app:has-text("Beszel") .sysnote').count()) throw new Error('Beszel has a note on Linux, where it sees the machine itself');
   } },
-  { name: 'Choose stacks as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
+  { name: 'Choose apps as SteamOS: Frigate with its AMD graphics', screen: 'choose', mock: { platform: 'Linux x86_64', host: { ...host, os: 'Linux (SteamOS 3.7)', machine: 'Steam Machine', desktop: 'kde' } }, run: async (page) => {
     await page.fill('#search', 'frigate');
     await page.waitForSelector('label.app:has-text("Frigate") .sysnote:has-text("AMD graphics")', { timeout: 5000 });
   } },
@@ -894,6 +1278,74 @@ const smokes = [
     await page.waitForSelector('#nothingToInstall:has-text("already running")', { timeout: 5000 });
     if (!(await page.isDisabled('#installBtn'))) throw new Error('Install should be greyed out');
   } },
+  // A backup's contents: hover (or Tab to) an off-site job's time for its last run, how long it took, what it holds, the
+  // versions kept, its folders, and its next run; a job Duplicati says little about says only that.
+  // Savings over time: the year's figure on Status, hovered (or reached with Tab), says what has been saved since the
+  // first record, month by month, newest first, and the card is not cut off.
+  { name: 'Status: hover what the apps replace for what they have saved so far', screen: 'status', run: async (page) => {
+    const tile = '#tiles .tile:has-text("Instead of subscriptions") .savedso';
+    await page.waitForSelector(tile, { timeout: 5000 });
+    await page.hover(tile);
+    const card = await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    // The preview's 60 days: 12 at $2,991 a year, 18 at $3,112, 17 at $3,232, and 13 at $3,292.
+    if (!/^Saved so far: \$520 since /.test(said)) throw new Error(`the total: ${said}`);
+    const months = await card.$$eval('.savedmonths li', (li) => li.map((l) => l.textContent));
+    const now = new Date().toLocaleString('en-US', { month: 'long' });
+    if (months.length < 2 || !months[0].startsWith(now)) throw new Error(`the months, newest first: ${months}`);
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    await page.focus(tile);
+    await page.waitForSelector(`${tile} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+  } },
+  // What changed since last night: a copy's size beside the night before's, said when it moved by a tenth, and a
+  // copy less than half the night before's warned about on its row.
+  { name: 'Backups: a copy beside the night before’s, and one that shrank', screen: 'backups', mock: { backups: { ...backups, shrank: 1, copies: backups.copies.map((c) =>
+    c.id === 'immich-database' ? { ...c, size: 9e6, before: 61e6, shrank: true }
+    : c.id === 'navidrome' ? { ...c, before: 6.1e6 }
+    : c.id === 'vikunja' ? { ...c, before: 405e3 } : c) } }, run: async (page) => {
+    const row = (name) => page.locator(`#copiesCard tr.copy:has(td.name:has-text("${name}"))`).first();
+    await row('Immich database').locator('.note.bad').getByText('Less than half the night before\'s 58 MB: check that Immich database still has its data').waitFor({ timeout: 5000 });
+    if (!(await row('Immich database').locator('.dot.bad').count())) throw new Error('the shrunk copy has no red dot');
+    // Grown by a third: both sizes shown. Within a tenth: its own size only, the night before's on hover.
+    await row('Navidrome').locator('td.size .was').getByText('(was 5.8 MB)').waitFor({ timeout: 3000 });
+    if (await row('Vikunja').locator('td.size .was').count()) throw new Error('a copy within a tenth of the night before\'s says was');
+    if ((await row('Vikunja').locator('td.size').getAttribute('title')) !== 'The night before: 396 KB') throw new Error(`Vikunja's hover: ${await row('Vikunja').locator('td.size').getAttribute('title')}`);
+  } },
+  { name: 'Backups: hover a job’s time for its last run, what it holds, and how long it took', screen: 'backups', run: async (page) => {
+    const when = '#dupCard li:has-text("Homelab Photos") .when .hovers';
+    await page.waitForSelector(when, { timeout: 5000 });
+    await page.hover(when);
+    const card = await page.waitForSelector(`${when} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    for (const want of [/^Last ran .+, in 41 minutes/, /Holds 301\.2 GB of yours, 48,211 files/, /286 GB where it is kept, 9 versions to go back to/, /Copies library, upload/, /Next run /]) {
+      if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
+    }
+    const inside = await card.evaluate((c) => { const r = c.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight && c.contains(hit); });
+    if (!inside) throw new Error('the card is cut off or covered');
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${when} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    // Tab reaches another; one Duplicati says little about says only what it knows.
+    const secrets = '#dupCard li:has-text("Homelab Secrets") .when .hovers';
+    await page.focus(secrets);
+    const small = (await (await page.waitForSelector(`${secrets} [role=tooltip]`, { state: 'visible', timeout: 2000 })).innerText()).replace(/\s+/g, ' ');
+    if (!/^Last ran /.test(small) || /, in |Holds|versions|Copies/.test(small)) throw new Error('Secrets says: ' + small);
+  } },
+  // The weekly integrity check (homelab backup-check): a job whose check found a damaged file says so in red and
+  // counts as needing a look; one that passed says when on its hover.
+  { name: 'Backups: the weekly check, a damaged file in red and a passed one on hover', screen: 'backups', mock: { duplicatiJobs: duplicatiJobs.map((j) => (j.name === 'Homelab Photos' ? { ...j, checked: hoursAgo(30), checkProblem: 'Hash mismatch on file "duplicati-b9e2.dblock.zip.aes"' } : j.name === 'Homelab AppData' ? { ...j, checked: hoursAgo(30) } : j)) }, run: async (page) => {
+    await page.waitForSelector('#dupCard h2 + * .warn:text-is("1 need a look"), #dupCard .warn:text-is("1 need a look")', { timeout: 5000 });
+    const photos = page.locator('#dupCard li:has-text("Homelab Photos")');
+    const sub = (await photos.innerText()).replace(/\s+/g, ' ');
+    if (!/Failed its check .+: Hash mismatch on file "duplicati-b9e2\.dblock\.zip\.aes"\. A version may not restore/.test(sub)) throw new Error(`Photos says: ${sub}`);
+    if (!(await photos.locator('.dot.bad, [class*="bad"]').count())) throw new Error('the damaged job is not marked bad');
+    const when = '#dupCard li:has-text("Homelab AppData") .when .hovers';
+    await page.hover(when);
+    const said = (await (await page.waitForSelector(`${when} [role=tooltip]`, { state: 'visible', timeout: 3000 })).innerText()).replace(/\s+/g, ' ');
+    if (!/Checked .+: a sample of its files matched/.test(said)) throw new Error(`AppData's hover: ${said}`);
+  } },
   { name: 'Backups: copies paused while their apps wait for a drive, the place named, one line a copy', screen: 'backups', run: async (page) => {
     await page.waitForSelector('#copiesTile:has-text("2 more paused: their apps wait for the Hobbies drive")', { timeout: 5000 });
     const value = await page.textContent('#copiesTile .value');
@@ -908,8 +1360,11 @@ const smokes = [
     await page.waitForSelector('tr.copy.paused:has-text("Komga")');
     if (await page.isVisible('tr.copy:has-text("Komga") .dot.bad')) throw new Error('a paused copy shows red');
     if ((await page.textContent('#backupsCount')).trim() !== '1') throw new Error('a paused copy counted as a problem');
-    // One line a copy: no cell wraps, nor says "database" under the name.
-    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => r.getBoundingClientRect().height > 44).map((r) => r.textContent));
+    // One line a copy: no cell wraps, nor says "database" under the name. A copy with a note under its name (why it is
+    // stale, or that it shrank) is that one line and the note: its other cells stay on one line each.
+    const tall = await page.$$eval('tr.copy', (rows) => rows.filter((r) => (r.querySelector('.note')
+      ? [...r.querySelectorAll('td:not(.name)')].some((td) => { const g = document.createRange(); g.selectNodeContents(td); return new Set([...g.getClientRects()].map((x) => Math.round(x.top))).size > 1; })
+      : r.getBoundingClientRect().height > 44)).map((r) => r.textContent));
     if (tall.length) throw new Error(`copies on more than one line: ${tall.join(' | ')}`);
     if (await page.isVisible('#copiesCard .local')) throw new Error('"database" under each name');
     // Off-site sizes as the app's other sizes: 3.311 GiB → 3.3 GB.
@@ -1130,6 +1585,28 @@ const smokes = [
     if (act.join('|') !== 'add|Anna Smith|anna@example.com|vikunja') throw new Error(`asked ${act}`);
     if ((await page.evaluate(() => window.__MOCK.opened)) !== 'anna') throw new Error('the welcome page did not open');
   } },
+  // What CrowdSec stopped: the proxy's page lists today's with where each came from and what it tried, says how
+  // many more there were, and other apps' pages have no such card.
+  { name: 'The proxy’s page: what CrowdSec stopped today', screen: 'app:nginx-proxy-manager', run: async (page) => {
+    const card = page.locator('#appStopped');
+    await card.locator('h2:has-text("What CrowdSec stopped today")').waitFor({ timeout: 5000 });
+    await card.locator('text=5 today · 2 banned now').waitFor({ timeout: 3000 });
+    const first = card.locator('li').first();
+    for (const want of ['Probing for a known security hole', 'Netherlands · Example Hosting B.V.', 'Banned']) {
+      if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
+    }
+    await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
+  } },
+  { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
+    await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });
+  } },
+  { name: 'The proxy’s page when CrowdSec can’t be read', screen: 'app:nginx-proxy-manager', mock: { protection: null }, run: async (page) => {
+    await page.locator('#appStopped').getByText('CrowdSec can\'t be read right now: it and the proxy both need to be running.').waitFor({ timeout: 5000 });
+  } },
+  { name: 'Other apps’ pages have no CrowdSec card', screen: 'app:vikunja', run: async (page) => {
+    await page.waitForSelector('#appUpdates', { timeout: 5000 });
+    if (await page.locator('#appStopped').count()) throw new Error('Vikunja\'s page shows what CrowdSec stopped');
+  } },
   { name: 'Sign-in details for the proxy, from its page', screen: 'app:nginx-proxy-manager', run: async (page) => {
     await page.click('#appPeople button:has-text("Sign-in details")', { timeout: 5000 });
     await page.waitForSelector('#cliTitle:has-text("Sign in to Nginx Proxy Manager")');
@@ -1138,6 +1615,22 @@ const smokes = [
     if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'homelab@example.com') throw new Error('the email was not copied');
     await page.click('#cliActions .signin:has-text("Password") button');
     await page.waitForSelector('#cliActions:has-text("Password copied")');
+  } },
+  // Shapes as well as colours: on Status a running app's dot is a circle, one that needs a look a triangle, one that is
+  // down a cross, so the state reads without telling green from red, and still in forced colours (Windows' contrast
+  // themes), where every dot is drawn in one colour.
+  { name: 'Status: the dot of each state has its own shape, in forced colours too', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, health: 'unhealthy' } : a)) } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .dot.bad', { timeout: 5000 });
+    const shapes = () => page.evaluate(() => Object.fromEntries(['ok', 'warn', 'bad'].map((t) => {
+      const d = document.querySelector(`#statusRows .dot.${t}`);
+      return [t, d ? getComputedStyle(d).clipPath : 'missing'];
+    })));
+    for (const forced of ['none', 'active']) {
+      await page.emulateMedia({ forcedColors: forced });
+      const s = await shapes();
+      if (s.ok !== 'none' || !s.warn.startsWith('polygon') || !s.bad.startsWith('polygon') || s.warn === s.bad) throw new Error(`forced colours ${forced}: ${JSON.stringify(s)}`);
+    }
+    await page.emulateMedia({ forcedColors: 'none' });
   } },
   { name: 'Bigger text with the keyboard', screen: 'status', run: async (page) => {
     const mod = (await page.evaluate(() => navigator.platform)).startsWith('Mac') ? 'Meta' : 'Control';
@@ -1285,6 +1778,14 @@ const smokes = [
     await page.waitForSelector('#setting-ADGUARD_PASSWORD .test.ok', { timeout: 5000 });
     if (await page.evaluate(() => window.__MOCK.saved?.ADGUARD_PASSWORD) !== 'typed-not-saved') throw new Error('Test did not save the typed value first');
   } },
+  // Quiet hours: an everyday setting on the Notifications page, named for people, the night it ships with.
+  { name: 'Settings: quiet hours among the everyday ones', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Notifications"]', { timeout: 5000 });
+    const row = page.locator('#setting-QUIET_HOURS');
+    await row.waitFor({ state: 'visible', timeout: 5000 });
+    if (!(await row.textContent()).includes('Quiet hours (no sound at night)')) throw new Error(`its name: ${await row.textContent()}`);
+    if ((await row.locator('input').inputValue()) !== '22-7') throw new Error(`its value: ${await row.locator('input').inputValue()}`);
+  } },
   { name: 'Testing the Cloudflare token saves the Domain typed above it', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Domain"]', { timeout: 5000 });
     await page.fill('#setting-HOMELAB_DOMAIN input', 'snooper42.com');
@@ -1353,13 +1854,32 @@ const smokes = [
   { name: 'A homelab with no apps yet: Status says to choose some, with no empty list', screen: 'status', mock: { status: { ...status, apps: [], savings: 0 } }, run: async (page) => {
     await page.waitForSelector('#statusEmpty:has-text("No apps yet")', { timeout: 5000 });
     for (const sel of ['#tiles .tile', '#status table.grouped', '#statusAll']) if (await page.isVisible(sel)) throw new Error(`${sel} shows with no apps`);
-    await page.click('#statusEmpty button:text-is("Choose stacks")');
+    await page.click('#statusEmpty button:text-is("Choose apps")');
     await page.waitForSelector('#choose.screen.active', { timeout: 5000 });
   } },
   { name: 'Backups before the first night: no 0 of 0, and no restore test said to be proven', screen: 'backups', mock: { backups: { ...backups, lastRun: undefined, envCopied: undefined, stale: 0, paused: 0, copies: [], restoreTest: { history: [] } } }, run: async (page) => {
     await page.waitForSelector('#copiesTile .value:text-is("None yet")', { timeout: 5000 });
     await page.waitForSelector('#restoreTile .value:text-is("Never")');
     if (await page.isVisible('#restoreTile:has-text("Proven")')) throw new Error('a restore test that never ran is called proven');
+  } },
+  // An app's week says when it was last down, for how long, and why (the watchdog's outages), not "Missed checks on
+  // Thursday": with two, how many times; with misses but no outage, that each passed the next time; from an older agent
+  // with no outages, how many checks it didn't answer.
+  ...[
+    ['its last outage, and why', { vikunja: [{ from: dayAt(5, 14, 0), to: dayAt(5, 14, 30), problem: 'nothing answers on its port' }, { from: dayAt(3, 3, 10), to: dayAt(3, 3, 55), problem: 'HTTP 502' }] },
+      (d) => `Last down ${d} at 3:10 AM for 45 minutes: HTTP 502 · 2 outages`],
+    ['misses that passed the next time', {}, () => 'Each check it missed passed the next time'],
+    ['from an older agent', undefined, (d, long) => `It didn't answer 3 of its checks on ${long}`],
+  ].map(([what, outages, want]) => ({ name: `An app's week says ${what}`, screen: 'app:vikunja', mock: { ...pageMock, watchdog: { ...watchdog, ...(outages ? { outages } : {}) } }, run: async (page) => {
+    const d = new Date(); d.setDate(d.getDate() - 3);
+    const words = want(d.toLocaleDateString('en-US', { weekday: 'short' }), d.toLocaleDateString('en-US', { weekday: 'long' }));
+    await page.waitForSelector(`.tile:has-text("This week"):has-text("${words}")`, { timeout: 5000 });
+  } })),
+  // A stopped app's week, with the watchdog running (Status's header says checks are on): not "once Setup turns it on",
+  // but that the watchdog doesn't check it while it's stopped (Account 3's tester, task 2).
+  { name: "A stopped app's week says it isn't checked while stopped, not to turn Setup on", screen: 'app:mealie', mock: { ...pageMock, watchdog }, run: async (page) => {
+    await page.waitForSelector('.tile:has-text("This week"):has-text("The watchdog doesn\'t check it while it\'s stopped")', { timeout: 5000 });
+    if (await page.isVisible('.tile:has-text("This week"):has-text("once Setup turns it on")')) throw new Error('it says to turn on what is on');
   } },
   { name: 'Windows high contrast: an app’s week shows the day with missed checks', screen: 'app:vikunja', mock: { ...pageMock, platform: 'Win32' }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
@@ -1391,7 +1911,8 @@ const smokes = [
   ...[['Windows', 'Win32'], ['Mac', 'MacIntel']].map(([os, platform]) => ({ name: `${os} high contrast: the current screen and the focus look different in the sidebar`, screen: 'settings', mock: { platform }, run: async (page) => {
     await page.emulateMedia({ forcedColors: 'active' });
     const tabTo = async (sel) => { for (let i = 0; i < 40 && !(await page.evaluate((s) => document.activeElement.matches(s), sel)); i++) await page.keyboard.press('Tab'); await page.waitForTimeout(250); };
-    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
+    // In view first: with every account listed under its group, the sidebar can run past the window, and scrolls.
+    const shot = async () => { const r = await page.$eval('nav button.active', (e) => { e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.left - 4, y: b.top - 4, width: b.width + 8, height: b.height + 8 }; }); return page.screenshot({ clip: r }); };
     const plain = await shot();
     await tabTo('nav button[data-screen="backups"]');
     const elsewhere = await shot();
@@ -1493,11 +2014,60 @@ const smokes = [
     await page.waitForSelector('#watchCard:has-text("1 of 47 checks failing")', { timeout: 5000 });
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
   } },
+  // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
+  // A phone has no Snooze (its server does not offer it).
+  { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
+    const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
+    await page.waitForSelector(pick, { timeout: 5000 });
+    await page.selectOption(pick, '1');
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer"):has-text("No alerts about it until")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
+    const shown = await page.locator(`${pick} option:checked, ${pick} option[value=""]`).first().innerText();
+    if (!/^Snoozed until /.test(shown)) throw new Error(`the menu says: ${shown}`);
+    await page.selectOption(pick, '0');
+    await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
+  } },
+  { name: 'Watchdog on a phone: a failing check, no Snooze', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
+    if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone');
+  } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });
     await page.waitForSelector('#protectCard:has-text("new attackers are not blocked")');
     await page.click('#protectFix');
     await page.waitForSelector('#cliTitle:has-text("Fix it")', { timeout: 5000 });
+  } },
+  // Memory nearly full: while the watchdog's alert stands (health.StepMemory), its card lists the biggest apps,
+  // each with Stop; one the catalog does not know has none, and a phone that only looks shows none.
+  { name: 'Memory nearly full: the biggest apps, each with Stop', screen: 'status', mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#watchCard #memoryPressure:has-text("the apps use 94% of the 8.0 GB Docker has")', { timeout: 5000 });
+    const rows = await page.locator('#memoryPressure li').allInnerTexts();
+    if (rows.length !== 3 || !/Immich/.test(rows[0]) || !/2\.5 GB/.test(rows[0]) || !/900 MB/.test(rows[2])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    if (await page.locator('#memoryPressure li:has-text("someones-own") button').count()) throw new Error('Stop on a container the catalog does not know');
+    await page.click('#memoryPressure button[aria-label="Stop Immich"]');
+    await page.waitForFunction(() => window.__MOCK.calls.AppAction === 1, null, { timeout: 5000 });
+  } },
+  { name: 'Memory nearly full on a phone that only looks: no Stop', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, memory: memoryHigh } }, run: async (page) => {
+    await page.waitForSelector('#memoryPressure li:has-text("Immich")', { timeout: 5000 });
+    if (await page.isVisible('#memoryPressure button.memstop')) throw new Error('a phone that only looks may stop an app');
+  } },
+  // Health in one line: at the top of every screen but Status, the one thing that needs you, or All well.
+  { name: 'Health in one line: on Backups the one app that needs a look, and Open Status', screen: 'backups', run: async (page) => {
+    await page.waitForSelector('#oneLine.trouble:has-text("Mealie: Stopped")', { timeout: 5000 });
+    await page.click('#oneOpen');
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    if (await page.isVisible('#oneLine')) throw new Error('the line shows on Status too');
+    await page.click('nav button[data-screen="settings"]');
+    await page.waitForSelector('#settings.active', { timeout: 5000 });
+    await page.waitForSelector('#oneLine:has-text("Mealie: Stopped")', { timeout: 5000 });
+  } },
+  { name: 'Health in one line: All well, and several apps in one line', screen: 'settings', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) } }, run: async (page) => {
+    await page.waitForSelector('#oneLine:not(.trouble):has-text("All well")', { timeout: 5000 });
+    await page.evaluate(() => window.__emit('status:changed', { status: { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a, i) => (i < 4 ? { ...a, health: 'unhealthy' } : a)) } }));
+    await page.waitForSelector('#oneLine.trouble:has-text("4 apps need a look:"):has-text("and 2 more")', { timeout: 5000 });
+  } },
+  { name: 'Health in one line: a failing check that is no app’s', screen: 'backups', mock: { status: { ...status, apps: status.apps.filter((a) => a.state === 'running' && !['unhealthy', 'restarting'].includes(a.health) && !a.notAnswering) }, watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    await page.waitForSelector('#oneLine.trouble:has-text("The watchdog’s check of crowdsec bouncer is failing"), #oneLine.trouble:has-text("check of crowdsec bouncer is failing")', { timeout: 5000 });
   } },
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
@@ -1630,6 +2200,177 @@ const smokes = [
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
     await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Running")', { timeout: 5000 });
   } },
+  // A restart that keeps failing: the watchdog stopped it, and unlike one stopped by you it needs a look: its row
+  // says why with a red dot, Needs a look counts it, its group opens, and the group menu does not call it yours.
+  { name: 'Stopped for restarting over and over: its row says so, and it needs a look', screen: 'status', mock: { statusOpen: '', status: { ...status, stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } } }, run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped: it restarted 5 times in an hour")', { timeout: 5000 });
+    if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('stopped by the watchdog has no red dot');
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    const head = page.locator('#statusRows tr:has(strong:text-is("Mealie"))').locator('xpath=preceding-sibling::tr[contains(concat(" ", @class, " "), " grouphead ")][1]');
+    if ((await head.locator('.foldbtn').getAttribute('aria-expanded')) !== 'true') throw new Error('its group stayed folded');
+    if (await head.locator('.startall').count()) throw new Error('Start them offers it, which would only restart the loop');
+    await head.locator('.groupcount').click();
+    await page.waitForSelector('.groupmenulist', { timeout: 3000 });
+    if (await page.locator('.groupmenulist .heldnote').count()) throw new Error(`the group menu says you stopped it: ${await page.locator('.groupmenulist .heldnote').textContent()}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // An app that stopped by itself, not from the app: its row says when, and why when Docker knows (out of memory, an
+  // error, a port taken), with a red dot, and Needs a look counts it; one Docker gave no reason for says only when.
+  // Its own row still offers Start.
+  { name: 'Stopped by itself: its row says when and why, and it needs a look', screen: 'status', mock: stoppedByItself(), run: async (page) => {
+    await page.click('#statusAll');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) td.state:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
+    if (!(await page.$('tr:has(strong:text-is("Mealie")) td.state .dot.bad'))) throw new Error('an app that ran out of memory has no red dot');
+    await page.waitForSelector('#tiles .tile:has-text("Needs a look"):has-text("Mealie")', { timeout: 3000 });
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:text-is("Stopped yesterday, 9:40 PM")');
+    await page.waitForSelector('tr:has(strong:text-is("Mealie")) button.rowmain:text-is("Start")');
+  } },
+  // On the phone, 320px wide and with big text (213px is 320 at 1.5×): the why is all there, on a line of its own if
+  // need be, and nothing slides sideways.
+  ...[320, 213].map((w) => ({ name: `Stopped by itself, on the phone at ${w}px: the why is all there`, screen: 'status', phone: ['companion'], mock: stoppedByItself(), run: async (page) => {
+    await page.setViewportSize({ width: w, height: 640 });
+    const cell = page.locator('#statusRows tr:has(strong:text-is("Mealie")) td.state');
+    await cell.waitFor({ timeout: 5000 });
+    await cell.scrollIntoViewIfNeeded();
+    const text = (await cell.textContent()).trim();
+    if (!text.includes('Stopped at 3:12 AM: it ran out of memory')) throw new Error(`Mealie's row says "${text}"`);
+    const bad = await cell.evaluate((e) => {
+      const m = document.querySelector('main'), edge = m.getBoundingClientRect().right + 1, found = [];
+      if (m.scrollWidth > m.clientWidth + 1) found.push(`the page slides sideways (${m.scrollWidth} px in ${m.clientWidth})`);
+      for (const x of [e, ...e.querySelectorAll('*')]) {
+        if (getComputedStyle(x).textOverflow === 'ellipsis' && x.scrollWidth > x.clientWidth + 2) found.push('the why is cut off');
+        if (x.getBoundingClientRect().right > edge) found.push('the why sticks out');
+      }
+      return [...new Set(found)];
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+  } })),
+  // Its page says the same at the top, beside Start.
+  { name: 'Stopped by itself: its page says when and why', screen: 'app:mealie', mock: stoppedByItself(), run: async (page) => {
+    await page.waitForSelector('.pill.bad:has-text("Stopped at 3:12 AM: it ran out of memory")', { timeout: 5000 });
+  } },
+  // Account 3's tester, task 2: a stopped app's page says what to do, whatever stopped it, under its name.
+  ...[
+    ['stopped by you', { stopped: { mealie: { since: new Date().toISOString() } } }, {}, 'You stopped it, so nothing starts it by itself. Start starts it again.'],
+    ['kept restarting', { stopped: { mealie: { since: new Date().toISOString(), why: 'restarting', restarts: 5 } } }, {}, 'The watchdog stopped it after Docker restarted it again and again; its log below says why. Once that is put right, Start tries again.'],
+    ['out of memory', {}, { stoppedWhy: 'it ran out of memory' }, "If it runs out again, stop an app you aren't using, or give Docker more memory. Start tries again."],
+    ['its port taken', {}, { stoppedWhy: 'another program is using its port 9925' }, 'Another program has port 9925. Quit it, then Start.'],
+    ['stopped outside the homelab', {}, {}, 'It was stopped outside the homelab (by Docker, or a shutdown). Start starts it again.'],
+  ].map(([what, extra, app, words]) => ({ name: `A stopped app's page says what to do: ${what}`, screen: 'app:mealie',
+    mock: { ...pageMock, status: { ...status, ...extra, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, ...app } : a)) } }, run: async (page) => {
+    await page.waitForSelector(`.pagehead .stopnext:has-text("${words.replace(/"/g, '\\"')}")`, { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .lookonly')) throw new Error('the computer says a phone can only look');
+  } })),
+  // On a phone that only looks, a stopped app says where to start it, on Status and on its page; one that may make
+  // changes has Start, and no such words.
+  { name: 'A stopped app on a phone that only looks: start it from the computer', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) .lookonly:visible:text-is("Start it from the computer")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain')) throw new Error('a look-only phone shows Start');
+    await page.click('#statusRows tr:has(strong:text-is("Mealie")) .topage');
+    await page.waitForSelector('.pagehead .stopnext:has-text("It was stopped outside the homelab") .lookonly:visible:has-text("Start it from the computer: this phone can only look.")', { timeout: 5000 });
+    if (await page.isVisible('.pagehead .stopnext .change')) throw new Error('a look-only phone is told to press Start');
+  } },
+  { name: 'A stopped app on a phone that may make changes: Start', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Mealie")) button.rowmain:visible:text-is("Start")', { timeout: 5000 });
+    if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) .lookonly')) throw new Error('a phone that may change says to use the computer');
+  } },
+  // The watchdog doesn't check a stopped app: beside "All 47 checks passed", it names it, on the computer and the phone.
+  ...[[], ['companion']].map((phone) => ({ name: `The watchdog line names the stopped app it doesn't check${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, run: async (page) => {
+    await page.waitForSelector('#watchCard .unchecked:has-text("Not checked while stopped: Mealie")', { timeout: 5000 });
+  } })),
+  // Account 3's tester, task 2, finding 4: Status in a household's words. Apps, not stacks; the homelab's own apps, not
+  // baseline ones; what the savings are instead of; what CrowdSec caught, not its scenario's name and an address.
+  ...[[], ['companion']].map((phone) => ({ name: `Status in a household's words${phone.length ? ', on the phone' : ''}`, screen: 'status', phone, mock: { protection }, run: async (page) => {
+    await page.waitForSelector('#tiles .tile:has-text("Running"):has-text("The homelab\'s own apps are all up")', { timeout: 5000 });
+    await page.waitForSelector('#tiles .tile:has-text("Instead of subscriptions"):has-text("a year")');
+    await page.waitForSelector('#protectCard li:has-text("Probing for a known security hole"):has-text("Netherlands · Example Hosting B.V.")', { timeout: 5000 });
+    const said = await page.evaluate(() => document.body.innerText);
+    for (const w of ['stacks', 'baseline', 'Replaces a year', 'vpatch-', 'http-probing', '203.0.113.7']) if (said.includes(w)) throw new Error(`Status says "${w}"`);
+    if (!phone.length) await page.waitForSelector('nav button[data-screen="choose"]:has-text("Choose apps")');
+  } })),
+  // Finding 5: on the phone, an app's log wraps its lines: none runs out of its box.
+  { name: "An app's log on the phone wraps its lines, 390px wide", screen: 'app:vikunja', phone: ['companion'], mock: pageMock, run: async (page) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const log = page.locator('#appLog .applog');
+    await log.waitFor({ timeout: 5000 });
+    const wide = await log.evaluate((e) => e.scrollWidth > e.clientWidth + 1);
+    if (wide) throw new Error('a log line runs out of its box');
+  } },
+  // A stale copy says why, from its app's state, and what helps: Mealie is stopped (the preview's status), so the
+  // nightly copy skips it; one whose app runs says Back up now tries again.
+  ...[['its app is stopped', status, "It's stopped, so the nightly copy skips it. Start it, and tonight's copy catches up."],
+    ['its app runs', { ...status, apps: status.apps.map((a) => (a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy' } : a)) }, "Last night's copy didn't come. Back up now tries again; if it fails, the backup's log says why."],
+  ].map(([what, st, words]) => ({ name: `A stale copy says why: ${what}`, screen: 'backups', mock: { status: st }, run: async (page) => {
+    await page.waitForSelector(`tr.copy.stale:has-text("Mealie") .note:text-is("${words}")`, { timeout: 5000 });
+  } })),
+  // "This Mac" in a sentence keeps its capital: "Take the homelab off this Mac", not "this mac"; "this PC" on Windows.
+  ...[['MacIntel', 'this Mac'], ['Win32', 'this PC']].map(([platform, words]) => ({ name: `Settings says ${words} in a sentence`, screen: 'settings', mock: { platform }, run: async (page) => {
+    await page.waitForSelector(`h3.subhead:text-is("Take the homelab off ${words}")`, { timeout: 5000 });
+    await page.waitForSelector(`label:has-text("Delete the backups on ${words}")`);
+  } })),
+  // The phone's Backups: a copy's when, size, and how many are kept on one line under its name, not three lines with
+  // the size alone at the far right.
+  { name: "The phone's Backups: each copy on two lines", screen: 'backups', phone: ['companion'], run: async (page) => {
+    const row = page.locator('tr.copy:has-text("Vaultwarden")');
+    await row.waitFor({ timeout: 5000 });
+    const tops = await row.evaluate((r) => ['td.name', 'td.when', 'td.size', 'td.kept'].map((q) => Math.round(r.querySelector(q).getBoundingClientRect().top)));
+    if (!(tops[1] > tops[0] && tops[1] === tops[2] && tops[2] === tops[3])) throw new Error(`the lines' tops: ${tops.join(', ')}`);
+    if (!(await row.innerText()).includes('7 kept')) throw new Error('how many are kept is hidden');
+  } },
+  // The owner, Nov 6: a new Mac with the media drive unplugged and no Python, ffmpeg, or Calibre had nine rows under
+  // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose folder… for media elsewhere), and the
+  // tools a library here needs, in one row (Python only, while every library is away). Once the drive is back, the
+  // tools row names all three; Calibre's also sits on Books' tab.
+  ...(() => {
+    const fresh = { ...tidy, activity: [], freed: 0, drive: null,
+      libraries: ['music', 'movies', 'tv', 'books', 'audiobooks'].map((kind) => ({ kind, folder: `/Volumes/Media/${kind === 'books' ? 'Books' : kind}`, found: false, stage: 'new', freed: 0 })),
+      checks: tidy.checks.map((c) => (c.id === 'drive' ? { ...c, name: 'The Media drive', ok: false, note: "/Volumes/Media isn't there", fix: 'Plug in the media drive (or set MEDIA_ROOT in Settings)' }
+        : c.id === 'python' ? { ...c, ok: false, note: 'Not found', fix: 'Install Python 3: brew install python (or the installer from python.org)' }
+        : c.id === 'ffmpeg' ? { ...c, ok: false, note: 'Not installed', fix: 'Install ffmpeg: brew install ffmpeg in Terminal (Homebrew is at brew.sh)' }
+        : c.id === 'calibredb' ? { ...c, ok: false, note: 'Not installed', fix: "Install the Calibre app (Calibre-Web doesn't include its tools)" } : c)) };
+    const back = { ...fresh, checks: fresh.checks.map((c) => (c.id === 'drive' ? { ...c, ok: true, note: '/Volumes/Media' } : c)),
+      libraries: fresh.libraries.map((l) => ({ ...l, found: true })) };
+    const rows = (page) => page.$$eval('.tidyneeds li', (li) => li.map((r) => r.querySelector('.title, strong')?.textContent.trim() || r.textContent.trim().slice(0, 60)));
+    return [
+      { name: 'Tidy Up on a new Mac with the drive away: two things, not nine', screen: 'tidy', mock: { tidy: fresh }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (JSON.stringify(got) !== JSON.stringify(['Plug in the Media drive', 'Install Python 3'])) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.waitForSelector('.tidyneeds li:has-text("Music, Movies, TV, Books and Audiobooks are on it (/Volumes/Media)")');
+        await page.waitForSelector('.tidyneeds li:has-text("Install Python 3"):has-text("brew install python (or the installer from python.org)")');
+        await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose folder…")');
+        await page.waitForFunction(() => (window.__MOCK.calls.OpenSettings || window.__MOCK.calls.Settings || 0) >= 1 || !!document.querySelector('#settings.active, .screen.active#settings'), null, { timeout: 3000 });
+      } },
+      { name: 'Tidy Up once the drive is back: the tools in one row, Calibre on Books too', screen: 'tidy', mock: { tidy: back }, run: async (page) => {
+        await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
+        const got = await rows(page);
+        if (got[0] !== "Install Python 3, ffmpeg and Calibre's tools" || got.some((t) => /drive/.test(t))) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
+        await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+        await page.waitForSelector(".tidyneeds li:has-text(\"Install Python 3 and Calibre's tools\")", { timeout: 3000 });
+      } },
+    ];
+  })(),
+  // The owner, Nov 7: "I don't see the lyrics option". Never checked: Overview offers the check (it was on the Music tab
+  // only). Checked, with nothing to tidy or add: the Music tab still has a Lyrics row, what the check found, and Check
+  // again (before, no lyrics option was left anywhere).
+  ...(() => {
+    const withLyrics = (result) => ({ ...tidy, libraries: tidy.libraries.map((l) => (l.kind !== 'music' ? l
+      : { ...l, last: Object.fromEntries(Object.entries(l.last).filter(([k]) => k !== 'lyrics').concat(result ? [['lyrics', tidyRun('lyrics', 5, result)]] : [])) })) });
+    return [
+      { name: 'Lyrics never checked: Overview offers the check', screen: 'tidy', mock: { tidy: withLyrics(null) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Overview")', { timeout: 5000 });
+        await page.waitForSelector('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")', { timeout: 5000 });
+        await page.click('#tidy .tidyneeds li:has-text("See how many songs have lyrics") button:text-is("Check lyrics")');
+        await page.waitForFunction(() => window.__MOCK.tidyRuns.some((r) => r.slice(0, 3).join(' ') === 'music lyrics --check'), null, { timeout: 5000 });
+      } },
+      { name: 'Lyrics checked, nothing to do: Music still has a Lyrics row and Check again', screen: 'tidy', mock: { tidy: withLyrics({ check: true, synced: 13700, plain: 228, none: 0, to_clean: 0, instrumental: 4 }) }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+        const row = '#tidy .tidyneeds li:has-text("Lyrics"):has-text("13,700 songs time-synced")';
+        await page.waitForSelector(`${row}:has-text("none with two languages on one line") button:text-is("Check again")`, { timeout: 5000 });
+      } },
+    ];
+  })(),
   // Stop for a while, from a group's menu: it asks when (the choice is the second click), the keyboard moves through
   // the times, Back returns to the menu, and each running app is stopped until the time chosen, not for good.
   { name: 'Stop for a while from a group’s menu', screen: 'status', mock: { usage }, run: async (page) => {
@@ -1715,13 +2456,13 @@ const smokes = [
     const menu = page.locator('.rowmenu');
     await menu.waitFor({ timeout: 2000 });
     const labels = (await menu.locator('[role^=menuitem]').allTextContents()).map((t) => t.replace('✓', '').trim());
-    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops'];
+    const want = ['Open', 'Open on a phone', 'Copy address', 'Restart', 'Stop', 'Stop for a while ›', 'Logs', 'Back up now', 'Tell me if it stops', 'Pin to the top'];
     if (labels.join('|') !== want.join('|')) throw new Error(`items: ${labels.join(', ')}`);
     const m = await menu.boundingBox();
     if (Math.abs(m.x - (box.x + 20)) > 2 || Math.abs(m.y - (box.y + box.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
     const missed = await page.$$eval('.rowmenu [role^=menuitem]', (bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !b.contains(at); }).map((b) => b.textContent.trim()));
     if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
-    if ((await menu.locator('[role=menuitemcheckbox]').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
+    if ((await menu.locator('[role=menuitemcheckbox]:has-text("Tell me if it stops")').getAttribute('aria-checked')) !== 'true') throw new Error('Tell me if it stops is not ticked for an app with alerts on');
     await menu.locator('[role=menuitem]:text-is("Stop")').click();
     await menu.locator('[role=menuitem]:has-text("Click again to stop Vikunja")').waitFor({ timeout: 1000 });
     if (await page.evaluate(() => window.__MOCK.calls.AppAction)) throw new Error('one click on Stop stopped it');
@@ -1739,10 +2480,124 @@ const smokes = [
     await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
     await menu.waitFor({ state: 'detached', timeout: 1000 });
   } },
+  // Open, your way: ⌥-click (Alt-click) an address copies it and says so, opening nothing; ⇧-click (Shift-click) Open uses
+  // its address on this machine instead of the domain; a plain click still opens the domain. Each says so in its tooltip.
+  ...[['Mac', 'MacIntel', '⌥', '⇧'], ['Windows', 'Win32', 'Alt-', 'Shift-']].map(([sys, platform, alt, shift]) => ({
+    name: `Open, your way: ⌥-click copies an address, ⇧-click opens it on this machine, ${sys}`, screen: 'status', mock: { platform, host: sys === 'Mac' ? host : { ...host, os: 'Windows 11', machine: 'this PC' } }, run: async (page) => {
+      const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const local = await page.evaluate(() => window.__MOCK.status.apps.find((a) => a.id === 'vikunja').url);
+      const link = row.locator('a[role=button]:has-text("todo.example.com")');
+      if ((await link.getAttribute('title')) !== `${alt}click copies it`) throw new Error('the address says: ' + await link.getAttribute('title'));
+      await link.click({ modifiers: ['Alt'] });
+      await row.locator('.rowsaid:text-is("Address copied")').waitFor({ timeout: 2000 });
+      if ((await page.evaluate(() => window.__MOCK.clipboard)) !== 'https://todo.example.com') throw new Error('copied ' + await page.evaluate(() => window.__MOCK.clipboard));
+      if (await page.evaluate(() => window.__MOCK.opened)) throw new Error('⌥-click opened it too');
+      if (await page.isVisible('#app.active')) throw new Error('⌥-click opened its page');
+      const open = row.locator('button.rowmain:text-is("Open")');
+      if ((await open.getAttribute('title')) !== `Open Vikunja (${shift}click: on this machine, ${local.replace('http://', '')})`) throw new Error('Open says: ' + await open.getAttribute('title'));
+      await open.click({ modifiers: ['Shift'] });
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== local) throw new Error('⇧-click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await open.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('a click opened ' + await page.evaluate(() => window.__MOCK.opened));
+      await link.click();
+      if ((await page.evaluate(() => window.__MOCK.opened)) !== 'https://todo.example.com') throw new Error('the address opened ' + await page.evaluate(() => window.__MOCK.opened));
+    } })),
+  // Pin to the top (a row's right-click): the app moves to Pinned, open under Needs a look, in the order pinned, and leaves
+  // its own group; unpinned, it goes back. Ticked in the menu while pinned.
+  { name: 'Pin an app to the top of Status', screen: 'status', run: async (page) => {
+    const pin = async (name) => {
+      const row = page.locator(`#statusRows tr:not(.grouphead):has(strong:text-is("${name}"))`).first();
+      await row.waitFor({ timeout: 5000 });
+      await row.scrollIntoViewIfNeeded();
+      const box = await row.locator('td.state').boundingBox();
+      await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+      await page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")').click({ timeout: 2000 });
+    };
+    // The rows in order, each group's heading as "# label".
+    const rows = () => page.$$eval('#statusRows tr', (trs) => trs.map((r) => (r.classList.contains('grouphead') ? '# ' + (/Pinned|Needs a look/.exec(r.textContent)?.[0] || 'group') : r.querySelector('strong')?.textContent)));
+    await pin('Vikunja');
+    await page.waitForSelector('#statusRows tr.grouphead:has-text("Pinned")', { timeout: 3000 });
+    await pin('Immich');
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return rows[p + 2]?.querySelector('strong')?.textContent === 'Immich'; }, null, { timeout: 3000 });
+    const list = await rows();
+    const at = list.indexOf('# Pinned');
+    if (at < 0 || list[at + 1] !== 'Vikunja' || list[at + 2] !== 'Immich' || !list[at + 3]?.startsWith('# ')) throw new Error('rows: ' + list.join(', '));
+    if (list.filter((r) => r === 'Vikunja').length !== 1 || list.filter((r) => r === 'Immich').length !== 1) throw new Error('a pinned app shows twice: ' + list.join(', '));
+    const heads = list.filter((r) => r?.startsWith('# '));
+    if (heads[0] !== '# Pinned' && !(heads[0] === '# Needs a look' && heads[1] === '# Pinned')) throw new Error('Pinned is not at the top: ' + heads.join(', '));
+    // Ticked while pinned; unpinned, it is back in its group.
+    const row = page.locator('#statusRows tr:not(.grouphead):has(strong:text-is("Vikunja"))');
+    await row.scrollIntoViewIfNeeded();
+    const box = await row.locator('td.state').boundingBox();
+    await page.mouse.click(box.x + 20, box.y + box.height / 2, { button: 'right' });
+    const item = page.locator('.rowmenu [role=menuitemcheckbox]:has-text("Pin to the top")');
+    if ((await item.getAttribute('aria-checked')) !== 'true') throw new Error('Pin to the top is not ticked for a pinned app');
+    await item.click();
+    await page.waitForFunction(() => window.__MOCK.status.pinned?.join() === 'immich-server', null, { timeout: 3000 });
+    await page.waitForFunction(() => { const rows = [...document.querySelectorAll('#statusRows tr')]; const p = rows.findIndex((r) => r.classList.contains('grouphead') && /Pinned/.test(r.textContent)); return p >= 0 && rows[p + 1]?.querySelector('strong')?.textContent === 'Immich' && !rows[p + 2]?.querySelector('strong')?.textContent?.includes('Vikunja'); }, null, { timeout: 3000 });
+    const sets = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(sets) !== JSON.stringify([['vikunja', 'pinned', true], ['immich-server', 'pinned', true], ['vikunja', 'pinned', false]])) throw new Error('set: ' + JSON.stringify(sets));
+  } },
+  // A right-click on a screen in the sidebar opens its own menu at the pointer, without picking the screen: each item opens
+  // its screen and does what its button there does (Update all shows its list first). From the keyboard too; Escape closes
+  // it back on the sidebar, and a press elsewhere (as WebKit's) closes it.
+  { name: 'Right-click the sidebar: each screen’s own menu', screen: 'setup', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    const menu = page.locator('#contextMenu .rowmenu');
+    const items = async () => (await menu.locator('[role=menuitem]').allTextContents()).map((t) => t.trim());
+    const rightClick = async (screen) => {
+      const b = await page.locator(`nav button[data-screen=${screen}]`).boundingBox();
+      await page.mouse.click(b.x + 30, b.y + b.height / 2, { button: 'right' });
+      await menu.waitFor({ timeout: 2000 });
+      return b;
+    };
+    const b = await rightClick('status');
+    if ((await items()).join('|') !== 'Check again|Update all apps…') throw new Error('Status: ' + (await items()).join(', '));
+    if ((await menu.getAttribute('aria-label')) !== 'Status') throw new Error('the menu is named ' + await menu.getAttribute('aria-label'));
+    const m = await menu.boundingBox();
+    if (Math.abs(m.x - (b.x + 30)) > 2 || Math.abs(m.y - (b.y + b.height / 2)) > 2) throw new Error(`the menu opened at ${m.x},${m.y}, not at the pointer`);
+    const missed = await page.$$eval('#contextMenu [role=menuitem]', (bs) => bs.filter((x) => { const r = x.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !at || !x.contains(at); }).map((x) => x.textContent.trim()));
+    if (missed.length) throw new Error(`cut off: ${missed.join(', ')}`);
+    if (!(await page.isVisible('#setup.active'))) throw new Error('the right-click picked the screen');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Backups: Back up now and Test a restore.
+    await rightClick('backups');
+    if ((await items()).join('|') !== 'Check again|Back up now|Test a restore') throw new Error('Backups: ' + (await items()).join(', '));
+    await page.locator('#tiles').dispatchEvent('mousedown', { detail: 1 });
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    // Finances, from the keyboard: Shift+F10 on its button, the first item focused, the arrows, Return.
+    await page.focus('nav button[data-screen=finances]');
+    await page.keyboard.press('Shift+F10');
+    await menu.waitFor({ timeout: 2000 });
+    if ((await items()).join('|') !== 'Check again|Add a transaction|Update balances|Hide amounts') throw new Error('Finances: ' + (await items()).join(', '));
+    if ((await page.evaluate(() => document.activeElement.textContent.trim())) !== 'Check again') throw new Error('the first item is not focused');
+    await page.keyboard.press('Escape');
+    await menu.waitFor({ state: 'detached', timeout: 1000 });
+    if ((await page.evaluate(() => document.activeElement.dataset.screen)) !== 'finances') throw new Error('Escape did not go back to the sidebar');
+    await page.keyboard.press('Shift+F10');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('#finances.active', { timeout: 3000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 3000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 3000 });
+    // Update all opens Status and its list, as its button does (a sheet that owns the window): nothing is updated yet.
+    await rightClick('status');
+    await menu.locator('[role=menuitem]:text-is("Update all apps…")').click();
+    await page.waitForSelector('#status.active', { timeout: 3000 });
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Update all apps now")', { timeout: 5000 });
+    await page.waitForSelector('#cliActions button:text-is("Update them")', { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.join() !== 'update-all') throw new Error('ran: ' + ran.join());
+  } },
   // From the keyboard: Shift+F10 (or the context-menu key) on a row's button opens the menu under its name with the first item
   // focused; the arrows move through it and Return runs one. Tell me if it stops turns its alerts off. A stopped app's menu offers
   // Start, not Restart or Stop.
   { name: 'Right-click an app’s row: from the keyboard, and a stopped app', screen: 'status', run: async (page) => {
+    // Room under Vikunja, the last row, for the whole menu (near the bottom it opens upward: its own case).
+    await page.setViewportSize({ width: 1280, height: 1000 });
     const row = page.locator('tr:has(strong:text-is("Vikunja"))');
     await row.locator('button.rowmain').focus({ timeout: 5000 });
     await page.keyboard.press('Shift+F10');
@@ -1751,10 +2606,13 @@ const smokes = [
     await page.waitForFunction(() => document.activeElement?.closest('.rowmenu') && document.activeElement.textContent === 'Open', null, { timeout: 2000 });
     const name = await row.locator('strong').boundingBox(), m = await menu.boundingBox();
     if (m.y < name.y + name.height || m.y > name.y + name.height + 12) throw new Error('the menu did not open under the app’s name');
+    // End is Pin to the top; one up, Tell me if it stops.
     await page.keyboard.press('End');
+    await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Enter');
     await menu.waitFor({ state: 'detached', timeout: 1000 });
     await page.waitForFunction(() => window.__MOCK.calls.SetAppSetting >= 1, null, { timeout: 3000 });
+    if (JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet?.[0])) !== '["vikunja","alerts",false]') throw new Error('set ' + JSON.stringify(await page.evaluate(() => window.__MOCK.settingsSet)));
     if (!(await row.locator('button.rowmain').evaluate((b) => b === document.activeElement))) throw new Error('the focus did not come back to the row');
     await page.keyboard.press('ContextMenu');
     await menu.waitFor({ timeout: 2000 });
@@ -1849,6 +2707,59 @@ const smokes = [
     await page.waitForSelector('.groupmenulist', { timeout: 3000 });
     await page.keyboard.type('s');
     if (await page.$('.filterbox')) throw new Error('typing in an open menu opened the filter');
+  } },
+  // A sheet of shortcuts: ? on any screen, the focus not in a field, lists the screen's own shortcuts first, then those
+  // that work everywhere and each screen's key, as this system writes them; on Status it doesn't start the filter. In a
+  // field, ? is typed. The palette's Keyboard shortcuts opens it too, and Close puts the focus back where it was.
+  { name: 'Keyboard shortcuts: ? and the palette open them, the screen’s own first', screen: 'status', run: async (page) => {
+    const sheet = '#keysSheet';
+    const heads = () => page.$$eval(`${sheet} h3`, (h) => h.map((x) => x.textContent));
+    const text = () => page.$eval(sheet, (s) => s.innerText.replace(/\s+/g, ' '));
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    await page.keyboard.press('?');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads()).join('|') !== 'On Status|Everywhere|The screens') throw new Error(`the sections: ${await heads()}`);
+    let said = await text();
+    for (const want of ['Start typing an app’s name', '⌘K The command palette', '⌘R Check the screen again', '⌘⇧H Hide every amount', '⌘2 Status', '⌘, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('Ctrl') || /\bF1 /.test(said) || said.includes('F5')) throw new Error(`another system's keys on a Mac: ${said}`);
+    if (await page.$('.filterbox')) throw new Error('? started the filter');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    // In a field, ? is a character like any other.
+    await page.click('nav button[data-screen="choose"]');
+    await page.fill('#search', 'what');
+    await page.focus('#search');
+    await page.keyboard.press('?');
+    if ((await page.inputValue('#search')) !== 'what?') throw new Error(`the field holds "${await page.inputValue('#search')}"`);
+    if (await page.isVisible(sheet)) throw new Error('? in a field opened the sheet');
+    await page.fill('#search', '');
+    // From the palette, on Finances: the calendar's keys, and Close back where the focus was.
+    await page.click('nav button[data-screen="finances"]');
+    await page.focus('nav button[data-screen="finances"]');
+    await page.keyboard.press('Meta+k');
+    await page.fill('.palette .palfield', 'keyboard');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(`${sheet}:not([hidden])`, { timeout: 3000 });
+    if ((await heads())[0] !== 'On Finances') throw new Error(`the first section: ${await heads()}`);
+    said = await text();
+    if (!said.includes('Page Up Page Down The month before or after')) throw new Error(`no calendar keys in: ${said}`);
+    await page.click(`${sheet} button:text-is("Close")`);
+    await page.waitForSelector(`${sheet}`, { state: 'hidden', timeout: 2000 });
+    await page.waitForFunction(() => document.activeElement?.matches('nav button[data-screen="finances"]'), null, { timeout: 2000 })
+      .catch(async () => { throw new Error(`the focus went to ${await page.evaluate(() => document.activeElement?.outerHTML.slice(0, 80))}`); });
+  } },
+  // The same sheet on Windows: Ctrl, F5 beside Ctrl+R, the menu key, and F1 for the guide.
+  { name: 'Keyboard shortcuts as Windows: Ctrl, F5, and F1', screen: 'backups', mock: { platform: 'Win32', host: { ...host, os: 'Windows 11 24H2', machine: 'this PC' } }, run: async (page) => {
+    await page.keyboard.press('?');
+    await page.waitForSelector('#keysSheet:not([hidden])', { timeout: 3000 });
+    const said = await page.$eval('#keysSheet', (s) => s.innerText.replace(/\s+/g, ' '));
+    for (const want of ['Ctrl+K The command palette', 'Ctrl+R F5 Check the screen again', 'Shift+F10 Menu key', 'F1 The guide', 'Ctrl+, Settings']) {
+      if (!said.includes(want)) throw new Error(`no "${want}" in: ${said}`);
+    }
+    if (said.includes('⌘')) throw new Error(`a Mac's keys on Windows: ${said}`);
+    if (await page.$('#keysSheet h3:text-is("On Backups")')) throw new Error('a section for a screen with no keys of its own');
   } },
   // The command palette: ⌘K (Ctrl+K) on any screen opens a field over it; an app's name lists its Open, page, Restart,
   // Stop, and Logs, the arrows pick, Return runs, a name nothing has says so, and Escape closes it with the focus back
@@ -2061,6 +2972,47 @@ const smokes = [
     // Well before the minute's poll.
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Stopped")', { timeout: 2000 });
   } },
+  // Status read aloud: a screen reader hears each row's change as it is drawn, through one polite live region: a
+  // Restart's step and its end, and apps that go down together in one line. Nothing on the first draw, nor while
+  // another screen is shown.
+  { name: 'Status read aloud: a row’s change, a job’s step, and two apps at once', screen: 'status', run: async (page) => {
+    await page.waitForSelector('tr:has(strong:text-is("Vikunja")) td.state:has-text("Running")', { timeout: 5000 });
+    await page.evaluate(() => {
+      window.__said = [];
+      const el = document.getElementById('statusAloud');
+      new MutationObserver(() => { if (el.textContent) window.__said.push(el.textContent); }).observe(el, { childList: true, characterData: true, subtree: true });
+    });
+    const said = () => page.evaluate(() => window.__said);
+    if ((await page.getAttribute('#statusAloud', 'role')) !== 'status') throw new Error('the region is not a status');
+    await page.waitForTimeout(400);
+    if ((await said()).length) throw new Error(`said on the first draw: ${await said()}`);
+    // A Restart: its step as it starts, and the state it ends in.
+    await page.evaluate(() => { window.__MOCK.actionDelay = 900; });
+    await page.click('tr:has(strong:text-is("Vikunja")) td.state', { button: 'right' });
+    await page.click('.rowmenu button:text-is("Restart")');
+    await page.waitForFunction(() => window.__said.includes('Vikunja: Restarting…'), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`no "Vikunja: Restarting…" in ${JSON.stringify(await said())}`); });
+    await page.waitForFunction(() => window.__said.at(-1) === 'Vikunja: Running', null, { timeout: 5000 })
+      .catch(async () => { throw new Error(`the end not said: ${JSON.stringify(await said())}`); });
+    // Two apps down at once: one line.
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' || a.id === 'navidrome' ? { ...a, health: 'unhealthy' } : a)) };
+      window.__emit('status:changed', { apps: ['vikunja', 'navidrome'], status: M.status });
+    });
+    await page.waitForFunction(() => /^(Vikunja and Navidrome|Navidrome and Vikunja): Unhealthy$/.test(window.__said.at(-1) || ''), null, { timeout: 3000 })
+      .catch(async () => { throw new Error(`two apps not said together: ${JSON.stringify(await said())}`); });
+    // On another screen, Status's changes are not read out.
+    const n = (await said()).length;
+    await page.click('nav button[data-screen="backups"]');
+    await page.evaluate(() => {
+      const M = window.__MOCK;
+      M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'navidrome' ? { ...a, state: 'stopped', health: '' } : a)) };
+      window.__emit('status:changed', { apps: ['navidrome'], status: M.status });
+    });
+    await page.waitForTimeout(600);
+    if ((await said()).length !== n) throw new Error(`said on Backups: ${JSON.stringify((await said()).slice(n))}`);
+  } },
   { name: "The agent's change carries Status: drawn on any screen, nothing asked", screen: 'status', run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) td.state:has-text("Running")', { timeout: 5000 });
     await page.click('nav button[data-screen="backups"]');
@@ -2242,7 +3194,7 @@ const smokes = [
   // table's last row, and the clicks are as WebKit's on the Mac: a mouse click that leaves no focus on the button.
   { name: 'A group’s menu at the bottom of Status is whole, and one menu opens at a time', screen: 'status', mock: { usage }, run: async (page) => {
     const press = async (b) => { await b.dispatchEvent('mousedown', { detail: 1 }); await b.dispatchEvent('click', { detail: 1 }); };
-    const heads = page.locator('tr.grouphead');
+    const heads = page.locator('#statusRows tr.grouphead') // Status's own (Backups' copies have group rows too, drawn once its data is read);
     await heads.first().waitFor({ timeout: 5000 });
     const last = heads.last();
     if ((await last.locator('.foldbtn').getAttribute('aria-expanded')) === 'true') await last.locator('.foldbtn').click();
@@ -2393,6 +3345,52 @@ const smokes = [
     await page.waitForTimeout(120);
     if (!(await page.$eval('#statusMenu', (m) => m.hidden))) throw new Error('the menu stays open after the focus left it');
   } },
+  { name: 'A long command can be hidden: it carries on, its bar in the sidebar, and comes back from there', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    // Running, the sheet offers Hide, and Escape presses it.
+    await page.waitForSelector('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    if (await page.evaluate(() => document.documentElement.classList.contains('sheet-open'))) throw new Error('the screen stayed dimmed');
+    await page.waitForSelector('#bgJob .bgjob.running .bgtitle:text-is("Update all apps now")', { timeout: 3000 });
+    // Another command waits for it, saying so, and leaves its sheet be.
+    await page.click('#updateAll');
+    await page.waitForSelector('#error:not([hidden]):has-text("Wait for “Update all apps now” to finish")', { timeout: 3000 });
+    if (await page.isVisible('#cliPanel')) throw new Error('a second command took the sheet');
+    // The rest of the app is there to use meanwhile.
+    await page.click('nav button[data-screen="backups"]');
+    await page.waitForSelector('#backups.active', { timeout: 3000 });
+    // A job of another screen waits its turn, saying so, and the chip says what is next.
+    await page.click('#backupNow');
+    await page.waitForSelector('#backupPanel:not([hidden]) #backupTitle:has-text("Waiting for “Update all apps now” to finish, then: Backing up…")', { timeout: 3000 });
+    await page.waitForSelector('#bgJob .bgnext:text-is("Then: Backing up")', { timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.homelabRan || [])).includes('backup')) throw new Error('the backup ran beside the command');
+    // Done: the chip says so, and brings back the sheet, which says how it went.
+    await page.waitForSelector('#bgJob .bgjob.done .bgstep:text-is("Done")', { timeout: 10000 });
+    // Then the backup runs, in its turn.
+    await page.waitForSelector('#backupTitle:text-is("Backup done")', { timeout: 10000 });
+    await page.click('#bgJob .bgopen');
+    await page.waitForSelector('#cliPanel:not([hidden]) #cliActions button:text-is("Close")', { timeout: 3000 });
+    if (await page.$('#bgJob .bgjob')) throw new Error('the chip stayed with its sheet open');
+    const ran = await page.evaluate(() => window.__MOCK.homelabRan || []);
+    if (ran.join() !== 'update-all,update-all,backup') throw new Error('ran, in order: ' + ran.join());
+  } },
+  { name: 'An app’s Restart waits its turn behind a running command, saying so, and the other rows stay usable', screen: 'status', mock: { homelabDelay: 2500, jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
+    await page.click('#updateAll', { timeout: 5000 });
+    await page.click('#cliActions button:has-text("Update them")', { timeout: 5000 });
+    await page.click('#cliActions button:text-is("Hide")', { timeout: 5000 });
+    await page.waitForSelector('#cliPanel', { state: 'hidden', timeout: 3000 });
+    const row = (name) => page.locator('#statusRows tr', { has: page.locator(`text="${name}"`) }).first();
+    // Every row's buttons are there to press while it runs.
+    if (await row('Vaultwarden').locator('button:has-text("Open")').isDisabled()) throw new Error('the rows are held while the command runs');
+    await row('Vaultwarden').click({ button: 'right' });
+    await page.click('.rowmenu [role=menuitem]:has-text("Restart")', { timeout: 3000 });
+    await row('Vaultwarden').locator('text=Waiting for “Update all apps now” to finish').waitFor({ timeout: 3000 });
+    if (await page.evaluate(() => window.__MOCK.calls.AppAction || 0)) throw new Error('the restart ran beside the command');
+    // Then it runs, in its turn.
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) > 0, null, { timeout: 15000 });
+  } },
   { name: 'Keyboard: Tab and Shift+Tab stay inside an open sheet, before and after its job', screen: 'status', mock: { jobApps: { 'update-all': ['navidrome', 'vikunja', 'mealie'] } }, run: async (page) => {
     await page.click('#updateAll', { timeout: 5000 });
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
@@ -2434,7 +3432,7 @@ const smokes = [
     });
     if (cut.length) throw new Error(`cut off: ${cut.join(', ')}`);
   } })),
-  ...[['Choose stacks', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
+  ...[['Choose apps', 'choose', '#choose .cols'], ['Status', 'status', '#status .duo'], ['an app’s page', 'app:vikunja', '#app .pagecols']].map(([label, screen, sel]) => ({ name: `${label}: two columns only when there is room for both at the text size`, screen, mock: pageMock, run: async (page) => {
     for (const [w, h, zoom, want] of [[1280, 800, '1', 2], [1440, 900, '2', 1], [1280, 800, '1.5', 1]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.evaluate((z) => document.documentElement.style.setProperty('--zoom', z), zoom);
@@ -2523,6 +3521,92 @@ const smokes = [
     const lefts = await page.$$eval('#weekCard li', (li) => li.map((l) => Math.round(l.getBoundingClientRect().left)));
     if (lefts.length !== 8 || new Set(lefts).size !== 1) throw new Error(`the lines are side by side (left edges ${lefts.join(', ')})`);
   } },
+  // What happened overnight: in the morning, Status's first line is the night since 8 PM (updates, a rollback, the night's
+  // copies, and whether anything needed you); an app down overnight says so instead; Hide until tomorrow keeps it away for
+  // the day; in the afternoon there is none.
+  ...(() => {
+    const at = (h, m = 0) => { const d = new Date(); d.setHours(h, m, 0, 0); return d; };
+    const morning = at(7, 30), iso = (h, m = 0) => at(h, m).toISOString();
+    const night = {
+      overnight: true,
+      status: { ...status, apps: status.apps.map((a) => ({ ...a, updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? iso(4) : undefined })) },
+      alerts: [{ id: 'r1', time: iso(4, 20), topic: 'watchtower', title: 'Homelab: Navidrome rolled back', message: 'It runs the version from before its update again.', tags: ['rewind'] },
+        { id: 'o1', time: at(5, 0).toISOString(), topic: 'tunnel-watchdog', title: 'Homelab: recovered', message: 'all well' }],
+      backups: { ...backups, copies: [{ id: 'immich', name: 'Immich', newest: iso(3, 30), size: 1.5 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'paperless', name: 'Paperless-ngx', newest: iso(3, 35), size: 0.6 * 1024 ** 3, count: 7, state: 'fresh' }, { id: 'old', name: 'Mealie', newest: new Date(at(3).getTime() - 864e5).toISOString(), size: 9e9, count: 7, state: 'stale' }] },
+      watchdog: { lastRun: morning.toISOString(), checks: 40, failing: [], pending: 0, week: {}, outages: {} },
+    };
+    const line = '#overnightLine .overnight';
+    return [
+      // Backups failing in the morning: the overnight line asks for it again at most once a minute, not over and over.
+      { name: 'What happened overnight: Backups failing is not asked for over and over', screen: 'status', mock: { ...night, backupsError: 'the database is locked' }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => { window.__MOCK.calls.Backups = 0; window.__emit('status:changed'); });
+        await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+        await page.waitForTimeout(1500);
+        const asked = await page.evaluate(() => window.__MOCK.calls.Backups || 0);
+        if (asked > 2) throw new Error(`Backups was asked ${asked} times in a second and a half`);
+        await page.waitForSelector(line, { timeout: 5000 });
+      } },
+      { name: 'What happened overnight: Status’s first line in the morning', screen: 'status', mock: night, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForSelector(line, { timeout: 5000 });
+        await page.waitForFunction((s) => /backup/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
+        const said = (await page.textContent(`${line} > span`)).trim();
+        if (said !== 'Overnight: 2 apps updated, 1 rolled back, a backup of 2.1 GB, nothing needed you.') throw new Error('it says: ' + said);
+        // Above the machine's line, under the heading.
+        if (!(await page.evaluate(() => document.getElementById('overnightLine').nextElementSibling?.id === 'healthLine'))) throw new Error('not above the machine’s line');
+        await page.click(`${line} button:text-is("Hide until tomorrow")`);
+        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 2000 });
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForTimeout(400);
+        if (await page.isVisible(line)) throw new Error('back after Hide until tomorrow');
+      } },
+      { name: 'What happened overnight: an app down in the night says so, and none in the afternoon', screen: 'status',
+        mock: { ...night, watchdog: { ...night.watchdog, outages: { 'immich-server': [{ from: iso(2, 10), to: iso(2, 40), problem: 'HTTP 502' }] } } }, run: async (page) => {
+        await page.clock.setFixedTime(morning);
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForFunction((s) => /was down/.test(document.querySelector(s)?.textContent || ''), line, { timeout: 5000 });
+        if (!/Immich was down for a while\.$/.test((await page.textContent(`${line} > span`)).trim())) throw new Error('it says: ' + await page.textContent(line));
+        await page.clock.setFixedTime(at(15));
+        await page.evaluate(() => window.__emit('status:changed'));
+        await page.waitForSelector('#overnightLine', { state: 'hidden', timeout: 3000 });
+      } },
+    ];
+  })(),
+  // What changed since you looked: nothing the first time; after leaving Status, a row whose app restarted, updated, stopped,
+  // or started meanwhile has a dot saying how (its name for a screen reader); leaving Status again clears them. An app's page
+  // counts as Status. Kept on this device across launches.
+  { name: 'What changed since you looked: a dot on each row, cleared once seen', screen: 'status', run: async (page) => {
+    const dots = () => page.$$eval('#statusRows tr:not(.grouphead)', (rs) => rs.filter((r) => r.querySelector('.changedot')).map((r) => `${r.querySelector('strong').textContent}: ${r.querySelector('.changedot').getAttribute('aria-label')}`).sort());
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    if ((await dots()).length) throw new Error('dots on the first visit: ' + (await dots()).join(', '));
+    // An app's page is still Status: nothing is seen yet.
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) button.topage');
+    await page.waitForSelector('#app.active', { timeout: 3000 });
+    if (await page.evaluate(() => localStorage.getItem('homelab.statusSeen'))) throw new Error('an app’s page counted as leaving Status');
+    await page.click('nav button[data-screen=setup]');
+    await page.waitForSelector('#setup.active', { timeout: 3000 });
+    // Meanwhile: Vikunja restarted, Navidrome updated, Mealie started, Immich stopped.
+    await page.evaluate(() => {
+      const now = new Date().toISOString();
+      window.__MOCK.status = { ...window.__MOCK.status, apps: window.__MOCK.status.apps.map((a) => (
+        a.id === 'vikunja' ? { ...a, since: now }
+          : a.id === 'navidrome' ? { ...a, since: now, updatedAt: now }
+          : a.id === 'mealie' ? { ...a, state: 'running', health: 'healthy', since: now }
+          : a.id === 'immich-server' ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
+    });
+    await page.click('nav button[data-screen=status]');
+    await page.evaluate(() => window.__emit('status:changed'));
+    const want = ['Immich: Stopped since you looked', 'Mealie: Started since you looked', 'Navidrome: Updated since you looked', 'Vikunja: Restarted since you looked'];
+    await page.waitForFunction((n) => document.querySelectorAll('#statusRows .changedot').length === n, want.length, { timeout: 5000 }).catch(() => {});
+    if ((await dots()).join(' | ') !== want.join(' | ')) throw new Error('dots: ' + (await dots()).join(' | '));
+    if ((await page.$eval('#statusRows .changedot', (d) => d.getAttribute('role'))) !== 'img') throw new Error('a dot has no name for a screen reader');
+    // Seen: leaving and coming back clears them.
+    await page.click('nav button[data-screen=backups]');
+    await page.click('nav button[data-screen=status]');
+    await page.waitForFunction(() => !document.querySelector('#statusRows .changedot'), null, { timeout: 3000 });
+  } },
   { name: 'An app that was down this week says so', screen: 'status', mock: { watchdog: { lastRun: new Date().toISOString(), checks: 40, failing: [], pending: 0, week: { navidrome: 0.962, vaultwarden: 1 } } }, run: async (page) => {
     await page.waitForSelector('tr:has(strong:text-is("Navidrome")) .badge:has-text("96.2% up this week")', { timeout: 5000 });
     if (await page.isVisible('tr:has(strong:text-is("Vaultwarden")) .badge:has-text("up this week")')) throw new Error('a healthy app should not carry the badge');
@@ -2562,6 +3646,25 @@ const smokes = [
     await page.hover(blips);
     const said = await page.waitForSelector(`${blips} [role=tooltip]`, { state: 'visible', timeout: 3000 });
     if (!/No outage: each check it missed passed the next time/.test(await said.innerText())) throw new Error('Vaultwarden says: ' + await said.innerText());
+  } },
+  // Hover "up 8 hours" (or Tab to it) for why it last started, and when; an app with no reason kept has plain words.
+  { name: 'Why an app restarted, on hover', screen: 'status', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, startedBy: 'watchdog' } : a.id === 'audiobookshelf' ? { ...a, startedBy: 'docker' } : a)) } }, run: async (page) => {
+    const up = '#statusRows tr:has(strong:text-is("Vikunja")) .local.hovers:has-text("up 8 hours")';
+    await page.waitForSelector(up, { timeout: 5000 });
+    await page.hover(up);
+    const card = await page.waitForSelector(`${up} [role=tooltip]`, { state: 'visible', timeout: 3000 });
+    const said = await card.innerText();
+    if (!/The watchdog restarted it: it was unwell on two checks in a row/.test(said) || !/(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d+:\d\d (AM|PM)/.test(said)) throw new Error('Vikunja says: ' + said);
+    await page.mouse.move(5, 5);
+    await page.waitForSelector(`${up} [role=tooltip]`, { state: 'hidden', timeout: 2000 });
+    const abs = '#statusRows tr:has(strong:text-is("Audiobookshelf")) .local.hovers';
+    await page.focus(abs);
+    const docker = await page.waitForSelector(`${abs} [role=tooltip]`, { state: 'visible', timeout: 2000 });
+    if (!/Docker started it again after it stopped on its own/.test(await docker.innerText())) throw new Error('Audiobookshelf says: ' + await docker.innerText());
+    // A click on the words stays on Status; nothing kept, nothing to hover.
+    await page.click(up);
+    if (!(await page.isVisible('#status'))) throw new Error('the click left Status');
+    if (await page.$$eval('#statusRows tr:has(strong:text-is("Immich")) .local', (l) => l.some((e) => e.classList.contains('hovers')))) throw new Error('Immich has a hover with nothing to say');
   } },
   { name: 'Uptime and restarts on Status', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Audiobookshelf") .badge:has-text("restarted 3×")', { timeout: 5000 });
@@ -2644,11 +3747,11 @@ const smokes = [
     if (c.alpha < 1) throw new Error(`the count is see-through (alpha ${c.alpha})`);
     if (!c.onTop) throw new Error('the icon covers the count');
   } })),
-  // Counts in words: "1 baseline app is down", "7 other containers … aren't".
-  ...[[1, 1, '1 baseline app is down', '1 other container on this machine isn’t a catalog app.'], [3, 7, '3 baseline apps are down', '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
+  // Counts in words: "1 of the homelab's own apps is down", "7 other containers … aren't".
+  ...[[1, 1, "1 of the homelab's own apps is down", '1 other container on this machine isn’t a catalog app.'], [3, 7, "3 of the homelab's own apps are down", '7 other containers on this machine aren’t catalog apps.']].map(([missing, unmatched, down, other]) => ({ name: `Status counts in words: ${down}, ${unmatched} other container${unmatched === 1 ? '' : 's'}`, screen: 'status', mock: { status: { ...status, missing, unmatched } }, run: async (page) => {
     await page.waitForSelector('#tiles .tile', { timeout: 5000 });
     const text = await page.$eval('#status', (e) => e.innerText);
-    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|baseline app|other container)[^\n]*/g) || []).join(' | ')})`);
+    for (const want of [down, other]) if (!text.includes(want)) throw new Error(`no "${want}" (${(text.match(/[^\n]*(\(s\)|own apps? (is|are)|other container)[^\n]*/g) || []).join(' | ')})`);
   } })),
   // The phone zoomed in by its browser: 390 px at 150% is a 260 px page, at 175% about 213 px.
   ...[['status', 260], ['backups', 260], ['app:vikunja', 213], ['status', 213], ['backups', 213]].map(([screen, w]) => ({ name: `The phone zoomed in, ${w}px: ${screen === 'app:vikunja' ? 'an app’s page' : screen[0].toUpperCase() + screen.slice(1)} cuts nothing off and does not slide sideways`, screen, phone: ['companion', 'can-change'], mock: screen === 'app:vikunja' ? pageMock : undefined, run: async (page) => {
@@ -2730,6 +3833,37 @@ const smokes = [
     }
     await page.waitForSelector('#appSettings li:has-text("Tell me if it stops") .switchstate:text-is("On")');
   } },
+  // Quick actions: on a phone that may make changes, a long press on an app's row opens the quick ones (Open, Restart,
+  // Stop for a while, Logs), not this computer's (Back up now, alerts, Pin); the page does not open under it. A tap
+  // still opens the page, and a phone that only looks has no menu.
+  { name: 'The phone: a long press on an app for its quick actions', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    const menu = page.locator('#statusRows .rowmenu');
+    await menu.waitFor({ timeout: 3000 });
+    const items = await menu.locator('[role^=menuitem]').allTextContents();
+    for (const want of ['Open', 'Restart', 'Stop', 'Stop for a while ›', 'Logs']) if (!items.includes(want)) throw new Error(`no ${want} in ${items}`);
+    for (const never of ['Back up now', 'Pin to the top', 'Open on a phone']) if (items.some((i) => i.startsWith(never))) throw new Error(`${never} on the phone: ${items}`);
+    if (items.some((i) => i.startsWith('Tell me if it stops'))) throw new Error(`alerts on the phone: ${items}`);
+    if (await page.isVisible('#app')) throw new Error('the long press opened the app\'s page too');
+    // The finger held there selects no text (and iOS shows no callout).
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) !== 'none') throw new Error('a held finger can select the row\'s text');
+    // Where a finger can reach it: on the screen, and nothing over it.
+    const reach = await page.evaluate(() => { const b = [...document.querySelectorAll('.rowmenu button')].find((x) => x.textContent === 'Restart'); const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && b.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); });
+    if (!reach) throw new Error('the menu opened off the screen or under something');
+    await menu.locator('button:text-is("Restart")').click();
+    await page.waitForFunction(() => (window.__MOCK.calls.AppAction || 0) >= 1, null, { timeout: 5000 });
+    // A short tap is a tap: the app's page.
+    await longPress(page, 'Mealie', 80);
+    await page.waitForSelector('#app h1:has-text("Mealie")', { timeout: 5000 });
+  } },
+  { name: 'The phone that only looks: a long press opens no menu', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja"))', { timeout: 5000 });
+    await longPress(page, 'Vikunja', 650);
+    await page.waitForTimeout(300);
+    if (await page.locator('.rowmenu').count()) throw new Error('a look-only phone has a menu');
+    if ((await page.$eval('#statusRows tr:has(strong)', (r) => getComputedStyle(r).userSelect)) === 'none') throw new Error('a look-only phone cannot select a row\'s text');
+  } },
   { name: 'A phone allowed to make changes can restart, from the page', screen: 'app:vikunja', phone: ['companion', 'can-change'], run: async (page) => {
     await page.click('#app button:text-is("Restart")', { timeout: 5000 });
     await page.waitForFunction(() => window.__MOCK.calls.AppAction >= 1, null, { timeout: 5000 });
@@ -2784,6 +3918,46 @@ const smokes = [
     const paired = await page.evaluate(() => window.__MOCK.paired);
     if (paired?.finances !== 'edit' || paired.canChange) throw new Error(`paired with ${JSON.stringify(paired)}`);
   } },
+  // Phones that expire: a guest's phone keeps changes and Finances for a week, the row says until when, and a phone
+  // that only looks (the kitchen screen) has nothing to end.
+  // Devices on your tailnet (Settings › Phones): Tailscale's own list, this machine first; one not seen for a month
+  // is marked; Remove opens it in Tailscale's admin console. Hidden while Tailscale is not running.
+  { name: 'Settings › Phones: the devices on the tailnet, a lost one marked, Remove in the admin console', screen: 'settings', mock: { tailnetDevices: [
+    { name: 'homelab', os: 'linux', ip: '100.64.0.1', online: true, self: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.1' },
+    { name: 'bens-macbook-air', os: 'macOS', ip: '100.64.0.3', online: true, admin: 'https://login.tailscale.com/admin/machines/100.64.0.3' },
+    { name: 'old-pixel', os: 'android', ip: '100.64.0.4', online: false, lastSeen: hoursAgo(5 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.4' },
+    { name: 'annas-iphone', os: 'iOS', ip: '100.64.0.2', online: false, lastSeen: hoursAgo(97 * 24), admin: 'https://login.tailscale.com/admin/machines/100.64.0.2' },
+  ] }, run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#tailnetCard:has-text("4 devices, 2 online")', { timeout: 5000 });
+    const rows = (await page.locator('#tailnetCard li').allInnerTexts()).map((r) => r.replace(/\s+/g, ' '));
+    if (!/homelab.*Linux · this machine/.test(rows[0]) || /Remove/.test(rows[0])) throw new Error(`this machine: ${rows[0]}`);
+    if (!/old-pixel.*Android · last seen 5 days ago/.test(rows[2]) || /Not seen for a month/.test(rows[2])) throw new Error(`old-pixel: ${rows[2]}`);
+    if (!/annas-iphone.*iPhone or iPad · last seen .*Not seen for a month: if it is lost, remove it/.test(rows[3])) throw new Error(`annas-iphone: ${rows[3]}`);
+    await page.click('#tailnetCard button[aria-label="Remove annas-iphone"]');
+    await page.waitForFunction(() => window.__MOCK.opened === 'https://login.tailscale.com/admin/machines/100.64.0.2', null, { timeout: 3000 });
+  } },
+  { name: 'Settings › Phones without Tailscale: no tailnet card', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    await page.waitForSelector('#phonesCard li', { timeout: 5000 });
+    if (await page.isVisible('#tailnetCard')) throw new Error('the tailnet card shows without Tailscale');
+  } },
+  { name: 'Settings › Phones: access for a week, then it only looks', screen: 'settings', run: async (page) => {
+    await page.click('#settingsNav .pagebtn[data-page="Phones"]', { timeout: 5000 });
+    const anna = '#phonesCard li:has-text("Anna’s iPhone")';
+    await page.waitForSelector(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, { timeout: 5000 });
+    if (await page.locator('#phonesCard select[aria-label="How long Kitchen iPad keeps it"]').count()) throw new Error('a phone that only looks offers an end');
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, String(24 * 7));
+    await page.waitForSelector(`${anna} .phoneuntil:has-text("then it only looks")`, { timeout: 5000 });
+    const until = await page.evaluate(() => window.__MOCK.phones.find((p) => p.name === 'Anna’s iPhone').until);
+    const days = (new Date(until).getTime() - Date.now()) / 864e5;
+    if (!(days > 6.9 && days < 7.1)) throw new Error(`kept until ${until}`);
+    const want = new Date(until).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!(await page.textContent(`${anna} .phoneuntil`)).includes(want)) throw new Error(`the row does not say ${want}: ${await page.textContent(`${anna} .phoneuntil`)}`);
+    // Until you change it: the end goes.
+    await page.selectOption(`${anna} select[aria-label="How long Anna’s iPhone keeps it"]`, '0');
+    await page.waitForSelector(`${anna} .phoneuntil`, { state: 'detached', timeout: 5000 });
+  } },
   // Finances on a phone: only where it may see them; a phone allowed to
   // look has no way to change them; every view fits a phone.
   { name: 'The phone: no Finances until the phone may see them', screen: 'status', phone: ['companion'], run: async (page) => {
@@ -2799,8 +3973,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, and Export (which saves a copy and changes nothing).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), and a holding on Investments (it opens its worth at each read).
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -2846,6 +4020,35 @@ const smokes = [
     if (await page.isVisible('#phoneReport')) throw new Error('Send a report shows on the Mac');
     await page.evaluate(() => document.documentElement.classList.add('companion'));
     await page.waitForSelector('#phoneReport', { state: 'visible', timeout: 2000 });
+  } },
+  // An update's notes: hover "updates held" for why it is held, how to put it back, and its newest release's first lines,
+  // read from GitHub only when the card opens (and once); a release that cannot be read says why.
+  { name: 'Hover “updates held” for why, and what its newest release says', screen: 'status', mock: { releaseNotes: { dozzle: { app: 'dozzle', repo: 'amir20/dozzle', running: 'v8.4.2', placed: true, releases: [
+    { tag: 'v8.5.0', name: 'v8.5.0', when: '2026-10-30T12:00:00Z', url: 'https://github.com/amir20/dozzle/releases/tag/v8.5.0', notes: "## What's Changed\n- Logs from **every host** in one view by [@amir20](https://github.com/amir20)\n* Faster search\n- Fixed a crash" },
+  ] } } }, run: async (page) => {
+    const held = '#statusRows tr:has-text("Dozzle") .badge.hovers:has-text("updates held")';
+    await page.waitForSelector(held, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.calls.ReleaseNotes)) throw new Error('GitHub was asked before any hover');
+    await page.hover(held);
+    const card = page.locator(`${held} [role=tooltip]`);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    await card.locator(':text("Newest: v8.5.0")').waitFor({ timeout: 3000 });
+    const said = (await card.innerText()).replace(/\s+/g, ' ');
+    for (const want of [/Left out of the nightly updates after a rollback/, /Nightly updates on its page puts it back/, /Newest: v8\.5\.0 · Oct 30, 2026 \(it runs v8\.4\.2\)/, /Logs from every host in one view by @amir20 Faster search/]) {
+      if (!want.test(said)) throw new Error(`no ${want} in: ${said}`);
+    }
+    if (/What's Changed|Fixed a crash|\*\*|\]\(/.test(said)) throw new Error('more than its first lines, or its marks: ' + said);
+    await page.mouse.move(5, 5);
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    await page.hover(held);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    if ((await page.evaluate(() => window.__MOCK.calls.ReleaseNotes)) !== 1) throw new Error('read again: ' + await page.evaluate(() => window.__MOCK.calls.ReleaseNotes));
+  } },
+  { name: 'Hover “updates held”: a release that cannot be read says why', screen: 'status', run: async (page) => {
+    const held = '#statusRows tr:has-text("Dozzle") .badge.hovers:has-text("updates held")';
+    await page.waitForSelector(held, { timeout: 5000 });
+    await page.focus(held);
+    await page.locator(`${held} [role=tooltip] :text("Could not read its releases: GitHub answered 503 Service Unavailable")`).waitFor({ timeout: 3000 });
   } },
   { name: 'Roll back an update, from its page', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr:has-text("Dozzle") .badge:has-text("updates held")', { timeout: 5000 });
@@ -2984,8 +4187,9 @@ const smokes = [
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
+    // Nothing cancels it while it runs: Hide alone, which lets it carry on behind.
     const buttons = await page.$$eval('#cliActions button', (b) => b.map((x) => x.textContent));
-    if (buttons.length) throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
+    if (buttons.join() !== 'Hide') throw new Error(`buttons while it runs: ${buttons.join(', ')}`);
     // The engine says containers changed while the job runs: Status behind the sheet waits.
     await page.waitForSelector('#cliApps li', { timeout: 5000 });
     await page.evaluate(() => window.__emit('status:changed'));
@@ -3284,6 +4488,30 @@ const smokes = [
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
   } },
+  // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
+  // CLI says those days, and a held app has no window to choose.
+  { name: "An app's update window: Only on Sundays, and the days the CLI set", screen: 'app:vikunja', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
+    await page.waitForSelector(sw('Only on Sundays'), { timeout: 5000 });
+    if (await page.isChecked(sw('Only on Sundays'))) throw new Error('an app with no window starts on Sundays only');
+    await page.waitForSelector('#appSettings:has-text("Every night, with a backup of its data first")');
+    await page.click(sw('Only on Sundays'));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("On Sundays only, with a backup of its data first")', { timeout: 300 });
+    await page.waitForSelector(`${sw('Only on Sundays')}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['vikunja', 'sundays', true]])) throw new Error('set ' + JSON.stringify(set));
+    if (!(await page.isChecked(sw('Only on Sundays')))) throw new Error('the switch went back after Status was read');
+    // Days set from the CLI (homelab updates days vikunja sat+sun): the switch names them, and off is every night.
+    await page.evaluate(() => { const M = window.__MOCK; M.status = { ...M.status, apps: M.status.apps.map((a) => (a.id === 'vikunja' ? { ...a, updateDays: ['sat', 'sun'] } : a)) }; });
+    await page.click(sw('Tell me if it stops')); // a change reads Status again
+    await page.waitForSelector(sw('Only on Saturdays and Sundays'), { timeout: 5000 });
+    await page.waitForSelector('#appSettings:has-text("On Saturdays and Sundays only")');
+    // Held: no window to choose.
+    await page.click(sw('Nightly updates'));
+    await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
+    if (await page.locator(sw('Only on Saturdays and Sundays')).count()) throw new Error('a held app still offers its days');
+  } },
   { name: "A stopped app's nightly updates can be held too", screen: 'app:vikunja', mock: { status: { ...status, apps: status.apps.map((a) => (a.id === 'vikunja' ? { ...a, state: 'stopped', health: '' } : a)) } }, run: async (page) => {
     const sw = '#appSettings input.switch[aria-label="Nightly updates"]';
     await page.waitForSelector(`${sw}:not([disabled])`, { timeout: 5000 });
@@ -3367,6 +4595,37 @@ const smokes = [
     await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+Shift+H' : 'Control+Shift+H');
     await page.waitForTimeout(300);
     if (await page.evaluate(() => (window.__MOCK.financesSaved || []).length)) throw new Error('the shortcut saved from a phone that may only look');
+  } },
+  // Checking now and after the next paycheck, each with how it adds up: resting on it, Tab, or a tap shows the start, every row, and the result.
+  { name: 'Finances: checking now and after the next paycheck say how they add up', screen: 'finances', mock: {
+    finances: { ...finances, checkingNow: { date: '2026-10-30', from: '2026-10-27', start: 2560.6, steps: [{ date: '2026-10-28', transaction: 't6', name: 'Shell', amount: -48.2, after: 2512.4 }], result: 2512.4 } },
+  }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-clear #finAfterPay', { timeout: 5000 });
+    const now = await page.textContent('#finNow .fx-figure'), after = await page.textContent('#finAfterPay .fx-figure');
+    if (!now.includes('2,512') || !after.includes('2,557')) throw new Error(`checking now ${now}, after the paycheck ${after}`);
+    if (!(await page.textContent('#finAfterPay .fx-caption')).includes("Alex's paycheck")) throw new Error('the figure does not say whose paycheck');
+    await page.hover('#finAfterPay');
+    const card = '.fx-clear .hovercard:has(.fx-working):visible';
+    await page.waitForSelector(card, { timeout: 5000 });
+    const text = await page.textContent(card);
+    for (const want of ['Checking now', 'Groceries and gas', 'Mortgage', 'Netflix', 'Peloton', "Alex's paycheck", 'Once the paycheck is in', '2,557.91', 'One payment due']) {
+      if (!text.includes(want)) throw new Error(`how it adds up has no ${want}: ${text}`);
+    }
+    // The keyboard reaches the other: its working starts from the balance as typed in, with what has happened since.
+    await page.mouse.move(0, 0);
+    await page.focus('#finNow');
+    await page.waitForSelector(card, { timeout: 5000 });
+    const since = await page.textContent(card);
+    if (!since.includes('Checking, typed in') || !since.includes('Shell') || !since.includes('2,560.60')) throw new Error(`checking now's working: ${since}`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector(card, { state: 'hidden', timeout: 5000 });
+  } },
+  { name: 'The phone, view only: a tap on checking after the paycheck shows how it adds up', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-clear #finAfterPay', { timeout: 5000 });
+    await page.click('#finAfterPay');
+    await page.waitForSelector('.fx-clear .hovercard:has(.fx-working):visible', { timeout: 5000 });
+    const box = await page.$eval('.fx-clear .hovercard:has(.fx-working)', (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth }; });
+    if (box.l < 0 || box.r > box.w) throw new Error(`the card leaves the screen: ${JSON.stringify(box)}`);
   } },
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
@@ -3575,22 +4834,65 @@ const smokes = [
     await page.waitForSelector('.finreminders', { timeout: 5000 });
     if (await page.$('.fincalendar')) throw new Error('the phone offers a calendar link');
   } },
-  // Money flow on Recurring: each person's pay into a typical month, and out to each kind of bill, saving, and what is left.
+  // Money flow on Recurring: a typical month, each person's pay before taxes (Alex's $3,050 every other week is $6,608.33 a
+  // month; $599 of each is taxes, $1,297.83 a month) into all of it, out to taxes, each kind of bill, and saving, which goes
+  // into the 401(k), the Roth IRA, and savings, the rest kept as cash ($1,110.24, what was left over before). A band for each
+  // way money goes; a box a button for each.
   { name: 'Finances: money flow, pay to bills, saving, and what is left', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
-    await page.waitForSelector('.fx-moneyflow .fx-flowchart svg', { timeout: 5000 });
-    const legend = (await page.textContent('.fx-moneyflow .fx-flowlegend')).replace(/\s+/g, ' ');
-    for (const want of ["Alex's pay", '$4,658', "Jordan's pay", '$2,400', 'Saved', '$683', 'Left over', '$1,110']) if (!legend.includes(want)) throw new Error(`no ${want} in ${legend}`);
-    const rows = await page.$$eval('.fx-moneyflow table.sr tbody tr', (rs) => rs.map((r) => r.textContent));
-    if (!rows.includes("In: Alex's pay$4,658.33") || !rows.includes('Out: Left over$1,110.24') || rows.some((r) => r.startsWith('In: From the accounts'))) throw new Error(`rows ${rows.join(' | ')}`);
-    const bands = await page.$$eval('.fx-moneyflow path.fx-band', (ps) => ps.length);
-    if (bands !== 2 + rows.filter((r) => r.startsWith('Out:')).length) throw new Error(`${bands} bands for ${rows.length} rows`);
+    await page.waitForSelector('.fx-moneyflow .fx-sankey svg', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    for (const want of ["Alex's pay|Total income|$6,608.33", "Jordan's pay|Total income|$2,400.00", 'Total income|Taxes|$1,297.83', 'Expenses|Taken from pay|$255.67', 'Savings|Fidelity 401(k)|$396.50', 'Savings|Kept as cash|$1,110.24']) {
+      if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
+    }
+    if (rows.some((r) => r.startsWith('From your accounts'))) throw new Error('a month with more in than out takes from the accounts');
+    const bands = await page.$$eval('.fx-moneyflow path.fx-sband', (ps) => ps.length);
+    const boxes = await page.$$eval('.fx-moneyflow button.fx-snode', (bs) => bs.length);
+    if (bands !== rows.length || boxes !== rows.length + 1) throw new Error(`${bands} bands and ${boxes} boxes for ${rows.length} rows`);
+    if (!(await page.textContent('.fx-flowstrip')).replace(/\s+/g, '').includes('Saved$2,190.0724%savingsrate')) throw new Error('the strip: ' + await page.textContent('.fx-flowstrip'));
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Kept as cash")');
+    await page.waitForSelector('.fx-flowpick p:has-text("stayed where it came in")', { timeout: 5000 });
+  } },
+  // Money flow on the Dashboard: this month from the ledger (Jordan's paycheck in; Costco and Trader Joe's are Food, Shell is
+  // Car; the Roth IRA's transfer is saved). Picking a box lists what is behind it, each opening its transaction; ‹ goes to a
+  // typical month from the plan, where Top 5 makes the rest Other; the keyboard picks a box too.
+  { name: 'Finances: the money flow opens what is behind each box, month by month', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-moneyflow .fx-periodname:text-is("Oct 2026")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-moneyflow .sr table tbody tr', (rs) => rs.map((r) => [...r.cells].map((c) => c.textContent).join('|')));
+    for (const want of ["Jordan's paycheck|Total income|$2,400.00", 'Expenses|Food|$149.85', 'Expenses|Car|$48.20', 'Savings|Roth IRA|$250.00']) {
+      if (!rows.includes(want)) throw new Error(`no ${want} in ${rows.join(' / ')}`);
+    }
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Food")');
+    await page.waitForSelector('.fx-flowpick h3:has-text("Food")', { timeout: 5000 });
+    const items = await page.$$eval('.fx-flowpick li', (ls) => ls.map((l) => l.textContent));
+    if (items.length !== 2 || !items[0].includes('Costco') || !items[0].includes('−$86.10') || !items[1].includes("Trader Joe's")) throw new Error(`food: ${items.join(' | ')}`);
+    await page.click('.fx-flowpick li:has-text("Costco") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Costco")', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.click('.fx-moneyflow button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-moneyflow .fx-periodname:text-is("A typical month")', { timeout: 5000 });
+    if (await page.$('.fx-flowpick')) throw new Error('the box picked in October stays picked in another month');
+    await page.selectOption('.fx-moneyflow select.fx-top', '5');
+    await page.waitForSelector('.fx-moneyflow button.fx-snode:has-text("Other (3)")', { timeout: 5000 });
+    await page.focus('.fx-moneyflow button.fx-snode:has-text("Taxes")');
+    await page.keyboard.press('Enter');
+    await page.waitForSelector('.fx-flowpick li:has-text("Alex\'s taxes")', { timeout: 5000 });
+    if ((await page.getAttribute('.fx-moneyflow button.fx-snode:has-text("Taxes")', 'aria-pressed')) !== 'true') throw new Error('the box picked does not say so');
+  } },
+  { name: 'The phone, view only: the money flow opens, with nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-moneyflow .fx-sankey svg', { timeout: 5000 });
+    await page.click('.fx-moneyflow button.fx-snode:has-text("Food")');
+    await page.waitForSelector('.fx-flowpick li:has-text("Costco")', { timeout: 5000 });
+    if (await page.$('.fx-flowpick li button')) throw new Error('a phone that may only look can open a transaction');
   } },
   // A month that takes more than comes in: the rest comes out of the accounts, and nothing is left over.
   { name: 'Finances: money flow when a month takes more than comes in', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: [...finances.plan.payments, { id: 'rent', name: 'Rent', amount: 5000, kind: 'home', schedule: { every: 'month', start: '2026-01-01' } }] } } }, run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
-    await page.waitForSelector('.fx-moneyflow table.sr tbody tr:has-text("In: From the accounts$3,8")', { state: 'attached', timeout: 5000 });
-    if ((await page.textContent('.fx-moneyflow .fx-flowlegend')).includes('Left over')) throw new Error('left over with more out than in');
+    // Out: taxes, bills with rent, and $1,079.83 into savings accounts; in: $9,008.33; from the accounts, $3,889.76.
+    await page.waitForSelector('.fx-moneyflow .sr table tbody tr:has-text("From your accounts"):has-text("$3,889.76")', { state: 'attached', timeout: 5000 });
+    if ((await page.textContent('.fx-moneyflow .sr table')).includes('Kept as cash')) throw new Error('kept as cash with more out than in');
+    if (!(await page.textContent('.fx-flowstrip')).includes('Short')) throw new Error('the strip does not say it is short');
   } },
   // Pay more: an extra amount a paycheck on the loan picked, and every debt (a card carrying a balance too) paid down two ways.
   { name: 'Finances: pay more on a loan, highest rate or smallest balance first', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, run: async (page) => {
@@ -3757,6 +5059,86 @@ const smokes = [
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp .formerr:has-text("refused the security token")', { timeout: 5000 });
   } },
+  // Net worth › Investments: what Ghostfolio last read, kept in the plan, shown with Ghostfolio stopped: four figures, the
+  // split by account, a row a holding (the 401(k)'s cash a row of its own); a holding opens its worth at each read.
+  { name: 'Finances: Investments on Net worth, from what was last read', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read 7:02 AM")`, { timeout: 5000 });
+    for (const t of ['Total value', 'You paid', 'Gain', 'This month']) await page.waitForSelector(`${card} .fx-investfigs .fx-caption:text-is("${t}")`, { timeout: 2000 });
+    await page.waitForSelector(`${card} .fx-investfigs .fx-sub:text-is("9 holdings in 3 accounts")`, { timeout: 2000 });
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('not a row a holding and the cash');
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("Cash")):has-text("Fidelity 401(k)")`, { timeout: 2000 });
+    if (await page.$(`${card} .fx-investsaid`)) throw new Error('a read said with nothing read');
+    const vti = `${card} button.fx-holdbtn:has(strong:text-is("VTI"))`;
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail figure[aria-label^="VTI at each read"] svg`, { timeout: 2000 });
+    if ((await page.getAttribute(vti, 'aria-expanded')) !== 'true') throw new Error('VTI not said open');
+    await page.waitForSelector(`${card} .fx-holddetail :text("A share is worth")`, { timeout: 2000 });
+    await page.click(vti);
+    await page.waitForSelector(`${card} .fx-holddetail`, { state: 'detached', timeout: 2000 });
+    if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
+  } },
+  // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
+  // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
+  // (here, as a new account), kept, and read again.
+  { name: 'Finances: Investments read once as Finances opens, Read now, and a match by hand', screen: 'finances', mock: { status: runningToo('ghostfolio'), investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} [role=status]:has-text("Read from Ghostfolio at")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} [role=status]:has-text(": 9 holdings in 3 accounts.")`, { timeout: 2000 });
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('not read once on opening');
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Net worth")');
+    await page.waitForTimeout(300);
+    if ((await page.evaluate(() => window.__MOCK.investReads)) !== 1) throw new Error('read again on coming back');
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForFunction(() => window.__MOCK.investReads === 2, null, { timeout: 5000 });
+    await page.waitForSelector(`${card} h2:has-text("from Ghostfolio, read")`, { timeout: 2000 });
+    await page.selectOption(`${card} .fx-investleft select`, 'new');
+    await page.waitForFunction(() => window.__MOCK.investReads === 3, null, { timeout: 5000 });
+    const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
+    const added = plan.accounts.find((a) => a.ghostfolio === 'Coinbase');
+    if (!added || added.name !== 'Coinbase' || added.kind !== 'investment') throw new Error('Coinbase not added as an account matched by hand');
+  } },
+  { name: 'Finances: Investments say why Ghostfolio could not be read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } }, investProblem: 'Ghostfolio does not answer on this machine: is it running? (Status)' }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} button:text-is("Read now")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} .formerr[role=alert]:text-is("Could not read Ghostfolio: Ghostfolio does not answer on this machine: is it running? (Status)")`, { timeout: 5000 });
+    // What was last read is still shown.
+    if ((await page.$$(`${card} tbody.fx-hold`)).length !== 10) throw new Error('the holdings went with the failed read');
+  } },
+  // Read only on Read now, when so set: opening Finances reads nothing; the box turns the morning's read back on.
+  { name: 'Finances: Investments read only on Read now, when so set', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const box = '#finRoot .fx-invest .fx-investauto input[type=checkbox]';
+    await page.waitForSelector(box, { timeout: 5000 });
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on opening, set to read by hand');
+    if (await page.isChecked(box)) throw new Error('the box says it reads each day');
+    await page.click(box);
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length, null, { timeout: 5000 });
+    if (await page.evaluate(() => window.__MOCK.financesSaved.at(-1).readByHand)) throw new Error('still read by hand');
+  } },
+  // Never read: with Ghostfolio running, the card says what it would read and that only symbols leave the homelab.
+  { name: 'Finances: Investments never read offer a first read', screen: 'finances', mock: { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, holdingsRead: undefined, accounts: finances.plan.accounts.map(({ holdings, ...a }) => a) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} .fx-investintro:has-text("Only ticker symbols leave the homelab")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} button:text-is("Read now")`, { timeout: 2000 });
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read before the first Read now');
+  } },
+  { name: 'The phone, view only: Investments shown, with nothing to read or match', screen: 'finances', phone: ['companion', 'finances'], mock: { status: runningToo('ghostfolio'), finances: { ...finances, readOnly: true }, investUnmatched: ['Coinbase'] }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`, { timeout: 5000 });
+    if (await page.$(`${card} button:text-is("Read now")`) || await page.$(`${card} .fx-investauto`) || await page.$(`${card} select`)) throw new Error('something to read or change on a phone allowed only to look');
+    await page.waitForTimeout(300);
+    if (await page.evaluate(() => window.__MOCK.investReads)) throw new Error('read on a phone');
+    await page.click(`${card} button.fx-holdbtn:has(strong:text-is("AAPL"))`);
+    await page.waitForSelector(`${card} .fx-holddetail svg`, { timeout: 2000 });
+  } },
   { name: 'Finances: Update balances reads from no app that is not running, nor on a phone', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk', { timeout: 5000 });
@@ -3801,6 +5183,45 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved?.[0]);
     const gym = saved?.payments.find((x) => x.name === 'Gym');
     if (!gym || gym.amount !== 40 || gym.schedule.every !== 'month') throw new Error(`saved ${JSON.stringify(gym)}`);
+  } },
+  // Money in from someone outside the household: Comes in from someone asks who sends it, and keeps no account it comes out of.
+  { name: 'Finances: add money that comes in from someone', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.click('#finSheet .finway [role=radio]:text-is("Comes in from someone")');
+    if (await page.$('#finSheet label:has-text("Comes out of")') || await page.$('#finSheet label:has-text("Pays off a card")')) throw new Error('money in asks what it comes out of');
+    await page.fill('#finSheet label:has-text("Name") input', 'Mortgage share');
+    await page.fill('#finSheet label:has-text("Amount") input', '900');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Say who sends it")', { timeout: 5000 });
+    await page.fill('#finSheet label:text-is("From") input', 'Sam');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1));
+    const x = saved?.payments.find((q) => q.name === 'Mortgage share');
+    if (!x || x.amount !== 900 || x.payer !== 'Sam' || x.from || x.card || x.to) throw new Error(`saved ${JSON.stringify(x)}`);
+  } },
+  { name: 'The phone, view only: money from someone shows, with nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...moneyIn, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (await page.$('.fx-paycheck li:has-text("Mortgage share") button')) throw new Error('a phone that may only look can open the payment');
+  } },
+  // Money from Sam on the 3rd: in the pay period's rows, Recurring, the month, the money flow, and the calendar, as money in.
+  { name: 'Finances: money from someone shows as money in, everywhere it is planned', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+    await page.click('.fx-paycheck button:text-is("Today")').catch(() => {});
+    await page.click('.fx-paycheck button[aria-label="The pay period before"]').catch(() => {});
+    await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-monthsum')).includes('and Sam')) throw new Error('a typical month does not count what Sam sends');
+    await page.waitForSelector('.fx-moneyflow :text("Mortgage share, from Sam")', { timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-03"]');
+    await page.waitForSelector('.fx-dayone li:has-text("Mortgage share"):has-text("From Sam"):has-text("+$900.00")', { timeout: 5000 });
   } },
   // Another device saved after this one read: the save is refused, the
   // latest is read, and the form stays open with what was typed, so Save
@@ -4577,6 +5998,53 @@ const smokes = [
     await page.click('#finNav .fx-balance:has-text("Investments")');
     await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
   } },
+  // Resting on a group in the sidebar (or Tab to it) shows its accounts beside it: each balance, how long since it was
+  // updated, and a dot on one older than a month; the click still opens Net worth, and hidden amounts stay hidden there.
+  { name: 'A sidebar balance shows its accounts on hover, and how long since each was updated', screen: 'status',
+    mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'k401' ? { ...a, updated: '2026-09-10' } : a)) } } }, run: async (page) => {
+    const inv = '#finNav .fx-balance:has-text("Investments")';
+    await page.waitForSelector(inv, { state: 'visible', timeout: 5000 });
+    const tipOf = (sel) => page.$eval(sel, (b) => b.getAttribute('aria-describedby'));
+    const id = await tipOf(inv);
+    if (await page.isVisible(`#${id}`)) throw new Error('a card shows before any hover');
+    await page.hover(inv);
+    const card = page.locator(`#${id}[role=tooltip]`);
+    await card.waitFor({ state: 'visible', timeout: 3000 });
+    const rows = (await card.locator('.fx-hoveracct').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim());
+    if (rows.length !== 3) throw new Error(`rows: ${rows.join(' | ')}`);
+    if (!rows.some((r) => r.startsWith('Robinhood') && /\$[\d,]+ updated 2 days ago$/.test(r))) throw new Error(`Robinhood: ${rows.join(' | ')}`);
+    if (!rows.some((r) => r.startsWith('Fidelity 401(k)') && /updated Sep 10, over a month ago$/.test(r))) throw new Error(`Fidelity: ${rows.join(' | ')}`);
+    if (await card.locator('.fx-hoveracct.stale .fx-staledot').count() !== 1) throw new Error('not one account marked as old');
+    if (!/One is over a month old/.test(await card.innerText())) throw new Error('no word on the old one: ' + await card.innerText());
+    if (/Checking|Savings|Mortgage/.test(await card.innerText())) throw new Error('another group’s account in it');
+    // Beside the button, in the window, and nothing over it; the button's name is still its own.
+    const placed = await page.evaluate((c) => {
+      const r = document.querySelector(`[aria-describedby="${c}"]`).getBoundingClientRect(), k = document.getElementById(c).getBoundingClientRect();
+      const hit = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2);
+      return k.left >= r.right && k.right <= innerWidth && k.bottom <= innerHeight && document.getElementById(c).contains(hit);
+    }, id);
+    if (!placed) throw new Error('the card is not beside the button, or is cut off or covered');
+    if (/updated/.test(await page.textContent(inv))) throw new Error('the card is in the button’s name');
+    await page.mouse.move(600, 400);
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    // Tab reaches it; Escape closes it.
+    await page.focus(inv);
+    await card.waitFor({ state: 'visible', timeout: 2000 });
+    await page.keyboard.press('Escape');
+    await card.waitFor({ state: 'hidden', timeout: 2000 });
+    // The click still opens Net worth.
+    await page.click(inv);
+    await page.waitForSelector('#finances.active #finRoot .seg button.on:text-is("Net worth")', { timeout: 5000 });
+  } },
+  { name: 'With amounts hidden, a balance’s hover hides them too', screen: 'status', mock: { finances: { ...finances, plan: { ...finances.plan, hideAmounts: true } } }, run: async (page) => {
+    const cash = '#finNav .fx-balance:has-text("Cash")';
+    await page.waitForSelector(cash, { state: 'visible', timeout: 5000 });
+    await page.hover(cash);
+    const id = await page.$eval(cash, (b) => b.getAttribute('aria-describedby'));
+    await page.waitForSelector(`#${id}`, { state: 'visible', timeout: 3000 });
+    const shown = await page.$$eval(`#${id} .fx-amount`, (a) => a.map((e) => [e.classList.contains('fx-masked'), e.textContent]));
+    if (!shown.length || shown.some(([m, t]) => !m || /\d/.test(t))) throw new Error('amounts show: ' + JSON.stringify(shown));
+  } },
   // A balance opens its own group: Net worth on Investments alone, each of its accounts a band of its own month by month
   // (its history), only its accounts listed, and Show everything back to all of them; another view forgets it.
   { name: 'A sidebar balance opens Net worth on its own group, each account month by month', screen: 'status', run: async (page) => {
@@ -5003,6 +6471,352 @@ const smokes = [
     const sb = txs?.find((t) => t.payee === 'Starbucks'), pay = txs?.find((t) => t.payee === 'Payroll Acme'), tj = txs?.find((t) => t.payee === "Trader Joe's" && t.date === '2026-10-31');
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
+  // Chase's checking CSV: Details (CREDIT or DEBIT) comes before Description, the payee, and each row ends in an empty cell.
+  { name: 'Finances: a Chase checking CSV takes its payee from Description, not Details', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,11/06/2026,"COSTCO WHSE #0123",-236.15,DEBIT_CARD,4321.00,,\nCREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2169.24,ACH_CREDIT,4557.15,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("2 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-2);
+    if (txs.some((t) => /^(CREDIT|DEBIT)$/i.test(t.payee || '')) || txs[0].amount !== -236.15 || txs[1].amount !== 2169.24) throw new Error(`brought in ${JSON.stringify(txs)}`);
+  } },
+  // A Chase file read before as CREDIT and DEBIT, imported again: those rows take their payees (and keep a category given
+  // them since), rather than coming in twice; a row not in the ledger yet still comes in.
+  { name: 'Finances: a Chase CSV imported again gives rows brought in as CREDIT or DEBIT their payees', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'w1', date: '2026-11-06', account: 'chk', amount: -236.15, payee: 'DEBIT', category: 'Groceries' },
+    { id: 'w2', date: '2026-11-06', account: 'chk', amount: 2169.24, payee: 'CREDIT' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,11/06/2026,"COSTCO WHSE #0123",-236.15,DEBIT_CARD,4321.00,,\nCREDIT,11/06/2026,"ACME CORP PAYROLL PPD ID: 12345",2169.24,ACH_CREDIT,4557.15,,\nDEBIT,11/04/2026,"SHELL OIL 57444",-48.00,DEBIT_CARD,4569.15,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("1 to bring in"):has-text("2 brought in before as CREDIT or DEBIT")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 1, fix 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const w1 = txs.find((t) => t.id === 'w1'), w2 = txs.find((t) => t.id === 'w2');
+    if (txs.length !== 3 || !/costco/i.test(w1?.payee || '') || w1.category !== 'Groceries' || !/acme/i.test(w2?.payee || '') || !txs.some((t) => /shell/i.test(t.payee || ''))) throw new Error(`fixed ${JSON.stringify(txs)}`);
+  } },
+  // A file whose Payee column only says which way the money went: the names come from the column that has them, and
+  // a payee column picked by hand that has none is said to have none.
+  { name: 'Finances: a CSV whose payee column says only Withdrawal or Deposit reads names from another column', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Payee,Amount,Text\n11/02/2026,Withdrawal,-12.50,CORNER BAKERY 44\n11/03/2026,Deposit,300.00,REFUND FROM ACME\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Corner Bakery")', { timeout: 5000 });
+    if (await page.locator('#finSheet .importnote.bad').count()) throw new Error('warned with names found');
+    await page.locator('#finSheet label.field').filter({ hasText: /^Payee/ }).locator('select').selectOption({ label: 'Payee' });
+    await page.waitForSelector('#finSheet .importnote.bad:has-text("No payee here is a name")', { timeout: 5000 });
+  } },
+  // Deleted, they come back with Undo; and with Ctrl+Z (⌘Z) after another delete.
+  { name: 'Finances: deleted transactions come back with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    const del = async (count) => {
+      await page.click('.fx-transactions button:text-is("Select")');
+      for (let i = 0; i < count; i++) await page.click(`.fx-transactions .fx-txday li.opens >> nth=${i}`);
+      await page.click(`.fx-txpick button:text-is("Delete ${count}")`);
+      await page.click(`.fx-txpick button:has-text("Click again to delete")`);
+      await page.waitForSelector(`#undoNote :text("Deleted ${count === 1 ? '1 transaction' : count + ' transactions'}")`, { timeout: 5000 });
+      await page.click('.fx-transactions button:text-is("Done")');
+    };
+    await del(2);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+    await page.waitForSelector('#undoNote .undonote', { state: 'detached', timeout: 5000 });
+    await del(1);
+    await page.keyboard.press((await page.evaluate(() => navigator.platform.startsWith('Mac'))) ? 'Meta+z' : 'Control+z');
+    await page.waitForFunction((n) => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === n, n, { timeout: 5000 });
+  } },
+  // Shift+click picks a range; Move to puts them in another account, Undo puts them back; a category set is undone too.
+  { name: 'Finances: selected transactions move to another account, a Shift+click range, with Undo', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const rows = '.fx-transactions .fx-txday li.opens';
+    const ids = await page.evaluate(() => window.__MOCK.ledger?.transactions?.length);
+    await page.click('.fx-transactions button:text-is("Select")');
+    // The fifth to the seventh rows shown (Trader Joe's, Claude Pro, Verizon): none a transfer.
+    await page.click(`${rows} >> nth=4`);
+    await page.click(`${rows} >> nth=6`, { modifiers: ['Shift'] });
+    await page.waitForSelector('.fx-txpick :text("3 transactions selected")', { timeout: 5000 });
+    await page.selectOption('.fx-txpick select[aria-label="Move the selected to an account"]', { label: 'Amex Gold' });
+    await page.waitForSelector('#undoNote :text("Moved 3 transactions to Amex Gold")', { timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const moved = txs.filter((t) => t.account === 'amex').map((t) => t.id);
+    if (moved.length !== 3) throw new Error(`moved ${JSON.stringify(txs)}`);
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction((m) => { const t = window.__MOCK.ledgerSaved?.at(-1)?.transactions; return t && !t.some((x) => m.includes(x.id) && x.account === 'amex'); }, moved, { timeout: 5000 });
+    // A category set, then undone: each back to its own.
+    await page.click(`${rows} >> nth=4`);
+    await page.fill('.fx-txpick input[aria-label="Category for the selected"]', 'Fun');
+    await page.click('.fx-txpick button:text-is("Set category")');
+    await page.waitForSelector('#undoNote :text("1 transaction put in Fun")', { timeout: 5000 });
+    await page.click('#undoNote button:text-is("Undo")');
+    await page.waitForFunction(() => !window.__MOCK.ledgerSaved?.at(-1)?.transactions.some((t) => t.category === 'Fun'), null, { timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (ids && txs.length !== ids) throw new Error(`${txs.length} of ${ids}`);
+  } },
+  // While selecting, Ctrl+A (⌘A on a Mac) takes every row shown and Escape stops selecting.
+  { name: 'Finances: while selecting transactions, Ctrl+A selects them all and Escape stops', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const n = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    await page.click('.fx-transactions button:text-is("Select")');
+    await page.waitForSelector('.fx-txpick :text("None selected")', { timeout: 5000 });
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.waitForSelector(`.fx-txpick :text("${n} transactions selected")`, { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('.fx-txpick', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions button:text-is("Select")', { timeout: 5000 });
+  } },
+  // Select: rows picked by a click, or every one a filter shows; Delete asks once more, then they go; a category given to each.
+  { name: 'Finances: transactions selected together are deleted or given a category', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const before = await page.locator('.fx-transactions .fx-txday li.opens').count();
+    await page.click('.fx-transactions button:text-is("Select")');
+    await page.click('.fx-transactions .fx-txday li.opens >> nth=0');
+    await page.click('.fx-transactions .fx-txday li.opens >> nth=1');
+    await page.waitForSelector('.fx-txpick :text("2 transactions selected")', { timeout: 5000 });
+    if (await page.locator('.fx-transactions .rowopen[aria-pressed=true]').count() !== 2) throw new Error('two rows should be pressed');
+    await page.fill('.fx-txpick input[aria-label="Category for the selected"]', 'Fun');
+    await page.click('.fx-txpick button:text-is("Set category")');
+    await page.waitForSelector('.fx-txpick :text("None selected")', { timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.category === 'Fun').length < 2) throw new Error(`categories ${JSON.stringify(txs)}`);
+    await page.click(`.fx-txpick button:text-is("Select all ${before}")`);
+    await page.click(`.fx-txpick button:text-is("Delete ${before}")`);
+    await page.click(`.fx-txpick button:text-is("Click again to delete ${before} transactions")`);
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions.length === 0, null, { timeout: 5000 });
+  } },
+  // An estimated bill paid three times or more in six months, its average 3% or more off the plan's: the Dashboard asks to
+  // use the average. Use keeps it; Keep is remembered on this device. Twice is too few to ask.
+  ...[['Use $152.00', 152], ['Keep $140.00', 140]].map(([button, want]) => ({ name: `Finances: a bill that changes, its average offered, ${button}`, screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, payments: finances.plan.payments.map((x) => (x.id === 'water' ? { ...x, estimate: true } : x)) }, paid: [
+    { payment: 'electric', due: '2026-07-18', date: '2026-07-17', amount: 148, planned: 140, transaction: 'x1' },
+    { payment: 'electric', due: '2026-08-18', date: '2026-08-18', amount: 161, planned: 140, transaction: 'x2' },
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-19', amount: 147, planned: 140, transaction: 'x3' },
+    { payment: 'water', due: '2026-09-20', date: '2026-09-20', amount: 150, planned: 120, transaction: 'x4' },
+    { payment: 'water', due: '2026-10-20', date: '2026-10-20', amount: 150, planned: 120, transaction: 'x5' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-averages li:has-text("Electric has averaged $152.00 over 3 months")', { timeout: 5000 });
+    if (await page.$('.fx-averages li:has-text("Water")')) throw new Error('two payments are taken as an average');
+    await page.click(`.fx-averages button:text-is("${button}")`);
+    if (want === 152) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'electric'));
+      if (x.amount !== 152 || !x.estimate) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-averages', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+    }
+  } })),
+  // The sidebar lists each group's accounts under it, each with its round logo and balance; a group's arrow folds them away,
+  // and they stay folded when the app opens again; an account opens Net worth on its group.
+  { name: 'The sidebar lists each account under its group, and a group folds away', screen: 'status', run: async (page) => {
+    await page.waitForSelector('.fx-balances .fx-balgroup:has-text("Cash") .fx-balacct:has-text("Chase Checking") .fmark', { timeout: 5000 });
+    if (!(await page.$eval('.fx-balances .fx-balacct:has-text("Chase Checking") .fmark', (e) => getComputedStyle(e).borderRadius === '50%'))) throw new Error('an account\'s logo in the sidebar is not round');
+    const arrow = '.fx-balances .fx-balgroup:has-text("Cash") .fx-balfold';
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'true') throw new Error('Cash starts folded');
+    await page.click(arrow);
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Chase Checking")', { state: 'detached', timeout: 5000 });
+    if ((await page.getAttribute(arrow, 'aria-expanded')) !== 'false') throw new Error('the arrow does not say Cash is folded');
+    if (!(await page.$('.fx-balances .fx-balacct:has-text("Robinhood")'))) throw new Error('folding Cash folded Investments too');
+    // Opened again: still folded. Carried over by hand, as Status's place is: a reloaded file:// page in this browser can
+    // start with empty storage when the machine is busy.
+    const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+    if (!JSON.parse(kept)['homelab.finances.foldedGroups']?.includes('cash')) throw new Error('the fold is not kept on this device');
+    await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+    await page.reload();
+    await page.waitForSelector('.fx-balances .fx-balacct:has-text("Robinhood")', { timeout: 5000 });
+    if (await page.$('.fx-balances .fx-balacct:has-text("Chase Checking")')) throw new Error('Cash opened again by itself');
+    await page.click('.fx-balances .fx-balacct:has-text("Robinhood")');
+    await page.waitForSelector('#finances.active .fx-ownlist li:has-text("Robinhood")', { timeout: 5000 });
+  } },
+  // On Finances every mark is round, a logo on a coin: a payment's logo on Recurring, an account's on Net worth, a
+  // category's icon on Transactions.
+  { name: 'Finances: logos and icons are round on every row', screen: 'finances', run: async (page) => {
+    const round = (sel) => page.$eval(sel, (e) => getComputedStyle(e).borderRadius === '50%');
+    await page.click('#finRoot > .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments li:has-text("Netflix") .fmark.logo', { timeout: 5000 });
+    if (!(await round('.fx-payments li:has-text("Netflix") .fmark'))) throw new Error('a payment\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Net worth")');
+    await page.waitForSelector('.fx-ownlist li:has-text("RAV4") .fmark', { timeout: 5000 });
+    if (!(await round('.fx-ownlist li:has-text("RAV4") .fmark'))) throw new Error('an account\'s logo is not round');
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-txday .fmark', { timeout: 5000 });
+    if (!(await page.$$eval('.fx-txday .fmark', (ms) => ms.every((e) => getComputedStyle(e).borderRadius === '50%')))) throw new Error('a transaction\'s mark is not round');
+  } },
+  // One colour per category, everywhere: Food (the third top category, so the third colour) on a transaction with no logo,
+  // its budget, its row and bar on Reports, and its box in the money flow; a payment's kind takes its category's colour
+  // (Groceries and gas is Shopping, the seventh). The icon reads on its tint at 4.5:1 (lint.mjs checks the tokens).
+  { name: 'Finances: a category keeps one colour on every row, budget, report, and chart', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'd1', date: '2026-10-29', account: 'chk', amount: -12.5, payee: 'Corner Deli', category: 'Eating out', institution: 'none' }] } }, run: async (page) => {
+    const tintOf = (sel) => page.$eval(sel, (e) => { const s = getComputedStyle(e); return `${s.backgroundColor}/${s.color}`; });
+    await page.waitForSelector('.fx-moneyflow rect.fx-snoderect.fx-h3', { state: 'attached', timeout: 5000 });
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-budgets li:has-text("Food") .fmark.tint.t3', { timeout: 5000 });
+    const food = await tintOf('.fx-budgets li:has-text("Food") .fmark.tint');
+    await page.waitForSelector('.fx-txday li:has-text("Corner Deli") .fmark.tint.t3', { timeout: 5000 });
+    if ((await tintOf('.fx-txday li:has-text("Corner Deli") .fmark.tint')) !== food) throw new Error('the transaction and its budget differ in colour');
+    await page.click('#finRoot > .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-bycat li:has-text("Food") .fmark.tint.t3', { timeout: 5000 });
+    if ((await tintOf('.fx-bycat li:has-text("Food") .fmark.tint')) !== food) throw new Error('the report row and the budget differ in colour');
+    if (!(await page.$('.fx-bycat li:has-text("Food") .fx-catbar.fx-h3'))) throw new Error('the report bar is not in Food\'s colour');
+    await page.click('#finRoot > .seg button:text-is("Recurring")');
+    await page.waitForSelector('.fx-payments li:has-text("Groceries and gas") .fmark.tint.t7', { timeout: 5000 });
+  } },
+  // A bill paid in the ledger before with nothing for its last day, three days on: the Dashboard says so. One not followed
+  // in the ledger, or due two days ago, is not said.
+  { name: 'Finances: a bill paid before but not seen yet is said on the Dashboard', screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'electric', due: '2026-09-18', date: '2026-09-17', amount: 140, planned: 140, transaction: 'x1' },
+    { payment: 'hoa', due: '2026-09-28', date: '2026-09-28', amount: 310, planned: 310, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-missing li:has-text("Electric"):has-text("Due Sun, Oct 18, 12 days ago")', { timeout: 5000 });
+    if ((await page.$$('.fx-missing li')).length !== 1) throw new Error('more than Electric is said: ' + await page.textContent('.fx-missing'));
+    await page.click('.fx-missing button:text-is("Transactions")');
+    await page.waitForSelector('.fx-transactions', { timeout: 5000 });
+  } },
+  // A subscription charged the same new price twice in a row: the Dashboard asks to update the plan; Keep is remembered on
+  // this device, Update keeps the new amount. Charged a new price once, it asks nothing.
+  ...[['Update to $17.99', 17.99], ['Keep $15.49', 15.49]].map(([button, want]) => ({ name: `Finances: a subscription's new price, ${button}`, screen: 'finances', mock: { finances: { ...finances, paid: [...(finances.paid || []),
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' },
+    { payment: 'spotify', due: '2026-10-12', date: '2026-10-12', amount: 12.99, planned: 11.99, transaction: 'x3' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices li:has-text("Spotify")')) throw new Error('one new charge asks to change the plan');
+    await page.click(`.fx-prices button:text-is("${button}")`);
+    if (want === 17.99) {
+      await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+      const x = await page.evaluate(() => window.__MOCK.financesSaved[0].payments.find((q) => q.id === 'netflix'));
+      if (x.amount !== 17.99) throw new Error(`saved ${JSON.stringify(x)}`);
+    } else {
+      await page.waitForSelector('.fx-prices', { state: 'detached', timeout: 5000 });
+      if (await page.evaluate(() => window.__MOCK.financesSaved)) throw new Error('Keep saved the plan');
+      // Opened again: what this device kept is what it starts with. Carried over by hand, as Status's place is: a reloaded
+      // file:// page in this browser can start with empty storage when the machine is busy.
+      const kept = await page.evaluate(() => JSON.stringify({ ...localStorage }));
+      if (!Object.keys(JSON.parse(kept)).some((k) => k.startsWith('homelab.finances.keptPrice.netflix.'))) throw new Error('Keep kept nothing on this device');
+      await page.addInitScript((k) => { for (const [key, value] of Object.entries(JSON.parse(k))) localStorage.setItem(key, value); }, kept);
+      await page.reload();
+      await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
+      if (await page.$('.fx-prices')) throw new Error('Keep was not remembered');
+    }
+  } })),
+  { name: 'The phone, view only: a subscription\'s new price is said, with nothing to press', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, paid: [
+    { payment: 'netflix', due: '2026-09-03', date: '2026-09-03', amount: 17.99, planned: 15.49, transaction: 'x1' },
+    { payment: 'netflix', due: '2026-10-03', date: '2026-10-03', amount: 17.99, planned: 15.49, transaction: 'x2' }] } }, run: async (page) => {
+    await page.waitForSelector('.fx-prices li:has-text("Netflix is now $17.99, was $15.49")', { timeout: 5000 });
+    if (await page.$('.fx-prices button')) throw new Error('a phone that may only look can change the price');
+  } },
+  // A row that plainly pays a planned payment (its name or brand, its amount give or take a tenth, near one of its days) is
+  // linked to it, so the plan does not take it out again; the preview says so, and the link can be taken off there.
+  { name: 'Finances: an imported bill paid early is linked to its planned payment, and can be unlinked', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/29/2026,NETFLIX.COM,-15.49\n10/29/2026,PELOTON INTERACTIVE,-60.00\n10/28/2026,ELECTRIC COMPANY,-150.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("3 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Netflix")) .importlink:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Looks like Electric, planned $140.00")', { timeout: 5000 });
+    // $60 is too far from Peloton's $44 to be it.
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Peloton Interactive")) .importlink')) throw new Error('a charge a third over Peloton\'s is linked to it');
+    if (!(await page.isVisible('#finSheet .importnote'))) throw new Error('the preview does not say what a link does');
+    await page.selectOption('#finSheet .importlist li:has(strong:text-is("Electric Company")) select', '');
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Electric Company")) .importlink:has-text("Not a planned payment")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-3).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Netflix|netflix,Peloton Interactive|,Electric Company|') throw new Error(`saved ${txs}`);
+  } },
+  // Money in from someone, in a bank's file by their name, is linked to what they send as planned.
+  { name: 'Finances: an imported transfer from someone is linked to the money they send', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n10/30/2026,ZELLE FROM SAM,900.00\n10/30/2026,ZELLE FROM PAT,900.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Zelle From Sam")) .importlink:has-text("Looks like Mortgage share, planned $900.00")', { timeout: 5000 });
+    if (await page.$('#finSheet .importlist li:has(strong:text-is("Zelle From Pat")) .importlink')) throw new Error('money from someone else is linked to what Sam sends');
+    await page.click('#finSheet button:text-is("Bring in 2")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.slice(-2).map((t) => `${t.payee}|${t.payment || ''}`));
+    if (txs.join() !== 'Zelle From Sam|share,Zelle From Pat|') throw new Error(`saved ${txs}`);
+  } },
+  // A minus on checking and the same plus on savings a day later look like one transfer: Join makes them one, its arriving
+  // half's bank ID kept, so the savings statement brought in again skips it. Not one transfer keeps them apart.
+  ...['Join', 'Not one transfer'].map((button) => ({ name: `Finances: two rows that look like one transfer, ${button}`, screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'o1', date: '2026-10-28', account: 'chk', amount: -500, payee: 'TRANSFER TO SAVINGS', bank: 'C1' },
+    { id: 'i1', date: '2026-10-29', account: 'sav', amount: 500, payee: 'TRANSFER FROM CHECKING', bank: 'S1' },
+    { id: 'o2', date: '2026-10-20', account: 'chk', amount: -40, payee: 'Gas' },
+    { id: 'i2', date: '2026-10-21', account: 'sav', amount: 45, payee: 'Interest' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-pairs li:has-text("Chase Checking → BofA Savings"):has-text("$500.00")', { timeout: 5000 });
+    if ((await page.$$('.fx-pairs li')).length !== 1) throw new Error('$40 out and $45 in are taken as one transfer');
+    await page.click(`.fx-pairs button:text-is("${button}")`);
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions);
+    const o1 = txs.find((t) => t.id === 'o1'), i1 = txs.find((t) => t.id === 'i1');
+    if (button === 'Join') {
+      if (i1 || o1?.to !== 'sav' || o1.amount !== -500 || o1.toBank !== 'S1' || o1.bank !== 'C1') throw new Error(`joined ${JSON.stringify(txs.slice(-4))}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+      await page.waitForSelector('.fx-txday li:has-text("Chase Checking → BofA Savings")', { timeout: 5000 });
+      // The savings statement again: its half is in already.
+      await page.click('.fx-transactions button:text-is("Import a file")');
+      const ofx = '<OFX><BANKTRANLIST><STMTTRN><DTPOSTED>20261029<TRNAMT>500.00<FITID>S1<NAME>TRANSFER FROM CHECKING</STMTTRN></BANKTRANLIST></OFX>';
+      await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'sav');
+      await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'savings.ofx', mimeType: 'application/x-ofx', buffer: Buffer.from(ofx) });
+      await page.waitForSelector('#finSheet .formsub:has-text("1 already in, skipped")', { timeout: 5000 });
+    } else {
+      if (!o1?.apart || !i1?.apart || o1.to) throw new Error(`apart ${JSON.stringify([o1, i1])}`);
+      await page.waitForSelector('.fx-pairs', { state: 'detached', timeout: 5000 });
+    }
+  } })),
+  // Transactions already in the ledger that look like planned payments are offered, each to link or say Not it; once
+  // linked, a row says what it pays. Not it is kept, so it is not offered again.
+  { name: 'Finances: transactions that look like planned payments can be linked, or said not to be', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'e1', date: '2026-10-17', account: 'chk', amount: -142.1, payee: 'Electric Co' },
+    { id: 'n1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' },
+    { id: 'p1', date: '2026-10-29', account: 'chk', amount: -60, payee: 'Peloton' }] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("Electric Co"):has-text("looks like Electric, planned $140.00 for Oct 18")', { timeout: 5000 });
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM"):has-text("looks like Netflix")', { timeout: 5000 });
+    if (await page.$('.fx-links li:has-text("Peloton")')) throw new Error('$60 to Peloton, planned $44, is offered');
+    await page.waitForSelector('.fx-links button:text-is("Link all 2")', { timeout: 5000 });
+    await page.click('.fx-links li:has-text("NETFLIX.COM") button:text-is("Not it")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 1, null, { timeout: 5000 });
+    const n1 = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions.find((t) => t.id === 'n1'));
+    if (!n1.notPlanned || n1.payment) throw new Error(`Not it saved ${JSON.stringify(n1)}`);
+    await page.waitForSelector('.fx-links li:has-text("NETFLIX.COM")', { state: 'detached', timeout: 5000 });
+    await page.click('.fx-links li:has-text("Electric Co") button:text-is("Link")');
+    await page.waitForFunction(() => window.__MOCK.ledgerSaved?.length === 2, null, { timeout: 5000 });
+    const e1 = await page.evaluate(() => window.__MOCK.ledgerSaved[1].transactions.find((t) => t.id === 'e1'));
+    if (e1.payment !== 'electric') throw new Error(`Link saved ${JSON.stringify(e1)}`);
+    await page.waitForSelector('.fx-links', { state: 'detached', timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Electric Co") .fx-txpays:has-text("pays Electric")', { timeout: 5000 });
+  } },
+  // A transaction typed in links itself to what it plainly pays, saying so; picking None keeps it from being offered again.
+  { name: 'Finances: a typed transaction links itself to the planned payment it pays', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Netflix');
+    await page.fill('#finSheet label:has-text("Amount") input', '15.49');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-10-29');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Netflix, planned $15.49")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Pays a planned payment") select')) !== 'netflix') throw new Error('the pick does not show the link');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Netflix'));
+    if (t.payment !== 'netflix' || t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+    // Peloton, with None picked: it pays nothing planned, and says so.
+    await page.click('#finRoot .toolbar button:text-is("Add a transaction")');
+    await page.fill('#finSheet label:has-text("Paid to") input', 'Peloton');
+    await page.fill('#finSheet label:has-text("Amount") input', '44');
+    await page.fill('#finSheet label:has-text("Day") input', '2026-11-04');
+    await page.waitForSelector('#finSheet .fx-looks:has-text("Looks like Peloton")', { timeout: 5000 });
+    await page.selectOption('#finSheet label:has-text("Pays a planned payment") select', '');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    t = await page.evaluate(() => window.__MOCK.ledgerSaved.at(-1).transactions.find((q) => q.payee === 'Peloton'));
+    if (t.payment || !t.notPlanned) throw new Error(`saved ${JSON.stringify(t)}`);
+  } },
   // A bank's wording made the name a person writes, each with its logo where it has one; one kept in the ledger as the bank
   // wrote it still shows its logo.
   { name: "Finances: a bank's wording comes in as the payee's own name, with its logo", screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'raw1', date: '2026-10-29', account: 'chk', amount: -15.49, payee: 'NETFLIX.COM' }] } }, run: async (page) => {
@@ -5209,6 +7023,23 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
     if (saved.waiting?.join() !== 'payment:hoa:2026-10-28,pay:jordan:2026-10-26' || saved.notYet) throw new Error(`waiting ${saved.waiting}, notYet ${saved.notYet}`);
   } },
+  // A bill due the day the balances were typed in comes out that day; Already in says the balance has it, and is kept.
+  { name: 'Finances: a bill on the day the balances were typed comes out, unless Already in', screen: 'finances', mock: { finances: { ...since, plan: { ...since.plan, waiting: ['payment:hoa:2026-10-28'] }, since: [
+    { key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true },
+    ...since.since,
+  ] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("due the day the balance was typed") [role=radio][aria-checked=true]:text-is("Comes out")', { timeout: 5000 });
+    if (!(await page.textContent('.fx-since .fx-lead')).includes('A bill due that day still comes out')) throw new Error('the list does not say a bill that day comes out');
+    await page.click('.fx-since li:has-text("Netflix") [role=radio]:text-is("Already in")');
+    await page.waitForFunction(() => window.__MOCK.financesSaved?.length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.financesSaved[0]);
+    // What waits stays waiting; the bill is now in the balance.
+    if (saved.inBalance?.join() !== 'payment:netflix:2026-10-25' || saved.waiting?.join() !== 'payment:hoa:2026-10-28') throw new Error(`in the balance ${saved.inBalance}, waiting ${saved.waiting}`);
+  } },
+  { name: 'The phone, view only: what is taken as done is shown, with nothing to mark', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...since, readOnly: true, since: [{ key: 'payment:netflix:2026-10-25', date: '2026-10-25', payment: 'netflix', amount: 15.49, typed: true, inBalance: true }, ...since.since] } }, run: async (page) => {
+    await page.waitForSelector('.fx-since li:has-text("Netflix"):has-text("already in the balance")', { timeout: 5000 });
+    if (await page.$('.fx-since [role=radio]')) throw new Error('a phone that may only look can mark what is taken as done');
+  } },
   { name: 'Finances: typed changes are not dropped by one Cancel or Escape', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Name") input', 'Gym');
@@ -5221,6 +7052,31 @@ const smokes = [
     await page.click('#finRoot .toolbar button:text-is("Add a payment")');
     await page.click('#finSheet button:text-is("Cancel")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+  } },
+  // Cancel asked about, then Save: what stops the save is what shows, not the Cancel's question.
+  { name: 'Finances: a Save after Cancel says what stops it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
+    await page.fill('#finSheet label:has-text("Name") input', 'Gym');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:text-is("Type how much it is.")', { timeout: 5000 });
+    // And Cancel asks again before it drops what was typed.
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet:not([hidden]) .formerr:has-text("Nothing here is saved")', { timeout: 5000 });
+  } },
+  // A filter whose last transaction is deleted lets go: its menu would say Every category over an empty list.
+  { name: 'Finances: a transaction filter lets go when its last transaction goes', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Category"]', 'Gas');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Shell") button');
+    await page.click('#finSheet button:text-is("Delete")');
+    await page.click('#finSheet button:text-is("Click again to delete")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-transactions :text("None match")')) throw new Error('filtered by a category with nothing in it');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== '') throw new Error('the menu still has a pick');
   } },
   { name: 'Finances: amounts in euros, typed the European way', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, currency: 'EUR' } } }, run: async (page) => {
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("€")', { timeout: 5000 });
@@ -5262,7 +7118,7 @@ const screens = [
   { name: 'Status, filtered by name', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.type('me'); await page.waitForSelector('.filterbox input'); } },
   { name: 'Command palette, an app typed', screen: 'status', before: async (page) => { await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 }); await page.keyboard.press((await page.evaluate(() => /Mac/.test(navigator.platform))) ? 'Meta+k' : 'Control+k'); await page.keyboard.type('navi'); await page.waitForSelector('.palette [role=option]'); } },
   { name: 'Status after a crash', screen: 'status', mock: { crash: crashed } },
-  { name: 'Choose stacks', screen: 'choose' },
+  { name: 'Choose apps', screen: 'choose' },
   { name: 'Backups', screen: 'backups' },
   { name: 'Setup', screen: 'setup' },
   // The runtime down and no folder yet; each system's hint and folder are its own (systems).
@@ -5300,6 +7156,7 @@ const screens = [
   { name: 'Finances, Update balances from Firefly III and Ghostfolio', screen: 'finances', mock: { status: runningToo('firefly-iii', 'ghostfolio'), firefly: [{ name: 'Chase Checking', balance: 2600, currency: 'USD' }, { name: 'BofA Savings', balance: 6550, currency: 'USD' }] }, before: async (page) => { await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 }); await page.click('#finSheet button:text-is("From Firefly III")'); await page.waitForSelector('#finSheet .fromapp [role=status]', { timeout: 5000 }); } },
   { name: 'Finances, Subscriptions', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 }); await page.click('#finRoot .fx-payments .seg button:has-text("Subscriptions")'); } },
   { name: 'Finances, Transactions', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'Finances, Transactions, two selected', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'Finances, Categories', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Categories")'); await page.waitForSelector('#finSheet .catlist'); } },
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
@@ -5320,6 +7177,7 @@ const screens = [
   { name: 'The phone, Finances', screen: 'finances', phone: ['companion', 'finances'] },
   { name: 'The phone, Finances, view only', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } } },
   { name: 'The phone, Finances, Transactions', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.waitForSelector('.fx-txday'); } },
+  { name: 'The phone, Finances, Transactions, two selected', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Select")'); await page.click('.fx-txday li.opens >> nth=0'); await page.click('.fx-txday li.opens >> nth=2'); await page.waitForSelector('.fx-txpick :text("2 transactions selected")'); } },
   { name: 'The phone, Finances, Reports', screen: 'finances', phone: ['companion', 'finances'], mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'The phone, Finances, Calendar', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
 ];
@@ -5354,6 +7212,9 @@ async function open(browser, s, look = {}) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.addInitScript({ content: `window.__MOCK = ${JSON.stringify({ ...mock, ...phoneMock(s.phone), ...look.mock, ...s.mock, host: { ...mock.host, ...look.mock?.host, ...s.mock?.host }, screen: s.screen })};\n${readFileSync(join(here, 'mock.js'), 'utf8')}` });
+  // What happened overnight shows only in the morning: kept hidden in every case but its own (mock.overnight), so a
+  // case or a picture is the same whatever the hour it runs at.
+  if (!s.mock?.overnight) await page.addInitScript(() => { try { localStorage.setItem('homelab.overnightHidden', new Date().toDateString()); } catch { /* none */ } });
   await page.goto(pathToFileURL(join(root, 'web', 'dist', 'index.html')).href);
   await page.evaluate((c) => document.documentElement.classList.add('preview', ...c), s.phone || []);
   await page.waitForTimeout(600);
@@ -5390,12 +7251,18 @@ async function keep(page, label) {
 // Clicks through every smoke check in light and dark; then each screen, as
 // each system, in both themes, with and without more contrast, through axe
 // and a layout check. `--smoke light` or `--smoke dark` runs one theme;
-// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_DEBUG=1
-// prints what axe measured, and SMOKE_SHOTS=folder keeps a picture of each
-// screen that passed (for a pull request).
+// SMOKE_ONLY=text runs the checks whose name has it, SMOKE_SHARD=i/n runs
+// every nth from the ith (CI runs n at once: together they are every
+// check), SMOKE_DEBUG=1 prints what axe measured, and SMOKE_SHOTS=folder
+// keeps a picture of each screen and each check that passed (for a pull
+// request's after; a failing check's picture in app/preview/failures is
+// its before).
 if (process.argv.includes('--smoke')) {
   const schemes = ['light', 'dark'].filter((t) => !process.argv.includes(t === 'light' ? 'dark' : 'light'));
-  const picked = (label) => !process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY);
+  const [shard, shards] = (process.env.SMOKE_SHARD || '1/1').split('/').map(Number);
+  if (!(shards >= 1 && shard >= 1 && shard <= shards)) throw new Error(`SMOKE_SHARD is i/n, not ${process.env.SMOKE_SHARD}`);
+  let seen = 0;
+  const picked = (label) => (!process.env.SMOKE_ONLY || label.includes(process.env.SMOKE_ONLY)) && seen++ % shards === shard - 1;
   const browser = await chromium.launch();
   let failed = 0;
   for (const scheme of schemes) {
@@ -5406,6 +7273,11 @@ if (process.argv.includes('--smoke')) {
         await s.run(page);
         if (errors.length) throw new Error(errors.join('; '));
         console.log('ok  ', `${s.name} (${scheme})`);
+        // The screen as the check left it, for a pull request's after (a failing check's is its before).
+        if (process.env.SMOKE_SHOTS) {
+          mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+          await page.screenshot({ path: join(process.env.SMOKE_SHOTS, `${scheme}-${s.name}`.replace(/[^\w.-]+/g, '-').slice(0, 120) + '.png'), fullPage: true });
+        }
       } catch (e) {
         failed++;
         // The first line, and what it was waiting for (Playwright's call log), so a timeout says which step.

@@ -231,7 +231,7 @@ func TestFixLeavesWhatWasStoppedOnPurpose(t *testing.T) {
 	fakeDocker(t, ctrs)
 	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=")
 	out, _ := homelabCmd(t, root, "", "fix")
-	if !strings.Contains(out, "start the baseline apps that are down") || !strings.Contains(out, "Navidrome") {
+	if !strings.Contains(out, "start the homelab's own apps that are down") || !strings.Contains(out, "Navidrome") {
 		t.Fatalf("without a record, a stopped Navidrome should be down:\n%s", out)
 	}
 	if err := (stopped.Record{"navidrome": {Since: time.Now()}}).Save(stopped.Path(root)); err != nil {
@@ -240,5 +240,39 @@ func TestFixLeavesWhatWasStoppedOnPurpose(t *testing.T) {
 	out, _ = homelabCmd(t, root, "", "fix")
 	if strings.Contains(out, "Navidrome") {
 		t.Fatalf("Fix it offers to start an app stopped on purpose:\n%s", out)
+	}
+}
+
+// An app stopped on purpose while the awake job starts another one again
+// (a phone's Stop for a while, during the seconds a start takes) stays in
+// the record: the awake job does not save its older copy over it, which
+// would let the watchdog start the app the person just stopped.
+func TestStartWhenDueKeepsAStopMadeMeanwhile(t *testing.T) {
+	calls := fakeDocker(t, []docker.FakeContainer{
+		{Name: "homelab_media_automation-sonarr-1", Image: "x", Project: "homelab_media_automation", Service: "sonarr"},
+		{Name: "homelab_media_automation-radarr-1", Image: "x", Running: true, Health: "healthy", Project: "homelab_media_automation", Service: "radarr"},
+	})
+	root, _ := repoCopy(t)
+	now := time.Now()
+	path := stopped.Path(root)
+	if err := (stopped.Record{"sonarr": {Since: now.Add(-2 * time.Hour), Until: now.Add(-time.Minute)}}).Save(path); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("FAKE_START_STOPS", path+"=radarr")
+	h, err := newHomelab(&ui.UI{Out: &bytes.Buffer{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client, err := h.docker(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	containers, _ := client.Containers(context.Background())
+	h.startWhenDue(context.Background(), client, containers, now)
+	if log := readCalls(t, calls); !strings.Contains(log, "start sonarr") {
+		t.Fatalf("sonarr was not started:\n%s", log)
+	}
+	if got := strings.Join(stopped.Load(path).IDs(), ","); got != "radarr" {
+		t.Errorf("the record holds %q after the awake job, want radarr (stopped meanwhile)", got)
 	}
 }

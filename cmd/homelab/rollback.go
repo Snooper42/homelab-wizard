@@ -26,6 +26,7 @@ import (
 func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, containers []docker.Container, auto bool) []string {
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this run changed
 	report := detect.Analyze(h.catalog, containers)
 	now := time.Now()
 	seen := map[string]updates.Seen{}
@@ -108,7 +109,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 	if pruned {
 		_ = client.PruneDangling(ctx)
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		h.ui.Warn("could not save the update history: %v", err)
 	}
 	// .env keeps the version each app now runs: after an update, a
@@ -123,7 +124,7 @@ func (h *homelab) trackUpdates(ctx context.Context, client *docker.Client, conta
 // (putBack), and today's is set aside in the folder it returns.
 func (h *homelab) doRollback(ctx context.Context, client *docker.Client, a *catalog.App, ctr docker.Container, hist *updates.History, cp *backup.UpdateCopy) (aside string, err error) {
 	r := hist.Apps[a.ID]
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return "", fmt.Errorf("no earlier image of %s is kept (one is kept for a week after each update)", a.ID)
 	}
 	if err := client.Tag(ctx, updates.RollbackRef(a.ID), r.Ref); err != nil {
@@ -208,11 +209,12 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	path := updates.HistoryPath(h.root)
 	hist := updates.LoadHistory(path)
+	was := hist.Clone() // to save only what this rollback changed
 	r := hist.Apps[a.ID]
 	if *dataOnly {
 		return h.restoreData(ctx, client, a, r, *apply)
 	}
-	if r == nil || r.Previous == "" {
+	if !hist.CanRollBack(a.ID) {
 		return fmt.Errorf("no earlier image of %s is kept: one is kept for a week after each update", a.Name())
 	}
 	cp, haveCopy := h.copyFor(a.ID, r.Previous)
@@ -234,13 +236,13 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 	}
 	aside, err := h.doRollback(ctx, client, a, ctr, &hist, cp)
 	if err != nil {
-		_ = hist.Save(path)
+		_ = updates.SaveChanges(path, was, hist)
 		return err
 	}
 	if aside != "" {
 		u.OK("its data is as it was before the update; what it held since is in %s", h.rel(aside))
 	}
-	if err := hist.Save(path); err != nil {
+	if err := updates.SaveChanges(path, was, hist); err != nil {
 		return err
 	}
 	h.keepVersions(ctx, client) // .env keeps the version it went back to
@@ -287,7 +289,20 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 		return err
 	}
 	h.trackUpdates(ctx, client, containers, false)
-	report := detect.Analyze(h.catalog, containers)
+	dumps := h.dumpsFor(detect.Analyze(h.catalog, containers), apps)
+	if len(dumps) == 0 {
+		return nil
+	}
+	h.ui.Info("dumping %s first", strings.Join(dumps, ", "))
+	if err := h.backup(ctx, []string{"--apply", "--apps", strings.Join(dumps, ",")}); err != nil {
+		return fmt.Errorf("the dump before the update failed, so nothing was updated: %w", err)
+	}
+	return nil
+}
+
+// dumpsFor is which databases to dump before changing apps: each running
+// app's own and those of the databases it uses, once each.
+func (h *homelab) dumpsFor(report *detect.Report, apps []*catalog.App) []string {
 	var dumps []string
 	for _, a := range apps {
 		for _, id := range append([]string{a.ID}, a.DependsOn...) {
@@ -299,12 +314,26 @@ func (h *homelab) beforeUpdate(ctx context.Context, client *docker.Client, apps 
 			}
 		}
 	}
+	return dumps
+}
+
+// dumpBefore dumps the databases of apps about to start again on changed
+// settings (a new address, signing in with Pocket ID, settings changed
+// by hand), so what they hold just before is in the backups folder beside
+// the nightly dumps, rotated out as they are. what names the change; a
+// dump that fails stops it, as before an update.
+func (h *homelab) dumpBefore(ctx context.Context, client *docker.Client, apps []*catalog.App, what string) error {
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return err
+	}
+	dumps := h.dumpsFor(detect.Analyze(h.catalog, containers), apps)
 	if len(dumps) == 0 {
 		return nil
 	}
-	h.ui.Info("dumping %s first", strings.Join(dumps, ", "))
+	h.ui.Info("dumping %s first, before %s", strings.Join(dumps, ", "), what)
 	if err := h.backup(ctx, []string{"--apply", "--apps", strings.Join(dumps, ",")}); err != nil {
-		return fmt.Errorf("the dump before the update failed, so nothing was updated: %w", err)
+		return fmt.Errorf("the dump before %s failed, so it was not done: %w", what, err)
 	}
 	return nil
 }

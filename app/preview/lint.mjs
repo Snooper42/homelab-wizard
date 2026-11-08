@@ -118,4 +118,12 @@ if (logos.length < 100 || faint.length) {
   console.error(logos.length < 100 ? `read only ${logos.length} logos from web/src/finances/logos.ts` : `Finances logos under 4.5:1 (take the other ink, or a shade darker):\n  ${faint.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, blocks drawn by web/src/parts, colours as tokens only, ${logos.length} logos at 4.5:1`);
+// A category's icon in its colour on its tint reads at 4.5:1, in light and dark (style.css's --cat-N-soft and --cat-N-ink).
+const sheet = readFileSync(join(root, 'web', 'dist', 'style.css'), 'utf8');
+const tints = [...sheet.matchAll(/--cat-(\d)-soft:(#[0-9a-fA-F]{6}); --cat-\1-ink:(#[0-9a-fA-F]{6});/g)];
+const pale = tints.filter(([, , soft, ink]) => ratio(soft, ink) < 4.5).map(([, n, soft, ink]) => `--cat-${n}: ${ink} on ${soft} reads at ${ratio(soft, ink).toFixed(2)}:1`);
+if (tints.length < 16 || pale.length) {
+  console.error(tints.length < 16 ? `read only ${tints.length} category tints from style.css (8 in light and 8 in dark)` : `category colours under 4.5:1 on their tints:\n  ${pale.join('\n  ')}`);
+  process.exit(1);
+}
+console.log(`frontend ok: ${scripts.length} scripts parse, ${used.size} IDs found, app.ts ${appLines} lines, nothing built by hand, blocks drawn by web/src/parts, colours as tokens only, ${logos.length} logos and ${tints.length} category colours at 4.5:1`);

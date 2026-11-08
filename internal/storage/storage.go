@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/pgexec"
 )
 
@@ -104,7 +105,7 @@ func (r Record) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(r, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o600)
+	return lockedfile.Write(path, append(data, '\n'), 0o600)
 }
 
 // immichQueries read each person's quota usage, which Immich keeps up to

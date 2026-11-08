@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	goruntime "runtime"
 	"strings"
 	"testing"
@@ -124,6 +125,50 @@ func TestTidyArgs(t *testing.T) {
 	}
 }
 
+// The screen's arguments are the few the screen sends: never one that
+// points an engine at another folder (--library), other settings
+// (--config), or files of the page's choosing, so a bug in the page can't
+// have Tidy Up sort, rename, or throw away anything but the libraries.
+func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
+	for _, c := range []struct {
+		kind, action string
+		args         []string
+		want         string
+	}{
+		{"music", "lyrics", []string{"--check"}, "media music lyrics --check --events json"},
+		{"trash", "restore", []string{"scrubber-scan-1730770000000000000"}, "media restore scrubber-scan-1730770000000000000 --events json"},
+		{"books", "apply", []string{"--skip", "1049"}, "media books apply --skip 1049 --events json"},
+		// Tidy lyrics (Overview's and Music's): the songs' own lyrics set right, asking LRCLIB nothing.
+		{"music", "lyrics", []string{"--tidy"}, "media music lyrics --tidy --events json"},
+	} {
+		got, err := tidyArgs(c.kind, c.action, c.args, false)
+		if err != nil || strings.Join(got, " ") != c.want {
+			t.Errorf("%s %s %v: %v %v", c.kind, c.action, c.args, got, err)
+		}
+	}
+	for _, c := range []struct {
+		kind, action string
+		args         []string
+	}{
+		{"music", "run", []string{"--library", "/home/anna"}},
+		{"music", "run", []string{"--library=/home/anna"}},
+		{"movies", "scan", []string{"--config", "/tmp/other.json"}},
+		{"movies", "file", []string{"/home/anna/.ssh/id_ed25519"}},
+		{"books", "apply", []string{"--skip", "1,../2"}},
+		{"books", "apply", []string{"--skip"}},
+		{"trash", "restore", []string{"../../x"}},
+		{"trash", "restore", []string{"a-b-1", "a-b-2"}},
+		{"trash", "restore", nil},
+		// --tidy is music lyrics' alone.
+		{"movies", "scan", []string{"--tidy"}},
+		{"music", "run", []string{"--tidy"}},
+	} {
+		if got, err := tidyArgs(c.kind, c.action, c.args, false); err == nil {
+			t.Errorf("%s %s %v went through: %v", c.kind, c.action, c.args, got)
+		}
+	}
+}
+
 func TestTidyRunSendsTheEngineEvents(t *testing.T) {
 	a, w := testApp(t)
 	if err := a.TidyRun("movies", "scan", nil, false); err != nil {
@@ -149,7 +194,7 @@ func TestTidyRunSaysWhyItStopped(t *testing.T) {
 		t.Skip("the Windows launcher's echo can't write ✗")
 	}
 	a, w := testApp(t)
-	err := a.TidyRun("movies", "scan", []string{"unready"}, false)
+	err := a.TidyRun("movies", "scan", []string{"--check"}, false)
 	if err == nil || err.Error() != "ffmpeg and ffprobe: Not installed. Install ffmpeg: brew install ffmpeg in Terminal" {
 		t.Fatalf("the error: %v", err)
 	}
@@ -231,5 +276,66 @@ func TestDriveName(t *testing.T) {
 		if got := driveName(c.path, c.user); got != c.want {
 			t.Errorf("driveName(%q) = %q, want %q", c.path, got, c.want)
 		}
+	}
+}
+
+// A job another process runs (the agent's Collect): the lock, and where its log says it is.
+func TestTidyLockFollowsAJobItDidNotStart(t *testing.T) {
+	a, _ := testApp(t)
+	if got := a.TidyLock(); got.Lock != nil {
+		t.Fatalf("nothing running: %+v", got)
+	}
+	if err := os.MkdirAll(media.LogDir(a.root), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	log := filepath.Join(media.LogDir(a.root), "movies-collect-20261106-140200.jsonl")
+	if err := os.WriteFile(log, []byte(`{"type":"step","n":2,"total":2,"text":"Swapping in the smaller copies"}`+"\n"+`{"type":"progress","label":"Films","done":1,"total":4,"note":"Heat (1995)"}`+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := media.Acquire(a.root, "movies", "collect", log); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = media.Release(a.root) }()
+	got := a.TidyLock()
+	if got.Lock == nil || got.Lock.Kind != "movies" || got.Lock.Action != "collect" {
+		t.Fatalf("lock: %+v", got.Lock)
+	}
+	if got.Now.Step == nil || got.Now.Step.Text != "Swapping in the smaller copies" || got.Now.Progress == nil || got.Now.Progress.Note != "Heat (1995)" {
+		t.Errorf("where it is: %+v %+v", got.Now.Step, got.Now.Progress)
+	}
+}
+
+// Every job a button on Tidy Up sends, with the flags written into the screen's code, is one the app runs. The
+// preview's fake backend runs anything, so a smoke case can't see the app refuse a flag: Tidy lyrics sent --tidy,
+// which the app refused, and every smoke case passed.
+func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
+	call := regexp.MustCompile(`\brun\('([a-z]+)', '([a-z-]+)', \[([^\]]*)\]`)
+	flag := regexp.MustCompile(`'(--[a-z-]+)'`)
+	seen := 0
+	for _, f := range []string{"../web/src/tidy/Tidy.tsx", "../web/src/screens/tidy.ts"} {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, m := range call.FindAllStringSubmatch(string(b), -1) {
+			var args []string
+			for _, a := range flag.FindAllStringSubmatch(m[3], -1) {
+				args = append(args, a[1])
+			}
+			// --skip takes the books' ids, and Undo the run it puts back, which the screen fills in.
+			if len(args) == 1 && args[0] == "--skip" {
+				args = append(args, "1,2")
+			}
+			if m[1] == "trash" {
+				args = append(args, "scrubber-scan-1")
+			}
+			seen++
+			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
+				t.Errorf("%s: run(%q, %q, %v) is refused: %v", f, m[1], m[2], args, err)
+			}
+		}
+	}
+	if seen < 10 {
+		t.Fatalf("found only %d jobs the screen runs: the pattern no longer matches its code", seen)
 	}
 }

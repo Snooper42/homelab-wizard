@@ -17,6 +17,7 @@ internal/awake 78
 internal/battery 85
 internal/board 99
 internal/catalog 71
+internal/claim 91
 internal/companion 83
 internal/compose 79
 internal/core 83
@@ -62,6 +63,10 @@ internal/selfupdate 83  # target 80
 internal/settings 90
 internal/setup 79
 internal/sso 88  # target 70
+internal/started 91
+internal/turn 92
+internal/lockedfile 94
+internal/applist 83
 internal/stopped 92
 internal/storage 86
 internal/sysmem 89
@@ -71,3 +76,4 @@ internal/transfer 99
 internal/updates 75
 internal/upgrade 86
 internal/wiring 79
+internal/proc 93

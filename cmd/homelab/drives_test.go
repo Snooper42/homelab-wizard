@@ -173,3 +173,41 @@ func TestResumeOnPower(t *testing.T) {
 		t.Fatalf("calls:\n%s", log)
 	}
 }
+
+// The drives the apps wait for: only containers Docker could not start for
+// a missing folder, each drive once; and whether one is back.
+func TestDrivesWaitedFor(t *testing.T) {
+	base := docker.Container{Labels: map[string]string{"com.docker.compose.project": "homelab_media"}, RestartPolicy: "unless-stopped", StartedAt: time.Now()}
+	books := base
+	books.Error, books.Binds = "bind source path does not exist: /Volumes/Hobbies/Books", []string{"/Volumes/Hobbies/Books"}
+	films := base
+	films.Error, films.Binds = "bind source path does not exist: /Volumes/Hobbies/movies", []string{"/Users/you/Homelab/data", "/Volumes/Hobbies/movies"}
+	photos := base
+	photos.Error, photos.Binds = "bind source path does not exist: /Volumes/Photos/library", []string{"/Volumes/Photos/library"}
+	byHand := base
+	byHand.Binds = []string{"/Volumes/Archive/x"}
+	running := base
+	running.Running, running.Binds = true, []string{"/Volumes/Music/x"}
+	unplugged := map[string]bool{"/Volumes/Hobbies": true, "/Volumes/Photos": true, "/Volumes/Archive": true}
+	missing := func(paths []string) string {
+		for _, p := range paths {
+			for d := range unplugged {
+				if strings.HasPrefix(p, d+"/") {
+					return d
+				}
+			}
+		}
+		return ""
+	}
+	got := drivesWaitedFor([]docker.Container{books, films, photos, byHand, running}, missing)
+	if strings.Join(got, ",") != "/Volumes/Hobbies,/Volumes/Photos" {
+		t.Fatalf("waited for: %v", got)
+	}
+	mounted := func(d string) bool { return d == "/Volumes/Photos" }
+	if !driveBack(got, mounted) {
+		t.Error("Photos is back, but not seen")
+	}
+	if driveBack([]string{"/Volumes/Hobbies"}, mounted) || driveBack(nil, mounted) {
+		t.Error("a drive still away seen as back")
+	}
+}

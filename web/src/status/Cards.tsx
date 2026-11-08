@@ -4,14 +4,70 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
-import { ago, never } from '../format';
+import { ago, clockText, dayText, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
 import { Row, Rows, type Tone } from '../parts/Row';
+import { attackDetail, attackFrom, attackWords } from './attack';
 
 export interface WatchdogProps {
   w: health.Summary;
+  /** The stopped apps it doesn't check (stopped, not on purpose): said beside "All checks passed". */
+  unchecked?: string[];
   openSetup: () => void;
   fix: () => void;
+  /** Stops an app by its id: the memory card's Stop. */
+  stop?: (id: string) => void;
+  /** Snoozes a failing check's alerts for hours (0: alerts again now). */
+  snooze?: (check: string, hours: number) => void;
+}
+
+/** When a snooze ends, in words: "3:40 PM" today, "Sat 9:15 AM" after. */
+const wakeText = (t: string) => {
+  const d = new Date(t);
+  return d.toDateString() === new Date().toDateString() ? clockText(d) : `${dayText(d, { weekday: 'short' })} ${clockText(d)}`;
+};
+
+/**
+ * Snooze on a failing check: no alerts about it for an hour or a day, for a
+ * failure you already know of. The watchdog goes on checking it, and alerts
+ * when the snooze ends if it still fails.
+ */
+function SnoozePick({ check, until, snooze }: { check: string; until?: string; snooze: (check: string, hours: number) => void }) {
+  return (
+    <select class="snoozepick" aria-label={`Snooze the alerts about ${check}`} value="" onChange={(e) => { const v = e.currentTarget.value; if (v !== '') snooze(check, Number(v)); }}>
+      <option value="" disabled>{until ? `Snoozed until ${wakeText(until)}` : 'Snooze…'}</option>
+      <option value="1">For an hour</option>
+      <option value="24">For a day</option>
+      {until && <option value="0">Alert again now</option>}
+    </select>
+  );
+}
+
+/** Memory as the alert says it, in the binary units Docker sets it in: 2.1 GB, 900 MB. */
+export const memText = (n: number) => (n >= 2 ** 30 ? `${(n / 2 ** 30).toFixed(1)} GB` : `${Math.round(n / 2 ** 20)} MB`);
+
+/**
+ * Memory nearly full: the apps have stayed above 90% of what Docker has
+ * long enough for the watchdog to alert (health.StepMemory). The biggest,
+ * each with Stop, until it comes down.
+ */
+function MemoryPressure({ m, stop }: { m: health.Memory; stop?: (id: string) => void }) {
+  const share = m.total ? Math.round((m.used / m.total) * 100) : 0;
+  return (
+    <div id="memoryPressure">
+      <div class="row more">
+        <span><span class="bad">Memory nearly full:</span> <span class="muted">the apps use {share}% of the {memText(m.total)} Docker has, high since {ago(m.since)}. Stop one you don't need now.</span></span>
+      </div>
+      <Rows>
+        {(m.biggest || []).map((a) => (
+          <Row key={a.name} dot="warn" title={a.name} end={<>
+            <span class="muted">{memText(a.bytes)}</span>
+            {a.id && stop && <button class="small memstop" aria-label={`Stop ${a.name}`} onClick={() => stop(a.id!)}>Stop</button>}
+          </>} />
+        ))}
+      </Rows>
+    </div>
+  );
 }
 
 /**
@@ -19,7 +75,7 @@ export interface WatchdogProps {
  * Duplicati job, and the CrowdSec bouncer, checked every 15 minutes by the
  * scheduled job. Failing checks are the ones it alerted about.
  */
-export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
+export function Watchdog({ w, unchecked = [], openSetup, fix, stop, snooze }: WatchdogProps) {
   if (never(w.lastRun)) {
     return <Head title="Watchdog"><span class="muted">It checks every app, address, and backup every 15 minutes once the jobs are installed. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span></Head>;
   }
@@ -31,8 +87,10 @@ export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
         <span>
           {failing.length ? <span class="bad">{failing.length} of {w.checks} checks failing</span> : <span class="ok">✓ All {w.checks} checks passed</span>}
           <span class="muted">{w.pending && !failing.length ? `, ${w.pending} checked again next run` : ''} · {ago(w.lastRun)}</span>
+          {!!unchecked.length && <span class="warn unchecked"> · Not checked while stopped: {unchecked.join(', ')}</span>}
         </span>
       </Head>
+      {w.memory && <MemoryPressure m={w.memory} stop={stop} />}
       {late && <div class="muted more">It has not run since {ago(w.lastRun)}. Setup › Install the jobs schedules it every 15 minutes.</div>}
       {!!failing.length && (
         <div class="row more">
@@ -42,7 +100,11 @@ export function Watchdog({ w, openSetup, fix }: WatchdogProps) {
       )}
       {!!failing.length && (
         <Rows>
-          {failing.map((f) => <Row key={f.name} dot="bad" title={f.name} sub={f.problem} when={ago(f.since)} whenTitle="Failing since" />)}
+          {failing.map((f) => {
+            const until = w.snoozed?.[f.name];
+            return <Row key={f.name} dot="bad" title={f.name} sub={until ? `${f.problem}. No alerts about it until ${wakeText(until)}` : f.problem} when={ago(f.since)} whenTitle="Failing since"
+              end={snooze && <SnoozePick check={f.name} until={until} snooze={snooze} />} />;
+          })}
         </Rows>
       )}
     </>
@@ -70,7 +132,7 @@ export function Protection({ p, fix }: { p: crowdsec.Protection; fix: () => void
       {!!recent.length && (
         <Rows>
           {recent.slice(0, 3).map((a, i) => (
-            <Row key={i} dot={a.banned ? 'bad' : ''} title={a.scenario} sub={[a.ip, a.country, a.network].filter(Boolean).join(' · ')}
+            <Row key={i} dot={a.banned ? 'bad' : ''} title={<span title={attackDetail(a)}>{attackWords(a.scenario)}</span>} sub={attackFrom(a)}
               end={a.banned && <span class="badge">Banned</span>} when={ago(a.when)} />
           ))}
         </Rows>

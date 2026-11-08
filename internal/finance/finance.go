@@ -19,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Account kinds. Cards and loans hold what is owed; the rest what is there.
@@ -62,12 +64,17 @@ type Plan struct {
 	Holidays string `json:"holidays,omitempty"`
 	// Waiting are paychecks and payments dated on or before today that the
 	// balances do not have yet, by key (Past.Key): each comes today. Any
-	// other one dated on the day its balance was typed in is taken to be in
-	// it, and one dated after that and before today to have happened.
+	// other paycheck dated on the day its balance was typed in is taken to
+	// be in it (a payment comes out that day, unless InBalance says), and
+	// one dated after that and before today to have happened.
 	Waiting []string `json:"waiting,omitempty"`
 	// NotYet is a payday whose checks were not in the balances that day
 	// (YYYY-MM-DD): what Waiting was before it. It is still read.
 	NotYet string `json:"notYet,omitempty"`
+	// InBalance are payments dated on the day their balance was typed in
+	// that the household says it has already, by key (Past.Key): nothing
+	// more comes out for them. Any other payment that day still comes out.
+	InBalance []string `json:"inBalance,omitempty"`
 	// Logos are the household's own images for a brand, by its key ("chase"),
 	// or for a payment or account with none, by "name:" and its name in
 	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the
@@ -104,6 +111,11 @@ type Plan struct {
 	// a screenshot or a screen others can see. Kept in the plan so each
 	// device that shows it follows; none (older files) shows them.
 	HideAmounts bool `json:"hideAmounts,omitempty"`
+	// HoldingsRead is when the investments were last read from Ghostfolio
+	// (RFC 3339), none before the first Read now. After it, Finances reads
+	// them again on opening once a day, unless ReadByHand.
+	HoldingsRead string `json:"holdingsRead,omitempty"`
+	ReadByHand   bool   `json:"readByHand,omitempty"`
 	// Rev is the file as it was read (never written to it): Save refuses
 	// a plan read before another device saved, so one edit cannot quietly
 	// undo another. Empty skips the check.
@@ -183,6 +195,11 @@ type Account struct {
 	Bought   float64 `json:"bought,omitempty"`
 	BoughtOn string  `json:"boughtOn,omitempty"`
 	Holds    string  `json:"holds,omitempty"`
+	// Holdings are what an investment account holds, as Ghostfolio last
+	// read them (holdings.go); Ghostfolio is the name of its account there
+	// when the household matched it by hand, its own name not matching.
+	Holdings   []Holding `json:"holdings,omitempty"`
+	Ghostfolio string    `json:"ghostfolio,omitempty"`
 }
 
 // Cancelled is a payment stopped because an app on the homelab does its
@@ -233,7 +250,8 @@ func (a *Account) record() {
 func (a Account) Owed() float64 { return a.Balance + a.Pending }
 
 // Payment is something that comes out on a schedule: a bill, a
-// subscription, a card's payment, a transfer to savings.
+// subscription, a card's payment, a transfer to savings; or, with a
+// Payer, money that comes in from someone outside the household.
 type Payment struct {
 	ID       string   `json:"id"`
 	Name     string   `json:"name"`
@@ -259,6 +277,11 @@ type Payment struct {
 	// suggests one from its brand or name. One this version does not know
 	// is kept as it is, so a newer one's choice survives a save here.
 	Type string `json:"type,omitempty"`
+	// Payer is someone outside the household who sends it ("Jamie", for a
+	// share of the mortgage): it comes into To (checking when empty) on its
+	// day, out of none of the household's accounts, and starts no pay
+	// period as a paycheck does.
+	Payer string `json:"payer,omitempty"`
 }
 
 // Path is the plan in the homelab folder; the nightly backup copies data/*.json.
@@ -320,26 +343,30 @@ func Save(path string, p Plan) (Plan, error) {
 func write(path, was string, data []byte) (string, error) {
 	saving.Lock()
 	defer saving.Unlock()
-	if was != "" {
-		now := noFile
-		if old, err := os.ReadFile(path); err == nil {
-			now = rev(old)
-		} else if !os.IsNotExist(err) {
-			return "", err
-		}
-		if now != was {
-			return "", ErrChanged
-		}
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return "", err
-	}
 	data = append(data, '\n')
-	tmp := path + ".new"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+	// Checked and written under the lock beside the file, which the other
+	// process (the app, or the phones' server) takes too.
+	var refused error
+	err := lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		if was != "" {
+			now := noFile
+			if old != nil {
+				now = rev(old)
+			}
+			if now != was {
+				refused = ErrChanged
+				return nil, false
+			}
+		}
+		return data, true
+	})
+	if err == nil {
+		err = refused
+	}
+	if err != nil {
 		return "", err
 	}
-	return rev(data), os.Rename(tmp, path)
+	return rev(data), nil
 }
 
 var notID = regexp.MustCompile(`[^a-z0-9]+`)
@@ -382,6 +409,9 @@ func Clean(p Plan) (Plan, error) {
 		if err := cleanCar(a); err != nil {
 			return p, err
 		}
+		if err := cleanHoldings(a); err != nil {
+			return p, err
+		}
 		a.ID = id(a.ID, a.Name, "account")
 		sort.SliceStable(a.History, func(i, j int) bool { return a.History[i].Date < a.History[j].Date })
 		a.record()
@@ -397,6 +427,9 @@ func Clean(p Plan) (Plan, error) {
 	}
 	if p.Growth < -10 || p.Growth > 20 || math.IsNaN(p.Growth) {
 		return p, fmt.Errorf("growth of %v%% a year: between -10 and 20", p.Growth)
+	}
+	if _, err := time.Parse(time.RFC3339, p.HoldingsRead); p.HoldingsRead != "" && err != nil {
+		return p, fmt.Errorf("investments read at %q, which is no time", p.HoldingsRead)
 	}
 	if err := calendarError(p.CalendarKey); err != nil {
 		return p, err
@@ -499,6 +532,10 @@ func Clean(p Plan) (Plan, error) {
 		}
 		if x.Card != "" && x.Card == x.From {
 			return p, fmt.Errorf("%s: a card cannot pay itself off", x.Name)
+		}
+		x.Payer = strings.TrimSpace(x.Payer)
+		if x.Payer != "" && (x.From != "" || x.Card != "") {
+			return p, fmt.Errorf("%s: it comes from %s, so out of none of your accounts", x.Name, x.Payer)
 		}
 		if a := accounts[x.Card]; x.Card != "" && a.PaidEach {
 			return p, fmt.Errorf("%s: %s is paid off with each paycheck already; turn that off on the card, or delete this payment", x.Name, a.Name)

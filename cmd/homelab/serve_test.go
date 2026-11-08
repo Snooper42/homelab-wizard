@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/Snooper42/homelab-wizard/internal/companion"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
+	"github.com/Snooper42/homelab-wizard/internal/settings"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
 )
 
@@ -51,6 +55,21 @@ func TestPhoneCommands(t *testing.T) {
 	}
 	if out, code := homelabCmd(t, root, "", "phone", "finances", "Anna's iPhone"); code == 0 || !strings.Contains(out, "usage") {
 		t.Errorf("finances without a level (exit %d):\n%s", code, out)
+	}
+
+	// Until a time: listed with it, and taken off with never.
+	homelabCmd(t, root, "", "phone", "allow", "Anna's iPhone")
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "7d"); code != 0 || !strings.Contains(out, "may do more than look until") {
+		t.Errorf("until 7d (exit %d):\n%s", code, out)
+	}
+	if out, _ := homelabCmd(t, root, "", "phone", "list"); !strings.Contains(out, "can make changes until") {
+		t.Errorf("list does not say until when:\n%s", out)
+	}
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "never"); code != 0 || !strings.Contains(out, "until you change it") {
+		t.Errorf("until never (exit %d):\n%s", code, out)
+	}
+	if out, code := homelabCmd(t, root, "", "phone", "until", "anna's iphone", "soon"); code == 0 || !strings.Contains(out, "not a length of time") {
+		t.Errorf("until soon (exit %d):\n%s", code, out)
 	}
 }
 
@@ -183,5 +202,97 @@ func TestPhoneFinances(t *testing.T) {
 		if code, _ := call(editor, m, "[]"); code != 500 {
 			t.Errorf("%s with nothing: %d", m, code)
 		}
+	}
+}
+
+// Settings on a phone: the form as the computer lists it, secrets only set
+// or not; everyday settings change; secrets and the settings a phone
+// connects through are the computer's, and a refused change saves nothing.
+func TestPhoneSettings(t *testing.T) {
+	root, _ := repoCopy(t, "TZ=Europe/Lisbon", "HOMELAB_DOMAIN=example.com", "NPM_API_PASSWORD=hunter2hunter2", "PHONE_COMPANION=true")
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	methods := h.phoneMethods()
+	if !methods["Settings"].Private || !methods["SaveSettings"].Private || !methods["SaveSettings"].Change || methods["Settings"].Change {
+		t.Fatal("Settings must go over https only, and only a phone allowed changes may save them")
+	}
+	call := func(name string, args ...any) (any, error) {
+		t.Helper()
+		var raw []json.RawMessage
+		for _, a := range args {
+			b, _ := json.Marshal(a)
+			raw = append(raw, b)
+		}
+		v, _, err := methods[name].Call(context.Background(), raw)
+		return v, err
+	}
+	env := func() string {
+		data, _ := os.ReadFile(filepath.Join(root, ".env"))
+		return string(data)
+	}
+
+	v, err := call("Settings")
+	if err != nil {
+		t.Fatal(err)
+	}
+	form := v.(phoneSettings)
+	byKey := map[string]settings.Setting{}
+	for _, s := range form.Settings {
+		byKey[s.Key] = s
+	}
+	if byKey["TZ"].Value != "Europe/Lisbon" {
+		t.Errorf("TZ as the computer lists it: %+v", byKey["TZ"])
+	}
+	if pw := byKey["NPM_API_PASSWORD"]; !pw.Secret || !pw.Set || pw.Value != "" {
+		t.Errorf("a secret says only that it is set: %+v", pw)
+	}
+	only := strings.Join(form.ComputerOnly, " ")
+	for _, k := range []string{"NPM_API_PASSWORD", "COMPANION_PROXY_KEY", "HOMELAB_DOMAIN", "PHONE_COMPANION", "LAN_BIND_IP", "TAILSCALE_HOST", "TAILSCALE_AUTHKEY"} {
+		if !strings.Contains(" "+only+" ", " "+k+" ") {
+			t.Errorf("%s is not kept for the computer", k)
+		}
+	}
+	if strings.Contains(" "+only+" ", " TZ ") {
+		t.Error("TZ, an everyday setting, is kept for the computer")
+	}
+
+	if _, err := call("SaveSettings", map[string]string{"TZ": "America/Chicago", "BATTERY_SAVER": "false"}); err != nil {
+		t.Fatal(err)
+	}
+	if e := env(); !strings.Contains(e, "TZ=America/Chicago") || !strings.Contains(e, "BATTERY_SAVER=false") {
+		t.Fatalf("saved:\n%s", e)
+	}
+	before := env()
+	for _, c := range []struct {
+		values map[string]string
+		want   string
+	}{
+		{map[string]string{"NPM_API_PASSWORD": "mine-now-1234"}, "changed on the computer"},
+		{map[string]string{"HOMELAB_DOMAIN": "elsewhere.example"}, "changed on the computer"},
+		{map[string]string{"PHONE_COMPANION": "false"}, "changed on the computer"},
+		{map[string]string{"TAILSCALE_HOST": "elsewhere"}, "changed on the computer"},
+		{map[string]string{"TZ": "Asia/Tokyo", "LAN_BIND_IP": "10.9.9.9"}, "changed on the computer"},
+		{map[string]string{"NOT_A_SETTING": "1"}, "not a homelab setting"},
+		{map[string]string{"TZ": "Asia/Tokyo\nPHONE_COMPANION=false"}, "cannot span lines"},
+		{map[string]string{"TZ": strings.Repeat("a", 2000)}, "longer than"},
+		{map[string]string{}, "takes the settings"},
+	} {
+		_, err := call("SaveSettings", c.values)
+		if err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("SaveSettings %v: %v, want %q", c.values, err, c.want)
+		}
+		for _, value := range c.values {
+			if value != "" && err != nil && strings.Contains(err.Error(), value) {
+				t.Errorf("the error shows the value: %v", err)
+			}
+		}
+		if after := env(); after != before {
+			t.Errorf("a refused save changed .env (%v):\n%s", c.values, after)
+		}
+	}
+	if _, err := call("SaveSettings"); err == nil {
+		t.Error("SaveSettings without the settings")
 	}
 }

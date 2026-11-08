@@ -15,6 +15,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // Stop is one app stopped on purpose: when, and until when (zero: until
@@ -22,7 +24,15 @@ import (
 type Stop struct {
 	Since time.Time `json:"since"`
 	Until time.Time `json:"until,omitzero"`
+	// Why is who stopped it when not a person: KeptRestarting, the
+	// watchdog, after Docker restarted it Restarts times in an hour. It
+	// stays stopped until someone starts it, like one stopped by hand.
+	Why      string `json:"why,omitempty"`
+	Restarts int    `json:"restarts,omitempty"`
 }
+
+// KeptRestarting is the watchdog's stop of an app in a crash loop.
+const KeptRestarting = "restarting"
 
 // Record is every app stopped on purpose, by app ID.
 type Record map[string]Stop
@@ -42,7 +52,12 @@ func Load(path string) Record {
 	return r
 }
 
-// Save writes the record, or removes it when it holds nothing.
+// Save writes the record, or removes it when it holds nothing. It writes a
+// new file beside it and renames it in, so a process reading the record at
+// that moment (the watchdog, the battery saver) reads the old one or the new
+// one whole, never half a file that reads as "nothing stopped". To change
+// the record, use Update, which also keeps two writers from losing each
+// other's change.
 func (r Record) Save(path string) error {
 	if len(r) == 0 {
 		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
@@ -54,7 +69,30 @@ func (r Record) Save(path string) error {
 		return err
 	}
 	data, _ := json.MarshalIndent(r, "", "  ")
-	return os.WriteFile(path, append(data, '\n'), 0o644)
+	return lockedfile.Write(path, append(data, '\n'), 0o600)
+}
+
+// Update reads the record, lets change change it, and saves it when change
+// says it did, holding the lock beside the record the whole time
+// (internal/lockedfile), so a change made at the same moment by another
+// homelab process (the awake job, a phone's Stop for a while, homelab
+// stop) is never saved over.
+func Update(path string, change func(Record) bool) error {
+	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
+		r := Record{}
+		_ = json.Unmarshal(old, &r)
+		if r == nil {
+			r = Record{}
+		}
+		if !change(r) {
+			return nil, false
+		}
+		if len(r) == 0 {
+			return nil, true
+		}
+		data, err := json.MarshalIndent(r, "", "  ")
+		return append(data, '\n'), err == nil
+	})
 }
 
 // Has says whether id was stopped on purpose.

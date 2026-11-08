@@ -14,7 +14,8 @@ Everything that runs on its own, and how to check it is alive. Setup › **Sched
 |---|---|---|---|
 | startup | At login | `homelab up --apply --wait-media 15m` | Starts anything in the baseline that is not running; waits up to 15 minutes for the media drive first |
 | backup | Daily 03:30, or as soon as the machine is awake after a missed night | `homelab backup --apply` | Dumps every database, archives listed volumes, notes each app's image by its digest, copies `.env` and the homelab's own records (`data/*.json`, `data/people`, `data/sso`, `data/finance-receipts`: the household, phones, Finances and its receipts) into `recovery-staging`, keeps the newest 7 of each; alerts `duplicati-alerts` on failure. Also measures the app folders and each person's photos (Status › What the apps keep), records the day's savings, sends the monthly restore-test and vault-export reminders and Finances' reminders (a bill due tomorrow, a paycheck under the cushion, a yearly renewal, stale balances; each can be turned off in Finances), asks GitHub for homelab updates (for the menu bar), and on Sundays sends the weekly summary ([Monitoring](<Monitoring.md#weekly-summary>)) |
-| watchdog | Every 15 minutes | `homelab watchdog --quiet` | Checks the runtime, every app, the database copies, the off-site jobs, the CrowdSec bouncer, free disk space, and *with a domain* every public hostname ([Monitoring](<Monitoring.md#watchdog>)); alerts `tunnel-watchdog` when something breaks or recovers, and keeps 7 days of counts for the *% up this week* badges. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
+| watchdog | Every 15 minutes | `homelab watchdog --quiet` | Checks the runtime, every app, the database copies, the off-site jobs, the CrowdSec bouncer, free disk space, the apps' memory, and *with a domain* every public hostname ([Monitoring](<Monitoring.md#watchdog>)); alerts `tunnel-watchdog` when something breaks or recovers, and keeps 7 days of counts for the *% up this week* badges. Keeps each updated app's previous image for a week, and rolls back an update that stays unwell |
+| backup-check | Sundays from 07:00, or as soon as the machine is awake after | `homelab backup-check --quiet` | Duplicati's own Verify of each job that has run: a sample of its files at the destination downloaded and compared with the hashes it recorded. What it found is kept in `data/backup-check.json`; a damaged file makes the watchdog count that job as failing (and alert) and Backups say so beside it, until a check passes again. It runs beside the other parts, so the watchdog never waits for it |
 | awake | Always (from login) | `homelab awake` | Keeps the machine from sleeping while it is plugged in, so the apps stay reachable; the screen still turns off. On a Mac this is `caffeinate -s`, which a laptop on battery ignores. `KEEP_AWAKE=false` (Settings, or unticking **Keep this Mac/PC/computer awake while plugged in** in the menu bar item's or tray icon's menu) lets it sleep as set; the job follows the setting within a minute, either way. `homelab doctor` warns when the machine would sleep with nothing keeping it up (it reads the sleep setting on a Mac, in GNOME, and on Windows). Whatever `KEEP_AWAKE` says, it also starts the apps the battery saver paused within a minute of the machine being plugged in (`BATTERY_SAVER`) |
 | serve | Always (from login) | `homelab serve` | The phone companion on port 8099, home network and tailnet only ([Phone companion](<../services/system/Phone companion.md>)); `PHONE_COMPANION=false` turns it off |
 
@@ -32,6 +33,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 | After | An app updated 20 minutes to 6 hours ago that is unhealthy, restarting over and over, or whose page does not answer on two checks in a row is rolled back by the watchdog, its updates held, and an alert sent to the `watchtower` topic (`AUTO_ROLLBACK=false` turns this off). If it was never well after the update, its data from just before goes back with the image (nothing new can have been written); if it was well for a while, today's data stays and the alert says `homelab rollback <app> --data` puts the copy back |
 | What is new | `homelab updates notes <app>` lists the releases newer than the version it runs, with the start of each one's notes; `homelab update` prints one line per app, and the app's **Update** shows the notes before it goes ahead. They come from the GitHub project the image names (its `org.opencontainers.image.source` label, a `ghcr.io` name, or `releases:` in the app's `x-homelab`), kept 6 hours in `data/releases.json` |
 | Held | `homelab updates hold <app>` and `release <app>` (`UPDATES_HELD`), or an app's page › **Nightly updates**; a stopped app can be held too |
+| Its own days | `homelab updates days <app> sun`, or an app's page › **Only on Sundays**: the nightly run on another day leaves it out; `every` puts it back to each night. Kept in `data/update-days.json` (`{"immich": ["sun"]}`), not in `.env` |
 | Alerts | ntfy topic `watchtower` (the name it had under Watchtower, so phones already subscribed keep getting them): what each night updated, and each rollback |
 
 ### Who updates what
@@ -39,7 +41,7 @@ Check the agent with `./homelab schedule status` (installed, last exit code). Ea
 Every container falls into one of three groups, generated from the compose files: rebuilt (a locally built image), by hand (an `x-homelab` `pin` saying why, or a database or cache), or nightly (every other app). Each service note's table says the same for its app.
 
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
-### Nightly (70)
+### Nightly (69)
 
 The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
 
@@ -96,7 +98,6 @@ The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE
 | [Grocy](<../services/household/Grocy.md>) | `lscr.io/linuxserver/grocy:latest` |
 | [Homebox](<../services/household/Homebox.md>) | `ghcr.io/sysadminsmedia/homebox:latest` |
 | [Beszel](<../services/system/Beszel.md>) | `docker.io/henrygd/beszel:latest` |
-| [Beszel agent](<../services/system/Beszel agent.md>) | `docker.io/henrygd/beszel-agent:latest` |
 | [Cloudflare Tunnel](<../services/network/Cloudflare Tunnel.md>) | `cloudflare/cloudflared:latest` |
 | [Docmost](<../services/documents/Docmost.md>) | `docker.io/docmost/docmost:latest` |
 | [Firefly III](<../services/finance/Firefly III.md>) | `docker.io/fireflyiii/core:latest` |
@@ -124,7 +125,7 @@ Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it
 |---|---|---|
 | [Nginx Proxy Manager](<../services/network/Nginx Proxy Manager.md>) | `dockerfiles/npm-crowdsec` | Carries the CrowdSec bouncer; pulling the upstream image would silently drop it |
 
-### By hand (28)
+### By hand (29)
 
 Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).
 
@@ -132,6 +133,7 @@ Left out of the nightly update, each for the reason given. Update with a backup 
 |---|---|---|
 | [Kopia](<../services/system/Kopia.md>) | `kopia/kopia:0.23.1` | A backup engine reads and writes every copy you keep; set KOPIA_VERSION to a newer release after reading its notes, then ./homelab update kopia |
 | `docker-socket-proxy` | `ghcr.io/tecnativa/docker-socket-proxy:v0.5.0` | It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy |
+| [Beszel agent](<../services/system/Beszel agent.md>) | `docker.io/henrygd/beszel-agent:0.21.1` | It holds the Docker socket; set BESZEL_AGENT_VERSION to a newer release after reading its notes (keep it near Beszel's own version), then ./homelab update beszel-agent |
 | [MoneyMatter](<../services/finance/MoneyMatter.md>) | `letehaha/budget-tracker-fe:sha-f862f3d` | Pinned to the tested v0.30.2 build; read the release notes, then bump the frontend and backend tags together (its note) |
 | `moneymatter-backend` | `letehaha/budget-tracker-be:sha-f862f3d` | Pinned with the frontend; a new version can migrate the budget database, so it follows a backup |
 | `moneymatter-db` | `postgres:16` | A database or cache: a new major version needs a dump and restore (homelab db upgrade for PostgreSQL, else Runbooks) |

@@ -15,6 +15,7 @@ With no interval, /loop paces itself. Each round re-reads this file, so to steer
 These come before everything below; where they disagree with a later section, these win.
 
 - **State:** GitHub is the only source of truth: open PRs, remote branches, this file's order, the roadmap's *Built* marks. Never rely on a previous chat. Start each round with `git fetch origin`, a list of the open PRs, and `git ls-remote origin 'refs/heads/claude/*'`.
+- **The three accounts:** `.claude/prompts/lanes.md` sets who owns what, how each lane claims files, and the order PRs merge in. Read it at the start of every round once it is on main; where it and this file disagree, it wins. You are Account 1, and you merge last when two lanes' PRs are green at once.
 - **Lanes:** you own `claude/feature-*` branches and the roadmap's features. `claude/fix-*` is the maintenance account's lane, and the Library cleanup ("Tidy Up") branch belongs to its own session. Never push to, merge, or rebase a branch outside your lane. Library cleanup is not yours: leave its roadmap section and its files alone.
 - **Merging:** maintenance (`claude/fix-*`) PRs go first; if one is green, don't race it. Before squash-merging, if main moved since your last CI run, merge main in and let CI run again. Always pin `expectedHeadSha`. Each merge is one release, so merge one PR at a time.
 - **Hot files** (merging main into a branch):
@@ -29,6 +30,9 @@ These come before everything below; where they disagree with a later section, th
   - Read files by line range. Don't re-read what is already in context. Keep PR bodies to the template.
   - Ask the owner only about real product decisions. Otherwise pick, and put it under **Decisions to look at**.
 - **Save before you stop:** push before any long wait and at the end of every round. Nothing stays only in the container.
+- **Waiting on CI:** after opening a PR, `subscribe_pr_activity` on it and one `send_later` check-in about 50 minutes out. When it merges, delete the check-in and unsubscribe. A check-in that finds main moved merges main in and re-arms; it never merges on a CI run older than main.
+- **PR numbers:** pull requests and issues share one count, and other sessions take numbers too. Write `#PRn` in the docs until the PR exists; just before opening it, look at the newest PR *and* the newest issue, fill in the next number, and push that with the merge of main.
+- **A long session hands off:** when the chat has grown long (a summary of earlier turns, or the owner asks), end it cleanly. Push every branch. Update **Open now** below on your next PR's branch. Delete your check-ins, unsubscribe from your PR, and tell the owner to start a fresh session with the one-line command at the top. Nothing else carries over: GitHub is the state.
 
 ## Open items first
 
@@ -49,9 +53,43 @@ For each, oldest first, one at a time:
 
 The **one open pull request of yours at a time** rule still holds, so these go one by one. Only when the list is empty does **The order** go on. Re-check the list at the start of every round, since other sessions add to it.
 
-**Open now:** nothing of this loop's to ship. Cleared on Nov 3, 2026: #385 through #393 were merged (#391 folded into #393); on Nov 4–5, #395 through #402 and Export (#405). Three remote branches are left whose work is all on main (older copies of what #393 merged): `claude/feature-media-logic`, `claude/feature-tidy-duplicates`, `claude/feature-tidy-episodes`. The owner deletes them; list them in each report until they are gone. Still list what is open at the start of each round, as above: other sessions add to it.
+**Focus, the owner's call (Nov 6, 2026):** slow down on new features everywhere else. Work only on **Tidy Up**, then **Finances**:
+- **Tidy Up first:** the bugs the owner hits often, then usability, UX and UI: the Overview first, then every tab (what each screen says first, what needs an OK, Undo, empty and error states, progress for every job, spacing, focus order, VoiceOver labels; desktop, 860px and phone widths, light and dark). Ask the owner which bugs they have seen and what they were doing. One small PR each, with a smoke case that fails on main's build first. Account 2 fixes Tidy Up bugs too: check open PRs' files before each item (lanes.md Rule 2). This replaces "Tidy Up stays the owner's to ask for" below: the owner has asked.
+- **Then Finances:** the owner updates every balance to now, enters the expenses due before the next paycheck, and wants each account and the total just after that paycheck. Their spreadsheet comes out slightly different and was right on payday (Nov 6), and the forecast drifts after. Before changing anything, write down the rule the app uses for "after the next paycheck", ask the owner for one real example (balances, expenses, paycheck, their result), reproduce it in a Go test that fails where the app differs, and ask which rule is right. Then make "now" and "after payday" the clearest numbers on the screen, each explained on hover. Keep to finances-loop.md's rules.
+- The roadmap's other items wait until the owner says otherwise.
 
-**A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; never on main, another PR, or locally. Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
+**Tidy Up focus** (Nov 7, 2026; carry on from here):
+- **Fixed in #476** (merged Nov 7; the owner's Nov 6 audit, with a smoke case each that failed on main):
+  - Jobs: a job started elsewhere (the agent's Collect, Terminal) is followed with its step and bar, and every button waits; **Carry on** asks again, or opens the books review; **Stop** says *Stopping…*; a failure says *didn't finish*, with **Try again**; keyboard focus stays with the job; a job that resumes says so (Account 2's `fix-resume-warn`).
+  - Numbers: sizes are counted 1000 to a KB, as the engines and the Finder do; the first line counts what **Needs your OK** lists.
+  - Dead ends: a failed books review, **Look…** on Books, an unreadable record.
+  - What comes first: one main button, never on a step that throws things away; Music's Space; Tdarr's row; the phone's tabs; VoiceOver hears steps, not ticks.
+  - Engine results: a music check that finds songs missing says whose, with Put it back and Check again; an applied books review isn't offered again.
+- **Open:**
+  - The sidebar's Tidy Up badge counts only something wrong, not the screen's *N things need your OK*: the owner's call, asked Nov 6.
+  - Recently done on Books stays empty after a review.
+  - docs/Testing.md's new Tidy Up rows want a try on the owner's Mac.
+- **Account 2's `claude/fix-tidy-first-run`** (the owner's new Mac: Needs your OK starts with two rows, not nine) is stacked on #476 and opens after it. It is Account 2's PR: read it, don't push to it.
+- **For Account 2** (shared parts):
+  - `web/src/format.ts`'s `bytes` divides by 1024 but says GB and TB (Tidy Up now formats its own sizes, 1000 to a KB);
+  - `parts/Row`'s dot has no words for VoiceOver;
+  - `parts/Segmented` is a radiogroup where each radio is a Tab stop, with no arrow keys.
+  - `cmd/homelab/agentstate_test.go` (#471) fails on CI's Windows runner, then passes on a re-run: `TestJobLogSplitsAtOnceAllFinish` ("The process cannot access the file because it is being used by another process", #484 and #486, Nov 7) and once `TestAgentStateIsReplacedWhole` ("a reader found half a note (0 bytes)", #484). Both PRs changed no Go code. Windows refuses to open or rename a file another process holds, so `splitLog`'s and `saveAgentState`'s renames race their readers there; the failing check is `test (windows-latest)`.
+- **Then Finances**, in its own session, as the focus above says.
+
+**Open now** (Nov 7, 2026, 01:30 UTC): nothing of Account 1's once #470 (this file's own PR) merges; #476 merged. Branches whose work is on main, for the owner to delete, are listed in the session's report.
+- *Two-step sign-in, nudged* (left for after the focus) is skipped for now: knowing whether each admin app has a second factor needs that app's own API and its admin login, app by app, more than an S, and nothing here can try it. Take it up only with a list of the apps and how each says so.
+- **Merging, the owner's call of Nov 5:** a PR of mine merges when its CI is green on its current head and every commit main gained since that run touches none of its files. A newer `CHANGELOG.md` line on main does not count, provided main merges in with no conflict there; `web/dist/*`, `docs/Testing.md` and every other file do. Otherwise merge main in and let CI run again. (Account 2 merges small PRs every half hour or so; under the old rule #430 re-ran four times.) Never force-push or rebase to make a head match.
+- Nothing else is queued: every branch built ahead is merged or listed above.
+- Not started, for later: *One alert for many* (the Alerts screen resolves an alert line by line, so one line for several apps needs more than an S); the menu bar's per-app submenu (`app/tray`, best tried on a Mac).
+- Merged since Export (#405): #406, #409, #411, #413 to #420, #422, #423, #427, #428, #430, #435, #437, #438, #439, #445, #446, #447, #449, #450, #451, #452, #453, #455, #457, #458, #461, #463, #465, #469, #476.
+- This session's container can run a real Docker Engine (`dockerd` as root; it doesn't survive a worker restart, so start it again). Use it to try what the Testing.md rows ask on Linux. Alpine's package host is blocked there, so a step that builds the dump helper fails; that is the network, not the homelab.
+
+Still list what is open at the start of each round, as above: other sessions add to it.
+
+**A Finances smoke case to watch:** *a logo picked on a transaction goes with its payee* failed twice on #393's CI (dark only) and passed on its third run; then once on #414's (Nov 5, dark only, waiting for `#finSheet` to be hidden after a Save: it has three such waits, so name each one's step before chasing it). Never on main or locally (24 of 24 runs, four at a time, on #414's head). Its cause is unknown. If it fails again, the FAIL line names the step it was waiting on: fix that cause; never widen its timeout.
+
+**A Tidy Up smoke case to watch:** *Tidy Up: lyrics say what came of every song, and Overview counts only those still to ask* failed once on #439's CI (Nov 6, dark only): its first step, `page.click('#tidy .seg button:text-is("Overview")')`, gives the screen 5 s, and that run was early and under load. It passed on its re-run, and 6 of 6 locally. If it fails again, give that first click the time the screen needs (wait for `#tidy .seg` first), not a longer timeout.
 
 **Tidy Up, by the owner's ask in this loop's session (Nov 3, 2026):** the owner asked this loop to polish Tidy Up, redesign it (round 5: Overview's *Needs your OK*, a genre ring with a dropdown, the drive, *Recently done* with Undo; a tab per library), and audit its engines on every system. Merged: #383, #384, #386, #387, #388, #389, #390, #393 (#391 folded into it): all five steps of the redesign and the audit are done. Left for the owner on real machines: docs/Testing.md's Tidy Up rows on the Mac, a Steam Deck with Calibre from Discover (whether its Flatpak can open the media drive; #391's and #393's notes), and Windows with Docker Desktop (#389). Tidy Up stays the owner's to ask for: don't add to it unasked.
 
@@ -64,7 +102,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
 
 **The owner's own Mac, to finish by hand:** Jellyfin's API key (Settings › Jellyfin) for genres and refreshes, Navidrome's admin login (Settings › Navidrome) for lyrics' refresh, and a worker on Tdarr's node until #399 is in. Ask them what `~/Library/Caches/Homelab Wizard/update.log`'s `ERROR:` line said, for why the in-app update failed.
 
-Then continue **The order** from item 11, Answers on hover.
+**The order** below is all built. Go on with the rest of the roadmap, S before M before L, sections in the roadmap's order. Reliability's S items are built (the update window's other half, *Vaultwarden at once on a security release*, stays an idea). Next is Security and privacy: *Phones that expire* is on its branch, then *Tailnet devices*, *What CrowdSec stopped*, and *Two-step sign-in, nudged*.
 
 **Where the Finances loop left off** (its branch, `claude/homelab-finances-improvements-2v5ec9`, was deleted on Nov 3, 2026, with all its work already on main): its backlog in `.claude/prompts/finances-loop.md` is done up to F24 except F18 (export, item 10) and F19 (polish, a little each Finances round). Those are the Finances work still to do; tick each in that file too when it ships. When they are done, read that file's **MoneyMatter, redone** and backlog for anything still unstruck before adding new Finances items to the roadmap.
 
@@ -118,8 +156,8 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 8. **Finances on the phone** (F17, *Built*, #381): the calendar, upcoming bills, subscriptions, and goals on the phone companion, and Update balances in one quick sheet; view only where the phone may only look.
 9. **Type to filter Status** (*Built*, #385), then the **command palette** (⌘K, *Built*, #395).
 10. **Export** (F18, *Built*, #405): the plan and its projection as CSV and JSON, and a printable month.
-11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round), then why an app restarted (needs a record of who restarted it: an update, a crash, the battery saver, the watchdog, or you).
-12. **Right-click the sidebar**, then **pinned apps**.
+11. **Answers on hover**, a PR each, sharing `web/src/parts/Hover.tsx`: the week's outages (*Built*, #406), then a balance's accounts and how long since each was updated (a Finances round, *Built*, #409), then why an app restarted (*Built*, #411: `internal/started`, data/started.json, noted wherever the homelab starts an app).
+12. **Right-click the sidebar** (*Built*, #413: `web/src/palette/navMenu.tsx`, a shared `parts/ContextMenu.tsx`), then **pinned apps** (*Built*, #414: APPS_PINNED in .env, `homelab pin|unpin`).
 
 **Not yours:** the roadmap's *Media library cleanup* ("Tidy Up"). It has its own session and branch; leave its roadmap section and its files alone.
 
@@ -134,6 +172,13 @@ Do these first, one per round, in this order: app rounds and Finances rounds tak
 - Releases are numbered one more than the newest (0.17.0, 0.17.1, … 0.17.10, then 0.18.0 by itself; `internal/tools/nextversion`, the owner's call of Nov 2, 2026). `VERSION` stays as it is; a CHANGELOG line goes under `## [Unreleased]`, above the newest version's heading.
 - A session the owner starts can fetch, push a `claude/feature-*` branch, open a pull request, and squash-merge it (checked Nov 2, 2026).
 - Background commands that run longer than 10 minutes (a whole `app-smoke`) need `run_in_background` and a longer timeout, or they are cut off and read as failures.
+- Status's own rows are `#statusRows tr`. Backups draws `tr.grouphead` rows too, and in the morning Status reads Backups (the overnight line), so an unscoped `tr.grouphead` locator finds Backups' rows. Scope every locator to its screen.
+- Go's monotonic clock stops while a Mac or Linux machine sleeps. Anything meant to notice a sleep compares wall-clock times (`t.Round(0)`).
+- Records the app writes itself (held, pinned, days, phones) go in `data/` through `internal/lockedfile` (a lock beside the file, the file replaced whole), not in `.env`, which is for what the owner sets. Don't add new app-written keys to `.env` (the owner's call, Nov 5).
+- If you use a git worktree anyway, copy `node_modules` into it. A symlink puts this machine's path into `web/dist/app.js`'s module comments.
+- Logs too long to read through the GitHub tools are saved to a file; search that file for `FAIL` rather than reading it whole. The proxy blocks GitHub's log storage host, so `curl` on a log URL fails.
+- `make check` doesn't run gosec or govulncheck: CI's *security* job does (`make security`). Run it before opening a PR that changes Go; #446's first push failed it on a `template.URL` (G203). `bin/gosec` stays after one `make security`, so later runs are quick.
+- In this container's real Docker, `docker stop` leaves an app *stopped*, which the watchdog takes as stopped by hand and never alerts about. To make an app down for a test, `docker pause` it: it keeps running and stops answering (#439).
 
 ## Rules that never bend
 

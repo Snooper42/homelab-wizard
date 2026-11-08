@@ -5,7 +5,9 @@
 // letter. And a person's initial, in their colour. A brand's mark is
 // .fmark.logo, not .brand: that is the sidebar's name, margins and all.
 import { cleanPayee } from './payees';
+import { alike } from './importData';
 import { brands } from './logos';
+import { kindHueOf } from './hues';
 
 /** Feather-style icons for kinds of accounts and payments (24 by 24 strokes). */
 const kindIcons: Record<string, string> = {
@@ -59,6 +61,8 @@ export interface MarkProps {
   size?: 'sm' | 'lg';
   /** A payee with no brand: its own mark, its initials on a colour its name picks (autoMark). */
   auto?: boolean;
+  /** Its category's colour (hues.ts, 1 to 8): an icon or letter is drawn in it, on its soft tint. */
+  hue?: number;
 }
 
 /** How many colours a payee's own mark is drawn in (--auto-0 … in style.css, each 4.5:1 or more with white). */
@@ -118,9 +122,10 @@ export const setOwnLogos = (logos?: Record<string, string>) => { own = logos || 
 /** Where an image of one's own is kept: under its brand, else under its name. */
 export const ownKey = (brand: string | undefined, name: string | undefined): string => (brand && brand !== 'none' ? brand : 'name:' + words(name || '').trim());
 
-export function Mark({ brand, kind, name, type, size, img, auto }: MarkProps) {
+export function Mark({ brand, kind, name, type, size, img, auto, hue }: MarkProps) {
   const b = brand ? brands[brand] : undefined;
   const cls = 'fmark' + (size ? ' ' + size : '');
+  const tint = hue ? ` tint t${hue}` : '';
   // The household's own image for it, before any other.
   const mine = img ?? own[ownKey(brand, name)];
   if (mine) return <span class={cls + ' logo art own'} aria-hidden="true"><img src={mine} alt="" /></span>;
@@ -139,8 +144,8 @@ export function Mark({ brand, kind, name, type, size, img, auto }: MarkProps) {
   }
   const glyph = (type && type !== 'other' && kindIcons[type] ? type : '') || hintOf(kind, name) || kind;
   const icon = glyph && kindIcons[glyph];
-  if (icon) return <span class={cls + ' icon'} data-icon={glyph} aria-hidden="true"><svg viewBox="0 0 24 24"><path d={icon} /></svg></span>;
-  return <span class={cls + ' letter'} aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</span>;
+  if (icon) return <span class={cls + ' icon' + tint} data-icon={glyph} aria-hidden="true"><svg viewBox="0 0 24 24"><path d={icon} /></svg></span>;
+  return <span class={cls + ' letter' + tint} aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</span>;
 }
 
 /** A name in words to match: lower case, + as "plus", & as "and", the rest of the punctuation gone. */
@@ -219,6 +224,12 @@ export function brandOf(institution: string | undefined, name: string | undefine
 export const payeeBrand = (institution: string | undefined, payee: string | undefined): string | undefined =>
   institution === 'none' ? undefined : brandOf(institution, cleanPayee(payee)) || brandOf(undefined, payee);
 
+/** Whether a payee is a planned payment's: alike its name, or of its brand ("NETFLIX.COM" and Netflix). */
+export const paysAlike = (payee: string, x: finance.Payment): boolean => {
+  const b = payeeBrand(undefined, payee);
+  return alike(payee, x.name) || (!!b && b === brandOf(x.institution, x.name, x.kind));
+};
+
 /** An account's mark: its brand (picked, or in its name, or its car's model), else its kind's icon. */
 export function AcctMark({ a, size }: { a: finance.Account; size?: 'sm' | 'lg' }) {
   return <Mark brand={brandOf(a.institution, a.name, a.kind)} kind={a.kind} name={a.name} size={size} />;
@@ -278,7 +289,7 @@ export const typeOf = (x: finance.Payment): string => x.type || suggestType(x.in
 
 /** A payment's mark: its brand (picked, or in its name), else its type's or name's glyph, else its kind's icon. */
 export function PayMark({ x, size }: { x?: finance.Payment; size?: 'sm' | 'lg' }) {
-  return <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name || '?'} type={x?.kind === 'subscriptions' ? x?.type : undefined} size={size} />;
+  return <Mark brand={brandOf(x?.institution, x?.name)} kind={x?.kind} name={x?.name || '?'} type={x?.kind === 'subscriptions' ? x?.type : undefined} size={size} hue={x ? kindHueOf(x.kind) : undefined} />;
 }
 
 /** The category a payment to a brand mostly is, beyond its subscription type: bills, shops, lenders. */

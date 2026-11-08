@@ -26,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/ports"
 	"github.com/Snooper42/homelab-wizard/internal/selector"
+	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
 	"github.com/Snooper42/homelab-wizard/internal/sysmem"
 	"github.com/Snooper42/homelab-wizard/internal/tailnet"
@@ -255,6 +256,12 @@ func (h *homelab) runInstall(ctx context.Context, tokens []string, o installOpti
 	if o.waitMedia > 0 {
 		h.waitForRuntime(ctx, 3*time.Minute)
 		h.waitForDrives(ctx, o.waitMedia)
+		// Its turn now, not while it waited (turn.go's changes).
+		if o.apply && !o.dryRun {
+			if err := h.takeTurn(ctx); err != nil {
+				return err
+			}
+		}
 	}
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -550,6 +557,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		return nil
 	}
 	u.Title("Homelab status")
+	held := stopped.Load(stopped.Path(h.root))
 	var rows [][]string
 	changed := 0
 	for _, a := range st.Apps {
@@ -578,6 +586,9 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 		if a.NotAnswering != "" {
 			health = u.Red("not answering: " + a.NotAnswering)
 		}
+		if _, mine := held[a.ID]; a.StoppedWhy != "" && !mine {
+			health = u.Red(a.StoppedWhy) // it stopped by itself
+		}
 		if a.SettingsChanged {
 			state += u.Yellow(", settings changed")
 			changed++
@@ -586,7 +597,7 @@ func (h *homelab) status(ctx context.Context, args []string) error {
 	}
 	u.Table([]string{"APP", "STATE", "HEALTH", strings.ToUpper("On " + h.host.Machine), "ADDRESS"}, rows)
 	if st.Missing > 0 {
-		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d baseline app(s) are not running: homelab up shows why.", st.Missing)))
+		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d of the homelab's own apps are not running: homelab up shows why.", st.Missing)))
 	}
 	if changed > 0 {
 		u.Printf("\n  %s\n", u.Yellow(fmt.Sprintf("%d app(s) still run the settings they started with: homelab fix (or up) applies the changed ones.", changed)))
@@ -787,7 +798,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				return err
 			}
 			if len(tokens) == 0 {
-				h.ui.Printf("Nothing to update: no running app takes image updates.\n")
+				h.ui.Printf("Nothing to update now: no running app takes image updates today.\n")
 				return nil
 			}
 			h.ui.Printf("Updates now what the nightly update would (%d apps): %s.\n", len(tokens), strings.Join(tokens, ", "))
@@ -891,6 +902,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			if err != nil {
 				if !all {
 					h.markStopped(action, done, end)
+					h.noteLifecycle(action, nightly, done, updated)
 					return err
 				}
 				h.ui.Warn("%s: %v", strings.Join(pa.ids, ", "), err)
@@ -902,6 +914,7 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 			}
 		}
 		h.markStopped(action, append(done, updated...), end)
+		h.noteLifecycle(action, nightly, done, updated)
 		if action == "update" {
 			// Keep what they ran before, to go back to (homelab rollback).
 			if cs, err := client.Containers(ctx); err == nil {
@@ -941,26 +954,39 @@ func (h *homelab) markStopped(action string, ids []string, end time.Time) {
 	if len(ids) == 0 {
 		return
 	}
-	path := stopped.Path(h.root)
-	r := stopped.Load(path)
-	before := len(r)
-	for _, id := range ids {
-		switch action {
-		case "stop":
-			r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
-		case "start", "restart", "update", "remove":
-			delete(r, id)
+	err := stopped.Update(stopped.Path(h.root), func(r stopped.Record) bool {
+		before := len(r)
+		for _, id := range ids {
+			switch action {
+			case "stop":
+				r[id] = stopped.Stop{Since: time.Now().Truncate(time.Second), Until: end}
+			case "start", "restart", "update", "remove":
+				delete(r, id)
+			}
 		}
-	}
-	if action != "stop" && len(r) == before {
-		return
-	}
-	if err := r.Save(path); err != nil {
+		return action == "stop" || len(r) != before
+	})
+	if err != nil {
 		h.ui.Warn("could not keep which apps were stopped on purpose: %v", err)
 		return
 	}
 	if action == "stop" && !end.IsZero() {
 		h.ui.Info("starts again by itself at %s", end.Local().Format("Mon 3:04 PM"))
+	}
+}
+
+// noteLifecycle keeps why the apps a lifecycle command started did: you
+// (Start, Restart), or an update, yours or the nightly one's.
+func (h *homelab) noteLifecycle(action string, nightly bool, done, updated []string) {
+	switch action {
+	case "start", "restart":
+		h.noteStarted(started.You, done...)
+	case "update":
+		why := started.Updated
+		if nightly {
+			why = started.Nightly
+		}
+		h.noteStarted(why, updated...)
 	}
 }
 
@@ -999,8 +1025,8 @@ func (h *homelab) nightlyAlert(ctx context.Context, updated, failed []string) {
 var stepVerb = map[string]string{"update": "Updating", "start": "Starting", "stop": "Stopping", "restart": "Restarting", "remove": "Removing"}
 
 // updatable is every running app that takes image updates, the nightly
-// ones and those rebuilt from a Dockerfile, without the held ones:
-// homelab update --all.
+// ones and those rebuilt from a Dockerfile, without the held ones and those
+// whose update days (data/update-days.json) leave out today: homelab update --all.
 func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	client, err := h.docker(ctx)
 	if err != nil {
@@ -1011,12 +1037,20 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	report := detect.Analyze(h.catalog, containers)
-	held := updates.Held(h.envMap())
+	env := h.envMap()
+	held := updates.Held(env)
 	tidying := media.Held(h.root)
-	var ids, waiting []string
+	today, days := time.Now().Weekday(), updates.LoadDays(updates.DaysPath(h.root))
+	var ids, waiting, notToday []string
 	for _, a := range h.catalog.Apps {
 		how, _ := a.UpdatePolicy()
 		if how != "nightly" && how != "built" || slices.Contains(held, a.ID) {
+			continue
+		}
+		if !updates.DueOn(days, a.ID, today) {
+			if _, running := runningContainer(report, a.ID); running {
+				notToday = append(notToday, a.Name()+" ("+updates.DaysText(days[a.ID])+")")
+			}
 			continue
 		}
 		// Tidy Up is moving files: the apps that read the libraries wait
@@ -1033,6 +1067,9 @@ func (h *homelab) updatable(ctx context.Context) ([]string, error) {
 	}
 	if len(waiting) > 0 {
 		h.ui.Printf("Tidy Up is moving files, so these wait for the next update: %s.\n", strings.Join(waiting, ", "))
+	}
+	if len(notToday) > 0 {
+		h.ui.Printf("Updated on their own days, so not today: %s.\n", strings.Join(notToday, ", "))
 	}
 	return ids, nil
 }

@@ -1,6 +1,6 @@
 //go:build !windows
 
-package media
+package proc
 
 import (
 	"errors"

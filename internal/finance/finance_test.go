@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 func date(s string) time.Time {
@@ -656,13 +658,21 @@ func TestProjectSince(t *testing.T) {
 	if s := v.Since; len(s) != 2 || !s[len(s)-1].Waiting {
 		t.Fatalf("since, waiting: %+v", s)
 	}
-	// A bill on the day the balances were typed in is in them.
+	// A bill on the day the balances were typed in still comes out that
+	// day (2512.40 - 200), listed so the household can say it is in them.
 	p = household()
 	p.Updated = "2026-10-31"
 	v = Project(p, date("2026-10-31"), 3)
-	if v.Since[0].Key != "payment:food:2026-10-31" || !v.Since[0].Typed || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2512.40 {
+	if v.Since[0].Key != "payment:food:2026-10-31" || !v.Since[0].Typed || v.Since[0].InBalance || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2312.40 {
 		t.Fatalf("on the day: %+v, day 0 %+v", v.Since, v.Days[0])
 	}
+	// Said to be in them: nothing more comes out.
+	p.InBalance = []string{"payment:food:2026-10-31"}
+	v = Project(p, date("2026-10-31"), 3)
+	if !v.Since[0].InBalance || v.Start["chk"] != 2512.40 || v.Days[0].Balance != 2512.40 {
+		t.Fatalf("on the day, in the balance: %+v, day 0 %+v", v.Since, v.Days[0])
+	}
+	p.InBalance = nil
 	// Typed in yesterday: today's bill is still to come.
 	p.Updated = "2026-10-30"
 	if v := Project(p, date("2026-10-31"), 3); len(v.Since) != 0 || v.Days[0].Balance != 2312.40 {
@@ -1033,5 +1043,25 @@ func TestCardChargesOnTheirDay(t *testing.T) {
 	}
 	if later < 8 {
 		t.Errorf("%d charges a year ahead", later)
+	}
+}
+
+// The app and the phones' server are two processes: a save waits for the
+// one another process is making (the lock beside the file) rather than
+// checking and writing at the same moment, which could lose one of them
+// without ErrChanged.
+func TestSaveWaitsForAnotherProcess(t *testing.T) {
+	was := lockedfile.Wait
+	lockedfile.Wait = 50 * time.Millisecond
+	t.Cleanup(func() { lockedfile.Wait = was })
+	path := filepath.Join(t.TempDir(), "data", "finance.json")
+	if _, err := Save(path, Plan{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path+".lock", nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Save(path, Plan{}); err == nil || !strings.Contains(err.Error(), "try again") {
+		t.Errorf("saved while another process held the lock: %v", err)
 	}
 }

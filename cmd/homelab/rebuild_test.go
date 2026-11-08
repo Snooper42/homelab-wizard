@@ -6,6 +6,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 )
 
 // backupJob writes one job's backup as the stand-in Duplicati restores it:
@@ -27,6 +30,40 @@ func backupJob(t *testing.T, folder, job, passphrase string, files map[string]st
 	}
 	_ = os.WriteFile(filepath.Join(dir, "duplicati-20261030T050000Z.dlist.zip.aes"), nil, 0o644)
 	_ = os.WriteFile(filepath.Join(dir, "passphrase"), []byte(passphrase), 0o644)
+}
+
+// The nightly rebuild of Nov 4 and 5, 2026 stopped at its first step:
+// Duplicati's image came from a registry spacing out downloads (ghcr.io's
+// per-minute limit, shared by every machine behind the same address), and
+// docker run, unlike Compose, never tried again. The image is pulled first
+// now, waiting out a busy registry.
+func TestRebuildWaitsOutABusyRegistry(t *testing.T) {
+	calls := fakeDocker(t, nil)
+	fakeSystemctl(t)
+	old := docker.RegistryBusyWaits
+	docker.RegistryBusyWaits = []time.Duration{time.Millisecond, time.Millisecond, time.Millisecond}
+	t.Cleanup(func() { docker.RegistryBusyWaits = old })
+	t.Setenv("FAKE_REGISTRY_BUSY", "2")
+	src, _ := repoCopy(t)
+	env, err := os.ReadFile(filepath.Join(src, ".env"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder := t.TempDir()
+	backupJob(t, folder, "secrets", "sesame", map[string]string{"homelab.env": string(env) + "\nDUPLICATI_PASSPHRASE=open-the-rest\n"})
+	fresh, _ := repoCopy(t)
+	_ = os.Remove(filepath.Join(fresh, ".env"))
+	t.Setenv("DUPLICATI_SECRETS_PASSPHRASE", "sesame")
+	out, _ := homelabCmd(t, fresh, "", "rebuild", folder, "--apply")
+	if strings.Contains(out, "toomanyrequests") || strings.Contains(out, "Homelab Secrets:") {
+		t.Fatalf("stopped at a busy registry:\n%s", out)
+	}
+	if got := envMapOf(t, fresh)["DUPLICATI_PASSPHRASE"]; got != "open-the-rest" {
+		t.Errorf(".env not restored (%q):\n%s", got, out)
+	}
+	if n := strings.Count(readCalls(t, calls), "pull --quiet lscr.io/linuxserver/duplicati"); n != 3 {
+		t.Errorf("Duplicati's image pulled %d times, want 3 (busy twice):\n%s", n, readCalls(t, calls))
+	}
 }
 
 // A machine lost, a new homelab folder, and the backup folder: rebuild
@@ -147,5 +184,52 @@ func TestCopyTreeLeavesLinks(t *testing.T) {
 	}
 	if err := copyTree(filepath.Join(src, "missing"), dst, false); err != nil {
 		t.Fatalf("a missing folder: %v", err)
+	}
+}
+
+// A rebuild puts the backed-up .env in place while the agent and the app
+// may read it: they read the old file or the restored one, never half.
+func TestRebuildReplacesEnvWhole(t *testing.T) {
+	root := t.TempDir()
+	h := &homelab{root: root, envFile: filepath.Join(root, ".env")}
+	staging := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(staging, "data"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	versions := []string{strings.Repeat("TZ=America/New_York\n", 1<<16), strings.Repeat("TZ=Europe/Berlin\n", 1<<16)}
+	if err := os.WriteFile(h.envFile, []byte(versions[0]), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan struct{})
+	torn := make(chan int, 1)
+	go func() {
+		defer close(torn)
+		for {
+			select {
+			case <-done:
+				return
+			default:
+			}
+			data, err := os.ReadFile(h.envFile)
+			if err == nil && string(data) != versions[0] && string(data) != versions[1] {
+				torn <- len(data)
+				return
+			}
+		}
+	}()
+	for i := range 200 {
+		if err := os.WriteFile(filepath.Join(staging, "homelab.env"), []byte(versions[(i+1)%2]), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := h.takeSecrets(staging); err != nil {
+			t.Fatal(err)
+		}
+	}
+	close(done)
+	if n, ok := <-torn; ok {
+		t.Fatalf("a reader found half a .env (%d bytes)", n)
+	}
+	if fi, err := os.Stat(h.envFile); err != nil || (runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600) {
+		t.Errorf(".env: %v %v", fi.Mode(), err)
 	}
 }

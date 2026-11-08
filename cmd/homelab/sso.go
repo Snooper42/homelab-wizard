@@ -143,6 +143,11 @@ func (h *homelab) ssoCmd(ctx context.Context, args []string) error {
 			u.Printf("    %s\n", fmt.Sprintf(spec.Steps, issuer, h.rel(path)))
 			continue
 		}
+		// A copy first: an app signing in with Pocket ID may link or move
+		// its accounts the first time it starts that way.
+		if err := h.dumpBefore(ctx, client, []*catalog.App{a}, a.Name()+" signs in with Pocket ID"); err != nil {
+			return err
+		}
 		if err := sso.WriteEnv(path, spec.Env(c)); err != nil {
 			return err
 		}

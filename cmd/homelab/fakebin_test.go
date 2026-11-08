@@ -10,8 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/backup"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // The fake commands the end-to-end tests put on PATH (docker, systemctl,
@@ -95,6 +97,41 @@ func fakeDockerMain(d string, args []string) int {
 		os.Stdout.Write(data)
 	}
 	has := func(s string) bool { return strings.Contains(all, s) }
+	// FAKE_ON_RESTART=src>dst: a restart copies src over dst, as another
+	// process saving a record while this one restarts an app.
+	if hook := os.Getenv("FAKE_ON_RESTART"); hook != "" && has(" restart ") {
+		if src, dst, ok := strings.Cut(hook, ">"); ok {
+			if data, err := os.ReadFile(src); err == nil {
+				_ = os.WriteFile(dst, data, 0o644)
+			}
+		}
+	}
+	// FAKE_REGISTRY_BUSY=n: no image is here until a pull gets through,
+	// and the registry is busy for the first n pulls, and for a run that
+	// would pull its image itself, as ghcr.io's per-minute limit is.
+	if n, err := strconv.Atoi(os.Getenv("FAKE_REGISTRY_BUSY")); err == nil {
+		pulled := filepath.Join(d, "pulled")
+		_, here := os.Stat(pulled)
+		busy := "toomanyrequests: retry-after: 205.338µs, allowed: 44000/minute"
+		switch {
+		case arg(0) == "pull":
+			data, _ := os.ReadFile(filepath.Join(d, "pulls"))
+			tries := len(data) + 1
+			_ = os.WriteFile(filepath.Join(d, "pulls"), append(data, '.'), 0o644)
+			if tries <= n {
+				fmt.Fprintln(os.Stderr, "Error response from daemon: "+busy)
+				return 1
+			}
+			_ = os.WriteFile(pulled, nil, 0o644)
+			return 0
+		case arg(0) == "image" && arg(1) == "inspect" && here != nil:
+			fmt.Fprintln(os.Stderr, "Error response from daemon: No such image: "+args[len(args)-1])
+			return 1
+		case arg(0) == "run" && here != nil:
+			fmt.Fprintln(os.Stderr, "docker: error pulling image configuration: download failed after attempts=1: "+busy)
+			return 125
+		}
+	}
 	switch arg(0) {
 	case "info":
 		// A file named down: the runtime is not running yet.
@@ -103,6 +140,8 @@ func fakeDockerMain(d string, args []string) int {
 			return 1
 		}
 		cat("info.json")
+	case "stats":
+		cat("stats.txt") // written by a test that measures memory
 	case "ps":
 		cat("ids.txt")
 	case "inspect":
@@ -242,6 +281,15 @@ func fakeDockerMain(d string, args []string) int {
 			// As printf '%b' would: the test writes \n for each line.
 			fmt.Print(strings.ReplaceAll(os.Getenv("FAKE_CONFIG_HASHES"), `\n`, "\n"))
 		}
+		// FAKE_START_STOPS=<stopped.json>=<svc>: while a start runs, another
+		// homelab process (a phone's Stop for a while) stops svc on purpose.
+		if v := os.Getenv("FAKE_START_STOPS"); v != "" && has(" start ") {
+			if i := strings.LastIndex(v, "="); i > 0 {
+				r := stopped.Load(v[:i])
+				r[v[i+1:]] = stopped.Stop{Since: time.Now().Truncate(time.Second)}
+				_ = r.Save(v[:i])
+			}
+		}
 		// FAKE_START_FAILS=svc: a start that names the service fails.
 		if svc := os.Getenv("FAKE_START_FAILS"); svc != "" && has(" start ") && has(" "+svc) {
 			return 1
@@ -257,6 +305,10 @@ func fakeDockerMain(d string, args []string) int {
 				return 1
 			}
 		}
+	case "logs":
+		// An app's crash, on its stderr as most say it, and a secret it printed.
+		fmt.Println("Starting server")
+		fmt.Fprintln(os.Stderr, "Error: could not open the database at postgres://immich:"+os.Getenv("FAKE_LOG_SECRET")+"@db/immich")
 	case "system":
 		if arg(1) == "df" {
 			fmt.Println(`{"Type":"Images","Size":"24.1GB","Reclaimable":"12.3GB (51%)"}`)

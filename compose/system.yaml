@@ -17,6 +17,12 @@ networks:
   default:
     name: homelab
     external: true
+  # The socket proxy's own: it answers any GET under /containers, every
+  # container's environment (its passwords and keys) and files included, so
+  # only the apps that read it share this network, never the homelab one
+  # every app joins (docs/Security.md, N27).
+  socket:
+    internal: true
 
 services:
   duplicati:
@@ -45,6 +51,8 @@ services:
       - ./recovery-staging:/staging
       - ${BACKUP_DESTINATION:-./backups}:/destination
     x-homelab:
+      same_job:
+        kopia: "Meant to run beside it: Kopia keeps a second, independent copy on another drive."
       memory: 250
       name: Duplicati
       login: [DUPLICATI_PASSWORD]
@@ -116,10 +124,13 @@ services:
       DOCKER_PORTS: "2375"
     ports:
       - ${BIND_IP:-127.0.0.1}:${HOMARR_PORT:-7575}:7575
+    networks: [default, socket]
     volumes:
       - ./data/appdata/homarr:/appdata
     depends_on: [docker-socket-proxy]
     x-homelab:
+      same_job:
+        homepage: "Both are a page of your apps; one is usually enough."
       memory: 300
       dump: sqlite:/appdata/db/db.sqlite
       name: Homarr
@@ -136,6 +147,8 @@ services:
       HOMEPAGE_ALLOWED_HOSTS: homepage.${HOMELAB_DOMAIN:-example.com},localhost:${HOMEPAGE_PORT:-3000},${TAILSCALE_HOST:-localhost}:${HOMEPAGE_PORT:-3000}
     ports:
       - ${BIND_IP:-127.0.0.1}:${HOMEPAGE_PORT:-3000}:3000
+    # socket: for container status, when docker.yaml names docker-socket-proxy.
+    networks: [default, socket]
     volumes:
       - ./data/appdata/homepage:/app/config
     x-homelab:
@@ -155,6 +168,7 @@ services:
       DOZZLE_NO_ANALYTICS: "true"
     ports:
       - ${BIND_IP:-127.0.0.1}:${DOZZLE_PORT:-9998}:8080
+    networks: [default, socket]
     depends_on: [docker-socket-proxy]
     healthcheck:
       test: ["CMD", "/dozzle", "healthcheck"]
@@ -183,6 +197,8 @@ services:
       INFO: "1"
     volumes:
       - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    # Not the homelab network: only its readers reach it (N27).
+    networks: [socket]
     x-homelab:
       releases: Tecnativa/docker-socket-proxy
       pin: It holds the Docker socket; set SOCKET_PROXY_VERSION to a newer release after reading its notes, then ./homelab update docker-socket-proxy

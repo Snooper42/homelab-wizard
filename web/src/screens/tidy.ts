@@ -1,6 +1,6 @@
 // Tidy Up: reads TidyUp, runs the screen's jobs through TidyRun, and keeps
 // the running job's events (media:event) for the job panel.
-import { mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
+import { jobTitle, mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
 import { store } from '../store';
 import { navigate } from '../app';
 import { showSettings } from './settings';
@@ -12,33 +12,34 @@ let tab: TidyTab = 'overview';
 try { tab = tabNow(localStorage.getItem('homelab.tidyTab') || 'overview'); } catch { /* none */ }
 let job: TidyJob | null = null;
 let review: app.TidyBook[] | null = null;
+// Why the review couldn't be read (Calibre's database locked, say): said on Books, with Try again, never "every book looks tidy".
+let reviewError = '';
+// Look… was pressed: the review is shown, and the keyboard taken to it, once it's there.
+let showReview = false;
 const skip = new Set<number>();
 let confirm: TidyConfirm | null = null;
+// A job this window didn't start (the agent's Collect, a terminal's run): followed every few seconds while it holds the lock.
+let running: app.TidyRunning | null = null;
+let following: number | undefined;
+const FOLLOW_MS = 3000;
 
-const titles: Record<string, string> = {
-  'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
-  'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
-  'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply',
-  'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
-  'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
-  'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
-  'inbox scan': 'Checking Downloads', 'install ffmpeg': 'Getting ffmpeg', 'tdarr setup': 'Setting up Tdarr', 'arr apply': 'Handing the downloads over',
-};
 
 function draw() {
   const d = tidyData.value || null;
   mountTidy($('tidyRoot'), {
-    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, skip,
+    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running,
+    reload: () => { tidyData.load(); },
+    reloadReview: () => { loadReview(); },
     pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); },
-    closeJob: () => { job = null; draw(); },
+    // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
+    closeJob: () => { job = null; draw(); (document.querySelector('#tidy .seg button[aria-checked="true"]') as HTMLElement | null)?.focus(); },
     toggle: (id) => { if (skip.has(id)) skip.delete(id); else skip.add(id); draw(); },
     act: {
-      run, stop: () => { go().TidyStop(); },
+      run, stop: () => { if (job && !job.ended) { job.stopping = true; draw(); } go().TidyStop(); },
       ask: (c) => { confirm = c; drawSheet(); $('tidySheet').hidden = false; },
       reveal: (path) => { Promise.resolve(go().TidyReveal(path)).catch(showError); },
       settings: (keys) => (keys?.length ? showSettings(keys) : navigate('settings')),
-      review: () => { tab = 'books'; draw(); if (!review) loadReview(); },
+      review: () => { tab = 'books'; try { localStorage.setItem('homelab.tidyTab', tab); } catch { /* none */ } showReview = true; draw(); if (!review) loadReview(); },
       cover: (id, which) => go().TidyCover(id, which),
       // Fetches ffmpeg; once it's in, the job that wanted it runs again.
       install: async (after) => {
@@ -48,9 +49,34 @@ function draw() {
       open: (url) => { Promise.resolve(go().Open(url)).catch(showError); },
     },
   });
+  // The button that started a job waits while it runs, which takes the keyboard's place with it: it goes to the job's own button.
+  if (job && (!document.activeElement || document.activeElement === document.body) && $('tidy').classList.contains('active')) (document.querySelector('#tidyJob button:not([disabled])') as HTMLElement | null)?.focus();
+  // Look…: once the review is there, it's scrolled to and its first switch (or its Apply) takes the keyboard.
+  if (showReview && tab === 'books' && (review || reviewError)) {
+    showReview = false;
+    const box = document.getElementById('tidyReview') || document.getElementById('tidyReviewError');
+    box?.scrollIntoView({ block: 'start' });
+    (box?.querySelector('input, button') as HTMLElement | null)?.focus({ preventScroll: true });
+  }
   // The sidebar's count: what needs a look (a check that blocks, or a library swapped and not checked).
   const looks = (d?.checks || []).filter((c) => !c.ok && c.needs === 'all').length + (d?.libraries || []).filter((l) => l.stage === 'swapped').length;
   $('tidyCount').textContent = looks ? String(looks) : '';
+  follow();
+}
+// While a job this window didn't start holds the lock and Tidy Up shows, where it has got to; once it's done, the screen is read again.
+function follow() {
+  const held = (job && !job.ended) ? false : running ? !!running.lock : !!tidyData.value?.lock;
+  if (held && following === undefined) {
+    following = window.setTimeout(async () => {
+      following = undefined;
+      if (job && !job.ended) { running = null; return; }
+      // Another screen shows: nothing is asked, and it looks again once Tidy Up is back.
+      if (!$('tidy').classList.contains('active')) { follow(); return; }
+      try { running = await go().TidyLock(); } catch { running = null; return; }
+      if (!running.lock) { running = null; tidyData.load(); }
+      draw();
+    }, FOLLOW_MS);
+  }
 }
 // Closing sets hidden only on an open sheet: the sheet calls this again once
 // it is hidden (its onClose), and setting hidden again would call it again.
@@ -62,9 +88,10 @@ tidyData.watch(draw);
 window.addEventListener('focus', () => {
   if ($('tidy').classList.contains('active') && (!job || job.ended) && (tidyData.value?.checks || []).some((c) => !c.ok && c.needs)) tidyData.load();
 });
-export function loadTidy() { if (tab === 'books' && !review) loadReview(); return tidyData.load(); }
+export function loadTidy() { running = null; if (tab === 'books' && !review) loadReview(); return tidyData.load(); }
 async function loadReview() {
-  try { review = await go().TidyReview(); } catch (e) { showError(e); review = []; }
+  reviewError = '';
+  try { review = await go().TidyReview(); } catch (e) { review = null; reviewError = errorText(e); }
   draw();
 }
 
@@ -93,7 +120,9 @@ let listening = false;
 async function run(kind: string, action: string, args: string[] = [], yes = false) {
   if (job && !job.ended) return;
   if (!listening) { listening = true; window.runtime.EventsOn('media:event', onEvent); }
-  job = { kind, action, title: titles[`${kind} ${action}`] || `${kind} ${action}`, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(' ')}`.trim()] };
+  const title = jobTitle(kind, action, args);
+  job = { kind, action, args, yes, title, started: Date.now(), lines: [], log: [`$ homelab media ${kind} ${action} ${args.join(' ')}`.trim()] };
+  running = null;
   draw();
   try {
     await go().TidyRun(kind, action, args, yes);

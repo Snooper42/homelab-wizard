@@ -12,13 +12,14 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar } from './Calendar';
 import { setOwnLogos } from './Mark';
+import { setCategories } from './hues';
 import { type Running } from './homelab';
 import { Reports } from './Reports';
 import { Transactions } from './Transactions';
 import { openOn, Pay, Recurring, type SaveSettings } from './Lists';
-import { cardOf, daysBetween, dayShort, type Lookup, lookup, setCurrency } from './money';
+import { cardOf, daysBetween, dayShort, isoDay, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
-import { NetWorth } from './Worth';
+import { NetWorth, type NetWorthProps } from './Worth';
 
 export interface FinancesProps {
   /** The plan read forward; null until it is read. */
@@ -32,7 +33,7 @@ export interface FinancesProps {
   setTab: (tab: string) => void;
   sel: number;
   pick: (i: number) => void;
-  setWaiting: OverviewProps['setWaiting'];
+  setSince: OverviewProps['setSince'];
   saveSettings: SaveSettings;
   /** Keeps the plan as it is given (Add to the plan); false when it failed. */
   keep: (plan: finance.Plan) => Promise<boolean>;
@@ -46,6 +47,8 @@ export interface FinancesProps {
   fromWallos?: () => Promise<app.AppSubscription[]>;
   /** Reads a receipt by its name: a phone allowed only to look shows it under its transaction. */
   readReceipt: (name: string) => Promise<string>;
+  /** Keeps the ledger (a link to a planned payment, from Transactions); false when it failed. */
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
   /** Saves an export (Reports' CSV, the plan, what's ahead) and says where it went; "" when cancelled. */
   exportFile: (name: string, text: string) => Promise<string>;
   /** Opens a month's page to print (the browser prints it); on a phone, shared or downloaded. Says where it went. */
@@ -57,6 +60,8 @@ export interface FinancesProps {
   setGroup?: (group: string) => void;
   /** Hides every amount, or shows them again (the eye); none on a phone allowed only to look. */
   toggleHidden?: () => void;
+  /** Net worth › Investments: Read now and what it said; on the computer only. */
+  investments?: NetWorthProps['invest'];
 }
 
 const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
@@ -73,7 +78,8 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
     setSaid('Saving…');
     try { setSaid(await go()); } catch (e) { setSaid(`Not saved: ${(e as Error)?.message || e}`); }
   };
-  const month = (k: number) => { const d = new Date(v.today + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + k); return d.toISOString().slice(0, 7); };
+  // The month here, not in UTC: toISOString would give the month before east of UTC+12 (New Zealand in summer).
+  const month = (k: number) => { const d = new Date(v.today + 'T12:00:00'); d.setDate(1); d.setMonth(d.getMonth() + k); return isoDay(d).slice(0, 7); };
   const label = (m: string) => new Date(m + '-01T12:00:00').toLocaleDateString('en-US', { month: 'long' });
   const print = (k: number) => run(() => printMonth(monthName(month(k)), monthPage(v, month(k), 'Finances')));
   return (
@@ -90,19 +96,20 @@ function ExportMenu({ v, exportFile, printMonth }: { v: finance.View; exportFile
   );
 }
 
-function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWaiting, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, running, calendar, fromWallos, phone, toggleHidden, group, setGroup }: FinancesProps) {
+function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSince, saveSettings, keep, edit: open, exportFile, printMonth, readReceipt, saveLedger, running, calendar, fromWallos, phone, toggleHidden, group, setGroup, investments }: FinancesProps) {
   // A card's payoff with each paycheck is no payment of its own: it opens the card's form.
   const edit = (what: What, id?: string, kind?: string) => (cardOf(id) ? open('account', cardOf(id)) : open(what, id, kind));
   const L = v ? lookup(v.plan) : null;
   setCurrency(v?.plan.currency);
   setOwnLogos(v?.plan.logos);
+  setCategories(v?.categories);
   const [what, label] = adds[tab] || adds.overview;
   const ro = !!v?.readOnly;
   // Every number reads from the balances typed in (the oldest of checking's
   // and the cards'), with what has happened since: a week old, they say so.
   const age = v?.typed ? daysBetween(v.typed, v.today) : -1;
   const lead = (age < 0 ? (phone ? 'Typed in by you, kept on your homelab' : 'Typed in by you, kept on this machine')
-    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', update them with Edit'}` : ''))
+    : age === 0 ? 'Balances from today' : `Balances from ${dayShort(v.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? '' : ', bring them up to date with Update balances'}` : ''))
     + (ro ? ' · view only' : '');
   return (
     <>
@@ -122,12 +129,12 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setWa
           : !v ? <Empty>Reading…</Empty>
           : ro ? <View v={v} L={L} phone={phone} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} group={group} setGroup={setGroup} />
           : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
-          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
+          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} />
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
-          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} />
-          : <Overview v={v} L={L} sel={sel} pick={pick} setWaiting={setWaiting} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
+          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
+          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
       </div>
     </>
   );
@@ -141,7 +148,7 @@ function View({ v, L, phone, ledger, tab, sel, pick, openWorth, openSubscription
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} group={group} setGroup={setGroup} />
-    : <Overview v={v} L={L} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openTransactions={openTransactions} openCalendar={openCalendar} phone={phone} />;
+    : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openTransactions={openTransactions} openCalendar={openCalendar} phone={phone} />;
 }
 
 export function mountFinances(el: Element, props: FinancesProps) { render(<FinancesScreen {...props} />, el); }
