@@ -2057,6 +2057,18 @@ html.companion .alertlist.fx-rows li .when { margin-left:auto; }
 .fx-txfilters input, .fx-txfilters select, .fx-reporttag { font:inherit; font-size:13px; min-height:32px; padding:5px 10px; border:1px solid var(--line-strong); border-radius:8px; background:var(--panel); color:var(--text); }
 .fx-txfilters input:focus, .fx-txfilters select:focus, .fx-reporttag:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
 @media (max-width: 560px) { .fx-txfilters select { flex:1 1 calc(50% - 4px); } }
+/* Transactions picked to change together: what is picked and what to do with them, over the rows; each row's box before its mark. */
+.fx-txpick { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 12px; padding:8px 10px; border-radius:10px; background:var(--sunken); }
+.fx-txpicked { flex:1 1 auto; font-size:13px; font-weight:600; }
+.fx-txpickcat { display:inline-flex; gap:6px; }
+.fx-txpickcat input { font:inherit; font-size:13px; min-height:30px; width:10em; min-width:0; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-txpickcat input:focus, .fx-txpickmove:focus { outline:2px solid var(--fin-accent); outline-offset:0; border-color:var(--fin-accent); }
+.fx-txpickmove { font:inherit; font-size:13px; min-height:30px; max-width:12em; padding:4px 8px; border:1px solid var(--line-strong); border-radius:7px; background:var(--panel); color:var(--text); }
+.fx-check { flex:none; width:20px; height:20px; margin-right:2px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--line-strong); background:var(--panel); }
+.fx-check svg { width:14px; height:14px; fill:none; stroke:var(--fin-accent-text); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; visibility:hidden; }
+.fx-check.on { background:var(--fin-accent); border-color:var(--fin-accent); }
+.fx-check.on svg { visibility:visible; }
+.alertlist.fx-rows > li.opens.on > .rowopen { background:var(--fin-accent-soft); }
 /* Categories: one row each, a group's own under it, indented; name, group, icon, Delete. */
 .catlist { list-style:none; margin:8px 0 12px; padding:0; }
 .catlist li { display:grid; grid-template-columns:24px minmax(0, 1fr) 11em 10.5em auto; align-items:center; gap:8px; padding:5px 0; }
