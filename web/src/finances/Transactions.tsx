@@ -336,7 +336,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
         </Widget>
         {saveLedger && <PairsWidget L={L} ledger={ledger} save={saveLedger} />}
         {saveLedger && <LinksWidget v={v} L={L} ledger={ledger} save={saveLedger} />}
-        <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
+        <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} show={(c, m) => { setCategory(c); setMonthPick(m || ''); setQ(''); setAccount(''); setWay(''); setTag(''); document.querySelector('.fx-transactions')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
           actions={edit && <>
             {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}

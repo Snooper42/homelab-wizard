@@ -19,7 +19,9 @@ export const budgetTone = (b: finance.BudgetNow): 'out' | 'warn' | '' => (b.left
 /** Worth a look on the Dashboard: over, ahead of its pace, or nine tenths gone. */
 export const toWatch = (b: finance.BudgetNow): boolean => budgetTone(b) !== '' || b.spent >= b.amount * 0.9;
 
-export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = 'all' }: { v: finance.View; edit?: () => void; only?: (b: finance.BudgetNow) => boolean; open?: () => void; title?: string; span?: 1 | 2 | 'all' }) {
+export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = 'all', show }: { v: finance.View; edit?: () => void; only?: (b: finance.BudgetNow) => boolean; open?: () => void; title?: string; span?: 1 | 2 | 'all';
+  /** Shows a budget's transactions: its category, in its month (a budget a paycheck, every month). */
+  show?: (category: string, month?: string) => void }) {
   const list = (v.budgets || []).filter(only || (() => true));
   if (only && !list.length) return null;
   return (
@@ -40,7 +42,8 @@ export function BudgetsWidget({ v, edit, only, open, title = 'Budgets', span = '
           const daily = b.left > 0.005 && b.last >= v.today ? `${money(b.left / days)} a day${days > 1 ? ` for ${days} days` : ', today'}` : '';
           return <Row key={b.category} lead={<Mark kind={icon} type={icon} name={b.category} hue={hue} />} title={b.category}
             sub={`${b.per === 'paycheck' ? `This pay period, to ${dayShort(b.last)}` : `This month, to ${dayShort(b.last)}`} · ${money(b.spent)} of ${money(b.amount)}${b.rolled ? ` (${b.rolled > 0 ? 'with' : 'less'} ${money(Math.abs(b.rolled))} from last time)` : ''}`}
-            when={<span class={'fx-budgetleft' + (tone ? ' fx-' + tone : '')}>{b.left < 0 ? <>{money(-b.left)} over</> : <><Amount value={b.left} form="full" /> left</>}{daily && <span class="fx-budgetday">{daily}</span>}</span>} whenPlain>
+            when={<span class={'fx-budgetleft' + (tone ? ' fx-' + tone : '')}>{b.left < 0 ? <>{money(-b.left)} over</> : <><Amount value={b.left} form="full" /> left</>}{daily && <span class="fx-budgetday">{daily}</span>}</span>} whenPlain
+            onOpen={show && (() => show(b.category, b.per === 'paycheck' ? undefined : b.start.slice(0, 7)))} openLabel={show ? 'see its transactions' : undefined}>
             <span class={'fx-budgetbar' + (tone ? ' ' + tone : '')} role="img" aria-label={`${b.category}: ${money(b.spent)} spent of ${money(b.amount)}${tone === 'warn' ? ', ahead of an even pace' : ''}`}>
               <span style={{ width: `${share}%` }} />
               <i style={{ left: `${pace}%` }} />
