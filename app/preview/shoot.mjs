@@ -5971,11 +5971,14 @@ const smokes = [
     const above = await page.evaluate(() => document.querySelector('.fx-monthone').getBoundingClientRect().top < document.querySelector('.fx-calendar').getBoundingClientRect().top);
     if (!above) throw new Error('narrow, the month in all comes after the week list');
   } },
-  // No card alone with half its row empty: at two columns (1280px) What you own and What you owe side by side and By tag
+  // No card alone with half its row empty: the Dashboard's Net worth the whole row; at two columns (1280px) What you own and What you owe side by side and By tag
   // the whole row; at three (1500px), the day picked and the month in all one above the other beside the calendar.
   { name: 'Finances: no card sits alone with half its row empty', screen: 'finances', run: async (page) => {
     const box = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width) }; });
     const row = async (sel) => page.$eval(sel, (e) => { const b = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); return Math.round(r.right - r.left) / Math.round(b.width); });
+    // The Dashboard's Net worth comes after Money flow, which takes its row: it takes its own.
+    await page.waitForSelector('.fx-worthmini', { timeout: 5000 });
+    if ((await row('.fx-worthmini')) < 0.99) throw new Error('the Dashboard\'s Net worth takes half its row');
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     const own = await box('.fx-ownlist'), owe = await box('.fx-owelist');
     if (own.y !== owe.y || owe.x <= own.x) throw new Error(`own ${JSON.stringify(own)}, owe ${JSON.stringify(owe)}`);
