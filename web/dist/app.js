@@ -9457,18 +9457,26 @@
         all.map((t3) => ids.has(t3.id) ? { ...t3, category: c3 || void 0, splits: void 0 } : t3)
       );
     };
-    const moveTo = (acct) => {
-      const was = chosen.filter((t3) => t3.account !== acct && t3.to !== acct), ids = new Set(was.map((t3) => t3.id));
+    const moveTo = (acct2) => {
+      const was = chosen.filter((t3) => t3.account !== acct2 && t3.to !== acct2), ids = new Set(was.map((t3) => t3.id));
       if (!ids.size) {
-        setProblem(chosen.some((t3) => t3.to === acct) ? "A transfer can’t come out of the account it goes into." : "They are in it already.");
+        setProblem(chosen.some((t3) => t3.to === acct2) ? "A transfer can’t come out of the account it goes into." : "They are in it already.");
         return;
       }
-      undoable(`Moved ${plural(was.length, "transaction")} to ${L2.account[acct]?.name || acct}`, was, all.map((t3) => ids.has(t3.id) ? { ...t3, account: acct } : t3));
+      undoable(`Moved ${plural(was.length, "transaction")} to ${L2.account[acct2]?.name || acct2}`, was, all.map((t3) => ids.has(t3.id) ? { ...t3, account: acct2 } : t3));
     };
     const into2 = (v3.plan.accounts || []).filter((a3) => a3.kind !== "home" && a3.kind !== "car" && a3.kind !== "collectible");
     const now = v3.today.slice(0, 7);
     const thisMonth = all.filter((t3) => t3.date.startsWith(now) && !t3.to);
     const sum = (f4) => thisMonth.filter(f4).reduce((s3, t3) => s3 + amt(t3), 0);
+    const acct = account ? L2.account[account] : void 0;
+    const runs2 = !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
+    const after2 = (day3) => {
+      if (!acct) return 0;
+      const effect = (t3) => (t3.account === acct.id ? t3.amount : t3.to === acct.id ? -t3.amount : 0) * (owed(acct.kind) ? -1 : 1);
+      const at2 = acct.updated;
+      return all.reduce((n3, t3) => n3 + (day3 < at2 ? t3.date > day3 && t3.date <= at2 ? -effect(t3) : 0 : t3.date > at2 && t3.date <= day3 ? effect(t3) : 0), acct.balance);
+    };
     const days = [];
     for (const t3 of list) {
       if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
@@ -9556,14 +9564,35 @@
               problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem }),
               /* @__PURE__ */ u3("datalist", { id: "fxPickCategories", children: [.../* @__PURE__ */ new Set([...(v3.categories || []).map((c3) => c3.name), ...cats])].map((c3) => /* @__PURE__ */ u3("option", { value: c3 }, c3)) })
             ] }),
+            runs2 && !!shown6.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txrunning", children: [
+              "After each day, what ",
+              acct.name,
+              " ",
+              owed(acct.kind) ? "owed" : "held",
+              ": worked from the ",
+              moneyIn(acct.balance, acct.currency),
+              " typed in on ",
+              dayShort(acct.updated),
+              " through these transactions."
+            ] }),
             filtered && !!shown6.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-txtotal", children: [
               "Together ",
               /* @__PURE__ */ u3(Amount, { value: shown6.filter((t3) => !t3.to || account).reduce((s3, t3) => s3 + (account && t3.to === account ? -amt(t3) : amt(t3)), 0), form: "full", sign: true })
             ] }),
             days.map((d3) => /* @__PURE__ */ u3("section", { class: "fx-txday", "aria-label": dayLong(d3.date), children: [
               /* @__PURE__ */ u3("h3", { children: [
-                dayLong(d3.date),
-                d3.date === v3.today ? ", today" : ""
+                /* @__PURE__ */ u3("span", { children: [
+                  dayLong(d3.date),
+                  d3.date === v3.today ? ", today" : ""
+                ] }),
+                runs2 && /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
+                  moneyIn(after2(d3.date), acct.currency),
+                  /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+                    " ",
+                    owed(acct.kind) ? "owed" : "in " + acct.name,
+                    " after the day"
+                  ] })
+                ] })
               ] }),
               /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {
                 const a3 = L2.account[t3.account];

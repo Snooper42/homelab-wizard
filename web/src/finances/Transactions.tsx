@@ -24,7 +24,7 @@ import { joined, type Pair, pairs, suggestLinks } from './importData';
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
-import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
+import { allPayments, dayLong, dayShort, type Lookup, money, moneyIn, monthName, owed, plural } from './money';
 import { tagsOf } from './reportData';
 import { showUndo } from '../status/UndoNote';
 import { shownNote } from './payees';
@@ -279,6 +279,17 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const now = v.today.slice(0, 7);
   const thisMonth = all.filter((t) => t.date.startsWith(now) && !t.to);
   const sum = (f: (t: finance.Transaction) => boolean) => thisMonth.filter(f).reduce((s, t) => s + amt(t), 0);
+  // One account picked: what it held after each day, worked back (and on) from its balance as typed in on its day,
+  // through every transaction in or out of it. Not for a home, a car, or a collectible, whose worth no transaction moves.
+  const acct = account ? L.account[account] : undefined;
+  const runs = !!acct?.updated && !['home', 'car', 'collectible'].includes(acct.kind);
+  const after = (day: string): number => {
+    if (!acct) return 0;
+    // What a transaction did to the account: money out of it, or a transfer into it; a card or loan owes the more for a charge.
+    const effect = (t: finance.Transaction) => (t.account === acct.id ? t.amount : t.to === acct.id ? -t.amount : 0) * (owed(acct.kind) ? -1 : 1);
+    const at = acct.updated!;
+    return all.reduce((n, t) => n + (day < at ? (t.date > day && t.date <= at ? -effect(t) : 0) : (t.date > at && t.date <= day ? effect(t) : 0)), acct.balance);
+  };
   // By day, newest first, each day's transactions as they were entered, latest on top.
   const days: { date: string; list: finance.Transaction[] }[] = [];
   for (const t of list) {
@@ -351,10 +362,12 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             {problem && <span class="formerr bad" role="alert">{problem}</span>}
             <datalist id="fxPickCategories">{[...new Set([...(v.categories || []).map((c) => c.name), ...cats])].map((c) => <option key={c} value={c} />)}</datalist>
           </div>}
+          {runs && !!shown.length && <p class="fx-sub fx-txrunning">After each day, what {acct!.name} {owed(acct!.kind) ? 'owed' : 'held'}: worked from the {moneyIn(acct!.balance, acct!.currency)} typed in on {dayShort(acct!.updated!)} through these transactions.</p>}
           {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
           {days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
-              <h3>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</h3>
+              <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
+                {runs && <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>}</h3>
               <Rows kind="fx-rows">
                 {d.list.map((t) => {
                   const a = L.account[t.account];

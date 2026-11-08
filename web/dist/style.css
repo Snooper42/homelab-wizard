@@ -2109,7 +2109,10 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .alertlist.fx-rows > li .fwho:not(.sm):not(.lg), .alertlist.fx-rows > li .rowopen .fwho:not(.sm):not(.lg) { width:32px; height:32px; font-size:14px; }
 /* Transactions: by day, newest first; a day's heading over its rows. */
 .fx-txday + .fx-txday { margin-top:14px; }
-.fx-txday h3 { margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
+.fx-txday h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
+/* One account picked: what it held after the day, at the day's end of the line, in the text's own colour. */
+.fx-txday h3 .fx-txbal { color:var(--text); font-variant-numeric:tabular-nums; }
+.fx-txrunning { margin:0 0 8px; }
 /* Pay's next paychecks by month: the month, how many, and what they bring, over its paydays. */
 .fx-paymonth + .fx-paymonth { margin-top:14px; }
 .fx-paymonth h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; padding-bottom:6px; border-bottom:1px solid var(--line); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }

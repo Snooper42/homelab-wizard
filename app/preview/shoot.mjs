@@ -6447,6 +6447,22 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark.logo', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck") .fx-in:has-text("+$2,400.00")', { timeout: 5000 });
   } },
+  // One account picked: what it held after each day, worked back from the balance typed in on its day (checking's $2,512.40
+  // on Oct 30) through each transaction in or out of it, a transfer out too; a card says what it owed, more after a charge.
+  // With every account, no balance shows.
+  { name: 'Finances: one account picked, each day says what it held after', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-txday .fx-txbal')) throw new Error('a balance shows with every account');
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', 'chk');
+    const bal = (day) => page.textContent(`.fx-txday[aria-label="${day}"] .fx-txbal`, { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    for (const [day, want] of [['Wed, Oct 28', '$2,512.40'], ['Tue, Oct 27', '$2,560.60'], ['Mon, Oct 26', '$2,810.60'], ['Sat, Oct 24', '$410.60'], ['Thu, Oct 22', '$474.35']]) {
+      const got = await bal(day);
+      if (!got.startsWith(want + ' ')) throw new Error(`${day}: ${got}, not ${want}`);
+    }
+    await page.waitForSelector('.fx-txrunning:has-text("worked from the $2,512.40 typed in on Oct 30")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', 'visa');
+    if (!(await bal('Fri, Oct 30')).startsWith('$1,240.55 owed') || !(await bal('Fri, Oct 23')).startsWith('$1,154.45 owed')) throw new Error(`the card: ${await bal('Fri, Oct 30')}, ${await bal('Fri, Oct 23')}`);
+  } },
   // Finding transactions: words in the payee, category, or note; an account (a transfer into it counts as money in);
   // a category; a month; in or out; the total of what shows; Show all clears them.
   { name: 'Finances: transactions found by search and filters, with their total', screen: 'finances', run: async (page) => {
