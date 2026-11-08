@@ -14063,15 +14063,52 @@ ${pays}
       ] })
     ] });
   }
+  var foldedKey = "homelab.finances.foldedGroups";
+  var readFolded = () => {
+    try {
+      return JSON.parse(localStorage.getItem(foldedKey) || "[]") || [];
+    } catch {
+      return [];
+    }
+  };
   function Balances({ v: v3, open: open4, toggle }) {
+    const [folded2, setFolded] = d2(readFolded);
     const list = grouped(v3);
     if (!list.length) return null;
+    const fold2 = (key5) => {
+      const next = folded2.includes(key5) ? folded2.filter((k3) => k3 !== key5) : [...folded2, key5];
+      setFolded(next);
+      try {
+        localStorage.setItem(foldedKey, JSON.stringify(next));
+      } catch {
+      }
+    };
     return /* @__PURE__ */ u3("div", { class: "fx-balances", role: "group", "aria-label": "Balances", children: [
       /* @__PURE__ */ u3("div", { class: "fx-caption fx-balhead", children: [
         "Accounts",
         toggle && /* @__PURE__ */ u3(HideAmounts, { small: true, hidden: !!v3.plan.hideAmounts, toggle })
       ] }),
-      list.map((g2) => /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open4 }, g2.key)),
+      list.map((g2) => {
+        const shut2 = folded2.includes(g2.key);
+        const stale = (a3) => {
+          const d3 = updatedOn(a3);
+          return !!d3 && daysBetween(d3, v3.today) > staleDays;
+        };
+        return /* @__PURE__ */ u3("div", { class: "fx-balgroup", children: [
+          /* @__PURE__ */ u3("div", { class: "fx-balrow", children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "fx-balfold", "aria-expanded": !shut2, "aria-label": `${g2.name}'s accounts`, title: shut2 ? `Show ${g2.name}'s accounts` : `Hide ${g2.name}'s accounts`, onClick: () => fold2(g2.key), children: /* @__PURE__ */ u3("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", children: /* @__PURE__ */ u3("path", { d: "M9 6l6 6-6 6" }) }) }),
+            /* @__PURE__ */ u3(Balance, { v: v3, g: g2, open: open4 })
+          ] }),
+          !shut2 && /* @__PURE__ */ u3("ul", { class: "fx-balaccts", "aria-label": `${g2.name}'s accounts`, children: g2.accounts.map((a3) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("button", { type: "button", class: "fx-balacct", title: a3.name, onClick: () => open4(g2.key), children: [
+            /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
+            /* @__PURE__ */ u3("span", { class: "fx-balname", children: [
+              stale(a3) && /* @__PURE__ */ u3("span", { class: "fx-staledot", "aria-label": "over a month since it was updated" }),
+              /* @__PURE__ */ u3("span", { children: a3.name })
+            ] }),
+            /* @__PURE__ */ u3(Amount, { value: worthOf(v3, a3), form: "compact", tone: worthOf(v3, a3) < 0 ? "out" : "" })
+          ] }) }, a3.id)) })
+        ] }, g2.key);
+      }),
       /* @__PURE__ */ u3("div", { class: "fx-balance total", children: [
         /* @__PURE__ */ u3("span", { class: "fx-legendlabel", children: "Net worth" }),
         /* @__PURE__ */ u3("span", { class: "fx-amount", children: compact(netWorth(v3)) })
