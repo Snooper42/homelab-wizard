@@ -118,7 +118,7 @@ final class PayeeLogos: @unchecked Sendable {
         guard let url = resourceBundle.url(forResource: "PayeeLogos", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let logos = try? PayeeLogos(json: data) else {
-            SecureLog.ui.error("Payee logos missing from the app")
+            Log.ui.error("Payee logos missing from the app")
             return PayeeLogos.empty
         }
         return logos
