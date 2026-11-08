@@ -158,7 +158,7 @@ private struct PhoneDashboard: View {
 
     var body: some View {
         TabView(selection: tab) {
-            PhoneStatus(model: model, finances: finances)
+            PhoneStatus(model: model, finances: finances) { savedTab = Screen.backups.storageKey }
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
                 .badge(model.attentionCount)
                 .tag(Screen.status(.all))
@@ -190,6 +190,7 @@ private struct PhoneDashboard: View {
             .tabItem { Label("Settings", systemImage: Screen.settings.systemImage) }
             .tag(Screen.settings)
         }
+        .shrinkingTabBar()
     }
 
     /// Health in one line, as atop every screen but Status on the computer;
@@ -199,12 +200,14 @@ private struct PhoneDashboard: View {
     }
 }
 
-/// Status on iPhone: the summary, what changed, the apps by category as
-/// the computer groups them, and the cards under them, as the computer has
-/// them below its table.
+/// Status on iPhone: the ring and what needs a look, four tiles, what
+/// changed, the apps by category as the computer groups them, and the
+/// cards under them, as the computer has them below its table.
 private struct PhoneStatus: View {
     @Bindable var model: DashboardViewModel
     let finances: FinancesViewModel
+    /// Opens the Backups tab, from its tile.
+    var openBackups: @MainActor () -> Void = {}
     /// Which groups are open (StatusFolds): names only, kept like the tab.
     @SceneStorage("statusFolds") private var folds = ""
 
@@ -212,9 +215,14 @@ private struct PhoneStatus: View {
         NavigationStack {
             List {
                 // While searching, only the apps that match.
-                if !model.isSearching {
+                if !model.isSearching, model.hasLoaded {
                     Section {
-                        OverviewHeader(model: model)
+                        VStack(spacing: 10) {
+                            StatusHero(model: model)
+                            StatusTiles(model: model, openBackups: openBackups)
+                        }
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
                     }
                 }
                 let changed = model.isSearching ? [] : model.changedApps
@@ -275,14 +283,23 @@ private struct PhoneStatus: View {
                 AppDetailView(app: model.app(id: id))
             }
             .refreshable {
-                // Status and its cards (refresh reads them), and the money card.
+                // Status and its cards (refresh reads them), the backups tile, and the money card.
                 async let money: Void = finances.load()
+                async let backups: Void = model.backups.load()
                 await model.refresh()
                 await money
+                await backups
             }
             // Again once the device's level is known: right after unlock it may not be yet.
             .task(id: finances.canSeeMoney) { await finances.load() }
+            // The Backups tile, read once if the Backups tab hasn't yet.
+            .task { if model.backups.overview == nil { await model.backups.load() } }
             .toolbar {
+                #if os(iOS)
+                ToolbarItem(placement: .topBarLeading) {
+                    ConnectionBadge(state: model.liveEvents.connection)
+                }
+                #endif
                 ToolbarItem(placement: .primaryAction) {
                     DeviceMenu()
                 }
@@ -694,30 +711,6 @@ private extension DashboardViewModel.Filter {
 }
 
 // MARK: - Shared pieces
-
-private struct OverviewHeader: View {
-    let model: DashboardViewModel
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ConnectionBadge(state: model.liveEvents.connection)
-            Text(model.summary)
-                .font(.title3.weight(.semibold))
-            OvernightLine(model: model)
-            if let savings = model.yearlySavings {
-                Text("Replaces \(savings, format: .currency(code: "USD").precision(.fractionLength(0))) a year in subscriptions")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            if let error = model.liveEvents.refreshError {
-                Label(error, systemImage: "exclamationmark.triangle")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.warning)
-            }
-        }
-        .padding(.vertical, 6)
-    }
-}
 
 /// The device's menu: what it may do, Lock, and Unpair.
 struct DeviceMenu: View {
