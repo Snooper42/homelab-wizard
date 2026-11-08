@@ -250,7 +250,7 @@ jobs:
             exit 1
           fi
           tail -3 "$RUNNER_TEMP/shots.log"
-          warnings="$(grep -E "warning:" "$RUNNER_TEMP/shots.log" | grep -v "^ld: warning" | grep -v appintentsmetadataprocessor | sed -E 's#^.*/apple-client/##' | sort -u)"
+          warnings="$(grep -E "warning:" "$RUNNER_TEMP/shots.log" | grep -v "^ld: warning" | grep -v appintentsmetadataprocessor | sed -E 's#^.*/apple-client/##' | sort -u || true)"
           if [ -n "$warnings" ]; then echo "$warnings"; echo "::error::compiler warnings in the screenshots build"; exit 1; fi
 
       - name: Take the pictures
