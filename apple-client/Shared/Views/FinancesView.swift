@@ -161,6 +161,7 @@ private struct CheckingHero: View {
     let now: FinanceWorking
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    @Namespace private var zoom
 
     var body: some View {
         let account = view.plan.accounts.first { $0.id == view.checking }
@@ -171,12 +172,14 @@ private struct CheckingHero: View {
             NavigationLink {
                 CheckingWorkingView(working: now, view: view, finances: finances, title: caption,
                                     start: "Checking, typed in \(Self.long(now.from))", end: "Checking now", note: nil)
+                    .zoomTransition(id: "checking", in: zoom)
             } label: {
                 WalletCard(title: account?.name ?? "Checking",
                            amount: amountText(now.result, view.plan.currency, finances),
                            detail: caption,
                            style: .checking,
                            mark: brand.flatMap { logos.brandsByKey[$0] }.map { LogoContent.brand($0) })
+                    .zoomSource(id: "checking", in: zoom)
             }
             .buttonStyle(PressableButtonStyle())
             .accessibilityHint("How it adds up")
@@ -493,6 +496,7 @@ private struct GlanceTiles: View {
 private struct RecentTransactionsCard: View {
     let view: FinancesPlanView
     let finances: FinancesViewModel
+    @Namespace private var zoom
 
     var body: some View {
         let latest = Array((finances.ledger?.newestFirst ?? []).prefix(4))
@@ -528,9 +532,11 @@ private struct RecentTransactionsCard: View {
                 if i > 0 { Divider().padding(.leading, 58) }
                 NavigationLink {
                     TransactionDetailView(transaction: t, finances: finances)
+                        .zoomTransition(id: t.id, in: zoom)
                 } label: {
                     WalletTransactionRow(transaction: t, finances: finances, isNew: finances.isNew(t))
                         .contentShape(Rectangle())
+                        .zoomSource(id: t.id, in: zoom)
                 }
                 .buttonStyle(.plain)
             }
@@ -1297,35 +1303,50 @@ private struct FinanceGoalsPage: View {
     }
 
     private func goalRow(_ goal: FinanceGoal, _ view: FinancesPlanView) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(goal.name)
-                Spacer()
-                Money(value: goal.saved, currency: view.plan.currency, finances: finances)
-                Text(verbatim: "/").foregroundStyle(.secondary)
-                Money(value: goal.target, currency: view.plan.currency, finances: finances)
+        let tint = goal.isReached ? Theme.success : Theme.accent
+        return HStack(spacing: 14) {
+            ProgressRing(value: goal.share, lineWidth: 6, tint: tint, track: tint.opacity(0.16)) {
+                Text(goal.share, format: .percent.precision(.fractionLength(0)))
+                    .font(.caption2.weight(.bold))
+                    .monospacedDigit()
             }
-            ProgressView(value: goal.share)
-                .tint(goal.isReached ? Theme.success : .accentColor)
-            Group {
-                if goal.isReached {
-                    Text("Reached")
-                } else if let date = goal.date {
-                    Text("By \(date, format: .dateTime.month(.wide).year())")
-                } else if let reaches = goal.reaches {
-                    Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+            .frame(width: 52, height: 52)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(verbatim: goal.name)
+                    .font(.body.weight(.medium))
+                HStack(spacing: 3) {
+                    Money(value: goal.saved, currency: view.plan.currency, finances: finances)
+                        .fontWeight(.semibold)
+                    Text("of")
+                        .foregroundStyle(.secondary)
+                    Money(value: goal.target, currency: view.plan.currency, finances: finances)
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+                Group {
+                    if goal.isReached {
+                        Text("Reached")
+                    } else if let date = goal.date {
+                        Text("By \(date, format: .dateTime.month(.wide).year())")
+                    } else if let reaches = goal.reaches {
+                        Text("At this pace, \(reaches, format: .dateTime.month(.wide).year())")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(goal.isReached ? Theme.success : .secondary)
+                if goal.needsMonth > 0, !goal.isReached {
+                    HStack(spacing: 4) {
+                        Text("Needs")
+                        Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances)
+                        Text("a month")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            if goal.needsMonth > 0, !goal.isReached {
-                HStack(spacing: 4) {
-                    Text("Needs").font(.caption).foregroundStyle(.secondary)
-                    Money(value: goal.needsMonth, currency: view.plan.currency, finances: finances).font(.caption)
-                    Text("a month").font(.caption).foregroundStyle(.secondary)
-                }
-            }
+            Spacer(minLength: 0)
         }
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -1676,6 +1697,7 @@ struct TransactionsView: View {
     @State private var picked: String??
     /// Only the new ones.
     @State private var onlyNew = false
+    @Namespace private var zoom
 
     private struct MonthGroup: Identifiable {
         let month: Date
@@ -1773,8 +1795,10 @@ struct TransactionsView: View {
                         let isNew = finances.isNew(t)
                         NavigationLink {
                             TransactionDetailView(transaction: t, finances: finances)
+                                .zoomTransition(id: t.id, in: zoom)
                         } label: {
                             WalletTransactionRow(transaction: t, finances: finances, isNew: isNew)
+                                .zoomSource(id: t.id, in: zoom)
                         }
                         .swipeActions(edge: .leading) {
                             if isNew {
@@ -2200,8 +2224,15 @@ private struct TransactionDetailView: View {
     }
 
     /// What a transaction is, in words: its payee, or where a transfer went.
+    /// A payee as the bank wrote it ("NETFLIX.COM", "STARBUCKS STORE 01234")
+    /// is shown as a person would write it; one typed by a person as typed.
     static func title(of t: FinanceTransaction, finances: FinancesViewModel) -> String {
-        if !t.payee.isEmpty { return t.payee }
+        if !t.payee.isEmpty {
+            let logos = PayeeLogos.shared
+            guard logos.bankWording(t.payee) else { return t.payee }
+            let clean = logos.cleanPayee(t.payee)
+            return clean.isEmpty ? t.payee : clean
+        }
         if let to = t.to, !to.isEmpty { return "To \(finances.accountName(to) ?? "another account")" }
         return "Transaction"
     }

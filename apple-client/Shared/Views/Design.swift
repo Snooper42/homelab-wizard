@@ -512,3 +512,32 @@ enum TileColour {
     static let grey = Color(light: 0x6E6E73, dark: 0x8E8E93)
     static let purple = Color(light: 0x8944AB, dark: 0xBF5AF2)
 }
+
+// MARK: - Zoom
+
+extension View {
+    /// Where a zoom into a page starts (iOS 18): the row or card tapped.
+    @ViewBuilder
+    func zoomSource(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18, macOS 15, *) {
+            matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
+        }
+    }
+
+    /// A page that grows out of what was tapped, as Wallet opens a card (iOS 18);
+    /// a plain push before that, and on the Mac.
+    @ViewBuilder
+    func zoomTransition(id: some Hashable, in namespace: Namespace.ID) -> some View {
+        #if os(iOS)
+        if #available(iOS 18, *) {
+            navigationTransition(.zoom(sourceID: id, in: namespace))
+        } else {
+            self
+        }
+        #else
+        self
+        #endif
+    }
+}
