@@ -20,6 +20,7 @@ import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
 import { Mark, payeeBrand, paysAlike } from './Mark';
 import { joined, type Pair, pairs, suggestLinks } from './importData';
+import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
@@ -99,8 +100,9 @@ export function iconOf(categories: finance.Category[] | undefined, name: string 
  */
 export function TxMark({ t, size, categories }: { t: finance.Transaction; size?: 'sm' | 'lg'; categories?: finance.Category[] }) {
   const brand = t.to ? undefined : payeeBrand(t.institution, t.payee);
-  const icon = t.to ? 'savings' : iconOf(categories, t.splits?.length ? t.splits[0].category : t.category);
-  return <Mark brand={brand} kind={brand ? undefined : icon} name={t.payee || '?'} type={brand ? undefined : icon} size={size} auto={!t.to && !icon && t.institution !== 'none' && !!t.payee?.trim()} />;
+  const cat = t.splits?.length ? t.splits[0].category : t.category;
+  const icon = t.to ? 'savings' : iconOf(categories, cat);
+  return <Mark brand={brand} kind={brand ? undefined : icon} name={t.payee || '?'} type={brand ? undefined : icon} size={size} auto={!t.to && !icon && t.institution !== 'none' && !!t.payee?.trim()} hue={t.to ? undefined : categoryHue(cat, categories)} />;
 }
 
 /** What a transaction is, in words: its payee, or where a transfer went. */

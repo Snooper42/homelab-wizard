@@ -11,6 +11,7 @@ import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, m
 import { cleanPayee } from './payees';
 import { already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, plannedFor, type Planned, wayOnly, wayOnlyFixes } from './importData';
 import { carFromPrice, rateOf } from './model';
+import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
 export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal';
@@ -888,7 +889,8 @@ function CategoriesForm(props: EditProps) {
           return (
             <li key={i} class={r.parent ? 'sub' : ''} data-was={r.was || undefined}>
               {/* With no icon of its own, its group's, as its transactions show. */}
-              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm" />
+              <Mark kind={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} type={r.icon || rows.find((g) => g.name === r.parent)?.icon || undefined} name={r.name || '?'} size="sm"
+                hue={r.income ? undefined : categoryHue(r.parent || r.name, rows.map((q) => ({ name: q.name, parent: q.parent || undefined, income: q.income })))} />
               <input aria-label="Name" value={r.name} onInput={(ev) => set(i, 'name', (ev.target as HTMLInputElement).value)} />
               <select aria-label={`${r.name || 'Category'}'s group`} value={r.parent} onChange={(ev) => set(i, 'parent', (ev.target as HTMLSelectElement).value)}>
                 <option value="">No group</option>

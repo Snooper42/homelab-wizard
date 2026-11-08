@@ -57,6 +57,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Each category in its own colour:** on Finances, a category's icon is drawn in one colour on every row, budget, report bar, the money flow and the donut (Food is the same green everywhere, Utilities the same orange), so you can tell them apart at a glance, in light and dark.
 - **Tidy Up, redesigned:** Overview starts with the one thing to do next, larger, beside a ring of what's on the drive. Under it, a tile for each library in its own colour says what it holds, how far along it is, and what it waits on; a tile opens its tab, which now starts with that library (Music's with its clean-up step by step).
 - **Transfers between your accounts, joined:** money out of one of your accounts and the same into another within three days are offered on Transactions as one transfer (**Join**, or **Not one transfer**), so they count as neither spending nor income. Bringing in either bank's file again skips its half.
 - **Transactions link to the bills they pay:** Transactions lists those already in that look like a planned payment (*looks like Electric, planned $140*), each with **Link** or **Not it**, and **Link all**; a linked one says *pays Electric*. A transaction you type picks its planned payment by itself, saying so, until you pick another.
