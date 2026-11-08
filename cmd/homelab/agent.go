@@ -237,7 +237,7 @@ func openJobLog(dir, name string, limit int64) (*os.File, error) {
 // Each file is written beside its place and renamed into it, so a split
 // cut short leaves the old files as they were.
 func splitLog(path, older string) error {
-	data, err := os.ReadFile(path)
+	data, err := lockedfile.Read(path)
 	if err != nil {
 		return err
 	}
