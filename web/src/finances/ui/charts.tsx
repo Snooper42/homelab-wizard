@@ -168,7 +168,7 @@ export function StackedBars({ columns, height = 260, format, tip, label, lineles
           {at >= 0 && <div class="fx-tip wide" style={tipSide(((at + 0.5) / n) * 100)}>{tip(at)}</div>}
         </div>
       </div>
-      <div class="fx-barlabels" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+      <div class={'fx-barlabels' + (n > 8 ? ' many' : '')} aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
         {columns.map((c, i) => <span key={i} class={i === shown ? 'on' : ''}>{c.label}</span>)}
       </div>
     </figure>

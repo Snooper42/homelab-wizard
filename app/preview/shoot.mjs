@@ -6354,6 +6354,13 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // On a phone, Reports' twelve months label every other month, this one always: no two labels touch.
+  { name: 'The phone: a twelve-month chart\'s labels do not run together', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    const shown = await page.$$eval('.fx-trend .fx-barlabels span', (l) => l.filter((x) => getComputedStyle(x).visibility === 'visible').map((x) => { const r = document.createRange(); r.selectNodeContents(x); const b = r.getBoundingClientRect(); return [x.textContent, b.left, b.right]; }), { timeout: 5000 });
+    if (shown.at(-1)[0] !== 'Oct') throw new Error(`this month is not labelled: ${JSON.stringify(shown)}`);
+    for (let i = 1; i < shown.length; i++) if (shown[i][1] < shown[i - 1][2] + 4) throw new Error(`${shown[i - 1][0]} and ${shown[i][0]} touch`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

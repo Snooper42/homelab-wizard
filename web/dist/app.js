@@ -11925,7 +11925,7 @@ ${pays}
           at2 >= 0 && /* @__PURE__ */ u3("div", { class: "fx-tip wide", style: tipSide((at2 + 0.5) / n3 * 100), children: tip(at2) })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-barlabels", "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown6 ? "on" : "", children: c3.label }, i3)) })
+      /* @__PURE__ */ u3("div", { class: "fx-barlabels" + (n3 > 8 ? " many" : ""), "aria-hidden": "true", style: { gridTemplateColumns: `repeat(${n3}, minmax(0, 1fr))` }, children: columns.map((c3, i3) => /* @__PURE__ */ u3("span", { class: i3 === shown6 ? "on" : "", children: c3.label }, i3)) })
     ] });
   }
   function Donut({ slices, center, size: size2 = 150, label }) {
