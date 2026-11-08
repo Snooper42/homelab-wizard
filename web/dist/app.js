@@ -1349,6 +1349,7 @@
   }
   var matchDays = 16;
   var near = 0.1;
+  var tolerance = (x3) => x3.estimate || x3.kind === "utilities" ? 0.4 : near;
   var dayNo = (s3) => Math.round(Date.parse(s3 + "T00:00:00Z") / 864e5);
   function plannedFor(t3, account, payments, dues, checking, taken, same2) {
     if (!t3.amount || !t3.payee) return void 0;
@@ -1356,7 +1357,7 @@
     let best, tie = false;
     const fits = (x3) => x3.payer ? t3.amount > 0 && (x3.to || checking) === account && (same2(t3.payee, x3) || alike(t3.payee, x3.payer)) : t3.amount < 0 && (x3.from || checking) === account && same2(t3.payee, x3);
     for (const x3 of payments) {
-      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * near + 5e-3 || !fits(x3)) continue;
+      if (x3.card || !(x3.amount > 0) || Math.abs(paid - x3.amount) > x3.amount * tolerance(x3) + 5e-3 || !fits(x3)) continue;
       for (const due of dues[x3.id] || []) {
         const gap2 = Math.abs(dayNo(due) - dayNo(t3.date)), off2 = Math.abs(paid - x3.amount);
         if (gap2 > matchDays || taken.has(x3.id + " " + due)) continue;
@@ -8856,6 +8857,16 @@
     const hint = hintOf(void 0, payee);
     return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint]) };
   }
+  var billKinds = /* @__PURE__ */ new Set(["utilities", "home", "car", "subscriptions", "loans"]);
+  function samePurpose(payee, x3) {
+    if (!billKinds.has(x3.kind || "")) return false;
+    const brand = brandOf(void 0, payee);
+    if (!brand) return false;
+    if (brands[brand]?.kind === "car") return x3.kind === "car" && !/insurance/i.test(x3.name) || x3.kind === "loans" && /\b(?:car|auto|vehicle|truck)\b/i.test(x3.name);
+    const cat = brandCategory[brand];
+    return !!cat && paymentCategory(x3).some((c3) => c3.toLowerCase() === cat.toLowerCase());
+  }
+  var paysBill = (payee, x3) => paysAlike(payee, x3) || samePurpose(payee, x3);
 
   // web/src/finances/model.ts
   function month(v3, L2) {
@@ -9231,7 +9242,7 @@
   // web/src/finances/Transactions.tsx
   function LinksWidget({ v: v3, L: L2, ledger, save: save2 }) {
     const [busy2, setBusy] = d2(false);
-    const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, paysAlike);
+    const found2 = suggestLinks(ledger.transactions, allPayments(v3.plan).filter((x3) => !x3.card), v3.dues || {}, v3.checking, paysBill);
     if (!found2.size) return null;
     const list = ledger.transactions.filter((t3) => found2.has(t3.id)).reverse();
     const keep2 = async (change) => {
@@ -10645,7 +10656,7 @@
     const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
     const [renameAll, setRenameAll] = d2(true);
     const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
-    const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysAlike) : void 0;
+    const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysBill) : void 0;
     const linked = paymentPicked ? payment : guess?.payment || "";
     const guessed = guess && payments.find((x3) => x3.id === guess.payment);
     const choose = (id2) => {
@@ -10685,7 +10696,7 @@
         category: category.trim() || void 0,
         note: note.trim() || void 0,
         payment: linked || void 0,
-        notPlanned: paymentPicked && !payment && (!!t3?.notPlanned || !!plannedFor({ date, amount: way === "in" ? n3 : -n3, payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysAlike)) || void 0,
+        notPlanned: paymentPicked && !payment && (!!t3?.notPlanned || !!plannedFor({ date, amount: way === "in" ? n3 : -n3, payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), paysBill)) || void 0,
         to: way === "move" ? to : void 0,
         institution: way === "move" ? void 0 : logo || void 0,
         splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === "in" ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || void 0 })) : void 0,
@@ -11049,7 +11060,7 @@
     const guessed = (() => {
       const taken = paidDays(have, props.dues || {});
       return fresh.map((t3) => {
-        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, paysAlike);
+        const g2 = plannedFor(t3, account, payments, props.dues || {}, checking, taken, paysBill);
         if (g2) taken.add(g2.payment + " " + g2.due);
         return g2;
       });

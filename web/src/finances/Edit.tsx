@@ -6,12 +6,12 @@ import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
-import { guessFor } from './guessCategory';
+import { guessFor, paysBill } from './guessCategory';
 import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory } from './importData';
 import { carFromPrice, rateOf } from './model';
 import { categoryHue } from './hues';
@@ -871,7 +871,7 @@ function TransactionForm(props: EditProps) {
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
-    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike) : undefined;
+    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysBill) : undefined;
   const linked = paymentPicked ? payment : guess?.payment || '';
   const guessed = guess && payments.find((x) => x.id === guess.payment);
   const choose = (id: string) => {
@@ -901,7 +901,7 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
+      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysBill)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
@@ -1228,7 +1228,7 @@ function ImportForm(props: EditProps) {
   const payments = (plan.payments || []).filter((x) => !x.card);
   const guessed: (Planned | undefined)[] = (() => {
     const taken = paidDays(have, props.dues || {});
-    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysAlike); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysBill); if (g) taken.add(g.payment + ' ' + g.due); return g; });
   })();
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   // What each fresh row is for: a category, or a move to or from another of the household's accounts (guessCategory.ts).

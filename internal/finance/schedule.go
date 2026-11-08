@@ -54,6 +54,35 @@ func (s Schedule) check(what string) error {
 	return nil
 }
 
+// Back is the schedule as if it had run before its start, back past
+// from: the same days, from a start moved back by whole weeks (weekly,
+// every two weeks) or whole years (monthly and the rest), so a bill set
+// up in November was due in October too. A row of a bank's file from
+// before the plan was made can then be matched to it (dueDays,
+// matchLedger). Once, and a start that is no day, are as they are.
+func (s Schedule) Back(from time.Time) Schedule {
+	start, err := day(s.Start, from.Location())
+	if err != nil || !from.Before(start) {
+		return s
+	}
+	switch s.Every {
+	case Weekly, Biweekly:
+		step := 7
+		if s.Every == Biweekly {
+			step = 14
+		}
+		n := int(start.Sub(from).Hours()/24)/step + 1
+		start = start.AddDate(0, 0, -n*step)
+	case TwiceMonth, Monthly, Quarterly, Yearly:
+		years := start.Year() - from.Year() + 1
+		start = onDay(start.Year()-years, start.Month(), start.Day(), from.Location())
+	default:
+		return s
+	}
+	s.Start = dateOf(start)
+	return s
+}
+
 // Dates are the days it comes from from through to, both included, never
 // before Start. With each paycheck it has none of its own: Plan.Dates has them.
 func (s Schedule) Dates(from, to time.Time) []time.Time {

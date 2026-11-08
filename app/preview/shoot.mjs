@@ -7203,13 +7203,33 @@ const smokes = [
     const fpl = by('FPL'), amex = by('American Express'), mazda = by('Mazda'), hoa = by('Sunset Palms Eas Sunset Pal'), cash = by('Apple Cash');
     if (!fpl || fpl.payment !== 'electric' || fpl.category !== 'Electric' || !/FPL DIRECT DEBIT/.test(fpl.note)) throw new Error(`FPL ${JSON.stringify(fpl)}`);
     if (!amex || amex.to !== 'amex' || amex.category) throw new Error(`American Express ${JSON.stringify(amex)}`);
-    if (!mazda || mazda.payment) throw new Error(`Mazda ${JSON.stringify(mazda)}`);
+    // A car's make pays the plan's car payment by what it is (#508), $399 about its planned $412.
+    if (!mazda || mazda.payment !== 'carpay') throw new Error(`Mazda ${JSON.stringify(mazda)}`);
     if (!hoa || hoa.payment !== 'hoa') throw new Error(`HOA ${JSON.stringify(hoa)}`);
     if (!cash || cash.amount !== 107) throw new Error(`Apple Cash ${JSON.stringify(cash)}`);
     // The list shows the clean name, not the bank's wording.
     const row = page.locator('.fx-txday li:has-text("FPL")').first();
     await row.waitFor({ timeout: 5000 });
     if (/PPD ID|3590247775/.test(await row.innerText())) throw new Error('the bank wording is shown in the list');
+  } },
+  // A bill paid by what the payee is, its name saying nothing of it: FPL pays Electric though $157.06 is a tenth and more over
+  // the planned $140 (a utility changes each time), and a car's make pays the car payment (Mazda, the plan's car payment
+  // set up as a Toyota, about its amount); a grocer pays no spending envelope however close its amount.
+  { name: 'Finances: an electric company pays the Electric bill, and a car make the car payment, by what they are', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"FPL DIRECT DEBIT ELEC PYMT PPD ID: 3590247775",-157.06,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/16/2026,"MAZDA FINANCIAL WEB NZTZP5VXA0Y1UPE WEB ID: 2953775816",-405.00,ACH_DEBIT,600.00,,\n'
+      + 'DEBIT,10/31/2026,"COSTCO WHSE #1234",-198.00,DEBIT_CARD,400.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("FPL") :text("Looks like Electric")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Mazda") :text("Looks like Car payment")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const by = (p) => txs.find((t) => t.payee === p);
+    if (by('FPL')?.payment !== 'electric' || by('Mazda')?.payment !== 'carpay' || by('Costco')?.payment) throw new Error(`linked ${JSON.stringify(txs.slice(-3))}`);
   } },
   // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
   { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [

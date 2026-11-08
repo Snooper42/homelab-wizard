@@ -7,7 +7,8 @@
 // moving to savings) is a move to that account, not spending, when one
 // account plainly fits. Anything else is left for the household to
 // pick. Plain functions: nothing is looked up anywhere.
-import { brandOf, hintOf, subTypeName, suggestType } from './Mark';
+import { brandOf, hintOf, paysAlike, subTypeName, suggestType } from './Mark';
+import { brands } from './logos';
 
 /** Brands (logos.ts) and the category each is mostly. */
 const brandCategory: Record<string, string> = Object.fromEntries(Object.entries({
@@ -112,3 +113,24 @@ export function guessFor(t: { payee?: string; amount: number; raw?: string }, in
   const hint = hintOf(undefined, payee);
   return { category: pick(...(pays ? paymentCategory(pays) : []), fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : undefined, hint && hintCategory[hint]) };
 }
+
+/** The kinds of planned payment a payee may pay by what it is: bills, never a spending or saving envelope. */
+const billKinds = new Set(['utilities', 'home', 'car', 'subscriptions', 'loans']);
+
+/**
+ * Whether a payee pays a planned bill by what it is, its name saying
+ * nothing of the bill's: an electric company the Electric bill (FPL),
+ * a car's make the car payment (Mazda paying "Car payment", or a loan
+ * called "Car loan"), an insurer Car insurance (GEICO).
+ */
+export function samePurpose(payee: string, x: finance.Payment): boolean {
+  if (!billKinds.has(x.kind || '')) return false;
+  const brand = brandOf(undefined, payee);
+  if (!brand) return false;
+  if (brands[brand]?.kind === 'car') return (x.kind === 'car' && !/insurance/i.test(x.name)) || (x.kind === 'loans' && /\b(?:car|auto|vehicle|truck)\b/i.test(x.name));
+  const cat = brandCategory[brand];
+  return !!cat && paymentCategory(x).some((c) => c.toLowerCase() === cat.toLowerCase());
+}
+
+/** Whether a payee pays a planned payment: by its name or brand (Mark's paysAlike), or by what it is (samePurpose). */
+export const paysBill = (payee: string, x: finance.Payment): boolean => paysAlike(payee, x) || samePurpose(payee, x);
