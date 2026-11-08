@@ -12730,7 +12730,43 @@ ${pays}
   }
 
   // web/src/finances/widgets/Flow.tsx
-  function CashFlowWidget({ v: v3, L: L2, open: open4 }) {
+  function LastMonths({ v: v3, ledger, open: open4 }) {
+    if (!ledger?.transactions.length) return null;
+    const t3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1, 1);
+    const from2 = new Date(t3.getFullYear(), t3.getMonth() - 5, 1);
+    const iso2 = (d3) => `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`;
+    const months = byMonth(inHome(v3.plan, ledger.transactions), { key: "six", label: "", from: iso2(from2), to: v3.today.slice(0, 7) + "-31" });
+    if (months.filter((x3) => x3.in > 5e-3 || x3.out > 5e-3).length < 2) return null;
+    const most = Math.max(...months.map((x3) => Math.max(x3.in, x3.out)), 1);
+    const bar = (n3) => ({ height: `${Math.max(n3 > 5e-3 ? 2 : 0, n3 / most * 100)}%` });
+    return /* @__PURE__ */ u3("div", { class: "fx-lastmonths", role: "group", "aria-label": "The last six months, from your transactions", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Your last six months" }),
+      /* @__PURE__ */ u3("div", { class: "fx-monthbars", children: months.map((x3) => {
+        const said2 = `${monthName(x3.month + "-01")}: ${money(x3.in)} in, ${money(x3.out)} out`;
+        const body = /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3("span", { class: "fx-barpair", "aria-hidden": "true", children: [
+            /* @__PURE__ */ u3("i", { class: "fx-h-in", style: bar(x3.in) }),
+            /* @__PURE__ */ u3("i", { class: "fx-h-out", style: bar(x3.out) })
+          ] }),
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+            x3.label,
+            /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+              " ",
+              x3.month.slice(0, 4),
+              ": ",
+              money(x3.in),
+              " in, ",
+              money(x3.out),
+              " out",
+              open4 ? ", see its transactions" : ""
+            ] })
+          ] })
+        ] });
+        return open4 ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-monthbar", title: said2, onClick: () => open4({ month: x3.month }), children: body }, x3.month) : /* @__PURE__ */ u3("span", { class: "fx-monthbar", title: said2, children: body }, x3.month);
+      }) })
+    ] });
+  }
+  function CashFlowWidget({ v: v3, L: L2, open: open4, ledger, showIn }) {
     const m3 = month(v3, L2);
     return /* @__PURE__ */ u3(Widget, { title: "Cash flow", kind: "fx-flow", actions: open4 && /* @__PURE__ */ u3(IconButton, { icon: "open", label: "Open Recurring: a typical month, payment by payment", onClick: open4 }), children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: m3.left, sign: true, tone: "auto" }), caption: "Left in a typical month" }),
@@ -12739,7 +12775,8 @@ ${pays}
         { label: "Income", value: whole(m3.in), tone: "in" },
         { label: "Spending", value: whole(m3.spent), tone: "out" },
         { label: "Saved", value: m3.in ? `${Math.round((m3.saved + m3.viaPay) / (m3.in + m3.viaPay) * 100)}%` : whole(m3.saved), tone: "save" }
-      ] })
+      ] }),
+      /* @__PURE__ */ u3(LastMonths, { v: v3, ledger, open: showIn })
     ] });
   }
   function SpendingWidget({ v: v3, L: L2, open: open4 }) {
@@ -15440,7 +15477,7 @@ ${pays}
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked, openDay: openCalendar }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
         /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions }),
-        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring }),
+        /* @__PURE__ */ u3(CashFlowWidget, { v: v3, L: L2, open: openRecurring, ledger, showIn }),
         /* @__PURE__ */ u3(SpendingWidget, { v: v3, L: L2, open: openRecurring }),
         /* @__PURE__ */ u3(LatestWidget, { v: v3, L: L2, ledger, edit, all: openTransactions }),
         /* @__PURE__ */ u3(SpentWidget, { v: v3, ledger, open: showIn }),

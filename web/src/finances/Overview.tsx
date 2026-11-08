@@ -97,7 +97,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
-        <CashFlowWidget v={v} L={L} open={openRecurring} />
+        <CashFlowWidget v={v} L={L} open={openRecurring} ledger={ledger} showIn={showIn} />
         <SpendingWidget v={v} L={L} open={openRecurring} />
         <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
         <SpentWidget v={v} ledger={ledger} open={showIn} />

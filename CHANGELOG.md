@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Your last six months on Cash flow:** under the Dashboard's typical month, a bar of money in beside money out for each of the last six months your transactions cover; pick a month for its transactions.
 - **Spent this month on the Dashboard:** beside your latest transactions, a ring of what your transactions spent since the 1st by category, largest first; pick a category for this month's transactions of it.
 - **Latest transactions on the Dashboard:** Finances' Dashboard lists your five newest transactions, each opening its own form, with **See all** for Transactions.
 - **What a bill was paid lately:** open a payment on Finances and its form lists its last few from your transactions, each with how much more or less it was than planned, and their average when they differ (*Paid lately, $141.17 on average*).

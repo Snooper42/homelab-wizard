@@ -9,12 +9,45 @@ import { Donut } from '../ui/charts';
 import { Sankey } from '../ui/sankey';
 import { Dot, Legend, SplitBar } from '../ui/Legend';
 import { IconButton, Widget } from '../ui/Widget';
-import { kindName, month, surplus } from '../model';
+import { inHome, kindName, month, surplus } from '../model';
+import { byMonth } from '../reportData';
+import type { showTransactions } from '../Transactions';
 import { kindHueOf, ledgerMonths, monthFlow, savedHue, typicalFlow } from '../flowData';
 import { dayShort, type Lookup, money, monthName, whole } from '../money';
 
 
-export function CashFlowWidget({ v, L, open }: { v: finance.View; L: Lookup; open?: () => void }) {
+/**
+ * The last six months as the ledger has them, in against out a month,
+ * each month a button opening its transactions. Only with two months or
+ * more that have any: one alone says nothing a typical month does not.
+ */
+function LastMonths({ v, ledger, open }: { v: finance.View; ledger?: finance.Ledger | null; open?: (f: Parameters<typeof showTransactions>[0]) => void }) {
+  if (!ledger?.transactions.length) return null;
+  const t = new Date(+v.today.slice(0, 4), +v.today.slice(5, 7) - 1, 1);
+  const from = new Date(t.getFullYear(), t.getMonth() - 5, 1);
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  const months = byMonth(inHome(v.plan, ledger.transactions), { key: 'six', label: '', from: iso(from), to: v.today.slice(0, 7) + '-31' });
+  if (months.filter((x) => x.in > 0.005 || x.out > 0.005).length < 2) return null;
+  const most = Math.max(...months.map((x) => Math.max(x.in, x.out)), 1);
+  const bar = (n: number) => ({ height: `${Math.max(n > 0.005 ? 2 : 0, (n / most) * 100)}%` });
+  return (
+    <div class="fx-lastmonths" role="group" aria-label="The last six months, from your transactions">
+      <div class="fx-caption">Your last six months</div>
+      <div class="fx-monthbars">
+        {months.map((x) => {
+          // Its name starts with the month as shown (Sep), the figures after it unseen: a screen reader and a voice say the same.
+          const said = `${monthName(x.month + '-01')}: ${money(x.in)} in, ${money(x.out)} out`;
+          const body = <><span class="fx-barpair" aria-hidden="true"><i class="fx-h-in" style={bar(x.in)} /><i class="fx-h-out" style={bar(x.out)} /></span>
+            <span class="fx-sub">{x.label}<span class="fx-hidden"> {x.month.slice(0, 4)}: {money(x.in)} in, {money(x.out)} out{open ? ', see its transactions' : ''}</span></span></>;
+          return open ? <button key={x.month} type="button" class="fx-monthbar" title={said} onClick={() => open({ month: x.month })}>{body}</button>
+            : <span key={x.month} class="fx-monthbar" title={said}>{body}</span>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function CashFlowWidget({ v, L, open, ledger, showIn }: { v: finance.View; L: Lookup; open?: () => void; ledger?: finance.Ledger | null; showIn?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   const m = month(v, L);
   return (
     <Widget title="Cash flow" kind="fx-flow" actions={open && <IconButton icon="open" label="Open Recurring: a typical month, payment by payment" onClick={open} />}>
@@ -25,6 +58,7 @@ export function CashFlowWidget({ v, L, open }: { v: finance.View; L: Lookup; ope
         { label: 'Spending', value: whole(m.spent), tone: 'out' },
         { label: 'Saved', value: m.in ? `${Math.round(((m.saved + m.viaPay) / (m.in + m.viaPay)) * 100)}%` : whole(m.saved), tone: 'save' },
       ]} />
+      <LastMonths v={v} ledger={ledger} open={showIn} />
     </Widget>
   );
 }

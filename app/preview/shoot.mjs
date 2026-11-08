@@ -6185,6 +6185,20 @@ const smokes = [
     await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
     if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('not filtered to Food');
   } },
+  // Cash flow's last six months from the ledger (May to October, August on having transactions), in beside out; a month opens
+  // its transactions. With one month alone (the default ledger), none: a typical month already says as much.
+  { name: 'Finances: Cash flow shows the last six months, a month opening its transactions', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.waitForSelector('.fx-flow .fx-monthbar', { timeout: 5000 });
+    const bars = await page.$$eval('.fx-flow .fx-monthbar', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (bars.length !== 6 || bars[0] !== 'May 2026: $0.00 in, $0.00 out, see its transactions' || bars[4] !== 'Sep 2026: $2,425.00 in, $200.00 out, see its transactions') throw new Error(`bars: ${JSON.stringify(bars)}`);
+    await page.click('.fx-flow .fx-monthbar:has-text("Sep 2026")');
+    await page.waitForSelector('.fx-transactions h2:text-is("4 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-09') throw new Error('not filtered to September');
+  } },
+  { name: 'Finances: one month of transactions, no six months on Cash flow', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-flow .fx-tiles', { timeout: 5000 });
+    if (await page.$('.fx-flow .fx-lastmonths')) throw new Error('six months drawn from one');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
@@ -7781,6 +7795,8 @@ const screens = [
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'Finances, Import a file', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'chase.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/24/2026,TRADER JOE\'S #552,-63.75\n10/31/2026,STARBUCKS,-6.45\n') }); await page.waitForSelector('#finSheet .importlist'); } },
+  // The Dashboard with three months of transactions: Cash flow's six months, Latest transactions and Spent this month.
+  { name: 'Finances, Dashboard with months of transactions', screen: 'finances', mock: { ledger: ledgerMonths } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },
