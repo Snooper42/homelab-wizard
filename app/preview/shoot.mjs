@@ -5959,6 +5959,8 @@ const smokes = [
     await page.click('.fx-calendar button[aria-label="The month before"]');
     await page.waitForSelector('.fx-calendar h2:has-text("September 2026")', { timeout: 5000 });
     await page.waitForSelector('.fx-calendar .fx-lead:text-is("What your transactions recorded: 2 payments out, +$2,225.00 in all.")', { timeout: 5000 });
+    // A month past is what was recorded, not "so far".
+    await page.waitForSelector('.fx-monthone li:has(.grow > strong:text-is("Recorded")):has-text("+$2,225.00")', { timeout: 5000 });
     await page.click('.fx-calendar button[aria-label="The month before"]');
     await page.waitForSelector('.fx-calendar h2:has-text("August 2026")', { timeout: 5000 });
     if (!(await page.isDisabled('.fx-calendar button[aria-label="The month before"]'))) throw new Error('the calendar goes back past the ledger\'s first month');

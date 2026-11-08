@@ -287,7 +287,7 @@ function MonthCard({ L, month, ds, cushion, today }: { L: Lookup; month: string;
         {!!charges.length && <Row title="Charged to cards" sub={`${plural(charges.length, 'charge')}, paid with the card`} when={<Amount value={-sum(charges)} form="full" tone="muted" />} whenPlain />}
         {low && <Row title="Lowest in checking" sub={dayLong(low.date) + (low.low ? `, under your ${compact(cushion)} cushion` : '')} subTone={low.low ? 'warn' : ''}
           when={<Amount value={low.balance} tone={low.balance < 0 ? 'out' : low.low ? 'warn' : ''} form="full" />} whenPlain />}
-        {!!spent.length && <Row title="Recorded so far" sub={[recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(', ') + ' · in your transactions'} when={<Amount value={recNet} sign tone="auto" form="full" />} whenPlain />}
+        {!!spent.length && <Row title={month < today.slice(0, 7) ? 'Recorded' : 'Recorded so far'} sub={[recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(', ') + ' · in your transactions'} when={<Amount value={recNet} sign tone="auto" form="full" />} whenPlain />}
         {nothing && <li><Empty>Nothing comes or goes this month.</Empty></li>}
       </Rows>
     </Widget>

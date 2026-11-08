@@ -11561,7 +11561,7 @@ ${pays}
           whenPlain: true
         }
       ),
-      !!spent.length && /* @__PURE__ */ u3(Row, { title: "Recorded so far", sub: [recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(", ") + " · in your transactions", when: /* @__PURE__ */ u3(Amount, { value: recNet, sign: true, tone: "auto", form: "full" }), whenPlain: true }),
+      !!spent.length && /* @__PURE__ */ u3(Row, { title: month3 < today2.slice(0, 7) ? "Recorded" : "Recorded so far", sub: [recIn && `${recIn} in`, recOut && `${recOut} out`].filter(Boolean).join(", ") + " · in your transactions", when: /* @__PURE__ */ u3(Amount, { value: recNet, sign: true, tone: "auto", form: "full" }), whenPlain: true }),
       nothing && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing comes or goes this month." }) })
     ] }) });
   }
