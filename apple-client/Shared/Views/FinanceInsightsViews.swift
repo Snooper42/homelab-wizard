@@ -106,14 +106,7 @@ struct FinanceCashFlowPage: View {
                     AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)
                 }
             }
-            .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
-                    AxisGridLine().foregroundStyle(Theme.separator)
-                    if let amount = value.as(Double.self), finances.amountsShown, !finances.amountsHiddenByPlan {
-                        AxisValueLabel { Text(verbatim: amount.formatted(.number.notation(.compactName))) }
-                    }
-                }
-            }
+            .chartYAxis(.hidden)
             .chartLegend(.hidden)
             .chartXSelection(value: Binding(get: { picked }, set: { date in
                 if let date, let m = months.min(by: { abs($0.month.timeIntervalSince(date)) < abs($1.month.timeIntervalSince(date)) }) {
