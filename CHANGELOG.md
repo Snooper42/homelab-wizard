@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Recurring on the iPhone:** Finances › Recurring lists every payment that repeats, with its logo, how often it comes, when next and what it costs, under about what your bills and subscriptions cost a month; money coming in, card payments and savings each have their own group. Tap one to change what it costs.
 - **Put a buy right, or delete it:** on Net worth's Investments card, open a holding to see its buys and sales as Ghostfolio keeps them. **Change** fixes the shares, what you paid, the day, or bought or sold; **Delete** (asked first) takes it out of Ghostfolio. The card reads Ghostfolio again after each, so its figures follow. A phone allowed to change Finances can do the same.
 - **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.
 - **Real logos from each company's website:** Finances › Transactions › **Logos** lists every payee and account still showing initials, with its website guessed (fpl.com, fidelity.com); **Get them all** fetches each company's own icon from its site, shown before you save. A payee's, account's, or payment's logo picker has **Get the real logo** too. Your computer asks only the websites you click for, only then, and the logos are kept only in your plan.
@@ -64,6 +65,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Investments on the iPhone, redone:** what they're worth with the gain all time and this month, a line over the past month, 3 months or year you can run a finger along, how the money is split across your holdings, and each holding with its ticker in colour and its gain.
+- **A new icon for the iPhone app:** a violet server rack on a white tile, the other way round from before, like Proton Mail's. The mark on the pairing and lock screens matches.
 - **The native Mac version of the Homelab app is gone:** on the Mac, Homelab Wizard (the desktop app) is the way in. The iPhone and iPad app is unchanged.
 - **Finances on the iPhone, as cards:** checking as a Wallet card with what it is after the next paycheck, net worth with a line you can run a finger along (past month, 3 months or year), what's left to spend and the next bill side by side, the latest transactions, the bills coming up, and the rest of Finances one tap away. The red health line no longer sits atop every tab: what needs a look is on Status and its badge.
 - **Unplugging no longer cuts Tdarr off mid-video:** on battery, the other busy apps still pause at once, but Tdarr finishes the video it's on (starting no new one), then pauses too, so it leaves no half-made copy behind. Plugged in again, it picks up where it was.

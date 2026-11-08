@@ -52,6 +52,38 @@ struct FinancesHomeTests {
         #expect(FinancesView.upcomingBills(view, limit: 4).map(\.payment) == ["rent"])
     }
 
+    @Test func whatRepeats() throws {
+        let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
+        {"today":"2026-11-20","checking":"chk","start":{"chk":2400},
+         "plan":{"people":[],"cushion":0,"accounts":[{"id":"chk","name":"Everyday","kind":"checking"}],
+           "payments":[
+             {"id":"netflix","name":"Netflix","kind":"subscriptions","amount":15.49,"schedule":{"every":"month","start":"2026-01-03"}},
+             {"id":"rent","name":"Rent","kind":"home","amount":1200,"schedule":{"every":"month","start":"2026-01-01"}},
+             {"id":"gym","name":"Gym","amount":10,"schedule":{"every":"week","start":"2026-01-02"}},
+             {"id":"visa","name":"Visa","amount":300,"card":"visa","schedule":{"every":"month","start":"2026-01-21"}},
+             {"id":"save","name":"To savings","amount":100,"to":"sav","schedule":{"every":"2 weeks","start":"2026-01-02"}},
+             {"id":"jamie","name":"Jamie's share","amount":400,"payer":"Jamie","schedule":{"every":"month","start":"2026-01-05"}},
+             {"id":"fix","name":"Plumber","amount":250,"schedule":{"every":"once","start":"2026-11-25"}},
+             {"id":"odd","name":"Odd","amount":5,"schedule":"not a schedule"}]},
+         "periods":[{"now":true,"start":"2026-11-20","carried":2400,"in":0,"out":0,"saved":0,"left":2400,
+                     "rows":[{"date":"2026-11-24","payment":"rent","amount":1200},{"date":"2026-11-21","payment":"gym","amount":10}]}]}
+        """#.utf8))
+        let items = view.recurring
+        // Not one-offs, nor a payment whose schedule doesn't read (it still reads itself).
+        #expect(items.map(\.id) == ["jamie", "netflix", "gym", "rent", "visa", "save"])
+        #expect(items.map(\.sort) == [.moneyIn, .subscriptions, .bills, .bills, .cards, .savings])
+        // Soonest first within a sort: the gym before the rent.
+        #expect(items[2].next != nil && items[3].next != nil && items[2].next! < items[3].next!)
+        // A card payoff's amount isn't what it costs: no monthly figure.
+        #expect(items[4].monthly == nil)
+        // Weekly: 52 a year, 12 months.
+        #expect(abs((items[2].monthly ?? 0) - 10 * 52 / 12) < 0.001)
+        // Bills and subscriptions only.
+        #expect(abs(view.recurringPerMonth - (15.49 + 1200 + 10 * 52 / 12)) < 0.001)
+        #expect(view.plan.payments.contains { $0.id == "odd" && $0.schedule == nil })
+        #expect(FinanceSchedule(every: "2 weeks", start: nil).words == "Every 2 weeks")
+    }
+
     @Test func accountsBySort() throws {
         let view = try JSONDecoder.homelab().decode(FinancesPlanView.self, from: Data(#"""
         {"today":"2026-11-20","start":{"chk":2400,"sav":10000,"visa":500,"car":18000,"rav":21000,"x":7},
