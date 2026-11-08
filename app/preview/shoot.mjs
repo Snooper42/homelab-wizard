@@ -621,7 +621,7 @@ const smokes = [
   // A tab kept from before the tabs changed opens where its things are now.
   { name: 'Tidy Up: a tab kept from before opens where its things are now', screen: 'tidy', mock: { tidyTab: 'inbox' }, run: async (page) => {
     await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
-    if ((await page.textContent('#tidy .seg [aria-checked="true"]')).trim() !== 'Overview') throw new Error('New downloads did not open on Overview');
+    if ((await page.textContent('#tidy .seg [aria-checked="true"]')).trim() !== 'Inbox') throw new Error('New downloads did not open on Inbox');
   } },
   // One genre chart: the music library's genres by share; with none counted yet, a button counts them.
   { name: 'Tidy Up: the genre chart shows music’s genres by share', screen: 'tidy', run: async (page) => {

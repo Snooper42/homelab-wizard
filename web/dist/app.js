@@ -15966,26 +15966,30 @@ ${pays}
       const p3 = await act.pickFolder();
       if (p3 && !folders.includes(p3)) act.inbox([...folders, p3], when3);
     };
+    const other = x2(Elsewhere);
+    const waits2 = busy(job2) || !!other;
     const state2 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
     return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
       /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: "Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library." }),
-      /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
-        folders.map((f4) => /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: /* @__PURE__ */ u3(LibIcon, { kind: "folder" }),
-            title: folderName(f4),
-            sub: `${f4} · ${state2(f4)}`,
-            subTone: gone.has(f4) ? "warn" : void 0,
-            end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
-          },
-          f4
-        )),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(LibIcon, { kind: "inbox" }), title: "Add a folder…", sub: "Another folder, or a folder on a drive, for Tidy Up to watch", end: /* @__PURE__ */ u3("button", { class: "small", onClick: add, children: "Add…" }) })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "tidyinboxwhen", children: [
-        /* @__PURE__ */ u3("span", { class: "muted", children: "Tidy up" }),
-        /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
+      /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
+          folders.map((f4) => /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(LibIcon, { kind: "folder" }),
+              title: folderName(f4),
+              sub: `${f4} · ${state2(f4)}`,
+              subTone: gone.has(f4) ? "warn" : void 0,
+              end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
+            },
+            f4
+          )),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(LibIcon, { kind: "inbox" }), title: "Add a folder…", sub: "Another folder, or a folder on a drive, for Tidy Up to watch", end: /* @__PURE__ */ u3("button", { class: "small", onClick: add, children: "Add…" }) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "tidyinboxwhen", children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Tidy up" }),
+          /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
+        ] })
       ] }),
       /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
     ] });
