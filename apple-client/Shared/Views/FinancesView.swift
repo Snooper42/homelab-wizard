@@ -1083,8 +1083,9 @@ struct TransactionsView: View {
     @Bindable var finances: FinancesViewModel
     @State private var search = ""
     @State private var adding = false
-    /// The account shown, by id; nil for all of them.
-    @State private var account: String?
+    /// The account picked, by id (nil inside for all of them); nil until
+    /// one is picked, so the page opens on checking.
+    @State private var picked: String??
     /// Only the new ones.
     @State private var onlyNew = false
 
@@ -1094,12 +1095,33 @@ struct TransactionsView: View {
         var id: Date { month }
     }
 
+    /// The account shown, by id; nil for all of them.
+    private var account: String? {
+        if let picked { return picked }
+        return finances.plan.flatMap { Self.openingAccount(checking: $0.checking, in: $0.plan.accounts) }
+    }
+
+    /// The page opens on checking, where there is one; else on all of them.
+    nonisolated static func openingAccount(checking: String, in accounts: [FinanceAccount]) -> String? {
+        accounts.contains { $0.id == checking } ? checking : nil
+    }
+
+    /// The accounts in the switcher, in the screen's order: not a home, a
+    /// car or a collectible, which have no transactions.
+    nonisolated static func switcherAccounts(_ accounts: [FinanceAccount]) -> [FinanceAccount] {
+        accounts
+            .filter { !["home", "car", "collectible"].contains($0.kind) }
+            .sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) }
+    }
+
     private var months: [MonthGroup] {
         guard let ledger = finances.ledger else { return [] }
         let calendar = Calendar.current
+        // A search looks in every account (the switcher is hidden while searching).
+        let shown = search.isEmpty ? account : nil
         var out: [MonthGroup] = []
         for t in ledger.newestFirst where t.matches(search) {
-            if let account, t.account != account, t.to != account { continue }
+            if let shown, t.account != shown, t.to != shown { continue }
             if onlyNew, !finances.isNew(t) { continue }
             let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
             if out.last?.month == month {
@@ -1113,20 +1135,33 @@ struct TransactionsView: View {
 
     var body: some View {
         let newCount = finances.newTransactionCount
+        let groups = months
         List {
             if search.isEmpty, let view = finances.plan, !view.plan.accounts.isEmpty {
                 Section {
-                    VStack(spacing: 14) {
-                        AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
-                        AccountSwitcher(accounts: view.plan.accounts.sorted { ($0.kindOrder, $0.name.localizedLowercase) < ($1.kindOrder, $1.name.localizedLowercase) },
-                                        selection: $account)
-                    }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    .listRowBackground(Color.clear)
+                    AccountCard(account: view.plan.accounts.first { $0.id == account }, view: view, finances: finances)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                    let accounts = Self.switcherAccounts(view.plan.accounts)
+                    AccountSwitcher(accounts: accounts,
+                                    amounts: Dictionary(accounts.map { ($0.id, shortAmount($0, view)) }, uniquingKeysWith: { first, _ in first }),
+                                    allAmount: shortAmount(nil, view),
+                                    selection: account) { id in picked = .some(id) }
+                        .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
             }
             Section {
-                EmptyView()
+                // Under the heading, not over it.
+                if finances.ledger == nil || groups.isEmpty {
+                    emptyState
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 24)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
             } header: {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Latest Transactions")
@@ -1144,7 +1179,7 @@ struct TransactionsView: View {
                 }
                 .textCase(nil)
             }
-            ForEach(months) { group in
+            ForEach(groups) { group in
                 Section(group.month == .distantPast ? "No date" : group.month.formatted(.dateTime.month(.wide).year())) {
                     ForEach(group.items) { t in
                         let isNew = finances.isNew(t)
@@ -1168,23 +1203,6 @@ struct TransactionsView: View {
             }
         }
         .themedCanvas()
-        .overlay {
-            if finances.ledger == nil {
-                if let error = finances.ledgerError {
-                    ContentUnavailableView("Couldn't Read the Transactions", systemImage: "list.bullet.rectangle", description: Text(error))
-                } else {
-                    ProgressView("Reading the transactions…")
-                }
-            } else if months.isEmpty {
-                if !search.isEmpty {
-                    ContentUnavailableView.search(text: search)
-                } else if onlyNew {
-                    ContentUnavailableView("Nothing New", systemImage: "checkmark.circle", description: Text("Every transaction is reviewed."))
-                } else {
-                    ContentUnavailableView("No Transactions", systemImage: "list.bullet.rectangle")
-                }
-            }
-        }
         .searchable(text: $search, prompt: "Payee, category, note or tag")
         .task {
             await finances.loadLedger()
@@ -1225,6 +1243,44 @@ struct TransactionsView: View {
         }
         .sensoryFeedback(.selection, trigger: account)
         .sensoryFeedback(.success, trigger: finances.savedCount)
+    }
+
+    /// While there's nothing to list: reading, couldn't read, or nothing found.
+    @ViewBuilder
+    private var emptyState: some View {
+        if finances.ledger == nil {
+            if let error = finances.ledgerError {
+                ContentUnavailableView("Couldn't Read the Transactions", systemImage: "list.bullet.rectangle", description: Text(verbatim: error))
+            } else {
+                ProgressView("Reading the transactions…")
+            }
+        } else if !search.isEmpty {
+            ContentUnavailableView.search(text: search)
+        } else if onlyNew {
+            ContentUnavailableView("Nothing New", systemImage: "checkmark.circle", description: Text("Every transaction is reviewed."))
+        } else if let account, let name = finances.plan?.plan.accounts.first(where: { $0.id == account })?.name {
+            ContentUnavailableView {
+                Label("No Transactions", systemImage: "list.bullet.rectangle")
+            } description: {
+                Text(verbatim: "Nothing in \(name) yet.")
+            } actions: {
+                Button("Show All Accounts") {
+                    withAnimation(.snappy) { picked = .some(nil) }
+                }
+            }
+        } else {
+            ContentUnavailableView("No Transactions", systemImage: "list.bullet.rectangle")
+        }
+    }
+
+    /// An account's balance in whole units, for its small card; net worth for All.
+    private func shortAmount(_ account: FinanceAccount?, _ view: FinancesPlanView) -> String {
+        if finances.amountsHiddenByPlan || !finances.amountsShown { return "••••" }
+        guard let account else {
+            return view.netWorth.formatted(.currency(code: view.plan.currency).precision(.fractionLength(0)))
+        }
+        let value = view.start[account.id] ?? account.balance ?? 0
+        return value.formatted(.currency(code: account.currency ?? view.plan.currency).precision(.fractionLength(0)))
     }
 
     /// "Today", "Yesterday", a weekday within the week, else "Nov 5".
@@ -1278,54 +1334,77 @@ private struct AccountCard: View {
 }
 
 /// The accounts as small cards in a row, All first; the one shown ringed.
+/// Each card has the account's logo and balance, its name under it.
 private struct AccountSwitcher: View {
     let accounts: [FinanceAccount]
-    @Binding var selection: String?
+    /// Each account's balance as its card shows it, by id.
+    let amounts: [String: String]
+    let allAmount: String
+    let selection: String?
+    let pick: (String?) -> Void
+
+    private static let cardWidth: CGFloat = 112
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(alignment: .top, spacing: 12) {
-                chip(id: nil, name: "All") {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(Theme.accent.opacity(0.14))
-                        .overlay(Text("All").font(.caption.weight(.bold)).foregroundStyle(Theme.accent))
+                chip(id: nil, name: "All accounts", amount: allAmount, style: .other) {
+                    Image(systemName: "square.stack.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 24, height: 24)
+                        .background(.white.opacity(0.2), in: Circle())
                 }
                 ForEach(accounts) { account in
-                    chip(id: account.id, name: account.name) {
-                        RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(LinearGradient(colors: WalletStyle(kind: account.kind).colours, startPoint: .topLeading, endPoint: .bottomTrailing))
+                    chip(id: account.id, name: account.name, amount: amounts[account.id] ?? "", style: WalletStyle(kind: account.kind)) {
+                        LogoCircle(account: account, size: 24)
                     }
                 }
             }
-            .padding(.horizontal, 2)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 5)
         }
     }
 
-    private func chip<Card: View>(id: String?, name: String, @ViewBuilder card: () -> Card) -> some View {
+    private func chip<Mark: View>(id: String?, name: String, amount: String, style: WalletStyle, @ViewBuilder mark: () -> Mark) -> some View {
         let picked = selection == id
+        let ink: Color = style.hasDarkText ? Color(light: 0x1C1C1E, dark: 0x1C1C1E) : .white
         return Button {
-            withAnimation(.snappy) { selection = id }
+            withAnimation(.snappy) { pick(id) }
         } label: {
-            VStack(spacing: 4) {
-                card()
-                    .frame(width: 56, height: 36)
-                    .shadow(color: Design.shadow.opacity(0.12), radius: 2, y: 1)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .strokeBorder(picked ? Theme.accent : .clear, lineWidth: 2)
-                            .padding(-3)
-                    }
+            VStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 0) {
+                    mark()
+                    Spacer(minLength: 4)
+                    Text(verbatim: amount)
+                        .font(.footnote.weight(.bold))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
+                .foregroundStyle(ink)
+                .padding(10)
+                .frame(width: Self.cardWidth, height: 68, alignment: .leading)
+                .background(LinearGradient(colors: style.colours, startPoint: .topLeading, endPoint: .bottomTrailing),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: Design.shadow.opacity(0.12), radius: 2, y: 1)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(picked ? Theme.accent : .clear, lineWidth: 2)
+                        .padding(-3)
+                }
                 Text(verbatim: name)
-                    .font(.caption2.weight(picked ? .semibold : .regular))
+                    .font(.caption.weight(picked ? .semibold : .regular))
                     .foregroundStyle(picked ? Theme.ink : Theme.secondaryInk)
-                    .lineLimit(1)
-                    .frame(maxWidth: 64)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: Self.cardWidth)
             }
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(Text(verbatim: name))
-        .accessibilityAddTraits(picked ? .isSelected : [])
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: amount.isEmpty ? name : "\(name), \(amount)"))
+        .accessibilityAddTraits(picked ? [.isButton, .isSelected] : .isButton)
     }
 }
 
