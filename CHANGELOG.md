@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances on the iPhone, as cards:** checking as a Wallet card with what it is after the next paycheck, net worth with a line you can run a finger along (past month, 3 months or year), what's left to spend and the next bill side by side, the latest transactions, the bills coming up, and the rest of Finances one tap away. The red health line no longer sits atop every tab: what needs a look is on Status and its badge.
 - **A transaction's note on the iPhone:** the bank's own wording, kept from an import, isn't shown as its note (a memo you wrote before it still is), as on the computer.
 - **Budgets on the iPhone:** the page opens with what's left to spend this month, a bar of what's spent, and about how much a day that leaves.
 - **Backups on the iPhone, at a glance:** a ring of how many copies are fresh, when the last backup ran and where it went, with **Back Up Now** and **Test a Restore** right under it.

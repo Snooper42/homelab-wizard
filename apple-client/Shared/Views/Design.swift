@@ -326,6 +326,13 @@ extension LogoCircle {
         self.init(content: logos.mark(brand: brand, kind: nil, name: payee, auto: institution != "none"), size: size)
     }
 
+    /// A payment's logo: its brand's (picked, or in its name), else its kind's icon.
+    init(payment: FinancePayment, size: CGFloat = Design.logoInList) {
+        let logos = PayeeLogos.shared
+        let brand = logos.brandOf(institution: payment.institution, name: payment.name, kind: payment.kind)
+        self.init(content: logos.mark(brand: brand, kind: payment.kind, name: payment.name), size: size)
+    }
+
     /// An account's logo: its bank's (picked, or in its name), else its kind's icon.
     init(account: FinanceAccount, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared
