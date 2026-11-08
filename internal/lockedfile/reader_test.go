@@ -101,6 +101,7 @@ func TestReadTriesAgainOnlyWhileTheFileIsBusy(t *testing.T) {
 	onWindows, RenameWait = true, 50*time.Millisecond
 	inUse := &os.PathError{Op: "open", Path: "record.json", Err: errSharingViolation}
 	denied := &os.PathError{Op: "open", Path: "record.json", Err: os.ErrPermission}
+	pending := &os.PathError{Op: "open", Path: "record.json", Err: errDeletePending}
 	always := func(err error) func(int) error { return func(int) error { return err } }
 	for _, tc := range []struct {
 		name  string
@@ -110,6 +111,10 @@ func TestReadTriesAgainOnlyWhileTheFileIsBusy(t *testing.T) {
 	}{
 		{"in use, then free", func(read int) error {
 			return map[int]error{1: inUse, 2: denied}[read]
+		}, 3, true},
+		// The old file, replaced while another reader still has it open.
+		{"delete pending, then free", func(read int) error {
+			return map[int]error{1: pending, 2: pending}[read]
 		}, 3, true},
 		{"in use throughout", always(inUse), 0, false},
 		{"missing", always(os.ErrNotExist), 1, false},

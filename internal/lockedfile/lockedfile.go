@@ -118,8 +118,9 @@ func Write(path string, data []byte, mode os.FileMode) error {
 }
 
 // Read reads a record Write saves. On Windows an open at the very moment
-// another process renames the file in fails ("access is denied", or "in
-// use by another process"): Read tries again for up to RenameWait, so a
+// another process renames the file in fails ("access is denied", "in use
+// by another process", or "delete pending" while another reader still has
+// the old file open): Read tries again for up to RenameWait, so a
 // save never reads as no record at all. Any other failure, and every
 // failure off Windows, is returned at once.
 func Read(path string) ([]byte, error) {
@@ -134,8 +135,13 @@ func Read(path string) ([]byte, error) {
 }
 
 // errSharingViolation is Windows' ERROR_SHARING_VIOLATION, which Go does
-// not count as a permission error.
-const errSharingViolation = syscall.Errno(32)
+// not count as a permission error. errDeletePending is its
+// ERROR_DELETE_PENDING: an open that meets the old file in the moment a
+// save replaces it, while another reader still has it open.
+const (
+	errSharingViolation = syscall.Errno(32)
+	errDeletePending    = syscall.Errno(303)
+)
 
 // onWindows and readFile are what tests change, to try Read's Windows
 // path anywhere.
@@ -149,5 +155,5 @@ func busy(err error) bool {
 		return false
 	}
 	var errno syscall.Errno
-	return os.IsPermission(err) || (errors.As(err, &errno) && errno == errSharingViolation)
+	return os.IsPermission(err) || (errors.As(err, &errno) && (errno == errSharingViolation || errno == errDeletePending))
 }
