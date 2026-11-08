@@ -20,6 +20,9 @@ type Run struct {
 	// the Trash that Undo can put back.
 	ID   string `json:"id,omitempty"`
 	Back int    `json:"back,omitempty"`
+	// Why is what the engine said when it gave up (its last failure line),
+	// for Recent and the tabs to say instead of "the log says why".
+	Why string `json:"why,omitempty"`
 }
 
 // Record is data/media.json: what Tidy Up knows without running Python,
@@ -124,6 +127,14 @@ func Describe(kind string, run Run) (text, sub string) {
 			return "Some songs are missing", plural(num(res["missing"]), "song") + " not in the new library or set aside"
 		case kind == "music" && run.Action == "free-space":
 			return "The old library was kept", "Not every song is accounted for"
+		case (kind == "movies" || kind == "tv") && run.Action == "collect":
+			// The agent collects every few minutes: one that can't (Tdarr
+			// paused on battery, or stopped) makes no line each time; the
+			// tab says Tdarr isn't answering.
+			return "", ""
+		}
+		if run.Why != "" {
+			return title(kind) + ": " + run.Action + " stopped", run.Why
 		}
 		return title(kind) + ": " + run.Action + " stopped", "The log says why"
 	}
@@ -151,6 +162,11 @@ func Describe(kind string, run Run) (text, sub string) {
 		return "Genres folded into yours", plural(num(res["applied"]), "song")
 	case "books apply":
 		return "Books tidied", plural(num(res["changed"]), "book") + " · " + plural(num(res["covers"]), "cover")
+	case "books build":
+		if applied, _ := res["applied"].(bool); !applied {
+			return "", ""
+		}
+		return "Calibre library made", plural(num(res["added"]), "book")
 	case "movies collect", "tv collect":
 		if num(res["replaced"]) == 0 && len(anyList(res["filed"])) == 0 {
 			return "", ""

@@ -286,6 +286,8 @@ declare namespace app {
     counts?: Record<string, number>;
     waiting?: number;
     size?: number;
+    noCalibre?: boolean;
+    loose?: number;
   }
   interface TidyRunning {
     lock?: media.Lock | null;
@@ -953,6 +955,7 @@ declare namespace media {
     result?: Record<string, unknown>;
     id?: string;
     back?: number;
+    why?: string;
   }
 }
 

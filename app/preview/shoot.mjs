@@ -888,6 +888,36 @@ const smokes = [
     const gaps = await page.$$eval('#tidy .tidyspace > p.fx-sub', (ps) => ps.map((p) => parseFloat(getComputedStyle(p).marginTop) + parseFloat(getComputedStyle(p).marginBottom)));
     if (gaps.some((g) => g > 0)) throw new Error(`margins on the Space card's notes: ${gaps}`);
   } },
+  // Nov 8, the owner: Books said "isn't a Calibre library": a folder of books with no metadata.db. Books offers Make a
+  // Calibre library (and no review, which can't read them yet), asks first, then runs it with its yes.
+  { name: 'Tidy Up: books with no Calibre library offer to make one, after asking', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'books' ? { ...l, last: {}, noCalibre: true, loose: 301 } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Books")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has-text("Make a Calibre library from your 301 books")';
+    await page.waitForSelector(row, { timeout: 5000 });
+    if (await page.$('#tidy .tidyneeds li:has-text("Look over your books")')) throw new Error('a review is offered with no library to read');
+    // Nor the review's list or a genre count, which read Calibre's database.
+    if (await page.$('#tidyReview') || await page.$('#tidy .fx-board button:text-is("Count genres")')) throw new Error('the review or genres shown with no library');
+    await page.click(`${row} button:text-is("Make it…")`);
+    await page.waitForSelector('#tidySheet:not([hidden]) h2:text-is("Make a Calibre library from 301 books?")', { timeout: 5000 });
+    await page.waitForSelector('#tidySheet:has-text("Books (before Calibre)")', { timeout: 2000 });
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns || [])).length) throw new Error('it ran before the yes');
+    await page.click('#tidySheet button:text-is("Make it")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0]) !== JSON.stringify(['books', 'build', [], true])) throw new Error(JSON.stringify(runs));
+  } },
+  // Audiobooks that are one file each already: said with how many, not a bare nought.
+  { name: 'Tidy Up: audiobooks that are one file each say there is nothing to merge', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true, last: { scan: tidyRun('scan', 1, { books: 0, files: 0, bytes: 0, whole: 177 }) } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyneeds strong:text-is("All 177 audiobooks are one file each")', { timeout: 5000 });
+    if (await page.$('#tidy .tidyneeds button:text-is("Merge")')) throw new Error('Merge offered with nothing to merge');
+  } },
+  // Tdarr paused on battery: the shrinking row says it isn't answering, in amber, and Recent has no "collect stopped" lines.
+  { name: 'Tidy Up: Tdarr not answering is said on its row', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'movies' ? { ...l, last: { ...l.last, collect: { ...tidyRun('collect', 0.1, {}, false), why: "Tdarr isn't answering at http://localhost:8265: start it from Status (Tdarr), then try again. What's with it stays in its queue" } } } : l)) } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    const row = '#tidy .tidyneeds li:has(strong:text-is("Tdarr is shrinking 4 films"))';
+    await page.waitForSelector(`${row}:has-text("Tdarr isn't answering, so nothing is shrinking")`, { timeout: 5000 });
+  } },
   // On a phone, the six tabs in two even rows of three.
   { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 390, height: 800 });

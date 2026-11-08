@@ -74,6 +74,10 @@ type TidyLibrary struct {
 	// Size is the library's size on disk as last measured (in the
 	// background, at most every few hours); 0 until it has been.
 	Size int64 `json:"size,omitempty"`
+	// NoCalibre: books in a folder that isn't a Calibre library (no
+	// metadata.db), Loose of them, for Make a Calibre library to offer.
+	NoCalibre bool `json:"noCalibre,omitempty"`
+	Loose     int  `json:"loose,omitempty"`
 }
 
 // TidyInbox is the Downloads watcher.
@@ -113,6 +117,9 @@ func (a *App) TidyUp() (TidyUp, error) {
 		lib.Stage = stage(kind, rec.Last[kind])
 		lib.Counts, lib.Waiting = engineCounts(home, kind)
 		lib.Size = sizes[kind].Bytes
+		if lib.Found && kind == "books" && !media.IsCalibreLibrary(lib.Folder) {
+			lib.NoCalibre, lib.Loose = true, media.LooseBooks(lib.Folder)
+		}
 		if lib.Found {
 			present[kind] = lib.Folder
 			locs = append(locs, diskspace.Location{Name: kind, Path: lib.Folder})

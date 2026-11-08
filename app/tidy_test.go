@@ -339,3 +339,42 @@ func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 		t.Fatalf("found only %d jobs the screen runs: the pattern no longer matches its code", seen)
 	}
 }
+
+// Books in folders of their own, as Calibre exports them, with no
+// metadata.db: the Books tab is told how many, to offer Make a Calibre
+// library; once there is one, it isn't.
+func TestTidyUpBooksWithNoCalibreLibrary(t *testing.T) {
+	a, _ := testApp(t)
+	home, _ := os.UserHomeDir()
+	mediaRoot := filepath.Join(home, "Hobbies")
+	books := filepath.Join(mediaRoot, "Books")
+	for _, p := range []string{"Ann Author/One/One.epub", "Ann Author/One/One.azw3", "Ann Author/Two/Two.epub", "Bob Writer/Three/Three.pdf", "Bob Writer/Three/metadata.opf", ".calnotes/notes.db", "loose.epub", "_Sync/system/collections.json"} {
+		_ = os.MkdirAll(filepath.Dir(filepath.Join(books, p)), 0o755)
+		_ = os.WriteFile(filepath.Join(books, p), nil, 0o644)
+	}
+	f, _ := os.OpenFile(filepath.Join(a.root, ".env"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	f.WriteString("MEDIA_ROOT=" + mediaRoot + "\n")
+	f.Close()
+	refreshSizes = func(string, map[string]string, time.Duration, func() time.Time) bool { return true }
+	defer func() { refreshSizes = media.RefreshSizes }()
+	book := func() TidyLibrary {
+		got, err := a.TidyUp()
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, l := range got.Libraries {
+			if l.Kind == "books" {
+				return l
+			}
+		}
+		t.Fatal("no books")
+		return TidyLibrary{}
+	}
+	if l := book(); !l.Found || !l.NoCalibre || l.Loose != 3 {
+		t.Errorf("no library: %+v", l)
+	}
+	_ = os.WriteFile(filepath.Join(books, "metadata.db"), nil, 0o644)
+	if l := book(); l.NoCalibre || l.Loose != 0 {
+		t.Errorf("a library: %+v", l)
+	}
+}

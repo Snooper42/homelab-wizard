@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Make a Calibre library from your books:** when your books folder holds books (each in a folder of its own, as Calibre exports them) but no Calibre library, Tidy Up › Books offers **Make a Calibre library…**. It asks first, moves the books' folders aside on the same drive, has Calibre add each one with the title, author, series and cover beside it, and checks every book came in. The copy aside stays until you've looked. After it, the book review and Calibre-Web can read your books.
 - **Put a buy right, or delete it:** on Net worth's Investments card, open a holding to see its buys and sales as Ghostfolio keeps them. **Change** fixes the shares, what you paid, the day, or bought or sold; **Delete** (asked first) takes it out of Ghostfolio. The card reads Ghostfolio again after each, so its figures follow. A phone allowed to change Finances can do the same.
 - **Investments' total adds up:** the Total value on Net worth's Investments card is now what its rows add up to (each holding and the account's cash). Before, it took Ghostfolio's own figure for each account, which can lag a buy just put in, so a second holding was missing from the total.
 - **Real logos from each company's website:** Finances › Transactions › **Logos** lists every payee and account still showing initials, with its website guessed (fpl.com, fidelity.com); **Get them all** fetches each company's own icon from its site, shown before you save. A payee's, account's, or payment's logo picker has **Get the real logo** too. Your computer asks only the websites you click for, only then, and the logos are kept only in your plan.
@@ -64,6 +65,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up says what's going on:** Audiobooks that are already one file each say so (*All 177 audiobooks are one file each*) instead of 0. Movies and TV say when Tdarr isn't answering (paused on battery, or stopped) rather than looking stuck, and Recently done no longer fills with *collect stopped* every few minutes. A step that stops says why, in the engine's own words, instead of *The log says why*.
 - **Unplugging no longer cuts Tdarr off mid-video:** on battery, the other busy apps still pause at once, but Tdarr finishes the video it's on (starting no new one), then pauses too, so it leaves no half-made copy behind. Plugged in again, it picks up where it was.
 - **Tdarr no longer fills the media drive:** a video Tdarr was stopped part-way through (on battery, or by an update) left a copy as large as the video in its cache, and they added up (81 GB on one drive). Tidy Up now clears those leftovers by itself whenever Tdarr isn't converting anything, and says how much space came back. Your videos are never touched.
 - **A transaction's note on the iPhone:** the bank's own wording, kept from an import, isn't shown as its note (a memo you wrote before it still is), as on the computer.
