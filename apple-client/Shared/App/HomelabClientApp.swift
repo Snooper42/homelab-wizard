@@ -4,7 +4,13 @@ import SwiftUI
 /// Multiplatform template creates with this one.
 @main
 struct HomelabClientApp: App {
+    #if SCREENSHOTS
+    // The screenshots build: the sample homelab (Shared/Screenshots).
+    @State private var coordinator = AppCoordinator(keychain: ScreenshotCredentials(), biometrics: ScreenshotOwner(),
+                                                    protocolClasses: [ScreenshotURLProtocol.self])
+    #else
     @State private var coordinator = AppCoordinator()
+    #endif
 
     var body: some Scene {
         WindowGroup(id: AppWindows.main) {

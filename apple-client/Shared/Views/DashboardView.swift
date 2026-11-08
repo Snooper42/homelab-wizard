@@ -164,40 +164,62 @@ private struct PhoneDashboard: View {
                 .tag(Screen.status(.all))
             NavigationStack {
                 BackupsView(backups: model.backups)
-                    .safeAreaInset(edge: .top) { healthLine }
             }
             .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
             .badge(model.backups.needsAttention)
             .tag(Screen.backups)
             if finances.canSeePlan {
                 NavigationStack {
-                    FinancesView(finances: finances)
-                        .safeAreaInset(edge: .top) { healthLine }
+                    financesRoot
                 }
                 .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
                 .tag(Screen.finances)
             }
             NavigationStack {
                 ComputerView(computer: computer, page: .setup)
-                    .safeAreaInset(edge: .top) { healthLine }
             }
             .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
             .tag(Screen.setup)
             NavigationStack {
                 ComputerView(computer: computer, page: .settings)
-                    .safeAreaInset(edge: .top) { healthLine }
             }
             .tabItem { Label("Settings", systemImage: Screen.settings.systemImage) }
             .tag(Screen.settings)
         }
         .shrinkingTabBar()
+        #if SCREENSHOTS
+        .onAppear {
+            if let tab = screenshotTab { savedTab = tab.storageKey }
+            finances.amountsShown = !ScreenshotMode.hidesAmounts
+        }
+        #endif
     }
 
-    /// Health in one line, as atop every screen but Status on the computer;
-    /// Open Status goes to the Status tab.
-    private var healthLine: some View {
-        HealthLineBar(model: model) { savedTab = Screen.status(.all).storageKey }
+    // What needs a look is on the Status tab and its badge, not in a line
+    // atop every other tab (it squeezed their titles and read as an alarm).
+
+    @ViewBuilder
+    private var financesRoot: some View {
+        #if SCREENSHOTS
+        FinancesView.screenshotRoot(finances: finances)
+        #else
+        FinancesView(finances: finances)
+        #endif
     }
+
+    #if SCREENSHOTS
+    /// The tab a screenshot shows.
+    private var screenshotTab: Screen? {
+        switch ScreenshotMode.shot {
+        case nil: nil
+        case "status": .status(.all)
+        case "backups": .backups
+        case "setup": .setup
+        case "settings": .settings
+        default: .finances
+        }
+    }
+    #endif
 }
 
 /// Status on iPhone: the ring and what needs a look, four tiles, what
@@ -221,7 +243,9 @@ private struct PhoneStatus: View {
                             StatusHero(model: model)
                             StatusTiles(model: model, openBackups: openBackups)
                         }
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        // Room under the tiles for their shadows, which the row would otherwise cut.
+                        .padding(.bottom, 14)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
                         .listRowBackground(Color.clear)
                     }
                 }

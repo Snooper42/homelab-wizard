@@ -94,6 +94,15 @@ struct Pill: ViewModifier {
 extension View {
     func pill(_ tint: Color) -> some View { modifier(Pill(tint: tint)) }
 
+    /// Sections closer together than a grouped list's default (iPhone and iPad).
+    func compactSections() -> some View {
+        #if os(iOS)
+        listSectionSpacing(14)
+        #else
+        self
+        #endif
+    }
+
     /// Lists and forms on the warm canvas, their rows as white cards. On the
     /// Mac the system's own window background stays, so the window still
     /// matches the sidebar's vibrancy.
