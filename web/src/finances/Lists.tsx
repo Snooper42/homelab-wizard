@@ -187,12 +187,15 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
 
 export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[]; fromWallos?: () => Promise<app.AppSubscription[]> }) {
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
+  // Soonest first (by the next day each comes), or what each costs a month, largest first.
+  const [order, setOrder] = useState<'next' | 'size'>('next');
   const payments = allPayments(v.plan);
   const next = nextOf(v);
   const m = month(v, L);
   const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
-  const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
+  const monthly = (x: finance.Payment) => x.amount * perMonth(x.schedule, v.plan.people || [], v.checking);
+  const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (order === 'size' ? monthly(b) - monthly(a) : 0) || (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
   // What the payments shown come to in a typical month and a year: out, and apart from it what comes in from someone.
   const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, v.plan.people || [], v.checking);
@@ -230,7 +233,10 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         <MoneyFlowWidget v={v} L={L} />
         <Widget title="Payments" span="all" kind="fx-payments"
           actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
-          {filter !== 'subscriptions' && !!list.length && <p class="fx-sub fx-paytotal">{plural(list.length, 'payment')}: about <strong><Amount value={outMonth} form="full" /></strong> a month, <Amount value={outMonth * 12} form="whole" /> a year{inMonth > 0.005 && <>; <Amount value={inMonth} form="full" sign tone="in" /> a month comes in</>}{list.some((x) => x.card) && ', with each card\'s balance as it is now'}.</p>}
+          {filter !== 'subscriptions' && !!list.length && <p class="fx-sub fx-paytotal"><span class="fx-paysum">{plural(list.length, 'payment')}: about <strong><Amount value={outMonth} form="full" /></strong> a month, <Amount value={outMonth * 12} form="whole" /> a year{inMonth > 0.005 && <>; <Amount value={inMonth} form="full" sign tone="in" /> a month comes in</>}{list.some((x) => x.card) && ', with each card\'s balance as it is now'}.</span>
+            <select class="fx-payorder" aria-label="Order" value={order} onChange={(e) => setOrder((e.target as HTMLSelectElement).value as 'next' | 'size')}>
+              <option value="next">Soonest first</option><option value="size">Largest first</option>
+            </select></p>}
           {filter === 'subscriptions' ? <SubscriptionsSummary v={v} L={L} edit={edit ? (w, id) => edit(w, id) : undefined} /> : <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];

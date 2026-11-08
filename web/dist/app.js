@@ -13244,12 +13244,14 @@ ${pays}
       opening3 = "";
       return f4;
     });
+    const [order2, setOrder] = d2("next");
     const payments = allPayments(v3.plan);
     const next = nextOf(v3);
     const m3 = month(v3, L2);
     const share3 = (n3) => m3.in ? `${Math.round(n3 / m3.in * 100)}% of pay` : "";
     const onCard2 = (x3) => L2.account[x3.from || ""]?.kind === "card";
-    const list = payments.filter((x3) => groups2[filter2](x3.kind)).sort((a3, b2) => (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
+    const monthly = (x3) => x3.amount * perMonth(x3.schedule, v3.plan.people || [], v3.checking);
+    const list = payments.filter((x3) => groups2[filter2](x3.kind)).sort((a3, b2) => (order2 === "size" ? monthly(b2) - monthly(a3) : 0) || (next[a3.id]?.date || "9").localeCompare(next[b2.id]?.date || "9"));
     const count2 = (g2) => payments.filter((x3) => groups2[g2](x3.kind)).length;
     const each = (x3) => x3.amount * perMonth(x3.schedule, v3.plan.people || [], v3.checking);
     const outMonth = list.filter((x3) => !x3.payer).reduce((t3, x3) => t3 + each(x3), 0);
@@ -13320,19 +13322,25 @@ ${pays}
           actions: /* @__PURE__ */ u3(Segmented, { label: "Show", value: filter2, pick: setFilter2, options: [["all", `All ${count2("all")}`], ["bills", `Bills ${count2("bills")}`], ["cards", `Cards ${count2("cards")}`], ["subscriptions", `Subscriptions ${count2("subscriptions")}`], ["spending", `Spending ${count2("spending")}`], ["saving", `Saving ${count2("saving")}`]] }),
           children: [
             filter2 !== "subscriptions" && !!list.length && /* @__PURE__ */ u3("p", { class: "fx-sub fx-paytotal", children: [
-              plural(list.length, "payment"),
-              ": about ",
-              /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: outMonth, form: "full" }) }),
-              " a month, ",
-              /* @__PURE__ */ u3(Amount, { value: outMonth * 12, form: "whole" }),
-              " a year",
-              inMonth > 5e-3 && /* @__PURE__ */ u3(S, { children: [
-                "; ",
-                /* @__PURE__ */ u3(Amount, { value: inMonth, form: "full", sign: true, tone: "in" }),
-                " a month comes in"
+              /* @__PURE__ */ u3("span", { class: "fx-paysum", children: [
+                plural(list.length, "payment"),
+                ": about ",
+                /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: outMonth, form: "full" }) }),
+                " a month, ",
+                /* @__PURE__ */ u3(Amount, { value: outMonth * 12, form: "whole" }),
+                " a year",
+                inMonth > 5e-3 && /* @__PURE__ */ u3(S, { children: [
+                  "; ",
+                  /* @__PURE__ */ u3(Amount, { value: inMonth, form: "full", sign: true, tone: "in" }),
+                  " a month comes in"
+                ] }),
+                list.some((x3) => x3.card) && ", with each card's balance as it is now",
+                "."
               ] }),
-              list.some((x3) => x3.card) && ", with each card's balance as it is now",
-              "."
+              /* @__PURE__ */ u3("select", { class: "fx-payorder", "aria-label": "Order", value: order2, onChange: (e3) => setOrder(e3.target.value), children: [
+                /* @__PURE__ */ u3("option", { value: "next", children: "Soonest first" }),
+                /* @__PURE__ */ u3("option", { value: "size", children: "Largest first" })
+              ] })
             ] }),
             filter2 === "subscriptions" ? /* @__PURE__ */ u3(SubscriptionsSummary, { v: v3, L: L2, edit: edit ? (w3, id2) => edit(w3, id2) : void 0 }) : /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
               list.map((x3) => {

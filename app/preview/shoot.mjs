@@ -3973,8 +3973,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), and the order Recurring's payments are listed in.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -6018,7 +6018,7 @@ const smokes = [
   // together), and follow the filter; Subscriptions has its own summary instead.
   { name: 'Finances: the payments shown say what they come to a month', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
-    const said = () => page.textContent('.fx-payments .fx-paytotal', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    const said = () => page.textContent('.fx-payments .fx-paysum', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
     if ((await said()) !== "18 payments: about $5,948.10 a month, $71,377 a year, with each card's balance as it is now.") throw new Error(`all: ${await said()}`);
     await page.click('.fx-payments .seg button:has-text("Bills")');
     if (!/^8 payments: about \$[\d,]+\.\d\d a month, \$[\d,]+ a year\.$/.test(await said())) throw new Error(`bills: ${await said()}`);
@@ -6287,6 +6287,16 @@ const smokes = [
     await page.click('.fx-budgets li:has(.grow > strong:text-is("Food")) button');
     await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
     if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');
+  } },
+  // Recurring's payments soonest first, or by what each costs a month, largest first (the mortgage, then the card paid in
+  // full, then groceries every Saturday: $866.67 a month).
+  { name: 'Finances: Recurring\'s payments largest first on asking', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    const names = () => page.$$eval('.fx-payments li .grow > strong', (s) => s.map((x) => x.textContent));
+    if ((await names())[0] !== 'Groceries and gas') throw new Error(`soonest: ${await names()}`);
+    await page.selectOption('.fx-payments select[aria-label="Order"]', 'size');
+    const big = await names();
+    if (JSON.stringify(big.slice(0, 3)) !== JSON.stringify(['Mortgage', 'Chase Freedom', 'Groceries and gas'])) throw new Error(`largest: ${big}`);
   } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {

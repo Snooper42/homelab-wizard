@@ -2149,6 +2149,7 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 /* Coming up: what of it is due before the next paycheck, under the total. */
 .fx-beforepay { margin:-8px 0 0; }
 .fx-paytotal strong { color:var(--text); }
+.fx-paytotal { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:4px; } .fx-paytotal .fx-payorder { margin-left:auto; }
 /* Pay's next paychecks by month: the month, how many, and what they bring, over its paydays. */
 .fx-paymonth + .fx-paymonth { margin-top:14px; }
 .fx-paymonth h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; padding-bottom:6px; border-bottom:1px solid var(--line); font-size:14px; font-weight:600; font-variant-numeric:tabular-nums; }
