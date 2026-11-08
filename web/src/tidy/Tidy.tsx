@@ -261,7 +261,7 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
       {!!c?.fields?.length && (
         <div class="tidyfields">
           {c.fields.map((f) => (
-            <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if you know it)</span>}
+            <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if known)</span>}
               <input value={typed[f.key] || ''} inputMode={f.number ? 'numeric' : undefined} maxLength={f.number ? 4 : 200}
                 onInput={(e) => setTyped({ ...typed, [f.key]: (e.target as HTMLInputElement).value })} /></label>
           ))}

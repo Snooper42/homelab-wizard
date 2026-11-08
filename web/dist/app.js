@@ -15543,7 +15543,7 @@ ${pays}
       ] }),
       !!c3?.fields?.length && /* @__PURE__ */ u3("div", { class: "tidyfields", children: c3.fields.map((f4) => /* @__PURE__ */ u3("label", { class: "field" + (f4.number ? " tidynum" : ""), children: [
         f4.label,
-        f4.optional && /* @__PURE__ */ u3("span", { class: "muted", children: " (if you know it)" }),
+        f4.optional && /* @__PURE__ */ u3("span", { class: "muted", children: " (if known)" }),
         /* @__PURE__ */ u3(
           "input",
           {
