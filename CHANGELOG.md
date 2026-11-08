@@ -67,6 +67,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Goals, easier to read:** each goal says what it needs a paycheck first (*$90.16 a paycheck ($274.91 a month) to be there by Jun 30, 2028*), and under its bar what's saved and its pace lately (*$889.78 a month lately: there by May 2027*), in amber when that's late.
 - **⌘F on Transactions:** on Finances › Transactions, ⌘F (Ctrl+F on Windows and Linux) goes to its search, as it does on Choose apps and Settings; the shortcuts sheet (?) lists it.
 - **Payday among the bills, on the phone:** Finances' *Coming up* shows each paycheck of the next two weeks on its day among the bills, and says how much of what's due comes before the next one (*$2,104.49 of it before Alex's paycheck on Nov 6*).
 - **Cash flow and Where it goes open their detail:** on the Finances Dashboard, the arrow on either card opens Recurring, where the typical month is laid out payment by payment.

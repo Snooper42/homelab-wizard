@@ -11980,9 +11980,13 @@ ${pays}
   var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
   function goalWords(g2) {
     if (g2.left <= 0) return "Reached";
-    const needs = g2.needsMonth ? `${money(g2.needsMonth)} a month${g2.needsPaycheck ? `, ${money(g2.needsPaycheck)} a paycheck` : ""} to be there by ${byDay(g2.date)}` : g2.date ? `wanted by ${byDay(g2.date)}` : "";
-    const pace = g2.paced ? g2.pace > 0 ? `at ${money(g2.pace)} a month, there by ${monthOf2(g2.reaches)}` : "not growing lately" : "";
-    return [needs, pace].filter(Boolean).join("; ") || "No day set";
+    if (g2.needsPaycheck && g2.needsMonth) return `${money(g2.needsPaycheck)} a paycheck (${money(g2.needsMonth)} a month) to be there by ${byDay(g2.date)}`;
+    if (g2.needsMonth) return `${money(g2.needsMonth)} a month to be there by ${byDay(g2.date)}`;
+    return g2.date ? `Wanted by ${byDay(g2.date)}` : "No day set";
+  }
+  function goalPace(g2) {
+    if (g2.left <= 0 || !g2.paced) return "";
+    return g2.pace > 0 ? `${money(g2.pace)} a month lately: there by ${monthOf2(g2.reaches)}` : "Not growing lately";
   }
   function goalBrief(g2) {
     if (g2.left <= 0) return "Reached";
@@ -12095,7 +12099,11 @@ ${pays}
               /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
                 money(g2.saved),
                 " of ",
-                money(g2.target)
+                money(g2.target),
+                !all && goalPace(g2) && /* @__PURE__ */ u3(S, { children: [
+                  " · ",
+                  /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: goalPace(g2) })
+                ] })
               ] })
             ]
           },

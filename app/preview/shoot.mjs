@@ -4917,8 +4917,10 @@ const smokes = [
   // Goals on Net worth: each with what is left, what it needs a month and a paycheck by its day, and its pace (amber when that is late).
   { name: 'Finances: goals say what is left, what they need, and their pace', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$274.91 a month, $90.16 a paycheck"):has-text("there by May 2027"):has-text("to be there by Jun 30, 2028")', { timeout: 5000 });
-    await page.waitForSelector('.fx-goals li:has-text("Emergency fund") .fx-goalsaved:text-is("$6,500.00 of $12,000.00")', { timeout: 5000 });
+    // What it needs (a paycheck first) under its name; under its bar, what is saved and the pace lately.
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$90.16 a paycheck ($274.91 a month) to be there by Jun 30, 2028")', { timeout: 5000 });
+    const saved = (await page.textContent('.fx-goals li:has-text("Emergency fund") .fx-goalsaved', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (saved !== '$6,500.00 of $12,000.00 · $889.78 a month lately: there by May 2027') throw new Error(`under the bar: ${saved}`);
     await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-warn:has-text("there by Oct 2031")', { timeout: 5000 });
     await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-budgetbar.warn', { timeout: 5000 });
     if (await page.$('.fx-goals li:has-text("Emergency fund") .fx-warn')) throw new Error('a goal on pace is marked behind');
