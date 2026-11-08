@@ -11455,6 +11455,7 @@ ${pays}
         go2(m3 + day3.slice(7) > last2 ? last2 : m3 + day3.slice(7), true);
       } else if (e3.key === "Home") go2(addDays(day3, -col(day3)), true);
       else if (e3.key === "End") go2(addDays(day3, 6 - col(day3)), true);
+      else if ((e3.key === "t" || e3.key === "T") && !e3.metaKey && !e3.ctrlKey && !e3.altKey) go2(days[v3.today] ? v3.today : from2, true);
       else return;
       e3.preventDefault();
     };
@@ -16969,6 +16970,7 @@ ${pays}
           [["↑", "↓"], "The week before or after"],
           [["Page Up", "Page Down"], "The month before or after"],
           [["Home", "End"], "The week’s first or last day"],
+          [["T"], "On the calendar, today"],
           [[mod + "F"], "In Transactions, search them"],
           [[mod + "A"], "In Transactions, after Select, every transaction shown; Escape stops selecting"]
         ];

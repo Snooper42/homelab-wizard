@@ -172,6 +172,8 @@ export function Calendar({ v, L, ledger, edit }: CalendarProps) {
     else if (e.key === 'PageUp' || e.key === 'PageDown') { const m = addMonths(monthOf(day), e.key === 'PageUp' ? -1 : 1); go(m + day.slice(7) > last ? last : m + day.slice(7), true); }
     else if (e.key === 'Home') go(addDays(day, -col(day)), true);
     else if (e.key === 'End') go(addDays(day, 6 - col(day)), true);
+    // T, as calendars have it: back to today.
+    else if ((e.key === 't' || e.key === 'T') && !e.metaKey && !e.ctrlKey && !e.altKey) go(days[v.today] ? v.today : from, true);
     else return;
     e.preventDefault();
   };

@@ -5903,6 +5903,10 @@ const smokes = [
     await page.waitForSelector('.fx-calendar h2:has-text("December 2026")', { timeout: 5000 });
     await page.waitForSelector('.fx-month button[data-day="2026-12-05"][aria-pressed=true]:focus', { timeout: 5000 });
     await page.waitForSelector('.fx-month button[data-day="2026-12-25"] .fx-hol:text-is("Christmas")', { timeout: 5000 });
+    // T, from the day the keys reached, goes back to today, the focus with it.
+    await page.keyboard.press('t');
+    await page.waitForSelector('.fx-month button[data-day="2026-10-30"][aria-pressed=true]:focus', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
     await page.click('.fx-calendar button:text-is("Today")');
     await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
     // A payment's row opens its form.
