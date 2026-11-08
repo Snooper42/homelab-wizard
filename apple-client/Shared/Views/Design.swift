@@ -452,3 +452,56 @@ struct WalletStack<Content: View>: View {
         }
     }
 }
+
+// MARK: - Rows with an icon tile
+
+/// A row as Settings has them: its icon on a coloured rounded tile, its
+/// name (and a line under it), and a few words on the right.
+struct IconTileLabel<Trailing: View>: View {
+    let title: String
+    let systemImage: String
+    let tint: Color
+    var subtitle: String?
+    @ViewBuilder var trailing: () -> Trailing
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 30, height: 30)
+                .background(tint, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: title)
+                if let subtitle {
+                    Text(verbatim: subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 8)
+            trailing()
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+}
+
+extension IconTileLabel where Trailing == EmptyView {
+    init(title: String, systemImage: String, tint: Color, subtitle: String? = nil) {
+        self.init(title: title, systemImage: systemImage, tint: tint, subtitle: subtitle) { EmptyView() }
+    }
+}
+
+/// The tiles' colours, as Settings' own: each a colour white reads on.
+enum TileColour {
+    static let green = Color(light: 0x248A3D, dark: 0x30D158)
+    static let indigo = Color(light: 0x5856D6, dark: 0x5E5CE6)
+    static let blue = Color(light: 0x0A6CD8, dark: 0x0A84FF)
+    static let orange = Color(light: 0xC2410C, dark: 0xE8590C)
+    static let red = Color(light: 0xD70015, dark: 0xFF453A)
+    static let teal = Color(light: 0x0E7490, dark: 0x30B0C7)
+    static let grey = Color(light: 0x6E6E73, dark: 0x8E8E93)
+    static let purple = Color(light: 0x8944AB, dark: 0xBF5AF2)
+}

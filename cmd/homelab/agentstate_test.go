@@ -1,13 +1,19 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
 // The agent's note of when it last backed up and updated is replaced whole:
@@ -27,9 +33,17 @@ func TestAgentStateIsReplacedWhole(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for !stop.Load() {
-			if s := loadAgentState(path); s.LastBackup.IsZero() {
-				data, _ := os.ReadFile(path)
-				half.Store(string(data))
+			// As loadAgentState reads it, keeping what went wrong to say it.
+			data, err := lockedfile.Read(path)
+			var s agentState
+			uerr := json.Unmarshal(data, &s)
+			if err != nil || uerr != nil || s.LastBackup.IsZero() {
+				var errno syscall.Errno
+				code := ""
+				if errors.As(err, &errno) {
+					code = fmt.Sprintf(" (errno %d)", uintptr(errno))
+				}
+				half.Store(fmt.Sprintf("%d bytes, read error %v%s, unmarshal error %v", len(data), err, code, uerr))
 				return
 			}
 		}
@@ -42,7 +56,7 @@ func TestAgentStateIsReplacedWhole(t *testing.T) {
 	stop.Store(true)
 	wg.Wait()
 	if v := half.Load(); v != nil {
-		t.Errorf("a reader found half a note (%d bytes): it reads as no backup yet", len(v.(string)))
+		t.Errorf("a reader found no note (%s): it reads as no backup yet", v)
 	}
 }
 

@@ -1,9 +1,13 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// The computer app's Setup and Settings screens, with what a phone can
 /// reach of them. Setup: what still needs you, and how this machine is
-/// doing (its system, Look for problems). Settings: this machine's nightly
-/// updates, this device, help, and where the logos come from.
+/// doing (its system, Look for problems). Settings, laid out as the
+/// system's own: the homelab on top (this device's page behind it), the
+/// switches, the homelab's settings a section a row, then help and About.
 struct ComputerView: View {
     enum Page {
         case setup, settings
@@ -13,24 +17,22 @@ struct ComputerView: View {
     var page: Page = .settings
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(DashboardViewModel.self) private var dashboard
-    @State private var confirmingUnpair = false
     /// The widget, on this device (WidgetSummaryStore).
     @State private var widgetOn = WidgetSummaryStore.isEnabled
 
     var body: some View {
         @Bindable var computer = computer
         Form {
-            ScreenLead(text: lead)
             switch page {
             case .setup:
+                ScreenLead(text: "What still needs you, and how this machine is doing.")
                 hostSection
                 fixSection
             case .settings:
-                updatesSection
+                homelabCard
+                switchesSection
                 homelabSettingsSection
-                deviceSection
-                reportSection
-                creditsSection
+                helpSection
             }
         }
         .formStyle(.grouped)
@@ -49,15 +51,7 @@ struct ComputerView: View {
         .navigationTitle(page == .setup ? "Setup" : "Settings")
     }
 
-    /// The line under the computer's heading for each screen.
-    private var lead: String {
-        switch page {
-        case .setup: "What still needs you, and how this machine is doing."
-        case .settings: "The homelab's settings, as the computer's Settings has them. A password or token is never shown."
-        }
-    }
-
-    // MARK: Sections
+    // MARK: Setup
 
     @ViewBuilder
     private var hostSection: some View {
@@ -88,80 +82,6 @@ struct ComputerView: View {
         }
     }
 
-    @ViewBuilder
-    private var updatesSection: some View {
-        if let updates = computer.updates {
-            Section {
-                Toggle(isOn: Binding(
-                    get: { !updates.paused },
-                    set: { on in Task { await computer.setNightlyUpdates(on: on) } }
-                )) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Update apps nightly")
-                        if !updates.schedule.isEmpty {
-                            Text(updates.schedule.prefix(1).uppercased() + updates.schedule.dropFirst())
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .disabled(!computer.canChange || computer.isSavingUpdates)
-                if let error = computer.updatesError {
-                    Text(error).font(.callout).foregroundStyle(Theme.danger)
-                }
-            } header: {
-                Text("Updates")
-            } footer: {
-                if !computer.canChange {
-                    Text("This device can only look.")
-                } else if updates.paused {
-                    Text("Paused: apps keep the versions they run now until you turn this back on.")
-                }
-            }
-        }
-    }
-
-    /// The Settings form, a row a section, as the computer's Settings lists
-    /// its pages (main #491).
-    @ViewBuilder
-    private var homelabSettingsSection: some View {
-        Section {
-            if let form = computer.form {
-                NavigationLink {
-                    SettingsFormView(computer: computer, section: nil)
-                } label: {
-                    Label("Search All Settings", systemImage: "magnifyingglass")
-                }
-                ForEach(form.sections) { section in
-                    NavigationLink {
-                        SettingsFormView(computer: computer, section: section.name)
-                    } label: {
-                        LabeledContent {
-                            Text("\(section.settings.count)")
-                        } label: {
-                            Text(verbatim: SettingWords.section(section.name))
-                        }
-                    }
-                }
-            } else if computer.formNotServed {
-                Text("The computer's Homelab Wizard doesn't send its settings to a phone yet. They come with an update to it.")
-                    .foregroundStyle(.secondary)
-            } else if let error = computer.formError {
-                Text(error).foregroundStyle(.secondary)
-            } else {
-                ProgressView()
-            }
-        } header: {
-            Text("Homelab Settings")
-        } footer: {
-            if computer.form != nil {
-                Text(computer.canChange
-                     ? "Change the everyday ones here. Passwords and tokens, and the settings this device connects through, are changed on the computer."
-                     : "This device can only look.")
-            }
-        }
-    }
-
     private var fixSection: some View {
         Section {
             TaskButton(task: .fix)
@@ -172,36 +92,102 @@ struct ComputerView: View {
         }
     }
 
-    private var reportSection: some View {
+    // MARK: Settings
+
+    /// "iPhone", "iPad" or "Mac", for "This iPhone can make changes".
+    private var deviceWord: String {
+        #if os(iOS)
+        UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
+        #else
+        "Mac"
+        #endif
+    }
+
+    /// The homelab this device is paired with, and what it may do; this
+    /// device's own page behind it.
+    private var homelabCard: some View {
         Section {
-            Button {
-                Task { await computer.makeReport() }
+            NavigationLink {
+                ThisDevicePage()
             } label: {
-                HStack {
-                    Label("Make a Diagnostics Report", systemImage: "doc.text.below.ecg")
-                    if computer.isMakingReport {
-                        Spacer()
-                        ProgressView().controlSize(.small)
+                HStack(spacing: 14) {
+                    AppMark(size: 56)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Homelab Wizard")
+                            .font(.headline)
+                        if let server = coordinator.serverName {
+                            Text(verbatim: server)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                        if let device = coordinator.device {
+                            Text(device.canChange ? "This \(deviceWord) can make changes" : "This \(deviceWord) can only look")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(device.canChange ? Theme.success : Theme.secondaryInk)
+                        }
                     }
                 }
+                .padding(.vertical, 6)
             }
-            .disabled(computer.isMakingReport)
-            if let error = computer.reportError {
-                Text(error).font(.callout).foregroundStyle(Theme.danger)
-            }
-        } header: {
-            Text("Help")
-        } footer: {
-            Text("The computer removes every password, token and key first. You see the report before you share it.")
         }
     }
 
     private var widgetName: String {
         #if os(macOS)
-        "Show on the desktop widget"
+        "Desktop widget"
         #else
-        "Show on the Home Screen widget"
+        "Home Screen widget"
         #endif
+    }
+
+    private var lockName: String {
+        #if os(macOS)
+        "Touch ID lock"
+        #else
+        "Face ID lock"
+        #endif
+    }
+
+    /// Nightly updates, the lock, and the widget.
+    private var switchesSection: some View {
+        Section {
+            if let updates = computer.updates {
+                Toggle(isOn: Binding(
+                    get: { !updates.paused },
+                    set: { on in Task { await computer.setNightlyUpdates(on: on) } }
+                )) {
+                    IconTileLabel(title: "Update apps nightly", systemImage: "arrow.triangle.2.circlepath", tint: TileColour.green,
+                                  subtitle: updates.schedule.isEmpty ? nil : updates.schedule.prefix(1).uppercased() + updates.schedule.dropFirst())
+                }
+                .disabled(!computer.canChange || computer.isSavingUpdates)
+                if let error = computer.updatesError {
+                    Text(error).font(.callout).foregroundStyle(Theme.danger)
+                }
+            }
+            LabeledContent {
+                Text("On")
+            } label: {
+                IconTileLabel(title: lockName, systemImage: "faceid", tint: TileColour.indigo)
+            }
+            .accessibilityHint("The app locks when it leaves the screen, and asks again before any change.")
+            if WidgetSummaryStore.isAvailable {
+                Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
+                    IconTileLabel(title: widgetName, systemImage: "square.grid.2x2", tint: TileColour.blue)
+                }
+            }
+        } footer: {
+            VStack(alignment: .leading, spacing: 4) {
+                if computer.updates != nil, !computer.canChange {
+                    Text("This device can only look.")
+                } else if computer.updates?.paused == true {
+                    Text("Updates paused: apps keep the versions they run now until you turn this back on.")
+                }
+                if WidgetSummaryStore.isAvailable {
+                    Text("The widget shows only \"All well\" or how many apps need a look, and when, without \(lockName == "Face ID lock" ? "Face ID" : "Touch ID"). Never app names.")
+                }
+            }
+        }
     }
 
     /// Turning the widget on lets a line show without unlocking, so it asks
@@ -218,60 +204,156 @@ struct ComputerView: View {
         WidgetSummaryStore.reloadWidget()
     }
 
-    private var deviceSection: some View {
+    /// The Settings form, a row a section with its icon, as the computer's
+    /// Settings lists its pages (main #491).
+    @ViewBuilder
+    private var homelabSettingsSection: some View {
         Section {
-            if let device = coordinator.device {
-                LabeledContent("Paired as", value: device.name)
-                LabeledContent("Can", value: device.canChange ? "Look and make changes" : "Only look")
-                if let paired = device.paired {
-                    LabeledContent("Paired on") { Text(paired, format: .dateTime.year().month().day()) }
-                }
-                if device.unencrypted {
-                    Label("It paired without encryption, so the computer keeps it look-only for good. Pair again over https to make changes.",
-                          systemImage: "lock.open.fill")
-                        .foregroundStyle(Theme.warning)
-                }
-                LabeledContent("ID") {
-                    Text(verbatim: device.id).font(.body.monospaced()).textSelection(.enabled)
-                }
-            }
-            if let server = coordinator.serverName {
-                LabeledContent("Computer") {
-                    Text(verbatim: server).textSelection(.enabled)
-                }
-            }
-            if WidgetSummaryStore.isAvailable {
-                Toggle(isOn: Binding(get: { widgetOn }, set: { on in Task { await setWidget(on) } })) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(widgetName)
-                        Text("Shows only \"All well\" or how many apps need a look, and when, without Face ID or Touch ID. Never app names. Hidden while the device is locked.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if let form = computer.form {
+                ForEach(form.sections) { section in
+                    let look = Self.look(of: section.name)
+                    NavigationLink {
+                        SettingsFormView(computer: computer, section: section.name)
+                    } label: {
+                        IconTileLabel(title: SettingWords.section(section.name), systemImage: look.symbol, tint: look.tint) {
+                            Text("\(section.settings.count)")
+                        }
                     }
                 }
-            }
-            Button("Unpair This Device…", role: .destructive) { confirmingUnpair = true }
-                .confirmationDialog("Unpair this device?", isPresented: $confirmingUnpair, titleVisibility: .visible) {
-                    Button("Unpair", role: .destructive) { coordinator.unpair() }
-                } message: {
-                    Text("Its token is deleted from this device. To revoke it on the computer as well, run homelab phone remove \(coordinator.device?.id ?? "<id>").")
+                NavigationLink {
+                    SettingsFormView(computer: computer, section: nil)
+                } label: {
+                    IconTileLabel(title: "Search all settings", systemImage: "magnifyingglass", tint: TileColour.grey)
                 }
+            } else if computer.formNotServed {
+                Text("The computer's Homelab Wizard doesn't send its settings to a phone yet. They come with an update to it.")
+                    .foregroundStyle(.secondary)
+            } else if let error = computer.formError {
+                Text(error).foregroundStyle(.secondary)
+            } else {
+                ProgressView()
+            }
         } header: {
-            Text("This Device")
+            Text("Homelab Settings")
         } footer: {
-            Text("Locks when it leaves the screen, and asks again before any change. Lost it? On the computer, homelab phone remove \(coordinator.device?.id ?? "<id>") stops its token at once.")
+            if computer.form != nil {
+                Text(computer.canChange
+                     ? "Change the everyday ones here. Passwords and tokens, and the settings this device connects through, are changed on the computer. A password or token is never shown."
+                     : "This device can only look.")
+            }
+        }
+    }
+
+    /// Each section of the computer's Settings, by its name, as an icon on a tile.
+    nonisolated static func look(of section: String) -> (symbol: String, tint: Color) {
+        let name = section.lowercased()
+        if name.hasPrefix("this mac") || name.hasPrefix("this machine") { return ("desktopcomputer", TileColour.grey) }
+        if name.hasPrefix("storage") { return ("externaldrive.fill", TileColour.orange) }
+        if name.hasPrefix("domain") { return ("globe", TileColour.blue) }
+        if name.contains("proxy") || name.contains("crowdsec") { return ("lock.shield.fill", TileColour.green) }
+        if name.hasPrefix("adguard") { return ("hand.raised.fill", TileColour.teal) }
+        if name.hasPrefix("notification") { return ("bell.fill", TileColour.red) }
+        if name.hasPrefix("tidy") { return ("sparkles", TileColour.purple) }
+        if name.contains("port") { return ("number", TileColour.indigo) }
+        if name.contains("secret") || name.hasPrefix("app settings") { return ("key.fill", TileColour.indigo) }
+        return ("gearshape.fill", TileColour.grey)
+    }
+
+    /// A diagnostics report, and where the logos come from.
+    private var helpSection: some View {
+        Section {
+            Button {
+                Task { await computer.makeReport() }
+            } label: {
+                IconTileLabel(title: "Send a report", systemImage: "doc.text.fill", tint: TileColour.teal) {
+                    if computer.isMakingReport { ProgressView().controlSize(.small) }
+                }
+            }
+            .foregroundStyle(Theme.ink)
+            .disabled(computer.isMakingReport)
+            if let error = computer.reportError {
+                Text(error).font(.callout).foregroundStyle(Theme.danger)
+            }
+            NavigationLink {
+                AboutPage()
+            } label: {
+                IconTileLabel(title: "About", systemImage: "info", tint: TileColour.grey)
+            }
+        } footer: {
+            Text("A report has every password, token and key removed by the computer first. You see it before you share it.")
         }
     }
 }
 
-extension ComputerView {
-    /// Where the apps' logos come from (licenses/THIRD-PARTY.md).
-    private var creditsSection: some View {
-        Section("About") {
-            Text("App logos from dashboard-icons by homarr-labs, under the Apache License 2.0. Product names and logos belong to their owners, and are here only to tell the apps apart.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+/// This device: how it's paired, what it may do, and Unpair.
+private struct ThisDevicePage: View {
+    @Environment(AppCoordinator.self) private var coordinator
+    @State private var confirmingUnpair = false
+
+    var body: some View {
+        Form {
+            Section {
+                if let device = coordinator.device {
+                    LabeledContent("Paired as", value: device.name)
+                    LabeledContent("Can", value: device.canChange ? "Look and make changes" : "Only look")
+                    if let paired = device.paired {
+                        LabeledContent("Paired on") { Text(paired, format: .dateTime.year().month().day()) }
+                    }
+                    if device.unencrypted {
+                        Label("It paired without encryption, so the computer keeps it look-only for good. Pair again over https to make changes.",
+                              systemImage: "lock.open.fill")
+                            .foregroundStyle(Theme.warning)
+                    }
+                    LabeledContent("ID") {
+                        Text(verbatim: device.id).font(.body.monospaced()).textSelection(.enabled)
+                    }
+                }
+                if let server = coordinator.serverName {
+                    LabeledContent("Computer") {
+                        Text(verbatim: server).textSelection(.enabled)
+                    }
+                }
+            } footer: {
+                Text("Locks when it leaves the screen, and asks again before any change. Lost it? On the computer, homelab phone remove \(coordinator.device?.id ?? "<id>") stops its token at once.")
+            }
+            Section {
+                Button("Unpair This Device…", role: .destructive) { confirmingUnpair = true }
+                    .confirmationDialog("Unpair this device?", isPresented: $confirmingUnpair, titleVisibility: .visible) {
+                        Button("Unpair", role: .destructive) { coordinator.unpair() }
+                    } message: {
+                        Text("Its token is deleted from this device. To revoke it on the computer as well, run homelab phone remove \(coordinator.device?.id ?? "<id>").")
+                    }
+            }
         }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("This Device")
+    }
+}
+
+/// Where the apps' and payees' logos come from (licenses/THIRD-PARTY.md).
+private struct AboutPage: View {
+    var body: some View {
+        Form {
+            Section {
+                VStack(spacing: 8) {
+                    AppMark(size: 72)
+                    Text("Homelab Wizard").font(.title3.weight(.semibold))
+                    Text("Your apps, at home").font(.subheadline).foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .listRowBackground(Color.clear)
+            }
+            Section("Logos") {
+                Text("App logos from dashboard-icons by homarr-labs, under the Apache License 2.0. Payee logos from simple-icons, under CC0. Product names and logos belong to their owners, and are here only to tell the apps and payees apart.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("About")
     }
 }
 

@@ -62,6 +62,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Settings on the iPhone, as the iPhone's own:** your homelab at the top, then switches for nightly updates and the widget, and each section of the homelab's settings with its own coloured icon.
 - **Transactions on the iPhone, like Wallet:** the account's card on top with your other accounts to switch between, each transaction with its company's logo, and new ones marked with a violet dot until you've reviewed them. Tap one for its own page: a big logo and amount, what bill it paid, its category and note, and the other times at that place.
 - **Finances on the iPhone, tidied:** it opens with checking now and after payday, your net worth with its line, then a list like Settings: Transactions, Budgets, Bills, Investments, Accounts, Goals and Loans, each one tap away.
 - **Status on the iPhone, at a glance:** it opens with a ring of how many apps are running and the one that needs a look, with its **Start** and **Logs** right there, then tiles for backups, savings, nightly updates and health checks. The tab bar at the bottom shrinks as you scroll.

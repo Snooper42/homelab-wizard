@@ -19,13 +19,13 @@ struct FinancesView: View {
                     NavigationLink {
                         TransactionsView(finances: finances)
                     } label: {
-                        FinanceLinkLabel(title: "Transactions", systemImage: "list.bullet", tint: Theme.accent)
+                        IconTileLabel(title: "Transactions", systemImage: "list.bullet", tint: Theme.accent)
                     }
                     if !view.budgets.isEmpty {
                         NavigationLink {
                             FinanceBudgetsPage(finances: finances)
                         } label: {
-                            FinanceLinkLabel(title: "Budgets", systemImage: "chart.pie.fill", tint: Color(light: 0xC2410C, dark: 0xE8590C)) {
+                            IconTileLabel(title: "Budgets", systemImage: "chart.pie.fill", tint: Color(light: 0xC2410C, dark: 0xE8590C)) {
                                 HStack(spacing: 3) {
                                     Money(value: view.budgets.reduce(0) { $0 + max($1.left, 0) }, currency: view.plan.currency, finances: finances)
                                     Text("left")
@@ -37,7 +37,7 @@ struct FinancesView: View {
                         NavigationLink {
                             FinanceBillsPage(finances: finances)
                         } label: {
-                            FinanceLinkLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger) {
+                            IconTileLabel(title: "Bills", systemImage: "calendar", tint: Theme.danger) {
                                 if let next = Self.nextBill(view) {
                                     Text(verbatim: next)
                                 }
@@ -48,7 +48,7 @@ struct FinancesView: View {
                         NavigationLink {
                             FinanceInvestmentsPage(finances: finances)
                         } label: {
-                            FinanceLinkLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
+                            IconTileLabel(title: "Investments", systemImage: "chart.line.uptrend.xyaxis", tint: Theme.success) {
                                 Money(value: investments.total, currency: view.plan.currency, finances: finances)
                             }
                         }
@@ -56,7 +56,7 @@ struct FinancesView: View {
                     NavigationLink {
                         FinanceAccountsPage(finances: finances)
                     } label: {
-                        FinanceLinkLabel(title: "Accounts", systemImage: "building.columns.fill", tint: Theme.info) {
+                        IconTileLabel(title: "Accounts", systemImage: "building.columns.fill", tint: Theme.info) {
                             Text("\(view.plan.accounts.count)")
                         }
                     }
@@ -64,7 +64,7 @@ struct FinancesView: View {
                         NavigationLink {
                             FinanceGoalsPage(finances: finances)
                         } label: {
-                            FinanceLinkLabel(title: "Goals", systemImage: "flag.fill", tint: Color(light: 0x0F766E, dark: 0x14B8A6)) {
+                            IconTileLabel(title: "Goals", systemImage: "flag.fill", tint: Color(light: 0x0F766E, dark: 0x14B8A6)) {
                                 Text("\(view.goals.count)")
                             }
                         }
@@ -73,7 +73,7 @@ struct FinancesView: View {
                         NavigationLink {
                             FinanceLoansPage(finances: finances)
                         } label: {
-                            FinanceLinkLabel(title: "Loans", systemImage: "arrow.uturn.backward", tint: Color(light: 0x6E6E73, dark: 0x8E8E93)) {
+                            IconTileLabel(title: "Loans", systemImage: "arrow.uturn.backward", tint: Color(light: 0x6E6E73, dark: 0x8E8E93)) {
                                 Text("\(view.loans.count)")
                             }
                         }
@@ -143,36 +143,6 @@ struct FinancesView: View {
             }
         }
         return nil
-    }
-}
-
-/// A row of Finances' home: its icon on a coloured tile, as in Settings, its name, and a few words.
-private struct FinanceLinkLabel<Trailing: View>: View {
-    let title: String
-    let systemImage: String
-    let tint: Color
-    @ViewBuilder var trailing: () -> Trailing
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 30, height: 30)
-                .background(tint, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                .accessibilityHidden(true)
-            Text(title)
-            Spacer(minLength: 8)
-            trailing()
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-        }
-    }
-}
-
-extension FinanceLinkLabel where Trailing == EmptyView {
-    init(title: String, systemImage: String, tint: Color) {
-        self.init(title: title, systemImage: systemImage, tint: tint) { EmptyView() }
     }
 }
 
