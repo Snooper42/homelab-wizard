@@ -44,7 +44,7 @@ export const __hues = { hues, kindCategory };`,
 };
 const entry = `
 export { brands } from ${JSON.stringify(join(fin, 'logos.ts'))};
-export { cleanPayee, __payees } from ${JSON.stringify(join(fin, 'payees.ts'))};
+export { cleanPayee, bankWording, shownNote, __payees } from ${JSON.stringify(join(fin, 'payees.ts'))};
 export { brandOf, payeeBrand, autoMark, hintOf, __mark } from ${JSON.stringify(join(fin, 'Mark.tsx'))};
 export { alike } from ${JSON.stringify(join(fin, 'importData.ts'))};
 export { categoryHue, kindHue, kindHueOf, __hues } from ${JSON.stringify(join(fin, 'hues.ts'))};
@@ -306,6 +306,14 @@ const vectors = {
   autoMark: [...names].map((name) => ({ name, ...web.autoMark(name) })),
   hints: [...names].flatMap((name, n) => [undefined, 'checking', 'utilities'].map((kind) => ({ name, kind: kind ?? null, hint: web.hintOf(kind, name) ?? null }))
     .filter((v) => v.hint !== null || n % 10 === 0)),
+  // A note as a transaction's page shows it: the bank's wording left out (payees.ts's shownNote).
+  notes: [
+    ['ACME CRUISES AD_PAYMENT PPD ID: 1234', 'Acme Cruises'], ['ACME CRUISES AD_PAYMENT PPD ID: 1234', ''], ['Birthday dinner', 'Chipotle'],
+    ['Birthday dinner (CHIPOTLE 1234 ONLINE)', 'Chipotle'], ['Payment to Chase card ending in 9495 11/06', 'Payment to Chase card ••9495'],
+    ['FPL DIRECT DEBIT ELEC PYMT', 'FPL'], ['FPL DIRECT DEBIT ELEC PYMT', 'Electric'], ['Split with Sam', 'Trader Joe\'s'], ['', 'Netflix'],
+    ['XFER TO SAVINGS 123', 'Savings'], ['for the kids (WEB ID: 2222 MAZDA FINANCIAL)', 'Mazda'], ['GROCERIES FOR THE WEEK', 'Kroger'],
+    ['NETFLIX.COM', 'Netflix'], ['netflix.com', 'Netflix'], ['Order 123456 refund', 'Amazon'], ['  spaced note  ', 'X'],
+  ].map(([note, payee]) => ({ note, payee, shown: web.shownNote(note, payee || undefined), bank: web.bankWording(note) })),
   alike: [
     ["Trader Joe's", "TRADER JOE'S STORE 552"], ['Roth IRA', 'TRANSFER TO ROTH'], ['Netflix', 'NETFLIX.COM'], ['Netflix', 'Hulu'], ['The Card', 'Debit card'],
     ['Ab', 'ab'], ['Ab', 'Ab cd'], ['Payment', 'payment'], ['Water bill', 'City water'], ['', ''],

@@ -20,6 +20,7 @@ private struct Vectors: Decodable {
     struct Alike: Decodable { let a: String; let b: String; let alike: Bool }
     struct CategoryHue: Decodable { let name: String; let hue: Int }
     struct KindHue: Decodable { let kind: String; let withCategories: Bool; let hue: Int }
+    struct Note: Decodable { let note: String; let payee: String; let shown: String; let bank: Bool }
 
     let payees: [Payee]
     let brandOf: [BrandOf]
@@ -30,6 +31,7 @@ private struct Vectors: Decodable {
     let categories: [FinanceCategory]
     let categoryHue: [CategoryHue]
     let kindHue: [KindHue]
+    let notes: [Note]
 
     static func load() throws -> Vectors {
         let url = try #require(Bundle.module.url(forResource: "PayeeVectors", withExtension: "json"))
@@ -179,6 +181,15 @@ struct PayeeLogoTests {
             return got == h.hint ? nil : "\(h.name.debugDescription) as \(h.kind ?? "nothing"): \(got ?? "none"), not \(h.hint ?? "none")"
         }
         #expect(misses.isEmpty, report(misses))
+    }
+
+    @Test func notesWithoutTheBanksWording() throws {
+        let v = try Vectors.load()
+        #expect(!v.notes.isEmpty)
+        for n in v.notes {
+            #expect(logos.bankWording(n.note) == n.bank, "bankWording \(n.note.debugDescription)")
+            #expect(logos.shownNote(n.note, payee: n.payee) == n.shown, "shownNote \(n.note.debugDescription) for \(n.payee.debugDescription)")
+        }
     }
 
     @Test func payeesForTheSame() throws {
