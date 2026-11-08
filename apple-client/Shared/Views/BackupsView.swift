@@ -1,26 +1,35 @@
 import SwiftUI
 
-/// Backups, read-only: where they go, whether each app's copy is fresh,
-/// Duplicati's jobs, and the restore tests that prove they work.
+/// Backups: a card with a ring of the copies that are fresh, when the last
+/// backup ran and where to, and Back Up Now and Test a Restore; then
+/// where they go, the restore tests, the vault, Duplicati's jobs, and each
+/// app's copy.
 struct BackupsView: View {
     let backups: BackupsViewModel
 
     var body: some View {
         Form {
             if let overview = backups.overview {
+                Section {
+                    BackupsHero(overview: overview)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                } footer: {
+                    Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
+                }
                 summary(overview)
                 restore(overview)
                 vault(overview)
-            } else if let error = backups.overviewError {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+            } else {
+                if let error = backups.overviewError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(Theme.warning)
+                    }
                 }
-            }
-            Section {
-                TaskButton(task: .backup)
-                TaskButton(task: .restoreTest)
-            } footer: {
-                Text("A restore test restores the newest backup somewhere apart and checks it. Your apps aren't touched.")
+                Section {
+                    TaskButton(task: .backup)
+                    TaskButton(task: .restoreTest)
+                }
             }
             jobs
             if let overview = backups.overview {
@@ -53,16 +62,6 @@ struct BackupsView: View {
 
     private func summary(_ o: BackupOverview) -> some View {
         Section {
-            if o.stale > 0 {
-                Label("\(o.stale) \(o.stale == 1 ? "copy is" : "copies are") out of date", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Theme.warning)
-            } else if o.copies.isEmpty {
-                Label("No backups yet", systemImage: "externaldrive.badge.questionmark")
-                    .foregroundStyle(.secondary)
-            } else {
-                Label("Every copy is fresh", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(Theme.success)
-            }
             if o.shrank > 0 {
                 Label(o.shrank == 1 ? "1 copy is less than half the night before's" : "\(o.shrank) copies are less than half the night before's",
                       systemImage: "exclamationmark.triangle.fill")
@@ -71,12 +70,6 @@ struct BackupsView: View {
             if o.paused > 0 {
                 Label("\(o.paused) waiting for a drive", systemImage: "externaldrive.badge.timemachine")
                     .foregroundStyle(.secondary)
-            }
-            if let last = o.lastRun {
-                LabeledContent("Last backup") { Text(last, format: .relative(presentation: .named)) }
-            }
-            if !o.copies.isEmpty {
-                LabeledContent("Copies up to date", value: "\(o.upToDate.fresh) of \(o.upToDate.of)")
             }
             // The settings file (.env) goes with the nightly backup, as the computer says.
             LabeledContent("Settings file") {
@@ -308,6 +301,81 @@ private struct JobRow: View {
         case "stale": Theme.warning
         default: .secondary
         }
+    }
+}
+
+/// The top of Backups: a ring of the copies that are fresh out of those
+/// that should be, the words for it (as Status's Backups tile says them),
+/// when the last backup ran and where to, and the two jobs as buttons.
+private struct BackupsHero: View {
+    let overview: BackupOverview
+    @Environment(HomelabTasksViewModel.self) private var tasks
+
+    var body: some View {
+        let count = overview.upToDate
+        let tile = StatusTiles.backups(overview)
+        HStack(alignment: .center, spacing: 14) {
+            ProgressRing(value: count.of == 0 ? 0 : Double(count.fresh) / Double(count.of), lineWidth: 8,
+                         tint: tile.alert ? Theme.warning : Theme.success, track: Theme.accent.opacity(0.14)) {
+                VStack(spacing: 0) {
+                    Text(count.fresh, format: .number)
+                        .font(.title3.weight(.bold))
+                        .monospacedDigit()
+                    Text("of \(count.of)")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+            }
+            .frame(width: 76, height: 76)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(count.fresh) of \(count.of) copies fresh")
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(verbatim: tile.value)
+                    .font(.headline)
+                    .foregroundStyle(tile.alert ? Theme.warning : Theme.ink)
+                if let last = overview.lastRun {
+                    Text("Last backup \(last, format: .relative(presentation: .named))")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                Text(verbatim: "To \(BackupOverview.placeName(overview.destination))")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(1)
+                if tasks.canRun {
+                    HStack(spacing: 8) {
+                        Button(HomelabTask.backup.title) { tasks.start(.backup) }
+                            .buttonStyle(.borderedProminent)
+                        Button(HomelabTask.restoreTest.title) { tasks.start(.restoreTest) }
+                            .buttonStyle(.bordered)
+                    }
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .font(.subheadline.weight(.semibold))
+                    .disabled(tasks.running != nil)
+                    .padding(.top, 6)
+                } else {
+                    Text("This device can only look.")
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryInk)
+                }
+                if let running = tasks.running, running == .backup || running == .restoreTest {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.small)
+                        Text(running.progressTitle).font(.caption).foregroundStyle(Theme.secondaryInk)
+                    }
+                }
+                ForEach([HomelabTask.backup, .restoreTest], id: \.self) { task in
+                    if let error = tasks.errors[task] {
+                        Text(error).font(.caption).foregroundStyle(Theme.danger)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(14)
+        .card(radius: 24)
     }
 }
 
