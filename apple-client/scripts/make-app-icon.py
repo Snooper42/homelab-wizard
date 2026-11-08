@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Draws the app icon into Shared/Assets.xcassets/AppIcon.appiconset.
+
+    python3 apple-client/scripts/make-app-icon.py
+
+It needs Pillow (pip install pillow). The icon is the app's own mark
+(Theme.swift's AppMark): a white server rack on a violet tile, with one
+mint light that says "running". Made from shapes alone, so it can be
+drawn again at any size.
+
+- iPhone and iPad: one 1024 px square, edge to edge (iOS rounds the
+  corners), plus the dark and tinted variants iOS 18 shows.
+- Mac: the rounded tile with its margin and shadow, as macOS icons are
+  drawn, at every size from 16 to 1024 px.
+"""
+import json
+import os
+
+from PIL import Image, ImageDraw, ImageFilter
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(HERE, "..", "Shared", "Assets.xcassets", "AppIcon.appiconset")
+SS = 4  # drawn this many times larger, then shrunk, for smooth edges
+
+VIOLET_TOP = (0x7B, 0x62, 0xFF)
+VIOLET_BOTTOM = (0x45, 0x2A, 0xBD)
+DARK_TOP = (0x24, 0x1E, 0x33)
+DARK_BOTTOM = (0x11, 0x0E, 0x18)
+MINT = (0x3C, 0xC7, 0x9F)
+
+
+def gradient(size, top, bottom):
+    """A diagonal gradient, top-left to bottom-right."""
+    small = Image.new("RGB", (256, 256))
+    px = small.load()
+    for y in range(256):
+        for x in range(256):
+            t = (x + y) / 510
+            px[x, y] = tuple(round(a + (b - a) * t) for a, b in zip(top, bottom))
+    return small.resize((size, size), Image.BICUBIC)
+
+
+def glow(size, strength):
+    """A soft white light from the top left, as an alpha mask."""
+    mask = Image.new("L", (size, size), 0)
+    d = ImageDraw.Draw(mask)
+    r = size * 0.62
+    cx, cy = size * 0.22, size * 0.08
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=round(255 * strength))
+    return mask.filter(ImageFilter.GaussianBlur(size * 0.18))
+
+
+def rack(draw, size, unit, hole, light):
+    """The server rack: three units, each with two lights and two vents.
+
+    `unit` is the units' colour, `hole` the colour of what's cut into
+    them, `light` the top unit's first light (the running one)."""
+    s = size / 1024
+    w, h, gap, radius = 560 * s, 136 * s, 36 * s, 34 * s
+    left = (size - w) / 2
+    top = (size - (3 * h + 2 * gap)) / 2
+    for i in range(3):
+        y = top + i * (h + gap)
+        draw.rounded_rectangle((left, y, left + w, y + h), radius=radius, fill=unit)
+        cy = y + h / 2
+        dot = 22 * s
+        for j in range(2):
+            cx = left + 74 * s + j * 62 * s
+            colour = light if (i == 0 and j == 0) else hole
+            draw.ellipse((cx - dot, cy - dot, cx + dot, cy + dot), fill=colour)
+        vent_h = 18 * s
+        for j in range(2):
+            vy = cy - 26 * s + j * 52 * s - vent_h / 2
+            draw.rounded_rectangle((left + w - 250 * s, vy, left + w - 70 * s, vy + vent_h),
+                                   radius=vent_h / 2, fill=hole)
+
+
+def ios(variant):
+    big = 1024 * SS
+    if variant == "light":
+        img = gradient(big, VIOLET_TOP, VIOLET_BOTTOM).convert("RGBA")
+        img.paste((255, 255, 255, 255), (0, 0), glow(big, 0.22))
+        unit, hole = (255, 255, 255, 255), VIOLET_BOTTOM + (255,)
+    elif variant == "dark":
+        img = gradient(big, DARK_TOP, DARK_BOTTOM).convert("RGBA")
+        unit, hole = (0x9D, 0x8C, 0xFF, 255), DARK_BOTTOM + (255,)
+    else:  # tinted: grey on black, which iOS colours in
+        img = Image.new("RGBA", (big, big), (0, 0, 0, 255))
+        unit, hole = (235, 235, 235, 255), (0, 0, 0, 255)
+    light = MINT + (255,) if variant != "tinted" else (255, 255, 255, 255)
+    rack(ImageDraw.Draw(img), big, unit, hole, light)
+    return img.convert("RGB").resize((1024, 1024), Image.LANCZOS)
+
+
+def mac_master():
+    """The Mac icon at 1024 px: an 824 px rounded tile with a shadow."""
+    big = 1024 * SS
+    tile = 824 * SS
+    offset = (big - tile) // 2
+    radius = 185 * SS
+
+    mask = Image.new("L", (tile, tile), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, tile - 1, tile - 1), radius=radius, fill=255)
+
+    face = gradient(tile, VIOLET_TOP, VIOLET_BOTTOM).convert("RGBA")
+    face.paste((255, 255, 255, 255), (0, 0), glow(tile, 0.22))
+    rack(ImageDraw.Draw(face), tile, (255, 255, 255, 255), VIOLET_BOTTOM + (255,), MINT + (255,))
+
+    canvas = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    shadow_mask = Image.new("L", (big, big), 0)
+    shadow_mask.paste(mask, (offset, offset + 12 * SS))
+    shadow.putalpha(shadow_mask.point(lambda a: a * 0.32).filter(ImageFilter.GaussianBlur(14 * SS)))
+    canvas.alpha_composite(shadow)
+    canvas.paste(face, (offset, offset), mask)
+    return canvas.resize((1024, 1024), Image.LANCZOS)
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    images = []
+    for variant in ("light", "dark", "tinted"):
+        name = f"ios-{variant}-1024.png"
+        ios(variant).save(os.path.join(OUT, name), optimize=True)
+        entry = {"filename": name, "idiom": "universal", "platform": "ios", "size": "1024x1024"}
+        if variant != "light":
+            entry["appearances"] = [{"appearance": "luminosity", "value": variant}]
+        images.append(entry)
+
+    master = mac_master()
+    for points in (16, 32, 128, 256, 512):
+        for scale in (1, 2):
+            px = points * scale
+            name = f"mac-{px}.png"
+            # 16@2x and 32@1x are the same file, and so on: written twice, the same.
+            master.resize((px, px), Image.LANCZOS).save(os.path.join(OUT, name), optimize=True)
+            images.append({"filename": name, "idiom": "mac", "scale": f"{scale}x", "size": f"{points}x{points}"})
+
+    with open(os.path.join(OUT, "Contents.json"), "w") as f:
+        json.dump({"images": images, "info": {"author": "xcode", "version": 1}}, f, indent=2)
+        f.write("\n")
+    print("Drew the icon in", os.path.normpath(OUT))
+
+
+if __name__ == "__main__":
+    main()
