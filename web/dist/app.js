@@ -9299,7 +9299,8 @@
     L2.account[t3.account]?.name,
     t3.to && L2.account[t3.to]?.name,
     Math.abs(t3.amount).toFixed(2),
-    Math.abs(t3.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    Math.abs(t3.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    dayShort(t3.date)
   ].filter(Boolean).join(" ").toLowerCase();
   function PairsWidget({ L: L2, ledger, save: save2 }) {
     const [busy2, setBusy] = d2(false);
@@ -9571,7 +9572,7 @@
           ] }),
           children: [
             !!all.length && /* @__PURE__ */ u3("div", { class: "fx-txfilters", role: "search", "aria-label": "Find transactions", children: [
-              /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, note, amount", "aria-label": "Search transactions" }),
+              /* @__PURE__ */ u3("input", { type: "search", class: "fx-txsearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search payee, category, amount, day", "aria-label": "Search transactions" }),
               /* @__PURE__ */ u3("select", { "aria-label": "Account", value: account, onChange: (e3) => setAccount(e3.target.value), children: [
                 /* @__PURE__ */ u3("option", { value: "", children: "Every account" }),
                 accounts.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id))

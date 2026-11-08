@@ -6220,7 +6220,7 @@ const smokes = [
     const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
     if (rows.length !== 6 || rows[0] !== 'Fri, Oct 30+$55.50$2,512.40' || rows[5] !== 'Fri, Sep 25+$30.84$2,333.57') throw new Error(`rows: ${JSON.stringify(rows)}`);
   } },
-  // A charge found by what it came to: 86.10 finds Costco, and 2,400 with its comma Jordan's paycheck.
+  // A charge found by what it came to: 86.10 finds Costco, and 2,400 with its comma Jordan's paycheck; Oct 28 finds that day's.
   { name: 'Finances: a transaction found by its amount', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.fill('.fx-txsearch', '86.10');
@@ -6228,6 +6228,10 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
     await page.fill('.fx-txsearch', '2,400');
     await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck")', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    // And by its day as shown.
+    await page.fill('.fx-txsearch', 'oct 28');
+    await page.waitForSelector('.fx-txday li:has-text("Shell")', { timeout: 5000 });
     await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
   } },
   // Pay: each person's take-home a year too; one with no gross or deductions typed in says what they would show, with
