@@ -10325,6 +10325,7 @@
         ] }),
         /* @__PURE__ */ u3("datalist", { id: "finCurrencies", children: ["USD", "EUR", "GBP", "CAD", "AUD", "NZD", "JPY", "CHF", "SEK", "NOK", "DKK", "MXN", "INR"].filter((c3) => c3 !== home).map((c3) => /* @__PURE__ */ u3("option", { value: c3 }, c3)) })
       ] }),
+      a3 && /* @__PURE__ */ u3(BalancesLately, { a: a3 }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: !!a3, remove, close: props.close, problem, touched, uses, removeAll: () => without(true) })
     ] });
   }
@@ -10426,6 +10427,22 @@
         paid.length - shown6.length,
         " before, on Transactions."
       ] })
+    ] });
+  }
+  function BalancesLately({ a: a3 }) {
+    const points = (a3.history || []).slice(-7);
+    if (points.length < 2) return null;
+    const rows = points.slice(1).map((p3, i3) => ({ ...p3, moved: p3.amount - points[i3].amount })).reverse();
+    return /* @__PURE__ */ u3("section", { class: "paidlately", "aria-label": "Balances lately", children: [
+      /* @__PURE__ */ u3("h3", { children: "Balances lately" }),
+      /* @__PURE__ */ u3("ul", { children: rows.map((p3) => {
+        const good = owed(a3.kind) ? p3.moved < 0 : p3.moved > 0;
+        return /* @__PURE__ */ u3("li", { children: [
+          /* @__PURE__ */ u3("span", { class: "grow", children: dayLong(p3.date) }),
+          Math.abs(p3.moved) >= 5e-3 && /* @__PURE__ */ u3("span", { class: good ? "ok" : "bad", children: (p3.moved < 0 ? "−" : "+") + moneyIn(Math.abs(p3.moved), a3.currency) }),
+          /* @__PURE__ */ u3("strong", { children: moneyIn(p3.amount, a3.currency) })
+        ] }, p3.date);
+      }) })
     ] });
   }
   function BalancesForm(props) {

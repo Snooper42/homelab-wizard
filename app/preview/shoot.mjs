@@ -6212,6 +6212,14 @@ const smokes = [
     await page.click('.fx-payees button:text-is("Show fewer")');
     if ((await count()) !== 5) throw new Error(`${await count()} payees with fewer`);
   } },
+  // An account's form lists its last balances as kept, newest first, each with how it moved from the one before.
+  { name: 'Finances: an account\'s form says its balances lately', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-ownlist li:has-text("Chase Checking") button');
+    await page.waitForSelector('#finSheet .paidlately h3:text-is("Balances lately")', { timeout: 5000 });
+    const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (rows.length !== 6 || rows[0] !== 'Fri, Oct 30+$55.50$2,512.40' || rows[5] !== 'Fri, Sep 25+$30.84$2,333.57') throw new Error(`rows: ${JSON.stringify(rows)}`);
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });

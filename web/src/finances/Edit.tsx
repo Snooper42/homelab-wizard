@@ -599,6 +599,7 @@ function AccountForm(props: EditProps) {
         {foreign && sign && num(xrate) > 0 && num(balance) !== 0 && <p class="formsub muted wide">{moneyIn(num(balance), code)} is about {money(num(balance) * num(xrate))} at this rate, typed in by you: Finances never looks a rate up.</p>}
         <datalist id="finCurrencies">{['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'NZD', 'JPY', 'CHF', 'SEK', 'NOK', 'DKK', 'MXN', 'INR'].filter((c) => c !== home).map((c) => <option key={c} value={c} />)}</datalist>
       </div>
+      {a && <BalancesLately a={a} />}
       <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} uses={uses} removeAll={() => without(true)} />
     </form>
   );
@@ -685,6 +686,30 @@ function PaidLately({ x, ledger }: { x: finance.Payment; ledger?: finance.Ledger
         })}
       </ul>
       {paid.length > shown.length && <p class="muted">And {paid.length - shown.length} before, on Transactions.</p>}
+    </section>
+  );
+}
+
+/**
+ * An account's last few balances as kept (Account.History, one a day it
+ * was typed in or read), newest first, each with how it moved from the one
+ * before: up is good for what it holds, down for what it owes.
+ */
+function BalancesLately({ a }: { a: finance.Account }) {
+  const points = (a.history || []).slice(-7);
+  if (points.length < 2) return null;
+  const rows = points.slice(1).map((p, i) => ({ ...p, moved: p.amount - points[i].amount })).reverse();
+  return (
+    <section class="paidlately" aria-label="Balances lately">
+      <h3>Balances lately</h3>
+      <ul>
+        {rows.map((p) => {
+          const good = owed(a.kind) ? p.moved < 0 : p.moved > 0;
+          return <li key={p.date}><span class="grow">{dayLongOf(p.date)}</span>
+            {Math.abs(p.moved) >= 0.005 && <span class={good ? 'ok' : 'bad'}>{(p.moved < 0 ? '−' : '+') + moneyIn(Math.abs(p.moved), a.currency)}</span>}
+            <strong>{moneyIn(p.amount, a.currency)}</strong></li>;
+        })}
+      </ul>
     </section>
   );
 }
