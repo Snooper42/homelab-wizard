@@ -199,6 +199,8 @@ declare namespace app {
   interface InvestmentsRead {
     view: finance.View;
     unmatched: string[];
+    accounts: number;
+    holdings: number;
   }
   interface MenuEntry {
     available: boolean;

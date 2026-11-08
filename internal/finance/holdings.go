@@ -50,7 +50,8 @@ func plain(s string) string {
 // hand, else the investment or retirement account of the same name, else
 // one whose name is inside the other's; never one kept in another
 // currency. A match's worth is its balance, today's, and each of its
-// holdings remembers its worth on each day read. An account Ghostfolio no
+// holdings remembers its worth on each day read; one with nothing in
+// it in Ghostfolio yet (no holdings, no cash) leaves the balance as it was. An account Ghostfolio no
 // longer matches keeps its balance, but not holdings that are no longer
 // true. The plan given is left as it was.
 func TakeHoldings(p Plan, found []Invested, now time.Time) (Plan, []string) {
@@ -102,6 +103,12 @@ func TakeHoldings(p Plan, found []Invested, now time.Time) (Plan, []string) {
 			continue
 		}
 		a := &p.Accounts[matched[i]]
+		// Set up in Ghostfolio with nothing in it yet: its $0 is not this
+		// account's worth, so the balance typed in here stays as it is.
+		if len(f.Holdings) == 0 && math.Abs(f.Value) < 0.005 {
+			a.Holdings = nil
+			continue
+		}
 		was := map[string][]Point{}
 		for _, h := range a.Holdings {
 			was[strings.ToUpper(h.Symbol)] = h.History
