@@ -26,6 +26,8 @@ import { SinceWidget, type SinceState } from './widgets/Ledger';
 import { ComingUpWidget } from './widgets/ComingUp';
 import { GoalsWidget } from './widgets/Goals';
 import { LatestWidget } from './widgets/Latest';
+import { SpentWidget } from './widgets/Spent';
+import type { showTransactions } from './Transactions';
 
 /** What the dashboard draws; add, edit, and setSince are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
@@ -49,6 +51,8 @@ export interface OverviewProps {
   openSubscriptions?: () => void;
   /** Shows Recurring: a typical month, payment by payment. */
   openRecurring?: () => void;
+  /** Shows Transactions filtered (a category of this month's spending). */
+  showIn?: (f: Parameters<typeof showTransactions>[0]) => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
   /** Shows the Calendar, on a day when one is given (the checking chart's). */
@@ -57,7 +61,7 @@ export interface OverviewProps {
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, showIn, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -96,6 +100,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         <CashFlowWidget v={v} L={L} open={openRecurring} />
         <SpendingWidget v={v} L={L} open={openRecurring} />
         <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
+        <SpentWidget v={v} ledger={ledger} open={showIn} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>

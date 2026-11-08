@@ -6173,6 +6173,18 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Calendar")');
     await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
   } },
+  // Spent this month, from the ledger, beside the latest transactions: its total and each category, largest first; a
+  // category opens this month's transactions of it.
+  { name: 'Finances: the Dashboard says what was spent this month, a category opening its transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-spentmonth .fx-stat:has-text("$493.05")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-spentmonth li .grow', (l) => l.map((x) => x.textContent.trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['Subscriptions', 'Food', 'Utilities', 'Car'])) throw new Error(`rows: ${rows}`);
+    const latest = await page.$eval('.fx-latest', (e) => e.getBoundingClientRect().top), spent = await page.$eval('.fx-spentmonth', (e) => e.getBoundingClientRect().top);
+    if (latest !== spent) throw new Error('Spent this month is not beside the latest transactions');
+    await page.click('.fx-spentmonth li:has-text("Food") button');
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('not filtered to Food');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
