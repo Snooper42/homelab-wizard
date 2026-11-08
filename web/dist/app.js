@@ -8053,11 +8053,11 @@
   }
   function when(t3, now = /* @__PURE__ */ new Date()) {
     const d3 = new Date(t3);
-    const clock2 = clockText(d3);
+    const clock3 = clockText(d3);
     const day3 = (x3) => new Date(x3.getFullYear(), x3.getMonth(), x3.getDate()).getTime();
     const days = Math.round((day3(now) - day3(d3)) / 864e5);
-    if (days === 0) return `Today, ${clock2}`;
-    if (days === 1) return `Yesterday, ${clock2}`;
+    if (days === 0) return `Today, ${clock3}`;
+    if (days === 1) return `Yesterday, ${clock3}`;
     return dayText(d3, { weekday: "short", day: "numeric", month: "short" });
   }
   var dayTone = (d3) => !d3.all ? "" : d3.ok === d3.all ? "ok" : d3.ok ? "warn" : "bad";
@@ -15345,6 +15345,7 @@ ${pays}
     "books apply": "Tidying your books",
     "books undo": "Undoing the last apply",
     "books build": "Making your Calibre library",
+    "inbox undo": "Putting it back",
     "movies scan": "Scanning your films",
     "movies run": "Handing films to Tdarr",
     "movies collect": "Collecting Tdarr's work",
@@ -15930,7 +15931,10 @@ ${pays}
     const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }) }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }),
+        /* @__PURE__ */ u3(TodayWidget, { d: d3, job: job2, act })
+      ] }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidytop", children: [
         /* @__PURE__ */ u3(Widget, { title: "Needs your OK", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
           count(waiting2, "thing"),
@@ -15985,6 +15989,23 @@ ${pays}
       ] }),
       /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
     ] });
+  }
+  var clock2 = (at2) => new Date(at2).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  function TodayWidget({ d: d3, job: job2, act }) {
+    const today2 = d3.today || [];
+    return /* @__PURE__ */ u3(Widget, { title: "What I did today", span: "all", kind: "tidytoday", children: today2.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytoday", children: today2.map((f4) => /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(LibIcon, { kind: f4.kind }),
+        title: f4.title,
+        sub: f4.undone ? "Put back where it came from" : `${f4.where} · ${(f4.did || []).join(" · ")}`,
+        end: /* @__PURE__ */ u3(S, { children: [
+          f4.undo && !f4.undone && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, title: `Put ${f4.title} back where it came from`, onClick: () => act.run("inbox", "undo", [f4.id]) }),
+          /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: clock2(f4.at) })
+        ] })
+      },
+      f4.id
+    )) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing yet today. Drop something in a watched folder, or press Tidy up now." }) });
   }
   function meterOf(l3) {
     if (l3.kind === "music") {

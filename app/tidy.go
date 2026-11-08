@@ -39,6 +39,8 @@ type TidyUp struct {
 	Freed     int64            `json:"freed"`
 	Checks    []media.Check    `json:"checks"`
 	Inbox     TidyInbox        `json:"inbox"`
+	// Today is what the inbox filed today, newest first (What I did today).
+	Today []media.Filed `json:"today"`
 	// Settings are the TIDY_ settings from .env, for the screen's words.
 	Settings map[string]string `json:"settings"`
 	// Reports is the folder the engines write their reports into.
@@ -182,6 +184,7 @@ func (a *App) TidyUp() (TidyUp, error) {
 	if r, ok := rec.Last["inbox"]["scan"]; ok {
 		out.Inbox.Last = &r
 	}
+	out.Today = media.FiledToday(a.root, time.Now())
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
 }

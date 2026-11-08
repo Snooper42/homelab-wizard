@@ -408,6 +408,13 @@ func TestTidySetInbox(t *testing.T) {
 	if got.Inbox.When != "daily" || len(got.Inbox.Folders) != 2 || len(got.Inbox.Gone) != 1 || got.Inbox.Gone[0] != inbox {
 		t.Errorf("after: %+v", got.Inbox)
 	}
+	// What I did today: the inbox's record of the day.
+	line := `{"id":"x1","kind":"movies","title":"Heat (1995)","where":"Movies › Heat (1995)","did":["renamed and filed"],"from":"/d/Heat.mkv","files":["/m/Heat.mkv"],"undo":true,"run":"r","at":"` + time.Now().Format("2006-01-02T15:04:05") + `"}` + "\n"
+	_ = os.MkdirAll(filepath.Join(a.root, "data"), 0o755)
+	_ = os.WriteFile(media.FiledLogPath(a.root), []byte(line), 0o644)
+	if got, _ := a.TidyUp(); len(got.Today) != 1 || got.Today[0].Title != "Heat (1995)" {
+		t.Errorf("today: %+v", got.Today)
+	}
 	if _, err := a.TidySetInbox(nil, "daily"); err == nil {
 		t.Error("no folder at all was taken")
 	}
