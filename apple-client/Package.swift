@@ -22,12 +22,16 @@ let package = Package(
         .target(
             name: "HomelabClient",
             path: "Shared",
-            exclude: ["App/HomelabClientApp.swift", "App/PrivacyInfo.xcprivacy", "Assets.xcassets"]
+            exclude: ["App/HomelabClientApp.swift", "App/PrivacyInfo.xcprivacy", "Assets.xcassets"],
+            // The payee logos (scripts/make-payee-logos.mjs makes it).
+            resources: [.copy("Resources/PayeeLogos.json")]
         ),
         .testTarget(
             name: "HomelabClientTests",
             dependencies: ["HomelabClient"],
-            path: "Tests"
+            path: "Tests",
+            // What the computer's own functions answer, for PayeeLogoTests.
+            resources: [.copy("Resources/PayeeVectors.json")]
         ),
     ],
     swiftLanguageModes: [.v6]

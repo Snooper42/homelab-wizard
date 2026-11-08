@@ -136,7 +136,7 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: NO
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: "$TEAM"
-    # Shared/Assets.xcassets: the violet accent, for the system's own controls too.
+    # Shared/Assets.xcassets: the blue accent, for the system's own controls too.
     ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     # Shared/Assets.xcassets/AppIcon (drawn by make-app-icon.py).
     ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

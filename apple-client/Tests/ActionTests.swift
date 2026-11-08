@@ -409,12 +409,16 @@ struct ThemeContrastTests {
         #expect(Theme.surface.resolve(in: light) != Theme.surface.resolve(in: dark))
 
         let colours: [(String, Color)] = [("accent", Theme.accent), ("success", Theme.success), ("warning", Theme.warning),
-                                          ("caution", Theme.caution), ("danger", Theme.danger), ("info", Theme.info)]
+                                          ("caution", Theme.caution), ("danger", Theme.danger), ("info", Theme.info),
+                                          ("ink", Theme.ink), ("secondaryInk", Theme.secondaryInk)]
         for (scheme, env) in [("light", light), ("dark", dark)] {
-            let card = Theme.surface.resolve(in: env)
-            for (name, colour) in colours {
-                let ratio = contrast(colour.resolve(in: env), card)
-                #expect(ratio >= 4.5, "\(name) in \(scheme): \(ratio)")
+            // On a card, and on the canvas behind it (a section's caption).
+            for (ground, colour) in [("card", Theme.surface), ("canvas", Theme.canvas)] {
+                let back = colour.resolve(in: env)
+                for (name, colour) in colours {
+                    let ratio = contrast(colour.resolve(in: env), back)
+                    #expect(ratio >= 4.5, "\(name) on the \(ground) in \(scheme): \(ratio)")
+                }
             }
         }
     }
