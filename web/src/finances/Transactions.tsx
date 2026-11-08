@@ -5,7 +5,8 @@
 // in and out (a transfer between the household's accounts is neither), and
 // a search with filters: words in the payee, category, note, or tags, an
 // account, a category, a tag, a month, and money in or out. A row opens
-// its form; on a phone allowed only to look, only a row with a receipt
+// its form (the bank's own wording, kept in its note, is not shown in
+// the list; search still finds it); on a phone allowed only to look, only a row with a receipt
 // opens, to show the receipt under it. A row that pays a planned payment
 // says so; above them, those that look like one but are not linked yet,
 // each to link with a click or say Not it. Select picks rows (Select all
@@ -26,6 +27,7 @@ import { inHome } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
 import { tagsOf } from './reportData';
 import { showUndo } from '../status/UndoNote';
+import { shownNote } from './payees';
 
 export interface TransactionsProps {
   v: finance.View;
@@ -358,7 +360,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger }: Tr
                   const opens = picking ? (e: MouseEvent) => toggle(t.id, e.shiftKey) : edit ? () => edit('transaction', t.id) : t.receipt && readReceipt ? () => look(t) : undefined;
                   const open = !picking && seen?.id === t.id ? seen : null;
                   return <Fragment key={t.id}><Row lead={picking ? <><span class={'fx-check' + (on ? ' on' : '')} aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></svg></span><TxMark t={t} categories={v.categories} /></> : <TxMark t={t} categories={v.categories} />} title={txTitle(t, L)}
-                    sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{t.note && <span class="fx-txnote"> · {t.note}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
+                    sub={<>{what} · {where}{t.payment && L.payment[t.payment] && <span class="fx-txpays"> · pays {L.payment[t.payment].name}</span>}{t.receipt && <span class="fx-txreceipt"> · Receipt</span>}{shownNote(t.note, t.payee) && <span class="fx-txnote"> · {shownNote(t.note, t.payee)}</span>}{!!t.tags?.length && <span class="fx-txtags">{t.tags.map((x) => <span key={x} class="fx-tag">{x}</span>)}</span>}</>}
                     when={<Amount value={t.amount} sign={t.amount > 0} tone={t.amount > 0 && !t.to ? 'in' : ''} form="full" currency={a?.currency} />} whenPlain
                     onOpen={opens} pressed={picking ? on : undefined} openLabel={picking ? undefined : edit ? 'edit' : opens ? (open ? 'hide the receipt' : 'see the receipt') : undefined} />
                     {open && <li class="fx-receiptshown">{open.url ? <ReceiptView url={open.url} /> : open.problem ? <span class="formerr bad" role="alert">{open.problem}</span> : <span class="muted" role="status">Reading the receipt…</span>}</li>}

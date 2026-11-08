@@ -5255,7 +5255,7 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-6);
     const names = txs.map((t) => t.payee).join('|');
-    if (names !== 'Acme Cruises|Mazda Financial|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
+    if (names !== 'Acme Cruises|Mazda|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
     if (!txs[0].note?.includes('ACME CRUISES AD_PAYMENT PPD ID: 1234567890')) throw new Error(`the bank's wording not kept: ${txs[0].note}`);
   } },
   // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
@@ -6659,6 +6659,59 @@ const smokes = [
     if (txs?.length !== 10 || sb?.amount !== -6.45 || sb.account !== 'chk' || sb.date !== '2026-10-31' || sb.note !== 'STARBUCKS STORE 123' || pay?.amount !== 2150 || pay.note || tj?.category !== 'Groceries') throw new Error(`brought in ${JSON.stringify(txs?.slice(-3))}, ${txs?.length}`);
   } },
   // Chase's checking CSV: Details (CREDIT or DEBIT) comes before Description, the payee, and each row ends in an empty cell.
+  // A Chase file's bills by their company's name (FPL, Mazda, Apple Cash), a card paid off moving to that card, and a bill
+  // whose name says nothing (FPL paying Electric, the HOA's own wording paying HOA) paying the planned one of its amount to
+  // the cent; the list leaves the bank's wording out (it stays in the note).
+  { name: 'Finances: bills come in by their company, a card payment moves to its card, and an amount to the cent pays its bill', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"FPL DIRECT DEBIT ELEC PYMT PPD ID: 3590247775",-140.00,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/19/2026,"AMERICAN EXPRESS ACH PMT M8056 WEB ID: 2005032111",-300.00,ACH_DEBIT,700.00,,\n'
+      + 'DEBIT,10/15/2026,"MAZDA FINANCIAL WEB NZTZP5VXA0Y1UPE WEB ID: 1111111111",-399.00,ACH_DEBIT,301.00,,\n'
+      + 'DEBIT,10/28/2026,"SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA",-310.00,ACH_DEBIT,0.00,,\n'
+      + 'CREDIT,10/26/2026,"APPLE CASH BANK XFER JANE Q DOE WEB ID: 6192912998",107.00,ACH_CREDIT,107.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("American Express"):has-text("moves to Amex Gold")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 5")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.date >= '2026-10-15' && (t.note || '').length > 20);
+    const by = (p) => txs.find((t) => t.payee === p);
+    const fpl = by('FPL'), amex = by('American Express'), mazda = by('Mazda'), hoa = by('Sunset Palms Eas Sunset Pal'), cash = by('Apple Cash');
+    if (!fpl || fpl.payment !== 'electric' || fpl.category !== 'Electric' || !/FPL DIRECT DEBIT/.test(fpl.note)) throw new Error(`FPL ${JSON.stringify(fpl)}`);
+    if (!amex || amex.to !== 'amex' || amex.category) throw new Error(`American Express ${JSON.stringify(amex)}`);
+    if (!mazda || mazda.payment) throw new Error(`Mazda ${JSON.stringify(mazda)}`);
+    if (!hoa || hoa.payment !== 'hoa') throw new Error(`HOA ${JSON.stringify(hoa)}`);
+    if (!cash || cash.amount !== 107) throw new Error(`Apple Cash ${JSON.stringify(cash)}`);
+    // The list shows the clean name, not the bank's wording.
+    const row = page.locator('.fx-txday li:has-text("FPL")').first();
+    await row.waitFor({ timeout: 5000 });
+    if (/PPD ID|3590247775/.test(await row.innerText())) throw new Error('the bank wording is shown in the list');
+  } },
+  // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
+  { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'h1', date: '2026-09-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', note: 'SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA' },
+    { id: 'h2', date: '2026-10-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', note: 'SUNSET PALMS EAS SUNSET PAL FT446739999 WEB ID: 2HOA' },
+  ] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-txday li:has-text("Sunset Palms") button >> nth=0');
+    const box = page.locator('#finSheet label.field').filter({ hasText: /^Paid to/ }).locator('input');
+    await box.fill('HOA');
+    await page.waitForSelector('#finSheet .renameall:has-text("Rename the other transaction from “Sunset Palms Eas Sunset Pal” too")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    let txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.payee === 'HOA').length !== 2) throw new Error(`renamed ${JSON.stringify(txs)}`);
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\nDEBIT,10/29/2026,"SUNSET PALMS EAS SUNSET PAL FT447000001 WEB ID: 2HOA",-310.00,ACH_DEBIT,0.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("HOA")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 1")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.filter((t) => t.payee === 'HOA').length !== 3) throw new Error(`after import ${JSON.stringify(txs)}`);
+  } },
   { name: 'Finances: a Chase checking CSV takes its payee from Description, not Details', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');

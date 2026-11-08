@@ -8,8 +8,9 @@
 // is Walmart), and capitals made ordinary. A direct debit or deposit
 // (ACH) loses its codes: the PPD or WEB ID, its entry wording
 // (AD_PAYMENT), and a long reference. Zelle says who, and a card paid
-// from checking says which. Logos then match the clean
-// name. A plain function: words in, words out.
+// from checking says which; a bill or a card payment is its company
+// (FPL, American Express), and a car's lender its make (Mazda). Logos
+// then match the clean name. Plain functions: words in, words out.
 
 /** Processors that write their own name first, the merchant after a star. */
 const processors = new Set(['sq', 'tst', 'sp', 'pp', 'py', 'paypal', 'in', 'ggl', 'google', 'gglpay', 'clover', 'toast', 'zettle', 'izettle', 'pmt', 'chk', 'lsp', 'cke']);
@@ -36,6 +37,14 @@ const chains: [string, string][] = ([
   ['cvs pharmacy', 'CVS'], ['cvs', 'CVS'], ['walgreens', 'Walgreens'], ['apple com bill', 'Apple'], ['itunes com', 'Apple'], ['kroger fuel', 'Kroger'], ['kroger', 'Kroger'],
   ['youtubepremium', 'YouTube Premium'], ['youtube premium', 'YouTube Premium'], ['youtube', 'YouTube'], ['apple', 'Apple'], ['netflix', 'Netflix'], ['spotify usa', 'Spotify'], ['spotify', 'Spotify'], ['hulu', 'Hulu'], ['disney plus', 'Disney+'], ['instacart', 'Instacart'], ['chipotle', 'Chipotle'],
   ['comcast xfinity', 'Xfinity'], ['comcast cable', 'Xfinity'], ['xfinity', 'Xfinity'], ['apple gs savings', 'Apple Savings'], ['apple savings', 'Apple Savings'], ['verizon wireless', 'Verizon'],
+  // Bills and card payments, by the name a person says (FPL DIRECT DEBIT ELEC PYMT is FPL; APPLECARD GSBANK PAYMENT, Apple Card).
+  ['fpl', 'FPL'], ['florida power light', 'FPL'], ['duke energy', 'Duke Energy'], ['american express', 'American Express'], ['amex epayment', 'American Express'],
+  ['applecard gsbank', 'Apple Card'], ['applecard', 'Apple Card'], ['apple card', 'Apple Card'], ['apple cash', 'Apple Cash'], ['fid bkg svc', 'Fidelity'], ['fidelity investments', 'Fidelity'],
+  ['royal caribbean', 'Royal Caribbean'],
+  // A car's lender by its make: MAZDA FINANCIAL is Mazda, as its payment is planned.
+  ['mazda financial', 'Mazda'], ['toyota financial', 'Toyota'], ['toyota motor credit', 'Toyota'], ['lexus financial', 'Lexus'], ['honda financial', 'Honda'], ['american honda finance', 'Honda'],
+  ['ford credit', 'Ford'], ['ford motor credit', 'Ford'], ['nissan motor acceptance', 'Nissan'], ['nissan infiniti', 'Nissan'], ['hyundai motor finance', 'Hyundai'], ['hyundai capital', 'Hyundai'],
+  ['kia motors finance', 'Kia'], ['kia finance', 'Kia'], ['bmw financial', 'BMW'], ['subaru motors finance', 'Subaru'], ['vw credit', 'Volkswagen'], ['volkswagen credit', 'Volkswagen'],
   ['lowes', "Lowe's"], ['lowe s', "Lowe's"], ['the home depot', 'The Home Depot'], ['home depot', 'The Home Depot'], ['trader joe s', "Trader Joe's"], ['whole foods', 'Whole Foods'],
 ] as [string, string][]).sort((a, b) => b[0].length - a[0].length);
 
@@ -89,4 +98,27 @@ export function cleanPayee(raw: string | undefined): string {
   const f = flat(s);
   const chain = chains.find(([w]) => f === w || f.startsWith(w + ' '));
   return chain ? chain[1] : ordinary(s);
+}
+
+/** Whether a note is a bank's own wording (kept from an import), not words a person wrote: a long number, an ACH code, or a line in capitals the payee was made from. */
+export function bankWording(note: string): boolean {
+  const s = note.trim();
+  const letters = s.replace(/[^A-Za-z]/g, '');
+  const shouting = letters.length >= 8 && letters.replace(/[^A-Z]/g, '').length / letters.length > 0.7;
+  return (/\d{5,}/.test(s) || /\b(?:PPD|CCD|WEB|TEL)\s*ID\b|\bXFER\b/i.test(s) || shouting) && cleanPayee(s).toLowerCase() !== s.toLowerCase();
+}
+
+/**
+ * A note as the list shows it: the bank's wording left out (it stays in
+ * the transaction, for search and the form), a memo before it kept. The
+ * wording the payee was made from ("Payment to Chase card ending in 9495
+ * 11/06" for Payment to Chase card ••9495) is the bank's too.
+ */
+export function shownNote(note: string | undefined, payee?: string): string {
+  const s = (note || '').trim();
+  const fromIt = (x: string) => !!payee && cleanPayee(x).toLowerCase() === payee.toLowerCase() && cleanPayee(x).toLowerCase() !== x.toLowerCase();
+  const bank = (x: string) => bankWording(x) || fromIt(x);
+  const m = s.match(/^(.*\S)\s+\((.+)\)$/);
+  if (m && bank(m[2])) return bank(m[1]) ? '' : m[1];
+  return bank(s) ? '' : s;
 }
