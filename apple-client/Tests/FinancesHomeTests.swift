@@ -50,3 +50,30 @@ struct FinancesHomeTests {
         #expect(FinancesView.nextBill(none) == nil)
     }
 }
+
+// The top of the Budgets page: what's left in all, and about how much a day.
+@Suite("Budgets in all")
+struct BudgetsTotalTests {
+    private func budgets(_ json: String) throws -> [FinanceBudget] {
+        try JSONDecoder.homelab().decode([FinanceBudget].self, from: Data(json.utf8))
+    }
+
+    @Test func leftAndADay() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+        let today = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 21, hour: 12)))
+        let list = try budgets(#"""
+        [{"category":"Groceries","per":"month","amount":600,"spent":400,"left":200,"pace":420},
+         {"category":"Eating out","per":"month","amount":150,"spent":190,"left":-40,"pace":105}]
+        """#)
+        let total = BudgetsTotal(list, today: today, calendar: calendar)
+        #expect(total.amount == 750 && total.spent == 590 && total.left == 160)
+        // November has 30 days: the 21st to the 30th is 10 days.
+        #expect(total.perDay == 16)
+        #expect(!total.isOver && abs(total.share - 590.0 / 750.0) < 1e-9)
+        // A budget by pay period: no day's worth, its days differ.
+        let mixed = try budgets(#"[{"category":"Fun","per":"paycheck","amount":100,"spent":10,"left":90,"pace":50}]"#)
+        #expect(BudgetsTotal(mixed, today: today, calendar: calendar).perDay == nil)
+        #expect(BudgetsTotal([], today: today, calendar: calendar).perDay == nil)
+    }
+}

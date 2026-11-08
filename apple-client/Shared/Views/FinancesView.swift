@@ -207,6 +207,34 @@ private struct FinanceBudgetsPage: View {
     var body: some View {
         Form {
             if let view = finances.plan {
+                let total = BudgetsTotal(view.budgets, today: view.today)
+                Section {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(total.isOver ? "Over budget by" : "Left to spend")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(total.isOver ? Theme.danger : .secondary)
+                        Money(value: abs(total.left), currency: view.plan.currency, finances: finances)
+                            .font(.largeTitle.weight(.bold))
+                        ProgressView(value: total.share)
+                            .tint(total.isOver ? Theme.danger : Theme.accent)
+                        HStack(spacing: 4) {
+                            Money(value: total.spent, currency: view.plan.currency, finances: finances)
+                            Text("of")
+                            Money(value: total.amount, currency: view.plan.currency, finances: finances)
+                            Text("spent")
+                            Spacer(minLength: 8)
+                            if let perDay = total.perDay {
+                                Text("About")
+                                Money(value: perDay, currency: view.plan.currency, finances: finances)
+                                Text("a day")
+                            }
+                        }
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 6)
+                    .accessibilityElement(children: .combine)
+                }
                 Section {
                     ForEach(view.budgets) { budget in
                         if finances.canEdit {
