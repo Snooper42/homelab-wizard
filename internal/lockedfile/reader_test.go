@@ -117,7 +117,11 @@ func TestReadTriesAgainOnlyWhileTheFileIsBusy(t *testing.T) {
 			return map[int]error{1: pending, 2: pending}[read]
 		}, 3, true},
 		{"in use throughout", always(inUse), 0, false},
-		{"missing", always(os.ErrNotExist), 1, false},
+		// Looked for once more, in case a save finished in between.
+		{"missing", always(os.ErrNotExist), 2, false},
+		{"missing for an instant", func(read int) error {
+			return map[int]error{1: os.ErrNotExist}[read]
+		}, 2, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reads := 0
@@ -136,5 +140,45 @@ func TestReadTriesAgainOnlyWhileTheFileIsBusy(t *testing.T) {
 				t.Errorf("%d reads, want %d", reads, tc.reads)
 			}
 		})
+	}
+}
+
+// On Windows a record that reads as missing while a save of it is under
+// way (its new file beside it) is tried again until the save lands; an
+// old new file a save that died left behind does not count.
+func TestReadWaitsForASaveUnderWay(t *testing.T) {
+	was, wasWait, wasRead := onWindows, RenameWait, readFile
+	t.Cleanup(func() { onWindows, RenameWait, readFile = was, wasWait, wasRead })
+	onWindows, RenameWait = true, time.Second
+	dir := t.TempDir()
+	path := filepath.Join(dir, "agent.json")
+	tmp := path + ".tmp123"
+	if err := os.WriteFile(tmp, []byte(`{"n":1}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	reads := 0
+	readFile = func(string) ([]byte, error) {
+		reads++
+		if reads <= 5 {
+			return nil, os.ErrNotExist
+		}
+		return []byte(`{"n":1}`), nil
+	}
+	if data, err := Read(path); err != nil || string(data) != `{"n":1}` {
+		t.Fatalf("Read = %q, %v after %d reads", data, err, reads)
+	}
+
+	old := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(tmp, old, old); err != nil {
+		t.Fatal(err)
+	}
+	reads = 0
+	readFile = func(string) ([]byte, error) { reads++; return nil, os.ErrNotExist }
+	start := time.Now()
+	if _, err := Read(path); !os.IsNotExist(err) {
+		t.Fatalf("err = %v", err)
+	}
+	if reads != 2 || time.Since(start) > RenameWait/2 {
+		t.Errorf("a missing record with a stale save beside it took %d reads and %v", reads, time.Since(start))
 	}
 }

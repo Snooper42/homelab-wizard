@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -119,19 +120,50 @@ func Write(path string, data []byte, mode os.FileMode) error {
 
 // Read reads a record Write saves. On Windows an open at the very moment
 // another process renames the file in fails ("access is denied", "in use
-// by another process", or "delete pending" while another reader still has
-// the old file open): Read tries again for up to RenameWait, so a
-// save never reads as no record at all. Any other failure, and every
-// failure off Windows, is returned at once.
+// by another process", "delete pending" while another reader still has
+// the old file open, or even "not found" for that instant): Read tries
+// again for up to RenameWait, so a save never reads as no record at all.
+// A file missing with no save under way beside it is looked for once
+// more, in case a save finished in between, and then reported missing.
+// Any other failure, and every failure off Windows, is returned at once.
 func Read(path string) ([]byte, error) {
 	deadline := time.Now().Add(RenameWait)
+	lookedAgain := false
 	for {
 		data, err := readFile(path)
-		if err == nil || !busy(err) || time.Now().After(deadline) {
+		if err == nil || !onWindows || time.Now().After(deadline) {
+			return data, err
+		}
+		switch {
+		case busy(err):
+		case errors.Is(err, os.ErrNotExist) && beingSaved(path):
+		case errors.Is(err, os.ErrNotExist) && !lookedAgain:
+			lookedAgain = true
+		default:
 			return data, err
 		}
 		time.Sleep(2 * time.Millisecond)
 	}
+}
+
+// beingSaved says whether a save of path is under way: Write's new file
+// is beside it, made in the last minute (an older one was left by a save
+// that died, and says nothing about now).
+func beingSaved(path string) bool {
+	entries, err := os.ReadDir(filepath.Dir(path))
+	if err != nil {
+		return false
+	}
+	prefix := filepath.Base(path) + ".tmp"
+	for _, e := range entries {
+		if !strings.HasPrefix(e.Name(), prefix) {
+			continue
+		}
+		if info, err := e.Info(); err == nil && time.Since(info.ModTime()) < time.Minute {
+			return true
+		}
+	}
+	return false
 }
 
 // errSharingViolation is Windows' ERROR_SHARING_VIOLATION, which Go does
