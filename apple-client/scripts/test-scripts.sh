@@ -61,6 +61,7 @@ stub ipconfig 'echo "${FAKE_WIFI_DNS:-}"'
 stub dig 'echo "${FAKE_WIFI_IP:-}"'
 stub xcrun 'if [ "$1 $2 $3" = "devicectl list devices" ]; then
 [ -n "${FAKE_NO_PHONE:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}'"'"' >"$5"; exit 0; }
+[ -n "${FAKE_UNPAIRED:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"iPhone","developerModeStatus":"enabled"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"pairingState":"unpaired","transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
 [ -n "${FAKE_NO_REALITY:-}" ] && { echo '"'"'{"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"iPhone"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC"},"connectionProperties":{"transportType":"wired"}}]}}'"'"' >"$5"; exit 0; }
 cat >"$5" <<J
 {"result":{"devices":[{"identifier":"CORE-1","deviceProperties":{"name":"Test iPhone 2","developerModeStatus":"${FAKE_DEVMODE:-enabled}"},"hardwareProperties":{"platform":"iOS","udid":"00008110-ABC","reality":"physical"},"connectionProperties":{"pairingState":"paired","tunnelState":"connected"}},{"identifier":"SIM","deviceProperties":{"name":"Sim"},"hardwareProperties":{"platform":"iOS","reality":"virtual"},"connectionProperties":{}}]}}
@@ -141,6 +142,8 @@ expect "opens the app" called "xcrun devicectl device process launch --device CO
 expect "pairs with the https link, named for the phone" called "homelab phone pair --name Test iPhone 2 --can-change"
 expect "shows the QR code, not the Safari line" bash -c 'grep -q QRLINE1 <<<"$0" && ! grep -q Safari <<<"$0"' "$OUT"
 expect "gives the address and code to type" says "https://homelab.example.com and the code ABCD2345"
+FAKE_UNPAIRED=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
+expect "not trusted yet: the Mac asks the phone, then goes on" bash -c 'grep -q "devicectl manage pair --device CORE-1" "$CALLS" && grep -q "trusts this Mac" <<<"$0" && grep -q "id=00008110-ABC" "$CALLS"' "$OUT"
 FAKE_NO_REALITY=1 run "$HERE/run-on-iphone.sh" com.example ABCDE12345
 expect "a real iPhone that Xcode doesn't mark physical is still found" called "-destination id=00008110-ABC"
 FAKE_NO_PHONE=1 run "$HERE/run-on-iphone.sh" com.example

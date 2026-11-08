@@ -6,7 +6,7 @@
 #   apple-client/scripts/run-on-iphone.sh com.yourname
 #
 # Before the first run:
-#   - the iPhone is plugged in with a cable, unlocked, and "Trust This Computer" was tapped;
+#   - the iPhone is plugged in with a cable and unlocked (it asks the phone to trust this Mac);
 #   - Developer Mode is on (iPhone Settings › Privacy & Security › Developer Mode;
 #     it shows up there after Xcode has seen the phone once, and needs a restart);
 #   - the homelab's https address works: apple-client/scripts/phone-address.sh
@@ -93,8 +93,18 @@ fi
 IFS=$'\t' read -r DEVICE UDID NAME DEVMODE PAIRING TUNNEL <"$TMP/device.tsv"
 echo "Found $NAME."
 if [ -n "$PAIRING" ] && [ "$PAIRING" != "paired" ]; then
-  echo "This Mac isn't trusted by $NAME yet. Unlock the phone, tap Trust, enter its passcode, then run this again." >&2
-  exit 1
+  # The phone asks "Trust This Computer?" only when the Mac asks it to.
+  echo "Asking $NAME to trust this Mac: unlock the phone, tap Trust, and enter its passcode…"
+  if ! xcrun devicectl manage pair --device "$DEVICE" >"$TMP/pair.log" 2>&1; then
+    cat >&2 <<MSG
+$NAME didn't trust this Mac. Unlock it and run this again, then tap Trust when it asks.
+If it never asks (Don't Trust was tapped once), on the phone: Settings › General ›
+Transfer or Reset iPhone › Reset › Reset Location & Privacy. Then plug it in again.
+MSG
+    tail -3 "$TMP/pair.log" >&2
+    exit 1
+  fi
+  echo "✓ $NAME trusts this Mac."
 fi
 if [ "$DEVMODE" = "disabled" ]; then
   cat >&2 <<MSG
