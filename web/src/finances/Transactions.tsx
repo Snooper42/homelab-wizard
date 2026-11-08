@@ -394,7 +394,9 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
           {days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
               <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
-                {runs && <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>}</h3>
+                {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
+                  // More than one in or out that day: what they came to together (a transfer is neither).
+                  : d.list.filter((t) => !t.to).length > 1 && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
               <Rows kind="fx-rows">
                 {d.list.map((t) => {
                   const a = L.account[t.account];

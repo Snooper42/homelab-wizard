@@ -9641,13 +9641,16 @@
                   dayLong(d3.date),
                   d3.date === v3.today ? ", today" : ""
                 ] }),
-                runs2 && /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
+                runs2 ? /* @__PURE__ */ u3("span", { class: "fx-txbal", children: [
                   moneyIn(after2(d3.date), acct.currency),
                   /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
                     " ",
                     owed(acct.kind) ? "owed" : "in " + acct.name,
                     " after the day"
                   ] })
+                ] }) : d3.list.filter((t3) => !t3.to).length > 1 && /* @__PURE__ */ u3("span", { class: "fx-txdaysum", children: [
+                  /* @__PURE__ */ u3(Amount, { value: d3.list.filter((t3) => !t3.to).reduce((n3, t3) => n3 + amt(t3), 0), sign: true, form: "full" }),
+                  /* @__PURE__ */ u3("span", { class: "fx-hidden", children: " in all that day" })
                 ] })
               ] }),
               /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: d3.list.map((t3) => {

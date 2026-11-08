@@ -2140,6 +2140,7 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .fx-txday h3 { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin:0 0 2px; font-size:13px; font-weight:600; color:var(--muted); }
 /* One account picked: what it held after the day, at the day's end of the line, in the text's own colour. */
 .fx-txday h3 .fx-txbal { color:var(--text); font-variant-numeric:tabular-nums; }
+.fx-txday h3 .fx-txdaysum { font-weight:500; font-variant-numeric:tabular-nums; }
 .fx-txrunning { margin:0 0 8px; }
 .fx-txmore { display:flex; align-items:center; gap:12px; margin:14px 0 0; }
 .fx-txvs { margin:0; } .fx-txvs span { font-weight:600; }

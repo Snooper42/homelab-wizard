@@ -6254,6 +6254,14 @@ const smokes = [
     await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 13")', { timeout: 5000 });
     if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');
   } },
+  // A day with more than one in or out says what they came to together; a day with one does not.
+  { name: 'Finances: a day of several transactions says its total', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'x1', date: '2026-10-28', account: 'chk', amount: -12.5, payee: 'Starbucks', category: 'Eating out' }].sort((p, q) => p.date.localeCompare(q.date)) } }, run: async (page) => {
+    // In date order, as the ledger is kept (CleanLedger).
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const sum = (await page.textContent('.fx-txday[aria-label="Wed, Oct 28"] .fx-txdaysum', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (sum !== '−$60.70 in all that day') throw new Error(`Oct 28: ${sum}`);
+    if (await page.$('.fx-txday[aria-label="Thu, Oct 22"] .fx-txdaysum')) throw new Error('a day of one has a total');
+  } },
   // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
   { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
