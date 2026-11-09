@@ -288,7 +288,7 @@ struct StatusTop: View {
 
     /// "All 47 apps are running", or what keeps that from being true
     /// without anything being wrong: "46 running, 1 stopped by you".
-    static func line(_ status: HomelabStatus?) -> String {
+    nonisolated static func line(_ status: HomelabStatus?) -> String {
         guard let status else { return "Reading your apps…" }
         let counted = status.apps.filter { !$0.awaitingJobs }
         guard !counted.isEmpty else { return "No apps yet" }
