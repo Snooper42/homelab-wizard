@@ -86,6 +86,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Status on the iPhone, trimmed:** one line when all is well ("All 47 apps are running"), or one card for the app that needs a look, with what's wrong, its button and Open Its Page; then your apps by group. The ring, the four tiles, the Changed Since You Looked list and the cards under the apps are gone (an app that changed has a dot on its row; what your apps save is a line in Settings). The same on a household member's phone, with only their apps.
 - **Imports link the bills a name doesn't give away:** a payee you've linked to a planned payment once (an HOA paid as *Sunset Palms Eas…*) links to it again every month, and a bill of $100 or more to the cent links within two weeks of its day, not just five.
 - **Checking on payday, as your spreadsheet counts it:** the Dashboard's pay period card now also says what checking holds at the end of payday, once that day's own payments (savings, a card paid off) are out, beside where it ends the period. Step › to your second paycheck for a sheet's "2 paychecks".
 - **Update balances by group:** the accounts are listed under Cash, Credit cards, Investments, Home & Car and Loans, each heading in its colour.

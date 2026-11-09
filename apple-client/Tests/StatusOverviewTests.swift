@@ -57,4 +57,16 @@ struct StatusOverviewTests {
         #expect(try !app("stopped").isPlainlyFine)
         #expect(try !app("missing").isPlainlyFine)
     }
+
+    // The trimmed top of Status: one line when nothing needs a look.
+    @Test func theOneLine() throws {
+        func status(_ json: String) throws -> HomelabStatus {
+            try JSONDecoder.homelab().decode(HomelabStatus.self, from: Data(json.utf8))
+        }
+        #expect(StatusTop.line(nil) == "Reading your apps…")
+        #expect(StatusTop.line(try status(#"{"apps":[]}"#)) == "No apps yet")
+        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"running"},{"id":"homelab-companion","name":"Phone companion","state":"not running"}]}"#)) == "All 2 apps are running")
+        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"}]}"#)) == "Your app is running")
+        #expect(StatusTop.line(try status(#"{"apps":[{"id":"a","name":"A","state":"running"},{"id":"b","name":"B","state":"stopped"}],"stopped":{"b":{"since":"2026-11-05T14:00:00Z"}}}"#)) == "1 running, 1 stopped by you")
+    }
 }
