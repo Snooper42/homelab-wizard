@@ -25,11 +25,36 @@ final class IntentInbox {
         /// The app's name as said or typed ("jellyfin", "Immich").
         let app: String
         let action: AppAction?
+        /// From a link (`homelab://`), which anyone can send: the action
+        /// waits for one confirming tap on the app's page.
+        var fromLink = false
+        /// From a link: its logs, once the page is open.
+        var logs = false
     }
 
     var pending: Request?
+    /// A screen a link asked for (`homelab://backups`), until the dashboard shows it.
+    var screen: DashboardViewModel.SidebarItem?
+    /// A page of Finances a link asked for (`homelab://finances/budgets`).
+    var financePage: DeepLink.FinancePage?
 
     func post(_ request: Request) { pending = request }
+
+    /// Takes a link into the app (DeepLink). Nothing changes by itself: an
+    /// action waits for a tap on the app's page, after the app is unlocked.
+    func open(_ link: DeepLink) {
+        switch link {
+        case .app(let id, let then):
+            post(Request(app: id, action: then?.change, fromLink: true, logs: then == .logs))
+        case .status, .tidyInbox:
+            screen = .status(.all)
+        case .backups:
+            screen = .backups
+        case .finances(let page):
+            screen = .finances
+            financePage = page
+        }
+    }
 
     /// The app a request names, among those Status lists: its id or name,
     /// any case, then the only one whose name starts with it.

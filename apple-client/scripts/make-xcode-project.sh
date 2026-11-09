@@ -143,6 +143,11 @@ $IOS_GROUP_INFO
         NSCameraUsageDescription: The camera scans the pairing QR code your computer shows.
         NSLocalNetworkUsageDescription: Homelab talks to your homelab on the home network.
         ITSAppUsesNonExemptEncryption: false
+        # Links into the app (homelab://, Shared/Models/DeepLink.swift).
+        CFBundleURLTypes:
+          - CFBundleURLName: \$(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes:
+              - homelab
         UILaunchScreen: {}
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: true

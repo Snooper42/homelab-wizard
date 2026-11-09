@@ -3687,6 +3687,46 @@ private struct HoldingView: View {
     }
 }
 
+// MARK: - Links (homelab://finances/<page>)
+
+extension FinancesView {
+    /// A page of Finances a link asked for, with the plan and the ledger
+    /// read as the home would have.
+    static func linkedPage(_ page: DeepLink.FinancePage, finances: FinancesViewModel) -> some View {
+        LinkedFinancePage(page: page, finances: finances)
+    }
+}
+
+private struct LinkedFinancePage: View {
+    let page: DeepLink.FinancePage
+    let finances: FinancesViewModel
+
+    var body: some View {
+        content
+            .task {
+                if finances.plan == nil { await finances.loadPlan() }
+                if finances.ledger == nil { await finances.loadLedger() }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch page {
+        case .transactions: TransactionsView(finances: finances)
+        case .budgets: FinanceBudgetsPage(finances: finances)
+        case .bills: FinanceBillsPage(finances: finances)
+        case .accounts: FinanceAccountsPage(finances: finances)
+        case .investments: FinanceInvestmentsPage(finances: finances)
+        case .goals: FinanceGoalsPage(finances: finances)
+        case .recurring: FinanceRecurringPage(finances: finances)
+        case .spending: FinanceSpendingPage(finances: finances)
+        case .inbox: ReviewInboxPage(finances: finances)
+        case .cashflow: FinanceCashFlowPage(finances: finances)
+        case .review: MonthReviewPage(finances: finances)
+        }
+    }
+}
+
 #if SCREENSHOTS
 // MARK: - Screenshots
 
