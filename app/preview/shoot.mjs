@@ -246,6 +246,22 @@ const wallosSubs = [
   { name: 'Home insurance', amount: 610, every: '', cycle: 'every 6 months', next: '2027-01-15', category: 'Insurance' },
   { name: 'Hulu', amount: 7.99, every: 'month', cycle: 'every month', next: '2026-11-08', off: true },
 ];
+// The car loan read from its papers: $6,997.69 at 8.38%, $221.28 a month from Aug 9, three made; half of it a payment in the plan.
+function papersMock() {
+  const rows = [];
+  let b = 6997.69;
+  for (let k = 0; b > 0.005; k++) {
+    const interest = Math.round(b * 8.38 / 1200 * 100) / 100, payment = Math.min(221.28, Math.round((b + interest) * 100) / 100);
+    b = Math.round((b + interest - payment) * 100) / 100;
+    const d = new Date(2026, 7 + k, 9);
+    rows.push({ date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-09`, payment, principal: Math.round((payment - interest) * 100) / 100, interest, after: b });
+  }
+  const left = rows.slice(3);
+  const plan = { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'carloan' ? { ...a, original: 6997.69, rate: 8.38, firstDue: '2026-08-09', payment: 221.28, term: 36, balance: rows[2].after } : a)),
+    payments: finances.plan.payments.map((x) => (x.id === 'carpay' ? { ...x, amount: 110.64 } : x)) };
+  return { ...finances, plan, start: { ...finances.start, carloan: rows[2].after },
+    loans: [finances.loans[0], { account: 'carloan', balance: rows[2].after, rate: 8.38, monthly: 221.28, months: left.length, date: left.at(-1).date.slice(0, 7), interest: Math.round(left.reduce((t, x) => t + x.interest, 0) * 100) / 100, path: left.map((x) => x.after), rows, made: 3 }] };
+}
 const ratedLoans = [
   { account: 'mortgage', balance: 287400, rate: 6.25, monthly: 1845, months: 322, date: '2053-08', interest: 304893.68, path: Array.from({ length: 322 }, (_, i) => Math.max(0, 287400 - (i + 1) * 892.5)) },
   { account: 'carloan', balance: 11240, rate: 4.9, monthly: 412, months: 29, date: '2029-03', interest: 701.16, path: Array.from({ length: 29 }, (_, i) => Math.max(0, 11240 - (i + 1) * 388)) },
@@ -5301,12 +5317,25 @@ const smokes = [
     await page.click(`${form} button:text-is("Add to Ghostfolio")`);
     await page.waitForSelector(`${form} .formerr:text-is("How many shares: more than 0.")`, { timeout: 2000 });
     if (await page.evaluate(() => window.__MOCK.investAdded)) throw new Error('Ghostfolio asked with 0 shares');
-    await page.fill(`${form} input[placeholder="10"]`, '10');
+    // A part of a share: 11.038 is eleven and a bit, not eleven thousand; what a share comes to is said before it goes.
+    await page.fill(`${form} input[placeholder="10"]`, '11.038');
+    await page.fill(`${form} .moneyfield input`, '6653.35');
+    await page.waitForSelector(`${form} .fx-eachshare:text-is("11.038 shares at $602.77 each.")`, { timeout: 2000 });
     await page.click(`${form} button:text-is("Add to Ghostfolio")`);
     await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
-    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: bought 10 VTI. Read again at")`, { timeout: 2000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: bought 11.038 VTI. Read again at")`, { timeout: 2000 });
     const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
-    if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 10 || x.total !== 2000 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
+    if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 11.038 || x.total !== 6653.35 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
+  } },
+  // A holding Ghostfolio has no prices for yet: worth today's price it looked up, and said so in its details; one with prices says nothing.
+  { name: 'Finances: Investments say a worth is today\'s price while Ghostfolio has none of its own', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'roth' ? { ...a, holdings: a.holdings.map((h) => (h.symbol === 'VOO' ? { ...h, quoted: true } : h)) } : a)) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} tbody.fx-hold:has(strong:text-is("VOO")) button.fx-holdbtn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("VOO")) .fx-quoted:has-text("Ghostfolio has no prices of its own for VOO yet")`, { timeout: 2000 });
+    await page.click(`${card} tbody.fx-hold:has(strong:text-is("BND")) button.fx-holdbtn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-holdhist`, { timeout: 2000 });
+    if (await page.$(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-quoted`)) throw new Error('a holding with prices said to have none');
   } },
   // A buy typed wrong, put right from the card: an open holding lists its buys and sales from Ghostfolio, each to Change (what
   // is typed checked first; Ghostfolio's no said in its words, the form kept) or Delete (asked first; Keep it leaves it). Each
@@ -5441,6 +5470,32 @@ const smokes = [
     const names = txs.map((t) => t.payee).join('|');
     if (names !== 'Acme Cruises|Mazda|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
     if (!txs[0].note?.includes('ACME CRUISES AD_PAYMENT PPD ID: 1234567890')) throw new Error(`the bank's wording not kept: ${txs[0].note}`);
+  } },
+  // An American Express file: charges as plus amounts, a payment as minus. Into a card it is read the other way round,
+  // said so, and can be turned off; into checking, as written.
+  { name: 'Finances: an American Express file reads its plus amounts as charges', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n'
+      + '11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n'
+      + '11/04/2026,PET SUPERMARKET #100SUNRISE FL,30.34\n'
+      + '11/02/2026,AIRCOOL FLORIDA MIAMI FL,402.00\n'
+      + '11/01/2026,AUTOPAY PAYMENT RECEIVED - THANK YOU,-500.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.waitForSelector('#finSheet .formsub:has-text("4 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importnote:has-text("read as charges")', { timeout: 2000 });
+    if (!(await page.isChecked('#finSheet label:has-text("Charges are plus amounts") input'))) throw new Error('not read as charges');
+    const shown = await page.$$eval('#finSheet .importlist li > span:last-child', (s) => s.map((x) => x.textContent));
+    if (shown.join(' ') !== '−$56.61 −$30.34 −$402.00 +$500.00') throw new Error(`shown ${shown.join(' ')}`);
+    // Turned off, as written.
+    await page.click('#finSheet label:has-text("Charges are plus amounts") input');
+    if ((await page.textContent('#finSheet .importlist li > span:last-child')) !== '+$56.61') throw new Error('turned off, still the other way round');
+    await page.click('#finSheet label:has-text("Charges are plus amounts") input');
+    await page.click('#finSheet button:text-is("Bring in 4")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-4);
+    if (txs.map((t) => `${t.account} ${t.amount}`).join('|') !== 'amex -56.61|amex -30.34|amex -402|amex 500') throw new Error(`saved ${txs.map((t) => `${t.account} ${t.amount}`)}`);
   } },
   // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
   // name, keeping their category; a payee typed in by hand stays as it is; nothing comes in twice.
@@ -5760,6 +5815,47 @@ const smokes = [
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const loan = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'carloan'));
     if (loan?.rate !== 4.9 || loan.updated) throw new Error(`saved ${JSON.stringify(loan)}: the rate, and no new balance date`);
+  } },
+  // A loan read from its papers: the payments ring, what is paid down, the next payment split, who pays it, and every payment.
+  { name: 'Finances: a loan read from its papers, its payments ring', screen: 'finances', mock: { finances: papersMock() }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-loans li:has-text("Toyota Financial"):has-text("3 of 36 payments made · $221.28 a month: paid off")', { timeout: 5000 });
+    await page.click('.fx-loanchart [role=radio]:text-is("Toyota Financial")');
+    await page.waitForSelector('.fx-papers .fx-ring[aria-label="3 of 36 payments made"]', { timeout: 5000 });
+    const down = await page.textContent('.fx-papersdown');
+    if (!/^\$[\d,.]+ of \$6,997\.69 paid down, \d+%$/.test(down)) throw new Error(`paid down: ${down}`);
+    await page.waitForSelector('.fx-papersfacts p:has-text("Next, Nov 9, 2026: $221.28 ($"):has-text("pays it down, $"):has-text("is interest).")', { timeout: 5000 });
+    await page.waitForSelector('.fx-papersfacts p:has-text("Each month: Car payment $110.64, and $110.64 paid another way.")', { timeout: 5000 });
+    if (await page.isVisible('.fx-paperstable')) throw new Error('every payment shown before it is opened');
+    await page.click('.fx-papersrows summary');
+    const rows = await page.$$eval('.fx-paperstable tbody tr', (rs) => rs.map((r) => r.className));
+    if (rows.length !== 36 || rows.slice(0, 3).some((c) => c !== 'fx-made') || rows[3] !== 'fx-nextrow') throw new Error(`rows: ${rows.length}, ${rows.slice(0, 5)}`);
+    // Update balances has no box for it: it is worked out.
+    await page.click('#finRoot button:has-text("Update balances")');
+    await page.waitForSelector('#finSheet .balancelist li:has-text("Toyota Financial") .balpapers:text-is("From its papers")', { timeout: 5000 });
+    if (await page.$('#bal-carloan')) throw new Error('a box for a loan read from its papers');
+  } },
+  // Its form: the papers' fields, what it owes worked out as they are typed, no Owed to type, and all of it saved.
+  { name: "Finances: a loan's papers in its form", screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
+    await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .formsub:has-text("With the day its first payment was due")', { timeout: 5000 });
+    // $24,000 at no interest, $400 a month from the first of this month a year ago: thirteen due before today (twelve on the 1st).
+    const now = new Date(), first = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    const iso = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}-01`;
+    const made = now.getDate() > 1 ? 13 : 12;
+    await page.fill('#finSheet label:has-text("Interest (APR)") input', '');
+    await page.fill('#finSheet label:has-text("First payment due") input', iso);
+    await page.fill('#finSheet label:has-text("Each payment") input', '400');
+    await page.fill('#finSheet label:has-text("Number of payments") input', '60');
+    const owes = (24000 - made * 400).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    await page.waitForSelector(`#finSheet .formsub:has-text("Owes $${owes} today, after ${made} of 60 payments")`, { timeout: 5000 });
+    if (await page.$$eval('#finSheet label.field', (ls) => ls.some((l) => l.firstChild?.textContent === 'Owed'))) throw new Error('Owed asked for with the papers typed in');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const loan = await page.evaluate(() => window.__MOCK.financesSaved?.[0]?.accounts.find((a) => a.id === 'carloan'));
+    if (loan?.firstDue !== iso || loan.payment !== 400 || loan.term !== 60 || loan.charge || loan.balance !== 24000 - made * 400 || !loan.updated) throw new Error(`saved ${JSON.stringify({ ...loan, history: undefined })}`);
   } },
   { name: 'Finances: deleting an account asks about the payments that use it', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });

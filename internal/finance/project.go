@@ -328,6 +328,14 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			v.Typed = dateOf(t)
 		}
 	}
+	// A loan read from its papers owes, at the start of today, what they
+	// say after the payments due before it: as if typed in this morning.
+	papered := map[string]bool{}
+	for _, a := range p.Accounts {
+		if _, _, owed, ok := papers(p, a, today); ok {
+			bal[a.ID], typed[a.ID], papered[a.ID] = owed, today, true
+		}
+	}
 	inBalance := map[string]bool{}
 	for _, k := range p.InBalance {
 		inBalance[k] = true
@@ -438,7 +446,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	paidOn := map[string]time.Time{}
 	for _, x := range p.Payments {
 		t, ok := typed[x.To]
-		if !ok || kind[x.To] != Loan {
+		if !ok || kind[x.To] != Loan || papered[x.To] {
 			continue
 		}
 		for _, d := range p.Dates(x.Schedule, t.AddDate(0, 0, -62), t) {

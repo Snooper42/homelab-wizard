@@ -546,6 +546,10 @@ declare namespace finance {
     pending?: number;
     rate?: number;
     original?: number;
+    firstDue?: string;
+    payment?: number;
+    term?: number;
+    charge?: number;
     loan?: string;
     detail?: string;
     updated?: string;
@@ -659,6 +663,14 @@ declare namespace finance {
     paid: number;
     value: number;
     history?: finance.Point[];
+    quoted?: boolean;
+  }
+  interface Installment {
+    date: string;
+    payment: number;
+    principal: number;
+    interest: number;
+    after: number;
   }
   interface Ledger {
     transactions: finance.Transaction[];
@@ -720,6 +732,8 @@ declare namespace finance {
     interest?: number;
     never?: boolean;
     path?: number[];
+    rows?: finance.Installment[];
+    made?: number;
   }
   interface Period {
     now: boolean;

@@ -108,6 +108,17 @@ export function fromCsv(rows: string[][], col: Columns): Imported[] {
   return out;
 }
 
+/**
+ * Whether a card's file lists its charges as plus amounts and payments as
+ * minus (American Express does; Chase writes a charge as minus, as money
+ * leaving): most of a card's rows are charges, so most rows above zero
+ * says so. Three rows at least, for a guess worth making.
+ */
+export function chargesPlus(rows: Imported[]): boolean {
+  const n = rows.filter((t) => t.amount).length;
+  return n >= 3 && rows.filter((t) => t.amount > 0).length > n / 2;
+}
+
 /** An OFX or QFX statement's transactions: each STMTTRN's day, amount, name (or memo), and the bank's FITID. */
 export function fromOfx(text: string): Imported[] {
   const out: Imported[] = [];

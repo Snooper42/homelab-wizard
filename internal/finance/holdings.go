@@ -25,6 +25,9 @@ type Holding struct {
 	Paid    float64 `json:"paid"`
 	Value   float64 `json:"value"`
 	History []Point `json:"history,omitempty"`
+	// Quoted says Ghostfolio had no prices of its own for it yet (one just
+	// bought): its worth is today's price Ghostfolio looked up for it.
+	Quoted bool `json:"quoted,omitempty"`
 }
 
 // Invested is an account as Ghostfolio read it: its name there, what it is

@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A loan read from its papers:** give a loan the day its first payment was due and each payment (and, if you like, how many there are and the finance charge) and Finances works out what it owes each day, taking each payment off the day after it's due, with no balance to type. Its card on Net worth shows a ring of the payments made (*3 of 36*), what's paid down of what you borrowed, the next payment split into what pays it down and its interest, who pays it each month, when it's half and wholly paid off, and every payment in a table. With the finance charge, the first payment carries the days before it, so the 36 come to your papers to the cent.
 - **Your last six months on Cash flow:** under the Dashboard's typical month, a bar of money in beside money out for each of the last six months your transactions cover; pick a month for its transactions.
 - **Spent this month on the Dashboard:** beside your latest transactions, a ring of what your transactions spent since the 1st by category, largest first; pick a category for this month's transactions of it.
 - **Latest transactions on the Dashboard:** Finances' Dashboard lists your five newest transactions, each opening its own form, with **See all** for Transactions.
@@ -184,6 +185,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up's Which film? and Which show?:** typing in two boxes quickly could wipe what was in the first, leaving **File it** greyed out. Each box now keeps what the others hold.
+- **Shares in parts of one:** a holding added with *11.038* shares went into Ghostfolio as 11,038, read as a thousands mark, so a share showed as worth $0.60. Shares now take as many decimals as you type, and the form says what each comes to (*11.038 shares at $602.77 each*) before it goes. A holding Ghostfolio has no prices for yet no longer shows *You paid $0.00* and what you paid as its worth: what you paid is read from its buys and sales, its worth is today's price Ghostfolio looks up (its details say so), and Ghostfolio is asked to gather the symbol's prices, also as soon as a holding is added.
+- **An American Express file comes in the right way round:** Amex lists charges as plus amounts, so a card's file imported into Finances showed every charge as money in. A card's file whose rows are mostly plus amounts is now read as charges (its minus amounts as payments to it), says so, and **Charges are plus amounts in this file** turns it off or on.
 - **Finances on a phone:** budgets keep their bars wide beside the day's allowance, and a twelve-month chart labels every other month (this one always) so the names don't run together.
 - **A category's trend in its own colour:** Reports' *month by month* for a category draws its bars in that category's colour, as everywhere else, not the red of all spending.
 - **Cards and Spending told apart:** on the Dashboard's *Where it goes* and the money flow, Cards had Spending's purple and Loans the Car's yellow; each now has a colour of its own.

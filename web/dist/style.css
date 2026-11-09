@@ -2295,6 +2295,31 @@ html.os-linux #finances button.small:not(.primary):hover { color:var(--text); }
 .fx-loanhead h3, .fx-loansdone { margin:0; font-size:13px; }
 .fx-loansdone { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
 /* Loans' Pay more: an extra amount a paycheck, what it saves, and the two ways to pay several down. */
+.fx-papers { display:flex; flex-wrap:wrap; gap:16px 20px; align-items:flex-start; margin:4px 0 14px; }
+.fx-ring { position:relative; width:128px; height:128px; flex:none; }
+.fx-ring svg { width:100%; height:100%; display:block; }
+.fx-ringtrack { fill:none; stroke:var(--line); stroke-width:10; }
+.fx-ringfill { fill:none; stroke:var(--fin-accent); stroke-width:10; stroke-linecap:round; transition:stroke-dasharray .6s ease; }
+.fx-ringtext { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.15; }
+.fx-ringtext strong { font-size:26px; font-variant-numeric:tabular-nums; }
+.fx-ringtext span { font-size:13px; color:var(--muted); }
+.fx-ringtext small { font-size:11px; color:var(--muted); }
+.fx-papersfacts { flex:1 1 260px; min-width:0; font-size:13px; }
+.fx-papersfacts p { margin:0 0 8px; }
+.fx-papersdown strong { font-size:16px; }
+.fx-papersbar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; margin:-2px 0 10px; }
+.fx-papersbar span { display:block; height:100%; background:var(--fin-accent); border-radius:3px; }
+.fx-papersrows summary { cursor:pointer; color:var(--fin-accent); }
+.fx-paperstable { max-height:320px; overflow:auto; overscroll-behavior:contain; margin-top:8px; border:1px solid var(--line); border-radius:8px; }
+.fx-paperstable table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; font-size:12px; }
+.fx-paperstable th, .fx-paperstable td { padding:5px 8px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
+.fx-paperstable th[scope="row"], .fx-paperstable thead th:nth-child(2) { text-align:left; }
+.fx-paperstable tbody th { font-weight:inherit; font-size:inherit; color:inherit; text-transform:none; letter-spacing:0; background:none; }
+.fx-paperstable thead th { position:sticky; top:0; background:var(--panel); font-weight:600; }
+.fx-paperstable tr.fx-made { color:var(--muted); }
+.fx-paperstable tr.fx-nextrow { background:color-mix(in srgb, var(--fin-accent) 12%, transparent); font-weight:600; }
+.finbalances .balpapers { font-size:12px; white-space:nowrap; }
+@media (prefers-reduced-motion: reduce) { .fx-ringfill { transition:none; } }
 .fx-paymore { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
 .fx-paymore h3 { margin:0 0 8px; font-size:13px; }
 .fx-paymorefield { display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; font-size:13px; }

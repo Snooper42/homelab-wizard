@@ -170,6 +170,17 @@ type Account struct {
 	Rate float64 `json:"rate,omitempty"`
 	// Original is a loan's starting amount, for how much is paid.
 	Original float64 `json:"original,omitempty"`
+	// A loan's papers: the day its first payment was due (YYYY-MM-DD), each
+	// payment a month, how many there are, and the finance charge they
+	// state. With a first payment day and Original, what it owes is read
+	// from them each day, not typed in (loanpapers.go). Payment, when none
+	// is said, is what the plan pays into it a month; Term and Charge are
+	// optional, and with both the first payment carries the interest for
+	// the days before it, as lenders count it.
+	FirstDue string  `json:"firstDue,omitempty"`
+	Payment  float64 `json:"payment,omitempty"`
+	Term     int     `json:"term,omitempty"`
+	Charge   float64 `json:"charge,omitempty"`
 	// Loan is the loan against a home or car, by its ID.
 	Loan string `json:"loan,omitempty"`
 	// Detail is a few words: the last four digits, a car's year and model, an address.

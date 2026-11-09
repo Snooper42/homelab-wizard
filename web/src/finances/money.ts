@@ -87,6 +87,24 @@ export function parseAmount(typed: string): number {
   return t === '' || t === '-' ? NaN : parseFloat(t);
 }
 
+/**
+ * A count as typed, shares most often, its decimals as many as typed:
+ * "11.038" is eleven and a bit (parseAmount would read a thousands mark),
+ * "1,234.5678" and "1.234,5678" over a thousand, "1,000" a thousand, "2,5"
+ * two and a half. NaN when nothing is a number.
+ */
+export function parseCount(typed: string): number {
+  let t = String(typed ?? '').replace(/[\s\u00a0\u202f']/g, '').replace(/[^0-9.,\-−]/g, '').replace('−', '-');
+  const dots = t.split('.').length - 1, commas = t.split(',').length - 1;
+  if (dots && commas) {
+    const mark = t.lastIndexOf('.') > t.lastIndexOf(',') ? '.' : ',';
+    t = t.replace(mark === '.' ? /,/g : /\./g, '').replace(',', '.');
+  } else if (dots > 1) t = t.replace(/\./g, '');
+  else if (commas > 1 || /^-?\d{1,3},\d{3}$/.test(t)) t = t.replace(/,/g, '');
+  else t = t.replace(',', '.');
+  return t === '' || t === '-' || t === '.' ? NaN : parseFloat(t);
+}
+
 /** Rounded to the cent. */
 export const cents = (n: number): number => Math.round(n * 100) / 100;
 

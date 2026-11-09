@@ -7,12 +7,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
-import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
+import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, monthName, owed, parseAmount, parseDay, perMonth, signed as signedOf, signOf, todayISO } from './money';
+import { papers } from './payoffPlan';
 import { cleanPayee } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
 import { carFromPrice, groups, rateOf } from './model';
 import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
@@ -483,6 +484,14 @@ function AccountForm(props: EditProps) {
   const [pending, setPending] = useState(text(a?.pending));
   const [rate, setRate] = useState(text(a?.rate));
   const [original, setOriginal] = useState(money2(a?.original));
+  // A loan's papers: with its first payment day, what it owes is read from them each day.
+  const [firstDue, setFirstDue] = useState(a?.firstDue || '');
+  const [payment, setPayment] = useState(money2(a?.payment));
+  const [term, setTerm] = useState(text(a?.term));
+  const [charge, setCharge] = useState(money2(a?.charge));
+  // With no payment of its own, what the plan pays into it a month.
+  const planMonthly = Math.round((plan.payments || []).filter((x) => a && x.to === a.id).reduce((t, x) => t + x.amount * perMonth(x.schedule, plan.people, props.checking), 0) * 100) / 100;
+  const read = kind === 'loan' && firstDue ? papers({ original: num(original), rate: num(rate), firstDue, term: Math.round(num(term)), charge: num(charge) }, num(payment) || planMonthly, todayISO()) : null;
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
@@ -509,14 +518,22 @@ function AccountForm(props: EditProps) {
     e.preventDefault();
     const wrong = !name.trim() && !real ? 'Give it a name, or pick its bank.' : num(balance) < 0 && (owed(kind) || held(kind)) ? 'Type it without a minus.'
       : kind === 'card' && paidEach && payer ? `“${payer.name}” pays it off already: delete that payment, or leave this off.` : kind === 'card' && paidEach && num(spend) < 0 ? 'Type the spending without a minus.'
+      : kind === 'loan' && firstDue && !(num(original) > 0) ? 'Type what was borrowed, or leave the first payment day empty.'
+      : kind === 'loan' && firstDue && !(num(payment) > 0) && !(planMonthly > 0) ? 'Type each payment, or leave the first payment day empty.'
+      : kind === 'loan' && (num(term) < 0 || num(term) !== Math.round(num(term))) ? 'The number of payments is a whole number, as 36.'
+      : kind === 'loan' && (num(payment) < 0 || num(charge) < 0) ? 'Type the payment and the charge without a minus.'
       : kind === 'car' && num(bought) < 0 ? 'Type what it cost without a minus.' : kind === 'car' && num(bought) > 0 && !boughtOn ? 'Pick the day it was bought, or leave what it cost empty.'
       : foreign && !/^[A-Z]{3}$/.test(code) ? 'A currency is its three letters, as EUR.' : foreign && !(num(xrate) > 0) ? `Type how many ${home} one ${code} is.` : '';
     setProblem(wrong);
     if (wrong) return;
     // A balance (or a card's pending) typed in again is today's; a new name alone leaves its day.
-    const retyped = !a || num(balance) !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
-    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: num(balance), detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
+    // A loan read from its papers owes what they say today.
+    const owesNow = read ? read.owed : num(balance);
+    const retyped = !a || owesNow !== a.balance || (kind === 'card' && num(pending) !== (a.pending || 0));
+    const next: finance.Account = { id: a?.id || '', kind, name: name.trim() || (real ? named(kind, brandName(real)) : ''), institution: brand || undefined, balance: owesNow, detail: detail.trim() || undefined, updated: retyped ? todayISO() : a?.updated,
       pending: kind === 'card' ? num(pending) : undefined, rate: kind === 'savings' || kind === 'loan' || kind === 'card' ? num(rate) || undefined : undefined, original: kind === 'loan' ? num(original) : undefined,
+      firstDue: kind === 'loan' && firstDue ? firstDue : undefined, payment: kind === 'loan' && num(payment) > 0 ? num(payment) : undefined,
+      term: kind === 'loan' && num(term) > 0 ? Math.round(num(term)) : undefined, charge: kind === 'loan' && num(charge) > 0 ? num(charge) : undefined,
       loan: kind === 'home' || kind === 'car' ? loan || undefined : undefined,
       paidEach: kind === 'card' && paidEach ? true : undefined, spend: kind === 'card' && paidEach ? num(spend) || undefined : undefined, currency: foreign ? code : undefined,
       bought: kind === 'car' && num(bought) > 0 ? num(bought) : undefined, boughtOn: kind === 'car' && num(bought) > 0 ? boughtOn : undefined, holds: kind === 'car' && num(bought) > 0 ? holds || undefined : undefined };
@@ -583,13 +600,20 @@ function AccountForm(props: EditProps) {
       <OwnLogo value={img} set={setImg} what={real ? brandName(real) : said || 'this account'} fetchLogo={props.fetchLogo} guess={siteFor(real || brandOf(undefined, name, kind), name)} />
       <div class="formgrid">
         <Field label="Name"><input value={name} onInput={input(rename)} placeholder={real ? named(kind, brandName(brand)) : { checking: 'Chase Checking', savings: 'Savings', card: 'Chase Freedom', investment: 'Brokerage', retirement: '401(k)', loan: 'Car loan', home: 'Home', car: '2022 RAV4', collectible: 'Trading cards, jewelry', other: 'A boat' }[kind]} required={!brand} /></Field>
-        <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} sign={sign} />
+        {!read && <MoneyField label={owes ? 'Owed' : held(kind) ? 'Worth' : 'Balance'} value={balance} set={setBalance} sign={sign} />}
         {kind === 'card' && <MoneyField label="Pending" value={pending} set={setPending} sign={sign} />}
         {kind === 'card' && <label class="fcheckbox wide"><input type="checkbox" checked={paidEach} onClick={tick(setPaidEach)} /> I pay it off in full with each paycheck</label>}
         {kind === 'card' && paidEach && <MoneyField label="Spending on it between paychecks, about" value={spend} set={setSpend} hint="400.00" sign={sign} />}
         {kind === 'savings' && <Field label="Interest, % a year"><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder="3.2" /></Field>}
         {(kind === 'loan' || kind === 'card') && <Field label={kind === 'card' ? 'Interest (APR), % a year, if it carries a balance' : 'Interest (APR), % a year'}><input inputmode="decimal" value={rate} onInput={input(setRate)} placeholder={kind === 'card' ? '24.99' : '6.5'} /></Field>}
         {kind === 'loan' && <MoneyField label="Borrowed at the start" value={original} set={setOriginal} sign={sign} />}
+        {kind === 'loan' && <Field label="First payment due"><input type="date" value={firstDue} onInput={input(setFirstDue)} /></Field>}
+        {kind === 'loan' && <MoneyField label="Each payment" value={payment} set={setPayment} hint={planMonthly > 0 ? cents(planMonthly) : '221.28'} sign={sign} />}
+        {kind === 'loan' && <Field label="Number of payments (optional)"><input inputmode="numeric" value={term} onInput={input(setTerm)} placeholder="36" /></Field>}
+        {kind === 'loan' && <MoneyField label="Finance charge (optional)" value={charge} set={setCharge} hint="968.39" sign={sign} />}
+        {kind === 'loan' && <p class="formsub muted wide" role="status">{!firstDue ? 'With the day its first payment was due, Finances works out what it owes from its papers each day: no balance to type.'
+          : read ? <>Owes {moneyIn(read.owed, sign ? code : undefined)} today, after {read.made} of {read.rows.length} payments; paid off {monthName(read.rows[read.rows.length - 1].date).slice(0, 3)} {read.rows[read.rows.length - 1].date.slice(0, 4)}.{num(term) > 0 && Math.round(num(term)) !== read.rows.length ? ` The papers say ${Math.round(num(term))}: check the payment and the rate.` : ''} Finances takes each payment off on the day after it is due.</>
+          : num(original) > 0 && (num(payment) || planMonthly) > 0 ? 'At that payment it is never paid off: check the payment and the rate.' : 'Type what was borrowed and each payment to read it from its papers.'}</p>}
         {property && <AccountSelect label="Loan against it" value={loan} set={setLoan} accounts={loans} none="None" />}
         {kind === 'car' && <MoneyField label="Bought for (optional)" value={bought} set={setBought} hint="32000" sign={sign} />}
         {kind === 'car' && <Field label="Bought on"><input type="date" value={boughtOn} onInput={input(setBoughtOn)} /></Field>}
@@ -738,7 +762,9 @@ function BalancesForm(props: EditProps) {
   const first = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => { first.current?.focus(); first.current?.select(); }, []);
   // The first box shown takes the cursor: the first account of the first group with any.
-  const firstShown = groups.flatMap((g) => accounts.filter((a) => g.kinds.includes(a.kind)))[0]?.id;
+  // A loan read from its papers is worked out, not typed: no box for it.
+  const papered = (a: finance.Account) => a.kind === 'loan' && !!a.firstDue && (a.original || 0) > 0;
+  const firstShown = groups.flatMap((g) => accounts.filter((a) => g.kinds.includes(a.kind) && !papered(a)))[0]?.id;
   const read = (key: string, was: number) => { const n = parseAmount(typed[key] ?? ''); return typed[key]?.trim() && !isNaN(n) ? n : was; };
   const submit = (e: Event) => {
     e.preventDefault();
@@ -789,10 +815,11 @@ function BalancesForm(props: EditProps) {
           return (
             <li key={a.id}>
               <AcctMark a={a} size="sm" />
-              <label class="grow" for={'bal-' + a.id}><strong>{a.name}</strong>
+              <label class="grow" for={papered(a) ? undefined : 'bal-' + a.id}><strong>{a.name}</strong>
                 <small>{owed(a.kind) ? 'owed' : held(a.kind) ? 'worth' : 'today'} · expected {moneyIn(est(a), a.currency)}{Math.abs(d) >= 0.005 && <>, <span class={d < 0 === !owed(a.kind) ? 'bad' : 'ok'}>{(d < 0 ? '−' : '+') + moneyIn(Math.abs(d), a.currency)}</span></>}</small>
               </label>
-              <span class="moneyfield"><span aria-hidden="true">{signOf(a.currency)}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>
+              {papered(a) ? <span class="balpapers muted">From its papers</span>
+                : <span class="moneyfield"><span aria-hidden="true">{signOf(a.currency)}</span><input id={'bal-' + a.id} ref={i === 0 ? first : undefined} inputmode="decimal" value={typed[a.id]} onInput={type(a.id)} /></span>}
               {a.kind === 'card' && <label class="pendingfield"><span class="moneyfield"><span aria-hidden="true">{signOf(a.currency)}</span><input aria-label={`${a.name} pending`} inputmode="decimal" value={typed[a.id + ':p']} onInput={type(a.id + ':p')} /></span><small aria-hidden="true">pending</small></label>}
             </li>
           );
@@ -1205,18 +1232,25 @@ function ImportForm(props: EditProps) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [picked, setPicked] = useState<Record<number, string>>({});
+  // A card's file with its charges as plus amounts (American Express): read the other way round, guessed from the file, changeable.
+  const [flip, setFlip] = useState<boolean | null>(null);
   const ofx = !!text && isOfx(text);
   const rows = text && !ofx ? csvRows(text) : [];
   const header = rows[0] || [];
   const read = async (f?: File) => {
     if (!f) return;
     const t = await f.text();
-    setName(f.name); setText(t); setProblem(''); setPicked({});
+    setName(f.name); setText(t); setProblem(''); setPicked({}); setFlip(null);
     const all = isOfx(t) ? [] : csvRows(t);
     setCols(isOfx(t) ? null : guessColumns(all[0] || [], all.slice(1)));
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
-  const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const asRead = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const card = accounts.find((a) => a.id === account)?.kind === 'card';
+  const signed = !ofx && !!cols && cols.amount >= 0;
+  const guessFlip = signed && card && chargesPlus(asRead);
+  const flipped = signed && (flip ?? guessFlip);
+  const read_ = flipped ? asRead.map((t) => ({ ...t, amount: -t.amount })) : asRead;
   // The bank's wording is kept only when it says more than the clean name in other capitals. A payee renamed by hand
   // before (HOA for SUNSET PALMS EAS SUNSET PAL) comes in by that name.
   const have = ledger?.transactions || [];
@@ -1297,13 +1331,15 @@ function ImportForm(props: EditProps) {
           <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
           {name && <span class="muted">{name}</span>}
         </span></Field>
-        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); }} accounts={accounts} />
+        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); setFlip(null); }} accounts={accounts} />
         {cols && <>
           {colPick('Day', 'date')}
           {colPick('Amount', 'amount')}
           {cols.amount < 0 && colPick('Money out', 'debit')}
           {cols.amount < 0 && colPick('Money in', 'credit')}
           {colPick('Payee', 'payee')}
+          {signed && <label class="fcheckbox wide"><input type="checkbox" checked={flipped} onClick={tick(setFlip)} /> Charges are plus amounts in this file (American Express writes them so)</label>}
+          {signed && flip === null && guessFlip && <p class="formsub muted wide importnote">Most rows in this card's file are plus amounts, so they're read as charges and its minus amounts as payments to it.</p>}
         </>}
       </div>
       {!!text && <>
