@@ -551,7 +551,10 @@ func TestTidyPicksWhereTheLibrariesLive(t *testing.T) {
 	sd := directoryDialog
 	defer func() { directoryDialog = sd }()
 	var title string
-	directoryDialog = func(_ context.Context, o runtime.OpenDialogOptions) (string, error) { title = o.Title; return "/picked", nil }
+	directoryDialog = func(_ context.Context, o runtime.OpenDialogOptions) (string, error) {
+		title = o.Title
+		return "/picked", nil
+	}
 	if p, _ := a.TidyPickMediaFolder(); p != "/picked" || title != "Choose the folder for your libraries" {
 		t.Errorf("picker: %q %q", p, title)
 	}
