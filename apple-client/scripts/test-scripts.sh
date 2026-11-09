@@ -93,6 +93,19 @@ echo "all scripts"
 OUT="$(perl -ne 'print "$ARGV:$.: $_" if /\$[A-Za-z_]\w*[^\x00-\x7F]/; close ARGV if eof' "$HERE"/*.sh 2>&1)"
 expect "no \$NAME right before a non-ASCII character" test -z "$OUT"
 
+echo "make-xcode-project.sh"
+yml="$WORK/xcode/project.yml"
+yaml_ok() { command -v python3 >/dev/null && python3 -c 'import yaml' 2>/dev/null || return 0; python3 -c 'import sys, yaml; yaml.safe_load(open(sys.argv[1]))' "$yml"; }
+run env HOMELAB_NO_OPEN=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+expect "the default project: no push, no widget, no signed code" bash -c '[ "$0" = 0 ] && ! grep -q "aps-environment\|HOMELAB_SIGNED\|HomelabWidget\|application-groups" "$1"' "$RC" "$yml"
+expect "the default project is valid YAML" yaml_ok
+run env HOMELAB_NO_OPEN=1 HOMELAB_WIDGET=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+expect "HOMELAB_WIDGET=1: the widget and its App Group, no push" bash -c '[ "$0" = 0 ] && grep -q "group.com.example.HomelabClient" "$1" && grep -q "HomelabWidget-iOS:" "$1" && ! grep -q "aps-environment\|HOMELAB_SIGNED" "$1"' "$RC" "$yml"
+expect "the widget project is valid YAML" yaml_ok
+run env HOMELAB_NO_OPEN=1 HOMELAB_SIGNED=1 "$HERE/make-xcode-project.sh" com.example ABCDE12345
+expect "HOMELAB_SIGNED=1: push, the signed code, and the widget" bash -c '[ "$0" = 0 ] && grep -q "aps-environment: development" "$1" && grep -q "HOMELAB_SIGNED" "$1" && grep -q "HomelabWidget-iOS:" "$1"' "$RC" "$yml"
+expect "the signed project is valid YAML" yaml_ok
+
 echo "phones.sh"
 run "$HERE/phones.sh"
 expect "lists the devices" says "a1b2c3"
