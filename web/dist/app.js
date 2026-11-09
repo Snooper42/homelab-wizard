@@ -8396,6 +8396,45 @@
       rows.length ? /* @__PURE__ */ u3(Rows, { children: rows }) : /* @__PURE__ */ u3(Empty, { children: "No update since the homelab last started it. The nightly update dumps its database first, then updates it." })
     ] });
   }
+  function doneSub(e3) {
+    const when3 = ago(e3.at);
+    return `${when3.charAt(0).toUpperCase()}${when3.slice(1)}, by ${e3.who}`;
+  }
+  function Done({ on: on2 }) {
+    const [rows, setRows] = d2(null);
+    const [problem, setProblem] = d2("");
+    const [all, setAll] = d2(null);
+    const [q2, setQ] = d2("");
+    h2(() => {
+      on2.done().then(setRows, (e3) => setProblem(String(e3?.message || e3)));
+    }, []);
+    h2(() => {
+      if (all === null) return;
+      const t3 = setTimeout(() => on2.allDone(q2).then(setAll, (e3) => setProblem(String(e3?.message || e3))), 200);
+      return () => clearTimeout(t3);
+    }, [q2]);
+    const open4 = () => {
+      on2.allDone(q2).then(setAll, (e3) => setProblem(String(e3?.message || e3)));
+      const s3 = document.getElementById("doneSheet");
+      if (s3) s3.hidden = false;
+    };
+    const close3 = () => {
+      const s3 = document.getElementById("doneSheet");
+      if (s3) s3.hidden = true;
+    };
+    const shown6 = (rows || []).slice(0, 6);
+    return /* @__PURE__ */ u3(Card, { kind: "alerts pagecard", id: "appDone", children: [
+      /* @__PURE__ */ u3(CardHead, { title: "Recently done", children: /* @__PURE__ */ u3("button", { class: "small change", onClick: open4, children: "Everything that was done…" }) }),
+      problem ? /* @__PURE__ */ u3(Empty, { children: problem }) : rows === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : shown6.length ? /* @__PURE__ */ u3(Rows, { children: shown6.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days." }),
+      /* @__PURE__ */ u3(Sheet, { id: "doneSheet", titleId: "doneTitle", children: [
+        /* @__PURE__ */ u3("h2", { id: "doneTitle", children: "Everything that was done" }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each." }),
+        /* @__PURE__ */ u3("input", { type: "search", class: "donesearch", value: q2, onInput: (e3) => setQ(e3.target.value), placeholder: "Search: an app, a phone, restarted…", "aria-label": "Search what was done", autocomplete: "off", spellcheck: false }),
+        all === null ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((e3) => /* @__PURE__ */ u3(Row, { title: e3.text, sub: doneSub(e3) }, e3.id)) }) : /* @__PURE__ */ u3(Empty, { children: q2.trim() ? `Nothing done matches “${q2.trim()}”.` : "Nothing done yet that's kept here." }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
+      ] })
+    ] });
+  }
   function Stopped({ stopped: stopped2 }) {
     const reading = stopped2 === "reading", s3 = reading ? null : stopped2;
     const today2 = s3?.today || [];
@@ -8525,7 +8564,8 @@
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
           p3.entry?.kind !== "native" && p3.a.state !== "missing" && p3.a.state !== "elsewhere" && /* @__PURE__ */ u3(Log, { explainer: p3.explainer, machine: p3.machine, dozzle: p3.dozzle, on: p3.on }),
           p3.stopped !== void 0 && /* @__PURE__ */ u3(Stopped, { stopped: p3.stopped }),
-          /* @__PURE__ */ u3(Updates, { p: p3 })
+          /* @__PURE__ */ u3(Updates, { p: p3 }),
+          /* @__PURE__ */ u3(Done, { on: p3.on })
         ] }),
         /* @__PURE__ */ u3("div", { class: "pagecol", children: [
           /* @__PURE__ */ u3(Settings, { p: p3 }),
@@ -8693,6 +8733,8 @@
           return "Copied";
         },
         logs: (lines) => go().Logs(id, lines),
+        done: () => go().History(id, "", 0),
+        allDone: (search) => go().History("", search, 0),
         explain: () => go().ExplainLogs(id),
         // Backups runs it, in its own panel with its progress.
         backupNow: () => {
