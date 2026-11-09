@@ -100,13 +100,20 @@ func (h *homelab) sendFinanceReminders(ctx context.Context, now time.Time) {
 	h.noteSent(state, "Finances' reminders", last)
 }
 
-// financeLines are Finances' lines for the weekly summary; none with no plan.
+// financeLines are Finances' lines for the weekly summary; none with no
+// plan. After the plan's, what the transactions say went out this week.
 func (h *homelab) financeLines(now time.Time) []string {
 	v, money, ok := h.financeView(now)
 	if !ok {
 		return nil
 	}
-	return finance.WeekLines(v, now, money)
+	lines := finance.WeekLines(v, now, money)
+	if l, err := finance.LoadLedger(finance.LedgerPath(h.root)); err == nil {
+		if spent := finance.SpentLine(v.Plan, l, now, money); spent != "" {
+			lines = append(lines, spent)
+		}
+	}
+	return lines
 }
 
 // financeCalendar is Finances' calendar feed for a link's key: the plan's

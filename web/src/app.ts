@@ -180,6 +180,9 @@ document.addEventListener('keydown', (e) => {
   } else if (e.key.toLowerCase() === 'f') {
     const search = { choose: 'search', settings: 'settingsSearch' }[current];
     if (search) { e.preventDefault(); $(search).focus(); $(search).select(); }
+    // Finances: Transactions' own search, while it shows.
+    const box = current === 'finances' ? document.querySelector<HTMLInputElement>('#finances .fx-txsearch') : null;
+    if (box) { e.preventDefault(); box.focus(); box.select(); }
   }
 });
 

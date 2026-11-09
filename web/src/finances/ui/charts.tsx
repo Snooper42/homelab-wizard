@@ -54,10 +54,12 @@ export interface AreaChartProps {
   axis?: boolean;
   /** It grows into the room its card leaves, height its least (a card stretched to its row's height). */
   fill?: boolean;
+  /** A click on the plot opens its step (the calendar on that day); what is there is in the tip, and reachable elsewhere by keyboard. */
+  onPick?: (i: number) => void;
 }
 
 /** An area over steps, its line in the accent, with marks on it and a card for the step pointed at. */
-export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill }: AreaChartProps) {
+export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, band, height = 200, format, tip, label, zero = true, axis: showAxis = true, fill, onPick }: AreaChartProps) {
   const [at, setAt] = useState(-1);
   const n = values.length;
   // Filling, the plot is as tall as the room it is given, measured, so the line and the pin stay on its scale.
@@ -87,7 +89,8 @@ export function AreaChart({ values, xLabels, marks = [], threshold, aheadFrom, b
     <figure class={'fx-chart fx-area' + (fill ? ' fill' : '')} aria-label={label}>
       <div class="fx-plotrow">
         {showAxis && <Axis marks={axis.ticks} y={y} format={format} />}
-        <div ref={plot} class="fx-plot" style={fill ? { minHeight: `${height}px` } : { height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}>
+        <div ref={plot} class={'fx-plot' + (onPick ? ' pick' : '')} style={fill ? { minHeight: `${height}px` } : { height: `${height}px` }} onPointerMove={move} onPointerLeave={() => setAt(-1)}
+          onClick={onPick && ((e: MouseEvent) => { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); onPick(Math.max(0, Math.min(n - 1, Math.round(((e.clientX - r.left) / r.width) * (n - 1))))); })}>
           {showAxis && axis.ticks.map((t) => <span key={t} class={'fx-grid' + (t === 0 ? ' zero' : '')} style={{ top: `${y(t)}px` }} />)}
           {band && <span class="fx-band" style={{ left: `${pct(band.from)}%`, width: `${pct(band.to) - pct(band.from)}%` }} />}
           {threshold !== undefined && <span class="fx-threshold" style={{ top: `${y(threshold)}px` }} />}
@@ -121,7 +124,9 @@ export interface Column {
 }
 
 /** Bars stacked above zero and below it, a line through their middles (none when lineless), and the column pointed at (or the last typed in) carded. */
-export function StackedBars({ columns, height = 260, format, tip, label, lineless }: { columns: Column[]; height?: number; format: (n: number) => string; tip: (i: number) => ComponentChildren; label: string; lineless?: boolean }) {
+export function StackedBars({ columns, height = 260, format, tip, label, lineless, onPick }: { columns: Column[]; height?: number; format: (n: number) => string; tip: (i: number) => ComponentChildren; label: string; lineless?: boolean;
+  /** A click on a column opens what is behind it (its month's transactions); the table beside the chart has its numbers. */
+  onPick?: (i: number) => void }) {
   const last = columns.map((c) => !c.ahead).lastIndexOf(true);
   const [at, setAt] = useState(-1);
   // The column pointed at gets its card; with none, the last typed in is raised.
@@ -149,7 +154,7 @@ export function StackedBars({ columns, height = 260, format, tip, label, lineles
           {columns.map((c, i) => {
             let up = 0, down = 0;
             return (
-              <div key={i} class={'fx-stackcol' + (c.ahead ? ' ahead' : '') + (i === shown ? ' on' : '')} style={{ left: `${(i / n) * 100}%`, width: `${100 / n}%` }} onPointerEnter={() => setAt(i)}>
+              <div key={i} class={'fx-stackcol' + (c.ahead ? ' ahead' : '') + (i === shown ? ' on' : '') + (onPick ? ' pick' : '')} style={{ left: `${(i / n) * 100}%`, width: `${100 / n}%` }} onPointerEnter={() => setAt(i)} onClick={onPick && (() => onPick(i))}>
                 {c.up.map((p, k) => { const t = y(up + p.value), h = y(up) - t; up += p.value; return <span key={'u' + k} class={'fx-seg ' + hue(p.color) + (k === c.up.length - 1 ? ' cap' : '')} style={{ top: `${t}px`, height: `${Math.max(h, p.value > 0 ? 1 : 0)}px` }} />; })}
                 {c.down.map((p, k) => { const t = y(-down), h = y(-down - p.value) - t; down += p.value; return <span key={'d' + k} class={'fx-seg ' + hue(p.color) + (k === c.down.length - 1 ? ' foot' : '')} style={{ top: `${t}px`, height: `${Math.max(h, p.value > 0 ? 1 : 0)}px` }} />; })}
               </div>
@@ -163,7 +168,7 @@ export function StackedBars({ columns, height = 260, format, tip, label, lineles
           {at >= 0 && <div class="fx-tip wide" style={tipSide(((at + 0.5) / n) * 100)}>{tip(at)}</div>}
         </div>
       </div>
-      <div class="fx-barlabels" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+      <div class={'fx-barlabels' + (n > 8 ? ' many' : '')} aria-hidden="true" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
         {columns.map((c, i) => <span key={i} class={i === shown ? 'on' : ''}>{c.label}</span>)}
       </div>
     </figure>

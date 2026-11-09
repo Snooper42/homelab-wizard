@@ -10,12 +10,12 @@ import { aheadCsv, aheadName, monthName, monthPage, planJson, planName } from '.
 import { Segmented } from '../parts/Segmented';
 import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
-import { Calendar } from './Calendar';
+import { Calendar, showDay } from './Calendar';
 import { setOwnLogos } from './Mark';
 import { setCategories } from './hues';
 import { type Running } from './homelab';
 import { Reports } from './Reports';
-import { Transactions } from './Transactions';
+import { showTransactions, Transactions } from './Transactions';
 import { openOn, Pay, Recurring, type SaveSettings } from './Lists';
 import { cardOf, daysBetween, dayShort, isoDay, type Lookup, lookup, setCurrency } from './money';
 import { Overview, type OverviewProps } from './Overview';
@@ -104,6 +104,11 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   setOwnLogos(v?.plan.logos);
   setCategories(v?.categories);
   const [what, label] = adds[tab] || adds.overview;
+  // Where Transactions was opened from, filtered (a report's row, a Dashboard card), for its Back; a tab picked forgets it.
+  const [from, setFrom] = useState('');
+  const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
+  const pickTab = (t: string) => { setFrom(''); setTab(t); };
+  const back = from && from !== 'transactions' ? { label: tabs.find(([k]) => k === from)?.[1] || from, go: () => pickTab(from) } : undefined;
   const ro = !!v?.readOnly;
   // Every number reads from the balances typed in (the oldest of checking's
   // and the cards'), with what has happened since: a week old, they say so.
@@ -123,32 +128,32 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
         </div>
       </div>
-      <Segmented label="View" value={tab} pick={setTab} options={tabs} />
+      <Segmented label="View" value={tab} pick={pickTab} options={tabs} />
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
-          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} group={group} setGroup={setGroup} />
-          : tab === 'calendar' ? <Calendar v={v} L={L} edit={(w, id) => edit(w, id)} />
-          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} />
-          : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
+          : ro ? <View v={v} L={L} phone={phone} ledger={ledger} setTab={setTab} toTx={toTx} back={back} exportFile={exportFile} readReceipt={readReceipt} running={running} tab={tab} sel={sel} pick={pick} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} group={group} setGroup={setGroup} />
+          : tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} />
+          : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} edit={(w, id) => edit(w, id)} saveLedger={saveLedger} logos={!phone} back={back} />
+          : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
-          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openTransactions={() => setTab('transactions')} openCalendar={() => setTab('calendar')} phone={phone} />}
+          : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} phone={phone} />}
       </div>
     </>
   );
 }
 
 /** A view as a phone allowed only to look draws it: the same, without a way to change anything (an export changes nothing). */
-function View({ v, L, phone, ledger, tab, sel, pick, openWorth, openSubscriptions, openTransactions, openCalendar, exportFile, readReceipt, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openTransactions: () => void; openCalendar: () => void; group?: string; setGroup?: (group: string) => void }) {
-  return tab === 'calendar' ? <Calendar v={v} L={L} />
-    : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} />
-    : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} />
+function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn, openCalendar, exportFile, readReceipt, running, group, setGroup }: { v: finance.View; L: Lookup; phone?: boolean; ledger: finance.Ledger | null; setTab: (tab: string) => void; toTx: (f: Parameters<typeof showTransactions>[0]) => void; back?: { label: string; go: () => void }; exportFile: FinancesProps['exportFile']; readReceipt: FinancesProps['readReceipt']; running?: Running[]; tab: string; sel: number; pick: (i: number) => void; openWorth: () => void; openSubscriptions: () => void; openRecurring: (filter?: string) => void; openTransactions: () => void; showIn: (f: Parameters<typeof showTransactions>[0]) => void; openCalendar: (day?: string) => void; group?: string; setGroup?: (group: string) => void }) {
+  return tab === 'calendar' ? <Calendar v={v} L={L} ledger={ledger} />
+    : tab === 'transactions' ? <Transactions v={v} L={L} ledger={ledger} readReceipt={readReceipt} back={back} />
+    : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
     : tab === 'pay' ? <Pay v={v} L={L} />
     : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} group={group} setGroup={setGroup} />
-    : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openTransactions={openTransactions} openCalendar={openCalendar} phone={phone} />;
+    : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} phone={phone} />;
 }
 
 export function mountFinances(el: Element, props: FinancesProps) { render(<FinancesScreen {...props} />, el); }

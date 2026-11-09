@@ -15,7 +15,7 @@ import { compact, dayLong, dayShort, type Lookup, money, signed, tick } from '..
 /** A bill this big or bigger gets its mark on the line. */
 const bigBill = 300;
 
-export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel: number }) {
+export function CheckingWidget({ v, L, sel, openDay }: { v: finance.View; L: Lookup; sel: number; openDay?: (day: string) => void }) {
   const [span, setSpan] = useState('31');
   const days = checkingDays(v, Number(span));
   if (days.length < 2) return null;
@@ -41,17 +41,18 @@ export function CheckingWidget({ v, L, sel }: { v: finance.View; L: Lookup; sel:
       actions={<Segmented label="How far ahead" value={span} pick={setSpan} options={[['31', '30 days'], ['93', '3 months']]} />}>
       <Stat value={<Amount value={now} />} caption="Today"
         aside={<div class="fx-right"><Amount value={values[low]} form="full" tone={values[low] < cushion ? 'out' : ''} /><div class="fx-sub">lowest, {dayLong(days[low].date)}{values[low] < cushion ? `, under your ${compact(cushion)} cushion` : ''}</div></div>} />
-      <AreaChart values={values} xLabels={xLabels} marks={marks} height={300} threshold={cushion || undefined} format={tick}
+      <AreaChart values={values} xLabels={xLabels} marks={marks} height={300} threshold={cushion || undefined} format={tick} onPick={openDay && ((i) => openDay(days[i].date))}
         band={from >= 0 && to > from ? { from, to } : undefined}
-        label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.`}
+        label={`Checking each day from ${dayShort(days[0].date)} to ${dayShort(days[days.length - 1].date)}: ${money(now)} today, lowest ${money(values[low])} on ${dayShort(days[low].date)}. The paycheck's payments list every number.${openDay ? ' A day clicked opens it on the calendar.' : ''}`}
         tip={(i) => <>
           <div class="fx-tiphead"><span>{dayLong(days[i].date)}</span><Amount value={days[i].balance} form="full" /></div>
           {(days[i].events || []).slice(0, 6).map((e, k) => <div key={k} class="fx-tiprow">{lead(e)}<span>{said(e)}</span><span class={e.amount > 0 ? 'fx-in' : ''}>{signed(e.amount)}</span></div>)}
           {!(days[i].events || []).length && <div class="fx-sub" style={{ marginTop: '4px' }}>Nothing comes or goes</div>}
         </>} />
       <ul class="fx-legend inline" aria-hidden="true">
-        <li><Dot color="in" /><span class="fx-legendlabel">Paycheck</span></li>
-        <li><Dot color="out" /><span class="fx-legendlabel">Bill of {compact(bigBill)} or more</span></li>
+        {/* Only the marks the chart has: no big bill in the stretch, no key for one. */}
+        {marks.some((m) => m.tone === 'in') && <li><Dot color="in" /><span class="fx-legendlabel">Paycheck</span></li>}
+        {marks.some((m) => m.tone === 'out') && <li><Dot color="out" /><span class="fx-legendlabel">Bill of {compact(bigBill)} or more</span></li>}
         {!!cushion && <li><Dot color="out" shape="dash" /><span class="fx-legendlabel">{compact(cushion)} cushion</span></li>}
         {from >= 0 && <li><Dot color="accent" shape="square" /><span class="fx-legendlabel">The paycheck picked</span></li>}
       </ul>

@@ -19,16 +19,21 @@ import { Dot } from './ui/Legend';
 import { Widget } from './ui/Widget';
 import { Mark, payeeBrand } from './Mark';
 import { iconOf } from './Transactions';
+import type { showTransactions } from './Transactions';
 import { inHome } from './model';
 import { currencyCode, dayShort, money, monthName, parseDay, plural, tick } from './money';
 import { byCategory, byMonth, byTag, categoryTrend, csvName, ranges, tagsOf, toCsv, topPayees, totals, twelveMonths, yearOnYear } from './reportData';
 import { categoryHue } from './hues';
 
-export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string> }) {
+export function Reports({ v, ledger, exportFile, open }: { v: finance.View; ledger: finance.Ledger | null; exportFile?: (name: string, text: string) => Promise<string>;
+  /** Opens Transactions filtered to a row's category or payee (and the month, for this month or last). */
+  open?: (f: Parameters<typeof showTransactions>[0]) => void; }) {
   const [key, setKey] = useState('month');
   const [saved, setSaved] = useState('');
   const [tag, setTag] = useState('');
   const [trendOf, setTrendOf] = useState('');
+  // Every payee, not the five largest (Show all); back to five with Show fewer.
+  const [allPayees, setAllPayees] = useState(false);
   if (!ledger) return <div class="fin"><Empty>Reading…</Empty></div>;
   const tags = tagsOf(ledger.transactions);
   const picked = tags.includes(tag) ? tag : '';
@@ -40,7 +45,8 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
   const sum = totals(txs, r);
   const groups = byCategory(txs, v.categories || [], r);
   const months = byMonth(txs, r);
-  const payees = topPayees(txs, r);
+  const everyPayee = topPayees(txs, r, Infinity);
+  const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
   const tagged = picked ? [] : byTag(txs, v.categories || [], r);
   const account = (id: string) => v.plan.accounts?.find((a) => a.id === id)?.name || id;
   const save = async () => {
@@ -53,6 +59,9 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
   const yearGroups = byCategory(txs, v.categories || [], twelveMonths(v.today));
   const most = groups[0]?.amount || 1;
   const spent = groups.reduce((s, g) => s + g.amount, 0);
+  // A row opens what is behind it on Transactions: this month's or last month's, else every month.
+  const inMonth = key === 'month' || key === 'last' ? r.from.slice(0, 7) : undefined;
+  const opens = (f: { category?: string; q?: string }) => (open ? () => open({ ...f, month: inMonth }) : undefined);
   return (
     <div class="fin">
       <div class="fx-board">
@@ -77,17 +86,18 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
               {groups.map((g) => {
                 const icon = iconOf(v.categories, g.name), hue = categoryHue(g.name, v.categories);
                 return <Row key={g.name} lead={<Mark kind={icon} type={icon} name={g.name} hue={hue} />} title={g.name}
-                  sub={g.children.length ? g.children.map((c) => `${c.name} ${money(c.amount)}`).join(' · ') : `${Math.round((g.amount / (spent || 1)) * 100)}% of the spending`}
-                  when={<Amount value={g.amount} form="full" />} whenPlain>
+                  sub={[`${Math.round((g.amount / (spent || 1)) * 100)}% of the spending`, ...g.children.map((c) => `${c.name} ${money(c.amount)}`)].join(' · ')}
+                  when={<Amount value={g.amount} form="full" />} whenPlain
+                  onOpen={g.name === 'No category' ? undefined : opens({ category: g.name })} openLabel="see its transactions">
                   <span class={'fx-budgetbar fx-catbar' + (hue ? ' fx-h' + hue : '')} aria-hidden="true"><span style={{ width: `${Math.max(1, (g.amount / most) * 100)}%` }} /></span>
                 </Row>;
               })}
             </Rows> : <Empty>Nothing spent in this stretch.</Empty>}
           </Widget>
-          <Widget title="Where it went" kind="fx-payees">
+          <Widget title="Where it went" kind="fx-payees" actions={everyPayee.length > 5 && <button type="button" class="small" aria-expanded={allPayees} onClick={() => setAllPayees(!allPayees)}>{allPayees ? 'Show fewer' : `Show all ${everyPayee.length}`}</button>}>
             {payees.length ? <Rows kind="fx-rows">
               {payees.map((p) => <Row key={p.payee} lead={<Mark brand={payeeBrand(undefined, p.payee)} name={p.payee} auto />} title={p.payee} sub={plural(p.count, 'time')}
-                when={<Amount value={p.amount} form="full" />} whenPlain />)}
+                when={<Amount value={p.amount} form="full" />} whenPlain onOpen={opens({ q: p.payee })} openLabel="see its transactions" />)}
             </Rows> : <Empty>Nothing paid out in this stretch.</Empty>}
           </Widget>
           {!!tagged.length && <Widget title="By tag" kind="fx-bytag">
@@ -96,11 +106,12 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
                 when={<Amount value={x.amount} form="full" />} whenPlain onOpen={() => setTag(x.tag)} openLabel="see only these" />)}
             </Rows>
           </Widget>}
-          {!!yearGroups.length && <Trend v={v} txs={txs} groups={yearGroups} group={trendOf} pick={setTrendOf} />}
+          {!!yearGroups.length && <Trend v={v} txs={txs} groups={yearGroups} group={trendOf} pick={setTrendOf} open={open} />}
           {months.length > 1 && <Widget title="In and out, month by month" span="all" kind="fx-inout">
             <StackedBars format={tick} height={220}
               label={`Money in above the line and out below it, each month ${r.label.toLowerCase()}; the line is what was kept. The table under it has every number.`}
               columns={months.map((m) => ({ label: m.label, up: [{ value: m.in, color: 'in' }], down: [{ value: m.out, color: 'out' }], line: m.in - m.out }))}
+              onPick={open && ((i) => open({ month: months[i].month }))}
               tip={(i) => <>
                 <div class="fx-caption">{months[i].label} {months[i].month.slice(0, 4)}</div>
                 <div class="fx-tiprow"><Dot color="in" /><span>Money in</span><Amount value={months[i].in} form="full" /></div>
@@ -119,7 +130,7 @@ export function Reports({ v, ledger, exportFile }: { v: finance.View; ledger: fi
 }
 
 /** A category's last twelve months, bar by bar, with a table for a screen reader; over them, this month so far against the same days a year before. */
-function Trend({ v, txs, groups, group, pick }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void }) {
+function Trend({ v, txs, groups, group, pick, open }: { v: finance.View; txs: finance.Transaction[]; groups: { name: string }[]; group: string; pick: (name: string) => void; open?: (f: Parameters<typeof showTransactions>[0]) => void }) {
   const cats = v.categories || [];
   const g = groups.find((x) => x.name === group) || groups[0];
   const trend = categoryTrend(txs, cats, g.name, v.today);
@@ -140,7 +151,9 @@ function Trend({ v, txs, groups, group, pick }: { v: finance.View; txs: finance.
       </p>
       <StackedBars lineless format={tick} height={180}
         label={`${g.name}: what was spent each of the last 12 months. The table under it has every number.`}
-        columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: 'out' }], down: [], line: 0 }))}
+        // In the category's own colour, as it is drawn everywhere else (hues.ts).
+        columns={trend.map((t) => ({ label: t.label, up: [{ value: Math.max(0, t.amount), color: categoryHue(g.name, cats) || 'out' }], down: [], line: 0 }))}
+        onPick={open && g.name !== 'No category' ? (i) => open({ category: g.name, month: trend[i].month }) : undefined}
         tip={(i) => <>
           <div class="fx-caption">{monthName(trend[i].month + '-01')} {trend[i].month.slice(0, 4)}</div>
           <div class="fx-tiptotal"><span>{g.name}</span><Amount value={trend[i].amount} form="full" /></div>

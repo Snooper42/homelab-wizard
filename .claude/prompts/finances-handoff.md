@@ -88,3 +88,23 @@ If that job did not run, do both by hand (section 5's merge rules).
 ## 6. Every report to the owner
 
 A few plain lines: what changed for them, the check results (with the output when something failed), what is next, and any question. Then branch cleanup (`claude/feature-*` only) with its **Safe to delete** line.
+
+## 7. Nov 8, 2026: the usability round on `claude/pensive-newton-igw9jp`
+
+The owner asked this session to make Finances its main focus (usability, UI, features, bugs) and keep going. Everything is on `claude/pensive-newton-igw9jp`, pushed, with **no PR yet** (the owner did not ask for one). Each commit has its CHANGELOG line, a smoke case that fails on the build before it, and a `docs/Testing.md` row where it adds behaviour. Full Finances smoke runs (four shards) pass but for the known local-font case (*860px at text size 2*).
+
+Shipped, in the order built:
+- **Fixes:** Transactions' *This month* says *Kept* over the net; Loans' *Pay more* no *$0.00 a month* before an amount; the calendar's day buttons fill their cells (the platform's `td` padding beat `.fx-month td`); a new plan says *Nothing owed*, no dangling dots, no cushion key without a cushion; the checking chart's key lists only its marks; Cards and Loans no longer share Spending's and Car's colours (`hues.ts` `kindHue`).
+- **Calendar:** days before today show what the ledger recorded (payee marks, the day's total; a day lists them, each opening its form; back to the first month with transactions, a year at most); *<Month> in all* beside the day picked (paychecks, bills, lowest checking, recorded so far); **Add a payment** / **Add a transaction** on a day (`Edit.tsx` `startOn`); a day clicked on the Dashboard's checking chart opens it (`Calendar.tsx` `showDay`).
+- **Transactions:** a running balance per day when one account is picked; a day's total when it has several; this month's money out against last month's to the same day; 200 drawn at a time with **Show more** (5× faster with 3,000 rows); ⌘F to its search; search by amount and by day; a category filter takes a group (Food finds Groceries); `showTransactions(f)` opens it filtered (Reports, the Dashboard, budgets use it).
+- **Dashboard:** *Latest transactions* and *Spent this month* (a ring by category, each opening its transactions); Cash flow's last six months (a month opens its transactions); Cash flow and Where it goes open Recurring, a kind on Where it goes its payments; Net worth takes the row after Money flow.
+- **Reports:** a category, a payee, a month on its charts open their transactions; *Show all* payees; a category leads with its share.
+- **Recurring:** what the payments shown come to a month and a year; **Largest first**.
+- **Pay:** next paychecks by month with totals; a year's take-home; *Add them* where no gross is typed.
+- **Forms:** amounts to the cent (*2512.40*); a payment's *Paid lately* (with its average); an account's *Balances lately*; Update balances says how many differ and what that does to net worth.
+- **Budgets:** how much a day keeps one on budget; a budget opens its transactions.
+- **Phone:** *Coming up* shows payday among the bills and what's due before it.
+- **Weekly summary:** `finance.SpentLine`, what went out this week and where most of it went (`cmd/homelab/finances.go` `financeLines`).
+- **Layout:** no card alone with half its row empty (container queries at 1052px); Net worth's paycheck-by-paycheck table shades its edge while more lies to the right (`--fin-edge`).
+
+Left for the owner: open a PR from the branch when they want it reviewed and merged (it touches `web/src/finances`, `web/src/app.ts` for ⌘F, `internal/finance/reminders.go`, `cmd/homelab/finances.go`, and the shared `shoot.mjs`, `style.css`, `CHANGELOG.md`, `docs/Testing.md`). PR #508 (imports) touches `Edit.tsx`'s TransactionForm and ImportForm and `Transactions.tsx`'s LinksWidget; this branch changed other parts of those files, so a merge should go cleanly, but `web/dist` must be rebuilt after it.
