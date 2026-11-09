@@ -93,6 +93,8 @@ struct DashboardView: View {
         .onChange(of: model.liveEvents.status) { _, status in
             guard let status else { return }
             model.latestApps = status.apps
+            // Away mode's apps, kept only when they change.
+            model.rememberAwayApps()
             // Status read aloud: VoiceOver hears what changed as it changes.
             if let words = model.changesToSay(status.apps) {
                 AccessibilityNotification.Announcement(words).post()
@@ -645,6 +647,20 @@ private struct NotLoadedView: View {
 
     var body: some View {
         let live = model.liveEvents
+        Group {
+            if model.inAwayMode {
+                AwayModeView(model: model)
+            } else {
+                reading
+            }
+        }
+        // Nothing answers: read the apps kept for it, and ask each.
+        .task(id: live.cannotReach) { await model.loadAwayModeIfNothingAnswers() }
+    }
+
+    @ViewBuilder
+    private var reading: some View {
+        let live = model.liveEvents
         if let error = live.refreshError ?? live.connection.problem {
             ContentUnavailableView {
                 Label("Can't Reach the Computer", systemImage: "wifi.exclamationmark")
@@ -659,6 +675,80 @@ private struct NotLoadedView: View {
             }
         } else {
             ProgressView("Reading the status…")
+        }
+    }
+}
+
+/// Away mode (ADR-0023): neither home nor the tunnel answers, so only the
+/// apps on the internet are listed, as last read, each with whether its own
+/// address answers and Open. Everything else comes back by itself at home.
+private struct AwayModeView: View {
+    let model: DashboardViewModel
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Label("Can't reach home or the tunnel", systemImage: "wifi.exclamationmark")
+                    .font(.headline)
+                Text("Your apps on the internet, as last read. Everything else comes back by itself when the computer answers.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                VStack(spacing: 0) {
+                    ForEach(model.awayApps) { app in
+                        Button {
+                            openURL(app.address)
+                        } label: {
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(dot(for: app))
+                                    .frame(width: 9, height: 9)
+                                Text(verbatim: app.name)
+                                    .foregroundStyle(.primary)
+                                Spacer()
+                                Text(words(for: app))
+                                    .font(.footnote)
+                                    .foregroundStyle(Theme.secondaryInk)
+                                Image(systemName: "arrow.up.right.square")
+                                    .foregroundStyle(.tint)
+                            }
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(verbatim: "\(app.name), \(words(for: app))"))
+                        .accessibilityHint("Opens it in Safari")
+                        if app.id != model.awayApps.last?.id { Divider() }
+                    }
+                }
+                .padding(.horizontal, 14)
+                .card(radius: 20)
+                Button("Try Again") {
+                    Task {
+                        await model.refresh()
+                        await model.loadAwayMode()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(model.liveEvents.isRefreshing)
+            }
+            .padding()
+        }
+    }
+
+    private func dot(for app: AwayApp) -> Color {
+        switch model.awayAnswers[app.id] {
+        case true?: Design.running
+        case false?: Theme.warning
+        case nil: Color.secondary.opacity(0.4)
+        }
+    }
+
+    private func words(for app: AwayApp) -> String {
+        switch model.awayAnswers[app.id] {
+        case true?: "Answers"
+        case false?: "Not answering"
+        case nil: "Asking…"
         }
     }
 }

@@ -158,6 +158,45 @@ final class DashboardViewModel {
 
     var hasLoaded: Bool { liveEvents.status != nil }
 
+    // MARK: Away mode (ADR-0023)
+
+    /// The apps on the internet through the tunnel, as last kept, read
+    /// when nothing answers. In memory only while the dashboard is up.
+    private(set) var awayApps: [AwayApp] = []
+    /// Whether each one's own address answered; missing until asked.
+    private(set) var awayAnswers: [AwayApp.ID: Bool] = [:]
+    /// What was last handed to be kept, so an unchanged list isn't kept again.
+    @ObservationIgnored private var keptAwayApps: [AwayApp]?
+
+    /// Nothing read, and neither home nor the tunnel answers: only the apps
+    /// on the internet are shown, with a line saying so.
+    var inAwayMode: Bool { !hasLoaded && liveEvents.cannotReach && !awayApps.isEmpty }
+
+    /// Reads the kept apps and asks each whether it answers.
+    func loadAwayMode() async {
+        awayApps = await api.awayApps()
+        awayAnswers = [:]
+        guard !awayApps.isEmpty else { return }
+        awayAnswers = await api.awayAnswers(awayApps)
+    }
+
+    /// Away mode's apps, read only when nothing answers.
+    func loadAwayModeIfNothingAnswers() async {
+        guard liveEvents.cannotReach else { return }
+        await loadAwayMode()
+    }
+
+    /// Keeps the apps Away mode would show, from what was just read.
+    func rememberAwayApps() {
+        guard let status = liveEvents.status, let catalog else { return }
+        let apps = AwayApp.list(from: status, catalog: catalog)
+        // Status changes often; the list seldom.
+        guard apps != keptAwayApps else { return }
+        keptAwayApps = apps
+        let api = self.api
+        Task { await api.rememberAwayApps(apps) }
+    }
+
     private var allApps: [AppStatus] {
         (liveEvents.status?.apps ?? []).sorted {
             $0.name.localizedStandardCompare($1.name) == .orderedAscending
@@ -275,6 +314,7 @@ final class DashboardViewModel {
         defer { catalogLoading = false }
         do {
             catalog = try await api.call("Catalog", as: AppCatalog.self)
+            rememberAwayApps()
         } catch {
             // The page works without it; the description is just left out.
             Log.network.error("Catalog failed: \(APIError.from(error).logName, privacy: .public)")

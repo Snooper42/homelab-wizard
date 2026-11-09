@@ -568,3 +568,53 @@ extension NetworkRuleTests {
         #expect(AwayCredential.make(key: Data(repeating: 1, count: 16), url: Self.awayURL, clientID: "a", clientSecret: "b") == nil)
     }
 }
+
+// Away mode (ADR-0023): only a phone given the way out keeps the apps on
+// the internet, each is asked at its own address with nothing of the
+// homelab's, and Status knows when nothing answers at all.
+extension NetworkRuleTests {
+    private static let awayApps = [AwayApp(id: "immich", name: "Immich", address: URL(string: "https://photos.example.com")!)]
+
+    /// A phone paired with the way out.
+    private func awayStore() throws -> FakeCredentialStore {
+        let away = try #require(AwayCredential.make(key: Data(repeating: 7, count: 32), url: Self.awayURL, clientID: "client-1.access", clientSecret: "secret-1"))
+        return FakeCredentialStore(DeviceCredential(endpoint: try ServerEndpoint.parse(Self.origin).endpoint, token: Self.token,
+                                                    deviceID: "abc123", deviceName: "Test", pairedAt: Date(), away: away))
+    }
+
+    @Test func onlyAPhoneWithTheWayOutKeepsAppsForAwayMode() async throws {
+        let (home, homeStore) = client()
+        await home.rememberAwayApps(Self.awayApps)
+        #expect(try homeStore.loadAwayApps().isEmpty)
+        #expect(await home.awayApps().isEmpty)
+
+        let store = try awayStore()
+        let api = APIClient(keychain: store, protocolClasses: [StubProtocol.self])
+        await api.rememberAwayApps(Self.awayApps)
+        #expect(await api.awayApps() == Self.awayApps)
+    }
+
+    @Test func eachAppIsAskedAtItsOwnAddressWithNothingOfTheHomelabs() async throws {
+        let api = APIClient(keychain: try awayStore(), protocolClasses: [StubProtocol.self])
+        let apps = Self.awayApps + [AwayApp(id: "audiobookshelf", name: "Audiobookshelf", address: URL(string: "https://books.example.com")!)]
+        StubProtocol.reset(unreachable: ["books.example.com"]) { request in
+            request.url?.host == "photos.example.com" ? (401, [:], Data(), nil) : (500, [:], Data(), nil)
+        }
+        let answers = await api.awayAnswers(apps)
+        #expect(answers == ["immich": true, "audiobookshelf": false])
+        let asked = try #require(StubProtocol.requests.first)
+        #expect(asked.url.host == "photos.example.com" && asked.method == "HEAD" && asked.authorization == nil)
+    }
+
+    @Test @MainActor func statusKnowsWhenNothingAnswers() async throws {
+        let api = APIClient(keychain: try awayStore(), protocolClasses: [StubProtocol.self])
+        let live = LiveEventManager(api: api)
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net", "homelab-away.example.com"]) { _ in (500, [:], Data(), nil) }
+        await live.refreshNow()
+        #expect(live.cannotReach)
+        // The computer answering, even with an error, isn't Away mode.
+        StubProtocol.reset { _ in (500, [:], Self.json(#"{"error":"busy"}"#), nil) }
+        await live.refreshNow()
+        #expect(!live.cannotReach)
+    }
+}

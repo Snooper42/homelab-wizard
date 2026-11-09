@@ -55,6 +55,9 @@ final class LiveEventManager {
     private(set) var statusReadAt: Date?
     /// The last refresh's error, shown until the next one succeeds.
     private(set) var refreshError: String?
+    /// Whether the last refresh failed because nothing answered: not home,
+    /// and not the tunnel either (Away mode, ADR-0023).
+    private(set) var cannotReach = false
     private(set) var isRefreshing = false
 
     /// Called on the main actor when the computer no longer accepts this device.
@@ -105,6 +108,7 @@ final class LiveEventManager {
         status = nil
         statusReadAt = nil
         refreshError = nil
+        cannotReach = false
     }
 
     /// A Status read by some other call (StatusBoard), so it isn't read twice.
@@ -314,6 +318,7 @@ final class LiveEventManager {
                     status = fresh
                     statusReadAt = Date()
                     refreshError = nil
+                    cannotReach = false
                 } catch is CancellationError {
                     break
                 } catch {
@@ -325,6 +330,7 @@ final class LiveEventManager {
                         return
                     }
                     refreshError = apiError.errorDescription
+                    cannotReach = apiError.unreachable
                     Log.network.error("Status refresh failed: \(apiError.logName, privacy: .public)")
                 }
             } while refreshAgain && !Task.isCancelled

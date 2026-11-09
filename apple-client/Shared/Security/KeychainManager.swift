@@ -101,7 +101,47 @@ struct KeychainManager: Sendable {
 
     func deleteCredential() throws {
         try delete(account: account)
+        try delete(account: awayAccount)
         Log.security.notice("Deleted the device credential from the Keychain")
+    }
+
+    // MARK: Away mode's apps
+
+    private let awayAccount = "away-apps"
+
+    /// The apps Away mode shows (ADR-0023), with the credential's protection:
+    /// this device only, while unlocked, never synced or backed up.
+    func saveAwayApps(_ apps: [AwayApp]) throws {
+        try delete(account: awayAccount)
+        guard !apps.isEmpty else { return }
+        var query = baseQuery(account: awayAccount)
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        query[kSecValueData as String] = try JSONEncoder().encode(apps)
+        query[kSecAttrLabel as String] = "Homelab apps for away mode"
+        let status = SecItemAdd(query as CFDictionary, nil)
+        guard status == errSecSuccess else { throw Self.error(for: status) }
+    }
+
+    /// The apps Away mode shows; none if none were kept, or if what was kept
+    /// fails a check (it's then deleted).
+    func loadAwayApps() throws -> [AwayApp] {
+        var query = baseQuery(account: awayAccount)
+        query[kSecReturnData as String] = true
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecItemNotFound { return [] }
+        guard status == errSecSuccess else { throw Self.error(for: status) }
+        guard let item = result as? [String: Any],
+              let data = item[kSecValueData as String] as? Data,
+              item[kSecAttrAccessible as String] as? String == (kSecAttrAccessibleWhenUnlockedThisDeviceOnly as String),
+              let apps = try? JSONDecoder().decode([AwayApp].self, from: data)
+        else {
+            try delete(account: awayAccount)
+            return []
+        }
+        return apps
     }
 
     /// Deletes every item this app stored under `service`. Runs on the first
