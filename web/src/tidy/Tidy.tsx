@@ -258,8 +258,12 @@ function installFix(job: TidyJob, d: app.TidyUp | null | undefined, act: TidyAct
 /** The question before a step that changes something, in a sheet. */
 export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () => void }) {
   const [sure, setSure] = useState(false);
-  const [typed, setTyped] = useState<Record<string, string>>({});
-  useEffect(() => { setSure(false); setTyped({}); }, [c]);
+  // What's typed belongs to the question it was typed for: a new question starts empty at once, with no effect after
+  // the sheet shows that could wipe what was already typed (a busy machine ran it after the first keys, and File it stayed grey).
+  const [entry, setEntry] = useState<{ c: TidyConfirm | null; v: Record<string, string> }>({ c: null, v: {} });
+  const typed = entry.c === c ? entry.v : {};
+  const type = (key: string, v: string) => setEntry((e) => ({ c, v: { ...(e.c === c ? e.v : {}), [key]: v } }));
+  useEffect(() => setSure(false), [c]);
   const val = (f: TidyField) => (typed[f.key] || '').trim();
   const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
   return (
@@ -273,7 +277,7 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
           {c.fields.map((f) => (
             <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if known)</span>}
               <input value={typed[f.key] || ''} inputMode={f.number ? 'numeric' : undefined} maxLength={f.number ? 4 : 200}
-                onInput={(e) => { const v = (e.target as HTMLInputElement).value; setTyped((t) => ({ ...t, [f.key]: v })); }} /></label>
+                onInput={(e) => type(f.key, (e.target as HTMLInputElement).value)} /></label>
           ))}
         </div>
       )}

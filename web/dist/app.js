@@ -16402,11 +16402,10 @@ ${pays}
   }
   function ConfirmSheet({ c: c4, close: close3 }) {
     const [sure, setSure] = d2(false);
-    const [typed, setTyped] = d2({});
-    h2(() => {
-      setSure(false);
-      setTyped({});
-    }, [c4]);
+    const [entry, setEntry] = d2({ c: null, v: {} });
+    const typed = entry.c === c4 ? entry.v : {};
+    const type = (key5, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key5]: v3 } }));
+    h2(() => setSure(false), [c4]);
     const val = (f4) => (typed[f4.key] || "").trim();
     const ready2 = (c4?.fields || []).every((f4) => (f4.optional || val(f4)) && (!f4.number || /^\d{0,4}$/.test(val(f4))));
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
@@ -16426,10 +16425,7 @@ ${pays}
             value: typed[f4.key] || "",
             inputMode: f4.number ? "numeric" : void 0,
             maxLength: f4.number ? 4 : 200,
-            onInput: (e3) => {
-              const v3 = e3.target.value;
-              setTyped((t3) => ({ ...t3, [f4.key]: v3 }));
-            }
+            onInput: (e3) => type(f4.key, e3.target.value)
           }
         )
       ] }, f4.key)) }),
