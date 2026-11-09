@@ -16426,7 +16426,10 @@ ${pays}
             value: typed[f4.key] || "",
             inputMode: f4.number ? "numeric" : void 0,
             maxLength: f4.number ? 4 : 200,
-            onInput: (e3) => setTyped({ ...typed, [f4.key]: e3.target.value })
+            onInput: (e3) => {
+              const v3 = e3.target.value;
+              setTyped((t3) => ({ ...t3, [f4.key]: v3 }));
+            }
           }
         )
       ] }, f4.key)) }),
