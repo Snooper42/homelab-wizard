@@ -61,7 +61,8 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 		// Finances away from home" writes these; without them it's refused.
 		Access: func() companion.Access {
 			env := h.envMap()
-			return companion.Access{Team: env["COMPANION_ACCESS_TEAM"], Audience: env["COMPANION_ACCESS_AUD"], ClientID: env["COMPANION_ACCESS_CLIENT_ID"]}
+			return companion.Access{Team: env["COMPANION_ACCESS_TEAM"], Audience: env["COMPANION_ACCESS_AUD"], ClientID: env["COMPANION_ACCESS_CLIENT_ID"],
+				Secret: env["COMPANION_ACCESS_CLIENT_SECRET"], Host: env["COMPANION_AWAY_HOST"]}
 		}}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
@@ -705,7 +706,7 @@ func (h *homelab) runSelf(ctx context.Context, args ...string) ([]string, error)
 }
 
 // phoneCmd pairs phones with the companion and manages the paired ones.
-func (h *homelab) phoneCmd(_ context.Context, args []string) error {
+func (h *homelab) phoneCmd(ctx context.Context, args []string) error {
 	u := h.ui
 	store := companion.NewStore(companion.StorePath(h.root))
 	sub := ""
@@ -713,6 +714,8 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		sub, args = args[0], args[1:]
 	}
 	switch sub {
+	case "away":
+		return h.phoneAway(ctx, args)
 	case "pair":
 		fs := newFlags("phone pair")
 		name := fs.String("name", "", "")
@@ -864,7 +867,7 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		}
 		return err
 	}
-	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|person|until|remove")
+	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|person|until|remove|away")
 }
 
 // parseFor reads how long, as homelab phone until takes it: 12h, 7d, 2w.

@@ -352,6 +352,13 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		answer["tunnelKey"] = base64.StdEncoding.EncodeToString(computer)
+		// And how to go out: the tunnel's address and the household's
+		// service token, which Cloudflare Access asks for (lock 1).
+		if s.Access != nil {
+			if a := s.Access(); a.On() && a.Host != "" && a.Secret != "" {
+				answer["away"] = map[string]string{"url": "https://" + a.Host + TunnelPath, "clientId": a.ClientID, "clientSecret": a.Secret}
+			}
+		}
 	}
 	writeJSON(w, http.StatusOK, answer)
 }

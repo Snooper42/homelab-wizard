@@ -37,7 +37,7 @@ func newCFTeam(t *testing.T) *cfTeam {
 	if err != nil {
 		t.Fatal(err)
 	}
-	team := &cfTeam{key: key, other: other, acc: Access{Team: "household", Audience: "aud-tag-1", ClientID: "client-id.access"}}
+	team := &cfTeam{key: key, other: other, acc: Access{Team: "household", Audience: "aud-tag-1", ClientID: "client-id.access", Secret: "the-service-secret", Host: "homelab-away.example.com"}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/cdn-cgi/access/certs" {
 			http.NotFound(w, r)
@@ -346,11 +346,18 @@ func TestTheTunnelLocksOutAfterWrongAttempts(t *testing.T) {
 func TestTheTunnelKeyIsGivenOnlyWhereItIsSafe(t *testing.T) {
 	team := newCFTeam(t)
 	s, h := tunnelServer(t, &team.acc)
-	if _, got := pairForTunnel(t, h, s.Store, "192.168.1.20:52000", false, ""); got["tunnelKey"] != nil {
-		t.Error("a key over the plain home Wi-Fi")
+	if _, got := pairForTunnel(t, h, s.Store, "192.168.1.20:52000", false, ""); got["tunnelKey"] != nil || got["away"] != nil {
+		t.Error("a key, or the service token, over the plain home Wi-Fi")
 	}
-	if _, got := pairForTunnel(t, h, s.Store, "127.0.0.1:50000", true, ""); got["tunnelKey"] != nil {
-		t.Error("a key for a wall screen")
+	if _, got := pairForTunnel(t, h, s.Store, "127.0.0.1:50000", true, ""); got["tunnelKey"] != nil || got["away"] != nil {
+		t.Error("a key, or the service token, for a wall screen")
+	}
+	// A phone paired over the encrypted link learns how to go out: the
+	// tunnel's address and the household's service token (lock 1).
+	_, got := pairForTunnel(t, h, s.Store, "127.0.0.1:50001", false, "")
+	away, _ := got["away"].(map[string]any)
+	if away["url"] != "https://homelab-away.example.com"+TunnelPath || away["clientId"] != "client-id.access" || away["clientSecret"] != "the-service-secret" {
+		t.Errorf("how to go out: %+v", got["away"])
 	}
 	if strings.Contains(mustJSON(s.Store.Phones()), "tunnel") {
 		t.Error("the screens' list of phones shows a key")
