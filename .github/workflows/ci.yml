@@ -18,6 +18,39 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Which parts a pull request changes. One that touches only the iPhone app
+  # (apple-client/ and its own workflow, which run their own checks on a Mac,
+  # and its line in CHANGELOG.md, which check reads and no long test does)
+  # skips the desktop's long checks below: smoke in light and dark, and the
+  # Go tests on macOS and Windows, about 15 minutes that test nothing it
+  # changed. check, security and app are quick and still run. Main's pushes,
+  # and any pull request that touches anything else, run everything. No
+  # check is required on main, so a skipped one holds nothing up.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.diff.outputs.desktop }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Only the iPhone app changed?
+        id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          desktop=true
+          if [ "$EVENT" = pull_request ]; then
+            files=$(git diff --name-only "$BASE...$HEAD" 2>/dev/null) || files=""
+            others=$(printf '%s\n' "$files" | grep -vE '^(apple-client/|\.github/workflows/apple-client\.yml$|CHANGELOG\.md$)' | grep . || true)
+            # An empty list (the diff unreadable) runs everything, to be safe.
+            if [ -n "$files" ] && [ -z "$others" ]; then desktop=false; fi
+          fi
+          echo "desktop=$desktop" >> "$GITHUB_OUTPUT"
+          echo "The desktop's long checks run: $desktop"
+
   check:
     runs-on: ubuntu-latest
     steps:
@@ -126,6 +159,8 @@ jobs:
   # tested on that system. The end-to-end tests' fake docker is the test
   # binary itself (cmd/homelab/fakebin_test.go), so it runs on each.
   test:
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -204,6 +239,8 @@ jobs:
   # critical findings fail) and a layout check. A failing run keeps its
   # screenshots.
   smoke:
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
     strategy:
       fail-fast: false
       matrix:
