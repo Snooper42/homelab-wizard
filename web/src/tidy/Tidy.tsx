@@ -80,7 +80,7 @@ const titles: Record<string, string> = {
   'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
   'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
   'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library', 'inbox undo': 'Putting it back',
   'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
   'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
   'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
@@ -637,7 +637,7 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
   // doing (the shelf), and what was done (beside the genres).
   return (
     <>
-      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /></div>
+      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /><TodayWidget d={d} job={job} act={act} /></div>
       <div class="fx-board tidytop">
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
@@ -696,6 +696,31 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
       </div>
       </fieldset>
       <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
+    </Widget>
+  );
+}
+
+/** A time of day as the clock reads it: 9:41 AM. */
+const clock = (at: string) => new Date(at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+/**
+ * What I did today: a plain line for each download the inbox filed, newest first: what it is, where it went, and what
+ * was done (tags, lyrics, the better copy kept, shrinking first). Undo puts its files back where they came from, and the
+ * inbox then leaves them there.
+ */
+function TodayWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
+  const today = d.today || [];
+  return (
+    <Widget title="What I did today" span="all" kind="tidytoday">
+      {today.length ? (
+        <Rows kind="fx-rows tidytoday">
+          {today.map((f) => (
+            <Row key={f.id} lead={<LibIcon kind={f.kind} />} title={f.title}
+              sub={f.undone ? 'Put back where it came from' : `${f.where} · ${(f.did || []).join(' · ')}`}
+              end={<>{f.undo && !f.undone && <Go label="Undo" job={job} title={`Put ${f.title} back where it came from`} onClick={() => act.run('inbox', 'undo', [f.id])} />}<span class="muted tidywhen">{clock(f.at)}</span></>} />
+          ))}
+        </Rows>
+      ) : <Empty>Nothing yet today. Drop something in a watched folder, or press Tidy up now.</Empty>}
     </Widget>
   );
 }

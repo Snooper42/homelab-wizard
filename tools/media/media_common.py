@@ -658,6 +658,34 @@ def secret(name):
     return os.environ.get(name) or ""
 
 
+# ============================================================== what the inbox filed
+def note_filed(entry):
+    """One line in the record of what was filed from a watched folder (HOMELAB_MEDIA_FILED_LOG, the app's
+    data/media-filed.jsonl), for What I did today and its Undo: the run, the time, and the entry's own
+    fields. None without the record (a run from Terminal)."""
+    log = os.environ.get("HOMELAB_MEDIA_FILED_LOG")
+    if not log:
+        return None
+    entry = dict(entry, run=os.environ.get("HOMELAB_MEDIA_RUN", ""), at=datetime.now().isoformat(timespec="seconds"))
+    Path(log).parent.mkdir(parents=True, exist_ok=True)
+    with open(log, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return entry
+
+
+def filed_entries():
+    """Every line of the record, oldest first; [] without one."""
+    log = os.environ.get("HOMELAB_MEDIA_FILED_LOG")
+    out = []
+    if log and Path(log).is_file():
+        for line in Path(log).read_text(encoding="utf-8").splitlines():
+            try:
+                out.append(json.loads(line))
+            except ValueError:
+                continue
+    return out
+
+
 # ============================================================== Tdarr
 def tdarr(url):
     """Tdarr at url, with the homelab's key or login for it (from the environment, never a command line)."""

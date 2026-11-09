@@ -162,6 +162,8 @@ func Describe(kind string, run Run) (text, sub string) {
 		return "Genres folded into yours", plural(num(res["applied"]), "song")
 	case "books apply":
 		return "Books tidied", plural(num(res["changed"]), "book") + " · " + plural(num(res["covers"]), "cover")
+	case "inbox undo":
+		return "Put back where it came from", ""
 	case "books build":
 		if applied, _ := res["applied"].(bool); !applied {
 			return "", ""

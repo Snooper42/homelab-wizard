@@ -143,6 +143,8 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"books", "apply", []string{"--skip", "1049"}, "media books apply --skip 1049 --events json"},
 		// Tidy lyrics (Overview's and Music's): the songs' own lyrics set right, asking LRCLIB nothing.
 		{"music", "lyrics", []string{"--tidy"}, "media music lyrics --tidy --events json"},
+		// What I did today's Undo: one line of it.
+		{"inbox", "undo", []string{"0123456789ab"}, "media inbox undo 0123456789ab --events json"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, false)
 		if err != nil || strings.Join(got, " ") != c.want {
@@ -165,6 +167,10 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		// --tidy is music lyrics' alone.
 		{"movies", "scan", []string{"--tidy"}},
 		{"music", "run", []string{"--tidy"}},
+		{"inbox", "undo", nil},
+		{"inbox", "undo", []string{"/Users/anna/Downloads"}},
+		{"inbox", "undo", []string{"0123456789ab", "ba9876543210"}},
+		{"inbox", "scan", []string{"0123456789ab"}},
 	} {
 		if got, err := tidyArgs(c.kind, c.action, c.args, false); err == nil {
 			t.Errorf("%s %s %v went through: %v", c.kind, c.action, c.args, got)
@@ -332,6 +338,10 @@ func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 			if m[1] == "trash" {
 				args = append(args, "scrubber-scan-1")
 			}
+			// What I did today's Undo: the line it puts back.
+			if m[1] == "inbox" && m[2] == "undo" {
+				args = append(args, "0123456789ab")
+			}
 			seen++
 			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
 				t.Errorf("%s: run(%q, %q, %v) is refused: %v", f, m[1], m[2], args, err)
@@ -407,6 +417,13 @@ func TestTidySetInbox(t *testing.T) {
 	}
 	if got.Inbox.When != "daily" || len(got.Inbox.Folders) != 2 || len(got.Inbox.Gone) != 1 || got.Inbox.Gone[0] != inbox {
 		t.Errorf("after: %+v", got.Inbox)
+	}
+	// What I did today: the inbox's record of the day.
+	line := `{"id":"x1","kind":"movies","title":"Heat (1995)","where":"Movies › Heat (1995)","did":["renamed and filed"],"from":"/d/Heat.mkv","files":["/m/Heat.mkv"],"undo":true,"run":"r","at":"` + time.Now().Format("2006-01-02T15:04:05") + `"}` + "\n"
+	_ = os.MkdirAll(filepath.Join(a.root, "data"), 0o755)
+	_ = os.WriteFile(media.FiledLogPath(a.root), []byte(line), 0o644)
+	if got, _ := a.TidyUp(); len(got.Today) != 1 || got.Today[0].Title != "Heat (1995)" {
+		t.Errorf("today: %+v", got.Today)
 	}
 	if _, err := a.TidySetInbox(nil, "daily"); err == nil {
 		t.Error("no folder at all was taken")

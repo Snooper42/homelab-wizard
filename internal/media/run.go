@@ -103,7 +103,7 @@ func (j Job) Command() ([]string, error) {
 	}
 	cmd := append(append([]string{}, j.Python...), script)
 	action := j.Action
-	if j.Kind == "inbox" || j.Kind == "scrubber" || j.Kind == "tdarr" {
+	if j.Kind == "scrubber" || j.Kind == "tdarr" || (j.Kind == "inbox" && j.Action != "undo") {
 		action = "scan"
 	}
 	cmd = append(cmd, action)
@@ -146,7 +146,7 @@ func Execute(ctx context.Context, j Job) (Run, error) {
 	c := procattr.Hide(exec.CommandContext(ctx, argv[0], argv[1:]...))
 	c.Dir = ToolsDir(j.Root)
 	// The engines note what they put in the Trash under this run, for Undo.
-	c.Env = append(Environ(j.Env), "HOMELAB_MEDIA_RUN="+run.ID, "HOMELAB_MEDIA_TRASH_LOG="+TrashLogPath(j.Root))
+	c.Env = append(Environ(j.Env), "HOMELAB_MEDIA_RUN="+run.ID, "HOMELAB_MEDIA_TRASH_LOG="+TrashLogPath(j.Root), "HOMELAB_MEDIA_FILED_LOG="+FiledLogPath(j.Root))
 	c.Stderr = os.Stderr
 	// Stopped (Ctrl-C, the app's Stop, the battery): an interrupt, so the
 	// engine says where it stopped and saves its progress; then a kill.

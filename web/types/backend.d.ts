@@ -303,6 +303,7 @@ declare namespace app {
     freed: number;
     checks: media.Check[];
     inbox: app.TidyInbox;
+    today: media.Filed[];
     settings: Record<string, string>;
     reports: string;
     trash: string;
@@ -937,6 +938,17 @@ declare namespace media {
     value?: string;
     note?: string;
     eta?: number;
+  }
+  interface Filed {
+    id: string;
+    kind: string;
+    title: string;
+    where: string;
+    did: string[];
+    from: string;
+    undo: boolean;
+    at: string;
+    undone?: boolean;
   }
   interface Following {
     step?: media.Event | null;

@@ -39,6 +39,8 @@ type TidyUp struct {
 	Freed     int64            `json:"freed"`
 	Checks    []media.Check    `json:"checks"`
 	Inbox     TidyInbox        `json:"inbox"`
+	// Today is what the inbox filed today, newest first (What I did today).
+	Today []media.Filed `json:"today"`
 	// Settings are the TIDY_ settings from .env, for the screen's words.
 	Settings map[string]string `json:"settings"`
 	// Reports is the folder the engines write their reports into.
@@ -182,6 +184,7 @@ func (a *App) TidyUp() (TidyUp, error) {
 	if r, ok := rec.Last["inbox"]["scan"]; ok {
 		out.Inbox.Last = &r
 	}
+	out.Today = media.FiledToday(a.root, time.Now())
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
 }
@@ -379,6 +382,9 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 	switch kind {
 	case "inbox":
 		cli = []string{"media", "inbox"}
+		if action == "undo" {
+			cli = append(cli, "undo")
+		}
 	case "scrubber":
 		cli = []string{"media", "scrub"}
 	case "tdarr":
@@ -418,6 +424,8 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 var (
 	tidyRunID = regexp.MustCompile(`^[a-z]+(-[a-z]+)+-[0-9]+$`)
 	tidyIDs   = regexp.MustCompile(`^[0-9]+(,[0-9]+)*$`)
+	// tidyFiledID is one line of What I did today (inbox.py's describe).
+	tidyFiledID = regexp.MustCompile(`^[0-9a-f]{12}$`)
 )
 
 func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
@@ -438,11 +446,14 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 		case kind == "trash" && tidyRunID.MatchString(a):
 			out = append(out, a)
 			runs++
+		case kind == "inbox" && action == "undo" && tidyFiledID.MatchString(a):
+			out = append(out, a)
+			runs++
 		default:
 			return nil, fmt.Errorf("Tidy Up doesn't run a job with %q", a)
 		}
 	}
-	if kind == "trash" && runs != 1 {
+	if (kind == "trash" || kind == "inbox" && action == "undo") && runs != 1 {
 		return nil, errors.New("Undo puts back one run at a time")
 	}
 	return out, nil
