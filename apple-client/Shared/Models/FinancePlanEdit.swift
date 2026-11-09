@@ -38,6 +38,37 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// The kinds of account the computer keeps, in the order Add Account offers them.
+    static let accountKinds: [(id: String, title: String)] = [
+        ("checking", "Checking"), ("savings", "Savings"), ("card", "Credit Card"),
+        ("investment", "Investments"), ("retirement", "Retirement"), ("loan", "Loan"),
+        ("home", "Home"), ("car", "Car"), ("collectible", "Collectible"), ("other", "Other"),
+    ]
+
+    /// `plan` with a new account: its name, kind, and balance today (for a
+    /// card or a loan, what's owed). The computer gives it its id. Nil for
+    /// no name, an unknown kind, or a balance out of bounds.
+    static func addingAccount(name: String, kind: String, balance: Double, today: String, in plan: JSONValue) -> JSONValue? {
+        let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, name.count <= 80,
+              accountKinds.contains(where: { $0.id == kind }),
+              balance.isFinite, abs(balance) <= maxBalance,
+              LocalDay.parse(today) != nil,
+              case .object(var root) = plan
+        else { return nil }
+        var accounts: [JSONValue] = []
+        if case .array(let have)? = root["accounts"] { accounts = have }
+        accounts.append(.object([
+            "name": .string(name),
+            "kind": .string(kind),
+            "balance": .number(roundedToCents(balance)),
+            "updated": .string(today),
+        ]))
+        root["accounts"] = .array(accounts)
+        root["updated"] = .string(today)
+        return .object(root)
+    }
+
     /// `plan` with the budget for `category` set to `amount` this month or
     /// pay period. Its period and rollover are kept. The category matches
     /// regardless of case, as the computer keeps one budget per category.

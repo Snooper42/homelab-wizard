@@ -19,6 +19,8 @@ final class FinancesViewModel {
     private(set) var savedCount = 0
     private(set) var planError: String?
     private(set) var isLoadingPlan = false
+    /// On a household member's phone: the household's money shared with them.
+    private(set) var shared: HouseholdShared?
     private(set) var ledger: FinanceLedger?
     @ObservationIgnored private var rawLedger: JSONValue?
     private(set) var ledgerError: String?
@@ -99,6 +101,18 @@ final class FinancesViewModel {
             return false
         }
         return await savePlan(edited, reason: "Change the cushion.")
+    }
+
+    /// Adds an account to the plan: a member's own, or the household's.
+    /// Returns whether it saved.
+    func addAccount(name: String, kind: String, balance: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        let today = plan.map(\.todayText).flatMap { $0.isEmpty ? nil : $0 } ?? FinancePlanEdit.todayString()
+        guard let edited = FinancePlanEdit.addingAccount(name: name, kind: kind, balance: balance, today: today, in: raw) else {
+            saveError = "An account needs a name, and a balance that's an amount."
+            return false
+        }
+        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
     }
 
     /// Changes a budget's amount. Returns whether it saved.
@@ -400,6 +414,20 @@ final class FinancesViewModel {
             }
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
             planError = apiError.errorDescription
+        }
+    }
+
+    /// A household member's phone: their own plan is the one shown, and
+    /// the household's shows only as much as the owner shares.
+    var isMember: Bool { device()?.isMember == true }
+
+    func loadShared() async {
+        guard isMember, canSeePlan else { return }
+        do {
+            shared = try await api.financesShared()
+        } catch {
+            Log.ui.error("Shared Finances failed: \(APIError.from(error).logName, privacy: .public)")
+            shared = nil
         }
     }
 

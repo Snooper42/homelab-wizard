@@ -231,6 +231,12 @@ actor APIClient {
         try await call("FinancesWall", as: MoneyCard.self)
     }
 
+    /// On a household member's phone: what of the household's money the
+    /// owner shares with them, to look at.
+    func financesShared() async throws -> HouseholdShared {
+        try await call("FinancesShared", as: HouseholdShared.self)
+    }
+
     /// The plan read forward: accounts today and the pay periods ahead,
     /// with the plan itself as raw JSON, so an edit can send it back whole.
     /// It needs the view or edit level.

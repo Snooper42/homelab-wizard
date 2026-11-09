@@ -8,103 +8,175 @@ struct AppDetailView: View {
     @Environment(HomelabTasksViewModel.self) private var tasks
     /// Nil when the app left the status (uninstalled meanwhile).
     let app: AppStatus?
+    /// The page itself, kept to what's worth a glance (the owner's mockup,
+    /// Nov 8), or everything else about the app behind its More row.
+    var page: Page = .main
+
+    enum Page { case main, more }
 
     var body: some View {
         if let app {
-            Form {
-                // Its logo big, its name, and its state, centred, then its round buttons.
-                Section {
-                    VStack(spacing: 8) {
-                        AppIconView(app: app, size: iconSize)
-                            .shadow(color: Design.shadow.opacity(0.14), radius: 12, y: 8)
-                        Text(verbatim: app.name)
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
-                        // Its state as a pill in its colour, then the row's own words
-                        // when they say more ("Stopped at 3:12 AM: it ran out of memory").
-                        // While a Start, Stop or Restart runs, the pill says so with a
-                        // spinner, and turns to the new state when Status has it.
-                        statePill(for: app)
-                        if app.detailLine != app.stateLabel {
-                            Text(verbatim: app.detailLine)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        } else if app.isRunning, let since = app.startedAt {
-                            Text("Started \(since.formatted(.relative(presentation: .named)))")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .accessibilityElement(children: .combine)
-                    roundButtons(for: app)
-                        .padding(.top, 10)
-                }
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+            switch page {
+            case .main: mainPage(app)
+            case .more: morePage(app)
+            }
+        } else {
+            ContentUnavailableView("App Not Found", systemImage: "questionmark.app", description: Text("It's no longer in the status."))
+        }
+    }
 
-                // What's wrong first, then what can be done, then the rest.
-                if let problem = app.notAnswering, !problem.isEmpty {
-                    Section("Problem") {
-                        Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
-                            .foregroundStyle(Theme.warning)
-                    }
-                } else if app.state == "stopped", let stop = app.stoppedOnPurpose, stop.keptRestarting {
-                    Section("Problem") {
-                        Label(stop.words(), systemImage: "arrow.triangle.2.circlepath.circle")
-                            .foregroundStyle(Theme.danger)
-                        Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
+    /// Everything else: the whole of About, the backup in full, updates,
+    /// details, addresses, settings and what CrowdSec stopped.
+    private func morePage(_ app: AppStatus) -> some View {
+        Form {
+            aboutSection(for: app)
+            stoppedSection(for: app)
+            backupSection(for: app)
+            updatesSection(for: app)
+            detailsSection(for: app)
+            addressesSection(for: app)
+            settingsSection(for: app)
+            if app.settingsChanged == true {
+                Section("Notes") {
+                    Label("Settings changed. It keeps the old ones until it's recreated.", systemImage: "gearshape.arrow.triangle.2.circlepath")
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle("More About \(app.name)")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+    }
+
+    private func mainPage(_ app: AppStatus) -> some View {
+        Form {
+            // Its logo big, its name, and its state, centred, then its round buttons.
+            Section {
+                VStack(spacing: 8) {
+                    AppIconView(app: app, size: iconSize)
+                        .shadow(color: Design.shadow.opacity(0.14), radius: 12, y: 8)
+                    Text(verbatim: app.name)
+                        .font(.title2.bold())
+                        .multilineTextAlignment(.center)
+                    // Its state as a pill in its colour, then the row's own words
+                    // when they say more ("Stopped at 3:12 AM: it ran out of memory").
+                    // While a Start, Stop or Restart runs, the pill says so with a
+                    // spinner, and turns to the new state when Status has it.
+                    statePill(for: app)
+                    if app.detailLine != app.stateLabel {
+                        Text(verbatim: app.detailLine)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    } else if app.isRunning, let since = app.startedAt {
+                        Text("Started \(since.formatted(.relative(presentation: .named)))")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
                 }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+                roundButtons(for: app)
+                    .padding(.top, 10)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
 
-                // Why it isn't running, and what helps (the watchdog's stop is the Problem above).
-                if let next = app.stoppedNext(), app.stoppedOnPurpose?.keptRestarting != true {
-                    Section("Why It's Stopped") {
-                        Text(next.why)
-                        if !next.todo.isEmpty, actions.canChange {
-                            Text(next.todo)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+            // What's wrong first, then what can be done, then the rest.
+            if let problem = app.notAnswering, !problem.isEmpty {
+                Section("Problem") {
+                    Label("The container runs, but the app doesn't answer: \(problem)", systemImage: "bolt.horizontal.circle")
+                        .foregroundStyle(Theme.warning)
                 }
+            } else if app.state == "stopped", let stop = app.stoppedOnPurpose, stop.keptRestarting {
+                Section("Problem") {
+                    Label(stop.words(), systemImage: "arrow.triangle.2.circlepath.circle")
+                        .foregroundStyle(Theme.danger)
+                    Text("Docker kept restarting it, so the watchdog stopped it and left it stopped. Its log says why. Start it once that's fixed.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
-                actionsSection(for: app)
-
-                weekSection(for: app)
-
-                aboutSection(for: app)
-
-                stoppedSection(for: app)
-
-                backupSection(for: app)
-
-                updatesSection(for: app)
-
-                detailsSection(for: app)
-
-                addressesSection(for: app)
-
-
-                settingsSection(for: app)
-
-                if app.settingsChanged == true {
-                    Section("Notes") {
-                        Label("Settings changed. It keeps the old ones until it's recreated.", systemImage: "gearshape.arrow.triangle.2.circlepath")
+            // Why it isn't running, and what helps (the watchdog's stop is the Problem above).
+            if let next = app.stoppedNext(), app.stoppedOnPurpose?.keptRestarting != true {
+                Section("Why It's Stopped") {
+                    Text(next.why)
+                    if !next.todo.isEmpty, actions.canChange {
+                        Text(next.todo)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .formStyle(.grouped)
-            .themedCanvas()
-            .navigationTitle(app.name)
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-        } else {
-            ContentUnavailableView("App Not Found", systemImage: "questionmark.app", description: Text("It's no longer in the status."))
+
+            actionsSection(for: app)
+
+            weekSection(for: app)
+
+            // A glance: what it's for, its last backup, where it lives;
+            // the rest behind More.
+            glanceSection(for: app)
+
+            Section {
+                NavigationLink {
+                    AppDetailView(app: app, page: .more)
+                } label: {
+                    Label("More About \(app.name)", systemImage: "info.circle")
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .themedCanvas()
+        .navigationTitle(app.name)
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
+        // The Backup line, read once if nothing has yet.
+        .task { if dashboard.backups.overview == nil, !dashboard.backups.isLoading { await dashboard.backups.load() } }
+    }
+
+    /// What it's for in a line, its last backup (and only a problem with it),
+    /// and its address: no explanations.
+    @ViewBuilder
+    private func glanceSection(for app: AppStatus) -> some View {
+        let entry = dashboard.catalog?.entry(app.id)
+        let backups = dashboard.backups
+        let url = app.address.flatMap { Self.httpsURL($0) }
+        if let about = entry?.description, !about.isEmpty {
+            Section("About") {
+                Text(about)
+            }
+        }
+        if !app.isNative, let overview = backups.overview {
+            Section("Backup") {
+                LabeledContent("Last copy") {
+                    if let last = overview.lastRun {
+                        HStack(spacing: 4) {
+                            Text(last, format: .relative(presentation: .named))
+                            if overview.isLate() {
+                                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
+                                    .accessibilityLabel("Late")
+                            }
+                        }
+                    } else {
+                        Text("Not yet").foregroundStyle(.secondary)
+                    }
+                }
+                if let copy = overview.copy(for: app.id), copy.shrank {
+                    Label("Much smaller than the night before: check that \(app.name) still has its data.", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Theme.danger)
+                }
+            }
+        }
+        if let url, let address = app.address {
+            Section("Address") {
+                Link(destination: url) {
+                    LabeledContent("Homelab domain", value: address)
+                }
+            }
         }
     }
 
