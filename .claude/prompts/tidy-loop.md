@@ -166,6 +166,7 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 ## Done
 
 - #485: queue item 1 (Tidy lyrics runs; P6's guard), and the look: Take 2.
+- #540: Account 2's hand-off: Tdarr's setup says *Choose apps › Tdarr*, not *Choose stacks*; a test in `tools/media/tests` keeps *stacks* and *baseline* out of what the engines print.
 
 ## Couldn't reproduce
 
@@ -183,15 +184,29 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 ## Open now
 
-**Nov 9 (Account 1's session, handed off):** the Inbox plan is done: pieces 4 to 7 merged as #529, #535 (with #536, the owner's AcoustID answer), #537 and #538, each green on its head. No Account 1 PR is open. None of pieces 4 to 7 has been tried on a machine yet: `docs/Testing.md` has a row for each.
+**Nov 9, later (Account 1's session):** #540 merged (the hand-off from Account 2, see **Done**). No Account 1 PR is open. None of the Inbox plan's pieces 4 to 7 has been tried on a machine yet: `docs/Testing.md` has a row for each.
 
 **Next, in this order:**
 
-1. **Media apps run only while a job needs them** (the owner's ask, for memory on the 16GB Mac). Before building, look at what's there and write a plan into this section:
-   - Tdarr already pauses when idle on battery and starts again when plugged in (`cmd/homelab`, `battery_tdarr_test.go`); `internal/media/record.go` pauses Duplicati and Navidrome around a job (`DuplicatiPaused`, the music swap).
-   - `docs/Feature Roadmap.md` has *Stop when idle* (L, mocked up: Immich's machine learning) and *Quiet hours for heavy work* (M, idea). This is the media side of those.
-   - Which apps: Tdarr (only Shrink and Collect need it), and maybe Sonarr, Radarr, Lidarr, qBittorrent and Prowlarr when nothing is downloading. Jellyfin and Navidrome stay up (the household watches and listens through them). **Ask the owner once** which apps, and whether "stopped until a job needs it" should show on Status, with the most conservative choice meanwhile: Tdarr only, started by the job that needs it and stopped when it's idle.
-   - Lanes: starting and stopping apps, and Status, are Account 2's. Tidy Up may start and stop Tdarr around its own jobs (it does on battery already); anything on Status or the app's page goes to **For Account 2** above.
+1. **Media apps run only while a job needs them** (the owner's ask, for memory on the 16GB Mac). The plan, from reading the code (Nov 9):
+
+   *What's there.*
+   - Tdarr does only what Tidy Up gives it: `tdarr_setup.py` makes its libraries with `scanOnStart`, `folderWatching` and `scheduledScanFindNew` all off. It is one container (`compose/media-automation.yaml`, `internalNode: "true"`). The jobs that need it are `tdarrJob` in `cmd/homelab/media_tdarr.go`: `tdarr setup`, and `movies`/`tv` `run` and `collect`. The agent's `mediaTick` runs **Collect** every 5 minutes while `media.HasTdarrWork` says a film or episode is still with Tdarr (`pending`, or a file not yet collected).
+   - Whether Tdarr is converting right now: `tdarrAPI.busy` (`media_tdarr.go`), already used by the battery saver.
+   - Anything that starts apps by itself (the watchdog, `heal`, `fix`, the battery saver, the wait for a drive, Start the N stopped) skips an app in `data/stopped.json` (`internal/stopped`). Its `Why` is a free string; the watchdog uses `restarting`. So a stop Tidy Up makes there is honoured everywhere, with no change to `internal/stopped`.
+   - `record.go`'s `DuplicatiPaused` is the model for a pause Tidy Up undoes itself.
+
+   *What to build (one PR, Account 1's files only: `cmd/homelab/media_tdarr.go`, `media.go`, `internal/media/record.go`, the Tidy screen, their tests and docs):*
+   - **Rest when idle.** In `mediaTick`, with no lock held: Tdarr running, `HasTdarrWork` false for films and TV, `busy` false (or Tdarr not answering), and the last Tdarr job ended at least 15 minutes ago. Then stop the container and add Tdarr to `stopped.json` with `Why: "tidy"`. The media record keeps `TdarrResting: true`. `TIDY_TDARR_REST=false` turns it off.
+   - **Wake for a job.** Before a `tdarrJob` runs: if Tdarr's stop says `Why: "tidy"`, take it out of `stopped.json`, start the container, and wait for Tdarr's API (up to 2 minutes, saying *Starting Tdarr…* as a step). If it doesn't answer, the job says why, as it does now when Tdarr isn't answering.
+   - **A person's start wins.** A Tdarr someone started (Status, its page, Docker Desktop) is out of `stopped.json` while the record says resting. Tidy Up then clears `TdarrResting` and leaves Tdarr up until a Tidy Up job next uses it. A stop by a person (no `Why`, or any other `Why`) is never undone by Tidy Up.
+   - **Battery.** A resting Tdarr is held, so the battery saver neither pauses nor restarts it. One paused on battery that then has no work stays paused until power, and then may rest.
+   - **The screen.** Movies' and TV's Tdarr rows say *Resting: starts when there's something to shrink*, not *isn't answering*, while the record says resting (`Tidy.tsx`, near the `away` row).
+   - *Tests that fail today:* `cmd/homelab` (idle with no work → stopped with why `tidy`; work pending, busy, a job in the last 15 minutes, or `TIDY_TDARR_REST=false` → left running; a person's stop is never started; a `run` wakes a resting Tdarr and waits for its API; a person's start clears resting), and a smoke case for the resting row.
+
+   *For Account 2 (handed over when this is built):* Status reads `why === "tidy"` as *Stopped by you* today (`web/src/status/stopFor.ts`, `stoppedWords`). It should say *Resting until Tidy Up needs it*, with Start still offered. Also check that an update recreating Tdarr leaves a resting one stopped.
+
+   *Asked of the owner (Nov 9), building the conservative choice meanwhile:* (a) **Which apps:** Tdarr only for now, or also Sonarr, Radarr, Lidarr, qBittorrent and Prowlarr when nothing is downloading? Those fetch on their own schedules (RSS, Seerr's requests), so stopping them means new episodes don't arrive until something starts them: a bigger change. Jellyfin and Navidrome stay up. (b) **Status:** should a resting app show there as *Resting until Tidy Up needs it*, in the stopped list? Pick: yes, as above.
 2. The queue's item 2 (*a job that stopped part-way carries on as another job*), then the rest of the queue and the look's L3.
 
 Owner's answers this session (Nov 9): untagged songs go to beets first when AcoustID is set up; the album sheet's artist is optional; filing stops when a song is more than 30 s off its place on the album. #508 (Finances, idle) was closed at the owner's word.
