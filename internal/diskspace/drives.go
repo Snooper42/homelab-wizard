@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"os"
 	"os/user"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -31,23 +32,27 @@ func Drives() []Drive {
 	if u, err := user.Current(); err == nil {
 		name = u.Username
 	}
-	var tops []string
-	switch runtime.GOOS {
+	system, tops := places(runtime.GOOS, name, cmp.Or(os.Getenv("SystemDrive"), "C:"), subfolders)
+	return drives(system, tops, Mounted, usage, volumeID)
+}
+
+// places is where each system mounts drives: the system's own disk, and
+// the folders a drive plugged in shows up as (macOS's /Volumes, a Linux
+// desktop's /media/<user> and /run/media/<user>, /mnt, Windows' letters).
+func places(goos, user, systemDrive string, sub func(string) []string) (system string, tops []string) {
+	switch goos {
 	case "darwin":
-		tops = subfolders("/Volumes")
+		return "/", sub("/Volumes")
 	case "linux":
-		tops = append(subfolders(filepath.Join("/media", name)), subfolders(filepath.Join("/run/media", name))...)
-		tops = append(tops, subfolders("/mnt")...)
+		tops = append(sub(path.Join("/media", user)), sub(path.Join("/run/media", user))...)
+		return "/", append(tops, sub("/mnt")...)
 	case "windows":
 		for c := 'A'; c <= 'Z'; c++ {
 			tops = append(tops, string(c)+`:\`)
 		}
+		return strings.ToUpper(systemDrive) + `\`, tops
 	}
-	system := "/"
-	if runtime.GOOS == "windows" {
-		system = strings.ToUpper(cmp.Or(os.Getenv("SystemDrive"), "C:")) + `\`
-	}
-	return drives(system, tops, Mounted, usage, volumeID)
+	return "/", nil
 }
 
 // drives keeps the system's disk and each top that is a drive of its own
