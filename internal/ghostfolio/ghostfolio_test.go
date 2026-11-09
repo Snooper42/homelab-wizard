@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -279,5 +280,29 @@ func TestPaidFromTheBuysWhileUnpriced(t *testing.T) {
 	// VOO: $660 for six, half sold: $330 for the three left.
 	if paid["VOO"] != 330 || paid["SMH"] != 3203.62 {
 		t.Errorf("paid %v", paid)
+	}
+	// With no price of its own, a holding is worth only what was paid there: today's price looked up is its worth instead.
+	f.Quotes = map[string]float64{"VOO": 602.5}
+	f.Gathered = nil
+	r, err = ghostfolio.ReadInto(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]finance.Holding{}
+	for _, a := range r.Plan.Accounts {
+		for _, h := range a.Holdings {
+			got[h.Symbol] = h
+		}
+	}
+	if voo := got["VOO"]; voo.Value != 1807.5 || !voo.Quoted || voo.Paid != 330 {
+		t.Errorf("VOO %+v", voo)
+	}
+	// No quote for SMH: what Ghostfolio says, not marked.
+	if smh := got["SMH"]; smh.Value != 3203.62 || smh.Quoted {
+		t.Errorf("SMH %+v", smh)
+	}
+	sort.Strings(f.Gathered)
+	if strings.Join(f.Gathered, ",") != "YAHOO/SMH,YAHOO/VOO" {
+		t.Errorf("gathered %v", f.Gathered)
 	}
 }

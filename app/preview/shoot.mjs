@@ -5327,6 +5327,16 @@ const smokes = [
     const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
     if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 11.038 || x.total !== 6653.35 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
   } },
+  // A holding Ghostfolio has no prices for yet: worth today's price it looked up, and said so in its details; one with prices says nothing.
+  { name: 'Finances: Investments say a worth is today\'s price while Ghostfolio has none of its own', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'roth' ? { ...a, holdings: a.holdings.map((h) => (h.symbol === 'VOO' ? { ...h, quoted: true } : h)) } : a)) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.click(`${card} tbody.fx-hold:has(strong:text-is("VOO")) button.fx-holdbtn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("VOO")) .fx-quoted:has-text("Ghostfolio has no prices of its own for VOO yet")`, { timeout: 2000 });
+    await page.click(`${card} tbody.fx-hold:has(strong:text-is("BND")) button.fx-holdbtn`, { timeout: 5000 });
+    await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-holdhist`, { timeout: 2000 });
+    if (await page.$(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-quoted`)) throw new Error('a holding with prices said to have none');
+  } },
   // A buy typed wrong, put right from the card: an open holding lists its buys and sales from Ghostfolio, each to Change (what
   // is typed checked first; Ghostfolio's no said in its words, the form kept) or Delete (asked first; Keep it leaves it). Each
   // reads Ghostfolio again, so the row and the figures follow; the last buy deleted takes the holding off the card.

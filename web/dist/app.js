@@ -14957,12 +14957,19 @@ ${pays}
   function HoldingHistory({ v: v3, h: h3, cur }) {
     const pts = h3.history || [];
     const each = (n3) => h3.shares > 0 ? amountsHidden() ? money(0) : moneyIn(n3 / h3.shares, cur) : "";
-    const facts2 = h3.shares > 0 ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-      "A share is worth ",
-      each(h3.value),
-      " now; they cost ",
-      each(h3.paid),
-      " each on average."
+    const facts2 = h3.shares > 0 ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "A share is worth ",
+        each(h3.value),
+        " now; they cost ",
+        each(h3.paid),
+        " each on average."
+      ] }),
+      h3.quoted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-quoted", children: [
+        "Ghostfolio has no prices of its own for ",
+        h3.symbol,
+        " yet, so its worth is today's price Ghostfolio looked up. Ghostfolio was asked to gather its prices; once it has, they're its own."
+      ] })
     ] }) : null;
     if (pts.length < 2) {
       return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [

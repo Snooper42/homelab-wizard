@@ -274,8 +274,11 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 		// lag a buy just put in, while its holdings already have it.
 		worth := float64(x.Balance)
 		// Ghostfolio says nothing went into a holding until it has its
-		// prices (one just bought): what was paid is then read from its
-		// buys and sales, once for the account.
+		// prices (one just bought), and its worth is then only what was
+		// paid: what was paid is read from its buys and sales (once for
+		// the account), its worth from today's price Ghostfolio looks up,
+		// and Ghostfolio is asked to gather the symbol's prices itself (an
+		// admin's token may; another's is refused, and that is all).
 		var acts []gfActivity
 		read := false
 		for _, h := range found {
@@ -303,14 +306,24 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 					paid = p
 				}
 			}
+			worthNow, quoted := cents(value*rate), false
+			if float64(h.Investment) == 0 && shares > 0 {
+				if src := sourceOf(acts, x.ID, sym); src != "" {
+					if price, code, ok := g.quote(ctx, src, sym); ok && (code == "" || inv.Currency == "" || strings.EqualFold(code, inv.Currency)) {
+						worthNow, quoted = cents(shares*price), true
+					}
+					_ = g.Call(ctx, http.MethodPost, "/admin/gather/"+url.PathEscape(src)+"/"+url.PathEscape(sym), nil, nil)
+				}
+			}
 			inv.Holdings = append(inv.Holdings, finance.Holding{
 				Symbol: strings.ToUpper(strings.TrimSpace(sym)),
 				Name:   strings.TrimSpace(title),
 				Shares: shares,
 				Paid:   paid,
-				Value:  cents(value * rate),
+				Value:  worthNow,
+				Quoted: quoted,
 			})
-			worth += cents(value * rate)
+			worth += worthNow
 		}
 		inv.Value = cents(worth)
 		sort.SliceStable(inv.Holdings, func(i, j int) bool { return inv.Holdings[i].Value > inv.Holdings[j].Value })
@@ -511,6 +524,9 @@ func AddInvestment(ctx context.Context, root string, add Add) error {
 	if err != nil {
 		return err
 	}
+	// Ghostfolio prices a symbol new to it only once it has gathered its
+	// prices: asked now (an admin's token may), it need not wait a day.
+	_ = g.Call(ctx, http.MethodPost, "/admin/gather/"+url.PathEscape(add.DataSource)+"/"+url.PathEscape(strings.ToUpper(strings.TrimSpace(add.Symbol))), nil, nil)
 	if add.NewName != "" {
 		p.Accounts = append(p.Accounts, acct)
 		if _, err := finance.Save(path, p); err != nil {
@@ -624,6 +640,39 @@ func (g Session) activities(ctx context.Context, id string) ([]gfActivity, error
 		err = g.Read(ctx, "/order"+q, &got)
 	}
 	return got.Activities, err
+}
+
+// quote is today's price of a symbol, as Ghostfolio's data provider
+// gives it (/symbols since 2.x, /symbol before), in its currency.
+func (g Session) quote(ctx context.Context, dataSource, symbol string) (price float64, currency string, ok bool) {
+	var got struct {
+		Currency    string `json:"currency"`
+		MarketPrice num    `json:"marketPrice"`
+	}
+	path := "/" + url.PathEscape(dataSource) + "/" + url.PathEscape(symbol)
+	err := g.Read(ctx, "/symbols"+path, &got)
+	if errors.As(err, new(missing)) {
+		err = g.Read(ctx, "/symbol"+path, &got)
+	}
+	if err != nil || float64(got.MarketPrice) <= 0 {
+		return 0, "", false
+	}
+	return float64(got.MarketPrice), strings.ToUpper(strings.TrimSpace(got.Currency)), true
+}
+
+// sourceOf is the data source Ghostfolio prices a symbol by, from its buys
+// and sales in an account; "" when none says.
+func sourceOf(acts []gfActivity, id, symbol string) string {
+	for _, x := range acts {
+		prof := x.Profile
+		if prof == nil {
+			prof = x.Old
+		}
+		if prof != nil && x.AccountID == id && strings.EqualFold(strings.TrimSpace(prof.Symbol), symbol) && prof.DataSource != "" {
+			return prof.DataSource
+		}
+	}
+	return ""
 }
 
 // paidFor is what the shares of a symbol still held in an account cost,

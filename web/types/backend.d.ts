@@ -663,6 +663,7 @@ declare namespace finance {
     paid: number;
     value: number;
     history?: finance.Point[];
+    quoted?: boolean;
   }
   interface Installment {
     date: string;

@@ -186,7 +186,10 @@ function HoldingRow({ v, l, open, toggle, trades }: { v: finance.View; l: Line; 
 function HoldingHistory({ v, h, cur }: { v: finance.View; h: finance.Holding; cur?: string }) {
   const pts = h.history || [];
   const each = (n: number) => (h.shares > 0 ? (amountsHidden() ? money(0) : moneyIn(n / h.shares, cur)) : '');
-  const facts = h.shares > 0 ? <p class="fx-sub">A share is worth {each(h.value)} now; they cost {each(h.paid)} each on average.</p> : null;
+  const facts = h.shares > 0 ? <>
+    <p class="fx-sub">A share is worth {each(h.value)} now; they cost {each(h.paid)} each on average.</p>
+    {h.quoted && <p class="fx-sub fx-quoted">Ghostfolio has no prices of its own for {h.symbol} yet, so its worth is today's price Ghostfolio looked up. Ghostfolio was asked to gather its prices; once it has, they're its own.</p>}
+  </> : null;
   if (pts.length < 2) {
     return <div class="fx-holdhist">{facts}<p class="fx-sub">{pts.length ? `Read once so far, on ${dayShort(pts[0].date)}.` : 'Not read yet.'} Each read from now on adds its day here.</p></div>;
   }
