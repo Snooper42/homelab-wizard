@@ -1978,6 +1978,10 @@ html.os-mac .fx-balance { padding:4px 8px; }
 /* A person's card as tall as what it holds, not its row. */
 .fx-board > .fx-person { align-self:start; }
 @container (max-width: 560px) { .fx-next { display:none; } }
+/* What you own and owe, narrow (a small window, the largest text sizes): each account's name keeps its room, and its change
+   since the start, which the Since card above sums up, steps aside rather than squeezing the name to a word a line. */
+#finRoot .fx-ownlist > ul.fx-rows, #finRoot .fx-owelist > ul.fx-rows { container:acctrows / inline-size; }
+@container acctrows (max-width: 380px) { .fx-change { display:none; } }
 :is(#finRoot, #tidyRoot) .card.fx-widget > .row { flex-wrap:nowrap; align-items:center; gap:12px; }
 /* Narrow (a phone, a small window at a large text size), a heading's controls go under it when they
    don't fit beside it, and a long pick scrolls sideways in the card rather than past its edge. */
