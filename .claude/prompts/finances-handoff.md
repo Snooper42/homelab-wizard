@@ -2,6 +2,28 @@
 
 Paste this into a new session, or point the session at this file. It carries on the Finances work of Account 1 exactly where it stopped. It sits beside, and does not replace, the files below.
 
+## Read this first: where it stands on Nov 9, 2026
+
+The account that built Finances (sessions `01Vi5AofCa…` and `01Vi5AogT7…`) ran out of usage on Nov 9. Everything it pushed was checked against GitHub that day, and **nothing is lost: all of its Finances work is on main.** This section is the current state. Sections 1 to 3 and 7 below are history, kept for their notes; where they disagree with this section, this section wins.
+
+**Merged since section 1 was written:** #487 (Chase CSVs, select and change many), #488 (round logos, accounts in the sidebar), #489, #490, #494, #498, #510 (Investments from Ghostfolio: the card, Read now, Add a holding, put a buy right or delete it), #495, #497 (clean imported names, renames that stick), #499 (logos from each company's website, approved by the owner), #523 (section 7's usability round, plus imports that link the HOA and checking on payday as the owner's spreadsheet counts it), #532 (a loan read from its papers with its payments ring, Amex files the right way round, shares in parts of one). Branch `claude/elegant-ritchie-8dkyd1` (imported bills link by what they are; no PR) was checked line by line: its changes reached main in #523.
+
+**Still to do, in order** (one small PR each; show the owner first):
+1. **Ask the owner** whether "After <name>'s paycheck" now matches their spreadsheet (#523 changed how payday is counted). Until they say yes, section 2's item 1 stays open.
+2. **Follow-ups #532 left:**
+   - A mortgage split between two people, with only one half in the plan, falls by that half a month in the projection, while the Loans card uses the papers' whole payment. Make the two agree.
+   - Amex payee names keep the city and state, `AplPay`, `WWP*` and `WL *`. Clean them in `cleanPayee`, and change the iPhone app's Swift port in the same PR: it's tested against the computer's answers (`apple-client/Tests/Resources/PayeeVectors.json`, made by `apple-client/scripts/make-payee-logos.mjs`).
+3. **Step 4, the rest:** one period picker at the top of the Dashboard ("‹ This paycheck ›", or by month) that every card follows. Today `Overview.tsx` picks only now or the next paycheck. Then the dark theme near-black, cards a step lighter (tokens only, `lint.mjs`). Check what's there before starting either.
+4. **Step 5, the one card left:** Balance trend, a point opening its day. Latest transactions, Spent this month (the ring) and Cash flow's six months are built (#523).
+5. **Step 6, the Transactions table:** columns, sort by any column, at 860px and on a phone the list again. Select and change many is built (#487), and so are the running balance and Show more (#523).
+6. **Step 7, fewer tabs:** there are still seven (Dashboard, Calendar, Transactions, Reports, Recurring, Pay, Net worth). Mock a grouping first and change nothing until the owner picks.
+7. **Each needing the owner's yes first:** rules ("Always do this for <payee>"), a reminder for a bill not seen yet, picking a category's colour by hand. Bank sync stays declined (rule 1).
+8. **Backlog 19, polish,** a little in every round.
+
+**Branches:** keep `claude/feature-finances-shots` (every PR's screenshots). Safe to delete: `claude/elegant-ritchie-8dkyd1` and `claude/busy-newton-vvxfza` (both on main).
+
+---
+
 You are working on the Finances screen of homelab-wizard (github.com/Snooper42/homelab-wizard) with its owner. They are not a designer or a developer. Explain choices in plain words, show screenshots (before and after, light and dark, 1280px, 860px and phone width), and recommend one option rather than listing many.
 
 ## 0. Read first, and follow
