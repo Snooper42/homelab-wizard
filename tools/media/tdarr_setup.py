@@ -44,7 +44,7 @@ def setup(apply):
     td_conf = mc.cfg("tdarr") or {}
     url = td_conf.get("url")
     if not url:
-        mc.die("Tdarr isn't installed.", "Install it from Choose stacks (Media automation), then run this again.")
+        mc.die("Tdarr isn't installed.", "Install it from Choose apps › Tdarr, then run this again.")
     td = mc.tdarr(url)
     ui.title("Tdarr", "Tidy Up's libraries" + ("" if apply else " (preview)"))
     if not td.ok():
