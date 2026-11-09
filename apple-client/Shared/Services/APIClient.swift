@@ -513,6 +513,14 @@ actor APIClient {
 
     // MARK: Away from home
 
+    /// The phone's network changed (`NetworkKind`, noticed by
+    /// LiveEventManager): the next read tries home first again, rather than
+    /// the tunnel for what's left of `awayFor`.
+    func networkChanged() {
+        if awayUntil != nil { Log.network.info("The network changed; trying home first again") }
+        awayUntil = nil
+    }
+
     /// A read: from home, or through the tunnel when home can't be reached
     /// and this phone was given the way out. The answer is in home's shape
     /// (`{"result": …}` when `envelope`, else the result itself).

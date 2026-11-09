@@ -492,6 +492,54 @@ extension NetworkRuleTests {
         #expect(tunnel.authorization == nil && !String(decoding: tunnel.body, as: UTF8.self).contains(Self.token))
     }
 
+    /// Home answering `status`, as the companion does at home.
+    private static func homeAnswer(_ status: String) -> @Sendable (URLRequest) -> StubProtocol.Answer {
+        { request in
+            request.url?.host == "mac.tail1234.ts.net" ? (200, [:], json(#"{"result":\#(status)}"#), nil) : (500, [:], Data(), nil)
+        }
+    }
+
+    @Test func afterTheTunnelAnsweredItGoesFirstForAWhile() async throws {
+        let (api, key) = try awayClient()
+        let status = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : (500, [:], Data(), nil)
+        }
+        _ = try await api.status()
+        // Home could answer now, but the network didn't change: the tunnel is asked.
+        StubProtocol.reset { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : Self.homeAnswer(status)(request)
+        }
+        _ = try await api.status()
+        #expect(StubProtocol.requests.map(\.url.host) == ["homelab-away.example.com"])
+    }
+
+    @Test func aNetworkChangeTriesHomeFirstAgain() async throws {
+        let (api, key) = try awayClient()
+        let status = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : (500, [:], Data(), nil)
+        }
+        _ = try await api.status()
+        // Back on the home Wi-Fi: the phone notices, and home is asked first.
+        StubProtocol.reset(Self.homeAnswer(status))
+        await api.networkChanged()
+        let answer = try await api.status()
+        #expect(answer.apps.first?.id == "immich")
+        #expect(StubProtocol.requests.map(\.url.host) == ["mac.tail1234.ts.net"])
+    }
+
+    @Test func onlyAChangeOfNetworkCounts() {
+        let wifi = NetworkKind(reachable: true, wifi: true, cellular: false, wired: false, other: false)
+        let cellular = NetworkKind(reachable: true, wifi: false, cellular: true, wired: false, other: false)
+        let vpnOnWifi = NetworkKind(reachable: true, wifi: true, cellular: false, wired: false, other: true)
+        #expect(NetworkKind.isChange(from: nil, to: wifi) == false) // the first reading
+        #expect(NetworkKind.isChange(from: wifi, to: wifi) == false)
+        #expect(NetworkKind.isChange(from: wifi, to: cellular))
+        #expect(NetworkKind.isChange(from: wifi, to: vpnOnWifi)) // Proton VPN coming on
+        #expect(NetworkKind.isChange(from: cellular, to: NetworkKind(reachable: false, wifi: false, cellular: false, wired: false, other: false)))
+    }
+
     @Test func anAnswerFromHomeNeverGoesOut() async throws {
         let (api, _) = try awayClient()
         StubProtocol.reset { _ in (403, [:], Self.json(#"{"error":"this phone can look but not change anything"}"#), nil) }
