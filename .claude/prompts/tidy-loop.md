@@ -10,7 +10,7 @@ It has two tracks, taken in turn: **fixes** (*The queue*: bugs and the promises 
 
 **Paused:** no. (Change this to **yes** and push to pause the loop: a round that reads yes merges nothing new, opens nothing new, says it is paused, and waits for the next round.)
 
-**Alongside `features-loop.md`:** both are Account 1. While this loop runs, it owns Tidy Up; the features loop's *Tidy Up focus* defers to it and goes on to Finances. The two share Account 1's limits: **one open PR**, and **at most 3 merges a day**, between them. Before opening a PR, list Account 1's open PRs; if one is open, wait (subscribe to it, as **Waiting on CI** says) or take an item that needs no push (an audit pass).
+**Alongside `features-loop.md`:** both are Account 1. While this loop runs, it owns Tidy Up; the features loop's *Tidy Up focus* defers to it and goes on to Finances. The two share Account 1's limits: **one open PR**, between them. The owner waived the 3-a-day cap for Account 1 on Nov 8 ("Remember always merge everything"): merge each PR as soon as it is green and mergeable, without asking, still pinned to `expectedHeadSha` and still checking what main gained (Rule 5). Before opening a PR, list Account 1's open PRs; if one is open, wait (subscribe to it, as **Waiting on CI** says) or take an item that needs no push (an audit pass).
 
 ---
 
@@ -79,6 +79,15 @@ When the queue is empty, and at least every fifth round regardless, look Tidy Up
 - **Words:** each card says first what matters most; no command names, codes, or paths where a sentence would do; numbers agree across the screen (P8).
 - **The look:** each tab beside Finances' Dashboard and the references in `docs/images/tidy-reference/`, at the same width and theme. Each difference worth closing goes into **The look**'s list, with the screenshot pair.
 - **The engines:** for each script in `tools/media`, a run against a small fixture library in a throwaway home (stopped half-way with Ctrl-C, then run again; run twice; run with the drive missing). What a household would see if it went wrong is the finding.
+
+## The Inbox plan (owner, Nov 8)
+
+The owner's vision: drop messy files of any kind (untagged music, films, shows, books, audiobooks) in a watched folder or on a drive, and Tidy Up works out what each is, tags it, adds lyrics, checks for duplicates, and files it, by itself (as things arrive, or once a day) or when pressed, in words a household member who isn't technical can follow. They approved the mockup ("I love it. Yes. build that out") and asked for it in pieces, each its own PR:
+
+1. **Inbox home** (#521): Drop anything here: the watched folders (Add…, Remove), when it tidies (`TIDY_INBOX_WHEN`: arrive, daily, manual), Tidy up now.
+2. **What I did today + Undo** (`claude/feature-tidy-today`): a plain line for each download filed (`data/media-filed.jsonl`), Undo puts its files back (`homelab media inbox undo <id>`).
+3. **Needs a look** (`claude/feature-tidy-needs`): what no engine could place, with why (`data/media-needs.json`); It's a film… / It's an episode… rename and file it (`inbox name`), Leave it (`inbox leave`), Show in Finder. Still to come: music with no tags (Name these songs: artist and album, matched online), and looking a typed title up online before filing.
+4. **Where should your libraries live?**: a first-time drive picker for the libraries' folders.
 
 ## The queue
 

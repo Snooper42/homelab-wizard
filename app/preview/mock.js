@@ -398,6 +398,13 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     TidyReview: () => later(M.tidyReview || []),
     TidyCover: () => later(''),
     TidyReveal: (path) => { M.revealed = path; return later(null); },
+    // The Inbox card: what it keeps (M.tidyInbox, each call) and the folder picker's answer (M.pickFolder, '' for cancelled).
+    TidySetInbox: (folders, when) => {
+      (M.tidyInbox ??= []).push({ folders, when });
+      M.tidy = { ...M.tidy, inbox: { ...M.tidy.inbox, folders, when } };
+      return later(M.tidy);
+    },
+    TidyPickFolder: () => later(M.pickFolder ?? ''),
     TidyStop: () => { M.tidyStopped = true; return later(null); },
     // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
     TidyLock: () => {

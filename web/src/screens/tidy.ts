@@ -47,6 +47,8 @@ function draw() {
         if (after && job?.ended?.ok) run(after.kind, after.action);
       },
       open: (url) => { Promise.resolve(go().Open(url)).catch(showError); },
+      inbox: (folders, when) => { Promise.resolve(go().TidySetInbox(folders, when)).then((d) => { tidyData.set(d); draw(); }).catch(showError); },
+      pickFolder: () => Promise.resolve(go().TidyPickFolder()).catch((e) => { showError(e); return ''; }),
     },
   });
   // The button that started a job waits while it runs, which takes the keyboard's place with it: it goes to the job's own button.

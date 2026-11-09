@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/media"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Tidy Up: the screen's data (internal/media, read without Python) and its
@@ -38,6 +39,8 @@ type TidyUp struct {
 	Freed     int64            `json:"freed"`
 	Checks    []media.Check    `json:"checks"`
 	Inbox     TidyInbox        `json:"inbox"`
+	// Today is what the inbox filed today, newest first (What I did today).
+	Today []media.Filed `json:"today"`
 	// Settings are the TIDY_ settings from .env, for the screen's words.
 	Settings map[string]string `json:"settings"`
 	// Reports is the folder the engines write their reports into.
@@ -80,11 +83,53 @@ type TidyLibrary struct {
 	Loose     int  `json:"loose,omitempty"`
 }
 
-// TidyInbox is the Downloads watcher.
+// TidyInbox is the Downloads watcher: the folders it watches (Gone: those
+// not there now, a drive unplugged), and When it files what's in them
+// (TIDY_INBOX_WHEN: arrive, daily, or manual).
 type TidyInbox struct {
 	Folders  []string   `json:"folders"`
+	Gone     []string   `json:"gone,omitempty"`
+	When     string     `json:"when"`
 	Watching bool       `json:"watching"`
 	Last     *media.Run `json:"last,omitempty"`
+}
+
+// inboxWhens are TIDY_INBOX_WHEN's choices; arrive when unset.
+var inboxWhens = []string{"arrive", "daily", "manual"}
+
+func inboxWhen(v string) string {
+	v = strings.ToLower(strings.TrimSpace(v))
+	if slices.Contains(inboxWhens, v) {
+		return v
+	}
+	return "arrive"
+}
+
+// TidySetInbox keeps the folders Tidy Up watches and when it files what's
+// in them (the Inbox card's Add, Remove, and when), in .env.
+func (a *App) TidySetInbox(folders []string, when string) (TidyUp, error) {
+	var keep []string
+	for _, f := range folders {
+		if f = strings.TrimSpace(f); f != "" && !slices.Contains(keep, f) {
+			keep = append(keep, f)
+		}
+	}
+	if len(keep) == 0 {
+		return TidyUp{}, errors.New("keep at least one folder for Tidy Up to watch")
+	}
+	if !slices.Contains(inboxWhens, when) {
+		return TidyUp{}, fmt.Errorf("when is arrive, daily, or manual, not %q", when)
+	}
+	if _, err := a.SaveSettings(map[string]string{"TIDY_INBOX_FOLDERS": strings.Join(keep, ";"), "TIDY_INBOX_WHEN": when}); err != nil {
+		return TidyUp{}, err
+	}
+	return a.TidyUp()
+}
+
+// TidyPickFolder opens the system's folder picker for a folder to watch;
+// "" when cancelled.
+func (a *App) TidyPickFolder() (string, error) {
+	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder for Tidy Up to watch", CanCreateDirectories: true})
 }
 
 // TidyUp reads Tidy Up's record, the lock, and what this machine has.
@@ -130,10 +175,16 @@ func (a *App) TidyUp() (TidyUp, error) {
 	out.Drive = mediaDrive(locs)
 	// Measured again in the background when older than six hours: the next read has them.
 	refreshSizes(home, present, 6*time.Hour, time.Now)
-	out.Inbox = TidyInbox{Folders: media.InboxFolders(env, home), Watching: !offSetting(env["TIDY_UP"]) && !offSetting(env["TIDY_INBOX"])}
+	out.Inbox = TidyInbox{Folders: media.InboxFolders(env, home), When: inboxWhen(env["TIDY_INBOX_WHEN"]), Watching: !offSetting(env["TIDY_UP"]) && !offSetting(env["TIDY_INBOX"])}
+	for _, f := range out.Inbox.Folders {
+		if _, err := os.Stat(f); err != nil {
+			out.Inbox.Gone = append(out.Inbox.Gone, f)
+		}
+	}
 	if r, ok := rec.Last["inbox"]["scan"]; ok {
 		out.Inbox.Last = &r
 	}
+	out.Today = media.FiledToday(a.root, time.Now())
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
 }
@@ -331,6 +382,9 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 	switch kind {
 	case "inbox":
 		cli = []string{"media", "inbox"}
+		if action == "undo" {
+			cli = append(cli, "undo")
+		}
 	case "scrubber":
 		cli = []string{"media", "scrub"}
 	case "tdarr":
@@ -370,6 +424,8 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 var (
 	tidyRunID = regexp.MustCompile(`^[a-z]+(-[a-z]+)+-[0-9]+$`)
 	tidyIDs   = regexp.MustCompile(`^[0-9]+(,[0-9]+)*$`)
+	// tidyFiledID is one line of What I did today (inbox.py's describe).
+	tidyFiledID = regexp.MustCompile(`^[0-9a-f]{12}$`)
 )
 
 func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
@@ -390,11 +446,14 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 		case kind == "trash" && tidyRunID.MatchString(a):
 			out = append(out, a)
 			runs++
+		case kind == "inbox" && action == "undo" && tidyFiledID.MatchString(a):
+			out = append(out, a)
+			runs++
 		default:
 			return nil, fmt.Errorf("Tidy Up doesn't run a job with %q", a)
 		}
 	}
-	if kind == "trash" && runs != 1 {
+	if (kind == "trash" || kind == "inbox" && action == "undo") && runs != 1 {
 		return nil, errors.New("Undo puts back one run at a time")
 	}
 	return out, nil

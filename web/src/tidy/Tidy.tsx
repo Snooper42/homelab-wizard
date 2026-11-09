@@ -54,6 +54,10 @@ export interface TidyActions {
   cover: (id: number, which: 'current' | 'new') => Promise<string>;
   /** Fetches ffmpeg (the check's Install); after: the job to run again once it's in. */
   install: (after?: { kind: string; action: string }) => void;
+  /** Keeps the folders Tidy Up watches and when it files what's in them (arrive, daily, manual). */
+  inbox: (folders: string[], when: string) => void;
+  /** The system's folder picker, for a folder to watch: '' when cancelled. */
+  pickFolder: () => Promise<string>;
   /** Opens a page in the browser (Calibre's download). */
   open: (url: string) => void;
 }
@@ -76,7 +80,7 @@ const titles: Record<string, string> = {
   'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
   'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
   'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library', 'inbox undo': 'Putting it back',
   'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
   'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
   'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
@@ -279,6 +283,7 @@ const looks: Record<string, { hue: Hue; icon: string }> = {
   audiobooks: { hue: 6, icon: 'M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z' },
   inbox: { hue: 3, icon: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3' },
   machine: { hue: 'muted', icon: 'M2 4h20v12H2zM8 20h8M12 16v4' },
+  folder: { hue: 5, icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
   lyrics: { hue: 5, icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
 };
 const LIBRARIES = ['music', 'movies', 'tv', 'books', 'audiobooks'] as const;
@@ -560,9 +565,8 @@ function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: T
     }
     return null;
   };
-  const check = !kind && <Go label="Check Downloads" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} title="New films, episodes, music, and books in Downloads are filed every minute by themselves" />;
   return (
-    <Widget title="Recently done" span={span} kind="fx-renewing tidydone" actions={check || undefined}>
+    <Widget title="Recently done" span={span} kind="fx-renewing tidydone">
       {items.length ? (
         <Rows kind="fx-rows tidydone">
           {items.map(({ a, i }) => {
@@ -633,6 +637,7 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
   // doing (the shelf), and what was done (beside the genres).
   return (
     <>
+      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /><TodayWidget d={d} job={job} act={act} /></div>
       <div class="fx-board tidytop">
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
@@ -648,6 +653,75 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
         <DoneWidget d={d} job={job} act={act} span={1} />
       </div>
     </>
+  );
+}
+
+/** When Tidy Up files what's in the watched folders (TIDY_INBOX_WHEN). */
+const WHENS: [string, string][] = [['arrive', 'As things arrive'], ['daily', 'Once a day, 3 AM'], ['manual', 'Only when I press it']];
+
+/** A folder's own name, the last part of its path. */
+const folderName = (p: string) => p.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || p;
+
+/**
+ * Drop anything here: the folders Tidy Up watches (Add, and Remove while another is left), when it files what's in them,
+ * and Tidy up now. Whatever lands in them, however messy, is worked out, cleaned up, and filed in its library.
+ */
+function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
+  const ib = d.inbox;
+  const folders = ib.folders || [];
+  const gone = new Set(ib.gone || []);
+  const when = ib.when || 'arrive';
+  const add = async () => {
+    const p = await act.pickFolder();
+    if (p && !folders.includes(p)) act.inbox([...folders, p], when);
+  };
+  // While a job runs (here or elsewhere), the card's controls wait, as every button on the screen does.
+  const other = useContext(Elsewhere);
+  const waits = busy(job) || !!other;
+  const state = (f: string) => gone.has(f) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when === 'manual' ? 'Tidied when you press Tidy up now' : when === 'daily' ? 'Tidied once a day, after 3 AM' : 'Watched: tidied as things arrive';
+  return (
+    <Widget title="Drop anything here" span="all" kind="tidyinbox">
+      <p class="muted tidyinboxlead">Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library.</p>
+      <fieldset class="tidyinboxset" disabled={waits}>
+      <Rows kind="fx-rows tidytodo">
+        {folders.map((f) => (
+          <Row key={f} lead={<LibIcon kind="folder" />} title={folderName(f)} sub={`${f} · ${state(f)}`} subTone={gone.has(f) ? 'warn' : undefined}
+            end={folders.length > 1 && <button class="small" aria-label={`Remove ${folderName(f)}`} onClick={() => act.inbox(folders.filter((x) => x !== f), when)}>Remove</button>} />
+        ))}
+        <Row lead={<LibIcon kind="inbox" />} title="Add a folder…" sub="Another folder, or a folder on a drive, for Tidy Up to watch" end={<button class="small" onClick={add}>Add…</button>} />
+      </Rows>
+      <div class="tidyinboxwhen">
+        <span class="muted">Tidy up</span>
+        <Segmented label="When Tidy Up files what's in these folders" value={when} pick={(v) => act.inbox(folders, v)} options={WHENS} />
+      </div>
+      </fieldset>
+      <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
+    </Widget>
+  );
+}
+
+/** A time of day as the clock reads it: 9:41 AM. */
+const clock = (at: string) => new Date(at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+/**
+ * What I did today: a plain line for each download the inbox filed, newest first: what it is, where it went, and what
+ * was done (tags, lyrics, the better copy kept, shrinking first). Undo puts its files back where they came from, and the
+ * inbox then leaves them there.
+ */
+function TodayWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
+  const today = d.today || [];
+  return (
+    <Widget title="What I did today" span="all" kind="tidytoday">
+      {today.length ? (
+        <Rows kind="fx-rows tidytoday">
+          {today.map((f) => (
+            <Row key={f.id} lead={<LibIcon kind={f.kind} />} title={f.title}
+              sub={f.undone ? 'Put back where it came from' : `${f.where} · ${(f.did || []).join(' · ')}`}
+              end={<>{f.undo && !f.undone && <Go label="Undo" job={job} title={`Put ${f.title} back where it came from`} onClick={() => act.run('inbox', 'undo', [f.id])} />}<span class="muted tidywhen">{clock(f.at)}</span></>} />
+          ))}
+        </Rows>
+      ) : <Empty>Nothing yet today. Drop something in a watched folder, or press Tidy up now.</Empty>}
+    </Widget>
   );
 }
 
@@ -875,7 +949,7 @@ export function TidyScreen(p: TidyProps) {
         <div><h1>Tidy Up</h1><p class="lead">{say || 'Your music, films, TV, books, and audiobooks: sorted, tagged, and lean'}</p></div>
         <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
       </div>
-      <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Overview'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
+      <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);

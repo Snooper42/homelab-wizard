@@ -381,6 +381,20 @@ func TestMediaTickRunsTheInboxOnlyWhenDownloadsChanged(t *testing.T) {
 	}
 }
 
+// What I did today's Undo runs inbox.py undo <id>, holding the lock: it
+// moves files, with no --apply to ask for.
+func TestMediaInboxUndo(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "undo", "ok": true}`}})
+	if out, code := homelabCmd(t, root, "", "media", "inbox", "undo", "0123456789ab"); code != 0 {
+		t.Fatalf("undo (exit %d):\n%s", code, out)
+	}
+	c := pythonCalls(t, calls)
+	if len(c) != 1 || !strings.Contains(fmt.Sprint(c[0]["args"]), "inbox.py undo 0123456789ab --config") {
+		t.Fatalf("undo: %v", c)
+	}
+}
+
 func TestScrubDue(t *testing.T) {
 	loc := time.Local
 	day := func(h, m int) time.Time { return time.Date(2026, 11, 3, h, m, 0, 0, loc) }
@@ -439,5 +453,52 @@ func TestALeftoverLockStopsNothing(t *testing.T) {
 	}
 	if c := pythonCalls(t, calls); len(c) != 1 || !strings.Contains(fmt.Sprint(c[0]["args"]), "inbox.py scan --apply") {
 		t.Fatalf("the inbox was not swept with a leftover lock: %v", c)
+	}
+}
+
+// Nov 8, the owner: Tidy Up runs "automatically once a day maybe, or
+// maybe even manually". TIDY_INBOX_WHEN: arrive (or unset) sweeps when the
+// watched folders change, as before; daily once after 03:00; manual only
+// on Tidy up now.
+func TestInboxDue(t *testing.T) {
+	loc := time.Local
+	day := func(h int) time.Time { return time.Date(2026, 11, 8, h, 0, 0, 0, loc) }
+	for _, c := range []struct {
+		when    string
+		changed bool
+		now     time.Time
+		last    time.Time
+		want    bool
+	}{
+		{"", true, day(9), day(8), true},
+		{"arrive", false, day(9), time.Time{}, false},
+		{"Arrive", true, day(9), day(8), true},
+		{"daily", true, day(2), day(1).AddDate(0, 0, -1), false},
+		{"daily", false, day(3), day(1).AddDate(0, 0, -1), true},
+		{"daily", true, day(9), day(3), false},
+		{"manual", true, day(9), time.Time{}, false},
+		{"something else", true, day(9), day(8), true},
+	} {
+		if got := inboxDue(c.when, c.changed, c.now, c.last); got != c.want {
+			t.Errorf("inboxDue(%q, changed %v, %v, last %v) = %v", c.when, c.changed, c.now, c.last, got)
+		}
+	}
+}
+
+// Only when I press it: a new download waits for Tidy up now.
+func TestMediaTickLeavesTheInboxWhenManual(t *testing.T) {
+	fakeDocker(t, nil)
+	root, calls := mediaHomelab(t, pythonFixture{Lines: []string{`{"type": "result", "action": "inbox", "ok": true, "filed": {}, "waiting": []}`}},
+		"TIDY_SCRUB=false", "TIDY_INBOX_WHEN=manual")
+	inbox := filepath.Join(t.TempDir(), "Downloads")
+	_ = os.MkdirAll(inbox, 0o755)
+	f, _ := os.ReadFile(filepath.Join(root, ".env"))
+	_ = os.WriteFile(filepath.Join(root, ".env"), append(f, []byte("TIDY_INBOX_FOLDERS="+inbox+"\n")...), 0o600)
+	_ = os.WriteFile(filepath.Join(inbox, "Heat.1995.mkv"), []byte("x"), 0o644)
+	if out, code := homelabCmd(t, root, "", "media", "tick"); code != 0 {
+		t.Fatalf("tick (exit %d):\n%s", code, out)
+	}
+	if c := pythonCalls(t, calls); len(c) != 0 {
+		t.Fatalf("swept with manual: %v", c)
 	}
 }
