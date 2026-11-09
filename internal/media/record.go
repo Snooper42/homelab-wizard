@@ -44,6 +44,13 @@ type Record struct {
 	InboxSeen string `json:"inboxSeen,omitempty"`
 	// DuplicatiPaused: the media lock paused Duplicati, so it resumes it.
 	DuplicatiPaused bool `json:"duplicatiPaused,omitempty"`
+	// TdarrUsed is when a job last needed Tdarr: it rests only once that is
+	// a while ago. TdarrResting: Tidy Up stopped it (data/stopped.json says
+	// "tidy"), to start it again for a job. TdarrLeftUp: someone started it
+	// while it rested, so it stays up until a job next uses it.
+	TdarrUsed    time.Time `json:"tdarrUsed,omitzero"`
+	TdarrResting bool      `json:"tdarrResting,omitempty"`
+	TdarrLeftUp  bool      `json:"tdarrLeftUp,omitempty"`
 }
 
 // Activity is one line of Tidy Up's Recent activity.
