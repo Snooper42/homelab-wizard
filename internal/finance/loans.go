@@ -28,6 +28,10 @@ type Payoff struct {
 	Never bool `json:"never,omitempty"`
 	// Path is its balance at the end of each month to zero.
 	Path []float64 `json:"path,omitempty"`
+	// A loan read from its papers (Account.FirstDue): each of its payments,
+	// first to last, and how many of them fell due before today.
+	Rows []Installment `json:"rows,omitempty"`
+	Made int           `json:"made,omitempty"`
 }
 
 // monthsOn is the month n months on from a day's (its first day): Oct 30
@@ -96,6 +100,19 @@ func loansNow(p Plan, start map[string]float64, today time.Time) []Payoff {
 			}
 		}
 		pay := Payoff{Account: a.ID, Balance: cents(bal), Rate: a.Rate, Monthly: cents(paid / 12)}
+		if rows, made, owed, ok := papers(p, a, today); ok {
+			// Read from its papers: what is left of them is its way to zero.
+			pay.Balance, pay.Monthly, pay.Rows, pay.Made = owed, papersMonthly(p, a, today), rows, made
+			if left := rows[made:]; len(left) > 0 {
+				last, _ := day(left[len(left)-1].Date, today.Location())
+				pay.Months, pay.Date, pay.Interest = len(left), last.Format("2006-01"), interestOf(left)
+				for _, x := range left {
+					pay.Path = append(pay.Path, x.After)
+				}
+			}
+			out = append(out, pay)
+			continue
+		}
 		if pay.Balance > 0.005 {
 			months, interest, path, done := amortize(pay.Balance, a.Rate, pay.Monthly)
 			if done {

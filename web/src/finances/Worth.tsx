@@ -106,7 +106,7 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup,
   const row = (a: finance.Account) => {
     const w = worthOf(v, a), d = w - worthOn(v, a, start.date);
     const loan = a.loan ? accounts.find((x) => x.id === a.loan) : undefined;
-    const paid = a.original ? Math.max(0, Math.min(1, (a.original - a.balance) / a.original)) : -1;
+    const paid = a.original ? Math.max(0, Math.min(1, (a.original - todayOf(v, a) / rateOf(v.plan, a)) / a.original)) : -1;
     // Kept in another currency: its own figure first, as the bank shows it.
     const own = a.currency ? `${moneyIn(Math.abs(todayOf(v, a)) / rateOf(v.plan, a), a.currency)} · ` : '';
     const sub = own + (loan ? `${money(todayOf(v, a) - todayOf(v, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a.currency ? moneyIn(a.original!, a.currency).replace(/\.\d\d$/, '') : whole(a.original)} paid` : a.kind === 'card' && a.pending ? `${moneyIn(a.pending, a.currency)} pending` : ago(a.updated, v.today));

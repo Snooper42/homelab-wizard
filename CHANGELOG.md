@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A loan read from its papers:** give a loan the day its first payment was due and each payment (and, if you like, how many there are and the finance charge) and Finances works out what it owes each day, taking each payment off the day after it's due, with no balance to type. Its card on Net worth shows a ring of the payments made (*3 of 36*), what's paid down of what you borrowed, the next payment split into what pays it down and its interest, who pays it each month, when it's half and wholly paid off, and every payment in a table. With the finance charge, the first payment carries the days before it, so the 36 come to your papers to the cent.
 - **Your last six months on Cash flow:** under the Dashboard's typical month, a bar of money in beside money out for each of the last six months your transactions cover; pick a month for its transactions.
 - **Spent this month on the Dashboard:** beside your latest transactions, a ring of what your transactions spent since the 1st by category, largest first; pick a category for this month's transactions of it.
 - **Latest transactions on the Dashboard:** Finances' Dashboard lists your five newest transactions, each opening its own form, with **See all** for Transactions.
