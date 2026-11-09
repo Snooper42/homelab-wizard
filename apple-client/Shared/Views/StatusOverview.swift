@@ -118,7 +118,7 @@ struct StatusHero: View {
 
 /// The app's everyday action (Start for a stopped one, Restart for one
 /// that isn't well) and Logs, as capsules.
-private struct HeroButtons: View {
+struct HeroButtons: View {
     let app: AppStatus
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
@@ -248,5 +248,104 @@ extension View {
         #else
         self
         #endif
+    }
+}
+
+// MARK: - The trimmed top (Nov 9)
+
+/// The top of Status as the owner trimmed it: one line when all is well
+/// ("All 47 apps are running"), or one card for what needs a look, with
+/// what's wrong in a sentence and its button. Nothing else above the apps.
+struct StatusTop: View {
+    let model: DashboardViewModel
+    /// Opens an app's page (Status's navigation path).
+    var open: @MainActor (AppStatus.ID) -> Void = { _ in }
+
+    var body: some View {
+        let headline = StatusHeadline(status: model.liveEvents.status)
+        if let app = model.app(id: headline.attentionID) {
+            StatusAlertCard(app: app, others: headline.attentionCount - 1) { open(app.id) }
+        } else if let health = model.healthLine, !health.isEmpty {
+            StatusAlertCard(app: nil, others: 0, words: health)
+        } else {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Design.running)
+                    .frame(width: 9, height: 9)
+                Text(verbatim: Self.line(model.liveEvents.status))
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                if let error = model.liveEvents.refreshError {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundStyle(Theme.warning)
+                        .accessibilityLabel(Text(verbatim: error))
+                }
+            }
+            .padding(.horizontal, 4)
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// "All 47 apps are running", or what keeps that from being true
+    /// without anything being wrong: "46 running, 1 stopped by you".
+    nonisolated static func line(_ status: HomelabStatus?) -> String {
+        guard let status else { return "Reading your apps…" }
+        let counted = status.apps.filter { !$0.awaitingJobs }
+        guard !counted.isEmpty else { return "No apps yet" }
+        let running = counted.filter(\.isRunning).count
+        if running == counted.count {
+            return counted.count == 1 ? "Your app is running" : "All \(counted.count) apps are running"
+        }
+        let stopped = counted.count - running
+        return "\(running) running, \(stopped) stopped by you"
+    }
+}
+
+/// What needs a look, as one card: the app's logo, "Needs a look", what's
+/// wrong in a sentence, then its everyday button and Open Its Page.
+struct StatusAlertCard: View {
+    let app: AppStatus?
+    /// How many more need a look besides it.
+    let others: Int
+    /// For a problem that's no app's (the health line): its words.
+    var words: String? = nil
+    /// Opens the app's page.
+    var open: @MainActor () -> Void = {}
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 11) {
+                if let app {
+                    AppIconView(app: app, size: 40, stateBadge: false)
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(others > 0 ? "\(others + 1) need a look" : "Needs a look")
+                        .font(.caption.weight(.bold))
+                        .textCase(.uppercase)
+                        .foregroundStyle(Theme.warning)
+                    Text(verbatim: app?.name ?? (words ?? ""))
+                        .font(.headline)
+                        .foregroundStyle(Theme.ink)
+                        .lineLimit(app == nil ? 3 : 1)
+                }
+            }
+            if let app {
+                Text(verbatim: app.detailLine)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryInk)
+                    .lineLimit(2)
+                HStack(spacing: 8) {
+                    HeroButtons(app: app)
+                    Button("Open Its Page") { open() }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.small)
+                    .font(.subheadline.weight(.semibold))
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 20)
     }
 }
