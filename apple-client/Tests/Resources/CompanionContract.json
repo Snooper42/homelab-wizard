@@ -1,0 +1,52 @@
+{
+  "me": {
+    "id": "a1b2c3",
+    "name": "Phone",
+    "canChange": true,
+    "finances": "edit",
+    "computer": {
+      "version": "1.2.3",
+      "methods": [
+        "Alerts",
+        "AppAction",
+        "AppIcon",
+        "Backups",
+        "Catalog",
+        "DuplicatiJobs",
+        "Finances",
+        "FinancesAddInvestment",
+        "FinancesChangeInvestment",
+        "FinancesDeleteInvestment",
+        "FinancesFindSymbol",
+        "FinancesInvestmentTrades",
+        "FinancesLedger",
+        "FinancesReadInvestments",
+        "FinancesReceipt",
+        "FinancesShared",
+        "FinancesWall",
+        "Homelab",
+        "Host",
+        "LastStatus",
+        "Logs",
+        "Protection",
+        "Report",
+        "SaveFinances",
+        "SaveFinancesLedger",
+        "SaveFinancesReceipt",
+        "SaveSettings",
+        "SavingsHistory",
+        "Screen",
+        "SetAppSetting",
+        "SetUpdatesPaused",
+        "Settings",
+        "Status",
+        "StatusBoard",
+        "StopUntil",
+        "Watchdog"
+      ],
+      "features": [
+        "tunnel"
+      ]
+    }
+  }
+}

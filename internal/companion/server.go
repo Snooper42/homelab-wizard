@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -54,6 +55,8 @@ type Method struct {
 type Server struct {
 	Store   *Store
 	Methods map[string]Method
+	// Version is this computer's Homelab Wizard version, as /api/me says it.
+	Version string
 	Files   fs.FS // the desktop app's frontend (web.Files)
 	// Changes are the engine's changes, streamed to paired phones at
 	// /api/events so Status updates as on the computer; nil leaves it out.
@@ -262,10 +265,40 @@ type Me struct {
 	// Person is the household member whose phone it is; "" for the owner's.
 	Person     string `json:"person,omitempty"`
 	PersonName string `json:"personName,omitempty"`
+	// Computer is what the computer can do; nil from one older than this.
+	Computer *Computer `json:"computer,omitempty"`
 }
+
+// Computer is what the computer can do (unison-handoff.md section 4, item
+// 3): its version, every call it answers, and what else it serves, so a
+// phone newer than the computer hides what the computer lacks and says
+// "Update Homelab Wizard on the computer" rather than failing. Which of
+// those this phone may make is still the computer's call on each request.
+type Computer struct {
+	Version string   `json:"version"`
+	Methods []string `json:"methods"`
+	// Features beyond the calls: "tunnel" (it answers /api/tunnel, away
+	// from home, once Setup has set it up).
+	Features []string `json:"features"`
+}
+
+// Features are what this companion serves beyond its methods.
+var Features = []string{"tunnel"}
 
 func meOf(d Device) Me {
 	return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Person: d.Person, PersonName: d.PersonName}
+}
+
+// MeFor is d's /api/me answer, with what this computer can do.
+func (s *Server) MeFor(d Device) Me {
+	m := meOf(d)
+	methods := make([]string, 0, len(s.Methods))
+	for name := range s.Methods {
+		methods = append(methods, name)
+	}
+	slices.Sort(methods)
+	m.Computer = &Computer{Version: s.Version, Methods: methods, Features: slices.Clone(Features)}
+	return m
 }
 
 type deviceKey struct{}
@@ -288,7 +321,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusUnauthorized, "this phone is not paired")
 		return
 	}
-	writeJSON(w, http.StatusOK, meOf(d))
+	writeJSON(w, http.StatusOK, s.MeFor(d))
 }
 
 func (s *Server) pair(w http.ResponseWriter, r *http.Request) {

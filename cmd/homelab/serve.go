@@ -55,7 +55,7 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	// One follower of the engine (the agent's, else the runtime's) for every phone.
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
-	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
+	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Version: version, Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
 		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember,
 		// Away from home through the tunnel (ADR-0023): Setup's "Reach
 		// Finances away from home" writes these; without them it's refused.

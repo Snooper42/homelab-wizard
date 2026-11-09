@@ -23,12 +23,14 @@ struct DeviceInfo: Codable, Sendable, Equatable {
     var person: String? = nil
     /// Their name, to show ("Sam's apps").
     var personName: String? = nil
+    /// What the computer can do; nil from a computer older than that.
+    var computer: ComputerInfo? = nil
 
     /// A household member's phone, not the owner's.
     var isMember: Bool { !(person ?? "").isEmpty }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, canChange, finances, person, personName
+        case id, name, canChange, finances, person, personName, computer
     }
 
     private enum MoreKeys: String, CodingKey { case paired, lastSeen, unencrypted }
@@ -41,6 +43,8 @@ struct DeviceInfo: Codable, Sendable, Equatable {
         finances = try c.decodeIfPresent(String.self, forKey: .finances)
         person = try c.decodeIfPresent(String.self, forKey: .person).flatMap { $0.isEmpty ? nil : $0 }
         personName = try c.decodeIfPresent(String.self, forKey: .personName).flatMap { $0.isEmpty ? nil : $0 }
+        // A part only shown: one that doesn't read costs nothing else.
+        computer = (try? c.decodeIfPresent(ComputerInfo.self, forKey: .computer)) ?? nil
         let more = try decoder.container(keyedBy: MoreKeys.self)
         paired = Self.time(more, .paired)
         lastSeen = Self.time(more, .lastSeen)
@@ -53,6 +57,35 @@ struct DeviceInfo: Codable, Sendable, Equatable {
         else { return nil }
         return date
     }
+}
+
+/// What the computer can do (`/api/me`'s `computer`, internal/companion's
+/// Computer): its version, every call it answers, and what else it serves
+/// ("tunnel"), so the app can hide what the computer lacks and say to update
+/// it rather than fail. Tests/Resources/CompanionContract.json is this as the
+/// computer gives it.
+struct ComputerInfo: Codable, Sendable, Equatable {
+    let version: String
+    let methods: [String]
+    let features: [String]
+
+    init(version: String, methods: [String], features: [String] = []) {
+        self.version = version
+        self.methods = methods
+        self.features = features
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decodeIfPresent(String.self, forKey: .version) ?? ""
+        methods = try c.decodeIfPresent([String].self, forKey: .methods) ?? []
+        features = try c.decodeIfPresent([String].self, forKey: .features) ?? []
+    }
+
+    private enum CodingKeys: String, CodingKey { case version, methods, features }
+
+    /// Whether the computer answers `method`.
+    func answers(_ method: String) -> Bool { methods.contains(method) }
 }
 
 /// `POST /api/pair` body. Go matches field names regardless of case.
