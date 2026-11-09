@@ -271,6 +271,16 @@ declare namespace app {
     free: number;
     total: number;
   }
+  interface TidyDriveChoice {
+    root: string;
+    name: string;
+    internal: boolean;
+    free: number;
+    total: number;
+    found: string[];
+    backups?: boolean;
+    current?: boolean;
+  }
   interface TidyInbox {
     folders: string[];
     gone?: string[];
@@ -291,6 +301,18 @@ declare namespace app {
     noCalibre?: boolean;
     loose?: number;
   }
+  interface TidyPlace {
+    root: string;
+    libraries: app.TidyPlaceShelf[];
+  }
+  interface TidyPlaceShelf {
+    kind: string;
+    folder: string;
+    found: boolean;
+    items: number;
+    calibre?: boolean;
+    own?: boolean;
+  }
   interface TidyRunning {
     lock?: media.Lock | null;
     now: media.Following;
@@ -305,6 +327,7 @@ declare namespace app {
     inbox: app.TidyInbox;
     today: media.Filed[];
     needs: media.Need[];
+    mediaRoot: string;
     settings: Record<string, string>;
     reports: string;
     trash: string;
@@ -1280,12 +1303,16 @@ interface Backend {
     TailnetDevices(): Promise<tailnet.Device[]>;
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
+    TidyDrives(): Promise<app.TidyDriveChoice[]>;
     TidyLock(): Promise<app.TidyRunning>;
     TidyPickFolder(): Promise<string>;
+    TidyPickMediaFolder(): Promise<string>;
+    TidyPlace(arg1: string): Promise<app.TidyPlace>;
     TidyReveal(arg1: string): Promise<void>;
     TidyReview(): Promise<app.TidyBook[]>;
     TidyRun(arg1: string, arg2: string, arg3: string[], arg4: boolean): Promise<void>;
     TidySetInbox(arg1: string[], arg2: string): Promise<app.TidyUp>;
+    TidySetMediaRoot(arg1: string): Promise<app.TidyUp>;
     TidyStop(): Promise<void>;
     TidyUp(): Promise<app.TidyUp>;
     TrayAtLogin(): Promise<boolean>;

@@ -4,6 +4,7 @@ import { jobTitle, mountTidy, mountTidySheet, tabNow, type TidyConfirm, type Tid
 import { store } from '../store';
 import { navigate } from '../app';
 import { showSettings } from './settings';
+import { cliFlow } from './status';
 import { $, errorText, go, showError } from '../core';
 
 export const tidyData = store(() => go().TidyUp());
@@ -11,6 +12,8 @@ let tab: TidyTab = 'overview';
 // A tab kept from before the tabs changed (New downloads, Lyrics) opens where those things are now.
 try { tab = tabNow(localStorage.getItem('homelab.tidyTab') || 'overview'); } catch { /* none */ }
 let job: TidyJob | null = null;
+// Where should your libraries live? is open (Change where your libraries live…, or a drive's Choose another…).
+let placing = false;
 let review: app.TidyBook[] | null = null;
 // Why the review couldn't be read (Calibre's database locked, say): said on Books, with Try again, never "every book looks tidy".
 let reviewError = '';
@@ -27,7 +30,7 @@ const FOLLOW_MS = 3000;
 function draw() {
   const d = tidyData.value || null;
   mountTidy($('tidyRoot'), {
-    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running,
+    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running, placing,
     reload: () => { tidyData.load(); },
     reloadReview: () => { loadReview(); },
     pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); },
@@ -49,6 +52,17 @@ function draw() {
       open: (url) => { Promise.resolve(go().Open(url)).catch(showError); },
       inbox: (folders, when) => { Promise.resolve(go().TidySetInbox(folders, when)).then((d) => { tidyData.set(d); draw(); }).catch(showError); },
       pickFolder: () => Promise.resolve(go().TidyPickFolder()).catch((e) => { showError(e); return ''; }),
+      places: (open) => { placing = open; if (open) { tab = 'overview'; } draw(); if (open) document.querySelector('#tidy .tidyplaces')?.scrollIntoView({ block: 'start' }); },
+      drives: () => Promise.resolve(go().TidyDrives()),
+      place: (root) => Promise.resolve(go().TidyPlace(root)),
+      pickMediaFolder: () => Promise.resolve(go().TidyPickMediaFolder()).catch((e) => { showError(e); return ''; }),
+      // Kept, then the apps that read the libraries are recreated on it: homelab fix lists them and asks first.
+      useMediaRoot: (root, name) => {
+        Promise.resolve(go().TidySetMediaRoot(root)).then((d) => {
+          placing = false; tidyData.set(d); draw();
+          cliFlow(`Use ${name}`, 'fix', '', 'Restart them');
+        }).catch(showError);
+      },
     },
   });
   // The button that started a job waits while it runs, which takes the keyboard's place with it: it goes to the job's own button.

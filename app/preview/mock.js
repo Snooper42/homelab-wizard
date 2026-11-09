@@ -405,6 +405,16 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       return later(M.tidy);
     },
     TidyPickFolder: () => later(M.pickFolder ?? ''),
+    // Where should your libraries live?: M.tidyDrives, M.tidyPlaces[root] (else each library new there), what was kept
+    // (M.mediaRoots, each call), and the folder picker's answer (M.pickMediaFolder).
+    TidyDrives: () => later(M.tidyDrives || []),
+    TidyPlace: (root) => later(M.tidyPlaces?.[root] || { root, libraries: ['music', 'books', 'movies', 'tv', 'audiobooks'].map((kind) => ({ kind, folder: root + '/' + (kind === 'books' ? 'Books' : kind), found: false, items: 0 })) }),
+    TidySetMediaRoot: (root) => {
+      (M.mediaRoots ??= []).push(root);
+      M.tidy = { ...M.tidy, mediaRoot: root };
+      return later(M.tidy);
+    },
+    TidyPickMediaFolder: () => later(M.pickMediaFolder ?? ''),
     TidyStop: () => { M.tidyStopped = true; return later(null); },
     // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
     TidyLock: () => {

@@ -223,3 +223,6 @@ func expand(p, home string) string {
 	}
 	return p
 }
+
+// Expand is a folder setting with ~ for the home folder resolved.
+func Expand(p, home string) string { return expand(p, home) }

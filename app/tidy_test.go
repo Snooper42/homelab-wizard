@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/core"
+	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/media"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -476,6 +477,86 @@ func TestTidySetInbox(t *testing.T) {
 	}
 	if p, err := a.TidyPickFolder(); err != nil || p != "/picked" || title != "Choose a folder for Tidy Up to watch" {
 		t.Errorf("picker: %q %v %q", p, err, title)
+	}
+}
+
+// Where should your libraries live?: each drive with where the libraries
+// would go on it (a Media folder in the home folder on this computer's own
+// disk), the libraries already there, the one Duplicati backs up to, and
+// the one they're on now; a drive's libraries one by one, a Calibre
+// library said; and the choice kept in .env, its folder made.
+func TestTidyPicksWhereTheLibrariesLive(t *testing.T) {
+	a, _ := testApp(t)
+	home, _ := os.UserHomeDir()
+	vols := t.TempDir()
+	hobbies, backup, fresh := filepath.Join(vols, "Hobbies"), filepath.Join(vols, "Backup"), filepath.Join(vols, "New")
+	for _, d := range []string{"music/Artist A", "music/Artist B", "music/.hidden", "Books/Author", "movies/Heat (1995)", "tv"} {
+		_ = os.MkdirAll(filepath.Join(hobbies, d), 0o755)
+	}
+	_ = os.WriteFile(filepath.Join(hobbies, "Books", "metadata.db"), nil, 0o644)
+	_ = os.MkdirAll(filepath.Join(backup, "duplicati"), 0o755)
+	_ = os.MkdirAll(fresh, 0o755)
+	saved := listDrives
+	defer func() { listDrives = saved }()
+	listDrives = func() []diskspace.Drive {
+		return []diskspace.Drive{{Path: "/", Internal: true, Free: 100, Total: 500},
+			{Path: backup, Name: "Backup", Free: 1, Total: 2}, {Path: hobbies, Name: "Hobbies", Free: 3, Total: 4}, {Path: fresh, Name: "New", Free: 5, Total: 6}}
+	}
+	if _, err := a.SaveSettings(map[string]string{"MEDIA_ROOT": hobbies, "BACKUP_DESTINATION": filepath.Join(backup, "duplicati")}); err != nil {
+		t.Fatal(err)
+	}
+	got := a.TidyDrives()
+	if len(got) != 4 || got[0].Root != filepath.Join(home, "Media") || got[0].Current || got[0].Backups {
+		t.Fatalf("this computer: %+v", got)
+	}
+	if !got[1].Backups || got[1].Current || got[3].Backups || len(got[3].Found) != 0 {
+		t.Errorf("the backup drive, a new one: %+v %+v", got[1], got[3])
+	}
+	if h := got[2]; !h.Current || h.Root != hobbies || strings.Join(h.Found, ",") != "music,books,movies,tv" {
+		t.Errorf("the drive they're on: %+v", h)
+	}
+	place, err := a.TidyPlace(hobbies)
+	if err != nil {
+		t.Fatal(err)
+	}
+	shelf := map[string]TidyPlaceShelf{}
+	for _, s := range place.Libraries {
+		shelf[s.Kind] = s
+	}
+	if m := shelf["music"]; !m.Found || m.Items != 2 || m.Folder != filepath.Join(hobbies, "music") {
+		t.Errorf("music: %+v", m)
+	}
+	if b := shelf["books"]; !b.Calibre || b.Items != 1 {
+		t.Errorf("books: %+v", b)
+	}
+	if ab := shelf["audiobooks"]; ab.Found || ab.Items != 0 {
+		t.Errorf("audiobooks, new: %+v", ab)
+	}
+	if _, err := a.TidyPlace("relative/folder"); err == nil {
+		t.Error("a folder that isn't a whole path")
+	}
+	up, err := a.TidySetMediaRoot(filepath.Join(home, "Media"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fi, err := os.Stat(filepath.Join(home, "Media")); err != nil || !fi.IsDir() || core.Env(a.root)["MEDIA_ROOT"] != filepath.Join(home, "Media") || up.MediaRoot != filepath.Join(home, "Media") {
+		t.Errorf("kept: %v %q %q", err, core.Env(a.root)["MEDIA_ROOT"], up.MediaRoot)
+	}
+	if _, err := a.TidySetMediaRoot(filepath.Join(vols, "Unplugged", "Media")); err == nil || !strings.Contains(err.Error(), "plug in") {
+		t.Errorf("a drive that isn't there: %v", err)
+	}
+	if _, err := a.TidySetMediaRoot("Media"); err == nil {
+		t.Error("a folder that isn't a whole path")
+	}
+	sd := directoryDialog
+	defer func() { directoryDialog = sd }()
+	var title string
+	directoryDialog = func(_ context.Context, o runtime.OpenDialogOptions) (string, error) {
+		title = o.Title
+		return "/picked", nil
+	}
+	if p, _ := a.TidyPickMediaFolder(); p != "/picked" || title != "Choose the folder for your libraries" {
+		t.Errorf("picker: %q %q", p, title)
 	}
 }
 

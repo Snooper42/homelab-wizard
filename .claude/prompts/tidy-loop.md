@@ -84,10 +84,23 @@ When the queue is empty, and at least every fifth round regardless, look Tidy Up
 
 The owner's vision: drop messy files of any kind (untagged music, films, shows, books, audiobooks) in a watched folder or on a drive, and Tidy Up works out what each is, tags it, adds lyrics, checks for duplicates, and files it, by itself (as things arrive, or once a day) or when pressed, in words a household member who isn't technical can follow. They approved the mockup ("I love it. Yes. build that out") and asked for it in pieces, each its own PR:
 
-1. **Inbox home** (#521): Drop anything here: the watched folders (Add…, Remove), when it tidies (`TIDY_INBOX_WHEN`: arrive, daily, manual), Tidy up now.
-2. **What I did today + Undo** (`claude/feature-tidy-today`): a plain line for each download filed (`data/media-filed.jsonl`), Undo puts its files back (`homelab media inbox undo <id>`).
-3. **Needs a look** (`claude/feature-tidy-needs`): what no engine could place, with why (`data/media-needs.json`); It's a film… / It's an episode… rename and file it (`inbox name`), Leave it (`inbox leave`), Show in Finder. Still to come: music with no tags (Name these songs: artist and album, matched online), and looking a typed title up online before filing.
-4. **Where should your libraries live?**: a first-time drive picker for the libraries' folders.
+1. (done: #521) **Inbox home**: Drop anything here: the watched folders (Add…, Remove), when it tidies (`TIDY_INBOX_WHEN`: arrive, daily, manual), Tidy up now.
+2. (done: #524) **What I did today + Undo**: a plain line for each download filed (`data/media-filed.jsonl`), Undo puts its files back (`homelab media inbox undo <id>`).
+3. (done: #526) **Needs a look**: what no engine could place, with why (`data/media-needs.json`); It's a film… / It's an episode… rename and file it (`inbox name`), Leave it (`inbox leave`), Show in Finder.
+4. (done: #529) **Where should your libraries live?**: the first time, and from Change where your libraries live… or Choose another…: each drive (`diskspace.Drives`) with its space and the libraries on it, each library's folder on the one picked, Use it keeps `MEDIA_ROOT` and runs the Fix it flow (the apps that read the libraries recreated after asking). No per-library Change…: the apps mount each library from `MEDIA_ROOT`'s own subfolders.
+
+Next, in this order, each its own PR (mockups exist for the first two, in the Nov 8 session's scratchpad; make new ones with the real app if they're gone):
+
+5. **Name these songs**: music with no tags and no match. A sheet asks the artist and album, looks the album up (MusicBrainz, as beets does), shows the matches (*Rumours · Fleetwood Mac · 1977 · 11 tracks*), and files the songs as that album. Needs a look already lists the download (kind music); add the button and an `inbox name <path> album "<artist>" "<album>"`.
+6. **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
+7. **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
+
+Lessons from pieces 1–4, for whoever builds the next:
+- A button the mock app accepts can still be refused by the app: `TestTidyArgsTakeEveryJobTheScreenSends` fills in each new job's arguments, and the CLI's `homelab media inbox` routes every inbox action (Undo was a preview until #524).
+- Whole paths in the app's tests are `C:\...` on Windows (the `vid` and `show` helpers in `app/tidy_test.go`).
+- `make check` doesn't run the coverage floors; run `make coverage` before pushing new code in a package with a high floor (internal/diskspace is 91%).
+- A sheet's boxes update from the latest values (`setTyped((t) => ({ ...t, ... }))`): fixed in v0.27.4 after typing fast in two boxes wiped the first.
+- Every new button on the Inbox waits while a job runs; the running-job smoke case fails on any enabled button in `.fx-board`.
 
 ## The queue
 

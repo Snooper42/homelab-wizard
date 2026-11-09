@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Where should your libraries live?:** the first time, Tidy Up shows your computer's disk and each drive plugged in, with its space and the libraries already on it, and where each library would go. Pick one (or another folder, such as a NAS), and Tidy Up keeps it and restarts the apps that read your libraries, after listing them. Nothing is moved or copied. **Change where your libraries live…** on the Inbox opens it again.
 - **A loan read from its papers:** give a loan the day its first payment was due and each payment (and, if you like, how many there are and the finance charge) and Finances works out what it owes each day, taking each payment off the day after it's due, with no balance to type. Its card on Net worth shows a ring of the payments made (*3 of 36*), what's paid down of what you borrowed, the next payment split into what pays it down and its interest, who pays it each month, when it's half and wholly paid off, and every payment in a table. With the finance charge, the first payment carries the days before it, so the 36 come to your papers to the cent.
 - **Your last six months on Cash flow:** under the Dashboard's typical month, a bar of money in beside money out for each of the last six months your transactions cover; pick a month for its transactions.
 - **Spent this month on the Dashboard:** beside your latest transactions, a ring of what your transactions spent since the 1st by category, largest first; pick a category for this month's transactions of it.
@@ -186,6 +187,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **What you own and owe in a small window:** at the largest text sizes, an account's change since the start (*↓ $5.60k*) squeezed its name to a word a line (*Toyot / a / Finan / cial*). In a narrow list the change now steps aside, as the Since card above sums it up.
 - **Tidy Up's Which film? and Which show?:** typing in two boxes quickly could wipe what was in the first, leaving **File it** greyed out. Each box now keeps what the others hold.
 - **Tidy Up's questions start empty at once:** opening Which film? or Which show? cleared its boxes a moment after it appeared, so anything typed in that moment (on a busy computer, a word or two) was wiped and **File it** stayed greyed out. Each question now starts empty as it's drawn.
 - **Shares in parts of one:** a holding added with *11.038* shares went into Ghostfolio as 11,038, read as a thousands mark, so a share showed as worth $0.60. Shares now take as many decimals as you type, and the form says what each comes to (*11.038 shares at $602.77 each*) before it goes. A holding Ghostfolio has no prices for yet no longer shows *You paid $0.00* and what you paid as its worth: what you paid is read from its buys and sales, its worth is today's price Ghostfolio looks up (its details say so), and Ghostfolio is asked to gather the symbol's prices, also as soon as a holding is added.

@@ -43,6 +43,8 @@ type TidyUp struct {
 	Today []media.Filed `json:"today"`
 	// Needs is what the inbox couldn't place, or Undo put back (Needs a look).
 	Needs []media.Need `json:"needs"`
+	// MediaRoot is where the libraries live (MEDIA_ROOT, resolved).
+	MediaRoot string `json:"mediaRoot"`
 	// Settings are the TIDY_ settings from .env, for the screen's words.
 	Settings map[string]string `json:"settings"`
 	// Reports is the folder the engines write their reports into.
@@ -188,6 +190,7 @@ func (a *App) TidyUp() (TidyUp, error) {
 	}
 	out.Today = media.FiledToday(a.root, time.Now())
 	out.Needs = media.NeedsLook(a.root)
+	out.MediaRoot = mediaRoot(env, home)
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
 }
@@ -737,4 +740,148 @@ func needsListed(root, path string) bool {
 		}
 	}
 	return false
+}
+
+// TidyDriveChoice is a drive the libraries could live on, for Where should your
+// libraries live?
+type TidyDriveChoice struct {
+	// Root is where the libraries would go on it: the drive's top, a Media
+	// folder in your home on this computer's own disk, or where they are now.
+	Root     string `json:"root"`
+	Name     string `json:"name"`
+	Internal bool   `json:"internal"`
+	Free     uint64 `json:"free"`
+	Total    uint64 `json:"total"`
+	// Found is the libraries already there: music, movies, tv, books, audiobooks.
+	Found []string `json:"found"`
+	// Backups: Duplicati backs up to it, so the libraries stay off it.
+	Backups bool `json:"backups,omitempty"`
+	// Current: the libraries live on it now.
+	Current bool `json:"current,omitempty"`
+}
+
+// TidyPlace is where each library would be were the libraries at Root.
+type TidyPlace struct {
+	Root      string           `json:"root"`
+	Libraries []TidyPlaceShelf `json:"libraries"`
+}
+
+// TidyPlaceShelf is one library's folder in a TidyPlace.
+type TidyPlaceShelf struct {
+	Kind   string `json:"kind"`
+	Folder string `json:"folder"`
+	Found  bool   `json:"found"`
+	// Items is what's directly in it (artists, films, shows, authors); 0 when it's new.
+	Items int `json:"items"`
+	// Calibre: a Calibre library (metadata.db).
+	Calibre bool `json:"calibre,omitempty"`
+	// Own: kept where TIDY_<KIND>_LIBRARY says, whichever drive is picked.
+	Own bool `json:"own,omitempty"`
+}
+
+// listDrives is diskspace.Drives; tests replace it.
+var listDrives = diskspace.Drives
+
+func mediaRoot(env map[string]string, home string) string {
+	return filepath.Dir(media.Library(map[string]string{"MEDIA_ROOT": env["MEDIA_ROOT"]}, home, "music"))
+}
+
+// under: p is dir or in it.
+func under(p, dir string) bool {
+	p, dir = filepath.Clean(p), filepath.Clean(dir)
+	return p == dir || strings.HasPrefix(p, strings.TrimSuffix(dir, string(filepath.Separator))+string(filepath.Separator))
+}
+
+// TidyDrives lists this computer's own disk and every drive plugged in,
+// with their space, where the libraries would go on each, which libraries
+// are there already, the one Duplicati backs up to, and the one they're on.
+func (a *App) TidyDrives() []TidyDriveChoice {
+	env := core.Env(a.root)
+	home, _ := os.UserHomeDir()
+	now := mediaRoot(env, home)
+	backup := ""
+	if b := strings.TrimSpace(env["BACKUP_DESTINATION"]); b != "" {
+		backup = media.Expand(b, home)
+	}
+	drives := listDrives()
+	out := []TidyDriveChoice{}
+	for i, d := range drives {
+		t := TidyDriveChoice{Name: d.Name, Internal: d.Internal, Free: d.Free, Total: d.Total, Root: d.Path, Found: []string{}}
+		if d.Internal {
+			t.Root = filepath.Join(home, "Media")
+		}
+		// The libraries are on this drive now, and not on one mounted inside it.
+		onIt := under(now, d.Path) && !slices.ContainsFunc(drives[i+1:], func(o diskspace.Drive) bool { return under(now, o.Path) })
+		if onIt {
+			t.Root, t.Current = now, true
+		}
+		t.Backups = !d.Internal && backup != "" && under(backup, d.Path)
+		for _, k := range media.Kinds {
+			if fi, err := os.Stat(media.Library(map[string]string{"MEDIA_ROOT": t.Root}, home, k)); err == nil && fi.IsDir() {
+				t.Found = append(t.Found, k)
+			}
+		}
+		out = append(out, t)
+	}
+	return out
+}
+
+// TidyPlace says where each library would be were the libraries at root,
+// and what is in each folder already.
+func (a *App) TidyPlace(root string) (TidyPlace, error) {
+	if !filepath.IsAbs(root) {
+		return TidyPlace{}, errors.New("choose a folder or a drive")
+	}
+	env := core.Env(a.root)
+	home, _ := os.UserHomeDir()
+	out := TidyPlace{Root: filepath.Clean(root)}
+	for _, k := range media.Kinds {
+		own := strings.TrimSpace(env["TIDY_"+strings.ToUpper(k)+"_LIBRARY"]) != ""
+		e := map[string]string{"MEDIA_ROOT": out.Root}
+		if own {
+			e["TIDY_"+strings.ToUpper(k)+"_LIBRARY"] = env["TIDY_"+strings.ToUpper(k)+"_LIBRARY"]
+		}
+		s := TidyPlaceShelf{Kind: k, Folder: media.Library(e, home, k), Own: own}
+		if entries, err := os.ReadDir(s.Folder); err == nil {
+			s.Found = true
+			for _, en := range entries {
+				if en.IsDir() && !strings.HasPrefix(en.Name(), ".") {
+					s.Items++
+				}
+			}
+			if _, err := os.Stat(filepath.Join(s.Folder, "metadata.db")); err == nil {
+				s.Calibre = true
+			}
+		}
+		out.Libraries = append(out.Libraries, s)
+	}
+	return out, nil
+}
+
+// TidySetMediaRoot keeps where the libraries live (MEDIA_ROOT in .env),
+// making the folder when its drive is there. The apps that read the
+// libraries run on the old folder until they're recreated: the screen
+// runs homelab fix next, which lists them and asks first.
+func (a *App) TidySetMediaRoot(root string) (TidyUp, error) {
+	root = strings.TrimSpace(root)
+	if !filepath.IsAbs(root) {
+		return TidyUp{}, errors.New("choose a folder or a drive")
+	}
+	root = filepath.Clean(root)
+	if _, err := os.Stat(filepath.Dir(root)); err != nil {
+		return TidyUp{}, fmt.Errorf("%s isn't there: plug in its drive", filepath.Dir(root))
+	}
+	if err := os.MkdirAll(root, 0o755); err != nil {
+		return TidyUp{}, err
+	}
+	if _, err := a.SaveSettings(map[string]string{"MEDIA_ROOT": root}); err != nil {
+		return TidyUp{}, err
+	}
+	return a.TidyUp()
+}
+
+// TidyPickMediaFolder opens the system's folder picker for the libraries'
+// folder (Another folder…); "" when cancelled.
+func (a *App) TidyPickMediaFolder() (string, error) {
+	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose the folder for your libraries", CanCreateDirectories: true})
 }

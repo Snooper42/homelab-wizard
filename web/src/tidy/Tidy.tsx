@@ -6,7 +6,7 @@
 // components only draw, and say what a click wants (run, confirm, reveal).
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
-import { osName } from '../core';
+import { osName, thisMachine } from '../core';
 import { ago } from '../format';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -61,6 +61,16 @@ export interface TidyActions {
   pickFolder: () => Promise<string>;
   /** Opens a page in the browser (Calibre's download). */
   open: (url: string) => void;
+  /** Where should your libraries live?: opens it (Change where your libraries live…) or closes it. */
+  places: (open: boolean) => void;
+  /** This computer's disk and the drives plugged in, for the libraries. */
+  drives: () => Promise<app.TidyDriveChoice[]>;
+  /** Where each library would be, were the libraries at root. */
+  place: (root: string) => Promise<app.TidyPlace>;
+  /** Keeps where the libraries live, then recreates the apps that read them (homelab fix, which lists them and asks). */
+  useMediaRoot: (root: string, name: string) => void;
+  /** The system's folder picker, for Another folder…: '' when cancelled. */
+  pickMediaFolder: () => Promise<string>;
 }
 
 /** A question before a step that changes something. */
@@ -247,17 +257,13 @@ function installFix(job: TidyJob, d: app.TidyUp | null | undefined, act: TidyAct
 
 /** The question before a step that changes something, in a sheet. */
 export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () => void }) {
-  // What's typed and the first click of a twice belong to the question they were for: a new question starts empty in
-  // the very render that draws it. (Cleared in an effect instead, it emptied the boxes a frame later, over anything
-  // typed in between, and File it stayed greyed out.)
-  type Form = { for: TidyConfirm | null; sure: boolean; typed: Record<string, string> };
-  const fresh = (): Form => ({ for: c, sure: false, typed: {} });
-  const [kept, setForm] = useState<Form>(fresh);
-  const form = kept.for === c ? kept : fresh();
-  const change = (f: (s: Form) => Partial<Form>) => setForm((s) => { const b = s.for === c ? s : fresh(); return { ...b, ...f(b) }; });
-  const { sure, typed } = form;
-  const setSure = (v: boolean) => change(() => ({ sure: v }));
-  const setTyped = (f: (t: Record<string, string>) => Record<string, string>) => change((s) => ({ typed: f(s.typed) }));
+  const [sure, setSure] = useState(false);
+  // What's typed belongs to the question it was typed for: a new question starts empty at once, with no effect after
+  // the sheet shows that could wipe what was already typed (a busy machine ran it after the first keys, and File it stayed grey).
+  const [entry, setEntry] = useState<{ c: TidyConfirm | null; v: Record<string, string> }>({ c: null, v: {} });
+  const typed = entry.c === c ? entry.v : {};
+  const type = (key: string, v: string) => setEntry((e) => ({ c, v: { ...(e.c === c ? e.v : {}), [key]: v } }));
+  useEffect(() => setSure(false), [c]);
   const val = (f: TidyField) => (typed[f.key] || '').trim();
   const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
   return (
@@ -271,7 +277,7 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
           {c.fields.map((f) => (
             <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if known)</span>}
               <input value={typed[f.key] || ''} inputMode={f.number ? 'numeric' : undefined} maxLength={f.number ? 4 : 200}
-                onInput={(e) => { const v = (e.target as HTMLInputElement).value; setTyped((t) => ({ ...t, [f.key]: v })); }} /></label>
+                onInput={(e) => type(f.key, (e.target as HTMLInputElement).value)} /></label>
           ))}
         </div>
       )}
@@ -315,6 +321,7 @@ const looks: Record<string, { hue: Hue; icon: string }> = {
   audiobooks: { hue: 6, icon: 'M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z' },
   inbox: { hue: 3, icon: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3' },
   machine: { hue: 'muted', icon: 'M2 4h20v12H2zM8 20h8M12 16v4' },
+  drive: { hue: 3, icon: 'M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zM6 16h.01M10 16h.01' },
   folder: { hue: 5, icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
   lyrics: { hue: 5, icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
 };
@@ -650,7 +657,7 @@ function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null
   const listed = (ls: app.TidyLibrary[]) => { const w = ls.map((l) => names[l.kind]); return w.length === 1 ? w[0] : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1]; };
   const plug: Todo[] = drive ? [{ kind: 'machine', warn: true, title: `Plug in ${drive.name.replace(/^The /, 'the ')}`,
     sub: `${onIt.length ? `${listed(onIt)} ${onIt.length === 1 ? 'is' : 'are'} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
-    go: { label: 'Choose folder…', run: () => act.settings(['MEDIA_ROOT']), quiet: true } }] : [];
+    go: { label: 'Choose another…', run: () => act.places(true), quiet: true } }] : [];
   const gone: Todo[] = away.filter((l) => !onIt.includes(l)).map((l) => ({ kind: l.kind, title: `${names[l.kind]}: its drive isn't plugged in`, sub: `${l.folder} could not be found. It shows up here again once it's back.`, warn: true }));
   // A tool only a library that's away needs waits for it: with the drive unplugged, only Python is asked for.
   const here = new Set(d.libraries.filter((l) => l.found).map((l) => l.kind));
@@ -660,7 +667,10 @@ function needsFor(d: app.TidyUp, act: TidyActions, review: app.TidyBook[] | null
   return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k) => todosFor(lib(d, k), d, act, review, pick)), ...gone];
 }
 
-function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void }) {
+function Overview({ d, job, act, review, pick, placing }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; review: app.TidyBook[] | null; pick: (t: TidyTab) => void; placing?: boolean }) {
+  // The first time (no library anywhere, and no drive Tidy Up waits for), or when asked: where the libraries live, first.
+  const first = d.libraries.every((l) => !l.found) && !d.checks.some((c) => c.id === 'drive' && !c.ok);
+  if (first || placing) return <div class="fx-board"><PlacesWidget d={d} job={job} act={act} first={first && !placing} /></div>;
   const todos = needsFor(d, act, review, pick);
   // What waits on you: the things with a button (a drive away or a tool missing is said, not counted), as the heading counts.
   const waiting = todos.filter((t) => t.go).length;
@@ -728,6 +738,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
       </div>
       </fieldset>
       <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
+      <p class="tidyinboxwhere muted">Your libraries live in {d.mediaRoot}. <button type="button" class="linkbtn" disabled={waits} title={waits ? "Waits for the job to finish" : undefined} onClick={() => act.places(true)}>Change where your libraries live…</button></p>
     </Widget>
   );
 }
@@ -740,6 +751,89 @@ const clock = (at: string) => new Date(at).toLocaleTimeString('en-US', { hour: '
  * was done (tags, lyrics, the better copy kept, shrinking first). Undo puts its files back where they came from, and the
  * inbox then leaves them there.
  */
+/** What a library's folders are, counted: artists in music, films, shows, authors. */
+const shelfUnit: Record<string, [string, string]> = { music: ['artist', 'artists'], movies: ['film', 'films'], tv: ['show', 'shows'], books: ['author', 'authors'], audiobooks: ['author', 'authors'] };
+const kindWords: Record<string, string> = { music: 'music', movies: 'films', tv: 'TV', books: 'books', audiobooks: 'audiobooks' };
+const listWords = (w: string[]) => w.length < 2 ? w.join('') : w.slice(0, -1).join(', ') + ' and ' + w[w.length - 1];
+
+/** Where should your libraries live?: this computer's disk and each drive plugged in (its space, what's on it), or
+ * another folder; then where each library would be on the one picked, and Use it. Saving keeps MEDIA_ROOT and runs
+ * homelab fix, which lists the apps that read the libraries and recreates them once, after asking. Nothing is moved. */
+function PlacesWidget({ d, job, act, first }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; first: boolean }) {
+  const [drives, setDrives] = useState<app.TidyDriveChoice[] | null>(null);
+  const [picked, setPicked] = useState('');
+  const [place, setPlace] = useState<app.TidyPlace | null>(null);
+  useEffect(() => {
+    act.drives().then((ds) => {
+      setDrives(ds);
+      // The one they're on, else one with libraries already, else the roomiest drive plugged in, else this computer.
+      const pick = ds.find((x) => x.current) || ds.find((x) => x.found.length && !x.backups) || [...ds].filter((x) => !x.internal && !x.backups).sort((a, b) => b.free - a.free)[0] || ds[0];
+      if (pick) setPicked(pick.root);
+    }).catch(() => setDrives([]));
+  }, []);
+  useEffect(() => {
+    setPlace(null);
+    if (picked) act.place(picked).then(setPlace).catch(() => setPlace(null));
+  }, [picked]);
+  const label = (x: app.TidyDriveChoice) => x.internal ? thisMachine : x.name;
+  const chosen = drives?.find((x) => x.root === picked);
+  const other = async () => {
+    const p = await act.pickMediaFolder();
+    if (!p) return;
+    if (!drives?.some((x) => x.root === p)) setDrives([...(drives || []), { root: p, name: p.split(/[\\/]/).filter(Boolean).pop() || p, internal: false, free: 0, total: 0, found: [] }]);
+    setPicked(p);
+  };
+  const note = (x: app.TidyDriveChoice) => {
+    const free = x.total ? `${size(x.free)} free. ` : '';
+    if (x.backups) return 'Duplicati backs up to it, so your libraries stay off it';
+    if (x.current) return `${free}Your libraries are here now`;
+    if (x.found.length) return `${free}Your ${listWords(x.found.map((k) => kindWords[k]))} ${x.found.length === 1 && x.found[0] !== 'books' && x.found[0] !== 'films' ? 'is' : 'are'} already here`;
+    if (x.internal) return `${free}It fills up fast: better for a few things`;
+    return x.total ? `${free}Nothing here yet` : 'A folder you chose';
+  };
+  return (
+    <Widget title="Where should your libraries live?" span="all" kind="tidyplaces">
+      <p class="muted tidyinboxlead">{first ? "Pick the drive for your music, films, shows, books, and audiobooks. Tidy Up looks for libraries already on it, and files everything new there. You can change this later." : 'Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Tidy Up and your apps look there from now on.'}</p>
+      {!drives ? <Empty>Looking at your drives…</Empty> : (
+        <div class="tidydrives" role="radiogroup" aria-label="Where your libraries live">
+          {drives.map((x) => (
+            <button key={x.root} role="radio" aria-checked={x.root === picked} class={'tidydrive' + (x.root === picked ? ' picked' : '')} disabled={x.backups} onClick={() => setPicked(x.root)}>
+              <LibIcon kind={x.internal ? 'machine' : 'drive'} />
+              <span class="tidydrivetext">
+                <strong>{label(x)}</strong>
+                <span class="muted">{x.internal ? `This computer's own disk${x.total ? ' · ' + size(x.total) : ''}` : x.total ? `Drive · ${size(x.total)}` : x.root}</span>
+                {!!x.total && <span class="tidydrivebar" aria-hidden="true"><span style={{ width: `${Math.round(100 * (x.total - x.free) / x.total)}%` }} /></span>}
+                <span class="tidydrivenote">{note(x)}</span>
+              </span>
+            </button>
+          ))}
+          <button class="tidydrive" onClick={other}>
+            <LibIcon kind="folder" />
+            <span class="tidydrivetext"><strong>Another folder…</strong><span class="muted">A folder on any drive, or on the network</span><span class="tidydrivenote">For a NAS, or one folder for everything</span></span>
+          </button>
+        </div>
+      )}
+      {chosen && place && (
+        <>
+          <h3 class="tidyplacehead">On {label(chosen)}, each library goes here</h3>
+          <Rows kind="fx-rows tidytodo">
+            {place.libraries.map((s) => (
+              <Row key={s.kind} lead={<LibIcon kind={s.kind} />} title={names[s.kind]}
+                sub={`${s.folder} · ${s.own ? 'kept where you set it in Settings' : !s.found ? 'new: made when the first one arrives' : s.calibre ? `a Calibre library, ${count(s.items, 'author')}` : s.items ? `found ${count(s.items, shelfUnit[s.kind][0], shelfUnit[s.kind][1])}` : 'found, empty'}`} />
+            ))}
+          </Rows>
+        </>
+      )}
+      <div class="tidyplacego">
+        {chosen?.current ? <span class="muted">Your libraries are here now.</span>
+          : <Go primary label={chosen ? `Use ${label(chosen)}` : 'Use it'} job={job} onClick={() => chosen && act.useMediaRoot(chosen.root, label(chosen))} />}
+        {!first && <button class="small" onClick={() => act.places(false)}>{chosen?.current ? 'Close' : 'Cancel'}</button>}
+      </div>
+      {!chosen?.current && <p class="muted tidyplacenote">Jellyfin, Navidrome, Calibre-Web and your other apps that read the libraries restart once, so they look there. Tidy Up lists them and asks first. Nothing is moved or copied.</p>}
+    </Widget>
+  );
+}
+
 /** The file manager's name, for its button. */
 const showIn = osName === 'mac' ? 'Show in Finder' : osName === 'windows' ? 'Show in Explorer' : 'Show the folder';
 
@@ -1001,6 +1095,8 @@ export interface TidyProps {
   reload?: () => void;
   /** Reads the books' review again. */
   reloadReview?: () => void;
+  /** Where should your libraries live? is open (Change where your libraries live…, or Choose folder…). */
+  placing?: boolean;
 }
 
 /** A tab kept from before (New downloads, Lyrics) opens where those things are now. */
@@ -1032,7 +1128,7 @@ export function TidyScreen(p: TidyProps) {
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
         <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action) : ''}>
           <div class="finbody tidybody">
-            {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} />
+            {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} placing={p.placing} />
               : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} reviewError={p.reviewError} reloadReview={p.reloadReview} skip={p.skip} toggle={p.toggle} pick={p.pick} />}
           </div>
         </Elsewhere.Provider>
