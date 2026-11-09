@@ -132,6 +132,9 @@ func Describe(kind string, run Run) (text, sub string) {
 			// paused on battery, or stopped) makes no line each time; the
 			// tab says Tdarr isn't answering.
 			return "", ""
+		case kind == "inbox" && run.Action == "name":
+			// It stays in Needs a look, which says why.
+			return "Couldn't file it as you named it", run.Why
 		}
 		if run.Why != "" {
 			return title(kind) + ": " + run.Action + " stopped", run.Why
@@ -164,6 +167,10 @@ func Describe(kind string, run Run) (text, sub string) {
 		return "Books tidied", plural(num(res["changed"]), "book") + " · " + plural(num(res["covers"]), "cover")
 	case "inbox undo":
 		return "Put back where it came from", ""
+	case "inbox name":
+		return "Filed as you named it", ""
+	case "inbox leave":
+		return "Left where it is", ""
 	case "books build":
 		if applied, _ := res["applied"].(bool); !applied {
 			return "", ""

@@ -41,6 +41,8 @@ type TidyUp struct {
 	Inbox     TidyInbox        `json:"inbox"`
 	// Today is what the inbox filed today, newest first (What I did today).
 	Today []media.Filed `json:"today"`
+	// Needs is what the inbox couldn't place, or Undo put back (Needs a look).
+	Needs []media.Need `json:"needs"`
 	// Settings are the TIDY_ settings from .env, for the screen's words.
 	Settings map[string]string `json:"settings"`
 	// Reports is the folder the engines write their reports into.
@@ -185,6 +187,7 @@ func (a *App) TidyUp() (TidyUp, error) {
 		out.Inbox.Last = &r
 	}
 	out.Today = media.FiledToday(a.root, time.Now())
+	out.Needs = media.NeedsLook(a.root)
 	out.Checks = media.Preflight(a.ctx, media.DefaultProbe(), env, home)
 	return out, nil
 }
@@ -343,6 +346,10 @@ func (a *App) TidyRun(kind, action string, args []string, yes bool) error {
 	if err != nil {
 		return err
 	}
+	// Needs a look's answers move only what Needs a look listed.
+	if kind == "inbox" && (action == "name" || action == "leave") && !needsListed(a.root, args[0]) {
+		return errors.New("that download isn't waiting in Needs a look any more")
+	}
 	c := core.CLIContext(ctx, a.root, cli...)
 	c.Cancel = func() error { return interrupt(c.Process) }
 	out, err := c.StdoutPipe()
@@ -382,8 +389,8 @@ func tidyArgs(kind, action string, args []string, yes bool) ([]string, error) {
 	switch kind {
 	case "inbox":
 		cli = []string{"media", "inbox"}
-		if action == "undo" {
-			cli = append(cli, "undo")
+		if action == "undo" || action == "name" || action == "leave" {
+			cli = append(cli, action)
 		}
 	case "scrubber":
 		cli = []string{"media", "scrub"}
@@ -449,15 +456,62 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 		case kind == "inbox" && action == "undo" && tidyFiledID.MatchString(a):
 			out = append(out, a)
 			runs++
+		case kind == "inbox" && (action == "name" || action == "leave") && i == 0:
+			// Needs a look's answers: the download (one Needs a look listed:
+			// TidyRun checks), then for name what it is, in the person's words.
+			rest, err := tidyNameArgs(action, args)
+			if err != nil {
+				return nil, err
+			}
+			return append(out, rest...), nil
 		default:
 			return nil, fmt.Errorf("Tidy Up doesn't run a job with %q", a)
 		}
+	}
+	if kind == "inbox" && (action == "name" || action == "leave") {
+		return nil, errors.New("Tidy Up doesn't run that: which download?")
 	}
 	if (kind == "trash" || kind == "inbox" && action == "undo") && runs != 1 {
 		return nil, errors.New("Undo puts back one run at a time")
 	}
 	return out, nil
 }
+
+// tidyNameArgs are Needs a look's: leave <path>, or name <path> movie
+// <title> [<year>] / episode <show> <season> [<episode>]. A word that looks
+// like a flag is refused, so a title can't turn into --library.
+func tidyNameArgs(action string, args []string) ([]string, error) {
+	bad := errors.New("Tidy Up doesn't run that: say what it is")
+	if len(args) == 0 || !filepath.IsAbs(args[0]) {
+		return nil, bad
+	}
+	if action == "leave" {
+		if len(args) != 1 {
+			return nil, bad
+		}
+		return args, nil
+	}
+	if len(args) < 3 || (args[1] != "movie" && args[1] != "episode") || strings.TrimSpace(args[2]) == "" {
+		return nil, bad
+	}
+	nums := args[3:]
+	if len(nums) > 2 || args[1] == "movie" && len(nums) > 1 || args[1] == "episode" && len(nums) == 0 {
+		return nil, bad
+	}
+	for _, a := range append([]string{args[2]}, nums...) {
+		if strings.HasPrefix(strings.TrimSpace(a), "-") {
+			return nil, bad
+		}
+	}
+	for _, n := range nums {
+		if !tidyNumber.MatchString(n) {
+			return nil, bad
+		}
+	}
+	return args, nil
+}
+
+var tidyNumber = regexp.MustCompile(`^[0-9]{1,4}$`)
 
 // readEvents sends each line as an event: the engines' JSON as it is, the
 // CLI's own lines (homelab media arr) as "info".
@@ -673,4 +727,14 @@ func interrupt(p *os.Process) error {
 		return p.Kill()
 	}
 	return p.Signal(os.Interrupt)
+}
+
+// needsListed: the path is one Needs a look lists.
+func needsListed(root, path string) bool {
+	for _, n := range media.NeedsLook(root) {
+		if filepath.Clean(n.Path) == filepath.Clean(path) {
+			return true
+		}
+	}
+	return false
 }

@@ -2091,3 +2091,108 @@ class InboxToday(Base):
         os.environ.pop("HOMELAB_MEDIA_FILED_LOG")
         inbox.sweep(apply=True)
         self.assertFalse(self.log.exists())
+
+
+class InboxNeeds(Base):
+    """Nov 8, the owner: downloads Tidy Up couldn't place wait in Needs a look, with why, until a person says
+    what each one is (a film, an episode) or leaves it; what Undo put back shows there too."""
+
+    def setUp(self):
+        super().setUp()
+        self.needs = self.tmp / "media-needs.json"
+        self.log = self.tmp / "media-filed.jsonl"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_NEEDS": str(self.needs), "HOMELAB_MEDIA_FILED_LOG": str(self.log),
+                                     "HOMELAB_MEDIA_RUN": "run-1"}).start()
+        self.d = self.tmp / "Downloads"
+        self.calls = []
+        movies, tv = self.lib["movies"], self.lib["tv"]
+
+        def engine(kind, paths, apply):
+            self.calls.append((kind, [Path(p) for p in paths]))
+            p = Path(paths[0])
+            if kind == "movies" and p.stem == "Heat (1995)":
+                dest = movies / "Heat (1995)" / "Heat (1995).mkv"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(p), str(dest))
+                return True, {"filed": [str(dest)]}
+            if kind == "tv" and p.name == "Show S03":
+                out = []
+                for ep in sorted(p.glob("*S03E*.mkv")):  # the engine trashes the sample
+                    dest = tv / "Show" / "Season 03" / ep.name
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(ep), str(dest))
+                    out.append(str(dest))
+                return True, {"filed": out}
+            return False, {"filed": [], "why": "Can't tell what %s is from its name; left where it is" % p.name}
+        mock.patch.object(inbox, "engine", side_effect=engine).start()
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="h264", size=9_000_000_000)).start()
+        self.touch(self.d / "vid_0042.mkv", age=600)
+
+    def sweep(self):
+        try:
+            inbox.sweep(apply=True)
+        except SystemExit:
+            pass  # a download it couldn't place: exit 1
+
+    def listed(self):
+        return json.loads(self.needs.read_text())
+
+    def test_a_download_no_engine_could_place_waits_with_why(self):
+        self.sweep()
+        got = self.listed()
+        self.assertEqual([(n["name"], n["kind"]) for n in got], [("vid_0042.mkv", "movies")])
+        self.assertEqual(got[0]["why"], "Couldn't tell which film it is from its name.")
+        self.calls.clear()
+        self.sweep()
+        self.assertEqual(self.calls, [], "tried again every minute")
+
+    def test_named_as_a_film_it_is_renamed_and_filed(self):
+        self.sweep()
+        inbox.name_as(str(self.d / "vid_0042.mkv"), "movie", ["Heat", "1995"])
+        self.assertEqual(self.calls[-1], ("movies", [self.d / "Heat (1995).mkv"]))
+        self.assertTrue((self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv").exists())
+        self.assertEqual(self.listed(), [])
+        entry = json.loads(self.log.read_text().splitlines()[-1])
+        self.assertEqual(entry["from"], str(self.d / "vid_0042.mkv"))
+        self.assertIn("named by you, then filed", entry["did"])
+
+    def test_a_folder_of_episodes_keeps_each_ones_number(self):
+        self.touch(self.d / "stuff" / "a.S03E01.mkv", age=600)
+        self.touch(self.d / "stuff" / "b.S03E02.mkv", age=600)
+        self.touch(self.d / "stuff" / "sample.mkv", age=600)
+        inbox.name_as(str(self.d / "stuff"), "episode", ["Show", "3"])
+        kind, paths = self.calls[-1]
+        self.assertEqual((kind, paths), ("tv", [self.d / "Show S03"]))
+        tv = self.lib["tv"] / "Show" / "Season 03"
+        self.assertEqual(sorted(p.name for p in tv.iterdir()), ["Show S03E01.mkv", "Show S03E02.mkv"])
+
+    def test_one_that_still_cant_be_placed_says_so(self):
+        self.sweep()
+        with self.assertRaises(SystemExit):
+            inbox.name_as(str(self.d / "vid_0042.mkv"), "movie", ["Nonesuch"])
+        got = self.listed()
+        self.assertEqual([n["name"] for n in got], ["Nonesuch.mkv"])
+        self.assertTrue(got[0]["why"].startswith("Still couldn't place it"))
+
+    def test_leave_it_is_never_filed_and_not_asked_again(self):
+        self.sweep()
+        inbox.leave(str(self.d / "vid_0042.mkv"))
+        self.assertEqual(self.listed(), [])
+        self.touch(self.d / "vid_0042.mkv", size=20, age=600)  # changed since
+        self.calls.clear()
+        self.sweep()
+        self.assertEqual(self.calls, [])
+
+    def test_what_undo_put_back_shows_there(self):
+        self.sweep()
+        inbox.name_as(str(self.d / "vid_0042.mkv"), "movie", ["Heat", "1995"])
+        entry = json.loads(self.log.read_text().splitlines()[-1])
+        inbox.undo(entry["id"])
+        got = self.listed()
+        self.assertEqual([(n["name"], n["kind"]) for n in got], [("vid_0042.mkv", "movies")])
+        self.assertIn("You put it back", got[0]["why"])
+
+    def test_asks_for_what_it_needs(self):
+        for words in (["movie"], ["film", "Heat"], ["episode", "Show"], ["movie", "Heat", "soon"]):
+            with self.assertRaises(SystemExit):
+                inbox.name_as(str(self.d / "vid_0042.mkv"), words[0], words[1:])

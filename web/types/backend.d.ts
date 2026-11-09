@@ -304,6 +304,7 @@ declare namespace app {
     checks: media.Check[];
     inbox: app.TidyInbox;
     today: media.Filed[];
+    needs: media.Need[];
     settings: Record<string, string>;
     reports: string;
     trash: string;
@@ -960,6 +961,13 @@ declare namespace media {
     action: string;
     start: string;
     log?: string;
+  }
+  interface Need {
+    path: string;
+    name: string;
+    kind: string;
+    why: string;
+    since?: string;
   }
   interface Run {
     action: string;
