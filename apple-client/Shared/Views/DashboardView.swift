@@ -137,11 +137,17 @@ private struct PhoneDashboard: View {
     let finances: FinancesViewModel
     /// The tab, kept between launches as the computer keeps its screen: a name only.
     @SceneStorage("tab") private var savedTab = "apps:all"
+    @Environment(AppCoordinator.self) private var coordinator
+
+    /// A household member's phone: their apps, their Finances, and this
+    /// device. The homelab's backups and setup are the owner's.
+    private var isMember: Bool { coordinator.device?.isMember == true }
 
     private var tab: Binding<Screen> {
         Binding(
             get: {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
+                if isMember, screen == .backups || screen == .setup { return .status(.all) }
                 return screen == .finances && !finances.canSeePlan ? .status(.all) : screen
             },
             set: { savedTab = $0.storageKey }
@@ -150,16 +156,18 @@ private struct PhoneDashboard: View {
 
     var body: some View {
         TabView(selection: tab) {
-            PhoneStatus(model: model, finances: finances) { savedTab = Screen.backups.storageKey }
+            PhoneStatus(model: model, finances: finances, isMember: isMember) { savedTab = Screen.backups.storageKey }
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
                 .badge(model.attentionCount)
                 .tag(Screen.status(.all))
-            NavigationStack {
-                BackupsView(backups: model.backups)
+            if !isMember {
+                NavigationStack {
+                    BackupsView(backups: model.backups)
+                }
+                .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
+                .badge(model.backups.needsAttention)
+                .tag(Screen.backups)
             }
-            .tabItem { Label("Backups", systemImage: Screen.backups.systemImage) }
-            .badge(model.backups.needsAttention)
-            .tag(Screen.backups)
             if finances.canSeePlan {
                 NavigationStack {
                     financesRoot
@@ -167,13 +175,19 @@ private struct PhoneDashboard: View {
                 .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
                 .tag(Screen.finances)
             }
-            NavigationStack {
-                ComputerView(computer: computer, page: .setup)
+            if !isMember {
+                NavigationStack {
+                    ComputerView(computer: computer, page: .setup)
+                }
+                .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
+                .tag(Screen.setup)
             }
-            .tabItem { Label("Setup", systemImage: Screen.setup.systemImage) }
-            .tag(Screen.setup)
             NavigationStack {
-                settingsRoot
+                if isMember {
+                    MemberSettingsView()
+                } else {
+                    settingsRoot
+                }
             }
             .tabItem { Label("Settings", systemImage: Screen.settings.systemImage) }
             .tag(Screen.settings)
@@ -237,6 +251,9 @@ private struct PhoneDashboard: View {
 private struct PhoneStatus: View {
     @Bindable var model: DashboardViewModel
     let finances: FinancesViewModel
+    /// A household member's phone: their apps only, without the homelab's
+    /// tiles (backups, savings) or cards.
+    var isMember = false
     /// Opens the Backups tab, from its tile.
     var openBackups: @MainActor () -> Void = {}
     /// Which groups are open (StatusFolds): names only, kept like the tab.
@@ -255,7 +272,9 @@ private struct PhoneStatus: View {
                     Section {
                         VStack(spacing: 10) {
                             StatusHero(model: model)
-                            StatusTiles(model: model, openBackups: openBackups)
+                            if !isMember {
+                                StatusTiles(model: model, openBackups: openBackups)
+                            }
                         }
                         // Room under the tiles for their shadows, which the row would otherwise cut.
                         .padding(.bottom, 14)
@@ -305,7 +324,7 @@ private struct PhoneStatus: View {
                         }
                     }
                 }
-                if !model.isSearching, model.hasLoaded {
+                if !model.isSearching, model.hasLoaded, !isMember {
                     StatusCards(cards: model.cards, finances: finances)
                 }
             }
@@ -333,6 +352,7 @@ private struct PhoneStatus: View {
             #endif
             .refreshable {
                 // Status and its cards (refresh reads them), the backups tile, and the money card.
+                guard !isMember else { return await model.refresh() }
                 async let money: Void = finances.load()
                 async let backups: Void = model.backups.load()
                 await model.refresh()
@@ -340,9 +360,9 @@ private struct PhoneStatus: View {
                 await backups
             }
             // Again once the device's level is known: right after unlock it may not be yet.
-            .task(id: finances.canSeeMoney) { await finances.load() }
+            .task(id: finances.canSeeMoney) { if !isMember { await finances.load() } }
             // The Backups tile, read once if the Backups tab hasn't yet.
-            .task { if model.backups.overview == nil { await model.backups.load() } }
+            .task { if !isMember, model.backups.overview == nil { await model.backups.load() } }
             // Siri or a shortcut: the app's page, and the action asked for,
             // once Status is read (after unlock).
             .onChange(of: IntentInbox.shared.pending, initial: true) { takeRequest() }

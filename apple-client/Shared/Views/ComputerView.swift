@@ -279,7 +279,7 @@ struct ComputerView: View {
 }
 
 /// This device: how it's paired, what it may do, and Unpair.
-private struct ThisDevicePage: View {
+struct ThisDevicePage: View {
     @Environment(AppCoordinator.self) private var coordinator
     @State private var confirmingUnpair = false
 

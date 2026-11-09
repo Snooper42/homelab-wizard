@@ -19,6 +19,8 @@ final class FinancesViewModel {
     private(set) var savedCount = 0
     private(set) var planError: String?
     private(set) var isLoadingPlan = false
+    /// On a household member's phone: the household's money shared with them.
+    private(set) var shared: HouseholdShared?
     private(set) var ledger: FinanceLedger?
     @ObservationIgnored private var rawLedger: JSONValue?
     private(set) var ledgerError: String?
@@ -400,6 +402,20 @@ final class FinancesViewModel {
             }
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")
             planError = apiError.errorDescription
+        }
+    }
+
+    /// A household member's phone: their own plan is the one shown, and
+    /// the household's shows only as much as the owner shares.
+    var isMember: Bool { device()?.isMember == true }
+
+    func loadShared() async {
+        guard isMember, canSeePlan else { return }
+        do {
+            shared = try await api.financesShared()
+        } catch {
+            Log.ui.error("Shared Finances failed: \(APIError.from(error).logName, privacy: .public)")
+            shared = nil
         }
     }
 

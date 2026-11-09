@@ -196,3 +196,59 @@ struct TransactionFilter: Equatable, Sendable {
         return true
     }
 }
+
+/// What of the household's money the owner shares with a member's phone
+/// (`FinancesShared`): names, amounts and days, never an account.
+struct HouseholdShared: Decodable, Sendable, Equatable {
+    struct Payment: Decodable, Sendable, Equatable, Identifiable {
+        let name: String
+        let kind: String?
+        let institution: String?
+        let amount: Double
+        let estimate: Bool
+        let date: Date?
+        let every: String?
+        var id: String { "\(name)|\(date?.timeIntervalSince1970 ?? 0)" }
+
+        enum CodingKeys: String, CodingKey { case name, kind, institution, amount, estimate, date, every }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+            kind = try c.decodeIfPresent(String.self, forKey: .kind)
+            institution = try c.decodeIfPresent(String.self, forKey: .institution)
+            amount = try c.decodeIfPresent(Double.self, forKey: .amount) ?? 0
+            estimate = try c.decodeIfPresent(Bool.self, forKey: .estimate) ?? false
+            date = LocalDay.parse(try c.decodeIfPresent(String.self, forKey: .date))
+            every = try c.decodeIfPresent(String.self, forKey: .every)
+        }
+    }
+
+    struct Budget: Decodable, Sendable, Equatable, Identifiable {
+        let category: String
+        let amount: Double
+        let spent: Double
+        let left: Double
+        var id: String { category }
+        var share: Double { amount > 0 ? min(max(spent / amount, 0), 1) : 0 }
+    }
+
+    let currency: String
+    let shares: [String]
+    let bills: [Payment]
+    let subscriptions: [Payment]
+    let budgets: [Budget]
+
+    enum CodingKeys: String, CodingKey { case currency, shares, bills, subscriptions, budgets }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
+        shares = try c.decodeIfPresent([String].self, forKey: .shares) ?? []
+        bills = try c.decodeIfPresent([Payment].self, forKey: .bills) ?? []
+        subscriptions = try c.decodeIfPresent([Payment].self, forKey: .subscriptions) ?? []
+        budgets = try c.decodeIfPresent([Budget].self, forKey: .budgets) ?? []
+    }
+
+    var isEmpty: Bool { bills.isEmpty && subscriptions.isEmpty && budgets.isEmpty }
+}

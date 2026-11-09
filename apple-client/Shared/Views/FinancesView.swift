@@ -16,6 +16,10 @@ struct FinancesView: View {
             if let view = finances.plan {
                 VStack(spacing: 18) {
                     if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    // A member's phone: what the owner shares of the household's, first.
+                    if finances.isMember, let shared = finances.shared, !shared.isEmpty {
+                        HouseholdCard(shared: shared, finances: finances)
+                    }
                     NetWorthCard(view: view, finances: finances)
                     GlanceTiles(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
@@ -52,7 +56,10 @@ struct FinancesView: View {
             }
         }
         // Again once the device's level is known: right after unlock it may not be yet.
-        .task(id: finances.canSeePlan) { await finances.loadPlan() }
+        .task(id: finances.canSeePlan) {
+            await finances.loadPlan()
+            await finances.loadShared()
+        }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
             if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }
@@ -60,10 +67,11 @@ struct FinancesView: View {
         .refreshable {
             await finances.loadPlan()
             await finances.loadLedger()
+            await finances.loadShared()
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
-        .navigationTitle("Finances")
+        .navigationTitle(finances.isMember ? "My Finances" : "Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if !finances.amountsHiddenByPlan {

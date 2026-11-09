@@ -17,9 +17,18 @@ struct DeviceInfo: Codable, Sendable, Equatable {
     var lastSeen: Date? = nil
     /// It paired over plain HTTP, so the computer keeps it look-only for good.
     var unencrypted = false
+    /// The household member whose phone it is (their username), nil for
+    /// the owner's. A member's phone shows their own apps and their own
+    /// Finances; nothing else of the homelab answers it.
+    var person: String? = nil
+    /// Their name, to show ("Sam's apps").
+    var personName: String? = nil
+
+    /// A household member's phone, not the owner's.
+    var isMember: Bool { !(person ?? "").isEmpty }
 
     enum CodingKeys: String, CodingKey {
-        case id, name, canChange, finances
+        case id, name, canChange, finances, person, personName
     }
 
     private enum MoreKeys: String, CodingKey { case paired, lastSeen, unencrypted }
@@ -30,6 +39,8 @@ struct DeviceInfo: Codable, Sendable, Equatable {
         name = try c.decode(String.self, forKey: .name)
         canChange = try c.decodeIfPresent(Bool.self, forKey: .canChange) ?? false
         finances = try c.decodeIfPresent(String.self, forKey: .finances)
+        person = try c.decodeIfPresent(String.self, forKey: .person).flatMap { $0.isEmpty ? nil : $0 }
+        personName = try c.decodeIfPresent(String.self, forKey: .personName).flatMap { $0.isEmpty ? nil : $0 }
         let more = try decoder.container(keyedBy: MoreKeys.self)
         paired = Self.time(more, .paired)
         lastSeen = Self.time(more, .lastSeen)
