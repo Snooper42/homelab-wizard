@@ -1975,6 +1975,21 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .tidyfields .field { flex:1 1 220px; }
 .tidyfields .field.tidynum { flex:0 1 140px; }
 .tidyfields input { width:100%; }
+/* Where should your libraries live?: a card a drive, the picked one ringed, its space as a thin bar; then each library's folder. */
+.tidyinboxwhere { margin:12px 0 0; font-size:13px; }
+.tidyinboxwhere .linkbtn { padding:0; }
+.tidydrives { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; }
+.tidydrive { display:flex; gap:12px; align-items:flex-start; text-align:left; padding:14px 16px; border-radius:14px; border:2px solid transparent; background:var(--sunken); color:inherit; font:inherit; width:100%; }
+.tidydrive.picked { border-color:var(--accent); }
+.tidydrive:disabled { opacity:.55; }
+.tidydrivetext { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+.tidydrivetext .muted { font-size:13px; }
+.tidydrivebar { display:block; height:6px; border-radius:3px; background:var(--line); margin:6px 0 4px; overflow:hidden; }
+.tidydrivebar > span { display:block; height:100%; border-radius:3px; background:var(--accent); }
+.tidydrivenote { font-size:13px; }
+.tidyplacehead { margin:22px 0 4px; font-size:15px; }
+.tidyplacego { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:16px; }
+.tidyplacenote { margin:8px 0 0; font-size:13px; }
 .alertlist.fx-rows .when { min-width:96px; text-align:right; }
 /* A person's initial as wide as a logo, so the names after them line up. */
 .alertlist.fx-rows .fwho:not(.sm, .lg) { width:32px; height:32px; }

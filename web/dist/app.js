@@ -15606,6 +15606,7 @@ ${pays}
     audiobooks: { hue: 6, icon: "M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" },
     inbox: { hue: 3, icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" },
     machine: { hue: "muted", icon: "M2 4h20v12H2zM8 20h8M12 16v4" },
+    drive: { hue: 3, icon: "M22 12H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zM6 16h.01M10 16h.01" },
     folder: { hue: 5, icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
     lyrics: { hue: 5, icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }
   };
@@ -15939,7 +15940,7 @@ ${pays}
       warn: true,
       title: `Plug in ${drive.name.replace(/^The /, "the ")}`,
       sub: `${onIt.length ? `${listed3(onIt)} ${onIt.length === 1 ? "is" : "are"} on it (${root})` : `${root} isn't there`}. Each shows up here once it's back; or choose the folder your media is in.`,
-      go: { label: "Choose folder…", run: () => act.settings(["MEDIA_ROOT"]), quiet: true }
+      go: { label: "Choose another…", run: () => act.places(true), quiet: true }
     }] : [];
     const gone = away2.filter((l3) => !onIt.includes(l3)).map((l3) => ({ kind: l3.kind, title: `${names3[l3.kind]}: its drive isn't plugged in`, sub: `${l3.folder} could not be found. It shows up here again once it's back.`, warn: true }));
     const here2 = new Set(d3.libraries.filter((l3) => l3.found).map((l3) => l3.kind));
@@ -15947,7 +15948,9 @@ ${pays}
     const machine = d3.checks.filter((c3) => !c3.ok && c3.needs && c3.id !== "drive" && !TOOLS.has(c3.id)).map((c3) => ({ kind: "machine", title: c3.name, sub: `${c3.note}. ${c3.fix}`, warn: true }));
     return [...plug, ...tools, ...machine, ...LIBRARIES.flatMap((k3) => todosFor(lib(d3, k3), d3, act, review2, pick)), ...gone];
   }
-  function Overview2({ d: d3, job: job2, act, review: review2, pick }) {
+  function Overview2({ d: d3, job: job2, act, review: review2, pick, placing: placing2 }) {
+    const first = d3.libraries.every((l3) => !l3.found) && !d3.checks.some((c3) => c3.id === "drive" && !c3.ok);
+    if (first || placing2) return /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(PlacesWidget, { d: d3, job: job2, act, first: first && !placing2 }) });
     const todos = needsFor(d3, act, review2, pick);
     const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
@@ -16013,10 +16016,94 @@ ${pays}
           /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
         ] })
       ] }),
-      /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
+      /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) }),
+      /* @__PURE__ */ u3("p", { class: "tidyinboxwhere muted", children: [
+        "Your libraries live in ",
+        d3.mediaRoot,
+        ". ",
+        /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: () => act.places(true), children: "Change where your libraries live…" })
+      ] })
     ] });
   }
   var clock2 = (at2) => new Date(at2).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  var shelfUnit = { music: ["artist", "artists"], movies: ["film", "films"], tv: ["show", "shows"], books: ["author", "authors"], audiobooks: ["author", "authors"] };
+  var kindWords = { music: "music", movies: "films", tv: "TV", books: "books", audiobooks: "audiobooks" };
+  var listWords = (w3) => w3.length < 2 ? w3.join("") : w3.slice(0, -1).join(", ") + " and " + w3[w3.length - 1];
+  function PlacesWidget({ d: d3, job: job2, act, first }) {
+    const [drives, setDrives] = d2(null);
+    const [picked, setPicked] = d2("");
+    const [place, setPlace] = d2(null);
+    h2(() => {
+      act.drives().then((ds) => {
+        setDrives(ds);
+        const pick = ds.find((x3) => x3.current) || ds.find((x3) => x3.found.length && !x3.backups) || [...ds].filter((x3) => !x3.internal && !x3.backups).sort((a3, b2) => b2.free - a3.free)[0] || ds[0];
+        if (pick) setPicked(pick.root);
+      }).catch(() => setDrives([]));
+    }, []);
+    h2(() => {
+      setPlace(null);
+      if (picked) act.place(picked).then(setPlace).catch(() => setPlace(null));
+    }, [picked]);
+    const label = (x3) => x3.internal ? thisMachine : x3.name;
+    const chosen = drives?.find((x3) => x3.root === picked);
+    const other = async () => {
+      const p3 = await act.pickMediaFolder();
+      if (!p3) return;
+      if (!drives?.some((x3) => x3.root === p3)) setDrives([...drives || [], { root: p3, name: p3.split(/[\\/]/).filter(Boolean).pop() || p3, internal: false, free: 0, total: 0, found: [] }]);
+      setPicked(p3);
+    };
+    const note = (x3) => {
+      const free = x3.total ? `${size(x3.free)} free. ` : "";
+      if (x3.backups) return "Duplicati backs up to it, so your libraries stay off it";
+      if (x3.current) return `${free}Your libraries are here now`;
+      if (x3.found.length) return `${free}Your ${listWords(x3.found.map((k3) => kindWords[k3]))} ${x3.found.length === 1 && x3.found[0] !== "books" && x3.found[0] !== "films" ? "is" : "are"} already here`;
+      if (x3.internal) return `${free}It fills up fast: better for a few things`;
+      return x3.total ? `${free}Nothing here yet` : "A folder you chose";
+    };
+    return /* @__PURE__ */ u3(Widget, { title: "Where should your libraries live?", span: "all", kind: "tidyplaces", children: [
+      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: first ? "Pick the drive for your music, films, shows, books, and audiobooks. Tidy Up looks for libraries already on it, and files everything new there. You can change this later." : "Pick the drive or folder for your music, films, shows, books, and audiobooks. Nothing is moved or copied: Tidy Up and your apps look there from now on." }),
+      !drives ? /* @__PURE__ */ u3(Empty, { children: "Looking at your drives…" }) : /* @__PURE__ */ u3("div", { class: "tidydrives", role: "radiogroup", "aria-label": "Where your libraries live", children: [
+        drives.map((x3) => /* @__PURE__ */ u3("button", { role: "radio", "aria-checked": x3.root === picked, class: "tidydrive" + (x3.root === picked ? " picked" : ""), disabled: x3.backups, onClick: () => setPicked(x3.root), children: [
+          /* @__PURE__ */ u3(LibIcon, { kind: x3.internal ? "machine" : "drive" }),
+          /* @__PURE__ */ u3("span", { class: "tidydrivetext", children: [
+            /* @__PURE__ */ u3("strong", { children: label(x3) }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: x3.internal ? `This computer's own disk${x3.total ? " · " + size(x3.total) : ""}` : x3.total ? `Drive · ${size(x3.total)}` : x3.root }),
+            !!x3.total && /* @__PURE__ */ u3("span", { class: "tidydrivebar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${Math.round(100 * (x3.total - x3.free) / x3.total)}%` } }) }),
+            /* @__PURE__ */ u3("span", { class: "tidydrivenote", children: note(x3) })
+          ] })
+        ] }, x3.root)),
+        /* @__PURE__ */ u3("button", { class: "tidydrive", onClick: other, children: [
+          /* @__PURE__ */ u3(LibIcon, { kind: "folder" }),
+          /* @__PURE__ */ u3("span", { class: "tidydrivetext", children: [
+            /* @__PURE__ */ u3("strong", { children: "Another folder…" }),
+            /* @__PURE__ */ u3("span", { class: "muted", children: "A folder on any drive, or on the network" }),
+            /* @__PURE__ */ u3("span", { class: "tidydrivenote", children: "For a NAS, or one folder for everything" })
+          ] })
+        ] })
+      ] }),
+      chosen && place && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "tidyplacehead", children: [
+          "On ",
+          label(chosen),
+          ", each library goes here"
+        ] }),
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: place.libraries.map((s3) => /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(LibIcon, { kind: s3.kind }),
+            title: names3[s3.kind],
+            sub: `${s3.folder} · ${s3.own ? "kept where you set it in Settings" : !s3.found ? "new: made when the first one arrives" : s3.calibre ? `a Calibre library, ${count(s3.items, "author")}` : s3.items ? `found ${count(s3.items, shelfUnit[s3.kind][0], shelfUnit[s3.kind][1])}` : "found, empty"}`
+          },
+          s3.kind
+        )) })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "tidyplacego", children: [
+        chosen?.current ? /* @__PURE__ */ u3("span", { class: "muted", children: "Your libraries are here now." }) : /* @__PURE__ */ u3(Go, { primary: true, label: chosen ? `Use ${label(chosen)}` : "Use it", job: job2, onClick: () => chosen && act.useMediaRoot(chosen.root, label(chosen)) }),
+        !first && /* @__PURE__ */ u3("button", { class: "small", onClick: () => act.places(false), children: chosen?.current ? "Close" : "Cancel" })
+      ] }),
+      !chosen?.current && /* @__PURE__ */ u3("p", { class: "muted tidyplacenote", children: "Jellyfin, Navidrome, Calibre-Web and your other apps that read the libraries restart once, so they look there. Tidy Up lists them and asks first. Nothing is moved or copied." })
+    ] });
+  }
   var showIn = osName === "mac" ? "Show in Finder" : osName === "windows" ? "Show in Explorer" : "Show the folder";
   function NeedsLookWidget({ d: d3, job: job2, act }) {
     const needs = d3.needs || [];
@@ -16280,7 +16367,7 @@ ${pays}
           /* @__PURE__ */ u3("button", { class: "small", onClick: p3.reload, children: "Try again" })
         ] })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
   }
   function mountTidy(el3, props) {
@@ -16298,6 +16385,7 @@ ${pays}
   } catch {
   }
   var job = null;
+  var placing = false;
   var review = null;
   var reviewError = "";
   var showReview = false;
@@ -16317,6 +16405,7 @@ ${pays}
       reviewError,
       skip,
       running: running4,
+      placing,
       reload: () => {
         tidyData.load();
       },
@@ -16389,7 +16478,30 @@ ${pays}
         pickFolder: () => Promise.resolve(go().TidyPickFolder()).catch((e3) => {
           showError(e3);
           return "";
-        })
+        }),
+        places: (open4) => {
+          placing = open4;
+          if (open4) {
+            tab2 = "overview";
+          }
+          draw5();
+          if (open4) document.querySelector("#tidy .tidyplaces")?.scrollIntoView({ block: "start" });
+        },
+        drives: () => Promise.resolve(go().TidyDrives()),
+        place: (root) => Promise.resolve(go().TidyPlace(root)),
+        pickMediaFolder: () => Promise.resolve(go().TidyPickMediaFolder()).catch((e3) => {
+          showError(e3);
+          return "";
+        }),
+        // Kept, then the apps that read the libraries are recreated on it: homelab fix lists them and asks first.
+        useMediaRoot: (root, name) => {
+          Promise.resolve(go().TidySetMediaRoot(root)).then((d4) => {
+            placing = false;
+            tidyData.set(d4);
+            draw5();
+            cliFlow(`Use ${name}`, "fix", "", "Restart them");
+          }).catch(showError);
+        }
       }
     });
     if (job && (!document.activeElement || document.activeElement === document.body) && $2("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();

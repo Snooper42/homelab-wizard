@@ -348,7 +348,7 @@ const tidy = {
   ],
   inbox: { folders: ['/Users/you/Downloads', '/Volumes/Hobbies/downloads'], when: 'arrive', watching: true,
     last: tidyRun('scan', 0.2, { filed: { movies: ['/Volumes/Hobbies/movies/Heat (1995)/Heat (1995).mkv'], music: ['/Volumes/Hobbies/music/Radiohead/OK Computer (1997)'] }, waiting: [{ path: '/Users/you/Downloads/Dune.Part.Two.2024.2160p', why: 'still downloading' }] }) },
-  settings: { TIDY_UP: 'true', TIDY_VIDEO_CODEC: 'hevc', TIDY_KEEP_LANGUAGES: 'eng', TIDY_LYRICS: 'embed' },
+  settings: { TIDY_UP: 'true', TIDY_VIDEO_CODEC: 'hevc', TIDY_KEEP_LANGUAGES: 'eng', TIDY_LYRICS: 'embed' }, mediaRoot: '/Volumes/Hobbies',
   reports: '/Users/you/Homelab/reports/media', trash: 'the Trash', tdarr: { movies: 'tidyup-movies', tv: 'tidyup-tv' },
   drive: { name: 'Hobbies', free: 1.2e12, total: 4e12 },
 };
@@ -1021,6 +1021,52 @@ const smokes = [
     await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });
     if (await page.$('#tidy .tidyneedslook')) throw new Error('an empty Needs a look');
   } },
+  // Nov 9, the owner: piece 4, Where should your libraries live?, "completely okay": the first time it comes first;
+  // after, the Inbox's Change where your libraries live… opens it. Each drive with its space and what's on it (the
+  // backup drive can't be picked), each library's folder on the one picked, Another folder…, and Use it: kept, then
+  // homelab fix lists the apps to restart and asks.
+  ...(() => {
+    const drives = [
+      { root: '/Users/you/Media', name: '', internal: true, free: 128e9, total: 494e9, found: [] },
+      { root: '/Volumes/Backup', name: 'Backup', internal: false, free: 1.2e12, total: 2e12, found: [], backups: true },
+      { root: '/Volumes/Hobbies', name: 'Hobbies', internal: false, free: 1.2e12, total: 4e12, found: ['music', 'books', 'movies', 'tv'], current: true },
+      { root: '/Volumes/New', name: 'New', internal: false, free: 3.9e12, total: 4e12, found: [] },
+    ];
+    const tidyPlaces = { '/Volumes/Hobbies': { root: '/Volumes/Hobbies', libraries: [
+      { kind: 'music', folder: '/Volumes/Hobbies/music', found: true, items: 1204 }, { kind: 'books', folder: '/Volumes/Hobbies/Books', found: true, items: 288, calibre: true },
+      { kind: 'movies', folder: '/Volumes/Hobbies/movies', found: true, items: 352 }, { kind: 'tv', folder: '/Volumes/Hobbies/tv', found: true, items: 61 },
+      { kind: 'audiobooks', folder: '/Volumes/Hobbies/audiobooks', found: false, items: 0 }] } };
+    const none = { ...tidy, libraries: tidy.libraries.map((l) => ({ ...l, found: false })), checks: tidy.checks.map((c) => (c.id === 'drive' ? { ...c, ok: true } : c)) };
+    return [
+      { name: 'Tidy Up: Change where your libraries live picks a drive, and restarts the apps after asking', screen: 'tidy', mock: { tidyDrives: drives, tidyPlaces }, run: async (page) => {
+        await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+        await page.waitForSelector('#tidy .tidyinbox:has-text("Your libraries live in /Volumes/Hobbies.")', { timeout: 5000 });
+        await page.click('#tidy .tidyinbox button:text-is("Change where your libraries live…")');
+        const card = '#tidy .tidyplaces';
+        await page.waitForSelector(`${card} .tidydrive[aria-checked="true"]:has(strong:text-is("Hobbies")):has-text("Your libraries are here now")`, { timeout: 5000 });
+        await page.waitForSelector(`${card} li:has(strong:text-is("Books")):has-text("/Volumes/Hobbies/Books · a Calibre library, 288 authors")`, { timeout: 3000 });
+        await page.waitForSelector(`${card} li:has(strong:text-is("Music")):has-text("found 1,204 artists")`, { timeout: 3000 });
+        if (!await page.$(`${card} .tidydrive:has(strong:text-is("Backup"))[disabled]`)) throw new Error('the backup drive can be picked');
+        if (await page.$(`${card} button:has-text("Use Hobbies")`)) throw new Error('Use on the drive they are on already');
+        await page.click(`${card} .tidydrive:has(strong:text-is("New"))`);
+        await page.waitForSelector(`${card} li:has(strong:text-is("Movies")):has-text("/Volumes/New/movies · new: made when the first one arrives")`, { timeout: 3000 });
+        await page.click(`${card} button:text-is("Use New")`);
+        await page.waitForFunction(() => (window.__MOCK.mediaRoots || []).length === 1, null, { timeout: 3000 });
+        if ((await page.evaluate(() => window.__MOCK.mediaRoots))[0] !== '/Volumes/New') throw new Error('kept the wrong folder');
+        await page.waitForSelector('#cliPanel:not([hidden]) #cliTitle:text-is("Use New")', { timeout: 5000 });
+        await page.waitForSelector('#cliPanel button:text-is("Restart them")', { timeout: 5000 });
+      } },
+      { name: 'Tidy Up: the first time, Where should your libraries live? comes first, on the roomiest drive', screen: 'tidy', mock: { tidy: none, tidyDrives: drives.map((x) => ({ ...x, found: [], current: false })), pickMediaFolder: '/Volumes/NAS/Media' }, run: async (page) => {
+        const card = '#tidy .tidyplaces';
+        await page.waitForSelector(`${card} h2:text-is("Where should your libraries live?")`, { timeout: 5000 });
+        if (await page.$('#tidy .tidyinbox') || await page.$(`${card} button:text-is("Cancel")`)) throw new Error('the first time, something else first');
+        await page.waitForSelector(`${card} .tidydrive[aria-checked="true"]:has(strong:text-is("New"))`, { timeout: 3000 });
+        await page.click(`${card} .tidydrive:has(strong:text-is("Another folder…"))`);
+        await page.waitForSelector(`${card} .tidydrive[aria-checked="true"]:has(strong:text-is("Media")):has-text("A folder you chose")`, { timeout: 3000 });
+        await page.waitForSelector(`${card} button:text-is("Use Media")`, { timeout: 3000 });
+      } },
+    ];
+  })(),
   // On a phone, the six tabs in two even rows of three.
   { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 390, height: 800 });
@@ -2453,7 +2499,7 @@ const smokes = [
     if (!(await row.innerText()).includes('7 kept')) throw new Error('how many are kept is hidden');
   } },
   // The owner, Nov 6: a new Mac with the media drive unplugged and no Python, ffmpeg, or Calibre had nine rows under
-  // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose folder… for media elsewhere), and the
+  // Needs your OK. Now two: plug in the drive (the libraries on it named, Choose another… for media elsewhere), and the
   // tools a library here needs, in one row (Python only, while every library is away). Once the drive is back, the
   // tools row names all three; Calibre's also sits on Books' tab.
   ...(() => {
@@ -2473,8 +2519,11 @@ const smokes = [
         if (JSON.stringify(got) !== JSON.stringify(['Plug in the Media drive', 'Install Python 3'])) throw new Error(`Needs your OK lists: ${JSON.stringify(got)}`);
         await page.waitForSelector('.tidyneeds li:has-text("Music, Movies, TV, Books and Audiobooks are on it (/Volumes/Media)")');
         await page.waitForSelector('.tidyneeds li:has-text("Install Python 3"):has-text("brew install python (or the installer from python.org)")');
-        await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose folder…")');
-        await page.waitForFunction(() => (window.__MOCK.calls.OpenSettings || window.__MOCK.calls.Settings || 0) >= 1 || !!document.querySelector('#settings.active, .screen.active#settings'), null, { timeout: 3000 });
+        // Choose another… opens Where should your libraries live?, as the Inbox's link does.
+        await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose another…")');
+        await page.waitForSelector('#tidy .tidyplaces h2:text-is("Where should your libraries live?")', { timeout: 3000 });
+        await page.click('#tidy .tidyplaces button:text-is("Cancel")');
+        await page.waitForSelector('.tidyneeds li:has-text("Plug in the Media drive")', { timeout: 3000 });
       } },
       { name: 'Tidy Up once the drive is back: the tools in one row, Calibre on Books too', screen: 'tidy', mock: { tidy: back }, run: async (page) => {
         await page.waitForSelector('.tidyneeds li', { timeout: 5000 });
