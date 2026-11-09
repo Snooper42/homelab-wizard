@@ -2014,3 +2014,80 @@ class AudiobooksAlreadyWhole(Base):
         audiobook_organizer.Audiobooks().scan()
         r = self.results()[-1]
         self.assertEqual((r["books"], r["whole"]), (1, 3))
+
+
+class InboxToday(Base):
+    """Nov 8, the owner: "What I did today", a plain line for each thing the inbox filed, with Undo. Each
+    download filed leaves one record: what it is, where it went, what was done; Undo puts its files back
+    where they came from (a folder as a folder), and the sweep leaves them there until they change."""
+
+    def setUp(self):
+        super().setUp()
+        self.log = self.tmp / "media-filed.jsonl"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_FILED_LOG": str(self.log), "HOMELAB_MEDIA_RUN": "run-1"}).start()
+        self.d = self.tmp / "Downloads"
+        movies, tv = self.lib["movies"], self.lib["tv"]
+
+        def engine(kind, paths, apply):
+            out = []
+            for p in paths:
+                if kind == "movies":
+                    dest = movies / "Heat (1995)" / "Heat (1995).mkv"
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(p), str(dest))
+                    out.append(str(dest))
+                elif kind == "tv":
+                    for i, ep in enumerate(sorted(p.rglob("*.mkv")), 1):
+                        dest = tv / "Show" / "Season 03" / ("Show - S03E%02d.mkv" % i)
+                        dest.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.move(str(ep), str(dest))
+                        out.append(str(dest))
+            return True, {"filed": out, "replaced": 0, "discarded": 0, "shrinking": 1 if kind == "movies" else 0}
+        mock.patch.object(inbox, "engine", side_effect=engine).start()
+        self.touch(self.d / "Heat.1995.1080p.mkv", age=600)
+        self.touch(self.d / "Show.S03.WEB" / "Show.S03E01.mkv", age=600)
+        self.touch(self.d / "Show.S03.WEB" / "Show.S03E02.mkv", age=600)
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec="h264", size=9_000_000_000)).start()
+
+    def entries(self):
+        return [json.loads(l) for l in self.log.read_text().splitlines()]
+
+    def test_each_download_filed_leaves_a_plain_record(self):
+        inbox.sweep(apply=True)
+        got = {e["kind"]: e for e in self.entries()}
+        film, show = got["movies"], got["tv"]
+        self.assertEqual((film["title"], film["where"]), ("Heat (1995)", "Movies › Heat (1995)"))
+        self.assertIn("too big, so Tdarr is shrinking it first", film["did"])
+        self.assertEqual(film["from"], str(self.d / "Heat.1995.1080p.mkv"))
+        self.assertEqual((show["title"], show["where"]), ("Show · 2 episodes", "TV › Show › Season 03"))
+        self.assertTrue(film["id"] and film["run"] == "run-1" and film["at"] and film["undo"])
+
+    def test_undo_puts_them_back_and_the_sweep_leaves_them(self):
+        inbox.sweep(apply=True)
+        show = [e for e in self.entries() if e["kind"] == "tv"][0]
+        film = [e for e in self.entries() if e["kind"] == "movies"][0]
+        inbox.undo(show["id"])
+        inbox.undo(film["id"])
+        self.assertTrue((self.d / "Show.S03.WEB" / "Show - S03E01.mkv").exists())
+        self.assertTrue((self.d / "Show.S03.WEB" / "Show - S03E02.mkv").exists())
+        self.assertTrue((self.d / "Heat.1995.1080p.mkv").exists())
+        self.assertFalse((self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv").exists())
+        undone = [e["undone"] for e in self.entries() if "undone" in e]
+        self.assertEqual(sorted(undone), sorted([show["id"], film["id"]]))
+        inbox.engine.reset_mock()
+        inbox.sweep(apply=True)
+        self.assertEqual(inbox.engine.call_count, 0, "put back by Undo, then filed again")
+
+    def test_undo_of_one_already_undone_or_unknown_says_so(self):
+        inbox.sweep(apply=True)
+        film = [e for e in self.entries() if e["kind"] == "movies"][0]
+        inbox.undo(film["id"])
+        with self.assertRaises(SystemExit):
+            inbox.undo(film["id"])
+        with self.assertRaises(SystemExit):
+            inbox.undo("nope")
+
+    def test_no_log_no_record(self):
+        os.environ.pop("HOMELAB_MEDIA_FILED_LOG")
+        inbox.sweep(apply=True)
+        self.assertFalse(self.log.exists())

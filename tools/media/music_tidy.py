@@ -754,8 +754,10 @@ def file_music(args):
     for f in folders:
         servers.ping(f, "music")
     ui.ok("Filed %s songs (%s albums)" % (mc.fmt_n(len(filed)), mc.fmt_n(len(folders))))
-    ui.result(action="file", ok=True, media="music", filed=folders, songs=len(filed), replaced=replaced,
-              discarded=discarded, genres_fixed=regenred, told=servers.sent)
+    # The songs themselves too: Undo (What I did today) moves exactly those back, never an album folder that
+    # holds songs that were there before.
+    ui.result(action="file", ok=True, media="music", filed=folders, songs=len(filed), songs_filed=filed,
+              replaced=replaced, discarded=discarded, genres_fixed=regenred, told=servers.sent)
 
 
 def write_genre_fields(p, target):

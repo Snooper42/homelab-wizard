@@ -4,6 +4,8 @@ The inbox: watches Downloads, and files every finished download into the right l
 
   python3 inbox.py scan              what's in the inbox and where each would go; changes nothing
   python3 inbox.py scan --apply      file what's ready (the homelab runs this every minute)
+  python3 inbox.py undo <id>         put what one entry of What I did today filed back where it came
+                                     from; the sweep then leaves it there until it changes
 
 A download is ready once nothing in it has changed for 5 minutes and no partial file (.part,
 .crdownload, .!qB...) is left; macOS's ._ files are ignored. A .zip is unpacked into a hidden
@@ -29,6 +31,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 import zipfile
 from pathlib import Path
 
@@ -202,6 +205,86 @@ def engine(kind, paths, apply):
     return rc == 0 and result.get("ok", True), result
 
 
+KIND_TITLE = {"movies": "Movies", "tv": "TV", "music": "Music", "audiobooks": "Audiobooks", "books": "Books"}
+
+
+def describe(kind, item, files, res):
+    """What I did today's line for one download: what it is, where it went, what was done, and what Undo
+    needs (where it came from, and the files it became)."""
+    first = Path(files[0])
+    lib = mc.expand(mc.cfg(kind, "library"))
+    try:
+        rel = first.parent.relative_to(lib).parts if lib else ()
+    except ValueError:
+        rel = ()
+    where = " › ".join((KIND_TITLE.get(kind, kind.title()),) + tuple(rel))
+    if kind == "tv":
+        show = rel[0] if rel else first.parent.parent.name
+        title = "%s · %s" % (show, plural(len(files), "episode"))
+    elif kind == "music":
+        title = "%s · %s" % (first.parent.name, first.parent.parent.name)
+    elif kind == "audiobooks":
+        title = "%s · %s" % (first.stem, first.parent.parent.name)
+    else:
+        title = first.stem
+    did = []
+    if kind == "music":
+        did.append("%s, tags cleaned" % plural(len(files), "song"))
+        if res.get("genres_fixed"):
+            did.append("genre set")
+        if mc.cfg("lyrics", "on_new_music", True) is not False:
+            did.append("lyrics added where found")
+    if res.get("shrinking"):
+        did.append("too big, so Tdarr is shrinking it first")
+    if res.get("replaced"):
+        did.append("better than the copy you had, so it took its place")
+    if res.get("discarded"):
+        did.append("you already had a better copy, so this one went to the Trash")
+    if not did:
+        did.append("renamed and filed")
+    return {"id": uuid.uuid4().hex[:12], "kind": kind, "title": title, "where": where, "did": did,
+            "from": str(item), "files": [str(f) for f in files], "undo": True}
+
+
+def plural(n, word):
+    return "%d %s%s" % (n, word, "" if n == 1 else "s")
+
+
+def undo(entry_id):
+    """Put what one entry filed back where it came from: a single file to its own name, a folder's files into
+    that folder again; then the sweep leaves it until it changes."""
+    entries = mc.filed_entries()
+    entry = next((e for e in entries if e.get("id") == entry_id), None)
+    if not entry:
+        mc.die("Nothing filed today has that id: it may be older than the record keeps")
+    if any(e.get("undone") == entry_id for e in entries):
+        mc.die("%s was put back already" % entry["title"])
+    if not entry.get("undo"):
+        mc.die("%s can't be put back from here" % entry["title"])
+    files = [Path(f) for f in entry.get("files") or [] if Path(f).exists()]
+    if not files:
+        mc.die("%s isn't in the library any more: nothing to put back" % entry["title"])
+    src = Path(entry["from"])
+    ui.title("Inbox", "putting %s back" % entry["title"])
+    if len(files) == 1 and not src.is_dir() and src.suffix.lower() == files[0].suffix.lower():
+        dest = mc.unique_path(src)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        mc.move_file(files[0], dest)
+    else:
+        src.mkdir(parents=True, exist_ok=True)
+        for f in files:
+            mc.move_file(f, mc.unique_path(src / f.name))
+        dest = src
+    for f in files:
+        mc.remove_empty_dirs(f.parent, keep_root=False) if f.parent.exists() else None
+    tried = mc.load_state("inbox", {"failed": {}})
+    tried.setdefault("kept", {})[str(dest)] = dest.stat().st_mtime
+    mc.save_state("inbox", tried)
+    mc.note_filed({"undone": entry_id, "title": entry["title"]})
+    ui.ok("Put %s back in %s" % (entry["title"], mc.pretty_path(dest.parent)))
+    ui.result(action="undo", ok=True, id=entry_id, to=str(dest))
+
+
 def add_books(books, apply):
     """Into the Calibre library with calibredb (Calibre-Web paused meanwhile). A book that's already
     there is a rejected duplicate: it goes to the Trash."""
@@ -288,6 +371,9 @@ def sweep(apply):
                 continue
             if tried["failed"].get(str(item)) == item.stat().st_mtime:
                 continue
+            # Put back by Undo: left alone until it changes.
+            if (tried.get("kept") or {}).get(str(item)) == item.stat().st_mtime:
+                continue
             work, zipped = item, False
             if item.is_file() and item.suffix.lower() == ".zip":
                 if not apply:
@@ -319,6 +405,9 @@ def sweep(apply):
                 ok, res = engine(kind, paths, apply)
                 all_ok = all_ok and ok
                 filed.setdefault(kind, []).extend(res.get("filed") or [])
+                files = res.get("songs_filed") or res.get("filed") or []
+                if ok and files and not zipped:
+                    mc.note_filed(describe(kind, item, files, res))
                 if not ok:
                     failed.append(str(item))
                     tried["failed"][str(item)] = item.stat().st_mtime
@@ -354,9 +443,14 @@ def sweep(apply):
 
 
 def main():
-    ap = mc.base_parser("inbox.py", __doc__, ["scan"])
+    ap = mc.base_parser("inbox.py", __doc__, ["scan", "undo"])
     args = ap.parse_args()
-    mc.begin(args, "inbox", "inbox %s" % ("apply" if args.apply else "preview"))
+    mc.begin(args, "inbox", "inbox %s" % (args.action if args.action == "undo" else "apply" if args.apply else "preview"))
+    if args.action == "undo":
+        if not args.paths:
+            mc.die("Which one? inbox.py undo <id>")
+        undo(args.paths[0])
+        return
     sweep(args.apply)
 
 

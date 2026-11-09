@@ -945,6 +945,31 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidyinbox li:has(strong:text-is("downloads")) .warn:has-text("Not there now: plug in its drive")', { timeout: 5000 });
   } },
+  // What I did today: each download the inbox filed, newest first, in plain words; Undo puts one back (one already put back
+  // says so, with no Undo); with nothing filed today, it says how to start.
+  { name: 'Tidy Up: What I did today says what each download became, and Undo puts one back', screen: 'tidy', mock: { tidy: { ...tidy, today: [
+    { id: 'c3', kind: 'tv', title: 'Show · 10 episodes', where: 'TV › Show › Season 03', did: ['renamed and filed'], from: '/Users/you/Downloads/Show.S03.WEB', undo: true, at: tidyAt(0.5) },
+    { id: 'b2', kind: 'music', title: 'Album · Artist', where: 'Music › Artist › Album', did: ['12 songs, tags cleaned', 'lyrics added where found'], from: '/Users/you/Downloads/Album', undo: true, at: tidyAt(1), undone: true },
+    { id: 'a1', kind: 'movies', title: 'Heat (1995)', where: 'Movies › Heat (1995)', did: ['too big, so Tdarr is shrinking it first'], from: '/Users/you/Downloads/Heat.1995.mkv', undo: true, at: tidyAt(2) },
+  ] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    const card = '#tidy .tidytoday';
+    await page.waitForSelector(`${card} h2:text-is("What I did today")`, { timeout: 5000 });
+    const titles = await page.$$eval(`${card} li strong`, (e) => e.map((x) => x.textContent));
+    if (JSON.stringify(titles) !== JSON.stringify(['Show · 10 episodes', 'Album · Artist', 'Heat (1995)'])) throw new Error(JSON.stringify(titles));
+    await page.waitForSelector(`${card} li:has(strong:text-is("Heat (1995)")):has-text("Movies › Heat (1995) · too big, so Tdarr is shrinking it first")`, { timeout: 2000 });
+    const album = `${card} li:has(strong:text-is("Album · Artist"))`;
+    await page.waitForSelector(`${album}:has-text("Put back where it came from")`, { timeout: 2000 });
+    if (await page.$(`${album} button:text-is("Undo")`)) throw new Error('Undo on one put back already');
+    await page.click(`${card} li:has(strong:text-is("Heat (1995)")) button:text-is("Undo")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'undo', ['a1']])) throw new Error(JSON.stringify(runs));
+  } },
+  { name: 'Tidy Up: What I did today with nothing yet says how to start', screen: 'tidy', mock: { tidy: { ...tidy, today: [] } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidytoday:has-text("Nothing yet today. Drop something in a watched folder, or press Tidy up now.")', { timeout: 5000 });
+  } },
   // On a phone, the six tabs in two even rows of three.
   { name: 'Tidy Up: on a phone the tabs sit in two rows of three', screen: 'tidy', run: async (page) => {
     await page.setViewportSize({ width: 390, height: 800 });
