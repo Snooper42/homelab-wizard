@@ -2305,12 +2305,58 @@ class NameTheseSongs(Base):
 
     def test_songs_with_no_names_are_not_filed_as_they_are(self):
         calls = self.beets()
+        mock.patch.object(music_tidy, "can_fingerprint", return_value=False).start()
         mock.patch.object(music_tidy, "album_key", return_value=("", "")).start()
         res = self.file()
         self.assertFalse(res["ok"])
         self.assertEqual(res["why"], music_tidy.UNNAMED)
         self.assertFalse([c for c in calls if c[0] == "import"], "imported as they are, into a folder with no name")
         self.assertTrue(self.album.exists())
+
+    def by_sound(self, matched):
+        """beets with AcoustID: an import that matched moves the songs into the library; one that didn't leaves them."""
+        calls = self.beets()
+        lib = self.lib["music"] / "Fleetwood Mac" / "Rumours"
+
+        class FakeBeet:
+            def __init__(self, d):
+                pass
+
+            def __call__(self, *a):
+                calls.append(a)
+                if "import" in a and matched:
+                    lib.mkdir(parents=True, exist_ok=True)
+                    for f in sorted(Path(a[-1]).iterdir()):
+                        shutil.move(str(f), str(lib / f.name))
+                if a[0] == "ls" and matched:
+                    return ["%d\t%s" % (i, p) for i, p in enumerate(sorted(lib.iterdir()))]
+                return []
+        mock.patch.object(music_tidy, "Beet", FakeBeet).start()
+        mock.patch.object(music_tidy, "can_fingerprint", return_value=True).start()
+        mock.patch.object(music_tidy, "album_key", return_value=("", "")).start()
+        mock.patch.object(music_tidy, "lyrics").start()
+        mock.patch.object(music_tidy.mo, "read_genre_fields", return_value=[]).start()
+        shrunk = mock.patch.object(music_tidy, "shrink_lossless", side_effect=lambda f: f).start()
+        return calls, shrunk
+
+    def test_with_acoustid_songs_with_no_names_go_to_beets_first(self):
+        # The owner, Nov 9: "yes": with AcoustID, beets tries them by their sound before Needs a look asks.
+        calls, shrunk = self.by_sound(matched=True)
+        res = self.file()
+        imports = [c for c in calls if "import" in c]
+        self.assertEqual(len(imports), 1)
+        self.assertEqual(imports[0][0], "-c", "beets is told to skip what it can't match, not file it as it is")
+        self.assertIn("quiet_fallback: skip", Path(imports[0][1]).read_text())
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["songs"], 3)
+        shrunk.assert_not_called()
+
+    def test_with_acoustid_songs_it_cant_match_still_wait_in_needs_a_look(self):
+        self.by_sound(matched=False)
+        res = self.file()
+        self.assertFalse(res["ok"])
+        self.assertEqual(res["why"], music_tidy.UNNAMED)
+        self.assertEqual(len(list(self.album.iterdir())), 3, "left where they were")
 
     def test_named_songs_are_filed_as_the_album_picked(self):
         calls = self.beets()
