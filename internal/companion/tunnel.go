@@ -321,7 +321,7 @@ func (s *Server) tunnel(w http.ResponseWriter, r *http.Request) {
 // tunnelCall answers an opened request: me, or a method that only looks.
 func (s *Server) tunnelCall(r *http.Request, d Device, req TunnelRequest) TunnelAnswer {
 	if req.Method == "me" {
-		return TunnelAnswer{Status: http.StatusOK, Result: meOf(d)}
+		return TunnelAnswer{Status: http.StatusOK, Result: s.MeFor(d)}
 	}
 	m, ok := s.Methods[req.Method]
 	if !ok {

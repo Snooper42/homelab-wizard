@@ -99,7 +99,7 @@ Pair a screen the way you pair a phone, with `&kiosk` at the end of the pairing 
 - `POST /api/call/<Method>` with the method's arguments as a JSON array returns `{"result": …, "log": [lines]}`. The methods are the desktop app's: `Status`, `LastStatus`, `Backups`, `Alerts`, `Watchdog`, `Protection`, `SavingsHistory`, `DuplicatiJobs`, `AppIcon`, `Logs`, `Report`, and, for phones allowed to make changes, `AppAction`, `SetAppSetting`, `SetUpdatesPaused`, and `Homelab` (`backup`, `restore-test`, `fix`); for phones allowed Finances, over https or the tailnet, `Finances` and (with **Changes Finances**) `SaveFinances`.
 - `POST /api/call/StatusBoard` answers in lines of JSON as they come: Status first, then each card asked for (the watchdog, alerts, storage, usage, the week, protection) as it is read, from the background agent when it runs.
 - `GET /api/events` follows the homelab's changes as Server-Sent Events, as Status on the computer does.
-- `GET /api/me` says which phone the token belongs to, whether it may make changes, and its Finances (`"view"`, `"edit"`, or none).
+- `GET /api/me` says which phone the token belongs to, whether it may make changes, and its Finances (`"view"`, `"edit"`, or none), and what the computer can do (`computer`: its version, every call it answers, and `features` such as `tunnel`), so a phone newer than the computer can say to update it rather than fail. `apple-client/Tests/Resources/CompanionContract.json` is this answer as the computer gives it (`go test ./cmd/homelab -run TestCompanionContract -update-contract` writes it; the test fails when it is out of date).
 
 ## Learn more
 
