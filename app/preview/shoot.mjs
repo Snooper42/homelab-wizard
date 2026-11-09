@@ -1103,6 +1103,65 @@ const smokes = [
     await page.click(`${sheet} button:text-is("Cancel")`);
     if ((await page.evaluate(() => window.__MOCK.tidyRuns)).length !== 1) throw new Error('filed with nothing picked');
   } },
+  // Nov 8, the owner's Inbox plan, item 6: It's a film… and It's an episode… look what's typed up (Radarr, Sonarr, or
+  // Jellyfin), so a person picks The Big Lebowski (1998) rather than typing the year. Picking is a help, not a must:
+  // with nothing here to ask, the sheet says so and files what's typed. Typing the season keeps the show picked.
+  { name: "Tidy Up: It's a film… and It's an episode… look the name up, and file the one picked", screen: 'tidy', mock: { tidy: { ...tidy, needs: [
+    { path: '/Users/you/Downloads/IMG_2041.mov', name: 'IMG_2041.mov', kind: 'movies', why: "Couldn't tell which film it is from its name." },
+    { path: '/Users/you/Downloads/stuff', name: 'stuff', kind: 'tv', why: "Couldn't tell which show and episode it is from its name." },
+  ] }, tidyTitles: {
+    movie: [{ name: 'The Big Lebowski', year: 1998, from: 'Radarr' }, { name: 'The Making of The Big Lebowski', year: 1998, from: 'Radarr' }],
+    show: [{ name: 'Severance', year: 2022, from: 'Sonarr' }],
+  } }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    const card = '#tidy .tidyneedslook';
+    const sheet = '#tidySheet:not([hidden])';
+    // The sheet puts the cursor in its first box a frame after it shows (parts/Sheet.tsx): type once it has.
+    const settled = () => page.waitForFunction(() => document.activeElement === document.querySelector('#tidySheet .tidyfields input'), null, { timeout: 3000 });
+    const ran = (n) => page.waitForFunction((n) => (window.__MOCK.tidyRuns || []).length === n, n, { timeout: 5000 }).then(() => page.evaluate(() => window.__MOCK.tidyRuns.at(-1).slice(0, 3)));
+    const film = `${card} li:has(strong:text-is("IMG_2041.mov")) button:text-is("It's a film…")`;
+    await page.click(film);
+    await page.waitForSelector(`${sheet} h2:text-is("Which film is IMG_2041.mov?")`, { timeout: 3000 });
+    await settled();
+    if (!await page.$(`${sheet} button:text-is("Look it up")[disabled]`)) throw new Error('Look it up before a name');
+    await page.fill(`${sheet} label:has-text("Film") input`, 'lebowski');
+    await page.click(`${sheet} button:text-is("Look it up")`);
+    const found = `${sheet} [role="radiogroup"][aria-label="Films found"]`;
+    await page.waitForSelector(`${found} label:has(strong:text-is("The Big Lebowski")):has-text("1998 · from Radarr")`, { timeout: 3000 });
+    if (await page.$(`${sheet} button:text-is("File it")[disabled]`)) throw new Error('File it waits for a pick it does not need');
+    await page.click(`${found} label:has(strong:text-is("The Big Lebowski"))`);
+    await page.click(`${sheet} button:text-is("File it")`);
+    let run = await ran(1);
+    if (JSON.stringify(run) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/IMG_2041.mov', 'movie', 'The Big Lebowski', '1998']])) throw new Error(JSON.stringify(run));
+    await page.waitForSelector('#tidySheet', { state: 'hidden', timeout: 3000 });
+    // A show: one found is picked already, and typing the season keeps it.
+    await page.waitForSelector(`${card} button:text-is("It's an episode…"):not([disabled])`, { timeout: 8000 });
+    await page.click(`${card} li:has(strong:text-is("stuff")) button:text-is("It's an episode…")`);
+    await page.waitForSelector(`${sheet} h2:text-is("Which show is stuff?")`, { timeout: 3000 });
+    await settled();
+    await page.fill(`${sheet} label:has-text("Show") input`, 'severance');
+    await page.click(`${sheet} button:text-is("Look it up")`);
+    const shows = `${sheet} [role="radiogroup"][aria-label="Shows found"]`;
+    await page.waitForSelector(`${shows} label.on:has(strong:text-is("Severance")):has-text("2022 · from Sonarr")`, { timeout: 3000 });
+    await page.fill(`${sheet} label:has-text("Season") input`, '2');
+    if (!await page.$(`${shows} label.on:has(strong:text-is("Severance"))`)) throw new Error('typing the season lost the show picked');
+    await page.click(`${sheet} button:text-is("File it")`);
+    run = await ran(2);
+    if (JSON.stringify(run) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/stuff', 'episode', 'Severance', '2']])) throw new Error(JSON.stringify(run));
+    await page.waitForSelector('#tidySheet', { state: 'hidden', timeout: 3000 });
+    // Nothing here to ask: said in the sheet, and what's typed is filed.
+    await page.evaluate(() => { window.__MOCK.tidyTitlesFail = 'nothing here can look titles up: Radarr (films), Sonarr (shows), or Jellyfin with its API key in Settings can. Type the name instead'; });
+    await page.waitForSelector(`${film}:not([disabled])`, { timeout: 8000 });
+    await page.click(film);
+    await settled();
+    await page.fill(`${sheet} label:has-text("Film") input`, 'Heat');
+    await page.press(`${sheet} label:has-text("Film") input`, 'Enter');
+    await page.waitForSelector(`${sheet} .warn:has-text("nothing here can look titles up")`, { timeout: 3000 });
+    await page.fill(`${sheet} label:has-text("Year") input`, '1995');
+    await page.click(`${sheet} button:text-is("File it")`);
+    run = await ran(3);
+    if (JSON.stringify(run) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/IMG_2041.mov', 'movie', 'Heat', '1995']])) throw new Error(JSON.stringify(run));
+  } },
   { name: 'Tidy Up: with nothing to look at, Needs a look is not there', screen: 'tidy', mock: { tidy: { ...tidy, needs: [] } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });

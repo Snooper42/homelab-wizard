@@ -1027,6 +1027,11 @@ declare namespace media {
     back?: number;
     why?: string;
   }
+  interface Title {
+    name: string;
+    year?: number;
+    from: string;
+  }
 }
 
 declare namespace notify {
@@ -1314,6 +1319,7 @@ interface Backend {
     TidyCover(arg1: number, arg2: string): Promise<string>;
     TidyDrives(): Promise<app.TidyDriveChoice[]>;
     TidyFindAlbums(arg1: string, arg2: string): Promise<media.Album[]>;
+    TidyFindTitles(arg1: string, arg2: string): Promise<media.Title[]>;
     TidyLock(): Promise<app.TidyRunning>;
     TidyPickFolder(): Promise<string>;
     TidyPickMediaFolder(): Promise<string>;

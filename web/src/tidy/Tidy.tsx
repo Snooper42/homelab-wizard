@@ -73,6 +73,8 @@ export interface TidyActions {
   pickMediaFolder: () => Promise<string>;
   /** Name these songs' Look it up: the albums MusicBrainz has by that name (and artist, if typed). */
   albums: (artist: string, album: string) => Promise<media.Album[]>;
+  /** It's a film…'s and It's an episode…'s Look it up: what Radarr, Sonarr, or Jellyfin find for a typed name. */
+  titles: (kind: 'movie' | 'show', name: string) => Promise<media.Title[]>;
 }
 
 /** A question before a step that changes something. */
@@ -99,6 +101,10 @@ export interface TidyFind {
   what: string;
   run: (typed: Record<string, string>) => Promise<TidyChoice[]>;
   none: string;
+  /** The box it looks up (a film's name): Look it up waits for that one alone, and only typing there asks to look again. */
+  needs?: string;
+  /** A pick helps but isn't needed: the main button goes with what's typed (a film's name and year) when none is picked. */
+  optional?: boolean;
 }
 
 /** One thing a Look it up found. */
@@ -291,15 +297,17 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
   const val = (f: TidyField) => (typed[f.key] || '').trim();
   const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
   const values = () => Object.fromEntries((c?.fields || []).map((f) => [f.key, val(f)]));
+  // What Look it up waits for: the box it looks up, or (with none named) every box the question needs.
+  const canFind = !!c?.find && (c.find.needs ? !!(typed[c.find.needs] || '').trim() : ready);
   const find = () => {
-    if (!c?.find || !ready || look?.busy) return;
+    if (!c?.find || !canFind || look?.busy) return;
     const asked = c;
     setFound({ c: asked, busy: true });
     c.find.run(values()).then(
       (list) => setFound((f) => (f?.c === asked && f.busy ? { c: asked, list, picked: list.length === 1 ? list[0].id : undefined } : f)),
       (e) => setFound((f) => (f?.c === asked && f.busy ? { c: asked, error: errorText(e) } : f)));
   };
-  const typeAndForget = (key: string, v: string) => { type(key, v); if (look) setFound(null); };
+  const typeAndForget = (key: string, v: string) => { type(key, v); if (look && (!c?.find?.needs || key === c.find.needs)) setFound(null); };
   return (
     <Sheet id="tidySheet" titleId="tidySheetTitle" onClose={close}>
       <h2 id="tidySheetTitle">{c?.title}</h2>
@@ -318,7 +326,7 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
       )}
       {c?.find && (
         <div class="tidyfind">
-          <button class="small" disabled={!ready || !!look?.busy} onClick={find}>{look?.busy ? 'Looking…' : look?.list || look?.error ? 'Look again' : c.find.label}</button>
+          <button class="small" disabled={!canFind || !!look?.busy} onClick={find}>{look?.busy ? 'Looking…' : look?.list || look?.error ? 'Look again' : c.find.label}</button>
           <div aria-live="polite">
             {look?.error && <p class="warn">{look.error}</p>}
             {look?.list && !look.list.length && <p class="muted">{c.find.none}</p>}
@@ -337,7 +345,7 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
       )}
       <div class="actions">
         <button class="small" onClick={close}>Cancel</button>
-        <button class={'primary small' + (sure ? ' confirm' : '')} disabled={!ready || (!!c?.find && !look?.picked)} onClick={() => {
+        <button class={'primary small' + (sure ? ' confirm' : '')} disabled={!ready || (!!c?.find && !c.find.optional && !look?.picked)} onClick={() => {
           if (c?.twice && !sure) { setSure(true); return; }
           close();
           c?.go({ ...values(), ...(c.find ? { picked: look?.picked || '' } : {}) });
@@ -897,10 +905,19 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   const needs = d.needs || [];
   if (!needs.length) return null;
   const opt = (v: string) => v ? [v] : [];
+  // What Look it up found, as the choice's id: the name and year it files under.
+  const titleChoices = (kind: 'movie' | 'show') => (v: Record<string, string>) => act.titles(kind, kind === 'movie' ? v.title : v.show).then((list) => list.map((t) => ({
+    id: JSON.stringify([t.name, t.year || 0]), title: t.name, sub: [t.year ? String(t.year) : '', 'from ' + t.from].filter(Boolean).join(' · '),
+  })));
+  const picked = (v: Record<string, string>): [string, string] | null => {
+    try { const [n, y] = JSON.parse(v.picked || ''); return [String(n), y ? String(y) : '']; } catch { return null; }
+  };
   const film = (x: media.Need) => act.ask({
-    title: `Which film is ${x.name}?`, lead: 'Its title, and its year if you know it: Tidy Up renames it to that and files it in Movies.', action: 'File it',
+    title: `Which film is ${x.name}?`, lead: 'Its title, and its year if you know it, or Look it up and pick it: Tidy Up renames it to that and files it in Movies.', action: 'File it',
     fields: [{ key: 'title', label: 'Film' }, { key: 'year', label: 'Year', number: true, optional: true }],
-    go: (v) => act.run('inbox', 'name', [x.path, 'movie', v.title, ...opt(v.year)]),
+    find: { label: 'Look it up', what: 'Films found', needs: 'title', optional: true, run: titleChoices('movie'),
+      none: 'Nothing by that name. Check the spelling, or file it as typed.' },
+    go: (v) => { const p = picked(v); act.run('inbox', 'name', [x.path, 'movie', ...(p ? [p[0], ...opt(p[1])] : [v.title, ...opt(v.year)])]); },
   });
   // Songs with no names: the artist and album, looked up on MusicBrainz, and the one they are picked.
   const album = (x: media.Need) => act.ask({
@@ -919,7 +936,9 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
   const episode = (x: media.Need) => act.ask({
     title: `Which show is ${x.name}?`, lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.", action: 'File it',
     fields: [{ key: 'show', label: 'Show' }, { key: 'season', label: 'Season', number: true }, { key: 'episode', label: 'Episode', number: true, optional: true }],
-    go: (v) => act.run('inbox', 'name', [x.path, 'episode', v.show, v.season, ...opt(v.episode)]),
+    find: { label: 'Look it up', what: 'Shows found', needs: 'show', optional: true, run: titleChoices('show'),
+      none: 'Nothing by that name. Check the spelling, or file it as typed.' },
+    go: (v) => act.run('inbox', 'name', [x.path, 'episode', picked(v)?.[0] || v.show, v.season, ...opt(v.episode)]),
   });
   return (
     <Widget title="Needs a look" span="all" kind="tidyneedslook" actions={<span class="muted">{count(needs.length, 'thing')} Tidy Up couldn't place · nothing else waits on {needs.length === 1 ? 'it' : 'them'}</span>}>
