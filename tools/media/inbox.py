@@ -149,6 +149,25 @@ def classify(item):
     return out
 
 
+ARCHIVES = {".rar": ".rar", ".7z": ".7z"}
+# A .rar's later parts (.r00, .r01…) and .7z's (.7z.001): one archive, said once.
+ARCHIVE_PART_RE = re.compile(r"(?i)\.(r\d{2}|7z\.\d{3}|\d{3})$")
+ARCHIVE_WHY = ("It's packed in a %s file, which Tidy Up doesn't open. Open it (double-click it), and what's inside "
+               "is filed next time; or Leave it.")
+
+
+def archive_in(item):
+    """The kind of archive a download is or holds (".rar", ".7z"), or "": a .zip is unpacked by the sweep itself."""
+    files = [item] if item.is_file() else [p for p in item.rglob("*") if p.is_file() and not p.name.startswith("._")]
+    for f in files:
+        suffix = f.suffix.lower()
+        if suffix in ARCHIVES:
+            return ARCHIVES[suffix]
+        if ARCHIVE_PART_RE.search(f.name):
+            return ".7z" if ".7z." in f.name.lower() else ".rar"
+    return ""
+
+
 def leftovers_only(item):
     """True when what's left of a download is nothing worth keeping."""
     if not item.exists():
@@ -548,7 +567,7 @@ def sweep(apply):
         ui.say("On battery: new downloads wait until this computer is plugged in.")
         ui.result(action="inbox", ok=True, paused="battery", filed={}, waiting=[])
         return
-    filed, waiting, failed, trashed = {}, [], [], []
+    filed, waiting, failed, trashed, waiting_on_you = {}, [], [], [], []
     # A download that failed once waits until it changes, rather than failing every minute.
     tried = mc.load_state("inbox", {"failed": {}})
     for folder in inbox_folders():
@@ -581,6 +600,14 @@ def sweep(apply):
             if not kinds:
                 if zipped:
                     shutil.rmtree(str(work), ignore_errors=True)
+                packed = archive_in(item)
+                if packed and apply:
+                    # Packed in a .rar or .7z, which Tidy Up doesn't open: Needs a look says so, once.
+                    tried["failed"][str(item)] = item.stat().st_mtime
+                    note_why(tried, item, "", ARCHIVE_WHY % packed)
+                    waiting_on_you.append(str(item))
+                elif packed:
+                    ui.kv(item.name, "→ packed (%s): open it, and what's inside is filed" % packed)
                 continue  # not media: an installer, a document. Left alone.
             all_ok = True
             for kind, paths in kinds.items():
@@ -628,7 +655,7 @@ def sweep(apply):
     if apply:
         ui.ok("Filed %s from the inbox%s" % (mc.fmt_n(n), "; %d waiting" % len(waiting) if waiting else ""))
     ui.result(action="inbox", ok=not failed, applied=apply, filed=filed, waiting=waiting, failed=failed,
-              trashed=trashed)
+              trashed=trashed, packed=waiting_on_you)
     if failed:
         sys.exit(1)
 
