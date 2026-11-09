@@ -247,9 +247,17 @@ function installFix(job: TidyJob, d: app.TidyUp | null | undefined, act: TidyAct
 
 /** The question before a step that changes something, in a sheet. */
 export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () => void }) {
-  const [sure, setSure] = useState(false);
-  const [typed, setTyped] = useState<Record<string, string>>({});
-  useEffect(() => { setSure(false); setTyped({}); }, [c]);
+  // What's typed and the first click of a twice belong to the question they were for: a new question starts empty in
+  // the very render that draws it. (Cleared in an effect instead, it emptied the boxes a frame later, over anything
+  // typed in between, and File it stayed greyed out.)
+  type Form = { for: TidyConfirm | null; sure: boolean; typed: Record<string, string> };
+  const fresh = (): Form => ({ for: c, sure: false, typed: {} });
+  const [kept, setForm] = useState<Form>(fresh);
+  const form = kept.for === c ? kept : fresh();
+  const change = (f: (s: Form) => Partial<Form>) => setForm((s) => { const b = s.for === c ? s : fresh(); return { ...b, ...f(b) }; });
+  const { sure, typed } = form;
+  const setSure = (v: boolean) => change(() => ({ sure: v }));
+  const setTyped = (f: (t: Record<string, string>) => Record<string, string>) => change((s) => ({ typed: f(s.typed) }));
   const val = (f: TidyField) => (typed[f.key] || '').trim();
   const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
   return (

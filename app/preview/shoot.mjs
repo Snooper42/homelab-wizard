@@ -1002,6 +1002,10 @@ const smokes = [
     await page.waitForSelector(`${card} li:has(strong:text-is("IMG_2041.mov")) .warn:has-text("Couldn't tell which film it is from its name.")`, { timeout: 2000 });
     const song = `${card} li:has(strong:text-is("track01.mp3"))`;
     if (await page.$(`${song} button:text-is("It's a film…")`)) throw new Error('a song offered as a film');
+    // Slow frames, as a busy CI runner's are at times: a question cleared a frame after it's drawn wiped what was typed
+    // in that frame, and File it stayed greyed out (Nov 9: this check failed at random on main). Each sheet below is
+    // typed in at once, so that comes back every time, not one run in several.
+    await page.evaluate(() => { const r = window.requestAnimationFrame; window.requestAnimationFrame = (f) => setTimeout(() => r(f), 200); });
     await page.click(`${card} li:has(strong:text-is("IMG_2041.mov")) button:text-is("It's a film…")`);
     const sheet = '#tidySheet:not([hidden])';
     await page.waitForSelector(`${sheet} h2:text-is("Which film is IMG_2041.mov?")`, { timeout: 3000 });

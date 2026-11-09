@@ -16401,12 +16401,16 @@ ${pays}
     return { label: "Install ffmpeg", run: () => act.install({ kind: job2.kind, action: job2.action }) };
   }
   function ConfirmSheet({ c: c4, close: close3 }) {
-    const [sure, setSure] = d2(false);
-    const [typed, setTyped] = d2({});
-    h2(() => {
-      setSure(false);
-      setTyped({});
-    }, [c4]);
+    const fresh = () => ({ for: c4, sure: false, typed: {} });
+    const [kept4, setForm] = d2(fresh);
+    const form2 = kept4.for === c4 ? kept4 : fresh();
+    const change = (f4) => setForm((s3) => {
+      const b2 = s3.for === c4 ? s3 : fresh();
+      return { ...b2, ...f4(b2) };
+    });
+    const { sure, typed } = form2;
+    const setSure = (v3) => change(() => ({ sure: v3 }));
+    const setTyped = (f4) => change((s3) => ({ typed: f4(s3.typed) }));
     const val = (f4) => (typed[f4.key] || "").trim();
     const ready2 = (c4?.fields || []).every((f4) => (f4.optional || val(f4)) && (!f4.number || /^\d{0,4}$/.test(val(f4))));
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
