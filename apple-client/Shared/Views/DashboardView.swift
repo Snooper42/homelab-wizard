@@ -439,8 +439,14 @@ private struct SplitDashboard: View {
     @State private var columns: NavigationSplitViewVisibility = .all
 
     /// The computer's screens a phone can reach, in its sidebar's order.
+    /// A household member's iPad: their apps, their Finances, and Settings.
+    private var isMember: Bool { coordinator.device?.isMember == true }
+
     private var screens: [Screen] {
-        [.status(.all), .backups] + (finances.canSeePlan ? [.finances] : []) + [.setup, .settings]
+        if isMember {
+            return [.status(.all)] + (finances.canSeePlan ? [.finances] : []) + [.settings]
+        }
+        return [.status(.all), .backups] + (finances.canSeePlan ? [.finances] : []) + [.setup, .settings]
     }
 
     /// The highlighted row: Status for any of its filters. Picking Status
@@ -490,6 +496,9 @@ private struct SplitDashboard: View {
             }
         } content: {
             switch model.sidebar {
+            // A household member's iPad has neither (a place kept from before).
+            case .backups? where isMember, .setup? where isMember:
+                appList
             case .backups?:
                 BackupsView(backups: model.backups)
                     .safeAreaInset(edge: .top) { healthLine }
@@ -505,6 +514,9 @@ private struct SplitDashboard: View {
                     .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
+            case .settings? where isMember:
+                MemberSettingsView()
+                    .navigationSplitViewColumnWidth(min: 320, ideal: 420)
             case .settings?:
                 ComputerView(computer: computer, page: .settings)
                     .safeAreaInset(edge: .top) { healthLine }
