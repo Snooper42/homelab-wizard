@@ -14,10 +14,10 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 ## 1. Where it stands (Nov 9, evening)
 
-**In flight** (Nov 9, 19:35 UTC): #544, #545, #546 and #547 merged (the companion through the tunnel, Setup's *Reach Finances away from home*, the iPhone side of it, and the switch for the day they sign). On Nov 9 at 18:26 GitHub marked a round of runs failed without starting any jobs (main's CI and Release, and #546's): a re-run of each went green. If a run fails with no jobs at all, re-run it once before looking for a cause.
-1. **`claude/nice-bohr-ab4jg1`: Away mode and noticing a network change** (the last of `unison-handoff.md` section 4, item 0): a change of network has the phone try home first again (`NetworkKind`); when neither home nor the tunnel answers, Status lists just the apps on the internet, as last kept in the Keychain. **Its Swift was written without a compiler:** expect a fix round. This file's update rides it. `claude/feature-iphone-signed` (replaced by #547) can go.
+**In flight** (Nov 9, 20:00 UTC): #544 to #548 merged: away from home is done on both sides (the companion through the tunnel, Setup's *Reach Finances away from home*, the phone's sealing and fallback, Away mode, and noticing a network change), and the switch for the day they sign. On Nov 9 at 18:26 GitHub marked a round of runs failed without starting any jobs: a re-run of each went green. If a run fails with no jobs at all, re-run it once before looking for a cause.
+1. **`claude/nice-bohr-ab4jg1`: links into the app (`homelab://`)**, `unison-handoff.md` section 4, item 1: `DeepLink.parse`, the scheme in `make-xcode-project.sh`, an action link waiting for one tap on the app's page. iPhone only for now (the iPad and Mac split view doesn't take Siri's requests either). This file's update rides it. `claude/feature-iphone-signed` (replaced by #547) can go.
 
-**Next after that:** `unison-handoff.md` section 4 items 1 onwards (links into the app first), then Tidy Up and Finances in section 2's order.
+**Next after that:** `unison-handoff.md` section 4 item 2 (buttons on alerts, through ntfy: a desktop PR, which uses these links), then items 3 onwards, then Tidy Up and Finances in section 2's order.
 
 **Waiting on the owner:**
 - **The App Group test** (`unison-handoff.md` section 2): `HOMELAB_WIDGET=1 ./apple-client/scripts/run-on-iphone.sh <prefix>`, and whether it signs. It decides the widget, Live Activities and Control Center work.
