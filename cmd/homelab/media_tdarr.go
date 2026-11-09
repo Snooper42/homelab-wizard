@@ -14,11 +14,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/battery"
+	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
+	"github.com/Snooper42/homelab-wizard/internal/media"
+	"github.com/Snooper42/homelab-wizard/internal/stopped"
 )
 
 // tdarrClient reaches Tdarr's sign-up; tests replace it.
@@ -254,4 +259,186 @@ func (t *tdarrAPI) giveBack(ctx context.Context, held map[string]int) bool {
 		delete(held, key)
 	}
 	return true
+}
+
+// Tdarr rests while it has nothing to do (the owner, Nov 9: memory on a
+// 16GB Mac). It does only what Tidy Up hands it (its libraries scan nothing
+// on their own), so once no film or episode is with it and no job has
+// needed it for a while, the agent stops it and notes it in
+// data/stopped.json as Tidy Up's ("tidy"), which everything that starts
+// apps by itself skips. A job that needs it starts it first. Someone who
+// starts it meanwhile keeps it up until a job next uses it; a stop made by
+// a person is never undone here. TIDY_TDARR_REST=false keeps it up.
+
+// whyTidy is Tidy Up's stop of a resting Tdarr in data/stopped.json.
+const whyTidy = "tidy"
+
+// tdarrRestAfter is how long after the last job that needed Tdarr it rests.
+var tdarrRestAfter = 15 * time.Minute
+
+// needsTdarr is whether a run may hand Tdarr work or ask it something:
+// Tdarr's own jobs, filing a film or episode (a bloated one goes through
+// Tdarr first), and an inbox sweep with a video to file. inboxVideo is
+// asked only for that sweep.
+func needsTdarr(kind, action string, apply bool, rest []string, inboxVideo func() bool) bool {
+	switch {
+	case tdarrJob(kind, action):
+		return true
+	case (kind == "movies" || kind == "tv") && action == "file":
+		return true
+	case kind == "inbox" && action == "name":
+		return len(rest) > 1 && (rest[1] == "movie" || rest[1] == "episode")
+	case kind == "inbox" && action == "scan" && apply:
+		return inboxVideo()
+	}
+	return false
+}
+
+// tdarrAnswers is whether Tdarr's server answers at all on this machine
+// (one asking for a sign-in is up).
+func tdarrAnswers(ctx context.Context, env map[string]string) bool {
+	t := newTdarrAPI(ctx, map[string]string{"TDARR_PORT": env["TDARR_PORT"]}) // no key nor login: whether it answers at all
+	err := t.do(ctx, http.MethodGet, "/api/v2/status", nil, nil, nil)
+	return err == nil || strings.Contains(err.Error(), "answered 4")
+}
+
+// useTdarr is called before and after a job that needs Tdarr: a resting
+// Tdarr is started first (say tells the household), and the job counts as
+// Tidy Up's use of it, so it rests only a while after.
+func (h *homelab) useTdarr(ctx context.Context, say func(string)) {
+	h.wakeTdarr(ctx, say)
+	rec := media.LoadRecord(h.root)
+	rec.TdarrUsed, rec.TdarrLeftUp = time.Now().UTC(), false
+	_ = rec.Save(h.root)
+}
+
+// wakeTdarr starts a Tdarr that Tidy Up rested, and waits until it answers.
+// One that won't start stays as it was: the job then says Tdarr isn't
+// answering, as it would of any stopped Tdarr.
+func (h *homelab) wakeTdarr(ctx context.Context, say func(string)) {
+	path := stopped.Path(h.root)
+	if s, ok := stopped.Load(path)["tdarr"]; !ok || s.Why != whyTidy {
+		return
+	}
+	// On battery the saver would pause it again: it rests until power, as
+	// a Tdarr the saver paused does.
+	if onBattery, known := battery.Power(); known && onBattery && !strings.EqualFold(h.envMap()["BATTERY_SAVER"], "false") {
+		return
+	}
+	a, ok := h.catalog.Get("tdarr")
+	if !ok {
+		return
+	}
+	client, err := h.docker(ctx)
+	if err != nil {
+		return
+	}
+	say("Starting Tdarr, which was resting")
+	if err := client.Compose(ctx, h.project(a.File), a.Profiles, "start", a.ID); err != nil {
+		say(fmt.Sprintf("Tdarr didn't start: %v", err))
+		return
+	}
+	_ = stopped.Update(path, func(r stopped.Record) bool {
+		if s, ok := r["tdarr"]; ok && s.Why == whyTidy {
+			delete(r, "tdarr")
+			return true
+		}
+		return false
+	})
+	rec := media.LoadRecord(h.root)
+	rec.TdarrResting = false
+	_ = rec.Save(h.root)
+	env := h.envMap()
+	for deadline := time.Now().Add(tdarrStartWait); ctx.Err() == nil && time.Now().Before(deadline); time.Sleep(2 * time.Second) {
+		if tdarrAnswers(ctx, env) {
+			return
+		}
+	}
+}
+
+// restTdarr, from the agent's minute, stops the Tdarr Tidy Up uses when it
+// has nothing to do: no film or episode with it, not converting, no job and
+// no start for a while. One not set up for Tidy Up, one the battery saver
+// has, or one a person stopped or started, is left as it is.
+func (h *homelab) restTdarr(ctx context.Context, env map[string]string, home string, now time.Time) {
+	if off(env["TIDY_TDARR_REST"]) || h.jobRunning() {
+		return
+	}
+	path := stopped.Path(h.root)
+	if stopped.Load(path).Has("tdarr") {
+		return // resting already, or stopped by a person
+	}
+	rec := media.LoadRecord(h.root)
+	// Only the Tdarr Tidy Up uses (Set up Tdarr made its libraries): one
+	// installed for its own sake, or not set up yet, is left running.
+	if !rec.TdarrResting && (len(rec.TdarrLibraries) == 0 || rec.TdarrLeftUp || now.Sub(rec.TdarrUsed) < tdarrRestAfter ||
+		media.HasTdarrWork(home, "movies") || media.HasTdarrWork(home, "tv")) {
+		return
+	}
+	if bs := battery.Load(battery.Path(h.root)); slices.Contains(bs.Paused, "tdarr") || slices.Contains(bs.Finishing, "tdarr") {
+		return // the battery saver's, until it is plugged in
+	}
+	a, ok := h.catalog.Get("tdarr")
+	if !ok {
+		return
+	}
+	client, err := h.docker(ctx)
+	if err != nil {
+		return
+	}
+	containers, err := client.Containers(ctx)
+	if err != nil {
+		return
+	}
+	running := false
+	if st, _ := detect.Analyze(h.catalog, containers).State("tdarr"); st == detect.Running {
+		running = true
+	}
+	if rec.TdarrResting {
+		// Out of data/stopped.json while Tidy Up had it resting: someone
+		// started it (Status, its page) or said it's no longer stopped. Up
+		// is theirs until a job next uses it.
+		rec.TdarrResting, rec.TdarrLeftUp = false, running
+		_ = rec.Save(h.root)
+		return
+	}
+	if !running {
+		return
+	}
+	// Just installed, started, or updated: up a while before it rests.
+	for _, c := range containers {
+		if c.Service() == "tdarr" && !c.StartedAt.IsZero() && now.Sub(c.StartedAt) < tdarrRestAfter {
+			return
+		}
+	}
+	if busy, ok := newTdarrAPI(ctx, env).busy(ctx); ok && busy {
+		return
+	}
+	// In the record first, so nothing that starts apps starts it meanwhile.
+	mine := stopped.Stop{Since: now.UTC().Truncate(time.Second), Why: whyTidy}
+	added := false
+	if err := stopped.Update(path, func(r stopped.Record) bool {
+		if r.Has("tdarr") {
+			return false
+		}
+		r["tdarr"], added = mine, true
+		return true
+	}); err != nil || !added {
+		return
+	}
+	if err := client.Compose(ctx, h.project(a.File), a.Profiles, "stop", a.ID); err != nil {
+		h.ui.Warn("Tdarr: couldn't stop it to rest: %v", err)
+		_ = stopped.Update(path, func(r stopped.Record) bool {
+			if s, ok := r["tdarr"]; ok && s.Why == whyTidy && s.Since.Equal(mine.Since) {
+				delete(r, "tdarr")
+				return true
+			}
+			return false
+		})
+		return
+	}
+	rec = media.LoadRecord(h.root)
+	rec.TdarrResting = true
+	_ = rec.Save(h.root)
+	h.ui.Info("Tdarr is resting: Tidy Up starts it again when it has a video to shrink")
 }
