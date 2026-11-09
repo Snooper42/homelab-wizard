@@ -38,11 +38,14 @@ type Access struct {
 	// ClientID is the service token's client ID, which Cloudflare puts in the
 	// pass as common_name: only that token's passes are taken.
 	ClientID string
+<<<<<<< HEAD
 	// Secret is the service token's secret and Host the companion's
 	// hostname through the tunnel (COMPANION_ACCESS_CLIENT_SECRET,
 	// COMPANION_AWAY_HOST): given to a phone only when it pairs at home,
 	// with its key, so it can go out.
 	Secret, Host string
+=======
+>>>>>>> origin/main
 }
 
 // On is whether the tunnel may be used at all.
