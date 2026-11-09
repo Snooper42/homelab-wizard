@@ -16406,8 +16406,24 @@ ${pays}
     const typed = entry.c === c4 ? entry.v : {};
     const type = (key5, v3) => setEntry((e3) => ({ c: c4, v: { ...e3.c === c4 ? e3.v : {}, [key5]: v3 } }));
     h2(() => setSure(false), [c4]);
+    const [found2, setFound2] = d2(null);
+    const look2 = found2?.c === c4 ? found2 : null;
     const val = (f4) => (typed[f4.key] || "").trim();
     const ready2 = (c4?.fields || []).every((f4) => (f4.optional || val(f4)) && (!f4.number || /^\d{0,4}$/.test(val(f4))));
+    const values = () => Object.fromEntries((c4?.fields || []).map((f4) => [f4.key, val(f4)]));
+    const find = () => {
+      if (!c4?.find || !ready2 || look2?.busy) return;
+      const asked = c4;
+      setFound2({ c: asked, busy: true });
+      c4.find.run(values()).then(
+        (list) => setFound2((f4) => f4?.c === asked && f4.busy ? { c: asked, list, picked: list.length === 1 ? list[0].id : void 0 } : f4),
+        (e3) => setFound2((f4) => f4?.c === asked && f4.busy ? { c: asked, error: errorText(e3) } : f4)
+      );
+    };
+    const typeAndForget = (key5, v3) => {
+      type(key5, v3);
+      if (look2) setFound2(null);
+    };
     return /* @__PURE__ */ u3(Sheet, { id: "tidySheet", titleId: "tidySheetTitle", onClose: close3, children: [
       /* @__PURE__ */ u3("h2", { id: "tidySheetTitle", children: c4?.title }),
       /* @__PURE__ */ u3("p", { class: "lead", children: c4?.lead }),
@@ -16425,19 +16441,39 @@ ${pays}
             value: typed[f4.key] || "",
             inputMode: f4.number ? "numeric" : void 0,
             maxLength: f4.number ? 4 : 200,
-            onInput: (e3) => type(f4.key, e3.target.value)
+            onInput: (e3) => typeAndForget(f4.key, e3.target.value),
+            onKeyDown: c4.find ? (e3) => {
+              if (e3.key === "Enter") {
+                e3.preventDefault();
+                find();
+              }
+            } : void 0
           }
         )
       ] }, f4.key)) }),
+      c4?.find && /* @__PURE__ */ u3("div", { class: "tidyfind", children: [
+        /* @__PURE__ */ u3("button", { class: "small", disabled: !ready2 || !!look2?.busy, onClick: find, children: look2?.busy ? "Looking…" : look2?.list || look2?.error ? "Look again" : c4.find.label }),
+        /* @__PURE__ */ u3("div", { "aria-live": "polite", children: [
+          look2?.error && /* @__PURE__ */ u3("p", { class: "warn", children: look2.error }),
+          look2?.list && !look2.list.length && /* @__PURE__ */ u3("p", { class: "muted", children: c4.find.none }),
+          !!look2?.list?.length && /* @__PURE__ */ u3("div", { class: "tidyfound", role: "radiogroup", "aria-label": c4.find.what, children: look2.list.map((x3) => /* @__PURE__ */ u3("label", { class: "tidyfoundrow" + (look2.picked === x3.id ? " on" : ""), children: [
+            /* @__PURE__ */ u3("input", { type: "radio", name: "tidyfound", value: x3.id, checked: look2.picked === x3.id, onChange: () => setFound2({ ...look2, picked: x3.id }) }),
+            /* @__PURE__ */ u3("span", { children: [
+              /* @__PURE__ */ u3("strong", { children: x3.title }),
+              x3.sub && /* @__PURE__ */ u3("span", { class: "muted", children: x3.sub })
+            ] })
+          ] }, x3.id)) })
+        ] })
+      ] }),
       /* @__PURE__ */ u3("div", { class: "actions", children: [
         /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { class: "primary small" + (sure ? " confirm" : ""), disabled: !ready2, onClick: () => {
+        /* @__PURE__ */ u3("button", { class: "primary small" + (sure ? " confirm" : ""), disabled: !ready2 || !!c4?.find && !look2?.picked, onClick: () => {
           if (c4?.twice && !sure) {
             setSure(true);
             return;
           }
           close3();
-          c4?.go(Object.fromEntries((c4.fields || []).map((f4) => [f4.key, val(f4)])));
+          c4?.go({ ...values(), ...c4.find ? { picked: look2?.picked || "" } : {} });
         }, children: c4?.twice && sure ? `Click again: ${c4.action.toLowerCase()}` : c4?.action })
       ] })
     ] });
@@ -16991,6 +17027,23 @@ ${pays}
       fields: [{ key: "title", label: "Film" }, { key: "year", label: "Year", number: true, optional: true }],
       go: (v3) => act.run("inbox", "name", [x3.path, "movie", v3.title, ...opt(v3.year)])
     });
+    const album = (x3) => act.ask({
+      title: `Which album is ${x3.name}?`,
+      action: "File them",
+      lead: "Its name, and the artist if you know it. Tidy Up looks it up on MusicBrainz; pick the one these songs are, and it writes the album's names onto them and files them in Music.",
+      fields: [{ key: "artist", label: "Artist", optional: true }, { key: "album", label: "Album" }],
+      find: {
+        label: "Look it up",
+        what: "Albums found",
+        run: (v3) => act.albums(v3.artist, v3.album).then((list) => list.map((a3) => ({
+          id: a3.id,
+          title: a3.title,
+          sub: [a3.artist, a3.year, count(a3.songs, "song"), [a3.format, a3.country].filter(Boolean).join(", ")].filter(Boolean).join(" · ")
+        }))),
+        none: "MusicBrainz has no album by that name. Check the spelling, or leave the artist out."
+      },
+      go: (v3) => act.run("inbox", "name", [x3.path, "album", v3.picked])
+    });
     const episode = (x3) => act.ask({
       title: `Which show is ${x3.name}?`,
       lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.",
@@ -17010,6 +17063,7 @@ ${pays}
         sub: x3.why,
         subTone: "warn",
         end: /* @__PURE__ */ u3("span", { class: "tidyneedsgo", children: [
+          x3.kind === "music" && /* @__PURE__ */ u3(Go, { label: "Name these songs…", job: job2, onClick: () => album(x3) }),
           (x3.kind === "movies" || x3.kind === "tv") && /* @__PURE__ */ u3(S, { children: [
             /* @__PURE__ */ u3(Go, { label: "It's a film…", job: job2, onClick: () => film(x3) }),
             /* @__PURE__ */ u3(Go, { label: "It's an episode…", job: job2, onClick: () => episode(x3) })
@@ -17368,6 +17422,7 @@ ${pays}
           showError(e3);
           return "";
         }),
+        albums: (artist, album) => Promise.resolve(go().TidyFindAlbums(artist, album)),
         // Kept, then the apps that read the libraries are recreated on it: homelab fix lists them and asks first.
         useMediaRoot: (root, name) => {
           Promise.resolve(go().TidySetMediaRoot(root)).then((d4) => {

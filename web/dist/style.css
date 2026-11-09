@@ -2005,6 +2005,13 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .tidyfields .field { flex:1 1 220px; }
 .tidyfields .field.tidynum { flex:0 1 140px; }
 .tidyfields input { width:100%; }
+.tidyfind { margin:0 0 8px; }
+.tidyfind > button { margin-bottom:8px; }
+.tidyfound { display:flex; flex-direction:column; gap:4px; max-height:280px; overflow-y:auto; }
+.tidyfoundrow { display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid var(--line); border-radius:10px; cursor:pointer; }
+.tidyfoundrow.on { border-color:var(--accent); background:var(--accent-soft); }
+.tidyfoundrow input { margin-top:3px; flex:none; }
+.tidyfoundrow > span { display:flex; flex-direction:column; min-width:0; overflow-wrap:anywhere; }
 /* Where should your libraries live?: a card a drive, the picked one ringed, its space as a thin bar; then each library's folder. */
 .tidyinboxwhere { margin:12px 0 0; font-size:13px; }
 .tidyinboxwhere .linkbtn { padding:0; }

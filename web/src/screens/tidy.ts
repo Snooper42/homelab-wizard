@@ -56,6 +56,7 @@ function draw() {
       drives: () => Promise.resolve(go().TidyDrives()),
       place: (root) => Promise.resolve(go().TidyPlace(root)),
       pickMediaFolder: () => Promise.resolve(go().TidyPickMediaFolder()).catch((e) => { showError(e); return ''; }),
+      albums: (artist, album) => Promise.resolve(go().TidyFindAlbums(artist, album)),
       // Kept, then the apps that read the libraries are recreated on it: homelab fix lists them and asks first.
       useMediaRoot: (root, name) => {
         Promise.resolve(go().TidySetMediaRoot(root)).then((d) => {

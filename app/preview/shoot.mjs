@@ -1032,6 +1032,62 @@ const smokes = [
     runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[2].slice(0, 3)) !== JSON.stringify(['inbox', 'leave', ['/Users/you/Downloads/track01.mp3']])) throw new Error(JSON.stringify(runs));
   } },
+  // Nov 8, the owner's Inbox plan, item 5: songs with no names. Name these songs asks the album (and the artist, if
+  // known), looks it up on MusicBrainz, and files the songs as the one picked: File them waits for a pick, typing again
+  // asks to look again, and finding nothing, or not reaching MusicBrainz, says so in the sheet.
+  { name: 'Tidy Up: Name these songs looks the album up, and files the songs as the one picked', screen: 'tidy', mock: { tidy: { ...tidy, needs: [
+    { path: '/Users/you/Downloads/new stuff', name: 'new stuff', kind: 'music', why: "These songs don't say which artist or album they are." },
+    { path: '/Users/you/Downloads/IMG_2041.mov', name: 'IMG_2041.mov', kind: 'movies', why: "Couldn't tell which film it is from its name." },
+  ] }, tidyAlbums: [
+    { id: '0e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d', title: 'Rumours', artist: 'Fleetwood Mac', year: '1977', songs: 11, format: 'Vinyl', country: 'US' },
+    { id: '2e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d', title: 'Rumours', artist: 'Fleetwood Mac', year: '2013', songs: 38, format: '3×CD' },
+    { id: '3e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d', title: 'Rumours Live', artist: 'Lindsey Buckingham & Christine McVie', songs: 18 },
+  ] }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    const card = '#tidy .tidyneedslook';
+    const songs = `${card} li:has(strong:text-is("new stuff"))`;
+    await page.waitForSelector(`${songs} .warn:has-text("These songs don't say which artist or album they are.")`, { timeout: 5000 });
+    if (await page.$(`${card} li:has(strong:text-is("IMG_2041.mov")) button:text-is("Name these songs…")`)) throw new Error('a film offered as songs');
+    if (await page.$(`${songs} button:text-is("It's a film…")`)) throw new Error('songs offered as a film');
+    await page.click(`${songs} button:text-is("Name these songs…")`);
+    const sheet = '#tidySheet:not([hidden])';
+    await page.waitForSelector(`${sheet} h2:text-is("Which album is new stuff?")`, { timeout: 3000 });
+    if (!await page.$(`${sheet} button:text-is("Look it up")[disabled]`)) throw new Error('Look it up before an album');
+    if (!await page.$(`${sheet} button:text-is("File them")[disabled]`)) throw new Error('File them before a pick');
+    await page.fill(`${sheet} label:has-text("Artist") input`, 'Fleetwood Mac');
+    await page.fill(`${sheet} label:has-text("Album") input`, 'Rumours');
+    await page.click(`${sheet} button:text-is("Look it up")`);
+    const found = `${sheet} [role="radiogroup"][aria-label="Albums found"]`;
+    await page.waitForSelector(`${found} label:has(strong:text-is("Rumours")):has-text("Fleetwood Mac · 1977 · 11 songs · Vinyl, US")`, { timeout: 3000 });
+    if ((await page.$$(`${found} input[type="radio"]`)).length !== 3) throw new Error('not every album found is listed');
+    if (!await page.$(`${sheet} button:text-is("File them")[disabled]`)) throw new Error('File them before one of three is picked');
+    await page.fill(`${sheet} label:has-text("Album") input`, 'Rumours ');
+    await page.waitForSelector(found, { state: 'detached', timeout: 2000 });
+    await page.click(`${sheet} button:text-is("Look it up")`);
+    await page.click(`${found} label:has-text("2013")`);
+    if (process.env.SMOKE_SHOTS) {
+      mkdirSync(process.env.SMOKE_SHOTS, { recursive: true });
+      await page.locator('#tidySheet').screenshot({ path: join(process.env.SMOKE_SHOTS, `name-these-songs-${await page.evaluate(() => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))}.png`) });
+    }
+    await page.click(`${sheet} button:text-is("File them"):not([disabled])`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
+    if (JSON.stringify(runs[0].slice(0, 3)) !== JSON.stringify(['inbox', 'name', ['/Users/you/Downloads/new stuff', 'album', '2e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d']])) throw new Error(JSON.stringify(runs));
+    await page.waitForSelector('#tidySheet', { state: 'hidden', timeout: 3000 });
+    // Nothing by that name, then MusicBrainz out of reach: each said in the sheet, and nothing filed.
+    await page.evaluate(() => { window.__MOCK.tidyAlbums = []; });
+    await page.waitForSelector(`${songs} button:text-is("Name these songs…"):not([disabled])`, { timeout: 8000 });
+    await page.click(`${songs} button:text-is("Name these songs…")`);
+    await page.fill(`${sheet} label:has-text("Album") input`, 'Rumors');
+    await page.press(`${sheet} label:has-text("Album") input`, 'Enter');
+    await page.waitForSelector(`${sheet} p:text-is("MusicBrainz has no album by that name. Check the spelling, or leave the artist out.")`, { timeout: 3000 });
+    await page.evaluate(() => { window.__MOCK.tidyAlbumsFail = "couldn't reach MusicBrainz: is this computer online?"; });
+    await page.click(`${sheet} button:text-is("Look again")`);
+    await page.waitForSelector(`${sheet} .warn:text-is("couldn't reach MusicBrainz: is this computer online?")`, { timeout: 3000 });
+    if (!await page.$(`${sheet} button:text-is("File them")[disabled]`)) throw new Error('File them with nothing picked');
+    await page.click(`${sheet} button:text-is("Cancel")`);
+    if ((await page.evaluate(() => window.__MOCK.tidyRuns)).length !== 1) throw new Error('filed with nothing picked');
+  } },
   { name: 'Tidy Up: with nothing to look at, Needs a look is not there', screen: 'tidy', mock: { tidy: { ...tidy, needs: [] } }, run: async (page) => {
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
     await page.waitForSelector('#tidy .tidytoday', { timeout: 5000 });
