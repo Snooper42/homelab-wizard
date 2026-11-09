@@ -5458,6 +5458,32 @@ const smokes = [
     if (names !== 'Acme Cruises|Mazda|Xfinity|Apple Savings|Payment to Chase card ••1234|Zelle from Jane Q Doe') throw new Error(`named ${names}`);
     if (!txs[0].note?.includes('ACME CRUISES AD_PAYMENT PPD ID: 1234567890')) throw new Error(`the bank's wording not kept: ${txs[0].note}`);
   } },
+  // An American Express file: charges as plus amounts, a payment as minus. Into a card it is read the other way round,
+  // said so, and can be turned off; into checking, as written.
+  { name: 'Finances: an American Express file reads its plus amounts as charges', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n'
+      + '11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n'
+      + '11/04/2026,PET SUPERMARKET #100SUNRISE FL,30.34\n'
+      + '11/02/2026,AIRCOOL FLORIDA MIAMI FL,402.00\n'
+      + '11/01/2026,AUTOPAY PAYMENT RECEIVED - THANK YOU,-500.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.waitForSelector('#finSheet .formsub:has-text("4 to bring in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importnote:has-text("read as charges")', { timeout: 2000 });
+    if (!(await page.isChecked('#finSheet label:has-text("Charges are plus amounts") input'))) throw new Error('not read as charges');
+    const shown = await page.$$eval('#finSheet .importlist li > span:last-child', (s) => s.map((x) => x.textContent));
+    if (shown.join(' ') !== '−$56.61 −$30.34 −$402.00 +$500.00') throw new Error(`shown ${shown.join(' ')}`);
+    // Turned off, as written.
+    await page.click('#finSheet label:has-text("Charges are plus amounts") input');
+    if ((await page.textContent('#finSheet .importlist li > span:last-child')) !== '+$56.61') throw new Error('turned off, still the other way round');
+    await page.click('#finSheet label:has-text("Charges are plus amounts") input');
+    await page.click('#finSheet button:text-is("Bring in 4")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-4);
+    if (txs.map((t) => `${t.account} ${t.amount}`).join('|') !== 'amex -56.61|amex -30.34|amex -402|amex 500') throw new Error(`saved ${txs.map((t) => `${t.account} ${t.amount}`)}`);
+  } },
   // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
   // name, keeping their category; a payee typed in by hand stays as it is; nothing comes in twice.
   { name: 'Finances: a CSV imported again gives rows named with the bank\'s codes clearer names, never one typed by hand', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [

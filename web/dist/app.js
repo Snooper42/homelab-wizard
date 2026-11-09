@@ -1262,6 +1262,10 @@
     }
     return out;
   }
+  function chargesPlus(rows) {
+    const n3 = rows.filter((t3) => t3.amount).length;
+    return n3 >= 3 && rows.filter((t3) => t3.amount > 0).length > n3 / 2;
+  }
   function fromOfx(text2) {
     const out = [];
     for (const block of text2.split(/<STMTTRN>/i).slice(1)) {
@@ -11203,6 +11207,7 @@
     const [busy2, setBusy] = d2(false);
     const [problem, setProblem] = d2("");
     const [picked, setPicked] = d2({});
+    const [flip, setFlip] = d2(null);
     const ofx = !!text2 && isOfx(text2);
     const rows = text2 && !ofx ? csvRows(text2) : [];
     const header = rows[0] || [];
@@ -11213,10 +11218,16 @@
       setText(t3);
       setProblem("");
       setPicked({});
+      setFlip(null);
       const all = isOfx(t3) ? [] : csvRows(t3);
       setCols(isOfx(t3) ? null : guessColumns(all[0] || [], all.slice(1)));
     };
-    const read_ = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const asRead = !text2 ? [] : ofx ? fromOfx(text2) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+    const card = accounts.find((a3) => a3.id === account)?.kind === "card";
+    const signed2 = !ofx && !!cols && cols.amount >= 0;
+    const guessFlip = signed2 && card && chargesPlus(asRead);
+    const flipped = signed2 && (flip ?? guessFlip);
+    const read_ = flipped ? asRead.map((t3) => ({ ...t3, amount: -t3.amount })) : asRead;
     const have = ledger?.transactions || [];
     const memory3 = renameMemory(have, cleanPayee);
     const found2 = read_.map((t3) => {
@@ -11292,13 +11303,19 @@
         /* @__PURE__ */ u3(AccountSelect, { label: "Into the ledger of", value: account, set: (a3) => {
           setAccount(a3);
           setPicked({});
+          setFlip(null);
         }, accounts }),
         cols && /* @__PURE__ */ u3(S, { children: [
           colPick("Day", "date"),
           colPick("Amount", "amount"),
           cols.amount < 0 && colPick("Money out", "debit"),
           cols.amount < 0 && colPick("Money in", "credit"),
-          colPick("Payee", "payee")
+          colPick("Payee", "payee"),
+          signed2 && /* @__PURE__ */ u3("label", { class: "fcheckbox wide", children: [
+            /* @__PURE__ */ u3("input", { type: "checkbox", checked: flipped, onClick: tick2(setFlip) }),
+            " Charges are plus amounts in this file (American Express writes them so)"
+          ] }),
+          signed2 && flip === null && guessFlip && /* @__PURE__ */ u3("p", { class: "formsub muted wide importnote", children: "Most rows in this card's file are plus amounts, so they're read as charges and its minus amounts as payments to it." })
         ] })
       ] }),
       !!text2 && /* @__PURE__ */ u3(S, { children: [

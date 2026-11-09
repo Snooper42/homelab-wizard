@@ -13,7 +13,7 @@ import { cleanPayee } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
 import { carFromPrice, groups, rateOf } from './model';
 import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
@@ -1232,18 +1232,25 @@ function ImportForm(props: EditProps) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [picked, setPicked] = useState<Record<number, string>>({});
+  // A card's file with its charges as plus amounts (American Express): read the other way round, guessed from the file, changeable.
+  const [flip, setFlip] = useState<boolean | null>(null);
   const ofx = !!text && isOfx(text);
   const rows = text && !ofx ? csvRows(text) : [];
   const header = rows[0] || [];
   const read = async (f?: File) => {
     if (!f) return;
     const t = await f.text();
-    setName(f.name); setText(t); setProblem(''); setPicked({});
+    setName(f.name); setText(t); setProblem(''); setPicked({}); setFlip(null);
     const all = isOfx(t) ? [] : csvRows(t);
     setCols(isOfx(t) ? null : guessColumns(all[0] || [], all.slice(1)));
   };
   // Each payee as a person would write it ("NETFLIX.COM" is Netflix); the bank's own wording goes in the note.
-  const read_ = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const asRead = !text ? [] : ofx ? fromOfx(text) : cols && cols.date >= 0 && (cols.amount >= 0 || cols.debit >= 0 || cols.credit >= 0) ? fromCsv(rows, cols) : [];
+  const card = accounts.find((a) => a.id === account)?.kind === 'card';
+  const signed = !ofx && !!cols && cols.amount >= 0;
+  const guessFlip = signed && card && chargesPlus(asRead);
+  const flipped = signed && (flip ?? guessFlip);
+  const read_ = flipped ? asRead.map((t) => ({ ...t, amount: -t.amount })) : asRead;
   // The bank's wording is kept only when it says more than the clean name in other capitals. A payee renamed by hand
   // before (HOA for SUNSET PALMS EAS SUNSET PAL) comes in by that name.
   const have = ledger?.transactions || [];
@@ -1324,13 +1331,15 @@ function ImportForm(props: EditProps) {
           <button type="button" class="small" onClick={() => file.current?.click()}>{name ? 'Pick another file' : 'Pick a file'}</button>
           {name && <span class="muted">{name}</span>}
         </span></Field>
-        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); }} accounts={accounts} />
+        <AccountSelect label="Into the ledger of" value={account} set={(a) => { setAccount(a); setPicked({}); setFlip(null); }} accounts={accounts} />
         {cols && <>
           {colPick('Day', 'date')}
           {colPick('Amount', 'amount')}
           {cols.amount < 0 && colPick('Money out', 'debit')}
           {cols.amount < 0 && colPick('Money in', 'credit')}
           {colPick('Payee', 'payee')}
+          {signed && <label class="fcheckbox wide"><input type="checkbox" checked={flipped} onClick={tick(setFlip)} /> Charges are plus amounts in this file (American Express writes them so)</label>}
+          {signed && flip === null && guessFlip && <p class="formsub muted wide importnote">Most rows in this card's file are plus amounts, so they're read as charges and its minus amounts as payments to it.</p>}
         </>}
       </div>
       {!!text && <>
