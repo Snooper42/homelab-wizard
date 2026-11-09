@@ -8,6 +8,7 @@ The inbox: watches Downloads, and files every finished download into the right l
                                      from; the sweep then leaves it there until it changes
   python3 inbox.py name <path> movie "<title>" [<year>]
   python3 inbox.py name <path> episode "<show>" <season> [<episode>]
+  python3 inbox.py name <path> album <MusicBrainz release id>
                                      a download Tidy Up couldn't place (Needs a look): rename it as you
                                      say, and file it
   python3 inbox.py leave <path>      Needs a look's Leave it: the sweep never touches it again
@@ -49,6 +50,7 @@ ui = mc.ui
 SKIP_NAMES = {"music - needs attention", "incomplete", ".incomplete", "temp", "tmp", "torrents", "watch",
               "reports", "$recycle.bin"}
 SKIP_PREFIX = ("music_cleanup_", "books_organizer", "calibre_cleanup", "navidrome-backup-", "cleanup_online_cache")
+MBID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 SPOKEN_GENRES = {"audiobook", "audiobooks", "audio book", "speech", "spoken", "spoken word", "books & spoken",
                  "podcast", "hörbuch", "audiolibro"}
 NOT_BOOK_RE = re.compile(r"(?i)invoice|receipt|statement|ticket|boarding|order|bill|payslip|tax|form|contract|"
@@ -186,9 +188,10 @@ ENGINES = {"movies": "movies_organizer.py", "tv": "tv_organizer.py", "audiobooks
            "music": "music_tidy.py"}
 
 
-def engine(kind, paths, apply):
+def engine(kind, paths, apply, extra=()):
     """Run one engine's file action in its own process, passing its progress through."""
     cmd = [sys.executable, str(mc.HERE / ENGINES[kind]), "file"] + [str(p) for p in paths] + ["--events", "json"]
+    cmd += list(extra)
     if apply:
         cmd.append("--apply")
     if mo.CFG_PATH:
@@ -308,7 +311,8 @@ def friendly_why(kind, text):
     """The engine's warning, said for Needs a look."""
     if not text or "from its name" in text:
         return {"movies": "Couldn't tell which film it is from its name.",
-                "tv": "Couldn't tell which show and episode it is from its name."}.get(kind, "Couldn't file it.")
+                "tv": "Couldn't tell which show and episode it is from its name.",
+                "music": "Couldn't tell which album these songs are."}.get(kind, "Couldn't file it.")
     return text
 
 
@@ -363,15 +367,48 @@ def episode_name(show, season, ep):
     return "%s S%02dE%s" % (show, season, "E".join("%02d" % e for e in ep))
 
 
+def name_album(item, words):
+    """Name these songs: the album the person picked (a MusicBrainz release) is written onto the songs, and
+    they're filed as it. The files keep their place; only their tags change before beets files them."""
+    mbid = (words[0] if words else "").strip().lower()
+    if len(words) != 1 or not MBID_RE.match(mbid):
+        mc.die("Which album? name <path> album <MusicBrainz release id>")
+    ui.title("Inbox", "filing %s as the album you picked" % item.name)
+    tried = mc.load_state("inbox", {"failed": {}})
+    forget(tried, item)
+    ok, res = engine("music", [item], True, extra=["--album", mbid])
+    files = res.get("songs_filed") or res.get("filed") or []
+    if ok and files:
+        entry = describe("music", item, files, res)
+        entry["did"] = ["named by you, then filed"] + entry["did"]
+        mc.note_filed(entry)
+        if item.is_dir() and leftovers_only(item):
+            mc.trash(item)
+        elif item.is_dir():
+            mc.remove_empty_dirs(item, keep_root=False)
+    elif item.exists():
+        tried.setdefault("failed", {})[str(item)] = item.stat().st_mtime
+        note_why(tried, item, "music", "Still couldn't file it: " + friendly_why("music", res.get("why")))
+    save(tried)
+    if ok and files:
+        ui.ok("Filed %s as %s" % (item.name, entry["title"]))
+    ui.result(action="name", ok=bool(ok and files), filed=files, path=str(item), why=res.get("why") or "")
+    if not (ok and files):
+        sys.exit(1)
+
+
 def name_as(path, what, words):
     """Rename a download as the person says (a film's title and year, a show's season and episode) so the
     engine can place it, and file it. A folder of episodes keeps each file's own episode number."""
     item = Path(path)
     if not item.exists():
         mc.die("%s isn't there any more" % item.name)
+    if what == "album":
+        return name_album(item, words)
     kind = {"movie": "movies", "episode": "tv"}.get(what)
     if not kind or not words or not mc.safe_name(words[0]).strip():
-        mc.die('Say what it is: name <path> movie "<title>" [<year>], or episode "<show>" <season> [<episode>]')
+        mc.die('Say what it is: name <path> movie "<title>" [<year>], episode "<show>" <season> [<episode>], '
+               'or album <MusicBrainz release id>')
     title = mc.safe_name(words[0]).strip()
     try:
         nums = [int(w) for w in words[1:3]]
@@ -612,7 +649,8 @@ def main():
         return
     if args.action == "name":
         if len(args.paths) < 3:
-            mc.die('inbox.py name <path> movie "<title>" [<year>], or episode "<show>" <season> [<episode>]')
+            mc.die('inbox.py name <path> movie "<title>" [<year>], episode "<show>" <season> [<episode>], '
+                   'or album <MusicBrainz release id>')
         name_as(args.paths[0], args.paths[1], args.paths[2:])
         return
     sweep(args.apply)

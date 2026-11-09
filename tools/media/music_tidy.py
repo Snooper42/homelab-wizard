@@ -11,6 +11,8 @@ changing it. Its genre map, tag helpers and APE handling are the organizer's own
   python3 music_tidy.py lyrics --tidy       the songs' own lyrics set right, asking LRCLIB nothing
   python3 music_tidy.py genre-counts        how many songs are in each of your genres (changes nothing)
   python3 music_tidy.py file <paths>        file new music: shrink, compare, match with beets, genre, lyrics
+  python3 music_tidy.py file <path> --album <MusicBrainz release id>
+                                            songs with no names: the album's names written onto them, then filed
 
 For apps: --events json prints one JSON object per line; exit codes 0 ok, 1 error, 2 verify found
 missing songs, 130 stopped.
@@ -685,21 +687,185 @@ def album_key(files):
     return (t.get("album_artist") or t.get("albumartist") or t.get("artist") or "").strip(), (t.get("album") or "").strip()
 
 
+# ============================================================== Name these songs: an album from MusicBrainz
+MUSICBRAINZ = "https://musicbrainz.org/ws/2"
+MBID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+UNNAMED = "These songs don't say which artist or album they are."
+# A song's place on the album from its file's name: "01 Song", "1-03 Song", "Track 7", "07. Song".
+TRACK_NO_RE = re.compile(r"(?i)^\s*(?:track\s*)?(?:(\d{1,2})\s*-\s*)?(\d{1,3})(?!\d)")
+DISC_DIR_RE = re.compile(r"(?i)^\s*(?:cd|dis[ck])\s*(\d{1,2})\b")
+
+
+def mb_release(mbid):
+    """One release from MusicBrainz, with its songs; asked again once after a pause when it's busy (503)."""
+    url = "%s/release/%s?inc=recordings+artist-credits&fmt=json" % (MUSICBRAINZ, mbid)
+    for attempt in (0, 1):
+        try:
+            rel = mc.http_json("GET", url, headers={"User-Agent": USER_AGENT}, timeout=30)
+            break
+        except RuntimeError as e:
+            if "answered 404" in str(e):
+                mc.die("MusicBrainz has no album %s" % mbid, "Look the album up again, and pick one it found.")
+            if ("answered 503" in str(e) or "answered 429" in str(e)) and attempt == 0:
+                time.sleep(2)
+                continue
+            mc.die("Couldn't ask MusicBrainz about that album: %s" % e, "Is this computer online? Then try again.")
+    if not isinstance(rel, dict) or not rel.get("media"):
+        mc.die("MusicBrainz didn't say which songs that album has", "Pick another of the albums it found.")
+    return rel
+
+
+def credit(ac):
+    return "".join((c.get("name") or (c.get("artist") or {}).get("name") or "") + (c.get("joinphrase") or "")
+                   for c in ac or []).strip()
+
+
+def album_tracks(rel):
+    """The album's songs in order: disc, number, title, artist, length in seconds (or None), and their ids."""
+    album_artist = credit(rel.get("artist-credit"))
+    out = []
+    for disc, m in enumerate(rel.get("media") or [], 1):
+        for i, t in enumerate(m.get("tracks") or [], 1):
+            rec = t.get("recording") or {}
+            ms = t.get("length") or rec.get("length")
+            out.append({"disc": int(m.get("position") or disc), "number": int(t.get("position") or i),
+                        "title": t.get("title") or rec.get("title") or "", "length": ms / 1000.0 if ms else None,
+                        "artist": credit(t.get("artist-credit") or rec.get("artist-credit")) or album_artist,
+                        "track_id": t.get("id") or "", "recording_id": rec.get("id") or "",
+                        "of": len(m.get("tracks") or [])})
+    return out
+
+
+def place_on_album(path, root):
+    """(disc, number) a file's name and folder say, or None: "CD2/03 Song" is (2, 3), "1-07 Song" is (1, 7)."""
+    m = TRACK_NO_RE.match(Path(path).stem)
+    if not m:
+        return None
+    disc = int(m.group(1)) if m.group(1) else None
+    if disc is None:
+        for part in Path(path).relative_to(root).parts[:-1] if root != Path(path) else ():
+            d = DISC_DIR_RE.match(part)
+            if d:
+                disc = int(d.group(1))
+    return disc or 1, int(m.group(2))
+
+
+def mmss(sec):
+    return "%d:%02d" % (int(sec) // 60, int(round(sec)) % 60)
+
+
+def match_tracks(files, tracks, root, length):
+    """Pair each file with its song on the album: by the track numbers in their names when every file has
+    one, else in order when the counts agree. A file whose length is far from its song's says so: it's
+    likely another edition of the album, and filing it under the wrong names is worse than asking."""
+    discs = {t["disc"] for t in tracks}
+    by_place = {(t["disc"], t["number"]): t for t in tracks}
+    places = [place_on_album(f, root) for f in files]
+    if len(discs) == 1:
+        places = [(min(discs), p[1]) if p else None for p in places]
+    pairs = None
+    if all(places) and len(set(places)) == len(places) and all(p in by_place for p in places):
+        pairs = [(f, by_place[p]) for f, p in zip(files, places)]
+    elif len(files) == len(tracks):
+        pairs = list(zip(files, tracks))
+    if pairs is None:
+        raise RuntimeError("That album has %d songs and this has %d, with no track numbers to match them by. "
+                           "Try another edition, or Leave it." % (len(tracks), len(files)))
+    for f, t in pairs:
+        have = length(f)
+        if have and t["length"] and abs(have - t["length"]) > 30:
+            raise RuntimeError("%s is %s long, but that album's song %d, “%s”, is %s: probably another edition. "
+                               "Try another." % (f.name, mmss(have), t["number"], t["title"], mmss(t["length"])))
+    return pairs
+
+
+def song_length(p):
+    import mutagen
+    try:
+        f = mutagen.File(str(p))
+    except Exception:
+        return None
+    return getattr(getattr(f, "info", None), "length", None) or None
+
+
+def tag_as_album(pairs, rel):
+    """Write the album's names onto its songs (title, artist, album, year, track and disc), and its
+    MusicBrainz ids so beets matches it at once. A format that can't hold an id just goes without it."""
+    import mutagen
+    album, year = rel.get("title") or "", (rel.get("date") or "")[:4]
+    album_artist = credit(rel.get("artist-credit"))
+    discs = len({t["disc"] for _, t in pairs})
+    for f, t in pairs:
+        song = mutagen.File(str(f), easy=True)
+        if song is None:
+            raise RuntimeError("Can't write names onto %s" % f.name)
+        if song.tags is None:
+            song.add_tags()
+        tags = {"title": t["title"], "artist": t["artist"], "album": album, "albumartist": album_artist,
+                "tracknumber": "%d/%d" % (t["number"], t["of"]), "discnumber": "%d/%d" % (t["disc"], max(discs, 1))}
+        if year:
+            tags["date"] = year
+        for k, v in tags.items():
+            song[k] = v
+        for k, v in (("musicbrainz_albumid", rel.get("id")), ("musicbrainz_releasetrackid", t["track_id"]),
+                     ("musicbrainz_trackid", t["recording_id"])):
+            if v:
+                try:
+                    song[k] = v
+                except (KeyError, ValueError):
+                    pass  # not every format has a place for it
+        song.save()
+
+
+def name_album(item, files, mbid, apply):
+    """Name these songs: the album the person picked, its songs paired with the files and written onto them."""
+    rel = mb_release(mbid)
+    tracks = album_tracks(rel)
+    root = item if item.is_dir() else item.parent
+    try:
+        pairs = match_tracks(sorted(files, key=lambda p: [int(s) if s.isdigit() else s.casefold()
+                                                          for s in re.split(r"(\d+)", str(p.relative_to(root)))]),
+                             tracks, root, song_length)
+    except RuntimeError as e:
+        mc.die(str(e))
+    what = "%s · %s" % (rel.get("title") or "", credit(rel.get("artist-credit")))
+    if not apply:
+        for f, t in pairs:
+            ui.kv(f.name, "→ %d. %s" % (t["number"], t["title"]))
+        return what
+    try:
+        tag_as_album(pairs, rel)
+    except Exception as e:
+        mc.die("Couldn't write the album's names onto the songs: %s" % e)
+    ui.ok("Named %s as %s" % (mc.fmt_n(len(pairs)) + (" song" if len(pairs) == 1 else " songs"), what))
+    return what
+
+
 def file_music(args):
     need(["beets", "mutagen", "yaml"])
     lib = music_lib(args)
     apply = args.apply or args.yes
     ui.title("New music", "filing into %s" % mc.pretty_path(lib))
     beet = Beet(write_inbox_beets_config(lib))
-    filed, replaced, discarded = [], 0, 0
+    filed, replaced, discarded, unnamed = [], 0, 0, []
     started = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(time.time() - 2))
     shrink = mc.cfg("music", "shrink_lossless", True) is not False
+    album_id = getattr(args, "album", None)
+    if album_id and not MBID_RE.match(album_id):
+        mc.die("That isn't a MusicBrainz album: %s" % album_id)
     for item in [Path(p) for p in args.paths]:
         files = [item] if item.is_file() else mc.walk_files(item, mo.AUDIO_EXT)
         files = [f for f in files if f.suffix.lower() in mo.AUDIO_EXT]
         if not files:
             continue
+        if album_id:
+            name_album(item, files, album_id, apply)
         artist, album = album_key(files)
+        if not (artist and album) and not album_id:
+            # Filed as they are, they'd land in a folder with no name: Needs a look asks which album instead.
+            ui.warn(UNNAMED)
+            unnamed.append(str(item))
+            continue
         existing = []
         if artist and album:
             for line in beet("ls", "-f", "$albumartist\t$album\t$path", "albumartist:" + artist, "album:" + album):
@@ -728,11 +894,12 @@ def file_music(args):
                 mc.trash(e)
             beet("rm", "-f", "albumartist:" + artist, "album:" + album)
             replaced += 1
-        beet("import", str(item))
+        # The album the person picked: beets takes that one, not a guess of its own.
+        beet(*(["import"] + (["--search-id", album_id] if album_id else []) + [str(item)]))
         if item.is_dir():
             mc.remove_empty_dirs(item, keep_root=False)
     if not apply:
-        ui.result(action="file", ok=True, media="music", preview=True)
+        ui.result(action="file", ok=not unnamed, media="music", preview=True, unnamed=unnamed)
         return
     new_paths = [Path(l.split("\t", 1)[1]) for l in beet("ls", "-f", "$id\t$path", "added:%s.." % started)
                  if "\t" in l]
@@ -753,11 +920,14 @@ def file_music(args):
     servers = mc.Servers()
     for f in folders:
         servers.ping(f, "music")
-    ui.ok("Filed %s songs (%s albums)" % (mc.fmt_n(len(filed)), mc.fmt_n(len(folders))))
+    if filed or not unnamed:
+        ui.ok("Filed %s songs (%s albums)" % (mc.fmt_n(len(filed)), mc.fmt_n(len(folders))))
     # The songs themselves too: Undo (What I did today) moves exactly those back, never an album folder that
     # holds songs that were there before.
-    ui.result(action="file", ok=True, media="music", filed=folders, songs=len(filed), songs_filed=filed,
-              replaced=replaced, discarded=discarded, genres_fixed=regenred, told=servers.sent)
+    # Songs with no names, and nothing else filed: not done, and Needs a look says why.
+    ui.result(action="file", ok=not (unnamed and not filed), media="music", filed=folders, songs=len(filed),
+              songs_filed=filed, replaced=replaced, discarded=discarded, genres_fixed=regenred, told=servers.sent,
+              unnamed=unnamed, why=UNNAMED if unnamed else "")
 
 
 def write_genre_fields(p, target):
@@ -776,6 +946,7 @@ def main():
                                                    "genre-counts", "file"])
     ap.add_argument("--check", action="store_true", help="lyrics: count only, change nothing")
     ap.add_argument("--tidy", action="store_true", help="lyrics: set the songs' own lyrics right, asking LRCLIB nothing")
+    ap.add_argument("--album", help="file: the MusicBrainz album these songs are (Name these songs), written onto them first")
     args = ap.parse_args()
     mc.begin(args, "music", "music %s" % args.action)
     if args.library:
