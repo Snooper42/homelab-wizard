@@ -6,6 +6,7 @@
 // components only draw, and say what a click wants (run, confirm, reveal).
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
+import { osName } from '../core';
 import { ago } from '../format';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -71,7 +72,18 @@ export interface TidyConfirm {
   action: string;
   /** Asks for a second click, for what can't be undone from here. */
   twice?: boolean;
-  go: () => void;
+  /** What the person types first (Needs a look's "Which film is it?"): the button waits for the ones not optional. */
+  fields?: TidyField[];
+  go: (typed: Record<string, string>) => void;
+}
+
+/** One box in a question's sheet. */
+export interface TidyField {
+  key: string;
+  label: string;
+  /** A number (a year, a season): the box takes digits only. */
+  number?: boolean;
+  optional?: boolean;
 }
 
 const names: Record<string, string> = { music: 'Music', books: 'Books', movies: 'Movies', tv: 'TV', audiobooks: 'Audiobooks', inbox: 'Downloads', scrubber: 'Leftovers', tdarr: 'Tdarr', arr: 'Downloads' };
@@ -80,7 +92,7 @@ const titles: Record<string, string> = {
   'music scan': 'Scanning your music', 'music run': 'Tidying your music', 'music finalize': 'Swapping in your cleaned library',
   'music verify': 'Checking nothing went missing', 'music free-space': 'Freeing the space', 'music undo': 'Putting the old library back',
   'music navidrome-cleanup': 'Tidying Navidrome', 'music playlists': 'Making playlists', 'music lyrics': 'Adding lyrics',
-  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library', 'inbox undo': 'Putting it back',
+  'music genres': 'Checking genres', 'music genre-counts': 'Counting your genres', 'movies genre-counts': "Counting your films' genres", 'tv genre-counts': "Counting your shows' genres", 'books genre-counts': "Counting your books' genres", 'books review': 'Reviewing your books', 'books apply': 'Tidying your books', 'books undo': 'Undoing the last apply', 'books build': 'Making your Calibre library', 'inbox undo': 'Putting it back', 'inbox name': 'Filing it as you named it', 'inbox leave': 'Leaving it be',
   'movies scan': 'Scanning your films', 'movies run': 'Handing films to Tdarr', 'movies collect': "Collecting Tdarr's work",
   'tv scan': 'Scanning your TV', 'movies dedupe': 'Removing the extra copies', 'trash restore': 'Putting it back', 'movies posters': 'Asking Jellyfin for posters', 'tv posters': 'Asking Jellyfin for posters', 'tv dedupe': 'Removing the extra copies', 'tv run': 'Handing episodes to Tdarr', 'tv collect': "Collecting Tdarr's work",
   'audiobooks scan': 'Scanning your audiobooks', 'audiobooks run': 'Merging your audiobooks',
@@ -236,19 +248,31 @@ function installFix(job: TidyJob, d: app.TidyUp | null | undefined, act: TidyAct
 /** The question before a step that changes something, in a sheet. */
 export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () => void }) {
   const [sure, setSure] = useState(false);
-  useEffect(() => setSure(false), [c]);
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  useEffect(() => { setSure(false); setTyped({}); }, [c]);
+  const val = (f: TidyField) => (typed[f.key] || '').trim();
+  const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
   return (
     <Sheet id="tidySheet" titleId="tidySheetTitle" onClose={close}>
       <h2 id="tidySheetTitle">{c?.title}</h2>
       <p class="lead">{c?.lead}</p>
       {!!c?.steps?.length && <ol class="tidyplan">{c.steps.map((s) => <li key={s}>{s}</li>)}</ol>}
       {!!c?.keep?.length && <><p><strong>Kept either way:</strong></p><ul class="tidykeep">{c.keep.map((s) => <li key={s}>{s}</li>)}</ul></>}
+      {!!c?.fields?.length && (
+        <div class="tidyfields">
+          {c.fields.map((f) => (
+            <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if known)</span>}
+              <input value={typed[f.key] || ''} inputMode={f.number ? 'numeric' : undefined} maxLength={f.number ? 4 : 200}
+                onInput={(e) => setTyped({ ...typed, [f.key]: (e.target as HTMLInputElement).value })} /></label>
+          ))}
+        </div>
+      )}
       <div class="actions">
         <button class="small" onClick={close}>Cancel</button>
-        <button class={'primary small' + (sure ? ' confirm' : '')} onClick={() => {
+        <button class={'primary small' + (sure ? ' confirm' : '')} disabled={!ready} onClick={() => {
           if (c?.twice && !sure) { setSure(true); return; }
           close();
-          c?.go();
+          c?.go(Object.fromEntries((c.fields || []).map((f) => [f.key, val(f)])));
         }}>{c?.twice && sure ? `Click again: ${c.action.toLowerCase()}` : c?.action}</button>
       </div>
     </Sheet>
@@ -637,7 +661,7 @@ function Overview({ d, job, act, review, pick }: { d: app.TidyUp; job: TidyJob |
   // doing (the shelf), and what was done (beside the genres).
   return (
     <>
-      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /><TodayWidget d={d} job={job} act={act} /></div>
+      <div class="fx-board"><InboxWidget d={d} job={job} act={act} /><NeedsLookWidget d={d} job={job} act={act} /><TodayWidget d={d} job={job} act={act} /></div>
       <div class="fx-board tidytop">
         <Widget title="Needs your OK" kind="fx-paycheck tidyneeds" actions={waiting ? <span class="muted">{count(waiting, 'thing')}{gain ? ' · ' + size(gain) + ' to win back' : ''}</span> : undefined}>
           {todos.length ? <TodoRows todos={todos} job={job} /> : (
@@ -708,6 +732,44 @@ const clock = (at: string) => new Date(at).toLocaleTimeString('en-US', { hour: '
  * was done (tags, lyrics, the better copy kept, shrinking first). Undo puts its files back where they came from, and the
  * inbox then leaves them there.
  */
+/** The file manager's name, for its button. */
+const showIn = osName === 'mac' ? 'Show in Finder' : osName === 'windows' ? 'Show in Explorer' : 'Show the folder';
+
+/** Needs a look: the downloads Tidy Up couldn't place (or Undo put back), each with why, and what the person can
+ * say: it's a film, it's an episode, or leave it. Nothing else waits on them. */
+function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
+  const needs = d.needs || [];
+  if (!needs.length) return null;
+  const opt = (v: string) => v ? [v] : [];
+  const film = (x: media.Need) => act.ask({
+    title: `Which film is ${x.name}?`, lead: 'Its title, and its year if you know it: Tidy Up renames it to that and files it in Movies.', action: 'File it',
+    fields: [{ key: 'title', label: 'Film' }, { key: 'year', label: 'Year', number: true, optional: true }],
+    go: (v) => act.run('inbox', 'name', [x.path, 'movie', v.title, ...opt(v.year)]),
+  });
+  const episode = (x: media.Need) => act.ask({
+    title: `Which show is ${x.name}?`, lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.", action: 'File it',
+    fields: [{ key: 'show', label: 'Show' }, { key: 'season', label: 'Season', number: true }, { key: 'episode', label: 'Episode', number: true, optional: true }],
+    go: (v) => act.run('inbox', 'name', [x.path, 'episode', v.show, v.season, ...opt(v.episode)]),
+  });
+  return (
+    <Widget title="Needs a look" span="all" kind="tidyneedslook" actions={<span class="muted">{count(needs.length, 'thing')} Tidy Up couldn't place · nothing else waits on {needs.length === 1 ? 'it' : 'them'}</span>}>
+      <Rows kind="fx-rows tidytodo">
+        {needs.map((x) => (
+          <Row key={x.path} lead={<LibIcon kind={x.kind || 'inbox'} />} title={x.name} sub={x.why} subTone="warn"
+            end={<span class="tidyneedsgo">
+              {(x.kind === 'movies' || x.kind === 'tv') && <>
+                <Go label="It's a film…" job={job} onClick={() => film(x)} />
+                <Go label="It's an episode…" job={job} onClick={() => episode(x)} />
+              </>}
+              <button class="small" onClick={() => act.reveal(x.path)}>{showIn}</button>
+              <Go label="Leave it" job={job} title={`Leave ${x.name} where it is: Tidy Up won't file it`} onClick={() => act.run('inbox', 'leave', [x.path])} />
+            </span>} />
+        ))}
+      </Rows>
+    </Widget>
+  );
+}
+
 function TodayWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions }) {
   const today = d.today || [];
   return (

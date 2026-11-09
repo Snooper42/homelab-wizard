@@ -87,7 +87,10 @@ var actions = map[string]map[string]Action{
 	// Not a library: the Downloads watcher and the nightly scrubber.
 	"inbox": {"scan": {Script: "inbox.py", Lock: true},
 		// What I did today's Undo: one entry's files back where they came from.
-		"undo": {Script: "inbox.py", Lock: true}},
+		"undo": {Script: "inbox.py", Lock: true},
+		// Needs a look: file a download as the person named it, or leave it be.
+		"name":  {Script: "inbox.py", Lock: true},
+		"leave": {Script: "inbox.py", Lock: true}},
 	"scrubber": {"scan": {Script: "scrubber.py", Lock: true}},
 	"tdarr":    {"setup": {Script: "tdarr_setup.py"}},
 	// Undo: what a run put in the Trash goes back where it was.

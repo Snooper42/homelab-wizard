@@ -72,3 +72,41 @@ func FiledToday(root string, now time.Time) []Filed {
 	}
 	return out
 }
+
+// Need is one download waiting in Needs a look: one no engine could place,
+// or one Undo put back (inbox.py's needs_list, in data/media-needs.json).
+type Need struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+	// Kind is what it looked like: movies, tv, music, audiobooks, or "".
+	Kind  string `json:"kind"`
+	Why   string `json:"why"`
+	Since string `json:"since,omitempty"`
+}
+
+// NeedsPath is Needs a look's list, passed to every job as
+// HOMELAB_MEDIA_NEEDS; the inbox rewrites it each time it saves.
+func NeedsPath(root string) string { return filepath.Join(root, "data", "media-needs.json") }
+
+// NeedsLook is what's waiting for a person, without what has gone since
+// (moved or deleted by hand).
+func NeedsLook(root string) []Need {
+	out := []Need{}
+	b, err := os.ReadFile(NeedsPath(root))
+	if err != nil {
+		return out
+	}
+	var all []Need
+	if json.Unmarshal(b, &all) != nil {
+		return out
+	}
+	for _, n := range all {
+		if n.Path == "" {
+			continue
+		}
+		if _, err := os.Stat(n.Path); err == nil {
+			out = append(out, n)
+		}
+	}
+	return out
+}

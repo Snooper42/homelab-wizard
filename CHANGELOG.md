@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Needs a look:** a download Tidy Up couldn't place (a video whose name says nothing, say) waits on the Inbox with why, instead of sitting in Downloads unexplained. Tell it **It's a film…** or **It's an episode…** and type the name: Tidy Up renames it and files it. **Leave it** stops it asking, and **Show in Finder** opens the folder. Something you put back with Undo shows here too.
 - **What I did today:** Tidy Up's Inbox lists each download it filed today in plain words, like *Heat (1995) · Movies › Heat (1995) · too big, so Tdarr is shrinking it first* or *12 songs, tags cleaned · lyrics added where found*, newest first. **Undo** on one puts its files back where they came from, and Tidy Up leaves them there.
 - **Drop anything here:** Tidy Up opens on its new **Inbox**: the folders it watches for music, films, shows, books and audiobooks (Downloads to start; **Add…** a folder on your external drive too), when it tidies them (*As things arrive*, *Once a day, 3 AM*, or *Only when I press it*), and one **Tidy up now** button. A watched folder on a drive that's unplugged says so.
 - **Month in Review on the iPhone:** Finances › Month in Review tells each month back, one page each (swipe for the ones before): what you spent and how that compares with the month before, where it went, what came in and what was left, what grew and what shrank the most, and the biggest purchase.
