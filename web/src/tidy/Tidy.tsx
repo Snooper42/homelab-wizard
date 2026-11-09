@@ -6,7 +6,7 @@
 // components only draw, and say what a click wants (run, confirm, reveal).
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
-import { osName, thisMachine } from '../core';
+import { errorText, osName, thisMachine } from '../core';
 import { ago } from '../format';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
@@ -71,6 +71,8 @@ export interface TidyActions {
   useMediaRoot: (root: string, name: string) => void;
   /** The system's folder picker, for Another folder…: '' when cancelled. */
   pickMediaFolder: () => Promise<string>;
+  /** Name these songs' Look it up: the albums MusicBrainz has by that name (and artist, if typed). */
+  albums: (artist: string, album: string) => Promise<media.Album[]>;
 }
 
 /** A question before a step that changes something. */
@@ -84,7 +86,26 @@ export interface TidyConfirm {
   twice?: boolean;
   /** What the person types first (Needs a look's "Which film is it?"): the button waits for the ones not optional. */
   fields?: TidyField[];
+  /** Looks what's typed up (Name these songs: the albums by that name), for the person to pick one; the button waits
+   * for a pick, and go gets its id as picked. */
+  find?: TidyFind;
   go: (typed: Record<string, string>) => void;
+}
+
+/** A question's Look it up: what it's called, what it finds, and what it says when it finds nothing. */
+export interface TidyFind {
+  label: string;
+  /** What the list is, for VoiceOver ("Albums found"). */
+  what: string;
+  run: (typed: Record<string, string>) => Promise<TidyChoice[]>;
+  none: string;
+}
+
+/** One thing a Look it up found. */
+export interface TidyChoice {
+  id: string;
+  title: string;
+  sub?: string;
 }
 
 /** One box in a question's sheet. */
@@ -264,8 +285,21 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
   const typed = entry.c === c ? entry.v : {};
   const type = (key: string, v: string) => setEntry((e) => ({ c, v: { ...(e.c === c ? e.v : {}), [key]: v } }));
   useEffect(() => setSure(false), [c]);
+  // What Look it up found belongs to its question and to what was typed: typing again asks to look again.
+  const [found, setFound] = useState<{ c: TidyConfirm | null; list?: TidyChoice[]; busy?: boolean; error?: string; picked?: string } | null>(null);
+  const look = found?.c === c ? found : null;
   const val = (f: TidyField) => (typed[f.key] || '').trim();
   const ready = (c?.fields || []).every((f) => (f.optional || val(f)) && (!f.number || /^\d{0,4}$/.test(val(f))));
+  const values = () => Object.fromEntries((c?.fields || []).map((f) => [f.key, val(f)]));
+  const find = () => {
+    if (!c?.find || !ready || look?.busy) return;
+    const asked = c;
+    setFound({ c: asked, busy: true });
+    c.find.run(values()).then(
+      (list) => setFound((f) => (f?.c === asked && f.busy ? { c: asked, list, picked: list.length === 1 ? list[0].id : undefined } : f)),
+      (e) => setFound((f) => (f?.c === asked && f.busy ? { c: asked, error: errorText(e) } : f)));
+  };
+  const typeAndForget = (key: string, v: string) => { type(key, v); if (look) setFound(null); };
   return (
     <Sheet id="tidySheet" titleId="tidySheetTitle" onClose={close}>
       <h2 id="tidySheetTitle">{c?.title}</h2>
@@ -277,16 +311,36 @@ export function ConfirmSheet({ c, close }: { c: TidyConfirm | null; close: () =>
           {c.fields.map((f) => (
             <label key={f.key} class={'field' + (f.number ? ' tidynum' : '')}>{f.label}{f.optional && <span class="muted"> (if known)</span>}
               <input value={typed[f.key] || ''} inputMode={f.number ? 'numeric' : undefined} maxLength={f.number ? 4 : 200}
-                onInput={(e) => type(f.key, (e.target as HTMLInputElement).value)} /></label>
+                onInput={(e) => typeAndForget(f.key, (e.target as HTMLInputElement).value)}
+                onKeyDown={c.find ? (e) => { if (e.key === 'Enter') { e.preventDefault(); find(); } } : undefined} /></label>
           ))}
+        </div>
+      )}
+      {c?.find && (
+        <div class="tidyfind">
+          <button class="small" disabled={!ready || !!look?.busy} onClick={find}>{look?.busy ? 'Looking…' : look?.list || look?.error ? 'Look again' : c.find.label}</button>
+          <div aria-live="polite">
+            {look?.error && <p class="warn">{look.error}</p>}
+            {look?.list && !look.list.length && <p class="muted">{c.find.none}</p>}
+            {!!look?.list?.length && (
+              <div class="tidyfound" role="radiogroup" aria-label={c.find.what}>
+                {look.list.map((x) => (
+                  <label key={x.id} class={'tidyfoundrow' + (look.picked === x.id ? ' on' : '')}>
+                    <input type="radio" name="tidyfound" value={x.id} checked={look.picked === x.id} onChange={() => setFound({ ...look, picked: x.id })} />
+                    <span><strong>{x.title}</strong>{x.sub && <span class="muted">{x.sub}</span>}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
       <div class="actions">
         <button class="small" onClick={close}>Cancel</button>
-        <button class={'primary small' + (sure ? ' confirm' : '')} disabled={!ready} onClick={() => {
+        <button class={'primary small' + (sure ? ' confirm' : '')} disabled={!ready || (!!c?.find && !look?.picked)} onClick={() => {
           if (c?.twice && !sure) { setSure(true); return; }
           close();
-          c?.go(Object.fromEntries((c.fields || []).map((f) => [f.key, val(f)])));
+          c?.go({ ...values(), ...(c.find ? { picked: look?.picked || '' } : {}) });
         }}>{c?.twice && sure ? `Click again: ${c.action.toLowerCase()}` : c?.action}</button>
       </div>
     </Sheet>
@@ -848,6 +902,20 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
     fields: [{ key: 'title', label: 'Film' }, { key: 'year', label: 'Year', number: true, optional: true }],
     go: (v) => act.run('inbox', 'name', [x.path, 'movie', v.title, ...opt(v.year)]),
   });
+  // Songs with no names: the artist and album, looked up on MusicBrainz, and the one they are picked.
+  const album = (x: media.Need) => act.ask({
+    title: `Which album is ${x.name}?`, action: 'File them',
+    lead: "Its name, and the artist if you know it. Tidy Up looks it up on MusicBrainz; pick the one these songs are, and it writes the album's names onto them and files them in Music.",
+    fields: [{ key: 'artist', label: 'Artist', optional: true }, { key: 'album', label: 'Album' }],
+    find: {
+      label: 'Look it up', what: 'Albums found',
+      run: (v) => act.albums(v.artist, v.album).then((list) => list.map((a) => ({
+        id: a.id, title: a.title, sub: [a.artist, a.year, count(a.songs, 'song'), [a.format, a.country].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
+      }))),
+      none: 'MusicBrainz has no album by that name. Check the spelling, or leave the artist out.',
+    },
+    go: (v) => act.run('inbox', 'name', [x.path, 'album', v.picked]),
+  });
   const episode = (x: media.Need) => act.ask({
     title: `Which show is ${x.name}?`, lead: "The show and the season, and the episode if it's one: Tidy Up renames it to that and files it in TV. A folder of episodes keeps each one's own number.", action: 'File it',
     fields: [{ key: 'show', label: 'Show' }, { key: 'season', label: 'Season', number: true }, { key: 'episode', label: 'Episode', number: true, optional: true }],
@@ -859,6 +927,7 @@ function NeedsLookWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; 
         {needs.map((x) => (
           <Row key={x.path} lead={<LibIcon kind={x.kind || 'inbox'} />} title={x.name} sub={x.why} subTone="warn"
             end={<span class="tidyneedsgo">
+              {x.kind === 'music' && <Go label="Name these songs…" job={job} onClick={() => album(x)} />}
               {(x.kind === 'movies' || x.kind === 'tv') && <>
                 <Go label="It's a film…" job={job} onClick={() => film(x)} />
                 <Go label="It's an episode…" job={job} onClick={() => episode(x)} />

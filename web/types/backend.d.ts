@@ -958,6 +958,15 @@ declare namespace media {
     sub?: string;
     undo?: string;
   }
+  interface Album {
+    id: string;
+    title: string;
+    artist: string;
+    year?: string;
+    songs: number;
+    format?: string;
+    country?: string;
+  }
   interface Check {
     id: string;
     name: string;
@@ -1304,6 +1313,7 @@ interface Backend {
     TestSetting(arg1: string): Promise<setup.Result>;
     TidyCover(arg1: number, arg2: string): Promise<string>;
     TidyDrives(): Promise<app.TidyDriveChoice[]>;
+    TidyFindAlbums(arg1: string, arg2: string): Promise<media.Album[]>;
     TidyLock(): Promise<app.TidyRunning>;
     TidyPickFolder(): Promise<string>;
     TidyPickMediaFolder(): Promise<string>;

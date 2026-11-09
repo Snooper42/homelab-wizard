@@ -407,6 +407,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     TidyPickFolder: () => later(M.pickFolder ?? ''),
     // Where should your libraries live?: M.tidyDrives, M.tidyPlaces[root] (else each library new there), what was kept
     // (M.mediaRoots, each call), and the folder picker's answer (M.pickMediaFolder).
+    // Name these songs' Look it up: M.tidyAlbums (what MusicBrainz found), or M.tidyAlbumsFail (why it couldn't ask).
+    TidyFindAlbums: (artist, album) => (M.tidyAlbumsFail ? Promise.reject(new Error(M.tidyAlbumsFail)) : later(M.tidyAlbums || [], 80)),
     TidyDrives: () => later(M.tidyDrives || []),
     TidyPlace: (root) => later(M.tidyPlaces?.[root] || { root, libraries: ['music', 'books', 'movies', 'tv', 'audiobooks'].map((kind) => ({ kind, folder: root + '/' + (kind === 'books' ? 'Books' : kind), found: false, items: 0 })) }),
     TidySetMediaRoot: (root) => {

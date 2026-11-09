@@ -101,6 +101,8 @@ Lessons from pieces 1–4, for whoever builds the next:
 - `make check` doesn't run the coverage floors; run `make coverage` before pushing new code in a package with a high floor (internal/diskspace is 91%).
 - A sheet's boxes update from the latest values (`setTyped((t) => ({ ...t, ... }))`): fixed in v0.27.4 after typing fast in two boxes wiped the first.
 - Every new button on the Inbox waits while a job runs; the running-job smoke case fails on any enabled button in `.fx-board`.
+- Build `web/dist/app.js` only in a checkout with its own `node_modules` (a copy, never a link): esbuild writes each module's path into the bundle, so a linked one gives `../../home/…/node_modules/preact/…` and CI's `make frontend-check` fails (#529, Nov 9).
+- A question sheet can look things up first: `TidyConfirm.find` (Look it up, a list to pick from, the pick handed to `go` as `picked`). Name these songs uses it for albums; item 6's film and show titles can too.
 
 ## The queue
 
@@ -168,6 +170,8 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 ## For Account 2
 
 (Problems in shared parts or other screens that this loop finds: what you saw, the screenshot path, the smoke case that would fail. Never fix them here.)
+
+- **A sheet's first-box focus can take what's typed in another box** (`web/src/parts/Sheet.tsx`, Nov 9, #535). When a sheet shows, a `requestAnimationFrame` puts the cursor in its first field, even if the person (or a test) has already clicked into another one. On a slow frame, letters typed into the second box in between land in the first: CI's smoke (dark) on #535 had *Rumors* in Artist and Album empty; reproduced 2 runs in 9 with three smoke runs at once. Tidy Up's two cases now wait for that focus before typing a second box. *Fixed looks like:* the frame leaves the focus alone when it's already inside the panel. *Test:* open any sheet with two fields, slow `requestAnimationFrame` (as *Tidy Up: Needs a look names a film…* does), fill the second field at once, and expect its value kept.
 
 ## For Account 3
 

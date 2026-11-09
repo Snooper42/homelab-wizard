@@ -37,6 +37,7 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
   homelab media inbox undo <id>            put one download What I did today filed back where it was
   homelab media inbox name <path> movie "<title>" [<year>]
   homelab media inbox name <path> episode "<show>" <season> [<episode>]
+  homelab media inbox name <path> album <MusicBrainz release id>
                                            file a download Tidy Up couldn't place, as you name it
   homelab media inbox leave <path>         leave a download be: Tidy Up never files it
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone
@@ -68,7 +69,7 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 		return h.mediaInstall(ctx, args[1:])
 	case "inbox":
 		// What I did today's Undo, and Needs a look's answers: homelab media
-		// inbox undo <id>, name <path> movie|episode ..., leave <path>.
+		// inbox undo <id>, name <path> movie|episode|album ..., leave <path>.
 		if len(args) > 1 && (args[1] == "undo" || args[1] == "name" || args[1] == "leave") {
 			return h.mediaEngine(ctx, "inbox", args[1], args[2:])
 		}

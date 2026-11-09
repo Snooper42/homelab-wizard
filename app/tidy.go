@@ -136,6 +136,15 @@ func (a *App) TidyPickFolder() (string, error) {
 	return directoryDialog(a.ctx, runtime.OpenDialogOptions{Title: "Choose a folder for Tidy Up to watch", CanCreateDirectories: true})
 }
 
+// TidyFindAlbums is Name these songs' Look it up: the albums MusicBrainz
+// has by that name and artist, for the person to pick the one these songs
+// are. Only the two names typed are sent.
+func (a *App) TidyFindAlbums(artist, album string) ([]media.Album, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
+	defer cancel()
+	return media.FindAlbums(ctx, nil, artist, album)
+}
+
 // TidyUp reads Tidy Up's record, the lock, and what this machine has.
 func (a *App) TidyUp() (TidyUp, error) {
 	env := core.Env(a.root)
@@ -481,7 +490,8 @@ func tidyScreenArgs(kind, action string, args []string) ([]string, error) {
 }
 
 // tidyNameArgs are Needs a look's: leave <path>, or name <path> movie
-// <title> [<year>] / episode <show> <season> [<episode>]. A word that looks
+// <title> [<year>] / episode <show> <season> [<episode>] / album <MusicBrainz
+// release id>. A word that looks
 // like a flag is refused, so a title can't turn into --library.
 func tidyNameArgs(action string, args []string) ([]string, error) {
 	bad := errors.New("Tidy Up doesn't run that: say what it is")
@@ -490,6 +500,13 @@ func tidyNameArgs(action string, args []string) ([]string, error) {
 	}
 	if action == "leave" {
 		if len(args) != 1 {
+			return nil, bad
+		}
+		return args, nil
+	}
+	// Name these songs: the album picked, by its MusicBrainz id and nothing else.
+	if len(args) >= 2 && args[1] == "album" {
+		if len(args) != 3 || !media.IsReleaseID(args[2]) {
 			return nil, bad
 		}
 		return args, nil
