@@ -15,10 +15,22 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 Read the code before trusting any description of it, this file's included.
 
-**One account now (Nov 9).** The account that built Finances and Tidy Up ran out of usage, and the owner has one account left, which they want on this work. `lanes.md` still describes four accounts, and only the owner changes it. Nothing was lost: every pushed branch was checked on Nov 9 (`finances-handoff.md`'s first section has the Finances state). Still open from the other account:
-- **PR #537** (Tidy Up › Inbox: It's a film… and It's an episode… look the typed name up, branch `claude/account-1-tidy-up-cik3z7`): opened Nov 9 with **no CI run at all**. If its session is gone, take it to merged first, under lanes.md's rules.
-- **Issue #500** (the nightly run failed on Nov 8): Account 2's, still open.
-- Safe to delete once the owner agrees: `claude/feature-tidy-notes` (main's `tidy-loop.md` already has more), `claude/elegant-ritchie-8dkyd1` and `claude/busy-newton-vvxfza` (on main). Keep `claude/feature-finances-shots`.
+**Fewer accounts now (Nov 9).** The account that built Finances ran out of usage, and the owner wants their remaining account on this work. `lanes.md` still describes four accounts, and only the owner changes it. Nothing was lost: every pushed branch was checked on Nov 9.
+
+**Finances:** all its work is on main. `finances-handoff.md`'s first section has what's left.
+
+**Tidy Up** (`claude/account-1-tidy-up-cik3z7`, another account, still working on Nov 9):
+- **The Inbox plan's seven pieces** (`tidy-loop.md`, *The Inbox plan*) are built: #521, #524, #526, #529, #535, #536 and #537 merged. **#538** (Archives: a .rar or .7z says so in Needs a look) was open on Nov 9. **If it's still open and its session is gone, take it to merged first** (lanes.md's rules), then tick item 7 in `tidy-loop.md`.
+- **Written nowhere but that session's chat, so it's here:** the Tidy Up session's next item was **running the media apps only while a job needs them, to save memory on the owner's 16 GB Mac.**
+  - **What it means:** the apps Tidy Up's jobs use (beets for music, Tdarr for shrinking video, and whichever others a job reads, such as Jellyfin or the \*arr apps for item 6's title look-ups) stay stopped. A job starts what it needs, waits until each answers, and stops them again when it ends. Apps the household opens (Jellyfin, Navidrome) aren't stopped.
+  - **What already exists to build on:** *Stopped on purpose* (`internal/stopped`), so the watchdog and Start them all leave them be and Status doesn't count them as needing a look; *Stop for a while*; the media lock (`internal/media/lock.go`), which already postpones nightly updates for apps that mount a library; and the roadmap's *Stop when idle* (L, *Mocked up*, under *Memory and performance*), which is the general form of this.
+  - **Ask the owner before building:** which apps; whether an app the owner opened by hand while a job ran stays running afterwards (it should); and what Status says about them (proposed: "Asleep until Tidy Up needs it", not red).
+  - **Once #538 merges,** write this into `tidy-loop.md`'s queue, so it lives with the rest of Tidy Up's plan. Don't edit that file while #538 is open (lanes.md Rule 2).
+- **After that, Tidy Up's own lists** in `tidy-loop.md` say what's next: *The queue* items 2 to 9 (2, a job stopped part-way carrying on as another job, is High), and *The look* L3 to L7.
+
+**Also open:** issue #500 (the nightly run failed on Nov 8, Account 2's).
+
+**Branches:** safe to delete once the owner agrees: `claude/feature-tidy-notes` (main's `tidy-loop.md` already has more), `claude/elegant-ritchie-8dkyd1` and `claude/busy-newton-vvxfza` (both on main). Keep `claude/feature-finances-shots` (every PR's screenshots) and `claude/account-1-tidy-up-cik3z7` while it's in use.
 
 **Ask the owner once, at the start (it decides how the desktop half is done):** may this session change the desktop side too (the companion, notify, and the desktop screens these features need), or should it write each desktop need under **For Account 2** in `maintenance-loop.md` and wait? The pattern so far was a desktop PR first, then the iPhone PR that uses it (#528, then #530). Until they answer, build only the `apple-client/` parts that need nothing new from the computer.
 
@@ -107,4 +119,4 @@ One small PR each, one open PR at a time. When a feature needs the computer to d
 
 ## Launcher (paste into a new session)
 
-    Read .claude/prompts/unison-handoff.md and follow it. If it isn't on main yet, run `git fetch origin claude/inspiring-noether-x39490` and read it with `git show origin/claude/inspiring-noether-x39490:.claude/prompts/unison-handoff.md`. Start with section 0: what's still open from the account that ran out (PR #537 first), and its question to me. Then section 4's item 0 (Away from home through the tunnel), then section 2's App Group test and section 3's switch.
+    Read .claude/prompts/unison-handoff.md and follow it. If it isn't on main yet, run `git fetch origin claude/inspiring-noether-x39490` and read it with `git show origin/claude/inspiring-noether-x39490:.claude/prompts/unison-handoff.md`. Start with section 0: what's still open from the other accounts (#538 first, if it hasn't merged), and its question to me. Then section 4's item 0 (Away from home through the tunnel), then section 2's App Group test and section 3's switch.
