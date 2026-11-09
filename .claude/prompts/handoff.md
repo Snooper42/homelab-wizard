@@ -14,10 +14,10 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 ## 1. Where it stands (Nov 9, evening)
 
-**In flight** (Nov 9, 19:10 UTC): #544, #545 and #546 merged (the companion through the tunnel, Setup's *Reach Finances away from home*, and the iPhone side: `TunnelSeal`, pairing sends a key, reads fall back to the tunnel; its Swift compiled and passed first time). On Nov 9 at 18:26 GitHub marked a round of runs failed without starting any jobs (main's CI and Release, and #546's): a re-run of each went green. If a run fails with no jobs at all, re-run it once before looking for a cause.
-1. **`claude/nice-bohr-ab4jg1`: the switch for the day they sign** (`HOMELAB_SIGNED=1`, the README's *The day you sign*, and CI building the signed project). It replaces `claude/feature-iphone-signed`, which can go. This file's update rides it.
+**In flight** (Nov 9, 19:35 UTC): #544, #545, #546 and #547 merged (the companion through the tunnel, Setup's *Reach Finances away from home*, the iPhone side of it, and the switch for the day they sign). On Nov 9 at 18:26 GitHub marked a round of runs failed without starting any jobs (main's CI and Release, and #546's): a re-run of each went green. If a run fails with no jobs at all, re-run it once before looking for a cause.
+1. **`claude/nice-bohr-ab4jg1`: Away mode and noticing a network change** (the last of `unison-handoff.md` section 4, item 0): a change of network has the phone try home first again (`NetworkKind`); when neither home nor the tunnel answers, Status lists just the apps on the internet, as last kept in the Keychain. **Its Swift was written without a compiler:** expect a fix round. This file's update rides it. `claude/feature-iphone-signed` and `claude/feature-iphone-away` can go.
 
-**Next after those:** Away mode on the phone (only the tunneled apps when neither address answers, behind Face ID) and noticing a network change (`NWPathMonitor`); then `unison-handoff.md` section 4 items 1 onwards.
+**Next after that:** `unison-handoff.md` section 4 items 1 onwards (links into the app first), then Tidy Up and Finances in section 2's order.
 
 **Waiting on the owner:**
 - **The App Group test** (`unison-handoff.md` section 2): `HOMELAB_WIDGET=1 ./apple-client/scripts/run-on-iphone.sh <prefix>`, and whether it signs. It decides the widget, Live Activities and Control Center work.
