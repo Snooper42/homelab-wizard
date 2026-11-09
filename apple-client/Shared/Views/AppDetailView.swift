@@ -22,9 +22,9 @@ struct AppDetailView: View {
                             .multilineTextAlignment(.center)
                         // Its state as a pill in its colour, then the row's own words
                         // when they say more ("Stopped at 3:12 AM: it ran out of memory").
-                        Label(app.stateLabel, systemImage: app.symbolName)
-                            .labelStyle(.titleAndIcon)
-                            .pill(app.tint)
+                        // While a Start, Stop or Restart runs, the pill says so with a
+                        // spinner, and turns to the new state when Status has it.
+                        statePill(for: app)
                         if app.detailLine != app.stateLabel {
                             Text(verbatim: app.detailLine)
                                 .font(.callout)
@@ -200,6 +200,39 @@ struct AppDetailView: View {
         }
     }
 
+    /// The state, or what's being done to it: "Restarting…" with a spinner
+    /// in blue until Status shows the result, then the new state, with a
+    /// tap you can feel (a buzz when it failed).
+    private func statePill(for app: AppStatus) -> some View {
+        let pending = actions.pending[app.id]
+        let working = pending != nil && pending?.failure == nil
+        return ZStack {
+            if let pending, working {
+                HStack(spacing: 5) {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(Theme.info)
+                    Text(pending.action.progressTitle)
+                }
+                .pill(Theme.info)
+                .transition(.blurReplace)
+            } else {
+                Label(app.stateLabel, systemImage: app.symbolName)
+                    .labelStyle(.titleAndIcon)
+                    .contentTransition(.symbolEffect(.replace))
+                    .pill(app.tint)
+                    .transition(.blurReplace)
+            }
+        }
+        .animation(.smooth(duration: 0.35), value: working)
+        .animation(.smooth(duration: 0.35), value: app.stateLabel)
+        .sensoryFeedback(trigger: pending) { old, new in
+            if old != nil, old?.failure == nil, new == nil { return .success }
+            if old?.failure == nil, new?.failure != nil { return .error }
+            return nil
+        }
+    }
+
     /// The actions the round buttons carry.
     private static let roundActions: Set<AppAction> = [.start, .stop, .restart]
 
@@ -215,8 +248,10 @@ struct AppDetailView: View {
                     RoundActionButton(title: "Open", systemImage: "arrow.up.right.square", tint: Theme.accent) { openURL(url) }
                 }
                 ForEach([AppAction.start, .restart, .stop].filter { available.contains($0) }) { action in
+                    let running = actions.pending[app.id].map { $0.action == action && $0.failure == nil } ?? false
                     RoundActionButton(title: action.title, systemImage: action.systemImage,
-                                      tint: action == .stop ? Theme.danger : action == .start ? Theme.success : Theme.info) {
+                                      tint: action == .stop ? Theme.danger : action == .start ? Theme.success : Theme.info,
+                                      busy: running) {
                         actions.request(action, on: app)
                     }
                     .disabled(actions.isBusy)

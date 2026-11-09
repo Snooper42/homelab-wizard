@@ -40,4 +40,21 @@ struct StatusOverviewTests {
         #expect(StatusTiles.capitalized("daily at 04:00") == "Daily at 04:00")
         #expect(StatusTiles.capitalized("") == nil)
     }
+
+    // A folded group's logos: a badge only on what isn't simply running.
+    @Test func onlyWhatIsNotFineWearsABadge() throws {
+        func app(_ state: String, health: String? = nil, extra: String = "") throws -> AppStatus {
+            var json = #"{"id":"a","name":"Audiobookshelf","state":"\#(state)""#
+            if let health { json += #","health":"\#(health)""# }
+            json += extra + "}"
+            return try JSONDecoder.homelab().decode(AppStatus.self, from: Data(json.utf8))
+        }
+        #expect(try app("running", health: "healthy").isPlainlyFine)
+        #expect(try app("running").isPlainlyFine)
+        #expect(try !app("running", health: "starting").isPlainlyFine)
+        #expect(try !app("running", health: "unhealthy").isPlainlyFine)
+        #expect(try !app("running", extra: #","notAnswering":"no answer for 5 minutes""#).isPlainlyFine)
+        #expect(try !app("stopped").isPlainlyFine)
+        #expect(try !app("missing").isPlainlyFine)
+    }
 }
