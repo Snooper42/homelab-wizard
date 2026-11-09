@@ -6103,6 +6103,8 @@ const smokes = [
   // Net worth's paycheck-by-paycheck table, wider than its card: its right edge is shaded while more columns lie past it
   // (a Mac hides its scroll bar), and the shade is gone once scrolled to the end.
   { name: 'Finances: the paycheck-by-paycheck table shows there is more to its right', screen: 'finances', run: async (page) => {
+    // A window narrow enough that the table is wider than its card whatever the fonts (CI's are narrower than a Mac's).
+    await page.setViewportSize({ width: 900, height: 800 });
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     const edge = () => page.$eval('.finpostscroll', (e) => {
       const bg = getComputedStyle(e).backgroundImage;
@@ -7878,7 +7880,11 @@ const smokes = [
   { name: 'The phone, view only: transactions with nothing to add or open', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
-    if (await page.$('.fx-txday li button, #finRoot .toolbar button, .fx-budgets button, .fx-transactions .fx-actions button')) throw new Error('a phone allowed only to look can add or open a transaction, or edit budgets or categories');
+    if (await page.$('.fx-txday li button, #finRoot .toolbar button, .fx-budgets .fx-actions button, .fx-transactions .fx-actions button')) throw new Error('a phone allowed only to look can add or open a transaction, or edit budgets or categories');
+    // A budget only shows its transactions (the list filtered to it), and nothing is saved.
+    await page.click('.fx-budgets li:has(.grow > strong:text-is("Food")) button');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('a budget did not show its transactions');
+    if (await page.evaluate(() => window.__MOCK.financesSaved?.length || window.__MOCK.ledgerSaved?.length)) throw new Error('a phone allowed only to look saved something');
   } },
   { name: 'Finances: no transactions yet says how to add one', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
