@@ -682,5 +682,25 @@ extension NetworkRuleTests {
         let silent = actions(computer: nil)
         #expect(silent.available(for: app).contains(.restart) && silent.canStopForAWhile && !silent.settings(for: app).isEmpty)
         #expect(silent.updateHint(for: app) == nil)
+// What was done (item 4): the phone asks the computer's record for one
+// app's, or everything matching a search, and reads its lines as Go sends them.
+extension NetworkRuleTests {
+    @Test func historyAsksForOneAppsOrASearchAndReadsTheLines() async throws {
+        let (api, _) = client()
+        StubProtocol.reset { _ in
+            (200, [:], Self.json(#"{"result":[{"id":5,"at":"2026-11-09T21:00:00.123456789Z","kind":"heal","app":"immich","who":"the watchdog","text":"Restarted Immich: it stopped answering"},{"id":4,"at":"0001-01-01T00:00:00Z","kind":"settings","who":"Sam's iPhone","text":"Changed settings: QUIET_HOURS"}]}"#), nil)
+        }
+        let entries = try await api.history(appID: "immich")
+        #expect(entries.count == 2 && entries[0].text == "Restarted Immich: it stopped answering" && entries[0].byWho == "by the watchdog")
+        #expect(entries[0].at != nil && entries[1].at == nil && entries[1].app.isEmpty)
+        let asked = try #require(StubProtocol.requests.first)
+        #expect(asked.url.path == "/api/call/History")
+        #expect(try JSONDecoder().decode([JSONValue].self, from: asked.body) == [.string("immich"), .string(""), .number(0)])
+
+        _ = try await api.history(search: "  iphone  ")
+        let searched = try #require(StubProtocol.requests.last)
+        #expect(try JSONDecoder().decode([JSONValue].self, from: searched.body) == [.string(""), .string("iphone"), .number(0)])
+
+        await #expect(throws: APIError.invalidAppID) { _ = try await api.history(appID: "../etc") }
     }
 }

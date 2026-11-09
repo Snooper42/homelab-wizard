@@ -158,6 +158,11 @@ final class DashboardViewModel {
 
     var hasLoaded: Bool { liveEvents.status != nil }
 
+    /// What was done (the computer's record): one app's, or everything matching search.
+    func history(appID: String = "", search: String = "") async throws -> [HistoryEntry] {
+        try await api.history(appID: appID, search: search)
+    }
+
     // MARK: Away mode (ADR-0023)
 
     /// The apps on the internet through the tunnel, as last kept, read

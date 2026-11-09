@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **What was done, on the iPhone:** an app's More About page shows what was done to it lately, and **Everything That Was Done** searches the last 90 days, as on the computer.
 - **Recently done, on each app's page:** the last few things done to it (*Restarted Vikunja, 2 hours ago, by the watchdog*), and **Everything that was done…**, the last 90 days for every app, searchable by app, phone or word.
 - **A record of what was done:** every start, stop, restart, update, roll back and removal, the watchdog's restarts, settings saved and Finances changed are kept for 90 days, with who did it (this computer, which phone, the watchdog or the nightly update). `homelab history` lists them, `--app immich` or `--search` narrows them; the app and the iPhone show them next. It never keeps a setting's value or an amount of money.
 - **The download apps rest when nothing is on the way:** Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, FlareSolverr, qBittorrent and its VPN tunnel used to sit in memory all day. Now, with nothing downloading, queued or requested for 15 minutes, Tidy Up stops them, and starts them every 12 hours to look for new releases, at once when you request something in Seerr, and whenever Tidy Up needs them. A torrent still seeding keeps qBittorrent up. One you start yourself stays up until the next 12-hour wake. `TIDY_ARR_REST=false` in Settings keeps them running.

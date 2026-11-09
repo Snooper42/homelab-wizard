@@ -33,6 +33,10 @@ struct AppDetailView: View {
             stoppedSection(for: app)
             backupSection(for: app)
             updatesSection(for: app)
+            // What was done to it, where the computer keeps that (internal/history).
+            if actions.computerAnswers("History") {
+                RecentlyDoneSection(app: app)
+            }
             detailsSection(for: app)
             addressesSection(for: app)
             settingsSection(for: app)
