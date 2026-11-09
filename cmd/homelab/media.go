@@ -213,9 +213,6 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		return err
 	}
 	env := h.envMap()
-	if tdarrJob(kind, action) {
-		h.tdarrAccount(ctx, env)
-	}
 	// Python was found above (HOMELAB_PYTHON, or the probe): the other checks.
 	checks := slices.DeleteFunc(media.Preflight(ctx, mediaProbe(), env, homeDir()), func(c media.Check) bool { return c.ID == "python" })
 	// Lyrics set right on this computer (--tidy), or counted (--check), are
@@ -226,6 +223,25 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 			return media.ErrOnBattery
 		}
 		return fmt.Errorf("%s: %s. %s", c.Name, c.Note, c.Fix)
+	}
+	// A resting Tdarr is started for a run that needs it, said as the job's
+	// first line; after the run, Tdarr rests only a while later.
+	tdarr := action != "status" && needsTdarr(kind, action, f.apply, f.rest, func() bool {
+		return media.InboxHasVideo(media.InboxFolders(env, homeDir()))
+	})
+	if tdarr {
+		h.useTdarr(ctx, func(msg string) {
+			if f.events {
+				line, _ := json.Marshal(media.Event{Type: "info", Text: msg})
+				fmt.Fprintln(h.ui.Out, string(line))
+				return
+			}
+			h.ui.Info("%s", msg)
+		})
+		defer h.useTdarr(context.WithoutCancel(ctx), func(string) {})
+	}
+	if tdarrJob(kind, action) {
+		h.tdarrAccount(ctx, env)
 	}
 	if err := h.mediaSettings(ctx, py); err != nil {
 		return err
@@ -609,6 +625,7 @@ func (h *homelab) mediaTick(ctx context.Context) error {
 			}
 		}
 	}
+	h.restTdarr(ctx, env, home, now)
 	if !off(env["TIDY_SCRUB"]) && scrubDue(now, rec.LastScrub) {
 		if err := h.mediaEngine(ctx, "scrubber", "scan", []string{"--apply"}); err != nil && !errors.Is(err, media.ErrBusy) {
 			errs = append(errs, err)
