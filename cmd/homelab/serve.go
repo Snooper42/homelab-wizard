@@ -61,12 +61,8 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 		// Finances away from home" writes these; without them it's refused.
 		Access: func() companion.Access {
 			env := h.envMap()
-<<<<<<< HEAD
 			return companion.Access{Team: env["COMPANION_ACCESS_TEAM"], Audience: env["COMPANION_ACCESS_AUD"], ClientID: env["COMPANION_ACCESS_CLIENT_ID"],
 				Secret: env["COMPANION_ACCESS_CLIENT_SECRET"], Host: env["COMPANION_AWAY_HOST"]}
-=======
-			return companion.Access{Team: env["COMPANION_ACCESS_TEAM"], Audience: env["COMPANION_ACCESS_AUD"], ClientID: env["COMPANION_ACCESS_CLIENT_ID"]}
->>>>>>> origin/main
 		}}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
