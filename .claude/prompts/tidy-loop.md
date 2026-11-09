@@ -93,7 +93,7 @@ Next, in this order, each its own PR (mockups exist for the first two, in the No
 
 5. (done: #535) **Name these songs**: music with no tags and no match. The owner, Nov 9: "yes" to trying them by their sound first when AcoustID is set up (only what beets can't match waits in Needs a look), to the artist being optional, and to stopping when a song is more than 30 s off its place on the album. A sheet asks the artist and album, looks the album up (MusicBrainz, as beets does), shows the matches (*Rumours · Fleetwood Mac · 1977 · 11 tracks*), and files the songs as that album. Needs a look already lists the download (kind music); add the button and an `inbox name <path> album "<artist>" "<album>"`.
 6. (done: #537) **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
-7. (built: `inbox.archive_in`, listed once with why, kind ""; tick when its PR merges) **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
+7. (done: #538) **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
 
 Lessons from pieces 1–4, for whoever builds the next:
 - A button the mock app accepts can still be refused by the app: `TestTidyArgsTakeEveryJobTheScreenSends` fills in each new job's arguments, and the CLI's `homelab media inbox` routes every inbox action (Undo was a preview until #524).
@@ -102,7 +102,11 @@ Lessons from pieces 1–4, for whoever builds the next:
 - A sheet's boxes update from the latest values (`setTyped((t) => ({ ...t, ... }))`): fixed in v0.27.4 after typing fast in two boxes wiped the first.
 - Every new button on the Inbox waits while a job runs; the running-job smoke case fails on any enabled button in `.fx-board`.
 - Build `web/dist/app.js` only in a checkout with its own `node_modules` (a copy, never a link): esbuild writes each module's path into the bundle, so a linked one gives `../../home/…/node_modules/preact/…` and CI's `make frontend-check` fails (#529, Nov 9).
-- A question sheet can look things up first: `TidyConfirm.find` (Look it up, a list to pick from, the pick handed to `go` as `picked`). Name these songs uses it for albums; item 6's film and show titles can too.
+- A question sheet can look things up first: `TidyConfirm.find` (Look it up, a list to pick from, the pick handed to `go` as `picked`), with `needs` (the box it looks up: typing in another keeps the list) and `optional` (the main button doesn't wait for a pick). Name these songs uses it for albums (a pick needed), It's a film… and It's an episode… for titles (#537).
+- In a smoke case, type into a sheet's second box only once the sheet has put the cursor in its first (`document.activeElement` is `#tidySheet .tidyfields input`): the sheet focuses a frame after it shows, and on a slow runner that frame took the second box's typing (#535's red dark run). The cause is in `parts/Sheet.tsx`, noted for Account 2 above.
+- A PR that conflicts with main gets no CI at all (no checks, nothing red): after a merge, `git fetch` before starting the next branch from `origin/main`, and if a PR shows no checks, look for a conflict first (#537 sat 25 minutes so).
+- After a PR merges, its branch is deleted on GitHub: start the next one from a fresh `origin/main` and push it plainly (no force push is needed, and the sandbox refuses one).
+- The sandbox can't reach musicbrainz.org, Radarr, Sonarr, or Jellyfin, nor GitHub's artifact storage (a failed smoke run's screenshots): reproduce a CI-only failure locally with three smoke runs at once and the page's own state printed on failure.
 
 ## The queue
 
@@ -179,7 +183,18 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 ## Open now
 
-#485 merged (Nov 7). Next: queue item 2, *a job that stopped part-way carries on as another job*. Then the look's L3 (Music's Space card) and the rest of the queue.
+**Nov 9 (Account 1's session, handed off):** the Inbox plan is done: pieces 4 to 7 merged as #529, #535 (with #536, the owner's AcoustID answer), #537 and #538, each green on its head. No Account 1 PR is open. None of pieces 4 to 7 has been tried on a machine yet: `docs/Testing.md` has a row for each.
+
+**Next, in this order:**
+
+1. **Media apps run only while a job needs them** (the owner's ask, for memory on the 16GB Mac). Before building, look at what's there and write a plan into this section:
+   - Tdarr already pauses when idle on battery and starts again when plugged in (`cmd/homelab`, `battery_tdarr_test.go`); `internal/media/record.go` pauses Duplicati and Navidrome around a job (`DuplicatiPaused`, the music swap).
+   - `docs/Feature Roadmap.md` has *Stop when idle* (L, mocked up: Immich's machine learning) and *Quiet hours for heavy work* (M, idea). This is the media side of those.
+   - Which apps: Tdarr (only Shrink and Collect need it), and maybe Sonarr, Radarr, Lidarr, qBittorrent and Prowlarr when nothing is downloading. Jellyfin and Navidrome stay up (the household watches and listens through them). **Ask the owner once** which apps, and whether "stopped until a job needs it" should show on Status, with the most conservative choice meanwhile: Tdarr only, started by the job that needs it and stopped when it's idle.
+   - Lanes: starting and stopping apps, and Status, are Account 2's. Tidy Up may start and stop Tdarr around its own jobs (it does on battery already); anything on Status or the app's page goes to **For Account 2** above.
+2. The queue's item 2 (*a job that stopped part-way carries on as another job*), then the rest of the queue and the look's L3.
+
+Owner's answers this session (Nov 9): untagged songs go to beets first when AcoustID is set up; the album sheet's artist is optional; filing stops when a song is more than 30 s off its place on the album. #508 (Finances, idle) was closed at the owner's word.
 
 ## What earlier sessions learned about Tidy Up
 
