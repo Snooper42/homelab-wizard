@@ -575,7 +575,7 @@ func (h *homelab) mediaTick(ctx context.Context) error {
 	var errs []error
 	if !off(env["TIDY_INBOX"]) {
 		sig := media.InboxSignature(media.InboxFolders(env, home), now)
-		if sig != rec.InboxSeen {
+		if inboxDue(env["TIDY_INBOX_WHEN"], sig != rec.InboxSeen, now, rec.Last["inbox"]["scan"].At) {
 			if err := h.mediaEngine(ctx, "inbox", "scan", []string{"--apply"}); err != nil && !errors.Is(err, media.ErrBusy) {
 				errs = append(errs, err)
 			}
@@ -599,6 +599,20 @@ func (h *homelab) mediaTick(ctx context.Context) error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// inboxDue is whether the agent sweeps the watched folders now, by
+// TIDY_INBOX_WHEN: "daily" once after 03:00 (beside the nightly scrubber),
+// "manual" never (Tidy up now does), else as things arrive: when the
+// folders changed since the last sweep that left nothing waiting.
+func inboxDue(when string, changed bool, now, last time.Time) bool {
+	switch strings.ToLower(strings.TrimSpace(when)) {
+	case "manual":
+		return false
+	case "daily":
+		return scrubDue(now, last)
+	}
+	return changed
 }
 
 // scrubDue: 03:00 has passed today and the scrubber hasn't run since.
