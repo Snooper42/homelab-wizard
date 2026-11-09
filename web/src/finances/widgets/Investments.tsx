@@ -16,7 +16,7 @@ import { Widget } from '../ui/Widget';
 import { Mark } from '../Mark';
 import { tickerBrand } from '../tickers';
 import { rateOf, worthOf, worthOn } from '../model';
-import { amountsHidden, dayShort, isoDay, money, moneyIn, parseAmount, signOf, tick, todayISO } from '../money';
+import { amountsHidden, dayShort, isoDay, money, moneyIn, parseAmount, parseCount, signOf, tick, todayISO } from '../money';
 
 /** What Read now is doing, or last said. */
 export interface InvestState {
@@ -269,6 +269,14 @@ function Trades({ account, h, ops }: { account: finance.Account; h: finance.Hold
   );
 }
 
+/** What the shares and the total typed come to a share, so a count read wrong shows before it is saved. */
+function EachShare({ shares, total, currency, sold }: { shares: string; total: string; currency?: string; sold: boolean }) {
+  const n = parseCount(shares), t = parseAmount(total);
+  if (!(n > 0) || !(t > 0)) return null;
+  const count = n.toLocaleString('en-US', { maximumFractionDigits: 8 });
+  return <p class="fx-sub fx-eachshare" role="status">{count} {n === 1 ? 'share' : 'shares'} at {moneyIn(t / n, currency)} each{sold ? ' sold' : ''}.</p>;
+}
+
 /** A buy or a sale put right: bought or sold, how many shares, what was paid (or got) in all, and the day. */
 function TradeForm({ t, symbol, change, done }: { t: app.InvestmentTrade; symbol: string; change: TradeOps['change']; done: (saved: boolean) => void }) {
   const [way, setWay] = useState(t.sold ? 'sold' : 'bought');
@@ -281,7 +289,7 @@ function TradeForm({ t, symbol, change, done }: { t: app.InvestmentTrade; symbol
   const id = 'trade-' + t.id.replace(/[^A-Za-z0-9]+/g, '-');
   const submit = async (e: Event) => {
     e.preventDefault();
-    const n = parseAmount(count), m = parseAmount(total);
+    const n = parseCount(count), m = parseAmount(total);
     const wrong = !(n > 0) ? 'How many shares: more than 0.'
       : isNaN(m) || m < 0 ? `What you ${sold ? 'got' : 'paid'} in all: type it without a minus.`
       : !day || day > todayISO() ? 'Pick the day it happened, today or before.' : '';
@@ -307,6 +315,7 @@ function TradeForm({ t, symbol, change, done }: { t: app.InvestmentTrade; symbol
         <label class="field">{sold ? 'What you got in all' : 'What you paid in all'}<span class="moneyfield"><span aria-hidden="true">{signOf(t.currency)}</span><input inputmode="decimal" value={total} onInput={(e) => setTotal((e.target as HTMLInputElement).value)} /></span></label>
         <label class="field">Day<input type="date" value={day} max={todayISO()} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
       </div>
+      <EachShare shares={count} total={total} currency={t.currency} sold={sold} />
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <div class="fx-investaddactions">
         <button type="button" class="small" disabled={busy} onClick={() => done(false)}>Cancel</button>
@@ -394,7 +403,7 @@ function AddForm({ v, add, find, close }: { v: finance.View; add: NonNullable<In
   const sold = way === 'sold';
   const submit = async (e: Event) => {
     e.preventDefault();
-    const n = parseAmount(shares), t = parseAmount(total);
+    const n = parseCount(shares), t = parseAmount(total);
     const wrong = account === 'new' && !newName.trim() ? 'Name the new account.'
       : !picked ? 'Type a ticker or a name, then pick it from the list.'
       : !(n > 0) ? 'How many shares: more than 0.'
@@ -440,6 +449,7 @@ function AddForm({ v, add, find, close }: { v: finance.View; add: NonNullable<In
         <label class="field">{sold ? 'What you got in all' : 'What you paid in all'}<span class="moneyfield"><span aria-hidden="true">{signOf(picked?.currency)}</span><input inputmode="decimal" value={total} placeholder="0.00" onInput={(e) => setTotal((e.target as HTMLInputElement).value)} /></span></label>
         <label class="field">Day<input type="date" value={day} max={todayISO()} onInput={(e) => setDay((e.target as HTMLInputElement).value)} /></label>
       </div>
+      <EachShare shares={shares} total={total} currency={picked?.currency} sold={sold} />
       <p class="fx-sub fx-investaddnote">It goes into Ghostfolio on this computer{account === 'new' ? ', and the new account into Finances too, by the same name' : ''}. Only the ticker leaves the homelab, when Ghostfolio looks it up.</p>
       {problem && <p class="formerr bad" role="alert">{problem}</p>}
       <div class="fx-investaddactions">

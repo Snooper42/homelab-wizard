@@ -41,6 +41,10 @@ type Fake struct {
 	Activities []Activity
 	made       int
 
+	// Unpriced: holdings say nothing went in (investment 0), as
+	// Ghostfolio's do until it has a symbol's prices.
+	Unpriced bool
+
 	// Behind: an account's worth (GET /account) leaves out the newest buy
 	// or sale, as Ghostfolio's does until it has worked it out again.
 	Behind bool
@@ -116,7 +120,7 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		out := []map[string]any{}
 		for sym, n := range held {
-			out = append(out, map[string]any{"assetProfile": map[string]any{"symbol": sym, "name": sym + " Inc"}, "quantity": n, "investment": paid[sym], "valueInBaseCurrency": n * 100})
+			out = append(out, map[string]any{"assetProfile": map[string]any{"symbol": sym, "name": sym + " Inc"}, "quantity": n, "investment": invested(paid[sym], f.Unpriced), "valueInBaseCurrency": n * 100})
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"holdings": out})
 	case path == "/symbol/lookup":
@@ -190,4 +194,12 @@ func (f *Fake) worth(id string) float64 {
 		}
 	}
 	return n * 100
+}
+
+// invested is a holding's investment as the fake answers it: none while unpriced.
+func invested(paid float64, unpriced bool) float64 {
+	if unpriced {
+		return 0
+	}
+	return paid
 }

@@ -273,6 +273,11 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 		// card lists them: Ghostfolio's own figure for the account can
 		// lag a buy just put in, while its holdings already have it.
 		worth := float64(x.Balance)
+		// Ghostfolio says nothing went into a holding until it has its
+		// prices (one just bought): what was paid is then read from its
+		// buys and sales, once for the account.
+		var acts []gfActivity
+		read := false
 		for _, h := range found {
 			sym, title, sub := h.Symbol, h.Name, h.AssetSubClass
 			if p := h.AssetProfile; p != nil {
@@ -286,11 +291,23 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 			if h.ValueInBaseCurrency != nil {
 				value = float64(*h.ValueInBaseCurrency)
 			}
+			paid := cents(float64(h.Investment) * rate)
+			if paid == 0 && shares > 0 {
+				if !read {
+					acts, read = nil, true
+					if got, err := g.activities(ctx, x.ID); err == nil {
+						acts = got
+					}
+				}
+				if p, ok := paidFor(acts, x.ID, sym, inv.Currency); ok {
+					paid = p
+				}
+			}
 			inv.Holdings = append(inv.Holdings, finance.Holding{
 				Symbol: strings.ToUpper(strings.TrimSpace(sym)),
 				Name:   strings.TrimSpace(title),
 				Shares: shares,
-				Paid:   cents(float64(h.Investment) * rate),
+				Paid:   paid,
 				Value:  cents(value * rate),
 			})
 			worth += cents(value * rate)
@@ -595,6 +612,56 @@ func investedAccount(p finance.Plan, id string) (finance.Account, error) {
 	return finance.Account{}, errors.New("pick the account it is in")
 }
 
+// activities are the buys, sales and the rest Ghostfolio keeps in one of
+// its accounts: /activities since 2.249, /order before.
+func (g Session) activities(ctx context.Context, id string) ([]gfActivity, error) {
+	var got struct {
+		Activities []gfActivity `json:"activities"`
+	}
+	q := "?accounts=" + url.QueryEscape(id)
+	err := g.Read(ctx, "/activities"+q, &got)
+	if errors.As(err, new(missing)) {
+		err = g.Read(ctx, "/order"+q, &got)
+	}
+	return got.Activities, err
+}
+
+// paidFor is what the shares of a symbol still held in an account cost,
+// from its buys and sales oldest first: a buy adds what was paid, a sale
+// takes off its shares' part of what they cost on average. ok is false
+// when there are none, or one is in another currency than code.
+func paidFor(acts []gfActivity, id, symbol, code string) (paid float64, ok bool) {
+	list := append([]gfActivity(nil), acts...)
+	sort.SliceStable(list, func(i, j int) bool { return list[i].Date < list[j].Date })
+	held := 0.0
+	for _, x := range list {
+		prof := x.Profile
+		if prof == nil {
+			prof = x.Old
+		}
+		if prof == nil || x.AccountID != id || (x.Type != "BUY" && x.Type != "SELL") || !strings.EqualFold(strings.TrimSpace(prof.Symbol), symbol) {
+			continue
+		}
+		cur := x.Currency
+		if cur == "" {
+			cur = prof.Currency
+		}
+		if code != "" && cur != "" && !strings.EqualFold(cur, code) {
+			return 0, false
+		}
+		n := float64(x.Quantity)
+		if x.Type == "BUY" {
+			paid += n * float64(x.UnitPrice)
+			held += n
+		} else if held > 0 {
+			paid -= paid * math.Min(1, n/held)
+			held = math.Max(0, held-n)
+		}
+		ok = true
+	}
+	return cents(paid), ok
+}
+
 // trades signs in and lists the buys and sales Ghostfolio keeps in the
 // plan's account (of symbol, when one is given), the newest first, with
 // the session and Ghostfolio's id for the account.
@@ -618,21 +685,13 @@ func trades(ctx context.Context, root, account, symbol string) ([]Trade, Session
 		}
 		return nil, g, "", acct, err
 	}
-	var got struct {
-		Activities []gfActivity `json:"activities"`
-	}
-	// /activities since 2.249; /order before.
-	q := "?accounts=" + url.QueryEscape(id)
-	err = g.Read(ctx, "/activities"+q, &got)
-	if errors.As(err, new(missing)) {
-		err = g.Read(ctx, "/order"+q, &got)
-	}
+	acts, err := g.activities(ctx, id)
 	if err != nil {
 		return nil, g, id, acct, err
 	}
 	symbol = strings.ToUpper(strings.TrimSpace(symbol))
 	out := []Trade{}
-	for _, x := range got.Activities {
+	for _, x := range acts {
 		prof := x.Profile
 		if prof == nil {
 			prof = x.Old

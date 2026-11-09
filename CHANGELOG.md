@@ -182,6 +182,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Shares in parts of one:** a holding added with *11.038* shares went into Ghostfolio as 11,038, read as a thousands mark, so a share showed as worth $0.60. Shares now take as many decimals as you type, and the form says what each comes to (*11.038 shares at $602.77 each*) before it goes. A holding Ghostfolio has no prices for yet no longer shows *You paid $0.00*: what you paid is read from its buys and sales.
 - **An American Express file comes in the right way round:** Amex lists charges as plus amounts, so a card's file imported into Finances showed every charge as money in. A card's file whose rows are mostly plus amounts is now read as charges (its minus amounts as payments to it), says so, and **Charges are plus amounts in this file** turns it off or on.
 - **Finances on a phone:** budgets keep their bars wide beside the day's allowance, and a twelve-month chart labels every other month (this one always) so the names don't run together.
 - **A category's trend in its own colour:** Reports' *month by month* for a category draws its bars in that category's colour, as everywhere else, not the red of all spending.

@@ -1115,6 +1115,17 @@
     else t3 = t3.replace(/[.,]/g, "");
     return t3 === "" || t3 === "-" ? NaN : parseFloat(t3);
   }
+  function parseCount(typed) {
+    let t3 = String(typed ?? "").replace(/[\s\u00a0\u202f']/g, "").replace(/[^0-9.,\-−]/g, "").replace("−", "-");
+    const dots = t3.split(".").length - 1, commas = t3.split(",").length - 1;
+    if (dots && commas) {
+      const mark = t3.lastIndexOf(".") > t3.lastIndexOf(",") ? "." : ",";
+      t3 = t3.replace(mark === "." ? /,/g : /\./g, "").replace(",", ".");
+    } else if (dots > 1) t3 = t3.replace(/\./g, "");
+    else if (commas > 1 || /^-?\d{1,3},\d{3}$/.test(t3)) t3 = t3.replace(/,/g, "");
+    else t3 = t3.replace(",", ".");
+    return t3 === "" || t3 === "-" || t3 === "." ? NaN : parseFloat(t3);
+  }
   var signed = (n3) => hidden ? money(n3) : (n3 < -5e-3 ? "−" : "+") + money(Math.abs(n3));
   function split(n3) {
     const s3 = money(n3), i3 = s3.lastIndexOf(".");
@@ -15073,6 +15084,21 @@ ${pays}
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem })
     ] });
   }
+  function EachShare({ shares: shares2, total, currency, sold }) {
+    const n3 = parseCount(shares2), t3 = parseAmount(total);
+    if (!(n3 > 0) || !(t3 > 0)) return null;
+    const count2 = n3.toLocaleString("en-US", { maximumFractionDigits: 8 });
+    return /* @__PURE__ */ u3("p", { class: "fx-sub fx-eachshare", role: "status", children: [
+      count2,
+      " ",
+      n3 === 1 ? "share" : "shares",
+      " at ",
+      moneyIn(t3 / n3, currency),
+      " each",
+      sold ? " sold" : "",
+      "."
+    ] });
+  }
   function TradeForm({ t: t3, symbol, change, done }) {
     const [way, setWay] = d2(t3.sold ? "sold" : "bought");
     const [count2, setCount] = d2(String(t3.shares));
@@ -15084,7 +15110,7 @@ ${pays}
     const id2 = "trade-" + t3.id.replace(/[^A-Za-z0-9]+/g, "-");
     const submit = async (e3) => {
       e3.preventDefault();
-      const n3 = parseAmount(count2), m3 = parseAmount(total);
+      const n3 = parseCount(count2), m3 = parseAmount(total);
       const wrong = !(n3 > 0) ? "How many shares: more than 0." : isNaN(m3) || m3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
       setProblem(wrong);
       if (wrong) return;
@@ -15124,6 +15150,7 @@ ${pays}
           /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
         ] })
       ] }),
+      /* @__PURE__ */ u3(EachShare, { shares: count2, total, currency: t3.currency, sold }),
       problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
         /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => done(false), children: "Cancel" }),
@@ -15202,7 +15229,7 @@ ${pays}
     const sold = way === "sold";
     const submit = async (e3) => {
       e3.preventDefault();
-      const n3 = parseAmount(shares2), t3 = parseAmount(total);
+      const n3 = parseCount(shares2), t3 = parseAmount(total);
       const wrong = account === "new" && !newName.trim() ? "Name the new account." : !picked ? "Type a ticker or a name, then pick it from the list." : !(n3 > 0) ? "How many shares: more than 0." : isNaN(t3) || t3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
       setProblem(wrong);
       if (wrong || !picked) return;
@@ -15281,6 +15308,7 @@ ${pays}
           /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
         ] })
       ] }),
+      /* @__PURE__ */ u3(EachShare, { shares: shares2, total, currency: picked?.currency, sold }),
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-investaddnote", children: [
         "It goes into Ghostfolio on this computer",
         account === "new" ? ", and the new account into Finances too, by the same name" : "",

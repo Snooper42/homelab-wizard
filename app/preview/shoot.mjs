@@ -5317,12 +5317,15 @@ const smokes = [
     await page.click(`${form} button:text-is("Add to Ghostfolio")`);
     await page.waitForSelector(`${form} .formerr:text-is("How many shares: more than 0.")`, { timeout: 2000 });
     if (await page.evaluate(() => window.__MOCK.investAdded)) throw new Error('Ghostfolio asked with 0 shares');
-    await page.fill(`${form} input[placeholder="10"]`, '10');
+    // A part of a share: 11.038 is eleven and a bit, not eleven thousand; what a share comes to is said before it goes.
+    await page.fill(`${form} input[placeholder="10"]`, '11.038');
+    await page.fill(`${form} .moneyfield input`, '6653.35');
+    await page.waitForSelector(`${form} .fx-eachshare:text-is("11.038 shares at $602.77 each.")`, { timeout: 2000 });
     await page.click(`${form} button:text-is("Add to Ghostfolio")`);
     await page.waitForSelector(form, { state: 'detached', timeout: 5000 });
-    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: bought 10 VTI. Read again at")`, { timeout: 2000 });
+    await page.waitForSelector(`${card} [role=status]:has-text("Added to Ghostfolio: bought 11.038 VTI. Read again at")`, { timeout: 2000 });
     const x = await page.evaluate(() => window.__MOCK.investAdded[0]);
-    if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 10 || x.total !== 2000 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
+    if (x.account !== 'k401' || x.symbol !== 'VTI' || x.dataSource !== 'YAHOO' || x.currency !== 'USD' || x.shares !== 11.038 || x.total !== 6653.35 || x.sold || x.newName || !/^\d{4}-\d\d-\d\d$/.test(x.date)) throw new Error(`sent ${JSON.stringify(x)}`);
   } },
   // A buy typed wrong, put right from the card: an open holding lists its buys and sales from Ghostfolio, each to Change (what
   // is typed checked first; Ghostfolio's no said in its words, the form kept) or Delete (asked first; Keep it leaves it). Each

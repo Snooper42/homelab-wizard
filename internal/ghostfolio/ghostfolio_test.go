@@ -245,3 +245,39 @@ func TestChangeAndDeleteATrade(t *testing.T) {
 		t.Errorf("after the delete: %+v, Ghostfolio has %+v", list, f.Activities)
 	}
 }
+
+// Ghostfolio says nothing went into a holding until it has the symbol's
+// prices: what was paid is then read from its buys and sales, a sale
+// taking off its shares' part at the average cost.
+func TestPaidFromTheBuysWhileUnpriced(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	f.Unpriced = true
+	root := homelab(t, f, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n")
+	ctx := context.Background()
+	day := func(n int) string { return time.Now().AddDate(0, 0, -n).Format("2006-01-02") }
+	for _, a := range []ghostfolio.Add{
+		{Account: "brk", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 4, Total: 400, Date: day(9)},
+		{Account: "brk", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 2, Total: 260, Date: day(5)},
+		{Account: "brk", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 3, Total: 390, Date: day(2), Sold: true},
+		{Account: "brk", Symbol: "SMH", DataSource: "YAHOO", Currency: "USD", Shares: 5.339, Total: 3203.62, Date: day(3)},
+	} {
+		if err := ghostfolio.AddInvestment(ctx, root, a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r, err := ghostfolio.ReadInto(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	paid := map[string]float64{}
+	for _, a := range r.Plan.Accounts {
+		for _, h := range a.Holdings {
+			paid[h.Symbol] = h.Paid
+		}
+	}
+	// VOO: $660 for six, half sold: $330 for the three left.
+	if paid["VOO"] != 330 || paid["SMH"] != 3203.62 {
+		t.Errorf("paid %v", paid)
+	}
+}
