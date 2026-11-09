@@ -19,12 +19,13 @@ import { Empty } from '../parts/Empty';
 import { Row, Rows } from '../parts/Row';
 import { Amount, Stat } from './ui/Amount';
 import { Widget } from './ui/Widget';
-import { Mark, payeeBrand, paysAlike } from './Mark';
-import { joined, type Pair, pairs, suggestLinks } from './importData';
+import { Mark, payeeBrand } from './Mark';
+import { paysBill } from './guessCategory';
+import { joined, type Pair, pairs, suggestLinks, withLearned } from './importData';
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
 import { inHome } from './model';
-import { allPayments, dayLong, dayShort, type Lookup, money, monthName, plural } from './money';
+import { allPayments, dayLong, dayShort, type Lookup, money, moneyIn, monthName, owed, plural } from './money';
 import { tagsOf } from './reportData';
 import { showUndo } from '../status/UndoNote';
 import { shownNote } from './payees';
@@ -38,6 +39,8 @@ export interface TransactionsProps {
   edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import' | 'logos', id?: string) => void;
   /** Whether Logos is offered: the computer can ask a company's website for its real logo; a phone can't. */
   logos?: boolean;
+  /** Opened filtered from another view (a report's row, a Dashboard card): back to it. */
+  back?: { label: string; go: () => void };
   /** Reads a receipt by its name, for a phone allowed only to look (its rows open no form). */
   readReceipt?: (name: string) => Promise<string>;
   /** Keeps the ledger, for a link made or said Not it; none on a phone allowed only to look. */
@@ -52,7 +55,7 @@ export interface TransactionsProps {
  */
 function LinksWidget({ v, L, ledger, save }: { v: finance.View; L: Lookup; ledger: finance.Ledger; save: (l: finance.Ledger) => Promise<boolean> }) {
   const [busy, setBusy] = useState(false);
-  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, paysAlike);
+  const found = suggestLinks(ledger.transactions, allPayments(v.plan).filter((x) => !x.card), v.dues || {}, v.checking, withLearned(paysBill, ledger.transactions));
   if (!found.size) return null;
   const list = ledger.transactions.filter((t) => found.has(t.id)).reverse();
   const keep = async (change: (t: finance.Transaction) => finance.Transaction) => {
@@ -115,8 +118,9 @@ export const txTitle = (t: finance.Transaction, L: Lookup): string => t.payee ||
 /** A transaction's categories: its own, or its parts'. */
 const catsOf = (t: finance.Transaction): string[] => (t.splits?.length ? t.splits.map((s) => s.category) : t.category ? [t.category] : []);
 
-/** The words a search looks through: payee, categories, note, tags, and the accounts. */
-const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name].filter(Boolean).join(' ').toLowerCase();
+/** The words a search looks through: payee, categories, note, tags, the accounts, the amount as typed and as shown (86.10, 1,240.55), so a charge is found by what it came to, and its day as shown (Oct 28). */
+const wordsOf = (t: finance.Transaction, L: Lookup): string => [t.payee, ...catsOf(t), t.note, ...(t.tags || []), L.account[t.account]?.name, t.to && L.account[t.to]?.name,
+  Math.abs(t.amount).toFixed(2), Math.abs(t.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), dayShort(t.date)].filter(Boolean).join(' ').toLowerCase();
 
 /**
  * Rows that look like one transfer between the household's own accounts,
@@ -159,7 +163,16 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
   );
 }
 
-export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos }: TransactionsProps) {
+/** How many transactions are drawn at first, and more each time Show more is clicked. */
+export const txPage = 200;
+
+/** What Transactions opens filtered to next (a Reports row picked it): a category or group, a month, words. Then everything again. */
+let opening: { category?: string; month?: string; q?: string } = {};
+export const showTransactions = (f: { category?: string; month?: string; q?: string }) => { opening = f; };
+
+export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos, back }: TransactionsProps) {
+  // Taken once, as it opens: a later visit opens on everything.
+  const [first] = useState(() => { const f = opening; opening = {}; return f; });
   // The receipt shown under its row, on a phone allowed only to look: read, still reading, or why not.
   const [seen, setSeen] = useState<{ id: string; url?: string; problem?: string } | null>(null);
   const look = async (t: finance.Transaction) => {
@@ -169,12 +182,15 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     const still = (next: { id: string; url?: string; problem?: string }) => setSeen((now) => (now?.id === t.id ? next : now));
     try { still({ id: t.id, url: await readReceipt!(t.receipt!) }); } catch (e) { still({ id: t.id, problem: String((e as Error)?.message || e) }); }
   };
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(first.q || '');
   const [accountPick, setAccount] = useState('');
-  const [categoryPick, setCategory] = useState('');
-  const [monthPick, setMonthPick] = useState('');
+  const [categoryPick, setCategory] = useState(first.category || '');
+  const [monthPick, setMonthPick] = useState(first.month || '');
   const [way, setWay] = useState('');
   const [tagPick, setTag] = useState('');
+  // How many rows are drawn, for the filters they were asked for: a year of bank files is thousands, and drawing every
+  // one made typing in the search slow. Another filter starts again from the first page.
+  const [drawn, setDrawn] = useState({ key: '', n: txPage });
   // Picking rows to change together: which are picked, the category typed for them, Delete asked once, saving.
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -205,7 +221,11 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   // What each came to in the plan's currency, so the totals add up (an account may keep another).
   const home = new Map(inHome(v.plan, all).map((t) => [t.id, t.amount]));
   const amt = (t: finance.Transaction) => home.get(t.id) ?? t.amount;
-  const cats = [...new Set(all.flatMap(catsOf))].sort();
+  // Each category in the ledger, and the group of any that has one (Food, for Groceries and Eating out): a group finds all of its own.
+  const groupOf = new Map((v.categories || []).filter((c) => c.parent).map((c) => [c.name.toLowerCase(), c.parent!]));
+  const used = [...new Set(all.flatMap(catsOf))];
+  const cats = [...new Set([...used, ...used.map((c) => groupOf.get(c.toLowerCase())).filter((g): g is string => !!g)])].sort();
+  const inCategory = (t: finance.Transaction, c: string) => catsOf(t).some((x) => x === c || groupOf.get(x.toLowerCase())?.toLowerCase() === c.toLowerCase());
   const tags = tagsOf(all);
   const months = [...new Set(all.map((t) => t.date.slice(0, 7)))].sort().reverse();
   const accounts = (v.plan.accounts || []).filter((a) => all.some((t) => t.account === a.id || t.to === a.id));
@@ -217,13 +237,15 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const tag = tags.includes(tagPick) ? tagPick : '';
   const want = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = all.filter((t) => (!account || t.account === account || t.to === account)
-    && (!category || catsOf(t).includes(category))
+    && (!category || inCategory(t, category))
     && (!month || t.date.startsWith(month))
     && (!tag || !!t.tags?.includes(tag))
     && (!way || (way === 'move' ? !!t.to : !t.to && (way === 'in' ? t.amount > 0 : t.amount < 0)))
     && want.every((w) => wordsOf(t, L).includes(w)));
   const filtered = shown.length !== all.length;
   const list = [...shown].reverse();
+  const filterKey = [q, account, category, month, way, tag].join('\u0000');
+  const upTo = drawn.key === filterKey ? drawn.n : txPage;
   // What the picked act on: those picked that the filters still show.
   const chosen = shown.filter((t) => picked.has(t.id));
   const pick = (ids: Set<string>) => { setPicked(ids); setSure(false); setProblem(''); };
@@ -279,9 +301,26 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   const now = v.today.slice(0, 7);
   const thisMonth = all.filter((t) => t.date.startsWith(now) && !t.to);
   const sum = (f: (t: finance.Transaction) => boolean) => thisMonth.filter(f).reduce((s, t) => s + amt(t), 0);
+  // Last month to the same day (its last, in a shorter month): what had gone out by then, to set this month's against.
+  const lastMonthDay = (() => { const d = new Date(+v.today.slice(0, 4), +v.today.slice(5, 7) - 2, 1); const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(Math.min(end, +v.today.slice(8, 10))).padStart(2, '0')}`; })();
+  const before = all.filter((t) => !t.to && t.date.startsWith(lastMonthDay.slice(0, 7)) && t.date <= lastMonthDay);
+  const outBefore = -before.filter((t) => t.amount < 0).reduce((s, t) => s + amt(t), 0);
+  const outNow = -sum((t) => t.amount < 0);
+  // One account picked: what it held after each day, worked back (and on) from its balance as typed in on its day,
+  // through every transaction in or out of it. Not for a home, a car, or a collectible, whose worth no transaction moves.
+  const acct = account ? L.account[account] : undefined;
+  const runs = !!acct?.updated && !['home', 'car', 'collectible'].includes(acct.kind);
+  const after = (day: string): number => {
+    if (!acct) return 0;
+    // What a transaction did to the account: money out of it, or a transfer into it; a card or loan owes the more for a charge.
+    const effect = (t: finance.Transaction) => (t.account === acct.id ? t.amount : t.to === acct.id ? -t.amount : 0) * (owed(acct.kind) ? -1 : 1);
+    const at = acct.updated!;
+    return all.reduce((n, t) => n + (day < at ? (t.date > day && t.date <= at ? -effect(t) : 0) : (t.date > at && t.date <= day ? effect(t) : 0)), acct.balance);
+  };
   // By day, newest first, each day's transactions as they were entered, latest on top.
   const days: { date: string; list: finance.Transaction[] }[] = [];
-  for (const t of list) {
+  for (const t of list.slice(0, upTo)) {
     if (days.at(-1)?.date !== t.date) days.push({ date: t.date, list: [] });
     days.at(-1)!.list.push(t);
   }
@@ -292,12 +331,15 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
           <div class="fx-stats">
             <Stat value={<Amount value={sum((t) => t.amount > 0)} form="whole" tone="in" />} caption="Money in" />
             <Stat value={<Amount value={-sum((t) => t.amount < 0)} form="whole" tone="out" />} caption="Money out" />
-            <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={plural(thisMonth.length, 'transaction')} />
+            {/* What's kept, as Reports says it, with how many transactions it is. */}
+            <Stat value={<Amount value={sum(() => true)} form="whole" sign tone="auto" />} caption={`Kept · ${plural(thisMonth.length, 'transaction')}`} />
           </div>
+          {!!before.length && <p class="fx-sub fx-txvs">{Math.abs(outNow - outBefore) < 0.005 ? <>The same out as by {dayShort(lastMonthDay)} last month.</>
+            : <><span class={outNow > outBefore ? 'fx-out' : 'fx-in'}>{money(Math.abs(outNow - outBefore))} {outNow > outBefore ? 'more' : 'less'}</span> out than by {dayShort(lastMonthDay)} last month ({money(outBefore)}).</>}</p>}
         </Widget>
         {saveLedger && <PairsWidget L={L} ledger={ledger} save={saveLedger} />}
         {saveLedger && <LinksWidget v={v} L={L} ledger={ledger} save={saveLedger} />}
-        <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} />
+        <BudgetsWidget v={v} edit={edit ? () => edit('budgets') : undefined} show={(c, m) => { setCategory(c); setMonthPick(m || ''); setQ(''); setAccount(''); setWay(''); setTag(''); document.querySelector('.fx-transactions')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }} />
         <Widget title={filtered ? `${plural(shown.length, 'transaction')} of ${all.length}` : 'Transactions'} span="all" kind="fx-transactions"
           actions={edit && <>
             {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}
@@ -306,7 +348,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
           </>}>
           {!!all.length && <div class="fx-txfilters" role="search" aria-label="Find transactions">
-            <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, note" aria-label="Search transactions" />
+            <input type="search" class="fx-txsearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search payee, category, amount, day" aria-label="Search transactions" />
             <select aria-label="Account" value={account} onChange={(e) => setAccount((e.target as HTMLSelectElement).value)}>
               <option value="">Every account</option>
               {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -330,6 +372,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
               <option value="move">Between my accounts</option>
             </select>
             {filtered && <button type="button" class="small" onClick={() => { setQ(''); setAccount(''); setCategory(''); setMonthPick(''); setWay(''); setTag(''); }}>Show all</button>}
+            {back && <button type="button" class="small" onClick={back.go}><span aria-hidden="true">← </span>Back to {back.label}</button>}
           </div>}
           {picking && <div class="fx-txpick" role="group" aria-label="The selected transactions">
             <span class="fx-txpicked" role="status">{chosen.length ? `${plural(chosen.length, 'transaction')} selected` : 'None selected: click a row to select it'}</span>
@@ -350,10 +393,14 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             {problem && <span class="formerr bad" role="alert">{problem}</span>}
             <datalist id="fxPickCategories">{[...new Set([...(v.categories || []).map((c) => c.name), ...cats])].map((c) => <option key={c} value={c} />)}</datalist>
           </div>}
+          {runs && !!shown.length && <p class="fx-sub fx-txrunning">After each day, what {acct!.name} {owed(acct!.kind) ? 'owed' : 'held'}: worked from the {moneyIn(acct!.balance, acct!.currency)} typed in on {dayShort(acct!.updated!)} through these transactions.</p>}
           {filtered && !!shown.length && <p class="fx-sub fx-txtotal">Together <Amount value={shown.filter((t) => !t.to || account).reduce((s, t) => s + (account && t.to === account ? -amt(t) : amt(t)), 0)} form="full" sign /></p>}
           {days.map((d) => (
             <section key={d.date} class="fx-txday" aria-label={dayLong(d.date)}>
-              <h3>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</h3>
+              <h3><span>{dayLong(d.date)}{d.date === v.today ? ', today' : ''}</span>
+                {runs ? <span class="fx-txbal">{moneyIn(after(d.date), acct!.currency)}<span class="fx-hidden"> {owed(acct!.kind) ? 'owed' : 'in ' + acct!.name} after the day</span></span>
+                  // More than one in or out that day: what they came to together (a transfer is neither).
+                  : d.list.filter((t) => !t.to).length > 1 && <span class="fx-txdaysum"><Amount value={d.list.filter((t) => !t.to).reduce((n, t) => n + amt(t), 0)} sign form="full" /><span class="fx-hidden"> in all that day</span></span>}</h3>
               <Rows kind="fx-rows">
                 {d.list.map((t) => {
                   const a = L.account[t.account];
@@ -373,6 +420,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
             </section>
           ))}
           {!all.length && <Empty>{edit ? 'No transactions yet: add what you spend with Add a transaction, as it happens or from the receipt.' : 'No transactions yet.'}</Empty>}
+          {list.length > upTo && <p class="fx-txmore"><button type="button" class="small" onClick={() => setDrawn({ key: filterKey, n: upTo + txPage })}>Show {Math.min(txPage, list.length - upTo)} more</button>
+            <span class="fx-sub">{upTo} of {list.length} shown, newest first</span></p>}
           {!!all.length && !shown.length && <Empty>None match: try fewer words, or Show all.</Empty>}
         </Widget>
       </div>

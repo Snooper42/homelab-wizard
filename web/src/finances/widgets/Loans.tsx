@@ -15,7 +15,7 @@ import { AreaChart } from '../ui/charts';
 import { Widget } from '../ui/Widget';
 import { AcctMark } from '../Mark';
 import { amortize, type Debt, payDown } from '../payoffPlan';
-import { currencySign, type Lookup, money, monthName, parseAmount, plural, tick } from '../money';
+import { currencySign, dayShort, type Lookup, money, monthName, parseAmount, perMonth, plural, tick } from '../money';
 import { paydaysAMonth } from './Goals';
 
 /** "Mar 2029" from "2029-03". */
@@ -32,6 +32,63 @@ export function payoffWords(p: finance.Payoff): string {
   return `${money(p.monthly)} a month: paid off ${monthOf(p.date!)}${p.interest ? `, ${money(p.interest)} interest still to pay` : ''}`;
 }
 
+/** "Dec 9, 2026". */
+const dayYear = (d: string) => `${dayShort(d)}, ${d.slice(0, 4)}`;
+
+/** The payments ring: how many of a loan's payments are made, as a circle filling. */
+function Ring({ made, of }: { made: number; of: number }) {
+  const r = 52, round = 2 * Math.PI * r, part = of ? Math.min(1, made / of) : 0;
+  return (
+    <div class="fx-ring" role="img" aria-label={`${made} of ${of} payments made`}>
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="fx-ringtrack" cx="60" cy="60" r={r} />
+        <circle class="fx-ringfill" cx="60" cy="60" r={r} stroke-dasharray={`${(part * round).toFixed(2)} ${round.toFixed(2)}`} transform="rotate(-90 60 60)" />
+      </svg>
+      <div class="fx-ringtext" aria-hidden="true"><strong>{made}</strong><span>of {of}</span><small>payments</small></div>
+    </div>
+  );
+}
+
+/**
+ * A loan read from its papers: the ring of payments made, what is paid
+ * down of what was borrowed, the next payment split into what pays the
+ * loan down and what is interest, who pays it each month when more than
+ * one payment goes into it, when it is half paid and paid off, and every
+ * payment in a table to open.
+ */
+function Papers({ v, L, p }: { v: finance.View; L: Lookup; p: finance.Payoff }) {
+  const a = L.account[p.account], rows = p.rows!, made = p.made || 0;
+  const original = rows.reduce((t, x) => t + x.principal, 0);
+  const down = Math.max(0, original - p.balance), share = original ? down / original : 0;
+  const next = rows[made];
+  const half = rows.findIndex((x) => x.after <= original / 2 + 0.005);
+  const last = rows[rows.length - 1];
+  const paidIn = rows.slice(0, made).reduce((t, x) => t + x.interest, 0);
+  // Who pays it: each payment into it a month, and what the papers' payment leaves for someone else.
+  const into = (v.plan.payments || []).filter((x) => x.to === p.account).map((x) => ({ name: x.name, amount: x.amount * perMonth(x.schedule, v.plan.people, v.checking) }));
+  const planned = into.reduce((t, x) => t + x.amount, 0), rest = p.monthly - planned;
+  return (
+    <div class="fx-papers">
+      <Ring made={made} of={rows.length} />
+      <div class="fx-papersfacts">
+        <p class="fx-papersdown"><strong>{money(down)}</strong> of {money(original)} paid down, {Math.round(share * 100)}%</p>
+        <div class="fx-papersbar" aria-hidden="true"><span style={{ width: `${(share * 100).toFixed(1)}%` }} /></div>
+        {next && <p><strong>Next, {dayYear(next.date)}:</strong> {money(next.payment)}{next.interest > 0.005 ? <> ({money(next.principal)} pays it down, {money(next.interest)} is interest)</> : ', all of it paying it down'}.</p>}
+        {(into.length > 1 || (into.length && rest > 0.005)) && <p><strong>Each month:</strong> {into.map((x) => `${x.name} ${money(x.amount)}`).join(', ')}{rest > 0.005 ? `, and ${money(rest)} paid another way` : ''}.</p>}
+        <p>{half > 0 && <>{half < made ? 'Half paid off' : 'Half paid off on'} {dayYear(rows[half].date)}. </>}Paid off {dayYear(last.date)}, after {plural(rows.length - made, 'more payment')}{p.interest ? `, ${money(p.interest)} of interest still to pay` : ''}{paidIn > 0.005 ? ` (${money(paidIn)} paid so far)` : ''}.</p>
+        <details class="fx-papersrows">
+          <summary>Every payment</summary>
+          <div class="fx-paperstable"><table>
+            <caption class="sr">{a.name}: each payment, what pays it down, its interest, and what is owed after</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">Due</th><th scope="col">Payment</th><th scope="col">Paid down</th><th scope="col">Interest</th><th scope="col">Owed after</th></tr></thead>
+            <tbody>{rows.map((x, i) => <tr key={x.date} class={i < made ? 'fx-made' : i === made ? 'fx-nextrow' : undefined}><td>{i + 1}</td><th scope="row">{dayYear(x.date)}</th><td>{money(x.payment)}</td><td>{money(x.principal)}</td><td>{money(x.interest)}</td><td>{money(x.after)}</td></tr>)}</tbody>
+          </table></div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
 /** Pay more: an extra amount a paycheck on the loan picked, and every debt paid down the two ways. Changes nothing. */
 function PayMore({ v, L, shown, owing }: { v: finance.View; L: Lookup; shown?: finance.Payoff; owing: finance.Payoff[] }) {
   const [text, setText] = useState('');
@@ -44,7 +101,7 @@ function PayMore({ v, L, shown, owing }: { v: finance.View; L: Lookup; shown?: f
   return (
     <section class="fx-paymore" aria-label="Pay more">
       <h3>Pay more</h3>
-      <label class="fx-paymorefield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" aria-label="More a paycheck" value={text} placeholder="100" onInput={(e) => setText((e.target as HTMLInputElement).value)} /></span> more a paycheck (about {money(extra)} a month)</label>
+      <label class="fx-paymorefield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" aria-label="More a paycheck" value={text} placeholder="100" onInput={(e) => setText((e.target as HTMLInputElement).value)} /></span> more a paycheck{extra > 0 && ` (about ${money(extra)} a month)`}</label>
       <p class="fx-sub" role="status">
         {!one && 'Type an amount to see what it saves. Nothing is saved.'}
         {one && shown && (one.ok ? <>{name(shown.account)} paid off {when(one.months)}{shown.months ? `, ${plural(shown.months - one.months, 'month')} sooner` : ''}{shown.interest ? `, ${money(Math.max(0, shown.interest - one.interest))} less interest` : ''}.</> : <>{name(shown.account)} is still never paid off at that.</>)}
@@ -67,7 +124,7 @@ export function LoansWidget({ v, L, edit }: { v: finance.View; L: Lookup; edit?:
     const a = L.account[p.account];
     const bad = p.balance > 0.005 && (p.never || !p.monthly);
     return <Row key={p.account} lead={<AcctMark a={a} />} title={a.name}
-      sub={<span class={bad ? 'fx-warn' : ''}>{payoffWords(p)}{p.rate ? ` · ${p.rate}% a year` : ''}</span>}
+      sub={<span class={bad ? 'fx-warn' : ''}>{p.rows?.length ? `${p.made || 0} of ${p.rows.length} payments made · ` : ''}{payoffWords(p)}{p.rate ? ` · ${p.rate}% a year` : ''}</span>}
       when={<Amount value={p.balance} form="full" />} whenPlain
       onOpen={edit ? () => edit('account', p.account) : undefined} openLabel={edit ? 'edit' : undefined} />;
   };
@@ -83,6 +140,7 @@ export function LoansWidget({ v, L, edit }: { v: finance.View; L: Lookup; edit?:
           <h3>{L.account[shown.account].name}, to zero</h3>
           {charted.length > 1 && <Segmented label="Which loan" value={shown.account} pick={setPick} options={charted.map((p) => [p.account, L.account[p.account].name])} />}
         </div>
+        {!!shown.rows?.length && <Papers v={v} L={L} p={shown} />}
         <AreaChart values={[shown.balance, ...path]} xLabels={xLabels.map((x) => ({ i: x.i + 1, label: x.label }))} height={160} format={tick}
           label={`${L.account[shown.account].name}: what it owes each month until it is paid off in ${monthOf(shown.date!)}. The table under it has the balance each year.`}
           tip={(i) => <><div class="fx-caption">{i === 0 ? 'Today' : monthOf(monthsOn(v.today, i))}</div><div class="fx-tiptotal"><span>Owed</span><Amount value={i === 0 ? shown.balance : path[i - 1]} form="full" /></div></>} />

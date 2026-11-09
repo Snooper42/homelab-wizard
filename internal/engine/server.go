@@ -100,6 +100,12 @@ func (h *Hub) Subscribers() int {
 // Stream writes each change of h as Server-Sent Events until the request
 // ends, with a comment every half minute so a dead connection is noticed.
 func (h *Hub) Stream(w http.ResponseWriter, r *http.Request) {
+	h.StreamOnly(w, r, func(c Change) (Change, bool) { return c, true })
+}
+
+// StreamOnly is Stream with each change passed through keep first: what it
+// returns is sent, and a change it says no to is not.
+func (h *Hub) StreamOnly(w http.ResponseWriter, r *http.Request, keep func(Change) (Change, bool)) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
@@ -118,6 +124,10 @@ func (h *Hub) Stream(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			return
 		case c := <-ch:
+			c, ok := keep(c)
+			if !ok {
+				continue
+			}
 			data, _ := json.Marshal(c)
 			fmt.Fprintf(w, "data: %s\n\n", data)
 		case <-beat.C:

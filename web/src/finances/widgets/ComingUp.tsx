@@ -3,14 +3,17 @@
 // Each says its day and how soon, and a bill charged to a card says which
 // card (no checking money moves). Money put by (savings) is not a bill, so
 // it is left out; a card's payoff is in, as it leaves checking. It reads
-// only what the calendar does: View.Days, then View.Later past them.
+// only what the calendar does: View.Days, then View.Later past them. A
+// paycheck in the two weeks is a line of its own among them, before its
+// day's bills, so what is due before payday shows, with its total.
 import { Empty } from '../../parts/Empty';
 import { Row, Rows } from '../../parts/Row';
+import { Fragment } from 'preact';
 import { Amount, Stat } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
 import { onCard } from '../Calendar';
-import { PayMark } from '../Mark';
-import { dayLong, daysBetween, type Lookup, plural, saving } from '../money';
+import { PayMark, Who } from '../Mark';
+import { dayLong, dayShort, daysBetween, type Lookup, money, plural, saving } from '../money';
 
 /** How many days ahead it reads, today included. */
 export const comingDays = 14;
@@ -52,19 +55,31 @@ export function ComingUpWidget({ v, L, calendar }: { v: finance.View; L: Lookup;
   // What leaves checking: a card's charge is paid later, with the card.
   const out = bills.filter((b) => !b.charge).reduce((t, b) => t - b.e.amount, 0);
   const charged = bills.filter((b) => b.charge).length;
+  // The paychecks of the two weeks, each drawn before the first bill on or after its day.
+  const pays = (v.paydays || []).filter((p) => { const n = daysBetween(v.today, p.date); return n >= 0 && n < comingDays; });
+  const who = (p: finance.Payday) => p.people.map((id) => L.person[id]?.name || id).join(' and ');
+  const first = pays[0];
+  const before = first ? bills.filter((b) => !b.charge && b.date < first.date).reduce((t, b) => t - b.e.amount, 0) : 0;
+  const payLine = (p: finance.Payday) => <Row key={'pay' + p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+    title={`${who(p)}'s paycheck`} sub={`${soon(v.today, p.date)}, ${dayLong(p.date)}`}
+    when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />;
   return (
-    <Widget title="Coming up" kind="fx-comingup" actions={calendar && <button type="button" class="small" onClick={calendar}>Calendar</button>}>
+    <Widget title="Coming up" kind="fx-comingup" actions={calendar && <button type="button" class="small" onClick={() => calendar()}>Calendar</button>}>
       {bills.length ? <>
         <Stat value={<Amount value={out} form="full" />} caption={`Out of checking in the next ${comingDays} days` + (charged ? ` · ${plural(charged, 'charge')} on cards` : '')} />
-        <Rows kind="fx-rows">
+        {first && <p class="fx-sub fx-beforepay">{before > 0.005 ? `${money(before)} of it before ${who(first)}'s paycheck on ${dayShort(first.date)}` : `None of it before ${who(first)}'s paycheck on ${dayShort(first.date)}`}</p>}
+        <Rows kind="fx-rows fx-comingrows">
           {bills.map((b, i) => {
             const x = L.payment[b.e.payment || ''];
             // Today and tomorrow in amber: the ones to have the money for now.
             const near = daysBetween(v.today, b.date) <= 1;
-            return <Row key={b.date + i} lead={<PayMark x={x} />} title={x?.name || b.e.payment}
+            // A paycheck comes before the first bill on or after its day.
+            const landing = pays.filter((p) => p.date <= b.date && (i === 0 || bills[i - 1].date < p.date));
+            return <Fragment key={b.date + i}>{landing.map(payLine)}<Row lead={<PayMark x={x} />} title={x?.name || b.e.payment}
               sub={`${soon(v.today, b.date)}, ${dayLong(b.date)}` + (b.charge ? ` · ${onCard(b.e, L)}` : '')} subTone={near ? 'warn' : ''}
-              when={<Amount value={-b.e.amount} form="full" tone={b.charge ? 'muted' : ''} />} whenPlain />;
+              when={<Amount value={-b.e.amount} form="full" tone={b.charge ? 'muted' : ''} />} whenPlain /></Fragment>;
           })}
+          {pays.filter((p) => !bills.length || p.date > bills[bills.length - 1].date).map(payLine)}
         </Rows>
       </> : <Empty>Nothing due in the next {comingDays} days.</Empty>}
     </Widget>

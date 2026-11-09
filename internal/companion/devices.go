@@ -86,6 +86,12 @@ type Device struct {
 	// Kiosk: paired as a wall screen, which anyone walking past can use,
 	// so it only looks (and may show the money card), for good (N26).
 	Kiosk bool `json:"kiosk,omitempty"`
+	// Person is the household member (people.json's username) whose phone
+	// this is; "" for the owner's. A member's phone sees only their own
+	// apps and their own Finances (Method.Member), and changes no app.
+	Person string `json:"person,omitempty"`
+	// PersonName is their name, kept with it to show.
+	PersonName string `json:"personName,omitempty"`
 }
 
 // Phone is a paired phone as the screens show it (no token hash).
@@ -99,13 +105,16 @@ type Phone struct {
 	LastSeen    time.Time `json:"lastSeen"`
 	// Until is when its changes and Finances end; zero: until you change it.
 	Until time.Time `json:"until,omitzero"`
+	// Person is the household member it belongs to; "" for the owner's.
+	Person     string `json:"person,omitempty"`
+	PersonName string `json:"personName,omitempty"`
 }
 
 // Phones lists the paired phones for the screens.
 func (s *Store) Phones() []Phone {
 	out := []Phone{}
 	for _, d := range s.Devices() {
-		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen, Until: d.Until})
+		out = append(out, Phone{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Unencrypted: d.Unencrypted, Paired: d.Paired, LastSeen: d.LastSeen, Until: d.Until, Person: d.Person, PersonName: d.PersonName})
 	}
 	return out
 }
@@ -452,10 +461,17 @@ func (s *Store) SetCanChange(idOrName string, on bool) (Device, error) {
 		if on && d.Kiosk {
 			return fmt.Errorf("%s %w", d.Name, ErrKiosk)
 		}
+		if on && d.Person != "" {
+			return fmt.Errorf("%s %w", d.Name, ErrMember)
+		}
 		d.CanChange = on
 		return nil
 	})
 }
+
+// ErrMember is changes allowed to a household member's phone, which shows
+// only their own apps and changes none.
+var ErrMember = errors.New("is a household member's phone, which shows only their own apps and starts or stops none: homelab phone person <phone> none gives it back to you")
 
 // ErrNoFinances is Finances allowed to a device paired without encryption.
 var ErrNoFinances = errors.New("was paired over the home Wi-Fi without encryption, so it cannot see Finances: remove it, then pair it again with the Tailscale (https) link")
@@ -477,6 +493,25 @@ func (s *Store) SetFinances(idOrName, level string) (Device, error) {
 			return fmt.Errorf("%s %w", d.Name, ErrKiosk)
 		}
 		d.Finances = level
+		return nil
+	})
+}
+
+// SetPerson gives a phone to a household member (username and name, as
+// people.json has them), or back to the owner with "". A member's phone
+// changes no app, so it loses Allow changes; a wall screen, which anyone
+// walking past can use, is nobody's.
+func (s *Store) SetPerson(idOrName, username, name string) (Device, error) {
+	return s.change(idOrName, func(d *Device) error {
+		if username != "" && d.Kiosk {
+			return fmt.Errorf("%s %w", d.Name, ErrKiosk)
+		}
+		d.Person, d.PersonName = username, name
+		if username != "" {
+			d.CanChange = false
+		} else {
+			d.PersonName = ""
+		}
 		return nil
 	})
 }

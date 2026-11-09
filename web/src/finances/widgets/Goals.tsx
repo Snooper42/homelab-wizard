@@ -22,12 +22,18 @@ const monthOf = (ym: string) => `${monthName(ym + '-01').slice(0, 3)} ${ym.slice
 /** A goal's day with its year, as it is often a year or more away: "Jun 30, 2028". */
 const byDay = (d: string) => `${dayShort(d)}, ${d.slice(0, 4)}`;
 
-/** What a goal needs and how its pace stands, in words. */
+/** What a goal needs to be there by its day, a paycheck first, as this app thinks in paychecks. */
 export function goalWords(g: finance.GoalNow): string {
   if (g.left <= 0) return 'Reached';
-  const needs = g.needsMonth ? `${money(g.needsMonth)} a month${g.needsPaycheck ? `, ${money(g.needsPaycheck)} a paycheck` : ''} to be there by ${byDay(g.date!)}` : g.date ? `wanted by ${byDay(g.date)}` : '';
-  const pace = g.paced ? (g.pace > 0 ? `at ${money(g.pace)} a month, there by ${monthOf(g.reaches!)}` : 'not growing lately') : '';
-  return [needs, pace].filter(Boolean).join('; ') || 'No day set';
+  if (g.needsPaycheck && g.needsMonth) return `${money(g.needsPaycheck)} a paycheck (${money(g.needsMonth)} a month) to be there by ${byDay(g.date!)}`;
+  if (g.needsMonth) return `${money(g.needsMonth)} a month to be there by ${byDay(g.date!)}`;
+  return g.date ? `Wanted by ${byDay(g.date)}` : 'No day set';
+}
+
+/** How its accounts' pace stands, for under its bar: "$889.78 a month lately: there by May 2027". */
+export function goalPace(g: finance.GoalNow): string {
+  if (g.left <= 0 || !g.paced) return '';
+  return g.pace > 0 ? `${money(g.pace)} a month lately: there by ${monthOf(g.reaches!)}` : 'Not growing lately';
 }
 
 /** What a goal needs, short, for the phone's Dashboard: "$90.16 a paycheck, by Jun 30, 2028". */
@@ -108,7 +114,7 @@ export function GoalsWidget({ v, L, edit, all }: { v: finance.View; L: Lookup; e
             <span class={'fx-budgetbar' + (tone === 'warn' ? ' warn' : '')} role="img" aria-label={`${g.name}: ${money(g.saved)} of ${money(g.target)}`}>
               <span style={{ width: `${Math.max(share, g.saved > 0 ? 1 : 0)}%` }} />
             </span>
-            <span class="fx-sub fx-goalsaved">{money(g.saved)} of {money(g.target)}</span>
+            <span class="fx-sub fx-goalsaved">{money(g.saved)} of {money(g.target)}{!all && goalPace(g) && <> · <span class={tone === 'warn' ? 'fx-warn' : ''}>{goalPace(g)}</span></>}</span>
           </Row>;
         })}
       </Rows> : <Empty>{edit ? 'No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck.' : 'No goals yet.'}</Empty>}

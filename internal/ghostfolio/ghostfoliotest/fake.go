@@ -41,6 +41,14 @@ type Fake struct {
 	Activities []Activity
 	made       int
 
+	// Unpriced: holdings say nothing went in (investment 0), and are
+	// worth what was paid, as Ghostfolio's are until it has a symbol's
+	// prices; Quotes are today's prices /symbols looks up, by symbol, and
+	// Gathered the symbols asked to be gathered (admin/gather).
+	Unpriced bool
+	Quotes   map[string]float64
+	Gathered []string
+
 	// Behind: an account's worth (GET /account) leaves out the newest buy
 	// or sale, as Ghostfolio's does until it has worked it out again.
 	Behind bool
@@ -116,9 +124,20 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		out := []map[string]any{}
 		for sym, n := range held {
-			out = append(out, map[string]any{"assetProfile": map[string]any{"symbol": sym, "name": sym + " Inc"}, "quantity": n, "investment": paid[sym], "valueInBaseCurrency": n * 100})
+			out = append(out, map[string]any{"assetProfile": map[string]any{"symbol": sym, "name": sym + " Inc"}, "quantity": n, "investment": invested(paid[sym], f.Unpriced), "valueInBaseCurrency": worthOf(n, paid[sym], f.Unpriced)})
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"holdings": out})
+	case strings.HasPrefix(path, "/admin/gather/") && r.Method == http.MethodPost:
+		f.Gathered = append(f.Gathered, strings.TrimPrefix(path, "/admin/gather/"))
+		w.WriteHeader(http.StatusCreated)
+	case strings.HasPrefix(path, "/symbols/") && path != "/symbols/lookup" && r.Method == http.MethodGet:
+		parts := strings.Split(strings.TrimPrefix(path, "/symbols/"), "/")
+		price, ok := f.Quotes[parts[len(parts)-1]]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"currency": "USD", "dataSource": parts[0], "symbol": parts[len(parts)-1], "marketPrice": price})
 	case path == "/symbol/lookup":
 		q := r.URL.Query().Get("query")
 		items := []map[string]string{}
@@ -188,6 +207,23 @@ func (f *Fake) worth(id string) float64 {
 				n += a.Quantity
 			}
 		}
+	}
+	return n * 100
+}
+
+// invested is a holding's investment as the fake answers it: none while unpriced.
+func invested(paid float64, unpriced bool) float64 {
+	if unpriced {
+		return 0
+	}
+	return paid
+}
+
+// worthOf is a holding's worth as the fake answers it: $100 a share, or
+// while unpriced only what was paid.
+func worthOf(n, paid float64, unpriced bool) float64 {
+	if unpriced {
+		return paid
 	}
 	return n * 100
 }

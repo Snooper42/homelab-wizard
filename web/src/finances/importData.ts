@@ -3,6 +3,7 @@
 // sent anywhere. Plain functions: the file's text in, rows out, then the
 // rows as transactions, skipping any already in the ledger.
 import { isoDay, parseAmount } from './money';
+import { cleanPayee } from './payees';
 
 /** A row of a bank's file, read: its day, amount (money in a plus), payee, and the bank's own ID when it gives one. */
 export interface Imported { date: string; amount: number; payee: string; memo?: string; id?: string }
@@ -105,6 +106,17 @@ export function fromCsv(rows: string[][], col: Columns): Imported[] {
     out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r[col.payee] || '').replace(/\s+/g, ' ').trim(), memo: col.memo >= 0 ? r[col.memo] || undefined : undefined });
   }
   return out;
+}
+
+/**
+ * Whether a card's file lists its charges as plus amounts and payments as
+ * minus (American Express does; Chase writes a charge as minus, as money
+ * leaving): most of a card's rows are charges, so most rows above zero
+ * says so. Three rows at least, for a guess worth making.
+ */
+export function chargesPlus(rows: Imported[]): boolean {
+  const n = rows.filter((t) => t.amount).length;
+  return n >= 3 && rows.filter((t) => t.amount > 0).length > n / 2;
 }
 
 /** An OFX or QFX statement's transactions: each STMTTRN's day, amount, name (or memo), and the bank's FITID. */
@@ -257,6 +269,9 @@ export const matchDays = 16;
 /** How far a row's amount may be from a payment's and still be it: a tenth either way. */
 const near = 0.1;
 
+/** A bill that changes each time (marked so, or a utility: electric, water, gas) may be off its planned amount by up to two fifths. */
+const tolerance = (x: finance.Payment): number => (x.estimate || x.kind === 'utilities' ? 0.4 : near);
+
 const dayNo = (s: string) => Math.round(Date.parse(s + 'T00:00:00Z') / 86400000);
 
 /** A planned payment a row of a bank's file pays, and the day of it. */
@@ -265,8 +280,8 @@ export interface Planned { payment: string; due: string }
 /**
  * The planned payment a row plainly pays, or none: money out of this
  * account (the payment's From, or checking), to a payee alike its name or
- * of its brand (`same`), or money into it from someone outside the
- * household (Payer) by their name or the payment's, for its amount give or take a tenth, within two
+ * of its brand, or what it is (`same`: guessCategory's paysBill), or money into it from someone outside the
+ * household (Payer) by their name or the payment's, for its amount give or take a tenth (two fifths for a bill that changes), within two
  * weeks of one of its days (View.dues) not paid already (`taken`, by
  * payment and day). The nearest day wins; a tie between two payments is
  * no plain answer, so none. A payee whose name says nothing of the
@@ -283,7 +298,7 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
     ? t.amount > 0 && (x.to || checking) === account && (same(t.payee!, x) || alike(t.payee!, x.payer))
     : t.amount < 0 && (x.from || checking) === account && same(t.payee!, x));
   for (const x of payments) {
-    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * near + 0.005 || !fits(x)) continue;
+    if (x.card || !(x.amount > 0) || Math.abs(paid - x.amount) > x.amount * tolerance(x) + 0.005 || !fits(x)) continue;
     for (const due of dues[x.id] || []) {
       const gap = Math.abs(dayNo(due) - dayNo(t.date)), off = Math.abs(paid - x.amount);
       if (gap > matchDays || taken.has(x.id + ' ' + due)) continue;
@@ -299,7 +314,8 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
     if (x.payer ? !(t.amount > 0 && (x.to || checking) === account) : !(t.amount < 0 && (x.from || checking) === account)) continue;
     for (const due of dues[x.id] || []) {
       const gap = Math.abs(dayNo(due) - dayNo(t.date));
-      if (gap <= byAmountDays && !taken.has(x.id + ' ' + due)) exact.push({ payment: x.id, due, gap });
+      // A large amount to the cent ($780.15, the HOA) is plain enough within the usual two weeks; a small one ($15.49) only within a few days.
+      if (gap <= (x.amount >= bigAmount ? matchDays : byAmountDays) && !taken.has(x.id + ' ' + due)) exact.push({ payment: x.id, due, gap });
     }
   }
   if (new Set(exact.map((e) => e.payment)).size !== 1) return undefined;
@@ -309,6 +325,35 @@ export function plannedFor(t: Imported, account: string, payments: finance.Payme
 
 /** How far a row may be from a payment's day and pay it by its amount alone (its name saying nothing of the payment). */
 export const byAmountDays = 5;
+
+/** From this amount up, the cents alone make a payment plain enough to link within matchDays of its day. */
+export const bigAmount = 100;
+
+/** A payee as it is known across files: its clean name (payees.ts), lower case, its spaces one. */
+const payeeKey = (s: string): string => cleanPayee(s).toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * The planned payments each payee has paid before, by the ledger's links
+ * (Transaction.Payment, set by an import, Link, or by hand): a payee whose
+ * name says nothing of its bill ("Sunset Palms Eas", the HOA) pays it again,
+ * as a name alike would. Its amount and day still have to fit.
+ */
+export function learnedLinks(txs: finance.Transaction[]): (payee: string, x: finance.Payment) => boolean {
+  const by = new Map<string, Set<string>>();
+  for (const t of txs) {
+    if (!t.payment || !t.payee?.trim() || t.to) continue;
+    const k = payeeKey(t.payee);
+    if (!by.has(k)) by.set(k, new Set());
+    by.get(k)!.add(t.payment);
+  }
+  return (payee, x) => !!by.get(payeeKey(payee))?.has(x.id);
+}
+
+/** A way of telling a payee pays a payment, with what the ledger has learned beside it. */
+export const withLearned = (same: (payee: string, x: finance.Payment) => boolean, txs: finance.Transaction[]): ((payee: string, x: finance.Payment) => boolean) => {
+  const learned = learnedLinks(txs);
+  return (payee, x) => same(payee, x) || learned(payee, x);
+};
 
 /** The payment days the ledger has paid already, as "payment day": each linked transaction's nearest day of its payment. */
 export function paidDays(ledger: finance.Transaction[], dues: Record<string, string[]>): Set<string> {

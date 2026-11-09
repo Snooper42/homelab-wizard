@@ -92,6 +92,7 @@ func (p Plan) inHome() Plan {
 		r := p.rateOf(a)
 		if r != 1 {
 			a.Balance, a.Pending, a.Original, a.Spend = cents(a.Balance*r), cents(a.Pending*r), cents(a.Original*r), cents(a.Spend*r)
+			a.Payment, a.Charge = cents(a.Payment*r), cents(a.Charge*r)
 			h := make([]Point, len(a.History))
 			for j, x := range a.History {
 				h[j] = Point{Date: x.Date, Amount: cents(x.Amount * r)}

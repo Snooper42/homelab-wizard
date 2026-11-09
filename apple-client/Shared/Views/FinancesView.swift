@@ -15,7 +15,14 @@ struct FinancesView: View {
         ScrollView {
             if let view = finances.plan {
                 VStack(spacing: 18) {
+                    if view.plan.accounts.isEmpty, finances.canEdit {
+                        FirstAccountCard(finances: finances)
+                    }
                     if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    // A member's phone: what the owner shares of the household's, first.
+                    if finances.isMember, let shared = finances.shared, !shared.isEmpty {
+                        HouseholdCard(shared: shared, finances: finances)
+                    }
                     NetWorthCard(view: view, finances: finances)
                     GlanceTiles(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
@@ -52,7 +59,10 @@ struct FinancesView: View {
             }
         }
         // Again once the device's level is known: right after unlock it may not be yet.
-        .task(id: finances.canSeePlan) { await finances.loadPlan() }
+        .task(id: finances.canSeePlan) {
+            await finances.loadPlan()
+            await finances.loadShared()
+        }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
             if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }
@@ -60,10 +70,11 @@ struct FinancesView: View {
         .refreshable {
             await finances.loadPlan()
             await finances.loadLedger()
+            await finances.loadShared()
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
-        .navigationTitle("Finances")
+        .navigationTitle(finances.isMember ? "My Finances" : "Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if !finances.amountsHiddenByPlan {
@@ -121,14 +132,14 @@ struct FinancesView: View {
 
 /// An amount as a card's text: "••••" while amounts are hidden.
 @MainActor
-private func amountText(_ value: Double, _ currency: String, _ finances: FinancesViewModel, whole: Bool = false) -> String {
+func amountText(_ value: Double, _ currency: String, _ finances: FinancesViewModel, whole: Bool = false) -> String {
     if finances.amountsHiddenByPlan || !finances.amountsShown { return "••••" }
     let style = FloatingPointFormatStyle<Double>.Currency(code: currency)
     return whole ? value.formatted(style.precision(.fractionLength(0))) : value.formatted(style)
 }
 
 /// A card's heading: its name, and a link or a note on the right.
-private struct CardHeading<Trailing: View>: View {
+struct CardHeading<Trailing: View>: View {
     let title: LocalizedStringKey
     @ViewBuilder var trailing: () -> Trailing
 
@@ -577,8 +588,14 @@ private struct MoreFinancesCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            row { MonthReviewPage(finances: finances) } label: {
+                IconTileLabel(title: "Month in Review", systemImage: "sparkles.rectangle.stack.fill", tint: Color(light: 0xD9467A, dark: 0xF472B6))
+            }
             row { FinanceSpendingPage(finances: finances) } label: {
                 IconTileLabel(title: "Spending", systemImage: "chart.pie.fill", tint: Color(light: 0x0F9D8A, dark: 0x2EC4B0))
+            }
+            row { FinanceCashFlowPage(finances: finances) } label: {
+                IconTileLabel(title: "Cash Flow", systemImage: "chart.bar.fill", tint: Color(light: 0x2563EB, dark: 0x60A5FA))
             }
             if !view.budgets.isEmpty {
                 row { FinanceBudgetsPage(finances: finances) } label: {
@@ -1226,6 +1243,9 @@ private struct FinanceRecurringPage: View {
                 let items = view.recurring
                 VStack(spacing: 18) {
                     summary(view, items)
+                    if !view.recurringCalendar(in: view.today ?? Date()).isEmpty {
+                        RecurringCalendarCard(view: view, finances: finances)
+                    }
                     ForEach(RecurringItem.Sort.allCases, id: \.self) { sort in
                         let rows = items.filter { $0.sort == sort }
                         if !rows.isEmpty { group(sort, rows, view) }
@@ -1999,6 +2019,7 @@ private struct AddHoldingView: View {
 
 /// Accounts today, net worth and the cushion; tap an account to type in its balance.
 private struct FinanceAccountsPage: View {
+    @State private var adding = false
     @Bindable var finances: FinancesViewModel
     @State private var editing: FinanceAccount?
     @State private var editingCushion = false
@@ -2032,6 +2053,14 @@ private struct FinanceAccountsPage: View {
         .background(Theme.canvas.ignoresSafeArea())
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
+        .toolbar {
+            if finances.canEdit {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { adding = true } label: { Label("Add Account", systemImage: "plus") }
+                }
+            }
+        }
+        .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
         .navigationTitle("Accounts")
         .sheet(item: $editing) { account in
             BalanceEditor(account: account, finances: finances)
@@ -2657,6 +2686,8 @@ struct TransactionsView: View {
     @State private var picked: String??
     /// Only the new ones.
     @State private var onlyNew = false
+    /// Money in or out, a category, or the larger ones only.
+    @State private var filter = TransactionFilter()
     @Namespace private var zoom
 
     private struct MonthGroup: Identifiable {
@@ -2693,6 +2724,7 @@ struct TransactionsView: View {
         for t in ledger.newestFirst where t.matches(search) {
             if let shown, t.account != shown, t.to != shown { continue }
             if onlyNew, !finances.isNew(t) { continue }
+            if filter.isOn, !filter.keeps(t, categories: finances.plan?.categories ?? []) { continue }
             let month = t.date.flatMap { calendar.dateInterval(of: .month, for: $0)?.start } ?? .distantPast
             if out.last?.month == month {
                 out[out.count - 1].items.append(t)
@@ -2701,6 +2733,39 @@ struct TransactionsView: View {
             }
         }
         return out
+    }
+
+    /// Money in or out, one category, or only $100 or more.
+    private var filterMenu: some View {
+        Menu {
+            Picker("Show", selection: $filter.flow.animation(.snappy)) {
+                Text("Everything").tag(TransactionFilter.Flow.all)
+                Text("Money Out").tag(TransactionFilter.Flow.moneyOut)
+                Text("Money In").tag(TransactionFilter.Flow.moneyIn)
+            }
+            Picker("Category", selection: $filter.category.animation(.snappy)) {
+                Text("Every Category").tag(String?.none)
+                ForEach(filterCategories, id: \.self) { name in
+                    Text(verbatim: name).tag(String?.some(name))
+                }
+            }
+            .pickerStyle(.menu)
+            Toggle("$100 or More", isOn: Binding(
+                get: { filter.atLeast != nil },
+                set: { on in withAnimation(.snappy) { filter.atLeast = on ? 100 : nil } }
+            ))
+        } label: {
+            Label("Filter", systemImage: filter.isOn ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+        }
+        .sensoryFeedback(.selection, trigger: filter)
+    }
+
+    /// The categories the transactions have, by their top, as Spending counts them.
+    private var filterCategories: [String] {
+        guard let ledger = finances.ledger else { return [] }
+        let categories = finances.plan?.categories ?? []
+        let names = ledger.transactions.flatMap { t in t.splits.isEmpty ? [t.category] : t.splits.map(\.category) }
+        return Set(names.map { Spending.top($0, in: categories) }).sorted { $0.localizedLowercase < $1.localizedLowercase }
     }
 
     var body: some View {
@@ -2740,7 +2805,14 @@ struct TransactionsView: View {
                         .font(.title2.weight(.bold))
                         .foregroundStyle(Theme.ink)
                     Spacer()
-                    if newCount > 0 || onlyNew {
+                    if filter.isOn {
+                        Button("Clear Filter") {
+                            withAnimation(.snappy) { filter = TransactionFilter() }
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
+                    } else if newCount > 0 || onlyNew {
                         Button(onlyNew ? "Show All" : "\(newCount) New") {
                             withAnimation(.snappy) { onlyNew.toggle() }
                         }
@@ -2787,6 +2859,9 @@ struct TransactionsView: View {
         .refreshable { await finances.loadLedger() }
         .navigationTitle("Transactions")
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                filterMenu
+            }
             if newCount > 0 {
                 ToolbarItem(placement: .secondaryAction) {
                     Button {
@@ -2987,7 +3062,7 @@ private struct AccountSwitcher: View {
 
 /// A transaction as Wallet lists one: its logo, payee, category, and day,
 /// its amount on the right; a violet dot while it's new.
-private struct WalletTransactionRow: View {
+struct WalletTransactionRow: View {
     let transaction: FinanceTransaction
     let finances: FinancesViewModel
     let isNew: Bool
@@ -3648,6 +3723,8 @@ private struct ScreenshotPage: View {
         case "recurring": FinanceRecurringPage(finances: finances)
         case "spending": FinanceSpendingPage(finances: finances)
         case "inbox": ReviewInboxPage(finances: finances)
+        case "cashflow": FinanceCashFlowPage(finances: finances)
+        case "review": MonthReviewPage(finances: finances)
         case "loading": ScrollView { SkeletonCards().padding(.horizontal, 16) }.background(Theme.canvas).navigationTitle("Finances")
         default: FinancesView(finances: finances)
         }

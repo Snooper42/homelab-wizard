@@ -147,6 +147,7 @@ The household (Pocket ID accounts):
 ./homelab person welcome anna      # a new sign-in link and welcome page
 ./homelab person password anna     # a new password in Jellyfin and Navidrome, on a fresh welcome page
 ./homelab person apps anna immich-server paperless mealie   # only these on their page and Homepage tab (--all: every app)
+./homelab person share anna bills,budgets                    # what of the household's money her phone shows her, to look at (bills, subscriptions, budgets; none)
 ./homelab person remove anna       # sign-in off; their data stays in every app
 ```
 
@@ -166,10 +167,13 @@ Single sign-on with Pocket ID (needs a domain):
 ./homelab phone allow <id>                # may start, stop, restart, and back up
 ./homelab phone read-only <id>
 ./homelab phone finances <id> view        # it sees Finances (edit: it may change them too; card: a wall screen's money card only; off: hidden again)
+./homelab phone person <id> anna          # Anna's phone: only her apps (homelab person apps) and her own Finances, apart from the household's; none: yours again
 ./homelab phone until <id> 7d             # its changes and Finances end in a week (12h, 2w); then it only looks. never: no end
 ./homelab phone remove <id>               # its token stops working
 ./homelab serve                           # the companion itself (the serve job runs it)
 ```
+
+A household member's phone (`phone person`) sees only the apps they use, and starts or stops none. Its Finances are their own, in `data/members/<username>/` beside the household's, and of the household's money it shows only what `person share` names: bills in the next five weeks, subscriptions, budgets, with names, amounts and days, never an account, a balance or a transaction. Nothing else of the homelab answers it.
 
 Finances go only to a phone paired with the https link (Tailscale, or `https://homelab.example.com` with a domain), never to one paired over plain home Wi-Fi, nor to a TV or wall screen in kiosk mode, whatever is picked for it.
 

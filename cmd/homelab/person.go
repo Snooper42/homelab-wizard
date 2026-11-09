@@ -68,9 +68,11 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		return nil
 	case "apps":
 		return h.personApps(ctx, list, pos, *all)
+	case "share":
+		return h.personShare(list, pos)
 	case "add", "remove", "welcome", "password":
 	default:
-		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | welcome <name> | password <name> | remove <name>")
+		return fmt.Errorf("usage: homelab person [list] | add \"<name>\" --email <address> [--apps <ids>] | apps <name> [<ids>|--all] | share <name> [bills,subscriptions,budgets|none] | welcome <name> | password <name> | remove <name>")
 	}
 	if len(pos) != 1 {
 		return fmt.Errorf("usage: homelab person %s \"<name>\"", sub)

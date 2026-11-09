@@ -20,7 +20,7 @@ import { replacedBy, type Running } from './homelab';
 import { MoneyFlowWidget } from './widgets/Flow';
 import { SubscriptionsSummary } from './widgets/Subscriptions';
 import { month, todayOf } from './model';
-import { allPayments, currencySign, dayLong, dayShort, daysBetween, type Lookup, money, parseAmount, plural, saving, scheduleText, todayISO, whole } from './money';
+import { allPayments, currencySign, dayLong, dayShort, daysBetween, type Lookup, money, parseAmount, perMonth, plural, saving, scheduleText, todayISO, whole } from './money';
 
 export interface ListProps {
   v: finance.View;
@@ -187,13 +187,20 @@ function FoundWidget({ v, add }: { v: finance.View; add?: (x: finance.Payment) =
 
 export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps & { keep?: (plan: finance.Plan) => Promise<boolean>; running?: Running[]; fromWallos?: () => Promise<app.AppSubscription[]> }) {
   const [filter, setFilter] = useState(() => { const f = opening || 'all'; opening = ''; return f; });
+  // Soonest first (by the next day each comes), or what each costs a month, largest first.
+  const [order, setOrder] = useState<'next' | 'size'>('next');
   const payments = allPayments(v.plan);
   const next = nextOf(v);
   const m = month(v, L);
   const share = (n: number) => (m.in ? `${Math.round((n / m.in) * 100)}% of pay` : '');
   const onCard = (x: finance.Payment) => L.account[x.from || '']?.kind === 'card';
-  const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
+  const monthly = (x: finance.Payment) => x.amount * perMonth(x.schedule, v.plan.people || [], v.checking);
+  const list = payments.filter((x) => groups[filter](x.kind)).sort((a, b) => (order === 'size' ? monthly(b) - monthly(a) : 0) || (next[a.id]?.date || '9').localeCompare(next[b.id]?.date || '9'));
   const count = (g: string) => payments.filter((x) => groups[g](x.kind)).length;
+  // What the payments shown come to in a typical month and a year: out, and apart from it what comes in from someone.
+  const each = (x: finance.Payment) => x.amount * perMonth(x.schedule, v.plan.people || [], v.checking);
+  const outMonth = list.filter((x) => !x.payer).reduce((t, x) => t + each(x), 0);
+  const inMonth = list.filter((x) => x.payer).reduce((t, x) => t + each(x), 0);
   // Paid, as the ledger says: its latest in the last six weeks, and what it came to when that was not what was planned.
   const paidLine = (x: finance.Payment) => {
     const pd = (v.paid || []).filter((q) => q.payment === x.id && daysBetween(q.date, v.today) <= 42).sort((a, b) => b.date.localeCompare(a.date))[0];
@@ -216,9 +223,9 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         {keep && fromWallos && <WallosWidget v={v} read={fromWallos} keep={keep} />}
         <Widget title="A typical month" span="all" kind="fx-monthsum">
           <div class="fx-stats">
-            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : `${(v.plan.people || []).length} paychecks`}${m.others.length ? ` and ${m.others.map((o) => o.payer).filter((p, i, a) => a.indexOf(p) === i).join(' and ')}` : ''}`} />
-            <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={`Spent · ${share(m.spent)}`} />
-            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>Saved · {share(m.saved)}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
+            <Stat value={<Amount value={m.in} form="whole" tone="in" />} caption={`In · ${(v.plan.people || []).length === 1 ? '1 paycheck' : (v.plan.people || []).length ? `${(v.plan.people || []).length} paychecks` : 'no paychecks yet'}${m.others.length ? ` and ${m.others.map((o) => o.payer).filter((p, i, a) => a.indexOf(p) === i).join(' and ')}` : ''}`} />
+            <Stat value={<Amount value={m.spent} form="whole" tone="out" />} caption={['Spent', share(m.spent)].filter(Boolean).join(' · ')} />
+            <Stat value={<Amount value={m.saved} form="whole" tone="save" />} caption={<>{['Saved', share(m.saved)].filter(Boolean).join(' · ')}{!!m.viaPay && <span class="fx-capnote">plus {whole(m.viaPay)} before pay</span>}</>} />
             <Stat value={<Amount value={m.left} form="whole" tone={m.left < 0 ? 'out' : ''} />} caption="Left over" />
           </div>
           <SplitBar label="A typical month's pay" parts={[{ label: 'Spent', value: m.spent, color: 'out' }, { label: 'Saved', value: m.saved, color: 'save' }, { label: 'Left', value: Math.max(0, m.left), color: 'in' }]} />
@@ -226,6 +233,10 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
         <MoneyFlowWidget v={v} L={L} />
         <Widget title="Payments" span="all" kind="fx-payments"
           actions={<Segmented label="Show" value={filter} pick={setFilter} options={[['all', `All ${count('all')}`], ['bills', `Bills ${count('bills')}`], ['cards', `Cards ${count('cards')}`], ['subscriptions', `Subscriptions ${count('subscriptions')}`], ['spending', `Spending ${count('spending')}`], ['saving', `Saving ${count('saving')}`]]} />}>
+          {filter !== 'subscriptions' && !!list.length && <p class="fx-sub fx-paytotal"><span class="fx-paysum">{plural(list.length, 'payment')}: about <strong><Amount value={outMonth} form="full" /></strong> a month, <Amount value={outMonth * 12} form="whole" /> a year{inMonth > 0.005 && <>; <Amount value={inMonth} form="full" sign tone="in" /> a month comes in</>}{list.some((x) => x.card) && ', with each card\'s balance as it is now'}.</span>
+            <select class="fx-payorder" aria-label="Order" value={order} onChange={(e) => setOrder((e.target as HTMLSelectElement).value as 'next' | 'size')}>
+              <option value="next">Soonest first</option><option value="size">Largest first</option>
+            </select></p>}
           {filter === 'subscriptions' ? <SubscriptionsSummary v={v} L={L} edit={edit ? (w, id) => edit(w, id) : undefined} /> : <Rows kind="fx-rows">
             {list.map((x) => {
               const n = next[x.id];
@@ -235,7 +246,9 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
               const from = n && (x.payer ? 'from ' + x.payer : x.to && x.to === v.checking ? 'into checking' : onCard(x) ? 'on ' + L.account[x.from].name : n.period.now ? 'from the current balance' : `${n.period.pay.people.map((id) => L.person[id]?.name).join(' and ')}'s ${dayShort(n.period.pay.date)} check`);
               const into = x.to ? ' → ' + (L.account[x.to]?.name || x.to) : x.payer ? ' → ' + (L.account[v.checking]?.name || 'checking') : '';
               return <Row key={x.id} lead={<PayMark x={x} />}
-                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')}{kept(x, n)}{paidLine(x)}</>}
+                title={x.name} sub={<>{scheduleText(x.schedule, L) + into + (x.card ? ' · the card\'s balance' : x.estimate ? ' · about' : '')
+                  // Not monthly (weekly, every 3 months, yearly…): what it comes to a month, as Largest first orders by.
+                  + (!x.card && Math.abs(perMonth(x.schedule, v.plan.people || [], v.checking) - 1) > 0.001 && monthly(x) > 0.005 ? ` · ${money(monthly(x))} a month` : '')}{kept(x, n)}{paidLine(x)}</>}
                 end={<span class="fx-next">{n ? <><span>{dayLong(n.date)}</span><span class="fx-sub">{from}</span></> : later ? <><span>{dayLong(later)}{later.slice(0, 4) !== v.today.slice(0, 4) ? ', ' + later.slice(0, 4) : ''}</span><span class="fx-sub">{after(later, v.today)}</span></> : <span class="fx-sub">Nothing ahead</span>}</span>}
                 when={<Amount value={x.card && n?.period ? (n.period.rows.find((r) => r.payment === x.id)?.amount ?? x.amount) : x.amount} sign={!!x.payer} tone={x.payer ? 'in' : ''} form="full" />} whenPlain
                 onOpen={edit ? () => edit('payment', x.id) : undefined} openLabel="edit" />;
@@ -251,7 +264,18 @@ export function Recurring({ v, L, edit, keep, running, fromWallos }: ListProps &
 export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { saveSettings?: SaveSettings; keep?: (plan: finance.Plan) => Promise<boolean>; calendar?: () => Promise<string> }) {
   const people = v.plan.people || [];
   // Every paycheck ahead, a check into savings too, which says where it goes.
-  const paydays = (v.paydays || []).slice(0, 10);
+  // The next ten paydays, and the rest of the last one's month when it was read, so each month's total is the whole month.
+  const read = v.paydays || [];
+  const lastMonth = read[9]?.date.slice(0, 7);
+  const paydays = read.filter((p, i) => i < 10 || p.date.slice(0, 7) === lastMonth);
+  const months: { month: string; list: finance.Payday[] }[] = [];
+  for (const p of paydays) {
+    if (months.at(-1)?.month !== p.date.slice(0, 7)) months.push({ month: p.date.slice(0, 7), list: [] });
+    months.at(-1)!.list.push(p);
+  }
+  // The last month is whole when a payday after it was read; otherwise it is said to run to its last one.
+  const wholeMonth = (m: string) => read.some((p) => p.date.slice(0, 7) > m);
+  const monthWord = (m: string) => new Date(+m.slice(0, 4), +m.slice(5, 7) - 1, 1).toLocaleDateString(undefined, m.slice(0, 4) === v.today.slice(0, 4) ? { month: 'long' } : { month: 'long', year: 'numeric' });
   const into = (id: string) => { const to = L.person[id]?.account; return to && to !== v.checking ? L.account[to]?.name || to : ''; };
   return (
     <div class="fin">
@@ -262,7 +286,9 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
           return (
             <Widget key={e.id} kind="fx-person" title={<span class="fx-who"><Who name={e.name} n={L.order[e.id] ?? 0} size="lg" /><span>{e.name}<span class="fx-sub">{scheduleText(e.schedule)} · into {L.account[e.account || v.checking]?.name || 'checking'}</span></span></span>}
               actions={edit && <IconButton icon="edit" label={`Edit ${e.name}'s pay`} onClick={() => edit('person', e.id)} />}>
-              <Stat value={<Amount value={e.net} />} caption="Take-home, each paycheck" />
+              <Stat value={<Amount value={e.net} />} caption={<>Take-home, each paycheck · about {whole(e.net * perMonth(e.schedule) * 12)} a year</>} />
+              {/* No gross or deductions yet: say what they would show, and open the form for them. */}
+              {!e.gross && !ded.length && edit && <p class="fx-sub fx-payhint">Add the gross and what is taken out (taxes, a 401(k), insurance) to see where the rest of the pay goes. <button type="button" class="small" onClick={() => edit('person', e.id)}>Add them</button></p>}
               {!!e.gross && (() => {
                 const parts: Part[] = [{ label: 'Take-home', value: e.net, color: 'in' }, ...ded.map((d) => ({ label: d.name, value: d.amount, color: (d.account ? 'save' : 'track') as Hue })), ...(e.gross - e.net - taken > 0.5 ? [{ label: 'Taxes and the rest', value: e.gross - e.net - taken, color: 'muted' as Hue }] : [])];
                 return <><SplitBar size="sm" label={`${e.name}'s pay`} parts={parts} /><Legend layout="inline" items={parts.map((p) => ({ label: p.label, color: p.color }))} /></>;
@@ -277,12 +303,19 @@ export function Pay({ v, L, edit, saveSettings, keep, calendar }: ListProps & { 
         {edit && <button type="button" class="finadd" onClick={() => edit('person')}><span aria-hidden="true">+</span>Add someone who gets paid</button>}
         {!people.length && !edit && <Card><Empty>No paychecks typed in yet.</Empty></Card>}
         {!!paydays.length && <Widget title="Next paychecks" span="all" kind="fx-paydays">
-          <Rows kind="fx-rows">
-            {paydays.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
-              title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
-              end={(p.moved || []).map((mv) => <span key={mv.person} class="fx-badge fx-muted">{mv.why.charAt(0).toUpperCase() + mv.why.slice(1)}, from {dayShort(mv.from)}</span>)}
-              when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
-          </Rows>
+          {/* Month by month, each with what it brings in all: a month with a third paycheck stands out. */}
+          {months.map(({ month: m, list }) => (
+            <section key={m} class="fx-paymonth" aria-label={monthWord(m)}>
+              <h3><span>{monthWord(m)}<span class="fx-sub"> · {plural(list.length, 'paycheck')}{wholeMonth(m) ? '' : `, to ${dayShort(list.at(-1)!.date)}`}</span></span>
+                <Amount value={list.reduce((n, p) => n + p.total, 0)} sign tone="in" form="full" /></h3>
+              <Rows kind="fx-rows">
+                {list.map((p) => <Row key={p.date} lead={<span class="fwhos">{p.people.map((id) => <Who key={id} name={L.person[id]?.name} n={L.order[id] ?? 0} />)}</span>}
+                  title={dayLong(p.date)} sub={p.people.map((id) => L.person[id]?.name + (into(id) ? ` (into ${into(id)})` : '')).join(' and ')}
+                  end={(p.moved || []).map((mv) => <span key={mv.person} class="fx-badge fx-muted">{mv.why.charAt(0).toUpperCase() + mv.why.slice(1)}, from {dayShort(mv.from)}</span>)}
+                  when={<Amount value={p.total} sign tone="in" form="full" />} whenPlain />)}
+              </Rows>
+            </section>
+          ))}
         </Widget>}
         <SetAsideWidget v={v} keep={keep} />
         {saveSettings && <Settings v={v} save={saveSettings} calendar={calendar} />}
