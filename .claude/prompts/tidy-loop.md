@@ -101,6 +101,8 @@ Lessons from pieces 1–4, for whoever builds the next:
 - `make check` doesn't run the coverage floors; run `make coverage` before pushing new code in a package with a high floor (internal/diskspace is 91%).
 - A sheet's boxes update from the latest values (`setTyped((t) => ({ ...t, ... }))`): fixed in v0.27.4 after typing fast in two boxes wiped the first.
 - Every new button on the Inbox waits while a job runs; the running-job smoke case fails on any enabled button in `.fx-board`.
+- Build `web/dist/app.js` only in a checkout with its own `node_modules` (a copy, never a link): esbuild writes each module's path into the bundle, so a linked one gives `../../home/…/node_modules/preact/…` and CI's `make frontend-check` fails (#529, Nov 9).
+- A question sheet can look things up first: `TidyConfirm.find` (Look it up, a list to pick from, the pick handed to `go` as `picked`). Name these songs uses it for albums; item 6's film and show titles can too.
 
 ## The queue
 
