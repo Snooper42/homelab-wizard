@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// Talks to the companion (`homelab serve`, internal/companion/server.go).
@@ -10,6 +11,13 @@ import Foundation
 /// | `GET  /api/me`             | Bearer | → `{id, name, canChange, finances}`             |
 /// | `POST /api/call/<Method>`  | Bearer | JSON array of args → `{result, log}` / `{error}`|
 /// | `GET  /api/events`         | Bearer | `text/event-stream`, `data: <engine.Change>`    |
+/// | `POST /api/tunnel` (away)  | sealed | `{device, nonce, box}` → `{nonce, box}`         |
+///
+/// Away from home (ADR-0023): a read that can't reach home goes through
+/// the Cloudflare tunnel instead, sealed end to end with the key agreed at
+/// pairing (`TunnelSeal`), with the household's service token for
+/// Cloudflare Access. Home is tried first, briefly; after the tunnel
+/// answered, it goes first for a few minutes. Changes never go out.
 ///
 /// Status is the `Status` method. The cards (the engine's `/v1/cards`) are
 /// the `StatusBoard` method, which answers in ndjson. The engine's own
@@ -45,6 +53,13 @@ actor APIClient {
     /// 30 minutes. A change that waits its turn behind a nightly backup
     /// (main #425) can outlast it; it then still runs, and Status shows it.
     private let actionSession: URLSession
+    /// Home, tried briefly when the tunnel is there to fall back on.
+    private let quickSession: URLSession
+    /// After home didn't answer and the tunnel did, the tunnel goes first
+    /// until then.
+    private var awayUntil: Date?
+    /// How long the tunnel goes first once home didn't answer.
+    static let awayFor: TimeInterval = 5 * 60
 
     /// - Parameter protocolClasses: for tests only, URL protocols that
     ///   answer in place of the network.
@@ -59,6 +74,7 @@ actor APIClient {
         session = URLSession(configuration: config(30, 120), delegate: delegate, delegateQueue: nil)
         streamingSession = URLSession(configuration: config(75, 60 * 60 * 24), delegate: delegate, delegateQueue: nil)
         actionSession = URLSession(configuration: config(300, 30 * 60), delegate: delegate, delegateQueue: nil)
+        quickSession = URLSession(configuration: config(4, 8), delegate: delegate, delegateQueue: nil)
     }
 
     // MARK: Pairing
@@ -74,7 +90,10 @@ actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         let name = String(deviceName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(64))
-        request.httpBody = try JSONEncoder().encode(PairRequest(code: code.value, name: name, kiosk: kiosk))
+        // A key for away from home, agreed now, at home; a wall screen stays home.
+        let tunnelPrivate = Curve25519.KeyAgreement.PrivateKey()
+        let key = kiosk ? nil : tunnelPrivate.publicKey.rawRepresentation.base64EncodedString()
+        request.httpBody = try JSONEncoder().encode(PairRequest(code: code.value, name: name, kiosk: kiosk, key: key))
 
         Log.security.info("Pairing with \(endpoint.displayName, privacy: .private(mask: .hash))")
         let data = try await send(request, to: endpoint)
@@ -91,12 +110,18 @@ actor APIClient {
             throw APIError.invalidResponse
         }
 
+        var away: AwayCredential?
+        if !kiosk, let computer = reply.tunnelKey.flatMap({ Data(base64Encoded: $0) }), let out = reply.away,
+           let derived = try? TunnelSeal.key(phone: tunnelPrivate, computer: computer, deviceID: reply.device.id) {
+            away = AwayCredential.make(key: derived.withUnsafeBytes { Data($0) }, url: out.url, clientID: out.clientId, clientSecret: out.clientSecret)
+        }
         let credential = DeviceCredential(
             endpoint: endpoint,
             token: reply.token,
             deviceID: reply.device.id,
             deviceName: reply.device.name,
-            pairedAt: Date()
+            pairedAt: Date(),
+            away: away
         )
         do {
             try keychain.saveCredential(credential)
@@ -121,7 +146,7 @@ actor APIClient {
 
     func me() async throws -> DeviceInfo {
         let (request, endpoint) = try authorizedRequest(path: "/api/me")
-        let data = try await send(request, to: endpoint)
+        let data = try await read(request, endpoint, tunnel: "me", [], envelope: false)
         return try decode(DeviceInfo.self, from: data)
     }
 
@@ -140,7 +165,7 @@ actor APIClient {
     /// `phoneMethods` in cmd/homelab/serve.go).
     func call<Value: Decodable & Sendable>(_ method: String, _ arguments: [JSONValue] = [], as type: Value.Type) async throws -> Value {
         let (request, endpoint) = try callRequest(method, arguments)
-        let data = try await send(request, to: endpoint)
+        let data = try await read(request, endpoint, tunnel: method, arguments, envelope: true)
         do {
             return try JSONDecoder.homelab().decode(CallEnvelope<Value>.self, from: data).result
         } catch {
@@ -486,6 +511,99 @@ actor APIClient {
         return try authorizedRequest(path: "/api/call/\(method)", method: "POST", body: body)
     }
 
+    // MARK: Away from home
+
+    /// A read: from home, or through the tunnel when home can't be reached
+    /// and this phone was given the way out. The answer is in home's shape
+    /// (`{"result": …}` when `envelope`, else the result itself).
+    private func read(_ request: URLRequest, _ endpoint: ServerEndpoint, tunnel method: String, _ arguments: [JSONValue], envelope: Bool) async throws -> Data {
+        guard let credential = try? keychain.loadCredential(), let away = credential.away else {
+            return try await send(request, to: endpoint)
+        }
+        if let until = awayUntil, until > Date() {
+            do {
+                return try await throughTunnel(method, arguments, credential, away, envelope: envelope)
+            } catch let error as APIError where error.unreachable {
+                awayUntil = nil // the tunnel didn't answer either: home again
+            }
+        }
+        do {
+            let data = try await send(request, to: endpoint, using: quickSession)
+            awayUntil = nil
+            return data
+        } catch let error as APIError where error.unreachable {
+            let data = try await throughTunnel(method, arguments, credential, away, envelope: envelope)
+            awayUntil = Date().addingTimeInterval(Self.awayFor)
+            return data
+        }
+    }
+
+    /// One call through the tunnel: sealed with the key agreed at pairing,
+    /// carrying the device token and its time, with the service token for
+    /// Cloudflare Access; the answer opened and checked against the request.
+    private func throughTunnel(_ method: String, _ arguments: [JSONValue], _ credential: DeviceCredential, _ away: AwayCredential, envelope: Bool) async throws -> Data {
+        let key = SymmetricKey(data: away.key)
+        let ask = TunnelAsk(token: credential.token, at: Int64((Date().timeIntervalSince1970 * 1000).rounded()), method: method, args: arguments.isEmpty ? nil : arguments)
+        let sealed = try TunnelSeal.seal(try JSONEncoder().encode(ask), key: key, ad: TunnelSeal.requestAD(deviceID: credential.deviceID))
+        let nonce = sealed.nonce.base64EncodedString()
+        var request = URLRequest(url: away.url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(away.clientID, forHTTPHeaderField: "CF-Access-Client-Id")
+        request.setValue(away.clientSecret, forHTTPHeaderField: "CF-Access-Client-Secret")
+        request.httpBody = try JSONEncoder().encode(TunnelSealed(device: credential.deviceID, nonce: nonce, box: sealed.box.base64EncodedString()))
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            let mapped = APIError.from(error)
+            Log.network.error("away \(method, privacy: .public) failed: \(mapped.logName, privacy: .public)")
+            throw mapped
+        }
+        guard data.count <= Self.maxResponseBytes else { throw APIError.responseTooLarge }
+        guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
+        guard http.url?.host == away.url.host, http.url?.scheme == "https" else {
+            Log.network.fault("An answer through the tunnel came from another origin")
+            throw APIError.originMismatch
+        }
+        switch http.statusCode {
+        case 200: break
+        case 429: throw APIError.rateLimited("Too many tries away from home. Wait 10 minutes.")
+        case 401, 403: throw APIError.forbidden("Away from home, the computer didn't let this phone in. Pair it again at home.")
+        case 300..<400: throw APIError.redirectRefused
+        default: throw APIError.server(status: http.statusCode, message: nil)
+        }
+        let answer: TunnelAnswerBody
+        let plain: Data
+        do {
+            let box = try JSONDecoder().decode(TunnelSealed.self, from: data)
+            guard let n = Data(base64Encoded: box.nonce), let b = Data(base64Encoded: box.box) else { throw APIError.invalidResponse }
+            plain = try TunnelSeal.open(b, nonce: n, key: key, ad: TunnelSeal.answerAD(deviceID: credential.deviceID, requestNonce: nonce))
+            answer = try JSONDecoder().decode(TunnelAnswerBody.self, from: plain)
+        } catch {
+            Log.network.error("An answer through the tunnel couldn't be opened")
+            throw APIError.invalidResponse
+        }
+        let clean = APIError.sanitize(answer.error)
+        switch answer.status {
+        case 200:
+            // The computer's result as it sent it (numbers stay as they were),
+            // in home's shape.
+            guard let whole = try? JSONSerialization.jsonObject(with: plain) as? [String: Any] else { throw APIError.invalidResponse }
+            let result = whole["result"] ?? NSNull()
+            let shaped: Any = envelope ? (["result": result] as [String: Any]) : result
+            return try JSONSerialization.data(withJSONObject: shaped, options: [.fragmentsAllowed])
+        case 401: throw APIError.unauthorized
+        case 403: throw APIError.forbidden(clean ?? "Away from home the phone only looks.")
+        case 500 where !(answer.log ?? []).isEmpty:
+            throw APIError.actionFailed(message: clean ?? "It didn't work on the computer.", log: APIError.sanitizeLog(answer.log))
+        default: throw APIError.server(status: answer.status, message: clean)
+        }
+    }
+
     // MARK: Sending
 
     private func send(_ request: URLRequest, to endpoint: ServerEndpoint, using override: URLSession? = nil) async throws -> Data {
@@ -546,6 +664,28 @@ actor APIClient {
 }
 
 // MARK: - Wire shapes
+
+/// A request through the tunnel, before it's sealed.
+private struct TunnelAsk: Encodable {
+    let token: String
+    let at: Int64
+    let method: String
+    let args: [JSONValue]?
+}
+
+/// A sealed box through the tunnel; a request also says which phone.
+private struct TunnelSealed: Codable {
+    var device: String? = nil
+    let nonce: String
+    let box: String
+}
+
+/// An answer through the tunnel, opened: what home would have answered.
+private struct TunnelAnswerBody: Decodable {
+    let status: Int
+    let log: [String]?
+    let error: String?
+}
 
 private struct CallEnvelope<Value: Decodable>: Decodable {
     let result: Value

@@ -30,8 +30,9 @@ let package = Package(
             name: "HomelabClientTests",
             dependencies: ["HomelabClient"],
             path: "Tests",
-            // What the computer's own functions answer, for PayeeLogoTests.
-            resources: [.copy("Resources/PayeeVectors.json")]
+            // What the computer's own functions answer, for PayeeLogoTests,
+            // and its sealing for the tunnel, for TunnelSealTests.
+            resources: [.copy("Resources/PayeeVectors.json"), .copy("Resources/TunnelVectors.json")]
         ),
     ],
     swiftLanguageModes: [.v6]

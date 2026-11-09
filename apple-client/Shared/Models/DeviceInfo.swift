@@ -61,10 +61,24 @@ struct PairRequest: Encodable, Sendable {
     let name: String
     /// A TV or wall screen: never allowed to make changes or see Finances.
     let kiosk: Bool
+    /// This phone's Curve25519 public key (base64), for sealing what goes
+    /// through the tunnel away from home (ADR-0023); nil for a wall screen.
+    var key: String? = nil
 }
 
 /// `POST /api/pair` answer.
 struct PairResponse: Decodable, Sendable {
     let token: String
     let device: DeviceInfo
+    /// The computer's Curve25519 public key, when it agreed one for away
+    /// from home.
+    var tunnelKey: String? = nil
+    /// How to go out, when the computer is set up for it.
+    var away: Away? = nil
+
+    struct Away: Decodable, Sendable {
+        let url: String
+        let clientId: String
+        let clientSecret: String
+    }
 }

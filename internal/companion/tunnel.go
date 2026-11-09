@@ -68,14 +68,19 @@ const MaxTunnel = 64 << 10
 // public key in, the computer's public key out, and the key both derive.
 // The computer's private key is used once, and kept nowhere.
 func TunnelKeys(phone []byte, deviceID string) (computer, key []byte, err error) {
-	curve := ecdh.X25519()
-	theirs, err := curve.NewPublicKey(phone)
-	if err != nil {
-		return nil, nil, errors.New("the phone's key is not an X25519 key")
-	}
-	mine, err := curve.GenerateKey(rand.Reader)
+	mine, err := ecdh.X25519().GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, nil, err
+	}
+	return tunnelKeysWith(mine, phone, deviceID)
+}
+
+// tunnelKeysWith is TunnelKeys with the computer's private key given (the
+// vectors the iPhone app is tested against are made with fixed ones).
+func tunnelKeysWith(mine *ecdh.PrivateKey, phone []byte, deviceID string) (computer, key []byte, err error) {
+	theirs, err := ecdh.X25519().NewPublicKey(phone)
+	if err != nil {
+		return nil, nil, errors.New("the phone's key is not an X25519 key")
 	}
 	shared, err := mine.ECDH(theirs)
 	if err != nil {
@@ -131,6 +136,16 @@ func Seal(key []byte, ad string, plain []byte) (nonce, box []byte, err error) {
 		return nil, nil, err
 	}
 	return nonce, aead.Seal(nil, nonce, plain, []byte(ad)), nil
+}
+
+// sealWith is Seal with the nonce given, for the iPhone app's vectors only:
+// a nonce is never used twice with one key.
+func sealWith(key []byte, ad string, nonce, plain []byte) ([]byte, error) {
+	aead, err := gcm(key)
+	if err != nil {
+		return nil, err
+	}
+	return aead.Seal(nil, nonce, plain, []byte(ad)), nil
 }
 
 // Open opens a box Seal made with the same key and additional data.

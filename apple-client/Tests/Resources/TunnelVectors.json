@@ -1,0 +1,20 @@
+{
+  "phonePrivate": "ERERERERERERERERERERERERERERERERERERERERERE=",
+  "phonePublic": "e06Qm75//kTEZaIgA31gjuNYl9Me+XLwf3SJLLD3PxM=",
+  "computerPublic": "D6poTtKIZ7l/Smot7l34zpdOdrcBjj8iocTPJnhXDyA=",
+  "deviceID": "a1b2c3",
+  "info": "homelab-wizard companion tunnel v1",
+  "key": "RmwYJELhm6noKoI3TsreMyjq2WLZkkJrfkhKhrECMmY=",
+  "request": {
+    "ad": "homelab tunnel request\u0000a1b2c3",
+    "nonce": "MzMzMzMzMzMzMzMz",
+    "plain": "{\"token\":\"the-device-token\",\"at\":1762700000000,\"method\":\"Status\"}",
+    "box": "NsPrkftMljI0iBCFvXqd005NeDV0ctMFDxYo/DxzkKjoDG6IktHKI5cN4HO8dnLEPL3DG858Bs5AnP7ITVuyO12sAGRd3zBxd85ymJq1O/QX"
+  },
+  "answer": {
+    "ad": "homelab tunnel answer\u0000a1b2c3\u0000MzMzMzMzMzMzMzMz",
+    "nonce": "RERERERERERERERE",
+    "plain": "{\"status\":200,\"result\":\"all up\"}",
+    "box": "nFG5sI3rY2gAARQjA+e8ll0hYhXTe4JEVsMsYWGU9lTascBStnxpapKuIuuKtxk+"
+  }
+}
