@@ -98,6 +98,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app says when the computer needs updating:** when the app is newer than Homelab Wizard on the computer, something the computer can't do yet says "Update Homelab Wizard on the computer to use this" (with the version it has), instead of failing with an error that explains nothing.
 - **The iPhone app notices when you get home:** once it has reached the computer through the tunnel, it goes that way for up to 5 minutes, but when the phone's network changes (Wi-Fi to cellular, back on the home Wi-Fi, a VPN on or off), it tries home first again straight away.
 - **Status on the iPhone, trimmed:** one line when all is well ("All 47 apps are running"), or one card for the app that needs a look, with what's wrong, its button and Open Its Page; then your apps by group. The ring, the four tiles, the Changed Since You Looked list and the cards under the apps are gone (an app that changed has a dot on its row; what your apps save is a line in Settings). The same on a household member's phone, with only their apps.
 - **Imports link the bills a name doesn't give away:** a payee you've linked to a planned payment once (an HOA paid as *Sunset Palms Eas…*) links to it again every month, and a bill of $100 or more to the cent links within two weeks of its day, not just five.

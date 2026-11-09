@@ -618,3 +618,39 @@ extension NetworkRuleTests {
         #expect(!live.cannotReach)
     }
 }
+
+// What the computer can do (unison-handoff.md section 4, item 3): a call the
+// computer says it doesn't answer isn't sent; the phone says to update the
+// computer instead. A computer older than that says nothing, and every call
+// goes as before.
+extension NetworkRuleTests {
+    @Test func aCallTheComputerLacksSaysToUpdateItAndIsNotSent() async throws {
+        let (api, _) = client()
+        StubProtocol.reset { request in
+            switch request.url?.path {
+            case "/api/me": (200, [:], Self.json(#"{"id":"abc123","name":"Test","canChange":true,"computer":{"version":"0.27.9","methods":["Status"],"features":["tunnel"]}}"#), nil)
+            default: (200, [:], Self.json(#"{"result":{"apps":[],"missing":0,"unmatched":0,"savings":0}}"#), nil)
+            }
+        }
+        _ = try await api.me()
+        await #expect(throws: APIError.computerTooOld(version: "0.27.9")) {
+            _ = try await api.call("Catalog", as: JSONValue.self)
+        }
+        #expect(!StubProtocol.requests.contains { $0.url.path == "/api/call/Catalog" })
+        _ = try await api.status()
+        #expect(StubProtocol.requests.contains { $0.url.path == "/api/call/Status" })
+        #expect(APIError.computerTooOld(version: "0.27.9").errorDescription == "Update Homelab Wizard on the computer to use this: it has 0.27.9.")
+    }
+
+    @Test func aComputerThatSaysNothingIsAskedEverything() async throws {
+        let (api, _) = client()
+        StubProtocol.reset { request in
+            request.url?.path == "/api/me"
+                ? (200, [:], Self.json(#"{"id":"abc123","name":"Test","canChange":true}"#), nil)
+                : (200, [:], Self.json(#"{"result":null}"#), nil)
+        }
+        _ = try await api.me()
+        _ = try await api.call("Catalog", as: JSONValue.self)
+        #expect(StubProtocol.requests.contains { $0.url.path == "/api/call/Catalog" })
+    }
+}

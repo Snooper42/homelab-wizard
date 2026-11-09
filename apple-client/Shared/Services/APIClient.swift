@@ -88,6 +88,8 @@ actor APIClient {
     /// - Parameter kiosk: a wall screen or TV. The computer then never lets
     ///   this device make changes or see Finances, whatever the code allowed.
     func pair(code: PairingCode, deviceName: String, at endpoint: ServerEndpoint, kiosk: Bool = false) async throws -> DeviceInfo {
+        // Another computer, perhaps: what the last one could do no longer counts.
+        computer = nil
         guard let pairURL = endpoint.url(path: "/api/pair") else { throw APIError.originMismatch }
         var request = URLRequest(url: pairURL)
         request.httpMethod = "POST"
@@ -151,8 +153,14 @@ actor APIClient {
     func me() async throws -> DeviceInfo {
         let (request, endpoint) = try authorizedRequest(path: "/api/me")
         let data = try await read(request, endpoint, tunnel: "me", [], envelope: false)
-        return try decode(DeviceInfo.self, from: data)
+        let info = try decode(DeviceInfo.self, from: data)
+        computer = info.computer
+        return info
     }
+
+    /// What the computer said it can do at the last `me()`; nil until then,
+    /// or from a computer older than that, when every call is sent.
+    private var computer: ComputerInfo?
 
     /// A fresh reading of every app (the `Status` method).
     func status() async throws -> HomelabStatus {
@@ -482,6 +490,10 @@ actor APIClient {
     // MARK: Request building
 
     private func authorizedRequest(path: String, method: String = "GET", body: Data? = nil) throws -> (URLRequest, ServerEndpoint) {
+        // A call the computer said it doesn't answer: say to update it, and send nothing.
+        if path.hasPrefix("/api/call/"), let computer, !computer.answers(String(path.dropFirst("/api/call/".count))) {
+            throw APIError.computerTooOld(version: computer.version)
+        }
         let credential: DeviceCredential
         do {
             guard let stored = try keychain.loadCredential() else { throw APIError.notPaired }

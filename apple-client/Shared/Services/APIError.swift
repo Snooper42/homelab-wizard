@@ -31,6 +31,9 @@ enum APIError: LocalizedError, Equatable, Sendable {
     /// printed (Docker's output), already cleaned up for display.
     case actionFailed(message: String, log: [String])
     case keychain(KeychainManager.KeychainError)
+    /// The computer said it doesn't answer this call (`/api/me`'s
+    /// `computer`): its Homelab Wizard is older than this app. Not sent.
+    case computerTooOld(version: String)
 
     var errorDescription: String? {
         switch self {
@@ -60,6 +63,10 @@ enum APIError: LocalizedError, Equatable, Sendable {
             message
         case .keychain(let error):
             error.errorDescription
+        case .computerTooOld(let version):
+            version.isEmpty
+                ? "Update Homelab Wizard on the computer to use this."
+                : "Update Homelab Wizard on the computer to use this: it has \(version)."
         }
     }
 
@@ -82,6 +89,7 @@ enum APIError: LocalizedError, Equatable, Sendable {
         case .invalidAppID: "invalidAppID"
         case .actionFailed: "actionFailed"
         case .keychain: "keychain"
+        case .computerTooOld: "computerTooOld"
         }
     }
 
