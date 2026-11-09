@@ -171,7 +171,8 @@ never stop the loop.
    or images. Its source is not in this repo; the features below are what you
    need.
 4. **Logos**: copy marks exactly from the simple-icons package (npm `simple-icons`) or
-   selfh.st/icons. If a brand has neither, use a monogram (`letters`) on a
+   selfh.st/icons. The owner also approved a brand's own logo from its website
+   (Nov 8: "logos from websites are fine, keep #499"). If a brand has neither, use a monogram (`letters`) on a
    colour as near its own as known. Keep every bg/ink pair at 4.5:1 or
    better, and the license header in logos.ts true.
 5. **Never skip, weaken, or delete a test or check** to get green. Change an

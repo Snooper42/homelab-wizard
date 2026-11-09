@@ -34,12 +34,17 @@ struct StatusHeadline: Equatable {
 /// The ring and the one thing that needs a look, or that all is well.
 struct StatusHero: View {
     let model: DashboardViewModel
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         let headline = StatusHeadline(status: model.liveEvents.status)
         let app = model.app(id: headline.attentionID)
         let health = model.healthLine ?? ""
-        HStack(alignment: .center, spacing: 14) {
+        // The ring beside the words, or above them at the largest text sizes.
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 14))
+        layout {
             ProgressRing(value: headline.share, lineWidth: 8,
                          tint: app == nil && health.isEmpty ? Theme.success : Theme.accent,
                          track: Theme.accent.opacity(0.14)) {
@@ -54,6 +59,8 @@ struct StatusHero: View {
                 }
             }
             .frame(width: 76, height: 76)
+            // The ring's number stays inside the ring at any text size.
+            .dynamicTypeSize(...DynamicTypeSize.xLarge)
             .animation(.snappy, value: headline.running)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(headline.running) of \(headline.total) apps running")
@@ -131,6 +138,7 @@ private struct HeroButtons: View {
         .buttonBorderShape(.capsule)
         .controlSize(.small)
         .font(.subheadline.weight(.semibold))
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 }
 
@@ -169,12 +177,15 @@ struct StatusTile: View {
 /// Backups, Saved, Updates and Checks, two by two; a tile with nothing to
 /// say yet isn't shown.
 struct StatusTiles: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let model: DashboardViewModel
     /// Opens the Backups tab.
     var openBackups: (@MainActor () -> Void)?
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+        LazyVGrid(columns: typeSize.isAccessibilitySize
+                  ? [GridItem(.flexible())]
+                  : [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
             if let overview = model.backups.overview {
                 let tile = Self.backups(overview)
                 Button { openBackups?() } label: {

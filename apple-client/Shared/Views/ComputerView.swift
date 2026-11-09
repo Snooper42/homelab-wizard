@@ -88,7 +88,7 @@ struct ComputerView: View {
         } header: {
             Text("Problems")
         } footer: {
-            Text("This only looks, and shows what it would do. Nothing changes until you tap Fix These.")
+            Text("Nothing changes until you tap Fix These.")
         }
     }
 
@@ -177,15 +177,10 @@ struct ComputerView: View {
                 }
             }
         } footer: {
-            VStack(alignment: .leading, spacing: 4) {
-                if computer.updates != nil, !computer.canChange {
-                    Text("This device can only look.")
-                } else if computer.updates?.paused == true {
-                    Text("Updates paused: apps keep the versions they run now until you turn this back on.")
-                }
-                if WidgetSummaryStore.isAvailable {
-                    Text("The widget shows only \"All well\" or how many apps need a look, and when, without \(lockName == "Face ID lock" ? "Face ID" : "Touch ID"). Never app names.")
-                }
+            if computer.updates != nil, !computer.canChange {
+                Text("This device can only look.")
+            } else if computer.updates?.paused == true {
+                Text("Apps keep their versions until this is back on.")
             }
         }
     }
@@ -226,7 +221,7 @@ struct ComputerView: View {
                     IconTileLabel(title: "Search all settings", systemImage: "magnifyingglass", tint: TileColour.grey)
                 }
             } else if computer.formNotServed {
-                Text("The computer's Homelab Wizard doesn't send its settings to a phone yet. They come with an update to it.")
+                Text("Update Homelab Wizard on the computer to see its settings here.")
                     .foregroundStyle(.secondary)
             } else if let error = computer.formError {
                 Text(error).foregroundStyle(.secondary)
@@ -236,10 +231,8 @@ struct ComputerView: View {
         } header: {
             Text("Homelab Settings")
         } footer: {
-            if computer.form != nil {
-                Text(computer.canChange
-                     ? "Change the everyday ones here. Passwords and tokens, and the settings this device connects through, are changed on the computer. A password or token is never shown."
-                     : "This device can only look.")
+            if computer.form != nil, !computer.canChange {
+                Text("This device can only look.")
             }
         }
     }
@@ -280,7 +273,7 @@ struct ComputerView: View {
                 IconTileLabel(title: "About", systemImage: "info", tint: TileColour.grey)
             }
         } footer: {
-            Text("A report has every password, token and key removed by the computer first. You see it before you share it.")
+            Text("Passwords and keys are removed first, and you see it before it's shared.")
         }
     }
 }
@@ -300,8 +293,7 @@ private struct ThisDevicePage: View {
                         LabeledContent("Paired on") { Text(paired, format: .dateTime.year().month().day()) }
                     }
                     if device.unencrypted {
-                        Label("It paired without encryption, so the computer keeps it look-only for good. Pair again over https to make changes.",
-                              systemImage: "lock.open.fill")
+                        Label("Paired without https: look-only for good.", systemImage: "lock.open.fill")
                             .foregroundStyle(Theme.warning)
                     }
                     LabeledContent("ID") {
@@ -314,14 +306,14 @@ private struct ThisDevicePage: View {
                     }
                 }
             } footer: {
-                Text("Locks when it leaves the screen, and asks again before any change. Lost it? On the computer, homelab phone remove \(coordinator.device?.id ?? "<id>") stops its token at once.")
+                Text("Lost it? Remove it on the computer, in Settings › Phones.")
             }
             Section {
                 Button("Unpair This Device…", role: .destructive) { confirmingUnpair = true }
                     .confirmationDialog("Unpair this device?", isPresented: $confirmingUnpair, titleVisibility: .visible) {
                         Button("Unpair", role: .destructive) { coordinator.unpair() }
                     } message: {
-                        Text("Its token is deleted from this device. To revoke it on the computer as well, run homelab phone remove \(coordinator.device?.id ?? "<id>").")
+                        Text("It forgets the homelab. Remove it on the computer too, in Settings › Phones.")
                     }
             }
         }

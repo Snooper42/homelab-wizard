@@ -71,6 +71,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app at the largest text sizes:** Status's card and tiles, Finances' paycheck line and Spending's ring stack instead of squeezing; the ring's number, Wallet cards and the small account cards keep their words inside them, as Wallet's do.
+- **Settings on the iPhone, tidied like iPhone Settings:** each setting shows only its name and value, switches flip in place, and a setting opens its own page with what it does; the long notes under each section are gone.
+- **The iPhone app takes https addresses only:** the one exception, plain http to the homelab on the same Mac, was for the Mac version of the app, which is gone.
 - **Tidy Up says what's going on:** Audiobooks that are already one file each say so (*All 177 audiobooks are one file each*) instead of 0. Movies and TV say when Tdarr isn't answering (paused on battery, or stopped) rather than looking stuck, and Recently done no longer fills with *collect stopped* every few minutes. A step that stops says why, in the engine's own words, instead of *The log says why*.
 - **The iPhone app, smoother:** Finances shows the shapes of its cards while it reads instead of a spinner; an app's page opens with its logo big, round Open, Start or Stop, Restart and Logs buttons, and its week as seven coloured bars; the lock screen shows the new white icon with one Unlock button; and at the largest text sizes Finances' tiles stack instead of cutting off.
 - **Investments on the iPhone, redone:** what they're worth with the gain all time and this month, a line over the past month, 3 months or year you can run a finger along, how the money is split across your holdings, and each holding with its ticker in colour and its gain.
@@ -139,6 +142,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **On Windows, a note being saved no longer reads as missing:** for an instant while one part of the app replaced a note (such as when the last backup ran), Windows could say the file wasn't there, which reads as no backup yet. A read now waits while a save of that note is under way.
 - **On Windows, a backup no longer starts by mistake:** the agent's note of the last backup could read as missing for an instant while another part of the app saved it, which made a backup start at once. It now waits that instant and reads it again.
 - **Transactions on the iPhone:** the page opens on checking, not on an account with no transactions; homes, cars and collectibles are left out of the account cards, and each small card shows its logo, balance and whole name. "No Transactions" now sits under the heading instead of over it, with **Show All Accounts**.
 - A Chase checking account's CSV now comes in with each payee from its Description, not as CREDIT or DEBIT. Importing the same file again gives rows already brought in as CREDIT or DEBIT their payees, keeping any category you gave them, rather than adding them twice. A bank's file whose payee column only says which way the money went has its names read from another column, and the import says so when no payee is a name.
