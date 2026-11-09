@@ -147,10 +147,10 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		// What I did today's Undo: one line of it.
 		{"inbox", "undo", []string{"0123456789ab"}, "media inbox undo 0123456789ab --events json"},
 		// Needs a look: the download, then what it is.
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", "Heat", "1995"}, "media inbox name /d/vid.mkv movie Heat 1995 --events json"},
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", "The Thing"}, "media inbox name /d/vid.mkv movie The Thing --events json"},
-		{"inbox", "name", []string{"/d/show", "episode", "Show", "3", "4"}, "media inbox name /d/show episode Show 3 4 --events json"},
-		{"inbox", "leave", []string{"/d/vid.mkv"}, "media inbox leave /d/vid.mkv --events json"},
+		{"inbox", "name", []string{vid, "movie", "Heat", "1995"}, "media inbox name " + vid + " movie Heat 1995 --events json"},
+		{"inbox", "name", []string{vid, "movie", "The Thing"}, "media inbox name " + vid + " movie The Thing --events json"},
+		{"inbox", "name", []string{show, "episode", "Show", "3", "4"}, "media inbox name " + show + " episode Show 3 4 --events json"},
+		{"inbox", "leave", []string{vid}, "media inbox leave " + vid + " --events json"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, false)
 		if err != nil || strings.Join(got, " ") != c.want {
@@ -178,13 +178,13 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"inbox", "undo", []string{"0123456789ab", "ba9876543210"}},
 		{"inbox", "scan", []string{"0123456789ab"}},
 		{"inbox", "name", []string{"vid.mkv", "movie", "Heat"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", "--library=/x"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", "Heat", "--config"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "song", "Heat"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", ""}},
-		{"inbox", "name", []string{"/d/vid.mkv", "movie", "Heat", "1995", "2"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "episode", "Show"}},
-		{"inbox", "name", []string{"/d/vid.mkv", "episode", "Show", "three"}},
+		{"inbox", "name", []string{vid, "movie", "--library=/x"}},
+		{"inbox", "name", []string{vid, "movie", "Heat", "--config"}},
+		{"inbox", "name", []string{vid, "song", "Heat"}},
+		{"inbox", "name", []string{vid, "movie", ""}},
+		{"inbox", "name", []string{vid, "movie", "Heat", "1995", "2"}},
+		{"inbox", "name", []string{vid, "episode", "Show"}},
+		{"inbox", "name", []string{vid, "episode", "Show", "three"}},
 		{"inbox", "leave", []string{"/d/a", "/d/b"}},
 		{"inbox", "leave", nil},
 	} {
@@ -360,10 +360,10 @@ func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 			}
 			// Needs a look's: the download, then what the sheet asked.
 			if m[1] == "inbox" && m[2] == "leave" {
-				args = []string{"/d/vid.mkv"}
+				args = []string{vid}
 			}
 			if m[1] == "inbox" && m[2] == "name" {
-				args = []string{"/d/vid.mkv", "movie", "Heat", "1995"}
+				args = []string{vid, "movie", "Heat", "1995"}
 			}
 			seen++
 			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
@@ -478,3 +478,12 @@ func TestTidySetInbox(t *testing.T) {
 		t.Errorf("picker: %q %v %q", p, err, title)
 	}
 }
+
+// vid and show are a download's whole path on this system (Needs a look's
+// name and leave take only whole paths; /d/vid.mkv isn't one on Windows).
+var vid, show = func() (string, string) {
+	if goruntime.GOOS == "windows" {
+		return `C:\d\vid.mkv`, `C:\d\show`
+	}
+	return "/d/vid.mkv", "/d/show"
+}()
