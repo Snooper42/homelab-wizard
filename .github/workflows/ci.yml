@@ -31,19 +31,18 @@ jobs:
     outputs:
       desktop: ${{ steps.diff.outputs.desktop }}
     steps:
+      # A pull request's checkout is its merge into main: its first parent
+      # is main, so the two commits are enough to say what it changes, with
+      # nothing the pull request's author wrote put into the step.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - name: Only the iPhone app changed?
         id: diff
-        env:
-          EVENT: ${{ github.event_name }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           desktop=true
-          if [ "$EVENT" = pull_request ]; then
-            files=$(git diff --name-only "$BASE...$HEAD" 2>/dev/null) || files=""
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            files=$(git diff --name-only HEAD^1 HEAD 2>/dev/null) || files=""
             others=$(printf '%s\n' "$files" | grep -vE '^(apple-client/|\.github/workflows/apple-client\.yml$|CHANGELOG\.md$)' | grep . || true)
             # An empty list (the diff unreadable) runs everything, to be safe.
             if [ -n "$files" ] && [ -z "$others" ]; then desktop=false; fi
