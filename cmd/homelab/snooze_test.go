@@ -64,3 +64,33 @@ func TestSnoozeAnAlert(t *testing.T) {
 		t.Error("a length that is not one was taken")
 	}
 }
+
+// TestDownAlertHasButtons: apps down reach the phone with a button into
+// the iPhone app (homelab://, which changes nothing by itself: the app asks
+// for a tap, then Face ID). This homelab has two selected apps not running,
+// so the button is Open Status; one app gets Restart and Show Logs
+// (internal/notify's TestButtonsForApps).
+func TestDownAlertHasButtons(t *testing.T) {
+	var mu sync.Mutex
+	var bodies, actions []string // the down alerts
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		if r.Header.Get("Title") == core.DownTitle {
+			body, _ := io.ReadAll(r.Body)
+			bodies = append(bodies, string(body))
+			actions = append(actions, r.Header.Get("Actions"))
+		}
+	}))
+	defer srv.Close()
+	u, _ := url.Parse(srv.URL)
+	fakeDocker(t, nil)
+	root, _ := repoCopy(t, "UPDATES_PAUSED=true", "TUNNEL_TOKEN=", "AUTO_HEAL=false", "DESKTOP_ALERTS=false", "NTFY_PORT="+u.Port(), "NTFY_PUBLISH_TOKEN=tk_pub")
+	homelabCmd(t, root, "", "watchdog")
+	homelabCmd(t, root, "", "watchdog")
+	mu.Lock()
+	defer mu.Unlock()
+	if len(actions) != 1 || actions[0] != "action=view, label=Open Status, url=homelab://status" || strings.Count(bodies[0], "not running") < 2 {
+		t.Fatalf("down alerts %q, buttons %q", bodies, actions)
+	}
+}

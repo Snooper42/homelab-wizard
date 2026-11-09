@@ -95,6 +95,13 @@ func (h *homelab) alert(ctx context.Context, topic string, m notify.Message) {
 	}
 }
 
+// isApp says a check's name is an app in the catalog by its own id (not a
+// disk, the engine or a host), so its alert can have buttons for it.
+func (h *homelab) isApp(name string) bool {
+	a, ok := h.catalog.Get(name)
+	return ok && a.ID == name
+}
+
 // downPriority is the down alert's priority: the vault unreachable is
 // serious, so it sounds in the quiet hours too; anything else is high.
 func downPriority(failed []health.Result) int {
@@ -759,6 +766,7 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 				Body:     strings.Join(lines, "\n\n") + "\n\nIt stays stopped until you start it again, from Status or homelab start, once its log says what to fix (AUTO_HEAL=false leaves it to Docker).",
 				Priority: 4,
 				Tags:     []string{"octagonal_sign"},
+				Actions:  notify.StoppedButtons(loops, h.isApp),
 			})
 		}
 		results, unwell, missing = append(results, apps...), sick, gone
@@ -905,7 +913,14 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		for _, r := range failed {
 			lines = append(lines, core.DownLine(r))
 		}
-		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: downPriority(failed), Tags: []string{"warning"}})
+		var names []string
+		for _, r := range failed {
+			names = append(names, r.Name)
+		}
+		// Buttons into the iPhone app (homelab://): Restart and Show Logs
+		// for one app, Open Status for more; they change nothing by themselves.
+		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: downPriority(failed), Tags: []string{"warning"},
+			Actions: notify.DownButtons(names, h.isApp)})
 	}
 	if len(recovered) > 0 && engineUp {
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: recovered", Body: strings.Join(recovered, ", ") + " answering again", Tags: []string{"white_check_mark"}})
