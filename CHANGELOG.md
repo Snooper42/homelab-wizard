@@ -70,6 +70,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app at the largest text sizes:** Status's card and tiles, Finances' paycheck line and Spending's ring stack instead of squeezing; the ring's number, Wallet cards and the small account cards keep their words inside them, as Wallet's do.
+- **Settings on the iPhone, tidied like iPhone Settings:** each setting shows only its name and value, switches flip in place, and a setting opens its own page with what it does; the long notes under each section are gone.
+- **The iPhone app takes https addresses only:** the one exception, plain http to the homelab on the same Mac, was for the Mac version of the app, which is gone.
 - **Tidy Up says what's going on:** Audiobooks that are already one file each say so (*All 177 audiobooks are one file each*) instead of 0. Movies and TV say when Tdarr isn't answering (paused on battery, or stopped) rather than looking stuck, and Recently done no longer fills with *collect stopped* every few minutes. A step that stops says why, in the engine's own words, instead of *The log says why*.
 - **The iPhone app, smoother:** Finances shows the shapes of its cards while it reads instead of a spinner; an app's page opens with its logo big, round Open, Start or Stop, Restart and Logs buttons, and its week as seven coloured bars; the lock screen shows the new white icon with one Unlock button; and at the largest text sizes Finances' tiles stack instead of cutting off.
 - **Investments on the iPhone, redone:** what they're worth with the gain all time and this month, a line over the past month, 3 months or year you can run a finger along, how the money is split across your holdings, and each holding with its ticker in colour and its gain.
