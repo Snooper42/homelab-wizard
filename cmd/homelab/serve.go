@@ -26,6 +26,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
@@ -55,7 +56,7 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
 	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
-		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }}
+		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
 		<-ctx.Done()
@@ -176,6 +177,11 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return v, nil, err
 		}}
 	}
+	// A household member's phone may call it too (member.go).
+	member := func(m companion.Method) companion.Method {
+		m.Member = true
+		return m
+	}
 	// A change from a phone waits its turn (turn.go) behind any other,
 	// from a phone, the app, or the nightly jobs, as the command it runs.
 	run := func(ctx context.Context, args ...string) ([]string, error) {
@@ -188,25 +194,34 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			_, _, err := core.Containers(ctx)
 			return phoneHost{OS: p.Name, Machine: p.Machine, Runtime: p.Runtime, Scheduler: p.Scheduler, Supported: p.Supported, RootOK: true, RuntimeOK: err == nil, Version: version}, nil
 		}),
-		"Screen": read(func(context.Context, []json.RawMessage) (any, error) { return "status", nil }),
+		"Screen": member(read(func(context.Context, []json.RawMessage) (any, error) { return "status", nil })),
 		// The agent's last reading, drawn at once while Status reads a fresh one.
-		"LastStatus": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+		"LastStatus": member(read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
 			if r, ok := core.LastStatus(ctx, root); ok {
-				return &r, nil
+				st, err := h.forCaller(ctx, r.Status)
+				r.Status = st
+				return &r, err
 			}
 			return nil, nil
-		}),
-		"Catalog": read(func(context.Context, []json.RawMessage) (any, error) {
+		})),
+		"Catalog": member(read(func(context.Context, []json.RawMessage) (any, error) {
 			c, err := core.Catalog(root)
 			if err != nil {
 				return nil, err
 			}
 			return api.CatalogOf(c), nil
-		}),
-		"Status": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Status(ctx, root) }),
+		})),
+		// A household member's phone gets only the apps they use (member.go).
+		"Status": member(read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			st, err := core.Status(ctx, root)
+			if err != nil {
+				return st, err
+			}
+			return h.forCaller(ctx, st)
+		})),
 		// Status with the cards beside it in one request, each sent as it
 		// is read; the cards the phone does not show say so.
-		"StatusBoard": {Stream: func(ctx context.Context, args []json.RawMessage, result func(any, error), event func(string, any)) {
+		"StatusBoard": {Member: true, Stream: func(ctx context.Context, args []json.RawMessage, result func(any, error), event func(string, any)) {
 			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
 			var n int
@@ -216,8 +231,18 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				_ = json.Unmarshal(args[1], &want)
 			}
 			st, err := core.Status(ctx, root)
+			if err == nil {
+				st, err = h.forCaller(ctx, st)
+			}
 			result(st, err)
 			if err != nil {
+				return
+			}
+			// A member's phone: their apps, and none of the homelab's cards.
+			if _, isMember, _ := h.member(ctx); isMember {
+				for _, name := range want {
+					event("status:card", board.Card{Board: n, Name: name, Error: board.NotHere})
+				}
 				return
 			}
 			// The phone's cards, from the agent when it serves them; the
@@ -246,13 +271,16 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}),
 		// An app's icon for its page, as the app on this machine kept it; a
 		// phone never makes it ask the app.
-		"AppIcon": read(func(_ context.Context, args []json.RawMessage) (any, error) {
+		"AppIcon": member(read(func(ctx context.Context, args []json.RawMessage) (any, error) {
 			var id string
 			if len(args) > 0 {
 				_ = json.Unmarshal(args[0], &id)
 			}
+			if p, isMember, err := h.member(ctx); err != nil || (isMember && !p.Uses(id)) {
+				return nil, err
+			}
 			return appicon.Kept(root, id), nil
-		}),
+		})),
 		"SavingsHistory": read(func(context.Context, []json.RawMessage) (any, error) {
 			return savings.LoadHistory(savings.HistoryPath(root)), nil
 		}),
@@ -288,9 +316,13 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// Finances, for the phones allowed them (Settings › Phones): the
 		// same plan the computer keeps, read forward the same way. A phone
 		// that may only look gets it marked read-only, so it offers no Edit.
-		"Finances": {Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
-			p, err := finance.Load(finance.Path(root))
-			l, lerr := finance.LoadLedger(finance.LedgerPath(root))
+		"Finances": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			p, err := finance.Load(finance.Path(froot))
+			l, lerr := finance.LoadLedger(finance.LedgerPath(froot))
 			if lerr != nil {
 				l = finance.Ledger{} // Transactions says why
 			}
@@ -302,12 +334,16 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// The money card, for a wall screen allowed it (or any phone that
 		// sees Finances): a few facts, never the plan, and no amount at all
 		// while Hide amounts is on.
-		"FinancesWall": {Finances: companion.FinancesCard, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
-			p, err := finance.Load(finance.Path(root))
+		"FinancesWall": {Member: true, Finances: companion.FinancesCard, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
 			if err != nil {
 				return nil, nil, err
 			}
-			l, lerr := finance.LoadLedger(finance.LedgerPath(root))
+			p, err := finance.Load(finance.Path(froot))
+			if err != nil {
+				return nil, nil, err
+			}
+			l, lerr := finance.LoadLedger(finance.LedgerPath(froot))
 			if lerr != nil {
 				l = finance.Ledger{}
 			}
@@ -315,12 +351,40 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 		// A save from a phone is refused, as on the computer, when the
 		// plan changed after the phone read it (finance.ErrChanged).
-		"SaveFinances": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"SaveFinances": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
 			var p finance.Plan
 			if len(args) < 1 || json.Unmarshal(args[0], &p) != nil {
 				return nil, nil, errors.New("SaveFinances takes the plan")
 			}
-			saved, err := finance.Save(finance.Path(root), p)
+			saved, err := finance.Save(finance.Path(froot), p)
+			if err != nil {
+				return nil, nil, err
+			}
+			l, lerr := finance.LoadLedger(finance.LedgerPath(froot))
+			if lerr != nil {
+				l = finance.Ledger{}
+			}
+			return finance.ProjectWith(saved, l, time.Now(), finance.Ahead), nil, nil
+		}},
+		// The household's money a member's phone may see, to look at: only
+		// what the owner shares (homelab person share), names, amounts and
+		// days, never an account or the ledger (member.go).
+		"FinancesShared": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			p, isMember, err := h.member(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			if !isMember {
+				return nil, nil, errors.New("the household's own Finances are on this phone already")
+			}
+			if len(p.Shares) == 0 {
+				return memberShared{Shares: []string{}}, nil, nil
+			}
+			plan, err := finance.Load(finance.Path(root))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -328,24 +392,33 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			if lerr != nil {
 				l = finance.Ledger{}
 			}
-			return finance.ProjectWith(saved, l, time.Now(), finance.Ahead), nil, nil
+			now := time.Now()
+			return sharedFor(finance.ProjectWith(plan, l, now, finance.Ahead), p, now), nil, nil
 		}},
 		// The ledger, what actually happened, goes to the same phones the
 		// plan does, at the same levels, and is refused when stale as it is.
-		"FinancesLedger": {Finances: companion.FinancesView, Call: func(context.Context, []json.RawMessage) (any, []string, error) {
-			l, err := finance.LoadLedger(finance.LedgerPath(root))
+		"FinancesLedger": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
+			l, err := finance.LoadLedger(finance.LedgerPath(froot))
 			return l, nil, err
 		}},
-		"SaveFinancesLedger": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"SaveFinancesLedger": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
 			var l finance.Ledger
 			if len(args) < 1 || json.Unmarshal(args[0], &l) != nil {
 				return nil, nil, errors.New("SaveFinancesLedger takes the ledger")
 			}
-			p, err := finance.Load(finance.Path(root))
+			p, err := finance.Load(finance.Path(froot))
 			if err != nil {
 				return nil, nil, err
 			}
-			saved, err := finance.SaveLedger(finance.LedgerPath(root), l, p)
+			saved, err := finance.SaveLedger(finance.LedgerPath(froot), l, p)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -438,20 +511,28 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 		// Receipts go with the ledger: a phone that may change it may keep one
 		// (from its camera), and one that may only look may see them.
-		"FinancesReceipt": {Finances: companion.FinancesView, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"FinancesReceipt": {Member: true, Finances: companion.FinancesView, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
 			var name string
 			if len(args) < 1 || json.Unmarshal(args[0], &name) != nil {
 				return nil, nil, errors.New("FinancesReceipt takes the receipt's name")
 			}
-			r, err := finance.ReadReceipt(finance.ReceiptsDir(root), name)
+			r, err := finance.ReadReceipt(finance.ReceiptsDir(froot), name)
 			return r, nil, err
 		}},
-		"SaveFinancesReceipt": {Finances: companion.FinancesEdit, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"SaveFinancesReceipt": {Member: true, Finances: companion.FinancesEdit, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
+			froot, err := h.financeRoot(ctx)
+			if err != nil {
+				return nil, nil, err
+			}
 			var data string
 			if len(args) < 1 || json.Unmarshal(args[0], &data) != nil {
 				return nil, nil, errors.New("SaveFinancesReceipt takes the receipt")
 			}
-			name, err := finance.SaveReceipt(finance.ReceiptsDir(root), data)
+			name, err := finance.SaveReceipt(finance.ReceiptsDir(froot), data)
 			return name, nil, err
 		}},
 		// The Settings form (.env), for the native app's Settings screen:
@@ -678,6 +759,9 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			if !d.Until.IsZero() {
 				can += " until " + d.Until.Local().Format("2 Jan 15:04")
 			}
+			if d.Person != "" {
+				can = d.PersonName + "'s: their apps only"
+			}
 			rows = append(rows, []string{d.ID, d.Name, can, money, "paired " + d.Paired.Local().Format("2 Jan 2006"), "last seen " + seen})
 		}
 		u.Table(nil, rows)
@@ -717,6 +801,39 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 			u.OK("%s no longer sees Finances", d.Name)
 		}
 		return err
+	case "person":
+		// homelab phone person <phone> <name>|none: whose phone it is. A
+		// member's phone sees only their apps and their own Finances.
+		if len(args) != 2 {
+			return fmt.Errorf("usage: homelab phone person <id or name> <person>|none")
+		}
+		username, name := "", ""
+		if who := args[1]; who != "none" && who != "me" {
+			list, err := people.Load(people.Path(h.root))
+			if err != nil {
+				return err
+			}
+			i, ok := people.Find(list, who)
+			if !ok || !list[i].Active() {
+				return fmt.Errorf("%s is not in the household (homelab person list)", who)
+			}
+			if !memberName.MatchString(list[i].Username) {
+				return fmt.Errorf("%s's username %q can't name a folder of their own", list[i].Name, list[i].Username)
+			}
+			username, name = list[i].Username, list[i].Name
+		}
+		d, err := store.SetPerson(args[0], username, name)
+		switch {
+		case err != nil:
+		case username == "":
+			u.OK("%s is yours again: it sees the whole homelab, as allowed", d.Name)
+		default:
+			u.OK("%s is %s's now: their apps and their own Finances, nothing else", d.Name, name)
+			if d.Finances == "" {
+				u.Printf("  %s\n", u.Dim("For their Finances: homelab phone finances "+d.ID+" edit. What of the household's they see: homelab person share "+username+"."))
+			}
+		}
+		return err
 	case "until":
 		// homelab phone until <phone> 7d: its changes and Finances end in a
 		// week, and it only looks; never takes the end off.
@@ -741,7 +858,7 @@ func (h *homelab) phoneCmd(_ context.Context, args []string) error {
 		}
 		return err
 	}
-	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|until|remove")
+	return fmt.Errorf("usage: homelab phone pair|list|allow|read-only|finances|person|until|remove")
 }
 
 // parseFor reads how long, as homelab phone until takes it: 12h, 7d, 2w.

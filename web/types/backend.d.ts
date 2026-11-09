@@ -451,6 +451,8 @@ declare namespace companion {
     paired: string;
     lastSeen: string;
     until?: string;
+    person?: string;
+    personName?: string;
   }
 }
 
@@ -1002,6 +1004,7 @@ declare namespace people {
     added: string;
     removed: string;
     apps?: string[];
+    shares?: string[];
   }
 }
 
