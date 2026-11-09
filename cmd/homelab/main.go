@@ -294,6 +294,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"tailnet":      h.tailnetCmd,
 		"adguard":      h.adguardCmd,
 		"media":        h.media,
+		"history":      h.history,
 	}
 	fn, ok := commands[cmd]
 	if !ok {

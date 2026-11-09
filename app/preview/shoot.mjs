@@ -373,7 +373,15 @@ const tidyReview = [
   { id: 40, title: 'Project Hail Mary (Unabridged)', changes: [{ field: 'title', old: 'Project Hail Mary (Unabridged)', new: 'Project Hail Mary', reason: 'junk' }], cover: false, held: false },
   { id: 77, title: 'Untitled scan', changes: [{ field: 'tags', old: 'Misc', new: 'Fiction', reason: 'online' }], cover: false, held: true },
 ];
-const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, screen: 'status' };
+// What was done (internal/history), oldest first by id.
+const history = [
+  { id: 1, at: hoursAgo(50), kind: 'update', app: 'vikunja', who: 'the nightly update', text: 'Updated Vikunja' },
+  { id: 2, at: hoursAgo(26), kind: 'settings', who: 'this computer', text: 'Changed settings: QUIET_HOURS' },
+  { id: 3, at: hoursAgo(5), kind: 'heal', app: 'vikunja', who: 'the watchdog', text: 'Restarted Vikunja (no answer): it stopped answering' },
+  { id: 4, at: hoursAgo(3), kind: 'stop', app: 'immich', who: "Sam's iPhone", text: 'Stopped Immich' },
+  { id: 5, at: hoursAgo(2), kind: 'restart', app: 'vikunja', who: 'this computer', text: 'Restarted Vikunja' },
+];
+const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, screen: 'status' };
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -1922,6 +1930,27 @@ const smokes = [
       if (!(await first.textContent()).includes(want)) throw new Error(`the newest row has no ${want}: ${await first.textContent()}`);
     }
     await card.locator('li:has-text("and 3 more today")').waitFor({ timeout: 3000 });
+  } },
+  { name: 'An app’s page says what was done to it, and everything is searchable', screen: 'app:vikunja', run: async (page) => {
+    const card = page.locator('#appDone');
+    await card.locator('h2:has-text("Recently done")').waitFor({ timeout: 5000 });
+    const rows = card.locator('li');
+    await rows.first().waitFor({ timeout: 3000 });
+    const texts = await rows.allTextContents();
+    if (texts.length !== 3 || !texts[0].includes('Restarted Vikunja') || !texts[0].includes('by this computer') || !texts[1].includes('by the watchdog') || texts.some((t) => t.includes('Immich'))) throw new Error(`Vikunja's newest first, only its own: ${JSON.stringify(texts)}`);
+    await card.getByRole('button', { name: 'Everything that was done…' }).click();
+    const sheet = page.locator('#doneSheet');
+    await sheet.locator('h2:has-text("Everything that was done")').waitFor({ timeout: 3000 });
+    await sheet.locator('li:has-text("Stopped Immich")').waitFor({ timeout: 3000 });
+    await sheet.getByLabel('Search what was done').fill('iphone');
+    await page.waitForFunction(() => document.querySelectorAll('#doneSheet li').length === 1, null, { timeout: 3000 });
+    await sheet.getByLabel('Search what was done').fill('nothing like this');
+    await sheet.getByText('Nothing done matches “nothing like this”.').waitFor({ timeout: 3000 });
+    await sheet.getByRole('button', { name: 'Close' }).click();
+    await sheet.waitFor({ state: 'hidden', timeout: 3000 });
+  } },
+  { name: 'An app’s page with nothing done to it says so', screen: 'app:vikunja', mock: { history: [] }, run: async (page) => {
+    await page.locator('#appDone').getByText("Nothing done to it yet that's kept here.", { exact: false }).waitFor({ timeout: 5000 });
   } },
   { name: 'CrowdSec’s page on a quiet day', screen: 'app:crowdsec', mock: { protection: { ...protection, today: [], todayCount: 0, bannedNow: 0 } }, run: async (page) => {
     await page.locator('#appStopped').getByText(/^Nothing yet today; 14 this week, the last /).waitFor({ timeout: 5000 });

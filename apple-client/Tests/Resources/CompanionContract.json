@@ -24,6 +24,7 @@
         "FinancesReceipt",
         "FinancesShared",
         "FinancesWall",
+        "History",
         "Homelab",
         "Host",
         "LastStatus",

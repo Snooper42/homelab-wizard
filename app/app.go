@@ -37,6 +37,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/explain"
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/install"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
@@ -722,7 +723,16 @@ func (a *App) SaveSettings(values map[string]string) ([]settings.Setting, error)
 	if err := settings.Save(a.root, values); err != nil {
 		return nil, err
 	}
+	if len(values) > 0 {
+		history.Record(a.root, history.Entry{Kind: "settings", Who: history.ThisComputer, Text: history.SettingsChanged(values)})
+	}
 	return settings.List(a.root)
+}
+
+// History is what was done (internal/history), newest first: app, search
+// and before (an entry's id, for the next page) narrow it, each optional.
+func (a *App) History(app, search string, before int64) ([]history.Entry, error) {
+	return history.List(a.root, history.Filter{App: app, Search: search, Before: before})
 }
 
 // Backups is the state of the nightly backups: each installed app's newest
@@ -997,6 +1007,7 @@ func (a *App) SaveFinances(p finance.Plan) (finance.View, error) {
 	if err != nil {
 		return finance.View{}, err
 	}
+	history.Record(a.root, history.Entry{Kind: "finances", Who: history.ThisComputer, Text: "Changed the Finances plan"})
 	return finance.ProjectWith(saved, a.ledger(), time.Now(), finance.Ahead), nil
 }
 
@@ -1013,7 +1024,11 @@ func (a *App) SaveFinancesLedger(l finance.Ledger) (finance.Ledger, error) {
 	if err != nil {
 		return l, err
 	}
-	return finance.SaveLedger(finance.LedgerPath(a.root), l, p)
+	saved, err := finance.SaveLedger(finance.LedgerPath(a.root), l, p)
+	if err == nil {
+		history.Record(a.root, history.Entry{Kind: "finances", Who: history.ThisComputer, Text: "Changed Finances' transactions"})
+	}
+	return saved, err
 }
 
 // SaveFinancesReceipt keeps a receipt (a picture made small on this device,

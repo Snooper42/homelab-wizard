@@ -225,7 +225,7 @@ Architecture decisions and why they were made.
 
 ## ADR-0022: SQLite only for records that grow and are searched; small state stays in JSON
 
-**Status:** Accepted, November 2026, from the maintenance order (the owner's call); nothing uses it yet.
+**Status:** Accepted, November 2026, from the maintenance order (the owner's call). First used by the record of what was done (`internal/history`, November 2026).
 
 **Context:** The homelab keeps its own records as small JSON files in `data/` (what is stopped, pinned, held, the watchdog's state, Setup's ticks), each changed whole under a lock beside it (`internal/lockedfile`, `internal/applist`) and copied by the nightly Secrets backup. That suits a record of a few kilobytes that is read whole. Two planned features are different: the Memory screen needs a day of samples taken every minute or so, and a record of what the homelab did needs months of entries that a screen filters and searches. As JSON, each would be read and rewritten whole on every change, and a search would read everything.
 

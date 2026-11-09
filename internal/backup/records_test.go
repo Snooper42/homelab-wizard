@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"slices"
 	"testing"
+
+	"github.com/Snooper42/homelab-wizard/internal/history"
 )
 
 func write(t *testing.T, path, content string) {
@@ -96,5 +98,28 @@ func TestCopyRecordsWithNothingToCopy(t *testing.T) {
 	}
 	if _, err := os.Stat(dst); !os.IsNotExist(err) {
 		t.Errorf("an old copy stayed with no records left: %v", err)
+	}
+}
+
+// The record of what was done goes with the records, as a copy SQLite
+// made, which opens on its own.
+func TestCopyRecordsSnapshotsTheHistory(t *testing.T) {
+	root := t.TempDir()
+	d, err := history.Open(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := d.Add(history.Entry{Kind: "restart", App: "immich", Who: history.Watchdog, Text: "Restarted Immich"}); err != nil {
+		t.Fatal(err)
+	}
+	defer d.Close() // still open, as the agent would have it
+	dst := filepath.Join(t.TempDir(), "data")
+	n, err := CopyRecords(filepath.Join(root, "data"), dst)
+	if err != nil || n != 1 {
+		t.Fatalf("copied %d: %v", n, err)
+	}
+	got, err := history.List(filepath.Dir(dst), history.Filter{})
+	if err != nil || len(got) != 1 || got[0].Text != "Restarted Immich" {
+		t.Fatalf("the copy: %+v %v", got, err)
 	}
 }

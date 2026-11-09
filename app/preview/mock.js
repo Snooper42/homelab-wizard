@@ -138,6 +138,12 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       M.status = { ...M.status, stopped: { ...M.status.stopped, [id]: { since: new Date().toISOString(), until } }, apps: M.status.apps.map((a) => (a.id === id ? { ...a, state: 'stopped', health: '', since: undefined } : a)) };
     },
     Logs: (id) => later(M.logs[id] || M.logs.default),
+    // What was done (internal/history): newest first, by app and search.
+    History: (app, search, before) => {
+      const q = (search || '').trim().toLowerCase();
+      const all = (M.history || []).filter((e) => (!app || e.app === app) && (!q || [e.text, e.app || '', e.who].some((s) => s.toLowerCase().includes(q))) && (!before || e.id < before));
+      return later(all.sort((a, b) => b.id - a.id));
+    },
     AppIcon: (id) => later(M.icons?.[id] || ''),
     Explainer: () => later(M.explainer || ''),
     ExplainLogs: (id) => later(M.explained?.[id] || 'The log looks normal.', 300),

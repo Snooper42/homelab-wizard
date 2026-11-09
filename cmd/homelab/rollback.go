@@ -246,6 +246,7 @@ func (h *homelab) rollback(ctx context.Context, args []string) error {
 		return err
 	}
 	h.keepVersions(ctx, client) // .env keeps the version it went back to
+	h.record("rollback", a.ID, h.who(), "Rolled back "+a.Name()+" to the version from before its update")
 	u.OK("%s runs the image from before %s; updates held (homelab updates release %s)", a.Name(), r.Updated.Local().Format("2 Jan"), a.ID)
 	h.alert(ctx, "watchtower", notify.Message{Title: "Homelab: " + a.Name() + " rolled back", Body: "It runs the version from before its update again. Its nightly updates are held until released.", Tags: []string{"rewind"}})
 	return nil

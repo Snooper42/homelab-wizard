@@ -12,6 +12,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/started"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
@@ -84,6 +85,7 @@ func (h *homelab) heal(ctx context.Context, client *docker.Client, unwell, missi
 			if verb[0] == "up" {
 				line = a.Name() + " (its container was gone, so it was made again)"
 			}
+			h.record("heal", id, history.Watchdog, "Restarted "+line+": it stopped answering")
 			h.ui.Info("restarted %s, unwell on two checks in a row", line)
 			done = append(done, line)
 		}

@@ -145,6 +145,8 @@ function draw() {
         return 'Copied';
       },
       logs: (lines) => go().Logs(id, lines),
+      done: () => go().History(id, '', 0),
+      allDone: (search) => go().History('', search, 0),
       explain: () => go().ExplainLogs(id),
       // Backups runs it, in its own panel with its progress.
       backupNow: () => { navigate('backups'); $('backupNow').click(); },

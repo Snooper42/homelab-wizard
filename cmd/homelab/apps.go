@@ -978,6 +978,11 @@ func (h *homelab) markStopped(action string, ids []string, end time.Time) {
 // noteLifecycle keeps why the apps a lifecycle command started did: you
 // (Start, Restart), or an update, yours or the nightly one's.
 func (h *homelab) noteLifecycle(action string, nightly bool, done, updated []string) {
+	if action == "update" {
+		h.recordLifecycle(action, nightly, updated)
+	} else {
+		h.recordLifecycle(action, nightly, done)
+	}
 	switch action {
 	case "start", "restart":
 		h.noteStarted(started.You, done...)

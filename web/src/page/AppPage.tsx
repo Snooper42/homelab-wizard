@@ -13,6 +13,7 @@ import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { MenuButton } from '../parts/MenuButton';
 import { Row, Rows } from '../parts/Row';
+import { Sheet } from '../parts/Sheet';
 import { Tile } from '../status/Tiles';
 import { lasted, type Pending } from '../status/AppList';
 import { stopChoices } from '../status/stopFor';
@@ -36,6 +37,10 @@ export interface AppPageActions {
   copy: (text: string) => Promise<string>;
   /** The end of its log: its last lines. */
   logs: (lines: number) => Promise<string>;
+  /** What was done to it (internal/history), newest first. */
+  done: () => Promise<history.Entry[]>;
+  /** What was done to any app, or anything else, matching search. */
+  allDone: (search: string) => Promise<history.Entry[]>;
   /** What the Ollama on this machine says of its log. */
   explain: () => Promise<string>;
   backupNow: () => void;
@@ -368,6 +373,55 @@ function Updates({ p }: { p: AppPageProps }) {
   );
 }
 
+/** An entry's line under its title: when, and who did it. */
+export function doneSub(e: history.Entry): string {
+  const when = ago(e.at);
+  return `${when.charAt(0).toUpperCase()}${when.slice(1)}, by ${e.who}`;
+}
+
+/** What was done to this app (internal/history): its newest few, and
+ * everything that was done, searchable, in a sheet. */
+function Done({ on }: { on: AppPageActions }) {
+  const [rows, setRows] = useState<history.Entry[] | null>(null);
+  const [problem, setProblem] = useState('');
+  const [all, setAll] = useState<history.Entry[] | null>(null);
+  const [q, setQ] = useState('');
+  // The page is drawn afresh for each app (see mountAppPage), so this runs once per app.
+  useEffect(() => { on.done().then(setRows, (e) => setProblem(String(e?.message || e))); }, []);
+  useEffect(() => {
+    if (all === null) return;
+    const t = setTimeout(() => on.allDone(q).then(setAll, (e) => setProblem(String(e?.message || e))), 200);
+    return () => clearTimeout(t);
+  }, [q]);
+  const open = () => {
+    on.allDone(q).then(setAll, (e) => setProblem(String(e?.message || e)));
+    const s = document.getElementById('doneSheet');
+    if (s) s.hidden = false;
+  };
+  const close = () => { const s = document.getElementById('doneSheet'); if (s) s.hidden = true; };
+  const shown = (rows || []).slice(0, 6);
+  return (
+    <Card kind="alerts pagecard" id="appDone">
+      <CardHead title="Recently done">
+        <button class="small change" onClick={open}>Everything that was done…</button>
+      </CardHead>
+      {problem ? <Empty>{problem}</Empty>
+        : rows === null ? <Empty>Reading…</Empty>
+          : shown.length ? <Rows>{shown.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>
+            : <Empty>Nothing done to it yet that's kept here. Its starts, stops, restarts and updates, and the watchdog's, are kept for 90 days.</Empty>}
+      <Sheet id="doneSheet" titleId="doneTitle">
+        <h2 id="doneTitle">Everything that was done</h2>
+        <p class="muted">The last 90 days: starts, stops, restarts, updates, roll backs, the watchdog's restarts, settings and Finances changed, and who did each.</p>
+        <input type="search" class="donesearch" value={q} onInput={(e) => setQ((e.target as HTMLInputElement).value)} placeholder="Search: an app, a phone, restarted…" aria-label="Search what was done" autocomplete="off" spellcheck={false} />
+        {all === null ? <Empty>Reading…</Empty>
+          : all.length ? <Rows>{all.map((e) => <Row key={e.id} title={e.text} sub={doneSub(e)} />)}</Rows>
+            : <Empty>{q.trim() ? `Nothing done matches “${q.trim()}”.` : "Nothing done yet that's kept here."}</Empty>}
+        <div class="actions"><button class="small" onClick={close}>Close</button></div>
+      </Sheet>
+    </Card>
+  );
+}
+
 /** The proxy's and CrowdSec's pages: every address CrowdSec stopped today, where it came from, and what it tried. */
 function Stopped({ stopped }: { stopped: crowdsec.Protection | null | 'reading' }) {
   const reading = stopped === 'reading', s = reading ? null : stopped;
@@ -482,6 +536,7 @@ export function AppPage(p: AppPageProps) {
           {p.entry?.kind !== 'native' && p.a.state !== 'missing' && p.a.state !== 'elsewhere' && <Log explainer={p.explainer} machine={p.machine} dozzle={p.dozzle} on={p.on} />}
           {p.stopped !== undefined && <Stopped stopped={p.stopped} />}
           <Updates p={p} />
+          <Done on={p.on} />
         </div>
         <div class="pagecol">
           <Settings p={p} />

@@ -189,6 +189,15 @@ actor APIClient {
     /// The app's last `lines` log lines (`homelab logs <id> --tail N`). The
     /// computer removes `.env`'s secrets and anything shaped like a password
     /// or token before sending, because every paired device may read logs.
+    /// What was done (the computer's record, newest first): one app's when
+    /// appID is set, matching search, older than before (an entry's id, for
+    /// the next page). The computer redacts every line.
+    func history(appID: String = "", search: String = "", before: Int64 = 0) async throws -> [HistoryEntry] {
+        if !appID.isEmpty, !AppStatus.isValidID(appID) { throw APIError.invalidAppID }
+        let query = String(search.trimmingCharacters(in: .whitespacesAndNewlines).prefix(100))
+        return try await call("History", [.string(appID), .string(query), .number(Double(max(before, 0)))], as: [HistoryEntry].self)
+    }
+
     func logs(appID: String, lines: Int) async throws -> String {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
         let count = min(max(lines, 1), 5000)
