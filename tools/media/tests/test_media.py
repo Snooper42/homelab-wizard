@@ -2407,3 +2407,59 @@ class NameTheseSongs(Base):
         for words in ([], ["Rumours"], [RUMOURS, "extra"], ["--library"]):
             with self.assertRaises(SystemExit):
                 inbox.name_as(str(self.album), "album", words)
+
+
+class InboxArchives(Base):
+    """Nov 8, the owner's Inbox plan, item 7: a .rar or .7z in a watched folder isn't passed over in silence: Needs a
+    look says it's packed and what to do (open it; what's inside is filed next time), once, until it changes."""
+
+    def setUp(self):
+        super().setUp()
+        self.needs = self.tmp / "media-needs.json"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_NEEDS": str(self.needs)}).start()
+        self.d = self.tmp / "Downloads"
+        self.calls = []
+        mock.patch.object(inbox, "engine", side_effect=lambda *a, **k: self.calls.append(a) or (True, {"filed": []})).start()
+
+    def sweep(self):
+        try:
+            inbox.sweep(apply=True)
+        except SystemExit:
+            pass
+        return json.loads(self.needs.read_text()) if self.needs.exists() else []
+
+    def test_a_rar_and_a_scene_folder_of_rar_parts_wait_with_why(self):
+        self.touch(self.d / "Heat.1995.rar", age=600)
+        self.touch(self.d / "Show.S01.WEB" / "show.s01.rar", age=600)
+        self.touch(self.d / "Show.S01.WEB" / "show.s01.r00", age=600)
+        self.touch(self.d / "Show.S01.WEB" / "show.s01.nfo", age=600)
+        self.touch(self.d / "Album.7z.001", age=600)
+        got = {n["name"]: n for n in self.sweep()}
+        self.assertEqual(sorted(got), ["Album.7z.001", "Heat.1995.rar", "Show.S01.WEB"])
+        self.assertTrue(got["Heat.1995.rar"]["why"].startswith("It's packed in a .rar file"))
+        self.assertIn("a .7z file", got["Album.7z.001"]["why"])
+        self.assertEqual(got["Heat.1995.rar"]["kind"], "", "no film or episode buttons: it isn't one yet")
+        self.assertEqual(self.calls, [])
+        self.assertTrue((self.d / "Heat.1995.rar").exists(), "left where it is")
+
+    def test_said_once_and_left_be_until_it_changes(self):
+        self.touch(self.d / "Heat.1995.rar", age=600)
+        self.sweep()
+        with mock.patch.object(inbox, "note_why", wraps=inbox.note_why) as noted:
+            self.sweep()
+        noted.assert_not_called()
+        inbox.leave(str(self.d / "Heat.1995.rar"))
+        self.assertEqual(self.sweep(), [])
+
+    def test_a_download_with_its_film_and_a_rar_of_extras_is_filed_as_usual(self):
+        self.touch(self.d / "Heat.1995" / "Heat.1995.mkv", size=2000, age=600)
+        self.touch(self.d / "Heat.1995" / "Subs.rar", age=600)
+        mock.patch.object(mc, "ffprobe", return_value=facts_info()).start()
+        self.assertEqual(self.sweep(), [])
+        self.assertEqual([c[0] for c in self.calls], ["movies"])
+
+    def test_the_preview_says_so_and_changes_nothing(self):
+        self.touch(self.d / "Heat.1995.rar", age=600)
+        inbox.sweep(apply=False)
+        self.assertIn("packed (.rar)", self.out.getvalue())
+        self.assertFalse(self.needs.exists())
