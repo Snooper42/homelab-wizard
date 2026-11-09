@@ -14,10 +14,13 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 ## 1. Where it stands (Nov 9, evening)
 
-**In flight:**
-- **#542, Tdarr rests while it has nothing to do** (Tidy Up). Built, fixed once (the nightly's `real-docker` caught it resting a Tdarr just installed), waiting on CI. Merge when green.
-- **`claude/feature-phone-tunnel`, the companion through the tunnel** (ADR-0023; the iPhone's item 0, the computer's part). Pushed, no PR yet: open it after #542 merges (merge `origin/main` into it first).
-- **This file's PR**, `claude/feature-handoffs`.
+**In flight** (Nov 9, 17:25 UTC; #542 and #543 merged): four branches, one PR at a time, each merged as soon as every check is green, `origin/main` merged into the next before its PR opens. Each is stacked on the one before.
+1. **#544, the companion through the tunnel** (ADR-0023 locks 2 to 4, the computer's part). **Merged.**
+2. **`claude/feature-phone-away`: Setup's *Reach Finances away from home*** (`homelab phone away --apply`: Cloudflare Access application, service token and policy, the proxy host, the hostname through the tunnel; a paired phone gets the way out). It touches `.env.example`, so the nightly's `real-docker` runs on it (up to an hour). This file's update rides it.
+3. **`claude/feature-iphone-away`: the iPhone side** (`TunnelSeal`, tested against `Tests/Resources/TunnelVectors.json`, which `internal/companion/vectors_test.go` writes; pairing sends a key; reads fall back to the tunnel). **Its Swift has never been compiled** (this container can't, and the Apple client job runs only on a PR): expect a fix round. Say in its PR that `ITSAppUsesNonExemptEncryption` needs a look before TestFlight.
+4. **`claude/feature-iphone-signed`: the switch for the day they sign** (`HOMELAB_SIGNED=1`, the README's *The day you sign*). From main, independent of the others.
+
+**Next after those:** Away mode on the phone (only the tunneled apps when neither address answers, behind Face ID) and noticing a network change (`NWPathMonitor`); then `unison-handoff.md` section 4 items 1 onwards.
 
 **Waiting on the owner:**
 - **The App Group test** (`unison-handoff.md` section 2): `HOMELAB_WIDGET=1 ./apple-client/scripts/run-on-iphone.sh <prefix>`, and whether it signs. It decides the widget, Live Activities and Control Center work.

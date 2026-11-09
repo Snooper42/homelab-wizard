@@ -415,6 +415,13 @@ func Steps(ctx context.Context, in Inputs) []Step {
 			Detail:   "Create a tunnel in Cloudflare Zero Trust › Networks › Tunnels, put its token in TUNNEL_TOKEN, then start it.",
 			Settings: []string{"TUNNEL_TOKEN"}, Run: [][]string{{"up", "--apply"}, {"domain", "setup", "--apply"}}, RunLabel: "Start the tunnel",
 			Open: "https://one.dash.cloudflare.com/"}, env["TUNNEL_TOKEN"] != "" && tunnelUp, "vaultwarden")
+		// The iPhone app away from home (ADR-0023): through the tunnel, behind
+		// Cloudflare Access, for the household's phones only.
+		if env["TUNNEL_TOKEN"] != "" {
+			add(Step{ID: "phone-away", Title: "Reach Finances away from home", Why: "So the Homelab app on your phone shows Status, your apps, and Finances on cellular too, through the tunnel: no Tailscale, nothing to install. Cloudflare lets in only your household's phones, and even Cloudflare can't read what passes. Away from home the phone only looks.",
+				Detail:   "It uses CLOUDFLARE_API_TOKEN, which needs two more permissions for this: Account › Access: Apps and Policies › Edit, and Account › Access: Service Tokens › Edit. Afterwards, pair each phone again at home once (Settings › Phones).",
+				Settings: []string{"CLOUDFLARE_API_TOKEN"}, Run: [][]string{{"phone", "away", "--apply"}}, RunLabel: "Do it", Later: true}, env["COMPANION_ACCESS_AUD"] != "" && env["COMPANION_AWAY_HOST"] != "", "tunnel")
+		}
 		// Immich's share links carry the address Immich is told is its
 		// own; without it they point at this machine and open nowhere else.
 		if photos := address(st, "immich-server"); photos != "" {

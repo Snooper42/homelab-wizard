@@ -534,3 +534,35 @@ func TestCloudflareSaid(t *testing.T) {
 		}
 	}
 }
+
+// Reach Finances away from home (ADR-0023): only with a tunnel, after it,
+// running homelab phone away, and done once the companion's Access is in
+// .env.
+func TestPhoneAwayStep(t *testing.T) {
+	down := errors.New("refused")
+	env := map[string]string{"HOMELAB_DOMAIN": "example.com", "BACKUP_DESTINATION": "./backups"}
+	find := func(env map[string]string, st *api.Status) (Step, bool) {
+		for _, s := range Steps(context.Background(), Inputs{Env: env, Host: host.For("darwin"), Status: st, Probe: fakeProbe{cert: down}}) {
+			if s.ID == "phone-away" {
+				return s, true
+			}
+		}
+		return Step{}, false
+	}
+	if _, ok := find(env, nil); ok {
+		t.Fatal("offered with no tunnel")
+	}
+	env["TUNNEL_TOKEN"] = "token"
+	s, ok := find(env, nil)
+	if !ok || s.State != "waiting" || len(s.Run) != 1 || strings.Join(s.Run[0], " ") != "phone away --apply" {
+		t.Fatalf("with the tunnel not running yet: %+v", s)
+	}
+	running := &api.Status{Apps: []api.AppStatus{{ID: "cloudflared", State: "running"}, {ID: "vaultwarden", State: "running"}}}
+	if s, _ := find(env, running); s.State != "todo" || !strings.Contains(s.Detail, "Access: Service Tokens") {
+		t.Fatalf("with the tunnel running: %+v", s)
+	}
+	env["COMPANION_ACCESS_AUD"], env["COMPANION_AWAY_HOST"] = "aud-1", "homelab-away.example.com"
+	if s, _ := find(env, running); s.State != "done" {
+		t.Fatalf("set up: %+v", s)
+	}
+}
