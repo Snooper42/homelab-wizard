@@ -22,9 +22,15 @@ import (
 func TestAMembersPhoneCallsOnlyMemberMethods(t *testing.T) {
 	store := NewStore(filepath.Join(t.TempDir(), "phones.json"))
 	s := &Server{Store: store, Methods: map[string]Method{
-		"Status":   {Member: true, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) { d, _ := Caller(ctx); return d.Person, nil, nil }},
-		"Backups":  {Call: func(context.Context, []json.RawMessage) (any, []string, error) { return "all of them", nil, nil }},
-		"Finances": {Member: true, Finances: FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) { d, _ := Caller(ctx); return "plan of " + d.Person, nil, nil }},
+		"Status": {Member: true, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			d, _ := Caller(ctx)
+			return d.Person, nil, nil
+		}},
+		"Backups": {Call: func(context.Context, []json.RawMessage) (any, []string, error) { return "all of them", nil, nil }},
+		"Finances": {Member: true, Finances: FinancesView, Call: func(ctx context.Context, _ []json.RawMessage) (any, []string, error) {
+			d, _ := Caller(ctx)
+			return "plan of " + d.Person, nil, nil
+		}},
 	}}
 	h := s.Handler()
 	call := func(name, token string) (int, map[string]any) {
