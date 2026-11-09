@@ -15,7 +15,14 @@ struct FinancesView: View {
         ScrollView {
             if let view = finances.plan {
                 VStack(spacing: 18) {
+                    if view.plan.accounts.isEmpty, finances.canEdit {
+                        FirstAccountCard(finances: finances)
+                    }
                     if let now = view.checkingNow { CheckingHero(now: now, view: view, finances: finances) }
+                    // A member's phone: what the owner shares of the household's, first.
+                    if finances.isMember, let shared = finances.shared, !shared.isEmpty {
+                        HouseholdCard(shared: shared, finances: finances)
+                    }
                     NetWorthCard(view: view, finances: finances)
                     GlanceTiles(view: view, finances: finances)
                     RecentTransactionsCard(view: view, finances: finances)
@@ -52,7 +59,10 @@ struct FinancesView: View {
             }
         }
         // Again once the device's level is known: right after unlock it may not be yet.
-        .task(id: finances.canSeePlan) { await finances.loadPlan() }
+        .task(id: finances.canSeePlan) {
+            await finances.loadPlan()
+            await finances.loadShared()
+        }
         // The latest transactions, once there's a plan to show them with.
         .task(id: finances.plan == nil) {
             if finances.plan != nil, finances.ledger == nil { await finances.loadLedger() }
@@ -60,10 +70,11 @@ struct FinancesView: View {
         .refreshable {
             await finances.loadPlan()
             await finances.loadLedger()
+            await finances.loadShared()
         }
         .sensoryFeedback(.success, trigger: finances.savedCount)
         .animation(.smooth, value: finances.amountsShown)
-        .navigationTitle("Finances")
+        .navigationTitle(finances.isMember ? "My Finances" : "Finances")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 if !finances.amountsHiddenByPlan {
@@ -2008,6 +2019,7 @@ private struct AddHoldingView: View {
 
 /// Accounts today, net worth and the cushion; tap an account to type in its balance.
 private struct FinanceAccountsPage: View {
+    @State private var adding = false
     @Bindable var finances: FinancesViewModel
     @State private var editing: FinanceAccount?
     @State private var editingCushion = false
@@ -2041,6 +2053,14 @@ private struct FinanceAccountsPage: View {
         .background(Theme.canvas.ignoresSafeArea())
         .refreshable { await finances.loadPlan() }
         .sensoryFeedback(.success, trigger: finances.savedCount)
+        .toolbar {
+            if finances.canEdit {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { adding = true } label: { Label("Add Account", systemImage: "plus") }
+                }
+            }
+        }
+        .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
         .navigationTitle("Accounts")
         .sheet(item: $editing) { account in
             BalanceEditor(account: account, finances: finances)
