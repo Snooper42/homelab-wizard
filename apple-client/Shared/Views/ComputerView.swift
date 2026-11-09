@@ -30,6 +30,17 @@ struct ComputerView: View {
                 fixSection
             case .settings:
                 homelabCard
+                // What used to be Status's Saved tile, one line here now.
+                if let savings = dashboard.yearlySavings {
+                    Section {
+                        LabeledContent {
+                            Text(verbatim: savings.formatted(.currency(code: "USD").precision(.fractionLength(0))) + " a year")
+                                .monospacedDigit()
+                        } label: {
+                            IconTileLabel(title: "Subscriptions you don’t pay", systemImage: "dollarsign.circle", tint: TileColour.green)
+                        }
+                    }
+                }
                 switchesSection
                 homelabSettingsSection
                 helpSection

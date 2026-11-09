@@ -156,7 +156,7 @@ private struct PhoneDashboard: View {
 
     var body: some View {
         TabView(selection: tab) {
-            PhoneStatus(model: model, finances: finances, isMember: isMember) { savedTab = Screen.backups.storageKey }
+            PhoneStatus(model: model, isMember: isMember)
                 .tabItem { Label("Status", systemImage: Screen.status(.all).systemImage) }
                 .badge(model.attentionCount)
                 .tag(Screen.status(.all))
@@ -245,17 +245,13 @@ private struct PhoneDashboard: View {
     #endif
 }
 
-/// Status on iPhone: the ring and what needs a look, four tiles, what
-/// changed, the apps by category as the computer groups them, and the
-/// cards under them, as the computer has them below its table.
+/// Status on iPhone, as the owner trimmed it (Nov 9): one line when all is
+/// well, or a card for what needs a look; then the apps by category, the
+/// pinned ones open, the rest folded to a row of logos until opened.
 private struct PhoneStatus: View {
     @Bindable var model: DashboardViewModel
-    let finances: FinancesViewModel
-    /// A household member's phone: their apps only, without the homelab's
-    /// tiles (backups, savings) or cards.
+    /// A household member's phone: their apps only (and no backups to read).
     var isMember = false
-    /// Opens the Backups tab, from its tile.
-    var openBackups: @MainActor () -> Void = {}
     /// Which groups are open (StatusFolds): names only, kept like the tab.
     @SceneStorage("statusFolds") private var folds = ""
     /// An app's page grows out of its row (iOS 18).
@@ -268,38 +264,16 @@ private struct PhoneStatus: View {
         NavigationStack(path: $path) {
             List {
                 // While searching, only the apps that match.
+                // One line when all is well, or one card for what needs a
+                // look (the owner's trim, Nov 9). An app changed since you
+                // looked has its dot on its row.
                 if !model.isSearching, model.hasLoaded {
                     Section {
-                        VStack(spacing: 10) {
-                            StatusHero(model: model)
-                            if !isMember {
-                                StatusTiles(model: model, openBackups: openBackups)
-                            }
-                        }
-                        // Room under the tiles for their shadows, which the row would otherwise cut.
-                        .padding(.bottom, 14)
-                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
-                        .listRowBackground(Color.clear)
-                    }
-                }
-                let changed = model.isSearching ? [] : model.changedApps
-                if !changed.isEmpty {
-                    Section {
-                        ForEach(changed) { app in
-                            NavigationLink(value: app.id) {
-                                AppRowView(app: app)
-                            }
-                            .zoomSource(id: app.id, in: zoom)
-                            .appActionControls(for: app)
-                        }
-                    } header: {
-                        HStack {
-                            Text("Changed Since You Looked")
-                            Spacer()
-                            Button("Mark as Seen") { model.markAllSeen() }
-                                .textCase(nil)
-                                .font(.caption)
-                        }
+                        StatusTop(model: model) { id in path.append(id) }
+                            // Room under a card for its shadow, which the row would otherwise cut.
+                            .padding(.bottom, 6)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 0, trailing: 0))
+                            .listRowBackground(Color.clear)
                     }
                 }
                 // By category, as the computer's Status: what needs a look
@@ -323,9 +297,6 @@ private struct PhoneStatus: View {
                             folds = StatusFolds.setting(group, open: !open, in: folds)
                         }
                     }
-                }
-                if !model.isSearching, model.hasLoaded, !isMember {
-                    StatusCards(cards: model.cards, finances: finances)
                 }
             }
             .overlay {
@@ -351,17 +322,13 @@ private struct PhoneStatus: View {
             }
             #endif
             .refreshable {
-                // Status and its cards (refresh reads them), the backups tile, and the money card.
+                // Status, and the backups the Backups tab's badge counts.
                 guard !isMember else { return await model.refresh() }
-                async let money: Void = finances.load()
                 async let backups: Void = model.backups.load()
                 await model.refresh()
-                await money
                 await backups
             }
-            // Again once the device's level is known: right after unlock it may not be yet.
-            .task(id: finances.canSeeMoney) { if !isMember { await finances.load() } }
-            // The Backups tile, read once if the Backups tab hasn't yet.
+            // The Backups tab's badge, read once if that tab hasn't yet.
             .task { if !isMember, model.backups.overview == nil { await model.backups.load() } }
             // Siri or a shortcut: the app's page, and the action asked for,
             // once Status is read (after unlock).
