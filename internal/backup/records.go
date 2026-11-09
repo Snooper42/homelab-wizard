@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Snooper42/homelab-wizard/internal/history"
 )
 
 // RecordsFolder is where the nightly backup keeps the homelab's own records,
@@ -19,8 +21,9 @@ const RecordsFolder = "data"
 var recordDirs = []string{"people", "sso", "finance-receipts"}
 
 // CopyRecords copies the homelab's own records from dataDir (the homelab
-// folder's data/) into dst: every .json file directly in it, and the people,
-// sso, and finance-receipts folders. Not data/appdata (the AppData job has it), the icon cache,
+// folder's data/) into dst: every .json file directly in it, the people,
+// sso, and finance-receipts folders, and a snapshot of homelab.db (the
+// record of what was done). Not data/appdata (the AppData job has it), the icon cache,
 // or a sync folder. dst is replaced as a whole, so a record removed here is
 // gone from the next night's copy too, and a copy that fails halfway leaves
 // the previous night's in place. It returns how many files were copied.
@@ -72,6 +75,20 @@ func CopyRecords(dataDir, dst string) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+	}
+	// The record of what was done (data/homelab.db, internal/history): a
+	// consistent copy made through SQLite, never the file mid-write.
+	if _, err := os.Stat(filepath.Join(dataDir, filepath.Base(history.Path("")))); err == nil {
+		d, err := history.Open(filepath.Dir(dataDir))
+		if err != nil {
+			return 0, err
+		}
+		err = d.Snapshot(filepath.Join(tmp, filepath.Base(history.Path(""))))
+		d.Close()
+		if err != nil {
+			return 0, fmt.Errorf("copying the record of what was done: %w", err)
+		}
+		count++
 	}
 	if count == 0 {
 		_ = os.RemoveAll(tmp)

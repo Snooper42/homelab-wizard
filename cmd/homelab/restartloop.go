@@ -13,6 +13,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
 	"github.com/Snooper42/homelab-wizard/internal/docker"
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/stopped"
@@ -141,6 +142,7 @@ func (h *homelab) stopRestartLoops(ctx context.Context, client *docker.Client, c
 			}
 			ids = append(ids, id)
 			lines = append(lines, line)
+			h.record("stop", id, history.Watchdog, fmt.Sprintf("Stopped %s: it restarted %d times in an hour", a.Name(), n))
 		}
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err == nil {

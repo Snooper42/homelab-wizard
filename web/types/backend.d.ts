@@ -938,6 +938,17 @@ declare namespace health {
   }
 }
 
+declare namespace history {
+  interface Entry {
+    id: number;
+    at: string;
+    kind: string;
+    app?: string;
+    who: string;
+    text: string;
+  }
+}
+
 declare namespace install {
   interface Event {
     step: number;
@@ -1259,6 +1270,7 @@ interface Backend {
     FinancesReceipt(arg1: string): Promise<string>;
     FinancesWall(): Promise<finance.Wall>;
     Health(): Promise<app.HealthInfo>;
+    History(arg1: string, arg2: string, arg3: number): Promise<history.Entry[]>;
     Homelab(arg1: string, arg2: string, arg3: boolean): Promise<void>;
     Host(): Promise<app.HostInfo>;
     Install(arg1: string[], arg2: Record<string, string>): Promise<api.Started[]>;

@@ -220,6 +220,16 @@ The owner asked for the iPhone app away from home without Tailscale (ADR-0023). 
 - The team's keys are fetched from Cloudflare; the address is made from a team name checked as one DNS label, so it can't be pointed elsewhere.
 - Lockouts are kept in memory: restarting `homelab serve` clears them. Cloudflare's own rate limits stand in front.
 
+## Review: the record of what was done (November 2026)
+
+`internal/history` keeps what was done in `data/homelab.db`, the homelab's first SQLite file (ADR-0022).
+
+- **What it stores:** one line per thing done (*Restarted Immich*, *Changed settings: QUIET_HOURS*, *Changed Finances' transactions*), its kind, the app's id, when, and who did it: *this computer*, a phone by the name it paired with, *the watchdog*, or *the nightly update*. Never a setting's value, a secret, or an amount of money: settings are named only, and Finances says only what kind of thing changed. A household member's own Finances are never recorded. Lines are cut at 500 characters and kept to one line without control characters.
+- **Who can read it:** this account (the file and its `-wal` and `-shm` files are 0600, made so before SQLite opens them); `homelab history`; the desktop app (`History`); and the owner's paired phones through the companion's look-only `History` call, every line through `phoneLog`'s redaction of `.env`'s secrets and anything shaped like a token. A member's phone and a wall screen can't call it.
+- **How long:** 90 days, and at most 20,000 entries (the newest), trimmed on every write.
+- **Backups:** the nightly Secrets backup takes a copy made through SQLite (`VACUUM INTO`), encrypted with `.env` and the other records, never the file copied mid-write.
+- **Who it names:** a phone's own name, as its owner gave it at pairing, and reached from the companion's verified caller (`companion.Caller`), passed to the command it runs (`HOMELAB_ACTOR`). A terminal user can set that variable by hand, which only changes the line they write about themselves.
+
 ## Incident response
 
 1. Look: `cscli alerts list`, the proxy logs, the app's logs.

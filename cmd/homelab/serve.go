@@ -25,6 +25,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/finance"
 	"github.com/Snooper42/homelab-wizard/internal/ghostfolio"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
@@ -291,6 +292,27 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		"SavingsHistory": read(func(context.Context, []json.RawMessage) (any, error) {
 			return savings.LoadHistory(savings.HistoryPath(root)), nil
 		}),
+		// What was done (internal/history), to look at: [app, search, before],
+		// each optional. The owner's phones only (a member's isn't one of
+		// them), every line through phoneLog's redaction.
+		"History": read(func(_ context.Context, args []json.RawMessage) (any, error) {
+			var f history.Filter
+			if len(args) > 0 {
+				_ = json.Unmarshal(args[0], &f.App)
+			}
+			if len(args) > 1 {
+				_ = json.Unmarshal(args[1], &f.Search)
+			}
+			if len(args) > 2 {
+				_ = json.Unmarshal(args[2], &f.Before)
+			}
+			entries, err := history.List(root, f)
+			for i := range entries {
+				entries[i].Text = h.phoneLog(entries[i].Text)
+				entries[i].Who = h.phoneLog(entries[i].Who)
+			}
+			return entries, err
+		}),
 		"Logs": read(func(ctx context.Context, args []json.RawMessage) (any, error) {
 			var id string
 			lines := 200
@@ -371,6 +393,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			if err != nil {
 				return nil, nil, err
 			}
+			h.recordFinances(froot, whoAsked(ctx), "Changed the Finances plan")
 			l, lerr := finance.LoadLedger(finance.LedgerPath(froot))
 			if lerr != nil {
 				l = finance.Ledger{}
@@ -429,6 +452,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			if err != nil {
 				return nil, nil, err
 			}
+			h.recordFinances(froot, whoAsked(ctx), "Changed Finances' transactions")
 			return saved, nil, nil
 		}},
 		// Investments, as the card on the computer has them (internal/ghostfolio):
@@ -551,7 +575,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			v, err := listPhoneSettings(root)
 			return v, nil, err
 		}},
-		"SaveSettings": {Change: true, Private: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"SaveSettings": {Change: true, Private: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var values map[string]string
 			if len(args) < 1 || json.Unmarshal(args[0], &values) != nil {
 				return nil, nil, errors.New("SaveSettings takes the settings to change")
@@ -559,6 +583,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			v, err := savePhoneSettings(root, values)
 			if err != nil {
 				return nil, nil, err
+			}
+			if len(values) > 0 {
+				h.record("settings", "", whoAsked(ctx), history.SettingsChanged(values))
 			}
 			return v, nil, nil
 		}},
@@ -697,6 +724,8 @@ func (h *homelab) runSelf(ctx context.Context, args ...string) ([]string, error)
 	defer cancel()
 	c := procattr.Hide(exec.CommandContext(ctx, exe, append([]string{"--root", h.root, "--no-color"}, args...)...))
 	c.Dir = h.root
+	// The record of what was done says which phone asked (internal/history).
+	c.Env = append(os.Environ(), actorEnv+"="+whoAsked(ctx))
 	out, err := c.CombinedOutput()
 	text := strings.TrimRight(string(out), "\n")
 	if text == "" {
