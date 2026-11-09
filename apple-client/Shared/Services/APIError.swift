@@ -93,6 +93,20 @@ enum APIError: LocalizedError, Equatable, Sendable {
         }
     }
 
+    /// Whether the computer couldn't be reached at all (not on this
+    /// network, or not answering), as opposed to answering with an error:
+    /// only then does a read go through the tunnel instead.
+    var unreachable: Bool {
+        guard case .transport(let code) = self else { return false }
+        switch code {
+        case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost,
+             .cannotFindHost, .dnsLookupFailed, .internationalRoamingOff, .dataNotAllowed:
+            return true
+        default:
+            return false
+        }
+    }
+
     static func from(_ error: Error) -> APIError {
         if let api = error as? APIError { return api }
         if let keychain = error as? KeychainManager.KeychainError { return .keychain(keychain) }

@@ -1,3 +1,4 @@
+import CryptoKit
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -21,11 +22,14 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
 
     nonisolated(unsafe) static var answer: @Sendable (URLRequest) -> Answer = { _ in (200, [:], Data(), nil) }
     nonisolated(unsafe) static var seen: [Seen] = []
+    /// Hosts that don't answer at all, as a computer away from this network.
+    nonisolated(unsafe) static var unreachable: Set<String> = []
     private static let lock = NSLock()
 
-    static func reset(_ answer: @escaping @Sendable (URLRequest) -> Answer) {
+    static func reset(unreachable: Set<String> = [], _ answer: @escaping @Sendable (URLRequest) -> Answer) {
         lock.withLock {
             self.answer = answer
+            self.unreachable = unreachable
             seen = []
         }
     }
@@ -50,6 +54,10 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
         // The answer sees the body too: the stream above can be read only once.
         var request = self.request
         request.httpBody = body
+        if Self.lock.withLock({ Self.unreachable.contains(request.url?.host ?? "") }) {
+            client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
+            return
+        }
         let (status, headers, data, url) = Self.lock.withLock {
             Self.seen.append(Seen(url: request.url!, method: request.httpMethod ?? "GET",
                                   authorization: request.value(forHTTPHeaderField: "Authorization"), body: body))
@@ -400,5 +408,115 @@ extension NetworkRuleTests {
         #expect(model.saveError?.contains("another device") == true)
         // Read again after the refusal: the latest, not this device's stale copy.
         #expect(StubProtocol.requests.filter { $0.url.path == "/api/call/Finances" }.count == 2)
+    }
+}
+
+// Away from home through the tunnel (ADR-0023): the phone agrees a key at
+// pairing, and a read that can't reach home goes out sealed, with the
+// household's service token; an answer from home, even a refusal, never
+// sends it out.
+extension NetworkRuleTests {
+    private static let awayURL = "https://homelab-away.example.com/api/tunnel"
+
+    @Test func pairingAgreesTheKeyForAwayFromHome() async throws {
+        let endpoint = try ServerEndpoint.parse(Self.origin).endpoint
+        let code = try #require(PairingCode("ABCD2345"))
+        let computer = Curve25519.KeyAgreement.PrivateKey()
+        let computerPublic = computer.publicKey.rawRepresentation.base64EncodedString()
+        StubProtocol.reset { _ in
+            (200, [:], Self.json(#"{"token":"\#(Self.token)","device":{"id":"abc123","name":"Phone","canChange":false},"tunnelKey":"\#(computerPublic)","away":{"url":"\#(Self.awayURL)","clientId":"client-1.access","clientSecret":"secret-1"}}"#), nil)
+        }
+        let (api, store) = client(paired: false)
+        _ = try await api.pair(code: code, deviceName: "Phone", at: endpoint)
+        let body = try JSONDecoder().decode([String: JSONValue].self, from: try #require(StubProtocol.requests.first).body)
+        guard case .string(let sent) = body["key"] else { Issue.record("no key sent"); return }
+        let phonePublic = try #require(Data(base64Encoded: sent))
+        // The computer's side of the agreement gives the key the phone kept.
+        let expected = try TunnelSeal.key(phone: computer, computer: phonePublic, deviceID: "abc123")
+        let away = try #require(try store.loadCredential()?.away)
+        #expect(away.key == expected.withUnsafeBytes { Data($0) })
+        #expect(away.url.absoluteString == Self.awayURL && away.clientID == "client-1.access" && away.clientSecret == "secret-1")
+    }
+
+    @Test func aWallScreenSendsNoKeyAndKeepsNoWayOut() async throws {
+        let endpoint = try ServerEndpoint.parse(Self.origin).endpoint
+        let code = try #require(PairingCode("ABCD2345"))
+        StubProtocol.reset { _ in (200, [:], Self.json(#"{"token":"\#(Self.token)","device":{"id":"abc123","name":"Hall","canChange":false}}"#), nil) }
+        let (api, store) = client(paired: false)
+        _ = try await api.pair(code: code, deviceName: "Hall", at: endpoint, kiosk: true)
+        let body = try JSONDecoder().decode([String: JSONValue].self, from: try #require(StubProtocol.requests.first).body)
+        #expect(body["key"] == nil)
+        #expect(try store.loadCredential()?.away == nil)
+    }
+
+    /// A phone paired with a way out, and the key the computer shares.
+    private func awayClient() throws -> (APIClient, SymmetricKey) {
+        let key = SymmetricKey(size: .bits256)
+        let away = try #require(AwayCredential.make(key: key.withUnsafeBytes { Data($0) }, url: Self.awayURL, clientID: "client-1.access", clientSecret: "secret-1"))
+        let store = FakeCredentialStore(DeviceCredential(endpoint: try ServerEndpoint.parse(Self.origin).endpoint, token: Self.token,
+                                                         deviceID: "abc123", deviceName: "Test", pairedAt: Date(), away: away))
+        return (APIClient(keychain: store, protocolClasses: [StubProtocol.self]), key)
+    }
+
+    /// The computer's answer through the tunnel: the request opened with
+    /// key, checked, and `result` sealed back, bound to it.
+    private static func tunnelAnswer(_ request: URLRequest, key: SymmetricKey, result: String) -> StubProtocol.Answer {
+        guard request.value(forHTTPHeaderField: "CF-Access-Client-Id") == "client-1.access",
+              request.value(forHTTPHeaderField: "CF-Access-Client-Secret") == "secret-1",
+              request.value(forHTTPHeaderField: "Authorization") == nil,
+              let body = request.httpBody,
+              let sealed = try? JSONDecoder().decode([String: String].self, from: body),
+              sealed["device"] == "abc123", let nonce = sealed["nonce"], let box = sealed["box"],
+              let n = Data(base64Encoded: nonce), let b = Data(base64Encoded: box),
+              let plain = try? TunnelSeal.open(b, nonce: n, key: key, ad: TunnelSeal.requestAD(deviceID: "abc123")),
+              let ask = try? JSONDecoder().decode([String: JSONValue].self, from: plain),
+              ask["token"] == .string(token), ask["method"] == .string("Status")
+        else { return (403, [:], Data(), nil) }
+        let answer = Data(#"{"status":200,"result":\#(result)}"#.utf8)
+        guard let out = try? TunnelSeal.seal(answer, key: key, ad: TunnelSeal.answerAD(deviceID: "abc123", requestNonce: nonce)) else { return (500, [:], Data(), nil) }
+        let reply = #"{"nonce":"\#(out.nonce.base64EncodedString())","box":"\#(out.box.base64EncodedString())"}"#
+        return (200, [:], Data(reply.utf8), nil)
+    }
+
+    @Test func aReadThatCannotReachHomeGoesThroughTheTunnel() async throws {
+        let (api, key) = try awayClient()
+        let status = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : (500, [:], Data(), nil)
+        }
+        let answer = try await api.status()
+        #expect(answer.apps.first?.id == "immich")
+        let tunnel = try #require(StubProtocol.requests.first)
+        #expect(tunnel.url.absoluteString == Self.awayURL)
+        // The device token went only inside the sealed box.
+        #expect(tunnel.authorization == nil && !String(decoding: tunnel.body, as: UTF8.self).contains(Self.token))
+    }
+
+    @Test func anAnswerFromHomeNeverGoesOut() async throws {
+        let (api, _) = try awayClient()
+        StubProtocol.reset { _ in (403, [:], Self.json(#"{"error":"this phone can look but not change anything"}"#), nil) }
+        await #expect(throws: APIError.self) { _ = try await api.status() }
+        #expect(StubProtocol.requests.allSatisfy { $0.url.host != "homelab-away.example.com" })
+    }
+
+    @Test func aChangedAnswerThroughTheTunnelIsRefused() async throws {
+        let (api, key) = try awayClient()
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            guard request.url?.host == "homelab-away.example.com" else { return (500, [:], Data(), nil) }
+            var answer = Self.tunnelAnswer(request, key: key, result: "null")
+            // The box, sealed for another request.
+            answer.2 = Data(#"{"nonce":"MzMzMzMzMzMzMzMz","box":"AAAAAAAAAAAAAAAAAAAAAA=="}"#.utf8)
+            return answer
+        }
+        await #expect(throws: APIError.invalidResponse) { _ = try await api.status() }
+    }
+
+    @Test func onlyATunnelAddressIsKept() {
+        let key = Data(repeating: 1, count: 32)
+        #expect(AwayCredential.make(key: key, url: Self.awayURL, clientID: "a", clientSecret: "b") != nil)
+        #expect(AwayCredential.make(key: key, url: "http://homelab-away.example.com/api/tunnel", clientID: "a", clientSecret: "b") == nil)
+        #expect(AwayCredential.make(key: key, url: "https://homelab-away.example.com/api/call/Status", clientID: "a", clientSecret: "b") == nil)
+        #expect(AwayCredential.make(key: key, url: "https://user@homelab-away.example.com/api/tunnel", clientID: "a", clientSecret: "b") == nil)
+        #expect(AwayCredential.make(key: Data(repeating: 1, count: 16), url: Self.awayURL, clientID: "a", clientSecret: "b") == nil)
     }
 }
