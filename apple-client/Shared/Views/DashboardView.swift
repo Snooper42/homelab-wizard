@@ -179,6 +179,10 @@ private struct PhoneDashboard: View {
             .tag(Screen.settings)
         }
         .shrinkingTabBar()
+        // Siri or a shortcut asked for an app: Status, where its page opens.
+        .onChange(of: IntentInbox.shared.pending, initial: true) { _, request in
+            if request != nil { savedTab = Screen.status(.all).storageKey }
+        }
         #if SCREENSHOTS
         .onAppear {
             if let tab = screenshotTab { savedTab = tab.storageKey }
@@ -237,9 +241,14 @@ private struct PhoneStatus: View {
     var openBackups: @MainActor () -> Void = {}
     /// Which groups are open (StatusFolds): names only, kept like the tab.
     @SceneStorage("statusFolds") private var folds = ""
+    /// An app's page grows out of its row (iOS 18).
+    @Namespace private var zoom
+    @Environment(AppActionsViewModel.self) private var actions
+    /// The pages open on Status, so Siri can open one.
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 // While searching, only the apps that match.
                 if !model.isSearching, model.hasLoaded {
@@ -261,6 +270,7 @@ private struct PhoneStatus: View {
                             NavigationLink(value: app.id) {
                                 AppRowView(app: app)
                             }
+                            .zoomSource(id: app.id, in: zoom)
                             .appActionControls(for: app)
                         }
                     } header: {
@@ -283,6 +293,7 @@ private struct PhoneStatus: View {
                                 NavigationLink(value: app.id) {
                                     AppRowView(app: app)
                                 }
+                                .zoomSource(id: app.id, in: zoom)
                                 .appActionControls(for: app)
                             }
                         } else {
@@ -310,6 +321,7 @@ private struct PhoneStatus: View {
             .navigationTitle("Status")
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
+                    .zoomTransition(id: id, in: zoom)
             }
             #if SCREENSHOTS
             .overlay {
@@ -331,6 +343,10 @@ private struct PhoneStatus: View {
             .task(id: finances.canSeeMoney) { await finances.load() }
             // The Backups tile, read once if the Backups tab hasn't yet.
             .task { if model.backups.overview == nil { await model.backups.load() } }
+            // Siri or a shortcut: the app's page, and the action asked for,
+            // once Status is read (after unlock).
+            .onChange(of: IntentInbox.shared.pending, initial: true) { takeRequest() }
+            .onChange(of: model.hasLoaded) { takeRequest() }
             .toolbar {
                 #if os(iOS)
                 ToolbarItem(placement: .topBarLeading) {
@@ -340,6 +356,27 @@ private struct PhoneStatus: View {
                 ToolbarItem(placement: .primaryAction) {
                     DeviceMenu()
                 }
+            }
+        }
+    }
+
+    /// Does what Siri or a shortcut asked: opens the app's page and asks as
+    /// its button would (Face ID, and Stop asks first). An app it can't
+    /// tell is searched for instead, so the list shows what matches.
+    private func takeRequest() {
+        let inbox = IntentInbox.shared
+        guard let request = inbox.pending, model.hasLoaded else { return }
+        inbox.pending = nil
+        guard let app = IntentInbox.match(request.app, in: model.apps(for: .all)) else {
+            model.search = request.app
+            return
+        }
+        path = NavigationPath([app.id])
+        if let action = request.action, actions.available(for: app).contains(action) {
+            // Once its page is up, so the spinner and the result show there.
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                actions.request(action, on: app)
             }
         }
     }
@@ -697,22 +734,45 @@ struct GroupHeader: View {
     }
 }
 
-/// A folded group's apps, by name, on a line of their own (as the computer
-/// shows them since main #474). A tap opens the group.
+/// A folded group: its apps' logos in a row, as a Home Screen folder
+/// shows its apps, and their names under them. A badge only on one that
+/// isn't simply running. A tap opens the group.
 struct FoldedGroupNames: View {
     let group: AppGroup
     let open: @MainActor () -> Void
+    @ScaledMetric(relativeTo: .body) private var logo: CGFloat = 30
+    /// How many logos fit before "+3".
+    private let shown = 6
 
     var body: some View {
         Button(action: open) {
-            Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(group.apps.prefix(shown)) { app in
+                        AppIconView(app: app, size: min(logo, 44), stateBadge: !app.isPlainlyFine)
+                    }
+                    if group.apps.count > shown {
+                        Text(verbatim: "+\(group.apps.count - shown)")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .frame(width: min(logo, 44), height: min(logo, 44))
+                            .background(Theme.canvas, in: RoundedRectangle(cornerRadius: min(logo, 44) * 0.22, style: .continuous))
+                    }
+                    Spacer(minLength: 0)
+                }
+                Text(verbatim: group.apps.map(\.name).joined(separator: ", "))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: group.apps.map(\.name).joined(separator: ", ")))
         .accessibilityHint("Opens the group")
     }
 }

@@ -35,8 +35,68 @@ struct HealthProvider: TimelineProvider {
 
 struct HealthWidgetView: View {
     let entry: HealthEntry
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
+        switch family {
+        case .accessoryCircular: circular
+        case .accessoryRectangular: rectangular
+        case .accessoryInline: inline
+        default: tile
+        }
+    }
+
+    private var symbol: String {
+        guard let summary = entry.summary, entry.enabled else { return "server.rack" }
+        return summary.needALook == 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"
+    }
+
+    /// On the Lock Screen, round: a tick, or how many need a look.
+    private var circular: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            if let summary = entry.summary, entry.enabled, summary.needALook > 0 {
+                VStack(spacing: 0) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.caption2)
+                    Text(summary.needALook, format: .number).font(.title3.weight(.bold))
+                }
+                .privacySensitive()
+            } else {
+                Image(systemName: symbol).font(.title2.weight(.semibold)).privacySensitive()
+            }
+        }
+        .widgetAccentable()
+        .containerBackground(for: .widget) { Color.clear }
+    }
+
+    /// On the Lock Screen, a line or two.
+    private var rectangular: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label("Homelab", systemImage: "server.rack")
+                .font(.caption2.weight(.semibold))
+                .widgetAccentable()
+            if let summary = entry.summary, entry.enabled {
+                Group {
+                    Text(summary.words).font(.headline)
+                    (Text(summary.at, style: .relative) + Text(" ago")).font(.caption2)
+                }
+                .privacySensitive()
+            } else {
+                Text(entry.enabled ? "Open Homelab" : "Turn on in Homelab").font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .containerBackground(for: .widget) { Color.clear }
+    }
+
+    /// Above the clock, in a few words.
+    private var inline: some View {
+        Label(entry.enabled ? (entry.summary?.words ?? "Open Homelab") : "Homelab", systemImage: symbol)
+            .privacySensitive()
+            .containerBackground(for: .widget) { Color.clear }
+    }
+
+    private var tile: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "server.rack")
@@ -82,7 +142,11 @@ struct HealthWidget: Widget {
         }
         .configurationDisplayName("Homelab")
         .description("All well, or how many apps need a look. No app names.")
+        #if os(iOS)
+        .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular, .accessoryInline])
+        #else
         .supportedFamilies([.systemSmall])
+        #endif
     }
 }
 

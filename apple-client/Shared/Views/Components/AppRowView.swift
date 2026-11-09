@@ -69,6 +69,9 @@ struct AppIconView: View {
     @Environment(IconStore.self) private var icons
     let app: AppStatus
     let size: CGFloat
+    /// The state as a badge on the logo. Off where only an app that isn't
+    /// simply running should stand out (a folded group's logos).
+    var stateBadge = true
 
     var body: some View {
         // The app's logo from the set the app ships (AppLogos), else the one
@@ -103,10 +106,12 @@ extension AppIconView {
                     .strokeBorder(.primary.opacity(0.08), lineWidth: 0.5)
             }
             .overlay(alignment: .bottomTrailing) {
-                AppStateIcon(app: app)
-                    .font(.system(size: size * 0.42))
-                    .background(Circle().fill(.background).padding(1))
-                    .offset(x: size * 0.12, y: size * 0.12)
+                if stateBadge {
+                    AppStateIcon(app: app)
+                        .font(.system(size: size * 0.42))
+                        .background(Circle().fill(.background).padding(1))
+                        .offset(x: size * 0.12, y: size * 0.12)
+                }
             }
             .accessibilityHidden(true)
     }
@@ -354,6 +359,11 @@ extension AppStatus {
             || !(notAnswering ?? "").isEmpty || stoppedOnPurpose?.keptRestarting == true
             // A crash: it stopped by itself and Docker says why (main #474).
             || (state == "stopped" && stoppedOnPurpose == nil && !(stoppedWhy ?? "").isEmpty)
+    }
+
+    /// Running as it should: nothing about it needs saying.
+    var isPlainlyFine: Bool {
+        isRunning && !needsAttention && !isWaiting && health != "starting"
     }
 
     var symbolName: String {
