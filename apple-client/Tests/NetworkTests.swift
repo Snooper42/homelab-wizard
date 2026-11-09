@@ -654,3 +654,33 @@ extension NetworkRuleTests {
         #expect(StubProtocol.requests.contains { $0.url.path == "/api/call/Catalog" })
     }
 }
+
+// What the computer can do, on screen (item 3): what it doesn't answer isn't
+// offered, and an app's page says to update the computer; one that says
+// nothing about itself is offered everything, as before.
+extension NetworkRuleTests {
+    @MainActor
+    private func actions(computer: String?) -> AppActionsViewModel {
+        let (api, _) = client()
+        let extra = computer.map { #","computer":\#($0)"# } ?? ""
+        let device = try! JSONDecoder().decode(DeviceInfo.self, from: Data(#"{"id":"abc123","name":"Test","canChange":true\#(extra)}"#.utf8))
+        return AppActionsViewModel(api: api, liveEvents: LiveEventManager(api: api), device: { device }, authorize: { _ in true })
+    }
+
+    @Test @MainActor func whatTheComputerLacksIsNotOffered() {
+        let app = Self.apps(#"[{"id":"immich","name":"Immich","state":"running"}]"#)[0]
+        let old = actions(computer: #"{"version":"0.27.9","methods":["Status","Logs"],"features":[]}"#)
+        #expect(old.available(for: app).isEmpty && !old.canChangeApps)
+        #expect(!old.canStopForAWhile && old.settings(for: app).isEmpty)
+        #expect(old.updateHint(for: app) == "Update Homelab Wizard on the computer to start and stop apps from here: it has 0.27.9.")
+        #expect(old.lookOnlyHint(for: app) == nil) // it may change; the computer can't yet
+
+        let new = actions(computer: #"{"version":"0.28.0","methods":["AppAction","SetAppSetting","StopUntil"],"features":[]}"#)
+        #expect(new.available(for: app).contains(.stop) && new.canStopForAWhile && !new.settings(for: app).isEmpty)
+        #expect(new.updateHint(for: app) == nil)
+
+        let silent = actions(computer: nil)
+        #expect(silent.available(for: app).contains(.restart) && silent.canStopForAWhile && !silent.settings(for: app).isEmpty)
+        #expect(silent.updateHint(for: app) == nil)
+    }
+}

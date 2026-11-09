@@ -68,7 +68,7 @@ struct AppActionControls: ViewModifier {
                     }
                     .disabled(actions.isBusy)
                 }
-                if available.contains(.stop) {
+                if available.contains(.stop), actions.canStopForAWhile {
                     StopForAWhileMenu(app: app)
                 }
                 if actions.canChange {
@@ -213,7 +213,7 @@ struct GroupActionsMenu: View {
     var body: some View {
         let start = AppAction.groupTargets(.start, in: apps)
         let running = AppAction.groupTargets(.restart, in: apps)
-        if actions.canChange, !start.isEmpty || !running.isEmpty {
+        if actions.canChangeApps, !start.isEmpty || !running.isEmpty {
             Menu {
                 if !start.isEmpty {
                     Button { actions.requestGroup(.start, on: start) } label: {
@@ -227,12 +227,14 @@ struct GroupActionsMenu: View {
                     Button(role: .destructive) { actions.requestGroup(.stop, on: running) } label: {
                         Label(running.count == 1 ? "Stop \(running[0].name)" : AppAction.stop.groupTitle(count: running.count), systemImage: AppAction.stop.systemImage)
                     }
-                    Menu {
-                        ForEach(StopChoice.choices()) { choice in
-                            Button(choice.label) { actions.requestGroup(.stop, on: running, until: choice) }
+                    if actions.canStopForAWhile {
+                        Menu {
+                            ForEach(StopChoice.choices()) { choice in
+                                Button(choice.label) { actions.requestGroup(.stop, on: running, until: choice) }
+                            }
+                        } label: {
+                            Label("Stop for a While", systemImage: "timer")
                         }
-                    } label: {
-                        Label("Stop for a While", systemImage: "timer")
                     }
                 }
             } label: {
