@@ -734,7 +734,7 @@ function InboxWidget({ d, job, act }: { d: app.TidyUp; job: TidyJob | null; act:
       </div>
       </fieldset>
       <div class="tidyinboxgo"><Go primary label="Tidy up now" job={job} onClick={() => act.run('inbox', 'scan', ['--apply'])} /></div>
-      <p class="tidyinboxwhere muted">Your libraries live in {d.mediaRoot}. <button type="button" class="linkbtn" onClick={() => act.places(true)}>Change where your libraries live…</button></p>
+      <p class="tidyinboxwhere muted">Your libraries live in {d.mediaRoot}. <button type="button" class="linkbtn" disabled={waits} title={waits ? "Waits for the job to finish" : undefined} onClick={() => act.places(true)}>Change where your libraries live…</button></p>
     </Widget>
   );
 }

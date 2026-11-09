@@ -16021,7 +16021,7 @@ ${pays}
         "Your libraries live in ",
         d3.mediaRoot,
         ". ",
-        /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", onClick: () => act.places(true), children: "Change where your libraries live…" })
+        /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn", disabled: waits2, title: waits2 ? "Waits for the job to finish" : void 0, onClick: () => act.places(true), children: "Change where your libraries live…" })
       ] })
     ] });
   }
