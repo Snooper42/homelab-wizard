@@ -150,6 +150,7 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"inbox", "name", []string{vid, "movie", "Heat", "1995"}, "media inbox name " + vid + " movie Heat 1995 --events json"},
 		{"inbox", "name", []string{vid, "movie", "The Thing"}, "media inbox name " + vid + " movie The Thing --events json"},
 		{"inbox", "name", []string{show, "episode", "Show", "3", "4"}, "media inbox name " + show + " episode Show 3 4 --events json"},
+		{"inbox", "name", []string{show, "album", rumours}, "media inbox name " + show + " album " + rumours + " --events json"},
 		{"inbox", "leave", []string{vid}, "media inbox leave " + vid + " --events json"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, false)
@@ -185,6 +186,11 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"inbox", "name", []string{vid, "movie", "Heat", "1995", "2"}},
 		{"inbox", "name", []string{vid, "episode", "Show"}},
 		{"inbox", "name", []string{vid, "episode", "Show", "three"}},
+		{"inbox", "name", []string{show, "album"}},
+		{"inbox", "name", []string{show, "album", "Rumours"}},
+		{"inbox", "name", []string{show, "album", "--library=/x"}},
+		{"inbox", "name", []string{show, "album", rumours, "--config"}},
+		{"inbox", "name", []string{show, "album", strings.ToUpper(rumours)}},
 		{"inbox", "leave", []string{"/d/a", "/d/b"}},
 		{"inbox", "leave", nil},
 	} {
@@ -333,6 +339,9 @@ func TestTidyLockFollowsAJobItDidNotStart(t *testing.T) {
 // Every job a button on Tidy Up sends, with the flags written into the screen's code, is one the app runs. The
 // preview's fake backend runs anything, so a smoke case can't see the app refuse a flag: Tidy lyrics sent --tidy,
 // which the app refused, and every smoke case passed.
+// rumours is a MusicBrainz release id, as Name these songs sends it.
+const rumours = "0e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d"
+
 func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 	call := regexp.MustCompile(`\brun\('([a-z]+)', '([a-z-]+)', \[([^\]]*)\]`)
 	flag := regexp.MustCompile(`'(--[a-z-]+)'`)
@@ -364,6 +373,9 @@ func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 			}
 			if m[1] == "inbox" && m[2] == "name" {
 				args = []string{vid, "movie", "Heat", "1995"}
+				if strings.Contains(m[3], "'album'") {
+					args = []string{vid, "album", rumours}
+				}
 			}
 			seen++
 			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
