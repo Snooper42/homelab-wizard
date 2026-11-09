@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -68,9 +69,23 @@ type Server struct {
 	// bills as iCalendar), ok false for a key that is not the plan's; nil
 	// leaves /finances.ics out.
 	Calendar func(key string) (ics []byte, ok bool)
+	// Access is the companion's Cloudflare Access application (.env), for
+	// away from home through the tunnel (ADR-0023); nil, or not set up,
+	// refuses the tunnel as before.
+	Access func() Access
+	// Now is the clock; nil is time.Now.
+	Now func() time.Time
 
 	mu       sync.Mutex
 	failures []time.Time // recent wrong pairing codes
+	guardT   tunnelGuard
+}
+
+func (s *Server) now() time.Time {
+	if s.Now != nil {
+		return s.Now()
+	}
+	return time.Now()
 }
 
 // MaxFailures is how many wrong pairing codes are taken in PairFor before
@@ -87,14 +102,19 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/manifest.webmanifest", manifest)
 	mux.HandleFunc("GET /finances.ics", s.calendar)
 	mux.HandleFunc("/", s.files)
-	return guard(mux)
+	return s.guard(mux)
 }
 
 // guard turns away everything that is not from this machine, the home
-// network, or the tailnet, and anything that came through Cloudflare (the
-// tunnel would carry its headers): the companion is never on the internet.
-func guard(next http.Handler) http.Handler {
+// network, or the tailnet. What came through Cloudflare (the tunnel carries
+// its headers) goes to the tunnel's one address, sealed and looking only
+// (tunnel.go); nothing else of the companion is ever on the internet.
+func (s *Server) guard(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if throughTunnel(r) {
+			s.tunnel(w, r)
+			return
+		}
 		if !Local(r) {
 			http.Error(w, "the phone companion answers only at home and on the tailnet", http.StatusForbidden)
 			return
@@ -279,6 +299,10 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Code, Name string
 		Kiosk      bool // a TV or wall screen: never allowed changes
+		// Key is the phone's X25519 public key (base64), for sealing what
+		// goes through the tunnel away from home (ADR-0023); "" from a
+		// phone that doesn't go out.
+		Key string
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
 		fail(w, http.StatusBadRequest, "send {\"code\": \"...\"}")
@@ -311,7 +335,25 @@ func (s *Server) pair(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"token": token, "device": meOf(d)})
+	answer := map[string]any{"token": token, "device": meOf(d)}
+	// Away from home: a key agreed here, at home, over a connection nobody
+	// on the Wi-Fi can read, and never for a wall screen, which stays home.
+	if body.Key != "" && s.encrypted(r) && !d.Kiosk {
+		phone, err := base64.StdEncoding.DecodeString(body.Key)
+		var computer, key []byte
+		if err == nil {
+			computer, key, err = TunnelKeys(phone, d.ID)
+		}
+		if err == nil {
+			err = s.Store.SetTunnelKey(d.ID, key)
+		}
+		if err != nil {
+			fail(w, http.StatusBadRequest, "the phone's key for away from home could not be used: pair again")
+			return
+		}
+		answer["tunnelKey"] = base64.StdEncoding.EncodeToString(computer)
+	}
+	writeJSON(w, http.StatusOK, answer)
 }
 
 func (s *Server) tooMany() bool {
@@ -356,39 +398,8 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the computer")
 		return
 	}
-	if d.Person != "" && !m.Member {
-		fail(w, http.StatusForbidden, "this is "+d.PersonName+"'s phone: it shows their own apps and their own Finances, not the rest of the homelab")
-		return
-	}
-	if m.Change && d.CanChange && !s.encrypted(r) {
-		fail(w, http.StatusForbidden, "changes from a phone need the Tailscale (https) link; over the home Wi-Fi it can only look")
-		return
-	}
-	if m.Change && !d.CanChange {
-		fail(w, http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow "+d.ID)
-		return
-	}
-	if m.Private && d.Kiosk {
-		fail(w, http.StatusForbidden, "a wall screen does not see Settings: use a phone, or Homelab Wizard on the computer")
-		return
-	}
-	if m.Private && !s.encrypted(r) {
-		fail(w, http.StatusForbidden, "Settings on a phone need the https link; over the home Wi-Fi they are not sent")
-		return
-	}
-	if m.Finances != "" && !s.encrypted(r) {
-		fail(w, http.StatusForbidden, "Finances on a phone need the Tailscale (https) link; over the home Wi-Fi they are not sent")
-		return
-	}
-	if !FinancesAllow(d.Finances, m.Finances) {
-		switch d.Finances {
-		case "":
-			fail(w, http.StatusForbidden, "this phone cannot see Finances: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" view")
-		case FinancesCard:
-			fail(w, http.StatusForbidden, "this screen sees only the money card: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" view")
-		default:
-			fail(w, http.StatusForbidden, "this phone can see Finances but not change them: on the computer, Settings › Phones, or homelab phone finances "+d.ID+" edit")
-		}
+	if code, msg := allowed(d, m, s.encrypted(r)); code != 0 {
+		fail(w, code, msg)
 		return
 	}
 	var args []json.RawMessage
@@ -416,6 +427,42 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"result": result, "log": log})
+}
+
+// allowed is whether device d may call m, and why not (an HTTP status and
+// what to say) when it may not; encrypted is whether the call came where
+// nobody on the Wi-Fi can read it. The home network and the tunnel both
+// ask it, so the two never drift apart.
+func allowed(d Device, m Method, encrypted bool) (int, string) {
+	if d.Person != "" && !m.Member {
+		return http.StatusForbidden, "this is " + d.PersonName + "'s phone: it shows their own apps and their own Finances, not the rest of the homelab"
+	}
+	if m.Change && d.CanChange && !encrypted {
+		return http.StatusForbidden, "changes from a phone need the Tailscale (https) link; over the home Wi-Fi it can only look"
+	}
+	if m.Change && !d.CanChange {
+		return http.StatusForbidden, "this phone can look but not change anything: on the computer, homelab phone allow " + d.ID
+	}
+	if m.Private && d.Kiosk {
+		return http.StatusForbidden, "a wall screen does not see Settings: use a phone, or Homelab Wizard on the computer"
+	}
+	if m.Private && !encrypted {
+		return http.StatusForbidden, "Settings on a phone need the https link; over the home Wi-Fi they are not sent"
+	}
+	if m.Finances != "" && !encrypted {
+		return http.StatusForbidden, "Finances on a phone need the Tailscale (https) link; over the home Wi-Fi they are not sent"
+	}
+	if !FinancesAllow(d.Finances, m.Finances) {
+		switch d.Finances {
+		case "":
+			return http.StatusForbidden, "this phone cannot see Finances: on the computer, Settings › Phones, or homelab phone finances " + d.ID + " view"
+		case FinancesCard:
+			return http.StatusForbidden, "this screen sees only the money card: on the computer, Settings › Phones, or homelab phone finances " + d.ID + " view"
+		default:
+			return http.StatusForbidden, "this phone can see Finances but not change them: on the computer, Settings › Phones, or homelab phone finances " + d.ID + " edit"
+		}
+	}
+	return 0, ""
 }
 
 // stream answers a Stream method, a line at a time.
