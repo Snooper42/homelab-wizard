@@ -4107,8 +4107,8 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await page.click(`#finRoot > .seg button:text-is("${view}")`);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), and a holding on Investments (it opens its worth at each read).
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), and the order Recurring's payments are listed in.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -5033,6 +5033,8 @@ const smokes = [
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
     await page.waitForSelector('.fx-loans h2:text-is("Loans and cards carrying a balance")', { timeout: 5000 });
     await page.waitForSelector('.fx-paymore [role=status]:has-text("Nothing is saved")', { timeout: 5000 });
+    // Nothing typed, no figure a month: not "about $0.00 a month".
+    if (/about/.test(await page.textContent('.fx-paymore label'))) throw new Error(`with nothing typed: ${await page.textContent('.fx-paymore label')}`);
     await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100');
     await page.waitForSelector('.fx-paymore label:has-text("(about $306.96 a month)")', { timeout: 5000 });
     await page.waitForSelector('.fx-paymore [role=status]:text-is("Mortgage paid off Nov 2045, 93 months sooner, $99,595.13 less interest.")', { timeout: 5000 });
@@ -5049,8 +5051,10 @@ const smokes = [
   // Goals on Net worth: each with what is left, what it needs a month and a paycheck by its day, and its pace (amber when that is late).
   { name: 'Finances: goals say what is left, what they need, and their pace', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
-    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$274.91 a month, $90.16 a paycheck"):has-text("there by May 2027"):has-text("to be there by Jun 30, 2028")', { timeout: 5000 });
-    await page.waitForSelector('.fx-goals li:has-text("Emergency fund") .fx-goalsaved:text-is("$6,500.00 of $12,000.00")', { timeout: 5000 });
+    // What it needs (a paycheck first) under its name; under its bar, what is saved and the pace lately.
+    await page.waitForSelector('.fx-goals li:has-text("Emergency fund"):has-text("$5,500.00 left"):has-text("$90.16 a paycheck ($274.91 a month) to be there by Jun 30, 2028")', { timeout: 5000 });
+    const saved = (await page.textContent('.fx-goals li:has-text("Emergency fund") .fx-goalsaved', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (saved !== '$6,500.00 of $12,000.00 · $889.78 a month lately: there by May 2027') throw new Error(`under the bar: ${saved}`);
     await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-warn:has-text("there by Oct 2031")', { timeout: 5000 });
     await page.waitForSelector('.fx-goals li:has-text("Japan trip") .fx-budgetbar.warn', { timeout: 5000 });
     if (await page.$('.fx-goals li:has-text("Emergency fund") .fx-warn')) throw new Error('a goal on pace is marked behind');
@@ -5182,7 +5186,7 @@ const smokes = [
     if (await page.$('#finSheet button:text-is("From Firefly III")')) throw new Error('From Firefly III with Firefly III not running');
     await page.click('#finSheet button:text-is("From Ghostfolio")');
     await page.waitForSelector('#finSheet .fromapp [role=status]:text-is("Filled from Ghostfolio: Robinhood, Fidelity 401(k). Not matched: Trading 212. Check them, then Save.")', { timeout: 5000 });
-    if ((await page.inputValue('#bal-brk')) !== '8420.5' || (await page.inputValue('#bal-k401')) !== '39120' || (await page.inputValue('#bal-chk')) !== '2512.4') throw new Error('the boxes were not filled as read');
+    if ((await page.inputValue('#bal-brk')) !== '8420.50' || (await page.inputValue('#bal-k401')) !== '39120' || (await page.inputValue('#bal-chk')) !== '2512.40') throw new Error('the boxes were not filled as read');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const plan = await page.evaluate(() => window.__MOCK.financesSaved.at(-1));
@@ -5529,12 +5533,22 @@ const smokes = [
   { name: 'Finances: Update balances keeps the balances typed in', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
     await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
-    for (const [id, want] of [['chk', '2512.4'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
+    for (const [id, want] of [['chk', '2512.40'], ['sav', '6500'], ['roth', '14600'], ['visa', '1240.55'], ['mortgage', '287400'], ['home', '410000']]) {
       const got = await page.inputValue(`#finSheet input#bal-${id}`);
       if (got !== want) throw new Error(`${id} starts at ${got}, not ${want}`);
     }
     await page.fill('#finSheet input#bal-chk', '3000');
     await page.waitForSelector('#finSheet .balancelist li:has(#bal-chk) small:has-text("expected $2,512.40, +$487.60")', { timeout: 5000 });
+    // What Save changes in all: nothing else differs yet; then the card owing $59.45 more, and its pending $15.90 less.
+    if (await page.$('#finSheet .balsum')) {
+      if ((await page.textContent('#finSheet .balsum')).trim() !== '1 balance differs from what was expected: net worth +$487.60.') throw new Error(await page.textContent('#finSheet .balsum'));
+    } else throw new Error('no line says what Save changes');
+    await page.fill('#finSheet input#bal-visa', '1300');
+    await page.fill('#finSheet input[aria-label="Chase Freedom pending"]', '68.20');
+    await page.waitForFunction(() => document.querySelector('#finSheet .balsum')?.textContent.trim() === '2 balances differ from what was expected: net worth +$444.05.', null, { timeout: 5000 })
+      .catch(async () => { throw new Error(`two changed: ${await page.textContent('#finSheet .balsum')}`); });
+    await page.fill('#finSheet input#bal-visa', '1240.55');
+    await page.fill('#finSheet input[aria-label="Chase Freedom pending"]', '84.10');
     await page.fill('#finSheet label:has-text("Flag checking under") input', '600');
     // Enter keeps them, as Save does.
     await page.press('#finSheet input#bal-chk', 'Enter');
@@ -6023,6 +6037,10 @@ const smokes = [
     await page.waitForSelector('.fx-calendar h2:has-text("December 2026")', { timeout: 5000 });
     await page.waitForSelector('.fx-month button[data-day="2026-12-05"][aria-pressed=true]:focus', { timeout: 5000 });
     await page.waitForSelector('.fx-month button[data-day="2026-12-25"] .fx-hol:text-is("Christmas")', { timeout: 5000 });
+    // T, from the day the keys reached, goes back to today, the focus with it.
+    await page.keyboard.press('t');
+    await page.waitForSelector('.fx-month button[data-day="2026-10-30"][aria-pressed=true]:focus', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
     await page.click('.fx-calendar button:text-is("Today")');
     await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
     // A payment's row opens its form.
@@ -6055,6 +6073,470 @@ const smokes = [
     // January 2027 holds both: checking each day to Jan 30, then what is planned.
     for (let i = 0; i < 6; i++) await page.click('.fx-calendar button[aria-label="The month before"]');
     await page.waitForSelector('.fx-calendar .fx-lead:has-text("after it, what is planned")', { timeout: 5000 });
+  } },
+  // Before today: what the ledger recorded on each day, its payees' marks and the day's total, back to its first month;
+  // a day picked lists them, each opening its form; a month before reads what it came to; a transfer is in no total.
+  { name: 'Finances: the calendar shows what was recorded on the days before today', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month td.fx-past button[data-day="2026-10-28"] .fmark.logo', { timeout: 5000 });
+    const bal = await page.textContent('.fx-month button[data-day="2026-10-28"] .fx-daybal');
+    if (bal !== '−$48') throw new Error(`Oct 28 shows ${bal}`);
+    // Jordan's paycheck is money in; the Roth IRA transfer moves money between the household's own accounts: no total.
+    await page.waitForSelector('.fx-month button[data-day="2026-10-26"] .fx-daybal.fx-in:text-is("+$2.40k")', { timeout: 5000 });
+    if (await page.$('.fx-month button[data-day="2026-10-27"] .fx-daybal')) throw new Error('a transfer has a total');
+    const label = await page.textContent('.fx-month button[data-day="2026-10-28"] .fx-hidden');
+    if (!label.includes('Shell −$48.20') || !label.includes('in all')) throw new Error(`Oct 28 reads out as: ${label}`);
+    await page.click('.fx-month button[data-day="2026-10-28"]');
+    await page.waitForSelector('.fx-dayone .fx-stat:has-text("What your transactions recorded")', { timeout: 5000 });
+    await page.click('.fx-dayone li:has-text("Shell") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Shell")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    // The month before: September, read from the ledger, and no further back than its first month (August).
+    await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("September 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-calendar .fx-lead:text-is("What your transactions recorded: 2 payments out, +$2,225.00 in all.")', { timeout: 5000 });
+    // A month past is what was recorded, not "so far".
+    await page.waitForSelector('.fx-monthone li:has(.grow > strong:text-is("Recorded")):has-text("+$2,225.00")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month before"]');
+    await page.waitForSelector('.fx-calendar h2:has-text("August 2026")', { timeout: 5000 });
+    if (!(await page.isDisabled('.fx-calendar button[aria-label="The month before"]'))) throw new Error('the calendar goes back past the ledger\'s first month');
+    await page.click('.fx-calendar button:text-is("Today")');
+    await page.waitForSelector('.fx-calendar h2:has-text("October 2026")', { timeout: 5000 });
+  } },
+  // The month in all, beside the day: its paychecks, its bills, the lowest checking gets (under the cushion, said), and what was
+  // recorded so far; the month after has no recorded line. Narrow, it comes before the week list.
+  { name: 'Finances: the calendar sums up the month shown', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    const card = '.fx-monthone';
+    await page.waitForSelector(`${card} h2:text-is("October in all")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Lowest in checking"):has-text("Sat, Oct 31"):has-text("$2,312.40")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Recorded so far"):has-text("1 in, 5 out"):has-text("+$1,906.95")`, { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.waitForSelector(`${card} h2:text-is("November in all")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Paychecks"):has-text("3 paychecks · Alex, Jordan"):has-text("+$6,700.00")`, { timeout: 5000 });
+    await page.waitForSelector(`${card} li:has-text("Lowest in checking"):has-text("Thu, Nov 5, under your $500 cushion"):has-text("$407.91")`, { timeout: 5000 });
+    if (await page.$(`${card} li:has-text("Recorded so far")`)) throw new Error('a month ahead says what was recorded');
+    await page.setViewportSize({ width: 860, height: 900 });
+    await page.waitForSelector('.fx-weeks', { state: 'visible', timeout: 5000 });
+    const above = await page.evaluate(() => document.querySelector('.fx-monthone').getBoundingClientRect().top < document.querySelector('.fx-calendar').getBoundingClientRect().top);
+    if (!above) throw new Error('narrow, the month in all comes after the week list');
+  } },
+  // No card alone with half its row empty: the Dashboard's Net worth the whole row; at two columns (1280px) What you own and What you owe side by side and By tag
+  // the whole row; at three (1500px), the day picked and the month in all one above the other beside the calendar.
+  { name: 'Finances: no card sits alone with half its row empty', screen: 'finances', run: async (page) => {
+    const box = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width) }; });
+    const row = async (sel) => page.$eval(sel, (e) => { const b = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect(); return Math.round(r.right - r.left) / Math.round(b.width); });
+    // The Dashboard's Net worth comes after Money flow, which takes its row: it takes its own.
+    await page.waitForSelector('.fx-worthmini', { timeout: 5000 });
+    if ((await row('.fx-worthmini')) < 0.99) throw new Error('the Dashboard\'s Net worth takes half its row');
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const own = await box('.fx-ownlist'), owe = await box('.fx-owelist');
+    if (own.y !== owe.y || owe.x <= own.x) throw new Error(`own ${JSON.stringify(own)}, owe ${JSON.stringify(owe)}`);
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-bytag', { timeout: 5000 });
+    if ((await row('.fx-bytag')) < 0.99) throw new Error('By tag takes half its row');
+    await page.setViewportSize({ width: 1500, height: 900 });
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-monthone', { timeout: 5000 });
+    const cal = await box('.fx-calendar'), day = await box('.fx-dayone'), month = await box('.fx-monthone');
+    if (day.x !== month.x || month.y <= day.y || day.x <= cal.x + cal.w - 1) throw new Error(`calendar ${JSON.stringify(cal)}, day ${JSON.stringify(day)}, month ${JSON.stringify(month)}`);
+  } },
+  // Pay's next paychecks month by month, each with how many and what they bring: December has four (Alex's Jan 1 moved
+  // to Dec 31), and January, read to its end, is whole.
+  { name: 'Finances: the next paychecks by month, each with its total', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    const heads = await page.$$eval('.fx-paydays .fx-paymonth h3', (hs) => hs.map((h) => h.textContent.replace(/\s+/g, ' ').trim()));
+    const want = ['November · 3 paychecks+$6,700.00', 'December · 4 paychecks+$8,850.00', 'January 2027 · 3 paychecks+$6,700.00'];
+    if (JSON.stringify(heads) !== JSON.stringify(want)) throw new Error(`months: ${JSON.stringify(heads)}`);
+    await page.waitForSelector('.fx-paymonth[aria-label="December"] li:has-text("Thu, Dec 31"):has-text("New Year")', { timeout: 5000 });
+  } },
+  // Recurring's payments say what those shown come to a month and a year (All: the typical month's spent and saved
+  // together), and follow the filter; Subscriptions has its own summary instead.
+  { name: 'Finances: the payments shown say what they come to a month', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    const said = () => page.textContent('.fx-payments .fx-paysum', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    if ((await said()) !== "18 payments: about $5,948.10 a month, $71,377 a year, with each card's balance as it is now.") throw new Error(`all: ${await said()}`);
+    await page.click('.fx-payments .seg button:has-text("Bills")');
+    if (!/^8 payments: about \$[\d,]+\.\d\d a month, \$[\d,]+ a year\.$/.test(await said())) throw new Error(`bills: ${await said()}`);
+    await page.click('.fx-payments .seg button:has-text("Subscriptions")');
+    if (await page.$('.fx-payments .fx-paytotal')) throw new Error('Subscriptions has a second total');
+  } },
+  // A Reports row opens what is behind it: a category (a group finds its own, Food its Groceries) or a payee, on Transactions,
+  // this month's; a category's line leads with its share of the spending, its own categories after.
+  { name: 'Finances: a Reports row opens its transactions', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    const sub = (await page.textContent('.fx-bycat li:has(.grow > strong:text-is("Food")) .grow')).replace(/\s+/g, ' ');
+    if (!sub.includes('30% of the spending · Groceries $149.85')) throw new Error(`Food says ${sub}`);
+    await page.click('.fx-bycat li:has(.grow > strong:text-is("Food")) button');
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not filtered to Food in October');
+    const payees = await page.$$eval('.fx-txday li .grow > strong', (s) => s.map((x) => x.textContent));
+    if (JSON.stringify(payees) !== JSON.stringify(['Costco', "Trader Joe's"])) throw new Error(`Food shows ${payees}`);
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.click('.fx-payees li:has-text("Shell") button');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txsearch')) !== 'Shell') throw new Error('not searched for Shell');
+    // Opened again from its tab, Transactions shows everything.
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.click('#finRoot .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-transactions h2:text-is("Transactions")', { timeout: 5000 });
+  } },
+  // The Dashboard's Cash flow and Where it goes each open Recurring, where the typical month is, payment by payment.
+  { name: 'Finances: Cash flow and Where it goes open Recurring', screen: 'finances', run: async (page) => {
+    for (const card of ['.fx-flow', '.fx-spend']) {
+      await page.click('#finRoot .seg button:text-is("Dashboard")', { timeout: 5000 });
+      await page.click(`${card} button[aria-label^="Open Recurring"]`, { timeout: 5000 });
+      await page.waitForSelector('#finRoot .seg button:text-is("Recurring")[aria-checked=true], #finRoot .seg button:text-is("Recurring")[aria-pressed=true]', { timeout: 5000 });
+      await page.waitForSelector('.fx-monthsum h2:text-is("A typical month")', { timeout: 5000 });
+    }
+  } },
+  // ⌘F on Transactions goes to its search, its words picked to type over; elsewhere on Finances it does nothing.
+  { name: 'Keyboard: ⌘F searches Finances’ transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active', { timeout: 5000 });
+    await page.keyboard.press('Meta+f');
+    if (await page.evaluate(() => document.activeElement?.matches('input'))) throw new Error('⌘F on the Dashboard went to a box');
+    await page.click('#finRoot > .seg button:text-is("Transactions")');
+    await page.fill('.fx-txsearch', 'Shell');
+    await page.click('.fx-transactions h2');
+    await page.keyboard.press('Meta+f');
+    await page.waitForSelector('.fx-txsearch:focus', { timeout: 5000 });
+    if (await page.evaluate(() => { const b = document.querySelector('.fx-txsearch'); return b.selectionEnd - b.selectionStart; }) !== 5) throw new Error('the words typed before are not picked');
+  } },
+  // Net worth's paycheck-by-paycheck table, wider than its card: its right edge is shaded while more columns lie past it
+  // (a Mac hides its scroll bar), and the shade is gone once scrolled to the end.
+  { name: 'Finances: the paycheck-by-paycheck table shows there is more to its right', screen: 'finances', run: async (page) => {
+    // A window narrow enough that the table is wider than its card whatever the fonts (CI's are narrower than a Mac's).
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const edge = () => page.$eval('.finpostscroll', (e) => {
+      const bg = getComputedStyle(e).backgroundImage;
+      return { more: e.scrollWidth > e.clientWidth + 1, end: e.scrollLeft + e.clientWidth >= e.scrollWidth - 1, layers: (bg.match(/gradient/g) || []).length, local: getComputedStyle(e).backgroundAttachment };
+    });
+    const a = await edge();
+    if (!a.more || a.end || a.layers !== 2 || !/local/.test(a.local)) throw new Error(`at the start: ${JSON.stringify(a)}`);
+    await page.$eval('.finpostscroll', (e) => { e.scrollLeft = e.scrollWidth; });
+    if (!(await edge()).end) throw new Error('it does not scroll to its end');
+  } },
+  // A long ledger (a year of bank files): the newest 200 drawn, Show more for the next 200, the count and totals of every one
+  // still; another filter starts again from the newest 200.
+  { name: 'Finances: a long ledger draws 200 transactions at a time', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: Array.from({ length: 450 }, (_, i) => ({ id: 'n' + i, date: `2026-${String(10 - Math.floor(i / 60)).padStart(2, '0')}-${String(1 + (i % 28)).padStart(2, '0')}`, account: 'chk', amount: -10, payee: i % 2 ? 'Costco' : 'Shell', category: i % 2 ? 'Groceries' : 'Gas' })) } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const rows = () => page.$$eval('.fx-txday li', (l) => l.length);
+    await page.waitForSelector('.fx-txmore:has-text("200 of 450 shown, newest first")', { timeout: 5000 });
+    if ((await rows()) !== 200) throw new Error(`${await rows()} drawn`);
+    await page.click('.fx-txmore button:text-is("Show 200 more")');
+    await page.waitForSelector('.fx-txmore:has-text("400 of 450 shown")', { timeout: 5000 });
+    await page.click('.fx-txmore button:text-is("Show 50 more")');
+    await page.waitForSelector('.fx-txmore', { state: 'detached', timeout: 5000 });
+    if ((await rows()) !== 450) throw new Error(`${await rows()} drawn after all`);
+    await page.fill('.fx-txsearch', 'Costco');
+    await page.waitForSelector('.fx-transactions h2:text-is("225 transactions of 450")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txmore:has-text("200 of 225 shown")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txtotal:has-text("−$2,250.00")', { timeout: 5000 });
+  } },
+  // This month's money out against last month's to the same day (Sep 30: Chipotle and Costco, the return being money in);
+  // with no last month in the ledger, nothing is said.
+  { name: 'Finances: this month\'s money out against last month to the same day', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const said = (await page.textContent('.fx-txsum .fx-txvs', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (said !== '$293.05 more out than by Sep 30 last month ($200.00).') throw new Error(said);
+    await page.waitForSelector('.fx-txvs .fx-out', { timeout: 5000 });
+  } },
+  { name: 'Finances: no last month, no comparison', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txsum .fx-stat', { timeout: 5000 });
+    if (await page.$('.fx-txvs')) throw new Error('it compares with a month that has no transactions');
+  } },
+  // A plan with only a checking account and no cushion: nothing owed said plainly, A typical month with no dangling dots,
+  // and the calendar's key for checking not drawn as under a cushion.
+  { name: 'Finances: a new plan, only checking, says so plainly', screen: 'finances', mock: { finances: { ...finances, plan: { accounts: [{ id: 'chk', name: 'Checking', kind: 'checking', balance: 1200, updated: '2026-10-30' }] }, checking: 'chk', periods: finances.periods.slice(0, 1).map((p) => ({ ...p, rows: [], in: 0, out: 0, saved: 0 })), paydays: [], loans: [], goals: [], budgets: [], found: [], investments: undefined } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.waitForSelector('.fx-say:text-is("Nothing owed: no card balance, no loan.")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Recurring")');
+    const caps = await page.$$eval('.fx-monthsum .fx-caption', (c) => c.map((x) => x.textContent.trim()));
+    if (caps.some((c) => /·\s*$/.test(c)) || !caps.includes('In · no paychecks yet')) throw new Error(`captions: ${JSON.stringify(caps)}`);
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    if (await page.$('.fx-callegend .fx-keylow')) throw new Error('with no cushion, the key is drawn as under one');
+  } },
+  // The checking chart's key names only the marks it has: no bill of $300 or more ahead, no key for one.
+  { name: 'Finances: the checking chart keys only what it marks', screen: 'finances', mock: { finances: { ...finances, days: finances.days.map((d) => ({ ...d, events: (d.events || []).filter((e) => e.people?.length || Math.abs(e.amount) < 300) })) } }, run: async (page) => {
+    const keys = await page.$$eval('.fx-checking .fx-legend li', (l) => l.map((x) => x.textContent.trim()), { timeout: 5000 });
+    if (!keys.includes('Paycheck') || keys.some((k) => k.startsWith('Bill of'))) throw new Error(`keys: ${keys}`);
+  } },
+  // A payment's form lists its last few from the transactions linked to it, each with how far it was from the plan,
+  // and their average when they differ; one with none has no such list.
+  { name: 'Finances: a payment\'s form says what it was paid lately', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'e1', date: '2026-08-18', account: 'chk', amount: -140, payee: 'FPL', payment: 'electric' },
+    { id: 'e2', date: '2026-09-18', account: 'chk', amount: -131.1, payee: 'FPL', payment: 'electric' },
+    { id: 'e3', date: '2026-10-18', account: 'chk', amount: -152.4, payee: 'FPL', payment: 'electric' }] } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    await page.click('.fx-payments li:has(.grow > strong:text-is("Electric")) button');
+    await page.waitForSelector('#finSheet .paidlately h3:has-text("Paid lately, $141.17 on average")', { timeout: 5000 });
+    const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['Sun, Oct 18FPL$12.40 more$152.40', 'Fri, Sep 18FPL$8.90 less$131.10', 'Tue, Aug 18FPL$140.00'])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('.fx-payments li:has(.grow > strong:text-is("Internet")) button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2', { timeout: 5000 });
+    if (await page.$('#finSheet .paidlately')) throw new Error('a payment never paid lists what it was paid');
+  } },
+  // The Dashboard's latest transactions: the five newest (today's Costco first, Claude Pro on Oct 23 left out), each opening its form; See all opens
+  // Transactions. With no ledger, no card; on a phone allowed only to look, the rows open nothing.
+  { name: 'Finances: the Dashboard lists the latest transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-latest li', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-latest li .grow', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['CostcoToday · Groceries · Chase Freedom', 'ShellOct 28 · Gas · Chase Checking', 'Roth IRAOct 27 · Transfer · Chase Checking → Roth IRA', "Jordan's paycheckOct 26 · Income · Chase Checking", "Trader Joe'sOct 24 · Groceries · Chase Checking"])) throw new Error(`rows: ${JSON.stringify(rows)}`);
+    await page.click('.fx-latest li:has-text("Shell") button');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:has-text("Shell")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    await page.click('.fx-latest button:text-is("See all")');
+    await page.waitForSelector('.fx-transactions', { timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the latest transactions open nothing', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await page.waitForSelector('.fx-latest li', { timeout: 5000 });
+    if (await page.$('.fx-latest li button')) throw new Error('a row can be opened to change');
+  } },
+  { name: 'Finances: no ledger, no latest transactions', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [] } }, run: async (page) => {
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    if (await page.$('.fx-latest')) throw new Error('an empty card of latest transactions');
+  } },
+  // A day clicked on the checking chart opens it on the calendar (Alex's Nov 6 paycheck, its green mark); the Calendar
+  // tab picked after opens on today again.
+  { name: 'Finances: a day clicked on the checking chart opens it on the calendar', screen: 'finances', run: async (page) => {
+    await page.locator('.fx-checking .fx-mark.fx-h-in').first().scrollIntoViewIfNeeded({ timeout: 5000 });
+    const mark = await page.$eval('.fx-checking .fx-mark.fx-h-in', (m) => { const r = m.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, { timeout: 5000 });
+    await page.mouse.click(mark.x, mark.y);
+    await page.waitForSelector('.fx-calendar h2:has-text("November 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-dayone h2:text-is("Fri, Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('.fx-month button[data-day="2026-11-06"][aria-pressed=true]', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('#finRoot .seg button:text-is("Calendar")');
+    await page.waitForSelector('.fx-dayone h2:has-text("Oct 30, today")', { timeout: 5000 });
+  } },
+  // Spent this month, from the ledger, beside the latest transactions: its total and each category, largest first; a
+  // category opens this month's transactions of it.
+  { name: 'Finances: the Dashboard says what was spent this month, a category opening its transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-spentmonth .fx-stat:has-text("$493.05")', { timeout: 5000 });
+    const rows = await page.$$eval('.fx-spentmonth li .grow', (l) => l.map((x) => x.textContent.trim()));
+    if (JSON.stringify(rows) !== JSON.stringify(['Subscriptions', 'Food', 'Utilities', 'Car'])) throw new Error(`rows: ${rows}`);
+    const latest = await page.$eval('.fx-latest', (e) => e.getBoundingClientRect().top), spent = await page.$eval('.fx-spentmonth', (e) => e.getBoundingClientRect().top);
+    if (latest !== spent) throw new Error('Spent this month is not beside the latest transactions');
+    await page.click('.fx-spentmonth li:has-text("Food") button');
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('not filtered to Food');
+  } },
+  // Cash flow's last six months from the ledger (May to October, August on having transactions), in beside out; a month opens
+  // its transactions. With one month alone (the default ledger), none: a typical month already says as much.
+  { name: 'Finances: Cash flow shows the last six months, a month opening its transactions', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.waitForSelector('.fx-flow .fx-monthbar', { timeout: 5000 });
+    const bars = await page.$$eval('.fx-flow .fx-monthbar', (b) => b.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (bars.length !== 6 || bars[0] !== 'May 2026: $0.00 in, $0.00 out, see its transactions' || bars[4] !== 'Sep 2026: $2,425.00 in, $200.00 out, see its transactions') throw new Error(`bars: ${JSON.stringify(bars)}`);
+    await page.click('.fx-flow .fx-monthbar:has-text("Sep 2026")');
+    await page.waitForSelector('.fx-transactions h2:text-is("4 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-09') throw new Error('not filtered to September');
+  } },
+  { name: 'Finances: one month of transactions, no six months on Cash flow', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-flow .fx-tiles', { timeout: 5000 });
+    if (await page.$('.fx-flow .fx-lastmonths')) throw new Error('six months drawn from one');
+  } },
+  // Reports' payees: the five largest, then Show all for every one (six in all of the ledger, Costco twice), and Show fewer.
+  { name: 'Finances: Reports shows every payee on asking', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("All")');
+    const count = () => page.$$eval('.fx-payees li', (l) => l.length);
+    if ((await count()) !== 5) throw new Error(`${await count()} payees at first`);
+    await page.click('.fx-payees button:text-is("Show all 6")');
+    if ((await count()) !== 6) throw new Error(`${await count()} payees with all`);
+    await page.click('.fx-payees button:text-is("Show fewer")');
+    if ((await count()) !== 5) throw new Error(`${await count()} payees with fewer`);
+  } },
+  // An account's form lists its last balances as kept, newest first, each with how it moved from the one before.
+  { name: 'Finances: an account\'s form says its balances lately', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    await page.click('.fx-ownlist li:has-text("Chase Checking") button');
+    await page.waitForSelector('#finSheet .paidlately h3:text-is("Balances lately")', { timeout: 5000 });
+    const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+    if (rows.length !== 6 || rows[0] !== 'Fri, Oct 30+$55.50$2,512.40' || rows[5] !== 'Fri, Sep 25+$30.84$2,333.57') throw new Error(`rows: ${JSON.stringify(rows)}`);
+  } },
+  // A charge found by what it came to: 86.10 finds Costco, and 2,400 with its comma Jordan's paycheck; Oct 28 finds that day's.
+  { name: 'Finances: a transaction found by its amount', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', '86.10');
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
+    await page.fill('.fx-txsearch', '2,400');
+    await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck")', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    // And by its day as shown.
+    await page.fill('.fx-txsearch', 'oct 28');
+    await page.waitForSelector('.fx-txday li:has-text("Shell")', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+  } },
+  // Pay: each person's take-home a year too; one with no gross or deductions typed in says what they would show, with
+  // Add them opening the form. None on a phone allowed only to look.
+  { name: 'Finances: Pay says a year\'s take-home, and asks for the gross where none is typed', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Pay")', { timeout: 5000 });
+    await page.waitForSelector('.fx-person:has-text("Alex") .fx-caption:text-is("Take-home, each paycheck · about $55,900 a year")', { timeout: 5000 });
+    await page.waitForSelector('.fx-person:has-text("Jordan") .fx-caption:text-is("Take-home, each paycheck · about $28,800 a year")', { timeout: 5000 });
+    if (await page.$('.fx-person:has-text("Alex") .fx-payhint')) throw new Error('Alex, with a gross, is asked for one');
+    await page.click('.fx-person:has-text("Jordan") .fx-payhint button:text-is("Add them")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Jordan")', { timeout: 5000 });
+  } },
+  // Reports' month columns open what is behind them: In and out's September its transactions, and Food's October (the
+  // largest category over the year, the trend's first) Food's of October.
+  { name: 'Finances: a month on a Reports chart opens its transactions', screen: 'finances', mock: { ledger: ledgerMonths }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-reportsum button:text-is("3 months")');
+    await page.locator('.fx-inout .fx-stackcol').nth(1).click({ timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("4 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-09') throw new Error('not September');
+    await page.click('#finRoot .seg button:text-is("Reports")');
+    await page.waitForSelector('.fx-trend h2:text-is("Food, month by month")', { timeout: 5000 });
+    // In Food's own colour, as its rows and its slice are.
+    const hue = await page.$eval('.fx-bycat li:has(.grow > strong:text-is("Food")) .fx-catbar', (e) => [...e.classList].find((c) => /^fx-h\d$/.test(c)));
+    if (!hue || !(await page.$(`.fx-trend .fx-seg.${hue}`))) throw new Error(`the trend is not in Food's ${hue}`);
+    await page.locator('.fx-trend .fx-stackcol').last().click();
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 13")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');
+  } },
+  // A day with more than one in or out says what they came to together; a day with one does not.
+  { name: 'Finances: a day of several transactions says its total', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions, { id: 'x1', date: '2026-10-28', account: 'chk', amount: -12.5, payee: 'Starbucks', category: 'Eating out' }].sort((p, q) => p.date.localeCompare(q.date)) } }, run: async (page) => {
+    // In date order, as the ledger is kept (CleanLedger).
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const sum = (await page.textContent('.fx-txday[aria-label="Wed, Oct 28"] .fx-txdaysum', { timeout: 5000 })).replace(/\s+/g, ' ').trim();
+    if (sum !== '−$60.70 in all that day') throw new Error(`Oct 28: ${sum}`);
+    if (await page.$('.fx-txday[aria-label="Thu, Oct 22"] .fx-txdaysum')) throw new Error('a day of one has a total');
+  } },
+  // Where it goes: every kind its own colour (Cards was Spending's purple, Loans Car's yellow).
+  { name: 'Finances: Where it goes draws each kind in a colour of its own', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('.fx-spend .fx-spentrows li', { timeout: 5000 });
+    const hues = await page.$$eval('.fx-spend .fx-spentrows li', (l) => l.map((x) => [x.querySelector('.grow').textContent, [...x.querySelector('.fx-dot').classList].find((c) => /^fx-h\d$/.test(c))]));
+    const seen = new Map();
+    for (const [label, hue] of hues) { if (seen.has(hue)) throw new Error(`${label} and ${seen.get(hue)} are both ${hue}`); seen.set(hue, label); }
+  } },
+  // Where it goes: a kind opens Recurring on its payments (Cards on Cards; Home, a bill, on Bills).
+  { name: 'Finances: a kind on Where it goes opens its payments', screen: 'finances', run: async (page) => {
+    await page.click('.fx-spend li:has-text("Cards") button', { timeout: 5000 });
+    await page.waitForSelector('.fx-payments .seg button[aria-checked=true]:has-text("Cards"), .fx-payments .seg button[aria-pressed=true]:has-text("Cards")', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('.fx-spend li:has-text("Home") button');
+    await page.waitForSelector('.fx-payments .seg button[aria-checked=true]:has-text("Bills"), .fx-payments .seg button[aria-pressed=true]:has-text("Bills")', { timeout: 5000 });
+  } },
+  // A budget opens its transactions: on Transactions, Food's this month (its Groceries); on the Dashboard, Budgets to
+  // watch's Subscriptions.
+  { name: 'Finances: a budget opens its transactions', screen: 'finances', run: async (page) => {
+    await page.click('.fx-budgets li:has-text("Subscriptions") button', { timeout: 5000 });
+    await page.waitForSelector('.fx-transactions h2:text-is("1 transaction of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Subscriptions') throw new Error('not Subscriptions');
+    await page.click('.fx-transactions button:text-is("Show all")');
+    await page.click('.fx-budgets li:has(.grow > strong:text-is("Food")) button');
+    await page.waitForSelector('.fx-transactions h2:text-is("2 transactions of 7")', { timeout: 5000 });
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food' || (await page.inputValue('.fx-txfilters select[aria-label="Month"]')) !== '2026-10') throw new Error('not Food in October');
+  } },
+  // Recurring's payments soonest first, or by what each costs a month, largest first (the mortgage, then the card paid in
+  // full, then groceries every Saturday: $866.67 a month).
+  { name: 'Finances: Recurring\'s payments largest first on asking', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Recurring")', { timeout: 5000 });
+    const names = () => page.$$eval('.fx-payments li .grow > strong', (s) => s.map((x) => x.textContent));
+    if ((await names())[0] !== 'Groceries and gas') throw new Error(`soonest: ${await names()}`);
+    // A payment not monthly says what it comes to a month; a monthly one does not.
+    const sub = (name) => page.textContent(`.fx-payments li:has(.grow > strong:text-is("${name}")) .grow`).then((t) => t.replace(/\s+/g, ' '));
+    if (!(await sub('Groceries and gas')).includes('Every Saturday · $866.67 a month') || !(await sub('Claude Pro')).includes('Yearly on Oct 23 · $16.67 a month')) throw new Error(`${await sub('Groceries and gas')} | ${await sub('Claude Pro')}`);
+    if ((await sub('Netflix')).includes('a month')) throw new Error(await sub('Netflix'));
+    await page.selectOption('.fx-payments select[aria-label="Order"]', 'size');
+    const big = await names();
+    if (JSON.stringify(big.slice(0, 3)) !== JSON.stringify(['Mortgage', 'Chase Freedom', 'Groceries and gas'])) throw new Error(`largest: ${big}`);
+  } },
+  // A calendar day adds on itself: a day ahead a payment starting on it, a day before today (or today) a transaction on it;
+  // a new payment from the header afterwards starts today again.
+  { name: 'Finances: a calendar day adds a payment or a transaction on itself', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    await page.click('.fx-calendar button[aria-label="The month after"]');
+    await page.click('.fx-month button[data-day="2026-11-12"]');
+    await page.click('.fx-dayone button:text-is("Add a payment")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Next on") input')) !== '2026-11-12') throw new Error(`starts ${await page.inputValue('#finSheet label:has-text("Next on") input')}`);
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('#finRoot .toolbar button:has-text("Add a payment")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Next on") input')) === '2026-11-12') throw new Error('the day stuck to the next form');
+    await page.click('#finSheet button:text-is("Cancel")');
+    await page.click('.fx-calendar button:text-is("Today")');
+    await page.click('.fx-month button[data-day="2026-10-28"]');
+    await page.click('.fx-dayone button:text-is("Add a transaction")');
+    await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a transaction")', { timeout: 5000 });
+    if ((await page.inputValue('#finSheet label:has-text("Day") input')) !== '2026-10-28') throw new Error(`on ${await page.inputValue('#finSheet label:has-text("Day") input')}`);
+  } },
+  // Transactions opened from another view has Back to it: from Reports (a payee), and from the Dashboard (See all); picked
+  // from its own tab, none.
+  { name: 'Finances: Transactions opened from a report or a card goes back to it', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Reports")', { timeout: 5000 });
+    await page.click('.fx-payees li:has-text("Shell") button');
+    await page.click('.fx-txfilters button:has-text("Back to Reports")', { timeout: 5000 });
+    await page.waitForSelector('.fx-reportsum', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Dashboard")');
+    await page.click('.fx-latest button:text-is("See all")');
+    await page.click('.fx-txfilters button:has-text("Back to Dashboard")', { timeout: 5000 });
+    await page.waitForSelector('.fx-latest', { timeout: 5000 });
+    await page.click('#finRoot .seg button:text-is("Transactions")');
+    await page.waitForSelector('.fx-txfilters', { timeout: 5000 });
+    if (await page.$('.fx-txfilters button:has-text("Back to")')) throw new Error('Back from its own tab');
+  } },
+  // On a phone, a budget's figures take only the room they need: each bar keeps most of the row, the same as the others.
+  { name: 'The phone: budgets keep their bars wide', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
+    if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
+  } },
+  // On a phone, Reports' twelve months label every other month, this one always: no two labels touch.
+  { name: 'The phone: a twelve-month chart\'s labels do not run together', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 });
+    const shown = await page.$$eval('.fx-trend .fx-barlabels span', (l) => l.filter((x) => getComputedStyle(x).visibility === 'visible').map((x) => { const r = document.createRange(); r.selectNodeContents(x); const b = r.getBoundingClientRect(); return [x.textContent, b.left, b.right]; }), { timeout: 5000 });
+    if (shown.at(-1)[0] !== 'Oct') throw new Error(`this month is not labelled: ${JSON.stringify(shown)}`);
+    for (let i = 1; i < shown.length; i++) if (shown[i][1] < shown[i - 1][2] + 4) throw new Error(`${shown[i - 1][0]} and ${shown[i][0]} touch`);
+  } },
+  // A payee linked to a payment before links again, its name saying nothing of it: the HOA, paid as Sunset Palms in
+  // September and linked, comes in October ten days early and $5 off. A large amount to the cent links within two weeks
+  // (a $412.00 car payment from a lender named nothing like it, eight days off); a small one only within a few days.
+  { name: 'Finances: an import links a payee it has linked before, and a large amount to the cent', screen: 'finances', mock: { ledger: { ...ledger, transactions: [{ id: 'h0', date: '2026-09-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', payment: 'hoa' }, ...ledger.transactions] } }, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA",-305.00,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/07/2026,"WESTLAKE FIN SVC PMT WEB ID: 77",-412.00,ACH_DEBIT,700.00,,\n'
+      + 'DEBIT,10/12/2026,"ACME STREAM 555",-15.49,DEBIT_CARD,600.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Sunset") :text("Looks like HOA")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Westlake") :text("Looks like Car payment")', { timeout: 5000 });
+    // Netflix's $15.49 nine days from its day, by a name saying nothing of it: too small to link by the cents alone that far off.
+    if (await page.$('#finSheet .importlist li:has-text("Acme") :text("Looks like")')) throw new Error('a small amount linked far from its day');
+  } },
+  // The pay period card says checking at the end of payday, once that day's own payments are out (what a spreadsheet
+  // counting paychecks against a month of bills comes to), beside the period's end; stepping on, the next payday's.
+  { name: 'Finances: the pay period says checking on payday, once its own payments are out', screen: 'finances', run: async (page) => {
+    const want = (day) => page.evaluate((d) => '$' + window.__MOCK.finances.days.find((x) => x.date === d).balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), day);
+    const said = () => page.textContent('.fx-paycheck .fx-onpayday', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    if ((await said()) !== `On payday, Nov 6, once its own payments are out: ${await want('2026-11-06')}`) throw new Error(await said());
+    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.waitForFunction(() => document.querySelector('.fx-paycheck .fx-onpayday')?.textContent.includes('Nov 20'), null, { timeout: 5000 });
+    if ((await said()) !== `On payday, Nov 20, once its own payments are out: ${await want('2026-11-20')}`) throw new Error(await said());
+  } },
+  // Update balances lists the accounts under their groups, each heading in its colour, the cursor in the first box shown.
+  { name: 'Finances: Update balances lists the accounts by group', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .toolbar button:text-is("Update balances")', { timeout: 5000 });
+    const heads = await page.$$eval('#finSheet .balgrouphead', (h) => h.map((x) => x.textContent.trim()), { timeout: 5000 });
+    if (JSON.stringify(heads) !== JSON.stringify(['Cash', 'Credit cards', 'Investments', 'Home & Car', 'Loans'])) throw new Error(`groups: ${heads}`);
+    const cards = await page.$$eval('#finSheet .balgroup:has(.balgrouphead:text-is("Credit cards")) li strong', (s) => s.map((x) => x.textContent));
+    if (JSON.stringify(cards) !== JSON.stringify(['Chase Freedom', 'Amex Gold'])) throw new Error(`cards: ${cards}`);
+    await page.waitForSelector('#finSheet input#bal-chk:focus', { timeout: 5000 });
+  } },
+  // A day's cells are the whole of its button: the platform's own table padding once inset every day in its cell.
+  { name: 'Finances: a calendar day fills its cell', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 });
+    const gap = await page.$eval('.fx-month button[data-day="2026-10-30"]', (b) => { const c = b.parentElement.getBoundingClientRect(), r = b.getBoundingClientRect(); return Math.max(Math.abs(c.top - r.top), Math.abs(c.left - r.left), Math.abs(c.width - r.width)); });
+    if (gap > 1) throw new Error(`the day is ${gap}px inside its cell`);
   } },
   // A bill charged to a card moves no checking money, yet shows on its day, on its card and with the card's due day, apart
   // from checking: its mark in the cell, a row in the day's card, and read out; on the phone, in the day's list.
@@ -6094,7 +6576,13 @@ const smokes = [
     }
     const first = await page.evaluate(() => [...document.querySelectorAll('#finances .fx-board > .card')].slice(0, 2).map((e) => e.querySelector('h2')?.textContent));
     if (first.join() !== 'Coming up,Goals') throw new Error('the Dashboard opens with ' + first.join(', '));
-    const rows = await page.$$eval('.fx-comingup li', (ls) => ls.map((l) => l.textContent));
+    // A paycheck is a line of its own (its person's initial leading), before the first bill after its day; the rest are bills.
+    const all = await page.$$eval('.fx-comingup li', (ls) => ls.map((l) => ({ pay: !!l.querySelector('.fwhos'), text: l.textContent })));
+    const at = all.findIndex((r) => r.pay);
+    if (at < 0 || !all[at].text.includes("Alex's paycheck") || !all[at].text.includes('In 7 days, Fri, Nov 6') || !all[at].text.includes('+$2,150.00')
+      || !all[at - 1].text.includes('Thu, Nov 5') || !all[at + 1].text.includes('Sat, Nov 7')) throw new Error('the paycheck is not between Nov 5 and Nov 7: ' + all.map((r) => r.text).join(' | '));
+    if (!(await page.textContent('.fx-comingup .fx-beforepay')).includes("$2,104.49 of it before Alex's paycheck on Nov 6")) throw new Error('before payday reads ' + await page.textContent('.fx-comingup .fx-beforepay'));
+    const rows = all.filter((r) => !r.pay).map((r) => r.text);
     if (!rows.some((r) => r.includes('Mortgage') && r.includes('In 2 days, Sun, Nov 1') && r.includes('$1,845.00'))) throw new Error('no Mortgage in 2 days: ' + rows.join(' | '));
     if (!rows[0].includes('Tomorrow, Sat, Oct 31')) throw new Error('the first is not tomorrow’s: ' + rows[0]);
     if (!rows.some((r) => r.includes('Spotify') && r.includes('on Chase Freedom, due Nov 21') && r.includes('$11.99'))) throw new Error('the card’s charge is not on its card: ' + rows.join(' | '));
@@ -6489,7 +6977,7 @@ const smokes = [
   // neither); a row opens its form; a new one is added, one changed, one deleted, each saved to the ledger.
   { name: 'Finances: transactions, newest first, with this month in and out', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
-    for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['6 transactions', '+$1,907']]) {
+    for (const [stat, want] of [['Money in', '$2,400'], ['Money out', '$493'], ['Kept · 6 transactions', '+$1,907']]) {
       const text = (await page.textContent(`.fx-txsum .fx-stat:has(.fx-caption:has-text("${stat}"))`, { timeout: 5000 })).replace(/\s+/g, '');
       if (!text.includes(want)) throw new Error(`${stat}: ${text}`);
     }
@@ -6499,6 +6987,22 @@ const smokes = [
     await page.waitForSelector('.fx-txday li:has-text("Shell"):has-text("Road trip")', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Costco") .fmark.logo', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Jordan\'s paycheck") .fx-in:has-text("+$2,400.00")', { timeout: 5000 });
+  } },
+  // One account picked: what it held after each day, worked back from the balance typed in on its day (checking's $2,512.40
+  // on Oct 30) through each transaction in or out of it, a transfer out too; a card says what it owed, more after a charge.
+  // With every account, no balance shows.
+  { name: 'Finances: one account picked, each day says what it held after', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    if (await page.$('.fx-txday .fx-txbal')) throw new Error('a balance shows with every account');
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', 'chk');
+    const bal = (day) => page.textContent(`.fx-txday[aria-label="${day}"] .fx-txbal`, { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
+    for (const [day, want] of [['Wed, Oct 28', '$2,512.40'], ['Tue, Oct 27', '$2,560.60'], ['Mon, Oct 26', '$2,810.60'], ['Sat, Oct 24', '$410.60'], ['Thu, Oct 22', '$474.35']]) {
+      const got = await bal(day);
+      if (!got.startsWith(want + ' ')) throw new Error(`${day}: ${got}, not ${want}`);
+    }
+    await page.waitForSelector('.fx-txrunning:has-text("worked from the $2,512.40 typed in on Oct 30")', { timeout: 5000 });
+    await page.selectOption('.fx-txfilters select[aria-label="Account"]', 'visa');
+    if (!(await bal('Fri, Oct 30')).startsWith('$1,240.55 owed') || !(await bal('Fri, Oct 23')).startsWith('$1,154.45 owed')) throw new Error(`the card: ${await bal('Fri, Oct 30')}, ${await bal('Fri, Oct 23')}`);
   } },
   // Finding transactions: words in the payee, category, or note; an account (a transfer into it counts as money in);
   // a category; a month; in or out; the total of what shows; Show all clears them.
@@ -6532,7 +7036,7 @@ const smokes = [
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.click('.fx-txday li:has-text("Costco") button');
     await page.click('#finSheet button:text-is("Split it")');
-    if ((await page.inputValue('#finSheet input[aria-label="Part 1 category"]')) !== 'Groceries' || (await page.inputValue('#finSheet input[aria-label="Part 1 amount"]')) !== '86.1') throw new Error('the first part is not the whole');
+    if ((await page.inputValue('#finSheet input[aria-label="Part 1 category"]')) !== 'Groceries' || (await page.inputValue('#finSheet input[aria-label="Part 1 amount"]')) !== '86.10') throw new Error('the first part is not the whole');
     await page.fill('#finSheet input[aria-label="Part 1 amount"]', '60');
     await page.fill('#finSheet input[aria-label="Part 2 category"]', 'Home');
     await page.fill('#finSheet input[aria-label="Part 2 amount"]', '20');
@@ -6744,7 +7248,8 @@ const smokes = [
   { name: 'Finances: budgets say what is left, and over in red', screen: 'finances', run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     const left = (cat) => page.textContent(`.fx-budgets li:has(.grow > strong:text-is("${cat}")) .fx-budgetleft`, { timeout: 5000 });
-    for (const [cat, want] of [['Food', '$450.15 left'], ['Car', '$251.80 left'], ['Subscriptions', '$50.00 over']]) {
+    // What is left, and under it how much a day keeps it on budget to the month's end (Oct 30 and 31: two days).
+    for (const [cat, want] of [['Food', '$450.15 left$225.08 a day for 2 days'], ['Car', '$251.80 left$125.90 a day for 2 days'], ['Subscriptions', '$50.00 over']]) {
       if ((await left(cat)).replace(/\s+/g, ' ').trim() !== want) throw new Error(`${cat}: ${await left(cat)}`);
     }
     await page.waitForSelector('.fx-budgets li:has-text("Subscriptions") .fx-budgetleft.fx-out', { timeout: 5000 });
@@ -6869,13 +7374,33 @@ const smokes = [
     const fpl = by('FPL'), amex = by('American Express'), mazda = by('Mazda'), hoa = by('Sunset Palms Eas Sunset Pal'), cash = by('Apple Cash');
     if (!fpl || fpl.payment !== 'electric' || fpl.category !== 'Electric' || !/FPL DIRECT DEBIT/.test(fpl.note)) throw new Error(`FPL ${JSON.stringify(fpl)}`);
     if (!amex || amex.to !== 'amex' || amex.category) throw new Error(`American Express ${JSON.stringify(amex)}`);
-    if (!mazda || mazda.payment) throw new Error(`Mazda ${JSON.stringify(mazda)}`);
+    // A car's make pays the plan's car payment by what it is (#508), $399 about its planned $412.
+    if (!mazda || mazda.payment !== 'carpay') throw new Error(`Mazda ${JSON.stringify(mazda)}`);
     if (!hoa || hoa.payment !== 'hoa') throw new Error(`HOA ${JSON.stringify(hoa)}`);
     if (!cash || cash.amount !== 107) throw new Error(`Apple Cash ${JSON.stringify(cash)}`);
     // The list shows the clean name, not the bank's wording.
     const row = page.locator('.fx-txday li:has-text("FPL")').first();
     await row.waitFor({ timeout: 5000 });
     if (/PPD ID|3590247775/.test(await row.innerText())) throw new Error('the bank wording is shown in the list');
+  } },
+  // A bill paid by what the payee is, its name saying nothing of it: FPL pays Electric though $157.06 is a tenth and more over
+  // the planned $140 (a utility changes each time), and a car's make pays the car payment (Mazda, the plan's car payment
+  // set up as a Toyota, about its amount); a grocer pays no spending envelope however close its amount.
+  { name: 'Finances: an electric company pays the Electric bill, and a car make the car payment, by what they are', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Details,Posting Date,Description,Amount,Type,Balance,Check or Slip #\n'
+      + 'DEBIT,10/18/2026,"FPL DIRECT DEBIT ELEC PYMT PPD ID: 3590247775",-157.06,ACH_DEBIT,1000.00,,\n'
+      + 'DEBIT,10/16/2026,"MAZDA FINANCIAL WEB NZTZP5VXA0Y1UPE WEB ID: 2953775816",-405.00,ACH_DEBIT,600.00,,\n'
+      + 'DEBIT,10/31/2026,"COSTCO WHSE #1234",-198.00,DEBIT_CARD,400.00,,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'Chase1234_Activity.CSV', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importlist li:has-text("FPL") :text("Looks like Electric")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importlist li:has-text("Mazda") :text("Looks like Car payment")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 3")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    const by = (p) => txs.find((t) => t.payee === p);
+    if (by('FPL')?.payment !== 'electric' || by('Mazda')?.payment !== 'carpay' || by('Costco')?.payment) throw new Error(`linked ${JSON.stringify(txs.slice(-3))}`);
   } },
   // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
   { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
@@ -7459,7 +7984,11 @@ const smokes = [
   { name: 'The phone, view only: transactions with nothing to add or open', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
     await page.waitForSelector('.fx-txday li:has-text("Costco")', { timeout: 5000 });
-    if (await page.$('.fx-txday li button, #finRoot .toolbar button, .fx-budgets button, .fx-transactions .fx-actions button')) throw new Error('a phone allowed only to look can add or open a transaction, or edit budgets or categories');
+    if (await page.$('.fx-txday li button, #finRoot .toolbar button, .fx-budgets .fx-actions button, .fx-transactions .fx-actions button')) throw new Error('a phone allowed only to look can add or open a transaction, or edit budgets or categories');
+    // A budget only shows its transactions (the list filtered to it), and nothing is saved.
+    await page.click('.fx-budgets li:has(.grow > strong:text-is("Food")) button');
+    if ((await page.inputValue('.fx-txfilters select[aria-label="Category"]')) !== 'Food') throw new Error('a budget did not show its transactions');
+    if (await page.evaluate(() => window.__MOCK.financesSaved?.length || window.__MOCK.ledgerSaved?.length)) throw new Error('a phone allowed only to look saved something');
   } },
   { name: 'Finances: no transactions yet says how to add one', screen: 'finances', mock: { ledger: null }, run: async (page) => {
     await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
@@ -7623,6 +8152,8 @@ const screens = [
   { name: 'Finances, Budgets', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-budgets button:text-is("Edit budgets")'); await page.waitForSelector('#finSheet .budgetlist'); } },
   { name: 'Finances, Reports', screen: 'finances', mock: { ledger: ledgerMonths }, before: async (page) => { await page.click('#finRoot > .seg button:text-is("Reports")', { timeout: 5000 }); await page.click('.fx-reportsum [role=radio]:text-is("3 months")'); await page.waitForSelector('.fx-inout'); } },
   { name: 'Finances, Import a file', screen: 'finances', before: async (page) => { await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'chase.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/24/2026,TRADER JOE\'S #552,-63.75\n10/31/2026,STARBUCKS,-6.45\n') }); await page.waitForSelector('#finSheet .importlist'); } },
+  // The Dashboard with three months of transactions: Cash flow's six months, Latest transactions and Spent this month.
+  { name: 'Finances, Dashboard with months of transactions', screen: 'finances', mock: { ledger: ledgerMonths } },
   { name: 'Finances, Calendar', screen: 'finances', before: async (page) => { await page.click('#finRoot .seg button:text-is("Calendar")', { timeout: 5000 }); await page.click('.fx-calendar button[aria-label="The month after"]'); await page.waitForSelector('.fx-calendar h2:has-text("November 2026")'); } },
   { name: 'Finances, Net worth with collectibles', screen: 'finances', mock: { finances: collected }, before: async (page) => { await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 }); } },
   { name: 'Finances without a checking account', screen: 'finances', mock: { finances: { ...finances, checking: '', plan: { ...finances.plan, accounts: finances.plan.accounts.filter((a) => a.kind !== 'checking') } } } },

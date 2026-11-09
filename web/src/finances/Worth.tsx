@@ -127,7 +127,7 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup,
           <Stat size="lg" value={<Amount value={now - start.net} sign tone="auto" />} aside={<Delta value={now - start.net} base={start.net} shareOnly />} />
         </Widget>
         <Widget title="What's owed" kind="fx-figurecard">
-          <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{loans.length ? <>{onLoans > owes / 2 ? ', most of it on loans. They are' : '. Your loans are'} <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</> : '.'}</p>
+          {owes < 0.005 && !loans.length ? <p class="fx-say">Nothing owed: no card balance, no loan.</p> : <p class="fx-say">You owe <Amount value={owes} form="full" tone="out" />{loans.length ? <>{onLoans > owes / 2 ? ', most of it on loans. They are' : '. Your loans are'} <Amount value={Math.abs(loanDrop)} form="whole" /> {loanDrop >= 0 ? 'smaller' : 'larger'} than on {dayShort(start.date)}.</> : '.'}</p>}
         </Widget>
 
         {focus && <GroupCard v={v} focus={focus} months={months} range={range} setRange={setRange} clear={() => setGroup?.('')} />}

@@ -44,7 +44,7 @@ function PayMore({ v, L, shown, owing }: { v: finance.View; L: Lookup; shown?: f
   return (
     <section class="fx-paymore" aria-label="Pay more">
       <h3>Pay more</h3>
-      <label class="fx-paymorefield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" aria-label="More a paycheck" value={text} placeholder="100" onInput={(e) => setText((e.target as HTMLInputElement).value)} /></span> more a paycheck (about {money(extra)} a month)</label>
+      <label class="fx-paymorefield"><span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" aria-label="More a paycheck" value={text} placeholder="100" onInput={(e) => setText((e.target as HTMLInputElement).value)} /></span> more a paycheck{extra > 0 && ` (about ${money(extra)} a month)`}</label>
       <p class="fx-sub" role="status">
         {!one && 'Type an amount to see what it saves. Nothing is saved.'}
         {one && shown && (one.ok ? <>{name(shown.account)} paid off {when(one.months)}{shown.months ? `, ${plural(shown.months - one.months, 'month')} sooner` : ''}{shown.interest ? `, ${money(Math.max(0, shown.interest - one.interest))} less interest` : ''}.</> : <>{name(shown.account)} is still never paid off at that.</>)}

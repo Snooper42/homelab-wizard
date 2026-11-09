@@ -178,3 +178,52 @@ func WeekLines(v View, today time.Time, money func(float64) string) []string {
 	}
 	return out
 }
+
+// SpentLine is the weekly summary's line of what the ledger says went out
+// in the seven days to today, today included: how much, in how many
+// transactions, and the payee most of it went to ("Spent this week:
+// $412.30 in 9 transactions, the most at Costco, $198.00"). A transfer
+// between the household's own accounts is not spending, and money in is
+// not counted against it. "" when nothing went out.
+func SpentLine(p Plan, l Ledger, today time.Time, money func(float64) string) string {
+	from := dateOf(time.Date(today.Year(), today.Month(), today.Day()-6, 0, 0, 0, 0, today.Location()))
+	to := dateOf(today)
+	total, n := 0.0, 0
+	by := map[string]float64{}
+	names := map[string]string{}
+	for _, t := range l.inHome(p).Transactions {
+		if t.To != "" || t.Amount >= 0 || t.Date < from || t.Date > to {
+			continue
+		}
+		total -= t.Amount
+		n++
+		if name := strings.TrimSpace(t.Payee); name != "" {
+			key := strings.ToLower(name)
+			by[key] -= t.Amount
+			if _, ok := names[key]; !ok {
+				names[key] = name
+			}
+		}
+	}
+	if n == 0 {
+		return ""
+	}
+	word := "transactions"
+	if n == 1 {
+		word = "transaction"
+	}
+	line := fmt.Sprintf("Spent this week: %s in %d %s", money(total), n, word)
+	// The payee most went to, when there is more than one transaction to set it apart from; the first by name on a tie.
+	if n > 1 {
+		top, most := "", 0.0
+		for key, amount := range by {
+			if amount > most+0.005 || (math.Abs(amount-most) < 0.005 && key < top) {
+				top, most = key, amount
+			}
+		}
+		if top != "" {
+			line += fmt.Sprintf(", the most at %s, %s", names[top], money(most))
+		}
+	}
+	return line
+}

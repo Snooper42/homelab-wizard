@@ -6,14 +6,15 @@ import { render } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../parts/Segmented';
 import { Sheet } from '../parts/Sheet';
-import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, paysAlike, subTypeName, subTypes, suggestType, Who } from './Mark';
+import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, owed, parseAmount, parseDay, signed as signedOf, signOf, todayISO } from './money';
 import { cleanPayee } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
-import { guessFor } from './guessCategory';
-import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory } from './importData';
-import { carFromPrice, rateOf } from './model';
+import { guessFor, paysBill } from './guessCategory';
+import { alike, already, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { carFromPrice, groups, rateOf } from './model';
+import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
@@ -50,8 +51,16 @@ export interface EditProps {
   close: () => void;
 }
 
+/** The day the next new payment or transaction starts on (a calendar day's Add), taken once by the form that opens. */
+let firstDay = '';
+export const startOn = (day: string) => { firstDay = day; };
+const takeDay = () => { const d = firstDay; firstDay = ''; return d; };
+
 const num = (s: string) => { const n = parseAmount(s); return isNaN(n) ? 0 : n; };
 const text = (n?: number) => (n ? String(n) : '');
+/** An amount as a box starts with it: its cents in two places when it has any ($2512.40, not 2512.4), none when it has none. */
+const cents = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+const money2 = (n?: number) => (n ? cents(n) : '');
 const input = (set: (s: string) => void) => (e: Event) => set((e.target as HTMLInputElement).value);
 
 const everies: [string, string][] = [['month', 'Monthly'], ['2 weeks', 'Every 2 weeks'], ['week', 'Weekly'], ['twice a month', 'Twice a month'], ['3 months', 'Every 3 months'], ['year', 'Yearly'], ['once', 'Once']];
@@ -329,11 +338,11 @@ function PaymentForm(props: EditProps) {
   const kindPicked = useRef(!!x);
   const follow = (b: string) => { const k = kindForBrand(b); if (k && !kindPicked.current) setKind(k); };
   const rename = (n: string) => { setName(n); if (!picked.current) { const b = brandOf(undefined, n) || ''; setBrand(b); follow(b); } };
-  const [amount, setAmount] = useState(text(x?.amount));
+  const [amount, setAmount] = useState(money2(x?.amount));
   const [estimate, setEstimate] = useState(!!x?.estimate);
   const [every, setEvery] = useState(x?.schedule.every || 'month');
   const [person, setPerson] = useState(x?.schedule.person || '');
-  const [start, setStart] = useState(x?.schedule.start || todayISO());
+  const [start, setStart] = useState(() => x?.schedule.start || takeDay() || todayISO());
   const [day2, setDay2] = useState(String(x?.schedule.day2 || 15));
   const [kind, setKind] = useState(x?.kind || 'home');
   const [from, setFrom] = useState(x?.from || checking || '');
@@ -394,6 +403,7 @@ function PaymentForm(props: EditProps) {
           </>}
         <label class="fcheckbox wide"><input type="checkbox" checked={estimate} onClick={tick(setEstimate)} /> The amount changes each time (an estimate)</label>
       </div>
+      {x && <PaidLately x={x} ledger={props.ledger} />}
       <Actions busy={busy} exists={!!x} remove={remove} close={props.close} problem={problem} touched={touched} />
     </form>
   );
@@ -469,10 +479,10 @@ function AccountForm(props: EditProps) {
   const [img, setImg] = useState(had);
   // "none" is a None picked by hand: no logo, and no bank to name it after.
   const real = brand === 'none' ? '' : brand;
-  const [balance, setBalance] = useState(text(a?.balance));
+  const [balance, setBalance] = useState(money2(a?.balance));
   const [pending, setPending] = useState(text(a?.pending));
   const [rate, setRate] = useState(text(a?.rate));
-  const [original, setOriginal] = useState(text(a?.original));
+  const [original, setOriginal] = useState(money2(a?.original));
   const [loan, setLoan] = useState(a?.loan || '');
   const [detail, setDetail] = useState(a?.detail || '');
   const [paidEach, setPaidEach] = useState(!!a?.paidEach);
@@ -595,6 +605,7 @@ function AccountForm(props: EditProps) {
         {foreign && sign && num(xrate) > 0 && num(balance) !== 0 && <p class="formsub muted wide">{moneyIn(num(balance), code)} is about {money(num(balance) * num(xrate))} at this rate, typed in by you: Finances never looks a rate up.</p>}
         <datalist id="finCurrencies">{['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'NZD', 'JPY', 'CHF', 'SEK', 'NOK', 'DKK', 'MXN', 'INR'].filter((c) => c !== home).map((c) => <option key={c} value={c} />)}</datalist>
       </div>
+      {a && <BalancesLately a={a} />}
       <Actions busy={busy} exists={!!a} remove={remove} close={props.close} problem={problem} touched={touched} uses={uses} removeAll={() => without(true)} />
     </form>
   );
@@ -604,13 +615,13 @@ function PersonForm(props: EditProps) {
   const { plan, id, checking } = props;
   const e = (plan.people || []).find((q) => q.id === id);
   const [name, setName] = useState(e?.name || '');
-  const [net, setNet] = useState(text(e?.net));
-  const [gross, setGross] = useState(text(e?.gross));
+  const [net, setNet] = useState(money2(e?.net));
+  const [gross, setGross] = useState(money2(e?.gross));
   const [every, setEvery] = useState(e?.schedule.every || '2 weeks');
   const [start, setStart] = useState(e?.schedule.start || todayISO());
   const [day2, setDay2] = useState(String(e?.schedule.day2 || 15));
   const [account, setAccount] = useState(e?.account || checking || '');
-  const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: text(d.amount), account: d.account || '' })));
+  const [deds, setDeds] = useState((e?.deductions || []).map((d) => ({ name: d.name, amount: money2(d.amount), account: d.account || '' })));
   const { busy, keep, touched, watch } = useSaving(props);
   const accounts = (plan.accounts || []).filter((a) => !owed(a.kind) && !held(a.kind));
   const [problem, setProblem] = useState('');
@@ -659,6 +670,57 @@ function PersonForm(props: EditProps) {
 }
 
 /**
+ * A planned payment's last few, from the transactions linked to it: each
+ * day, what it came to, and how far that was from the plan's amount; with
+ * their average when it changes. Read only: a row is changed on Transactions.
+ */
+function PaidLately({ x, ledger }: { x: finance.Payment; ledger?: finance.Ledger | null }) {
+  const paid = (ledger?.transactions || []).filter((t) => t.payment === x.id).sort((a, b) => b.date.localeCompare(a.date));
+  if (!paid.length) return null;
+  const shown = paid.slice(0, 6);
+  const avg = shown.reduce((n, t) => n + Math.abs(t.amount), 0) / shown.length;
+  const differs = shown.some((t) => Math.abs(Math.abs(t.amount) - x.amount) >= 0.005);
+  return (
+    <section class="paidlately" aria-label="Paid lately">
+      <h3>Paid lately{differs && shown.length > 1 && <span class="muted">, {money(avg)} on average</span>}</h3>
+      <ul>
+        {shown.map((t) => {
+          const off = Math.abs(t.amount) - x.amount;
+          return <li key={t.id}><span>{dayLongOf(t.date)}</span><span class="grow muted">{t.payee || ''}</span>
+            {Math.abs(off) >= 0.005 && x.amount > 0 && <span class={off > 0 ? 'bad' : 'ok'}>{off > 0 ? `${money(off)} more` : `${money(-off)} less`}</span>}
+            <strong>{money(Math.abs(t.amount))}</strong></li>;
+        })}
+      </ul>
+      {paid.length > shown.length && <p class="muted">And {paid.length - shown.length} before, on Transactions.</p>}
+    </section>
+  );
+}
+
+/**
+ * An account's last few balances as kept (Account.History, one a day it
+ * was typed in or read), newest first, each with how it moved from the one
+ * before: up is good for what it holds, down for what it owes.
+ */
+function BalancesLately({ a }: { a: finance.Account }) {
+  const points = (a.history || []).slice(-7);
+  if (points.length < 2) return null;
+  const rows = points.slice(1).map((p, i) => ({ ...p, moved: p.amount - points[i].amount })).reverse();
+  return (
+    <section class="paidlately" aria-label="Balances lately">
+      <h3>Balances lately</h3>
+      <ul>
+        {rows.map((p) => {
+          const good = owed(a.kind) ? p.moved < 0 : p.moved > 0;
+          return <li key={p.date}><span class="grow">{dayLongOf(p.date)}</span>
+            {Math.abs(p.moved) >= 0.005 && <span class={good ? 'ok' : 'bad'}>{(p.moved < 0 ? '−' : '+') + moneyIn(Math.abs(p.moved), a.currency)}</span>}
+            <strong>{moneyIn(p.amount, a.currency)}</strong></li>;
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
  * Update balances: every account in one list, each box starting at what
  * it is expected to hold today, the difference shown as it is typed, and
  * Enter (or Save) keeping them all as today's.
@@ -670,11 +732,13 @@ function BalancesForm(props: EditProps) {
   // its own currency, as it is typed (the view's figures are the plan's, at the account's rate).
   const now = (a: finance.Account) => (start?.[a.id] !== undefined ? Math.round((start[a.id] / rateOf(plan, a)) * 100) / 100 : undefined);
   const est = (a: finance.Account) => (owed(a.kind) ? Math.max(0, Math.round(((now(a) ?? a.balance + (a.pending || 0)) - (a.pending || 0)) * 100) / 100) : now(a) ?? a.balance);
-  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, String(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', String(a.pending || 0)]] : [])])) }));
+  const [typed, setTyped] = useState<Record<string, string>>(() => ({ cushion: String(plan.cushion || 0), ...Object.fromEntries(accounts.flatMap((a) => [[a.id, cents(est(a))], ...(a.kind === 'card' ? [[a.id + ':p', cents(a.pending || 0)]] : [])])) }));
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const first = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => { first.current?.focus(); first.current?.select(); }, []);
+  // The first box shown takes the cursor: the first account of the first group with any.
+  const firstShown = groups.flatMap((g) => accounts.filter((a) => g.kinds.includes(a.kind)))[0]?.id;
   const read = (key: string, was: number) => { const n = parseAmount(typed[key] ?? ''); return typed[key]?.trim() && !isNaN(n) ? n : was; };
   const submit = (e: Event) => {
     e.preventDefault();
@@ -699,7 +763,7 @@ function BalancesForm(props: EditProps) {
         const n = name(f.name);
         const a = accounts.find((q) => name(q.name) === n) || accounts.find((q) => n && (name(q.name).includes(n) || n.includes(name(q.name))));
         const code = (a?.currency || currencyCode()).toUpperCase();
-        if (a && (!f.currency || f.currency === code)) { next[a.id] = String(f.balance); filled.push(a.name); } else left.push(f.name);
+        if (a && (!f.currency || f.currency === code)) { next[a.id] = cents(f.balance); filled.push(a.name); } else left.push(f.name);
       }
       setTyped(next);
       setPulled({ said: `${filled.length ? `Filled from ${app.name}: ${filled.join(', ')}.` : `Nothing in ${app.name} matched these accounts.`}${left.length ? ` Not matched: ${left.join(', ')}.` : ''} Check them, then Save.` });
@@ -714,9 +778,14 @@ function BalancesForm(props: EditProps) {
         {pulled.said && <span class="muted" role="status">{pulled.said}</span>}
         {pulled.problem && <span class="formerr bad" role="alert">{pulled.problem}</span>}
       </div>}
+      {/* Under each group's heading, in its colour (Cash, Credit cards, Investments, Home & Car, Loans), as the sidebar has them. */}
+      {groups.map((g) => ({ g, list: accounts.filter((a) => g.kinds.includes(a.kind)) })).filter((x) => x.list.length).map(({ g, list }) => (
+      <section key={g.key} class="balgroup" aria-labelledby={'balg-' + g.key}>
+      <h3 id={'balg-' + g.key} class="balgrouphead"><Dot color={g.color} />{g.name}</h3>
       <ul class={'balancelist' + (accounts.some((a) => a.kind === 'card') ? ' cards' : '')}>
-        {accounts.map((a, i) => {
+        {list.map((a) => {
           const d = read(a.id, est(a)) - est(a);
+          const i = a.id === firstShown ? 0 : 1;
           return (
             <li key={a.id}>
               <AcctMark a={a} size="sm" />
@@ -729,7 +798,19 @@ function BalancesForm(props: EditProps) {
           );
         })}
       </ul>
+      </section>))}
       {!accounts.length && <p class="muted">No accounts yet: add one first.</p>}
+      {(() => {
+        // What Save changes in all: how many differ from what was expected, and net worth by how much (in the plan's currency;
+        // a card owes its balance and its pending together).
+        const off = accounts.map((a) => {
+          const d = read(a.id, est(a)) - est(a), p = a.kind === 'card' ? read(a.id + ':p', a.pending || 0) - (a.pending || 0) : 0;
+          return { moved: Math.abs(d) >= 0.005 || Math.abs(p) >= 0.005, worth: (owed(a.kind) ? -(d + p) : d) * rateOf(plan, a) };
+        }).filter((x) => x.moved);
+        if (!off.length) return null;
+        const worth = off.reduce((t, x) => t + x.worth, 0);
+        return <p class="muted balsum" role="status">{off.length === 1 ? '1 balance differs' : `${off.length} balances differ`} from what was expected{Math.abs(worth) >= 0.005 ? <>: net worth <span class={worth < 0 ? 'bad' : 'ok'}>{(worth < 0 ? '−' : '+') + money(Math.abs(worth))}</span></> : ', net worth the same'}.</p>;
+      })()}
       <label class="field cushion">Flag checking under <span class="moneyfield"><span aria-hidden="true">{currencySign()}</span><input inputmode="decimal" value={typed.cushion} onInput={type('cushion')} /></span></label>
       <Actions busy={busy} exists={false} remove={() => {}} close={props.close} problem={problem} touched={touched} />
     </form>
@@ -752,8 +833,8 @@ function TransactionForm(props: EditProps) {
   const payments = allPayments(plan);
   const [way, setWay] = useState(t?.to ? 'move' : t && t.amount > 0 ? 'in' : 'out');
   const [payee, setPayee] = useState(t?.payee || '');
-  const [amount, setAmount] = useState(t ? String(Math.abs(t.amount)) : '');
-  const [date, setDate] = useState(t?.date || todayISO());
+  const [amount, setAmount] = useState(t ? cents(Math.abs(t.amount)) : '');
+  const [date, setDate] = useState(() => t?.date || takeDay() || todayISO());
   const [account, setAccount] = useState(t?.account || checking || accounts[0]?.id || '');
   const [to, setTo] = useState(t?.to || '');
   const [category, setCategory] = useState(t?.category || '');
@@ -762,7 +843,7 @@ function TransactionForm(props: EditProps) {
   const [paymentPicked, setPaymentPicked] = useState(!!t?.payment || !!t?.notPlanned);
   const [note, setNote] = useState(t?.note || '');
   // Parts across categories, as typed (amounts without a sign: the whole's way), and tags, comma between.
-  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: text(Math.abs(sp.amount)), note: sp.note || '' })));
+  const [parts, setParts] = useState((t?.splits || []).map((sp) => ({ category: sp.category, amount: money2(Math.abs(sp.amount)), note: sp.note || '' })));
   const [tagText, setTagText] = useState((t?.tags || []).join(', '));
   const [receipt, setReceipt] = useState(t?.receipt);
   const setPart = (i: number, k: string, val: string) => setParts(parts.map((sp, j) => (j === i ? { ...sp, [k]: val } : sp)));
@@ -799,7 +880,7 @@ function TransactionForm(props: EditProps) {
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
-    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike) : undefined;
+    ? plannedFor({ date, amount: way === 'in' ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), withLearned(paysBill, others)) : undefined;
   const linked = paymentPicked ? payment : guess?.payment || '';
   const guessed = guess && payments.find((x) => x.id === guess.payment);
   const choose = (id: string) => {
@@ -808,7 +889,7 @@ function TransactionForm(props: EditProps) {
     const x = payments.find((q) => q.id === id);
     if (!x) return;
     if (!payee.trim()) setPayee(x.name);
-    if (!amount.trim() && x.amount) setAmount(String(x.amount));
+    if (!amount.trim() && x.amount) setAmount(cents(x.amount));
     if (!category.trim()) setCategory(categories.find(([k]) => k === x.kind)?.[1] || '');
     if (x.card && way !== 'move') setWay('out');
   };
@@ -829,7 +910,7 @@ function TransactionForm(props: EditProps) {
     setProblem(wrong);
     if (wrong) return;
     const next: finance.Transaction = { ...(t || {}), id: t?.id || '', date, account, amount: way === 'in' ? n : -n, payee: payee.trim() || undefined, category: category.trim() || undefined,
-      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), paysAlike)) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
+      note: note.trim() || undefined, payment: linked || undefined, notPlanned: paymentPicked && !payment && (!!t?.notPlanned || !!plannedFor({ date, amount: way === 'in' ? n : -n, payee: payee.trim() }, account, payments.filter((x) => !x.card), props.dues || {}, checking, paidDays(others, props.dues || {}), withLearned(paysBill, others))) || undefined, to: way === 'move' ? to : undefined, institution: way === 'move' ? undefined : logo || undefined,
       splits: used.length > 1 ? used.map((sp) => ({ category: sp.category.trim(), amount: way === 'in' ? num(sp.amount) : -num(sp.amount), note: sp.note.trim() || undefined })) : undefined,
       tags: tagText.split(',').map((x) => x.trim().toLowerCase()).filter((x, i, all) => x && all.indexOf(x) === i), receipt };
     // One part alone is the whole: its category is the transaction's. Split, the categories are the parts'.
@@ -1059,7 +1140,7 @@ function CategoriesForm(props: EditProps) {
 function BudgetsForm(props: EditProps) {
   const { plan } = props;
   const names = (props.categories || []).map((c) => c.name);
-  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: text(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
+  const [rows, setRows] = useState(() => (plan.budgets || []).map((b) => ({ category: b.category, amount: money2(b.amount), per: b.per || 'month', rollover: !!b.rollover })));
   const { busy, keep, touched, watch } = useSaving(props);
   const [problem, setProblem] = useState('');
   const set = (i: number, k: string, val: string | boolean) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: val } : r)));
@@ -1156,7 +1237,9 @@ function ImportForm(props: EditProps) {
   const payments = (plan.payments || []).filter((x) => !x.card);
   const guessed: (Planned | undefined)[] = (() => {
     const taken = paidDays(have, props.dues || {});
-    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, paysAlike); if (g) taken.add(g.payment + ' ' + g.due); return g; });
+    // A payee linked to a payment before links to it again (learnedLinks).
+    const same = withLearned(paysBill, have);
+    return fresh.map((t) => { const g = plannedFor(t, account, payments, props.dues || {}, checking, taken, same); if (g) taken.add(g.payment + ' ' + g.due); return g; });
   })();
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   // What each fresh row is for: a category, or a move to or from another of the household's accounts (guessCategory.ts).
@@ -1271,7 +1354,7 @@ function GoalForm(props: EditProps) {
   const accounts = (plan.accounts || []).filter((a) => goalKinds.includes(a.kind));
   const taken = (acct: string) => others.reduce((t, q) => t + (q.shares || []).filter((s) => s.account === acct).reduce((u, s) => u + s.percent, 0), 0);
   const [name, setName] = useState(g?.name || '');
-  const [target, setTarget] = useState(text(g?.target));
+  const [target, setTarget] = useState(money2(g?.target));
   const [date, setDate] = useState(g?.date || '');
   const [shares, setShares] = useState<Record<string, string>>(() => Object.fromEntries((g?.shares || []).map((s) => [s.account, String(s.percent)])));
   const { busy, keep, touched, watch } = useSaving(props);

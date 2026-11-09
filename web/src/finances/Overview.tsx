@@ -25,6 +25,9 @@ import { NetWorthWidget } from './widgets/Worth';
 import { SinceWidget, type SinceState } from './widgets/Ledger';
 import { ComingUpWidget } from './widgets/ComingUp';
 import { GoalsWidget } from './widgets/Goals';
+import { LatestWidget } from './widgets/Latest';
+import { SpentWidget } from './widgets/Spent';
+import type { showTransactions } from './Transactions';
 
 /** What the dashboard draws; add, edit, and setSince are left out on a phone allowed only to look, so it offers no way to change anything. */
 export interface OverviewProps {
@@ -46,15 +49,19 @@ export interface OverviewProps {
   openWorth: () => void;
   /** Shows Recurring's Subscriptions. */
   openSubscriptions?: () => void;
+  /** Shows Recurring: a typical month, payment by payment; with a filter, on those payments (Bills, Cards…). */
+  openRecurring?: (filter?: string) => void;
+  /** Shows Transactions filtered (a category of this month's spending). */
+  showIn?: (f: Parameters<typeof showTransactions>[0]) => void;
   /** Shows Transactions (and its budgets). */
   openTransactions?: () => void;
-  /** Shows the Calendar. */
-  openCalendar?: () => void;
+  /** Shows the Calendar, on a day when one is given (the checking chart's). */
+  openCalendar?: (day?: string) => void;
   /** Drawn on a phone (the companion): what is coming up first, and the goals. */
   phone?: boolean;
 }
 
-export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openTransactions, openCalendar, phone }: OverviewProps) {
+export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, showIn, phone }: OverviewProps) {
   const picked = Math.min(sel, v.periods.length - 1);
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
@@ -87,11 +94,13 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}
         <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
-        <CheckingWidget v={v} L={L} sel={picked} />
+        <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
-        <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} />
-        <CashFlowWidget v={v} L={L} />
-        <SpendingWidget v={v} L={L} />
+        <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} />
+        <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} />
+        <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} />
+        <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
+        <SpentWidget v={v} ledger={ledger} open={showIn} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>

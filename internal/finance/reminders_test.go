@@ -120,3 +120,30 @@ func TestWeekLines(t *testing.T) {
 		t.Errorf("an empty plan: %q", lines)
 	}
 }
+
+// The week's spending from the ledger: the seven days to today, money out
+// only (a transfer and money in left out), the payee most went to named;
+// one transaction alone is not set apart; none, no line.
+func TestSpentLine(t *testing.T) {
+	p := Plan{Accounts: []Account{{ID: "chk", Name: "Checking", Kind: Checking}, {ID: "sav", Name: "Savings", Kind: Savings}}}
+	today := date("2026-10-30")
+	l := Ledger{Transactions: []Transaction{
+		{ID: "a", Date: "2026-10-23", Account: "chk", Amount: -500, Payee: "Rent"}, // eight days back: not this week
+		{ID: "b", Date: "2026-10-24", Account: "chk", Amount: -40, Payee: "Costco"},
+		{ID: "c", Date: "2026-10-26", Account: "chk", Amount: 2400, Payee: "Paycheck"},
+		{ID: "d", Date: "2026-10-27", Account: "chk", Amount: -250, Payee: "Savings", To: "sav"},
+		{ID: "e", Date: "2026-10-28", Account: "chk", Amount: -48.20, Payee: "Shell"},
+		{ID: "f", Date: "2026-10-30", Account: "chk", Amount: -60, Payee: "COSTCO"},
+		{ID: "g", Date: "2026-10-31", Account: "chk", Amount: -99, Payee: "Tomorrow"},
+	}}
+	if got, want := SpentLine(p, l, today, usd), "Spent this week: $148.20 in 3 transactions, the most at Costco, $100.00"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	one := Ledger{Transactions: []Transaction{{ID: "e", Date: "2026-10-28", Account: "chk", Amount: -48.20, Payee: "Shell"}}}
+	if got := SpentLine(p, one, today, usd); got != "Spent this week: $48.20 in 1 transaction" {
+		t.Errorf("one: %q", got)
+	}
+	if got := SpentLine(p, Ledger{}, today, usd); got != "" {
+		t.Errorf("none: %q", got)
+	}
+}

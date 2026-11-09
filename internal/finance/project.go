@@ -915,14 +915,17 @@ func lastDays(p Plan, today time.Time) map[string]string {
 const DuesBack = 120
 
 // dueDays is each payment with a set amount's days from DuesBack before
-// today to matchWindow after.
+// today to matchWindow after, before its start too (Schedule.Back): the
+// household's bills were paid before they were typed into the plan.
 func dueDays(p Plan, today time.Time) map[string][]string {
 	out := map[string][]string{}
 	for _, x := range p.Payments {
 		if x.Card != "" || x.Amount <= 0 {
 			continue
 		}
-		for _, d := range p.Dates(x.Schedule, today.AddDate(0, 0, -DuesBack), today.AddDate(0, 0, matchWindow)) {
+		// Before the payment's start too: a bill set up today was paid last month (Schedule.Back).
+		from := today.AddDate(0, 0, -DuesBack)
+		for _, d := range p.Dates(x.Schedule.Back(from), from, today.AddDate(0, 0, matchWindow)) {
 			out[x.ID] = append(out[x.ID], dateOf(d))
 		}
 	}
@@ -961,7 +964,8 @@ const matchWindow = 16
 // transaction pays (the nearest unpaid one within matchWindow days, the
 // earlier on a tie), and lists them as paid, in the ledger's order. A day
 // before the events start (before any balance was typed in) is matched
-// from the payment's own schedule: listed as paid, with nothing to take out.
+// from the payment's own schedule, run back before its start if need be
+// (Schedule.Back): listed as paid, with nothing to take out.
 func matchLedger(p Plan, events []event, txs []Transaction, start time.Time, loc *time.Location) ([]event, []Paid) {
 	paid := map[int]bool{}
 	earlier := map[string]bool{} // payment and day, matched before start
@@ -987,7 +991,7 @@ func matchLedger(p Plan, events []event, txs []Transaction, start time.Time, loc
 			}
 		}
 		var due time.Time
-		for _, d := range p.Dates(x.Schedule, on.AddDate(0, 0, -matchWindow), on.AddDate(0, 0, matchWindow)) {
+		for _, d := range p.Dates(x.Schedule.Back(on.AddDate(0, 0, -matchWindow)), on.AddDate(0, 0, -matchWindow), on.AddDate(0, 0, matchWindow)) {
 			if d.Before(start) && !earlier[t.Payment+dateOf(d)] {
 				if g := gapOf(on, d); g < gap || g == gap && best >= 0 && d.Before(events[best].was) {
 					due, gap, best = d, g, -2
