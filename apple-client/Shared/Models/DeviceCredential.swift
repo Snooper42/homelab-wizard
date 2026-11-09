@@ -13,6 +13,10 @@ struct DeviceCredential: Codable, Sendable {
     let deviceID: String
     let deviceName: String
     let pairedAt: Date
+    /// Away from home through the tunnel (ADR-0023), when the computer gave
+    /// it at pairing; nil for a phone paired before, or where the computer
+    /// doesn't go out. Kept with the token, in the Keychain, this device only.
+    var away: AwayCredential? = nil
 
     /// Whether a token has the expected shape. The client rejects anything
     /// else instead of storing or sending it.
@@ -30,6 +34,32 @@ struct DeviceCredential: Codable, Sendable {
             }
         }
     }
+}
+
+/// How a phone reaches the computer away from home: the key both sides
+/// derived at pairing, the tunnel's address, and the household's service
+/// token that Cloudflare Access asks for.
+struct AwayCredential: Codable, Sendable, Equatable {
+    let key: Data
+    let url: URL
+    let clientID: String
+    let clientSecret: String
+
+    /// Only an https address on the tunnel's one path, with no user, query
+    /// or fragment, and a 32-byte key.
+    static func make(key: Data, url: String, clientID: String, clientSecret: String) -> AwayCredential? {
+        guard key.count == 32, let u = URL(string: url), u.scheme == "https", let host = u.host, !host.isEmpty,
+              u.path == "/api/tunnel", u.user == nil, u.password == nil, u.query == nil, u.fragment == nil,
+              (1...256).contains(clientID.utf8.count), (1...512).contains(clientSecret.utf8.count)
+        else { return nil }
+        return AwayCredential(key: key, url: u, clientID: clientID, clientSecret: clientSecret)
+    }
+}
+
+extension AwayCredential: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+    var description: String { "<redacted>" }
+    var debugDescription: String { "AwayCredential(<redacted>)" }
+    var customMirror: Mirror { Mirror(self, children: []) }
 }
 
 extension DeviceCredential: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
