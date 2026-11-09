@@ -12,7 +12,7 @@ Architecture decisions and why they were made.
 | ADR-0002 | OrbStack as the container runtime | Accepted |
 | ADR-0003 | Cloudflare Tunnel for public access, through the proxy | Accepted |
 | ADR-0004 | Custom Nginx Proxy Manager image with the CrowdSec bouncer | Accepted |
-| ADR-0005 | No Cloudflare Access or WARP | Accepted |
+| ADR-0005 | No Cloudflare Access or WARP | Accepted; narrowed by ADR-0023 for the phone companion's own hostname |
 | ADR-0006 | Watchtower opt-in by label | Superseded by ADR-0020 |
 | ADR-0007 | Database dumps scheduled by launchd, not Duplicati scripts | Accepted |
 | ADR-0008 | compose files are the catalog; one CLI in Go | Accepted |
@@ -30,6 +30,7 @@ Architecture decisions and why they were made.
 | ADR-0020 | A rollback puts back the app's data with its image | Accepted |
 | ADR-0021 | Finances as a screen of the app, typed in by hand and kept on this machine | Accepted |
 | ADR-0022 | SQLite only for records that grow and are searched; small state stays in JSON | Accepted |
+| ADR-0023 | The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end | Accepted |
 
 ---
 
@@ -59,6 +60,8 @@ Architecture decisions and why they were made.
 **Consequences:** Never update it by pulling the upstream image (that silently drops the bouncer). Left out of the nightly updates; `./homelab update nginx-proxy-manager` rebuilds it. With no bouncer key the bouncer turns itself off instead of stopping the proxy.
 
 ## ADR-0005: No Cloudflare Access or WARP
+
+**Status:** Narrowed by [ADR-0023](<#adr-0023-the-iphone-app-away-from-home-the-companion-through-the-tunnel-behind-access-and-sealed-end-to-end>) (November 2026): the phone companion's own hostname is behind Access with a service token, which the Homelab app sends itself. Every other app stays without Access, for the reasons below.
 
 **Context:** Cloudflare Access could gate the public apps behind a login.
 **Decision:** Do not use Access or WARP.
@@ -236,3 +239,23 @@ Architecture decisions and why they were made.
 **Trade-offs:** a dependency of some size (the pure-Go SQLite is a translation of SQLite's C, and grows the binary), a schema to migrate between versions, and a file that, unlike the JSON records, a person cannot read or fix in a text editor. In return the two growing records stay fast and bounded, and the rest of `data/` stays as simple as it is.
 
 **Alternatives:** JSON lines files with rotation (simple, but every search reads them all, and a day of samples is rewritten to trim it); bbolt or another key-value store (pure Go too, but no queries, so each screen would grow its own index); the cgo SQLite driver (the original C, but a C toolchain on every build machine and harder cross-builds).
+
+## ADR-0023: The iPhone app away from home: the companion through the tunnel, behind Access and sealed end to end
+
+**Status:** Accepted, November 2026 (the owner's call, Nov 9). The computer's side is built; the Setup step that makes the Access application and the iPhone's side follow.
+
+**Context:** The phone companion (`homelab serve`) answered only at home and on the tailnet, and refused anything with Cloudflare's headers, so on cellular the iPhone app showed nothing. The owner doesn't use Tailscale and won't add an app to every device; they use the Cloudflare tunnel, with Proton VPN's DNS. The companion holds Finances, so putting it on the internet as the other apps are (ADR-0005: their own sign-in, CrowdSec, Cloudflare's rules) is not enough.
+
+**Decision:** the companion gets one address through the tunnel, `/api/tunnel`, behind four locks, any one of which stops someone who got past the rest:
+
+1. **Cloudflare Access with a service token** on the companion's own hostname only. A request without the household's token is stopped at Cloudflare and never reaches the house. This narrows ADR-0005: the Homelab app sends the token itself (`CF-Access-Client-Id` and `-Secret`), so nobody completes a login, and no other app goes behind Access. The token reaches a phone only when it pairs at home, kept in its Keychain.
+2. **Access's signed pass, checked by the companion** (`Cf-Access-Jwt-Assertion`): RS256 by one of the team's keys (fetched from `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, the team's name checked as one DNS label, cached an hour), for this application's audience, by the team's issuer, for the household's service token (`common_name`), and not expired. Anything else with Cloudflare's headers is refused, as before.
+3. **The phone's own pairing:** its device token, inside the sealed message, so a phone unpaired on the computer is cut off at once.
+4. **Sealed end to end:** at pairing, at home over an encrypted link, the phone and the computer agree a key (X25519, HKDF-SHA256 with the phone's ID), and every request and answer through the tunnel is sealed with it (AES-256-GCM; a request bound to its phone, an answer to its request). Cloudflare opens the tunnel's TLS, so without this it could read Finances; with it, it sees which phone, and nothing more. A request carries its time (within 2 minutes) and is taken once.
+
+Through the tunnel the phone **only looks**: a method that changes anything, the household's settings, a stream, pairing, and the frontend are never served there. Ten wrong attempts lock an address, or a phone, out for 10 minutes. A wall screen, and a phone paired over plain home Wi-Fi, get no key, so never go out.
+
+**Trade-offs:** the companion is reachable from the internet at all, where it wasn't; the locks are why that is acceptable, and each is tested (`internal/companion/tunnel_test.go`). The key lives in `data/phones.json` (0600) beside the hashed tokens, since a sealing key can't be kept as a hash; whoever can read that file can already read `data/finance.json`. Phones paired before this pair again once, at home. Cloudflare outages leave the phone with only what it last saw.
+
+**Alternatives:** Tailscale (encrypted, no Access needed, but the owner won't install it); Access with a person's login (the app can't complete one, as ADR-0005 says); Access alone without sealing (Cloudflare could read every answer); a VPN server at home (another app on every device, and a port to open).
+

@@ -56,7 +56,13 @@ func (h *homelab) serve(ctx context.Context, args []string) error {
 	changes := &engine.Hub{}
 	go engine.Follow(ctx, h.root, changes.Publish)
 	s := &companion.Server{Store: companion.NewStore(companion.StorePath(h.root)), Methods: h.phoneMethods(), Files: web.Files(), Changes: changes, Calendar: h.financeCalendar,
-		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember}
+		ProxyKey: func() string { return h.envMap()["COMPANION_PROXY_KEY"] }, ForMember: h.forMember,
+		// Away from home through the tunnel (ADR-0023): Setup's "Reach
+		// Finances away from home" writes these; without them it's refused.
+		Access: func() companion.Access {
+			env := h.envMap()
+			return companion.Access{Team: env["COMPANION_ACCESS_TEAM"], Audience: env["COMPANION_ACCESS_AUD"], ClientID: env["COMPANION_ACCESS_CLIENT_ID"]}
+		}}
 	srv := &http.Server{Addr: net.JoinHostPort(bind, strconv.Itoa(*port)), Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
 	go func() { // #nosec G118 -- shuts down after ctx is done, so it needs a fresh context
 		<-ctx.Done()

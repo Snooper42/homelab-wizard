@@ -92,6 +92,11 @@ type Device struct {
 	Person string `json:"person,omitempty"`
 	// PersonName is their name, kept with it to show.
 	PersonName string `json:"personName,omitempty"`
+	// TunnelKey seals what it sends and gets through the tunnel away from
+	// home (ADR-0023), agreed when it paired at home; none, it isn't
+	// answered there. Kept here, in a file only this user can read (0600),
+	// and never shown.
+	TunnelKey []byte `json:"tunnelKey,omitempty"`
 }
 
 // Phone is a paired phone as the screens show it (no token hash).
@@ -550,4 +555,27 @@ func secret(n int) (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// SetTunnelKey keeps the key a phone agreed when it paired, for the tunnel.
+func (s *Store) SetTunnelKey(id string, key []byte) error {
+	_, err := s.change(id, func(d *Device) error {
+		d.TunnelKey = append([]byte(nil), key...)
+		return nil
+	})
+	return err
+}
+
+// tunnelKey is a paired phone's key for the tunnel, by its ID.
+func (s *Store) tunnelKey(id string) ([]byte, bool) {
+	var key []byte
+	s.read(func(st *state) bool {
+		for _, d := range st.Devices {
+			if d.ID == id && len(d.TunnelKey) == 32 {
+				key = append([]byte(nil), d.TunnelKey...)
+			}
+		}
+		return false
+	})
+	return key, key != nil
 }
