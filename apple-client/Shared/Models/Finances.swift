@@ -1211,7 +1211,7 @@ enum Spending {
         return trimmed
     }
 
-    private static func isIncome(_ name: String, in categories: [FinanceCategory]) -> Bool {
+    static func isIncome(_ name: String, in categories: [FinanceCategory]) -> Bool {
         if let c = categories.first(where: { $0.name.lowercased() == name.lowercased() }) { return c.income ?? false }
         return name.lowercased() == "income"
     }
