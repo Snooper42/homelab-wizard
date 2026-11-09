@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -64,6 +66,45 @@ func HasTdarrWork(home, kind string) bool {
 	}
 	for _, f := range st.Files {
 		if f.Status == "queued" {
+			return true
+		}
+	}
+	return false
+}
+
+// videoExt are the files Tdarr may shrink (video_engine's VIDEO_EXT).
+var videoExt = []string{".mkv", ".mp4", ".m4v", ".avi", ".mov", ".wmv", ".ts", ".m2ts", ".webm", ".mpg", ".mpeg", ".flv"}
+
+// InboxHasVideo reports whether a watched folder holds a video, a few
+// folders down (a download's own folder, a season in it): only then may a
+// sweep hand Tdarr something to shrink.
+func InboxHasVideo(folders []string) bool {
+	for _, f := range folders {
+		base := strings.Count(filepath.Clean(f), string(filepath.Separator))
+		found := false
+		_ = filepath.WalkDir(f, func(p string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil // a folder that can't be read (or a missing one) holds nothing to see
+			}
+			if p != f && strings.HasPrefix(d.Name(), ".") {
+				if d.IsDir() {
+					return fs.SkipDir
+				}
+				return nil
+			}
+			if d.IsDir() {
+				if strings.Count(filepath.Clean(p), string(filepath.Separator))-base >= 3 {
+					return fs.SkipDir
+				}
+				return nil
+			}
+			if slices.Contains(videoExt, strings.ToLower(filepath.Ext(p))) {
+				found = true
+				return fs.SkipAll
+			}
+			return nil
+		})
+		if found {
 			return true
 		}
 	}

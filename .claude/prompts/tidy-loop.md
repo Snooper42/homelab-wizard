@@ -167,6 +167,7 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 - #485: queue item 1 (Tidy lyrics runs; P6's guard), and the look: Take 2.
 - #540: Account 2's hand-off: Tdarr's setup says *Choose apps › Tdarr*, not *Choose stacks*; a test in `tools/media/tests` keeps *stacks* and *baseline* out of what the engines print.
+- #541: the plan for *media apps run only while a job needs them* (in **Open now**).
 
 ## Couldn't reproduce
 
@@ -177,6 +178,8 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 (Problems in shared parts or other screens that this loop finds: what you saw, the screenshot path, the smoke case that would fail. Never fix them here.)
 
 - **A sheet's first-box focus can take what's typed in another box** (`web/src/parts/Sheet.tsx`, Nov 9, #535). When a sheet shows, a `requestAnimationFrame` puts the cursor in its first field, even if the person (or a test) has already clicked into another one. On a slow frame, letters typed into the second box in between land in the first: CI's smoke (dark) on #535 had *Rumors* in Artist and Album empty; reproduced 2 runs in 9 with three smoke runs at once. Tidy Up's two cases now wait for that focus before typing a second box. *Fixed looks like:* the frame leaves the focus alone when it's already inside the panel. *Test:* open any sheet with two fields, slow `requestAnimationFrame` (as *Tidy Up: Needs a look names a film…* does), fill the second field at once, and expect its value kept.
+
+- **A resting Tdarr reads "Stopped by you" on Status** (Nov 9, `claude/feature-tidy-tdarr-rest`). Tidy Up now stops an idle Tdarr and notes it in `data/stopped.json` as `{"why": "tidy"}`. `stoppedWords` in `web/src/status/stopFor.ts` knows only `restarting`, so the row says *Stopped by you*, and the phone's screens likely say the same. *Fixed looks like:* *Resting* (the owner, Nov 9: shorter than *Resting until Tidy Up needs it*), with Start still offered (a Start keeps it up until Tidy Up's next job). *Test:* a smoke case with a mock whose `stopped` has `tdarr: {why: 'tidy'}`, expecting the words. Also check that an update recreating Tdarr leaves a resting one stopped, as it does one a person stopped.
 
 ## For Account 3
 
@@ -201,13 +204,21 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
    - **Wake for a job.** Before a `tdarrJob` runs: if Tdarr's stop says `Why: "tidy"`, take it out of `stopped.json`, start the container, and wait for Tdarr's API (up to 2 minutes, saying *Starting Tdarr…* as a step). If it doesn't answer, the job says why, as it does now when Tdarr isn't answering.
    - **A person's start wins.** A Tdarr someone started (Status, its page, Docker Desktop) is out of `stopped.json` while the record says resting. Tidy Up then clears `TdarrResting` and leaves Tdarr up until a Tidy Up job next uses it. A stop by a person (no `Why`, or any other `Why`) is never undone by Tidy Up.
    - **Battery.** A resting Tdarr is held, so the battery saver neither pauses nor restarts it. One paused on battery that then has no work stays paused until power, and then may rest.
-   - **The screen.** Movies' and TV's Tdarr rows say *Resting: starts when there's something to shrink*, not *isn't answering*, while the record says resting (`Tidy.tsx`, near the `away` row).
+   - **The screen:** nothing to change, as it turned out. Its only "Tdarr isn't answering" row (`Tidy.tsx`, `away`) shows while a film or episode is with Tdarr, and Tdarr never rests then.
+   - **Found while building:** the inbox files a bloated download through Tdarr (`video_engine.py` `file`, run by `inbox.py`). So a sweep with a video in a watched folder, and Needs a look's *It's a film…* / *It's an episode…*, wake it too (`needsTdarr`, `media.InboxHasVideo`).
    - *Tests that fail today:* `cmd/homelab` (idle with no work → stopped with why `tidy`; work pending, busy, a job in the last 15 minutes, or `TIDY_TDARR_REST=false` → left running; a person's stop is never started; a `run` wakes a resting Tdarr and waits for its API; a person's start clears resting), and a smoke case for the resting row.
 
-   *For Account 2 (handed over when this is built):* Status reads `why === "tidy"` as *Stopped by you* today (`web/src/status/stopFor.ts`, `stoppedWords`). It should say *Resting until Tidy Up needs it*, with Start still offered. Also check that an update recreating Tdarr leaves a resting one stopped.
+   *Built in the PR after #541 (`claude/feature-tidy-tdarr-rest`).* *For Account 2 (handed over below, under **For Account 2**):* Status reads `why === "tidy"` as *Stopped by you* today (`web/src/status/stopFor.ts`, `stoppedWords`). It should say *Resting* (the owner's word), with Start still offered. Also check that an update recreating Tdarr leaves a resting one stopped.
 
    *Asked of the owner (Nov 9), building the conservative choice meanwhile:* (a) **Which apps:** Tdarr only for now, or also Sonarr, Radarr, Lidarr, qBittorrent and Prowlarr when nothing is downloading? Those fetch on their own schedules (RSS, Seerr's requests), so stopping them means new episodes don't arrive until something starts them: a bigger change. Jellyfin and Navidrome stay up. (b) **Status:** should a resting app show there as *Resting until Tidy Up needs it*, in the stopped list? Pick: yes, as above.
-2. The queue's item 2 (*a job that stopped part-way carries on as another job*), then the rest of the queue and the look's L3.
+2. **The *arr apps rest too** (the owner, Nov 9: "All arr apps should rest unless there is something actually pending"). After #542 merges, its own PR, built on #542's rest-and-wake (generalise `restTdarr`/`wakeTdarr` to a list of apps, each with what counts as pending):
+   - *Which:* Sonarr, Radarr, Lidarr, Prowlarr and Bazarr, with the helpers that serve only them: qBittorrent (and Gluetun, which it runs through), FlareSolverr. Seerr, Jellyfin and Navidrome stay up.
+   - *Pending* (any keeps them all up, as they call each other): a torrent downloading or queued in qBittorrent; anything in a Sonarr, Radarr or Lidarr queue (`/api/v3/queue`, Lidarr `/api/v1/queue`); a Seerr request approved and not yet available; a Tidy Up job that hands downloads over (`arr apply`); and 15 minutes after any of these. A torrent seeding keeps qBittorrent and Gluetun up (the owner: yes), not the rest.
+   - *New episodes and films* still come: they wake on a timetable (the owner: every 12 hours, "I'm not adding files that often"; and at once when Seerr has a new request), ask for an RSS sync and a search of what's missing (`RssSync`, `MissingEpisodeSearch`), and rest again once nothing was grabbed. A request Seerr couldn't hand over while they rested is sent again once they're up.
+   - *Lanes:* Status's word for them is the same hand-off as Tdarr's (**For Account 2**).
+3. The queue's item 2 (*a job that stopped part-way carries on as another job*), then the rest of the queue and the look's L3.
+
+Owner's answers, Nov 9 (later): all the *arr apps rest unless something is actually pending (item 2 above); they wake every 12 hours to look for new releases; seeding keeps qBittorrent up; a resting app's word on Status is just *Resting*.
 
 Owner's answers this session (Nov 9): untagged songs go to beets first when AcoustID is set up; the album sheet's artist is optional; filing stops when a song is more than 30 s off its place on the album. #508 (Finances, idle) was closed at the owner's word.
 
