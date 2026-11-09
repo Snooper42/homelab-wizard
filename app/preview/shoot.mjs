@@ -1011,6 +1011,11 @@ const smokes = [
     await page.waitForSelector(`${sheet} h2:text-is("Which film is IMG_2041.mov?")`, { timeout: 3000 });
     if (!await page.$(`${sheet} button:text-is("File it")[disabled]`)) throw new Error('File it before a title');
     await page.fill(`${sheet} label:has-text("Film") input`, 'The Big Lebowski');
+    // The first box is typed in at once (above); the sheet then puts the cursor there itself, a slow frame later
+    // (parts/Sheet.tsx), which took a second box's typing with it (Nov 9: Season's "2" went to Show, and File it stayed
+    // grey). The second box waits for that: what's typed in the first is still checked when it's filed.
+    const settled = () => page.waitForFunction(() => document.activeElement === document.querySelector('#tidySheet .tidyfields input'), null, { timeout: 3000 });
+    await settled();
     await page.fill(`${sheet} label:has-text("Year") input`, '19x8');
     if (!await page.$(`${sheet} button:text-is("File it")[disabled]`)) throw new Error('a year that is not a number');
     await page.fill(`${sheet} label:has-text("Year") input`, '1998');
@@ -1023,6 +1028,7 @@ const smokes = [
     await page.click(`${card} li:has(strong:text-is("stuff")) button:text-is("It's an episode…")`);
     await page.waitForSelector(`${sheet} h2:text-is("Which show is stuff?")`, { timeout: 3000 });
     await page.fill(`${sheet} label:has-text("Show") input`, ' Severance ');
+    await settled();
     await page.fill(`${sheet} label:has-text("Season") input`, '2');
     await page.click(`${sheet} button:text-is("File it")`);
     await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 2, null, { timeout: 5000 });
@@ -1056,6 +1062,10 @@ const smokes = [
     await page.click(`${songs} button:text-is("Name these songs…")`);
     const sheet = '#tidySheet:not([hidden])';
     await page.waitForSelector(`${sheet} h2:text-is("Which album is new stuff?")`, { timeout: 3000 });
+    // The sheet puts the cursor in its first box a frame after it shows (parts/Sheet.tsx). Typed into Album before that,
+    // a slow runner's late frame sent the word to Artist (Nov 9, CI dark: "Rumors" in Artist, Album empty): wait for it.
+    const settled = () => page.waitForFunction(() => document.activeElement === document.querySelector('#tidySheet .tidyfields input'), null, { timeout: 3000 });
+    await settled();
     if (!await page.$(`${sheet} button:text-is("Look it up")[disabled]`)) throw new Error('Look it up before an album');
     if (!await page.$(`${sheet} button:text-is("File them")[disabled]`)) throw new Error('File them before a pick');
     await page.fill(`${sheet} label:has-text("Artist") input`, 'Fleetwood Mac');
@@ -1082,6 +1092,7 @@ const smokes = [
     await page.evaluate(() => { window.__MOCK.tidyAlbums = []; });
     await page.waitForSelector(`${songs} button:text-is("Name these songs…"):not([disabled])`, { timeout: 8000 });
     await page.click(`${songs} button:text-is("Name these songs…")`);
+    await settled();
     await page.fill(`${sheet} label:has-text("Album") input`, 'Rumors');
     await page.press(`${sheet} label:has-text("Album") input`, 'Enter');
     await page.waitForSelector(`${sheet} p:text-is("MusicBrainz has no album by that name. Check the spelling, or leave the artist out.")`, { timeout: 3000 });
