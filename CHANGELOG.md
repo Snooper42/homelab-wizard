@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Links into the iPhone app:** `homelab://app/radarr` opens Radarr's page, `homelab://finances/budgets` opens Budgets, and `homelab://app/radarr?do=restart` opens Radarr's page with Restart waiting for your tap. A link never changes anything by itself. They're for the buttons on alerts, coming next.
 - **Away mode on the iPhone:** when neither home nor the tunnel answers, the app no longer just says it can't reach the computer: it lists your apps that are on the internet (Immich, say), as it last saw them, each with whether it answers and a tap to open it.
 - **The iPhone app away from home:** once the computer is set up for it and the phone is paired again at home, the Homelab app shows Status, your apps, and the Finances it may see on cellular too, through your Cloudflare tunnel, sealed so that even Cloudflare can't read it. At home it goes straight to the computer as before. Away, it only looks: changes wait until you're home.
 - **Reach Finances away from home:** a Setup step that puts Cloudflare Access in front of the phone companion's own address (`homelab-away.<your domain>`), letting in only your household's phones, and publishes it through your tunnel, all with the Cloudflare token you already have (given two more permissions). Phones paired at home afterwards get what they need to reach it; the iPhone app's part comes next.

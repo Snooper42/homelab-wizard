@@ -173,6 +173,13 @@ private struct PhoneDashboard: View {
             if finances.canSeePlan {
                 NavigationStack {
                     financesRoot
+                        // A link to one of its pages (homelab://finances/budgets).
+                        .navigationDestination(item: Binding(
+                            get: { IntentInbox.shared.financePage },
+                            set: { IntentInbox.shared.financePage = $0 }
+                        )) { page in
+                            FinancesView.linkedPage(page, finances: finances)
+                        }
                 }
                 .tabItem { Label("Finances", systemImage: Screen.finances.systemImage) }
                 .tag(Screen.finances)
@@ -198,6 +205,15 @@ private struct PhoneDashboard: View {
         // Siri or a shortcut asked for an app: Status, where its page opens.
         .onChange(of: IntentInbox.shared.pending, initial: true) { _, request in
             if request != nil { savedTab = Screen.status(.all).storageKey }
+        }
+        // A link asked for a screen (homelab://backups): that tab, where this
+        // phone has it (the tab's own rules still apply).
+        .onChange(of: IntentInbox.shared.screen, initial: true) { _, screen in
+            guard let screen else { return }
+            savedTab = screen.storageKey
+            IntentInbox.shared.screen = nil
+            // No Finances on this phone: no page of it waits either.
+            if !finances.canSeePlan { IntentInbox.shared.financePage = nil }
         }
         #if SCREENSHOTS
         .onAppear {
@@ -259,6 +275,8 @@ private struct PhoneStatus: View {
     /// An app's page grows out of its row (iOS 18).
     @Namespace private var zoom
     @Environment(AppActionsViewModel.self) private var actions
+    /// A link's action, waiting for its one tap.
+    @State private var linkAsk: LinkAsk?
     /// The pages open on Status, so Siri can open one.
     @State private var path = NavigationPath()
 
@@ -347,20 +365,63 @@ private struct PhoneStatus: View {
                 }
             }
         }
+        // A link's action, on a device allowed changes: one tap here, then
+        // as its button would (Face ID, and Stop asks first).
+        .confirmationDialog(
+            linkAsk.map { "\($0.action.title) \($0.app.name)?" } ?? "",
+            isPresented: Binding(get: { linkAsk != nil }, set: { if !$0 { linkAsk = nil } }),
+            titleVisibility: .visible,
+            presenting: linkAsk
+        ) { ask in
+            Button(ask.action.title, role: ask.action == .stop ? .destructive : nil) {
+                actions.request(ask.action, on: ask.app)
+            }
+            Button("Not Now", role: .cancel) {}
+        } message: { _ in
+            Text("A link asked for this. Nothing happens unless you tap it.")
+        }
     }
 
-    /// Does what Siri or a shortcut asked: opens the app's page and asks as
-    /// its button would (Face ID, and Stop asks first). An app it can't
-    /// tell is searched for instead, so the list shows what matches.
+    /// A link's action, waiting for its tap.
+    struct LinkAsk: Equatable {
+        let app: AppStatus
+        let action: AppAction
+    }
+
+    /// Does what Siri, a shortcut or a link asked: opens the app's page and
+    /// asks as its button would (Face ID, and Stop asks first); a link's
+    /// action waits for one more tap, as anyone can send a link. An app it
+    /// can't tell is searched for instead, so the list shows what matches.
     private func takeRequest() {
         let inbox = IntentInbox.shared
         guard let request = inbox.pending, model.hasLoaded else { return }
         inbox.pending = nil
-        guard let app = IntentInbox.match(request.app, in: model.apps(for: .all)) else {
+        let apps = model.apps(for: .all)
+        // A link names an app by its id, exactly.
+        let found = request.fromLink
+            ? apps.first { $0.id.lowercased() == request.app.lowercased() }
+            : IntentInbox.match(request.app, in: apps)
+        guard let app = found else {
             model.search = request.app
             return
         }
         path = NavigationPath([app.id])
+        if request.logs {
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                model.logsApp = app
+            }
+            return
+        }
+        if request.fromLink {
+            if let action = request.action, actions.available(for: app).contains(action) {
+                Task {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    linkAsk = LinkAsk(app: app, action: action)
+                }
+            }
+            return
+        }
         if let action = request.action, actions.available(for: app).contains(action) {
             // Once its page is up, so the spinner and the result show there.
             Task {

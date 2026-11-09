@@ -44,6 +44,9 @@ struct AppCoordinatorView: View {
         }
         #endif
         .task { coordinator.bootstrap() }
+        // A link into the app (homelab://): kept until the unlocked
+        // dashboard takes it. It changes nothing by itself.
+        .onOpenURL { url in IntentInbox.shared.open(DeepLink.parse(url)) }
         .onChange(of: scenePhase, initial: true) { _, phase in
             coordinator.scenePhaseChanged(to: phase)
         }
