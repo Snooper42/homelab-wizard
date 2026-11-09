@@ -434,6 +434,8 @@ struct WalletCard: View {
             }
         }
         .foregroundStyle(ink)
+        // A card's words stay on the card, as Wallet's do, at any text size.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity, minHeight: Self.height, maxHeight: Self.height, alignment: .leading)
