@@ -35,6 +35,10 @@ const mediaUsage = `homelab media: Tidy Up, your music, books, films, TV, and au
       audiobooks  scan, run (one .m4b a book), file <paths>, status
   homelab media inbox [--apply]            file what's finished downloading in Downloads
   homelab media inbox undo <id>            put one download What I did today filed back where it was
+  homelab media inbox name <path> movie "<title>" [<year>]
+  homelab media inbox name <path> episode "<show>" <season> [<episode>]
+                                           file a download Tidy Up couldn't place, as you name it
+  homelab media inbox leave <path>         leave a download be: Tidy Up never files it
   homelab media scrub [--apply]            sweep leftovers whose film, song or book is gone
   homelab media tdarr setup [--apply]      Tdarr's space-saving libraries for films and TV
   homelab media restore <run> [--yes]      put back what one run put in %[1]s (Undo on Tidy Up)
@@ -63,8 +67,9 @@ func (h *homelab) media(ctx context.Context, args []string) error {
 	case "install":
 		return h.mediaInstall(ctx, args[1:])
 	case "inbox":
-		// What I did today's Undo: homelab media inbox undo <id>.
-		if len(args) > 1 && args[1] == "undo" {
+		// What I did today's Undo, and Needs a look's answers: homelab media
+		// inbox undo <id>, name <path> movie|episode ..., leave <path>.
+		if len(args) > 1 && (args[1] == "undo" || args[1] == "name" || args[1] == "leave") {
 			return h.mediaEngine(ctx, "inbox", args[1], args[2:])
 		}
 		return h.mediaEngine(ctx, "inbox", "scan", args[1:])
@@ -225,7 +230,7 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		return err
 	}
 	// The inbox's sweep and the scrubber only preview without --apply: no
-	// lock then. The inbox's Undo moves files at once.
+	// lock then. The inbox's Undo, name, and leave act at once.
 	preview := kind == "inbox" && action == "scan" || kind == "scrubber" || kind == "tdarr"
 	lock := act.Lock && (f.apply || !preview)
 	if kind == "music" && action == "genres" && !f.apply || kind == "music" && action == "lyrics" && slices.Contains(f.rest, "--check") {

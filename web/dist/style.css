@@ -1995,6 +1995,12 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .tidyinboxset { margin:0; padding:0; border:0; min-width:0; }
 .tidyinboxwhen { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:14px 0; }
 .tidyinboxgo button { width:100%; justify-content:center; padding:9px 14px; font-size:14px; }
+/* Needs a look: each download's answers in a row that wraps under it when narrow; the sheet's boxes, a number's short. */
+.tidyneedsgo { display:flex; flex-wrap:wrap; gap:6px; }
+.tidyfields { display:flex; flex-wrap:wrap; gap:0 14px; margin:4px 0 8px; }
+.tidyfields .field { flex:1 1 220px; }
+.tidyfields .field.tidynum { flex:0 1 140px; }
+.tidyfields input { width:100%; }
 .alertlist.fx-rows .when { min-width:96px; text-align:right; }
 /* A person's initial as wide as a logo, so the names after them line up. */
 .alertlist.fx-rows .fwho:not(.sm, .lg) { width:32px; height:32px; }

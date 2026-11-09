@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	goruntime "runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -145,6 +146,11 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"music", "lyrics", []string{"--tidy"}, "media music lyrics --tidy --events json"},
 		// What I did today's Undo: one line of it.
 		{"inbox", "undo", []string{"0123456789ab"}, "media inbox undo 0123456789ab --events json"},
+		// Needs a look: the download, then what it is.
+		{"inbox", "name", []string{vid, "movie", "Heat", "1995"}, "media inbox name " + vid + " movie Heat 1995 --events json"},
+		{"inbox", "name", []string{vid, "movie", "The Thing"}, "media inbox name " + vid + " movie The Thing --events json"},
+		{"inbox", "name", []string{show, "episode", "Show", "3", "4"}, "media inbox name " + show + " episode Show 3 4 --events json"},
+		{"inbox", "leave", []string{vid}, "media inbox leave " + vid + " --events json"},
 	} {
 		got, err := tidyArgs(c.kind, c.action, c.args, false)
 		if err != nil || strings.Join(got, " ") != c.want {
@@ -171,6 +177,16 @@ func TestTidyArgsTakesOnlyWhatTheScreenSends(t *testing.T) {
 		{"inbox", "undo", []string{"/Users/anna/Downloads"}},
 		{"inbox", "undo", []string{"0123456789ab", "ba9876543210"}},
 		{"inbox", "scan", []string{"0123456789ab"}},
+		{"inbox", "name", []string{"vid.mkv", "movie", "Heat"}},
+		{"inbox", "name", []string{vid, "movie", "--library=/x"}},
+		{"inbox", "name", []string{vid, "movie", "Heat", "--config"}},
+		{"inbox", "name", []string{vid, "song", "Heat"}},
+		{"inbox", "name", []string{vid, "movie", ""}},
+		{"inbox", "name", []string{vid, "movie", "Heat", "1995", "2"}},
+		{"inbox", "name", []string{vid, "episode", "Show"}},
+		{"inbox", "name", []string{vid, "episode", "Show", "three"}},
+		{"inbox", "leave", []string{"/d/a", "/d/b"}},
+		{"inbox", "leave", nil},
 	} {
 		if got, err := tidyArgs(c.kind, c.action, c.args, false); err == nil {
 			t.Errorf("%s %s %v went through: %v", c.kind, c.action, c.args, got)
@@ -342,6 +358,13 @@ func TestTidyArgsTakeEveryJobTheScreenSends(t *testing.T) {
 			if m[1] == "inbox" && m[2] == "undo" {
 				args = append(args, "0123456789ab")
 			}
+			// Needs a look's: the download, then what the sheet asked.
+			if m[1] == "inbox" && m[2] == "leave" {
+				args = []string{vid}
+			}
+			if m[1] == "inbox" && m[2] == "name" {
+				args = []string{vid, "movie", "Heat", "1995"}
+			}
 			seen++
 			if _, err := tidyArgs(m[1], m[2], args, false); err != nil {
 				t.Errorf("%s: run(%q, %q, %v) is refused: %v", f, m[1], m[2], args, err)
@@ -422,6 +445,19 @@ func TestTidySetInbox(t *testing.T) {
 	line := `{"id":"x1","kind":"movies","title":"Heat (1995)","where":"Movies › Heat (1995)","did":["renamed and filed"],"from":"/d/Heat.mkv","files":["/m/Heat.mkv"],"undo":true,"run":"r","at":"` + time.Now().Format("2006-01-02T15:04:05") + `"}` + "\n"
 	_ = os.MkdirAll(filepath.Join(a.root, "data"), 0o755)
 	_ = os.WriteFile(media.FiledLogPath(a.root), []byte(line), 0o644)
+	// Needs a look: what the inbox couldn't place; only what it lists can be named or left.
+	stuck := filepath.Join(downloads, "vid_0042.mkv")
+	_ = os.WriteFile(stuck, nil, 0o644)
+	_ = os.WriteFile(media.NeedsPath(a.root), []byte(`[{"path":`+strconv.Quote(stuck)+`,"name":"vid_0042.mkv","kind":"movies","why":"Couldn't tell which film it is from its name."}]`), 0o644)
+	if got, _ := a.TidyUp(); len(got.Needs) != 1 || got.Needs[0].Kind != "movies" {
+		t.Errorf("needs: %+v", got.Needs)
+	}
+	if !needsListed(a.root, stuck) || needsListed(a.root, filepath.Join(home, ".ssh", "id_ed25519")) {
+		t.Error("only what Needs a look lists")
+	}
+	if err := a.TidyRun("inbox", "leave", []string{filepath.Join(home, ".ssh")}, false); err == nil || !strings.Contains(err.Error(), "Needs a look") {
+		t.Errorf("leave on a folder Needs a look didn't list: %v", err)
+	}
 	if got, _ := a.TidyUp(); len(got.Today) != 1 || got.Today[0].Title != "Heat (1995)" {
 		t.Errorf("today: %+v", got.Today)
 	}
@@ -442,3 +478,12 @@ func TestTidySetInbox(t *testing.T) {
 		t.Errorf("picker: %q %v %q", p, err, title)
 	}
 }
+
+// vid and show are a download's whole path on this system (Needs a look's
+// name and leave take only whole paths; /d/vid.mkv isn't one on Windows).
+var vid, show = func() (string, string) {
+	if goruntime.GOOS == "windows" {
+		return `C:\d\vid.mkv`, `C:\d\show`
+	}
+	return "/d/vid.mkv", "/d/show"
+}()

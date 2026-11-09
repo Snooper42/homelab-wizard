@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -116,5 +117,50 @@ func TestFiledToday(t *testing.T) {
 	argv, err := Job{Root: root, Kind: "inbox", Action: "undo", Args: []string{"c"}, Python: []string{"py"}}.Command()
 	if err != nil || !strings.Contains(strings.Join(argv, " "), "inbox.py undo c --config") {
 		t.Errorf("undo argv: %v %v", argv, err)
+	}
+}
+
+// Needs a look lists what the inbox couldn't place, without what was moved
+// or deleted by hand since; naming one and leaving one are inbox jobs.
+func TestNeedsLook(t *testing.T) {
+	root := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(root, "data"), 0o755)
+	if got := NeedsLook(root); got == nil || len(got) != 0 {
+		t.Errorf("no list: %+v", got)
+	}
+	here := filepath.Join(root, "vid_0042.mkv")
+	_ = os.WriteFile(here, nil, 0o644)
+	list := `[{"path":` + strconv.Quote(here) + `,"name":"vid_0042.mkv","kind":"movies","why":"Couldn't tell which film it is from its name.","since":"2026-11-08T10:00:00"},` +
+		`{"path":"/gone/Show.mkv","name":"Show.mkv","kind":"tv","why":"x"},{"name":"no path"}]`
+	if err := os.WriteFile(NeedsPath(root), []byte(list), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got := NeedsLook(root)
+	if len(got) != 1 || got[0].Name != "vid_0042.mkv" || got[0].Kind != "movies" || got[0].Why == "" {
+		t.Errorf("needs: %+v", got)
+	}
+	_ = os.WriteFile(NeedsPath(root), []byte("not json"), 0o644)
+	if len(NeedsLook(root)) != 0 {
+		t.Error("a damaged list, nothing")
+	}
+	for _, act := range []string{"name", "leave"} {
+		if a, err := Lookup("inbox", act); err != nil || !a.Lock || a.Script != "inbox.py" {
+			t.Errorf("inbox %s: %+v %v", act, a, err)
+		}
+	}
+	_ = os.MkdirAll(ToolsDir(root), 0o755)
+	_ = os.WriteFile(filepath.Join(ToolsDir(root), "inbox.py"), nil, 0o644)
+	argv, _ := Job{Root: root, Kind: "inbox", Action: "name", Args: []string{here, "movie", "Heat", "1995"}, Python: []string{"py"}}.Command()
+	if !strings.Contains(strings.Join(argv, " "), "inbox.py name "+here+" movie Heat 1995 --config") {
+		t.Errorf("name argv: %v", argv)
+	}
+	if text, _ := Describe("inbox", Run{Action: "name", OK: true}); text != "Filed as you named it" {
+		t.Errorf("name's line: %q", text)
+	}
+	if text, why := Describe("inbox", Run{Action: "name", Why: "Still couldn't place it"}); text != "Couldn't file it as you named it" || why == "" {
+		t.Errorf("a name that failed: %q %q", text, why)
+	}
+	if text, _ := Describe("inbox", Run{Action: "leave", OK: true}); text != "Left where it is" {
+		t.Errorf("leave's line: %q", text)
 	}
 }
