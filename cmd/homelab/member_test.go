@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -112,7 +113,8 @@ func TestAMembersFinancesAreTheirOwn(t *testing.T) {
 	if froot != want {
 		t.Errorf("member's root %s, want %s", froot, want)
 	}
-	if info, err := os.Stat(filepath.Join(want, "data")); err != nil || info.Mode().Perm() != 0o700 {
+	// Readable by the homelab's user only (Windows has no such bits).
+	if info, err := os.Stat(filepath.Join(want, "data")); err != nil || !info.IsDir() || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o700) {
 		t.Errorf("their folder: %v %v", info, err)
 	}
 	owner := companion.WithCaller(context.Background(), companion.Device{})
