@@ -140,6 +140,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **On Windows, a note being saved no longer reads as missing:** for an instant while one part of the app replaced a note (such as when the last backup ran), Windows could say the file wasn't there, which reads as no backup yet. A read now waits while a save of that note is under way.
 - **On Windows, a backup no longer starts by mistake:** the agent's note of the last backup could read as missing for an instant while another part of the app saved it, which made a backup start at once. It now waits that instant and reads it again.
 - **Transactions on the iPhone:** the page opens on checking, not on an account with no transactions; homes, cars and collectibles are left out of the account cards, and each small card shows its logo, balance and whole name. "No Transactions" now sits under the heading instead of over it, with **Show All Accounts**.
 - A Chase checking account's CSV now comes in with each payee from its Description, not as CREDIT or DEBIT. Importing the same file again gives rows already brought in as CREDIT or DEBIT their payees, keeping any category you gave them, rather than adding them twice. A bank's file whose payee column only says which way the money went has its names read from another column, and the import says so when no payee is a name.
