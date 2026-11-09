@@ -92,7 +92,7 @@ The owner's vision: drop messy files of any kind (untagged music, films, shows, 
 Next, in this order, each its own PR (mockups exist for the first two, in the Nov 8 session's scratchpad; make new ones with the real app if they're gone):
 
 5. **Name these songs**: music with no tags and no match. A sheet asks the artist and album, looks the album up (MusicBrainz, as beets does), shows the matches (*Rumours · Fleetwood Mac · 1977 · 11 tracks*), and files the songs as that album. Needs a look already lists the download (kind music); add the button and an `inbox name <path> album "<artist>" "<album>"`.
-6. **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
+6. (built: `TidyConfirm.find` with `needs` and `optional`, `media.FindTitles`; tick when its PR merges) **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
 7. **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
 
 Lessons from pieces 1–4, for whoever builds the next:
