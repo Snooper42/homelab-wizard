@@ -92,8 +92,8 @@ The owner's vision: drop messy files of any kind (untagged music, films, shows, 
 Next, in this order, each its own PR (mockups exist for the first two, in the Nov 8 session's scratchpad; make new ones with the real app if they're gone):
 
 5. (done: #535) **Name these songs**: music with no tags and no match. The owner, Nov 9: "yes" to trying them by their sound first when AcoustID is set up (only what beets can't match waits in Needs a look), to the artist being optional, and to stopping when a song is more than 30 s off its place on the album. A sheet asks the artist and album, looks the album up (MusicBrainz, as beets does), shows the matches (*Rumours · Fleetwood Mac · 1977 · 11 tracks*), and files the songs as that album. Needs a look already lists the download (kind music); add the button and an `inbox name <path> album "<artist>" "<album>"`.
-6. **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
-7. **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
+6. (done: #537) **Look a typed title up**: It's a film… and It's an episode… show what TMDB (through Jellyfin or the *arr apps, which have the key) finds for what's typed, so a person picks *The Big Lebowski (1998)* rather than typing the year.
+7. (built: `inbox.archive_in`, listed once with why, kind ""; tick when its PR merges) **Archives**: a .rar or .7z in a watched folder says so in Needs a look (*open it in Finder; what's inside is filed next time*), instead of being passed over.
 
 Lessons from pieces 1–4, for whoever builds the next:
 - A button the mock app accepts can still be refused by the app: `TestTidyArgsTakeEveryJobTheScreenSends` fills in each new job's arguments, and the CLI's `homelab media inbox` routes every inbox action (Undo was a preview until #524).

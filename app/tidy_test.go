@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -580,3 +583,28 @@ var vid, show = func() (string, string) {
 	}
 	return "/d/vid.mkv", "/d/show"
 }()
+
+// It's a film…'s Look it up asks what this machine has: Jellyfin with
+// the key Settings keeps, at its own port; nothing at all says so.
+func TestTidyFindTitlesAsksWhatThisMachineHas(t *testing.T) {
+	a, _ := testApp(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/Items/RemoteSearch/Movie" || r.Header.Get("Authorization") != `MediaBrowser Token="jf-key"` {
+			w.WriteHeader(404)
+			return
+		}
+		_, _ = w.Write([]byte(`[{"Name":"Heat","ProductionYear":1995}]`))
+	}))
+	defer srv.Close()
+	port := srv.URL[strings.LastIndex(srv.URL, ":")+1:]
+	if _, err := a.TidyFindTitles("movie", "heat"); !errors.Is(err, media.ErrNoLookup) {
+		t.Fatalf("with nothing to ask: %v", err)
+	}
+	f, _ := os.OpenFile(filepath.Join(a.root, ".env"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	f.WriteString("JELLYFIN_API_KEY=jf-key\nJELLYFIN_PORT=" + port + "\n")
+	f.Close()
+	got, err := a.TidyFindTitles("movie", "heat")
+	if err != nil || len(got) != 1 || got[0] != (media.Title{Name: "Heat", Year: 1995, From: "Jellyfin"}) {
+		t.Fatalf("got %+v, %v", got, err)
+	}
+}

@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
 	"github.com/Snooper42/homelab-wizard/internal/media"
+	"github.com/Snooper42/homelab-wizard/internal/wiring"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -143,6 +144,42 @@ func (a *App) TidyFindAlbums(artist, album string) ([]media.Album, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
 	defer cancel()
 	return media.FindAlbums(ctx, nil, artist, album)
+}
+
+// TidyFindTitles is It's a film…'s and It's an episode…'s Look it up:
+// kind "movie" or "show", and the films or shows Radarr, Sonarr, or
+// Jellyfin find for what's typed, for the person to pick one.
+func (a *App) TidyFindTitles(kind, term string) ([]media.Title, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
+	defer cancel()
+	return media.FindTitles(ctx, nil, kind, term, titleSources(ctx, a.root))
+}
+
+// titleSources are the apps here that can look a title up: Radarr and
+// Sonarr while they run (each with the key in its config.xml), and
+// Jellyfin when Settings has its API key. A test sets its own.
+var titleSources = func(ctx context.Context, root string) []media.TitleSource {
+	env := core.Env(root)
+	var out []media.TitleSource
+	if c, err := core.Catalog(root); err == nil {
+		if _, containers, err := core.Containers(ctx); err == nil {
+			home, _ := os.UserHomeDir()
+			apps := wiring.New(c, containers, env, home).Apps
+			for _, id := range []string{"radarr", "sonarr"} {
+				if app, ok := apps[id]; ok {
+					out = append(out, media.TitleSource{App: id, URL: app.URL, Key: media.ArrKey(app.ConfigDir)})
+				}
+			}
+		}
+	}
+	if key := strings.TrimSpace(env["JELLYFIN_API_KEY"]); key != "" {
+		port := strings.TrimSpace(env["JELLYFIN_PORT"])
+		if port == "" {
+			port = "8096"
+		}
+		out = append(out, media.TitleSource{App: "jellyfin", URL: "http://127.0.0.1:" + port, Key: key})
+	}
+	return out
 }
 
 // TidyUp reads Tidy Up's record, the lock, and what this machine has.
