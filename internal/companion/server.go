@@ -28,6 +28,11 @@ type Method struct {
 	// connection and never to a wall screen, which anyone walking past can
 	// read.
 	Private bool
+	// Member: a household member's phone (Device.Person) may call it too.
+	// Every other method is the owner's alone. What a member's call
+	// answers is theirs (Caller says whose): their own apps, their own
+	// Finances.
+	Member bool
 	// Finances is the Finances level a device needs to call it
 	// (FinancesView or FinancesEdit), over an encrypted connection only;
 	// "" for a method that is not about money.
@@ -55,6 +60,10 @@ type Server struct {
 	// ProxyKey is COMPANION_PROXY_KEY, which the companion's own proxy host
 	// sends in ProxyHeader (N25); nil or "" before a domain is set up again.
 	ProxyKey func() string
+	// ForMember is what a household member's phone may see of a change on
+	// /api/events: their own apps only, or nothing (false). Nil: a
+	// member's phone does not follow changes.
+	ForMember func(d Device, c engine.Change) (engine.Change, bool)
 	// Calendar is Finances' calendar feed for a link's key (the paydays and
 	// bills as iCalendar), ok false for a key that is not the plan's; nil
 	// leaves /finances.ics out.
@@ -230,13 +239,22 @@ type Me struct {
 	Name      string `json:"name"`
 	CanChange bool   `json:"canChange"`
 	Finances  string `json:"finances,omitempty"`
+	// Person is the household member whose phone it is; "" for the owner's.
+	Person     string `json:"person,omitempty"`
+	PersonName string `json:"personName,omitempty"`
 }
 
 func meOf(d Device) Me {
-	return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances}
+	return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Person: d.Person, PersonName: d.PersonName}
 }
 
 type deviceKey struct{}
+
+// WithCaller is ctx answering d, as a call from it is: for a method
+// called in-process (and tests).
+func WithCaller(ctx context.Context, d Device) context.Context {
+	return context.WithValue(ctx, deviceKey{}, d)
+}
 
 // Caller is the paired device a method is answering, from its context.
 func Caller(ctx context.Context) (Device, bool) {
@@ -338,6 +356,10 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusNotFound, "not on the phone: use Homelab Wizard on the computer")
 		return
 	}
+	if d.Person != "" && !m.Member {
+		fail(w, http.StatusForbidden, "this is "+d.PersonName+"'s phone: it shows their own apps and their own Finances, not the rest of the homelab")
+		return
+	}
 	if m.Change && d.CanChange && !s.encrypted(r) {
 		fail(w, http.StatusForbidden, "changes from a phone need the Tailscale (https) link; over the home Wi-Fi it can only look")
 		return
@@ -383,7 +405,7 @@ func (s *Server) call(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "the arguments must be a JSON array")
 		return
 	}
-	r = r.WithContext(context.WithValue(r.Context(), deviceKey{}, d))
+	r = r.WithContext(WithCaller(r.Context(), d))
 	if m.Stream != nil {
 		stream(w, r, m, args)
 		return
@@ -430,11 +452,12 @@ var streamRecheck = 5 * time.Second
 // again every few seconds, and one removed on the computer (by another
 // process too) is cut off, as its token stops working (N23).
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.device(r); !ok {
+	d, ok := s.device(r)
+	if !ok {
 		fail(w, http.StatusUnauthorized, "this phone is not paired")
 		return
 	}
-	if s.Changes == nil {
+	if s.Changes == nil || (d.Person != "" && s.ForMember == nil) {
 		fail(w, http.StatusNotFound, "no changes to follow")
 		return
 	}
@@ -455,6 +478,10 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+	if d.Person != "" {
+		s.Changes.StreamOnly(w, r.WithContext(ctx), func(c engine.Change) (engine.Change, bool) { return s.ForMember(d, c) })
+		return
+	}
 	s.Changes.Stream(w, r.WithContext(ctx))
 }
 

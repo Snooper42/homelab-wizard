@@ -30,6 +30,9 @@ type Person struct {
 	Removed time.Time `json:"removed"`
 	// Apps are the apps they use, by id; none means every household app.
 	Apps []string `json:"apps,omitempty"`
+	// Shares are what of the household's money their phone shows them, to
+	// look at: bills, subscriptions, budgets (homelab person share).
+	Shares []string `json:"shares,omitempty"`
 }
 
 // Uses reports whether the person uses an app.
