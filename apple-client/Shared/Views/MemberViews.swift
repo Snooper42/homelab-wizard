@@ -139,3 +139,114 @@ struct HouseholdCard: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// A plan with no accounts yet (a household member's own, at first): where
+/// to start.
+struct FirstAccountCard: View {
+    let finances: FinancesViewModel
+    @State private var adding = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Image(systemName: "building.columns.fill")
+                .font(.title2)
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(Theme.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Text(finances.isMember ? "Your own Finances start here" : "Finances start here")
+                .font(.title3.weight(.bold))
+                .foregroundStyle(Theme.ink)
+            Text(finances.isMember
+                 ? "Add your checking account first, then savings and cards. They’re yours alone: no one else’s phone shows them."
+                 : "Add your checking account first, then savings and cards.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryInk)
+            Button {
+                adding = true
+            } label: {
+                Text("Add an Account")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(radius: 24)
+        .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
+    }
+}
+
+/// A new account: its name, what kind it is, and what's in it today (for a
+/// card or a loan, what's owed).
+struct AddAccountView: View {
+    let finances: FinancesViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var name = ""
+    @State private var kind = "checking"
+    @State private var balance = ""
+    @State private var saving = false
+    @FocusState private var focused: Bool
+
+    private var owed: Bool { kind == "card" || kind == "loan" }
+    private var amount: Double? { balance.isEmpty ? 0 : FinancePlanEdit.parseAmount(balance) }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Name, like Chase Checking", text: $name)
+                        .focused($focused)
+                        #if os(iOS)
+                        .textInputAutocapitalization(.words)
+                        #endif
+                    Picker("Kind", selection: $kind) {
+                        ForEach(FinancePlanEdit.accountKinds, id: \.id) { k in
+                            Text(k.title).tag(k.id)
+                        }
+                    }
+                }
+                Section {
+                    TextField(owed ? "What’s owed" : "What’s in it", text: $balance)
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                        .monospacedDigit()
+                } header: {
+                    Text(owed ? "Owed today" : "Balance today")
+                } footer: {
+                    if let error = finances.saveError, !saving {
+                        Text(verbatim: error).foregroundStyle(Theme.danger)
+                    } else {
+                        Text("You can change it any time from the account.")
+                    }
+                }
+            }
+            .navigationTitle("Add Account")
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        guard let amount else { return }
+                        saving = true
+                        Task {
+                            let ok = await finances.addAccount(name: name, kind: kind, balance: amount)
+                            saving = false
+                            if ok { dismiss() }
+                        }
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || amount == nil || saving)
+                }
+            }
+            .onAppear { focused = true }
+        }
+        .presentationDetents([.medium, .large])
+    }
+}

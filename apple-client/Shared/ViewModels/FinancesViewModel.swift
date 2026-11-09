@@ -103,6 +103,18 @@ final class FinancesViewModel {
         return await savePlan(edited, reason: "Change the cushion.")
     }
 
+    /// Adds an account to the plan: a member's own, or the household's.
+    /// Returns whether it saved.
+    func addAccount(name: String, kind: String, balance: Double) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan else { return false }
+        let today = plan.map(\.todayText).flatMap { $0.isEmpty ? nil : $0 } ?? FinancePlanEdit.todayString()
+        guard let edited = FinancePlanEdit.addingAccount(name: name, kind: kind, balance: balance, today: today, in: raw) else {
+            saveError = "An account needs a name, and a balance that's an amount."
+            return false
+        }
+        return await savePlan(edited, reason: "Add \(name.trimmingCharacters(in: .whitespaces)) to Finances.")
+    }
+
     /// Changes a budget's amount. Returns whether it saved.
     func setBudget(_ budget: FinanceBudget, to amount: Double) async -> Bool {
         guard canEdit, !isSaving, let raw = rawPlan else { return false }

@@ -34,3 +34,27 @@ struct MemberTests {
         #expect(none.isEmpty)
     }
 }
+
+@Suite("Add an account")
+struct AddAccountTests {
+    @Test func toAnEmptyPlan() throws {
+        let plan = JSONValue.object(["rev": .string("new")])
+        let edited = try #require(FinancePlanEdit.addingAccount(name: "  Chase Checking ", kind: "checking", balance: 1234.567, today: "2026-11-09", in: plan))
+        guard case .array(let accounts)? = edited["accounts"], case .object(let a)? = accounts.first else {
+            Issue.record("no accounts"); return
+        }
+        #expect(a["name"] == .string("Chase Checking"))
+        #expect(a["kind"] == .string("checking"))
+        #expect(a["balance"] == .number(1234.57))
+        #expect(a["id"] == nil) // the computer gives it one
+        #expect(edited["rev"] == .string("new"))
+    }
+
+    @Test func refusesWhatTheComputerWouldNot() {
+        let plan = JSONValue.object([:])
+        #expect(FinancePlanEdit.addingAccount(name: " ", kind: "checking", balance: 0, today: "2026-11-09", in: plan) == nil)
+        #expect(FinancePlanEdit.addingAccount(name: "Piggy bank", kind: "jar", balance: 0, today: "2026-11-09", in: plan) == nil)
+        #expect(FinancePlanEdit.addingAccount(name: "Visa", kind: "card", balance: .infinity, today: "2026-11-09", in: plan) == nil)
+        #expect(FinancePlanEdit.addingAccount(name: "Visa", kind: "card", balance: 10, today: "soon", in: plan) == nil)
+    }
+}
