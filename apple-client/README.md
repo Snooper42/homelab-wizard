@@ -139,6 +139,19 @@ The same checks run on every change on GitHub's Mac runner (`.github/workflows/a
    - Choose a development team.
 7. Make sure `Shared/App/PrivacyInfo.xcprivacy` is in the app target. It's the privacy manifest the App Store asks for. It states no tracking and no data collected, and the one required-reason API the app uses: `UserDefaults`, for its own settings (CA92.1). The Swift package leaves it out, as a library has no use for it.
 
+## The day you sign
+
+The app is built for a free Apple ID today (the owner's call, Nov 9, 2026): no push notifications, the widget only where its App Group signs, and a re-install with the cable every 7 days. Everything that needs the paid Apple Developer Program is built, tested, and kept compiling behind one switch. The day you join:
+
+1. **Join** the Apple Developer Program, with the same Apple ID, and note the **team ID** (10 characters, developer.apple.com › Membership).
+2. **Make the project signed:** `HOMELAB_SIGNED=1 apple-client/scripts/make-xcode-project.sh com.yourname TEAMID`. It turns on the widget and its App Group (as `HOMELAB_WIDGET=1` does), push notifications (`aps-environment`), and the code under `#if HOMELAB_SIGNED`. Without it, the project is the same as before. `scripts/test-scripts.sh` checks all three ways, and CI builds the signed app on every change, so it keeps compiling.
+3. **An APNs key for the computer:** developer.apple.com › Certificates, IDs & Profiles › Keys › **+**, Apple Push Notifications service, download the `.p8` once, and put it in the homelab's Settings (the alerts then go to the app as well as ntfy). *Built when push lands.*
+4. **TestFlight for the partner's phone:** Xcode › Product › Archive › Distribute App › TestFlight, then invite them in App Store Connect; their phone installs from the TestFlight app and stops needing the cable.
+5. **Export compliance:** the app's sealing for away from home (`TunnelSeal`: Curve25519 and AES-GCM from CryptoKit) is encryption beyond HTTPS, so before the first TestFlight upload set `ITSAppUsesNonExemptEncryption` as App Store Connect's questions lead (standard algorithms from the system, for the app's own data, usually count as exempt) rather than the `NO` the project says today.
+6. **Notarise the Mac app** too while signed: `docs/Releasing.md`.
+
+Keep this list current as features that need signing land.
+
 ## Pair an iPhone over the home network (no Tailscale)
 
 Tailscale is never needed. The phone needs an **https** address, and the homelab's domain gives it one at home: `https://homelab.<your domain>`, served by Nginx Proxy Manager with the domain's certificate. The Wi-Fi's DNS (AdGuard, or the router's custom DNS) sends that name to the homelab. The companion answers it only from the home network: anything that comes through the Cloudflare tunnel gets a 403, so it is never on the internet. Since the proxy says it reached it over https (`X-Forwarded-Proto`), the companion counts it as encrypted, and the phone may make changes and see Finances.

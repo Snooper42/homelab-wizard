@@ -14,11 +14,8 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 ## 1. Where it stands (Nov 9, evening)
 
-**In flight** (Nov 9, 17:25 UTC; #542 and #543 merged): four branches, one PR at a time, each merged as soon as every check is green, `origin/main` merged into the next before its PR opens. Each is stacked on the one before.
-1. **#544, the companion through the tunnel** (ADR-0023 locks 2 to 4, the computer's part). **Merged.**
-2. **#545, Setup's *Reach Finances away from home*** (merged) (`homelab phone away --apply`: Cloudflare Access application, service token and policy, the proxy host, the hostname through the tunnel; a paired phone gets the way out). It touches `.env.example`, so the nightly's `real-docker` runs on it (up to an hour). This file's update rides it.
-3. **`claude/feature-iphone-away`: the iPhone side** (`TunnelSeal`, tested against `Tests/Resources/TunnelVectors.json`, which `internal/companion/vectors_test.go` writes; pairing sends a key; reads fall back to the tunnel). **Its Swift has never been compiled** (this container can't, and the Apple client job runs only on a PR): expect a fix round. Say in its PR that `ITSAppUsesNonExemptEncryption` needs a look before TestFlight.
-4. **`claude/feature-iphone-signed`: the switch for the day they sign** (`HOMELAB_SIGNED=1`, the README's *The day you sign*). From main, independent of the others.
+**In flight** (Nov 9, 19:10 UTC): #544, #545 and #546 merged (the companion through the tunnel, Setup's *Reach Finances away from home*, and the iPhone side: `TunnelSeal`, pairing sends a key, reads fall back to the tunnel; its Swift compiled and passed first time). On Nov 9 at 18:26 GitHub marked a round of runs failed without starting any jobs (main's CI and Release, and #546's): a re-run of each went green. If a run fails with no jobs at all, re-run it once before looking for a cause.
+1. **`claude/nice-bohr-ab4jg1`: the switch for the day they sign** (`HOMELAB_SIGNED=1`, the README's *The day you sign*, and CI building the signed project). It replaces `claude/feature-iphone-signed`, which can go. This file's update rides it.
 
 **Next after those:** Away mode on the phone (only the tunneled apps when neither address answers, behind Face ID) and noticing a network change (`NWPathMonitor`); then `unison-handoff.md` section 4 items 1 onwards.
 

@@ -49,6 +49,17 @@ fi
   | openssl x509 -noout -subject 2>/dev/null \
   | sed -n 's/.*OU *= *\([A-Z0-9]\{10\}\).*/\1/p' | head -1 || true)"
 
+# The day you join the paid Apple Developer Program (README, "The day you
+# sign"): HOMELAB_SIGNED=1 turns on everything HOMELAB_WIDGET=1 does, plus
+# push notifications (aps-environment), and builds the code under
+# #if HOMELAB_SIGNED. Without it, the project is the same as before.
+SIGNED_ENT="" SIGNED_FLAG=""
+if [ -n "${HOMELAB_SIGNED:-}" ]; then
+  HOMELAB_WIDGET=1
+  SIGNED_ENT="        aps-environment: development"
+  SIGNED_FLAG="        SWIFT_ACTIVE_COMPILATION_CONDITIONS: \"\$(inherited) HOMELAB_SIGNED\""
+fi
+
 # The Home Screen widget (Widget/), only with HOMELAB_WIDGET=1:
 # it needs an App Group, which a free Apple ID may not sign, so the default
 # project leaves it out and can't fail on it. The pieces below stay empty
@@ -122,6 +133,7 @@ $IOS_WIDGET_DEP
         PRODUCT_BUNDLE_IDENTIFIER: $PREFIX.HomelabClient
         PRODUCT_NAME: HomelabClient
         TARGETED_DEVICE_FAMILY: "1,2"
+$SIGNED_FLAG
     info:
       path: Info-iOS.plist
       properties:
@@ -149,6 +161,7 @@ $IOS_GROUP_INFO
         keychain-access-groups:
           - "\$(AppIdentifierPrefix)$PREFIX.HomelabClient"
 $IOS_GROUP_ENT
+$SIGNED_ENT
 $WIDGET_TARGETS
 YAML
 

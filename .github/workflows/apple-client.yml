@@ -157,6 +157,21 @@ jobs:
           build iphone-widget -project "$RUNNER_TEMP/xcode-widget/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
             -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app-widget"
 
+      # The app as it is built the day the owner signs (HOMELAB_SIGNED=1:
+      # the widget, push, and the code under #if HOMELAB_SIGNED), so the
+      # signed path can't stop compiling unseen.
+      - name: Make the Xcode project signed
+        env:
+          HOMELAB_XCODE_DIR: ${{ runner.temp }}/xcode-signed
+          HOMELAB_NO_OPEN: "1"
+          HOMELAB_SIGNED: "1"
+        run: ./scripts/make-xcode-project.sh com.example ABCDE12345
+
+      - name: Build the iPhone app signed
+        run: |
+          build iphone-signed -project "$RUNNER_TEMP/xcode-signed/HomelabClient.xcodeproj" -scheme HomelabClient-iOS \
+            -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/app-signed"
+
       # The scripts people run on their Mac: each parses, and each does what
       # it says against stand-ins for Xcode, the iPhone and the homelab.
       - name: Scripts parse
