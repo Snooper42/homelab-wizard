@@ -32,6 +32,7 @@ struct ScanToPairTests {
 final class FakeCredentialStore: CredentialStore, @unchecked Sendable {
     private let lock = NSLock()
     private var stored: DeviceCredential?
+    private var away: [AwayApp] = []
     private var _deletedAll = 0
     var failLoad = false
 
@@ -42,8 +43,10 @@ final class FakeCredentialStore: CredentialStore, @unchecked Sendable {
         if failLoad { throw KeychainManager.KeychainError.interactionNotAllowed }
         return lock.withLock { stored }
     }
-    func deleteCredential() throws { lock.withLock { stored = nil } }
-    func deleteAll() throws { lock.withLock { stored = nil; _deletedAll += 1 } }
+    func deleteCredential() throws { lock.withLock { stored = nil; away = [] } }
+    func deleteAll() throws { lock.withLock { stored = nil; away = []; _deletedAll += 1 } }
+    func saveAwayApps(_ apps: [AwayApp]) throws { lock.withLock { away = apps } }
+    func loadAwayApps() throws -> [AwayApp] { lock.withLock { away } }
 
     var hasCredential: Bool { lock.withLock { stored != nil } }
     var deletedAll: Int { lock.withLock { _deletedAll } }

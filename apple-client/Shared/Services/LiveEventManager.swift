@@ -55,6 +55,9 @@ final class LiveEventManager {
     private(set) var statusReadAt: Date?
     /// The last refresh's error, shown until the next one succeeds.
     private(set) var refreshError: String?
+    /// Whether the last refresh failed because nothing answered: not home,
+    /// and not the tunnel either (Away mode, ADR-0023).
+    private(set) var cannotReach = false
     private(set) var isRefreshing = false
 
     /// Called on the main actor when the computer no longer accepts this device.
@@ -105,6 +108,7 @@ final class LiveEventManager {
         status = nil
         statusReadAt = nil
         refreshError = nil
+        cannotReach = false
     }
 
     /// A Status read by some other call (StatusBoard), so it isn't read twice.
@@ -178,7 +182,8 @@ final class LiveEventManager {
 
     /// Reconnects at once when the network comes back (Wi-Fi to cellular,
     /// Tailscale up again) instead of waiting out the backoff. Nothing
-    /// changes while the stream is live.
+    /// changes while the stream is live. A change of network also has the
+    /// next read try home first again (away from home, ADR-0023).
     private func watchNetwork() {
         guard pathMonitor == nil else { return }
         let monitor = NWPathMonitor()
@@ -186,12 +191,26 @@ final class LiveEventManager {
         // would otherwise be main-actor isolated, and Swift 6 traps when the
         // monitor calls it on its own queue.
         monitor.pathUpdateHandler = { @Sendable [weak self] path in
+            let kind = NetworkKind(path)
             // A strong let for the Task: a captured weak var can't cross into it.
-            guard path.status == .satisfied, let self else { return }
-            Task { @MainActor in self.networkCameBack() }
+            guard let self else { return }
+            Task { @MainActor in self.networkUpdated(kind) }
         }
         monitor.start(queue: DispatchQueue(label: "homelab.live-events.path"))
         pathMonitor = monitor
+    }
+
+    /// The network as last seen. Kept while stopped, so a change while the
+    /// app was locked still counts when it opens.
+    @ObservationIgnored private var network: NetworkKind?
+
+    private func networkUpdated(_ kind: NetworkKind) {
+        if NetworkKind.isChange(from: network, to: kind) {
+            let api = self.api
+            Task { await api.networkChanged() }
+        }
+        network = kind
+        if kind.reachable { networkCameBack() }
     }
 
     private func networkCameBack() {
@@ -299,6 +318,7 @@ final class LiveEventManager {
                     status = fresh
                     statusReadAt = Date()
                     refreshError = nil
+                    cannotReach = false
                 } catch is CancellationError {
                     break
                 } catch {
@@ -310,6 +330,7 @@ final class LiveEventManager {
                         return
                     }
                     refreshError = apiError.errorDescription
+                    cannotReach = apiError.unreachable
                     Log.network.error("Status refresh failed: \(apiError.logName, privacy: .public)")
                 }
             } while refreshAgain && !Task.isCancelled

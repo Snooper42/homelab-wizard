@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Away mode on the iPhone:** when neither home nor the tunnel answers, the app no longer just says it can't reach the computer: it lists your apps that are on the internet (Immich, say), as it last saw them, each with whether it answers and a tap to open it.
 - **The iPhone app away from home:** once the computer is set up for it and the phone is paired again at home, the Homelab app shows Status, your apps, and the Finances it may see on cellular too, through your Cloudflare tunnel, sealed so that even Cloudflare can't read it. At home it goes straight to the computer as before. Away, it only looks: changes wait until you're home.
 - **Reach Finances away from home:** a Setup step that puts Cloudflare Access in front of the phone companion's own address (`homelab-away.<your domain>`), letting in only your household's phones, and publishes it through your tunnel, all with the Cloudflare token you already have (given two more permissions). Phones paired at home afterwards get what they need to reach it; the iPhone app's part comes next.
 - **The iPhone app away from home, the computer's part:** the phone companion can now answer the iPhone app through the Cloudflare tunnel, for looking only (Status, your apps, Finances it may see), behind Cloudflare Access's service token, Cloudflare's signed pass, the phone's own pairing, and a key the phone and the computer agree at home, so even Cloudflare can't read what passes. Nothing changes until Setup's *Reach Finances away from home* turns it on (next), and the iPhone app learns to use it after that.
@@ -95,6 +96,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app notices when you get home:** once it has reached the computer through the tunnel, it goes that way for up to 5 minutes, but when the phone's network changes (Wi-Fi to cellular, back on the home Wi-Fi, a VPN on or off), it tries home first again straight away.
 - **Status on the iPhone, trimmed:** one line when all is well ("All 47 apps are running"), or one card for the app that needs a look, with what's wrong, its button and Open Its Page; then your apps by group. The ring, the four tiles, the Changed Since You Looked list and the cards under the apps are gone (an app that changed has a dot on its row; what your apps save is a line in Settings). The same on a household member's phone, with only their apps.
 - **Imports link the bills a name doesn't give away:** a payee you've linked to a planned payment once (an HOA paid as *Sunset Palms Eas…*) links to it again every month, and a bill of $100 or more to the cent links within two weeks of its day, not just five.
 - **Checking on payday, as your spreadsheet counts it:** the Dashboard's pay period card now also says what checking holds at the end of payday, once that day's own payments (savings, a card paid off) are out, beside where it ends the period. Step › to your second paycheck for a sheet's "2 paychecks".

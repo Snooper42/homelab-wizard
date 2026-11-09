@@ -32,6 +32,8 @@ struct ScreenshotCredentials: CredentialStore {
     }
     func deleteCredential() throws {}
     func deleteAll() throws {}
+    func saveAwayApps(_ apps: [AwayApp]) throws {}
+    func loadAwayApps() throws -> [AwayApp] { [] }
 }
 
 /// Unlocks without asking.

@@ -492,6 +492,54 @@ extension NetworkRuleTests {
         #expect(tunnel.authorization == nil && !String(decoding: tunnel.body, as: UTF8.self).contains(Self.token))
     }
 
+    /// Home answering `status`, as the companion does at home.
+    private static func homeAnswer(_ status: String) -> @Sendable (URLRequest) -> StubProtocol.Answer {
+        { request in
+            request.url?.host == "mac.tail1234.ts.net" ? (200, [:], json(#"{"result":\#(status)}"#), nil) : (500, [:], Data(), nil)
+        }
+    }
+
+    @Test func afterTheTunnelAnsweredItGoesFirstForAWhile() async throws {
+        let (api, key) = try awayClient()
+        let status = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : (500, [:], Data(), nil)
+        }
+        _ = try await api.status()
+        // Home could answer now, but the network didn't change: the tunnel is asked.
+        StubProtocol.reset { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : Self.homeAnswer(status)(request)
+        }
+        _ = try await api.status()
+        #expect(StubProtocol.requests.map(\.url.host) == ["homelab-away.example.com"])
+    }
+
+    @Test func aNetworkChangeTriesHomeFirstAgain() async throws {
+        let (api, key) = try awayClient()
+        let status = #"{"apps":[{"id":"immich","name":"Immich","state":"running"}],"missing":0,"unmatched":0,"savings":0}"#
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net"]) { request in
+            request.url?.host == "homelab-away.example.com" ? Self.tunnelAnswer(request, key: key, result: status) : (500, [:], Data(), nil)
+        }
+        _ = try await api.status()
+        // Back on the home Wi-Fi: the phone notices, and home is asked first.
+        StubProtocol.reset(Self.homeAnswer(status))
+        await api.networkChanged()
+        let answer = try await api.status()
+        #expect(answer.apps.first?.id == "immich")
+        #expect(StubProtocol.requests.map(\.url.host) == ["mac.tail1234.ts.net"])
+    }
+
+    @Test func onlyAChangeOfNetworkCounts() {
+        let wifi = NetworkKind(reachable: true, wifi: true, cellular: false, wired: false, other: false)
+        let cellular = NetworkKind(reachable: true, wifi: false, cellular: true, wired: false, other: false)
+        let vpnOnWifi = NetworkKind(reachable: true, wifi: true, cellular: false, wired: false, other: true)
+        #expect(NetworkKind.isChange(from: nil, to: wifi) == false) // the first reading
+        #expect(NetworkKind.isChange(from: wifi, to: wifi) == false)
+        #expect(NetworkKind.isChange(from: wifi, to: cellular))
+        #expect(NetworkKind.isChange(from: wifi, to: vpnOnWifi)) // Proton VPN coming on
+        #expect(NetworkKind.isChange(from: cellular, to: NetworkKind(reachable: false, wifi: false, cellular: false, wired: false, other: false)))
+    }
+
     @Test func anAnswerFromHomeNeverGoesOut() async throws {
         let (api, _) = try awayClient()
         StubProtocol.reset { _ in (403, [:], Self.json(#"{"error":"this phone can look but not change anything"}"#), nil) }
@@ -518,5 +566,55 @@ extension NetworkRuleTests {
         #expect(AwayCredential.make(key: key, url: "https://homelab-away.example.com/api/call/Status", clientID: "a", clientSecret: "b") == nil)
         #expect(AwayCredential.make(key: key, url: "https://user@homelab-away.example.com/api/tunnel", clientID: "a", clientSecret: "b") == nil)
         #expect(AwayCredential.make(key: Data(repeating: 1, count: 16), url: Self.awayURL, clientID: "a", clientSecret: "b") == nil)
+    }
+}
+
+// Away mode (ADR-0023): only a phone given the way out keeps the apps on
+// the internet, each is asked at its own address with nothing of the
+// homelab's, and Status knows when nothing answers at all.
+extension NetworkRuleTests {
+    private static let awayApps = [AwayApp(id: "immich", name: "Immich", address: URL(string: "https://photos.example.com")!)]
+
+    /// A phone paired with the way out.
+    private func awayStore() throws -> FakeCredentialStore {
+        let away = try #require(AwayCredential.make(key: Data(repeating: 7, count: 32), url: Self.awayURL, clientID: "client-1.access", clientSecret: "secret-1"))
+        return FakeCredentialStore(DeviceCredential(endpoint: try ServerEndpoint.parse(Self.origin).endpoint, token: Self.token,
+                                                    deviceID: "abc123", deviceName: "Test", pairedAt: Date(), away: away))
+    }
+
+    @Test func onlyAPhoneWithTheWayOutKeepsAppsForAwayMode() async throws {
+        let (home, homeStore) = client()
+        await home.rememberAwayApps(Self.awayApps)
+        #expect(try homeStore.loadAwayApps().isEmpty)
+        #expect(await home.awayApps().isEmpty)
+
+        let store = try awayStore()
+        let api = APIClient(keychain: store, protocolClasses: [StubProtocol.self])
+        await api.rememberAwayApps(Self.awayApps)
+        #expect(await api.awayApps() == Self.awayApps)
+    }
+
+    @Test func eachAppIsAskedAtItsOwnAddressWithNothingOfTheHomelabs() async throws {
+        let api = APIClient(keychain: try awayStore(), protocolClasses: [StubProtocol.self])
+        let apps = Self.awayApps + [AwayApp(id: "audiobookshelf", name: "Audiobookshelf", address: URL(string: "https://books.example.com")!)]
+        StubProtocol.reset(unreachable: ["books.example.com"]) { request in
+            request.url?.host == "photos.example.com" ? (401, [:], Data(), nil) : (500, [:], Data(), nil)
+        }
+        let answers = await api.awayAnswers(apps)
+        #expect(answers == ["immich": true, "audiobookshelf": false])
+        let asked = try #require(StubProtocol.requests.first)
+        #expect(asked.url.host == "photos.example.com" && asked.method == "HEAD" && asked.authorization == nil)
+    }
+
+    @Test @MainActor func statusKnowsWhenNothingAnswers() async throws {
+        let api = APIClient(keychain: try awayStore(), protocolClasses: [StubProtocol.self])
+        let live = LiveEventManager(api: api)
+        StubProtocol.reset(unreachable: ["mac.tail1234.ts.net", "homelab-away.example.com"]) { _ in (500, [:], Data(), nil) }
+        await live.refreshNow()
+        #expect(live.cannotReach)
+        // The computer answering, even with an error, isn't Away mode.
+        StubProtocol.reset { _ in (500, [:], Self.json(#"{"error":"busy"}"#), nil) }
+        await live.refreshNow()
+        #expect(!live.cannotReach)
     }
 }

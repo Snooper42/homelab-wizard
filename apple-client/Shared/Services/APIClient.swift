@@ -60,6 +60,9 @@ actor APIClient {
     private var awayUntil: Date?
     /// How long the tunnel goes first once home didn't answer.
     static let awayFor: TimeInterval = 5 * 60
+    /// Away mode's: asks each app's own address whether it answers, sharing
+    /// nothing with the sessions above.
+    private let askingSession: URLSession
 
     /// - Parameter protocolClasses: for tests only, URL protocols that
     ///   answer in place of the network.
@@ -75,6 +78,7 @@ actor APIClient {
         streamingSession = URLSession(configuration: config(75, 60 * 60 * 24), delegate: delegate, delegateQueue: nil)
         actionSession = URLSession(configuration: config(300, 30 * 60), delegate: delegate, delegateQueue: nil)
         quickSession = URLSession(configuration: config(4, 8), delegate: delegate, delegateQueue: nil)
+        askingSession = AwayApp.askingSession(protocolClasses: protocolClasses.isEmpty ? nil : protocolClasses)
     }
 
     // MARK: Pairing
@@ -513,6 +517,14 @@ actor APIClient {
 
     // MARK: Away from home
 
+    /// The phone's network changed (`NetworkKind`, noticed by
+    /// LiveEventManager): the next read tries home first again, rather than
+    /// the tunnel for what's left of `awayFor`.
+    func networkChanged() {
+        if awayUntil != nil { Log.network.info("The network changed; trying home first again") }
+        awayUntil = nil
+    }
+
     /// A read: from home, or through the tunnel when home can't be reached
     /// and this phone was given the way out. The answer is in home's shape
     /// (`{"result": …}` when `envelope`, else the result itself).
@@ -601,6 +613,39 @@ actor APIClient {
         case 500 where !(answer.log ?? []).isEmpty:
             throw APIError.actionFailed(message: clean ?? "It didn't work on the computer.", log: APIError.sanitizeLog(answer.log))
         default: throw APIError.server(status: answer.status, message: clean)
+        }
+    }
+
+    // MARK: Away mode
+
+    /// Keeps the apps Away mode would show, on a phone given the way out
+    /// (a wall screen, or a phone paired without it, keeps nothing).
+    func rememberAwayApps(_ apps: [AwayApp]) {
+        guard (try? keychain.loadCredential())?.away != nil else { return }
+        guard (try? keychain.loadAwayApps()) != apps else { return }
+        do {
+            try keychain.saveAwayApps(apps)
+        } catch {
+            Log.security.error("Couldn't keep the apps for away mode")
+        }
+    }
+
+    /// The apps Away mode shows, as last kept; none on a phone without the way out.
+    func awayApps() -> [AwayApp] {
+        guard (try? keychain.loadCredential())?.away != nil else { return [] }
+        return (try? keychain.loadAwayApps()) ?? []
+    }
+
+    /// Whether each app's own address answers, asked all at once.
+    func awayAnswers(_ apps: [AwayApp]) async -> [AwayApp.ID: Bool] {
+        let session = askingSession
+        return await withTaskGroup(of: (AwayApp.ID, Bool).self) { group in
+            for app in apps {
+                group.addTask { (app.id, await AwayApp.answers(app.address, session: session)) }
+            }
+            var answers: [AwayApp.ID: Bool] = [:]
+            for await (id, answered) in group { answers[id] = answered }
+            return answers
         }
     }
 
