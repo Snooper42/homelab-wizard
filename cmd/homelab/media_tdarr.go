@@ -356,9 +356,10 @@ func (h *homelab) wakeTdarr(ctx context.Context, say func(string)) {
 	}
 }
 
-// restTdarr, from the agent's minute, stops a Tdarr with nothing to do: no
-// film or episode with it, not converting, and no job for a while. One the
-// battery saver has, or a person stopped or started, is left as it is.
+// restTdarr, from the agent's minute, stops the Tdarr Tidy Up uses when it
+// has nothing to do: no film or episode with it, not converting, no job and
+// no start for a while. One not set up for Tidy Up, one the battery saver
+// has, or one a person stopped or started, is left as it is.
 func (h *homelab) restTdarr(ctx context.Context, env map[string]string, home string, now time.Time) {
 	if off(env["TIDY_TDARR_REST"]) || h.jobRunning() {
 		return
@@ -368,7 +369,9 @@ func (h *homelab) restTdarr(ctx context.Context, env map[string]string, home str
 		return // resting already, or stopped by a person
 	}
 	rec := media.LoadRecord(h.root)
-	if !rec.TdarrResting && (rec.TdarrLeftUp || now.Sub(rec.TdarrUsed) < tdarrRestAfter ||
+	// Only the Tdarr Tidy Up uses (Set up Tdarr made its libraries): one
+	// installed for its own sake, or not set up yet, is left running.
+	if !rec.TdarrResting && (len(rec.TdarrLibraries) == 0 || rec.TdarrLeftUp || now.Sub(rec.TdarrUsed) < tdarrRestAfter ||
 		media.HasTdarrWork(home, "movies") || media.HasTdarrWork(home, "tv")) {
 		return
 	}
@@ -401,6 +404,12 @@ func (h *homelab) restTdarr(ctx context.Context, env map[string]string, home str
 	}
 	if !running {
 		return
+	}
+	// Just installed, started, or updated: up a while before it rests.
+	for _, c := range containers {
+		if c.Service() == "tdarr" && !c.StartedAt.IsZero() && now.Sub(c.StartedAt) < tdarrRestAfter {
+			return
+		}
 	}
 	if busy, ok := newTdarrAPI(ctx, env).busy(ctx); ok && busy {
 		return

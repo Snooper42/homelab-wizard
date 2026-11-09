@@ -48,6 +48,15 @@ func TestTdarrRestsWhenIdleAndWakesForAJob(t *testing.T) {
 	}
 	path := stopped.Path(root)
 
+	// Not set up for Tidy Up (no libraries of its own): a Tdarr installed a
+	// minute ago, or for its own sake, is never rested (the nightly
+	// real-Docker run found one stopped right after it was installed).
+	setRecord(func(r *media.Record) { r.TdarrUsed = now.Add(-time.Hour) })
+	if log := tick(nil); strings.Contains(log, "stop") {
+		t.Fatalf("rested a Tdarr Tidy Up hasn't set up:\n%s", log)
+	}
+	setRecord(func(r *media.Record) { r.TdarrLibraries = map[string]string{"movies": "lib1"} })
+
 	// Kept up: a job used it a few minutes ago; a film is still with it;
 	// it's converting one; or TIDY_TDARR_REST=false.
 	setRecord(func(r *media.Record) { r.TdarrUsed = now.Add(-5 * time.Minute) })
