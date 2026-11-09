@@ -115,7 +115,32 @@ final class AppActionsViewModel {
     var canChange: Bool { device()?.canChange == true }
 
     func available(for app: AppStatus) -> [AppAction] {
-        canChange ? AppAction.available(for: app) : []
+        canChangeApps ? AppAction.available(for: app) : []
+    }
+
+    /// Whether the computer answers `method` (`/api/me`'s `computer`). True
+    /// when it doesn't say: one older than that is asked everything.
+    func computerAnswers(_ method: String) -> Bool { device()?.computer?.answers(method) ?? true }
+
+    /// Start, Stop, Restart and Roll back: this device may, and the computer can.
+    var canChangeApps: Bool { canChange && computerAnswers("AppAction") }
+
+    /// Stop for a while (StopUntil), where the computer can.
+    var canStopForAWhile: Bool { computerAnswers("StopUntil") }
+
+    /// An app's settings (SetAppSetting), where the computer can.
+    func settings(for app: AppStatus) -> [AppSetting] {
+        computerAnswers("SetAppSetting") ? AppSetting.available(for: app) : []
+    }
+
+    /// For a device allowed changes whose computer can't make them yet:
+    /// update it. Nil otherwise.
+    func updateHint(for app: AppStatus) -> String? {
+        guard canChange, !AppAction.available(for: app).isEmpty,
+              let computer = device()?.computer, !computer.answers("AppAction")
+        else { return nil }
+        let line = "Update Homelab Wizard on the computer to start and stop apps from here"
+        return computer.version.isEmpty ? line + "." : line + ": it has \(computer.version)."
     }
 
     /// For a look-only device, how to allow it changes. Nil when it already
@@ -303,7 +328,7 @@ final class AppActionsViewModel {
     }
 
     func set(_ setting: AppSetting, on: Bool, for app: AppStatus) async {
-        guard !isBusy, canChange, AppSetting.available(for: app).contains(setting) else { return }
+        guard !isBusy, canChange, settings(for: app).contains(setting) else { return }
         isBusy = true
         guard await authorize(setting.reason(on: on, app: app)) else {
             isBusy = false

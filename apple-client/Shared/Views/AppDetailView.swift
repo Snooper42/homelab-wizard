@@ -238,7 +238,7 @@ struct AppDetailView: View {
     private func actionsSection(for app: AppStatus) -> some View {
         let available = actions.available(for: app)
         let pending = actions.pending[app.id]
-        let hint = actions.lookOnlyHint(for: app)
+        let hint = actions.lookOnlyHint(for: app) ?? actions.updateHint(for: app)
         let rest = available.filter { !Self.roundActions.contains($0) }
         if !rest.isEmpty || available.contains(.stop) || pending != nil || hint != nil {
             Section {
@@ -257,7 +257,7 @@ struct AppDetailView: View {
                     }
                     .disabled(actions.isBusy)
                 }
-                if available.contains(.stop) {
+                if available.contains(.stop), actions.canStopForAWhile {
                     StopForAWhileMenu(app: app)
                 }
             } header: {
@@ -567,7 +567,7 @@ struct AppDetailView: View {
 
     @ViewBuilder
     private func settingsSection(for app: AppStatus) -> some View {
-        let settings = AppSetting.available(for: app)
+        let settings = actions.settings(for: app)
         if !settings.isEmpty {
             Section {
                 ForEach(settings) { setting in

@@ -98,6 +98,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **The iPhone app hides what the computer can't do yet:** with Homelab Wizard on the computer older than the app, Start, Stop and Restart, Stop for a While and an app's settings aren't offered, and the app's page says to update the computer, with the version it has.
 - **The iPhone app says when the computer needs updating:** when the app is newer than Homelab Wizard on the computer, something the computer can't do yet says "Update Homelab Wizard on the computer to use this" (with the version it has), instead of failing with an error that explains nothing.
 - **The iPhone app notices when you get home:** once it has reached the computer through the tunnel, it goes that way for up to 5 minutes, but when the phone's network changes (Wi-Fi to cellular, back on the home Wi-Fi, a VPN on or off), it tries home first again straight away.
 - **Status on the iPhone, trimmed:** one line when all is well ("All 47 apps are running"), or one card for the app that needs a look, with what's wrong, its button and Open Its Page; then your apps by group. The ring, the four tiles, the Changed Since You Looked list and the cards under the apps are gone (an app that changed has a dot on its row; what your apps save is a line in Settings). The same on a household member's phone, with only their apps.
