@@ -190,6 +190,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tdarr's setup in plain words:** when Tdarr isn't installed, setting it up for Tidy Up's libraries now says to install it from **Choose apps › Tdarr**, as the app calls that screen, instead of the old *Choose stacks (Media automation)*.
 - **What you own and owe in a small window:** at the largest text sizes, an account's change since the start (*↓ $5.60k*) squeezed its name to a word a line (*Toyot / a / Finan / cial*). In a narrow list the change now steps aside, as the Since card above sums it up.
 - **Tidy Up's Which film? and Which show?:** typing in two boxes quickly could wipe what was in the first, leaving **File it** greyed out. Each box now keeps what the others hold.
 - **Tidy Up's questions start empty at once:** opening Which film? or Which show? cleared its boxes a moment after it appeared, so anything typed in that moment (on a busy computer, a word or two) was wiped and **File it** stayed greyed out. Each question now starts empty as it's drawn.

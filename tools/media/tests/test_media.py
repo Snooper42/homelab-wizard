@@ -1,6 +1,7 @@
 """Tidy Up's Python engines, with every outside program stubbed: no ffmpeg, ffprobe, Docker, Tdarr,
 media server, LRCLIB or Calibre is run, and no real library is touched (everything is in a temporary
 folder). Run with: python3 -m unittest discover -s tools/media/tests"""
+import ast
 import hashlib
 import io
 import json
@@ -145,6 +146,27 @@ class Vendored(unittest.TestCase):
         self.assertEqual(len(mc.mo.GENRES), 14)
         self.assertEqual(mc.mo.map_genre(["Stoner Rock"]), "Rock & Metal")
         self.assertEqual(mc.mo.map_genre(["Hip Hop/Rap"]), "Hip-Hop & Rap")
+
+
+class Words(unittest.TestCase):
+    # The app's words (app/preview/words.mjs refuses these in web/src): what an engine prints names
+    # screens as the app does, so a household never reads "Choose stacks" for Choose apps.
+    JARGON = re.compile(r"\b(stacks?|baseline)\b", re.I)
+
+    def test_the_engines_say_no_stacks_or_baseline(self):
+        said = []
+        for path in sorted(HERE.glob("*.py")):
+            if path.name in VENDORED:
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            docs = {id(n.body[0].value) for n in ast.walk(tree)
+                    if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                    and n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant)}
+            for n in ast.walk(tree):  # what an engine can print: its strings, not its comments or docstrings
+                if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docs \
+                        and self.JARGON.search(n.value):
+                    said.append("%s:%d: %s" % (path.name, n.lineno, n.value))
+        self.assertEqual(said, [], "say it as the app does (Choose apps, not stacks)")
 
 
 class DockerDesktopOnWindows(unittest.TestCase):
