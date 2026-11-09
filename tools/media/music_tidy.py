@@ -634,6 +634,19 @@ def write_inbox_beets_config(lib):
     return d
 
 
+def can_fingerprint():
+    """Whether beets can tell songs by their sound (its chroma plugin: AcoustID's fpcalc and the acoustid module)."""
+    return bool(shutil.which("fpcalc")) and mo.has_module("acoustid")
+
+
+def skip_unmatched():
+    """A beets settings layer (beet -c, on top of the inbox's own) that leaves songs it can't match where they are,
+    rather than filing them as they are: for songs with no names, tried by their sound."""
+    p = beets_dir() / "skip-unmatched.yaml"
+    p.write_text("import:\n  quiet_fallback: skip\n", encoding="utf-8")
+    return p
+
+
 class Beet:
     def __init__(self, d):
         self.env = dict(os.environ, BEETSDIR=str(d))
@@ -861,11 +874,15 @@ def file_music(args):
         if album_id:
             name_album(item, files, album_id, apply)
         artist, album = album_key(files)
+        by_sound = False
         if not (artist and album) and not album_id:
-            # Filed as they are, they'd land in a folder with no name: Needs a look asks which album instead.
-            ui.warn(UNNAMED)
-            unnamed.append(str(item))
-            continue
+            # Filed as they are, they'd land in a folder with no name. With AcoustID, beets tries them by their
+            # sound first (and leaves what it can't match where it is); otherwise, or if it can't, Needs a look asks.
+            if not (apply and can_fingerprint()):
+                ui.warn(UNNAMED)
+                unnamed.append(str(item))
+                continue
+            by_sound = True
         existing = []
         if artist and album:
             for line in beet("ls", "-f", "$albumartist\t$album\t$path", "albumartist:" + artist, "album:" + album):
@@ -887,15 +904,22 @@ def file_music(args):
         if not apply:
             ui.kv(item.name, "→ beets%s" % (" (replaces the library's copy)" if existing else ""))
             continue
-        if shrink:
+        if shrink and not by_sound:  # a download that may stay where it is isn't changed
             files = shrink_lossless(files)
         if existing:
             for e in existing:
                 mc.trash(e)
             beet("rm", "-f", "albumartist:" + artist, "album:" + album)
             replaced += 1
-        # The album the person picked: beets takes that one, not a guess of its own.
-        beet(*(["import"] + (["--search-id", album_id] if album_id else []) + [str(item)]))
+        if by_sound:
+            beet("-c", str(skip_unmatched()), "import", str(item))
+            if all(f.exists() for f in files):
+                ui.warn(UNNAMED)
+                unnamed.append(str(item))
+                continue
+        else:
+            # The album the person picked: beets takes that one, not a guess of its own.
+            beet(*(["import"] + (["--search-id", album_id] if album_id else []) + [str(item)]))
         if item.is_dir():
             mc.remove_empty_dirs(item, keep_root=False)
     if not apply:
