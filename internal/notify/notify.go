@@ -26,6 +26,8 @@ type Message struct {
 	Body     string
 	Priority int // 1 (min) to 5 (max); 0 leaves ntfy's default
 	Tags     []string
+	// Actions are its buttons (at most three): the iPhone app's own links.
+	Actions []Action
 }
 
 // Client publishes to one ntfy server.
@@ -63,6 +65,9 @@ func (c *Client) Publish(ctx context.Context, topic string, m Message) error {
 	}
 	if len(m.Tags) > 0 {
 		req.Header.Set("Tags", strings.Join(m.Tags, ","))
+	}
+	if h := actionsHeader(m.Actions); h != "" {
+		req.Header.Set("Actions", h)
 	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {

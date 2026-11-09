@@ -163,7 +163,7 @@ Confidence that what matters can come back.
 
 Few, clear, and useful when they come.
 
-- **Buttons on alerts** (M, *Idea*): "Radarr stopped" on the phone with **Restart** and **Show logs** (ntfy's actions, through the phone companion's own access).
+- **Buttons on alerts** (M, *Built*, Nov 2026): "Radarr stopped" on the phone with **Restart** and **Show logs**: ntfy's view buttons, as links into the iPhone app (`homelab://`), which open the app's page with the action waiting for a tap and Face ID; more than one app down gets **Open Status**.
 - **Quiet hours** (S, *Built*, #439): no sound overnight unless it is serious (backups failing for days, the vault unreachable). `QUIET_HOURS=22-7` by default; Settings › Quiet hours.
 - **One alert for many** (S, *Idea*): three apps stopping together is one alert, "3 apps stopped: the drive was unplugged", not three.
 - **Snooze an alert** (S, *Built*, #469): snooze one failing check for an hour or a day beside it on Status's Watchdog card (or `homelab notify snooze`): still checked, not alerted about until it wakes, and alerted then if it still fails. Not from the phone's alert itself: ntfy's buttons would need a way in to the computer from the notification.
