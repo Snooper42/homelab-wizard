@@ -2196,3 +2196,214 @@ class InboxNeeds(Base):
         for words in (["movie"], ["film", "Heat"], ["episode", "Show"], ["movie", "Heat", "soon"]):
             with self.assertRaises(SystemExit):
                 inbox.name_as(str(self.d / "vid_0042.mkv"), words[0], words[1:])
+
+
+RUMOURS = "0e7f9bd8-ae28-3d16-8c3e-5b0c0c8e5a3d"
+
+
+def rumours(tracks=(("Second Hand News", 163000), ("Dreams", 257000), ("Never Going Back Again", 134000)), discs=1):
+    """A MusicBrainz release as /ws/2/release/<id>?inc=recordings+artist-credits answers it."""
+    per = [tracks] * discs
+    return {"id": RUMOURS, "title": "Rumours", "date": "1977-02-04",
+            "artist-credit": [{"name": "Fleetwood Mac", "joinphrase": ""}],
+            "media": [{"position": d, "format": "CD", "tracks": [
+                {"id": "t%d-%d" % (d, i), "position": i, "title": t, "length": ms,
+                 "recording": {"id": "r%d-%d" % (d, i), "title": t, "length": ms}}
+                for i, (t, ms) in enumerate(ts, 1)]} for d, ts in enumerate(per, 1)]}
+
+
+class NameTheseSongs(Base):
+    """Nov 8, the owner's Inbox plan, item 5: music with no names waits in Needs a look; a person says the
+    artist and album, picks the album MusicBrainz finds, and the songs are named as it and filed."""
+
+    def setUp(self):
+        super().setUp()
+        self.needs = self.tmp / "media-needs.json"
+        self.log = self.tmp / "media-filed.jsonl"
+        mock.patch.dict(os.environ, {"HOMELAB_MEDIA_NEEDS": str(self.needs), "HOMELAB_MEDIA_FILED_LOG": str(self.log),
+                                     "HOMELAB_MEDIA_RUN": "run-1"}).start()
+        self.d = self.tmp / "Downloads"
+        self.album = self.d / "new stuff"
+        for n in ("01 track.mp3", "02 track.mp3", "03 track.mp3"):
+            self.touch(self.album / n, age=600)
+
+    def test_place_on_album_reads_the_number_and_disc(self):
+        root = self.album
+        self.assertEqual(music_tidy.place_on_album(root / "03 Song.mp3", root), (1, 3))
+        self.assertEqual(music_tidy.place_on_album(root / "1-07 Song.flac", root), (1, 7))
+        self.assertEqual(music_tidy.place_on_album(root / "CD2" / "03 Song.mp3", root), (2, 3))
+        self.assertEqual(music_tidy.place_on_album(root / "Track 7.m4a", root), (1, 7))
+        self.assertIsNone(music_tidy.place_on_album(root / "Dreams.mp3", root))
+        self.assertIsNone(music_tidy.place_on_album(root / "1977 Dreams.mp3", root), "a year isn't a track number")
+
+    def test_the_albums_songs_in_order(self):
+        got = music_tidy.album_tracks(rumours(discs=2))
+        self.assertEqual([(t["disc"], t["number"], t["title"]) for t in got][:4],
+                         [(1, 1, "Second Hand News"), (1, 2, "Dreams"), (1, 3, "Never Going Back Again"), (2, 1, "Second Hand News")])
+        self.assertEqual(got[1]["artist"], "Fleetwood Mac", "a song without its own credit is the album's artist's")
+        self.assertEqual((got[1]["length"], got[1]["of"], got[1]["recording_id"]), (257.0, 3, "r1-2"))
+
+    def test_matched_by_number_then_by_order(self):
+        tracks = music_tidy.album_tracks(rumours())
+        files = [self.album / "03 track.mp3", self.album / "01 track.mp3"]
+        got = music_tidy.match_tracks(files, tracks, self.album, lambda f: None)
+        self.assertEqual([(f.name, t["title"]) for f, t in got], [("03 track.mp3", "Never Going Back Again"), ("01 track.mp3", "Second Hand News")])
+        files = [self.album / "a.mp3", self.album / "b.mp3", self.album / "c.mp3"]
+        got = music_tidy.match_tracks(files, tracks, self.album, lambda f: None)
+        self.assertEqual([t["number"] for _, t in got], [1, 2, 3], "no numbers, the same count: in order")
+
+    def test_a_count_that_doesnt_agree_says_so(self):
+        tracks = music_tidy.album_tracks(rumours())
+        with self.assertRaises(RuntimeError) as e:
+            music_tidy.match_tracks([self.album / "a.mp3", self.album / "b.mp3"], tracks, self.album, lambda f: None)
+        self.assertIn("That album has 3 songs and this has 2", str(e.exception))
+
+    def test_another_edition_is_caught_by_the_songs_lengths(self):
+        tracks = music_tidy.album_tracks(rumours())
+        files = sorted(self.album.iterdir())
+        lengths = {files[0]: 163.5, files[1]: 400.0, files[2]: 134.0}
+        with self.assertRaises(RuntimeError) as e:
+            music_tidy.match_tracks(files, tracks, self.album, lengths.get)
+        self.assertIn("02 track.mp3 is 6:40 long, but that album's song 2, “Dreams”, is 4:17", str(e.exception))
+
+    def test_musicbrainz_is_asked_once_more_when_busy(self):
+        self.http_mock.side_effect = [RuntimeError("GET https://musicbrainz.org/ws/2/release/x answered 503"), rumours()]
+        mock.patch.object(music_tidy.time, "sleep").start()
+        self.assertEqual(music_tidy.mb_release(RUMOURS)["title"], "Rumours")
+        url = self.http_mock.call_args[0][1]
+        self.assertIn("/release/%s?inc=recordings+artist-credits" % RUMOURS, url)
+        self.assertIn("Homelab Wizard", self.http_mock.call_args[1]["headers"]["User-Agent"])
+
+    def test_an_album_musicbrainz_doesnt_have_says_so(self):
+        self.http_mock.side_effect = RuntimeError("GET https://musicbrainz.org/ws/2/release/x answered 404")
+        with self.assertRaises(SystemExit):
+            music_tidy.mb_release(RUMOURS)
+
+    def beets(self):
+        """music_tidy's file with beets stubbed: what it was asked, and nothing imported."""
+        calls = []
+
+        class FakeBeet:
+            def __init__(self, d):
+                pass
+
+            def __call__(self, *a):
+                calls.append(a)
+                return []
+        mock.patch.object(music_tidy, "need").start()
+        mock.patch.object(music_tidy, "write_inbox_beets_config", return_value=self.tmp).start()
+        mock.patch.object(music_tidy, "Beet", FakeBeet).start()
+        mock.patch.object(music_tidy, "shrink_lossless", side_effect=lambda f: f).start()
+        mock.patch.object(mc, "ffprobe", return_value={}).start()
+        return calls
+
+    def file(self, album=None):
+        import argparse
+        args = argparse.Namespace(apply=True, yes=False, library=None, paths=[str(self.album)], album=album)
+        music_tidy.file_music(args)
+        return self.results()[-1]
+
+    def test_songs_with_no_names_are_not_filed_as_they_are(self):
+        calls = self.beets()
+        mock.patch.object(music_tidy, "album_key", return_value=("", "")).start()
+        res = self.file()
+        self.assertFalse(res["ok"])
+        self.assertEqual(res["why"], music_tidy.UNNAMED)
+        self.assertFalse([c for c in calls if c[0] == "import"], "imported as they are, into a folder with no name")
+        self.assertTrue(self.album.exists())
+
+    def test_named_songs_are_filed_as_the_album_picked(self):
+        calls = self.beets()
+        named = []
+        mock.patch.object(music_tidy, "name_album", side_effect=lambda *a: named.append(a)).start()
+        mock.patch.object(music_tidy, "album_key", return_value=("", "")).start()
+        self.file(album=RUMOURS)
+        self.assertEqual(named[0][2:], (RUMOURS, True))
+        self.assertIn(("import", "--search-id", RUMOURS, str(self.album)), calls)
+
+    def test_an_album_id_that_isnt_one_is_refused(self):
+        self.beets()
+        with self.assertRaises(SystemExit):
+            self.file(album="--library")
+
+    def test_the_names_are_written_onto_the_songs(self):
+        written = {}
+
+        class Song(dict):
+            tags = None
+
+            def __init__(self, path):
+                super().__init__()
+                self.path = path
+
+            def add_tags(self):
+                self.tags = {}
+
+            def __setitem__(self, k, v):
+                if k == "musicbrainz_releasetrackid":
+                    raise KeyError(k)  # a format with no place for it
+                super().__setitem__(k, v)
+
+            def save(self):
+                written[Path(self.path).name] = dict(self)
+        fake = mock.MagicMock()
+        fake.File.side_effect = lambda p, easy=False: Song(p)
+        mock.patch.dict(sys.modules, {"mutagen": fake}).start()
+        tracks = music_tidy.album_tracks(rumours())
+        pairs = list(zip(sorted(self.album.iterdir()), tracks))
+        music_tidy.tag_as_album(pairs, rumours())
+        self.assertEqual(written["02 track.mp3"], {
+            "title": "Dreams", "artist": "Fleetwood Mac", "album": "Rumours", "albumartist": "Fleetwood Mac",
+            "tracknumber": "2/3", "discnumber": "1/1", "date": "1977", "musicbrainz_albumid": RUMOURS,
+            "musicbrainz_trackid": "r1-2"})
+
+    def inbox_engine(self, ok=True):
+        calls = []
+        lib = self.lib["music"] / "Fleetwood Mac" / "Rumours"
+
+        def engine(kind, paths, apply, extra=()):
+            calls.append((kind, [Path(p) for p in paths], list(extra)))
+            if not ok:
+                return False, {"filed": [], "why": "That album has 11 songs and this has 3, with no track numbers to match them by."}
+            out = []
+            for f in sorted(Path(paths[0]).iterdir()):
+                lib.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(f), str(lib / f.name))
+                out.append(str(lib / f.name))
+            return True, {"filed": [str(lib)], "songs_filed": out}
+        mock.patch.object(inbox, "engine", side_effect=engine).start()
+        return calls
+
+    def test_the_sweep_leaves_them_in_needs_a_look_with_why(self):
+        mock.patch.object(inbox, "engine", return_value=(False, {"filed": [], "why": music_tidy.UNNAMED})).start()
+        mock.patch.object(mc, "ffprobe", return_value=facts_info(codec=None, audio=("mp3",), duration=200)).start()
+        try:
+            inbox.sweep(apply=True)
+        except SystemExit:
+            pass
+        got = json.loads(self.needs.read_text())
+        self.assertEqual([(n["name"], n["kind"], n["why"]) for n in got], [("new stuff", "music", music_tidy.UNNAMED)])
+
+    def test_name_these_songs_files_them_as_the_album(self):
+        calls = self.inbox_engine()
+        inbox.name_as(str(self.album), "album", [RUMOURS.upper()])
+        self.assertEqual(calls, [("music", [self.album], ["--album", RUMOURS])])
+        entry = json.loads(self.log.read_text().splitlines()[-1])
+        self.assertEqual(entry["title"], "Rumours · Fleetwood Mac")
+        self.assertEqual(entry["did"][0], "named by you, then filed")
+        self.assertEqual(len(entry["files"]), 3, "Undo moves back exactly these songs")
+        self.assertEqual(json.loads(self.needs.read_text()), [])
+
+    def test_an_album_that_doesnt_fit_stays_in_needs_a_look_saying_why(self):
+        self.inbox_engine(ok=False)
+        with self.assertRaises(SystemExit):
+            inbox.name_as(str(self.album), "album", [RUMOURS])
+        got = json.loads(self.needs.read_text())
+        self.assertEqual([n["name"] for n in got], ["new stuff"])
+        self.assertTrue(got[0]["why"].startswith("Still couldn't file it: That album has 11 songs"))
+
+    def test_name_needs_an_album_id(self):
+        self.inbox_engine()
+        for words in ([], ["Rumours"], [RUMOURS, "extra"], ["--library"]):
+            with self.assertRaises(SystemExit):
+                inbox.name_as(str(self.album), "album", words)
