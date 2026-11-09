@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -10,7 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/core"
 	"github.com/Snooper42/homelab-wizard/internal/media"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func TestTidyUpReadsTheRecordWithoutPython(t *testing.T) {
@@ -376,5 +379,49 @@ func TestTidyUpBooksWithNoCalibreLibrary(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(books, "metadata.db"), nil, 0o644)
 	if l := book(); l.NoCalibre || l.Loose != 0 {
 		t.Errorf("a library: %+v", l)
+	}
+}
+
+// The Inbox card: the folders Tidy Up watches (one gone with its drive is
+// said), and when it files what's in them; saving writes both into .env.
+// A folder to add comes from the system's picker; an empty list or an
+// unknown when is refused.
+func TestTidySetInbox(t *testing.T) {
+	a, _ := testApp(t)
+	home, _ := os.UserHomeDir()
+	downloads, inbox := filepath.Join(home, "Downloads"), filepath.Join(home, "Hobbies", "Inbox")
+	_ = os.MkdirAll(downloads, 0o755)
+	refreshSizes = func(string, map[string]string, time.Duration, func() time.Time) bool { return true }
+	defer func() { refreshSizes = media.RefreshSizes }()
+	got, err := a.TidyUp()
+	if err != nil || got.Inbox.When != "arrive" {
+		t.Fatalf("before: %+v %v", got.Inbox, err)
+	}
+	got, err = a.TidySetInbox([]string{downloads, " " + inbox + " "}, "daily")
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := core.Env(a.root)
+	if env["TIDY_INBOX_FOLDERS"] != downloads+";"+inbox || env["TIDY_INBOX_WHEN"] != "daily" {
+		t.Errorf(".env: %q %q", env["TIDY_INBOX_FOLDERS"], env["TIDY_INBOX_WHEN"])
+	}
+	if got.Inbox.When != "daily" || len(got.Inbox.Folders) != 2 || len(got.Inbox.Gone) != 1 || got.Inbox.Gone[0] != inbox {
+		t.Errorf("after: %+v", got.Inbox)
+	}
+	if _, err := a.TidySetInbox(nil, "daily"); err == nil {
+		t.Error("no folder at all was taken")
+	}
+	if _, err := a.TidySetInbox([]string{downloads}, "hourly"); err == nil {
+		t.Error("an unknown when was taken")
+	}
+	saved := directoryDialog
+	defer func() { directoryDialog = saved }()
+	var title string
+	directoryDialog = func(_ context.Context, o runtime.OpenDialogOptions) (string, error) {
+		title = o.Title
+		return "/picked", nil
+	}
+	if p, err := a.TidyPickFolder(); err != nil || p != "/picked" || title != "Choose a folder for Tidy Up to watch" {
+		t.Errorf("picker: %q %v %q", p, err, title)
 	}
 }

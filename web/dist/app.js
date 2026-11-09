@@ -15584,6 +15584,7 @@ ${pays}
     audiobooks: { hue: 6, icon: "M3 18v-6a9 9 0 0 1 18 0v6M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" },
     inbox: { hue: 3, icon: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" },
     machine: { hue: "muted", icon: "M2 4h20v12H2zM8 20h8M12 16v4" },
+    folder: { hue: 5, icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
     lyrics: { hue: 5, icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }
   };
   var LIBRARIES = ["music", "movies", "tv", "books", "audiobooks"];
@@ -15864,8 +15865,7 @@ ${pays}
       }
       return null;
     };
-    const check = !kind && /* @__PURE__ */ u3(Go, { label: "Check Downloads", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]), title: "New films, episodes, music, and books in Downloads are filed every minute by themselves" });
-    return /* @__PURE__ */ u3(Widget, { title: "Recently done", span, kind: "fx-renewing tidydone", actions: check || void 0, children: items.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidydone", children: items.map(({ a: a3, i: i3 }) => {
+    return /* @__PURE__ */ u3(Widget, { title: "Recently done", span, kind: "fx-renewing tidydone", children: items.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidydone", children: items.map(({ a: a3, i: i3 }) => {
       const u4 = undo(i3);
       return /* @__PURE__ */ u3(
         Row,
@@ -15930,6 +15930,7 @@ ${pays}
     const waiting2 = todos.filter((t3) => t3.go).length;
     const gain = todos.reduce((t3, x3) => t3 + (x3.gain || 0), 0);
     return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(InboxWidget, { d: d3, job: job2, act }) }),
       /* @__PURE__ */ u3("div", { class: "fx-board tidytop", children: [
         /* @__PURE__ */ u3(Widget, { title: "Needs your OK", kind: "fx-paycheck tidyneeds", actions: waiting2 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
           count(waiting2, "thing"),
@@ -15948,6 +15949,45 @@ ${pays}
         /* @__PURE__ */ u3(GenresWidget, { d: d3, job: job2, act }),
         /* @__PURE__ */ u3(DoneWidget, { d: d3, job: job2, act, span: 1 })
       ] })
+    ] });
+  }
+  var WHENS = [["arrive", "As things arrive"], ["daily", "Once a day, 3 AM"], ["manual", "Only when I press it"]];
+  var folderName = (p3) => p3.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || p3;
+  function InboxWidget({ d: d3, job: job2, act }) {
+    const ib = d3.inbox;
+    const folders = ib.folders || [];
+    const gone = new Set(ib.gone || []);
+    const when3 = ib.when || "arrive";
+    const add = async () => {
+      const p3 = await act.pickFolder();
+      if (p3 && !folders.includes(p3)) act.inbox([...folders, p3], when3);
+    };
+    const other = x2(Elsewhere);
+    const waits2 = busy(job2) || !!other;
+    const state2 = (f4) => gone.has(f4) ? "Not there now: plug in its drive" : !ib.watching ? "Not watched: Tidy Up's background work is off in Settings" : when3 === "manual" ? "Tidied when you press Tidy up now" : when3 === "daily" ? "Tidied once a day, after 3 AM" : "Watched: tidied as things arrive";
+    return /* @__PURE__ */ u3(Widget, { title: "Drop anything here", span: "all", kind: "tidyinbox", children: [
+      /* @__PURE__ */ u3("p", { class: "muted tidyinboxlead", children: "Music, films, shows, books, and audiobooks: put them in one of these folders, however messy, and Tidy Up works out what each is, cleans it up, and files it in your library." }),
+      /* @__PURE__ */ u3("fieldset", { class: "tidyinboxset", disabled: waits2, children: [
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows tidytodo", children: [
+          folders.map((f4) => /* @__PURE__ */ u3(
+            Row,
+            {
+              lead: /* @__PURE__ */ u3(LibIcon, { kind: "folder" }),
+              title: folderName(f4),
+              sub: `${f4} · ${state2(f4)}`,
+              subTone: gone.has(f4) ? "warn" : void 0,
+              end: folders.length > 1 && /* @__PURE__ */ u3("button", { class: "small", "aria-label": `Remove ${folderName(f4)}`, onClick: () => act.inbox(folders.filter((x3) => x3 !== f4), when3), children: "Remove" })
+            },
+            f4
+          )),
+          /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(LibIcon, { kind: "inbox" }), title: "Add a folder…", sub: "Another folder, or a folder on a drive, for Tidy Up to watch", end: /* @__PURE__ */ u3("button", { class: "small", onClick: add, children: "Add…" }) })
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "tidyinboxwhen", children: [
+          /* @__PURE__ */ u3("span", { class: "muted", children: "Tidy up" }),
+          /* @__PURE__ */ u3(Segmented, { label: "When Tidy Up files what's in these folders", value: when3, pick: (v3) => act.inbox(folders, v3), options: WHENS })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "tidyinboxgo", children: /* @__PURE__ */ u3(Go, { primary: true, label: "Tidy up now", job: job2, onClick: () => act.run("inbox", "scan", ["--apply"]) }) })
     ] });
   }
   function meterOf(l3) {
@@ -16122,7 +16162,7 @@ ${pays}
         ] }),
         /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Overview"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
+      /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
       other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0 }),
       d3?.stale && !other && !job2 && (() => {
         const c3 = carryOn(d3.stale, d3, act, p3.pick);
@@ -16254,7 +16294,17 @@ ${pays}
         },
         open: (url) => {
           Promise.resolve(go().Open(url)).catch(showError);
-        }
+        },
+        inbox: (folders, when3) => {
+          Promise.resolve(go().TidySetInbox(folders, when3)).then((d4) => {
+            tidyData.set(d4);
+            draw5();
+          }).catch(showError);
+        },
+        pickFolder: () => Promise.resolve(go().TidyPickFolder()).catch((e3) => {
+          showError(e3);
+          return "";
+        })
       }
     });
     if (job && (!document.activeElement || document.activeElement === document.body) && $2("tidy").classList.contains("active")) document.querySelector("#tidyJob button:not([disabled])")?.focus();
