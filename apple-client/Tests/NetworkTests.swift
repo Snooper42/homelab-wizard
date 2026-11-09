@@ -682,6 +682,9 @@ extension NetworkRuleTests {
         let silent = actions(computer: nil)
         #expect(silent.available(for: app).contains(.restart) && silent.canStopForAWhile && !silent.settings(for: app).isEmpty)
         #expect(silent.updateHint(for: app) == nil)
+    }
+}
+
 // What was done (item 4): the phone asks the computer's record for one
 // app's, or everything matching a search, and reads its lines as Go sends them.
 extension NetworkRuleTests {
