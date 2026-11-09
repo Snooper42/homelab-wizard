@@ -181,6 +181,8 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
 
 - **A resting Tdarr reads "Stopped by you" on Status** (Nov 9, `claude/feature-tidy-tdarr-rest`). Tidy Up now stops an idle Tdarr and notes it in `data/stopped.json` as `{"why": "tidy"}`. `stoppedWords` in `web/src/status/stopFor.ts` knows only `restarting`, so the row says *Stopped by you*, and the phone's screens likely say the same. *Fixed looks like:* *Resting* (the owner, Nov 9: shorter than *Resting until Tidy Up needs it*), with Start still offered (a Start keeps it up until Tidy Up's next job). *Test:* a smoke case with a mock whose `stopped` has `tdarr: {why: 'tidy'}`, expecting the words. Also check that an update recreating Tdarr leaves a resting one stopped, as it does one a person stopped.
 
+- **The \*arr apps rest too, with the same `{"why": "tidy"}`** (Nov 9): Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, FlareSolverr, qBittorrent and Gluetun. Each should read *Resting* on Status as Tdarr does; a Start there keeps them up until the next 12-hour wake. The nightly update should leave resting ones stopped.
+
 ## For Account 3
 
 (Anything that touches a security guard: `tidyScreenArgs`, `TidyReveal`, the lock's PID checks, the Trash log, secrets. Say what changed and the PR.)
@@ -216,6 +218,7 @@ L7. **Dark mode, 860px, and the phone** match Finances' at each step: compare ev
    - *Pending* (any keeps them all up, as they call each other): a torrent downloading or queued in qBittorrent; anything in a Sonarr, Radarr or Lidarr queue (`/api/v3/queue`, Lidarr `/api/v1/queue`); a Seerr request approved and not yet available; a Tidy Up job that hands downloads over (`arr apply`); and 15 minutes after any of these. A torrent seeding keeps qBittorrent and Gluetun up (the owner: yes), not the rest.
    - *New episodes and films* still come: they wake on a timetable (the owner: every 12 hours, "I'm not adding files that often"; and at once when Seerr has a new request), ask for an RSS sync and a search of what's missing (`RssSync`, `MissingEpisodeSearch`), and rest again once nothing was grabbed. A request Seerr couldn't hand over while they rested is sent again once they're up.
    - *Lanes:* Status's word for them is the same hand-off as Tdarr's (**For Account 2**).
+   - *Built (Nov 9, the one-account session):* `cmd/homelab/media_arr_rest.go`, `TIDY_ARR_REST`. Pending is read from the queues, qBittorrent (`QBITTORRENT_PASSWORD`) and Seerr (`filter=processing`); what can't be read keeps them up. A person's start keeps them up until the next 12-hour wake. *Not built yet:* sending again a request Seerr couldn't hand over while they rested (Seerr's `/api/v1/request/{id}/retry` for its failed ones, once they're up).
 3. The queue's item 2 (*a job that stopped part-way carries on as another job*), then the rest of the queue and the look's L3.
 
 Owner's answers, Nov 9 (later): all the *arr apps rest unless something is actually pending (item 2 above); they wake every 12 hours to look for new releases; seeding keeps qBittorrent up; a resting app's word on Status is just *Resting*.

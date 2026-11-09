@@ -51,6 +51,18 @@ type Record struct {
 	TdarrUsed    time.Time `json:"tdarrUsed,omitzero"`
 	TdarrResting bool      `json:"tdarrResting,omitempty"`
 	TdarrLeftUp  bool      `json:"tdarrLeftUp,omitempty"`
+	// The *arr apps rest too (the owner, Nov 9). ArrResting: Tidy Up stopped
+	// ArrStopped (data/stopped.json says "tidy") at ArrRested. ArrWoke: when
+	// it last started them (every 12 hours, for a request, or for a job).
+	// ArrBusy: when something was last pending, as they rest only a while
+	// after. ArrLeftUp: someone started one while they rested, so they stay
+	// up until the next 12-hour wake.
+	ArrResting bool      `json:"arrResting,omitempty"`
+	ArrStopped []string  `json:"arrStopped,omitempty"`
+	ArrRested  time.Time `json:"arrRested,omitzero"`
+	ArrWoke    time.Time `json:"arrWoke,omitzero"`
+	ArrBusy    time.Time `json:"arrBusy,omitzero"`
+	ArrLeftUp  bool      `json:"arrLeftUp,omitempty"`
 }
 
 // Activity is one line of Tidy Up's Recent activity.

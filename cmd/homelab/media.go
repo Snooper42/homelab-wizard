@@ -486,6 +486,8 @@ func (h *homelab) mediaArr(ctx context.Context, args []string) error {
 	if _, err := parseFlags(fs, args); err != nil {
 		return err
 	}
+	// Resting *arr apps are started first: the hand-over needs them up.
+	h.useArr(ctx, func(msg string) { h.ui.Info("%s", msg) })
 	client, err := h.docker(ctx)
 	if err != nil {
 		return err
@@ -626,6 +628,7 @@ func (h *homelab) mediaTick(ctx context.Context) error {
 		}
 	}
 	h.restTdarr(ctx, env, home, now)
+	h.restArr(ctx, env, now)
 	if !off(env["TIDY_SCRUB"]) && scrubDue(now, rec.LastScrub) {
 		if err := h.mediaEngine(ctx, "scrubber", "scan", []string{"--apply"}); err != nil && !errors.Is(err, media.ErrBusy) {
 			errs = append(errs, err)
