@@ -321,6 +321,9 @@ services:
       SERVER_COUNTRIES: ${PROTONVPN_SERVER_COUNTRIES:-}
       PORT_FORWARD_ONLY: "on"
       VPN_PORT_FORWARDING: "on"
+      # Its control server stops the VPN and gives its address: on its own
+      # loopback, which qBittorrent shares, never the shared network.
+      HTTP_CONTROL_SERVER_ADDRESS: 127.0.0.1:8000
     ports:
       # qBittorrent shares this container's network, so its UI is published here.
       - ${BIND_IP:-127.0.0.1}:${QBITTORRENT_PORT:-8082}:8082

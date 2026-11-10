@@ -1,9 +1,12 @@
 package catalog
 
 import (
+	"os"
 	"slices"
 	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Whatever mounts Docker's socket controls the computer, read-only mount
@@ -130,5 +133,33 @@ func TestDozzleIsNotOnTheSharedNetwork(t *testing.T) {
 	}
 	if !joins(d, "socket") {
 		t.Errorf("dozzle can't reach the socket proxy: %v", d.Networks)
+	}
+}
+
+// Gluetun's control server (:8000) gives the VPN's public address and
+// forwarded port, and stops or starts the VPN; its auth depends on the
+// version, and the image floats. qBittorrent shares its network, so it is
+// kept to Gluetun's own loopback, out of reach of every other app on the
+// shared network (backlog item 72).
+func TestGluetunsControlServerIsItsOwn(t *testing.T) {
+	g, ok := load(t).Get("gluetun")
+	if !ok {
+		t.Fatal("no gluetun in the catalog")
+	}
+	raw, err := os.ReadFile(g.Source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var f struct {
+		Services map[string]struct {
+			Environment map[string]string `yaml:"environment"`
+		} `yaml:"services"`
+	}
+	if err := yaml.Unmarshal(raw, &f); err != nil {
+		t.Fatal(err)
+	}
+	addr := f.Services["gluetun"].Environment["HTTP_CONTROL_SERVER_ADDRESS"]
+	if !strings.HasPrefix(addr, "127.0.0.1:") {
+		t.Errorf("Gluetun's control server listens on %q: every app on the shared network can stop the VPN or read its address; set HTTP_CONTROL_SERVER_ADDRESS to 127.0.0.1:8000", addr)
 	}
 }

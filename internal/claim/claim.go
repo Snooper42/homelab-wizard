@@ -1,5 +1,6 @@
 // Package claim asks a public app, on this machine, whether it has its
-// first account yet (Immich, Audiobookshelf, Komga, Navidrome, Calibre-Web).
+// first account yet (Immich, Audiobookshelf, Komga, Navidrome, Calibre-Web,
+// Paperless-ngx).
 package claim
 
 import (
@@ -16,8 +17,10 @@ import (
 
 // Some public apps can be claimed from the web: Immich's first sign-up is
 // its administrator, Audiobookshelf's first visitor sets the root password,
-// Komga's claims the server, Navidrome's makes the admin, and Calibre-Web
-// starts with admin/admin123. On the internet before the household has done
+// Komga's claims the server, Navidrome's makes the admin, Calibre-Web
+// starts with admin/admin123, and Paperless-ngx opens sign-up to anyone
+// while it has no user and no document, making the first a superuser (its
+// adapter's is_open_for_signup; N38). On the internet before the household has done
 // that, the first stranger to open the address would own the app. So each
 // goes through the tunnel only once it says it has its first account; one
 // that cannot be asked waits too, and the next Set up the domain looks again.
@@ -34,6 +37,9 @@ var claimChecks = map[string]claimCheck{
 	"komga":          {path: "/api/v1/claim", field: "isClaimed"},
 	"navidrome":      {path: "/app/", page: regexp.MustCompile(`firstTime\\?"\s*:\s*true`)},
 	"calibre-web":    {path: "/opds", basic: [2]string{"admin", "admin123"}},
+	// Its sign-up page says so only while it is the first account (asked
+	// with no Accept-Language, so in its default English).
+	"paperless": {path: "/accounts/signup/", page: regexp.MustCompile(`first user account for this installation`)},
 }
 
 // Claimed says whether app, answering at base, has its first account,
