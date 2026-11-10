@@ -692,7 +692,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     export`): payee and note text from a bank file that starts with `=`,
     `+`, `-` or `@` becomes a formula when the CSV is opened (formula
     injection). Prefix such cells with `'`, or say so beside the export.
-78. **Apps that are local but still on the shared network**: N35 keeps
+78. (done: N40) **Apps that are local but still on the shared network**: N35 keeps
     Dozzle and beets off the tailnet and the domain, and N36 moves Dozzle
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the
