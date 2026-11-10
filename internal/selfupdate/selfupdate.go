@@ -47,6 +47,9 @@ type Release struct {
 	Version string `json:"version,omitempty"`
 	// Assets are every file of the release, for the other systems' builds.
 	Assets []Asset `json:"-"`
+	// Repo is the repository it came from, "owner/name": its builds are
+	// checked against that repository's build provenance (N29).
+	Repo string `json:"-"`
 }
 
 // Asset is one file of a release, with GitHub's SHA-256 of it.
@@ -132,6 +135,7 @@ func LatestStable(ctx context.Context, repo string) (Release, error) {
 			continue
 		}
 		r = fromRelease(b)
+		r.Repo = repo
 		r.Commit = ""
 		if err := get(ctx, "/repos/"+repo+"/commits/"+b.TagName, "application/vnd.github.sha", &r.Commit); err != nil {
 			return r, err
@@ -166,6 +170,7 @@ func Latest(ctx context.Context, repo string) (Release, error) {
 		return r, err
 	}
 	r = fromRelease(body)
+	r.Repo = repo
 	// The workflow writes "Built from <sha>." in the notes too, in case the
 	// release points at a branch name.
 	if f := strings.Fields(body.Body); len(r.Commit) != 40 {
@@ -272,6 +277,15 @@ func Stage(ctx context.Context, r Release, dir string, on func(done, total int64
 			return "", err
 		}
 		if err := verify(file, a.SHA256); err != nil {
+			os.Remove(file)
+			return "", err
+		}
+		// GitHub's checksum comes from the release itself; the build
+		// provenance says this repository's own workflow made the file (N29).
+		if !needsProvenance(r.When) {
+			return file, nil
+		}
+		if err := Provenance(ctx, r.Repo, a.Name, a.SHA256); err != nil {
 			os.Remove(file)
 			return "", err
 		}
