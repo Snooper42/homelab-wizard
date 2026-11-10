@@ -1316,6 +1316,27 @@ const smokes = [
     const ran = await page.evaluate(() => window.__MOCK.tidyRuns[0]);
     if (JSON.stringify(ran) !== JSON.stringify(['music', 'finalize', [], true])) throw new Error(`ran: ${JSON.stringify(ran)}`);
   } },
+  // A job that stopped part-way carries on as itself, with the flags its lock kept (tidy-loop.md's queue, item 2): Tidy
+  // lyrics as Tidy lyrics (never Add lyrics, which asks LRCLIB about every song), Set up Tdarr and Check Downloads with
+  // --apply (without it, a preview that takes no lock, and the card stays). A lock from before flags were kept: Tdarr
+  // and Downloads lock only with --apply, so that is what they had; lyrics can't tell, so it says to start it again.
+  ...[
+    ['Tidy lyrics carries on as Tidy lyrics', { kind: 'music', action: 'lyrics', flags: ['--tidy'] }, 'Tidying lyrics', ['music', 'lyrics', ['--tidy']]],
+    ['Set up Tdarr carries on with --apply', { kind: 'tdarr', action: 'setup', flags: ['--apply'] }, 'Setting up Tdarr', ['tdarr', 'setup', ['--apply']]],
+    ['Check Downloads from an old lock carries on with --apply', { kind: 'inbox', action: 'scan' }, 'Checking Downloads', ['inbox', 'scan', ['--apply']]],
+    ['lyrics from an old lock says to start it again, and runs nothing', { kind: 'music', action: 'lyrics' }, 'Adding lyrics', null],
+  ].map(([what, lock, title, runs]) => ({ name: `Tidy Up: a job that stopped part-way, ${what}`, screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, start: tidyAt(3), ...lock } } }, run: async (page) => {
+    await page.waitForSelector(`#tidyStale strong:text-is("${title}: stopped part-way")`, { timeout: 5000 });
+    if (!runs) {
+      if (await page.isVisible('#tidyStale button')) throw new Error('a lock that cannot say offers Carry on');
+      await page.waitForSelector('#tidyStale:has-text("Music")', { timeout: 2000 });
+      return;
+    }
+    await page.click('#tidyStale button:text-is("Carry on")');
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[0].slice(0, 3));
+    if (JSON.stringify(ran) !== JSON.stringify(runs)) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } })),
   // Which books were left alone isn't kept with the job, so a books apply never carries on by itself: the review opens.
   { name: 'Tidy Up: a books apply that stopped part-way opens the review, and applies nothing by itself', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'books', action: 'apply', start: tidyAt(3) } } }, run: async (page) => {
     await page.waitForSelector('#tidyStale strong:text-is("Tidying your books: stopped part-way")', { timeout: 5000 });

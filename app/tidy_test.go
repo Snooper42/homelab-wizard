@@ -608,3 +608,26 @@ func TestTidyFindTitlesAsksWhatThisMachineHas(t *testing.T) {
 		t.Fatalf("got %+v, %v", got, err)
 	}
 }
+
+// A job that stopped part-way reaches the screen with the flags it ran with, so Carry on runs it as itself; an
+// old lock, which never kept them, says it can't tell (nil).
+func TestTidyUpStaleCarriesTheJobsFlags(t *testing.T) {
+	a, _ := testApp(t)
+	if err := os.MkdirAll(filepath.Dir(media.LockPath(a.root)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(s string) {
+		if err := os.WriteFile(media.LockPath(a.root), []byte(s), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write(`{"pid":999999,"kind":"music","action":"lyrics","start":"2026-11-09T03:04:00Z","flags":["--tidy"]}`)
+	d, err := a.TidyUp()
+	if err != nil || d.Stale == nil || d.Stale.Action != "lyrics" || len(d.Stale.Flags) != 1 || d.Stale.Flags[0] != "--tidy" {
+		t.Fatalf("stale: %+v %v", d.Stale, err)
+	}
+	write(`{"pid":999999,"kind":"tdarr","action":"setup","start":"2026-11-09T03:04:00Z"}`)
+	if d, _ := a.TidyUp(); d.Stale == nil || d.Stale.Flags != nil {
+		t.Errorf("an old lock: %+v", d.Stale)
+	}
+}

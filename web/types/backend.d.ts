@@ -1023,6 +1023,7 @@ declare namespace media {
     action: string;
     start: string;
     log?: string;
+    flags: string[];
   }
   interface Need {
     path: string;

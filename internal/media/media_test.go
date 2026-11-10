@@ -496,3 +496,36 @@ func TestInboxSignatureAndTdarrWork(t *testing.T) {
 		t.Error("queued")
 	}
 }
+
+// A lock keeps the flags its job ran with, so a job that stopped part-way
+// carries on as itself (Tidy lyrics as Tidy lyrics, Set up Tdarr with
+// --apply); a lock written before it kept them says it can't tell (nil),
+// which a lock with no flags (empty) is not.
+func TestLockKeepsTheJobsFlags(t *testing.T) {
+	root := t.TempDir()
+	saved := alive
+	t.Cleanup(func() { alive = saved })
+	alive = func(pid int) bool { return pid == os.Getpid() }
+
+	if _, err := Acquire(root, "music", "lyrics", "", "--tidy"); err != nil {
+		t.Fatal(err)
+	}
+	l, ok := ReadLock(root)
+	if !ok || len(l.Flags) != 1 || l.Flags[0] != "--tidy" {
+		t.Fatalf("with flags: %+v %v", l, ok)
+	}
+	_ = Release(root)
+	if _, err := Acquire(root, "music", "run", ""); err != nil {
+		t.Fatal(err)
+	}
+	if l, _ := ReadLock(root); l.Flags == nil || len(l.Flags) != 0 {
+		t.Errorf("no flags reads as none said: %#v", l.Flags)
+	}
+	_ = Release(root)
+	// Written before locks kept their flags: can't tell, and still read.
+	_ = os.WriteFile(LockPath(root), []byte(`{"pid":999999,"kind":"tdarr","action":"setup","start":"2026-11-09T03:04:00Z"}`), 0o644)
+	stale, err := Acquire(root, "tdarr", "setup", "", "--apply")
+	if err != nil || stale == nil || stale.Kind != "tdarr" || stale.Flags != nil {
+		t.Errorf("an old lock: %+v %v", stale, err)
+	}
+}

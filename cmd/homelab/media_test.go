@@ -502,3 +502,15 @@ func TestMediaTickLeavesTheInboxWhenManual(t *testing.T) {
 		t.Fatalf("swept with manual: %v", c)
 	}
 }
+
+// The lock keeps only the flags the screen may send a job again (--apply,
+// --check, --tidy): never a path, a name, or an id that came with it.
+func TestLockFlagsKeepOnlyTheScreens(t *testing.T) {
+	got := lockFlags([]string{"--apply", "--skip", "12,14", "--tidy", "/Users/sam/Music", "--check", "--apply"})
+	if strings.Join(got, " ") != "--apply --tidy --check" {
+		t.Errorf("kept %q", got)
+	}
+	if got := lockFlags(nil); got == nil || len(got) != 0 {
+		t.Errorf("none: %#v", got)
+	}
+}
