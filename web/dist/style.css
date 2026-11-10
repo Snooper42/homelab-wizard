@@ -1405,6 +1405,8 @@ table.copies tr.copy td.when, table.copies tr.copy td.size, table.copies tr.copy
    in their brand's colour (logos.ts), people in theirs (--person-N). */
 .fin { display:flex; flex-direction:column; gap:16px; }
 #finRoot > .seg { margin:0 0 16px; }
+/* A tab's pages (Spending, Plan) in a second row, closer to it than to the page. */
+#finRoot .fx-subtabs { margin:-8px 0 16px; }
 .finbody .tiles { margin:0; grid-template-columns:repeat(4, minmax(0,1fr)); }
 #finRoot .money small { font-size:.62em; opacity:.6; }
 #finRoot :is(.money, .num, .amt, .v, .after).warn { color:var(--warn); }

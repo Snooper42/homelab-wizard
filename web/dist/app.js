@@ -3232,9 +3232,9 @@
       /* @__PURE__ */ u3("span", { class: "muted filtercount", role: "status", children: said2 })
     ] });
   }
-  function openGroups(groups3, f4, held3) {
+  function openGroups(groups4, f4, held3) {
     const fine = (g2) => !g2.alert && !g2.pinned && g2.apps.every((a3) => a3.state === "running" || awaitingJobs(a3) || a3.state === "stopped" && held3[a3.id] && !keptRestarting(held3[a3.id]));
-    return Object.fromEntries(groups3.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
+    return Object.fromEntries(groups4.map((g2) => [g2.label, f4.all || (g2.label in f4.picked ? f4.picked[g2.label] : !fine(g2))]));
   }
   var heard = /* @__PURE__ */ new Map();
   var heardOnce = false;
@@ -4291,13 +4291,13 @@
       /* @__PURE__ */ u3("span", { class: "n", children: counts && counts[name] ? String(counts[name]) : "" })
     ] }, name);
   }
-  function PagePicker({ groups: groups3, active: active2, counts, pick }) {
+  function PagePicker({ groups: groups4, active: active2, counts, pick }) {
     const option = (name) => /* @__PURE__ */ u3("option", { value: name, children: counts && counts[name] ? `${name} (${counts[name]})` : name }, name);
     return /* @__PURE__ */ u3("label", { class: "pagepick", children: [
       /* @__PURE__ */ u3("span", { children: "Page" }),
       /* @__PURE__ */ u3("select", { value: counts ? "" : active2, onChange: (e3) => pick(e3.currentTarget.value), children: [
         counts && /* @__PURE__ */ u3("option", { value: "", disabled: true, children: "Matches on…" }),
-        groups3.filter((g2) => g2.items.length).flatMap((g2) => {
+        groups4.filter((g2) => g2.items.length).flatMap((g2) => {
           const pages = g2.items.filter((i3) => typeof i3 === "string");
           const folds = g2.items.filter((i3) => typeof i3 !== "string");
           return [
@@ -4308,13 +4308,13 @@
       ] })
     ] });
   }
-  function Nav({ groups: groups3, active: active2, counts, pick }) {
+  function Nav({ groups: groups4, active: active2, counts, pick }) {
     const [picked, setPicked] = d2({});
     const matches3 = (f4) => !!counts && f4.pages.some((p3) => counts[p3]);
     const isOpen2 = (f4) => counts ? matches3(f4) : picked[f4.label] ?? f4.pages.includes(active2);
     return /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3(PagePicker, { groups: groups3, active: active2, counts, pick }),
-      groups3.filter((g2) => g2.items.length).map((g2) => [
+      /* @__PURE__ */ u3(PagePicker, { groups: groups4, active: active2, counts, pick }),
+      groups4.filter((g2) => g2.items.length).map((g2) => [
         /* @__PURE__ */ u3("div", { class: "navhead", children: g2.head }, "h:" + g2.head),
         ...g2.items.map((item) => {
           if (typeof item === "string") return /* @__PURE__ */ u3(PageButton, { name: item, active: active2, counts, pick }, item);
@@ -6477,16 +6477,16 @@
     const known2 = Object.keys(statusById || {}).length > 0;
     const mine = known2 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
     const others2 = known2 ? apps2.filter((p3) => !mine.includes(p3)) : [];
-    const groups3 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
+    const groups4 = pageGroups.map(([head, names5]) => ({ head, items: names5.filter((n3) => general.includes(n3)) }));
     const named6 = new Set(pageGroups.flatMap(([, names5]) => names5));
-    groups3[0].items.push(...general.filter((n3) => !named6.has(n3)));
+    groups4[0].items.push(...general.filter((n3) => !named6.has(n3)));
     const cats = catalog?.categories || [];
     const catOf = (name) => (catalog?.apps || []).find((a3) => a3.kind !== "helper" && (name === a3.name || name.startsWith(a3.name + " ")))?.category || "";
     const folds = cats.map((c4) => ({ label: c4.label, pages: mine.filter((p3) => p3.name !== "Other apps" && catOf(p3.name) === c4.id).map((p3) => p3.name) })).filter((f4) => f4.pages.length);
     const loose2 = mine.filter((p3) => p3.name !== "Other apps" && !cats.some((c4) => c4.id === catOf(p3.name))).map((p3) => p3.name);
     const other = mine.some((p3) => p3.name === "Other apps") ? ["Other apps"] : [];
     navGroups = [
-      ...groups3,
+      ...groups4,
       { head: "Apps", items: [...loose2, ...folds, ...other, ...others2.length ? [{ label: "Apps you don't have", pages: others2.map((p3) => p3.name) }] : []] }
     ];
   }
@@ -6898,9 +6898,9 @@
   }
   function CopyRows({ o: o3, apps: apps2 }) {
     const [picked, setPicked] = d2({});
-    const groups3 = copyGroups(o3);
-    if (!groups3.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
-    return /* @__PURE__ */ u3(S, { children: groups3.map((g2) => {
+    const groups4 = copyGroups(o3);
+    if (!groups4.length) return /* @__PURE__ */ u3("tr", { children: /* @__PURE__ */ u3("td", { colSpan: 4, class: "muted", children: "No installed app has a database to dump yet." }) });
+    return /* @__PURE__ */ u3(S, { children: groups4.map((g2) => {
       const open4 = picked[g2.key] ?? (g2.key === "stale" || g2.key === "fresh");
       const toggle = () => setPicked({ ...picked, [g2.key]: !open4 });
       return [
@@ -7237,13 +7237,13 @@
     const byId = Object.fromEntries(st.apps.map((a3) => [a3.id, a3]));
     const pinned = (st.pinned || []).map((id2) => byId[id2]).filter((a3) => a3 && !trouble2(a3));
     const rest = (a3) => !trouble2(a3) && !pinned.includes(a3);
-    const groups3 = [
+    const groups4 = [
       { label: "Needs a look", apps: st.apps.filter(trouble2), alert: true },
       { label: "Pinned", apps: pinned, pinned: true },
       ...(catalog?.categories || []).map((c4) => ({ label: c4.label, apps: st.apps.filter((a3) => rest(a3) && catOf[a3.id] === c4.id) })),
       { label: "Other", apps: st.apps.filter((a3) => rest(a3) && !(catalog?.categories || []).some((c4) => c4.id === catOf[a3.id])) }
     ].filter((g2) => g2.apps.length);
-    appList = { groups: groups3, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
+    appList = { groups: groups4, pending, catalog, weekUp, outages, seen, batteryPaused, held, busy: appsBusy, companion: document.documentElement.classList.contains("companion"), os: osName, on: appListActions, memory };
     mountAppList($2("statusRows"), appList);
   }
   async function answerPages(st) {
@@ -9171,8 +9171,8 @@
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
   function worthByMonth(v3, back2 = 3, ahead = 3) {
     const accounts = v3.plan.accounts || [];
-    const groupOf = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
-    const against = new Set(accounts.filter((a3) => groupOf(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
+    const groupOf2 = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
+    const against = new Set(accounts.filter((a3) => groupOf2(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
     const split2 = (value) => {
       const owned = {};
       let owes = 0, secured = 0;
@@ -9181,7 +9181,7 @@
         if (owed(a3.kind)) {
           owes += n3;
           if (against.has(a3.id)) secured += n3;
-        } else owned[groupOf(a3.kind)] = (owned[groupOf(a3.kind)] || 0) + n3;
+        } else owned[groupOf2(a3.kind)] = (owned[groupOf2(a3.kind)] || 0) + n3;
       }
       const net = Object.values(owned).reduce((t3, n3) => t3 + n3, 0) - owes;
       return { owned, owes, secured, net };
@@ -9398,23 +9398,23 @@
     const income = incomeOf(cats);
     const parent = new Map(cats.map((c4) => [c4.name.toLowerCase(), c4.parent || ""]));
     const name = new Map(cats.map((c4) => [c4.name.toLowerCase(), c4.name]));
-    const groups3 = /* @__PURE__ */ new Map();
+    const groups4 = /* @__PURE__ */ new Map();
     for (const t3 of txs) {
       if (!inRange(t3, r3)) continue;
       for (const p3 of parts(t3, income)) {
         const key5 = p3.category.toLowerCase();
         const g2 = parent.get(key5) || name.get(key5) || p3.category;
-        const top = groups3.get(g2) || { name: g2, amount: 0, children: [] };
+        const top = groups4.get(g2) || { name: g2, amount: 0, children: [] };
         top.amount += p3.amount;
         if (parent.get(key5)) {
           const child = top.children.find((c4) => c4.name.toLowerCase() === key5) || (top.children.push({ name: name.get(key5) || p3.category, amount: 0 }), top.children.at(-1));
           child.amount += p3.amount;
         }
-        groups3.set(g2, top);
+        groups4.set(g2, top);
       }
     }
     const round = (n3) => Math.round(n3 * 100) / 100;
-    return [...groups3.values()].map((g2) => ({ ...g2, amount: round(g2.amount), children: g2.children.map((c4) => ({ ...c4, amount: round(c4.amount) })).filter((c4) => Math.abs(c4.amount) >= 5e-3).sort((a3, b2) => b2.amount - a3.amount) })).filter((g2) => g2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
+    return [...groups4.values()].map((g2) => ({ ...g2, amount: round(g2.amount), children: g2.children.map((c4) => ({ ...c4, amount: round(c4.amount) })).filter((c4) => Math.abs(c4.amount) >= 5e-3).sort((a3, b2) => b2.amount - a3.amount) })).filter((g2) => g2.amount >= 5e-3).sort((a3, b2) => b2.amount - a3.amount);
   }
   function byMonth(txs, r3) {
     const out = [];
@@ -9680,10 +9680,10 @@
     const all = ledger.transactions;
     const home = new Map(inHome(v3.plan, all).map((t3) => [t3.id, t3.amount]));
     const amt = (t3) => home.get(t3.id) ?? t3.amount;
-    const groupOf = new Map((v3.categories || []).filter((c4) => c4.parent).map((c4) => [c4.name.toLowerCase(), c4.parent]));
+    const groupOf2 = new Map((v3.categories || []).filter((c4) => c4.parent).map((c4) => [c4.name.toLowerCase(), c4.parent]));
     const used = [...new Set(all.flatMap(catsOf))];
-    const cats = [.../* @__PURE__ */ new Set([...used, ...used.map((c4) => groupOf.get(c4.toLowerCase())).filter((g2) => !!g2)])].sort();
-    const inCategory = (t3, c4) => catsOf(t3).some((x3) => x3 === c4 || groupOf.get(x3.toLowerCase())?.toLowerCase() === c4.toLowerCase());
+    const cats = [.../* @__PURE__ */ new Set([...used, ...used.map((c4) => groupOf2.get(c4.toLowerCase())).filter((g2) => !!g2)])].sort();
+    const inCategory = (t3, c4) => catsOf(t3).some((x3) => x3 === c4 || groupOf2.get(x3.toLowerCase())?.toLowerCase() === c4.toLowerCase());
     const tags = tagsOf(all);
     const months = [...new Set(all.map((t3) => t3.date.slice(0, 7)))].sort().reverse();
     const accounts = (v3.plan.accounts || []).filter((a3) => all.some((t3) => t3.account === a3.id || t3.to === a3.id));
@@ -11199,8 +11199,8 @@
       setTouched(true);
       setRows(rows.map((r3, j3) => j3 === i3 ? { ...r3, [k3]: val } : r3));
     };
-    const groups3 = rows.filter((r3) => !r3.parent && r3.name.trim());
-    const ordered = groups3.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups3.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
+    const groups4 = rows.filter((r3) => !r3.parent && r3.name.trim());
+    const ordered = groups4.flatMap((g2) => [g2, ...rows.filter((r3) => r3.parent === g2.name)]).concat(rows.filter((r3) => r3.parent && !groups4.some((g2) => g2.name === r3.parent) || !r3.parent && !r3.name.trim()));
     const submit = async (e3) => {
       e3.preventDefault();
       const names5 = rows.map((r3) => r3.name.trim().toLowerCase());
@@ -11253,7 +11253,7 @@
           /* @__PURE__ */ u3("input", { "aria-label": "Name", value: r3.name, onInput: (ev) => set2(i3, "name", ev.target.value) }),
           /* @__PURE__ */ u3("select", { "aria-label": `${r3.name || "Category"}'s group`, value: r3.parent, onChange: (ev) => set2(i3, "parent", ev.target.value), children: [
             /* @__PURE__ */ u3("option", { value: "", children: "No group" }),
-            groups3.filter((g2) => g2 !== r3 && !rows.some((c4) => c4.parent === r3.name && r3.name)).map((g2) => /* @__PURE__ */ u3("option", { value: g2.name, children: [
+            groups4.filter((g2) => g2 !== r3 && !rows.some((c4) => c4.parent === r3.name && r3.name)).map((g2) => /* @__PURE__ */ u3("option", { value: g2.name, children: [
               "Under ",
               g2.name
             ] }, g2.name))
@@ -12261,7 +12261,7 @@ ${pays}
     const all = ranges(v3.today, txs[0]?.date || v3.today);
     const r3 = all.find((x3) => x3.key === key5) || all[0];
     const sum = totals(txs, r3);
-    const groups3 = byCategory(txs, v3.categories || [], r3);
+    const groups4 = byCategory(txs, v3.categories || [], r3);
     const months = byMonth(txs, r3);
     const everyPayee = topPayees(txs, r3, Infinity);
     const payees = allPayees ? everyPayee : everyPayee.slice(0, 5);
@@ -12277,8 +12277,8 @@ ${pays}
       }
     };
     const yearGroups = byCategory(txs, v3.categories || [], twelveMonths(v3.today));
-    const most = groups3[0]?.amount || 1;
-    const spent = groups3.reduce((s3, g2) => s3 + g2.amount, 0);
+    const most = groups4[0]?.amount || 1;
+    const spent = groups4.reduce((s3, g2) => s3 + g2.amount, 0);
     const inMonth = key5 === "month" || key5 === "last" ? r3.from.slice(0, 7) : void 0;
     const opens = (f4) => open4 ? () => open4({ ...f4, month: inMonth }) : void 0;
     return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
@@ -12298,7 +12298,7 @@ ${pays}
         /* @__PURE__ */ u3("p", { class: "fx-sub fx-exported", role: "status", children: saved })
       ] }),
       !txs.length ? /* @__PURE__ */ u3(Widget, { title: "Nothing yet", span: "all", children: /* @__PURE__ */ u3(Empty, { children: "Reports read the transactions: add some on Transactions, and they show here." }) }) : /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(Widget, { title: "Spending by category", kind: "fx-bycat", children: groups3.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: groups3.map((g2) => {
+        /* @__PURE__ */ u3(Widget, { title: "Spending by category", kind: "fx-bycat", children: groups4.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: groups4.map((g2) => {
           const icon = iconOf(v3.categories, g2.name), hue2 = categoryHue(g2.name, v3.categories);
           return /* @__PURE__ */ u3(
             Row,
@@ -12394,9 +12394,9 @@ ${pays}
       ] })
     ] }) });
   }
-  function Trend({ v: v3, txs, groups: groups3, group: group2, pick, open: open4 }) {
+  function Trend({ v: v3, txs, groups: groups4, group: group2, pick, open: open4 }) {
     const cats = v3.categories || [];
-    const g2 = groups3.find((x3) => x3.name === group2) || groups3[0];
+    const g2 = groups4.find((x3) => x3.name === group2) || groups4[0];
     const trend = categoryTrend(txs, cats, g2.name, v3.today);
     const yoy = yearOnYear(txs, cats, g2.name, v3.today);
     const d3 = parseDay(v3.today);
@@ -12408,7 +12408,7 @@ ${pays}
         title: `${g2.name}, month by month`,
         span: "all",
         kind: "fx-trend",
-        actions: groups3.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-reporttag", "aria-label": "Which category", value: g2.name, onChange: (e3) => pick(e3.target.value), children: groups3.map((x3) => /* @__PURE__ */ u3("option", { value: x3.name, children: x3.name }, x3.name)) }),
+        actions: groups4.length > 1 && /* @__PURE__ */ u3("select", { class: "fx-reporttag", "aria-label": "Which category", value: g2.name, onChange: (e3) => pick(e3.target.value), children: groups4.map((x3) => /* @__PURE__ */ u3("option", { value: x3.name, children: x3.name }, x3.name)) }),
         children: [
           /* @__PURE__ */ u3("p", { class: "fx-sub fx-yoy", children: [
             "This month to ",
@@ -13018,7 +13018,7 @@ ${pays}
   function monthFlow(v3, L2, ledger, month3, top) {
     const cats = v3.categories || [];
     const byName = new Map(cats.map((c4) => [c4.name.toLowerCase(), c4]));
-    const groupOf = (name) => {
+    const groupOf2 = (name) => {
       const c4 = byName.get(name.toLowerCase());
       return c4?.parent || c4?.name || name || "No category";
     };
@@ -13051,7 +13051,7 @@ ${pays}
           add(src, "src:" + name.toLowerCase(), name, 0, 4, p3.amount, item(t3, p3.amount));
           continue;
         }
-        const g2 = groupOf(p3.category);
+        const g2 = groupOf2(p3.category);
         if (taxing(g2) || taxing(p3.category)) {
           tax ??= { id: "taxes", label: "Taxes", value: 0, col: 2, hue: 7, items: [] };
           tax.value -= p3.amount;
@@ -15909,14 +15909,14 @@ ${pays}
   function SpentWidget({ v: v3, ledger, open: open4 }) {
     if (!ledger?.transactions.length) return null;
     const month3 = ranges(v3.today, v3.today)[0];
-    const groups3 = byCategory(inHome(v3.plan, ledger.transactions), v3.categories || [], month3);
-    const total = groups3.reduce((t3, g2) => t3 + g2.amount, 0);
-    const rest = groups3.slice(named5).reduce((t3, g2) => t3 + g2.amount, 0);
+    const groups4 = byCategory(inHome(v3.plan, ledger.transactions), v3.categories || [], month3);
+    const total = groups4.reduce((t3, g2) => t3 + g2.amount, 0);
+    const rest = groups4.slice(named5).reduce((t3, g2) => t3 + g2.amount, 0);
     const hueOf = (name) => categoryHue(name, v3.categories) || "muted";
-    const slices = [...groups3.slice(0, named5).map((g2) => ({ label: g2.name, value: g2.amount, color: hueOf(g2.name) })), ...rest > 5e-3 ? [{ label: "Everything else", value: rest, color: "muted" }] : []];
+    const slices = [...groups4.slice(0, named5).map((g2) => ({ label: g2.name, value: g2.amount, color: hueOf(g2.name) })), ...rest > 5e-3 ? [{ label: "Everything else", value: rest, color: "muted" }] : []];
     return /* @__PURE__ */ u3(Widget, { title: "Spent this month", kind: "fx-spentmonth", children: [
       /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: total }), caption: `From your transactions, to ${dayShort(v3.today)}` }),
-      groups3.length ? /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
+      groups4.length ? /* @__PURE__ */ u3("div", { class: "fx-donutrow", children: [
         /* @__PURE__ */ u3(Donut, { slices, label: "This month's spending by category", center: /* @__PURE__ */ u3(S, { children: [
           /* @__PURE__ */ u3("strong", { children: whole(total) }),
           "so far"
@@ -15981,7 +15981,14 @@ ${pays}
   }
 
   // web/src/finances/Finances.tsx
-  var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Pay"], ["worth", "Net worth"]];
+  var tabs = [["overview", "Dashboard"], ["calendar", "Calendar"], ["transactions", "Transactions"], ["reports", "Reports"], ["recurring", "Recurring"], ["pay", "Paychecks"], ["worth", "Net worth"]];
+  var groups3 = [
+    ["overview", "Dashboard", ["overview"]],
+    ["spending", "Spending", ["transactions", "reports"]],
+    ["plan", "Plan", ["calendar", "recurring", "pay"]],
+    ["worth", "Net worth", ["worth"]]
+  ];
+  var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(tab3)) || groups3[0];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
   function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
     const [said2, setSaid] = d2("");
@@ -16059,7 +16066,8 @@ ${pays}
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "View", value: tab3, pick: pickTab, options: tabs }),
+      /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(groups3.find(([k3]) => k3 === g2)[2][0]), options: groups3.map(([k3, label2]) => [k3, label2]) }),
+      groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: tab3, pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
         error,

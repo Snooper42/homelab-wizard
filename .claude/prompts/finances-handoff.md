@@ -16,7 +16,7 @@ The account that built Finances (sessions `01Vi5AofCa…` and `01Vi5AogT7…`) r
 3. **Step 4, the rest:** one period picker at the top of the Dashboard ("‹ This paycheck ›", or by month) that every card follows. Today `Overview.tsx` picks only now or the next paycheck. Then the dark theme near-black, cards a step lighter (tokens only, `lint.mjs`). Check what's there before starting either.
 4. **Step 5, the one card left:** Balance trend, a point opening its day. Latest transactions, Spent this month (the ring) and Cash flow's six months are built (#523).
 5. **Step 6, the Transactions table:** columns, sort by any column, at 860px and on a phone the list again. Select and change many is built (#487), and so are the running balance and Show more (#523).
-6. **Step 7, fewer tabs:** there are still seven (Dashboard, Calendar, Transactions, Reports, Recurring, Pay, Net worth). Mock a grouping first and change nothing until the owner picks.
+6. ~~**Step 7, fewer tabs.**~~ **Done Nov 10:** the owner picked four from the mockup: Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring, Paychecks), Net worth (`groups` in `Finances.tsx`; smoke tests open a page with `finTab`).
 7. **Each needing the owner's yes first:** rules ("Always do this for <payee>"), a reminder for a bill not seen yet, picking a category's colour by hand. Bank sync stays declined (rule 1).
 8. **Backlog 19, polish,** a little in every round.
 
