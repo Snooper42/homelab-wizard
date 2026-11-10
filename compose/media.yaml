@@ -88,7 +88,8 @@ services:
       PGID: ${PGID:-20}
       TZ: ${TZ:-UTC}
     ports:
-      - ${BIND_IP:-127.0.0.1}:${BEETS_PORT:-8337}:8337
+      # No sign-in of its own: this computer only, whatever BIND_IP says.
+      - 127.0.0.1:${BEETS_PORT:-8337}:8337
     volumes:
       - ./data/appdata/beets:/config
       - type: bind

@@ -694,7 +694,9 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 				}
 			}
 		}
-		if a.File != c.Files[0] && a.HasWeb() && a.NetworkMode == "" && shared != "" && !joins(a, shared) {
+		// A local app (no sign-in of its own) gets no proxy host, so it
+		// needn't join the network every app shares (Dozzle stays off it).
+		if a.File != c.Files[0] && a.HasWeb() && !a.Local() && a.NetworkMode == "" && shared != "" && !joins(a, shared) {
 			errf("%s: has a web UI but does not join the shared %q network, so the proxy cannot reach it", a.ID, shared)
 		}
 		for _, p := range a.Ports {
