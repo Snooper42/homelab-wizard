@@ -5545,6 +5545,41 @@ const smokes = [
     await page.waitForSelector(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-holdhist`, { timeout: 2000 });
     if (await page.$(`${card} tbody.fx-hold:has(strong:text-is("BND")) .fx-quoted`)) throw new Error('a holding with prices said to have none');
   } },
+  // Ghostfolio's holdings counted VOO a thousand times over (its buys say 8): the card showed millions. Read now brings the
+  // count from the buys and sales, the holding says so in one line, and the totals come back to what was paid and a little
+  // more; a holding that agreed says nothing. One whose buys and sales couldn't be read, worth far more than was paid, says to check it.
+  { name: 'Finances: Investments use the buys and sales when Ghostfolio counts a holding wrong', screen: 'finances', mock: (() => {
+    const roth = finances.plan.accounts.find((a) => a.id === 'roth');
+    const voo = roth.holdings.find((h) => h.symbol === 'VOO');
+    const wrong = { ...roth, balance: roth.balance - voo.value + voo.value * 1000, holdings: roth.holdings.map((h) => (h === voo ? { ...h, shares: h.shares * 1000, value: h.value * 1000, quoted: true } : h)) };
+    const right = { ...roth, holdings: roth.holdings.map((h) => (h === voo ? { ...h, quoted: true, recounted: true } : h)) };
+    return { status: runningToo('ghostfolio'), finances: { ...finances, plan: { ...finances.plan, readByHand: true, accounts: finances.plan.accounts.map((a) => (a.id === 'roth' ? wrong : a)) } }, investedRead: { roth: right } };
+  })(), run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    const fig = async (n) => Number((await page.textContent(`${card} .fx-investfigs > div:nth-child(${n}) .fx-investfig`)).replace(/[^0-9.]/g, ''));
+    const voo = `${card} tbody.fx-hold:has(strong:text-is("VOO"))`;
+    await page.waitForSelector(`${voo} .fx-holdshares:text-is("8,000")`, { timeout: 5000 });
+    await page.click(`${card} button:text-is("Read now")`);
+    await page.waitForFunction(() => window.__MOCK.investReads === 1, null, { timeout: 5000 });
+    // Worth what was paid and a little more, not millions.
+    const total = await fig(1), paid = await fig(2);
+    if (!(total > paid * 0.9 && total < paid * 2)) throw new Error(`total ${total} against ${paid} paid`);
+    await page.waitForSelector(`${voo} .fx-holdshares:text-is("8")`, { timeout: 2000 });
+    await page.click(`${voo} button.fx-holdbtn`);
+    await page.waitForSelector(`${voo} .fx-recounted:text-is("Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales.")`, { timeout: 2000 });
+    if (await page.$(`${voo} .fx-doubtful`)) throw new Error('a recounted holding said to check');
+    const bnd = `${card} tbody.fx-hold:has(strong:text-is("BND"))`;
+    await page.click(`${bnd} button.fx-holdbtn`);
+    await page.waitForSelector(`${bnd} .fx-holdhist`, { timeout: 2000 });
+    if (await page.$(`${bnd} .fx-recounted, ${bnd} .fx-doubtful`)) throw new Error('a holding that agreed said it did not');
+  } },
+  { name: 'Finances: Investments say to check a holding worth far more than was paid', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, accounts: finances.plan.accounts.map((a) => (a.id === 'roth' ? { ...a, holdings: a.holdings.map((h) => (h.symbol === 'VOO' ? { ...h, doubtful: true } : h)) } : a)) } } }, run: async (page) => {
+    await page.click('#finRoot .seg button:text-is("Net worth")', { timeout: 5000 });
+    const voo = '#finRoot .fx-invest tbody.fx-hold:has(strong:text-is("VOO"))';
+    await page.click(`${voo} button.fx-holdbtn`, { timeout: 5000 });
+    await page.waitForSelector(`${voo} .fx-doubtful:has-text("This looks wrong: check VOO in Ghostfolio.")`, { timeout: 2000 });
+  } },
   // A buy typed wrong, put right from the card: an open holding lists its buys and sales from Ghostfolio, each to Change (what
   // is typed checked first; Ghostfolio's no said in its words, the form kept) or Delete (asked first; Keep it leaves it). Each
   // reads Ghostfolio again, so the row and the figures follow; the last buy deleted takes the holding off the card.

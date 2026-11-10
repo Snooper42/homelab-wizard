@@ -28,6 +28,12 @@ type Holding struct {
 	// Quoted says Ghostfolio had no prices of its own for it yet (one just
 	// bought): its worth is today's price Ghostfolio looked up for it.
 	Quoted bool `json:"quoted,omitempty"`
+	// Recounted says Ghostfolio's holdings counted other shares than its
+	// buys less its sales in the account: Shares (and its worth) are from
+	// the buys and sales. Doubtful says those could not be read and it is
+	// worth over a hundred times what was paid: one to check in Ghostfolio.
+	Recounted bool `json:"recounted,omitempty"`
+	Doubtful  bool `json:"doubtful,omitempty"`
 }
 
 // Invested is an account as Ghostfolio read it: its name there, what it is
@@ -39,6 +45,13 @@ type Invested struct {
 	Currency string    `json:"currency,omitempty"`
 	Holdings []Holding `json:"holdings"`
 }
+
+// TooMuch is how many times what was paid a holding's worth on a day can
+// be before that day is taken as one Ghostfolio counted its shares wrong
+// on (as it did for a symbol it had no prices for yet, about a thousand
+// times over): such a day is dropped from the holding's history, and the
+// account's balance on it too, when a read that can be trusted comes in.
+const TooMuch = 100
 
 var notWord = regexp.MustCompile(`[^a-z0-9]+`)
 
@@ -56,7 +69,9 @@ func plain(s string) string {
 // holdings remembers its worth on each day read; one with nothing in
 // it in Ghostfolio yet (no holdings, no cash) leaves the balance as it was. An account Ghostfolio no
 // longer matches keeps its balance, but not holdings that are no longer
-// true. The plan given is left as it was.
+// true. A day a holding was worth over TooMuch times what was paid (its
+// shares miscounted) is dropped from its history and the account's, so
+// net worth on that day is the one before. The plan given is left as it was.
 func TakeHoldings(p Plan, found []Invested, now time.Time) (Plan, []string) {
 	p.Accounts = append([]Account(nil), p.Accounts...)
 	today := dateOf(now)
@@ -116,14 +131,36 @@ func TakeHoldings(p Plan, found []Invested, now time.Time) (Plan, []string) {
 		for _, h := range a.Holdings {
 			was[strings.ToUpper(h.Symbol)] = h.History
 		}
+		trusted := true
+		for _, h := range f.Holdings {
+			trusted = trusted && !h.Doubtful
+		}
+		wrong := map[string]bool{} // the days a holding's worth was miscounted
 		a.Holdings = make([]Holding, 0, len(f.Holdings))
 		for _, h := range f.Holdings {
 			h.Symbol = strings.ToUpper(strings.TrimSpace(h.Symbol))
 			h.Name = strings.TrimSpace(h.Name)
 			h.Shares = math.Round(h.Shares*1e6) / 1e6
 			h.Paid, h.Value = cents(h.Paid), cents(h.Value)
-			h.History = putPoint(append([]Point(nil), was[h.Symbol]...), Point{today, h.Value})
+			kept := make([]Point, 0, len(was[h.Symbol])+1)
+			for _, pt := range was[h.Symbol] {
+				if trusted && h.Paid > 0 && pt.Date != today && pt.Amount > TooMuch*h.Paid {
+					wrong[pt.Date] = true
+					continue
+				}
+				kept = append(kept, pt)
+			}
+			h.History = putPoint(kept, Point{today, h.Value})
 			a.Holdings = append(a.Holdings, h)
+		}
+		if len(wrong) > 0 {
+			kept := make([]Point, 0, len(a.History))
+			for _, pt := range a.History {
+				if !wrong[pt.Date] {
+					kept = append(kept, pt)
+				}
+			}
+			a.History = kept
 		}
 		a.Balance, a.Updated = cents(f.Value), today
 	}

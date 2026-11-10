@@ -687,6 +687,8 @@ declare namespace finance {
     value: number;
     history?: finance.Point[];
     quoted?: boolean;
+    recounted?: boolean;
+    doubtful?: boolean;
   }
   interface Installment {
     date: string;

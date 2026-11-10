@@ -275,12 +275,15 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 		worth := float64(x.Balance)
 		// Ghostfolio says nothing went into a holding until it has its
 		// prices (one just bought), and its worth is then only what was
-		// paid: what was paid is read from its buys and sales (once for
-		// the account), its worth from today's price Ghostfolio looks up,
-		// and Ghostfolio is asked to gather the symbol's prices itself (an
-		// admin's token may; another's is refused, and that is all).
+		// paid: what was paid is read from its buys and sales, its worth
+		// from today's price Ghostfolio looks up, and Ghostfolio is asked
+		// to gather the symbol's prices itself (an admin's token may;
+		// another's is refused, and that is all). Its own count of a
+		// holding's shares can be far off then while its buys and sales
+		// are right, so each holding's is checked against those: read
+		// once for the account, and trusted only when the list is whole.
 		var acts []gfActivity
-		read := false
+		read, whole := false, false
 		for _, h := range found {
 			sym, title, sub := h.Symbol, h.Name, h.AssetSubClass
 			if p := h.AssetProfile; p != nil {
@@ -290,24 +293,37 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 			if strings.EqualFold(sub, "CASH") || shares == 0 || strings.TrimSpace(sym) == "" {
 				continue
 			}
+			if !read {
+				read = true
+				if got, all, err := g.activitiesWhole(ctx, x.ID); err == nil {
+					acts, whole = got, all
+				}
+			}
 			value := shares * float64(h.MarketPrice)
 			if h.ValueInBaseCurrency != nil {
 				value = float64(*h.ValueInBaseCurrency)
 			}
+			unpriced := float64(h.Investment) == 0
+			recounted := false
+			if n, ok := heldOf(acts, x.ID, sym); whole && ok && disagree(shares, n) {
+				if n <= 0 {
+					continue // sold, by its buys and sales
+				}
+				// Ghostfolio's worth is of its own count: a share's of it, times those held.
+				value, shares, recounted = value/shares*n, n, true
+			}
 			paid := cents(float64(h.Investment) * rate)
 			if paid == 0 && shares > 0 {
-				if !read {
-					acts, read = nil, true
-					if got, err := g.activities(ctx, x.ID); err == nil {
-						acts = got
-					}
-				}
 				if p, ok := paidFor(acts, x.ID, sym, inv.Currency); ok {
 					paid = p
 				}
 			}
 			worthNow, quoted := cents(value*rate), false
-			if float64(h.Investment) == 0 && shares > 0 {
+			if unpriced && recounted {
+				// Unpriced, Ghostfolio's worth is what was paid, not a price.
+				worthNow = paid
+			}
+			if unpriced && shares > 0 {
 				if src := sourceOf(acts, x.ID, sym); src != "" {
 					if price, code, ok := g.quote(ctx, src, sym); ok && (code == "" || inv.Currency == "" || strings.EqualFold(code, inv.Currency)) {
 						worthNow, quoted = cents(shares*price), true
@@ -316,12 +332,14 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 				}
 			}
 			inv.Holdings = append(inv.Holdings, finance.Holding{
-				Symbol: strings.ToUpper(strings.TrimSpace(sym)),
-				Name:   strings.TrimSpace(title),
-				Shares: shares,
-				Paid:   paid,
-				Value:  worthNow,
-				Quoted: quoted,
+				Symbol:    strings.ToUpper(strings.TrimSpace(sym)),
+				Name:      strings.TrimSpace(title),
+				Shares:    shares,
+				Paid:      paid,
+				Value:     worthNow,
+				Quoted:    quoted,
+				Recounted: recounted,
+				Doubtful:  !recounted && paid > 0 && worthNow > TooMuch*paid,
 			})
 			worth += worthNow
 		}
@@ -333,6 +351,17 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 }
 
 func cents(x float64) float64 { return math.Round(x*100) / 100 }
+
+// TooMuch is how many times what was paid a holding may be worth before
+// it is marked to check in Ghostfolio (Doubtful), when its buys and sales
+// could not be read to count its shares.
+const TooMuch = finance.TooMuch
+
+// disagree is two counts of shares more than a rounding apart: a
+// thousandth of the larger, and never less than 0.0001 of a share.
+func disagree(a, b float64) bool {
+	return math.Abs(a-b) > math.Max(0.0001, 0.001*math.Max(math.Abs(a), math.Abs(b)))
+}
 
 // Read is what Read now did: the plan as saved, the names of Ghostfolio's
 // accounts no account in it matched, and how many accounts and holdings
@@ -631,15 +660,24 @@ func investedAccount(p finance.Plan, id string) (finance.Account, error) {
 // activities are the buys, sales and the rest Ghostfolio keeps in one of
 // its accounts: /activities since 2.249, /order before.
 func (g Session) activities(ctx context.Context, id string) ([]gfActivity, error) {
+	list, _, err := g.activitiesWhole(ctx, id)
+	return list, err
+}
+
+// activitiesWhole is activities, and whether the list is all of them:
+// not when Ghostfolio counts more than it sent (a page of them).
+func (g Session) activitiesWhole(ctx context.Context, id string) ([]gfActivity, bool, error) {
 	var got struct {
 		Activities []gfActivity `json:"activities"`
+		Count      *num         `json:"count"`
 	}
 	q := "?accounts=" + url.QueryEscape(id)
 	err := g.Read(ctx, "/activities"+q, &got)
 	if errors.As(err, new(missing)) {
 		err = g.Read(ctx, "/order"+q, &got)
 	}
-	return got.Activities, err
+	whole := got.Count == nil || int(*got.Count) <= len(got.Activities)
+	return got.Activities, whole, err
 }
 
 // quote is today's price of a symbol, as Ghostfolio's data provider
@@ -673,6 +711,32 @@ func sourceOf(acts []gfActivity, id, symbol string) string {
 		}
 	}
 	return ""
+}
+
+// heldOf is how many shares of a symbol an account holds by its buys
+// less its sales; ok is false when it has none, or has an activity that
+// counts shares some other way (a valuable, ITEM, or a LIABILITY).
+func heldOf(acts []gfActivity, id, symbol string) (n float64, ok bool) {
+	for _, x := range acts {
+		prof := x.Profile
+		if prof == nil {
+			prof = x.Old
+		}
+		if prof == nil || x.AccountID != id || !strings.EqualFold(strings.TrimSpace(prof.Symbol), symbol) {
+			continue
+		}
+		switch x.Type {
+		case "BUY":
+			n += float64(x.Quantity)
+			ok = true
+		case "SELL":
+			n -= float64(x.Quantity)
+			ok = true
+		case "ITEM", "LIABILITY":
+			return 0, false
+		}
+	}
+	return math.Round(n*1e6) / 1e6, ok
 }
 
 // paidFor is what the shares of a symbol still held in an account cost,

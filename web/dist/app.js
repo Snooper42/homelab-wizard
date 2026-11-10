@@ -15007,6 +15007,12 @@ ${pays}
         each(h3.paid),
         " each on average."
       ] }),
+      h3.recounted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-recounted", children: "Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales." }),
+      h3.doubtful && /* @__PURE__ */ u3("p", { class: "fx-sub fx-doubtful", children: [
+        "This looks wrong: check ",
+        h3.symbol,
+        " in Ghostfolio. It's worth over a hundred times what was paid, and its buys and sales couldn't be read."
+      ] }),
       h3.quoted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-quoted", children: [
         "Ghostfolio has no prices of its own for ",
         h3.symbol,

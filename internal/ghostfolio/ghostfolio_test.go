@@ -306,3 +306,112 @@ func TestPaidFromTheBuysWhileUnpriced(t *testing.T) {
 		t.Errorf("gathered %v", f.Gathered)
 	}
 }
+
+// held is what a read kept, by account and symbol ("brk/VOO").
+func held(r ghostfolio.Read) map[string]finance.Holding {
+	out := map[string]finance.Holding{}
+	for _, a := range r.Plan.Accounts {
+		for _, h := range a.Holdings {
+			out[a.ID+"/"+h.Symbol] = h
+		}
+	}
+	return out
+}
+
+// Ghostfolio's holdings can count a symbol it has no prices for yet about
+// a thousand times over while its buys and sales are right: the count is
+// then each account's own buys less its sales, its worth follows from
+// it, and the holding says so; one that agrees says nothing.
+func TestSharesFromTheBuysWhenGhostfolioCountsWrong(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	f.Unpriced = true
+	root := homelab(t, f, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n")
+	ctx := context.Background()
+	day := func(n int) string { return time.Now().AddDate(0, 0, -n).Format("2006-01-02") }
+	for _, a := range []ghostfolio.Add{
+		{Account: "brk", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 12.5, Total: 1250, Date: day(3)},
+		{Account: "brk", Symbol: "BND", DataSource: "YAHOO", Currency: "USD", Shares: 10, Total: 700, Date: day(3)},
+		{Account: "brk", Symbol: "SMH", DataSource: "YAHOO", Currency: "USD", Shares: 8, Total: 800, Date: day(4)},
+		{Account: "brk", Symbol: "SMH", DataSource: "YAHOO", Currency: "USD", Shares: 3, Total: 330, Date: day(2), Sold: true},
+		{NewName: "Fidelity IRA", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 2, Total: 210, Date: day(3)},
+	} {
+		if err := ghostfolio.AddInvestment(ctx, root, a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.Held = map[string]float64{"VOO": 12500, "SMH": 5000}
+	f.Quotes = map[string]float64{"VOO": 110}
+	r, err := ghostfolio.ReadInto(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := held(r)
+	ira := ""
+	for _, a := range r.Plan.Accounts {
+		if a.Name == "Fidelity IRA" {
+			ira = a.ID
+		}
+	}
+	for key, want := range map[string]finance.Holding{
+		// Ghostfolio's 12,500 is the one buy of 12.5, worth today's price looked up.
+		"brk/VOO": {Shares: 12.5, Paid: 1250, Value: 1375, Quoted: true, Recounted: true},
+		// Agrees with its buy: as Ghostfolio says, no line.
+		"brk/BND": {Shares: 10, Paid: 700, Value: 700},
+		// 8 bought, 3 sold: 5, worth what the 5 cost while there is no price.
+		"brk/SMH": {Shares: 5, Paid: 500, Value: 500, Recounted: true},
+		// The same symbol in another account: that account's own buy.
+		ira + "/VOO": {Shares: 2, Paid: 210, Value: 220, Quoted: true, Recounted: true},
+	} {
+		h := got[key]
+		if h.Shares != want.Shares || h.Paid != want.Paid || h.Value != want.Value || h.Quoted != want.Quoted || h.Recounted != want.Recounted || h.Doubtful {
+			t.Errorf("%s: %+v, want %+v", key, h, want)
+		}
+	}
+	for _, a := range r.Plan.Accounts {
+		if a.ID == "brk" && a.Balance != 2575 {
+			t.Errorf("Robinhood's balance %v, want 2575 (1375 + 700 + 500)", a.Balance)
+		}
+	}
+
+	// Priced, Ghostfolio's worth of 12,500 shares is scaled to the 12.5 held.
+	f.Unpriced = false
+	r, err = ghostfolio.ReadInto(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h := held(r)["brk/VOO"]; h.Shares != 12.5 || h.Value != 1250 || h.Quoted || !h.Recounted {
+		t.Errorf("priced VOO %+v", h)
+	}
+}
+
+// When the buys and sales can't be read, Ghostfolio's count is kept, but
+// a holding worth over a hundred times what was paid is marked to check.
+func TestDoubtfulWhenTheBuysCannotBeRead(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	root := homelab(t, f, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n")
+	ctx := context.Background()
+	day := time.Now().AddDate(0, 0, -3).Format("2006-01-02")
+	for _, a := range []ghostfolio.Add{
+		{Account: "brk", Symbol: "VOO", DataSource: "YAHOO", Currency: "USD", Shares: 12.5, Total: 1250, Date: day},
+		{Account: "brk", Symbol: "BND", DataSource: "YAHOO", Currency: "USD", Shares: 10, Total: 700, Date: day},
+	} {
+		if err := ghostfolio.AddInvestment(ctx, root, a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.Held = map[string]float64{"VOO": 12500}
+	f.NoActivities = true
+	r, err := ghostfolio.ReadInto(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := held(r)
+	if h := got["brk/VOO"]; h.Shares != 12500 || !h.Doubtful || h.Recounted {
+		t.Errorf("VOO %+v", h)
+	}
+	if h := got["brk/BND"]; h.Shares != 10 || h.Doubtful || h.Recounted {
+		t.Errorf("BND %+v", h)
+	}
+}

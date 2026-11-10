@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -191,5 +192,91 @@ func TestTakeHoldingsEmptyAccountKeepsBalance(t *testing.T) {
 		if pt.Amount == 0 {
 			t.Errorf("a $0 day kept in the 401(k)'s history: %+v", cleaned.Accounts[1].History)
 		}
+	}
+}
+
+// Days a holding's shares were miscounted (worth over TooMuch times what
+// was paid) are dropped from its history and the account's when a read
+// that can be trusted comes in, so net worth on them is the day before's;
+// a read itself marked to check drops nothing.
+func TestTakeHoldingsDropsMiscountedDays(t *testing.T) {
+	now := time.Date(2026, 11, 10, 9, 0, 0, 0, time.Local)
+	p := Plan{Accounts: []Account{
+		{ID: "checking", Name: "Checking", Kind: Checking, Balance: 1000, Updated: "2026-11-05", History: []Point{{"2026-11-05", 1000}}},
+		{ID: "broker", Name: "Robinhood", Kind: Investment, Balance: 1376000, Updated: "2026-11-09",
+			History: []Point{{"2026-11-05", 1900}, {"2026-11-08", 1375700}, {"2026-11-09", 1376000}},
+			Holdings: []Holding{
+				{Symbol: "VOO", Shares: 12500, Paid: 1250, Value: 1375000, History: []Point{{"2026-11-05", 1200}, {"2026-11-08", 1374900}, {"2026-11-09", 1375000}}},
+				{Symbol: "BND", Shares: 10, Paid: 700, Value: 700, History: []Point{{"2026-11-05", 700}, {"2026-11-08", 690}, {"2026-11-09", 700}}},
+			}},
+	}}
+	right := []Invested{{Name: "Robinhood", Value: 2075, Currency: "USD", Holdings: []Holding{
+		{Symbol: "VOO", Shares: 12.5, Paid: 1250, Value: 1375, Recounted: true},
+		{Symbol: "BND", Shares: 10, Paid: 700, Value: 700},
+	}}}
+	got, _ := TakeHoldings(p, right, now)
+	got, err := Clean(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := got.Accounts[1]
+	if s := fmt.Sprint(b.Holdings[0].History); s != "[{2026-11-05 1200} {2026-11-10 1375}]" {
+		t.Errorf("VOO's days: %s", s)
+	}
+	if s := fmt.Sprint(b.Holdings[1].History); s != "[{2026-11-05 700} {2026-11-08 690} {2026-11-09 700} {2026-11-10 700}]" {
+		t.Errorf("BND's days: %s", s)
+	}
+	if s := fmt.Sprint(b.History); s != "[{2026-11-05 1900} {2026-11-10 2075}]" {
+		t.Errorf("the account's days: %s", s)
+	}
+	if !b.Holdings[0].Recounted || b.Balance != 2075 {
+		t.Errorf("Robinhood %+v", b)
+	}
+	// Net worth: 2,900 each day to the 9th, 3,075 today; never the millions.
+	for _, pt := range worth(got, now) {
+		want := 2900.0
+		if pt.Date == "2026-11-10" {
+			want = 3075
+		}
+		if pt.Amount != want {
+			t.Errorf("net worth on %s: %v, want %v", pt.Date, pt.Amount, want)
+		}
+	}
+	// The original plan is left as it was.
+	if len(p.Accounts[1].History) != 3 || len(p.Accounts[1].Holdings[0].History) != 3 {
+		t.Error("the plan given was changed")
+	}
+
+	// A read with a holding marked to check is no ground to drop anything.
+	doubt := []Invested{{Name: "Robinhood", Value: 1375700, Currency: "USD", Holdings: []Holding{
+		{Symbol: "VOO", Shares: 12500, Paid: 1250, Value: 1375000, Doubtful: true},
+		{Symbol: "BND", Shares: 10, Paid: 700, Value: 700},
+	}}}
+	kept, _ := TakeHoldings(p, doubt, now)
+	if n := len(kept.Accounts[1].Holdings[0].History); n != 4 {
+		t.Errorf("a doubtful read dropped days: %v", kept.Accounts[1].Holdings[0].History)
+	}
+}
+
+// A plan saved before Recounted and Doubtful loads as both false, and
+// saves without them.
+func TestHoldingsWithoutRecountedLoad(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "finance.json")
+	old := `{"accounts":[{"id":"b","name":"Robinhood","kind":"investment","balance":10,"holdings":[{"symbol":"VOO","shares":1,"paid":5,"value":10,"quoted":true}]}]}`
+	if err := os.WriteFile(path, []byte(old), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if h := p.Accounts[0].Holdings[0]; h.Recounted || h.Doubtful || !h.Quoted || h.Shares != 1 {
+		t.Errorf("loaded %+v", h)
+	}
+	if _, err := Save(path, p); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(path); strings.Contains(string(b), "recounted") || strings.Contains(string(b), "doubtful") {
+		t.Errorf("saved with the new fields unset: %s", b)
 	}
 }
