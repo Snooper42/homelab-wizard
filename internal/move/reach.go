@@ -109,6 +109,68 @@ type ownApp struct {
 	CapAdd      []string    `yaml:"cap_add"`
 	Devices     []yaml.Node `yaml:"devices"`
 	Volumes     []yaml.Node `yaml:"volumes"`
+	Ports       []yaml.Node `yaml:"ports"`
+}
+
+// openPorts are the ports an own app publishes beyond this computer: on
+// every address (no host IP, 0.0.0.0, ::) or one that is neither this
+// computer's own (127.0.0.1, localhost, ::1) nor ${BIND_IP…}, which is.
+func (a ownApp) openPorts() []string {
+	var out []string
+	for _, p := range a.Ports {
+		ip, published := "", ""
+		if p.Kind == yaml.MappingNode {
+			for i := 0; i+1 < len(p.Content); i += 2 {
+				switch p.Content[i].Value {
+				case "host_ip":
+					ip = p.Content[i+1].Value
+				case "published":
+					published = p.Content[i+1].Value
+				}
+			}
+		} else {
+			// [ip:]published:target[/proto], or a target alone (a port
+			// Docker picks, on every address). An IPv6 or ${…} host is
+			// split at its last colons, not inside it.
+			spec, _, _ := strings.Cut(p.Value, "/")
+			parts := splitPort(spec)
+			switch len(parts) {
+			case 3:
+				ip, published = parts[0], parts[1]
+			case 2:
+				published = parts[0]
+			default:
+				published = "a port Docker picks"
+			}
+		}
+		ip = strings.Trim(ip, "[]")
+		local := ip == "127.0.0.1" || ip == "localhost" || ip == "::1" || strings.HasPrefix(ip, "${BIND_IP")
+		if !local {
+			out = append(out, published)
+		}
+	}
+	return out
+}
+
+// splitPort splits a short port spec into its host IP, published port and
+// target, keeping a ${…} or [IPv6] host whole.
+func splitPort(spec string) []string {
+	host := ""
+	if strings.HasPrefix(spec, "${") || strings.HasPrefix(spec, "[") {
+		end := strings.IndexAny(spec, "}]")
+		if end < 0 || end+1 >= len(spec) || spec[end+1] != ':' {
+			return []string{spec}
+		}
+		host, spec = spec[:end+1], spec[end+2:]
+	}
+	parts := strings.Split(spec, ":")
+	if host != "" {
+		return append([]string{host}, parts...)
+	}
+	if len(parts) > 3 { // a bare IPv6 host
+		return []string{strings.Join(parts[:len(parts)-2], ":"), parts[len(parts)-2], parts[len(parts)-1]}
+	}
+	return parts
 }
 
 // takes says, in the household's words, what the app asks for that an
@@ -152,6 +214,9 @@ func (a ownApp) takes() []string {
 	}
 	if len(a.Devices) > 0 {
 		out = append(out, "this computer's devices")
+	}
+	if open := a.openPorts(); len(open) > 0 {
+		out = append(out, "the home network, on "+strings.Join(open, ", "))
 	}
 	return out
 }

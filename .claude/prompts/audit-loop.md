@@ -728,7 +728,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
       arriving from the phone (Import a file), so a huge CSV or a deeply
       nested OFX cannot hang the app.
     - Go's XML expands no entities; check the limits it does have.
-85. **What a custom app's compose may still widen** (`stacks/custom`;
+85. (done, Nov 10: a move file's own app that publishes a port beyond this computer, with no host IP, 0.0.0.0, ::, or any address but 127.0.0.1/localhost/::1/`${BIND_IP…}`, is now named "the home network, on <ports>" with N30's list; `homelab custom add` already writes `${BIND_IP}`; `extra_hosts` only adds names, so it is left) **What a custom app's compose may still widen** (`stacks/custom`;
     item 57 covered privileges): `network_mode: host`, `pid: host`, a
     published port on `0.0.0.0` ignoring `BIND_IP`, `extra_hosts`. Does
     `validate` warn for each, as it does for the socket?
