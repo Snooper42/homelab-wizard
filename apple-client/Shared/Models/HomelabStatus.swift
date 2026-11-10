@@ -75,6 +75,10 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
     let quiet: Bool?
     /// At the top of Status (homelab pin).
     let pinned: Bool?
+    /// How a public app may be reached once the domain has the Cloudflare
+    /// tunnel: "away" (through the tunnel too) or "home" (home only); nil
+    /// when it has no such switch (main #559).
+    var reach: String? = nil
     let waitingFor: String?
     let notAnswering: String?
     let settingsChanged: Bool?
@@ -90,7 +94,7 @@ struct AppStatus: Codable, Sendable, Equatable, Identifiable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, state, health, container, url, address, since, restarts, startedBy
-        case updatedAt, held, updateDays, quiet, pinned, waitingFor, notAnswering, settingsChanged, stoppedAt, stoppedWhy
+        case updatedAt, held, updateDays, quiet, pinned, reach, waitingFor, notAnswering, settingsChanged, stoppedAt, stoppedWhy
     }
 
     var isRunning: Bool { state == "running" }

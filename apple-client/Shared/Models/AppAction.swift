@@ -136,6 +136,10 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
     case alerts
     /// On: at the top of Status and the menu bar (`homelab pin`).
     case pinned
+    /// On: a public app opens away from home through the Cloudflare tunnel
+    /// (`homelab away on`); off: home only (`homelab away off`). Offered
+    /// where Status gives its reach (main #559).
+    case away
 
     var id: Self { self }
 
@@ -145,6 +149,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         case .sundays: "Only on Sundays"
         case .alerts: "Tell me if it stops"
         case .pinned: "Pin to the top"
+        case .away: "Reach it away from home"
         }
     }
 
@@ -156,6 +161,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         case .sundays: on ? "The other nights leave it alone; updating it by hand still works any day." : "For an app you would rather not see change midweek."
         case .alerts: on ? "On your phone through ntfy, and on the computer." : "Still checked and shown on Status, without an alert."
         case .pinned: on ? "At the top of Status, here and on the computer." : "Listed with the others, by its state."
+        case .away: on ? "Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes." : "Home only: it opens on your home Wi-Fi, and nobody outside can reach it."
         }
     }
 
@@ -182,16 +188,19 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         case .sundays: !(app.updateDays ?? []).isEmpty
         case .alerts: app.quiet != true
         case .pinned: app.pinned == true
+        case .away: app.reach == "away"
         }
     }
 
     /// The settings an app offers: a native app has no nightly update here,
-    /// as on the computer.
+    /// as on the computer; a public app has its reach once the domain has
+    /// the tunnel.
     static func available(for app: AppStatus) -> [AppSetting] {
         guard AppStatus.isValidID(app.id) else { return [] }
-        if app.isNative { return [.alerts, .pinned] }
+        let reach: [AppSetting] = (app.reach ?? "").isEmpty ? [] : [.away]
+        if app.isNative { return [.alerts, .pinned] + reach }
         // The days apply only while its nightly updates are on.
-        return app.held == true ? [.updates, .alerts, .pinned] : [.updates, .sundays, .alerts, .pinned]
+        return (app.held == true ? [.updates, .alerts, .pinned] : [.updates, .sundays, .alerts, .pinned]) + reach
     }
 
     func reason(on: Bool, app: AppStatus) -> String {
@@ -200,6 +209,7 @@ enum AppSetting: String, Sendable, CaseIterable, Identifiable {
         case .sundays: on ? "Update \(app.name) on Sundays only." : "Let \(app.name) update every night."
         case .alerts: on ? "Alert when \(app.name) stops." : "Stop alerts about \(app.name)."
         case .pinned: on ? "Pin \(app.name) to the top." : "Unpin \(app.name)."
+        case .away: on ? "Let \(app.name) be reached away from home." : "Keep \(app.name) home only."
         }
     }
 }

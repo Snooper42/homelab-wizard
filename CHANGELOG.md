@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Home only:** each app that can be on the internet (Paperless, Vaultwarden, Immich and the like) has **Reach it away from home** on its page, on the computer and in the iPhone app, once your domain has the Cloudflare tunnel. Off keeps it home only: it opens on your home Wi-Fi, and nobody outside can reach it, because its address comes off the tunnel and Cloudflare's DNS (only what the homelab put there; anything you added yourself stays). `homelab away off paperless` does the same. Apps you install from now on start home only; the ones you already have stay as they were.
 - **What was done, on the iPhone:** an app's More About page shows what was done to it lately, and **Everything That Was Done** searches the last 90 days, as on the computer.
 - **Recently done, on each app's page:** the last few things done to it (*Restarted Vikunja, 2 hours ago, by the watchdog*), and **Everything that was done…**, the last 90 days for every app, searchable by app, phone or word.
 - **A record of what was done:** every start, stop, restart, update, roll back and removal, the watchdog's restarts, settings saved and Finances changed are kept for 90 days, with who did it (this computer, which phone, the watchdog or the nightly update). `homelab history` lists them, `--app immich` or `--search` narrows them; the app and the iPhone show them next. It never keeps a setting's value or an amount of money.
