@@ -293,7 +293,10 @@ for (const [glyph, list] of m.hints) for (const w of list) names.add(`${w[0].toU
   'AplPay STARBUCKS SEATTLE WA', 'AplPay PINE CAFE MIAMI FL', 'WWP*SUNNY DAYS SCHOOL 877-555-0100 FL', 'WL *STEAM PURCHASE 425-555-0100 WA',
   'WL *STEAM PURCHASE   425-555-0100        WA', 'BLUE BOTTLE COFFEE  OAKLAND             CA', 'SQ  *BLUE BOTTLE  OAKLAND  CA', 'PET SUPERMARKET #100SUNRISE FL',
   'AMAZON.COM AMZN.COM/BILL WA', 'UBER   *TRIP  HELP.UBER.COM CA', 'AplPay TST* JOES CAFE FORT LAUDERDALE FL', 'APLPAY KIDS ART CLUB', 'WWP*KIDS ART CLUB',
-  'POS DEBIT  SHELL OIL 57444 SAN JOSE CA', 'AplPay  OAKLAND  CA', 'STORE  0042  FL', 'GREEN LEAF MARKET  SAN JOSE CA', 'aplpay  ca'
+  'POS DEBIT  SHELL OIL 57444 SAN JOSE CA', 'AplPay  OAKLAND  CA', 'STORE  0042  FL', 'GREEN LEAF MARKET  SAN JOSE CA', 'aplpay  ca',
+  // Game stores by their brand, and a known name after its maker's star.
+  'STEAMGAMES.COM 4259522985 WA', 'Steam Purchase', 'STEAM CLEANING CO', 'PLAYSTATION NETWORK 800-555-0199 CA', 'MICROSOFT*XBOX', 'MICROSOFT*STORE',
+  'MICROSOFT*ONEDRIVE', 'MSFT * E0400ABCD', 'NINTENDO CA1234567 WA', 'Nintendo', 'EPIC GAMES STORE', 'GAMESTOP #1234', 'ROBLOX CORPORATION'
 ].forEach((n) => names.add(n));
 
 const kinds = [undefined, 'car', 'other', 'collectible', 'checking', 'subscriptions', 'utilities'];

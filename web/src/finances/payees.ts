@@ -41,12 +41,19 @@ const chains: [string, string][] = ([
   ['fpl', 'FPL'], ['florida power light', 'FPL'], ['duke energy', 'Duke Energy'], ['american express', 'American Express'], ['amex epayment', 'American Express'],
   ['applecard gsbank', 'Apple Card'], ['applecard', 'Apple Card'], ['apple card', 'Apple Card'], ['apple cash', 'Apple Cash'], ['fid bkg svc', 'Fidelity'], ['fidelity investments', 'Fidelity'],
   ['royal caribbean', 'Royal Caribbean'],
+  // Game stores, by their brand (WL *STEAM PURCHASE is Steam; MICROSOFT*XBOX, Xbox).
+  ['steam purchase', 'Steam'], ['steamgames', 'Steam'], ['steam games', 'Steam'], ['steampowered', 'Steam'], ['steam store', 'Steam'],
+  ['playstation network', 'PlayStation'], ['sony playstation', 'PlayStation'], ['playstation', 'PlayStation'], ['playstation plus', 'PlayStation Plus'],
+  ['xbox', 'Xbox'], ['xbox game pass', 'Xbox Game Pass'], ['nintendo', 'Nintendo'], ['nintendo switch', 'Nintendo Switch'], ['epic games', 'Epic Games'], ['gamestop', 'GameStop'], ['roblox', 'Roblox'],
   // A car's lender by its make: MAZDA FINANCIAL is Mazda, as its payment is planned.
   ['mazda financial', 'Mazda'], ['toyota financial', 'Toyota'], ['toyota motor credit', 'Toyota'], ['lexus financial', 'Lexus'], ['honda financial', 'Honda'], ['american honda finance', 'Honda'],
   ['ford credit', 'Ford'], ['ford motor credit', 'Ford'], ['nissan motor acceptance', 'Nissan'], ['nissan infiniti', 'Nissan'], ['hyundai motor finance', 'Hyundai'], ['hyundai capital', 'Hyundai'],
   ['kia motors finance', 'Kia'], ['kia finance', 'Kia'], ['bmw financial', 'BMW'], ['subaru motors finance', 'Subaru'], ['vw credit', 'Volkswagen'], ['volkswagen credit', 'Volkswagen'],
   ['lowes', "Lowe's"], ['lowe s', "Lowe's"], ['the home depot', 'The Home Depot'], ['home depot', 'The Home Depot'], ['trader joe s', "Trader Joe's"], ['whole foods', 'Whole Foods'],
 ] as [string, string][]).sort((a, b) => b[0].length - a[0].length);
+
+/** The chain whose wording a clean line is, or starts with. */
+const chainOf = (f: string) => chains.find(([w]) => f === w || f.startsWith(w + ' '));
 
 /** Words for matching: lower case, letters and digits, one space between. */
 const flat = (s: string) => s.toLowerCase().replace(/['’]/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -129,9 +136,10 @@ export function cleanPayee(raw: string | undefined): string {
       .replace(/(?:\s+(?:PPD|CCD|WEB|TEL))+$/i, '');
   }
   s = s.replace(leading, '').trim();
-  // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE"); a star after the merchant is its own reference ("…US*2K4").
+  // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE"), as a known name does after its maker's
+  // ("MICROSOFT*XBOX" is Xbox); a star after the merchant is its own reference ("…US*2K4").
   const star = s.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
-  if (star && processors.has(flat(star[1]).replace(/ /g, ''))) s = star[2];
+  if (star && (processors.has(flat(star[1]).replace(/ /g, '')) || chainOf(flat(star[2])))) s = star[2];
   else s = s.replace(/\s*\*\s*\S*$/, '').replace(/\*/g, ' ');
   s = s
     .replace(/\bwww\./gi, '')
@@ -148,8 +156,7 @@ export function cleanPayee(raw: string | undefined): string {
   if (parts.length > 1 && states.has(parts.at(-1)!.toLowerCase()) && parts.at(-1) === parts.at(-1)!.toUpperCase()) parts.pop();
   s = parts.join(' ').replace(/[\s,.;:-]+$/, '').trim();
   if (!s) return (raw || '').trim();
-  const f = flat(s);
-  const chain = chains.find(([w]) => f === w || f.startsWith(w + ' '));
+  const chain = chainOf(flat(s));
   return chain ? chain[1] : ordinary(s);
 }
 

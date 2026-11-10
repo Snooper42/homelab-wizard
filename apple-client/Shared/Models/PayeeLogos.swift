@@ -367,9 +367,11 @@ final class PayeeLogos: @unchecked Sendable {
             s = replaceFirst(s, P.achTail, with: "")
         }
         s = withoutLeading(s).trimmingCharacters(in: .whitespacesAndNewlines)
-        // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE");
+        // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE"),
+        // as a known name does after its maker's ("MICROSOFT*XBOX" is Xbox);
         // a star after the merchant is its own reference ("…US*2K4").
-        if let star = groups(s, P.star), processors.contains(Self.flat(star[0]).replacingOccurrences(of: " ", with: "")) {
+        if let star = groups(s, P.star),
+           processors.contains(Self.flat(star[0]).replacingOccurrences(of: " ", with: "")) || chainOf(Self.flat(star[1])) != nil {
             s = star[1]
         } else {
             s = replaceFirst(s, P.starReference, with: "").replacingOccurrences(of: "*", with: " ")
@@ -390,9 +392,13 @@ final class PayeeLogos: @unchecked Sendable {
         }
         s = replace(parts.joined(separator: " "), P.trailing, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         if s.isEmpty { return raw.trimmingCharacters(in: .whitespacesAndNewlines) }
-        let f = Self.flat(s)
-        if let chain = chains.first(where: { f == $0.words || f.hasPrefix($0.words + " ") }) { return chain.name }
+        if let chain = chainOf(Self.flat(s)) { return chain.name }
         return ordinary(s)
+    }
+
+    /// The chain whose wording a clean line is, or starts with.
+    private func chainOf(_ f: String) -> (words: String, name: String)? {
+        chains.first(where: { f == $0.words || f.hasPrefix($0.words + " ") })
     }
 
     /// The words a bank puts before the merchant taken off ("POS DEBIT", "AplPay").

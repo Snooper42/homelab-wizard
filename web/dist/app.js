@@ -981,6 +981,23 @@
     ["fid bkg svc", "Fidelity"],
     ["fidelity investments", "Fidelity"],
     ["royal caribbean", "Royal Caribbean"],
+    // Game stores, by their brand (WL *STEAM PURCHASE is Steam; MICROSOFT*XBOX, Xbox).
+    ["steam purchase", "Steam"],
+    ["steamgames", "Steam"],
+    ["steam games", "Steam"],
+    ["steampowered", "Steam"],
+    ["steam store", "Steam"],
+    ["playstation network", "PlayStation"],
+    ["sony playstation", "PlayStation"],
+    ["playstation", "PlayStation"],
+    ["playstation plus", "PlayStation Plus"],
+    ["xbox", "Xbox"],
+    ["xbox game pass", "Xbox Game Pass"],
+    ["nintendo", "Nintendo"],
+    ["nintendo switch", "Nintendo Switch"],
+    ["epic games", "Epic Games"],
+    ["gamestop", "GameStop"],
+    ["roblox", "Roblox"],
     // A car's lender by its make: MAZDA FINANCIAL is Mazda, as its payment is planned.
     ["mazda financial", "Mazda"],
     ["toyota financial", "Toyota"],
@@ -1007,6 +1024,7 @@
     ["trader joe s", "Trader Joe's"],
     ["whole foods", "Whole Foods"]
   ].sort((a3, b2) => b2[0].length - a3[0].length);
+  var chainOf = (f4) => chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
   var flat = (s3) => s3.toLowerCase().replace(/['’]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
   function ordinary(s3) {
     if (s3 !== s3.toUpperCase()) return s3;
@@ -1055,15 +1073,14 @@
     }
     s3 = s3.replace(leading, "").trim();
     const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
-    if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
+    if (star && (processors.has(flat(star[1]).replace(/ /g, "")) || chainOf(flat(star[2])))) s3 = star[2];
     else s3 = s3.replace(/\s*\*\s*\S*$/, "").replace(/\*/g, " ");
     s3 = s3.replace(/\bwww\./gi, "").replace(/\.(?:com|net|org|co|io|tv|us)\b(?:\/\S*)?/gi, "").replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ").replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, " ").replace(/\b(?:x{2,}|\*{2,})\d+\b/gi, " ").replace(/\bstore\s*#?\s*\d+\b/gi, " ").replace(/#\s*\d+/g, " ").replace(/(?:^|\s)[A-Za-z]{0,2}\d{3,}[A-Za-z0-9]*(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
     const parts3 = s3.split(" ");
     if (parts3.length > 1 && states.has(parts3.at(-1).toLowerCase()) && parts3.at(-1) === parts3.at(-1).toUpperCase()) parts3.pop();
     s3 = parts3.join(" ").replace(/[\s,.;:-]+$/, "").trim();
     if (!s3) return (raw || "").trim();
-    const f4 = flat(s3);
-    const chain = chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
+    const chain = chainOf(flat(s3));
     return chain ? chain[1] : ordinary(s3);
   }
   function bankWording(note) {
@@ -1955,6 +1972,7 @@
     "game pass": "xboxgamepass",
     "xbox": "xboxgamepass",
     "psn": "playstation",
+    "nintendo": "nintendoswitch",
     "ps plus": "playstation",
     "comcast": "xfinity",
     "youtube tv": "youtube",
@@ -8999,7 +9017,8 @@
     Electric: "dukeenergy pge coned fpl",
     "Car insurance": "geico progressive statefarm allstate libertymutual",
     Travel: "delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft",
-    Fitness: "planetfitness peloton strava"
+    Fitness: "planetfitness peloton strava",
+    Gaming: "steam playstation xboxgamepass nintendoswitch epicgames ea ubisoft roblox gamestop"
   }).flatMap(([category, list]) => list.split(" ").map((b2) => [b2, category])));
   var hintCategory = {
     internet: "Internet",
@@ -9015,8 +9034,10 @@
     music: "Streaming and music",
     cloud: "Cloud and homelab",
     software: "Software and apps",
-    home: "Mortgage or rent"
+    home: "Mortgage or rent",
+    gaming: "Gaming"
   };
+  var alsoCalled = { gaming: ["Gaming", "Games", "Video games", "Video gaming"] };
   function paymentCategory(p3) {
     const out = [];
     const h3 = hintOf(p3.kind, p3.name);
@@ -9058,7 +9079,7 @@
     if (moved) return { account: moved };
     const have = new Map(categories2.map((c4) => [c4.name.toLowerCase(), c4]));
     const pick = (...names5) => {
-      for (const n3 of names5) {
+      for (const n3 of names5.flatMap((x3) => x3 && alsoCalled[x3.toLowerCase()] || [x3])) {
         const c4 = n3 && have.get(n3.toLowerCase());
         if (c4 && !!c4.income === t3.amount > 0) return c4.name;
       }
@@ -9070,7 +9091,8 @@
     const brand = payee ? brandOf(void 0, payee) : void 0;
     const sub = brand ? suggestType(brand, payee) : "";
     const hint = hintOf(void 0, payee);
-    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint]) };
+    const otherwise = brand && brandCategory[brand] === "Gaming" ? "Shopping" : void 0;
+    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint], otherwise) };
   }
   var billKinds = /* @__PURE__ */ new Set(["utilities", "home", "car", "subscriptions", "loans"]);
   function samePurpose(payee, x3) {

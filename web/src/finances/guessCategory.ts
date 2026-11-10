@@ -24,14 +24,18 @@ const brandCategory: Record<string, string> = Object.fromEntries(Object.entries(
   'Car insurance': 'geico progressive statefarm allstate libertymutual',
   Travel: 'delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft',
   Fitness: 'planetfitness peloton strava',
+  Gaming: 'steam playstation xboxgamepass nintendoswitch epicgames ea ubisoft roblox gamestop',
 }).flatMap(([category, list]) => list.split(' ').map((b) => [b, category])));
 
 /** The word hints (Mark.tsx's hintOf) and the category each means. */
 const hintCategory: Record<string, string> = {
   internet: 'Internet', phone: 'Phone', water: 'Water', utilities: 'Electric', spending: 'Groceries', fitness: 'Fitness',
   food: 'Eating out', health: 'Health', school: 'Kids and school', streaming: 'Streaming and music', music: 'Streaming and music',
-  cloud: 'Cloud and homelab', software: 'Software and apps', home: 'Mortgage or rent',
+  cloud: 'Cloud and homelab', software: 'Software and apps', home: 'Mortgage or rent', gaming: 'Gaming',
 };
+
+/** A category a household may call by another name: Gaming is its Games or Video games just as well. */
+const alsoCalled: Record<string, string[]> = { gaming: ['Gaming', 'Games', 'Video games', 'Video gaming'] };
 
 /** What a guess says: a category, or the household's own account the money moved to or came from. */
 export interface Guess { category?: string; account?: string }
@@ -96,7 +100,7 @@ export function guessFor(t: { payee?: string; amount: number; raw?: string }, in
   if (moved) return { account: moved };
   const have = new Map(categories.map((c) => [c.name.toLowerCase(), c]));
   const pick = (...names: (string | undefined)[]) => {
-    for (const n of names) {
+    for (const n of names.flatMap((x) => (x && alsoCalled[x.toLowerCase()]) || [x])) {
       const c = n && have.get(n.toLowerCase());
       // Money in takes an income category, money out a spending one.
       if (c && !!c.income === t.amount > 0) return c.name;
@@ -111,7 +115,9 @@ export function guessFor(t: { payee?: string; amount: number; raw?: string }, in
   const brand = payee ? brandOf(undefined, payee) : undefined;
   const sub = brand ? suggestType(brand, payee) : '';
   const hint = hintOf(undefined, payee);
-  return { category: pick(...(pays ? paymentCategory(pays) : []), fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : undefined, hint && hintCategory[hint]) };
+  // A game store bought from, with no Gaming category kept, is Shopping.
+  const otherwise = brand && brandCategory[brand] === 'Gaming' ? 'Shopping' : undefined;
+  return { category: pick(...(pays ? paymentCategory(pays) : []), fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : undefined, hint && hintCategory[hint], otherwise) };
 }
 
 /** The kinds of planned payment a payee may pay by what it is: bills, never a spending or saving envelope. */
