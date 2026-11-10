@@ -150,6 +150,29 @@ final class AppActionsViewModel {
         return computer.version.isEmpty ? line + "." : line + ": it has \(computer.version)."
     }
 
+    /// What a stopped app offers on its row and page: Start, on a device
+    /// allowed changes whose computer can start apps; on one that only looks,
+    /// where to start it (`.lookonly` in web/src/status/AppList.tsx).
+    enum StoppedOffer: Equatable {
+        case start, fromComputer
+
+        var words: String {
+            switch self {
+            case .start: AppAction.start.title
+            case .fromComputer: "Start it from the computer"
+            }
+        }
+    }
+
+    /// Nil while it runs, for one Start isn't for (a native app), before the
+    /// computer has said what this device may do, and where the computer
+    /// can't start apps from here yet (`updateHint` says so on its page).
+    func stoppedOffer(for app: AppStatus) -> StoppedOffer? {
+        guard AppAction.available(for: app).contains(.start), let device = device() else { return nil }
+        if !device.canChange { return .fromComputer }
+        return canChangeApps ? .start : nil
+    }
+
     /// For a look-only device, how to allow it changes. Nil when it already
     /// may, or when there's nothing to change on this app anyway.
     func lookOnlyHint(for app: AppStatus) -> String? {

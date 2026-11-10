@@ -112,6 +112,11 @@ struct AppDetailView: View {
                         Text(next.todo)
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                    } else if !next.todo.isEmpty, actions.stoppedOffer(for: app) == .fromComputer {
+                        // As the computer's page for a phone: where to start it.
+                        Text("\(AppActionsViewModel.StoppedOffer.fromComputer.words): this device can only look.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

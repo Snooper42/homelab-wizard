@@ -717,3 +717,21 @@ extension NetworkRuleTests {
         await #expect(throws: APIError.invalidAppID) { _ = try await api.history(appID: "../etc") }
     }
 }
+
+// A stopped app on the phone (audit-loop.md, For Account 2, item 2): a device
+// allowed changes is offered Start, one that only looks is told to start it
+// from the computer, and a running app is offered neither. As on the
+// computer's page for a phone (`.lookonly` in web/src/status/AppList.tsx).
+extension NetworkRuleTests {
+    @Test @MainActor func aStoppedAppSaysWhatToDo() {
+        let apps = Self.apps(#"[{"id":"mealie","name":"Mealie","state":"stopped"},{"id":"immich","name":"Immich","state":"running"}]"#)
+        let may = actions(canChange: true), looks = actions(canChange: false)
+        #expect(may.stoppedOffer(for: apps[0]) == .start)
+        #expect(looks.stoppedOffer(for: apps[0]) == .fromComputer)
+        #expect(AppActionsViewModel.StoppedOffer.fromComputer.words == "Start it from the computer")
+        #expect(may.stoppedOffer(for: apps[1]) == nil && looks.stoppedOffer(for: apps[1]) == nil)
+        // Allowed changes, but the computer can't start apps from a phone yet: its page says to update it instead.
+        let old = actions(computer: #"{"version":"0.27.9","methods":["Status","Logs"],"features":[]}"#)
+        #expect(old.stoppedOffer(for: apps[0]) == nil && old.updateHint(for: apps[0]) != nil)
+    }
+}

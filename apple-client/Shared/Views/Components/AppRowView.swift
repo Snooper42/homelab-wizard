@@ -36,6 +36,12 @@ struct AppRowView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(large ? 4 : 1)
+                    // A device that only looks: where to start it, as the computer's page says.
+                    if actions.stoppedOffer(for: app) == .fromComputer {
+                        Text(AppActionsViewModel.StoppedOffer.fromComputer.words)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 if large {
                     HStack(spacing: 6) { badges }
@@ -43,6 +49,17 @@ struct AppRowView: View {
             }
             Spacer(minLength: 0)
             if !large { badges }
+            // Stopped, on a device allowed changes: Start on the row, as a
+            // running app has Open on the computer's. VoiceOver has it in the
+            // row's actions, with the swipe and the menu.
+            if actions.stoppedOffer(for: app) == .start, actions.pending[app.id] == nil {
+                Button(AppAction.start.title) { actions.request(.start, on: app) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .tint(AppAction.start.tint)
+                    .disabled(actions.isBusy)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
