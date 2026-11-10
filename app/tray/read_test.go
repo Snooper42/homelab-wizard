@@ -135,6 +135,15 @@ func TestOpenURL(t *testing.T) {
 		if len(got) != 1 || got[0][0] != c.want || got[0][len(got[0])-1] != "https://photos.example.com" {
 			t.Errorf("%s: %q", c.goos, got)
 		}
+		// Only a web page: a file, another app's scheme, or text that
+		// would read as an option is never handed to the system's opener.
+		for _, bad := range []string{"file:///etc/passwd", "javascript:alert(1)", "-a Calculator", "smb://nas/share", "https://"} {
+			got = nil
+			openURL(bad)
+			if len(got) != 0 {
+				t.Errorf("%s opened %q: %q", c.goos, bad, got)
+			}
+		}
 	}
 }
 

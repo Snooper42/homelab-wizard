@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -735,7 +736,13 @@ func (f *follower) show(s string) {
 // stepPrefix starts the CLI's step lines (ui.Step).
 const stepPrefix = `{"schema":1,"type":"step"`
 
+// openURL opens an app's address in the default browser: http or https
+// only, so nothing else (a file, another app's scheme, text that would read
+// as an option) reaches the system's opener.
 func openURL(u string) {
+	if p, err := url.Parse(u); err != nil || (p.Scheme != "http" && p.Scheme != "https") || p.Host == "" {
+		return
+	}
 	switch goos {
 	case "darwin":
 		_ = start(exec.Command("open", u))

@@ -709,7 +709,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     notify-send's options** (`internal/notify/desktop.go`): the title
     went as a bare argument, so one starting with `-` was an option. Now
     `--` comes first; `TestDesktop` sends `-u critical …` as a title.
-81. **The tray opens app addresses without a scheme check**
+81. (done: hardening, Nov 10; `TestOpenURL` refuses file:, javascript:, an option and a host-less https) **The tray opens app addresses without a scheme check**
     (`app/tray/tray.go` `openURL`: `open`, `xdg-open`, `rundll32` on each
     entry's URL from Status). The URLs come from the catalog and its
     ports, but the desktop app's `Open` refuses anything but
