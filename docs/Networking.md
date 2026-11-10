@@ -65,6 +65,8 @@ These automatic addresses are LAN only: an install adds proxy hosts, never tunne
 
 Each proxy host includes `/data/nginx/custom/server_proxy.conf`, which sets `real_ip_header CF-Connecting-IP` so tunnel visitors are logged (and judged by CrowdSec) by their real address, and `set_real_ip_from 198.18.89.2`, cloudflared's fixed address on the tunnel's own network (`homelab-tunnel`, 198.18.89.0/29, which the CLI makes before any app starts). That line replaces Proxy Manager's own list (every private network), so a device at home or another container sending the header is seen as itself. cloudflared is on `homelab-tunnel` alone and reaches only the proxy; a file the household edited is kept, with a note in the proxy's log to add the line.
 
+Nextcloud, Firefly III and its importer believe the visitor's address (and https, and the host name) the proxy hands them, so they are on a network of their own, `homelab-front` (198.18.89.16/28, made before any app starts), and not on `homelab`. The proxy is at 198.18.89.18 there and Tailscale at 198.18.89.19, and those two addresses are all the apps trust (`TRUSTED_PROXIES`). A device at home on an app's own port, or another app, is seen as itself.
+
 ## Docker network
 
 | Network | Members |

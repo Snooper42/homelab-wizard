@@ -16,8 +16,11 @@ x-service: &service
 
 networks:
   default:
-  homelab:
-    name: homelab
+  # Not the shared homelab network: the front one, where the proxy and
+  # Tailscale Serve have the fixed addresses Firefly III trusts (backlog
+  # item 68; internal/docker FrontNetwork).
+  front:
+    name: homelab-front
     external: true
 
 volumes:
@@ -32,8 +35,10 @@ services:
     environment:
       APP_KEY: ${FIREFLY_APP_KEY}
       APP_URL: ${FIREFLY_URL:-https://firefly.${HOMELAB_DOMAIN:-example.com}}
-      # It sits behind the proxy or the tailnet; its port is this machine's only.
-      TRUSTED_PROXIES: "**"
+      # The proxy's and Tailscale Serve's fixed addresses on the front
+      # network: only they may name a visitor, the scheme, or the host its
+      # reset links are made for.
+      TRUSTED_PROXIES: 198.18.89.18,198.18.89.19
       TZ: ${TZ:-UTC}
       DB_CONNECTION: pgsql
       DB_HOST: firefly-iii-db
@@ -48,7 +53,7 @@ services:
       - firefly-iii-upload:/var/www/html/storage/upload
     # Its daily jobs start with it.
     depends_on: [firefly-iii-db, firefly-iii-cron]
-    networks: [default, homelab]
+    networks: [default, front]
     x-homelab:
       memory: 300
       archive: [firefly-iii-upload]
@@ -70,12 +75,12 @@ services:
       VANITY_URL: ${FIREFLY_URL:-https://firefly.${HOMELAB_DOMAIN:-example.com}}
       # A personal access token from Firefly III's Profile › OAuth (its note).
       FIREFLY_III_ACCESS_TOKEN: ${FIREFLY_IMPORTER_TOKEN:-}
-      TRUSTED_PROXIES: "**"
+      TRUSTED_PROXIES: 198.18.89.18,198.18.89.19
       TZ: ${TZ:-UTC}
     ports:
       - ${BIND_IP:-127.0.0.1}:${FIREFLY_IMPORTER_PORT:-8097}:8080
     depends_on: [firefly-iii]
-    networks: [default, homelab]
+    networks: [default, front]
     x-homelab:
       goes_with:
         firefly-iii: "Brings your bank's export files into Firefly III, instead of typing them."

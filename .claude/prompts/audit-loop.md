@@ -638,7 +638,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
         by anyone on the tailnet first. That matters on a tailnet shared
         with family or friends. Use the same claim check before the serve
         listener, or say so on the app's page.
-68. (open, a decision; looked at Nov 10: only with Settings › Apps listen on the home network, as `BIND_IP` defaults to this computer; Pocket ID's `TRUST_PROXY: "true"` is the same; narrowing to the proxy needs its address on `homelab`, which Docker picks, and OrbStack's networks are 192.168.x like many homes, so a careless list would make every visitor the proxy) **Apps that trust forwarded headers from everyone**: Nextcloud has
+68. (done: N41, Nov 10; the owner chose to narrow them; Nextcloud, Firefly III and its importer are on `homelab-front` only and trust the proxy's and Tailscale's fixed addresses there) **Apps that trust forwarded headers from everyone**: Nextcloud has
     `TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8`, and Firefly
     III and its importer have `TRUSTED_PROXIES: "**"`. Through the proxy,
     N21 now hands them one address. But with "listen on the network" on,
@@ -745,6 +745,15 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
+89. (open) **Pocket ID and Home Assistant trust a forwarded address from
+    any hop** (after N41): Pocket ID has `TRUST_PROXY: "true"` and is on
+    `homelab`; Home Assistant's starter `configuration.yaml` trusts every
+    private range. With Settings › Apps listen on the home network, a
+    device on the Wi-Fi sends its own `X-Forwarded-For` to their ports.
+    Move Pocket ID to `homelab-front` if its `TRUST_PROXY` can name the
+    proxy's address (or check what it trusts), and give new Home
+    Assistant installs the two front addresses (it runs on the host
+    network on Linux: check where its requests come from first).
 
 ### Security done
 

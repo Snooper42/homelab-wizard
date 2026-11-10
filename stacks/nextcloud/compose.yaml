@@ -30,8 +30,11 @@ x-nextcloud: &nextcloud
 
 networks:
   default:
-  homelab:
-    name: homelab
+  # Not the shared homelab network: the front one, where the proxy and
+  # Tailscale Serve have the fixed addresses Nextcloud trusts (backlog
+  # item 68; internal/docker FrontNetwork).
+  front:
+    name: homelab-front
     external: true
 
 volumes:
@@ -59,15 +62,17 @@ services:
       NEXTCLOUD_TRUSTED_DOMAINS: localhost nextcloud
       # Read by the before-starting hook at each start.
       NEXTCLOUD_DOMAINS: cloud.${HOMELAB_DOMAIN:-example.com} ${TAILSCALE_HOST:-}
-      # The proxy's address ranges, so https and the visitor's address
-      # come through.
-      TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8
+      # The proxy's and Tailscale Serve's fixed addresses on the front
+      # network, so https and the visitor's address come through from them
+      # alone: anything else, a device at home on Nextcloud's own port
+      # included, is taken for who it is.
+      TRUSTED_PROXIES: 198.18.89.18 198.18.89.19
       PHP_UPLOAD_LIMIT: 16G
       PHP_MEMORY_LIMIT: 1G
     ports:
       - ${BIND_IP:-127.0.0.1}:${NEXTCLOUD_PORT:-8089}:80
     depends_on: [nextcloud-db, nextcloud-redis]
-    networks: [default, homelab]
+    networks: [default, front]
     x-homelab:
       memory: 800
       url: NEXTCLOUD_URL

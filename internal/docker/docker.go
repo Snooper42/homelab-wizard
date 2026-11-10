@@ -672,10 +672,26 @@ const (
 	TunnelAddress = "198.18.89.2"
 )
 
+// The front network (backlog item 68): the apps that believe a forwarded
+// visitor's address and scheme (Nextcloud, Firefly III and its importer)
+// are on it and not on the shared homelab network, so the proxy and
+// Tailscale Serve reach them only from their fixed addresses here, the
+// only ones those apps trust. A device at home that sends X-Forwarded-For
+// to an app's own port arrives from Docker's gateway, which is trusted no
+// more, and so does every other app.
+const (
+	FrontNetwork      = "homelab-front"
+	FrontSubnet       = "198.18.89.16/28"
+	FrontRange        = "198.18.89.24/29"
+	FrontProxyAddress = "198.18.89.18"
+	FrontServeAddress = "198.18.89.19"
+)
+
 // fixedNetworks are the external networks made with settings of their
 // own, and the settings.
 var fixedNetworks = map[string][]string{
 	TunnelNetwork: {"--subnet", TunnelSubnet, "--ip-range", TunnelRange},
+	FrontNetwork:  {"--subnet", FrontSubnet, "--ip-range", FrontRange},
 }
 
 // EnsureNetwork creates an external network if it does not exist yet.

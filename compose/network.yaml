@@ -23,6 +23,13 @@ networks:
   tunnel:
     name: homelab-tunnel
     external: true
+  # The front network: the apps that believe a forwarded visitor's address
+  # (Nextcloud, Firefly III) are on it and not on homelab, and trust only
+  # the proxy's and Tailscale Serve's fixed addresses here (backlog item
+  # 68; internal/docker FrontNetwork, made before any project starts).
+  front:
+    name: homelab-front
+    external: true
 
 volumes:
   # Named as when they were in homelab_core, so their data stays.
@@ -54,7 +61,11 @@ services:
     # not, and with Docker run as you it is this machine's address.
     extra_hosts:
       - host.docker.internal:${HOST_GATEWAY:-host-gateway}
-    networks: [default, tunnel]
+    networks:
+      default:
+      tunnel:
+      front:
+        ipv4_address: 198.18.89.18
     volumes:
       - ./data/appdata/nginx-proxy-manager/data:/data
       - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
@@ -161,6 +172,12 @@ services:
     # Home mode serves this machine's own apps too (as the proxy does).
     extra_hosts:
       - host.docker.internal:${HOST_GATEWAY:-host-gateway}
+    # On the front network at the address Nextcloud and Firefly III trust,
+    # as Serve hands them a tailnet visitor's address and https.
+    networks:
+      default:
+      front:
+        ipv4_address: 198.18.89.19
     volumes:
       - ./data/appdata/tailscale:/var/lib/tailscale
     x-homelab:
