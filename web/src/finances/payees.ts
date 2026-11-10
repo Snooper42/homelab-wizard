@@ -13,10 +13,10 @@
 // then match the clean name. Plain functions: words in, words out.
 
 /** Processors that write their own name first, the merchant after a star. */
-const processors = new Set(['sq', 'tst', 'sp', 'pp', 'py', 'paypal', 'in', 'ggl', 'google', 'gglpay', 'clover', 'toast', 'zettle', 'izettle', 'pmt', 'chk', 'lsp', 'cke']);
+const processors = new Set(['sq', 'tst', 'sp', 'pp', 'py', 'paypal', 'in', 'ggl', 'google', 'gglpay', 'clover', 'toast', 'zettle', 'izettle', 'pmt', 'chk', 'lsp', 'cke', 'wwp', 'wl']);
 
 /** Words a bank puts before the merchant. */
-const leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+const leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online|aplpay)\b[\s#:*-]*)+/i;
 
 /** A direct debit's or deposit's code and number ("PPD ID: 1592714849", "WEB ID: 2222"). */
 const achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
@@ -57,9 +57,62 @@ function ordinary(s: string): string {
   return s.toLowerCase().replace(/(^|[\s(&/-])([a-z])/g, (_, a: string, b: string) => a + b.toUpperCase()).replace(/'S\b/g, "'s");
 }
 
+/** A state as a bank ends a line with it: two capitals. */
+const isState = (w: string) => w.length === 2 && w === w.toUpperCase() && states.has(w.toLowerCase());
+
+/** A town in a column of its own, or what stands in for one: the merchant's website or phone number. */
+const townColumn = /^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$/;
+
+/** A website in a line. */
+const site = /\.(?:com|net|org|co|io|tv|us)\b/i;
+
+/**
+ * The shop alone, its town and state taken off. American Express pads a
+ * line into columns ("BLUE BOTTLE COFFEE  OAKLAND   CA"): the shop, then
+ * its town (or website, or phone number), then its state. When the shop's
+ * column is full, the town follows its store number with no space ("PET
+ * SUPERMARKET #100SUNRISE FL"), and a shop online gives its website as its
+ * town ("AMAZON.COM AMZN.COM/BILL WA"). A line that is none of these, or
+ * that would keep nothing but a bank's words, comes back as it was.
+ */
+function shopOf(line: string): string {
+  const s = line.trim();
+  const keeps = (x: string) => /[A-Za-z]/.test(x.replace(leading, '')) ? x : s;
+  const cols = s.split(/\s{2,}/);
+  if (cols.length > 1) {
+    const last = cols[cols.length - 1], two = last.match(/^(.+)\s(\S+)$/);
+    if (isState(last)) return keeps((cols.length > 2 && townColumn.test(cols[cols.length - 2]) ? cols.slice(0, -2) : cols.slice(0, -1)).join(' '));
+    if (two && isState(two[2]) && townColumn.test(two[1])) return keeps(cols.slice(0, -1).join(' '));
+    return s;
+  }
+  const glued = s.match(/^(.*[A-Za-z].*\d)([A-Z][A-Z .'-]{1,12}) ([A-Z]{2})$/);
+  if (glued && isState(glued[3])) return keeps(glued[1]);
+  const web = s.match(/^(.+) (\S+) (\S+)$/);
+  if (web && isState(web[3]) && site.test(web[2])) return keeps(web[1]);
+  return s;
+}
+
+/**
+ * A bank's wording with the town its file names for it (a City/State
+ * column: "SAN JOSE CA", or on two lines) taken off its end; the wording as
+ * it was when it doesn't end with that town.
+ */
+export function withoutTown(raw: string, town: string | undefined): string {
+  const words = (town || '').split(/\s+/).filter(Boolean);
+  if (words.length > 1 && isState(words[words.length - 1])) words.pop();
+  const s = (raw || '').replace(/\s+/g, ' ').trim();
+  if (!words.length) return raw;
+  const parts = s.split(' ');
+  if (parts.length > 1 && isState(parts[parts.length - 1])) parts.pop();
+  const n = words.length, tail = parts.slice(-n).join(' ').toLowerCase();
+  if (parts.length <= n || tail !== words.join(' ').toLowerCase()) return raw;
+  const left = parts.slice(0, -n).join(' ');
+  return /[A-Za-z]/.test(left.replace(leading, '')) ? left : raw;
+}
+
 /** The payee a person would write for a bank's wording; the wording itself when nothing in it says who. */
 export function cleanPayee(raw: string | undefined): string {
-  let s = (raw || '').replace(/\s+/g, ' ').trim();
+  let s = shopOf(raw || '').replace(/\s+/g, ' ').trim();
   if (!s) return '';
   // Zelle: who it went to or came from, its reference dropped.
   const zelle = s.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);

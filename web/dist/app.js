@@ -905,8 +905,8 @@
   }
 
   // web/src/finances/payees.ts
-  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
-  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke", "wwp", "wl"]);
+  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online|aplpay)\b[\s#:*-]*)+/i;
   var achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
   var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
   var chains = [
@@ -1012,8 +1012,39 @@
     if (s3 !== s3.toUpperCase()) return s3;
     return s3.toLowerCase().replace(/(^|[\s(&/-])([a-z])/g, (_3, a3, b2) => a3 + b2.toUpperCase()).replace(/'S\b/g, "'s");
   }
+  var isState = (w3) => w3.length === 2 && w3 === w3.toUpperCase() && states.has(w3.toLowerCase());
+  var townColumn = /^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$/;
+  var site = /\.(?:com|net|org|co|io|tv|us)\b/i;
+  function shopOf(line) {
+    const s3 = line.trim();
+    const keeps = (x3) => /[A-Za-z]/.test(x3.replace(leading, "")) ? x3 : s3;
+    const cols = s3.split(/\s{2,}/);
+    if (cols.length > 1) {
+      const last2 = cols[cols.length - 1], two = last2.match(/^(.+)\s(\S+)$/);
+      if (isState(last2)) return keeps((cols.length > 2 && townColumn.test(cols[cols.length - 2]) ? cols.slice(0, -2) : cols.slice(0, -1)).join(" "));
+      if (two && isState(two[2]) && townColumn.test(two[1])) return keeps(cols.slice(0, -1).join(" "));
+      return s3;
+    }
+    const glued = s3.match(/^(.*[A-Za-z].*\d)([A-Z][A-Z .'-]{1,12}) ([A-Z]{2})$/);
+    if (glued && isState(glued[3])) return keeps(glued[1]);
+    const web = s3.match(/^(.+) (\S+) (\S+)$/);
+    if (web && isState(web[3]) && site.test(web[2])) return keeps(web[1]);
+    return s3;
+  }
+  function withoutTown(raw, town) {
+    const words5 = (town || "").split(/\s+/).filter(Boolean);
+    if (words5.length > 1 && isState(words5[words5.length - 1])) words5.pop();
+    const s3 = (raw || "").replace(/\s+/g, " ").trim();
+    if (!words5.length) return raw;
+    const parts3 = s3.split(" ");
+    if (parts3.length > 1 && isState(parts3[parts3.length - 1])) parts3.pop();
+    const n3 = words5.length, tail = parts3.slice(-n3).join(" ").toLowerCase();
+    if (parts3.length <= n3 || tail !== words5.join(" ").toLowerCase()) return raw;
+    const left = parts3.slice(0, -n3).join(" ");
+    return /[A-Za-z]/.test(left.replace(leading, "")) ? left : raw;
+  }
   function cleanPayee(raw) {
-    let s3 = (raw || "").replace(/\s+/g, " ").trim();
+    let s3 = shopOf(raw || "").replace(/\s+/g, " ").trim();
     if (!s3) return "";
     const zelle = s3.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);
     if (zelle) return `Zelle ${zelle[1].toLowerCase()} ${ordinary(zelle[2].trim())}`;
@@ -1228,10 +1259,11 @@
       debit: find("debit", "withdrawal", "money out", "paid out"),
       credit: find("credit", "deposit", "money in", "paid in"),
       payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
-      memo: find("memo", "note", "reference", "category")
+      memo: find("memo", "note", "reference", "category"),
+      town: find("city")
     };
     if (body.length && !namesIn(body, col.payee)) {
-      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo]);
+      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town]);
       const better = header.map((_3, i3) => i3).filter((i3) => !taken.has(i3) && namesIn(body, i3)).sort((a3, b2) => kinds(body, b2) - kinds(body, a3))[0];
       if (better !== void 0) col.payee = better;
     }
@@ -1269,7 +1301,7 @@
       const date = readDay(r3[col.date] || "", dayFirst);
       const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
       if (!date || !amount) continue;
-      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
+      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0, town: (col.town ?? -1) >= 0 ? r3[col.town] || void 0 : void 0 });
     }
     return out;
   }
@@ -10139,7 +10171,7 @@
   function OwnLogo({ value, set: set2, what: what2, fetchLogo: fetchLogo2, guess }) {
     const file = A2(null);
     const [problem, setProblem] = d2("");
-    const [site, setSite] = d2(null);
+    const [site2, setSite] = d2(null);
     const [getting, setGetting] = d2(false);
     const [from2, setFrom] = d2("");
     const read = async (f4) => {
@@ -10152,7 +10184,7 @@
         setProblem("That file is not a picture this can read: try a PNG or a JPEG.");
       }
     };
-    const typed = site ?? guess ?? "";
+    const typed = site2 ?? guess ?? "";
     const get = async () => {
       if (!fetchLogo2 || getting) return;
       setGetting(true);
@@ -11295,7 +11327,8 @@
     const have = ledger?.transactions || [];
     const memory3 = renameMemory(have, cleanPayee);
     const found2 = read_.map((t3) => {
-      const payee = cleanPayee(t3.payee), raw = t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0;
+      const said2 = t3.payee.replace(/\s+/g, " ").trim();
+      const payee = cleanPayee(withoutTown(t3.payee, t3.town)), raw = said2 && said2.toLowerCase() !== payee.toLowerCase() ? said2 : void 0;
       return { ...t3, payee: raw && memory3.get(payee.toLowerCase()) || payee, raw };
     });
     const fixes = wayOnlyFixes(found2, account, have);
@@ -16211,7 +16244,7 @@ ${pays}
     }
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
-  var fetchLogo = phone ? void 0 : (site) => go().FinancesFetchLogo(site);
+  var fetchLogo = phone ? void 0 : (site2) => go().FinancesFetchLogo(site2);
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));

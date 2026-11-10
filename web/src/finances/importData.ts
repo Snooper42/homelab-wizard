@@ -6,7 +6,7 @@ import { isoDay, parseAmount } from './money';
 import { cleanPayee } from './payees';
 
 /** A row of a bank's file, read: its day, amount (money in a plus), payee, and the bank's own ID when it gives one. */
-export interface Imported { date: string; amount: number; payee: string; memo?: string; id?: string }
+export interface Imported { date: string; amount: number; payee: string; memo?: string; id?: string; /** The town a file's City/State column names for the row (American Express's), to take off its payee. */ town?: string }
 
 /** A CSV's text as rows of cells: commas or semicolons, quotes, and "" inside them. */
 export function csvRows(text: string): string[][] {
@@ -33,7 +33,7 @@ export function csvRows(text: string): string[][] {
 }
 
 /** Which column holds what: indexes into a row, -1 for none. Debit and credit are a bank's two money columns. */
-export interface Columns { date: number; amount: number; debit: number; credit: number; payee: number; memo: number }
+export interface Columns { date: number; amount: number; debit: number; credit: number; payee: number; memo: number; town?: number }
 
 /**
  * The columns guessed from a header row's words, the first word given
@@ -52,9 +52,10 @@ export function guessColumns(header: string[], body: string[][] = []): Columns {
     credit: find('credit', 'deposit', 'money in', 'paid in'),
     payee: find('payee', 'description', 'name', 'merchant', 'details', 'empfänger', 'beschreibung'),
     memo: find('memo', 'note', 'reference', 'category'),
+    town: find('city'),
   };
   if (body.length && !namesIn(body, col.payee)) {
-    const taken = new Set([col.date, col.amount, col.debit, col.credit, col.memo]);
+    const taken = new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town]);
     const better = header.map((_, i) => i).filter((i) => !taken.has(i) && namesIn(body, i))
       .sort((a, b) => kinds(body, b) - kinds(body, a))[0];
     if (better !== undefined) col.payee = better;
@@ -93,7 +94,10 @@ export function daysFirst(cells: string[]): boolean {
   return cells.some((c) => /^\d{1,2}\./.test(c) || (/^(\d{1,2})\//.exec(c) && +/^(\d{1,2})\//.exec(c)![1] > 12));
 }
 
-/** A CSV's rows (header first) as what happened, with the columns given. A row with no day or amount is left out. */
+/**
+ * A CSV's rows (header first) as what happened, with the columns given. A row with no day or amount is left out. A payee
+ * keeps its runs of spaces, which say where American Express's columns (the shop, its town, its state) end.
+ */
 export function fromCsv(rows: string[][], col: Columns): Imported[] {
   const body = rows.slice(1);
   const dayFirst = daysFirst(body.map((r) => r[col.date] || ''));
@@ -103,7 +107,7 @@ export function fromCsv(rows: string[][], col: Columns): Imported[] {
     const date = readDay(r[col.date] || '', dayFirst);
     const amount = col.amount >= 0 ? money(r[col.amount]) : money(r[col.credit]) - Math.abs(money(r[col.debit]));
     if (!date || !amount) continue;
-    out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r[col.payee] || '').replace(/\s+/g, ' ').trim(), memo: col.memo >= 0 ? r[col.memo] || undefined : undefined });
+    out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r[col.payee] || '').trim(), memo: col.memo >= 0 ? r[col.memo] || undefined : undefined, town: (col.town ?? -1) >= 0 ? r[col.town!] || undefined : undefined });
   }
   return out;
 }
