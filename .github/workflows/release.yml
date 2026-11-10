@@ -371,6 +371,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Build provenance (N29): each file is attested as built here, by
+      # this workflow on main, so the app can check an update came from it.
+      id-token: write
+      attestations: write
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -393,6 +397,13 @@ jobs:
         with:
           name: linux
           path: dist
+      # Before anything is published, so a release never goes out without
+      # it. GitHub keeps attestations for public repositories only.
+      - name: Build provenance (verify with gh attestation verify)
+        if: ${{ !github.event.repository.private }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/*
       - name: Publish the numbered release
         run: |
           # The patch notes: a version's own section of CHANGELOG.md when
