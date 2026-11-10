@@ -45,7 +45,9 @@ export interface AppPageActions {
   explain: () => Promise<string>;
   backupNow: () => void;
   openBackups: () => void;
-  /** Turns one of its settings on or off: "updates" or "alerts". */
+  /** Turns one of its settings on or off: "updates", "sundays", "alerts",
+   * or "away" (a public app reached away from home through the tunnel, or
+   * home only). */
   setting: (setting: string, on: boolean) => void;
   /** Remove: a backup of it first, then its container goes; its data stays. */
   remove: () => void;
@@ -482,6 +484,8 @@ function Settings({ p }: { p: AppPageProps }) {
   const { a, entry, busy, backup: o, switching, on } = p;
   const container = entry?.kind !== 'native' && a.state !== 'missing' && a.state !== 'elsewhere';
   const updates = switching.updates ?? !a.held, alerts = switching.alerts ?? !a.quiet;
+  // Reach shows only for an app that can be published, once the domain has the tunnel.
+  const away = switching.away ?? a.reach === 'away';
   // Its update window: Sundays only (homelab updates days sets any days; the switch says those, and off is every night).
   const days = a.updateDays || [], ownDays = switching.sundays ?? days.length > 0;
   const daysText = switching.sundays || !days.length ? 'Sundays' : weekdaysText(days);
@@ -500,6 +504,8 @@ function Settings({ p }: { p: AppPageProps }) {
           sub={ownDays ? 'The other nights leave it alone; updating it by hand still works any day' : 'For an app you would rather not see change midweek'} />}
         <Switch label="Tell me if it stops" disabled={busy || 'alerts' in switching} on={alerts} set={(v) => on.setting('alerts', v)}
           sub={alerts ? `On your phone through ntfy, and on ${p.machine}` : 'Still checked and shown on Status, without an alert'} />
+        {a.reach && <Switch label="Reach it away from home" disabled={busy || 'away' in switching} on={away} set={(v) => on.setting('away', v)}
+          sub={away ? 'Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes' : 'Home only: it opens on your home Wi-Fi, and nobody outside can reach it'} />}
         <Row title="In the nightly backup" sub={kept} end={<ActionLink onClick={on.openBackups}>Backups ›</ActionLink>} />
       </Rows>
     </Card>

@@ -312,6 +312,9 @@ func TestPhoneMethods(t *testing.T) {
 	if _, log, _ := call("SetAppSetting", "ntfy", "updates", true); len(log) == 0 || log[0] != "$ homelab updates release ntfy" {
 		t.Fatalf("updates on: %q", log)
 	}
+	if _, log, _ := call("SetAppSetting", "ntfy", "away", false); len(log) == 0 || log[0] != "$ homelab away off ntfy" {
+		t.Fatalf("home only: %q", log)
+	}
 }
 
 func TestServe(t *testing.T) {

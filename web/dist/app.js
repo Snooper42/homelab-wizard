@@ -8495,6 +8495,7 @@
     const { a: a3, entry, busy: busy2, backup: o3, switching: switching2, on: on2 } = p3;
     const container = entry?.kind !== "native" && a3.state !== "missing" && a3.state !== "elsewhere";
     const updates = switching2.updates ?? !a3.held, alerts = switching2.alerts ?? !a3.quiet;
+    const away2 = switching2.away ?? a3.reach === "away";
     const days = a3.updateDays || [], ownDays = switching2.sundays ?? days.length > 0;
     const daysText = switching2.sundays || !days.length ? "Sundays" : weekdaysText(days);
     const ids = [a3.id, ...entry?.dependsOn || []];
@@ -8531,6 +8532,16 @@
             on: alerts,
             set: (v3) => on2.setting("alerts", v3),
             sub: alerts ? `On your phone through ntfy, and on ${p3.machine}` : "Still checked and shown on Status, without an alert"
+          }
+        ),
+        a3.reach && /* @__PURE__ */ u3(
+          Switch,
+          {
+            label: "Reach it away from home",
+            disabled: busy2 || "away" in switching2,
+            on: away2,
+            set: (v3) => on2.setting("away", v3),
+            sub: away2 ? "Opens anywhere through your Cloudflare tunnel; away from home, Cloudflare can see what passes" : "Home only: it opens on your home Wi-Fi, and nobody outside can reach it"
           }
         ),
         /* @__PURE__ */ u3(Row, { title: "In the nightly backup", sub: kept4, end: /* @__PURE__ */ u3(ActionLink, { onClick: on2.openBackups, children: "Backups ›" }) })

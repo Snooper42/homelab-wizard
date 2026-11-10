@@ -63,6 +63,8 @@ const apps = catalog.apps
     // Updated last night (the image before it is kept a week), or held after a rollback.
     updatedAt: ['vikunja', 'speedtest-tracker'].includes(a.id) ? new Date(Date.now() - 7.6 * 36e5).toISOString() : undefined,
     held: a.id === 'dozzle' || undefined,
+    // A public app, reached away from home through the tunnel (its switch shows).
+    reach: a.id === 'paperless' ? 'away' : undefined,
   }));
 // A week with long lines, as a homelab that needs looking after gets.
 const longWeek = { title: 'Homelab this week: 4 things to look at', problems: 4, body: '\u2022 20 of 21 apps well; needs a look: Cloudflare Tunnel (not running)\n\u2022 Watchdog: failing: crowdsec bouncer\n\u2022 Backups: 5 stale (Navidrome, Audiobookshelf, Calibre-Web, Komga, Kavita)\n\u2022 Off-site jobs: Duplicati is not reachable: connection refused\n\u25e6 No restore test yet (Backups \u203a Test a restore)\n\u25e6 Vault export due (Backups \u203a Password export)\n\u2713 Disk space: 73 GB free of 460 GB (15%)\nReplacing $2,656 a year in subscriptions' };
@@ -4833,6 +4835,8 @@ const smokes = [
     const sw = (label) => `#appSettings input.switch[aria-label="${label}"]`;
     await page.waitForSelector('#appSettings:has-text("In the nightly backup")', { timeout: 5000 });
     if (!(await page.isChecked(sw('Nightly updates'))) || !(await page.isChecked(sw('Tell me if it stops')))) throw new Error('a switch starts off');
+    // Vikunja can't be published: no Reach it away from home.
+    if (await page.$(sw('Reach it away from home'))) throw new Error('Vikunja shows the reach switch');
     await page.click(sw('Nightly updates'));
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch did not move at once');
     await page.waitForSelector('#appSettings:has-text("Held: the nightly update leaves it out")', { timeout: 300 });
@@ -4845,6 +4849,23 @@ const smokes = [
     // Status says so too: the row's badge.
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) .badge:has-text("updates held")', { state: 'attached', timeout: 5000 });
     if (await page.isChecked(sw('Nightly updates'))) throw new Error('the switch went back after Status was read');
+  } },
+  // Home only: a public app's Reach it away from home switch, on its page only (not on Vikunja, which can't be
+  // published: the settings case checks that); off says home only at once and is the setting "away".
+  { name: "An app's reach: Reach it away from home shows on a public app and turns it home only", screen: 'app:paperless', mock: { settingDelay: 600 }, run: async (page) => {
+    const sw = `#appSettings input.switch[aria-label="Reach it away from home"]`;
+    await page.waitForSelector(sw, { timeout: 5000 });
+    if (!(await page.isChecked(sw))) throw new Error('a public app reached away starts off');
+    await page.waitForSelector('#appSettings:has-text("Opens anywhere through your Cloudflare tunnel")');
+    await page.click(sw);
+    if (await page.isChecked(sw)) throw new Error('the switch did not move at once');
+    await page.waitForSelector('#appSettings:has-text("Home only: it opens on your home Wi-Fi")', { timeout: 300 });
+    await page.waitForSelector(`${sw}:not([disabled])`, { timeout: 5000 });
+    const set = await page.evaluate(() => window.__MOCK.settingsSet);
+    if (JSON.stringify(set) !== JSON.stringify([['paperless', 'away', false]])) throw new Error('set ' + JSON.stringify(set));
+    if (await page.isChecked(sw)) throw new Error('the switch went back after Status was read');
+    const reach = await page.evaluate(() => window.__MOCK.status.apps.find((a) => a.id === 'paperless').reach);
+    if (reach !== 'home') throw new Error('Status says ' + reach);
   } },
   // An update window per app: Only on Sundays under Nightly updates, said at once; one set to other days from the
   // CLI says those days, and a held app has no window to choose.
