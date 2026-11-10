@@ -714,7 +714,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     entry's URL from Status). The URLs come from the catalog and its
     ports, but the desktop app's `Open` refuses anything but
     http/https/mailto (`webLink`). Give the tray the same check, and a test.
-82. **The calendar feed's key in the proxy's access log**: through the
+82. (done: holds, Nov 10: the proxy's access logs are files in its own volume, `homelab_core_npm-logs`, not its output, so Dozzle and `homelab report` never show them; only CrowdSec mounts them, read-only; reading them takes Docker or root, which is the whole computer already; CrowdSec sends a request's context on only with an alert, which the household's own calendar does not trip) **The calendar feed's key in the proxy's access log**: through the
     tunnel, `/finances.ics?key=…` passes Nginx Proxy Manager, whose access
     log keeps the request URI (the `npm-logs` volume), and CrowdSec reads
     that log. Who can read it, for how long, and could the key travel
@@ -732,7 +732,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     item 57 covered privileges): `network_mode: host`, `pid: host`, a
     published port on `0.0.0.0` ignoring `BIND_IP`, `extra_hosts`. Does
     `validate` warn for each, as it does for the socket?
-86. **The away API's Cloudflare Access credential**: how the phones'
+86. (looked at Nov 10, left a decision: one Access service token, made `duration: forever`, is given to every phone at pairing; a lost phone keeps it, so lock 1 lets it through, but its device key is revoked at Remove and lock 3 refuses it. Rotating the token at Remove would bring lock 1 back too, at the cost of every other phone pairing again at home to go out: a choice for the owner; `homelab phone away --new-token` would be the shape) **The away API's Cloudflare Access credential**: how the phones'
     credential is made, where it is kept (on the phone and the computer),
     what it opens beyond `homelab-away`, and how a lost phone's is taken
     back.
