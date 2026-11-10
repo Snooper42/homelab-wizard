@@ -131,3 +131,52 @@ func TestPapersInView(t *testing.T) {
 		}
 	}
 }
+
+// A mortgage split between two people, with only one half in the plan:
+// the papers say $2,000 a month, the household pays $1,000 of it from
+// checking, and the other half comes from someone the plan doesn't list.
+// The loan still falls by the papers' whole payment ahead, as the Loans
+// card says, while checking pays only its half.
+func TestPapersSplitPayment(t *testing.T) {
+	p := household()
+	p.Updated = "2026-10-28"
+	p.Accounts = append(p.Accounts, Account{ID: "home", Name: "Mortgage", Kind: Loan, Balance: 1, Original: 200000, Rate: 6, FirstDue: "2024-01-01", Payment: 2000})
+	for i := range p.Payments {
+		if p.Payments[i].ID == "mortgage" {
+			p.Payments[i].Amount, p.Payments[i].To = 1000, "home"
+		}
+	}
+	v := Project(p, date("2026-11-02"), 12)
+	var loan Payoff
+	for _, x := range v.Loans {
+		if x.Account == "home" {
+			loan = x
+		}
+	}
+	if loan.Monthly != 2000 || len(loan.Rows) == 0 || loan.Made != 35 {
+		t.Fatalf("payoff %+v", loan)
+	}
+	// Each period ends owing what the papers say after the payments due by then.
+	periods := 0
+	for _, per := range v.Periods {
+		want := loan.Balance
+		for _, r := range loan.Rows[loan.Made:] {
+			if r.Date <= per.Last {
+				want = r.After
+			}
+		}
+		if got := per.Accounts["home"]; math.Abs(got-want) > 0.005 {
+			t.Errorf("period to %s: owes %v, the papers say %v", per.Last, got, want)
+		}
+		periods++
+		// Checking pays only the household's half.
+		for _, r := range per.Rows {
+			if r.Payment == "mortgage" && r.Amount != 1000 {
+				t.Errorf("period to %s: checking pays %v", per.Last, r.Amount)
+			}
+		}
+	}
+	if periods < 6 {
+		t.Fatalf("%d periods", periods)
+	}
+}

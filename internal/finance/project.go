@@ -330,10 +330,16 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 	}
 	// A loan read from its papers owes, at the start of today, what they
 	// say after the payments due before it: as if typed in this morning.
+	// Ahead it owes what they say after each payment due, whatever the plan
+	// pays into it (one half of a payment split with someone the plan
+	// doesn't list, say), so it falls as the Loans card says.
 	papered := map[string]bool{}
+	owing := map[string]float64{}
+	dueAhead := map[string][]Installment{}
 	for _, a := range p.Accounts {
-		if _, _, owed, ok := papers(p, a, today); ok {
+		if rows, made, owed, ok := papers(p, a, today); ok {
 			bal[a.ID], typed[a.ID], papered[a.ID] = owed, today, true
+			owing[a.ID], dueAhead[a.ID] = owed, rows[made:]
 		}
 	}
 	inBalance := map[string]bool{}
@@ -721,6 +727,14 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 		// card that carries a balance (one paid in full each time pays none).
 		before := bal[v.Checking]
 		for _, a := range p.Accounts {
+			if papered[a.ID] {
+				rows := dueAhead[a.ID]
+				for len(rows) > 0 && rows[0].Date <= k {
+					owing[a.ID], rows = rows[0].After, rows[1:]
+				}
+				bal[a.ID], dueAhead[a.ID] = owing[a.ID], rows
+				continue
+			}
 			if a.Rate > 0 && !inFull[a.ID] && (ahead || d.After(typed[a.ID])) {
 				bal[a.ID] += bal[a.ID] * a.Rate / 100 / 365
 			}
