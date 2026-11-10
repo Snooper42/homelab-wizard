@@ -47,6 +47,8 @@ export interface TidyJob {
 export interface TidyActions {
   run: (kind: string, action: string, args?: string[], yes?: boolean) => void;
   stop: () => void;
+  /** Stop on a job this window didn't start: asks the computer to stop that one (its process, and when it took the lock). */
+  stopElsewhere: (lock: { pid: number; start: string }) => void;
   ask: (c: TidyConfirm) => void;
   reveal: (path: string) => void;
   /** Settings; with keys, opened at those settings (Jellyfin's API key). */
@@ -237,17 +239,21 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
 }
 
 /** A job this window didn't start (the agent's, a terminal's): what it is, since when, and where it has got to. */
-function RunningCard({ lock, now }: { lock: app.TidyUp['lock'] & {}; now?: app.TidyRunning['now'] }) {
+function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] & {}; now?: app.TidyRunning['now']; stop?: () => void; stopping?: boolean }) {
   const title = jobTitle(lock.kind, lock.action, lock.flags || []);
   const p = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || '', note: now.progress.note, eta: now.progress.eta } : undefined;
   const since = new Date(lock.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
     <Card kind="tidyjob" id="tidyRunning">
-      <p class="sr" role="status">{title}: {now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : 'running'}</p>
-      <CardHead title={title} />
+      <p class="sr" role="status">{title}: {stopping ? 'stopping' : now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : 'running'}</p>
+      <CardHead title={stopping ? `${title}: stopping` : title}>
+        {stopping ? <button class="small" disabled title="It stops at its next safe point, so nothing is left half done">Stopping…</button>
+          : stop && <button class="small" onClick={stop} title="It stops at a safe point; run it again to carry on where it left off">Stop</button>}
+      </CardHead>
       {now?.step && <p class="tidystep">Step {now.step.n} of {now.step.total} · {now.step.text}</p>}
       <Bar title={title} p={p} idle="Working…" />
-      {p?.note && <p class="muted tidynow">Now: {p.note}</p>}
+      {stopping ? <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>
+        : p?.note && <p class="muted tidynow">Now: {p.note}</p>}
       <p class="muted">Started at {since}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
     </Card>
   );
@@ -1183,6 +1189,8 @@ export interface TidyProps {
   d: app.TidyUp | null;
   /** The job holding the lock, as last followed (a job this window didn't start). */
   running?: app.TidyRunning | null;
+  /** That job was asked to stop: when it took the lock, so a job after it isn't shown stopping. */
+  stoppingElsewhere?: string;
   error?: string;
   tab: TidyTab;
   pick: (t: TidyTab) => void;
@@ -1219,7 +1227,7 @@ export function TidyScreen(p: TidyProps) {
         <div class="toolbar"><button class="btn" onClick={() => act.settings()}>Settings…</button></div>
       </div>
       <Segmented label="Tidy Up sections" value={tab} pick={(v) => p.pick(v as TidyTab)} options={[['overview', 'Inbox'], ...LIBRARIES.map((k): [string, string] => [k, names[k]])]} />
-      {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} />}
+      {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
         return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action, staleFlags(d.stale))}: stopped part-way</strong><span class="muted">{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;

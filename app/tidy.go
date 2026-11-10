@@ -653,6 +653,40 @@ func (a *App) TidyStop() {
 	}
 }
 
+// TidyStopElsewhere asks a job this window didn't start (the agent's
+// Collect, a terminal's run) to stop at its next safe point, as Stop asks
+// the window's own: only the job the screen showed (its process and when
+// it took the lock), and only while that process is still the one that
+// took it (media.ReadLock: a process ID handed to another program since is
+// not), read again just before it's asked. A job that has ended is
+// nothing to stop.
+func (a *App) TidyStopElsewhere(pid int, start string) error {
+	shown, err := time.Parse(time.RFC3339Nano, start)
+	if err != nil {
+		return errors.New("that isn't a job Tidy Up showed")
+	}
+	l, running := media.ReadLock(a.root)
+	if !running {
+		// Ended, or its process ID is another program's now: nothing of it is left to stop.
+		return nil
+	}
+	if l.PID != pid || !l.Start.Equal(shown) {
+		return errors.New("another Tidy Up job is running now; stop that one from its own card")
+	}
+	if pid <= 1 || pid == os.Getpid() {
+		return errors.New("that job is this window's own: use its Stop")
+	}
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+	// Read once more, just before: the process may have ended and its ID gone to another program.
+	if again, ok := media.ReadLock(a.root); !ok || again.PID != pid || !again.Start.Equal(shown) {
+		return nil
+	}
+	return interrupt(p)
+}
+
 // TidyReveal shows a Tidy Up folder or report in the file manager: one of
 // the libraries, the reports, or a file in them.
 func (a *App) TidyReveal(path string) error {

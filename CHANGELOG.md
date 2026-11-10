@@ -103,6 +103,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Stop a Tidy Up job you didn't start here:** a job the overnight agent or a Terminal started (say, collecting Tdarr's work) used to hold every button on Tidy Up until it ended. Its card now has **Stop**, which stops it at its next safe point, as Stop does for a job you started, and says *Stopping…* until it has.
 - **Finances in four tabs:** Dashboard, **Spending** (Transactions and Reports), **Plan** (Calendar, Recurring and Paychecks, which was Pay) and Net worth, instead of seven side by side. Spending and Plan show their pages in a second row and open on the first; everything that opened a page before (a Dashboard card, a report, the sidebar) still opens it.
 - **A stopped app on the iPhone says what to do:** its row in Status has a **Start** button when the phone may make changes, and a phone that can only look says *Start it from the computer*, on the row and the app's page, instead of nothing.
 - **Games go where they belong:** a game store's wording comes in as its brand, with its logo: *WL \*STEAM PURCHASE* and *STEAMGAMES.COM* are *Steam*, *MICROSOFT\*XBOX* is *Xbox*, and PlayStation, Nintendo, Epic Games, GameStop and Roblox read the same way. Each goes into your Gaming category (or Games, or Video games) when you keep one, and Shopping when you don't.

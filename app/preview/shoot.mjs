@@ -1283,6 +1283,20 @@ const smokes = [
     await page.click('#tidy .seg button:text-is("Books")');
     await page.waitForSelector('#tidyReview button:text-is("Apply to 2 books…")', { timeout: 5000 });
   } },
+  // Stop on a job started elsewhere (tidy-loop.md's queue, item 3): it asks the computer to stop that job (the one shown:
+  // its process and start), says Stopping… until it has, and can't be asked twice; then the card goes.
+  { name: 'Tidy Up: a job started elsewhere can be stopped, and says Stopping…', screen: 'tidy', mock: (() => {
+    const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1), flags: [] };
+    return { tidy: { ...tidy, lock }, tidyStopSlow: 4000 };
+  })(), run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.click('#tidyRunning button:text-is("Stop")', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning button:text-is("Stopping…"):disabled', { timeout: 2000 });
+    const asked = await page.evaluate(() => window.__MOCK.tidyStoppedElsewhere);
+    const start = await page.evaluate(() => window.__MOCK.tidy.lock?.start);
+    if (!asked || asked[0] !== 4242 || asked[1] !== start) throw new Error(`asked to stop ${JSON.stringify(asked)}`);
+    await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 12000 });
+  } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };

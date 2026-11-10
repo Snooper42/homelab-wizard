@@ -16469,7 +16469,7 @@ ${pays}
       ] })
     ] });
   }
-  function RunningCard({ lock, now }) {
+  function RunningCard({ lock, now, stop: stop2, stopping }) {
     const title = jobTitle(lock.kind, lock.action, lock.flags || []);
     const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
     const since = new Date(lock.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -16477,9 +16477,9 @@ ${pays}
       /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: [
         title,
         ": ",
-        now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : "running"
+        stopping ? "stopping" : now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : "running"
       ] }),
-      /* @__PURE__ */ u3(CardHead, { title }),
+      /* @__PURE__ */ u3(CardHead, { title: stopping ? `${title}: stopping` : title, children: stopping ? /* @__PURE__ */ u3("button", { class: "small", disabled: true, title: "It stops at its next safe point, so nothing is left half done", children: "Stopping…" }) : stop2 && /* @__PURE__ */ u3("button", { class: "small", onClick: stop2, title: "It stops at a safe point; run it again to carry on where it left off", children: "Stop" }) }),
       now?.step && /* @__PURE__ */ u3("p", { class: "tidystep", children: [
         "Step ",
         now.step.n,
@@ -16489,7 +16489,7 @@ ${pays}
         now.step.text
       ] }),
       /* @__PURE__ */ u3(Bar, { title, p: p3, idle: "Working…" }),
-      p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
+      stopping ? /* @__PURE__ */ u3("p", { class: "muted tidynow", children: "Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there." }) : p3?.note && /* @__PURE__ */ u3("p", { class: "muted tidynow", children: [
         "Now: ",
         p3.note
       ] }),
@@ -17427,7 +17427,7 @@ ${pays}
         /* @__PURE__ */ u3("div", { class: "toolbar", children: /* @__PURE__ */ u3("button", { class: "btn", onClick: () => act.settings(), children: "Settings…" }) })
       ] }),
       /* @__PURE__ */ u3(Segmented, { label: "Tidy Up sections", value: tab3, pick: (v3) => p3.pick(v3), options: [["overview", "Inbox"], ...LIBRARIES.map((k3) => [k3, names3[k3]])] }),
-      other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0 }),
+      other && /* @__PURE__ */ u3(RunningCard, { lock: other, now: p3.running?.lock ? p3.running.now : void 0, stop: () => p3.act.stopElsewhere(other), stopping: p3.stoppingElsewhere === other.start }),
       d3?.stale && !other && !job2 && (() => {
         const c4 = carryOn(d3.stale, d3, act, p3.pick);
         return /* @__PURE__ */ u3(Card, { kind: "notice", id: "tidyStale", children: [
@@ -17485,6 +17485,7 @@ ${pays}
   var confirm = null;
   var running4 = null;
   var following;
+  var stoppingElsewhere = "";
   var FOLLOW_MS = 3e3;
   function draw5() {
     const d3 = tidyData.value || null;
@@ -17498,6 +17499,7 @@ ${pays}
       skip,
       running: running4,
       placing,
+      stoppingElsewhere,
       reload: () => {
         tidyData.load();
       },
@@ -17532,6 +17534,15 @@ ${pays}
             draw5();
           }
           go().TidyStop();
+        },
+        stopElsewhere: (lock) => {
+          stoppingElsewhere = lock.start;
+          draw5();
+          Promise.resolve(go().TidyStopElsewhere(lock.pid, lock.start)).catch((e3) => {
+            stoppingElsewhere = "";
+            showError(e3);
+            draw5();
+          });
         },
         ask: (c4) => {
           confirm = c4;
