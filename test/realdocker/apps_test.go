@@ -892,7 +892,7 @@ func beszelContainers(l *lab, tok string) error {
 }
 
 // Paperless-AI: a text document put in Paperless, Paperless's token in
-// .env and Paperless-AI installed with it, set up through its own /setup
+// .env and Paperless-AI installed with it, set up through its own setup
 // with an OpenAI-compatible model that this test plays (the runner has no
 // AI model), a scan started with its API key, and Paperless showing the
 // title the model gave; after the move its history still lists the
@@ -945,13 +945,16 @@ func seedPaperlessAI(l *lab) error {
 	ai := l.url("paperless-ai")
 	slow := &http.Client{Timeout: 3 * time.Minute}
 	setup, _ := json.Marshal(map[string]any{
-		// What its setup page fills in from the homelab's settings.
-		"paperlessUrl": "http://paperless:8000", "paperlessToken": tok.Token, "paperlessUsername": "nightly",
-		"aiProvider": "custom", "customBaseUrl": base, "customApiKey": "nightly", "customModel": "nightly",
-		"activateTagging": true, "activateCorrespondents": true, "activateTitle": true,
+		// What its setup page sends (Paperless-AI 4: POST /api/setup, open
+		// only until the first account exists): the account, then the
+		// settings the homelab's .env doesn't already fix.
 		"username": "nightly", "password": "nightly-password",
+		"config": map[string]any{
+			"paperless": map[string]any{"url": "http://paperless:8000", "token": tok.Token, "username": "nightly"},
+			"ai":        map[string]any{"provider": "custom", "custom": map[string]any{"baseUrl": base, "apiKey": "nightly", "model": "nightly"}},
+		},
 	})
-	resp, err := slow.Post(ai+"/setup", "application/json", bytes.NewReader(setup))
+	resp, err := slow.Post(ai+"/api/setup", "application/json", bytes.NewReader(setup))
 	if err != nil {
 		return err
 	}
@@ -960,8 +963,6 @@ func seedPaperlessAI(l *lab) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("Paperless-AI's setup: %s %s", resp.Status, tail(string(body), 5))
 	}
-	// It restarts itself 5 seconds after saving the settings.
-	time.Sleep(10 * time.Second)
 	var last string
 	for range 30 {
 		req, _ := http.NewRequest("POST", ai+"/api/scan/now", nil)
@@ -1019,19 +1020,19 @@ func paperlessUpload(paperless, auth string) error {
 
 func checkPaperlessAI(l *lab) error {
 	var history struct {
-		Data []struct {
+		Items []struct {
 			Title string `json:"title"`
-		} `json:"data"`
+		} `json:"items"`
 	}
 	var err error
 	for range 30 {
-		if err = request("GET", l.url("paperless-ai")+"/api/history?draw=1", nil, &history, "x-api-key", l.env("PAPERLESS_AI_API_KEY")); err == nil {
-			for _, d := range history.Data {
+		if err = request("GET", l.url("paperless-ai")+"/api/history", nil, &history, "x-api-key", l.env("PAPERLESS_AI_API_KEY")); err == nil {
+			for _, d := range history.Items {
 				if d.Title == paperlessAITitle {
 					return nil
 				}
 			}
-			err = fmt.Errorf("its history does not list %q (%d documents)", paperlessAITitle, len(history.Data))
+			err = fmt.Errorf("its history does not list %q (%d documents)", paperlessAITitle, len(history.Items))
 		}
 		time.Sleep(2 * time.Second)
 	}
