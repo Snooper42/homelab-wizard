@@ -45,7 +45,7 @@ func TestDesktop(t *testing.T) {
 	var got []*exec.Cmd
 	run = func(c *exec.Cmd) error { got = append(got, c); return nil }
 	ctx := context.Background()
-	title, body := `Backup "failed"`, "$(rm -rf ~); it's fine"
+	title, body := `-u critical Backup "failed"`, "$(rm -rf ~); it's fine"
 
 	goos = "darwin"
 	if err := Desktop(ctx, title, body); err != nil {
@@ -69,7 +69,8 @@ func TestDesktop(t *testing.T) {
 	if err := Desktop(ctx, title, body); err != nil {
 		t.Fatal(err)
 	}
-	if c := got[0]; !slices.Equal(c.Args[1:], []string{"--app-name=Homelab", title, body}) {
+	// "--" first: a title that starts with a dash is still the title, never one of notify-send's options.
+	if c := got[0]; !slices.Equal(c.Args[1:], []string{"--app-name=Homelab", "--", title, body}) {
 		t.Errorf("Linux: %q", c.Args)
 	}
 

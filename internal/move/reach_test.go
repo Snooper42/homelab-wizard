@@ -60,7 +60,11 @@ func TestBringsNamesWhatAnOwnAppTakes(t *testing.T) {
 	compose := `services:
   plain:
     image: one
+    ports: ["127.0.0.1:8080:80", "${BIND_IP:-127.0.0.1}:8081:81"]
     volumes: ["./data/appdata/plain:/data"]
+  open:
+    image: four
+    ports: ["8090:80", "0.0.0.0:8091:81", {target: 82, published: 8092}]
   root:
     image: two
     privileged: true
@@ -89,15 +93,16 @@ func TestBringsNamesWhatAnOwnAppTakes(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "move.tar")
 	_ = os.WriteFile(path, b.Bytes(), 0o600)
 	r, err := Brings(path)
-	if err != nil || len(r.Custom) != 3 {
+	if err != nil || len(r.Custom) != 4 {
 		t.Fatalf("%+v %v", r, err)
 	}
-	if r.Custom[1] != "plain (one)" {
-		t.Errorf("an ordinary own app: %q", r.Custom[1])
+	if r.Custom[2] != "plain (one)" {
+		t.Errorf("an ordinary own app, its ports this computer's own: %q", r.Custom[2])
 	}
 	for i, want := range map[int][]string{
 		0: {"long (three", "Docker's socket", "SYS_ADMIN"},
-		2: {"root (two", "privileged", "Docker's socket", "this computer's network", "this computer's processes", "its whole disk"},
+		1: {"open (four", "the home network", "8090", "8091", "8092"},
+		3: {"root (two", "privileged", "Docker's socket", "this computer's network", "this computer's processes", "its whole disk"},
 	} {
 		for _, w := range want {
 			if !strings.Contains(r.Custom[i], w) {
