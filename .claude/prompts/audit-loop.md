@@ -595,10 +595,10 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     `local: true`, and any app whose port is on `BIND_IP`): which then
     face the whole home network, and whether Settings says so when the
     address is changed.
-59. **CrowdSec's API on the shared network**: whether any app on
+59. (done: the independent review, Nov 10; holds) **CrowdSec's API on the shared network**: whether any app on
     `homelab` can reach the LAPI, and what it could do there (read
     decisions, add or remove a ban) with or without the bouncer key.
-60. **Databases on the shared network**: every app's database should sit
+60. (done: the independent review, Nov 10; holds, now tested) **Databases on the shared network**: every app's database should sit
     on its own project's network, never on `homelab`; a test like
     N27's over the catalog would hold it.
 61. **Vaultwarden on a public name**: `SIGNUPS_ALLOWED` and the admin
@@ -611,7 +611,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     keys).
 64. **The app's link to the agent on Windows** (the named pipe or local
     port item 8 read on the Mac): who on the same computer may use it.
-65. **The tunnel's catch-all kept by hand** (`MergeIngress` keeps a
+65. (done: N33, #562) **The tunnel's catch-all kept by hand** (`MergeIngress` keeps a
     catch-all someone added): one that sends every hostname to the proxy
     would put each home-only app behind the tunnel; say so when it is
     there (round 58 found the homelab's own catch-all answers 404).

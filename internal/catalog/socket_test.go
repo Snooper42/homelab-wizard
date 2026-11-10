@@ -69,3 +69,28 @@ func TestTheSocketProxyIsOnlyForItsReaders(t *testing.T) {
 		}
 	}
 }
+
+// Backlog item 60: an app's database (Postgres, MariaDB, Redis or Valkey,
+// Meilisearch, ...) answers whoever reaches it, often with a password every
+// app of that stack shares, so it sits on its own stack's network and never
+// on the shared homelab network every app joins.
+func TestDatabasesStayOffTheSharedNetwork(t *testing.T) {
+	n := 0
+	for _, a := range load(t).Apps {
+		img := strings.ToLower(a.Image)
+		db := false
+		for _, k := range []string{"postgres", "mariadb", "mysql", "redis", "valkey", "mongo", "meilisearch", "clickhouse", "memcached", "elasticsearch", "couchdb", "influxdb"} {
+			db = db || strings.Contains(img, k)
+		}
+		if !db {
+			continue
+		}
+		n++
+		if joins(a, "homelab") {
+			t.Errorf("%s (%s) is on the shared homelab network, where every app can reach it", a.ID, a.Image)
+		}
+	}
+	if n < 10 {
+		t.Errorf("only %d databases found: the test no longer sees them", n)
+	}
+}

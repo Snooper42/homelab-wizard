@@ -245,6 +245,10 @@ Everything merged from #544 to #560 was read again by a session that wrote none 
 - **`/api/me`'s computer info (#551 to #553):** only to a paired device; the version, the call names and the features, the same for every device and already in the public source.
 - **The \*arr apps resting (#554):** it stops nothing while a job holds the lock, each stop is noted in `data/stopped.json` so the watchdog leaves it, and the apps' keys are read from their own config and sent only to them, at home.
 - **The record of what was done (#555):** every query is parameterised (a search's `%` and `_` escaped); settings are named, never their values; Finances only by kind, never a member's; the files are 0600.
+- **Databases (backlog item 60):** every database in the catalog (19 today: Postgres, Valkey, Redis, Meilisearch) is on its own stack's network, none on `homelab`; `TestDatabasesStayOffTheSharedNetwork` keeps it so.
+- **CrowdSec's API on the shared network (backlog item 59):** any app on `homelab` reaches `crowdsec:8080` and the AppSec listener on 7422, but reading decisions and asking AppSec both need the bouncer key, and adding or removing a ban needs a machine login: a new machine stays pending until `cscli machines validate` inside the container, as the homelab never turns on auto-registration. An app could only knock.
+- **A hand-kept catch-all in the tunnel (backlog item 65):** covered by N33: when such a rule and a wildcard record would carry a home-only app, Set up the domain and `homelab away off` say so.
+- **N21 waits, on purpose:** every way to trust the tunnel's address alone changes how existing installs start (a network only `install` makes today, or an address Docker can change on a restart, after which every visitor is one address that CrowdSec could ban), and the tunnel has no real-Docker test yet. As a Low finding, it waits for that test and a try on a real install (`audit-loop.md` has the plan).
 - **Investments (#558):** no new network call, log line or alert: Ghostfolio's counts are compared with its own buys and sales on the machine, and the tests use made-up numbers.
 
 ## Incident response
