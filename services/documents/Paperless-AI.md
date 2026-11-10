@@ -32,27 +32,27 @@ Reads each new document in [Paperless-ngx](<Paperless-ngx.md>) and asks an AI mo
 1. Have Paperless-ngx running and sign in to it as an administrator.
 2. Have a model it can use: Ollama on this machine (Setup shows how on each system, once Paperless-AI is installed, and [Open WebUI](<Open WebUI.md>)'s Setup has the details), then `ollama pull llama3.2` or a larger model if the machine has the memory; or the address and key of an OpenAI-compatible service.
 3. In Paperless, open your account (top right) › **My Profile** and create an **API Auth Token**. Paperless-AI acts as that account and needs to see its tags, correspondents, document types, custom fields, and users, so an administrator's token is simplest.
-4. Put the token in Settings › `PAPERLESS_AI_PAPERLESS_TOKEN`, then `./homelab install paperless-ai`: it installs only once the token is set. Its image is a 4.6 GB download (13 GB on disk), mostly the chat's search index.
+4. Put the token in Settings › `PAPERLESS_AI_PAPERLESS_TOKEN`, then `./homelab install paperless-ai`: it installs only once the token is set. Its image is about a 135 MB download (version 4).
 5. Open Paperless-AI. Its setup page has Paperless's address (`http://paperless:8000`) and the token filled in; add your Paperless username, then:
    - **AI provider:** Ollama, at `http://host.docker.internal:11434` with the model you pulled; or Custom, with the service's address, key, and model.
    - Your own username and password for Paperless-AI.
-6. Save. It restarts with the settings and, every 30 minutes, works through the documents it has not seen yet. **Scan Now** on its dashboard starts at once.
+6. Save. The settings take effect at once (no restart), and it works through the documents it has not seen yet on its schedule. **Scan Now** on its dashboard starts at once.
 
-Its setup page answers without signing in, even once it is set up, so the homelab keeps Paperless-AI off the internet (LAN and Tailscale only).
+Until its first account exists, its setup page answers anyone who can reach it (versions before 4 answered without a sign-in even once set up), so the homelab keeps Paperless-AI off the internet (LAN and Tailscale only): finish step 5 right after installing.
 
 ## How it works
 
-- A Node.js app with a Python search service in one container. The app lists Paperless's documents through its API, sends each one's text to the model with a prompt, and writes the answer back: title, tags, correspondent, document type, date, and custom fields, each switched on or off in its settings.
-- The search service indexes the documents' text for the chat (**Chat** and **RAG Chat**), on this machine.
-- Its settings live in its own `data/.env`, written by its setup page and Settings. The homelab gives it Paperless's address and token (`PAPERLESS_AI_PAPERLESS_TOKEN`), which win over the ones on its own pages, so a new token goes in the homelab's Settings, followed by `./homelab up`. It also gives it `API_KEY` (`PAPERLESS_AI_API_KEY`, for its API) and `JWT_SECRET` (`PAPERLESS_AI_JWT_SECRET`, for its sign-in).
-- Which documents it has done, its history, and the token counts are kept in a SQLite database, `documents.db`.
+- One Node.js app (version 4; 3.x had a Python search service beside it). It lists Paperless's documents through its API, sends each one's text to the model with a prompt, and writes the answer back: title, tags, correspondent, document type, date, and custom fields, each switched on or off in its settings.
+- It indexes the documents' text for the chat (**Chat** and **RAG Chat**), on this machine.
+- Its settings live in its own `data/config.json` (3.x's `data/.env` is read once on the first start of version 4), written by its setup page and Settings; settings the homelab sets show there as locked. The homelab gives it Paperless's address and token (`PAPERLESS_AI_PAPERLESS_TOKEN`), which win over the ones on its own pages, so a new token goes in the homelab's Settings, followed by `./homelab up`. It also gives it `API_KEY` (`PAPERLESS_AI_API_KEY`, for its API) and `JWT_SECRET` (`PAPERLESS_AI_JWT_SECRET`, for its sign-in).
+- Which documents it has done, its history, its accounts, and the token counts are kept in a SQLite database, `paperless-ai.db` (3.x's `documents.db` is imported once, then left as it was).
 
 ## Where things live
 
 | What | Where |
 |---|---|
-| Settings (model, prompt, what it changes) | `appdata/paperless-ai/.env` |
-| Documents done, history, accounts | `appdata/paperless-ai/documents.db` |
+| Settings (model, prompt, what it changes) | `appdata/paperless-ai/config.json` |
+| Documents done, history, accounts | `appdata/paperless-ai/paperless-ai.db` |
 | The chat's search index | `appdata/paperless-ai` |
 | Secrets | `PAPERLESS_AI_PAPERLESS_TOKEN`, `PAPERLESS_AI_API_KEY`, and `PAPERLESS_AI_JWT_SECRET` in `.env` |
 
@@ -82,7 +82,7 @@ Its setup page answers without signing in, even once it is set up, so the homela
 ./homelab logs paperless-ai -f
 ./homelab compose paperless restart paperless-ai
 curl -s -X POST -H "x-api-key: $PAPERLESS_AI_API_KEY" http://localhost:8011/api/scan/now
-curl -s -H "x-api-key: $PAPERLESS_AI_API_KEY" "http://localhost:8011/api/history?length=5"
+curl -s -H "x-api-key: $PAPERLESS_AI_API_KEY" "http://localhost:8011/api/history?pageSize=5"
 ```
 
 ## API
@@ -99,7 +99,7 @@ curl -s -H "x-api-key: $PAPERLESS_AI_API_KEY" "http://localhost:8011/api/history
 
 ## Backup
 
-`./homelab backup` copies `documents.db` nightly into `recovery-staging/databases/paperless-ai`, and Duplicati takes it off-site with the rest. Its settings in `appdata/paperless-ai/.env` go off-site with the Homelab Stack Data job, which covers all of `appdata`. The chat's search index is rebuilt from Paperless. The documents themselves are Paperless's, backed up with it.
+`./homelab backup` copies `paperless-ai.db` nightly into `recovery-staging/databases/paperless-ai`, and Duplicati takes it off-site with the rest. Its settings in `appdata/paperless-ai/config.json` go off-site with the Homelab Stack Data job, which covers all of `appdata`. The chat's search index is rebuilt from Paperless. The documents themselves are Paperless's, backed up with it.
 
 ## Troubleshooting
 

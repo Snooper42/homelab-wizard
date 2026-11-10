@@ -105,7 +105,7 @@ services:
       PAPERLESS_API_URL: http://paperless:8000/api
       PAPERLESS_API_TOKEN: ${PAPERLESS_AI_PAPERLESS_TOKEN}
       # Its API key (x-api-key) and sign-in secret; its setup page keeps
-      # every other setting (the model, the prompt) in its own data/.env.
+      # every other setting (the model, the prompt) in its own data/config.json.
       API_KEY: ${PAPERLESS_AI_API_KEY}
       JWT_SECRET: ${PAPERLESS_AI_JWT_SECRET}
     # Ollama runs natively on the host, where it can use the GPU.
@@ -123,12 +123,15 @@ services:
       requires: [PAPERLESS_AI_PAPERLESS_TOKEN]
       memory: 1000
       url: PAPERLESS_AI_URL
-      dump: sqlite:/app/data/documents.db
+      # Paperless-AI 4 keeps everything in paperless-ai.db (3.x's
+      # documents.db is imported once, then left as it was).
+      dump: sqlite:/app/data/paperless-ai.db
       name: Paperless-AI
       category: documents
       description: Titles, tags, and correspondents for Paperless-ngx's documents, from an AI model
       subdomain: docs-ai
       web: 3000
-      # Its /setup page answers without a sign-in, even once set up.
+      # Its setup page answers anyone until its first account exists, and
+      # its settings reach any address: never public.
       admin: true
-      warning: "a 4.6 GB download; needs an AI model: Ollama running on this machine (homelab doctor shows how to install it here), or an OpenAI-compatible service"
+      warning: "needs an AI model: Ollama running on this machine (homelab doctor shows how to install it here), or an OpenAI-compatible service"
