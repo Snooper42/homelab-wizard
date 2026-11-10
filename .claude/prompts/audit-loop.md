@@ -719,7 +719,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     log keeps the request URI (the `npm-logs` volume), and CrowdSec reads
     that log. Who can read it, for how long, and could the key travel
     where the log drops it, or the line be redacted?
-83. **The engine socket's mode** (`internal/engine` `SocketPath`): its
+83. (done: holds, Nov 10: `Serve` sets the socket 0600 inside a folder made 0700, which also covers the moment before the chmod; the `TempDir` fallback is only for an account with no cache folder at all, and on Linux it is `$XDG_RUNTIME_DIR`, the account's own) **The engine socket's mode** (`internal/engine` `SocketPath`): its
     folder is made 0700, but what is the socket file's own mode? And what
     happens with the `os.TempDir()` fallback on a machine other accounts
     share?
