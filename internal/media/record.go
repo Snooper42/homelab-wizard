@@ -73,6 +73,10 @@ type Activity struct {
 	Sub  string    `json:"sub,omitempty"`
 	// Undo is the run whose Trash it can put back ("trash restore <it>").
 	Undo string `json:"undo,omitempty"`
+	// Action is what it was (its job's action, "finalize") when the job did
+	// what it set out to; none for a run that stopped. Recently done finds
+	// an Undo by it, never by Text's words.
+	Action string `json:"action,omitempty"`
 }
 
 // RecordPath is where the record lives.
@@ -124,6 +128,9 @@ func (r *Record) Note(kind string, run Run) {
 	}
 	if text, sub := Describe(kind, run); text != "" {
 		a := Activity{At: run.At, Kind: kind, Text: text, Sub: sub}
+		if run.OK {
+			a.Action = run.Action
+		}
 		if run.Back > 0 && run.OK && undoable(kind, run.Action) {
 			a.Undo = run.ID
 		}

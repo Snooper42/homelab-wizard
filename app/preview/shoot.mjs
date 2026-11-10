@@ -761,6 +761,23 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['music', 'undo', [], true])) throw new Error(JSON.stringify(runs));
   } },
+  // Undo is found by what a line was (its action), not its words (tidy-loop.md's queue, item 4): a swap and a books apply
+  // worded differently still offer theirs, and run the right Undo.
+  ...[
+    ['the swap', { kind: 'music', action: 'finalize', text: 'Your cleaned library is in' }, (t) => t, 'Put the old library back?', 'Put it back', ['music', 'undo', [], true]],
+    ['a books apply', { kind: 'books', action: 'apply', text: 'Your books were tidied' },
+      (t) => ({ ...t, libraries: t.libraries.map((l) => (l.kind === 'books' ? { ...l, last: { ...l.last, apply: tidyRun('apply', 0.5, { changed: 2, covers: 1 }) } } : l)) }),
+      'Undo the last apply?', 'Undo', ['books', 'undo', [], true]],
+  ].map(([what, line, lib, title, yes, runs]) => ({ name: `Tidy Up: Undo is offered on ${what} whose line is worded differently`, screen: 'tidy',
+    mock: { tidy: lib({ ...tidy, activity: [{ at: tidyAt(0.5), sub: '', ...line }] }) }, run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
+    await page.click(`#tidy .tidydone li:has-text("${line.text}") button:text-is("Undo")`, { timeout: 5000 });
+    await page.waitForSelector(`#tidySheet:not([hidden]) h2:text-is("${title}")`, { timeout: 5000 });
+    await page.click(`#tidySheet button:text-is("${yes}")`);
+    await page.waitForFunction(() => (window.__MOCK.tidyRuns || []).length === 1, null, { timeout: 5000 });
+    const ran = await page.evaluate(() => window.__MOCK.tidyRuns[0]);
+    if (JSON.stringify(ran) !== JSON.stringify(runs)) throw new Error(`ran: ${JSON.stringify(ran)}`);
+  } })),
   // A library whose folder is not there (the fixture's audiobooks) says so on its tab, and runs nothing until it is back.
   { name: 'Tidy Up: a library whose folder is gone says so, and runs nothing', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Audiobooks")', { timeout: 5000 });
