@@ -723,7 +723,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     folder is made 0700, but what is the socket file's own mode? And what
     happens with the `os.TempDir()` fallback on a machine other accounts
     share?
-84. **Bank files brought in**:
+84. (done: holds, Nov 10: a bank file is read in the page, on the person's own device, so a huge one can stall only their own screen; every phone call to the companion is capped, `MaxCall` and `MaxTunnel`, before it is read; Go's XML is not used for it) **Bank files brought in**:
     - Size and row limits on a file picked on the computer and on one
       arriving from the phone (Import a file), so a huge CSV or a deeply
       nested OFX cannot hang the app.
