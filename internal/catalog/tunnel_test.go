@@ -59,6 +59,15 @@ func TestOnlyTheTunnelNamesAVisitorsAddress(t *testing.T) {
 	if !strings.Contains(string(init), "\nset_real_ip_from "+docker.TunnelAddress+";\n") {
 		t.Errorf("the proxy's server_proxy.conf does not trust %s alone", docker.TunnelAddress)
 	}
+	// The apps behind the proxy are told that one address, not a chain the
+	// client began: NPM appends the client's own X-Forwarded-For.
+	build, err := os.ReadFile(filepath.Join(repoRoot(), "dockerfiles", "npm-crowdsec", "Dockerfile"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(build), `\1$remote_addr;`) || !strings.Contains(string(build), "/etc/nginx/conf.d/include/proxy.conf") {
+		t.Errorf("the proxy image passes on the client's own X-Forwarded-For chain to the apps")
+	}
 	for _, line := range strings.Split(string(init), "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "set_real_ip_from") && strings.TrimSpace(line) != "set_real_ip_from "+docker.TunnelAddress+";" {
 			t.Errorf("the proxy's start script trusts another address than the tunnel's: %s", line)
