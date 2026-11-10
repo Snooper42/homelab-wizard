@@ -622,7 +622,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     proxy's environment. It needs no proxy host (`local: true`), so its
     own network (with a gateway, for its published port) and the socket
     one may be enough: try it on real Docker.
-67. (in part: N38, the public side, with its test; the tailnet side open) **Apps whose first visitor becomes the admin**:
+67. (done: N38, the public side, with its test; the tailnet side is a decision, Nov 10: in Home mode the tailnet is how the household reaches a new app to make its first account, so holding unclaimed apps off it would lock the owner out of their own setup; it is the household's own network, a risk only on a tailnet shared beyond it, which Tailscale.md could say) **Apps whose first visitor becomes the admin**:
     - On the internet this holds. `internal/claim` keeps Immich,
       Audiobookshelf, Komga, Navidrome and Calibre-Web off the tunnel until
       each has its first account, and Nextcloud and Paperless get theirs
@@ -638,7 +638,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
         by anyone on the tailnet first. That matters on a tailnet shared
         with family or friends. Use the same claim check before the serve
         listener, or say so on the app's page.
-68. **Apps that trust forwarded headers from everyone**: Nextcloud has
+68. (open, a decision; looked at Nov 10: only with Settings › Apps listen on the home network, as `BIND_IP` defaults to this computer; Pocket ID's `TRUST_PROXY: "true"` is the same; narrowing to the proxy needs its address on `homelab`, which Docker picks, and OrbStack's networks are 192.168.x like many homes, so a careless list would make every visitor the proxy) **Apps that trust forwarded headers from everyone**: Nextcloud has
     `TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8`, and Firefly
     III and its importer have `TRUSTED_PROXIES: "**"`. Through the proxy,
     N21 now hands them one address. But with "listen on the network" on,
@@ -647,7 +647,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     to the port still picks its address (brute-force limits). Firefly also
     trusts `X-Forwarded-Host`, which builds reset links. Narrow both to the
     proxy, and prove it with a realdocker case.
-69. **Every app that reads the client's address**: list each one and the
+69. (done: holds after N21; the proxy overwrites both headers) **Every app that reads the client's address**: list each one and the
     header it reads (Vaultwarden `IP_HEADER`, Nextcloud, Firefly, Immich,
     Paperless, Pocket ID, Uptime Kuma). Add a catalog test that each reads
     a header the proxy overwrites (`X-Real-IP`) or a chain it cannot
@@ -657,7 +657,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     install close them by setting (Linkwarden
     `NEXT_PUBLIC_DISABLE_REGISTRATION`, Karakeep `DISABLE_SIGNUPS`, and so
     on)? Does Status say so while one is open on a public name?
-71. **Paperless-AI 4's setup window (after N37)**: the install could call
+71. (left, Nov 10: Paperless-AI is `admin: true`, never public; its window is the household's own network, as item 67's tailnet side; doing it needs a Paperless token made at install, worth it only with a test like the nightly's) **Paperless-AI 4's setup window (after N37)**: the install could call
     `POST /api/setup` itself with a user and password from `.env`, as the
     nightly test does, so the window closes the moment it starts.
 72. (done: N39) **Gluetun's control server on the shared network**: its HTTP control
@@ -692,7 +692,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     export`): payee and note text from a bank file that starts with `=`,
     `+`, `-` or `@` becomes a formula when the CSV is opened (formula
     injection). Prefix such cells with `'`, or say so beside the export.
-78. **Apps that are local but still on the shared network**: N35 keeps
+78. (done: N40) **Apps that are local but still on the shared network**: N35 keeps
     Dozzle and beets off the tailnet and the domain, and N36 moves Dozzle
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the

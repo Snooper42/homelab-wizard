@@ -163,3 +163,23 @@ func TestGluetunsControlServerIsItsOwn(t *testing.T) {
 		t.Errorf("Gluetun's control server listens on %q: every app on the shared network can stop the VPN or read its address; set HTTP_CONTROL_SERVER_ADDRESS to 127.0.0.1:8000", addr)
 	}
 }
+
+// An app with no sign-in of its own (local: true) answers whoever reaches
+// it, so beyond this computer's own port it is on no network another app
+// shares: never the shared homelab network, where every app could read it
+// (backlog item 78; Dozzle was N36, beets after it).
+func TestAppsWithoutASignInAreOnNoSharedNetwork(t *testing.T) {
+	n := 0
+	for _, a := range load(t).Apps {
+		if !a.Local() {
+			continue
+		}
+		n++
+		if a.NetworkMode != "" || joins(a, "homelab") {
+			t.Errorf("%s has no sign-in but is on the shared homelab network (%v %s): every app there can open it", a.ID, a.Networks, a.NetworkMode)
+		}
+	}
+	if n < 2 {
+		t.Errorf("only %d apps without a sign-in: the test no longer sees them", n)
+	}
+}

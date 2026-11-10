@@ -17,6 +17,9 @@ networks:
   default:
     name: homelab
     external: true
+  # beets' own: it has no sign-in, so no other app shares its network (its
+  # published port is this computer's alone).
+  music-tagging: {}
 
 services:
   navidrome:
@@ -90,6 +93,7 @@ services:
     ports:
       # No sign-in of its own: this computer only, whatever BIND_IP says.
       - 127.0.0.1:${BEETS_PORT:-8337}:8337
+    networks: [music-tagging]
     volumes:
       - ./data/appdata/beets:/config
       - type: bind
