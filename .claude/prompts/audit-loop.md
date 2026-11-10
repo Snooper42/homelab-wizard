@@ -1407,6 +1407,18 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
   only looks at once (the safe way) while the command says it "may do
   more than look until" a date long past. A cap (a year, say) would say
   so plainly.
+- **Two smoke cases time out on a busy CI runner** (Nov 10, on #569 and
+  #570, PRs that change no screen; each passed on re-run):
+  - "Tidy Up on a new Mac with the drive away: two things, not nine"
+    (`app/preview/shoot.mjs`, about line 2703) waits only 3 s for the
+    row to come back after Cancel, where its neighbours allow 5 s. It
+    failed twice in dark mode.
+  - "Finances: a typed transaction links itself to the planned payment
+    it pays" timed out at 5 s waiting for `Looks like Peloton`, once in
+    light mode.
+
+  Worth finding what each waits on (a re-fetch, an animation) rather
+  than only raising the timeout.
 
 ## For Account 2
 
