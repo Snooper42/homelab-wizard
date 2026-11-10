@@ -197,7 +197,7 @@ services:
 		"monitor is an admin app and must not be public",
 		"cams: its tmpfs volume at /tmp/cache stops the backup's SQLite copy",
 		`category "nope"`,
-		`does not join the shared "homelab" network`,
+		`joins neither the shared "homelab" network nor homelab-front`,
 		`helper: goes_with names "ghost", not another app`,
 		`helper: goes_with names "helper", not another app`,
 		"helper: goes_with monitor says nothing on what it brings",

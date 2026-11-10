@@ -206,6 +206,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Nextcloud and Firefly III see who you really are:** they used to believe any device at home that claimed, in a header, to be someone else, once Settings let the apps listen on the home network. Now they believe only the proxy and Tailscale, from a small network of their own.
 - **Paperless waits for its first account before going on the internet:** a fresh Paperless lets whoever signs up first become its admin, so with a domain a stranger could have claimed it before you made your account. It now stays home only until its account exists, as Immich, Navidrome and the other public apps already did.
 - **Dozzle and beets stay on this computer:** the two apps without a sign-in of their own no longer follow Settings › Apps listen on to the home network.
 - **Tdarr's setup in plain words:** when Tdarr isn't installed, setting it up for Tidy Up's libraries now says to install it from **Choose apps › Tdarr**, as the app calls that screen, instead of the old *Choose stacks (Media automation)*.

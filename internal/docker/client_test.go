@@ -251,6 +251,10 @@ func TestTheTunnelsNetworkIsMadeBeforeAnythingStarts(t *testing.T) {
 	if !slices.Contains(f.Calls, want) {
 		t.Errorf("starting a project did not make the tunnel's network (%s): %v", want, f.Calls)
 	}
+	front := "network create " + FrontNetwork + " --subnet " + FrontSubnet + " --ip-range " + FrontRange
+	if !slices.Contains(f.Calls, front) {
+		t.Errorf("starting a project did not make the front network (%s): %v", front, f.Calls)
+	}
 	if len(f.Streamed) != 1 {
 		t.Errorf("compose ran %d times", len(f.Streamed))
 	}

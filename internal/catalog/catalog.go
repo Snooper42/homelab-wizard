@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Snooper42/homelab-wizard/internal/compose"
+	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/host"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
@@ -695,9 +696,10 @@ func (c *Catalog) Validate(declared map[string]bool) []Issue {
 			}
 		}
 		// A local app (no sign-in of its own) gets no proxy host, so it
-		// needn't join the network every app shares (Dozzle stays off it).
-		if a.File != c.Files[0] && a.HasWeb() && !a.Local() && a.NetworkMode == "" && shared != "" && !joins(a, shared) {
-			errf("%s: has a web UI but does not join the shared %q network, so the proxy cannot reach it", a.ID, shared)
+		// needn't join the network every app shares (Dozzle stays off it);
+		// one that trusts the proxy's address is on the front network instead.
+		if a.File != c.Files[0] && a.HasWeb() && !a.Local() && a.NetworkMode == "" && shared != "" && !joins(a, shared) && !joins(a, docker.FrontNetwork) {
+			errf("%s: has a web UI but joins neither the shared %q network nor %s, so the proxy cannot reach it", a.ID, shared, docker.FrontNetwork)
 		}
 		for _, p := range a.Ports {
 			for _, part := range []string{p.HostIP, p.Host, p.Container} {

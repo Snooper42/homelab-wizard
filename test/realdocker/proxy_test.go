@@ -6,6 +6,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -250,10 +251,59 @@ func TestTheProxyBlocksABannedAddress(t *testing.T) {
 		t.Errorf("a container's own X-Forwarded-For reached the app behind the proxy: %q", got)
 	}
 	t.Log("the apps behind the proxy are told one address, the one the proxy settled on")
+
+	// Backlog item 68: Nextcloud and Firefly III trust only the proxy's
+	// fixed address on the front network, and are on no other network the
+	// proxy shares. So the proxy is at that address there, and reaches an
+	// app that is on the front network alone (from there, its one address
+	// on it); Docker's gateway, where an app's own port is reached from,
+	// is another address.
+	inspect := docker(t, "inspect", "-f", `{{(index .NetworkSettings.Networks "`+frontNetwork+`").IPAddress}}`, l.container("nginx-proxy-manager"))
+	if strings.TrimSpace(inspect) != frontProxyAddress {
+		t.Errorf("the proxy is at %q on %s, not the %s the apps trust", strings.TrimSpace(inspect), frontNetwork, frontProxyAddress)
+	}
+	gateway := strings.TrimSpace(docker(t, "network", "inspect", "-f", "{{range .IPAM.Config}}{{.Gateway}}{{end}}", frontNetwork))
+	if gateway == frontProxyAddress || gateway == frontServeAddress {
+		t.Errorf("%s's gateway is %s, an address the apps trust", frontNetwork, gateway)
+	}
+	const frontHost, frontName = "front.proxy.test", "homelab-realdocker-front"
+	t.Cleanup(func() { _, _ = exec.Command("docker", "rm", "-f", frontName).CombinedOutput() })
+	docker(t, "run", "-d", "--name", frontName, "--network", frontNetwork, "alpine:3", "sh", "-c",
+		`while true; do { printf 'HTTP/1.1 200 OK\r\nContent-Length: 5\r\nConnection: close\r\n\r\nfront'; sleep 2; } | nc -l -p 8080 >> /tmp/requests; done`)
+	front := map[string]any{
+		"domain_names": []string{frontHost}, "forward_scheme": "http", "forward_host": frontName, "forward_port": 8080,
+		"access_list_id": 0, "certificate_id": 0, "meta": map[string]any{}, "advanced_config": "", "locations": []any{},
+		"block_exploits": false, "caching_enabled": false, "allow_websocket_upgrade": false, "http2_support": false, "hsts_enabled": false, "hsts_subdomains": false, "ssl_forced": false,
+	}
+	if err := request(http.MethodPost, l.url("nginx-proxy-manager")+"/api/nginx/proxy-hosts", front, nil, "Authorization", "Bearer "+tok); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "an app on the front network alone, through the proxy", 2*time.Minute, func() error {
+		req, _ := http.NewRequest(http.MethodGet, proxy+"/?n=front", nil)
+		req.Host = frontHost
+		resp, err := web.Do(req)
+		if err != nil {
+			return err
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK || string(body) != "front" {
+			return fmt.Errorf("%d %q", resp.StatusCode, body)
+		}
+		return nil
+	})
+	t.Log("the proxy reaches the front network's apps from the one address they trust")
 }
 
 // The tunnel's own network and cloudflared's address on it (internal/docker).
 const (
 	tunnelNetwork = "homelab-tunnel"
 	tunnelAddress = "198.18.89.2"
+)
+
+// The front network and the addresses on it the apps trust (internal/docker).
+const (
+	frontNetwork      = "homelab-front"
+	frontProxyAddress = "198.18.89.18"
+	frontServeAddress = "198.18.89.19"
 )

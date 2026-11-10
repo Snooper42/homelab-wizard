@@ -287,7 +287,7 @@ func (h *homelab) removeEverythingElse(ctx context.Context, client *docker.Clien
 	out, _ = run("network", "ls", "--format", "{{.Name}}")
 	n = 0
 	for _, name := range strings.Fields(string(out)) {
-		if name == "bridge" || name == "host" || name == "none" || name == "homelab" || name == docker.TunnelNetwork {
+		if name == "bridge" || name == "host" || name == "none" || name == "homelab" || name == docker.TunnelNetwork || name == docker.FrontNetwork {
 			continue
 		}
 		if _, err := run("network", "rm", name); err == nil {
