@@ -15,7 +15,7 @@ package companion
 //     and is taken once.
 //
 // Through the tunnel the phone may only look: a method that changes
-// something, the household's settings, a stream, pairing, and the frontend
+// something (Finances' edits too), the household's settings, a stream, pairing, and the frontend
 // are never served there. Wrong attempts lock a phone, and an address, out
 // for a while.
 
@@ -327,7 +327,10 @@ func (s *Server) tunnelCall(r *http.Request, d Device, req TunnelRequest) Tunnel
 	if !ok {
 		return TunnelAnswer{Status: http.StatusNotFound, Error: "not on the phone: use Homelab Wizard on the computer"}
 	}
-	if m.Change || m.Private || m.Stream != nil || m.Call == nil {
+	// Finances' edit level is how their writes are guarded (SaveFinances
+	// and the like aren't marked Change, so a look-only phone may still
+	// keep its own budget): never through the tunnel.
+	if m.Change || m.Private || m.Stream != nil || m.Call == nil || m.Finances == FinancesEdit {
 		return TunnelAnswer{Status: http.StatusForbidden, Error: "away from home the phone only looks: this waits until you're home"}
 	}
 	// Sealed end to end, so as private as the tailnet.

@@ -368,3 +368,22 @@ func mustJSON(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
 }
+
+// Away from home the phone only looks (ADR-0023), Finances included: a
+// phone allowed to edit Finances at home still only reads them through the
+// tunnel, since the methods that write them aren't marked Change.
+func TestTheTunnelNeverChangesFinances(t *testing.T) {
+	team := newCFTeam(t)
+	s, h := tunnelServer(t, &team.acc)
+	phone, _ := pairForTunnel(t, h, s.Store, "127.0.0.1:50000", false, FinancesEdit)
+	good := team.pass(t, team.key, nil)
+	now := time.Now()
+	body := phone.sealed(t, now, "FinancesRead")
+	if a := phone.opened(t, throughCF(h, TunnelPath, good, body), body); a.Status != http.StatusOK || a.Result != "the plan" {
+		t.Fatalf("Finances to look at through the tunnel: %+v", a)
+	}
+	body = phone.sealed(t, now, "FinancesChange")
+	if a := phone.opened(t, throughCF(h, TunnelPath, good, body), body); a.Status != http.StatusForbidden || a.Result != nil {
+		t.Fatalf("a Finances change through the tunnel, from a phone allowed to edit them: %+v", a)
+	}
+}
