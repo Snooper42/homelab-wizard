@@ -666,22 +666,22 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     on the version, and `:latest` floats. qBittorrent shares its network
     namespace, so `HTTP_CONTROL_SERVER_ADDRESS=127.0.0.1:8000`, or an auth
     file, keeps it to qBittorrent. Write the test first, as for N27.
-73. **The database dumps in the backup's staging folder**
+73. (done: holds, Nov 10) **The database dumps in the backup's staging folder**
     (`/staging/databases`, every app's data, Vaultwarden's included): file
     and folder modes on the host, who else on the machine can read them
     between runs, and whether a failed run leaves them behind.
-74. **The ntfy token in Duplicati's alert URL**
+74. (done: holds, Nov 10) **The ntfy token in Duplicati's alert URL**
     (`http://ntfy:80/duplicati-alerts?auth=…`):
     - It is kept in each job's settings, so it shows in Duplicati's own
       page, its exports and its logs.
     - Is the token publish-only on that one topic?
     - What does someone holding it get?
-75. **Beszel's agent on the host network**: it listens on
+75. (done: holds, Nov 10) **Beszel's agent on the host network**: it listens on
     `BESZEL_AGENT_PORT` (45876) on every interface, guarded by `KEY` alone.
     Check what it answers without the key, whether it can listen on
     loopback where the hub runs on the same machine, and how the key is
     made and kept.
-76. **Kopia's server**:
+76. (done: holds, Nov 10) **Kopia's server**:
     - `KOPIA_SERVER_PASSWORD` for user `admin` over plain HTTP. The port is
       this machine's own unless "listen on the network" is on. Does it go
       over the tailnet in clear?
