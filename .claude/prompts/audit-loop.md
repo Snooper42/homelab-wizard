@@ -638,7 +638,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
         by anyone on the tailnet first. That matters on a tailnet shared
         with family or friends. Use the same claim check before the serve
         listener, or say so on the app's page.
-68. **Apps that trust forwarded headers from everyone**: Nextcloud has
+68. (open, a decision; looked at Nov 10: only with Settings › Apps listen on the home network, as `BIND_IP` defaults to this computer; Pocket ID's `TRUST_PROXY: "true"` is the same; narrowing to the proxy needs its address on `homelab`, which Docker picks, and OrbStack's networks are 192.168.x like many homes, so a careless list would make every visitor the proxy) **Apps that trust forwarded headers from everyone**: Nextcloud has
     `TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8`, and Firefly
     III and its importer have `TRUSTED_PROXIES: "**"`. Through the proxy,
     N21 now hands them one address. But with "listen on the network" on,
@@ -647,7 +647,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     to the port still picks its address (brute-force limits). Firefly also
     trusts `X-Forwarded-Host`, which builds reset links. Narrow both to the
     proxy, and prove it with a realdocker case.
-69. **Every app that reads the client's address**: list each one and the
+69. (done: holds after N21; the proxy overwrites both headers) **Every app that reads the client's address**: list each one and the
     header it reads (Vaultwarden `IP_HEADER`, Nextcloud, Firefly, Immich,
     Paperless, Pocket ID, Uptime Kuma). Add a catalog test that each reads
     a header the proxy overwrites (`X-Real-IP`) or a chain it cannot
