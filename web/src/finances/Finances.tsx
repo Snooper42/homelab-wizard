@@ -64,7 +64,17 @@ export interface FinancesProps {
   investments?: NetWorthProps['invest'];
 }
 
-const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Pay'], ['worth', 'Net worth']];
+const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calendar'], ['transactions', 'Transactions'], ['reports', 'Reports'], ['recurring', 'Recurring'], ['pay', 'Paychecks'], ['worth', 'Net worth']];
+
+/**
+ * The tabs in four: what happened (Spending: Transactions, Reports) and what
+ * is coming (Plan: Calendar, Recurring, Paychecks) each a tab with its pages
+ * in a second row under it, the first page opening with it. Each page keeps
+ * its own name inside (`tab`), so every way into one still opens it.
+ */
+const groups: [string, string, string[]][] = [['overview', 'Dashboard', ['overview']], ['spending', 'Spending', ['transactions', 'reports']],
+  ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth']]];
+const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(tab)) || groups[0];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
 /**
@@ -128,7 +138,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
         </div>
       </div>
-      <Segmented label="View" value={tab} pick={pickTab} options={tabs} />
+      <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(groups.find(([k]) => k === g)![2][0])} options={groups.map(([k, label]) => [k, label] as [string, string])} />
+      {groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={tab} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
           : !v ? <Empty>Reading…</Empty>
