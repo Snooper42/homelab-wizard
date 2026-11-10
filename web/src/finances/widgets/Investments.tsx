@@ -188,6 +188,8 @@ function HoldingHistory({ v, h, cur }: { v: finance.View; h: finance.Holding; cu
   const each = (n: number) => (h.shares > 0 ? (amountsHidden() ? money(0) : moneyIn(n / h.shares, cur)) : '');
   const facts = h.shares > 0 ? <>
     <p class="fx-sub">A share is worth {each(h.value)} now; they cost {each(h.paid)} each on average.</p>
+    {h.recounted && <p class="fx-sub fx-recounted">Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales.</p>}
+    {h.doubtful && <p class="fx-sub fx-doubtful">This looks wrong: check {h.symbol} in Ghostfolio. It's worth over a hundred times what was paid, and its buys and sales couldn't be read.</p>}
     {h.quoted && <p class="fx-sub fx-quoted">Ghostfolio has no prices of its own for {h.symbol} yet, so its worth is today's price Ghostfolio looked up. Ghostfolio was asked to gather its prices; once it has, they're its own.</p>}
   </> : null;
   if (pts.length < 2) {

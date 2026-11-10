@@ -52,6 +52,13 @@ type Fake struct {
 	// Behind: an account's worth (GET /account) leaves out the newest buy
 	// or sale, as Ghostfolio's does until it has worked it out again.
 	Behind bool
+
+	// Held: how many shares of a symbol the holdings answer says, in
+	// every account, in place of what its buys and sales add up to, as a
+	// Ghostfolio's own count can be off for a symbol it has no prices
+	// for; NoActivities: listing the buys and sales fails (500).
+	Held         map[string]float64
+	NoActivities bool
 }
 
 // New starts a fake with these accounts (each an id, name and currency).
@@ -124,6 +131,9 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		}
 		out := []map[string]any{}
 		for sym, n := range held {
+			if off, ok := f.Held[sym]; ok {
+				n = off
+			}
 			out = append(out, map[string]any{"assetProfile": map[string]any{"symbol": sym, "name": sym + " Inc"}, "quantity": n, "investment": invested(paid[sym], f.Unpriced), "valueInBaseCurrency": worthOf(n, paid[sym], f.Unpriced)})
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{"holdings": out})
@@ -157,6 +167,8 @@ func (f *Fake) serve(w http.ResponseWriter, r *http.Request) {
 		f.Activities = append(f.Activities, a)
 		w.WriteHeader(http.StatusCreated)
 		_, _ = w.Write([]byte("{}"))
+	case path == "/activities" && r.Method == http.MethodGet && f.NoActivities:
+		w.WriteHeader(http.StatusInternalServerError)
 	case path == "/activities" && r.Method == http.MethodGet:
 		id := r.URL.Query().Get("accounts")
 		out := []map[string]any{}
