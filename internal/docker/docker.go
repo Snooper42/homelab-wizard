@@ -659,15 +659,47 @@ func ParseInspect(data []byte) ([]Container, error) {
 	return out, nil
 }
 
+// The tunnel's own network (N21): cloudflared alone, at TunnelAddress, and
+// the proxy, which takes a visitor's address from CF-Connecting-IP only
+// when the request comes from TunnelAddress (dockerfiles/npm-crowdsec
+// homelab-init.sh). Its subnet is fixed, from a range homes and Docker do
+// not hand out (RFC 2544's), and Docker gives the proxy an address from
+// TunnelRange, so TunnelAddress is cloudflared's whatever starts first.
+const (
+	TunnelNetwork = "homelab-tunnel"
+	TunnelSubnet  = "198.18.89.0/29"
+	TunnelRange   = "198.18.89.4/30"
+	TunnelAddress = "198.18.89.2"
+)
+
+// fixedNetworks are the external networks made with settings of their
+// own, and the settings.
+var fixedNetworks = map[string][]string{
+	TunnelNetwork: {"--subnet", TunnelSubnet, "--ip-range", TunnelRange},
+}
+
 // EnsureNetwork creates an external network if it does not exist yet.
 func (c *Client) EnsureNetwork(ctx context.Context, name string) (created bool, err error) {
 	if _, err := c.Runner.Output(ctx, c.Bin, "network", "inspect", name); err == nil {
 		return false, nil
 	}
-	if _, err := c.Runner.Output(ctx, c.Bin, "network", "create", name); err != nil {
+	if _, err := c.Runner.Output(ctx, c.Bin, append([]string{"network", "create", name}, fixedNetworks[name]...)...); err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// ensureFixedNetworks makes the networks with fixed settings before a
+// project starts: an install made before one existed has none, and the
+// proxy's project names it, however the project is started (up, update,
+// heal, a rollback).
+func (c *Client) ensureFixedNetworks(ctx context.Context) error {
+	for name := range fixedNetworks {
+		if _, err := c.EnsureNetwork(ctx, name); err != nil {
+			return fmt.Errorf("making the %s network (%s): %w", name, strings.Join(fixedNetworks[name], " "), err)
+		}
+	}
+	return nil
 }
 
 // Tag gives an image (by ID or reference) another reference.
@@ -794,6 +826,11 @@ func (p Project) ComposeArgs(profiles []string) []string {
 
 // Compose runs `docker compose <args>` attached to the terminal.
 func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args ...string) error {
+	if len(args) > 0 && (args[0] == "up" || args[0] == "create" || args[0] == "start" || args[0] == "restart") {
+		if err := c.ensureFixedNetworks(ctx); err != nil {
+			return err
+		}
+	}
 	all := p.ComposeArgs(profiles)
 	if c.Progress != "" {
 		all = append([]string{all[0], "--progress", c.Progress}, all[1:]...)

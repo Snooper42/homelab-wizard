@@ -31,6 +31,18 @@ RUN set -eux; \
     test -f /etc/nginx/lualib/crowdsec.lua; \
     test -f /etc/nginx/lualib/resty/http.lua
 
+# N21: the apps behind the proxy see the one address the proxy settled on
+# (the tunnel's visitor, or the device itself), never a chain the client
+# began: NPM appends the client's own X-Forwarded-For, which an app that
+# trusts its proxy then reads as the visitor. The build fails if NPM moves
+# the line, rather than quietly keeping the chain.
+RUN set -eux; \
+    for f in /etc/nginx/nginx.conf /etc/nginx/conf.d/include/proxy.conf; do \
+        grep -q 'X-Forwarded-For *\$proxy_add_x_forwarded_for;' "$f"; \
+        sed -i 's/\(X-Forwarded-For *\)\$proxy_add_x_forwarded_for;/\1$remote_addr;/' "$f"; \
+        if grep -q 'proxy_add_x_forwarded_for' "$f"; then exit 1; fi; \
+    done
+
 COPY crowdsec_openresty.conf /etc/nginx/conf.d/crowdsec_openresty.conf
 COPY homelab-init.sh /usr/local/bin/homelab-init.sh
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
@@ -124,4 +125,135 @@ func TestTheProxyBlocksABannedAddress(t *testing.T) {
 		return nil
 	})
 	t.Logf("the bouncer pulls from CrowdSec; a ban on %s got 403 through the proxy, and lifting it let ntfy through again", client)
+
+	// N21: the visitor's address in CF-Connecting-IP is taken from the
+	// tunnel's own address alone (cloudflared's fixed place on its own
+	// network), never from a device at home or another container.
+	npm := l.container("nginx-proxy-manager")
+	seenAs := func(mark string) string {
+		t.Helper()
+		var addr string
+		waitFor(t, "the proxy's log of request "+mark, time.Minute, func() error {
+			logs := docker(t, "exec", npm, "sh", "-c", "cat /data/logs/proxy-host-*_access.log")
+			m := regexp.MustCompile(`\?n=`+mark+`" \[Client ([0-9a-fA-F.:]+)\]`).FindAllStringSubmatch(logs, -1)
+			if m == nil {
+				return fmt.Errorf("not in the log yet: %s", tail(logs, 3))
+			}
+			addr = m[len(m)-1][1]
+			return nil
+		})
+		return addr
+	}
+	// from sends one request to the proxy from a container on network (at
+	// ip, when given) claiming to be visitor, and gives its HTTP status.
+	from := func(network, ip, visitor, mark string) string {
+		t.Helper()
+		args := []string{"run", "--rm", "--network", network}
+		if ip != "" {
+			args = append(args, "--ip", ip)
+		}
+		args = append(args, "alpine:3", "sh", "-c",
+			"wget -S -q -O /dev/null --header 'Host: "+proxyTestHost+"' --header 'CF-Connecting-IP: "+visitor+"' 'http://nginx-proxy-manager/v1/health?n="+mark+"' 2>&1 | head -1 || true")
+		return docker(t, args...)
+	}
+	from(tunnelNetwork, tunnelAddress, "203.0.113.9", "tunnel")
+	if got := seenAs("tunnel"); got != "203.0.113.9" {
+		t.Errorf("a request from the tunnel's address naming visitor 203.0.113.9 was seen as %s", got)
+	}
+	from("homelab", "", "203.0.113.10", "neighbour")
+	if got := seenAs("neighbour"); got == "203.0.113.10" {
+		t.Errorf("a container on the homelab network chose the address the proxy sees (%s)", got)
+	}
+	from(tunnelNetwork, "", "203.0.113.11", "stranger")
+	if got := seenAs("stranger"); got == "203.0.113.11" {
+		t.Errorf("a container on the tunnel's network, not at its address, chose the address the proxy sees (%s)", got)
+	}
+	req, _ := http.NewRequest(http.MethodGet, proxy+"/v1/health?n=home", nil)
+	req.Host = proxyTestHost
+	req.Header.Set("CF-Connecting-IP", "203.0.113.12")
+	if resp, err := web.Do(req); err == nil {
+		resp.Body.Close()
+	}
+	if got := seenAs("home"); got == "203.0.113.12" {
+		t.Errorf("a device at home (the published port) chose the address the proxy sees (%s)", got)
+	}
+	// A ban on a visitor reaches them through the tunnel, and only them.
+	docker(t, "exec", crowdsec, "cscli", "decisions", "add", "--ip", "203.0.113.9", "--duration", "5m", "--reason", "nightly tunnel ban test")
+	waitFor(t, "403 through the tunnel for the banned visitor", 2*time.Minute, func() error {
+		if out := from(tunnelNetwork, tunnelAddress, "203.0.113.9", "banned"); !strings.Contains(out, "403") {
+			return fmt.Errorf("%s", out)
+		}
+		return nil
+	})
+	if out := from(tunnelNetwork, tunnelAddress, "203.0.113.13", "other"); !strings.Contains(out, "200") {
+		t.Errorf("another visitor through the tunnel was refused while one was banned: %s", out)
+	}
+	docker(t, "exec", crowdsec, "cscli", "decisions", "delete", "--ip", "203.0.113.9")
+	t.Log("the proxy takes the visitor's address from the tunnel's address only; a device at home and other containers are seen as themselves")
+
+	// And the apps behind it get that one address in X-Forwarded-For, never
+	// a chain the client began (NPM appends the client's own): an echo app
+	// that keeps every request's headers, behind a proxy host of its own.
+	const echoHost, echoName = "echo.proxy.test", "homelab-realdocker-echo"
+	t.Cleanup(func() { _, _ = exec.Command("docker", "rm", "-f", echoName).CombinedOutput() })
+	docker(t, "run", "-d", "--name", echoName, "--network", "homelab", "alpine:3", "sh", "-c",
+		`while true; do { printf 'HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok'; sleep 2; } | nc -l -p 8080 >> /tmp/requests; done`)
+	echo := map[string]any{
+		"domain_names": []string{echoHost}, "forward_scheme": "http", "forward_host": echoName, "forward_port": 8080,
+		"access_list_id": 0, "certificate_id": 0, "meta": map[string]any{}, "advanced_config": "", "locations": []any{},
+		"block_exploits": false, "caching_enabled": false, "allow_websocket_upgrade": false, "http2_support": false, "hsts_enabled": false, "hsts_subdomains": false, "ssl_forced": false,
+	}
+	if err := request(http.MethodPost, l.url("nginx-proxy-manager")+"/api/nginx/proxy-hosts", echo, nil, "Authorization", "Bearer "+tok); err != nil {
+		t.Fatal(err)
+	}
+	sendXFF := func(network, ip, mark string, headers ...string) {
+		t.Helper()
+		args := []string{"run", "--rm", "--network", network}
+		if ip != "" {
+			args = append(args, "--ip", ip)
+		}
+		cmd := "wget -q -T 5 -O /dev/null --header 'Host: " + echoHost + "'"
+		for _, h := range headers {
+			cmd += " --header '" + h + "'"
+		}
+		args = append(args, "alpine:3", "sh", "-c", cmd+" 'http://nginx-proxy-manager/?n="+mark+"' 2>&1 || true")
+		docker(t, args...)
+	}
+	// forwardedFor sends the request until the echo app has it (it listens
+	// again a moment after each answer), and gives its X-Forwarded-For.
+	forwardedFor := func(mark, network, ip string, headers ...string) string {
+		t.Helper()
+		var got string
+		waitFor(t, "the echo app's copy of request "+mark, 2*time.Minute, func() error {
+			sendXFF(network, ip, mark, headers...)
+			reqs := docker(t, "exec", echoName, "cat", "/tmp/requests")
+			for _, req := range strings.Split(reqs, "GET ")[1:] {
+				if !strings.Contains(req, "?n="+mark+" ") {
+					continue
+				}
+				for _, line := range strings.Split(req, "\n") {
+					if k, v, ok := strings.Cut(line, ":"); ok && strings.EqualFold(k, "X-Forwarded-For") {
+						got = strings.TrimSpace(v)
+						return nil
+					}
+				}
+				return fmt.Errorf("request %s has no X-Forwarded-For:\n%s", mark, req)
+			}
+			return fmt.Errorf("not there yet: %s", tail(reqs, 5))
+		})
+		return got
+	}
+	if got := forwardedFor("visitor", tunnelNetwork, tunnelAddress, "CF-Connecting-IP: 203.0.113.21", "X-Forwarded-For: 198.51.100.7"); got != "203.0.113.21" {
+		t.Errorf("an app behind the proxy was told the tunnel's visitor is %q, not 203.0.113.21 alone", got)
+	}
+	if got := forwardedFor("chain", "homelab", "", "X-Forwarded-For: 203.0.113.22"); strings.Contains(got, "203.0.113.22") || strings.Contains(got, ",") {
+		t.Errorf("a container's own X-Forwarded-For reached the app behind the proxy: %q", got)
+	}
+	t.Log("the apps behind the proxy are told one address, the one the proxy settled on")
 }
+
+// The tunnel's own network and cloudflared's address on it (internal/docker).
+const (
+	tunnelNetwork = "homelab-tunnel"
+	tunnelAddress = "198.18.89.2"
+)

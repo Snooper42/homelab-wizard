@@ -17,6 +17,12 @@ networks:
   default:
     name: homelab
     external: true
+  # The tunnel's own network: cloudflared alone, at a fixed address, and
+  # the proxy, which takes a visitor's address only from that address
+  # (N21; internal/docker TunnelNetwork, made before any project starts).
+  tunnel:
+    name: homelab-tunnel
+    external: true
 
 volumes:
   # Named as when they were in homelab_core, so their data stays.
@@ -48,6 +54,7 @@ services:
     # not, and with Docker run as you it is this machine's address.
     extra_hosts:
       - host.docker.internal:${HOST_GATEWAY:-host-gateway}
+    networks: [default, tunnel]
     volumes:
       - ./data/appdata/nginx-proxy-manager/data:/data
       - ./data/appdata/nginx-proxy-manager/letsencrypt:/etc/letsencrypt

@@ -152,6 +152,9 @@ func (h *homelab) uninstall(ctx context.Context, args []string) error {
 		if _, err := client.Runner.Output(ctx, client.Bin, "network", "rm", "homelab"); err == nil {
 			u.OK("removed the homelab network")
 		}
+		if _, err := client.Runner.Output(ctx, client.Bin, "network", "rm", docker.TunnelNetwork); err == nil {
+			u.OK("removed the tunnel's network")
+		}
 	}
 
 	if l, err := schedule.For(h.host); err == nil {
