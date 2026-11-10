@@ -35,6 +35,8 @@ The household's document archive. Scan or drop a file in, and Paperless reads it
    ./homelab compose paperless exec paperless python3 manage.py createsuperuser
    ```
 
+   Until an account exists, Paperless's own sign-up page makes whoever opens it first a superuser. So the homelab keeps it off the internet until then, and Set up the domain puts it on once the account is made.
+
 2. Sign in at `https://<TAILSCALE_HOST>:8010` in Home mode, or `https://docs.example.com` with a domain, turn on two-factor authentication (Profile), and create accounts for the family.
 3. Add correspondents, document types, and tags as documents arrive; let matching learn from them.
 4. Drop files into `appdata/paperless/consume` (or upload in the web UI or the mobile apps) to import.

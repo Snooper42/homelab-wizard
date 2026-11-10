@@ -206,6 +206,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Paperless waits for its first account before going on the internet:** a fresh Paperless lets whoever signs up first become its admin, so with a domain a stranger could have claimed it before you made your account. It now stays home only until its account exists, as Immich, Navidrome and the other public apps already did.
 - **Dozzle and beets stay on this computer:** the two apps without a sign-in of their own no longer follow Settings › Apps listen on to the home network.
 - **Tdarr's setup in plain words:** when Tdarr isn't installed, setting it up for Tidy Up's libraries now says to install it from **Choose apps › Tdarr**, as the app calls that screen, instead of the old *Choose stacks (Media automation)*.
 - **What you own and owe in a small window:** at the largest text sizes, an account's change since the start (*↓ $5.60k*) squeezed its name to a word a line (*Toyot / a / Finan / cial*). In a narrow list the change now steps aside, as the Since card above sums it up.
