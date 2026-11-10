@@ -652,7 +652,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     Paperless, Pocket ID, Uptime Kuma). Add a catalog test that each reads
     a header the proxy overwrites (`X-Real-IP`) or a chain it cannot
     extend.
-70. **Sign-ups left open after the first account** (Linkwarden, Karakeep,
+70. (done: holds, Nov 10; every public app is closed after its first account) **Sign-ups left open after the first account** (Linkwarden, Karakeep,
     Memos, Wallos, Immich: "turn sign-ups off" in their docs). Can the
     install close them by setting (Linkwarden
     `NEXT_PUBLIC_DISABLE_REGISTRATION`, Karakeep `DISABLE_SIGNUPS`, and so
