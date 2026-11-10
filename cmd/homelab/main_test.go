@@ -447,6 +447,32 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		t.Fatalf("second run exit %d:\n%s", code, out)
 	}
 
+	// A home-only list that can't be read publishes nothing: it isn't taken
+	// as an empty one, and it isn't overwritten.
+	list := applist.HomeOnly.Path(root)
+	saved, _ := os.ReadFile(list)
+	if err := os.WriteFile(list, []byte(`{"apps": ["vaultwar`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out, code = homelabCmd(t, root, "", "domain", "setup", "example.com", "--ip", "192.168.1.10", "--apply")
+	for _, r := range ingress {
+		if r["hostname"] == "passwords.example.com" {
+			t.Errorf("a home-only app was published while its list couldn't be read (exit %d):\n%s", code, out)
+		}
+	}
+	if code == 0 || !strings.Contains(out, "home-only.json") {
+		t.Errorf("an unreadable home-only list should stop Set up the domain (exit %d):\n%s", code, out)
+	}
+	if out, code = homelabCmd(t, root, "", "away", "off", "immich"); code == 0 {
+		t.Errorf("away off over an unreadable list (exit %d):\n%s", code, out)
+	}
+	if data, _ := os.ReadFile(list); string(data) != `{"apps": ["vaultwar` {
+		t.Errorf("the unreadable list was overwritten: %s", data)
+	}
+	if err := os.WriteFile(list, saved, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	// A newly installed app gets its host by itself, without a prompt.
 	n := len(npmSrv.Hosts)
 	for id, h := range npmSrv.Hosts {

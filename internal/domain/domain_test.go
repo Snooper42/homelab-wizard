@@ -540,3 +540,73 @@ func TestUnpublish(t *testing.T) {
 		t.Errorf("a second time should change nothing: %+v %v (puts %d)", un, err, puts)
 	}
 }
+
+// A home-only app is still on the internet when the household's own
+// wildcard record (*.example.com) points at the tunnel and a rule of the
+// tunnel's sends any name on (a wildcard rule, or a catch-all that isn't a
+// plain refusal): Unpublish leaves both, as the household's, and says the
+// app still opens away from home. With the catch-all refusing, it doesn't.
+func TestUnpublishSaysWhenAWildcardStillCarriesIt(t *testing.T) {
+	const proxy = "http://nginx-proxy-manager:80"
+	for name, c := range map[string]struct {
+		rules  []map[string]any
+		record string
+		still  bool
+	}{
+		"a catch-all to the proxy":    {[]map[string]any{{"hostname": "photos.example.com", "service": proxy}, {"service": proxy}}, "tun-1.cfargotunnel.com", true},
+		"a wildcard rule":             {[]map[string]any{{"hostname": "*.example.com", "service": proxy}, {"service": "http_status:404"}}, "tun-1.cfargotunnel.com", true},
+		"a catch-all that refuses":    {[]map[string]any{{"hostname": "photos.example.com", "service": proxy}, {"service": "http_status:404"}}, "tun-1.cfargotunnel.com", false},
+		"a wildcard pointing at home": {[]map[string]any{{"service": proxy}}, "", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			config := map[string]any{"ingress": c.rules}
+			records := []map[string]any{{"id": "r1", "name": "photos.example.com", "type": "CNAME", "content": "tun-1.cfargotunnel.com"}}
+			if c.record != "" {
+				records = append(records, map[string]any{"id": "w1", "name": "*.example.com", "type": "CNAME", "content": c.record})
+			} else {
+				records = append(records, map[string]any{"id": "w1", "name": "*.example.com", "type": "A", "content": "192.168.1.10"})
+			}
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ok := func(v any) { _ = json.NewEncoder(w).Encode(map[string]any{"success": true, "result": v}) }
+				body, _ := io.ReadAll(r.Body)
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/configurations") && r.Method == http.MethodGet:
+					ok(map[string]any{"config": config})
+				case strings.HasSuffix(r.URL.Path, "/configurations") && r.Method == http.MethodPut:
+					var in map[string]map[string]any
+					_ = json.Unmarshal(body, &in)
+					config = in["config"]
+					ok(nil)
+				case r.URL.Path == "/zones":
+					ok([]map[string]string{{"id": "z1"}})
+				case r.URL.Path == "/zones/z1/dns_records" && r.Method == http.MethodGet:
+					var hits []map[string]any
+					for _, rec := range records {
+						if rec["name"] == r.URL.Query().Get("name") {
+							hits = append(hits, rec)
+						}
+					}
+					ok(hits)
+				case strings.HasPrefix(r.URL.Path, "/zones/z1/dns_records/") && r.Method == http.MethodDelete:
+					id := strings.TrimPrefix(r.URL.Path, "/zones/z1/dns_records/")
+					if id == "w1" {
+						t.Error("the household's own wildcard record was deleted")
+					}
+					ok(map[string]string{"id": id})
+				default:
+					w.WriteHeader(404)
+				}
+			}))
+			defer srv.Close()
+			cf := NewCloudflare("tok")
+			cf.BaseURL = srv.URL
+			un, err := Unpublish(context.Background(), cf, Tunnel{AccountID: "acct", ID: "tun-1"}, "example.com", []string{"photos.example.com"}, proxy)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := len(un.StillPublic) == 1 && strings.HasPrefix(un.StillPublic[0], "photos.example.com "); got != c.still {
+				t.Errorf("still public: %q, want %v", un.StillPublic, c.still)
+			}
+		})
+	}
+}

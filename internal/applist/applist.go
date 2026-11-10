@@ -10,6 +10,8 @@ package applist
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -89,6 +91,24 @@ func (l List) Load(root string, env map[string]string) []string {
 	return union(kept, l.fromEnv(env))
 }
 
+// Read is the record in root alone, for a list whose loss would do harm
+// (HomeOnly: an app on the internet): none when there is no record, and an
+// error when there is one that can't be read, never an empty list.
+func (l List) Read(root string) ([]string, error) {
+	data, err := os.ReadFile(l.Path(root))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var r record
+	if err := json.Unmarshal(data, &r); err != nil {
+		return nil, fmt.Errorf("%s: %w", l.Path(root), err)
+	}
+	return r.Apps, nil
+}
+
 // Set puts an app on the list (at its end) or takes it off.
 func (l List) Set(root, app string, on bool) error {
 	return l.change(root, func(apps []string) []string {
@@ -116,8 +136,18 @@ func (l List) Carry(root string, env *envfile.File) (bool, error) {
 	return true, nil
 }
 
+// change rewrites the record; one that is there but can't be read is
+// left as it is, and said, rather than replaced by what change makes of
+// nothing.
 func (l List) change(root string, change func([]string) []string) error {
-	return lockedfile.Update(l.Path(root), 0o600, func(old []byte) ([]byte, bool) {
+	var bad error
+	err := lockedfile.Update(l.Path(root), 0o600, func(old []byte) ([]byte, bool) {
+		if len(old) > 0 {
+			if err := json.Unmarshal(old, &record{}); err != nil {
+				bad = fmt.Errorf("%s can't be read (%w): fix or remove it first", l.Path(root), err)
+				return nil, false
+			}
+		}
 		apps := change(union(parse(old), nil))
 		if apps == nil {
 			apps = []string{}
@@ -125,4 +155,8 @@ func (l List) change(root string, change func([]string) []string) error {
 		data, err := json.MarshalIndent(record{Apps: apps}, "", "  ")
 		return append(data, '\n'), err == nil
 	})
+	if err != nil {
+		return err
+	}
+	return bad
 }

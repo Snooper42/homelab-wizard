@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -309,8 +310,14 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		if tunnel, err = domain.ParseTunnelToken(envMap["TUNNEL_TOKEN"]); err != nil {
 			return err
 		}
+		// Unread, the household's home-only list would publish every app
+		// on it: nothing is published until it can be read.
+		homeOnly, err := applist.HomeOnly.Read(h.root)
+		if err != nil {
+			return fmt.Errorf("the home-only list can't be read, so no app is put on the internet: %w", err)
+		}
 		for _, r := range routes {
-			if r.App.Public() && h.homeOnly(r.App) {
+			if r.App.Public() && slices.Contains(homeOnly, r.App.ID) {
 				kept = append(kept, r)
 				continue
 			}
@@ -552,6 +559,9 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		}
 		for _, why := range un.Left {
 			u.Warn("%s: left as it is in Cloudflare DNS, as the homelab didn't make it", why)
+		}
+		for _, why := range un.StillPublic {
+			u.Warn("%s: the homelab didn't make them, so it leaves them; change them in Cloudflare to keep it home only", why)
 		}
 		if un.IngressChanged || len(un.Removed) > 0 {
 			u.OK("Cloudflare Tunnel: took %d home-only hostname(s) off the internet", len(un.Removed))

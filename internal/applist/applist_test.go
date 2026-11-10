@@ -71,3 +71,31 @@ func TestCarryAnEmptyKey(t *testing.T) {
 		t.Errorf("a record was made for nothing: %v", err)
 	}
 }
+
+// A record that is there but can't be read is never taken as an empty
+// list by Read, nor replaced by Set.
+func TestAnUnreadableRecordIsKept(t *testing.T) {
+	root := t.TempDir()
+	if apps, err := HomeOnly.Read(root); err != nil || apps != nil {
+		t.Fatalf("no record: %v %v", apps, err)
+	}
+	if err := HomeOnly.Set(root, "paperless", true); err != nil {
+		t.Fatal(err)
+	}
+	if apps, err := HomeOnly.Read(root); err != nil || len(apps) != 1 || apps[0] != "paperless" {
+		t.Fatalf("read: %v %v", apps, err)
+	}
+	broken := []byte(`{"apps": ["paper`)
+	if err := os.WriteFile(HomeOnly.Path(root), broken, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := HomeOnly.Read(root); err == nil {
+		t.Error("a broken record read as a list")
+	}
+	if err := HomeOnly.Set(root, "immich-server", true); err == nil {
+		t.Error("a broken record was written over")
+	}
+	if data, _ := os.ReadFile(HomeOnly.Path(root)); string(data) != string(broken) {
+		t.Errorf("record now: %s", data)
+	}
+}
