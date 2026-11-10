@@ -688,7 +688,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     - What does `config/kopia/start.sh` pass (`--insecure`,
       `--without-password`)?
     - How is the password made and kept?
-77. **CSV exports a spreadsheet would run** (`internal/export`, `homelab db
+77. (done: holds, Nov 10; Finances' CSVs already escape, the data export is for import) **CSV exports a spreadsheet would run** (`internal/export`, `homelab db
     export`): payee and note text from a bank file that starts with `=`,
     `+`, `-` or `@` becomes a formula when the CSV is opened (formula
     injection). Prefix such cells with `'`, or say so beside the export.
