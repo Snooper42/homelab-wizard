@@ -697,6 +697,54 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the
     catalog, not by hand.
+79. **The git checkout's upgrade trusts the branch tip alone**
+    (`internal/upgrade`, `homelab upgrade`): `git pull --ff-only` from
+    origin over HTTPS, then the new version's `up` runs. N29 made release
+    downloads prove where they were built; a source checkout has no such
+    proof. It is done by hand and lists the commits first. Could it check
+    that the new tip is signed by a key the checkout already trusts (`git
+    verify-commit` with an allowed-signers file), or move only to tags
+    whose release was attested? Low.
+80. (done: hardening, Nov 10) **A desktop alert's title read as one of
+    notify-send's options** (`internal/notify/desktop.go`): the title
+    went as a bare argument, so one starting with `-` was an option. Now
+    `--` comes first; `TestDesktop` sends `-u critical …` as a title.
+81. **The tray opens app addresses without a scheme check**
+    (`app/tray/tray.go` `openURL`: `open`, `xdg-open`, `rundll32` on each
+    entry's URL from Status). The URLs come from the catalog and its
+    ports, but the desktop app's `Open` refuses anything but
+    http/https/mailto (`webLink`). Give the tray the same check, and a test.
+82. **The calendar feed's key in the proxy's access log**: through the
+    tunnel, `/finances.ics?key=…` passes Nginx Proxy Manager, whose access
+    log keeps the request URI (the `npm-logs` volume), and CrowdSec reads
+    that log. Who can read it, for how long, and could the key travel
+    where the log drops it, or the line be redacted?
+83. **The engine socket's mode** (`internal/engine` `SocketPath`): its
+    folder is made 0700, but what is the socket file's own mode? And what
+    happens with the `os.TempDir()` fallback on a machine other accounts
+    share?
+84. **Bank files brought in**:
+    - Size and row limits on a file picked on the computer and on one
+      arriving from the phone (Import a file), so a huge CSV or a deeply
+      nested OFX cannot hang the app.
+    - Go's XML expands no entities; check the limits it does have.
+85. **What a custom app's compose may still widen** (`stacks/custom`;
+    item 57 covered privileges): `network_mode: host`, `pid: host`, a
+    published port on `0.0.0.0` ignoring `BIND_IP`, `extra_hosts`. Does
+    `validate` warn for each, as it does for the socket?
+86. **The away API's Cloudflare Access credential**: how the phones'
+    credential is made, where it is kept (on the phone and the computer),
+    what it opens beyond `homelab-away`, and how a lost phone's is taken
+    back.
+87. **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
+    `pocket-id:v2`): the nightly update takes each new image, and these
+    hold every password and every sign-in. The socket holders are pinned
+    (M6). This is a decision: pinning delays their own security fixes. A
+    digest check against the release, or a short hold with the release
+    notes shown, may sit between the two.
+88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
+    reads every request and decides who is banned. Should it be pinned
+    with the socket holders, or is its own hub update the trust anchor?
 
 ### Security done
 
