@@ -294,8 +294,9 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		}
 	}
 
-	// Public hostnames through the tunnel.
-	var public []domain.Route
+	// Public hostnames through the tunnel; the household's home-only apps
+	// are kept off it, and taken off when they are on it.
+	var public, kept []domain.Route
 	var tunnel domain.Tunnel
 	tunnelNote := ""
 	switch {
@@ -309,6 +310,10 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 			return err
 		}
 		for _, r := range routes {
+			if r.App.Public() && h.homeOnly(r.App) {
+				kept = append(kept, r)
+				continue
+			}
 			if ok, why := h.mayPublish(ctx, r.App, envMap); ok {
 				public = append(public, r)
 			} else if why != "" {
@@ -351,6 +356,13 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 	}
 	if tunnelNote != "" {
 		u.Info("%s", tunnelNote)
+	}
+	if len(kept) > 0 {
+		var apps []*catalog.App
+		for _, r := range kept {
+			apps = append(apps, r.App)
+		}
+		u.Info("home only, kept off the internet: %s %s", homeOnlyNames(apps), u.Dim("(Reach it away from home, on each one's page)"))
 	}
 	scheme := "http"
 	if o.ssl || h.hasWildcard(ctx, envMap, dom) {
@@ -527,6 +539,25 @@ func (h *homelab) domainSetup(ctx context.Context, args []string) error {
 		}
 	}
 
+	if len(kept) > 0 {
+		var hosts []string
+		for _, r := range kept {
+			hosts = append(hosts, r.Host)
+		}
+		cf := domain.NewCloudflare(o.cfToken)
+		cf.BaseURL = cloudflareAPI
+		un, err := domain.Unpublish(ctx, cf, tunnel, dom, hosts, tunnelService)
+		if err != nil {
+			return fmt.Errorf("taking the home-only apps off the internet: %w", err)
+		}
+		for _, why := range un.Left {
+			u.Warn("%s: left as it is in Cloudflare DNS, as the homelab didn't make it", why)
+		}
+		if un.IngressChanged || len(un.Removed) > 0 {
+			u.OK("Cloudflare Tunnel: took %d home-only hostname(s) off the internet", len(un.Removed))
+		}
+	}
+
 	u.Title("Your apps")
 	rows = nil
 	for _, r := range results {
@@ -600,8 +631,13 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 	}
 	report := detect.Analyze(h.catalog, containers)
 	var public []string
+	var homeOnly []*catalog.App
 	for _, a := range h.catalog.Apps {
 		if st, _ := report.State(a.ID); st != detect.Running {
+			continue
+		}
+		if a.Public() && h.homeOnly(a) {
+			homeOnly = append(homeOnly, a)
 			continue
 		}
 		if ok, why := h.mayPublish(ctx, a, env); ok {
@@ -618,6 +654,9 @@ func (h *homelab) domainStatus(ctx context.Context) error {
 		u.Info("public apps: none running")
 	default:
 		u.Info("public apps: %s", strings.Join(public, ", "))
+	}
+	if len(homeOnly) > 0 {
+		u.Info("home only: %s", homeOnlyNames(homeOnly))
 	}
 	if st, _ := report.State(npmID); st != detect.Running {
 		u.Warn("Nginx Proxy Manager is not running")

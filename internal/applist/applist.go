@@ -33,6 +33,11 @@ var (
 	// Pinned are the apps at the top of Status and of the menu bar's Open
 	// an app, in the order pinned (homelab pin|unpin <app>).
 	Pinned = List{File: "pinned.json", Key: "APPS_PINNED"}
+	// HomeOnly are the public apps kept off the internet: no hostname in
+	// the tunnel or in Cloudflare's DNS, only on the home network (homelab
+	// away off|on <app>, an app's page › Reach it away from home). A public
+	// app installed new starts on it. It was never a .env key.
+	HomeOnly = List{File: "home-only.json"}
 
 	Moved = []List{AlertsOff, Pinned}
 )

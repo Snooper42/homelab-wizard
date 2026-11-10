@@ -158,3 +158,63 @@ func Publish(ctx context.Context, cf *Cloudflare, t Tunnel, zone string, hosts [
 	}
 	return pub, nil
 }
+
+// Unpublication is what Unpublish did: whether the tunnel's rules changed,
+// the hostnames whose DNS record it removed, and those it left, with why.
+type Unpublication struct {
+	IngressChanged bool
+	Removed        []string
+	Left           []string
+}
+
+// Unpublish takes hosts back off the internet, undoing only what Publish
+// did: each one's rule in the tunnel that sends it to service, and its
+// CNAME record when that points at this tunnel. A rule someone added for
+// another service, and a record of another kind or pointing elsewhere,
+// are the household's own and are left (said in Left). The rest of the
+// tunnel's settings are kept. Once its record is gone, the name falls to
+// the home record (*.domain, this machine's address at home), so it
+// still opens at home and leads nowhere away from it.
+func Unpublish(ctx context.Context, cf *Cloudflare, t Tunnel, zone string, hosts []string, service string) (Unpublication, error) {
+	var un Unpublication
+	gone := map[string]bool{}
+	for _, h := range hosts {
+		gone[strings.ToLower(h)] = true
+	}
+	config, rules, err := cf.TunnelIngress(ctx, t)
+	if err != nil {
+		return un, err
+	}
+	kept := make([]map[string]any, 0, len(rules))
+	for _, r := range rules {
+		h, _ := r["hostname"].(string)
+		s, _ := r["service"].(string)
+		if h != "" && gone[strings.ToLower(h)] && s == service {
+			un.IngressChanged = true
+			continue
+		}
+		kept = append(kept, r)
+	}
+	if un.IngressChanged {
+		if err := cf.SetTunnelIngress(ctx, t, config, kept); err != nil {
+			return un, err
+		}
+	}
+	zoneID, err := cf.ZoneID(ctx, zone)
+	if err != nil {
+		return un, err
+	}
+	for _, h := range hosts {
+		h = strings.ToLower(h)
+		removed, why, err := cf.removeCNAME(ctx, zoneID, h, t.Target())
+		if err != nil {
+			return un, err
+		}
+		if removed {
+			un.Removed = append(un.Removed, h)
+		} else if why != "" {
+			un.Left = append(un.Left, h+" "+why)
+		}
+	}
+	return un, nil
+}

@@ -45,6 +45,9 @@ type Plan struct {
 	Warnings   []string
 	Problems   []string
 	Env        *envfile.File
+	// HomeOnly are the public apps this install brings new: they start
+	// home only (applist.HomeOnly), off the internet until turned on.
+	HomeOnly []*catalog.App
 	// Memory is what every app running after the install uses, against
 	// the room this machine has for them, in MB (Room 0: not known).
 	Memory Memory
@@ -141,6 +144,9 @@ func Build(in Inputs, sel *selector.Selection) (*Plan, error) {
 			}
 		}
 		plan.Start = append(plan.Start, a)
+		if state == detect.NotInstalled && a.Public() {
+			plan.HomeOnly = append(plan.HomeOnly, a)
+		}
 		if a.Meta.Warning != "" {
 			plan.Warnings = append(plan.Warnings, a.Name()+": "+a.Meta.Warning)
 		}
@@ -482,6 +488,15 @@ func ApplyWithProgress(ctx context.Context, p *Plan, client *docker.Client, c *c
 			}
 			if err := p.Env.Save(); err != nil {
 				return fmt.Errorf("writing .env: %w", err)
+			}
+			// A public app new here starts home only: it goes on the
+			// internet only once someone turns Reach it away from home on.
+			if c.Root != "" {
+				for _, a := range p.HomeOnly {
+					if err := applist.HomeOnly.Set(c.Root, a.ID, true); err != nil {
+						return fmt.Errorf("keeping %s home only: %w", a.Name(), err)
+					}
+				}
 			}
 		case "folders":
 			for _, d := range p.Dirs {

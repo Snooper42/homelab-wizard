@@ -443,3 +443,100 @@ func TestTheCompanionsProxyHostVouchesForHTTPS(t *testing.T) {
 		t.Errorf("a second run changes nothing: %+v %v", res, err)
 	}
 }
+
+// Unpublish takes a home-only app's hostname out of the tunnel and its
+// record out of Cloudflare's DNS, and only what Publish put there: a rule
+// for another host or service, and a record pointing anywhere but the
+// tunnel (or of another kind), stay as they are; doing it again changes
+// nothing.
+func TestUnpublish(t *testing.T) {
+	const proxy = "http://nginx-proxy-manager:80"
+	config := map[string]any{
+		"ingress": []map[string]any{
+			{"hostname": "docs.example.com", "service": proxy, "originRequest": map[string]any{"noTLSVerify": true}},
+			{"hostname": "photos.example.com", "service": proxy},
+			{"hostname": "nas.example.com", "service": "http://192.168.1.5:5000"},
+			{"hostname": "passwords.example.com", "service": "http://elsewhere:80"},
+			{"service": "http_status:404"},
+		},
+		"warp-routing": map[string]any{"enabled": false},
+	}
+	records := []map[string]any{
+		{"id": "r1", "name": "docs.example.com", "type": "CNAME", "content": "tun-1.cfargotunnel.com"},
+		{"id": "r2", "name": "photos.example.com", "type": "CNAME", "content": "tun-1.cfargotunnel.com"},
+		{"id": "r3", "name": "passwords.example.com", "type": "CNAME", "content": "other.example.net"},
+		{"id": "r4", "name": "books.example.com", "type": "A", "content": "203.0.113.4"},
+	}
+	var deleted []string
+	puts := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ok := func(v any) { _ = json.NewEncoder(w).Encode(map[string]any{"success": true, "result": v}) }
+		body, _ := io.ReadAll(r.Body)
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/cfd_tunnel/tun-1/configurations") && r.Method == http.MethodGet:
+			ok(map[string]any{"config": config})
+		case strings.HasSuffix(r.URL.Path, "/cfd_tunnel/tun-1/configurations") && r.Method == http.MethodPut:
+			puts++
+			var in map[string]map[string]any
+			_ = json.Unmarshal(body, &in)
+			config = in["config"]
+			ok(nil)
+		case r.URL.Path == "/zones":
+			ok([]map[string]string{{"id": "z1"}})
+		case r.URL.Path == "/zones/z1/dns_records" && r.Method == http.MethodGet:
+			var hits []map[string]any
+			for _, rec := range records {
+				if rec["name"] == r.URL.Query().Get("name") {
+					hits = append(hits, rec)
+				}
+			}
+			ok(hits)
+		case strings.HasPrefix(r.URL.Path, "/zones/z1/dns_records/") && r.Method == http.MethodDelete:
+			id := strings.TrimPrefix(r.URL.Path, "/zones/z1/dns_records/")
+			deleted = append(deleted, id)
+			for i, rec := range records {
+				if rec["id"] == id {
+					records = append(records[:i], records[i+1:]...)
+					break
+				}
+			}
+			ok(map[string]string{"id": id})
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer srv.Close()
+	cf := NewCloudflare("tok")
+	cf.BaseURL = srv.URL
+	tun := Tunnel{AccountID: "acct", ID: "tun-1"}
+	ctx := context.Background()
+	hosts := []string{"Docs.example.com", "passwords.example.com", "books.example.com"}
+	un, err := Unpublish(ctx, cf, tun, "example.com", hosts, proxy)
+	if err != nil || !un.IngressChanged {
+		t.Fatalf("unpublish: %+v %v", un, err)
+	}
+	var left []string
+	raw, _ := json.Marshal(config["ingress"])
+	var rules []map[string]any
+	_ = json.Unmarshal(raw, &rules)
+	for _, r := range rules {
+		h, _ := r["hostname"].(string)
+		left = append(left, h+" "+r["service"].(string))
+	}
+	if got := strings.Join(left, ", "); got != "photos.example.com "+proxy+", nas.example.com http://192.168.1.5:5000, passwords.example.com http://elsewhere:80,  http_status:404" {
+		t.Errorf("ingress left: %s", got)
+	}
+	if config["warp-routing"] == nil {
+		t.Error("other tunnel settings must be kept")
+	}
+	if strings.Join(deleted, ",") != "r1" || strings.Join(un.Removed, ",") != "docs.example.com" {
+		t.Errorf("deleted %v, said %v: only the record pointing at the tunnel", deleted, un.Removed)
+	}
+	if strings.Join(un.Left, " | ") != "passwords.example.com points at other.example.net | books.example.com has its own A record" {
+		t.Errorf("left: %q", un.Left)
+	}
+	un, err = Unpublish(ctx, cf, tun, "example.com", hosts, proxy)
+	if err != nil || un.IngressChanged || len(un.Removed) != 0 || puts != 1 || len(deleted) != 1 {
+		t.Errorf("a second time should change nothing: %+v %v (puts %d)", un, err, puts)
+	}
+}

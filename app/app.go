@@ -1534,8 +1534,10 @@ func (a *App) StopUntil(id, until string) error {
 // page: "updates" (the nightly update; off holds it, homelab updates
 // hold|release), "sundays" (its update window: Sundays only, or every
 // night, homelab updates days), "alerts" (the watchdog's alerts about it, homelab
-// notify on|off), or "pinned" (at the top of Status and the menu bar's
-// Open an app, homelab pin|unpin). Status says the new state.
+// notify on|off), "pinned" (at the top of Status and the menu bar's
+// Open an app, homelab pin|unpin), or "away" (a public app reached away
+// from home through the tunnel, or home only, homelab away on|off).
+// Status says the new state.
 func (a *App) SetAppSetting(id, setting string, on bool) error {
 	c, err := a.catalog()
 	if err != nil {
@@ -1572,6 +1574,11 @@ func (a *App) SetAppSetting(id, setting string, on bool) error {
 		args = []string{"unpin", id}
 		if on {
 			args[0] = "pin"
+		}
+	case "away":
+		args = []string{"away", "off", id}
+		if on {
+			args[1] = "on"
 		}
 	default:
 		return fmt.Errorf("unknown setting %q", setting)

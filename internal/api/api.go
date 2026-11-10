@@ -307,6 +307,10 @@ type AppStatus struct {
 	// Pinned: at the top of Status and of the menu bar's Open an app
 	// (homelab pin); Status lists the apps in their pinned order.
 	Pinned bool `json:"pinned,omitempty"`
+	// Reach is how a public app may be reached once the domain has the
+	// Cloudflare tunnel: "away" (from anywhere, through the tunnel) or
+	// "home" (home only, homelab away off); "" for every other app.
+	Reach string `json:"reach,omitempty"`
 	// WaitingFor is the drive a stopped app's folders are on while that
 	// drive is not plugged in ("/Volumes/Hobbies"); it starts once it is.
 	WaitingFor string `json:"waitingFor,omitempty"`

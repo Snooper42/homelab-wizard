@@ -39,6 +39,7 @@ declare namespace api {
     updateDays?: string[];
     quiet?: boolean;
     pinned?: boolean;
+    reach?: string;
     waitingFor?: string;
     stoppedAt?: string;
     stoppedWhy?: string;

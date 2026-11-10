@@ -46,7 +46,8 @@
         "Watchdog"
       ],
       "features": [
-        "tunnel"
+        "tunnel",
+        "away"
       ]
     }
   }

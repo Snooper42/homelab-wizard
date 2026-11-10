@@ -34,7 +34,7 @@ func TestMeSaysWhatTheComputerCanDo(t *testing.T) {
 	if err := json.NewDecoder(resp.Body).Decode(&me); err != nil || me.Computer == nil {
 		t.Fatalf("me: %v %+v", err, me)
 	}
-	if me.Computer.Version != "0.27.9" || !slices.Equal(me.Computer.Methods, []string{"AppAction", "Catalog", "Status"}) || !slices.Equal(me.Computer.Features, []string{"tunnel"}) {
+	if me.Computer.Version != "0.27.9" || !slices.Equal(me.Computer.Methods, []string{"AppAction", "Catalog", "Status"}) || !slices.Equal(me.Computer.Features, []string{"tunnel", "away"}) {
 		t.Fatalf("computer: %+v", me.Computer)
 	}
 	// Through the tunnel, the same.

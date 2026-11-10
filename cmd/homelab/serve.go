@@ -629,8 +629,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			return nil, log, err
 		}},
 		// An app's own settings, from its page: its nightly update, the
-		// watchdog's alerts about it, and whether it is pinned to the top
-		// (as the computer's SetAppSetting).
+		// watchdog's alerts about it, whether it is pinned to the top, and
+		// whether a public one is reached away from home (as the
+		// computer's SetAppSetting).
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id, setting string
 			var on bool
@@ -656,6 +657,8 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 				cmd = []string{"notify", map[bool]string{true: "on", false: "off"}[on], id}
 			case "pinned":
 				cmd = []string{map[bool]string{true: "pin", false: "unpin"}[on], id}
+			case "away":
+				cmd = []string{"away", map[bool]string{true: "on", false: "off"}[on], id}
 			default:
 				return nil, nil, fmt.Errorf("unknown setting %q", setting)
 			}
