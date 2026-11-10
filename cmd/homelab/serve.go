@@ -295,7 +295,12 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// What was done (internal/history), to look at: [app, search, before],
 		// each optional. The owner's phones only (a member's isn't one of
 		// them), every line through phoneLog's redaction.
-		"History": read(func(_ context.Context, args []json.RawMessage) (any, error) {
+		"History": read(func(ctx context.Context, args []json.RawMessage) (any, error) {
+			// It names the household's phones and what each did: not for a
+			// wall screen, which anyone walking past can read.
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				return nil, errors.New("a wall screen does not show what was done: use a phone, or Homelab Wizard on the computer")
+			}
 			var f history.Filter
 			if len(args) > 0 {
 				_ = json.Unmarshal(args[0], &f.App)

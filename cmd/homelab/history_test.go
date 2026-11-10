@@ -84,4 +84,9 @@ func TestHistoryFromAPhone(t *testing.T) {
 	if m := methods["History"]; m.Change || m.Member {
 		t.Fatalf("History is the owner's phones', to look at: %+v", m)
 	}
+	// A wall screen, which anyone walking past can read, doesn't get it.
+	wall := companion.WithCaller(context.Background(), companion.Device{ID: "w1", Name: "Kitchen", Kiosk: true})
+	if v, _, err := methods["History"].Call(wall, nil); err == nil {
+		t.Fatalf("a wall screen read what was done: %v", v)
+	}
 }
