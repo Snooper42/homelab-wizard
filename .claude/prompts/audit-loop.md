@@ -1484,7 +1484,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 From task 2, **Something is down: find out what, and fix it** (Nov 6, against the fake backend: Mealie stopped). Pictures in `docs/images/usability/`.
 
 1. **A stopped app's page never says why, or what to do if Start does not help** (`t2-mealie-page.png`). The page shows "▲ Stopped", a Start button, and a log of old, normal lines from Oct 10 ("Starting server on :3456"). Nothing says whether it was stopped on purpose, stopped for a while, crashed, or kept restarting, nor what to try next. *Fixed looks like:* a line under the title saying why it stopped and since when (stopped by you or for a while; crashed with its last error line; kept restarting and was stopped), and what to do (Start; or Restart, then the log's error; or "it needs X"). *Smoke case that fails today:* the app page for an app the watchdog stopped in a restart loop names the reason and when.
-2. **On the phone, a stopped app offers nothing and says nothing** (`t2-phone-status.png`, `t2-phone-mealie-page.png`). Every running app has Open; Mealie has no button and no word, on the list or on its page. *Fixed looks like:* a phone that may make changes gets Start; one that only looks says "Start it from the computer". *Smoke case:* the phone's Status (look-only and may-change) for a stopped app shows the action or the sentence.
+2. (done: the phone's web page in #524; the iPhone app on Nov 10, after #575) **On the phone, a stopped app offers nothing and says nothing** (`t2-phone-status.png`, `t2-phone-mealie-page.png`). Every running app has Open; Mealie has no button and no word, on the list or on its page. *Fixed looks like:* a phone that may make changes gets Start; one that only looks says "Start it from the computer". *Smoke case:* the phone's Status (look-only and may-change) for a stopped app shows the action or the sentence.
 3. **The screens disagree about checks** (`t2-phone-status.png`, `t2-mealie-page.png`).
    - The phone's Status says "Watchdog ✓ All 47 checks passed" while Mealie is stopped and the desktop's "Needs a look" card names it.
    - Mealie's page says "Not checked yet… once Setup turns it on", while Status's header says "Backups and checks on".
@@ -1497,7 +1497,7 @@ From task 2, **Something is down: find out what, and fix it** (Nov 6, against th
    - the Protection card listing scanner names ("vpatch-CVE-2017-9841", "http-probing") and raw addresses.
 
    *Fixed looks like:* plain names ("Choose apps"; "Blocked: someone probing for a known web-server hole"; the subscription sense said). *Smoke case:* the words lint (`app/preview/words.mjs`) refusing "stacks", "baseline", and a raw scenario name on a screen.
-5. **The phone cuts log lines off at the right** (`t2-phone-mealie-page.png`, 390px): "INF Starting server on" ends mid-line with no wrap or scroll hint. *Fixed looks like:* lines wrap, or the box says it scrolls. *Smoke case:* the app page at 390px has no text running out of its box.
+5. (done: the phone's web page wraps them since #524, with its smoke case; the iPhone app's log already wrapped) **The phone cuts log lines off at the right** (`t2-phone-mealie-page.png`, 390px): "INF Starting server on" ends mid-line with no wrap or scroll hint. *Fixed looks like:* lines wrap, or the box says it scrolls. *Smoke case:* the app page at 390px has no text running out of its box.
 
 From task 6, **Pair a partner's phone with only look access, then remove a lost phone** (Nov 6, against the fake backend; `t6-phones.png`):
 
