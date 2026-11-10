@@ -167,7 +167,8 @@ services:
       DOCKER_HOST: tcp://docker-socket-proxy:2375
       DOZZLE_NO_ANALYTICS: "true"
     ports:
-      - ${BIND_IP:-127.0.0.1}:${DOZZLE_PORT:-9998}:8080
+      # No sign-in of its own: this computer only, whatever BIND_IP says.
+      - 127.0.0.1:${DOZZLE_PORT:-9998}:8080
     networks: [default, socket]
     depends_on: [docker-socket-proxy]
     healthcheck:

@@ -591,7 +591,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     and a move file's own apps, N16): `privileged`, `network_mode: host`,
     `pid: host`, Docker's socket, or `/` mounted are taken without a word.
     Name them before it starts, as N16 names its image.
-58. **Apps with no sign-in when `BIND_IP` is the LAN address** (Dozzle,
+58. (done: N35) **Apps with no sign-in when `BIND_IP` is the LAN address** (Dozzle,
     `local: true`, and any app whose port is on `BIND_IP`): which then
     face the whole home network, and whether Settings says so when the
     address is changed.
@@ -601,12 +601,12 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 60. (done: the independent review, Nov 10; holds, now tested) **Databases on the shared network**: every app's database should sit
     on its own project's network, never on `homelab`; a test like
     N27's over the catalog would hold it.
-61. **Vaultwarden on a public name**: `SIGNUPS_ALLOWED` and the admin
+61. (done: holds) **Vaultwarden on a public name**: `SIGNUPS_ALLOWED` and the admin
     page (`ADMIN_TOKEN`, hashed or not) when it goes through the tunnel,
     as N19 asked of the apps with a first account.
-62. **Uptime Kuma's status pages and push URLs** on a public name: what
+62. (done: holds) **Uptime Kuma's status pages and push URLs** on a public name: what
     a stranger can read or post there.
-63. **Homarr's `SECRET_ENCRYPTION_KEY`**: made where, kept 0600, carried
+63. (done: holds) **Homarr's `SECRET_ENCRYPTION_KEY`**: made where, kept 0600, carried
     by which backup, and what Homarr keeps with it (the integrations'
     keys).
 64. **The app's link to the agent on Windows** (the named pipe or local
@@ -615,6 +615,12 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     catch-all someone added): one that sends every hostname to the proxy
     would put each home-only app behind the tunnel; say so when it is
     there (round 58 found the homelab's own catch-all answers 404).
+66. **Dozzle on the shared network**: Dozzle (every container's logs) is
+    on `homelab` (its stack's default), so any app there can read every
+    log at `dozzle:8080` without a sign-in, as N27 was for the socket
+    proxy's environment. It needs no proxy host (`local: true`), so its
+    own network (with a gateway, for its published port) and the socket
+    one may be enough: try it on real Docker.
 
 ### Security done
 

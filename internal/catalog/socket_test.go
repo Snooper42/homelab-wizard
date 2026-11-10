@@ -92,5 +92,24 @@ func TestDatabasesStayOffTheSharedNetwork(t *testing.T) {
 	}
 	if n < 10 {
 		t.Errorf("only %d databases found: the test no longer sees them", n)
+// Backlog item 58: an app with no sign-in of its own (local: Dozzle, with
+// every container's logs, and beets) listens on this computer only, even
+// when Settings › Apps listen on (BIND_IP) is set to the home network's
+// address; otherwise anyone on the Wi-Fi could open it.
+func TestAppsWithoutASignInListenOnThisComputerOnly(t *testing.T) {
+	n := 0
+	for _, a := range load(t).Apps {
+		if !a.Meta.Local {
+			continue
+		}
+		n++
+		for _, p := range a.Ports {
+			if p.HostIP != "127.0.0.1" {
+				t.Errorf("%s has no sign-in of its own, but its port %q listens on %q", a.ID, p.Raw, p.HostIP)
+			}
+		}
+	}
+	if n < 2 {
+		t.Errorf("only %d apps without a sign-in found: the test no longer sees them", n)
 	}
 }
