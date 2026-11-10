@@ -24,13 +24,15 @@ let confirm: TidyConfirm | null = null;
 // A job this window didn't start (the agent's Collect, a terminal's run): followed every few seconds while it holds the lock.
 let running: app.TidyRunning | null = null;
 let following: number | undefined;
+// A job this window didn't start that was asked to stop: when it took the lock.
+let stoppingElsewhere = '';
 const FOLLOW_MS = 3000;
 
 
 function draw() {
   const d = tidyData.value || null;
   mountTidy($('tidyRoot'), {
-    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running, placing,
+    d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running, placing, stoppingElsewhere,
     reload: () => { tidyData.load(); },
     reloadReview: () => { loadReview(); },
     pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); },
@@ -39,6 +41,11 @@ function draw() {
     toggle: (id) => { if (skip.has(id)) skip.delete(id); else skip.add(id); draw(); },
     act: {
       run, stop: () => { if (job && !job.ended) { job.stopping = true; draw(); } go().TidyStop(); },
+      stopElsewhere: (lock) => {
+        stoppingElsewhere = lock.start;
+        draw();
+        Promise.resolve(go().TidyStopElsewhere(lock.pid, lock.start)).catch((e) => { stoppingElsewhere = ''; showError(e); draw(); });
+      },
       ask: (c) => { confirm = c; drawSheet(); $('tidySheet').hidden = false; },
       reveal: (path) => { Promise.resolve(go().TidyReveal(path)).catch(showError); },
       settings: (keys) => (keys?.length ? showSettings(keys) : navigate('settings')),

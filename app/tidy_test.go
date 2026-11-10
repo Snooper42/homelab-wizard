@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	goruntime "runtime"
@@ -629,5 +630,68 @@ func TestTidyUpStaleCarriesTheJobsFlags(t *testing.T) {
 	write(`{"pid":999999,"kind":"tdarr","action":"setup","start":"2026-11-09T03:04:00Z"}`)
 	if d, _ := a.TidyUp(); d.Stale == nil || d.Stale.Flags != nil {
 		t.Errorf("an old lock: %+v", d.Stale)
+	}
+}
+
+// Stop on a job another process runs (tidy-loop.md's queue, item 3): only the job the screen showed, only while that
+// process still holds the lock, asked as Stop asks the window's own. A job other than the one shown is refused, and a
+// process ID another program has since (it started after the lock was written) is never signalled; a job that has
+// ended is nothing to stop.
+func TestTidyStopElsewhereSignalsOnlyTheJobShown(t *testing.T) {
+	if goruntime.GOOS == "windows" {
+		t.Skip("Windows has no interrupt for another process: interrupt ends it, as for the window's own jobs")
+	}
+	a, _ := testApp(t)
+	cmd := exec.Command("sleep", "30")
+	if err := cmd.Start(); err != nil {
+		t.Skip("no sleep here:", err)
+	}
+	t.Cleanup(func() { _ = cmd.Process.Kill() })
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+	pid := cmd.Process.Pid
+	if err := os.MkdirAll(filepath.Dir(media.LockPath(a.root)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write := func(at time.Time) string {
+		data, _ := json.Marshal(media.Lock{PID: pid, Kind: "tv", Action: "collect", Start: at, Flags: []string{}})
+		if err := os.WriteFile(media.LockPath(a.root), data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		var l struct{ Start string }
+		_ = json.Unmarshal(data, &l)
+		return l.Start
+	}
+	stillRuns := func(why string) {
+		select {
+		case <-done:
+			t.Fatalf("%s: it was signalled", why)
+		case <-time.After(200 * time.Millisecond):
+		}
+	}
+	now := time.Now().UTC()
+	shown := write(now)
+	// Another job than the one shown (another start): refused.
+	if err := a.TidyStopElsewhere(pid, now.Add(time.Minute).Format(time.RFC3339Nano)); err == nil {
+		t.Error("another job than the one shown was stopped")
+	}
+	stillRuns("another job")
+	// A lock written an hour before this process started: its PID belongs to another program now.
+	old := write(now.Add(-time.Hour))
+	_ = a.TidyStopElsewhere(pid, old) // nothing of that job is left to stop
+	stillRuns("a reused PID")
+	// The job shown, still running: asked to stop.
+	shown = write(now)
+	if err := a.TidyStopElsewhere(pid, shown); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("not stopped")
+	}
+	// Gone now: nothing to stop, and nothing to say.
+	if err := a.TidyStopElsewhere(pid, shown); err != nil {
+		t.Errorf("an ended job: %v", err)
 	}
 }

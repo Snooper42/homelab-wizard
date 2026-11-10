@@ -1346,6 +1346,7 @@ interface Backend {
     TidySetInbox(arg1: string[], arg2: string): Promise<app.TidyUp>;
     TidySetMediaRoot(arg1: string): Promise<app.TidyUp>;
     TidyStop(): Promise<void>;
+    TidyStopElsewhere(arg1: number, arg2: string): Promise<void>;
     TidyUp(): Promise<app.TidyUp>;
     TrayAtLogin(): Promise<boolean>;
     Uninstall(arg1: app.UninstallOptions): Promise<void>;

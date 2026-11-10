@@ -436,6 +436,12 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       if (!r.lock && M.tidy) M.tidy = { ...M.tidy, lock: undefined };
       return later(r);
     },
+    // Stop on a job this window didn't start: kept in M.tidyStoppedElsewhere; it ends after M.tidyStopSlow ms.
+    TidyStopElsewhere: (pid, start) => {
+      M.tidyStoppedElsewhere = [pid, start];
+      setTimeout(() => { if (M.tidy) M.tidy = { ...M.tidy, lock: undefined }; }, M.tidyStopSlow || 0);
+      return later(null);
+    },
     // M.tidyStopSlow: the engine takes that many ms to reach a safe point after Stop.
     ...(M.tidyStopSlow ? { TidyStop: () => { setTimeout(() => { M.tidyStopped = true; }, M.tidyStopSlow); return later(null); } } : {}),
     // M.tidyUpFails, M.tidyReviewFails: how many reads fail first (then they answer), and M.tidyFailWhy what they say.
