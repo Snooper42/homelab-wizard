@@ -622,6 +622,81 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     proxy's environment. It needs no proxy host (`local: true`), so its
     own network (with a gateway, for its published port) and the socket
     one may be enough: try it on real Docker.
+67. (in part: N38, the public side, with its test; the tailnet side open) **Apps whose first visitor becomes the admin**:
+    - On the internet this holds. `internal/claim` keeps Immich,
+      Audiobookshelf, Komga, Navidrome and Calibre-Web off the tunnel until
+      each has its first account, and Nextcloud and Paperless get theirs
+      from `.env`.
+    - Two things are missing:
+      - A catalog test that every `public: true` app either takes its first
+        account from `.env` (`login:`), has a claim check, or is named as
+        having no accounts (Feishin). Without it, a new public app could
+        slip through.
+      - The tailnet. `tailnet setup` gives every running web app a listener
+        at once, so Firefly III, Linkwarden, Tandoor, Memos, Docmost,
+        Wallos, Ghostfolio, Baikal, Tdarr and Paperless-AI can be claimed
+        by anyone on the tailnet first. That matters on a tailnet shared
+        with family or friends. Use the same claim check before the serve
+        listener, or say so on the app's page.
+68. **Apps that trust forwarded headers from everyone**: Nextcloud has
+    `TRUSTED_PROXIES: 172.16.0.0/12 192.168.0.0/16 10.0.0.0/8`, and Firefly
+    III and its importer have `TRUSTED_PROXIES: "**"`. Through the proxy,
+    N21 now hands them one address. But with "listen on the network" on,
+    the app's own port is reached through Docker's gateway, a trusted
+    private hop, so a device at home that sends `X-Forwarded-For` straight
+    to the port still picks its address (brute-force limits). Firefly also
+    trusts `X-Forwarded-Host`, which builds reset links. Narrow both to the
+    proxy, and prove it with a realdocker case.
+69. **Every app that reads the client's address**: list each one and the
+    header it reads (Vaultwarden `IP_HEADER`, Nextcloud, Firefly, Immich,
+    Paperless, Pocket ID, Uptime Kuma). Add a catalog test that each reads
+    a header the proxy overwrites (`X-Real-IP`) or a chain it cannot
+    extend.
+70. **Sign-ups left open after the first account** (Linkwarden, Karakeep,
+    Memos, Wallos, Immich: "turn sign-ups off" in their docs). Can the
+    install close them by setting (Linkwarden
+    `NEXT_PUBLIC_DISABLE_REGISTRATION`, Karakeep `DISABLE_SIGNUPS`, and so
+    on)? Does Status say so while one is open on a public name?
+71. **Paperless-AI 4's setup window (after N37)**: the install could call
+    `POST /api/setup` itself with a user and password from `.env`, as the
+    nightly test does, so the window closes the moment it starts.
+72. **Gluetun's control server on the shared network**: its HTTP control
+    API (`:8000`; `/v1/publicip/ip`, the forwarded port, `PUT
+    /v1/vpn/status`) answers any container on `homelab`. Its auth depends
+    on the version, and `:latest` floats. qBittorrent shares its network
+    namespace, so `HTTP_CONTROL_SERVER_ADDRESS=127.0.0.1:8000`, or an auth
+    file, keeps it to qBittorrent. Write the test first, as for N27.
+73. **The database dumps in the backup's staging folder**
+    (`/staging/databases`, every app's data, Vaultwarden's included): file
+    and folder modes on the host, who else on the machine can read them
+    between runs, and whether a failed run leaves them behind.
+74. **The ntfy token in Duplicati's alert URL**
+    (`http://ntfy:80/duplicati-alerts?auth=…`):
+    - It is kept in each job's settings, so it shows in Duplicati's own
+      page, its exports and its logs.
+    - Is the token publish-only on that one topic?
+    - What does someone holding it get?
+75. **Beszel's agent on the host network**: it listens on
+    `BESZEL_AGENT_PORT` (45876) on every interface, guarded by `KEY` alone.
+    Check what it answers without the key, whether it can listen on
+    loopback where the hub runs on the same machine, and how the key is
+    made and kept.
+76. **Kopia's server**:
+    - `KOPIA_SERVER_PASSWORD` for user `admin` over plain HTTP. The port is
+      this machine's own unless "listen on the network" is on. Does it go
+      over the tailnet in clear?
+    - What does `config/kopia/start.sh` pass (`--insecure`,
+      `--without-password`)?
+    - How is the password made and kept?
+77. **CSV exports a spreadsheet would run** (`internal/export`, `homelab db
+    export`): payee and note text from a bank file that starts with `=`,
+    `+`, `-` or `@` becomes a formula when the CSV is opened (formula
+    injection). Prefix such cells with `'`, or say so beside the export.
+78. **Apps that are local but still on the shared network**: N35 keeps
+    Dozzle and beets off the tailnet and the domain, and N36 moves Dozzle
+    off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
+    network another app's user can reach, and get the list from the
+    catalog, not by hand.
 
 ### Security done
 
