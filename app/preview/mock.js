@@ -432,6 +432,8 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
     TidyStop: () => { M.tidyStopped = true; return later(null); },
     // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
     TidyLock: () => {
+      // M.tidyLockFails: how many asks fail first (a busy disk, say), then they answer.
+      if (M.tidyLockFails > 0) { M.tidyLockFails--; return Promise.reject(new Error('open data/homelab.media.lock: resource busy')); }
       const r = M.tidyLocks?.length ? M.tidyLocks.shift() : (M.tidy?.lock ? { lock: M.tidy.lock, now: {} } : { now: {} });
       if (!r.lock && M.tidy) M.tidy = { ...M.tidy, lock: undefined };
       return later(r);

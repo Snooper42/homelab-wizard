@@ -1314,6 +1314,17 @@ const smokes = [
     if (!asked || asked[0] !== 4242 || asked[1] !== start) throw new Error(`asked to stop ${JSON.stringify(asked)}`);
     await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 12000 });
   } },
+  // Following a job started elsewhere carries on after a read that fails once (tidy-loop.md's queue, item 6): the next
+  // ask finds it done, and the card goes, with no click.
+  { name: 'Tidy Up: following a job started elsewhere tries again after a read fails', screen: 'tidy', mock: (() => {
+    const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1), flags: [] };
+    return { tidy: { ...tidy, lock }, tidyLockFails: 1, tidyLocks: [{ now: {} }] };
+  })(), run: async (page) => {
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.waitForSelector('#tidyRunning', { timeout: 5000 });
+    // The first ask (3 s in) fails; the next (3 s later) finds it done.
+    await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 12000 });
+  } },
   // A job this window didn't start (the agent's Collect every few minutes) holds the lock: followed, and every button waits.
   { name: 'Tidy Up: a job started elsewhere shows its step and bar, every button waits, and the screen reads again once it is done', screen: 'tidy', mock: (() => {
     const lock = { pid: 4242, kind: 'movies', action: 'collect', start: tidyAt(0.1) };

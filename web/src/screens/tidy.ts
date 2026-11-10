@@ -97,7 +97,8 @@ function follow() {
       if (job && !job.ended) { running = null; return; }
       // Another screen shows: nothing is asked, and it looks again once Tidy Up is back.
       if (!$('tidy').classList.contains('active')) { follow(); return; }
-      try { running = await go().TidyLock(); } catch { running = null; return; }
+      // A read that fails (a busy disk) keeps what was known and asks again on the next tick.
+      try { running = await go().TidyLock(); } catch { follow(); return; }
       if (!running.lock) { running = null; tidyData.load(); }
       draw();
     }, FOLLOW_MS);
