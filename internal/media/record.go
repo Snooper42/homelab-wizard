@@ -189,6 +189,12 @@ func Describe(kind string, run Run) (text, sub string) {
 		return "Lyrics added", plural(num(res["added"]), "song") + " · " + plural(num(res["upgraded"]), "plain one") + " now time-synced"
 	case "music genres":
 		return "Genres folded into yours", plural(num(res["applied"]), "song")
+	case "books review":
+		// It changes nothing (the review page is what to look at), but Books says it was done.
+		if n := num(res["changes"]); n > 0 {
+			return "Books looked over", plural(num(res["books"]), "book") + " · " + commas(n) + " could look tidier"
+		}
+		return "Books looked over", plural(num(res["books"]), "book") + " · nothing to change"
 	case "books apply":
 		return "Books tidied", plural(num(res["changed"]), "book") + " · " + plural(num(res["covers"]), "cover")
 	case "inbox undo":
