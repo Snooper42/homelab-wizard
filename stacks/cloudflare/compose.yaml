@@ -2,14 +2,18 @@
 # through Nginx Proxy Manager (http://nginx-proxy-manager:80), so CrowdSec sees
 # and blocks tunnel traffic too. No router ports are opened.
 #
+# cloudflared is on the tunnel's own network only, at a fixed address: the
+# proxy takes a visitor's address (CF-Connecting-IP) from that address and
+# nowhere else (N21), and the proxy is all the tunnel can reach.
+#
 # `./homelab domain setup` writes the tunnel's public hostnames for every app
 # marked `public: true`; you only create the tunnel and paste its token.
 
 name: homelab_cloudflare
 
 networks:
-  homelab:
-    name: homelab
+  tunnel:
+    name: homelab-tunnel
     external: true
 
 services:
@@ -24,7 +28,9 @@ services:
       options: { max-size: 10m, max-file: "3" }
     environment:
       TUNNEL_TOKEN: ${TUNNEL_TOKEN}
-    networks: [homelab]
+    networks:
+      tunnel:
+        ipv4_address: 198.18.89.2
     x-homelab:
       releases: cloudflare/cloudflared
       name: Cloudflare Tunnel

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -233,5 +234,38 @@ func TestExecRunnerAndFindCLI(t *testing.T) {
 	}
 	if c, err := New(); err != nil || c.Bin != orb {
 		t.Errorf("New: %+v %v", c, err)
+	}
+}
+
+// N21: the tunnel's network is made with its fixed subnet, and before any
+// project starts, so an install made before it existed gets it from
+// whatever starts the proxy next (up, update, heal, a rollback).
+func TestTheTunnelsNetworkIsMadeBeforeAnythingStarts(t *testing.T) {
+	ctx := context.Background()
+	f := &FakeRunner{}
+	c := &Client{Runner: f, Bin: "docker"}
+	if err := c.Compose(ctx, Project{Name: "homelab_network", Dir: t.TempDir()}, nil, "up", "--detach"); err != nil {
+		t.Fatal(err)
+	}
+	want := "network create " + TunnelNetwork + " --subnet " + TunnelSubnet + " --ip-range " + TunnelRange
+	if !slices.Contains(f.Calls, want) {
+		t.Errorf("starting a project did not make the tunnel's network (%s): %v", want, f.Calls)
+	}
+	if len(f.Streamed) != 1 {
+		t.Errorf("compose ran %d times", len(f.Streamed))
+	}
+	f.Calls = nil
+	_ = c.Compose(ctx, Project{Name: "homelab_network", Dir: t.TempDir()}, nil, "up", "--detach")
+	for _, call := range f.Calls {
+		if strings.HasPrefix(call, "network create") {
+			t.Errorf("made again once it is there: %s", call)
+		}
+	}
+	f.Calls = nil
+	_ = c.Compose(ctx, Project{Name: "homelab_network", Dir: t.TempDir()}, nil, "down")
+	for _, call := range f.Calls {
+		if strings.HasPrefix(call, "network ") {
+			t.Errorf("stopping a project touched networks: %s", call)
+		}
 	}
 }

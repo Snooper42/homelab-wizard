@@ -63,7 +63,7 @@ Nginx Proxy Manager listens on 80 and 443 on every address of this machine.
 
 These automatic addresses are LAN only: an install adds proxy hosts, never tunnel hostnames. Publishing an app to the internet stays a deliberate **Set up the domain** (`./homelab domain setup --apply`), which also adds the public apps' tunnel hostnames.
 
-Each proxy host includes `/data/nginx/custom/server_proxy.conf`, which sets `real_ip_header CF-Connecting-IP` so tunnel visitors are logged (and judged by CrowdSec) by their real address. Proxy Manager already trusts private ranges, which include the cloudflared container.
+Each proxy host includes `/data/nginx/custom/server_proxy.conf`, which sets `real_ip_header CF-Connecting-IP` so tunnel visitors are logged (and judged by CrowdSec) by their real address, and `set_real_ip_from 198.18.89.2`, cloudflared's fixed address on the tunnel's own network (`homelab-tunnel`, 198.18.89.0/29, which the CLI makes before any app starts). That line replaces Proxy Manager's own list (every private network), so a device at home or another container sending the header is seen as itself. cloudflared is on `homelab-tunnel` alone and reaches only the proxy; a file the household edited is kept, with a note in the proxy's log to add the line.
 
 ## Docker network
 

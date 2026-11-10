@@ -7,7 +7,12 @@
 #  2. Creates /data/nginx/custom/server_proxy.conf once (NPM includes it in
 #     every proxy host): requests from the Cloudflare Tunnel carry the
 #     visitor's address in CF-Connecting-IP, so logs and CrowdSec see real
-#     clients. LAN requests have no such header and keep their own address.
+#     clients. The header is taken only from cloudflared's fixed address on
+#     the tunnel's own network (198.18.89.2, internal/docker TunnelAddress):
+#     at server level, set_real_ip_from replaces NPM's own list (every
+#     private network), so a device at home or another container is seen
+#     as itself whatever it sends (N21). A file that is still the old text
+#     this image wrote is rewritten; one the household edited is kept.
 #  3. Execs NPM's /init, which must stay PID 1.
 set -eu
 
@@ -43,6 +48,17 @@ else
 fi
 
 custom=/data/nginx/custom/server_proxy.conf
+old_text="# Created by the homelab image (dockerfiles/npm-crowdsec/homelab-init.sh) and
+# included in every proxy host. Your edits are kept.
+# Requests from the Cloudflare Tunnel carry the visitor's address in
+# CF-Connecting-IP; use it so access logs and CrowdSec see real clients.
+real_ip_header CF-Connecting-IP;"
+if [ -e "$custom" ] && [ "$(cat "$custom")" = "$old_text" ]; then
+	echo "homelab-init: server_proxy.conf now takes a visitor's address from the tunnel alone" >&2
+	rm -f "$custom"
+elif [ -e "$custom" ] && ! grep -q '^set_real_ip_from 198\.18\.89\.2;' "$custom"; then
+	echo "homelab-init: server_proxy.conf was edited, so it is kept as it is; add 'set_real_ip_from 198.18.89.2;' to it so only the tunnel can name a visitor's address" >&2
+fi
 if [ ! -e "$custom" ]; then
 	mkdir -p "$(dirname "$custom")"
 	cat > "$custom" <<'EOF'
@@ -50,7 +66,11 @@ if [ ! -e "$custom" ]; then
 # included in every proxy host. Your edits are kept.
 # Requests from the Cloudflare Tunnel carry the visitor's address in
 # CF-Connecting-IP; use it so access logs and CrowdSec see real clients.
+# Taken only from cloudflared's fixed address on the tunnel's own network:
+# here it replaces NPM's list of every private network, so a device at
+# home is seen as itself whatever it sends.
 real_ip_header CF-Connecting-IP;
+set_real_ip_from 198.18.89.2;
 EOF
 fi
 
