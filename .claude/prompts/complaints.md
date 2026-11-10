@@ -8,6 +8,8 @@ Add a complaint from the phone by editing this file on GitHub (github.com/Snoope
 
 ## Finances (Account 1)
 
+- **Investments shows share counts about a thousand times too big** (Nov 10, with a screenshot): every holding's Shares is far more than its own Buys and sales list says, so Worth now, Gain, This month, the chart and the account's balance are all wildly wrong. `handoff.md` section 2.1 has what was found and the fix.
+
 ## Setup and first run (Account 2)
 
 ## Status (Account 2)
