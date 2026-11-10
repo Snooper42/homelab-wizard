@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/compose"
 	"github.com/Snooper42/homelab-wizard/internal/detect"
@@ -101,6 +102,13 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 	for _, id := range notify.LoadQuiet(c.Root, env) {
 		quiet[id] = true
 	}
+	// A public app may be reached away from home once the domain has the
+	// Cloudflare tunnel; the household keeps some home only.
+	homeOnly := map[string]bool{}
+	for _, id := range applist.HomeOnly.Load(c.Root, nil) {
+		homeOnly[id] = true
+	}
+	tunnel := domainName != "" && env["TUNNEL_TOKEN"] != ""
 	for _, a := range c.Apps {
 		if a.Internal() && !all {
 			continue
@@ -164,6 +172,9 @@ func statusOf(ctx context.Context, c *catalog.Catalog, containers []docker.Conta
 		s.UpdateDays = updates.DayNames(days[a.ID])
 		s.Quiet = quiet[a.ID]
 		s.Pinned = pinned[a.ID]
+		if tunnel && a.Public() && (a.ID != "ntfy" || env["NTFY_PUBLISH_TOKEN"] != "") {
+			s.Reach = map[bool]string{true: "home", false: "away"}[homeOnly[a.ID]]
+		}
 		st.Apps = append(st.Apps, s)
 	}
 	if ask {

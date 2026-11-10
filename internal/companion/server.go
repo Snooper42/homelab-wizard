@@ -278,12 +278,13 @@ type Computer struct {
 	Version string   `json:"version"`
 	Methods []string `json:"methods"`
 	// Features beyond the calls: "tunnel" (it answers /api/tunnel, away
-	// from home, once Setup has set it up).
+	// from home, once Setup has set it up); "away" (SetAppSetting takes
+	// "away": a public app reached away from home, or home only).
 	Features []string `json:"features"`
 }
 
 // Features are what this companion serves beyond its methods.
-var Features = []string{"tunnel"}
+var Features = []string{"tunnel", "away"}
 
 func meOf(d Device) Me {
 	return Me{ID: d.ID, Name: d.Name, CanChange: d.CanChange, Finances: d.Finances, Person: d.Person, PersonName: d.PersonName}

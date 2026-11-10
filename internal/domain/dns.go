@@ -465,3 +465,34 @@ func (c *Cloudflare) UpsertHome(ctx context.Context, zoneID, name, ip string) (s
 	}
 	return "created", c.call(ctx, http.MethodPost, fmt.Sprintf("/zones/%s/dns_records", zoneID), rec, nil)
 }
+
+// removeCNAME deletes name's CNAME record when it points at target (the
+// tunnel), and says why one that does not was left; no record, nothing.
+func (c *Cloudflare) removeCNAME(ctx context.Context, zoneID, name, target string) (bool, string, error) {
+	var records []struct {
+		ID      string `json:"id"`
+		Type    string `json:"type"`
+		Content string `json:"content"`
+	}
+	if err := c.call(ctx, http.MethodGet, fmt.Sprintf("/zones/%s/dns_records?name=%s", zoneID, url.QueryEscape(name)), nil, &records); err != nil {
+		return false, "", err
+	}
+	removed, why := false, ""
+	for _, r := range records {
+		switch {
+		case r.Type != "CNAME":
+			why = "has its own " + r.Type + " record"
+		case !strings.EqualFold(strings.TrimSuffix(r.Content, "."), target):
+			why = "points at " + r.Content
+		default:
+			if err := c.call(ctx, http.MethodDelete, fmt.Sprintf("/zones/%s/dns_records/%s", zoneID, url.PathEscape(r.ID)), nil, nil); err != nil {
+				return removed, why, err
+			}
+			removed = true
+		}
+	}
+	if removed {
+		why = ""
+	}
+	return removed, why, nil
+}

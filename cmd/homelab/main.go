@@ -69,6 +69,8 @@ Apps:
 Domain:
   homelab domain setup [domain]        proxy hosts, LAN DNS, certificate, public hostnames
   homelab domain status
+  homelab away on|off <app>            a public app reached away from home through the tunnel, or
+                                       home only (off: nothing of it on the internet)
   homelab domain resolver              this machine finds every app by name, also with a VPN on
   homelab domain resolver --undo       takes that back, and homelab's lines in the hosts file
   homelab person add "<name>" --email A  someone in the household: a Pocket ID account, a first
@@ -264,6 +266,7 @@ func run(ctx context.Context, u *ui.UI, args []string) int {
 		"digest":       h.digestCmd,
 		"watchdog":     h.watchdog,
 		"notify":       h.notify,
+		"away":         h.away,
 		"pin":          h.pin(true),
 		"unpin":        h.pin(false),
 		"schedule":     h.schedule,

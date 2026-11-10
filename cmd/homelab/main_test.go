@@ -18,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Snooper42/homelab-wizard/internal/applist"
 	"github.com/Snooper42/homelab-wizard/internal/catalog"
 	"github.com/Snooper42/homelab-wizard/internal/diskhealth"
 	"github.com/Snooper42/homelab-wizard/internal/diskspace"
@@ -369,8 +370,12 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 		t.Fatalf("auto before setup (exit %d, %d hosts):\n%s", code, len(npmSrv.Hosts), out)
 	}
 
+	// The household keeps Vaultwarden home only: no hostname of it in the tunnel.
+	if err := applist.HomeOnly.Set(root, "vaultwarden", true); err != nil {
+		t.Fatal(err)
+	}
 	out, code = homelabCmd(t, root, "", "domain", "setup", "example.com", "--ip", "192.168.1.10", "--apply")
-	if code != 0 {
+	if code != 0 || !strings.Contains(out, "home only, kept off the internet: Vaultwarden") {
 		t.Fatalf("domain setup exit %d:\n%s", code, out)
 	}
 	hosts := map[string]string{}
@@ -419,8 +424,11 @@ func TestDomainSetupEndToEnd(t *testing.T) {
 			}
 		}
 	}
-	if !public["photos.example.com"] || !public["passwords.example.com"] || public["uptime.example.com"] || public["npm.example.com"] {
-		t.Errorf("only public apps belong in the tunnel: %v", public)
+	if !public["photos.example.com"] || public["passwords.example.com"] || public["uptime.example.com"] || public["npm.example.com"] {
+		t.Errorf("only public apps not kept home only belong in the tunnel: %v", public)
+	}
+	if hosts["passwords.example.com"] != "vaultwarden" {
+		t.Error("a home-only app still opens at home through the proxy")
 	}
 	if dns["photos.example.com"] != "tun-1.cfargotunnel.com" {
 		t.Errorf("dns: %v", dns)
