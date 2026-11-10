@@ -55,6 +55,12 @@ func (h *homelab) away(ctx context.Context, args []string) error {
 		for _, why := range un.Left {
 			u.Warn("%s: left as it is in Cloudflare DNS, as the homelab didn't make it", why)
 		}
+		if len(un.StillPublic) > 0 {
+			for _, why := range un.StillPublic {
+				u.Warn("%s: the homelab didn't make them, so it leaves them; change them in Cloudflare to keep it home only", why)
+			}
+			return nil
+		}
 		u.OK("%s is home only: %s opens on the home network, and nowhere else", a.Name(), host)
 		return nil
 	}

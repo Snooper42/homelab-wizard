@@ -165,6 +165,10 @@ type Unpublication struct {
 	IngressChanged bool
 	Removed        []string
 	Left           []string
+	// StillPublic are the hosts that still open away from home, with why:
+	// the household's own wildcard record points at the tunnel, and a rule
+	// of the tunnel's sends any name on. Both are left, as theirs.
+	StillPublic []string
 }
 
 // Unpublish takes hosts back off the internet, undoing only what Publish
@@ -215,6 +219,40 @@ func Unpublish(ctx context.Context, cf *Cloudflare, t Tunnel, zone string, hosts
 		} else if why != "" {
 			un.Left = append(un.Left, h+" "+why)
 		}
+		if rule := carrier(kept, h); rule != "" && strings.Contains(h, ".") {
+			wild := "*." + h[strings.Index(h, ".")+1:]
+			at, err := cf.pointsAt(ctx, zoneID, wild, t.Target())
+			if err != nil {
+				return un, err
+			}
+			if at {
+				un.StillPublic = append(un.StillPublic, h+" still opens away from home: "+wild+" in Cloudflare DNS points at the tunnel, and its "+rule+" sends it on")
+			}
+		}
 	}
 	return un, nil
+}
+
+// carrier names the tunnel's rule that a request for host meets first
+// once its own is gone, when that rule sends it somewhere (not a plain
+// refusal, http_status:…); "" when none does. Rules are matched as
+// cloudflared does: the exact name, then *.suffix, then the catch-all.
+func carrier(rules []map[string]any, host string) string {
+	for _, r := range rules {
+		h, _ := r["hostname"].(string)
+		h = strings.ToLower(h)
+		s, _ := r["service"].(string)
+		match := h == "" || h == host || (strings.HasPrefix(h, "*.") && strings.HasSuffix(host, h[1:]))
+		if !match {
+			continue
+		}
+		if strings.HasPrefix(s, "http_status:") {
+			return ""
+		}
+		if h == "" {
+			return "catch-all rule (" + s + ")"
+		}
+		return "rule for " + h + " (" + s + ")"
+	}
+	return ""
 }
