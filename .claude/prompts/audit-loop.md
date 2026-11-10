@@ -622,7 +622,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     proxy's environment. It needs no proxy host (`local: true`), so its
     own network (with a gateway, for its published port) and the socket
     one may be enough: try it on real Docker.
-67. (in part: N38, the public side, with its test; the tailnet side open) **Apps whose first visitor becomes the admin**:
+67. (done: N38, the public side, with its test; the tailnet side is a decision, Nov 10: in Home mode the tailnet is how the household reaches a new app to make its first account, so holding unclaimed apps off it would lock the owner out of their own setup; it is the household's own network, a risk only on a tailnet shared beyond it, which Tailscale.md could say) **Apps whose first visitor becomes the admin**:
     - On the internet this holds. `internal/claim` keeps Immich,
       Audiobookshelf, Komga, Navidrome and Calibre-Web off the tunnel until
       each has its first account, and Nextcloud and Paperless get theirs
@@ -657,7 +657,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     install close them by setting (Linkwarden
     `NEXT_PUBLIC_DISABLE_REGISTRATION`, Karakeep `DISABLE_SIGNUPS`, and so
     on)? Does Status say so while one is open on a public name?
-71. **Paperless-AI 4's setup window (after N37)**: the install could call
+71. (left, Nov 10: Paperless-AI is `admin: true`, never public; its window is the household's own network, as item 67's tailnet side; doing it needs a Paperless token made at install, worth it only with a test like the nightly's) **Paperless-AI 4's setup window (after N37)**: the install could call
     `POST /api/setup` itself with a user and password from `.env`, as the
     nightly test does, so the window closes the moment it starts.
 72. (done: N39) **Gluetun's control server on the shared network**: its HTTP control
