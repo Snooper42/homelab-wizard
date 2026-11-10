@@ -25,7 +25,7 @@ func Desktop(ctx context.Context, title, body string) error {
 		if _, err := exec.LookPath("notify-send"); err != nil {
 			return errors.New("notify-send is not installed")
 		}
-		c = exec.CommandContext(ctx, "notify-send", "--app-name=Homelab", title, body)
+		c = exec.CommandContext(ctx, "notify-send", "--app-name=Homelab", "--", title, body)
 	case "windows":
 		// Windows shows a toast only for an app it knows: the name is
 		// registered for this account first (no administrator needed).
