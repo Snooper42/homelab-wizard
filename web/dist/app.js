@@ -16470,7 +16470,7 @@ ${pays}
     ] });
   }
   function RunningCard({ lock, now }) {
-    const title = jobTitle(lock.kind, lock.action);
+    const title = jobTitle(lock.kind, lock.action, lock.flags || []);
     const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
     const since = new Date(lock.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", children: [
@@ -16500,8 +16500,16 @@ ${pays}
       ] })
     ] });
   }
+  function staleFlags(s3) {
+    if (s3.flags) return s3.flags;
+    const what2 = `${s3.kind} ${s3.action}`;
+    if (what2 === "tdarr setup" || what2 === "inbox scan") return ["--apply"];
+    return what2 === "music lyrics" ? void 0 : [];
+  }
   function carryOn(s3, d3, act, pick) {
-    const title = jobTitle(s3.kind, s3.action), what2 = `${s3.kind} ${s3.action}`;
+    const flags = staleFlags(s3);
+    const title = jobTitle(s3.kind, s3.action, flags), what2 = `${s3.kind} ${s3.action}`;
+    if (!flags) return { say: "Start Add lyrics or Tidy lyrics again from Music: it picks up where it left off." };
     if (what2 === "books apply") return { label: "Open the review", run: () => pick("books") };
     if (what2 === "trash restore") return { say: "Press Undo beside it in Recently done again: what's back stays back." };
     const asks = {
@@ -16515,7 +16523,7 @@ ${pays}
     if (asks[what2]) {
       return { label: "Carry on…", run: () => act.ask({ title: `Carry on: ${title.charAt(0).toLowerCase() + title.slice(1)}?`, action: "Carry on", lead: `It stopped part-way. It picks up where it left off. ${asks[what2]}`, go: () => act.run(s3.kind, s3.action, [], true) }) };
     }
-    return { label: "Carry on", run: () => act.run(s3.kind, s3.action) };
+    return { label: "Carry on", run: () => act.run(s3.kind, s3.action, flags) };
   }
   function installFix(job2, d3, act) {
     const ff = d3?.checks.find((c4) => c4.id === "ffmpeg" && !c4.ok && c4.install);
@@ -17424,7 +17432,7 @@ ${pays}
         const c4 = carryOn(d3.stale, d3, act, p3.pick);
         return /* @__PURE__ */ u3(Card, { kind: "notice", id: "tidyStale", children: [
           /* @__PURE__ */ u3("strong", { children: [
-            jobTitle(d3.stale.kind, d3.stale.action),
+            jobTitle(d3.stale.kind, d3.stale.action, staleFlags(d3.stale)),
             ": stopped part-way"
           ] }),
           /* @__PURE__ */ u3("span", { class: "muted", children: "say" in c4 ? c4.say : /* @__PURE__ */ u3(S, { children: [
@@ -17451,7 +17459,7 @@ ${pays}
           /* @__PURE__ */ u3("button", { class: "small", onClick: p3.reload, children: "Try again" })
         ] })
       ] }),
-      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
+      !d3 ? !p3.error && /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : /* @__PURE__ */ u3(Elsewhere.Provider, { value: other ? jobTitle(other.kind, other.action, other.flags || []) : "", children: /* @__PURE__ */ u3("div", { class: "finbody tidybody", children: tab3 === "overview" ? /* @__PURE__ */ u3(Overview2, { d: d3, job: job2, act, review: p3.review, pick: p3.pick, placing: p3.placing }) : /* @__PURE__ */ u3(LibraryTab, { kind: tab3, d: d3, job: job2, act, review: p3.review, reviewError: p3.reviewError, reloadReview: p3.reloadReview, skip: p3.skip, toggle: p3.toggle, pick: p3.pick }) }) })
     ] });
   }
   function mountTidy(el3, props) {

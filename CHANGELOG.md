@@ -210,6 +210,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up carries on the job that stopped, not another:** a **Tidy lyrics** that stopped part-way came back as *Adding lyrics* and its **Carry on** asked LRCLIB about every song, and a **Set up Tdarr** or **Check Downloads** carried on as a preview that changed nothing, so its *stopped part-way* card never went away. A job now keeps how it was run, and Carry on runs it that way. One that stopped before this update, where that can't be told, says to start it again from Music.
 - **A mortgage split with someone else falls as its papers say:** with only your half of the payment in the plan, Net worth's paycheck-by-paycheck table had the mortgage falling by that half a month, while the Loans card used the papers' whole payment. A loan read from its papers now owes, after each payment day, what the papers say, on both. Checking still pays only your half.
 - **Nextcloud and Firefly III see who you really are:** they used to believe any device at home that claimed, in a header, to be someone else, once Settings let the apps listen on the home network. Now they believe only the proxy and Tailscale, from a small network of their own.
 - **Paperless waits for its first account before going on the internet:** a fresh Paperless lets whoever signs up first become its admin, so with a domain a stranger could have claimed it before you made your account. It now stays home only until its account exists, as Immich, Navidrome and the other public apps already did.

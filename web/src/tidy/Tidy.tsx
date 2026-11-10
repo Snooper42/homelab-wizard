@@ -238,7 +238,7 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
 
 /** A job this window didn't start (the agent's, a terminal's): what it is, since when, and where it has got to. */
 function RunningCard({ lock, now }: { lock: app.TidyUp['lock'] & {}; now?: app.TidyRunning['now'] }) {
-  const title = jobTitle(lock.kind, lock.action);
+  const title = jobTitle(lock.kind, lock.action, lock.flags || []);
   const p = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || '', note: now.progress.note, eta: now.progress.eta } : undefined;
   const since = new Date(lock.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
@@ -253,9 +253,24 @@ function RunningCard({ lock, now }: { lock: app.TidyUp['lock'] & {}; now?: app.T
   );
 }
 
-/** A job that stopped part-way, and how to carry it on: as it is, after asking again, or from where its choices were made. */
-export function carryOn(s: { kind: string; action: string }, d: app.TidyUp, act: TidyActions, pick: (t: TidyTab) => void): { label: string; run: () => void } | { say: string } {
-  const title = jobTitle(s.kind, s.action), what = `${s.kind} ${s.action}`;
+/**
+ * The flags a job that stopped part-way ran with: its lock's; for a lock from before they were kept (none said), the
+ * one a job takes the lock with only (Set up Tdarr and Check Downloads lock only with --apply). Undefined when it
+ * can't be told: lyrics locks as Add lyrics and as Tidy lyrics alike.
+ */
+export function staleFlags(s: { kind: string; action: string; flags?: string[] | null }): string[] | undefined {
+  if (s.flags) return s.flags;
+  const what = `${s.kind} ${s.action}`;
+  if (what === 'tdarr setup' || what === 'inbox scan') return ['--apply'];
+  return what === 'music lyrics' ? undefined : [];
+}
+
+/** A job that stopped part-way, and how to carry it on: as it is (with its flags), after asking again, or from where its choices were made. */
+export function carryOn(s: { kind: string; action: string; flags?: string[] | null }, d: app.TidyUp, act: TidyActions, pick: (t: TidyTab) => void): { label: string; run: () => void } | { say: string } {
+  const flags = staleFlags(s);
+  const title = jobTitle(s.kind, s.action, flags), what = `${s.kind} ${s.action}`;
+  // A lock that can't say how its job ran: start it again from its page, as it was meant.
+  if (!flags) return { say: 'Start Add lyrics or Tidy lyrics again from Music: it picks up where it left off.' };
   // Which books were left alone isn't kept with the job: Apply again from the review, where they're chosen.
   if (what === 'books apply') return { label: 'Open the review', run: () => pick('books') };
   // Which run to put back isn't kept either: its Undo is still in Recently done.
@@ -272,7 +287,7 @@ export function carryOn(s: { kind: string; action: string }, d: app.TidyUp, act:
   if (asks[what]) {
     return { label: 'Carry on…', run: () => act.ask({ title: `Carry on: ${title.charAt(0).toLowerCase() + title.slice(1)}?`, action: 'Carry on', lead: `It stopped part-way. It picks up where it left off. ${asks[what]}`, go: () => act.run(s.kind, s.action, [], true) }) };
   }
-  return { label: 'Carry on', run: () => act.run(s.kind, s.action) };
+  return { label: 'Carry on', run: () => act.run(s.kind, s.action, flags) };
 }
 
 /** A films', TV's, or audiobooks' job stopped for want of ffmpeg, where the app can fetch it: Install, then the job again. */
@@ -1207,14 +1222,14 @@ export function TidyScreen(p: TidyProps) {
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
-        return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action)}: stopped part-way</strong><span class="muted">{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;
+        return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action, staleFlags(d.stale))}: stopped part-way</strong><span class="muted">{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;
       })()}
       {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)}
         // A job that asked first (a swap, an apply) is tried again from its own button, which asks again.
         again={job.yes ? undefined : () => act.run(job.kind, job.action, job.args || [])} />}
       {p.error && !d && <Card kind="notice" id="tidyError" role="alert"><strong>Tidy Up couldn't read its record</strong><span class="muted">{p.error}. Nothing in your libraries changed. <button class="small" onClick={p.reload}>Try again</button></span></Card>}
       {!d ? (!p.error && <Empty>Reading…</Empty>) : (
-        <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action) : ''}>
+        <Elsewhere.Provider value={other ? jobTitle(other.kind, other.action, other.flags || []) : ''}>
           <div class="finbody tidybody">
             {tab === 'overview' ? <Overview d={d} job={job} act={act} review={p.review} pick={p.pick} placing={p.placing} />
               : <LibraryTab kind={tab} d={d} job={job} act={act} review={p.review} reviewError={p.reviewError} reloadReview={p.reloadReview} skip={p.skip} toggle={p.toggle} pick={p.pick} />}

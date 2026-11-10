@@ -21,6 +21,11 @@ type Lock struct {
 	Start  time.Time `json:"start"`
 	// Log is the job's event log, for the app to follow a job it did not start.
 	Log string `json:"log,omitempty"`
+	// Flags are the ones the job ran with that the screen may send again
+	// (--apply, --tidy), so one that stopped part-way carries on as itself.
+	// Always written, if only as []: nil is a lock from before they were
+	// kept, which can't say.
+	Flags []string `json:"flags"`
 }
 
 // LockPath is where the lock lives.
@@ -66,13 +71,14 @@ func Held(root string) bool {
 
 // Acquire takes the lock for this process. A lock whose process is gone
 // (a crash, a restart mid-job) is stale: it is taken over, and stale
-// reports the job it held, which the engines resume when run again.
-func Acquire(root, kind, action, log string) (stale *Lock, err error) {
+// reports the job it held, which the engines resume when run again. flags
+// are the job's own, kept with it (Lock.Flags).
+func Acquire(root, kind, action, log string, flags ...string) (stale *Lock, err error) {
 	path := LockPath(root)
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, err
 	}
-	me := Lock{PID: os.Getpid(), Kind: kind, Action: action, Start: time.Now().UTC(), Log: log}
+	me := Lock{PID: os.Getpid(), Kind: kind, Action: action, Start: time.Now().UTC(), Log: log, Flags: append([]string{}, flags...)}
 	data, _ := json.Marshal(me)
 	for range 2 {
 		f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)

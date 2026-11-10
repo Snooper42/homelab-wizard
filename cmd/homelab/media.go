@@ -131,6 +131,19 @@ func parseMediaFlags(args []string) mediaFlags {
 	return f
 }
 
+// lockFlags are the flags a job's lock keeps, so the screen's Carry on runs
+// it as it was: only the ones the screen sends (app/tidy.go's
+// tidyScreenArgs), each once, never a path, a name or an id.
+func lockFlags(rest []string) []string {
+	out := []string{}
+	for _, a := range rest {
+		if (a == "--apply" || a == "--check" || a == "--tidy") && !slices.Contains(out, a) {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
 // mediaPython finds Python, or says how to get it.
 func (h *homelab) mediaPython(ctx context.Context) ([]string, error) {
 	if py := os.Getenv("HOMELAB_PYTHON"); py != "" {
@@ -268,7 +281,7 @@ func (h *homelab) mediaEngine(ctx context.Context, kind, action string, args []s
 		h.ui.Warn("%s", msg)
 	}
 	if lock {
-		stale, err := media.Acquire(h.root, kind, action, logf.Name())
+		stale, err := media.Acquire(h.root, kind, action, logf.Name(), lockFlags(f.rest)...)
 		if err != nil {
 			return err
 		}
