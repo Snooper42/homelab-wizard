@@ -128,9 +128,16 @@ final class AppActionsViewModel {
     /// Stop for a while (StopUntil), where the computer can.
     var canStopForAWhile: Bool { computerAnswers("StopUntil") }
 
-    /// An app's settings (SetAppSetting), where the computer can.
+    /// Whether the computer says it serves `feature` (`/api/me`'s
+    /// `computer.features`). False when it doesn't say.
+    func computerHas(_ feature: String) -> Bool { device()?.computer?.features.contains(feature) == true }
+
+    /// An app's settings (SetAppSetting), where the computer can. Its reach
+    /// only where the computer takes "away".
     func settings(for app: AppStatus) -> [AppSetting] {
-        computerAnswers("SetAppSetting") ? AppSetting.available(for: app) : []
+        guard computerAnswers("SetAppSetting") else { return [] }
+        let all = AppSetting.available(for: app)
+        return computerHas("away") ? all : all.filter { $0 != .away }
     }
 
     /// For a device allowed changes whose computer can't make them yet:

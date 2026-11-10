@@ -683,6 +683,16 @@ extension NetworkRuleTests {
         #expect(silent.available(for: app).contains(.restart) && silent.canStopForAWhile && !silent.settings(for: app).isEmpty)
         #expect(silent.updateHint(for: app) == nil)
     }
+
+    // Home only (main #559): the switch only where the computer says it takes "away".
+    @Test @MainActor func reachOnlyWhereTheComputerTakesIt() {
+        let app = Self.apps(#"[{"id":"paperless","name":"Paperless-ngx","state":"running","reach":"home"}]"#)[0]
+        let without = actions(computer: #"{"version":"0.28.0","methods":["SetAppSetting"],"features":["tunnel"]}"#)
+        #expect(!without.settings(for: app).contains(.away) && without.settings(for: app).contains(.alerts))
+        let with = actions(computer: #"{"version":"0.29.0","methods":["SetAppSetting"],"features":["tunnel","away"]}"#)
+        #expect(with.settings(for: app).last == .away)
+        #expect(!actions(computer: nil).settings(for: app).contains(.away))
+    }
 }
 
 // What was done (item 4): the phone asks the computer's record for one

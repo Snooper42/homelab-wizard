@@ -188,7 +188,7 @@ struct AppSettingTests {
     @Test func nativeAppsHaveOnlyAlerts() throws {
         let native = try app(#"{"id":"jellyfin","name":"Jellyfin","state":"running","health":"native"}"#)
         #expect(AppSetting.available(for: native) == [.alerts, .pinned])
-        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "sundays", "alerts", "pinned"]) // what SetAppSetting takes
+        #expect(AppSetting.allCases.map(\.rawValue) == ["updates", "sundays", "alerts", "pinned", "away"]) // what SetAppSetting takes
     }
 
     // main #457: an update window per app.
@@ -210,6 +210,23 @@ struct AppSettingTests {
         // Held: the nightly update leaves it out, so no days to choose.
         let held = try app(#"{"id":"immich","name":"Immich","state":"running","held":true}"#)
         #expect(!AppSetting.available(for: held).contains(.sundays))
+    }
+
+    // Home only (main #559): Status's reach says a public app has the switch,
+    // once the domain has the tunnel; on is "away", off "home".
+    @Test func reachItAwayFromHome() throws {
+        let away = try app(#"{"id":"immich-server","name":"Immich","state":"running","reach":"away"}"#)
+        #expect(away.reach == "away" && AppSetting.available(for: away).last == .away)
+        #expect(AppSetting.away.isOn(for: away))
+        #expect(AppSetting.away.title == "Reach it away from home")
+        #expect(AppSetting.away.detail(on: true).contains("Cloudflare can see what passes"))
+        let home = try app(#"{"id":"paperless","name":"Paperless-ngx","state":"running","reach":"home"}"#)
+        #expect(!AppSetting.away.isOn(for: home))
+        #expect(AppSetting.away.detail(on: false) == "Home only: it opens on your home Wi-Fi, and nobody outside can reach it.")
+        #expect(AppSetting.away.reason(on: false, app: home) == "Keep Paperless-ngx home only.")
+        // No reach: it can't be published, or the domain has no tunnel yet.
+        let plain = try app(#"{"id":"vikunja","name":"Vikunja","state":"running"}"#)
+        #expect(!AppSetting.available(for: plain).contains(.away))
     }
 }
 
@@ -309,6 +326,7 @@ struct AppPageTests {
         #expect(AppDetailView.reach(isPublic: true, hasAddress: true).contains("Cloudflare Tunnel"))
         #expect(AppDetailView.reach(isPublic: false, hasAddress: true) == "At home and on your tailnet, not on the internet.")
         #expect(AppDetailView.reach(isPublic: false, hasAddress: false) == "On this machine only.")
+        #expect(AppDetailView.reach(isPublic: true, hasAddress: true, homeOnly: true) == "At home only: kept off the internet.")
     }
 
     @Test func settingsSayWhatOnAndOffMean() {

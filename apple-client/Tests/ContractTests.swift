@@ -22,7 +22,7 @@ struct ContractTests {
         #expect(me.id == "a1b2c3" && me.canChange && me.finances == "edit")
         let computer = try #require(me.computer)
         #expect(computer.version == "1.2.3")
-        #expect(computer.answers("Status") && computer.features.contains("tunnel"))
+        #expect(computer.answers("Status") && computer.features.contains("tunnel") && computer.features.contains("away"))
     }
 
     @Test func aComputerOlderThanThatSaysNothing() throws {

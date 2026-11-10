@@ -1,5 +1,7 @@
 # Handoff: the home-only switch, half built (Nov 10, 2026)
 
+> **Done (Nov 10):** PR A merged as #559 (the computer side); PR B, the native iPhone app's switch, is the PR that adds this line. What's left is the last section: stop, and ask the owner what's next.
+
 This picks up a session that ran out of usage partway through handoff.md's item **2.2**, the "home only" switch. Everything it wrote is on the branch **`claude/investments-bug-pr-merges-pmy7tp`**, in one work-in-progress commit. There's no PR yet. `.claude/prompts/handoff.md` still holds the standing rules (its section 0) and the order of work (its section 2); this file says where that order stands now and what's left of 2.2.
 
 The owner isn't a developer. Talk plainly, recommend one option, and keep reports short.

@@ -233,7 +233,8 @@ struct AppDetailView: View {
                 Text("Addresses")
             } footer: {
                 Text(Self.reach(isPublic: dashboard.catalog?.entry(app.id)?.isPublic == true,
-                                hasAddress: !(app.address ?? "").isEmpty))
+                                hasAddress: !(app.address ?? "").isEmpty,
+                                homeOnly: app.reach == "home"))
             }
         }
     }
@@ -608,7 +609,9 @@ struct AppDetailView: View {
     }
 
     /// Where it can be reached from, as the computer's Address tile says it.
-    nonisolated static func reach(isPublic: Bool, hasAddress: Bool) -> String {
+    /// A public app kept home only (main #559) says so.
+    nonisolated static func reach(isPublic: Bool, hasAddress: Bool, homeOnly: Bool = false) -> String {
+        if isPublic && homeOnly { return "At home only: kept off the internet." }
         if isPublic { return "At home, and on the internet through the Cloudflare Tunnel." }
         if hasAddress { return "At home and on your tailnet, not on the internet." }
         return "On this machine only."

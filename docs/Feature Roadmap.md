@@ -19,6 +19,7 @@ What started this page: small features asked for one by one, each now in the app
 
 | Feature | What it does | Pull request |
 |---|---|---|
+| Home only | An app's page › **Reach it away from home**, on each public app once the domain has the Cloudflare tunnel, on the computer and the iPhone: off takes it off the tunnel and public DNS (`homelab away off`), removing only what the homelab made; new public installs start home only | #559 and the iPhone's next |
 | Health in one line | At the top of every screen but Status: ✓ All well, or the one thing that needs you, with Open Status | #470 |
 | Snooze an alert | Snooze… beside a failing check on Status's Watchdog card: no alerts about it for an hour or a day, and one then if it still fails | #469 |
 | Tailnet devices | Settings › Phones lists every device on the tailnet, online or when last seen, one unseen for a month marked, and Remove… opens it in Tailscale's admin console | #465 |
