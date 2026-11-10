@@ -156,7 +156,7 @@ const aliases: Record<string, string> = {
   'booking': 'bookingcom', 'hotels': 'hotelscom', 'h and m': 'hm', 'chick fil a': 'chickfila', 'tjs': 'traderjoes', 'trader joes': 'traderjoes',
   'amex': 'americanexpress', 'bofa': 'bankofamerica', 'att': 'atandt', 'hbo': 'max', 'hbo max': 'max', 'prime video': 'amazonprimevideo',
   'prime': 'amazonprime', 'nyt': 'thenewyorktimes', 'ny times': 'thenewyorktimes', 'new york times': 'thenewyorktimes', 'openai': 'chatgpt',
-  'anthropic': 'claude', 'game pass': 'xboxgamepass', 'xbox': 'xboxgamepass', 'psn': 'playstation', 'ps plus': 'playstation',
+  'anthropic': 'claude', 'game pass': 'xboxgamepass', 'xbox': 'xboxgamepass', 'psn': 'playstation', 'nintendo': 'nintendoswitch', 'ps plus': 'playstation',
   'comcast': 'xfinity', 'youtube tv': 'youtube', 'youtube premium': 'youtube', 'amc theatres': 'amc', 'a list': 'amc',
   'fid bkg': 'fidelity', 'fidelity investments': 'fidelity', 'florida power': 'fpl', 'florida power and light': 'fpl', 'applecard': 'apple', 'gs bank': 'goldmansachs', 'gsbank': 'goldmansachs', 'royal caribbean international': 'royalcaribbean',
   'plex pass': 'plex', 'mullvad': 'mullvad', 'aws': 'aws', 'digital ocean': 'digitalocean', 'nitro': 'discord', 'docker hub': 'docker',

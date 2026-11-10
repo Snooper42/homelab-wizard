@@ -103,6 +103,8 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Games go where they belong:** a game store's wording comes in as its brand, with its logo: *WL \*STEAM PURCHASE* and *STEAMGAMES.COM* are *Steam*, *MICROSOFT\*XBOX* is *Xbox*, and PlayStation, Nintendo, Epic Games, GameStop and Roblox read the same way. Each goes into your Gaming category (or Games, or Video games) when you keep one, and Shopping when you don't.
+- **Cleaner American Express names:** a card file's payees no longer keep Amex's own wording: *AplPay STARBUCKS SEATTLE WA* comes in as *Starbucks*, *WWP\*…* and *WL \*…* as the shop after them, and the town and state after a shop are left off, whether Amex spaced them into columns, ran them into a store number, or named them in the file's City/State column. The iPhone app cleans names the same way. To rename rows you brought in before, import the same file again.
 - **Updates on Windows and Linux are checked against how they were built:** before installing, the app checks GitHub's signed record that this project's own build made the file, and refuses one without it.
 - **The iPhone app hides what the computer can't do yet:** with Homelab Wizard on the computer older than the app, Start, Stop and Restart, Stop for a While and an app's settings aren't offered, and the app's page says to update the computer, with the version it has.
 - **The iPhone app says when the computer needs updating:** when the app is newer than Homelab Wizard on the computer, something the computer can't do yet says "Update Homelab Wizard on the computer to use this" (with the version it has), instead of failing with an error that explains nothing.

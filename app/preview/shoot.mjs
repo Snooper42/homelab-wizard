@@ -5761,6 +5761,62 @@ const smokes = [
     const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-4);
     if (txs.map((t) => `${t.account} ${t.amount}`).join('|') !== 'amex -56.61|amex -30.34|amex -402|amex 500') throw new Error(`saved ${txs.map((t) => `${t.account} ${t.amount}`)}`);
   } },
+  // American Express's own wording: AplPay before the shop, WWP* and WL * (its processors), and the town and state after it,
+  // padded into columns, glued to a store number, or in the file's City/State column. Each comes in as the shop, the
+  // wording kept in its note.
+  { name: "Finances: an American Express file's payees lose AplPay, WWP*, WL * and the town", screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category\n'
+      + '11/08/2026,AplPay STARBUCKS SEATTLE WA,6.10,,,,"SEATTLE\nWA",98101,UNITED STATES,,Restaurant\n'
+      + '11/08/2026,AplPay PINE CAFE MIAMI FL,12.40,,,,"MIAMI\nFL",33101,UNITED STATES,,Restaurant\n'
+      + '11/07/2026,WWP*SUNNY DAYS SCHOOL 877-555-0100 FL,250.00,,,,"877-555-0100\nFL",33101,UNITED STATES,,Education\n'
+      + '11/07/2026,WL *STEAM PURCHASE   425-555-0100        WA,19.99,,,,,,,,Entertainment\n'
+      + '11/06/2026,BLUE BOTTLE COFFEE  OAKLAND             CA,5.75,,,,,,,,Restaurant\n'
+      + '11/06/2026,PET SUPERMARKET #100SUNRISE FL,30.34,,,,,,,,Merchandise\n'
+      + '11/05/2026,AplPay TST* JOES CAFE FORT LAUDERDALE FL,22.00,,,,"FORT LAUDERDALE\nFL",33301,UNITED STATES,,Restaurant\n'
+      + '11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61,,,,,,,,Merchandise\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.waitForSelector('#finSheet .formsub:has-text("8 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 8")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.account === 'amex' && t.date >= '2026-11-05');
+    const want = ['Starbucks', 'Pine Cafe', 'Sunny Days School', 'Steam', 'Blue Bottle Coffee', 'Pet Supermarket', 'Joes Cafe', 'Amazon'];
+    const got = txs.map((t) => t.payee);
+    if ([...got].sort().join('|') !== [...want].sort().join('|')) throw new Error(`payees ${got.join('|')}`);
+    // The bank's wording stays in the note, on one line.
+    const steam = txs.find((t) => t.payee === 'Steam');
+    if (!(steam?.note || '').includes('WL *STEAM PURCHASE 425-555-0100 WA')) throw new Error(`Steam's note ${JSON.stringify(steam?.note)}`);
+  } },
+  // A game store's wording is its brand, with its logo (Steam, PlayStation, Xbox, Nintendo, Epic Games, GameStop, Roblox),
+  // and its row goes into the household's own Gaming category; with none, Shopping.
+  ...[[true, 'Gaming'], [false, 'Shopping']].map(([own, cat]) => ({ name: `Finances: a game store comes in as its brand, with its logo, into ${own ? 'your Gaming category' : 'Shopping without one'}`, screen: 'finances',
+    mock: own ? { finances: { ...finances, categories: [...finances.categories, { name: 'Gaming', icon: 'gaming' }], plan: { ...finances.plan, categories: [...finances.categories, { name: 'Gaming', icon: 'gaming' }] } } } : {}, run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Transactions")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n'
+      + '11/08/2026,WL *STEAM PURCHASE 425-555-0100 WA,-19.99\n'
+      + '11/08/2026,STEAMGAMES.COM 4259522985 WA,-4.99\n'
+      + '11/07/2026,PLAYSTATION NETWORK 800-555-0199 CA,-69.99\n'
+      + '11/07/2026,MICROSOFT*XBOX,-29.99\n'
+      + '11/06/2026,NINTENDO CA1234567 WA,-59.99\n'
+      + '11/06/2026,EPIC GAMES STORE,-14.99\n'
+      + '11/05/2026,GAMESTOP #1234,-39.99\n'
+      + '11/05/2026,ROBLOX CORPORATION,-9.99\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("8 to bring in")', { timeout: 5000 });
+    for (const who of ['Steam', 'PlayStation', 'Xbox', 'Nintendo', 'Epic Games', 'GameStop', 'Roblox']) {
+      await page.waitForSelector(`#finSheet .importlist li:has(strong:text-is("${who}")) small:has-text(" · ${cat}")`, { timeout: 2000 });
+      await page.waitForSelector(`#finSheet .importlist li:has(strong:text-is("${who}")) .fmark.logo`, { timeout: 2000 });
+    }
+    await page.click('#finSheet button:text-is("Bring in 8")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).slice(-8);
+    const got = txs.map((t) => `${t.payee} ${t.category}`).sort().join('|');
+    const want = ['Steam', 'Steam', 'PlayStation', 'Xbox', 'Nintendo', 'Epic Games', 'GameStop', 'Roblox'].map((p) => `${p} ${cat}`).sort().join('|');
+    if (got !== want) throw new Error(`saved ${got}`);
+  } })),
   // The same file imported again over rows brought in before with the bank's codes in their names: those take the clearer
   // name, keeping their category; a payee typed in by hand stays as it is; nothing comes in twice.
   { name: 'Finances: a CSV imported again gives rows named with the bank\'s codes clearer names, never one typed by hand', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [

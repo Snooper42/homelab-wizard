@@ -288,7 +288,15 @@ for (const [glyph, list] of m.hints) for (const w of list) names.add(`${w[0].toU
   'ACME CRUISES AD_PAYMENT PPD ID: 1234', 'Zelle payment from JANE DOE 1234567890', 'Zelle payment to Sam Lee', 'ZELLE TO BOB SMITH JPM99A8B7C6D',
   'zelle transfer from Ann', 'Payment to Chase card ending in 4321 11/05', 'PAYMENT TO CAPITAL ONE CARD ENDING IN 0042', 'MAZDA FINANCIAL PYMT WEB ID: 2222',
   'GUSTO PAYROLL NZTZP5VXA0Y1UPE CCD', 'COMCAST CABLE 8495 PPD ID:0000', 'APPLE GS SAVINGS TRANSFER', 'VERIZON WIRELESS PAYMENTS PPD', 'IRS USATAXPYMT PPD ID: 3387702000',
-  'ach credit WEB ID 99 ACME_CORP DIR DEP', 'Pay to card ending in 12'
+  'ach credit WEB ID 99 ACME_CORP DIR DEP', 'Pay to card ending in 12',
+  // American Express: AplPay, its processors (WWP*, WL *), and the town padded into a column, glued to a store number, or a website.
+  'AplPay STARBUCKS SEATTLE WA', 'AplPay PINE CAFE MIAMI FL', 'WWP*SUNNY DAYS SCHOOL 877-555-0100 FL', 'WL *STEAM PURCHASE 425-555-0100 WA',
+  'WL *STEAM PURCHASE   425-555-0100        WA', 'BLUE BOTTLE COFFEE  OAKLAND             CA', 'SQ  *BLUE BOTTLE  OAKLAND  CA', 'PET SUPERMARKET #100SUNRISE FL',
+  'AMAZON.COM AMZN.COM/BILL WA', 'UBER   *TRIP  HELP.UBER.COM CA', 'AplPay TST* JOES CAFE FORT LAUDERDALE FL', 'APLPAY KIDS ART CLUB', 'WWP*KIDS ART CLUB',
+  'POS DEBIT  SHELL OIL 57444 SAN JOSE CA', 'AplPay  OAKLAND  CA', 'STORE  0042  FL', 'GREEN LEAF MARKET  SAN JOSE CA', 'aplpay  ca',
+  // Game stores by their brand, and a known name after its maker's star.
+  'STEAMGAMES.COM 4259522985 WA', 'Steam Purchase', 'STEAM CLEANING CO', 'PLAYSTATION NETWORK 800-555-0199 CA', 'MICROSOFT*XBOX', 'MICROSOFT*STORE',
+  'MICROSOFT*ONEDRIVE', 'MSFT * E0400ABCD', 'NINTENDO CA1234567 WA', 'Nintendo', 'EPIC GAMES STORE', 'GAMESTOP #1234', 'ROBLOX CORPORATION'
 ].forEach((n) => names.add(n));
 
 const kinds = [undefined, 'car', 'other', 'collectible', 'checking', 'subscriptions', 'utilities'];

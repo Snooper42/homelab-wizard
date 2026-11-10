@@ -9,7 +9,7 @@ import { Sheet } from '../parts/Sheet';
 import { AcctMark, allBrands, brandName, brandOf, brandsFor, kindForBrand, Mark, ownKey, payeeBrand, subTypeName, subTypes, suggestType, Who } from './Mark';
 import { allPayments, currencyCode, currencySign, dayLong as dayLongOf, money, moneyIn, monthName, owed, parseAmount, parseDay, perMonth, signed as signedOf, signOf, todayISO } from './money';
 import { papers } from './payoffPlan';
-import { cleanPayee } from './payees';
+import { cleanPayee, withoutTown } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
@@ -1256,7 +1256,8 @@ function ImportForm(props: EditProps) {
   const have = ledger?.transactions || [];
   const memory = renameMemory(have, cleanPayee);
   const found = read_.map((t) => {
-    const payee = cleanPayee(t.payee), raw = t.payee && t.payee.toLowerCase() !== payee.toLowerCase() ? t.payee : undefined;
+    const said = t.payee.replace(/\s+/g, ' ').trim();
+    const payee = cleanPayee(withoutTown(t.payee, t.town)), raw = said && said.toLowerCase() !== payee.toLowerCase() ? said : undefined;
     return { ...t, payee: (raw && memory.get(payee.toLowerCase())) || payee, raw };
   });
   const fixes = wayOnlyFixes(found, account, have);

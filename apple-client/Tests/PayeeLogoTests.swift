@@ -142,6 +142,27 @@ struct PayeeLogoTests {
         #expect(misses.isEmpty, report(misses))
     }
 
+    // American Express's own wording, named outright as well as in the vectors:
+    // AplPay, its processors, and the town padded, glued or a website; and
+    // game stores by their brand.
+    @Test func americanExpressWording() {
+        let cases = [
+            ("AplPay STARBUCKS SEATTLE WA", "Starbucks"),
+            ("WWP*SUNNY DAYS SCHOOL 877-555-0100 FL", "Sunny Days School"),
+            ("WL *STEAM PURCHASE   425-555-0100        WA", "Steam"),
+            ("MICROSOFT*XBOX", "Xbox"),
+            ("NINTENDO CA1234567 WA", "Nintendo"),
+            ("BLUE BOTTLE COFFEE  OAKLAND             CA", "Blue Bottle Coffee"),
+            ("SQ  *BLUE BOTTLE  OAKLAND  CA", "Blue Bottle"),
+            ("PET SUPERMARKET #100SUNRISE FL", "Pet Supermarket"),
+            ("AMAZON.COM AMZN.COM/BILL WA", "Amazon"),
+            ("POS DEBIT  SHELL OIL 57444 SAN JOSE CA", "Shell"),
+        ]
+        for (raw, want) in cases {
+            #expect(logos.cleanPayee(raw) == want, "\(raw.debugDescription)")
+        }
+    }
+
     @Test func aPayeesBrand() throws {
         let v = try Vectors.load()
         var misses = v.payees.compactMap { p -> String? in

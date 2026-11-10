@@ -905,8 +905,8 @@
   }
 
   // web/src/finances/payees.ts
-  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke"]);
-  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online)\b[\s#:*-]*)+/i;
+  var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke", "wwp", "wl"]);
+  var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online|aplpay)\b[\s#:*-]*)+/i;
   var achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
   var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
   var chains = [
@@ -981,6 +981,23 @@
     ["fid bkg svc", "Fidelity"],
     ["fidelity investments", "Fidelity"],
     ["royal caribbean", "Royal Caribbean"],
+    // Game stores, by their brand (WL *STEAM PURCHASE is Steam; MICROSOFT*XBOX, Xbox).
+    ["steam purchase", "Steam"],
+    ["steamgames", "Steam"],
+    ["steam games", "Steam"],
+    ["steampowered", "Steam"],
+    ["steam store", "Steam"],
+    ["playstation network", "PlayStation"],
+    ["sony playstation", "PlayStation"],
+    ["playstation", "PlayStation"],
+    ["playstation plus", "PlayStation Plus"],
+    ["xbox", "Xbox"],
+    ["xbox game pass", "Xbox Game Pass"],
+    ["nintendo", "Nintendo"],
+    ["nintendo switch", "Nintendo Switch"],
+    ["epic games", "Epic Games"],
+    ["gamestop", "GameStop"],
+    ["roblox", "Roblox"],
     // A car's lender by its make: MAZDA FINANCIAL is Mazda, as its payment is planned.
     ["mazda financial", "Mazda"],
     ["toyota financial", "Toyota"],
@@ -1007,13 +1024,45 @@
     ["trader joe s", "Trader Joe's"],
     ["whole foods", "Whole Foods"]
   ].sort((a3, b2) => b2[0].length - a3[0].length);
+  var chainOf = (f4) => chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
   var flat = (s3) => s3.toLowerCase().replace(/['’]/g, " ").replace(/[^a-z0-9]+/g, " ").trim();
   function ordinary(s3) {
     if (s3 !== s3.toUpperCase()) return s3;
     return s3.toLowerCase().replace(/(^|[\s(&/-])([a-z])/g, (_3, a3, b2) => a3 + b2.toUpperCase()).replace(/'S\b/g, "'s");
   }
+  var isState = (w3) => w3.length === 2 && w3 === w3.toUpperCase() && states.has(w3.toLowerCase());
+  var townColumn = /^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$/;
+  var site = /\.(?:com|net|org|co|io|tv|us)\b/i;
+  function shopOf(line) {
+    const s3 = line.trim();
+    const keeps = (x3) => /[A-Za-z]/.test(x3.replace(leading, "")) ? x3 : s3;
+    const cols = s3.split(/\s{2,}/);
+    if (cols.length > 1) {
+      const last2 = cols[cols.length - 1], two = last2.match(/^(.+)\s(\S+)$/);
+      if (isState(last2)) return keeps((cols.length > 2 && townColumn.test(cols[cols.length - 2]) ? cols.slice(0, -2) : cols.slice(0, -1)).join(" "));
+      if (two && isState(two[2]) && townColumn.test(two[1])) return keeps(cols.slice(0, -1).join(" "));
+      return s3;
+    }
+    const glued = s3.match(/^(.*[A-Za-z].*\d)([A-Z][A-Z .'-]{1,12}) ([A-Z]{2})$/);
+    if (glued && isState(glued[3])) return keeps(glued[1]);
+    const web = s3.match(/^(.+) (\S+) (\S+)$/);
+    if (web && isState(web[3]) && site.test(web[2])) return keeps(web[1]);
+    return s3;
+  }
+  function withoutTown(raw, town) {
+    const words5 = (town || "").split(/\s+/).filter(Boolean);
+    if (words5.length > 1 && isState(words5[words5.length - 1])) words5.pop();
+    const s3 = (raw || "").replace(/\s+/g, " ").trim();
+    if (!words5.length) return raw;
+    const parts3 = s3.split(" ");
+    if (parts3.length > 1 && isState(parts3[parts3.length - 1])) parts3.pop();
+    const n3 = words5.length, tail = parts3.slice(-n3).join(" ").toLowerCase();
+    if (parts3.length <= n3 || tail !== words5.join(" ").toLowerCase()) return raw;
+    const left = parts3.slice(0, -n3).join(" ");
+    return /[A-Za-z]/.test(left.replace(leading, "")) ? left : raw;
+  }
   function cleanPayee(raw) {
-    let s3 = (raw || "").replace(/\s+/g, " ").trim();
+    let s3 = shopOf(raw || "").replace(/\s+/g, " ").trim();
     if (!s3) return "";
     const zelle = s3.match(/^zelle\s+(?:payment\s+|transfer\s+)?(from|to)\s+(.+?)(?:\s+[A-Za-z]*\d[A-Za-z0-9]{5,})?$/i);
     if (zelle) return `Zelle ${zelle[1].toLowerCase()} ${ordinary(zelle[2].trim())}`;
@@ -1024,15 +1073,14 @@
     }
     s3 = s3.replace(leading, "").trim();
     const star = s3.match(/^([A-Za-z. ]{1,12}?)\s*\*\s*(.+)$/);
-    if (star && processors.has(flat(star[1]).replace(/ /g, ""))) s3 = star[2];
+    if (star && (processors.has(flat(star[1]).replace(/ /g, "")) || chainOf(flat(star[2])))) s3 = star[2];
     else s3 = s3.replace(/\s*\*\s*\S*$/, "").replace(/\*/g, " ");
     s3 = s3.replace(/\bwww\./gi, "").replace(/\.(?:com|net|org|co|io|tv|us)\b(?:\/\S*)?/gi, "").replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ").replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, " ").replace(/\b(?:x{2,}|\*{2,})\d+\b/gi, " ").replace(/\bstore\s*#?\s*\d+\b/gi, " ").replace(/#\s*\d+/g, " ").replace(/(?:^|\s)[A-Za-z]{0,2}\d{3,}[A-Za-z0-9]*(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
     const parts3 = s3.split(" ");
     if (parts3.length > 1 && states.has(parts3.at(-1).toLowerCase()) && parts3.at(-1) === parts3.at(-1).toUpperCase()) parts3.pop();
     s3 = parts3.join(" ").replace(/[\s,.;:-]+$/, "").trim();
     if (!s3) return (raw || "").trim();
-    const f4 = flat(s3);
-    const chain = chains.find(([w3]) => f4 === w3 || f4.startsWith(w3 + " "));
+    const chain = chainOf(flat(s3));
     return chain ? chain[1] : ordinary(s3);
   }
   function bankWording(note) {
@@ -1228,10 +1276,11 @@
       debit: find("debit", "withdrawal", "money out", "paid out"),
       credit: find("credit", "deposit", "money in", "paid in"),
       payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
-      memo: find("memo", "note", "reference", "category")
+      memo: find("memo", "note", "reference", "category"),
+      town: find("city")
     };
     if (body.length && !namesIn(body, col.payee)) {
-      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo]);
+      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town]);
       const better = header.map((_3, i3) => i3).filter((i3) => !taken.has(i3) && namesIn(body, i3)).sort((a3, b2) => kinds(body, b2) - kinds(body, a3))[0];
       if (better !== void 0) col.payee = better;
     }
@@ -1269,7 +1318,7 @@
       const date = readDay(r3[col.date] || "", dayFirst);
       const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
       if (!date || !amount) continue;
-      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").replace(/\s+/g, " ").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0 });
+      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0, town: (col.town ?? -1) >= 0 ? r3[col.town] || void 0 : void 0 });
     }
     return out;
   }
@@ -1923,6 +1972,7 @@
     "game pass": "xboxgamepass",
     "xbox": "xboxgamepass",
     "psn": "playstation",
+    "nintendo": "nintendoswitch",
     "ps plus": "playstation",
     "comcast": "xfinity",
     "youtube tv": "youtube",
@@ -8967,7 +9017,8 @@
     Electric: "dukeenergy pge coned fpl",
     "Car insurance": "geico progressive statefarm allstate libertymutual",
     Travel: "delta unitedairlines americanairlines southwestairlines jetblue marriott hilton airbnb expedia bookingdotcom hotelsdotcom uber lyft",
-    Fitness: "planetfitness peloton strava"
+    Fitness: "planetfitness peloton strava",
+    Gaming: "steam playstation xboxgamepass nintendoswitch epicgames ea ubisoft roblox gamestop"
   }).flatMap(([category, list]) => list.split(" ").map((b2) => [b2, category])));
   var hintCategory = {
     internet: "Internet",
@@ -8983,8 +9034,10 @@
     music: "Streaming and music",
     cloud: "Cloud and homelab",
     software: "Software and apps",
-    home: "Mortgage or rent"
+    home: "Mortgage or rent",
+    gaming: "Gaming"
   };
+  var alsoCalled = { gaming: ["Gaming", "Games", "Video games", "Video gaming"] };
   function paymentCategory(p3) {
     const out = [];
     const h3 = hintOf(p3.kind, p3.name);
@@ -9026,7 +9079,7 @@
     if (moved) return { account: moved };
     const have = new Map(categories2.map((c4) => [c4.name.toLowerCase(), c4]));
     const pick = (...names5) => {
-      for (const n3 of names5) {
+      for (const n3 of names5.flatMap((x3) => x3 && alsoCalled[x3.toLowerCase()] || [x3])) {
         const c4 = n3 && have.get(n3.toLowerCase());
         if (c4 && !!c4.income === t3.amount > 0) return c4.name;
       }
@@ -9038,7 +9091,8 @@
     const brand = payee ? brandOf(void 0, payee) : void 0;
     const sub = brand ? suggestType(brand, payee) : "";
     const hint = hintOf(void 0, payee);
-    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint]) };
+    const otherwise = brand && brandCategory[brand] === "Gaming" ? "Shopping" : void 0;
+    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint], otherwise) };
   }
   var billKinds = /* @__PURE__ */ new Set(["utilities", "home", "car", "subscriptions", "loans"]);
   function samePurpose(payee, x3) {
@@ -10139,7 +10193,7 @@
   function OwnLogo({ value, set: set2, what: what2, fetchLogo: fetchLogo2, guess }) {
     const file = A2(null);
     const [problem, setProblem] = d2("");
-    const [site, setSite] = d2(null);
+    const [site2, setSite] = d2(null);
     const [getting, setGetting] = d2(false);
     const [from2, setFrom] = d2("");
     const read = async (f4) => {
@@ -10152,7 +10206,7 @@
         setProblem("That file is not a picture this can read: try a PNG or a JPEG.");
       }
     };
-    const typed = site ?? guess ?? "";
+    const typed = site2 ?? guess ?? "";
     const get = async () => {
       if (!fetchLogo2 || getting) return;
       setGetting(true);
@@ -11295,7 +11349,8 @@
     const have = ledger?.transactions || [];
     const memory3 = renameMemory(have, cleanPayee);
     const found2 = read_.map((t3) => {
-      const payee = cleanPayee(t3.payee), raw = t3.payee && t3.payee.toLowerCase() !== payee.toLowerCase() ? t3.payee : void 0;
+      const said2 = t3.payee.replace(/\s+/g, " ").trim();
+      const payee = cleanPayee(withoutTown(t3.payee, t3.town)), raw = said2 && said2.toLowerCase() !== payee.toLowerCase() ? said2 : void 0;
       return { ...t3, payee: raw && memory3.get(payee.toLowerCase()) || payee, raw };
     });
     const fixes = wayOnlyFixes(found2, account, have);
@@ -16211,7 +16266,7 @@ ${pays}
     }
   }
   var receipts = { save: (dataURL) => go().SaveFinancesReceipt(dataURL), read: (name) => go().FinancesReceipt(name) };
-  var fetchLogo = phone ? void 0 : (site) => go().FinancesFetchLogo(site);
+  var fetchLogo = phone ? void 0 : (site2) => go().FinancesFetchLogo(site2);
   async function saveLedger(l3) {
     try {
       ledgerData.set(await go().SaveFinancesLedger(l3));

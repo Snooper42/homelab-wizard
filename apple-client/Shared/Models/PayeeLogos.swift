@@ -185,9 +185,18 @@ final class PayeeLogos: @unchecked Sendable {
         static let longNumber = #"\d{5,}"#
         static let bankCode = #"\b(?:PPD|CCD|WEB|TEL)\s*ID\b|\bXFER\b"#
         static let memoAndWording = #"^(.*\S)\s+\((.+)\)$"#
-        static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail, bankCode]
+        // American Express's columns: the shop, its town (or website, or phone number), its state.
+        static let gap = #"\s{2,}"#
+        static let townColumn = #"^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$"#
+        static let lastWord = #"^(.+)\s(\S+)$"#
+        static let glued = #"^(.*[A-Za-z].*\d)([A-Z][A-Z .'-]{1,12}) ([A-Z]{2})$"#
+        static let lastTwoWords = #"^(.+) (\S+) (\S+)$"#
+        static let site = #"\.(?:com|net|org|co|io|tv|us)\b"#
+        static let letter = #"[A-Za-z]"#
+        static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail, bankCode, site]
         static let all = [spaces, star, starReference, www, domain, date, phone, cardDigits, store, number, terminal, trailing, wordStart, apostropheS,
-                          zelle, cardPayment, achId, underscored, longReference, achTail, longNumber, bankCode, memoAndWording]
+                          zelle, cardPayment, achId, underscored, longReference, achTail, longNumber, bankCode, memoAndWording,
+                          gap, townColumn, lastWord, glued, lastTwoWords, site, letter]
     }
 
     private static func compile() -> [String: NSRegularExpression] {
@@ -338,7 +347,7 @@ final class PayeeLogos: @unchecked Sendable {
     /// when nothing in it says who (payees.ts's `cleanPayee`).
     func cleanPayee(_ raw: String?) -> String {
         let raw = raw ?? ""
-        var s = replace(raw, P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        var s = replace(shopOf(raw), P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return "" }
         // Zelle: who it went to or came from, its reference dropped.
         if let z = groups(s, P.zelle) {
@@ -357,16 +366,12 @@ final class PayeeLogos: @unchecked Sendable {
             s = replace(s, P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             s = replaceFirst(s, P.achTail, with: "")
         }
-        if let leading {
-            let ns = s as NSString
-            if let m = leading.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) {
-                s = ns.replacingCharacters(in: m.range, with: "")
-            }
-            s = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE");
+        s = withoutLeading(s).trimmingCharacters(in: .whitespacesAndNewlines)
+        // A processor first: the merchant follows its star ("SQ *BLUE BOTTLE"),
+        // as a known name does after its maker's ("MICROSOFT*XBOX" is Xbox);
         // a star after the merchant is its own reference ("…US*2K4").
-        if let star = groups(s, P.star), processors.contains(Self.flat(star[0]).replacingOccurrences(of: " ", with: "")) {
+        if let star = groups(s, P.star),
+           processors.contains(Self.flat(star[0]).replacingOccurrences(of: " ", with: "")) || chainOf(Self.flat(star[1])) != nil {
             s = star[1]
         } else {
             s = replaceFirst(s, P.starReference, with: "").replacingOccurrences(of: "*", with: " ")
@@ -387,9 +392,63 @@ final class PayeeLogos: @unchecked Sendable {
         }
         s = replace(parts.joined(separator: " "), P.trailing, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         if s.isEmpty { return raw.trimmingCharacters(in: .whitespacesAndNewlines) }
-        let f = Self.flat(s)
-        if let chain = chains.first(where: { f == $0.words || f.hasPrefix($0.words + " ") }) { return chain.name }
+        if let chain = chainOf(Self.flat(s)) { return chain.name }
         return ordinary(s)
+    }
+
+    /// The chain whose wording a clean line is, or starts with.
+    private func chainOf(_ f: String) -> (words: String, name: String)? {
+        chains.first(where: { f == $0.words || f.hasPrefix($0.words + " ") })
+    }
+
+    /// The words a bank puts before the merchant taken off ("POS DEBIT", "AplPay").
+    private func withoutLeading(_ s: String) -> String {
+        let ns = s as NSString
+        guard let leading, let m = leading.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) else { return s }
+        return ns.replacingCharacters(in: m.range, with: "")
+    }
+
+    /// A state as a bank ends a line with it: two capitals.
+    private func isState(_ w: String) -> Bool {
+        w.count == 2 && w == w.uppercased() && states.contains(w.lowercased())
+    }
+
+    /// The shop alone, its town and state taken off (payees.ts's `shopOf`):
+    /// American Express pads a line into columns ("BLUE BOTTLE COFFEE  OAKLAND
+    /// CA"), glues the town to a full column's store number ("PET SUPERMARKET
+    /// #100SUNRISE FL"), and gives a shop online its website as its town
+    /// ("AMAZON.COM AMZN.COM/BILL WA"). Anything else comes back as it was.
+    private func shopOf(_ line: String) -> String {
+        let s = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        func keeps(_ x: String) -> String { matches(withoutLeading(x), P.letter) ? x : s }
+        let cols = split(s, P.gap)
+        if cols.count > 1 {
+            let last = cols[cols.count - 1]
+            if isState(last) {
+                let keep = cols.count > 2 && matches(cols[cols.count - 2], P.townColumn) ? cols.dropLast(2) : cols.dropLast()
+                return keeps(keep.joined(separator: " "))
+            }
+            if let two = groups(last, P.lastWord), isState(two[1]), matches(two[0], P.townColumn) {
+                return keeps(cols.dropLast().joined(separator: " "))
+            }
+            return s
+        }
+        if let g = groups(s, P.glued), isState(g[2]) { return keeps(g[0]) }
+        if let w = groups(s, P.lastTwoWords), isState(w[2]), matches(w[1], P.site) { return keeps(w[0]) }
+        return s
+    }
+
+    /// The pieces between a pattern's matches.
+    private func split(_ s: String, _ pattern: String) -> [String] {
+        let ns = s as NSString
+        guard let re = patterns[pattern] else { return [s] }
+        var out: [String] = [], from = 0
+        for m in re.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            out.append(ns.substring(with: NSRange(location: from, length: m.range.location - from)))
+            from = m.range.location + m.range.length
+        }
+        out.append(ns.substring(from: from))
+        return out
     }
 
     /// "BLUE BOTTLE" is "Blue Bottle"; a line in mixed case is left as typed.
