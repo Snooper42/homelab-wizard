@@ -529,3 +529,23 @@ func TestLockKeepsTheJobsFlags(t *testing.T) {
 		t.Errorf("an old lock: %+v %v", stale, err)
 	}
 }
+
+// A line says what it was (its job's action) when the job did what it set out to, so Recently done finds its Undo by
+// that, never by its words (tidy-loop.md's queue, item 4). A run that stopped makes a line of its own, with none: it
+// did nothing to undo.
+func TestActivityKeepsWhatItWas(t *testing.T) {
+	var r Record
+	now := time.Now()
+	r.Note("music", Run{Action: "finalize", OK: true, At: now})
+	r.Note("books", Run{Action: "apply", OK: true, At: now, Result: map[string]any{"changed": 2.0, "covers": 1.0}})
+	r.Note("music", Run{Action: "finalize", OK: false, Exit: 1, At: now, Why: "Navidrome didn't pause"})
+	if len(r.Activity) != 3 {
+		t.Fatalf("lines: %+v", r.Activity)
+	}
+	if r.Activity[0].Action != "finalize" || r.Activity[1].Action != "apply" {
+		t.Errorf("what each was: %q %q", r.Activity[0].Action, r.Activity[1].Action)
+	}
+	if r.Activity[2].Action != "" {
+		t.Errorf("a run that stopped says it was %q", r.Activity[2].Action)
+	}
+}

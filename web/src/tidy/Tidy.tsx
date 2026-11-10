@@ -670,8 +670,10 @@ function SpaceWidget({ l, d }: { l: app.TidyLibrary; d: app.TidyUp }) {
 function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: TidyJob | null; act: TidyActions; kind?: string; span?: 1 | 'all' }) {
   const items = d.activity.map((a, i) => ({ a, i })).filter(({ a }) => !kind || a.kind === kind || (kind === 'music' && a.kind === 'lyrics')).reverse().slice(0, 6);
   const music = lib(d, 'music'), books = lib(d, 'books');
-  const swapIdx = d.activity.map((a) => a.text).lastIndexOf('Cleaned library swapped in');
-  const applyIdx = d.activity.map((a) => a.kind + a.text.slice(0, 12)).lastIndexOf('booksBooks tidied');
+  // Each line by what it was (its action); a line kept before lines said so, by its words.
+  const was = (kind: string, action: string, words: string) => d.activity.map((a) => a.kind === kind && (a.action ? a.action === action : a.text.startsWith(words))).lastIndexOf(true);
+  const swapIdx = was('music', 'finalize', 'Cleaned library swapped in');
+  const applyIdx = was('books', 'apply', 'Books tidied');
   const undo = (i: number) => {
     if (i === swapIdx && (music.stage === 'swapped' || music.stage === 'verified')) {
       return () => act.ask({ title: 'Put the old library back?', action: 'Put it back', lead: 'Navidrome is paused while the folders swap back, exactly as they were.', go: () => act.run('music', 'undo', [], true) });

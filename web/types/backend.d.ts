@@ -971,6 +971,7 @@ declare namespace media {
     text: string;
     sub?: string;
     undo?: string;
+    action?: string;
   }
   interface Album {
     id: string;

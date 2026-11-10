@@ -16914,8 +16914,9 @@ ${pays}
   function DoneWidget({ d: d3, job: job2, act, kind, span = "all" }) {
     const items = d3.activity.map((a3, i3) => ({ a: a3, i: i3 })).filter(({ a: a3 }) => !kind || a3.kind === kind || kind === "music" && a3.kind === "lyrics").reverse().slice(0, 6);
     const music = lib(d3, "music"), books = lib(d3, "books");
-    const swapIdx = d3.activity.map((a3) => a3.text).lastIndexOf("Cleaned library swapped in");
-    const applyIdx = d3.activity.map((a3) => a3.kind + a3.text.slice(0, 12)).lastIndexOf("booksBooks tidied");
+    const was = (kind2, action, words5) => d3.activity.map((a3) => a3.kind === kind2 && (a3.action ? a3.action === action : a3.text.startsWith(words5))).lastIndexOf(true);
+    const swapIdx = was("music", "finalize", "Cleaned library swapped in");
+    const applyIdx = was("books", "apply", "Books tidied");
     const undo = (i3) => {
       if (i3 === swapIdx && (music.stage === "swapped" || music.stage === "verified")) {
         return () => act.ask({ title: "Put the old library back?", action: "Put it back", lead: "Navidrome is paused while the folders swap back, exactly as they were.", go: () => act.run("music", "undo", [], true) });
