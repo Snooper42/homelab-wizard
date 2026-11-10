@@ -76,7 +76,7 @@ Told the owner on Nov 9: away from home, public apps pass Cloudflare decrypted (
 
 - **What Ghostfolio's own Holdings page says** for one of the wrong holdings (2.1).
 - **Paperless and Vaultwarden home only, Immich reachable?** (2.2)
-- **The Cloudflare token's two permissions** (*Access: Apps and Policies*, *Access: Service Tokens*, Edit), then Setup's *Reach Finances away from home*, then pair the phone again at home: away from home stays off until then.
+- ~~The Cloudflare token's two permissions, Setup's *Reach Finances away from home*, pairing again~~ **Dropped by the owner (Nov 10): they don't want the phone away from home.** They added the two permissions, then the Setup step wasn't found (they ran `./homelab phone away` in their code checkout, not their homelab folder) and they let it go. Leave it off and don't ask again; nothing is published without that step. If they ever want it back, start from the Setup screen's **Can wait** row. They were told the two Access permissions can be removed from their token.
 - **The App Group test** (`unison-handoff.md` section 2): `HOMELAB_WIDGET=1 ./apple-client/scripts/run-on-iphone.sh <prefix>`, and whether it signs.
 - **Trying Nov 9's work on a phone**: they were installing it on Nov 10 (`git pull`, then `run-on-iphone.sh` with their prefix, after updating the computer).
 - **Finances:** whether "After <name>'s paycheck" matches their spreadsheet (`finances-handoff.md`).
