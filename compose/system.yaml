@@ -23,6 +23,10 @@ networks:
   # every app joins (docs/Security.md, N27).
   socket:
     internal: true
+  # Dozzle's own: it shows every container's logs without a sign-in, so it
+  # is on no network every app joins (docs/Security.md, backlog item 66).
+  # Not internal, so its port on this computer still answers.
+  logs: {}
 
 services:
   duplicati:
@@ -169,7 +173,7 @@ services:
     ports:
       # No sign-in of its own: this computer only, whatever BIND_IP says.
       - 127.0.0.1:${DOZZLE_PORT:-9998}:8080
-    networks: [default, socket]
+    networks: [logs, socket]
     depends_on: [docker-socket-proxy]
     healthcheck:
       test: ["CMD", "/dozzle", "healthcheck"]

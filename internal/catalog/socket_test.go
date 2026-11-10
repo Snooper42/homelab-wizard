@@ -92,6 +92,9 @@ func TestDatabasesStayOffTheSharedNetwork(t *testing.T) {
 	}
 	if n < 10 {
 		t.Errorf("only %d databases found: the test no longer sees them", n)
+	}
+}
+
 // Backlog item 58: an app with no sign-in of its own (local: Dozzle, with
 // every container's logs, and beets) listens on this computer only, even
 // when Settings › Apps listen on (BIND_IP) is set to the home network's
@@ -111,5 +114,21 @@ func TestAppsWithoutASignInListenOnThisComputerOnly(t *testing.T) {
 	}
 	if n < 2 {
 		t.Errorf("only %d apps without a sign-in found: the test no longer sees them", n)
+	}
+}
+
+// Backlog item 66: Dozzle shows every container's logs without a sign-in,
+// and logs can hold secrets (L1). It needs no proxy host (local), so it is
+// on no network every app joins: only the socket proxy's and its own.
+func TestDozzleIsNotOnTheSharedNetwork(t *testing.T) {
+	d, ok := load(t).Get("dozzle")
+	if !ok {
+		t.Fatal("no dozzle in the catalog")
+	}
+	if joins(d, "homelab") {
+		t.Errorf("dozzle is on the shared homelab network, where every app can read every log at dozzle:8080")
+	}
+	if !joins(d, "socket") {
+		t.Errorf("dozzle can't reach the socket proxy: %v", d.Networks)
 	}
 }

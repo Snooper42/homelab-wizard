@@ -609,13 +609,13 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 63. (done: holds) **Homarr's `SECRET_ENCRYPTION_KEY`**: made where, kept 0600, carried
     by which backup, and what Homarr keeps with it (the integrations'
     keys).
-64. **The app's link to the agent on Windows** (the named pipe or local
+64. (done: holds) **The app's link to the agent on Windows** (the named pipe or local
     port item 8 read on the Mac): who on the same computer may use it.
 65. (done: N33, #562) **The tunnel's catch-all kept by hand** (`MergeIngress` keeps a
     catch-all someone added): one that sends every hostname to the proxy
     would put each home-only app behind the tunnel; say so when it is
     there (round 58 found the homelab's own catch-all answers 404).
-66. **Dozzle on the shared network**: Dozzle (every container's logs) is
+66. (done: N36) **Dozzle on the shared network**: Dozzle (every container's logs) is
     on `homelab` (its stack's default), so any app there can read every
     log at `dozzle:8080` without a sign-in, as N27 was for the socket
     proxy's environment. It needs no proxy host (`local: true`), so its
