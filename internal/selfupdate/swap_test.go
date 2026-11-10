@@ -33,7 +33,21 @@ func serve(t *testing.T, files map[string][]byte, sums map[string]string) Releas
 		w.Write(body)
 	}))
 	t.Cleanup(srv.Close)
-	var rel Release
+	rel := Release{Repo: "o/r"}
+	attested := map[string]string{}
+	for name, body := range files {
+		sum := sha256.Sum256(body)
+		attested[name] = hex.EncodeToString(sum[:])
+	}
+	// The build provenance vouches for the files served, as they are (N29).
+	old := Provenance
+	Provenance = func(_ context.Context, repo, name, sha string) error {
+		if repo != "o/r" || attested[name] == "" || !strings.EqualFold(attested[name], sha) {
+			return errors.New("no build provenance for " + name)
+		}
+		return nil
+	}
+	t.Cleanup(func() { Provenance = old })
 	for name, body := range files {
 		sum := sha256.Sum256(body)
 		a := Asset{Name: name, URL: srv.URL + "/dl/" + name, SHA256: hex.EncodeToString(sum[:])}
@@ -441,9 +455,10 @@ func (f *full) Write(p []byte) (int, error) {
 
 func (f *full) Close() error { return nil }
 
-// The roadmap's four cases: only a good download is staged to replace the
-// app; a bad checksum, a download cut off, and a full disk leave nothing
-// behind, so the app carries on as it is.
+// The roadmap's four cases, and a fifth (N29): only a good download is
+// staged to replace the app; a bad checksum, a download cut off, a full
+// disk, and a build without its provenance leave nothing behind, so the
+// app carries on as it is.
 func TestTheFourCases(t *testing.T) {
 	body := []byte("the new build, all of it")
 	sum := sha256.Sum256(body)
@@ -465,18 +480,27 @@ func TestTheFourCases(t *testing.T) {
 	defer srv.Close()
 	installedAs(t, Installed{Kind: KindWindowsPortable, Path: `D:\Apps\Homelab`})
 	rel := func(path string) Release {
-		return Release{Assets: []Asset{{Name: portable(), URL: srv.URL + path, SHA256: hex.EncodeToString(sum[:])}}}
+		return Release{Repo: "o/r", Assets: []Asset{{Name: portable(), URL: srv.URL + path, SHA256: hex.EncodeToString(sum[:])}}}
 	}
 	for _, c := range []struct {
 		name, path, want string
-		full             bool
+		full, unattested bool
 	}{
-		{"a good download", "/good", "", false},
-		{"a bad checksum", "/bad", "checksum", false},
-		{"a download cut off", "/cut", "unexpected EOF", false},
-		{"a full disk", "/good", "no space left", true},
+		{"a good download", "/good", "", false, false},
+		{"a bad checksum", "/bad", "checksum", false, false},
+		{"a download cut off", "/cut", "unexpected EOF", false, false},
+		{"a full disk", "/good", "no space left", true, false},
+		{"no build provenance", "/good", "could not be shown to come from this app's own build", false, true},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			old := Provenance
+			Provenance = func(_ context.Context, repo, name, sha string) error {
+				if c.unattested || repo != "o/r" || name != portable() || sha != hex.EncodeToString(sum[:]) {
+					return errors.New("the download could not be shown to come from this app's own build (GitHub has no build provenance for it)")
+				}
+				return nil
+			}
+			t.Cleanup(func() { Provenance = old })
 			if c.full {
 				old := create
 				create = func(string) (io.WriteCloser, error) { return &full{}, nil }

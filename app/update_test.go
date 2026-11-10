@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -42,10 +44,17 @@ func newerBuild(t *testing.T) (helpers *[]*exec.Cmd) {
 		}
 	}))
 	t.Cleanup(srv.Close)
-	oldAPI, oldCommit, oldRepo, oldCurrent, oldStart := selfupdate.API, commit, repo, selfupdate.Current, selfupdate.StartHelper
+	oldAPI, oldCommit, oldRepo, oldCurrent, oldStart, oldProvenance := selfupdate.API, commit, repo, selfupdate.Current, selfupdate.StartHelper, selfupdate.Provenance
 	t.Cleanup(func() {
-		selfupdate.API, commit, repo, selfupdate.Current, selfupdate.StartHelper = oldAPI, oldCommit, oldRepo, oldCurrent, oldStart
+		selfupdate.API, commit, repo, selfupdate.Current, selfupdate.StartHelper, selfupdate.Provenance = oldAPI, oldCommit, oldRepo, oldCurrent, oldStart, oldProvenance
 	})
+	// The build's provenance vouches for this download (N29).
+	selfupdate.Provenance = func(_ context.Context, r, name, sha string) error {
+		if r != "o/r" || name != asset || sha != hex.EncodeToString(sum[:]) {
+			return errors.New("no build provenance")
+		}
+		return nil
+	}
 	selfupdate.API, commit, repo = srv.URL, "aaaaaaa", "o/r"
 	selfupdate.Current = func() selfupdate.Installed {
 		return selfupdate.Installed{Kind: selfupdate.KindWindowsPortable, Path: filepath.Join(t.TempDir(), "Homelab")}
