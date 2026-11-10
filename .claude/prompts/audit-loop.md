@@ -660,7 +660,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 71. **Paperless-AI 4's setup window (after N37)**: the install could call
     `POST /api/setup` itself with a user and password from `.env`, as the
     nightly test does, so the window closes the moment it starts.
-72. **Gluetun's control server on the shared network**: its HTTP control
+72. (done: N39) **Gluetun's control server on the shared network**: its HTTP control
     API (`:8000`; `/v1/publicip/ip`, the forwarded port, `PUT
     /v1/vpn/status`) answers any container on `homelab`. Its auth depends
     on the version, and `:latest` floats. qBittorrent shares its network
