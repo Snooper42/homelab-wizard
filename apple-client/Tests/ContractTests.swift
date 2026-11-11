@@ -25,6 +25,20 @@ struct ContractTests {
         #expect(computer.answers("Status") && computer.features.contains("tunnel") && computer.features.contains("away"))
     }
 
+    /// AlertLog's sample (cmd/homelab's sampleAlertLog), as the phone reads it.
+    @Test func thePhoneReadsTheAlertLog() throws {
+        let url = try #require(Bundle.module.url(forResource: "CompanionContract", withExtension: "json"))
+        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
+        let whole = try #require(object as? [String: Any])
+        let data = try JSONSerialization.data(withJSONObject: try #require(whole["alertLog"]))
+        let alerts = try JSONDecoder.homelab().decode([KeptAlert].self, from: data)
+        #expect(alerts.count == 3)
+        #expect(alerts[0].id == 3 && alerts[0].isUrgent && alerts[0].checks == ["crowdsec bouncer"])
+        #expect(alerts[0].snoozedBy == "Phone" && alerts[0].snoozedUntil != nil && alerts[0].clearedAt == nil)
+        #expect(alerts[1].clearedAt != nil && alerts[1].snoozedUntil == nil)
+        #expect(alerts[2].checks.isEmpty && !alerts[2].isUrgent && alerts[2].body == "Navidrome")
+    }
+
     @Test func aComputerOlderThanThatSaysNothing() throws {
         let me = try JSONDecoder.homelab().decode(DeviceInfo.self, from: Data(#"{"id":"a","name":"Phone"}"#.utf8))
         #expect(me.computer == nil)
