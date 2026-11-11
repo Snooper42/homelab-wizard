@@ -819,6 +819,7 @@ declare namespace finance {
   }
   interface Rule {
     match: string;
+    prefix?: boolean;
     payee?: string;
     category?: string;
   }

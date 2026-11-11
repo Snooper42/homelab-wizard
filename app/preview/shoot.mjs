@@ -7963,34 +7963,65 @@ const smokes = [
     const by = (p) => txs.find((t) => t.payee === p);
     if (by('FPL')?.payment !== 'electric' || by('Mazda')?.payment !== 'carpay' || by('Costco')?.payment) throw new Error(`linked ${JSON.stringify(txs.slice(-3))}`);
   } },
-  // Rules (the owner's yes, Nov 11): a transaction renamed and given a category, with Always ticked, makes a rule for its
-  // name as it came in: its other transactions take the name, and the category where they had none; the next import of
-  // that name comes in renamed and in that category. The Rules sheet lists it, and Remove takes it away.
+  // Rules (the owner's yes, Nov 11): a transaction renamed to the start of its name (Pine Pest Control 80 to Pine Pest
+  // Control) and given a category, with Always ticked, makes a rule for every name starting so: the ones already in
+  // take the name and the category (one picked before too), and the next import of another branch comes in so. The
+  // Rules sheet lists it; its category changed there is kept; Remove takes it away.
   { name: 'Finances: Always do this for a payee, and the next import does it', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
     { id: 'p1', date: '2026-10-20', account: 'chk', amount: -50, payee: 'Pine Pest Control 80' },
-    { id: 'p2', date: '2026-09-20', account: 'chk', amount: -50, payee: 'Pine Pest Control 80' },
+    { id: 'p2', date: '2026-09-20', account: 'chk', amount: -50, payee: 'Pine Pest Control 81', category: 'Other' },
+    { id: 'p3', date: '2026-08-20', account: 'chk', amount: -50, payee: 'Pine Pest Control 112' },
   ] } }, run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
     await page.click('.fx-txday li:has-text("Pine Pest Control 80") button >> nth=0');
     await page.locator('#finSheet label.field').filter({ hasText: /^Paid to/ }).locator('input').fill('Pine Pest Control');
     await page.locator('#finSheet label.field').filter({ hasText: /^Category/ }).locator('input').fill('Repairs');
     await page.click('#finSheet label:has-text("Always do this for “Pine Pest Control 80”") input');
+    if (!(await page.isChecked('#finSheet label:has-text("Any name starting with") input[type=radio]'))) throw new Error('not starts-with by default');
+    if ((await page.inputValue('#finSheet input[aria-label="Names starting with"]')) !== 'Pine Pest Control') throw new Error('the start');
+    if (!(await page.isChecked('#finSheet label:has-text("Also change the 2 already in") input'))) throw new Error('not applied to those already in');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const rules = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.rules);
-    if (JSON.stringify(rules) !== JSON.stringify([{ match: 'Pine Pest Control 80', payee: 'Pine Pest Control', category: 'Repairs' }])) throw new Error(`rules ${JSON.stringify(rules)}`);
+    if (JSON.stringify(rules) !== JSON.stringify([{ match: 'Pine Pest Control', prefix: true, payee: 'Pine Pest Control', category: 'Repairs' }])) throw new Error(`rules ${JSON.stringify(rules)}`);
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
-    if (txs.filter((t) => t.payee === 'Pine Pest Control' && t.category === 'Repairs').length !== 2) throw new Error(`the others ${JSON.stringify(txs)}`);
+    if (txs.filter((t) => t.payee === 'Pine Pest Control' && t.category === 'Repairs').length !== 3) throw new Error(`those already in ${JSON.stringify(txs)}`);
     await page.click('.fx-transactions button:text-is("Import a file")');
-    const csv = 'Date,Description,Amount\n11/20/2026,PINE PEST CONTROL 80  TUCSON   AZ,-50.00\n';
+    const csv = 'Date,Description,Amount\n11/20/2026,PINE PEST CONTROL 205  TUCSON   AZ,-50.00\n';
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
     await page.waitForSelector('#finSheet .importlist li:has(strong:text-is("Pine Pest Control")) small:has-text(" · Repairs")', { timeout: 5000 });
+    // Cancel with a file picked asks once more (nothing is saved yet): pressed again, the sheet closes.
     await page.click('#finSheet button:text-is("Cancel")');
+    if (await page.isVisible('#finSheet .formerr:has-text("Cancel again")')) await page.click('#finSheet button:text-is("Cancel")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Rules (1)")', { timeout: 5000 });
-    await page.waitForSelector('#finSheet .rulelist li:has-text("Pine Pest Control 80"):has-text("Pine Pest Control · Repairs")', { timeout: 5000 });
+    await page.fill('#finSheet .rulelist input[aria-label="Category for Pine Pest Control"]', 'Home');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.rules?.[0]?.category)) !== 'Home') throw new Error('the category changed in the Rules sheet was not kept');
+    await page.click('.fx-transactions button:text-is("Rules (1)")', { timeout: 5000 });
     await page.click('#finSheet .rulelist li button:text-is("Remove")');
     await page.click('#finSheet button:text-is("Save")');
-    await page.waitForFunction(() => (window.__MOCK.financesSaved?.at(-1)?.rules || []).length === 0, null, { timeout: 5000 });
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    if ((await page.evaluate(() => (window.__MOCK.financesSaved?.at(-1)?.rules || []).length)) !== 0) throw new Error('Remove was not kept');
+  } },
+  // Only that name: a category given with Always, the name kept, is a rule for that name alone; a name that only starts
+  // the same (Corner Cafe Downtown) is left as it was.
+  { name: 'Finances: Always do this for only that name leaves a name starting the same alone', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'c1', date: '2026-10-20', account: 'chk', amount: -12, payee: 'Corner Cafe' },
+    { id: 'c2', date: '2026-10-21', account: 'chk', amount: -9, payee: 'Corner Cafe Downtown' },
+  ] } }, run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.click('.fx-txday li:has(strong:text-is("Corner Cafe")) button >> nth=0');
+    await page.locator('#finSheet label.field').filter({ hasText: /^Category/ }).locator('input').fill('Eating out');
+    await page.click('#finSheet label:has-text("Always do this for “Corner Cafe”") input');
+    if (!(await page.isChecked('#finSheet label:has-text("Only “Corner Cafe”") input[type=radio]'))) throw new Error('not only by default');
+    await page.click('#finSheet button:text-is("Save")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const rules = await page.evaluate(() => window.__MOCK.financesSaved?.at(-1)?.rules);
+    if (JSON.stringify(rules) !== JSON.stringify([{ match: 'Corner Cafe', category: 'Eating out' }])) throw new Error(`rules ${JSON.stringify(rules)}`);
+    const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
+    if (txs.find((t) => t.id === 'c2')?.category) throw new Error('a name starting the same was changed');
   } },
   // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
   { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [

@@ -13,7 +13,7 @@ import { cleanPayee, withoutTown } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
-import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, ruleFor, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, ruleFor, ruleMatches, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
 import { carFromPrice, groups, rateOf } from './model';
 import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
@@ -908,6 +908,18 @@ function TransactionForm(props: EditProps) {
   // take the name, and the category where they had none. Offered once it is renamed or given a category.
   const [always, setAlways] = useState(false);
   const canAlways = !!t && !!oldPayee && way !== 'move' && !parts.length && (payee.trim().toLowerCase() !== oldPayee.toLowerCase() || !!category.trim());
+  // For that name only, or every name starting with some words: starting with the new name when it starts the old one
+  // (Pine Pest Control 80 renamed Pine Pest Control), until picked.
+  const startsOld = (n: string) => !!n && oldPayee.toLowerCase().startsWith(n.toLowerCase() + ' ');
+  const [scope, setScope] = useState<'' | 'only' | 'start'>('');
+  const [start, setStart] = useState<string | null>(null);
+  const scopeNow = scope || (startsOld(payee.trim()) ? 'start' : 'only');
+  const startNow = start ?? (startsOld(payee.trim()) ? payee.trim() : oldPayee);
+  const ruleNow = { match: scopeNow === 'start' ? startNow.trim() : oldPayee, prefix: scopeNow === 'start' || undefined };
+  // The ones already in that it is for, changed too unless unticked: the name, and the category, whatever it was.
+  const [applyIn, setApplyIn] = useState(true);
+  const ruled = (q: finance.Transaction) => !q.to && q.id !== t?.id && !!q.payee && ruleMatches(ruleNow, q.payee);
+  const inCount = always && canAlways ? (ledger?.transactions || []).filter(ruled).length : 0;
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
@@ -952,14 +964,17 @@ function TransactionForm(props: EditProps) {
     if (!next.tags!.length) next.tags = undefined;
     // A logo picked by hand is its payee's: every transaction to it takes it, past and to come.
     const same = (q: finance.Transaction) => !q.to && !!q.payee && q.payee.toLowerCase() === (next.payee || '').toLowerCase();
-    const rule = always && canAlways ? { match: oldPayee, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : undefined, category: next.category || undefined } : undefined;
+    if (always && canAlways && !ruleNow.match) { setProblem('Type the words the names start with.'); return; }
+    const rule: finance.Rule | undefined = always && canAlways ? { ...ruleNow, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : undefined, category: next.category || undefined } : undefined;
+    if (rule && !rule.prefix) delete rule.prefix;
     const list = (ledger?.transactions || [])
-      .map((q) => ((rule || renameAll) && renamesToo && next.payee && byOld(q) ? { ...q, payee: next.payee } : q))
-      .map((q) => (rule?.category && !q.category && !q.splits?.length && q.id !== t?.id && (byOld(q) || same(q)) ? { ...q, category: rule.category } : q))
+      .map((q) => (rule && applyIn && ruled(q) ? { ...q, payee: rule.payee || q.payee, category: q.splits?.length ? q.category : rule.category || q.category } : q))
+      .map((q) => (!(rule && applyIn) && renameAll && renamesToo && next.payee && byOld(q) ? { ...q, payee: next.payee } : q))
       .map((q) => (logoPicked.current && next.payee && same(q) ? { ...q, institution: next.institution } : q));
     const at = list.findIndex((q) => q.id === t?.id);
     if (at >= 0) list[at] = next; else list.push(next);
-    keepLedger(list, rule ? [...(plan.rules || []).filter((r) => r.match.trim().toLowerCase() !== oldPayee.toLowerCase()), rule] : undefined);
+    const kind = (r: finance.Rule) => r.match.trim().toLowerCase() + (r.prefix ? ' …' : '');
+    keepLedger(list, rule ? [...(plan.rules || []).filter((r) => kind(r) !== kind(rule)), rule] : undefined);
   };
   const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
   return (
@@ -980,8 +995,14 @@ function TransactionForm(props: EditProps) {
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
-      {canAlways && <label class="fcheckbox always"><input type="checkbox" checked={always} onClick={tick(setAlways)} /> Always do this for “{oldPayee}”: its other transactions, and every import from now on</label>}
-      {renamesToo > 0 && <label class="fcheckbox renameall"><input type="checkbox" checked={renameAll} onClick={tick(setRenameAll)} /> Rename {renamesToo === 1 ? 'the other transaction' : `the ${renamesToo} other transactions`} from “{oldPayee}” too, and ones imported later</label>}
+      {canAlways && <label class="fcheckbox always"><input type="checkbox" checked={always} onClick={tick(setAlways)} /> Always do this for “{oldPayee}”, and for every import from now on</label>}
+      {canAlways && always && <div class="ruleopts wide">
+        <label class="fcheckbox"><input type="radio" name="rulescope" checked={scopeNow === 'only'} onClick={() => setScope('only')} /> Only “{oldPayee}”</label>
+        <label class="fcheckbox"><input type="radio" name="rulescope" checked={scopeNow === 'start'} onClick={() => setScope('start')} /> Any name starting with</label>
+        <input aria-label="Names starting with" value={startNow} disabled={scopeNow !== 'start'} onInput={(e) => { setStart((e.target as HTMLInputElement).value); setScope('start'); }} />
+        {inCount > 0 && <label class="fcheckbox"><input type="checkbox" checked={applyIn} onClick={tick(setApplyIn)} /> Also change the {inCount === 1 ? 'one' : inCount} already in</label>}
+      </div>}
+      {renamesToo > 0 && !(always && canAlways) && <label class="fcheckbox renameall"><input type="checkbox" checked={renameAll} onClick={tick(setRenameAll)} /> Rename {renamesToo === 1 ? 'the other transaction' : `the ${renamesToo} other transactions`} from “{oldPayee}” too, and ones imported later</label>}
       {way !== 'move' && <div class="txlogo">
         <button type="button" class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>{picking ? 'Done with the logo' : 'Change logo'}</button>
         {!picking && logoPicked.current && payee.trim() && <span class="muted">Every transaction to {payee.trim()} shows it.</span>}
@@ -1085,24 +1106,47 @@ function LogosForm(props: EditProps) {
   );
 }
 
-/** The rules (Always do this for <payee>): each payee's name as it comes in, and what it becomes; Remove takes one away. */
+/**
+ * The rules (Always do this for <payee>): each payee's name as it comes in, or the words names start with, and the
+ * name and category it becomes, each changeable here; Remove takes one away.
+ */
 function RulesForm(props: EditProps) {
   const { plan } = props;
   const { busy, keep, touched, watch } = useSaving(props);
-  const [rules, setRules] = useState(plan.rules || []);
-  const submit = (e: Event) => { e.preventDefault(); keep({ ...plan, rules: rules.length ? rules : undefined }); };
+  const [rules, setRulesState] = useState<finance.Rule[]>(plan.rules || []);
+  // The rules as last typed: Save reads them here, so a Save pressed straight after typing keeps the last change, drawn
+  // or not.
+  const latest = useRef(rules);
+  const setRules = (next: finance.Rule[]) => { latest.current = next; setRulesState(next); };
+  const [problem, setProblem] = useState('');
+  const set = (i: number, change: Partial<finance.Rule>) => setRules(latest.current.map((r, j) => (j === i ? { ...r, ...change } : r)));
+  const named = (props.categories || []).map((c) => c.name);
+  const submit = (e: Event) => {
+    e.preventDefault();
+    const kept = latest.current.map((r) => ({ match: r.match.trim(), prefix: r.prefix || undefined, payee: (r.payee || '').trim() || undefined, category: (r.category || '').trim() || undefined }));
+    const bad = kept.find((r) => !r.match || (!r.payee && !r.category));
+    if (bad) { setProblem(bad.match ? `The rule for ${bad.match} does nothing: give it a name or a category.` : 'Each rule needs the name it is for.'); return; }
+    keep({ ...plan, rules: kept.length ? kept : undefined });
+  };
   return (
     <form class="finform finrules" onSubmit={submit} {...watch}>
       <div class="formhead"><h2 id="finSheetTitle">Rules</h2></div>
       <p class="formsub muted">What each payee becomes as it comes in, from <strong>Always do this for…</strong> on a transaction. Every import follows them, before anything is guessed.</p>
+      <datalist id="finRuleCategories">{named.map((n) => <option key={n} value={n} />)}</datalist>
       <ul class="rulelist">
-        {rules.map((r, i) => <li key={r.match}>
-          <span class="grow"><strong>{r.match}</strong><small>{[r.payee, r.category].filter(Boolean).join(' · ')}</small></span>
-          <button type="button" class="small" aria-label={`Remove the rule for ${r.match}`} onClick={() => setRules(rules.filter((_, j) => j !== i))}>Remove</button>
+        {rules.map((r, i) => <li key={i}>
+          <span class="grow rulefields">
+            <input aria-label={`Name to match for ${r.match}`} value={r.match} onInput={(e) => set(i, { match: (e.target as HTMLInputElement).value })} />
+            <label class="fcheckbox"><input type="checkbox" checked={!!r.prefix} onClick={(e) => set(i, { prefix: (e.target as HTMLInputElement).checked || undefined })} /> and names starting so</label>
+            <input aria-label={`Name to give for ${r.match}`} value={r.payee || ''} placeholder="Its name as it comes in" onInput={(e) => set(i, { payee: (e.target as HTMLInputElement).value })} />
+            <input aria-label={`Category for ${r.match}`} value={r.category || ''} placeholder="No category" list="finRuleCategories" onInput={(e) => set(i, { category: (e.target as HTMLInputElement).value })} />
+          </span>
+          <button type="button" class="small" aria-label={`Remove the rule for ${r.match}`} onClick={() => setRules(latest.current.filter((_, j) => j !== i))}>Remove</button>
         </li>)}
       </ul>
       {!rules.length && <p class="muted">No rules yet. On a transaction, give its payee a name or a category and tick <strong>Always do this for…</strong>.</p>}
-      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || rules.length !== (plan.rules || []).length} />
+      {problem && <p class="formerr bad" role="alert">{problem}</p>}
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || JSON.stringify(rules) !== JSON.stringify(plan.rules || [])} />
     </form>
   );
 }
