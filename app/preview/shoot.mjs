@@ -383,7 +383,15 @@ const history = [
   { id: 4, at: hoursAgo(3), kind: 'stop', app: 'immich', who: "Sam's iPhone", text: 'Stopped Immich' },
   { id: 5, at: hoursAgo(2), kind: 'restart', app: 'vikunja', who: 'this computer', text: 'Restarted Vikunja' },
 ];
-const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, screen: 'status' };
+// The computer's record of alerts (internal/history's alerts), newest first: one open and snoozed from a phone,
+// one cleared, one from two days ago (past ntfy's 12 hours), and a Finances reminder kept by its plain line.
+const alertLog = [
+  { id: 4, at: hoursAgo(0.5), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'crowdsec bouncer: no pull for 9 minutes', priority: 4, checks: ['crowdsec bouncer'], snoozedUntil: hoursAgo(-0.5), snoozedBy: "Sam's iPhone" },
+  { id: 3, at: hoursAgo(9), topic: 'tunnel-watchdog', title: 'A Finances reminder', priority: 3 },
+  { id: 2, at: hoursAgo(14), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'vikunja: not answering', priority: 4, checks: ['vikunja'], clearedAt: hoursAgo(13.6) },
+  { id: 1, at: hoursAgo(50), topic: 'watchtower', title: 'Homelab: an update was rolled back', body: 'Navidrome' },
+];
+const mock = { platform: 'MacIntel', tidy, tidyReview, cliSteps, upgrade: { ...upgrade, behind: 0, changes: [], appChanged: false, appCommit: '7d9be080888433f921c9fa860a38b329ac368c88', appBehind: 0 }, catalog, status, setup, settings, host, logs, actionLog, urls, envFor, tests, backups, cliLog, alerts, watchdog, protection, savingsHistory, duplicatiJobs, phones, finances, ledger, history, alertLog, screen: 'status' };
 // Finances' tabs are four: Spending holds Transactions and Reports, Plan holds Calendar, Recurring and Paychecks (Pay),
 // each in a second row under it. A page by its name, its tab first.
 const finGroups = { Transactions: 'Spending', Reports: 'Spending', Calendar: 'Plan', Recurring: 'Plan', Pay: 'Plan', Paychecks: 'Plan' };
@@ -3521,6 +3529,24 @@ const smokes = [
       const asked = Object.entries(await backendCalls(page)).filter(([k]) => reads.includes(k)).map(([k, n]) => `${k} ×${n}`);
       if (asked.join(', ') !== 'StatusBoard ×1') throw new Error('Status asked: ' + asked.join(', '));
     } },
+  // Every alert…: the computer's record, past ntfy's 12 hours, each saying when it cleared or who snoozed it, until when.
+  ...[[], ['companion']].map((phone) => ({ name: `Every alert on Recent alerts lists the kept ones${phone.length ? ', on the phone' : ''}`, screen: 'status', phone: phone.length ? phone : undefined, run: async (page) => {
+    await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
+    const sheet = page.locator('#alertLogSheet');
+    await sheet.locator('h2:has-text("Every alert")').waitFor({ timeout: 5000 });
+    await sheet.locator('li').nth(3).waitFor({ timeout: 3000 });
+    const texts = await sheet.locator('li').allTextContents();
+    if (texts.length !== 4) throw new Error(`four kept: ${JSON.stringify(texts)}`);
+    if (!/Snoozed by Sam’s iPhone until/.test(texts[0].replace("'", '’'))) throw new Error(`who snoozed it: ${texts[0]}`);
+    if (!/Cleared at /.test(texts[2])) throw new Error(`when it cleared: ${texts[2]}`);
+    if (!texts[3].includes('rolled back')) throw new Error(`two days ago: ${texts[3]}`);
+    await sheet.getByRole('button', { name: 'Close' }).click();
+    await sheet.waitFor({ state: 'hidden', timeout: 3000 });
+  } })),
+  { name: 'Every alert with none kept says so', screen: 'status', mock: { alertLog: [] }, run: async (page) => {
+    await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
+    await page.locator('#alertLogSheet').getByText('No alerts kept yet.', { exact: false }).waitFor({ timeout: 5000 });
+  } },
   // Check again reads the alerts now: one whose problem cleared is gone.
   { name: 'Check again on Recent alerts reads them now', screen: 'status', run: async (page) => {
     await page.waitForSelector('#alertsCard:has-text("3 in the last 12 hours")', { timeout: 5000 });

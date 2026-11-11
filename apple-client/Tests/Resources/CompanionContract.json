@@ -7,6 +7,7 @@
     "computer": {
       "version": "1.2.3",
       "methods": [
+        "AlertLog",
         "Alerts",
         "AppAction",
         "AppIcon",

@@ -2176,6 +2176,78 @@
     R(w3 ? /* @__PURE__ */ u3(WallCard, { w: w3 }) : null, el3);
   }
 
+  // web/src/parts/Sheet.tsx
+  var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])";
+  var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
+  var stops = (sheet2) => [...sheet2.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
+  var closer = (sheet2) => [...sheet2.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel|Hide)$/.test(b2.textContent.trim()));
+  var listening = false;
+  function keys() {
+    if (listening) return;
+    listening = true;
+    let downOnDim = false;
+    document.addEventListener("mousedown", (e3) => {
+      downOnDim = e3.target === document.body && openSheets().length > 0;
+    }, true);
+    document.addEventListener("click", (e3) => {
+      const open4 = openSheets().pop();
+      if (!open4 || !downOnDim || e3.target !== document.body) return;
+      downOnDim = false;
+      closer(open4)?.click();
+    });
+    document.addEventListener("keydown", (e3) => {
+      const open4 = openSheets().pop();
+      if (!open4) return;
+      if (e3.key === "Escape") {
+        const close3 = closer(open4);
+        if (close3) {
+          e3.preventDefault();
+          close3.click();
+        }
+      } else if (e3.key === "Tab") {
+        const all = stops(open4);
+        if (!all.length) {
+          e3.preventDefault();
+          open4.focus();
+          return;
+        }
+        const at2 = all.indexOf(document.activeElement);
+        const next = at2 < 0 ? e3.shiftKey ? all.length - 1 : 0 : at2 + (e3.shiftKey ? -1 : 1);
+        if (at2 < 0 || next < 0 || next >= all.length) {
+          e3.preventDefault();
+          all[(next + all.length) % all.length].focus();
+        }
+      }
+    });
+  }
+  function Sheet({ id: id2, titleId, onClose, children }) {
+    const ref = A2(null);
+    _2(() => {
+      keys();
+      const panel = ref.current;
+      let before3 = null;
+      const seen2 = new MutationObserver(() => {
+        document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
+        if (!panel.hidden) {
+          if (!panel.contains(document.activeElement)) before3 = document.activeElement;
+          requestAnimationFrame(() => {
+            const now = document.activeElement;
+            if (panel.hidden || now && now !== panel && panel.contains(now)) return;
+            panel.scrollTop = 0;
+            (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
+          });
+        } else {
+          if (before3 && document.contains(before3)) before3.focus();
+          before3 = null;
+          if (!openSheets().length) onClose?.();
+        }
+      });
+      seen2.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+      return () => seen2.disconnect();
+    }, []);
+    return /* @__PURE__ */ u3("div", { ref, id: id2, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
+  }
+
   // web/src/parts/Row.tsx
   function Rows({ kind, children }) {
     return /* @__PURE__ */ u3("ul", { class: "alertlist" + (kind ? " " + kind : ""), children });
@@ -2372,23 +2444,32 @@
       lines.length > 4 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn morelines", "aria-expanded": all, onClick: () => setAll(!all), children: all ? "Show less" : `Show ${lines.length - 3} more` })
     ] });
   }
-  function Alerts({ events, problem, openSetup, refresh }) {
+  function Alerts({ events, problem, openSetup, refresh, log: log2 }) {
     const [checking, setChecking] = d2(false);
     const again = () => {
       setChecking(true);
       refresh().finally(() => setChecking(false));
     };
     const check = /* @__PURE__ */ u3("button", { id: "alertsCheck", class: "small", disabled: checking, title: "Reads the alerts again and leaves out those whose problem has cleared", onClick: again, children: checking ? "Checking…" : "Check again" });
+    const every = /* @__PURE__ */ u3(AlertLog, { log: log2 });
     if (!events) {
       return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
         "They appear here once the alert token is set up. ",
-        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" })
-      ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: problem }) });
+        /* @__PURE__ */ u3(ActionLink, { onClick: openSetup, children: "Open Setup" }),
+        " ",
+        every
+      ] }) : /* @__PURE__ */ u3("span", { class: "muted", children: [
+        problem,
+        " ",
+        every
+      ] }) });
     }
     if (!events.length) return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /* @__PURE__ */ u3("span", { children: [
       /* @__PURE__ */ u3("span", { class: "ok", children: "✓ None in the last 12 hours" }),
       " ",
-      check
+      check,
+      " ",
+      every
     ] }) });
     const shown6 = events.slice(0, 5);
     const tone = (e3) => (e3.priority || 0) >= 4 ? "bad" : (e3.tags || []).includes("white_check_mark") || /^recovered/i.test(e3.title || "") ? "ok" : "";
@@ -2399,7 +2480,9 @@
           " in the last 12 hours"
         ] }),
         " ",
-        check
+        check,
+        " ",
+        every
       ] }) }),
       /* @__PURE__ */ u3(Rows, { children: shown6.map((e3) => /* @__PURE__ */ u3(
         Row,
@@ -2415,7 +2498,53 @@
       events.length > shown6.length && /* @__PURE__ */ u3("div", { class: "muted more", children: [
         "and ",
         events.length - shown6.length,
-        " more in the ntfy app"
+        " more in Every alert…"
+      ] })
+    ] });
+  }
+  function alertFate(a3, now = Date.now()) {
+    if (a3.clearedAt) return `Cleared at ${wakeText(a3.clearedAt)}`;
+    if (a3.snoozedUntil && new Date(a3.snoozedUntil).getTime() > now) return a3.snoozedBy ? `Snoozed by ${a3.snoozedBy} until ${wakeText(a3.snoozedUntil)}` : `Snoozed until ${wakeText(a3.snoozedUntil)}`;
+    return a3.checks?.length ? "Not cleared yet" : "";
+  }
+  function AlertLog({ log: log2 }) {
+    const [all, setAll] = d2(null);
+    const [problem, setProblem] = d2("");
+    const sheet2 = () => document.getElementById("alertLogSheet");
+    const open4 = () => {
+      setProblem("");
+      log2().then(setAll, (e3) => setProblem(String(e3?.message || e3)));
+      const s3 = sheet2();
+      if (s3) s3.hidden = false;
+    };
+    const close3 = () => {
+      const s3 = sheet2();
+      if (s3) s3.hidden = true;
+    };
+    const tone = (a3) => a3.clearedAt ? "ok" : (a3.priority || 0) >= 4 ? "bad" : "";
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: open4, children: "Every alert…" }),
+      /* @__PURE__ */ u3(Sheet, { id: "alertLogSheet", titleId: "alertLogTitle", children: [
+        /* @__PURE__ */ u3("h2", { id: "alertLogTitle", children: "Every alert" }),
+        /* @__PURE__ */ u3("p", { class: "muted", children: "What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one." }),
+        problem ? /* @__PURE__ */ u3("p", { class: "muted", children: problem }) : all === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((a3) => {
+          const fate = alertFate(a3);
+          return /* @__PURE__ */ u3(
+            Row,
+            {
+              dot: tone(a3),
+              title: a3.title,
+              sub: /* @__PURE__ */ u3(S, { children: [
+                a3.body && /* @__PURE__ */ u3(Lines, { text: a3.body }),
+                fate && /* @__PURE__ */ u3("div", { class: "fate", children: fate })
+              ] }),
+              end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[a3.topic] || a3.topic }),
+              when: ago(a3.at)
+            },
+            a3.id
+          );
+        }) }) : /* @__PURE__ */ u3("p", { class: "muted", children: "No alerts kept yet. From now on, each one the homelab sends is kept here for 90 days." }),
+        /* @__PURE__ */ u3("div", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: close3, children: "Close" }) })
       ] })
     ] });
   }
@@ -3478,78 +3607,6 @@
   }
   function mountReportActions(el3, props) {
     R(props ? /* @__PURE__ */ u3(ReportActions, { ...props }) : null, el3);
-  }
-
-  // web/src/parts/Sheet.tsx
-  var field = "input:not([disabled]):not([type=hidden]):not([type=checkbox]):not([type=file]):not([hidden]), select:not([disabled]), textarea:not([disabled])";
-  var openSheets = () => [...document.querySelectorAll(".panel.sheet:not([hidden])")];
-  var stops = (sheet2) => [...sheet2.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')].filter((e3) => e3.getClientRects().length > 0);
-  var closer = (sheet2) => [...sheet2.querySelectorAll("button:not([disabled])")].find((b2) => /^(Close|Cancel|Hide)$/.test(b2.textContent.trim()));
-  var listening = false;
-  function keys() {
-    if (listening) return;
-    listening = true;
-    let downOnDim = false;
-    document.addEventListener("mousedown", (e3) => {
-      downOnDim = e3.target === document.body && openSheets().length > 0;
-    }, true);
-    document.addEventListener("click", (e3) => {
-      const open4 = openSheets().pop();
-      if (!open4 || !downOnDim || e3.target !== document.body) return;
-      downOnDim = false;
-      closer(open4)?.click();
-    });
-    document.addEventListener("keydown", (e3) => {
-      const open4 = openSheets().pop();
-      if (!open4) return;
-      if (e3.key === "Escape") {
-        const close3 = closer(open4);
-        if (close3) {
-          e3.preventDefault();
-          close3.click();
-        }
-      } else if (e3.key === "Tab") {
-        const all = stops(open4);
-        if (!all.length) {
-          e3.preventDefault();
-          open4.focus();
-          return;
-        }
-        const at2 = all.indexOf(document.activeElement);
-        const next = at2 < 0 ? e3.shiftKey ? all.length - 1 : 0 : at2 + (e3.shiftKey ? -1 : 1);
-        if (at2 < 0 || next < 0 || next >= all.length) {
-          e3.preventDefault();
-          all[(next + all.length) % all.length].focus();
-        }
-      }
-    });
-  }
-  function Sheet({ id: id2, titleId, onClose, children }) {
-    const ref = A2(null);
-    _2(() => {
-      keys();
-      const panel = ref.current;
-      let before3 = null;
-      const seen2 = new MutationObserver(() => {
-        document.documentElement.classList.toggle("sheet-open", openSheets().length > 0);
-        if (!panel.hidden) {
-          if (!panel.contains(document.activeElement)) before3 = document.activeElement;
-          requestAnimationFrame(() => {
-            const now = document.activeElement;
-            if (panel.hidden || now && now !== panel && panel.contains(now)) return;
-            panel.scrollTop = 0;
-            (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
-          });
-        } else {
-          if (before3 && document.contains(before3)) before3.focus();
-          before3 = null;
-          if (!openSheets().length) onClose?.();
-        }
-      });
-      seen2.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
-      return () => seen2.disconnect();
-    }, []);
-    return /* @__PURE__ */ u3("div", { ref, id: id2, class: "panel sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabIndex: -1, hidden: true, children });
   }
 
   // web/src/sheets/Sheet.tsx
@@ -7607,8 +7664,9 @@
     card.hidden = false;
     lastEvents = events || [];
     drawOvernight();
-    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
-    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
+    const log2 = () => go().AlertLog();
+    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log: log2 });
+    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log: log2 });
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),

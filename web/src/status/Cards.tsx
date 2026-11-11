@@ -6,6 +6,7 @@ import { useState } from 'preact/hooks';
 import { ActionLink } from '../ActionLink';
 import { ago, clockText, dayText, never } from '../format';
 import { CardHead as Head } from '../parts/Card';
+import { Sheet } from '../parts/Sheet';
 import { Row, Rows, type Tone } from '../parts/Row';
 import { attackDetail, attackFrom, attackWords } from './attack';
 
@@ -146,6 +147,8 @@ const topicName: Record<string, string> = { watchtower: 'Updates', 'duplicati-al
 export interface AlertsProps {
   /** The alerts of the last 12 hours, newest first; null when they could not be read. */
   events: notify.Event[] | null;
+  /** Every alert the computer kept (internal/history), newest first: Every alert…. */
+  log: () => Promise<history.Alert[]>;
   /** Why they could not be read. */
   problem?: string;
   openSetup: () => void;
@@ -172,32 +175,83 @@ function Lines({ text }: { text: string }) {
  * cleared since (a later watchdog run passed, the apps a backup skipped run
  * again). Check again reads them now rather than at the next minute's poll.
  */
-export function Alerts({ events, problem, openSetup, refresh }: AlertsProps) {
+export function Alerts({ events, problem, openSetup, refresh, log }: AlertsProps) {
   const [checking, setChecking] = useState(false);
   const again = () => { setChecking(true); refresh().finally(() => setChecking(false)); };
   const check = <button id="alertsCheck" class="small" disabled={checking} title="Reads the alerts again and leaves out those whose problem has cleared" onClick={again}>{checking ? 'Checking…' : 'Check again'}</button>;
+  const every = <AlertLog log={log} />;
   if (!events) {
     return (
       <Head title="Recent alerts">
         {/NTFY_READ_TOKEN/.test(problem || '')
-          ? <span class="muted">They appear here once the alert token is set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink></span>
-          : <span class="muted">{problem}</span>}
+          ? <span class="muted">They appear here once the alert token is set up. <ActionLink onClick={openSetup}>Open Setup</ActionLink> {every}</span>
+          : <span class="muted">{problem} {every}</span>}
       </Head>
     );
   }
-  if (!events.length) return <Head title="Recent alerts"><span><span class="ok">✓ None in the last 12 hours</span> {check}</span></Head>;
+  if (!events.length) return <Head title="Recent alerts"><span><span class="ok">✓ None in the last 12 hours</span> {check} {every}</span></Head>;
   const shown = events.slice(0, 5);
   const tone = (e: notify.Event): Tone => ((e.priority || 0) >= 4 ? 'bad' : (e.tags || []).includes('white_check_mark') || /^recovered/i.test(e.title || '') ? 'ok' : '');
   return (
     <>
-      <Head title="Recent alerts"><span><span class="muted">{events.length} in the last 12 hours</span> {check}</span></Head>
+      <Head title="Recent alerts"><span><span class="muted">{events.length} in the last 12 hours</span> {check} {every}</span></Head>
       <Rows>
         {shown.map((e) => (
           <Row key={e.id} dot={tone(e)} title={e.title || e.message} sub={e.title && e.message && <Lines text={e.message} />}
             end={<span class="badge">{topicName[e.topic] || e.topic}</span>} when={ago(e.time)} />
         ))}
       </Rows>
-      {events.length > shown.length && <div class="muted more">and {events.length - shown.length} more in the ntfy app</div>}
+      {events.length > shown.length && <div class="muted more">and {events.length - shown.length} more in Every alert…</div>}
+    </>
+  );
+}
+
+/** What became of a kept alert: when its problem cleared, or who snoozed it until when; "" for neither. */
+export function alertFate(a: history.Alert, now = Date.now()): string {
+  if (a.clearedAt) return `Cleared at ${wakeText(a.clearedAt)}`;
+  if (a.snoozedUntil && new Date(a.snoozedUntil).getTime() > now) return a.snoozedBy ? `Snoozed by ${a.snoozedBy} until ${wakeText(a.snoozedUntil)}` : `Snoozed until ${wakeText(a.snoozedUntil)}`;
+  return a.checks?.length ? 'Not cleared yet' : '';
+}
+
+/**
+ * Every alert…: the computer's record of the alerts it sent (the last 90
+ * days, internal/history), long after ntfy has let them go, each with when
+ * its problem cleared or who snoozed it.
+ */
+function AlertLog({ log }: { log: () => Promise<history.Alert[]> }) {
+  const [all, setAll] = useState<history.Alert[] | null>(null);
+  const [problem, setProblem] = useState('');
+  const sheet = () => document.getElementById('alertLogSheet');
+  const open = () => {
+    setProblem('');
+    log().then(setAll, (e) => setProblem(String(e?.message || e)));
+    const s = sheet();
+    if (s) s.hidden = false;
+  };
+  const close = () => { const s = sheet(); if (s) s.hidden = true; };
+  const tone = (a: history.Alert): Tone => (a.clearedAt ? 'ok' : (a.priority || 0) >= 4 ? 'bad' : '');
+  return (
+    <>
+      <button type="button" class="small" onClick={open}>Every alert…</button>
+      <Sheet id="alertLogSheet" titleId="alertLogTitle">
+        <h2 id="alertLogTitle">Every alert</h2>
+        <p class="muted">What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one.</p>
+        {problem ? <p class="muted">{problem}</p>
+          : all === null ? <p class="muted">Reading…</p>
+            : all.length ? (
+              <Rows>
+                {all.map((a) => {
+                  const fate = alertFate(a);
+                  return (
+                    <Row key={a.id} dot={tone(a)} title={a.title}
+                      sub={<>{a.body && <Lines text={a.body} />}{fate && <div class="fate">{fate}</div>}</>}
+                      end={<span class="badge">{topicName[a.topic] || a.topic}</span>} when={ago(a.at)} />
+                  );
+                })}
+              </Rows>
+            ) : <p class="muted">No alerts kept yet. From now on, each one the homelab sends is kept here for 90 days.</p>}
+        <div class="actions"><button class="small" onClick={close}>Close</button></div>
+      </Sheet>
     </>
   );
 }

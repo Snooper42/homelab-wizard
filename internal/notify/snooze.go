@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
 
@@ -77,11 +78,26 @@ func SnoozeHours(root, check string, hours int) error {
 			return errors.New("that isn't one of the watchdog's checks")
 		}
 	}
-	var until time.Time
-	if hours > 0 {
-		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	return Snooze(root, check, snoozeUntil(hours))
+}
+
+// snoozeUntil is when a snooze of hours from now ends; zero for 0 (now).
+func snoozeUntil(hours int) time.Time {
+	if hours <= 0 {
+		return time.Time{}
 	}
-	return Snooze(root, check, until)
+	return time.Now().Add(time.Duration(hours) * time.Hour)
+}
+
+// SnoozeHoursBy is SnoozeHours, and marks the newest open alert about
+// check in the computer's record of alerts with who snoozed it (this
+// computer, a phone by its name), until when; 0 takes the mark off.
+func SnoozeHoursBy(root, check string, hours int, who string) error {
+	if err := SnoozeHours(root, check, hours); err != nil {
+		return err
+	}
+	history.SnoozeAlertIn(root, check, snoozeUntil(hours), who)
+	return nil
 }
 
 // Woken takes out the snoozes whose time has come and returns them: the

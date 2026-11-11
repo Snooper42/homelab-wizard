@@ -762,7 +762,14 @@ func (a *App) Watchdog() health.Summary {
 // hours (Status › Watchdog › Snooze); 0 wakes it. It goes on checking it,
 // and alerts when the snooze ends if it still fails.
 func (a *App) SnoozeCheck(check string, hours int) error {
-	return notify.SnoozeHours(a.root, check, hours)
+	return notify.SnoozeHoursBy(a.root, check, hours, history.ThisComputer)
+}
+
+// AlertLog is every alert the computer kept (the last 90 days, at most 200,
+// newest first), with when each cleared and who snoozed it: Status ›
+// Alerts › Every alert….
+func (a *App) AlertLog() ([]history.Alert, error) {
+	return history.AlertsIn(a.root, 0)
 }
 
 // TailnetDevices is every device on the household's tailnet, when

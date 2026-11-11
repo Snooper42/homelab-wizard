@@ -67,7 +67,7 @@ func (h *homelab) sendWeekly(ctx context.Context) {
 	}
 	title, body, _ := h.weekly(ctx)
 	h.ui.Info("sending the weekly summary: %s", title)
-	h.alert(ctx, digestTopic, h.digestMessage(title, body))
+	h.alert(ctx, digestTopic, weeklyAlert(h, title, body))
 	state.LastSent = time.Now()
 	h.noteSent(path, "the weekly summary", state)
 }
@@ -139,4 +139,12 @@ func (h *homelab) weekly(ctx context.Context) (title, body string, problems int)
 		in.New = true
 	}
 	return digest.Summary(in)
+}
+
+// weeklyAlert is the weekly summary as an alert; the record of alerts
+// keeps only its plain line, since it can carry Finances' amounts.
+func weeklyAlert(h *homelab, title, body string) notify.Message {
+	m := h.digestMessage(title, body)
+	m.Kept = "The weekly summary"
+	return m
 }

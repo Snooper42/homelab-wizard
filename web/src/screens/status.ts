@@ -402,8 +402,9 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
   card.hidden = false;
   lastEvents = events || [];
   drawOvernight();
-  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus });
-  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus });
+  const log = () => go().AlertLog();
+  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log });
+  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log });
 }
 
 // What the app list's rows do.
