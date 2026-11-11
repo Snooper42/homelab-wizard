@@ -133,6 +133,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **Run `make lint` before every push** (gofmt on `cmd` and `internal`, both `go vet`s): #591 went red once on a map entry's alignment in `serve.go`.
 - **GitHub can lag:** a job's log can end while its check still says in progress for half an hour, and `upload-artifact` can fail on GitHub's own HTML error pages (#593). Read the job's log before deciding it's stuck or red; re-run an upload that failed that way once.
 - **A flaky smoke case is a bug until shown otherwise:** the one on Nov 11 was a real race in `Sheet.tsx` (typing right as a sheet opened), fixed at its source in #590 with a case that reproduced it every time.
+- **A smoke click aimed while a panel is still filling in can land on what moved into its place:** wait for the panel's content (the Tidy places panel's drives, #595) before clicking a button below it. A case that passes alone but fails in CI's shards is usually this or a focus race (#590).
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 
 ## When a check is red or stuck (the playbook)
