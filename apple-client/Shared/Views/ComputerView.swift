@@ -17,8 +17,12 @@ struct ComputerView: View {
     var page: Page = .settings
     @Environment(AppCoordinator.self) private var coordinator
     @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(AppActionsViewModel.self) private var actions
     /// The widget, on this device (WidgetSummaryStore).
     @State private var widgetOn = WidgetSummaryStore.isEnabled
+    /// Who notifies this device of alerts (AlertNotifications).
+    @State private var alertSource = AlertNotifications().source
+    @State private var alertSourceProblem: String?
 
     var body: some View {
         @Bindable var computer = computer
@@ -42,6 +46,9 @@ struct ComputerView: View {
                     }
                 }
                 switchesSection
+                if actions.computerAnswers("AlertLog") {
+                    alertsSection
+                }
                 homelabSettingsSection
                 helpSection
             }
@@ -194,6 +201,41 @@ struct ComputerView: View {
                 Text("Apps keep their versions until this is back on.")
             }
         }
+    }
+
+    /// Alerts From: the ntfy app, or this app, on this device only.
+    private var alertsSection: some View {
+        Section {
+            Picker(selection: Binding(get: { alertSource }, set: { source in Task { await setAlertSource(source) } })) {
+                ForEach(AlertSource.allCases) { source in
+                    Text(source.label).tag(source)
+                }
+            } label: {
+                IconTileLabel(title: "Alerts From", systemImage: "bell.badge", tint: TileColour.red)
+            }
+            if let alertSourceProblem {
+                Text(alertSourceProblem).font(.callout).foregroundStyle(Theme.danger)
+            }
+        } footer: {
+            switch alertSource {
+            case .ntfy:
+                Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
+            case .thisApp:
+                Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
+            }
+        }
+    }
+
+    /// This app notifying asks to show notifications first; no means the
+    /// ntfy app goes on notifying.
+    private func setAlertSource(_ source: AlertSource) async {
+        alertSourceProblem = nil
+        if source == .thisApp, !(await LocalAlerts.ask()) {
+            alertSourceProblem = "Notifications are off for Homelab: turn them on in the Settings app, then pick This App again."
+            return
+        }
+        AlertNotifications().source = source
+        alertSource = source
     }
 
     /// Turning the widget on lets a line show without unlocking, so it asks
