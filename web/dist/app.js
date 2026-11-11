@@ -1386,6 +1386,10 @@
     }
     return out;
   }
+  function ruleFor(rules, name) {
+    const want = (name || "").trim().toLowerCase();
+    return want ? (rules || []).find((r3) => r3.match.trim().toLowerCase() === want) : void 0;
+  }
   function noted(t3, account, ledger) {
     const said2 = t3.raw || t3.payee;
     return !!said2 && ledger.some((q2) => q2.account === account && !q2.to && q2.date === t3.date && Math.abs(q2.amount - t3.amount) < 5e-3 && (q2.note || "").includes(said2));
@@ -9843,6 +9847,11 @@
           actions: edit && /* @__PURE__ */ u3(S, { children: [
             saveLedger2 && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-pressed": picking, onClick: () => picking ? stopPicking() : setPicking(true), children: picking ? "Done" : "Select" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("import"), children: "Import a file" }),
+            !!v3.plan.rules?.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("rules"), children: [
+              "Rules (",
+              v3.plan.rules.length,
+              ")"
+            ] }),
             logos && !!all.length && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("logos"), children: "Logos" }),
             /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("categories"), children: "Categories" })
           ] }),
@@ -10959,6 +10968,8 @@
     const byOld = (q2) => !q2.to && q2.id !== t3?.id && !!q2.payee && q2.payee.trim().toLowerCase() === oldPayee.toLowerCase();
     const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
     const [renameAll, setRenameAll] = d2(true);
+    const [always, setAlways] = d2(false);
+    const canAlways = !!t3 && !!oldPayee && way !== "move" && !parts3.length && (payee.trim().toLowerCase() !== oldPayee.toLowerCase() || !!category.trim());
     const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
     const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), withLearned(paysBill, others2)) : void 0;
     const linked = paymentPicked ? payment : guess?.payment || "";
@@ -10973,9 +10984,11 @@
       if (!category.trim()) setCategory(categories.find(([k3]) => k3 === x3.kind)?.[1] || "");
       if (x3.card && way !== "move") setWay("out");
     };
-    const keepLedger = async (list) => {
+    const keepLedger = async (list, rules) => {
       setSaving(true);
-      if (img !== hadImg && way !== "move" && payee.trim() && !await props.save({ ...plan, logos: withLogo(plan, imgKey(), img, openedKey.current, hadImg) })) {
+      let next = rules ? { ...plan, rules } : plan;
+      if (img !== hadImg && way !== "move" && payee.trim()) next = { ...next, logos: withLogo(next, imgKey(), img, openedKey.current, hadImg) };
+      if (next !== plan && !await props.save(next)) {
         setSaving(false);
         return;
       }
@@ -11011,11 +11024,12 @@
       if (used.length > 1) next.category = void 0;
       if (!next.tags.length) next.tags = void 0;
       const same2 = (q2) => !q2.to && !!q2.payee && q2.payee.toLowerCase() === (next.payee || "").toLowerCase();
-      const list = (ledger?.transactions || []).map((q2) => renameAll && renamesToo && next.payee && byOld(q2) ? { ...q2, payee: next.payee } : q2).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
+      const rule = always && canAlways ? { match: oldPayee, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : void 0, category: next.category || void 0 } : void 0;
+      const list = (ledger?.transactions || []).map((q2) => (rule || renameAll) && renamesToo && next.payee && byOld(q2) ? { ...q2, payee: next.payee } : q2).map((q2) => rule?.category && !q2.category && !q2.splits?.length && q2.id !== t3?.id && (byOld(q2) || same2(q2)) ? { ...q2, category: rule.category } : q2).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
       const at2 = list.findIndex((q2) => q2.id === t3?.id);
       if (at2 >= 0) list[at2] = next;
       else list.push(next);
-      keepLedger(list);
+      keepLedger(list, rule ? [...(plan.rules || []).filter((r3) => r3.match.trim().toLowerCase() !== oldPayee.toLowerCase()), rule] : void 0);
     };
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
@@ -11051,6 +11065,12 @@
         ] }),
         /* @__PURE__ */ u3(Field, { label: "Note", wide: true, children: /* @__PURE__ */ u3("input", { value: note, onInput: input(setNote) }) }),
         /* @__PURE__ */ u3(Field, { label: "Tags (a comma between)", wide: true, children: /* @__PURE__ */ u3("input", { value: tagText, onInput: input(setTagText), placeholder: "vacation, tax-deductible" }) })
+      ] }),
+      canAlways && /* @__PURE__ */ u3("label", { class: "fcheckbox always", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: always, onClick: tick2(setAlways) }),
+        " Always do this for “",
+        oldPayee,
+        "”: its other transactions, and every import from now on"
       ] }),
       renamesToo > 0 && /* @__PURE__ */ u3("label", { class: "fcheckbox renameall", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: renameAll, onClick: tick2(setRenameAll) }),
@@ -11170,6 +11190,37 @@
       !rows.length && /* @__PURE__ */ u3("p", { class: "muted", children: "Every payee and account has a logo already." }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
       }, close: props.close, touched: touched || Object.keys(got).length > 0 })
+    ] });
+  }
+  function RulesForm(props) {
+    const { plan } = props;
+    const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
+    const [rules, setRules] = d2(plan.rules || []);
+    const submit = (e3) => {
+      e3.preventDefault();
+      keep2({ ...plan, rules: rules.length ? rules : void 0 });
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform finrules", onSubmit: submit, ...watch2, children: [
+      /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Rules" }) }),
+      /* @__PURE__ */ u3("p", { class: "formsub muted", children: [
+        "What each payee becomes as it comes in, from ",
+        /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
+        " on a transaction. Every import follows them, before anything is guessed."
+      ] }),
+      /* @__PURE__ */ u3("ul", { class: "rulelist", children: rules.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("span", { class: "grow", children: [
+          /* @__PURE__ */ u3("strong", { children: r3.match }),
+          /* @__PURE__ */ u3("small", { children: [r3.payee, r3.category].filter(Boolean).join(" · ") })
+        ] }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove the rule for ${r3.match}`, onClick: () => setRules(rules.filter((_3, j3) => j3 !== i3)), children: "Remove" })
+      ] }, r3.match)) }),
+      !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
+        "No rules yet. On a transaction, give its payee a name or a category and tick ",
+        /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
+        "."
+      ] }),
+      /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
+      }, close: props.close, touched: touched || rules.length !== (plan.rules || []).length })
     ] });
   }
   var categoryIcons = [
@@ -11366,7 +11417,8 @@
     const found2 = read_.map((t3) => {
       const said2 = t3.payee.replace(/\s+/g, " ").trim();
       const payee = cleanPayee(withoutTown(t3.payee, t3.town)), raw = said2 && said2.toLowerCase() !== payee.toLowerCase() ? said2 : void 0;
-      return { ...t3, payee: raw && memory3.get(payee.toLowerCase()) || payee, raw };
+      const rule = ruleFor(plan.rules, payee);
+      return { ...t3, payee: rule?.payee || raw && memory3.get(payee.toLowerCase()) || payee, raw, ruled: rule?.category };
     });
     const fixes = wayOnlyFixes(found2, account, have);
     const renames = renameFixes(found2, account, have, fixes);
@@ -11386,7 +11438,7 @@
     })();
     const linkOf = (i3) => i3 in picked ? picked[i3] : guessed[i3]?.payment || "";
     const cats = props.categories || [];
-    const guesses = fresh.map((t3, i3) => guessFor(t3, account, plan, cats, t3.payee ? lastCat(t3.payee) : void 0, payments.find((q2) => q2.id === linkOf(i3))));
+    const guesses = fresh.map((t3, i3) => guessFor(t3, account, plan, cats, t3.ruled || (t3.payee ? lastCat(t3.payee) : void 0), payments.find((q2) => q2.id === linkOf(i3))));
     const named6 = (i3) => renames.has(i3) ? found2[i3].payee : void 0;
     const recat = /* @__PURE__ */ new Map();
     found2.forEach((t3, i3) => {
@@ -11610,6 +11662,7 @@
       edit?.what === "budgets" && /* @__PURE__ */ u3(BudgetsForm, { ...edit }, "g" + edit.n),
       edit?.what === "import" && /* @__PURE__ */ u3(ImportForm, { ...edit }, "i" + edit.n),
       edit?.what === "logos" && /* @__PURE__ */ u3(LogosForm, { ...edit }, "l" + edit.n),
+      edit?.what === "rules" && /* @__PURE__ */ u3(RulesForm, { ...edit }, "r" + edit.n),
       edit?.what === "goal" && /* @__PURE__ */ u3(GoalForm, { ...edit }, "o" + edit.n),
       !edit && /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Finances" })
     ] });

@@ -98,6 +98,10 @@ type Plan struct {
 	// homelab does their job now: what each cost a year, the day, and the
 	// apps. Recurring adds them up.
 	Cancelled []Cancelled `json:"cancelled,omitempty"`
+	// Rules are what to do with a payee as it comes in ("Always do this
+	// for <payee>"): its name to give it, its category, or both. Each
+	// import applies them before anything is guessed.
+	Rules []Rule `json:"rules,omitempty"`
 	// Quiet are the reminders the household turned off, by kind (due,
 	// cushion, renewal, balances): reminders.go.
 	Quiet []string `json:"quiet,omitempty"`
@@ -212,6 +216,18 @@ type Account struct {
 	Holdings   []Holding `json:"holdings,omitempty"`
 	Ghostfolio string    `json:"ghostfolio,omitempty"`
 }
+
+// Rule is one "Always do this for <payee>": the payee's name as it comes
+// in (as the import makes it from the bank's wording, any capitals), and
+// the name and the category to give it. At least one of the two.
+type Rule struct {
+	Match    string `json:"match"`
+	Payee    string `json:"payee,omitempty"`
+	Category string `json:"category,omitempty"`
+}
+
+// maxRules is as many rules as a plan keeps.
+const maxRules = 500
 
 // Cancelled is a payment stopped because an app on the homelab does its
 // job: its name, what it cost a year, the day it was cancelled, and the
@@ -465,6 +481,33 @@ func Clean(p Plan) (Plan, error) {
 			p.Quiet = append(p.Quiet, k)
 		}
 	}
+	// Each payee's name once: a newer rule replaces the older, whatever its capitals.
+	if len(p.Rules) > maxRules {
+		return p, fmt.Errorf("%d rules: at most %d", len(p.Rules), maxRules)
+	}
+	var rules []Rule
+	at := map[string]int{}
+	for _, r := range p.Rules {
+		r.Match, r.Payee, r.Category = strings.TrimSpace(r.Match), strings.TrimSpace(r.Payee), strings.TrimSpace(r.Category)
+		if r.Match == "" || len([]rune(r.Match)) > 100 || len([]rune(r.Payee)) > 100 || len([]rune(r.Category)) > 100 {
+			return p, fmt.Errorf("a rule needs the payee's name as it comes in, up to 100 letters: %q", r.Match)
+		}
+		if r.Payee == "" && r.Category == "" {
+			return p, fmt.Errorf("the rule for %s does nothing: give it a name or a category", r.Match)
+		}
+		k := strings.ToLower(r.Match)
+		if i, ok := at[k]; ok {
+			rules = append(rules[:i], rules[i+1:]...)
+			for m, j := range at {
+				if j > i {
+					at[m] = j - 1
+				}
+			}
+		}
+		at[k] = len(rules)
+		rules = append(rules, r)
+	}
+	p.Rules = rules
 	for i := range p.Cancelled {
 		c := &p.Cancelled[i]
 		c.Name, c.Because = strings.TrimSpace(c.Name), strings.TrimSpace(c.Because)

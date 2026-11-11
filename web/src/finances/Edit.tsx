@@ -13,13 +13,13 @@ import { cleanPayee, withoutTown } from './payees';
 import { siteFor } from './sites';
 import { brands } from './logos';
 import { guessFor, paysBill } from './guessCategory';
-import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
+import { alike, already, chargesPlus, type Columns, csvRows, fromCsv, fromOfx, guessColumns, isOfx, paidDays, noted, plannedFor, type Planned, renameFixes, ruleFor, wayOnly, wayOnlyFixes, renameMemory, withLearned } from './importData';
 import { carFromPrice, groups, rateOf } from './model';
 import { Dot } from './ui/Legend';
 import { categoryHue } from './hues';
 import { ReceiptView, TxMark } from './Transactions';
 
-export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal' | 'logos';
+export type What = 'account' | 'person' | 'payment' | 'balances' | 'transaction' | 'categories' | 'budgets' | 'import' | 'goal' | 'logos' | 'rules';
 
 export interface EditProps {
   what: What;
@@ -904,6 +904,10 @@ function TransactionForm(props: EditProps) {
   const byOld = (q: finance.Transaction) => !q.to && q.id !== t?.id && !!q.payee && q.payee.trim().toLowerCase() === oldPayee.toLowerCase();
   const renamesToo = oldPayee && payee.trim() && payee.trim().toLowerCase() !== oldPayee.toLowerCase() ? (ledger?.transactions || []).filter(byOld).length : 0;
   const [renameAll, setRenameAll] = useState(true);
+  // Always do this for its name as it came in: a rule (Plan.Rules) its next imports follow, and its other transactions
+  // take the name, and the category where they had none. Offered once it is renamed or given a category.
+  const [always, setAlways] = useState(false);
+  const canAlways = !!t && !!oldPayee && way !== 'move' && !parts.length && (payee.trim().toLowerCase() !== oldPayee.toLowerCase() || !!category.trim());
   // What it looks like it pays: payee, amount, day and account as typed, a day the ledger has not paid already.
   const others = (ledger?.transactions || []).filter((q) => q.id !== t?.id);
   const guess = !paymentPicked && way !== 'move' && num(amount) > 0
@@ -920,10 +924,12 @@ function TransactionForm(props: EditProps) {
     if (!category.trim()) setCategory(categories.find(([k]) => k === x.kind)?.[1] || '');
     if (x.card && way !== 'move') setWay('out');
   };
-  const keepLedger = async (list: finance.Transaction[]) => {
+  const keepLedger = async (list: finance.Transaction[], rules?: finance.Rule[]) => {
     setSaving(true);
-    // An image picked or got for the payee goes into the plan first; the transaction is kept only once it is.
-    if (img !== hadImg && way !== 'move' && payee.trim() && !(await props.save({ ...plan, logos: withLogo(plan, imgKey(), img, openedKey.current, hadImg) }))) { setSaving(false); return; }
+    // An image picked or got for the payee, and a rule, go into the plan first; the transaction is kept only once it is.
+    let next = rules ? { ...plan, rules } : plan;
+    if (img !== hadImg && way !== 'move' && payee.trim()) next = { ...next, logos: withLogo(next, imgKey(), img, openedKey.current, hadImg) };
+    if (next !== plan && !(await props.save(next))) { setSaving(false); return; }
     const ok = await props.saveLedger!({ ...(ledger || { transactions: [] }), transactions: list });
     setSaving(false);
     if (ok) props.close();
@@ -946,12 +952,14 @@ function TransactionForm(props: EditProps) {
     if (!next.tags!.length) next.tags = undefined;
     // A logo picked by hand is its payee's: every transaction to it takes it, past and to come.
     const same = (q: finance.Transaction) => !q.to && !!q.payee && q.payee.toLowerCase() === (next.payee || '').toLowerCase();
+    const rule = always && canAlways ? { match: oldPayee, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : undefined, category: next.category || undefined } : undefined;
     const list = (ledger?.transactions || [])
-      .map((q) => (renameAll && renamesToo && next.payee && byOld(q) ? { ...q, payee: next.payee } : q))
+      .map((q) => ((rule || renameAll) && renamesToo && next.payee && byOld(q) ? { ...q, payee: next.payee } : q))
+      .map((q) => (rule?.category && !q.category && !q.splits?.length && q.id !== t?.id && (byOld(q) || same(q)) ? { ...q, category: rule.category } : q))
       .map((q) => (logoPicked.current && next.payee && same(q) ? { ...q, institution: next.institution } : q));
     const at = list.findIndex((q) => q.id === t?.id);
     if (at >= 0) list[at] = next; else list.push(next);
-    keepLedger(list);
+    keepLedger(list, rule ? [...(plan.rules || []).filter((r) => r.match.trim().toLowerCase() !== oldPayee.toLowerCase()), rule] : undefined);
   };
   const remove = () => keepLedger((ledger?.transactions || []).filter((q) => q.id !== t?.id));
   return (
@@ -972,6 +980,7 @@ function TransactionForm(props: EditProps) {
         <Field label="Note" wide><input value={note} onInput={input(setNote)} /></Field>
         <Field label="Tags (a comma between)" wide><input value={tagText} onInput={input(setTagText)} placeholder="vacation, tax-deductible" /></Field>
       </div>
+      {canAlways && <label class="fcheckbox always"><input type="checkbox" checked={always} onClick={tick(setAlways)} /> Always do this for “{oldPayee}”: its other transactions, and every import from now on</label>}
       {renamesToo > 0 && <label class="fcheckbox renameall"><input type="checkbox" checked={renameAll} onClick={tick(setRenameAll)} /> Rename {renamesToo === 1 ? 'the other transaction' : `the ${renamesToo} other transactions`} from “{oldPayee}” too, and ones imported later</label>}
       {way !== 'move' && <div class="txlogo">
         <button type="button" class="small" aria-expanded={picking} onClick={() => setPicking(!picking)}>{picking ? 'Done with the logo' : 'Change logo'}</button>
@@ -1072,6 +1081,28 @@ function LogosForm(props: EditProps) {
       </ul>
       {!rows.length && <p class="muted">Every payee and account has a logo already.</p>}
       <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || Object.keys(got).length > 0} />
+    </form>
+  );
+}
+
+/** The rules (Always do this for <payee>): each payee's name as it comes in, and what it becomes; Remove takes one away. */
+function RulesForm(props: EditProps) {
+  const { plan } = props;
+  const { busy, keep, touched, watch } = useSaving(props);
+  const [rules, setRules] = useState(plan.rules || []);
+  const submit = (e: Event) => { e.preventDefault(); keep({ ...plan, rules: rules.length ? rules : undefined }); };
+  return (
+    <form class="finform finrules" onSubmit={submit} {...watch}>
+      <div class="formhead"><h2 id="finSheetTitle">Rules</h2></div>
+      <p class="formsub muted">What each payee becomes as it comes in, from <strong>Always do this for…</strong> on a transaction. Every import follows them, before anything is guessed.</p>
+      <ul class="rulelist">
+        {rules.map((r, i) => <li key={r.match}>
+          <span class="grow"><strong>{r.match}</strong><small>{[r.payee, r.category].filter(Boolean).join(' · ')}</small></span>
+          <button type="button" class="small" aria-label={`Remove the rule for ${r.match}`} onClick={() => setRules(rules.filter((_, j) => j !== i))}>Remove</button>
+        </li>)}
+      </ul>
+      {!rules.length && <p class="muted">No rules yet. On a transaction, give its payee a name or a category and tick <strong>Always do this for…</strong>.</p>}
+      <Actions busy={busy} exists={false} remove={() => {}} close={props.close} touched={touched || rules.length !== (plan.rules || []).length} />
     </form>
   );
 }
@@ -1269,7 +1300,9 @@ function ImportForm(props: EditProps) {
   const found = read_.map((t) => {
     const said = t.payee.replace(/\s+/g, ' ').trim();
     const payee = cleanPayee(withoutTown(t.payee, t.town)), raw = said && said.toLowerCase() !== payee.toLowerCase() ? said : undefined;
-    return { ...t, payee: (raw && memory.get(payee.toLowerCase())) || payee, raw };
+    // A rule for its name (Always do this for <payee>) first: its name and its category.
+    const rule = ruleFor(plan.rules, payee);
+    return { ...t, payee: rule?.payee || (raw && memory.get(payee.toLowerCase())) || payee, raw, ruled: rule?.category };
   });
   const fixes = wayOnlyFixes(found, account, have);
   const renames = renameFixes(found, account, have, fixes);
@@ -1290,7 +1323,7 @@ function ImportForm(props: EditProps) {
   const linkOf = (i: number) => (i in picked ? picked[i] : guessed[i]?.payment || '');
   // What each fresh row is for: a category, or a move to or from another of the household's accounts (guessCategory.ts).
   const cats = props.categories || [];
-  const guesses = fresh.map((t, i) => guessFor(t, account, plan, cats, t.payee ? lastCat(t.payee) : undefined, payments.find((q) => q.id === linkOf(i))));
+  const guesses = fresh.map((t, i) => guessFor(t, account, plan, cats, t.ruled || (t.payee ? lastCat(t.payee) : undefined), payments.find((q) => q.id === linkOf(i))));
   // Rows brought in before with no category take one now: the one this row is, matched by its wording or a payee alike.
   const named = (i: number) => (renames.has(i) ? found[i].payee : undefined);
   const recat = new Map<string, string>();
@@ -1473,6 +1506,7 @@ function FinanceSheet({ edit }: { edit: EditProps | null }) {
       {edit?.what === 'budgets' && <BudgetsForm key={'g' + edit.n} {...edit} />}
       {edit?.what === 'import' && <ImportForm key={'i' + edit.n} {...edit} />}
       {edit?.what === 'logos' && <LogosForm key={'l' + edit.n} {...edit} />}
+      {edit?.what === 'rules' && <RulesForm key={'r' + edit.n} {...edit} />}
       {edit?.what === 'goal' && <GoalForm key={'o' + edit.n} {...edit} />}
       {!edit && <h2 id="finSheetTitle">Finances</h2>}
     </Sheet>

@@ -793,6 +793,7 @@ declare namespace finance {
     withdraw?: number;
     growth?: number;
     cancelled?: finance.Cancelled[];
+    rules?: finance.Rule[];
     quiet?: string[];
     calendarKey?: string;
     calendarAmounts?: boolean;
@@ -815,6 +816,11 @@ declare namespace finance {
     into?: boolean;
     late?: boolean;
     saved?: boolean;
+  }
+  interface Rule {
+    match: string;
+    payee?: string;
+    category?: string;
   }
   interface Schedule {
     every: string;

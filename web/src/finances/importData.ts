@@ -199,6 +199,12 @@ export function renameMemory(ledger: finance.Transaction[], clean: (raw: string)
   return out;
 }
 
+/** The rule for a payee as it comes in ("Always do this for <payee>"): by its name, in any capitals. */
+export function ruleFor(rules: finance.Rule[] | undefined, name: string | undefined): finance.Rule | undefined {
+  const want = (name || '').trim().toLowerCase();
+  return want ? (rules || []).find((r) => r.match.trim().toLowerCase() === want) : undefined;
+}
+
 /** One already in by the bank's wording kept in its note, on the account, day, and amount: whatever it was renamed since. */
 export function noted(t: Imported & { raw?: string }, account: string, ledger: finance.Transaction[]): boolean {
   const said = t.raw || t.payee;
