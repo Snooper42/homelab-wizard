@@ -198,6 +198,12 @@ actor APIClient {
         return try await call("History", [.string(appID), .string(query), .number(Double(max(before, 0)))], as: [HistoryEntry].self)
     }
 
+    /// Every alert the computer kept (the last 90 days, newest first), with
+    /// when each cleared and who snoozed it. The computer redacts every line.
+    func alertLog() async throws -> [KeptAlert] {
+        try await call("AlertLog", as: [KeptAlert].self)
+    }
+
     func logs(appID: String, lines: Int) async throws -> String {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }
         let count = min(max(lines, 1), 5000)

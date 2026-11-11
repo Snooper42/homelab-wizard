@@ -401,9 +401,22 @@ struct AttackRow: View {
 // MARK: - Alerts
 
 private struct AlertsCard: View {
+    @Environment(AppActionsViewModel.self) private var actions
     let events: [AlertEvent]
 
     var body: some View {
+        alerts
+        // Every alert the computer kept, past ntfy's 12 hours, where it keeps them.
+        if actions.computerAnswers("AlertLog") {
+            NavigationLink {
+                AlertLogView()
+            } label: {
+                Text("Every Alert")
+            }
+        }
+    }
+
+    @ViewBuilder private var alerts: some View {
         if events.isEmpty {
             Label("No alerts in the last 12 hours", systemImage: "bell.slash")
                 .foregroundStyle(.secondary)

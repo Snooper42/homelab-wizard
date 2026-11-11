@@ -14,7 +14,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 6. **Every PR ends with "Try this tonight"** (what to click, and whether the iPhone needs the cable re-install). `CHANGELOG.md` under `## [Unreleased]` only.
 7. **Each new companion (phone) call** checks the device's permission: a read, or a change (`Change: true`) that a look-only phone and a wall screen can't make, and that a member's phone makes only for its own things. Changes ask Face ID on the iPhone, except a fold (it only changes what shows open).
 
-## 1. Where it stands (Nov 11, 1:00 PM Eastern)
+## 1. Where it stands (Nov 11, 3:00 PM Eastern)
 
 **Merged Nov 10 and 11** (each green):
 
@@ -34,7 +34,9 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #587, #588 | Status folds kept by the computer, the same on the app, the phone's page and the iPhone |
 | #590 | **Snooze a failing check's alerts from a phone allowed to change things** (the phone's page and the iPhone, behind Face ID); **a form opening leaves the cursor where it was put** (`web/src/parts/Sheet.tsx`: the sheet no longer moves the cursor to its first field once it's in another of its fields; that race made the *Always do this for only that name* smoke case fail now and then) |
 
-**In flight:** nothing open. The owner said "continue" (Nov 11) without picking from the list; this session took the recommendation, **Alerts in the app** (section 2). Its first PR carries this file.
+| #591 | Alerts PR 1: **the computer keeps every alert** (`internal/history`'s `alerts`, 90 days), when it cleared and who snoozed it, never an amount; `AlertLog`; **Every alert…** on Status's Recent alerts, on the computer and the phone's page |
+
+**In flight:** Alerts PR 2, **the iPhone's Every Alert page** (branch `claude/laughing-ritchie-flic1b`): done when it's merged green, the Apple client job included (its first Swift compile). The owner said "continue" (Nov 11) without picking from the list; this session took the recommendation, **Alerts in the app** (section 2).
 
 **Dropped, with the owner told:** ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 
@@ -48,7 +50,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
    - *Shown:* a look-only companion call `AlertLog` (contract JSON updated, `computer.calls`), the app's `AlertLog` binding, and on Status's alerts card, on the computer and the phone's page, **Every alert…**: a sheet listing them, each with *Cleared at 3:12 AM* or *Snoozed by Alex's iPhone until 9 PM*.
    - *Fixed looks like:* an alert from yesterday morning still listed today, with when it cleared.
    - *Tests that fail today:* `internal/history` (`TestAlertsKept`, `TestAlertCleared`, `TestAlertSnoozedBy`, `TestAlertsTrimmed`); `cmd/homelab` (`alert()` records even without ntfy's token; a Finances reminder is kept as its plain line, no amount; a phone's `AlertLog` is a read, refused to no device); a smoke case for **Every alert…** on the computer and the phone's page.
-2. **The iPhone's Recent Alerts page** (iPhone PR). *Where:* the alerts card in `StatusCardsView.swift` opens a page reading `AlertLog` (`APIClient.alertLog`), only where `computer.calls` lists it; each row with its time, cleared or snoozed (by whom, until when), and Snooze… on an open one (the same `SnoozeMenu`, Face ID). *Test that fails today:* Swift decoding the contract's `AlertLog` sample, and the row's words for cleared, snoozed and open.
+2. **The iPhone's Every Alert page** (iPhone PR, in flight). *Where:* the alerts card in `StatusCardsView.swift` links to `AlertLogView` (`AlertLogViews.swift`) reading `AlertLog` (`APIClient.alertLog`, `KeptAlert`), only where the computer answers it; each row with its time, topic, and what became of it (`KeptAlert.fate`). The contract gains `alertLog`, a sample at fixed times (`sampleAlertLog` in `cmd/homelab/contract_test.go`). *Tests:* `ContractTests` decodes the sample; `AlertLogTests` checks the words. *Left for later:* Snooze… on an open row (the watchdog card has it); check on the iPad and Mac that the link opens from the cards in the split view's list.
 3. **Notifications from the Homelab app, and who notifies** (desktop + iPhone; **ask the owner first**). Local notifications while the app runs, from the live events the phone already reads (a new alert), and from background refresh (best effort). A setting chooses whether the ntfy app or this app notifies, never both. **The question:** ntfy can't be muted per phone from here, so "this app notifies" either means the household stops sending to ntfy (the partner's phone too, if it relies on ntfy) or each person unsubscribes in the ntfy app. Recommend per phone: the setting on the iPhone, with one line saying to turn the ntfy app's notifications off. Push (APNs) stays behind `HOMELAB_SIGNED`.
 
 **Next time, offer** (recommended first): **a check of every feature on the computer, the phone's page, the iPhone and the iPad, with the gaps** (the owner asked about parity on Nov 11 and was offered it); Finances imports round 3 (a screenshot of rows still wrong, described in shapes); Finances Steps 4 to 6 (`finances-handoff.md` section 3, mock each first); Tidy Up queue item 7, then the look (L3 to L7); an independent security review of #556 to the alerts work, in a session of its own (launcher below); rules, deeper (a rule that links a payee to a planned bill; by amount or direction), each needing a yes.

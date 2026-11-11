@@ -163,6 +163,11 @@ final class DashboardViewModel {
         try await api.history(appID: appID, search: search)
     }
 
+    /// Every alert the computer kept, newest first.
+    func alertLog() async throws -> [KeptAlert] {
+        try await api.alertLog()
+    }
+
     // MARK: Away mode (ADR-0023)
 
     /// The apps on the internet through the tunnel, as last kept, read
