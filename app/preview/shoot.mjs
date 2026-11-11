@@ -5910,7 +5910,8 @@ const smokes = [
   // A bank's file that says what each row is (American Express's Category column: "Restaurant-Restaurant",
   // "Merchandise & Supplies-Groceries"; Chase's: "Food & Drink") gives a shop the household's own category for it when
   // nothing better says (a known brand's still wins: Starbucks is Eating out whatever the file calls it). One that
-  // says nothing the household has (Other-Miscellaneous) is left to pick, and the bank's word isn't a note.
+  // says nothing the household has (Other-Miscellaneous) is left to pick, and the bank's word isn't a note. A company's
+  // ending (LLC, Inc.) goes, as its town does.
   { name: "Finances: an American Express file's Category column gives each shop the household's category", screen: 'finances', run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
     await page.click('.fx-transactions button:text-is("Import a file")');
@@ -5923,15 +5924,16 @@ const smokes = [
       + '11/06/2026,HOMETOWN HARDWARE MIAMI FL,22.00,,,,"MIAMI\nFL",,,,Merchandise & Supplies-Hardware Supplies\n'
       + '11/05/2026,BIG STORE MIAMI FL,60.00,,,,"MIAMI\nFL",,,,Merchandise & Supplies-Department Stores\n'
       + '11/05/2026,STARBUCKS SEATTLE WA,6.10,,,,"SEATTLE\nWA",,,,Merchandise & Supplies-Groceries\n'
-      + '11/04/2026,MYSTERY LLC MIAMI FL,9.00,,,,"MIAMI\nFL",,,,Other-Miscellaneous\n';
+      + '11/04/2026,MYSTERY LLC MIAMI FL,9.00,,,,"MIAMI\nFL",,,,Other-Miscellaneous\n'
+      + '11/04/2026,"SUNSHINE DENTAL, INC. MIAMI FL",90.00,,,,"MIAMI\nFL",,,,Business Services-Health Care Services\n';
     await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
     await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
-    await page.waitForSelector('#finSheet .formsub:has-text("9 to bring in")', { timeout: 5000 });
-    await page.click('#finSheet button:text-is("Bring in 9")');
+    await page.waitForSelector('#finSheet .formsub:has-text("10 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 10")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
     const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.account === 'amex' && t.date >= '2026-11-04');
     const got = Object.fromEntries(txs.map((t) => [t.payee, t.category || '']));
-    const want = { 'Pine Cafe': 'Eating out', 'Corner Market': 'Groceries', 'Sunny Days School': 'Kids and school', 'Riverside Inn': 'Travel', 'Fuel Stop 12': 'Gas', 'Hometown Hardware': 'Repairs', 'Big Store': 'Shopping', Starbucks: 'Eating out', 'Mystery Llc': '' };
+    const want = { 'Pine Cafe': 'Eating out', 'Corner Market': 'Groceries', 'Sunny Days School': 'Kids and school', 'Riverside Inn': 'Travel', 'Fuel Stop 12': 'Gas', 'Hometown Hardware': 'Repairs', 'Big Store': 'Shopping', Starbucks: 'Eating out', Mystery: '', 'Sunshine Dental': 'Health' };
     for (const [payee, cat] of Object.entries(want)) if (got[payee] !== cat) throw new Error(`${payee}: ${JSON.stringify(got[payee])}, not ${JSON.stringify(cat)} (${JSON.stringify(got)})`);
     if (txs.some((t) => /Restaurant|Merchandise|Miscellaneous/.test(t.note || ''))) throw new Error('the bank\'s category went into a note');
   } },

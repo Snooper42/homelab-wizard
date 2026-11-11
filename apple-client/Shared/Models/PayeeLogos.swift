@@ -155,6 +155,7 @@ final class PayeeLogos: @unchecked Sendable {
     private let processors: Set<String>
     private let leading: NSRegularExpression?
     private let states: Set<String>
+    private let suffixes: Set<String>
     private let chains: [(words: String, name: String)]
     private let kindHue: [String: Int]
     private let kindCategory: [String: String]
@@ -213,6 +214,7 @@ final class PayeeLogos: @unchecked Sendable {
             let processors: [String]
             let leading: String
             let states: [String]
+            let suffixes: [String]?
             let chains: [[String]]
         }
         struct Colours: Decodable {
@@ -253,7 +255,7 @@ final class PayeeLogos: @unchecked Sendable {
     private init() {
         brands = []; brandsByKey = [:]; marks = [:]; categoryLight = []; categoryDark = []; autoColours = []; glyphs = []
         brandWords = []; loose = []; tails = []; models = []; hints = []; plainKinds = []; brandTypes = [:]; brandKinds = [:]
-        processors = []; leading = nil; states = []; chains = []; kindHue = [:]; kindCategory = [:]
+        processors = []; leading = nil; states = []; suffixes = []; chains = []; kindHue = [:]; kindCategory = [:]
         patterns = Self.compile()
     }
 
@@ -293,6 +295,7 @@ final class PayeeLogos: @unchecked Sendable {
         processors = Set(f.payee.processors)
         leading = try? NSRegularExpression(pattern: f.payee.leading, options: [.caseInsensitive])
         states = Set(f.payee.states)
+        suffixes = Set(f.payee.suffixes ?? [])
         chains = f.payee.chains.compactMap { $0.count == 2 ? (words: $0[0], name: $0[1]) : nil }
         kindHue = f.kindHue
         kindCategory = f.kindCategory
@@ -389,6 +392,11 @@ final class PayeeLogos: @unchecked Sendable {
         // A trailing state, after something to keep (in capitals, as a bank writes it).
         var parts = s.components(separatedBy: " ")
         if parts.count > 1, let last = parts.last, states.contains(last.lowercased()), last == last.uppercased() {
+            parts.removeLast()
+        }
+        // Then a company's ending (LLC, Inc.), after something to keep.
+        while parts.count > 1, let last = parts.last,
+              suffixes.contains(last.lowercased().replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: "")) {
             parts.removeLast()
         }
         s = replace(parts.joined(separator: " "), P.trailing, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
