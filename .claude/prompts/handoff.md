@@ -14,7 +14,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 6. **Every PR ends with "Try this tonight"** (what to click, and whether the iPhone needs the cable re-install). `CHANGELOG.md` under `## [Unreleased]` only.
 7. **Each new companion (phone) call** checks the device's permission: a read, or a change (`Change: true`) that a look-only phone and a wall screen can't make, and that a member's phone makes only for its own things. Changes ask Face ID on the iPhone, except a fold (it only changes what shows open).
 
-## 1. Where it stands (Nov 11, 3:00 PM Eastern)
+## 1. Where it stands (Nov 11, 4:30 PM Eastern)
 
 **Merged Nov 10 and 11** (each green):
 
@@ -33,12 +33,11 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #586 | Back and Forward between screens: ⌘[ ⌘], mouse buttons, a two-finger swipe |
 | #587, #588 | Status folds kept by the computer, the same on the app, the phone's page and the iPhone |
 | #590 | **Snooze a failing check's alerts from a phone allowed to change things** (the phone's page and the iPhone, behind Face ID); **a form opening leaves the cursor where it was put** (`web/src/parts/Sheet.tsx`: the sheet no longer moves the cursor to its first field once it's in another of its fields; that race made the *Always do this for only that name* smoke case fail now and then) |
-
 | #591 | Alerts PR 1: **the computer keeps every alert** (`internal/history`'s `alerts`, 90 days), when it cleared and who snoozed it, never an amount; `AlertLog`; **Every alert…** on Status's Recent alerts, on the computer and the phone's page |
-
 | #592 | Alerts PR 2: **the iPhone's Every Alert page** (`AlertLogView`, `KeptAlert`; the contract's `alertLog` sample) |
+| #593 | Alerts PR 3: **Alerts From** on the iPhone (the ntfy app or this app, per phone; this app notifies while it's open) |
 
-**In flight:** Alerts PR 3, **Alerts From** on the iPhone (branch `claude/laughing-ritchie-flic1b`): done when it's merged green, the Apple client job included. The owner said "continue" (Nov 11) without picking from the list; this session took the recommendation, **Alerts in the app** (section 2).
+**In flight:** nothing open. Alerts in the app is done but for PR 4, which waits on the owner (section 4).
 
 **Dropped, with the owner told:** ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 
@@ -46,15 +45,15 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 `unison-handoff.md` section 4, item 6. **Today:** the phones and the app read `Alerts` (`core.RecentAlerts`): what ntfy kept on the alert topics (12 hours), less what cleared (`core.Current`). Nothing remembers an alert past ntfy's 12 hours, when it cleared, or who snoozed it. Every alert goes through one function, `(*homelab).alert` in `cmd/homelab/jobs.go`; the watchdog's down and recovered alerts are at the end of its run there (`core.DownTitle`, "Homelab: recovered"); snoozes are `notify.SnoozeHours` (from `app.SnoozeCheck`, the phone's `SnoozeCheck` in `cmd/homelab/serve.go`, and `homelab notify snooze`).
 
-1. **The computer keeps every alert** (desktop PR, carries this file).
+1. **The computer keeps every alert** (#591, merged).
    - *Where:* `internal/history` gains a second table (migration 2, `alerts`: at, topic, title, body, priority, checks, cleared_at, snoozed_until, snoozed_by), with `AddAlert`, `ClearAlerts` (a down alert is cleared when none of its checks still fail), `SnoozeAlert` (the newest open alert naming that check: until when, and who), `Alerts` (newest first, 30 days, at most 200), trimmed to 90 days like the actions. `alert()` records every alert, before it looks for ntfy's token (the record is the computer's, set up or not). The watchdog's recovered names clear their alerts. Each snooze records who (this computer, the phone's name, the command line).
    - **Money never goes in:** Finances' reminders and the weekly summary can carry amounts, in their titles too. `notify.Message` gets a field for the line the record keeps instead (*A Finances reminder*, *The weekly summary*); the record never holds their title or body.
    - *Shown:* a look-only companion call `AlertLog` (contract JSON updated, `computer.calls`), the app's `AlertLog` binding, and on Status's alerts card, on the computer and the phone's page, **Every alert…**: a sheet listing them, each with *Cleared at 3:12 AM* or *Snoozed by Alex's iPhone until 9 PM*.
    - *Fixed looks like:* an alert from yesterday morning still listed today, with when it cleared.
    - *Tests that fail today:* `internal/history` (`TestAlertsKept`, `TestAlertCleared`, `TestAlertSnoozedBy`, `TestAlertsTrimmed`); `cmd/homelab` (`alert()` records even without ntfy's token; a Finances reminder is kept as its plain line, no amount; a phone's `AlertLog` is a read, refused to no device); a smoke case for **Every alert…** on the computer and the phone's page.
 2. **The iPhone's Every Alert page** (#592, merged). *Where:* the alerts card in `StatusCardsView.swift` links to `AlertLogView` (`AlertLogViews.swift`) reading `AlertLog` (`APIClient.alertLog`, `KeptAlert`), only where the computer answers it; each row with its time, topic, and what became of it (`KeptAlert.fate`). The contract gains `alertLog`, a sample at fixed times (`sampleAlertLog` in `cmd/homelab/contract_test.go`). *Tests:* `ContractTests` decodes the sample; `AlertLogTests` checks the words. *Left for later:* Snooze… on an open row (the watchdog card has it); check on the iPad and Mac that the link opens from the cards in the split view's list.
-3. **Notifications from the Homelab app, and who notifies** (iPhone PR). **The owner said "continue" (Nov 11) without answering; this session took the recommendation, per phone.** *Where:* `AlertNotifier.swift`: `AlertSource` and `AlertNotifications` (the choice and how far it has seen, in this device's defaults), `LocalAlerts.watch` (reads `AlertLog` each minute while the app runs, from `DashboardView`'s root), `AlertPresenter` (banners while open); Settings › **Alerts From** in `ComputerView.swift`, asking for notification permission first. *Tests:* `AlertNotificationsTests` (the ntfy app until picked, no old ones on the first look, at most five, a record begun again, switching back and forth). Nothing changes on the computer: ntfy goes on sending for every phone.
-4. **Background refresh** (next, iPhone PR): a `BGAppRefreshTask` (`.backgroundTask(.appRefresh(…))`, `UIBackgroundModes` fetch and `BGTaskSchedulerPermittedIdentifiers` in `scripts/make-xcode-project.sh`) running the same check while the app is closed, best effort (iOS decides how often). Check first whether the API client can read the pairing in the background, before the app is unlocked. Push (APNs) stays behind `HOMELAB_SIGNED`.
+3. **Notifications from the Homelab app, and who notifies** (#593, merged). **The owner said "continue" (Nov 11) without answering; this session took the recommendation, per phone.** *Where:* `AlertNotifier.swift`: `AlertSource` and `AlertNotifications` (the choice and how far it has seen, in this device's defaults), `LocalAlerts.watch` (reads `AlertLog` each minute while the app runs, from `DashboardView`'s root), `AlertPresenter` (banners while open); Settings › **Alerts From** in `ComputerView.swift`, asking for notification permission first. *Tests:* `AlertNotificationsTests` (the ntfy app until picked, no old ones on the first look, at most five, a record begun again, switching back and forth). Nothing changes on the computer: ntfy goes on sending for every phone.
+4. **Background refresh** (waits on the owner). **Found Nov 11:** the pairing is in the Keychain as `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` (`KeychainManager.swift`, which refuses anything else), so the app can't reach the computer while the phone is locked, and iOS runs background refresh mostly then. Making it work means `AfterFirstUnlockThisDevice` for the pairing (readable while locked, after the first unlock since a restart): a security trade-off the owner decides, with a review of what a locked, stolen phone could then reach. Otherwise leave it, and alerts to a locked phone stay the ntfy app's until push (APNs, behind `HOMELAB_SIGNED`).
 
 **Next time, offer** (recommended first): **a check of every feature on the computer, the phone's page, the iPhone and the iPad, with the gaps** (the owner asked about parity on Nov 11 and was offered it); Finances imports round 3 (a screenshot of rows still wrong, described in shapes); Finances Steps 4 to 6 (`finances-handoff.md` section 3, mock each first); Tidy Up queue item 7, then the look (L3 to L7); an independent security review of #556 to the alerts work, in a session of its own (launcher below); rules, deeper (a rule that links a payee to a planned bill; by amount or direction), each needing a yes.
 
@@ -72,7 +71,8 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
-- **Alerts, PR 3's question** (section 2): who notifies, per phone or for the household.
+- **Alerts, PR 4** (section 2): whether the pairing may be readable while the phone is locked, so background refresh can check for alerts. Recommended: no; the ntfy app covers a locked phone. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household.
+- **Trying on the phone:** #592 and #593 (Every Alert; Alerts From) with the cable re-install.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
 - **Imports:** a second look later (they said "closer to being correct", Nov 11); a screenshot of what still looks off.
 - **"After <name>'s paycheck"** against their spreadsheet (`finances-handoff.md` section 2, item 1): which row still differs.
@@ -108,9 +108,9 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## Launchers (paste one into a new session)
 
-The work, in this file's order (carries on with Alerts in the app, section 2):
+The work, in this file's order (lands what's in flight, then asks the owner):
 
-    Read .claude/prompts/handoff.md and follow it: carry on with section 2's Alerts in the app, one PR at a time from where section 1 says it stands, asking me PR 3's question before building it. Merge each PR as soon as it's green.
+    Read .claude/prompts/handoff.md and follow it: land anything section 1 says is in flight, then ask me section 2's PR 4 question and offer the next-time list. Merge each PR as soon as it's green.
 
 The independent security review, in a session of its own (not at the same time as the other):
 
