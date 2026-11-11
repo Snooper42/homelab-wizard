@@ -521,6 +521,25 @@ struct StatusGroupTests {
         #expect(!StatusFolds.isOpen(other, in: StatusFolds.setting(other, open: false, in: opened)))
         #expect(StatusFolds.isOpen(other, in: "not json"))             // a bad record is no choice
     }
+
+    // The folds are the computer's, the same on every device (the owner, Nov 10): its answer becomes this device's
+    // folds; a change is saved for every device only when the person made it (not the computer's answer coming
+    // back, in whatever order), on a device allowed changes, with a computer that keeps them.
+    @Test func foldsAreTheComputers() throws {
+        let theirs = StatusFolds.fromComputer(["Media": true, "Photos": false])
+        #expect(StatusFolds.choices(theirs) == ["Media": true, "Photos": false])
+        #expect(StatusFolds.choices(StatusFolds.fromComputer([:])).isEmpty)
+        let st = try status(#"{"apps":[{"id":"plex","name":"Plex","state":"running"}]}"#)
+        let media = try #require(DashboardViewModel.groups(apps: st.apps, pinned: [], catalog: catalog).first { $0.label == "Media" })
+        #expect(StatusFolds.isOpen(media, in: theirs))
+        let mine = StatusFolds.setting(media, open: false, in: theirs)
+        #expect(!StatusFolds.shouldSave(theirs, computers: theirs, canChange: true, keeps: true))
+        #expect(!StatusFolds.shouldSave(#"{"Photos":false,"Media":true}"#, computers: theirs, canChange: true, keeps: true))
+        #expect(StatusFolds.shouldSave(mine, computers: theirs, canChange: true, keeps: true))
+        #expect(StatusFolds.shouldSave(mine, computers: nil, canChange: true, keeps: true))
+        #expect(!StatusFolds.shouldSave(mine, computers: theirs, canChange: false, keeps: true))   // looks only: its own
+        #expect(!StatusFolds.shouldSave(mine, computers: theirs, canChange: true, keeps: false))   // an older computer
+    }
 }
 
 // The widget's one line: a count, never names; and nothing kept without a widget.
