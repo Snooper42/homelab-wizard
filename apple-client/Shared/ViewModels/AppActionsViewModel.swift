@@ -125,6 +125,9 @@ final class AppActionsViewModel {
     /// Start, Stop, Restart and Roll back: this device may, and the computer can.
     var canChangeApps: Bool { canChange && computerAnswers("AppAction") }
 
+    /// Snooze… on a failing check: this device may, and the computer can.
+    var canSnooze: Bool { canChange && computerAnswers("SnoozeCheck") }
+
     /// Stop for a while (StopUntil), where the computer can.
     var canStopForAWhile: Bool { computerAnswers("StopUntil") }
 
@@ -381,6 +384,30 @@ final class AppActionsViewModel {
         }
         // Status now says what it is (or the switch goes back, on failure).
         settingOverrides[key] = nil
+    }
+
+    /// What went wrong with the last snooze, said under the check.
+    private(set) var snoozeError: String?
+
+    /// Snoozes a failing check's alerts (`hours` from snoozeChoices), after
+    /// Face ID, as Snooze… on the computer. True when the computer took it.
+    func snooze(_ check: String, hours: Int) async -> Bool {
+        guard !isBusy, canSnooze, WatchdogSummary.snoozeChoices(snoozed: true).contains(where: { $0.hours == hours }) else { return false }
+        isBusy = true
+        defer { isBusy = false }
+        guard await authorize(WatchdogSummary.snoozeReason(check, hours: hours)) else { return false }
+        snoozeError = nil
+        do {
+            try await api.snoozeCheck(check, hours: hours)
+            successCount += 1
+            return true
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("SnoozeCheck failed: \(apiError.logName, privacy: .public)")
+            snoozeError = apiError.errorDescription
+            failureCount += 1
+            return false
+        }
     }
 
     private func offerUndo(for apps: [AppStatus], until: StopChoice?) {
