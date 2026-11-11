@@ -36,7 +36,7 @@ export interface TransactionsProps {
   /** The ledger; null until it is read. */
   ledger: finance.Ledger | null;
   /** Opens a transaction's form, or the categories; none on a phone allowed only to look. */
-  edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import' | 'logos', id?: string) => void;
+  edit?: (what: 'transaction' | 'categories' | 'budgets' | 'import' | 'logos' | 'rules', id?: string) => void;
   /** Whether Logos is offered: the computer can ask a company's website for its real logo; a phone can't. */
   logos?: boolean;
   /** Opened filtered from another view (a report's row, a Dashboard card): back to it. */
@@ -344,6 +344,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
           actions={edit && <>
             {saveLedger && !!all.length && <button type="button" class="small" aria-pressed={picking} onClick={() => (picking ? stopPicking() : setPicking(true))}>{picking ? 'Done' : 'Select'}</button>}
             <button type="button" class="small" onClick={() => edit('import')}>Import a file</button>
+            {!!v.plan.rules?.length && <button type="button" class="small" onClick={() => edit('rules')}>Rules ({v.plan.rules.length})</button>}
             {logos && !!all.length && <button type="button" class="small" onClick={() => edit('logos')}>Logos</button>}
             <button type="button" class="small" onClick={() => edit('categories')}>Categories</button>
           </>}>

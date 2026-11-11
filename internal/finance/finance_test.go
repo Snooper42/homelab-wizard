@@ -1065,3 +1065,35 @@ func TestSaveWaitsForAnotherProcess(t *testing.T) {
 		t.Errorf("saved while another process held the lock: %v", err)
 	}
 }
+
+// Rules ("Always do this for <payee>", the owner's yes Nov 11): a payee's name as it comes in, and the name and
+// category to give it. Kept trimmed, each name once (the newer replaces the older, whatever its capitals); one with no
+// name to match, or nothing to do, is refused; a plan from before rules still reads.
+func TestRulesAreCleaned(t *testing.T) {
+	p := household()
+	p.Rules = []Rule{
+		{Match: "  Truly Nolen 80 ", Payee: " Truly Nolen ", Category: "Home"},
+		{Match: "GAMESTOP", Category: "Gaming"},
+		{Match: "truly nolen 80", Payee: "Truly Nolen", Category: "Repairs"},
+	}
+	got, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Rules) != 2 || got.Rules[0] != (Rule{Match: "GAMESTOP", Category: "Gaming"}) || got.Rules[1] != (Rule{Match: "truly nolen 80", Payee: "Truly Nolen", Category: "Repairs"}) {
+		t.Errorf("rules: %+v", got.Rules)
+	}
+	for _, bad := range []Rule{{Match: " ", Payee: "X"}, {Match: "Store"}, {Match: strings.Repeat("a", 101), Payee: "A"}} {
+		p.Rules = []Rule{bad}
+		if _, err := Clean(p); err == nil {
+			t.Errorf("kept %+v", bad)
+		}
+	}
+	var old Plan
+	if err := json.Unmarshal([]byte(`{"people":[],"accounts":[],"payments":[]}`), &old); err != nil || old.Rules != nil {
+		t.Fatalf("a plan from before: %v %+v", err, old.Rules)
+	}
+	if data, _ := json.Marshal(old); strings.Contains(string(data), "rules") {
+		t.Errorf("an old plan writes rules: %s", data)
+	}
+}
