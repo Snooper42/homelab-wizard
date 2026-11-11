@@ -100,6 +100,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
+- **Which gaps to close (2A step 2),** asked Nov 11 at 6 PM Eastern from `docs/Parity.md`'s *Gaps* list. Recommended: 1 (links into the app on the iPad and Mac app), then 2 and 4 together (What was done and Every alert from the split view), then 3 (Snooze on an open alert), then 6 (Settings on the phone's page); the iPhone Finances pieces (5) after 2B. If they say "continue", take that order.
 - **Trying on the phone:** #576, #588, #590, #592 and #593 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
 - **Imports:** a screenshot of what still looks off (2B, step 1).
