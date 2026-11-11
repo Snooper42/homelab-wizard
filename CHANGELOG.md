@@ -107,6 +107,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Finances tabs open where you left them:** Spending and Plan now open again on the page you were last on (Reports, Recurring, Paychecks…), not always their first.
 - **A bank's own categories on import:** an American Express or Chase file's Category column ("Restaurant-Restaurant", "Merchandise & Supplies-Groceries", "Food & Drink") now gives a shop the matching category of yours (Eating out, Groceries, Travel, Gas…) when nothing better says. Your own choice for a payee, a rule, the bill it pays and a known brand still come first, and one the file calls Other is left for you to pick.
 - **Rules that reach further:** a rule can be for every payee starting with some words (*Truly Nolen* for *Truly Nolen 80*, *81* and *112*): rename a payee to the start of its name and tick **Always do this for…**, and that's picked for you, or pick **Only** that name. **Also change the N already in** gives every matching transaction the name and category, replacing a category picked before. And in **Rules** each rule's words, *starts with*, name and category can be changed, not only removed.
 - **Tidy Up's Undo holds up:** Recently done finds the music swap's and the books' Undo by what was done, not by the words of its line, so rewording a line in a later update can't quietly take its Undo away.

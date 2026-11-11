@@ -6056,8 +6056,8 @@ const smokes = [
   // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
   // payment to someone is left for the household to pick. The preview says each before it comes in.
   // Four tabs, as the owner picked (Nov 10): Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring,
-  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row; a way into a page (a Dashboard
-  // card) picks its tab and page.
+  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row, and again on the page it was
+  // left on; a way into a page (a Dashboard card) picks its tab and page.
   { name: 'Finances: four tabs, Spending and Plan with their pages in a second row', screen: 'finances', run: async (page) => {
     const top = await page.$$eval('#finRoot > .seg button', (bs) => bs.map((b) => b.textContent));
     if (top.join('|') !== 'Dashboard|Spending|Plan|Net worth') throw new Error(`tabs ${top.join('|')}`);
@@ -6074,6 +6074,11 @@ const smokes = [
     await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 2000 });
     await page.click('#finRoot > .seg button:text-is("Net worth")');
     if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on Net worth');
+    // Each tab opens again on the page it was left on.
+    await page.click('#finRoot > .seg button:text-is("Spending")');
+    if ((await second()) !== 'Transactions|Reports*') throw new Error(`Spending again ${await second()}`);
+    await page.click('#finRoot > .seg button:text-is("Plan")');
+    if ((await second()) !== 'Calendar|Recurring|Paychecks*') throw new Error(`Plan again ${await second()}`);
     // Back on the Dashboard, a card that opens Recurring picks Plan and Recurring.
     await page.click('#finRoot > .seg button:text-is("Dashboard")');
     await page.click('.fx-flow button[aria-label^="Open Recurring"]', { timeout: 5000 });
