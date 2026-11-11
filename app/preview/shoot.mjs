@@ -2536,6 +2536,21 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
+  // The folds are the computer's, the same on every device (the owner, Nov 10): a group another device opened shows open
+  // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
+  // nothing; Fold them again puts every device back to the defaults.
+  { name: 'Status folds are kept by the computer, the same on every device', screen: 'status', mock: { statusOpen: '', statusFolds: { Security: true } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    await page.click('#statusRows tr.grouphead:has-text("Security") button.foldbtn');
+    await page.waitForFunction(() => window.__MOCK.statusFoldsSaved?.at(-1)?.Security === false, null, { timeout: 5000 });
+    const saved = () => page.evaluate(() => (window.__MOCK.statusFoldsSaved || []).length);
+    const before = await saved();
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    if ((await saved()) !== before) throw new Error('Show every app was saved for every device');
+    await page.click('#statusAll');
+    await page.waitForFunction(() => JSON.stringify(window.__MOCK.statusFoldsSaved?.at(-1)) === '{}', null, { timeout: 5000 });
+  } },
   { name: 'Start the stopped apps of a category', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr.grouphead:has-text("Household") button.startall', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr.grouphead:has-text("Household") button.startall', { state: 'detached', timeout: 5000 });
