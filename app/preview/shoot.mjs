@@ -2828,6 +2828,9 @@ const smokes = [
         // Choose another… opens Where should your libraries live?, as the Inbox's link does.
         await page.click('.tidyneeds li:has-text("Plug in the Media drive") button:has-text("Choose another…")');
         await page.waitForSelector('#tidy .tidyplaces h2:text-is("Where should your libraries live?")', { timeout: 3000 });
+        // Its drives come a moment after it opens and push Cancel down: a click aimed before they're in can land on a
+        // drive instead (smoke (light) on #595, smoke (dark) on main, Nov 11). Cancel once they're listed.
+        await page.waitForSelector('#tidy .tidyplaces .tidydrives', { timeout: 3000 });
         await page.click('#tidy .tidyplaces button:text-is("Cancel")');
         await page.waitForSelector('.tidyneeds li:has-text("Plug in the Media drive")', { timeout: 3000 });
       } },

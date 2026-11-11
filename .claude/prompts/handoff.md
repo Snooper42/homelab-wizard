@@ -1,4 +1,4 @@
-# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 11, 2026)
+# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 11, 2026, evening)
 
 The owner has one Claude account for this repository. This file is the hub: where the work stands, what to do first, and how to hand on. It sits above the files it points to (section 5); each keeps its detail and its own rules.
 
@@ -14,7 +14,24 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 6. **Every PR ends with "Try this tonight"** (what to click, and whether the iPhone needs the cable re-install). `CHANGELOG.md` under `## [Unreleased]` only.
 7. **Each new companion (phone) call** checks the device's permission: a read, or a change (`Change: true`) that a look-only phone and a wall screen can't make, and that a member's phone makes only for its own things. Changes ask Face ID on the iPhone, except a fold (it only changes what shows open).
 
-## 1. Where it stands (Nov 11, 4:30 PM Eastern)
+## Start here (every session, in this order, before anything else)
+
+1. **Read this whole file**, then the files section 5 names for the work you're about to do. Read the code before trusting any description of it, this file's included.
+2. **Find where things stand on GitHub, not in your memory:** `git fetch origin --prune`; list the open PRs; `git ls-remote origin 'refs/heads/claude/*'`; `git log --oneline -15 origin/main`. Compare with section 1. If GitHub shows something section 1 doesn't (a PR merged or opened since), GitHub is right: carry on from what it shows.
+3. **An open PR from an earlier session comes first:** subscribe to it, read every check on its head, and land it (the playbook below). Only then start the next step. Never open a second PR while one is open.
+4. **Find the next step:** the first step in section 2 not marked **Done**. Each step says what "done" is. Mark it **Done** (with its PR number) in this file in the PR that finishes it, so GitHub always shows the next step.
+5. **Branch from a fresh `origin/main`:** `git checkout -B <your branch> origin/main`. The branch name is whatever the session was given; a merged PR's branch is gone from GitHub, so push it plainly (`git push -u origin <branch>`), never `--force-with-lease` against a deleted branch.
+6. **Tell the owner in two or three lines** what you're about to do and what (if anything) you need from them, then start.
+
+## How to decide (so nothing waits on a guess)
+
+- **The owner says "continue", "keep going" or similar without answering a question:** take the recommendation you gave, say in one line that you did and that they can still change it, and write that into this file (as #593's "per phone" was).
+- **A step says "ask the owner":** ask once, in one short message with one recommendation first. While you wait, go on to the next step that doesn't need the answer; never sit idle and never build the asked-about thing on a guess. Write the question into section 4.
+- **Never without the owner's yes:** anything that weakens a security choice (the Keychain's unlock-only pairing, a phone call made a change without `Change: true`, anything published to the internet); deleting a branch or data; pushing to a branch that isn't this session's; a second open PR; changing CI to skip or loosen a step. These are asked even if they say "continue".
+- **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
+- **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
+
+## 1. Where it stands (Nov 11, 5:00 PM Eastern)
 
 **Merged Nov 10 and 11** (each green):
 
@@ -36,26 +53,38 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #591 | Alerts PR 1: **the computer keeps every alert** (`internal/history`'s `alerts`, 90 days), when it cleared and who snoozed it, never an amount; `AlertLog`; **Every alert…** on Status's Recent alerts, on the computer and the phone's page |
 | #592 | Alerts PR 2: **the iPhone's Every Alert page** (`AlertLogView`, `KeptAlert`; the contract's `alertLog` sample) |
 | #593 | Alerts PR 3: **Alerts From** on the iPhone (the ntfy app or this app, per phone; this app notifies while it's open) |
+| #594, #595 | The hand-off after Alerts in the app; this one (the feature check, then the rest) |
 
-**In flight:** nothing open. Alerts in the app is done but for PR 4, which waits on the owner (section 4).
+**In flight:** nothing open. **Alerts in the app is done.** Background refresh was **dropped by the owner (Nov 11: "I'm okay with no backgrounds")**: the pairing stays readable only while the phone is unlocked (`KeychainManager.swift`), and a locked phone hears from the ntfy app until push (APNs, behind `HOMELAB_SIGNED`). Don't offer it again.
 
 **Dropped, with the owner told:** ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 
-## 2. Alerts in the app (the pick), in PRs
+## 2. The owner's pick (Nov 11): all of it, in this order
 
-`unison-handoff.md` section 4, item 6. **Today:** the phones and the app read `Alerts` (`core.RecentAlerts`): what ntfy kept on the alert topics (12 hours), less what cleared (`core.Current`). Nothing remembers an alert past ntfy's 12 hours, when it cleared, or who snoozed it. Every alert goes through one function, `(*homelab).alert` in `cmd/homelab/jobs.go`; the watchdog's down and recovered alerts are at the end of its run there (`core.DownTitle`, "Homelab: recovered"); snoozes are `notify.SnoozeHours` (from `app.SnoozeCheck`, the phone's `SnoozeCheck` in `cmd/homelab/serve.go`, and `homelab notify snooze`).
+The owner asked for "a handoff to do all this" (Nov 11): the feature check first (recommended), then the rest of the list. One PR at a time; ask where a step says so (*How to decide*, above). Mark each numbered step **Done (#PR)** in the PR that finishes it; the next session starts at the first step without the mark. What Alerts in the app built is in `unison-handoff.md` section 4, item 6, and #591 to #593.
 
-1. **The computer keeps every alert** (#591, merged).
-   - *Where:* `internal/history` gains a second table (migration 2, `alerts`: at, topic, title, body, priority, checks, cleared_at, snoozed_until, snoozed_by), with `AddAlert`, `ClearAlerts` (a down alert is cleared when none of its checks still fail), `SnoozeAlert` (the newest open alert naming that check: until when, and who), `Alerts` (newest first, 30 days, at most 200), trimmed to 90 days like the actions. `alert()` records every alert, before it looks for ntfy's token (the record is the computer's, set up or not). The watchdog's recovered names clear their alerts. Each snooze records who (this computer, the phone's name, the command line).
-   - **Money never goes in:** Finances' reminders and the weekly summary can carry amounts, in their titles too. `notify.Message` gets a field for the line the record keeps instead (*A Finances reminder*, *The weekly summary*); the record never holds their title or body.
-   - *Shown:* a look-only companion call `AlertLog` (contract JSON updated, `computer.calls`), the app's `AlertLog` binding, and on Status's alerts card, on the computer and the phone's page, **Every alert…**: a sheet listing them, each with *Cleared at 3:12 AM* or *Snoozed by Alex's iPhone until 9 PM*.
-   - *Fixed looks like:* an alert from yesterday morning still listed today, with when it cleared.
-   - *Tests that fail today:* `internal/history` (`TestAlertsKept`, `TestAlertCleared`, `TestAlertSnoozedBy`, `TestAlertsTrimmed`); `cmd/homelab` (`alert()` records even without ntfy's token; a Finances reminder is kept as its plain line, no amount; a phone's `AlertLog` is a read, refused to no device); a smoke case for **Every alert…** on the computer and the phone's page.
-2. **The iPhone's Every Alert page** (#592, merged). *Where:* the alerts card in `StatusCardsView.swift` links to `AlertLogView` (`AlertLogViews.swift`) reading `AlertLog` (`APIClient.alertLog`, `KeptAlert`), only where the computer answers it; each row with its time, topic, and what became of it (`KeptAlert.fate`). The contract gains `alertLog`, a sample at fixed times (`sampleAlertLog` in `cmd/homelab/contract_test.go`). *Tests:* `ContractTests` decodes the sample; `AlertLogTests` checks the words. *Left for later:* Snooze… on an open row (the watchdog card has it); check on the iPad and Mac that the link opens from the cards in the split view's list.
-3. **Notifications from the Homelab app, and who notifies** (#593, merged). **The owner said "continue" (Nov 11) without answering; this session took the recommendation, per phone.** *Where:* `AlertNotifier.swift`: `AlertSource` and `AlertNotifications` (the choice and how far it has seen, in this device's defaults), `LocalAlerts.watch` (reads `AlertLog` each minute while the app runs, from `DashboardView`'s root), `AlertPresenter` (banners while open); Settings › **Alerts From** in `ComputerView.swift`, asking for notification permission first. *Tests:* `AlertNotificationsTests` (the ntfy app until picked, no old ones on the first look, at most five, a record begun again, switching back and forth). Nothing changes on the computer: ntfy goes on sending for every phone.
-4. **Background refresh** (waits on the owner). **Found Nov 11:** the pairing is in the Keychain as `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` (`KeychainManager.swift`, which refuses anything else), so the app can't reach the computer while the phone is locked, and iOS runs background refresh mostly then. Making it work means `AfterFirstUnlockThisDevice` for the pairing (readable while locked, after the first unlock since a restart): a security trade-off the owner decides, with a review of what a locked, stolen phone could then reach. Otherwise leave it, and alerts to a locked phone stay the ntfy app's until push (APNs, behind `HOMELAB_SIGNED`).
+### 2A. The feature check: every feature, everywhere (first): not started
 
-**Next time, offer** (recommended first): **a check of every feature on the computer, the phone's page, the iPhone and the iPad, with the gaps** (the owner asked about parity on Nov 11 and was offered it); Finances imports round 3 (a screenshot of rows still wrong, described in shapes); Finances Steps 4 to 6 (`finances-handoff.md` section 3, mock each first); Tidy Up queue item 7, then the look (L3 to L7); an independent security review of #556 to the alerts work, in a session of its own (launcher below); rules, deeper (a rule that links a payee to a planned bill; by amount or direction), each needing a yes.
+The owner asked (Nov 11) whether every version on each platform has the same features. The answer then was "mostly, not entirely", from `apple-client/README.md`'s table alone. This makes it definite.
+
+1. **The map** (docs PR, with its test).
+   - *Where:* a new `docs/Parity.md`: one table, a row per feature (group them as the computer's sidebar does: Status, an app's page, Backups, Finances, Tidy Up, Setup, Settings, Choose apps, then alerts, links, widgets, keyboard), and a column each for **the computer** (one column; a note where Mac, Windows or Linux differ), **the phone's page** (the companion in a browser), **the iPhone app**, **the iPad**, and **the Homelab app on the Mac** where it differs from the iPad. Each cell: *yes*, *partly* (what's missing), *on purpose* (why: a phone can't install apps, a wall screen only looks, away from home only looks), or *gap*.
+   - *Read, don't trust descriptions:* the computer's screens (`web/src/screens/*.ts` and what they mount); the phone's page is the same bundle under `html.companion`, so a feature is there only if its calls are in `phoneMethods` (`cmd/homelab/serve.go`) and CSS doesn't hide it (`html.companion` and `.can-change` rules in `web/dist/style.css`); the iPhone and iPad from `apple-client/Shared/Views` and `apple-client/README.md`'s table ("Not yet" there is a gap); the computer per system from `docs/Host.md` (*The same on every system*) and `os-mac`/`os-windows`/`os-linux` in the CSS. Every **New** line in `CHANGELOG.md` since 0.17.0 should land in a row.
+   - *Test that fails today:* `cmd/homelab` `TestParityNamesEveryPhoneCall`: every key of `phoneMethods` is named in `docs/Parity.md`, so a new phone call can't go unmapped. Mention the map in `CONTRIBUTING.md`'s every-PR list.
+   - *Fixed looks like:* the owner can read one page and see what each device can and can't do, and why.
+   - *Done:* merged green, with the test.
+2. **Show the owner the gaps and ask which to close.** A short list in chat (or a private Artifact page): each gap in a line, what closing it takes (S, M, L), and one recommended order. Gaps already known: the iPad lacks **What was done** and **links into the app** (README says "Not yet"); **Snooze…** on an open row of Every Alert (the watchdog card has it); whether **Every Alert**'s link opens from the iPad and Mac split view's list; Tidy Up and Choose apps are the computer's only (on purpose for now; Tidy Up's questions on the phone are `unison-handoff.md` item 9).
+   *Done:* the owner has the list and has picked (or said none).
+3. **Each gap the owner picks: its own PR**, a failing test first (Swift Testing for the iPhone and iPad, smoke for the phone's page), and its row in `docs/Parity.md` changed to *yes* in the same PR. *Done:* every picked gap merged with its row *yes*; then give the owner 2B step 6's launcher line (the security review), and go on to 2B step 1.
+
+### 2B. Then the rest, in this order: not started
+
+1. **Finances imports, round 3.** Ask the owner for a screenshot of rows that still look wrong (they said "closer to being correct", Nov 11). Describe them in shapes, never commit their merchants (section 0, rule 1). No screenshot: go to 2, and ask again when 2 is done. *Done:* the rows in the screenshot import right, with a test of each shape.
+2. **Finances Steps 4 to 6** (`finances-handoff.md` section 3): one period picker the Dashboard follows, Dashboard cards that click through, the Transactions table. Mock each first (a private Artifact page with made-up numbers) and show the owner before building; build only what they say yes to. *Done:* each step's PR merged, or the owner said no to it.
+3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM"), then the look, L3 to L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked.
+4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. *Done:* each item merged and `unison-handoff.md` marks it.
+5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. *Done:* built, or the owner said no.
+6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. Tell the owner when 2A is done that it's a good moment to start it, with the launcher line; never in this session. *Done:* the owner has the line.
 
 ## 3. Once the owner picks: hand on before you build
 
@@ -71,13 +100,11 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
-- **Alerts, PR 4** (section 2): whether the pairing may be readable while the phone is locked, so background refresh can check for alerts. Recommended: no; the ntfy app covers a locked phone. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household.
-- **Trying on the phone:** #592 and #593 (Every Alert; Alerts From) with the cable re-install.
+- **Trying on the phone:** #576, #588, #590, #592 and #593 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
-- **Imports:** a second look later (they said "closer to being correct", Nov 11); a screenshot of what still looks off.
+- **Imports:** a screenshot of what still looks off (2B, step 1).
 - **"After <name>'s paycheck"** against their spreadsheet (`finances-handoff.md` section 2, item 1): which row still differs.
 - **Amex rows:** whether purchases show as minus and the account's kind is Credit card.
-- **Trying on the phone:** #576, #588 and #590 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer). The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **`unison-handoff.md` section 6's three questions** (setup from the phone; the partner's phone; which hurts most).
 - **Branches safe to delete** (the owner deletes): `claude/feature-iphone-signed`, `claude/inspiring-noether-x39490`, `claude/investments-bug-pr-merges-pmy7tp`.
 
@@ -103,15 +130,48 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **Preact:** state set while typing isn't read by a Save pressed at once; keep a `useRef` mirror (the Rules sheet, #585).
 - **After a conflict, diff every touched file against `origin/main`** before pushing; a CHANGELOG conflict keeps both lines. `git cherry-pick --continue` takes no `-q`: check `git log` after.
 - **GitHub's runners losing Ubuntu's mirror** (Nov 11, about 9 AM to 12:30 PM Eastern): **app**, **smoke (light)** and **smoke (dark)** died at `playwright install --with-deps` or `apt-get` with `Temporary failure resolving 'archive.ubuntu.com'`, before any test. Not the code: check the log for that line (`gh api repos/Snooper42/homelab-wizard/actions/jobs/<id>/logs`), wait, then `rerun-failed-jobs` on the run. Never change CI to skip the step.
+- **Run `make lint` before every push** (gofmt on `cmd` and `internal`, both `go vet`s): #591 went red once on a map entry's alignment in `serve.go`.
+- **GitHub can lag:** a job's log can end while its check still says in progress for half an hour, and `upload-artifact` can fail on GitHub's own HTML error pages (#593). Read the job's log before deciding it's stuck or red; re-run an upload that failed that way once.
 - **A flaky smoke case is a bug until shown otherwise:** the one on Nov 11 was a real race in `Sheet.tsx` (typing right as a sheet opened), fixed at its source in #590 with a case that reproduced it every time.
+- **A smoke click aimed while a panel is still filling in can land on what moved into its place:** wait for the panel's content (the Tidy places panel's drives, #595) before clicking a button below it. A case that passes alone but fails in CI's shards is usually this or a focus race (#590).
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
+
+## When a check is red or stuck (the playbook)
+
+Read the job's log before deciding anything: `gh api repos/Snooper42/homelab-wizard/actions/jobs/<job id>/logs` (job ids from `gh api repos/Snooper42/homelab-wizard/commits/<sha>/check-runs`). Then:
+
+| What the log says | What it is | What to do |
+|---|---|---|
+| `Temporary failure resolving 'archive.ubuntu.com'` (or `azure.archive…`) at `apt-get` or `playwright install --with-deps`, before any test | GitHub's runners can't reach Ubuntu's mirror (Nov 11, 3½ hours) | Not the code. Wait 30 to 60 minutes, then `gh api -X POST repos/Snooper42/homelab-wizard/actions/runs/<run id>/rerun-failed-jobs`. Repeat at each check-in while it lasts. Never change CI to skip the step |
+| `Failed to CreateArtifact … Unexpected token '<'` after the work passed | GitHub's artifact service answering HTML | Re-run the failed job once; one comment on the PR saying so |
+| The log ended, but the check still says in progress | GitHub's status lagging | Read the log's end for the result; wait for the check to catch up (a check-in 40 minutes out). Merge only when GitHub shows it green |
+| A run with no jobs at all, marked failed | GitHub | Re-run once |
+| `make: *** [Makefile:…: lint]` with a file name | gofmt or vet | Yours: `gofmt -w` that file, `make lint`, push |
+| ` FAIL <case name>` in smoke | A real failure until shown otherwise | Run that case alone locally (`SMOKE_ONLY="<name>" node app/preview/shoot.mjs --smoke light`). If it passes locally, look for a race (#590's was the sheet's cursor), and check main's recent runs for the same case: if main fails it too, it isn't this PR's; fix it at its source anyway, in this PR if the owner allows, else the next one |
+| `error:` in build-and-test (Swift) | The first compile of new Swift | Yours: read the errors group, fix, push. Swift 6 concurrency is the usual cause |
+| `coverage … below` | A package fell under `coverage-floors.txt` | Test the new code beside it, in its own package |
+
+Re-run a job at most once for a real-looking failure; a second failure is real. A red PR you own is never finished: every event and check-in on it is work until it's green or you've told the owner exactly what blocks it.
+
+## Before every push (the checklist)
+
+- `make lint` (gofmt, both `go vet`s); `go test ./...` for what you touched, and `cd app && go test ./...` if `app/` changed.
+- A new or changed phone call: `go test ./cmd/homelab -run TestCompanionContract -update-contract`; a new app method: `cd app && go test -run TestBindings -update .`.
+- Web changes: `node web/build.mjs` then `node web/build.mjs --check`, `grep -c home/user web/dist/app.js` is 0, `node app/preview/lint.mjs`, `npx tsc -p .`, and the smoke cases you added or touched.
+- `go run ./cmd/homelab docs --check` when compose files, metadata or docs changed.
+- After a cherry-pick or a conflict: `git diff --stat origin/main` shows only what this PR adds.
+- The PR: the template's sections (`.github/pull_request_template.md`), **Try this tonight**, no money (section 0, rule 1), no model name.
+
+## Before the session ends (or the owner stops)
+
+Rewrite this file so the next session starts from GitHub alone: section 1 (what merged, what's open and what "done" is for it), section 2's **Done** marks, section 4, any new lesson in section 6, and the launcher. Land it as a PR (or in the open one). Then tell the owner the launcher line to paste.
 
 ## Launchers (paste one into a new session)
 
-The work, in this file's order (lands what's in flight, then asks the owner):
+The work, in this file's order (the feature check, then the rest of section 2):
 
-    Read .claude/prompts/handoff.md and follow it: land anything section 1 says is in flight, then ask me section 2's PR 4 question and offer the next-time list. Merge each PR as soon as it's green.
+    Read .claude/prompts/handoff.md and follow it from "Start here": land anything open, then do section 2 in order from the first step not marked Done, asking me only where it says to. Merge each PR as soon as it's green, and rewrite the hand-off before you stop.
 
-The independent security review, in a session of its own (not at the same time as the other):
+The independent security review, in a session of its own (after 2A is done, not at the same time as the other):
 
-    Read .claude/prompts/audit-loop.md and follow it, against what merged from #556 onwards: the phone's change calls (SetStatusFolds, SnoozeCheck), home only (#559 to #562), Finances rules (#584, #585), imports, and the alert record (internal/history's alerts table, AlertLog). Write each finding with a test that fails without its fix, and fix the real ones.
+    Read .claude/prompts/audit-loop.md and follow it, against what merged from #556 onwards: the phone's change calls (SetStatusFolds, SnoozeCheck), home only (#559 to #562), Finances rules (#584, #585), imports, the alert record (internal/history's alerts table, AlertLog, #591) and the iPhone's local notifications (#593). Write each finding with a test that fails without its fix, and fix the real ones.
