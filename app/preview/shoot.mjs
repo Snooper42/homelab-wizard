@@ -2536,6 +2536,21 @@ const smokes = [
     await page.click('#statusAll');
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Navidrome"))', { timeout: 5000 });
   } },
+  // The folds are the computer's, the same on every device (the owner, Nov 10): a group another device opened shows open
+  // here though it's healthy; opening or folding one here saves it there; Show every app is this device's own and saves
+  // nothing; Fold them again puts every device back to the defaults.
+  { name: 'Status folds are kept by the computer, the same on every device', screen: 'status', mock: { statusOpen: '', statusFolds: { Security: true } }, run: async (page) => {
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    await page.click('#statusRows tr.grouphead:has-text("Security") button.foldbtn');
+    await page.waitForFunction(() => window.__MOCK.statusFoldsSaved?.at(-1)?.Security === false, null, { timeout: 5000 });
+    const saved = () => page.evaluate(() => (window.__MOCK.statusFoldsSaved || []).length);
+    const before = await saved();
+    await page.click('#statusAll');
+    await page.waitForSelector('#statusRows tr:has(strong:text-is("Vaultwarden"))', { timeout: 5000 });
+    if ((await saved()) !== before) throw new Error('Show every app was saved for every device');
+    await page.click('#statusAll');
+    await page.waitForFunction(() => JSON.stringify(window.__MOCK.statusFoldsSaved?.at(-1)) === '{}', null, { timeout: 5000 });
+  } },
   { name: 'Start the stopped apps of a category', screen: 'status', run: async (page) => {
     await page.click('#statusRows tr.grouphead:has-text("Household") button.startall', { timeout: 5000 });
     await page.waitForSelector('#statusRows tr.grouphead:has-text("Household") button.startall', { state: 'detached', timeout: 5000 });
@@ -3519,7 +3534,9 @@ const smokes = [
   } },
   // A screen's data is kept (web/src/store.ts): folding asks nothing, and
   // so does going back to a screen already read.
-  { name: 'Opening and folding every category asks the backend nothing', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
+  // Folds are kept by the computer now (the owner, Nov 10), so the one call
+  // folding makes is keeping them; it still reads nothing again.
+  { name: 'Opening and folding every category reads nothing again, only keeps the folds', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr.grouphead', { timeout: 5000 });
     await page.waitForTimeout(500); // the cards read beside Status
     const before = await backendCalls(page);
@@ -3537,8 +3554,10 @@ const smokes = [
     await page.waitForSelector('#statusAll:has-text("Fold them again")', { timeout: 2000 });
     await page.click('#statusAll');
     await page.waitForSelector('#statusAll:has-text("Show every app")', { timeout: 2000 });
-    const asked = diffCalls(before, await backendCalls(page));
+    const asked = diffCalls(before, await backendCalls(page)).filter((c) => !c.startsWith('SetStatusFolds'));
     if (asked.length) throw new Error('folding asked the backend: ' + asked.join(', '));
+    const last = await page.evaluate(() => JSON.stringify(window.__MOCK.statusFoldsSaved?.at(-1)));
+    if (last !== '{}') throw new Error('Fold them again kept ' + last);
   } },
   { name: 'Going back to a screen draws what was read', screen: 'status', run: async (page) => {
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });

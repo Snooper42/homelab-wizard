@@ -38,10 +38,12 @@
         "SavingsHistory",
         "Screen",
         "SetAppSetting",
+        "SetStatusFolds",
         "SetUpdatesPaused",
         "Settings",
         "Status",
         "StatusBoard",
+        "StatusFolds",
         "StopUntil",
         "Watchdog"
       ],

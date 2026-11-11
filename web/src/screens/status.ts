@@ -7,7 +7,7 @@ import { mountUndoNote } from '../status/UndoNote';
 import { stoppedWords } from '../status/stopFor';
 import { mountWallCard } from '../status/WallCard';
 import { mountAlerts, mountProtection, mountStorage, mountWatchdog, mountWeek, storageShown } from '../status/Cards';
-import { type AppListActions, type AppListProps, clearAppList, mountAppList, mountShowAll, type Pending, stateOf } from '../status/AppList';
+import { type AppListActions, type AppListProps, clearAppList, foldsFromComputer, mountAppList, mountShowAll, onFoldsPicked, type Pending, stateOf } from '../status/AppList';
 import { store } from '../store';
 import { ReleaseNotes } from '../status/ReleaseNotes';
 import { h as vnode } from 'preact';
@@ -146,7 +146,7 @@ function showCrash(c: crash.Crash | null) {
 }
 
 // Status as last read (store.ts), with the cards beside it read alongside.
-export const statusData = store(readStatus);
+export const statusData = store(() => { loadFolds(); return readStatus(); });
 // The agent's last reading, drawn at once when the window opens (marked
 // with its age) while Status reads a fresh one; none once that is in.
 let remembered: api.Reading | null = null;
@@ -161,6 +161,10 @@ export async function drawRemembered(last: Promise<api.Reading | null>) {
 statusData.watch(drawStatus);
 // Backups says why a stale copy is stale from its app's state: drawn again as it changes.
 statusData.watch(() => redrawBackups());
+// The groups folded on Status are the computer's, the same on every device: read each time Status is (statusData),
+// and saved as they're picked. A device that may only look is refused, and keeps its own.
+function loadFolds() { Promise.resolve(go().StatusFolds()).then((p) => { if (p) foldsFromComputer(p); }).catch(() => { /* this device's own */ }); }
+onFoldsPicked((picked) => { Promise.resolve(go().SetStatusFolds(picked)).catch(() => { /* this device's own */ }); });
 export function loadStatus() { return statusData.load(); }
 
 // One request for Status and the cards beside it (StatusBoard): Status

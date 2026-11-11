@@ -508,7 +508,9 @@ function GroupHead({ g, open, toggle, p }: { g: Group; open: boolean; toggle: ()
 // Which categories are open, kept between visits and restarts: each one
 // the user opened or closed; the rest open when something in them is not
 // running. all: Show every app was picked. Shared by the list and its
-// Show every app button.
+// Show every app button. What was picked is the computer's too
+// (internal/statusfolds), so every device shows the same; Show every app is
+// this device's own. Kept here as well, so the list draws at once.
 interface Fold { all: boolean; picked: Record<string, boolean> }
 const foldKey = 'homelab.statusOpen';
 let fold: Fold = { all: false, picked: {} };
@@ -521,10 +523,21 @@ try {
   }
 } catch { /* private window: the defaults */ }
 const folded: ((f: Fold) => void)[] = [];
-function setFold(f: Fold) {
+function show(f: Fold) {
   fold = f;
   try { localStorage.setItem(foldKey, f.all ? 'all' : JSON.stringify(f.picked)); } catch { /* not kept */ }
   folded.forEach((fn) => fn(f));
+}
+/** Who keeps what is picked for every device (screens/status.ts): told of each fold or open, never of Show every app. */
+let keep: (picked: Record<string, boolean>) => void = () => {};
+export function onFoldsPicked(fn: (picked: Record<string, boolean>) => void) { keep = fn; }
+function setFold(f: Fold) {
+  show(f);
+  if (!f.all) keep(f.picked);
+}
+/** What the computer keeps as picked (another device's folds, or this one's from before): the list's, Show every app as it is here. */
+export function foldsFromComputer(picked: Record<string, boolean>) {
+  if (JSON.stringify(picked) !== JSON.stringify(fold.picked)) show({ all: fold.all, picked: { ...picked } });
 }
 function useFold(): Fold {
   const [f, set] = useState(fold);

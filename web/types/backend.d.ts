@@ -1326,6 +1326,7 @@ interface Backend {
     SetPhoneCanChange(arg1: string, arg2: boolean): Promise<companion.Phone[]>;
     SetPhoneFinances(arg1: string, arg2: string): Promise<companion.Phone[]>;
     SetPhoneUntil(arg1: string, arg2: number): Promise<companion.Phone[]>;
+    SetStatusFolds(arg1: Record<string, boolean>): Promise<void>;
     SetTrayAtLogin(arg1: boolean): Promise<void>;
     SetUpdatesPaused(arg1: boolean): Promise<updates.State>;
     SettingTests(): Promise<string[]>;
@@ -1336,6 +1337,7 @@ interface Backend {
     StartRuntime(): Promise<void>;
     Status(): Promise<api.Status>;
     StatusBoard(arg1: number, arg2: string[]): Promise<api.Status>;
+    StatusFolds(): Promise<Record<string, boolean>>;
     StopUntil(arg1: string, arg2: string): Promise<void>;
     Storage(): Promise<storage.Record>;
     TailnetDevices(): Promise<tailnet.Device[]>;

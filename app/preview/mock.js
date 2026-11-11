@@ -429,6 +429,9 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       return later(M.tidy);
     },
     TidyPickMediaFolder: () => later(M.pickMediaFolder ?? ''),
+    // The groups folded on Status, kept by the computer for every device: M.statusFolds, and what was saved.
+    StatusFolds: () => later(M.statusFolds || {}),
+    SetStatusFolds: (open) => { M.statusFolds = open; (M.statusFoldsSaved ??= []).push(open); return later(null); },
     TidyStop: () => { M.tidyStopped = true; return later(null); },
     // A job this window didn't start: M.tidyLocks plays what each ask finds (its step and bar); one with no lock ends it.
     TidyLock: () => {

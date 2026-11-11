@@ -31,6 +31,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
 	"github.com/Snooper42/homelab-wizard/internal/settings"
+	"github.com/Snooper42/homelab-wizard/internal/statusfolds"
 	"github.com/Snooper42/homelab-wizard/web"
 )
 
@@ -637,6 +638,16 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		// watchdog's alerts about it, whether it is pinned to the top, and
 		// whether a public one is reached away from home (as the
 		// computer's SetAppSetting).
+		// The groups folded on Status, kept by the computer so every device shows the same (internal/statusfolds).
+		// Reading is the owner's phones'; saving is a change, so a phone that only looks keeps its own.
+		"StatusFolds": read(func(context.Context, []json.RawMessage) (any, error) { return statusfolds.Load(root), nil }),
+		"SetStatusFolds": {Change: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var open map[string]bool
+			if len(args) < 1 || json.Unmarshal(args[0], &open) != nil || open == nil {
+				return nil, nil, errors.New("SetStatusFolds takes each group's name and whether it is open")
+			}
+			return nil, nil, statusfolds.Save(root, open)
+		}},
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id, setting string
 			var on bool
