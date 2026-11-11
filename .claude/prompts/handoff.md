@@ -90,6 +90,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **Smoke:** `SMOKE_ONLY="<part of a name>" node app/preview/shoot.mjs --smoke light` (rebuild the bundle first). Finances tabs: the `finTab(page, name)` helper. A long local run can die with a container restart; CI runs the full set in two themes.
 - **Companion calls:** add to `phoneMethods` in `cmd/homelab/serve.go`, then `go test ./cmd/homelab -run TestCompanionContract -update-contract`; the bindings for the app: `cd app && go test -run TestBindings -update .`.
 - **`govulncheck` can't reach its database here;** CI's security job runs it. When a new Go advisory turns it red on every PR, bump `toolchain` in `go.mod` and `app/go.mod`.
+- **Coverage floors are per package** (`coverage-floors.txt`, CI's **check** job runs `make coverage`): a new function tested only from another package lowers its own package's figure. Test it beside its code (`notify.SnoozeHours`, #590).
 - **Windows CI:** a test that saves inside `if runtime.GOOS != "windows"` and checks outside it fails there (#587).
 - **Preact:** state set while typing isn't read by a Save pressed at once; keep a `useRef` mirror (the Rules sheet, #585).
 - **After a conflict, diff every touched file against `origin/main`** before pushing; a CHANGELOG conflict keeps both lines. `git cherry-pick --continue` takes no `-q`: check `git log` after.
