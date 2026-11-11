@@ -1251,6 +1251,17 @@ function ImportForm(props: EditProps) {
   const guessFlip = signed && card && chargesPlus(asRead);
   const flipped = signed && (flip ?? guessFlip);
   const read_ = flipped ? asRead.map((t) => ({ ...t, amount: -t.amount })) : asRead;
+  // A card's file left on an account that isn't a card (the sheet starts on checking): most rows are money in, as a
+  // card's file writes its charges. Said before anything comes in, with the card to bring it into: the one American
+  // Express card, or else the only card.
+  const cards = accounts.filter((a) => a.kind === 'card');
+  const amexCards = cards.filter((a) => brandOf(a.institution, a.name) === 'americanexpress');
+  const toCard = amexCards.length === 1 ? amexCards[0] : cards.length === 1 ? cards[0] : undefined;
+  // Read as money in though most rows are: on a card (its box unticked), or an account that is American Express but not
+  // set up as a card, they'd lower what it owes; so Read them as charges. On another account (checking), the card.
+  const plusRead = signed && !flipped && chargesPlus(asRead);
+  const here = accounts.find((a) => a.id === account);
+  const cardHere = card || (!!here && brandOf(here.institution, here.name) === 'americanexpress');
   // The bank's wording is kept only when it says more than the clean name in other capitals. A payee renamed by hand
   // before (HOA for SUNSET PALMS EAS SUNSET PAL) comes in by that name.
   const have = ledger?.transactions || [];
@@ -1346,6 +1357,16 @@ function ImportForm(props: EditProps) {
       {!!text && <>
         <h3 class="formsub">{found.length ? `${fresh.length} to bring in` : 'Nothing found yet'} <span class="muted">{[fixes.size ? `${fixes.size} brought in before as CREDIT or DEBIT, given their payee` : '', renames.size ? `${renames.size} brought in before, given clearer names` : '', recat.size ? `${recat.size} brought in before, given a category` : '', found.length - fresh.length - fixes.size - renames.size ? `${found.length - fresh.length - fixes.size - renames.size} already in, skipped` : ''].filter(Boolean).join(' · ')}</span></h3>
         {!ofx && found.length > 1 && found.every((t) => !t.payee || wayOnly(t.payee)) && <p class="formerr bad importnote" role="alert">No payee here is a name, only {found.find((t) => t.payee)?.payee ? `“${found.find((t) => t.payee)!.payee}”` : 'empty'}: pick the column with the names under Payee.</p>}
+        {plusRead && cardHere && <p class="importnote importwarn" role="alert">Most of these rows are read as money coming in, which on {here?.name || 'this card'} lowers what it owes. A card's file writes its charges as plus amounts (American Express does).{' '}
+          <button type="button" class="small" onClick={() => setFlip(true)}>Read them as charges</button></p>}
+        {plusRead && !cardHere && <p class="importnote importwarn" role="alert">Most of these rows are money coming in, which is how a card's file writes its charges (American Express does).{' '}
+          {toCard ? <button type="button" class="small" onClick={() => { setAccount(toCard.id); setPicked({}); setFlip(null); }}>Bring it into {toCard.name}</button> : "If it's a card's file, pick the card above."}</p>}
+        {fresh.length > 0 && (() => {
+          // What comes in, before Bring in: how many go out and in, and how much.
+          const out = fresh.filter((t) => t.amount < 0), inn = fresh.filter((t) => t.amount > 0);
+          const sum = (l: typeof fresh) => money(Math.round(l.reduce((a, t) => a + Math.abs(t.amount), 0) * 100) / 100);
+          return <p class="muted importnote importsum">{out.length} out, {sum(out)} · {inn.length} in, {sum(inn)}</p>;
+        })()}
         {guessed.some(Boolean) && <p class="muted importnote">A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong.</p>}
         <ul class="importlist">
           {found.slice(0, 60).map((t, i) => {

@@ -296,7 +296,9 @@ for (const [glyph, list] of m.hints) for (const w of list) names.add(`${w[0].toU
   'POS DEBIT  SHELL OIL 57444 SAN JOSE CA', 'AplPay  OAKLAND  CA', 'STORE  0042  FL', 'GREEN LEAF MARKET  SAN JOSE CA', 'aplpay  ca',
   // Game stores by their brand, and a known name after its maker's star.
   'STEAMGAMES.COM 4259522985 WA', 'Steam Purchase', 'STEAM CLEANING CO', 'PLAYSTATION NETWORK 800-555-0199 CA', 'MICROSOFT*XBOX', 'MICROSOFT*STORE',
-  'MICROSOFT*ONEDRIVE', 'MSFT * E0400ABCD', 'NINTENDO CA1234567 WA', 'Nintendo', 'EPIC GAMES STORE', 'GAMESTOP #1234', 'ROBLOX CORPORATION'
+  'MICROSOFT*ONEDRIVE', 'MSFT * E0400ABCD', 'NINTENDO CA1234567 WA', 'Nintendo', 'EPIC GAMES STORE', 'GAMESTOP #1234', 'ROBLOX CORPORATION',
+  // A padded line whose town runs into the shop's column, Amex's marketplace spelling, and a name cut with its town run in.
+  'PET SUPERMARKET #100SUNRISE           FL', 'AMAZON MARKEPLACE NA PA', 'ANTHROPIC CLAUDE SUSAN FRANCISCO CA', 'STORE24  MIAMI  FL'
 ].forEach((n) => names.add(n));
 
 const kinds = [undefined, 'car', 'other', 'collectible', 'checking', 'subscriptions', 'utilities'];
