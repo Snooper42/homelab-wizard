@@ -588,6 +588,14 @@
     const days = Math.round(hours / 24);
     return days === 1 ? "yesterday" : `${days} days ago`;
   }
+  function startedText(t3) {
+    const d3 = new Date(t3), today2 = /* @__PURE__ */ new Date();
+    const days = Math.round((new Date(today2.getFullYear(), today2.getMonth(), today2.getDate()).getTime() - new Date(d3.getFullYear(), d3.getMonth(), d3.getDate()).getTime()) / 864e5);
+    const at2 = `at ${clockText(d3)}`;
+    if (days <= 0) return at2;
+    if (days === 1) return `yesterday ${at2}`;
+    return days < 7 ? `on ${dayText(d3, { weekday: "long" })} ${at2}` : `on ${dayText(d3, { day: "numeric", month: "short" })} ${at2}`;
+  }
   function untilText(t3) {
     const mins = Math.round((new Date(t3).getTime() - Date.now()) / 6e4);
     if (mins <= 1) return "now";
@@ -16752,7 +16760,6 @@ ${pays}
   function RunningCard({ lock, now, stop: stop2, stopping }) {
     const title = jobTitle(lock.kind, lock.action, lock.flags || []);
     const p3 = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || "", note: now.progress.note, eta: now.progress.eta } : void 0;
-    const since = new Date(lock.start).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     return /* @__PURE__ */ u3(Card, { kind: "tidyjob", id: "tidyRunning", children: [
       /* @__PURE__ */ u3("p", { class: "sr", role: "status", children: [
         title,
@@ -16774,8 +16781,8 @@ ${pays}
         p3.note
       ] }),
       /* @__PURE__ */ u3("p", { class: "muted", children: [
-        "Started at ",
-        since,
+        "Started ",
+        startedText(lock.start),
         ", outside this window, and carries on with it closed. The buttons below wait until it's done."
       ] })
     ] });
@@ -17716,10 +17723,17 @@ ${pays}
             jobTitle(d3.stale.kind, d3.stale.action, staleFlags(d3.stale)),
             ": stopped part-way"
           ] }),
-          /* @__PURE__ */ u3("span", { class: "muted", children: "say" in c4 ? c4.say : /* @__PURE__ */ u3(S, { children: [
-            "It can pick up where it left off. ",
-            /* @__PURE__ */ u3("button", { class: "small", onClick: c4.run, children: c4.label })
-          ] }) })
+          /* @__PURE__ */ u3("span", { class: "muted", children: [
+            !never(d3.stale.start) && /* @__PURE__ */ u3(S, { children: [
+              "Started ",
+              startedText(d3.stale.start),
+              ". "
+            ] }),
+            "say" in c4 ? c4.say : /* @__PURE__ */ u3(S, { children: [
+              "It can pick up where it left off. ",
+              /* @__PURE__ */ u3("button", { class: "small", onClick: c4.run, children: c4.label })
+            ] })
+          ] })
         ] });
       })(),
       job2 && /* @__PURE__ */ u3(

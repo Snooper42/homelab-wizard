@@ -41,6 +41,17 @@ export function ago(t?: string): string {
   return days === 1 ? 'yesterday' : `${days} days ago`;
 }
 
+/** When something started, by the calendar, for "Started …": "at 3:04 AM" today, "yesterday at 3:04 AM",
+ * "on Monday at 3:04 AM" this past week, "on 9 Nov at 3:04 AM" before that. */
+export function startedText(t: string): string {
+  const d = new Date(t), today = new Date();
+  const days = Math.round((new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86400e3);
+  const at = `at ${clockText(d)}`;
+  if (days <= 0) return at;
+  if (days === 1) return `yesterday ${at}`;
+  return days < 7 ? `on ${dayText(d, { weekday: 'long' })} ${at}` : `on ${dayText(d, { day: 'numeric', month: 'short' })} ${at}`;
+}
+
 /** "in 6 hours", "tomorrow", "in 3 days" for a time ahead. */
 export function untilText(t: string): string {
   const mins = Math.round((new Date(t).getTime() - Date.now()) / 60000);
