@@ -14518,7 +14518,7 @@ ${pays}
     if (held3.length) out.push(heldTile());
     return out;
   }
-  function PaycheckWidget({ v: v3, L: L2, sel: sel2, pick, edit }) {
+  function PaycheckWidget({ v: v3, L: L2, sel: sel2, edit }) {
     const [all, setAll] = d2(false);
     const i3 = Math.min(sel2, v3.periods.length - 1);
     const p3 = v3.periods[i3];
@@ -14526,103 +14526,111 @@ ${pays}
     const rows = all ? p3.rows : p3.rows.slice(0, shown4);
     const cushion = v3.plan.cushion || 0;
     const row = tiles(v3, L2, i3);
-    return /* @__PURE__ */ u3(
-      Widget,
-      {
-        title: periodTitle(p3, L2),
-        kind: "fx-paycheck",
-        span: "all",
-        actions: /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: i3 === 0, onClick: () => pick(0), children: "Today" }),
-          /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The pay period before", disabled: i3 === 0, onClick: () => pick(i3 - 1) }),
-          /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The pay period after", disabled: i3 >= v3.periods.length - 1, onClick: () => pick(i3 + 1) })
-        ] }),
-        children: [
-          /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
-            dayShort(p3.start),
-            " – ",
-            dayShort(p3.last),
-            p3.now ? ", from today" : ""
+    return /* @__PURE__ */ u3(Widget, { title: p3.now ? "Until the next paycheck" : "This paycheck", kind: "fx-paycheck", span: "all", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
+        dayShort(p3.start),
+        " – ",
+        dayShort(p3.last),
+        p3.now ? ", from today" : ""
+      ] }),
+      !!row.length && /* @__PURE__ */ u3("ul", { class: "fx-acctrow", "aria-label": "Each account after this paycheck's bills", children: row.map((t3) => {
+        const sign = t3.owes ? -1 : 1, d3 = (t3.after - t3.was) * sign;
+        return /* @__PURE__ */ u3("li", { class: "fx-accttile" + (t3.in >= 5e-3 ? " fx-gets" : ""), children: [
+          /* @__PURE__ */ u3("span", { class: "fx-acctname", children: [
+            t3.lead,
+            /* @__PURE__ */ u3("span", { children: t3.name })
           ] }),
-          !!row.length && /* @__PURE__ */ u3("ul", { class: "fx-acctrow", "aria-label": "Each account after this paycheck's bills", children: row.map((t3) => {
-            const sign = t3.owes ? -1 : 1, d3 = (t3.after - t3.was) * sign;
-            return /* @__PURE__ */ u3("li", { class: "fx-accttile" + (t3.in >= 5e-3 ? " fx-gets" : ""), children: [
-              /* @__PURE__ */ u3("span", { class: "fx-acctname", children: [
-                t3.lead,
-                /* @__PURE__ */ u3("span", { children: t3.name })
-              ] }),
-              /* @__PURE__ */ u3(Amount, { value: t3.after * sign, form: "full" }),
-              /* @__PURE__ */ u3("span", { class: "fx-acctnote", children: [
-                Math.abs(d3) >= 5e-3 ? /* @__PURE__ */ u3("span", { class: d3 < 0 ? "fx-out" : "fx-in", children: signed(d3) }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "No change" }),
-                t3.in >= 5e-3 && /* @__PURE__ */ u3("span", { class: "fx-gotin", children: t3.owes ? `${compact(t3.in)} paid` : `${compact(t3.in)} in` })
-              ] })
-            ] }, t3.key);
-          }) }),
-          /* @__PURE__ */ u3(
-            Stat,
+          /* @__PURE__ */ u3(Amount, { value: t3.after * sign, form: "full" }),
+          /* @__PURE__ */ u3("span", { class: "fx-acctnote", children: [
+            Math.abs(d3) >= 5e-3 ? /* @__PURE__ */ u3("span", { class: d3 < 0 ? "fx-out" : "fx-in", children: signed(d3) }) : /* @__PURE__ */ u3("span", { class: "fx-sub", children: "No change" }),
+            t3.in >= 5e-3 && /* @__PURE__ */ u3("span", { class: "fx-gotin", children: t3.owes ? `${compact(t3.in)} paid` : `${compact(t3.in)} in` })
+          ] })
+        ] }, t3.key);
+      }) }),
+      /* @__PURE__ */ u3(
+        Stat,
+        {
+          value: /* @__PURE__ */ u3(Amount, { value: p3.left, tone: p3.left < 0 ? "out" : p3.left < cushion ? "warn" : "" }),
+          caption: /* @__PURE__ */ u3(S, { children: [
+            p3.now ? `Checking on ${dayShort(p3.last)}, before the next paycheck` : `Checking on ${dayShort(p3.last)}, after its bills`,
+            p3.left < 0 ? /* @__PURE__ */ u3("span", { class: "fx-out", children: [
+              ", short ",
+              money(-p3.left)
+            ] }) : p3.left < cushion ? /* @__PURE__ */ u3("span", { children: [
+              ", under your ",
+              compact(cushion),
+              " cushion"
+            ] }) : ""
+          ] }),
+          aside: !p3.now && /* @__PURE__ */ u3(Delta, { value: p3.in - p3.out })
+        }
+      ),
+      !p3.now && (() => {
+        const day3 = v3.days?.find((d3) => d3.date === p3.pay.date);
+        return day3 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-onpayday", children: [
+          "On payday, ",
+          dayShort(p3.pay.date),
+          ", once its own payments are out: ",
+          /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: day3.balance, form: "full", tone: day3.balance < 0 ? "out" : "" }) })
+        ] });
+      })(),
+      /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        !p3.now && /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: /* @__PURE__ */ u3(Who, { name: L2.person[p3.pay.people[0]]?.name, n: L2.order[p3.pay.people[0]] ?? 0 }),
+            title: `${names2(p3.pay.people, L2)}'s paycheck`,
+            sub: dayLong(p3.pay.date),
+            when: /* @__PURE__ */ u3(Amount, { value: p3.pay.amount, sign: true, tone: "in", form: "full" }),
+            whenPlain: true
+          }
+        ),
+        rows.map((r3, k3) => {
+          const x3 = L2.payment[r3.payment];
+          const src = L2.account[x3?.from];
+          const via = x3?.payer ? "from " + x3.payer : r3.outside || r3.into ? (src?.kind === "card" ? "on " : "from ") + (src?.name || "another account") : kindName(x3?.kind || "other");
+          return /* @__PURE__ */ u3(
+            Row,
             {
-              value: /* @__PURE__ */ u3(Amount, { value: p3.left, tone: p3.left < 0 ? "out" : p3.left < cushion ? "warn" : "" }),
-              caption: /* @__PURE__ */ u3(S, { children: [
-                p3.now ? `Checking on ${dayShort(p3.last)}, before the next paycheck` : `Checking on ${dayShort(p3.last)}, after its bills`,
-                p3.left < 0 ? /* @__PURE__ */ u3("span", { class: "fx-out", children: [
-                  ", short ",
-                  money(-p3.left)
-                ] }) : p3.left < cushion ? /* @__PURE__ */ u3("span", { children: [
-                  ", under your ",
-                  compact(cushion),
-                  " cushion"
-                ] }) : ""
+              lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
+              title: /* @__PURE__ */ u3(S, { children: [
+                x3?.name || r3.payment,
+                r3.estimate && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (about)" })
               ] }),
-              aside: !p3.now && /* @__PURE__ */ u3(Delta, { value: p3.in - p3.out })
-            }
-          ),
-          !p3.now && (() => {
-            const day3 = v3.days?.find((d3) => d3.date === p3.pay.date);
-            return day3 && /* @__PURE__ */ u3("p", { class: "fx-sub fx-onpayday", children: [
-              "On payday, ",
-              dayShort(p3.pay.date),
-              ", once its own payments are out: ",
-              /* @__PURE__ */ u3("strong", { children: /* @__PURE__ */ u3(Amount, { value: day3.balance, form: "full", tone: day3.balance < 0 ? "out" : "" }) })
-            ] });
-          })(),
-          /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-            !p3.now && /* @__PURE__ */ u3(
-              Row,
-              {
-                lead: /* @__PURE__ */ u3(Who, { name: L2.person[p3.pay.people[0]]?.name, n: L2.order[p3.pay.people[0]] ?? 0 }),
-                title: `${names2(p3.pay.people, L2)}'s paycheck`,
-                sub: dayLong(p3.pay.date),
-                when: /* @__PURE__ */ u3(Amount, { value: p3.pay.amount, sign: true, tone: "in", form: "full" }),
-                whenPlain: true
-              }
-            ),
-            rows.map((r3, k3) => {
-              const x3 = L2.payment[r3.payment];
-              const src = L2.account[x3?.from];
-              const via = x3?.payer ? "from " + x3.payer : r3.outside || r3.into ? (src?.kind === "card" ? "on " : "from ") + (src?.name || "another account") : kindName(x3?.kind || "other");
-              return /* @__PURE__ */ u3(
-                Row,
-                {
-                  lead: /* @__PURE__ */ u3(PayMark, { x: x3 }),
-                  title: /* @__PURE__ */ u3(S, { children: [
-                    x3?.name || r3.payment,
-                    r3.estimate && /* @__PURE__ */ u3("span", { class: "fx-sub", children: " (about)" })
-                  ] }),
-                  sub: `${dayShort(r3.date)} · ${via}`,
-                  when: /* @__PURE__ */ u3(Amount, { value: r3.into ? r3.amount : -r3.amount, sign: r3.into, tone: r3.into ? "in" : "", form: "full" }),
-                  whenPlain: true,
-                  onOpen: edit && x3 ? () => edit("payment", x3.id) : void 0,
-                  openLabel: x3 ? "edit" : void 0
-                },
-                k3
-              );
-            }),
-            !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing to pay before the next paycheck." }) })
-          ] }),
-          p3.rows.length > shown4 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
-        ]
-      }
-    );
+              sub: `${dayShort(r3.date)} · ${via}`,
+              when: /* @__PURE__ */ u3(Amount, { value: r3.into ? r3.amount : -r3.amount, sign: r3.into, tone: r3.into ? "in" : "", form: "full" }),
+              whenPlain: true,
+              onOpen: edit && x3 ? () => edit("payment", x3.id) : void 0,
+              openLabel: x3 ? "edit" : void 0
+            },
+            k3
+          );
+        }),
+        !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing to pay before the next paycheck." }) })
+      ] }),
+      p3.rows.length > shown4 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
+    ] });
+  }
+
+  // web/src/finances/widgets/Period.tsx
+  function PeriodBar({ v: v3, L: L2, sel: sel2, pick }) {
+    const i3 = Math.min(sel2, v3.periods.length - 1);
+    const p3 = v3.periods[i3];
+    if (!p3) return null;
+    return /* @__PURE__ */ u3(Card, { kind: "fx-periodbar", id: "finPeriod", children: [
+      /* @__PURE__ */ u3(IconButton, { icon: "prev", label: "The pay period before", disabled: i3 === 0, onClick: () => pick(i3 - 1) }),
+      /* @__PURE__ */ u3("div", { class: "fx-periodname", "aria-live": "polite", children: [
+        /* @__PURE__ */ u3("h2", { children: periodTitle(p3, L2) }),
+        /* @__PURE__ */ u3("p", { class: "fx-sub fx-dates", children: [
+          dayShort(p3.start),
+          " – ",
+          dayShort(p3.last),
+          p3.now ? ", from today" : ""
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(IconButton, { icon: "next", label: "The pay period after", disabled: i3 >= v3.periods.length - 1, onClick: () => pick(i3 + 1) }),
+      /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: i3 === 0, onClick: () => pick(0), children: "Today" })
+    ] });
   }
 
   // web/src/finances/widgets/Ledger.tsx
@@ -16242,6 +16250,7 @@ ${pays}
         ] }),
         add && /* @__PURE__ */ u3("button", { class: "small", onClick: () => add("account", "checking"), children: "Add your checking account" })
       ] }),
+      /* @__PURE__ */ u3(PeriodBar, { v: v3, L: L2, sel: picked, pick }),
       /* @__PURE__ */ u3("div", { class: "fx-board", children: [
         !phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
         !!v3.since?.length && /* @__PURE__ */ u3(SinceWidget, { v: v3, L: L2, set: setSince2 }),
@@ -16251,7 +16260,7 @@ ${pays}
         phone2 && /* @__PURE__ */ u3(ComingUpWidget, { v: v3, L: L2, calendar: openCalendar }),
         phone2 && /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit: edit && ((w3, id2) => edit(w3, id2)), all: openWorth }),
         phone2 && /* @__PURE__ */ u3(NowWidget, { v: v3, L: L2 }),
-        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, pick, edit }),
+        /* @__PURE__ */ u3(PaycheckWidget, { v: v3, L: L2, sel: picked, edit }),
         /* @__PURE__ */ u3(CheckingWidget, { v: v3, L: L2, sel: picked, openDay: openCalendar }),
         /* @__PURE__ */ u3(RenewingWidget, { v: v3, L: L2, edit, all: openSubscriptions }),
         /* @__PURE__ */ u3(BudgetsWidget, { v: v3, only: toWatch, title: "Budgets to watch", span: 1, open: openTransactions, show: showIn2 && ((category, month3) => showIn2({ category, month: month3 })) }),
