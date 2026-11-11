@@ -28,6 +28,14 @@ type Message struct {
 	Tags     []string
 	// Actions are its buttons (at most three): the iPhone app's own links.
 	Actions []Action
+	// Checks are the watchdog's checks it is about, for the computer's
+	// record of alerts (internal/history), which marks it cleared once none
+	// fails. Not sent.
+	Checks []string
+	// Kept is the line the record keeps instead of its title and body, for
+	// an alert that can carry an amount of money (Finances' reminders, the
+	// weekly summary): the record never holds money. Not sent.
+	Kept string
 }
 
 // Client publishes to one ntfy server.

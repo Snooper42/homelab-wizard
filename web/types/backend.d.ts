@@ -949,6 +949,18 @@ declare namespace health {
 }
 
 declare namespace history {
+  interface Alert {
+    id: number;
+    at: string;
+    topic: string;
+    title: string;
+    body?: string;
+    priority?: number;
+    checks?: string[];
+    clearedAt?: string | null;
+    snoozedUntil?: string | null;
+    snoozedBy?: string;
+  }
   interface Entry {
     id: number;
     at: string;
@@ -1247,6 +1259,7 @@ declare namespace wiring {
 /** The Go methods the frontend calls: window.go.main.App. */
 interface Backend {
     AddCustom(arg1: custom.Spec): Promise<api.Catalog>;
+    AlertLog(): Promise<history.Alert[]>;
     Alerts(): Promise<notify.Event[]>;
     Answers(): Promise<Record<string, string>>;
     AppAction(arg1: string, arg2: string): Promise<void>;

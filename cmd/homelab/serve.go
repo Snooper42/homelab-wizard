@@ -275,6 +275,23 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		"Backups":       read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Backups(ctx, root) }),
 		"DuplicatiJobs": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.DuplicatiJobs(ctx, root) }),
 		"Alerts":        read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.RecentAlerts(ctx, root) }),
+		// Every alert the computer kept (internal/history), with when each cleared and who snoozed it, every
+		// line through phoneLog's redaction; a wall screen, which anyone walking past can read, isn't shown
+		// which phone snoozed one.
+		"AlertLog": read(func(ctx context.Context, _ []json.RawMessage) (any, error) {
+			list, err := history.AlertsIn(root, 0)
+			kiosk := false
+			if d, ok := companion.Caller(ctx); ok && d.Kiosk {
+				kiosk = true
+			}
+			for i := range list {
+				list[i].Title, list[i].Body, list[i].SnoozedBy = h.phoneLog(list[i].Title), h.phoneLog(list[i].Body), h.phoneLog(list[i].SnoozedBy)
+				if kiosk {
+					list[i].SnoozedBy = ""
+				}
+			}
+			return list, err
+		}),
 		"Protection":    read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Protection(ctx, root) }),
 		"Watchdog": read(func(context.Context, []json.RawMessage) (any, error) {
 			return health.LoadState(health.StatePath(root)).Summary(), nil
@@ -647,13 +664,13 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 		}},
 		// Snooze… on a failing check, from a phone allowed to change things (as the computer's SnoozeCheck): no
 		// alerts about it for so many hours, up to a week; 0 alerts again now.
-		"SnoozeCheck": {Change: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+		"SnoozeCheck": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var check string
 			var hours int
 			if len(args) < 2 || json.Unmarshal(args[0], &check) != nil || json.Unmarshal(args[1], &hours) != nil {
 				return nil, nil, errors.New("SnoozeCheck takes a check and how many hours")
 			}
-			return nil, nil, notify.SnoozeHours(root, check, hours)
+			return nil, nil, notify.SnoozeHoursBy(root, check, hours, whoAsked(ctx))
 		}},
 		// An app's own settings, from its page: its nightly update, the
 		// watchdog's alerts about it, whether it is pinned to the top, and

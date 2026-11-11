@@ -94,7 +94,7 @@ func (h *homelab) sendFinanceReminders(ctx context.Context, now time.Time) {
 	}
 	for _, r := range finance.Reminders(v, now, money) {
 		h.ui.Info("Finances: %s", r.Title)
-		h.alert(ctx, digestTopic, notify.Message{Title: r.Title, Body: r.Body, Priority: 3, Tags: []string{"moneybag"}})
+		h.alert(ctx, digestTopic, reminderAlert(r))
 	}
 	last.Day = today
 	h.noteSent(state, "Finances' reminders", last)
@@ -129,4 +129,10 @@ func (h *homelab) financeCalendar(key string) ([]byte, bool) {
 	}
 	now := time.Now()
 	return finance.ICS(finance.ProjectWith(p, l, now, finance.Ahead), p.CalendarAmounts, now, moneyIn(p.Currency)), true
+}
+
+// reminderAlert is a Finances reminder as an alert; the record of alerts
+// keeps only its plain line, since its title and body can carry amounts.
+func reminderAlert(r finance.Reminder) notify.Message {
+	return notify.Message{Title: r.Title, Body: r.Body, Priority: 3, Tags: []string{"moneybag"}, Kept: "A Finances reminder"}
 }

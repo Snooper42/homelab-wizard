@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Snooper42/homelab-wizard/internal/history"
 )
 
 // TestSnooze: a check snoozed until a time is asleep until then; one whose
@@ -79,5 +81,33 @@ func TestSnoozeHours(t *testing.T) {
 	}
 	if s := LoadSnoozes(root); len(s) != 1 {
 		t.Errorf("a refused snooze changed the record: %v", s)
+	}
+}
+
+// A snooze from the app or a phone marks the newest open alert about the
+// check in the computer's record with who snoozed it, until when; a wrong
+// one marks nothing.
+func TestSnoozeHoursByMarksTheAlert(t *testing.T) {
+	root := t.TempDir()
+	history.RecordAlert(root, history.Alert{Title: "Homelab: something is down", Checks: []string{"immich"}})
+	if err := SnoozeHoursBy(root, "immich", 25*24*7, "Sam's iPhone"); err == nil {
+		t.Fatal("a snooze past a week passed")
+	}
+	if got, _ := history.AlertsIn(root, 0); got[0].SnoozedBy != "" {
+		t.Fatalf("a refused snooze marked the alert: %+v", got[0])
+	}
+	if err := SnoozeHoursBy(root, "immich", 2, "Sam's iPhone"); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := history.AlertsIn(root, 0)
+	if got[0].SnoozedBy != "Sam's iPhone" || got[0].SnoozedUntil == nil || got[0].SnoozedUntil.Sub(time.Now()) < 119*time.Minute {
+		t.Fatalf("who and until when: %+v", got[0])
+	}
+	if !LoadSnoozes(root).Active("immich", time.Now()) {
+		t.Fatal("not snoozed")
+	}
+	_ = SnoozeHoursBy(root, "immich", 0, history.ThisComputer)
+	if got, _ := history.AlertsIn(root, 0); got[0].SnoozedBy != "" {
+		t.Fatalf("woken, still marked: %+v", got[0])
 	}
 }

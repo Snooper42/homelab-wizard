@@ -30,6 +30,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/health"
+	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/kopia"
 	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
@@ -80,6 +81,9 @@ var alertNow = time.Now
 // also shows on this machine's screen (DESKTOP_ALERTS, on by default), so
 // alerts reach someone before the phone is set up, or when ntfy is down.
 func (h *homelab) alert(ctx context.Context, topic string, m notify.Message) {
+	// Kept in the computer's record of alerts first, whether or not the
+	// phone's are set up (the app's and the phones' Every alert…).
+	history.RecordAlert(h.root, alertRecord(topic, m))
 	env := h.envMap()
 	if !strings.EqualFold(env["DESKTOP_ALERTS"], "false") {
 		_ = desktopNotify(ctx, m.Title, m.Body)
@@ -93,6 +97,24 @@ func (h *homelab) alert(ctx context.Context, topic string, m notify.Message) {
 	if err := h.ntfy().Publish(ctx, topic, m); err != nil {
 		h.ui.Warn("could not send the alert: %v", err)
 	}
+}
+
+// alertRecord is m as the record of alerts keeps it: its plain line alone
+// when it could carry money (Kept), never its title and body then.
+func alertRecord(topic string, m notify.Message) history.Alert {
+	a := history.Alert{Topic: topic, Title: m.Title, Body: m.Body, Priority: m.Priority, Checks: m.Checks}
+	if m.Kept != "" {
+		a.Title, a.Body = m.Kept, ""
+	}
+	return a
+}
+
+// clearAlerts marks cleared the kept alerts none of whose checks fails in
+// this run's results (an app no longer checked fails nothing).
+func (h *homelab) clearAlerts(results []health.Result, now time.Time) {
+	history.ClearAlertsIn(h.root, func(name string) bool {
+		return slices.ContainsFunc(results, func(r health.Result) bool { return r.Name == name && !r.OK() })
+	}, now)
 }
 
 // isApp says a check's name is an app in the catalog by its own id (not a
@@ -920,7 +942,10 @@ func (h *homelab) watchdog(ctx context.Context, args []string) error {
 		// Buttons into the iPhone app (homelab://): Restart and Show Logs
 		// for one app, Open Status for more; they change nothing by themselves.
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: core.DownTitle, Body: strings.Join(lines, "\n"), Priority: downPriority(failed), Tags: []string{"warning"},
-			Actions: notify.DownButtons(names, h.isApp)})
+			Actions: notify.DownButtons(names, h.isApp), Checks: names})
+	}
+	if engineUp {
+		h.clearAlerts(results, now)
 	}
 	if len(recovered) > 0 && engineUp {
 		h.alert(ctx, "tunnel-watchdog", notify.Message{Title: "Homelab: recovered", Body: strings.Join(recovered, ", ") + " answering again", Tags: []string{"white_check_mark"}})
@@ -1163,6 +1188,7 @@ func (h *homelab) notify(ctx context.Context, args []string) error {
 		if err := notify.Snooze(h.root, args[1], until); err != nil {
 			return err
 		}
+		history.SnoozeAlertIn(h.root, args[1], until, h.who())
 		if until.IsZero() {
 			h.ui.OK("the watchdog alerts about %s again (on its next run, if it still fails)", args[1])
 		} else {

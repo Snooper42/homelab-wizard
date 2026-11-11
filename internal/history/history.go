@@ -71,6 +71,20 @@ var migrations = []string{
 	);
 	CREATE INDEX actions_at ON actions(at);
 	CREATE INDEX actions_app ON actions(app, at);`,
+	// The alerts the computer sent (alerts.go).
+	`CREATE TABLE alerts (
+		id            INTEGER PRIMARY KEY AUTOINCREMENT,
+		at            INTEGER NOT NULL,
+		topic         TEXT NOT NULL DEFAULT '',
+		title         TEXT NOT NULL,
+		body          TEXT NOT NULL DEFAULT '',
+		priority      INTEGER NOT NULL DEFAULT 0,
+		checks        TEXT NOT NULL DEFAULT '',
+		cleared_at    INTEGER NOT NULL DEFAULT 0,
+		snoozed_until INTEGER NOT NULL DEFAULT 0,
+		snoozed_by    TEXT NOT NULL DEFAULT ''
+	);
+	CREATE INDEX alerts_at ON alerts(at);`,
 }
 
 // DB is the open record.
