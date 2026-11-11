@@ -2444,7 +2444,7 @@ const smokes = [
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")');
   } },
   // Snooze an alert: a failing check's alerts wait an hour or a day; its line says until when, and Alert again now undoes it.
-  // A phone has no Snooze (its server does not offer it).
+  // A phone allowed to change things snoozes the same way; one that only looks has no Snooze.
   { name: 'Watchdog: snooze a failing check for an hour, then alert again', screen: 'status', mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago", since: hoursAgo(0.3) }] } }, run: async (page) => {
     const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
     await page.waitForSelector(pick, { timeout: 5000 });
@@ -2456,9 +2456,16 @@ const smokes = [
     await page.selectOption(pick, '0');
     await page.waitForFunction(() => !document.querySelector('#watchCard li')?.textContent?.includes('No alerts about it until'), null, { timeout: 5000 });
   } },
-  { name: 'Watchdog on a phone: a failing check, no Snooze', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+  { name: 'Watchdog on a phone that may change things: snooze a failing check for a day', screen: 'status', phone: ['companion', 'can-change'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
+    const pick = '#watchCard select[aria-label="Snooze the alerts about crowdsec bouncer"]';
+    await page.waitForSelector(pick, { state: 'visible', timeout: 5000 });
+    await page.selectOption(pick, '24');
+    await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer"):has-text("No alerts about it until")', { timeout: 5000 });
+    if (!(await page.evaluate(() => window.__MOCK.calls.SnoozeCheck))) throw new Error('not snoozed');
+  } },
+  { name: 'Watchdog on a phone that only looks: a failing check, no Snooze', screen: 'status', phone: ['companion'], mock: { watchdog: { ...watchdog, failing: [{ name: 'crowdsec bouncer', problem: 'no pull for 9 minutes', since: hoursAgo(0.3) }] } }, run: async (page) => {
     await page.waitForSelector('#watchCard li:has-text("crowdsec bouncer")', { timeout: 5000 });
-    if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone');
+    if (await page.isVisible('#watchCard select.snoozepick')) throw new Error('Snooze on a phone that only looks');
   } },
   { name: 'Bans not enforced', screen: 'status', mock: { protection: { ...protection, enforced: false, bouncer: "the proxy's bouncer last pulled CrowdSec's decisions 9 minutes ago" } }, run: async (page) => {
     await page.waitForSelector('#protectCard:has-text("Bans not enforced")', { timeout: 5000 });

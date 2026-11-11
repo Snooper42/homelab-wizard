@@ -27,6 +27,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/health"
 	"github.com/Snooper42/homelab-wizard/internal/history"
 	"github.com/Snooper42/homelab-wizard/internal/host"
+	"github.com/Snooper42/homelab-wizard/internal/notify"
 	"github.com/Snooper42/homelab-wizard/internal/people"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
 	"github.com/Snooper42/homelab-wizard/internal/savings"
@@ -634,10 +635,6 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			log, err := run(ctx, "stop", id, "--until", until)
 			return nil, log, err
 		}},
-		// An app's own settings, from its page: its nightly update, the
-		// watchdog's alerts about it, whether it is pinned to the top, and
-		// whether a public one is reached away from home (as the
-		// computer's SetAppSetting).
 		// The groups folded on Status, kept by the computer so every device shows the same (internal/statusfolds).
 		// Reading is the owner's phones'; saving is a change, so a phone that only looks keeps its own.
 		"StatusFolds": read(func(context.Context, []json.RawMessage) (any, error) { return statusfolds.Load(root), nil }),
@@ -648,6 +645,20 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return nil, nil, statusfolds.Save(root, open)
 		}},
+		// Snooze… on a failing check, from a phone allowed to change things (as the computer's SnoozeCheck): no
+		// alerts about it for so many hours, up to a week; 0 alerts again now.
+		"SnoozeCheck": {Change: true, Call: func(_ context.Context, args []json.RawMessage) (any, []string, error) {
+			var check string
+			var hours int
+			if len(args) < 2 || json.Unmarshal(args[0], &check) != nil || json.Unmarshal(args[1], &hours) != nil {
+				return nil, nil, errors.New("SnoozeCheck takes a check and how many hours")
+			}
+			return nil, nil, notify.SnoozeHours(root, check, hours)
+		}},
+		// An app's own settings, from its page: its nightly update, the
+		// watchdog's alerts about it, whether it is pinned to the top, and
+		// whether a public one is reached away from home (as the
+		// computer's SetAppSetting).
 		"SetAppSetting": {Change: true, Call: func(ctx context.Context, args []json.RawMessage) (any, []string, error) {
 			var id, setting string
 			var on bool

@@ -2,9 +2,12 @@ package notify
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
+	"unicode"
 
 	"github.com/Snooper42/homelab-wizard/internal/lockedfile"
 )
@@ -56,6 +59,29 @@ func Snooze(root, check string, until time.Time) error {
 		until = time.Now()
 	}
 	return change(root, func(s Snoozes) { s[check] = until.Truncate(time.Second) })
+}
+
+// SnoozeHours snoozes check for hours from now, as Snooze… on Status
+// does from the app or a phone: up to a week, 0 to wake it now. A check
+// is a name the watchdog gives (an app, "disk /"): not empty, not long,
+// no control characters.
+func SnoozeHours(root, check string, hours int) error {
+	if hours < 0 || hours > 24*7 {
+		return fmt.Errorf("a snooze is up to a week, not %d hours", hours)
+	}
+	if check == "" || len(check) > 128 {
+		return errors.New("that isn't one of the watchdog's checks")
+	}
+	for _, c := range check {
+		if unicode.IsControl(c) {
+			return errors.New("that isn't one of the watchdog's checks")
+		}
+	}
+	var until time.Time
+	if hours > 0 {
+		until = time.Now().Add(time.Duration(hours) * time.Hour)
+	}
+	return Snooze(root, check, until)
 }
 
 // Woken takes out the snoozes whose time has come and returns them: the
