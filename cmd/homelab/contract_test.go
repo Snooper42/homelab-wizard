@@ -71,3 +71,30 @@ func TestCompanionContract(t *testing.T) {
 		t.Fatalf("apple-client/Tests/Resources/CompanionContract.json is out of date: go test ./cmd/homelab -run TestCompanionContract -update-contract (%v)", err)
 	}
 }
+
+// Every call a phone may make is named in docs/Parity.md, the map of what
+// each device can do, so a new phone call can't go unmapped: name it there
+// (in backticks) in the row of the feature it serves.
+func TestParityNamesEveryPhoneCall(t *testing.T) {
+	fakeDocker(t, []docker.FakeContainer{})
+	t.Setenv(asCLI, "1")
+	root, _ := repoCopy(t)
+	h, err := newHomelab(&ui.UI{Out: &strings.Builder{}}, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := os.ReadFile(filepath.Join("..", "..", "docs", "Parity.md"))
+	if err != nil {
+		t.Fatalf("docs/Parity.md, the map of what each device can do: %v", err)
+	}
+	var missing []string
+	for name := range h.phoneMethods() {
+		if !bytes.Contains(doc, []byte("`"+name+"`")) {
+			missing = append(missing, name)
+		}
+	}
+	slices.Sort(missing)
+	if len(missing) > 0 {
+		t.Errorf("docs/Parity.md doesn't name these phone calls (in backticks, in the row of the feature each serves): %s", strings.Join(missing, ", "))
+	}
+}

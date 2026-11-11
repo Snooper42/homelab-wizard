@@ -63,11 +63,11 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 The owner asked for "a handoff to do all this" (Nov 11): the feature check first (recommended), then the rest of the list. One PR at a time; ask where a step says so (*How to decide*, above). Mark each numbered step **Done (#PR)** in the PR that finishes it; the next session starts at the first step without the mark. What Alerts in the app built is in `unison-handoff.md` section 4, item 6, and #591 to #593.
 
-### 2A. The feature check: every feature, everywhere (first): not started
+### 2A. The feature check: every feature, everywhere (first): step 1 done
 
 The owner asked (Nov 11) whether every version on each platform has the same features. The answer then was "mostly, not entirely", from `apple-client/README.md`'s table alone. This makes it definite.
 
-1. **The map** (docs PR, with its test).
+1. **The map** (docs PR, with its test). **Done (#596):** `docs/Parity.md`, `TestParityNamesEveryPhoneCall`; its *Gaps* section is step 2's list.
    - *Where:* a new `docs/Parity.md`: one table, a row per feature (group them as the computer's sidebar does: Status, an app's page, Backups, Finances, Tidy Up, Setup, Settings, Choose apps, then alerts, links, widgets, keyboard), and a column each for **the computer** (one column; a note where Mac, Windows or Linux differ), **the phone's page** (the companion in a browser), **the iPhone app**, **the iPad**, and **the Homelab app on the Mac** where it differs from the iPad. Each cell: *yes*, *partly* (what's missing), *on purpose* (why: a phone can't install apps, a wall screen only looks, away from home only looks), or *gap*.
    - *Read, don't trust descriptions:* the computer's screens (`web/src/screens/*.ts` and what they mount); the phone's page is the same bundle under `html.companion`, so a feature is there only if its calls are in `phoneMethods` (`cmd/homelab/serve.go`) and CSS doesn't hide it (`html.companion` and `.can-change` rules in `web/dist/style.css`); the iPhone and iPad from `apple-client/Shared/Views` and `apple-client/README.md`'s table ("Not yet" there is a gap); the computer per system from `docs/Host.md` (*The same on every system*) and `os-mac`/`os-windows`/`os-linux` in the CSS. Every **New** line in `CHANGELOG.md` since 0.17.0 should land in a row.
    - *Test that fails today:* `cmd/homelab` `TestParityNamesEveryPhoneCall`: every key of `phoneMethods` is named in `docs/Parity.md`, so a new phone call can't go unmapped. Mention the map in `CONTRIBUTING.md`'s every-PR list.
@@ -100,6 +100,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
+- **Which gaps to close (2A step 2),** asked Nov 11 at 6 PM Eastern from `docs/Parity.md`'s *Gaps* list. Recommended: 1 (links into the app on the iPad and Mac app), then 2 and 4 together (What was done and Every alert from the split view), then 3 (Snooze on an open alert), then 6 (Settings on the phone's page); the iPhone Finances pieces (5) after 2B. If they say "continue", take that order.
 - **Trying on the phone:** #576, #588, #590, #592 and #593 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
 - **Imports:** a screenshot of what still looks off (2B, step 1).

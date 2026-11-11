@@ -62,6 +62,7 @@ The full app list with addresses and ports is in [Inventory](<Inventory.md>). It
 | [Usability](<Usability.md>) | The household's tasks, tried end to end, and whether each is getting easier |
 | [Storage](<Storage.md>) | Folders, volumes, and the paths Duplicati sees |
 | [Docker](<Docker.md>) | The container runtime, Compose projects, and container standards |
+| [What each device can do](<Parity.md>) | Every feature on the computer, the phone's page, the iPhone, the iPad and the Mac app, and why one isn't somewhere |
 | [Host](<Host.md>) | The machine: the Mac's power, login, and FileVault settings, and the Linux and Windows profiles |
 | [Environment](<Environment.md>) | Every `.env` setting and what it is for |
 
