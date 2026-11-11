@@ -43,6 +43,30 @@ struct WatchdogSummary: Decodable, Sendable, Equatable {
         return until
     }
 
+    /// Snooze… on a failing check, as the computer offers it (SnoozePick in
+    /// web/src/status/Cards.tsx): for an hour, for a day, and Alert again
+    /// now while it's snoozed. Hours, and the words.
+    static func snoozeChoices(snoozed: Bool) -> [SnoozeChoice] {
+        [SnoozeChoice(hours: 1, label: "For an hour"), SnoozeChoice(hours: 24, label: "For a day")]
+            + (snoozed ? [SnoozeChoice(hours: 0, label: "Alert again now")] : [])
+    }
+
+    /// One of Snooze…'s choices: how many hours (0 wakes it now), in words.
+    struct SnoozeChoice: Hashable, Identifiable {
+        let hours: Int
+        let label: String
+        var id: Int { hours }
+    }
+
+    /// What Face ID asks before a snooze, in plain words.
+    static func snoozeReason(_ check: String, hours: Int) -> String {
+        switch hours {
+        case 0: "Alert about \(check) again now."
+        case 1: "No alerts about \(check) for an hour."
+        default: "No alerts about \(check) for a day."
+        }
+    }
+
     /// When a snooze ends, as the computer says it: "3:40 PM" today,
     /// "Sat 9:15 AM" on another day (`wakeText` in web/src/status/Cards.tsx).
     static func wakeText(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {

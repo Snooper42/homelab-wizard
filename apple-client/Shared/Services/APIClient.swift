@@ -452,6 +452,14 @@ actor APIClient {
         _ = try await send(request, to: endpoint, using: actionSession)
     }
 
+    /// Snoozes a failing check's alerts for `hours` (0: alerts again now),
+    /// as Snooze… on the computer (SnoozeCheck). This is a change.
+    func snoozeCheck(_ check: String, hours: Int) async throws {
+        let (request, endpoint) = try callRequest("SnoozeCheck", [.string(check), .number(Double(hours))])
+        Log.network.notice("SnoozeCheck for \(hours, privacy: .public) hours")
+        _ = try await send(request, to: endpoint, using: actionSession)
+    }
+
     /// Changes one of an app's settings. This is a change.
     func setAppSetting(_ setting: AppSetting, on: Bool, appID: String) async throws -> [String] {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }

@@ -578,3 +578,15 @@ struct StoppedNextTests {
         #expect(outside.why.hasPrefix("It was stopped outside the homelab"))
     }
 }
+
+// Snooze… on a failing check, from the phone, as the computer offers it.
+@Suite("Snooze from the phone")
+struct SnoozeTests {
+    @Test func theComputersChoices() {
+        #expect(WatchdogSummary.snoozeChoices(snoozed: false).map { $0.hours } == [1, 24])
+        #expect(WatchdogSummary.snoozeChoices(snoozed: true).map { $0.label } == ["For an hour", "For a day", "Alert again now"])
+        #expect(WatchdogSummary.snoozeReason("disk /", hours: 1) == "No alerts about disk / for an hour.")
+        #expect(WatchdogSummary.snoozeReason("disk /", hours: 24) == "No alerts about disk / for a day.")
+        #expect(WatchdogSummary.snoozeReason("disk /", hours: 0) == "Alert about disk / again now.")
+    }
+}

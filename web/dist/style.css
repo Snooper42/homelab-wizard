@@ -561,8 +561,8 @@ details.group > summary h2 .n { font-weight:600; color:var(--muted); letter-spac
 html:not(.companion) .companion-only { display:none; }
 /* Memory nearly full (the watchdog card): Stop only where this phone may make changes. */
 html.companion:not(.can-change) .memstop { display:none; }
-/* Snooze needs the desktop app (the phone's server does not offer it). */
-html.companion .snoozepick { display:none; }
+/* Snooze: only where this phone may make changes, as Stop. */
+html.companion:not(.can-change) .snoozepick { display:none; }
 #memoryPressure .alertlist button.memstop { margin-left:8px; }
 
 /* The phone companion (homelab serve, html.companion): Status and Backups,

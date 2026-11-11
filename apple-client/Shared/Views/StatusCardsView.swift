@@ -175,6 +175,7 @@ private struct MoneySection: View {
 // MARK: - Watchdog
 
 private struct WatchdogCard: View {
+    @Environment(AppActionsViewModel.self) private var actions
     let summary: WatchdogSummary
 
     var body: some View {
@@ -206,6 +207,15 @@ private struct WatchdogCard: View {
                             .foregroundStyle(.secondary)
                     }
                     .accessibilityElement(children: .combine)
+                    // Snooze…, as on the computer, where this device may change things.
+                    if actions.canSnooze {
+                        SnoozeMenu(check: failure.name, snoozed: summary.snoozedUntil(failure.name) != nil)
+                    }
+                }
+                if let error = actions.snoozeError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(Theme.danger)
                 }
             }
             if summary.pending > 0 {
@@ -222,6 +232,33 @@ private struct WatchdogCard: View {
             Text("The watchdog hasn't run yet.")
                 .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Snooze… on a failing check: no alerts about it for an hour or a day, for
+/// a failure already known of; the watchdog goes on checking it. The card
+/// is read again after, so it says until when.
+private struct SnoozeMenu: View {
+    @Environment(AppActionsViewModel.self) private var actions
+    @Environment(DashboardViewModel.self) private var dashboard
+    let check: String
+    let snoozed: Bool
+
+    var body: some View {
+        Menu {
+            ForEach(WatchdogSummary.snoozeChoices(snoozed: snoozed)) { choice in
+                Button(choice.label) {
+                    Task {
+                        if await actions.snooze(check, hours: choice.hours) { await dashboard.cards.load() }
+                    }
+                }
+            }
+        } label: {
+            Label(snoozed ? "Snoozed" : "Snooze…", systemImage: "bell.slash")
+                .font(.callout)
+        }
+        .disabled(actions.isBusy)
+        .accessibilityLabel("Snooze the alerts about \(check)")
     }
 }
 

@@ -762,14 +762,7 @@ func (a *App) Watchdog() health.Summary {
 // hours (Status › Watchdog › Snooze); 0 wakes it. It goes on checking it,
 // and alerts when the snooze ends if it still fails.
 func (a *App) SnoozeCheck(check string, hours int) error {
-	if hours < 0 || hours > 24*7 {
-		return fmt.Errorf("a snooze is up to a week, not %d hours", hours)
-	}
-	var until time.Time
-	if hours > 0 {
-		until = time.Now().Add(time.Duration(hours) * time.Hour)
-	}
-	return notify.Snooze(a.root, check, until)
+	return notify.SnoozeHours(a.root, check, hours)
 }
 
 // TailnetDevices is every device on the household's tailnet, when
