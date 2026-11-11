@@ -443,6 +443,15 @@ actor APIClient {
         return APIError.sanitizeLog(envelope?.log)
     }
 
+    /// Keeps the groups opened or folded on Status for every device
+    /// (SetStatusFolds). This is a change, so it goes to the computer
+    /// directly, never through the tunnel. It asks no Face ID: it changes
+    /// only which groups show open.
+    func setStatusFolds(_ open: [String: Bool]) async throws {
+        let (request, endpoint) = try callRequest("SetStatusFolds", [.object(open.mapValues { .bool($0) })])
+        _ = try await send(request, to: endpoint, using: actionSession)
+    }
+
     /// Changes one of an app's settings. This is a change.
     func setAppSetting(_ setting: AppSetting, on: Bool, appID: String) async throws -> [String] {
         guard AppStatus.isValidID(appID) else { throw APIError.invalidAppID }

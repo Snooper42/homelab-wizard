@@ -270,8 +270,11 @@ private struct PhoneStatus: View {
     @Bindable var model: DashboardViewModel
     /// A household member's phone: their apps only (and no backups to read).
     var isMember = false
-    /// Which groups are open (StatusFolds): names only, kept like the tab.
+    /// Which groups are open (StatusFolds): names only, kept like the tab,
+    /// and the computer's for every device (FoldSync).
     @SceneStorage("statusFolds") private var folds = ""
+    /// What the computer last said they are, to tell the person's own changes apart.
+    @State private var computerFolds: String?
     /// An app's page grows out of its row (iOS 18).
     @Namespace private var zoom
     @Environment(AppActionsViewModel.self) private var actions
@@ -328,6 +331,9 @@ private struct PhoneStatus: View {
             }
             .themedCanvas()
             .searchable(text: $model.search, prompt: "Apps")
+            // The folds are the computer's, the same on every device.
+            .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
+            .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
             .navigationTitle("Status")
             .navigationDestination(for: AppStatus.ID.self) { id in
                 AppDetailView(app: model.app(id: id))
@@ -454,6 +460,26 @@ private struct BrandHeader: View {
     }
 }
 
+/// Status's folds as the computer keeps them for every device (the owner,
+/// Nov 10): read when Status loads, taken as this device's; the person's
+/// own changes saved back, on a device allowed changes, where the computer
+/// keeps them. A device that only looks keeps its own.
+@MainActor
+enum FoldSync {
+    static func pull(model: DashboardViewModel, actions: AppActionsViewModel, folds: Binding<String>, computer: Binding<String?>) async {
+        guard actions.computerAnswers("StatusFolds"), let theirs = await model.computerFolds() else { return }
+        computer.wrappedValue = theirs
+        if StatusFolds.choices(theirs) != StatusFolds.choices(folds.wrappedValue) { folds.wrappedValue = theirs }
+    }
+
+    static func push(_ raw: String, model: DashboardViewModel, actions: AppActionsViewModel, computer: Binding<String?>) {
+        guard StatusFolds.shouldSave(raw, computers: computer.wrappedValue, canChange: actions.canChange,
+                                     keeps: actions.computerAnswers("SetStatusFolds")) else { return }
+        computer.wrappedValue = raw
+        Task { await model.saveFolds(raw) }
+    }
+}
+
 private struct SplitDashboard: View {
     typealias Screen = DashboardViewModel.SidebarItem
     @Environment(AppActionsViewModel.self) private var actions
@@ -461,8 +487,11 @@ private struct SplitDashboard: View {
     /// The sidebar's choice, kept across launches as the computer keeps each
     /// screen's place (#417). Only the choice is kept, never what it shows.
     @SceneStorage("sidebar") private var savedSidebar = "apps:all"
-    /// Which Status groups are open (StatusFolds), as on iPhone.
+    /// Which Status groups are open (StatusFolds), as on iPhone, and the
+    /// computer's for every device (FoldSync).
     @SceneStorage("statusFolds") private var folds = ""
+    /// What the computer last said they are, to tell the person's own changes apart.
+    @State private var computerFolds: String?
     @Bindable var model: DashboardViewModel
     let computer: ComputerViewModel
     let finances: FinancesViewModel
@@ -519,6 +548,9 @@ private struct SplitDashboard: View {
                 model.selectedAppID = id
             }
             .navigationSplitViewColumnWidth(min: 190, ideal: 220)
+            // The folds are the computer's, the same on every device.
+            .task(id: model.hasLoaded) { await FoldSync.pull(model: model, actions: actions, folds: $folds, computer: $computerFolds) }
+            .onChange(of: folds) { _, new in FoldSync.push(new, model: model, actions: actions, computer: $computerFolds) }
             .safeAreaInset(edge: .bottom) {
                 ConnectionBadge(state: model.liveEvents.connection)
                     .frame(maxWidth: .infinity, alignment: .leading)

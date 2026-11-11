@@ -313,6 +313,23 @@ final class DashboardViewModel {
         if cards.error != nil { await liveEvents.refreshNow() }
     }
 
+    /// The groups opened or folded on Status as the computer keeps them for
+    /// every device (StatusFolds); nil where it can't say (an older computer,
+    /// or no answer), and this device keeps its own.
+    func computerFolds() async -> String? {
+        guard let open = try? await api.call("StatusFolds", as: [String: Bool].self) else { return nil }
+        return StatusFolds.fromComputer(open)
+    }
+
+    /// Keeps `raw` as every device's folds (SetStatusFolds, a change).
+    func saveFolds(_ raw: String) async {
+        do {
+            try await api.setStatusFolds(StatusFolds.choices(raw))
+        } catch {
+            Log.network.error("SetStatusFolds failed: \(APIError.from(error).logName, privacy: .public)")
+        }
+    }
+
     func loadCatalog() async {
         guard catalog == nil, !catalogLoading else { return }
         catalogLoading = true
@@ -505,5 +522,22 @@ enum StatusFolds {
         picked[group.label] = open
         guard let data = try? JSONEncoder().encode(picked) else { return raw }
         return String(decoding: data, as: UTF8.self)
+    }
+
+    /// The folds the computer keeps for every device (its `StatusFolds`,
+    /// internal/statusfolds), as this device keeps them.
+    static func fromComputer(_ open: [String: Bool]) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        guard let data = try? encoder.encode(open) else { return "" }
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// Whether `raw` is the person's own change, to keep for every device:
+    /// not what the computer last said (in whatever order), on a device
+    /// allowed changes, with a computer that keeps them. A device that only
+    /// looks keeps its own.
+    static func shouldSave(_ raw: String, computers: String?, canChange: Bool, keeps: Bool) -> Bool {
+        canChange && keeps && choices(raw) != choices(computers ?? "")
     }
 }
