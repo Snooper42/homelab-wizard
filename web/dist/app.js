@@ -908,6 +908,7 @@
   var processors = /* @__PURE__ */ new Set(["sq", "tst", "sp", "pp", "py", "paypal", "in", "ggl", "google", "gglpay", "clover", "toast", "zettle", "izettle", "pmt", "chk", "lsp", "cke", "wwp", "wl"]);
   var leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa|mc|ach|recurring|electronic|point of sale|preauthorized|preauth|bill pay|web|online|aplpay)\b[\s#:*-]*)+/i;
   var achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
+  var suffixes = new Set("llc inc corp corporation ltd pllc llp".split(" "));
   var states = new Set("al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr".split(" "));
   var chains = [
     ["amzn mktp", "Amazon"],
@@ -1087,6 +1088,7 @@
     s3 = s3.replace(/\bwww\./gi, "").replace(/\.(?:com|net|org|co|io|tv|us)\b(?:\/\S*)?/gi, "").replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ").replace(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/g, " ").replace(/\b(?:x{2,}|\*{2,})\d+\b/gi, " ").replace(/\bstore\s*#?\s*\d+\b/gi, " ").replace(/#\s*\d+/g, " ").replace(/(?:^|\s)[A-Za-z]{0,2}\d{3,}[A-Za-z0-9]*(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
     const parts3 = s3.split(" ");
     if (parts3.length > 1 && states.has(parts3.at(-1).toLowerCase()) && parts3.at(-1) === parts3.at(-1).toUpperCase()) parts3.pop();
+    while (parts3.length > 1 && suffixes.has(parts3.at(-1).toLowerCase().replace(/[.,]/g, ""))) parts3.pop();
     s3 = parts3.join(" ").replace(/[\s,.;:-]+$/, "").trim();
     if (!s3) return (raw || "").replace(/\s+/g, " ").trim();
     const chain = chainOf(flat(s3));
@@ -1285,11 +1287,12 @@
       debit: find("debit", "withdrawal", "money out", "paid out"),
       credit: find("credit", "deposit", "money in", "paid in"),
       payee: find("payee", "description", "name", "merchant", "details", "empfänger", "beschreibung"),
-      memo: find("memo", "note", "reference", "category"),
-      town: find("city")
+      memo: find("memo", "note", "reference"),
+      town: find("city"),
+      kind: find("category")
     };
     if (body.length && !namesIn(body, col.payee)) {
-      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town]);
+      const taken = /* @__PURE__ */ new Set([col.date, col.amount, col.debit, col.credit, col.memo, col.town, col.kind]);
       const better = header.map((_3, i3) => i3).filter((i3) => !taken.has(i3) && namesIn(body, i3)).sort((a3, b2) => kinds(body, b2) - kinds(body, a3))[0];
       if (better !== void 0) col.payee = better;
     }
@@ -1327,7 +1330,7 @@
       const date = readDay(r3[col.date] || "", dayFirst);
       const amount = col.amount >= 0 ? money3(r3[col.amount]) : money3(r3[col.credit]) - Math.abs(money3(r3[col.debit]));
       if (!date || !amount) continue;
-      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0, town: (col.town ?? -1) >= 0 ? r3[col.town] || void 0 : void 0 });
+      out.push({ date, amount: Math.round(amount * 100) / 100, payee: (r3[col.payee] || "").trim(), memo: col.memo >= 0 ? r3[col.memo] || void 0 : void 0, town: (col.town ?? -1) >= 0 ? r3[col.town] || void 0 : void 0, kind: (col.kind ?? -1) >= 0 ? r3[col.kind]?.trim() || void 0 : void 0 });
     }
     return out;
   }
@@ -9082,6 +9085,31 @@
     gaming: "Gaming"
   };
   var alsoCalled = { gaming: ["Gaming", "Games", "Video games", "Video gaming"] };
+  var bankWords = [
+    [/grocer|supermarket/, ["Groceries"]],
+    [/restaurant|food & drink|food and drink|dining|bar & caf|fast food|coffee/, ["Eating out"]],
+    [/\bfuel|gas station|^gas\b|gas\/automotive/, ["Gas"]],
+    [/airline|lodging|hotel|travel|vehicle rental|car rental|rail|cruise/, ["Travel"]],
+    [/pharmac|drug store|health|medical|dental|doctor|hospital/, ["Health"]],
+    [/fitness|gym|sporting club/, ["Fitness"]],
+    [/cable|internet/, ["Internet"]],
+    [/wireless|telephone|telecom|phone/, ["Phone"]],
+    [/hardware|home improvement|building supplies|home & garden|home and garden/, ["Repairs"]],
+    [/education|school|tuition|child care/, ["Kids and school"]],
+    [/gift|donation|charit/, ["Gifts and giving", "Gifts"]],
+    [/fees? & adjust|fees and adjust|interest charge|^fees?\b/, ["Fees and interest"]],
+    [/insurance/, ["Insurance"]],
+    [/utilit/, ["Utilities", "Electric"]],
+    [/entertainment/, ["Entertainment"]],
+    [/retail|department store|clothing|merchandise|shopping|electronics|sporting goods|book store|internet purchase|wholesale/, ["Shopping"]],
+    [/automotive|auto service|auto parts|parking|tolls?\b/, ["Car"]]
+  ];
+  function bankKinds(word) {
+    const w3 = (word || "").toLowerCase().trim();
+    if (!w3) return [];
+    const parts3 = w3.split(/\s*-\s*/).filter((p3) => p3 && !/^(?:other|misc|miscellaneous|general)$/.test(p3)).reverse();
+    return parts3.flatMap((part) => [part, ...bankWords.filter(([re]) => re.test(part)).flatMap(([, names5]) => names5)]);
+  }
   function paymentCategory(p3) {
     const out = [];
     const h3 = hintOf(p3.kind, p3.name);
@@ -9136,7 +9164,7 @@
     const sub = brand ? suggestType(brand, payee) : "";
     const hint = hintOf(void 0, payee);
     const otherwise = brand && brandCategory[brand] === "Gaming" ? "Shopping" : void 0;
-    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint], otherwise) };
+    return { category: pick(...pays ? paymentCategory(pays) : [], fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : void 0, hint && hintCategory[hint], otherwise, ...bankKinds(t3.kind)) };
   }
   var billKinds = /* @__PURE__ */ new Set(["utilities", "home", "car", "subscriptions", "loans"]);
   function samePurpose(payee, x3) {
@@ -11534,7 +11562,7 @@
       if (fresh.includes(t3) || fixes.has(i3)) return;
       const q2 = have.find((q3) => !recat.has(q3.id) && q3.account === account && !q3.to && !q3.category && !q3.splits?.length && q3.date === t3.date && Math.abs(q3.amount - t3.amount) < 5e-3 && (t3.raw && (q3.note || "").includes(t3.raw) || !!q3.payee && !!t3.payee && alike(q3.payee, t3.payee)));
       if (!q2) return;
-      const g2 = guessFor({ payee: named6(i3) || q2.payee, amount: q2.amount }, account, plan, cats, named6(i3) || q2.payee ? lastCat(named6(i3) || q2.payee) : void 0, payments.find((x3) => x3.id === q2.payment));
+      const g2 = guessFor({ payee: named6(i3) || q2.payee, amount: q2.amount, kind: t3.kind }, account, plan, cats, named6(i3) || q2.payee ? lastCat(named6(i3) || q2.payee) : void 0, payments.find((x3) => x3.id === q2.payment));
       if (g2.category) recat.set(q2.id, g2.category);
     });
     const nameOf = (id2) => (plan.accounts || []).find((a3) => a3.id === id2)?.name || "another account";
@@ -16178,6 +16206,8 @@ ${pays}
     ["worth", "Net worth", ["worth"]]
   ];
   var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(tab3)) || groups3[0];
+  var leftOn = {};
+  var pageOf = (group2) => leftOn[group2] || groups3.find(([k3]) => k3 === group2)[2][0];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
   function ExportMenu({ v: v3, exportFile: exportFile2, printMonth }) {
     const [said2, setSaid] = d2("");
@@ -16232,6 +16262,7 @@ ${pays}
       setFrom("");
       setTab(t3);
     };
+    if (groupOf(tab3)[2].includes(tab3)) leftOn[groupOf(tab3)[0]] = tab3;
     const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
@@ -16255,7 +16286,7 @@ ${pays}
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(groups3.find(([k3]) => k3 === g2)[2][0]), options: groups3.map(([k3, label2]) => [k3, label2]) }),
+      /* @__PURE__ */ u3(Segmented, { label: "View", value: groupOf(tab3)[0], pick: (g2) => pickTab(pageOf(g2)), options: groups3.map(([k3, label2]) => [k3, label2]) }),
       groupOf(tab3)[2].length > 1 && /* @__PURE__ */ u3("div", { class: "fx-subtabs", children: /* @__PURE__ */ u3(Segmented, { label: groupOf(tab3)[1], value: tab3, pick: pickTab, options: tabs.filter(([k3]) => groupOf(tab3)[2].includes(k3)) }) }),
       /* @__PURE__ */ u3("div", { class: "finbody", children: !v3 && error ? /* @__PURE__ */ u3(Empty, { children: [
         "The finances file could not be read: ",
