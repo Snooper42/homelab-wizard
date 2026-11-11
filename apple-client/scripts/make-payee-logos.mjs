@@ -38,7 +38,7 @@ const extra = {
 export const __mark = { aliases, loose: [...loose], tails: [...tails], models, hints, plainKinds: [...plainKinds],
   glyphs: Object.keys(kindIcons), brandTypes, brandKinds, autoHues };`,
   'payees.ts': `
-export const __payees = { processors: [...processors], leading: leading.source, states: [...states], chains };`,
+export const __payees = { processors: [...processors], leading: leading.source, states: [...states], suffixes: [...suffixes], chains };`,
   'hues.ts': `
 export const __hues = { hues, kindCategory };`,
 };
@@ -252,7 +252,7 @@ const logos = {
   glyphs: m.glyphs,
   brandTypes: m.brandTypes,
   brandKinds: m.brandKinds,
-  payee: { processors: p.processors, leading: p.leading, states: p.states, chains: p.chains },
+  payee: { processors: p.processors, leading: p.leading, states: p.states, suffixes: p.suffixes, chains: p.chains },
   colours: {
     category: { light: catColours(lightBlock, lightBlock), dark: catColours(darkBlock, lightBlock) },
     auto: autoColours,
@@ -298,7 +298,9 @@ for (const [glyph, list] of m.hints) for (const w of list) names.add(`${w[0].toU
   'STEAMGAMES.COM 4259522985 WA', 'Steam Purchase', 'STEAM CLEANING CO', 'PLAYSTATION NETWORK 800-555-0199 CA', 'MICROSOFT*XBOX', 'MICROSOFT*STORE',
   'MICROSOFT*ONEDRIVE', 'MSFT * E0400ABCD', 'NINTENDO CA1234567 WA', 'Nintendo', 'EPIC GAMES STORE', 'GAMESTOP #1234', 'ROBLOX CORPORATION',
   // A padded line whose town runs into the shop's column, Amex's marketplace spelling, and a name cut with its town run in.
-  'PET SUPERMARKET #100SUNRISE           FL', 'AMAZON MARKEPLACE NA PA', 'ANTHROPIC CLAUDE SUSAN FRANCISCO CA', 'STORE24  MIAMI  FL'
+  'PET SUPERMARKET #100SUNRISE           FL', 'AMAZON MARKEPLACE NA PA', 'ANTHROPIC CLAUDE SUSAN FRANCISCO CA', 'STORE24  MIAMI  FL',
+  // A company's ending goes; a name that is only one stays.
+  'MYSTERY LLC', 'SUNSHINE DENTAL, INC.', 'ACME PLUMBING CORP FL', 'BLUE SKY LTD', 'SMITH LAW PLLC', 'Inc', 'LLC'
 ].forEach((n) => names.add(n));
 
 const kinds = [undefined, 'car', 'other', 'collectible', 'checking', 'subscriptions', 'utilities'];

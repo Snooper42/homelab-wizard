@@ -22,6 +22,8 @@ const leading = /^(?:(?:pos|debit|credit|purchase|checkcard|check card|card|visa
 const achId = /\b(?:PPD|CCD|WEB|TEL|CTX|IAT|ARC|BOC|POP|RCK|CIE)\s*ID\s*:?\s*\S*/gi;
 
 /** The states and territories, as a bank ends a line with one. */
+/** A company's ending, which says nothing of the shop: SUNSHINE DENTAL, INC. is Sunshine Dental. */
+const suffixes = new Set('llc inc corp corporation ltd pllc llp'.split(' '));
 const states = new Set('al ak az ar ca co ct de dc fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy pr'.split(' '));
 
 /**
@@ -164,6 +166,8 @@ export function cleanPayee(raw: string | undefined): string {
   // A trailing state, after something to keep (in capitals, as a bank writes it).
   const parts = s.split(' ');
   if (parts.length > 1 && states.has(parts.at(-1)!.toLowerCase()) && parts.at(-1) === parts.at(-1)!.toUpperCase()) parts.pop();
+  // Then a company's ending (LLC, Inc.), after something to keep.
+  while (parts.length > 1 && suffixes.has(parts.at(-1)!.toLowerCase().replace(/[.,]/g, ''))) parts.pop();
   s = parts.join(' ').replace(/[\s,.;:-]+$/, '').trim();
   if (!s) return (raw || '').replace(/\s+/g, ' ').trim();
   const chain = chainOf(flat(s));

@@ -5907,6 +5907,54 @@ const smokes = [
     const steam = txs.find((t) => t.payee === 'Steam');
     if (!(steam?.note || '').includes('WL *STEAM PURCHASE 425-555-0100 WA')) throw new Error(`Steam's note ${JSON.stringify(steam?.note)}`);
   } },
+  // A bank's file that says what each row is (American Express's Category column: "Restaurant-Restaurant",
+  // "Merchandise & Supplies-Groceries"; Chase's: "Food & Drink") gives a shop the household's own category for it when
+  // nothing better says (a known brand's still wins: Starbucks is Eating out whatever the file calls it). One that
+  // says nothing the household has (Other-Miscellaneous) is left to pick, and the bank's word isn't a note. A company's
+  // ending (LLC, Inc.) goes, as its town does.
+  { name: "Finances: an American Express file's Category column gives each shop the household's category", screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount,Extended Details,Appears On Your Statement As,Address,City/State,Zip Code,Country,Reference,Category\n'
+      + '11/08/2026,PINE CAFE MIAMI FL,12.40,,,,"MIAMI\nFL",,,,Restaurant-Restaurant\n'
+      + '11/08/2026,CORNER MARKET MIAMI FL,40.00,,,,"MIAMI\nFL",,,,Merchandise & Supplies-Groceries\n'
+      + '11/07/2026,SUNNY DAYS SCHOOL MIAMI FL,250.00,,,,"MIAMI\nFL",,,,Other-Education\n'
+      + '11/07/2026,RIVERSIDE INN ASHEVILLE NC,180.00,,,,"ASHEVILLE\nNC",,,,Travel-Lodging\n'
+      + '11/06/2026,FUEL STOP 12 MIAMI FL,35.00,,,,"MIAMI\nFL",,,,Transportation-Fuel\n'
+      + '11/06/2026,HOMETOWN HARDWARE MIAMI FL,22.00,,,,"MIAMI\nFL",,,,Merchandise & Supplies-Hardware Supplies\n'
+      + '11/05/2026,BIG STORE MIAMI FL,60.00,,,,"MIAMI\nFL",,,,Merchandise & Supplies-Department Stores\n'
+      + '11/05/2026,STARBUCKS SEATTLE WA,6.10,,,,"SEATTLE\nWA",,,,Merchandise & Supplies-Groceries\n'
+      + '11/04/2026,MYSTERY LLC MIAMI FL,9.00,,,,"MIAMI\nFL",,,,Other-Miscellaneous\n'
+      + '11/04/2026,"SUNSHINE DENTAL, INC. MIAMI FL",90.00,,,,"MIAMI\nFL",,,,Business Services-Health Care Services\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.waitForSelector('#finSheet .formsub:has-text("10 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 10")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.account === 'amex' && t.date >= '2026-11-04');
+    const got = Object.fromEntries(txs.map((t) => [t.payee, t.category || '']));
+    const want = { 'Pine Cafe': 'Eating out', 'Corner Market': 'Groceries', 'Sunny Days School': 'Kids and school', 'Riverside Inn': 'Travel', 'Fuel Stop 12': 'Gas', 'Hometown Hardware': 'Repairs', 'Big Store': 'Shopping', Starbucks: 'Eating out', Mystery: '', 'Sunshine Dental': 'Health' };
+    for (const [payee, cat] of Object.entries(want)) if (got[payee] !== cat) throw new Error(`${payee}: ${JSON.stringify(got[payee])}, not ${JSON.stringify(cat)} (${JSON.stringify(got)})`);
+    if (txs.some((t) => /Restaurant|Merchandise|Miscellaneous/.test(t.note || ''))) throw new Error('the bank\'s category went into a note');
+  } },
+  // Chase's file says it in its own words, in a Category column beside its Memo.
+  { name: "Finances: a Chase file's Category column gives each shop the household's category", screen: 'finances', run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Transaction Date,Post Date,Description,Category,Type,Amount,Memo\n'
+      + '11/08/2026,11/09/2026,PINE CAFE,Food & Drink,Sale,-12.40,\n'
+      + '11/07/2026,11/08/2026,CORNER MARKET,Groceries,Sale,-40.00,\n'
+      + '11/06/2026,11/07/2026,FUEL STOP 12,Gas,Sale,-35.00,\n'
+      + '11/05/2026,11/06/2026,TOWN CLINIC,Health & Wellness,Sale,-80.00,\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'chase.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .formsub:has-text("4 to bring in")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Bring in 4")');
+    await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
+    const txs = (await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions)).filter((t) => t.date >= '2026-11-05' && t.amount < 0);
+    const got = Object.fromEntries(txs.map((t) => [t.payee, t.category || '']));
+    const want = { 'Pine Cafe': 'Eating out', 'Corner Market': 'Groceries', 'Fuel Stop 12': 'Gas', 'Town Clinic': 'Health' };
+    for (const [payee, cat] of Object.entries(want)) if (got[payee] !== cat) throw new Error(`${payee}: ${JSON.stringify(got[payee])}, not ${JSON.stringify(cat)} (${JSON.stringify(got)})`);
+  } },
   // A card's file brought into checking (left on the sheet's first account): most rows are money in, which a card's file
   // writes its charges as. The sheet says so before anything comes in, and moves it to the American Express card in one
   // tap, read as charges; a line says what comes in, out and in, before Bring in.
@@ -6010,8 +6058,8 @@ const smokes = [
   // Paycheck; paying the household's own card, and money in from its own savings account, are moves, not spending; a Zelle
   // payment to someone is left for the household to pick. The preview says each before it comes in.
   // Four tabs, as the owner picked (Nov 10): Dashboard, Spending (Transactions, Reports), Plan (Calendar, Recurring,
-  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row; a way into a page (a Dashboard
-  // card) picks its tab and page.
+  // Paychecks), Net worth. A tab with pages opens its first and shows them in a second row, and again on the page it was
+  // left on; a way into a page (a Dashboard card) picks its tab and page.
   { name: 'Finances: four tabs, Spending and Plan with their pages in a second row', screen: 'finances', run: async (page) => {
     const top = await page.$$eval('#finRoot > .seg button', (bs) => bs.map((b) => b.textContent));
     if (top.join('|') !== 'Dashboard|Spending|Plan|Net worth') throw new Error(`tabs ${top.join('|')}`);
@@ -6028,6 +6076,11 @@ const smokes = [
     await page.waitForSelector('#finRoot > .seg button[aria-checked=true]:text-is("Plan")', { timeout: 2000 });
     await page.click('#finRoot > .seg button:text-is("Net worth")');
     if (await page.isVisible('#finRoot .fx-subtabs')) throw new Error('a second row on Net worth');
+    // Each tab opens again on the page it was left on.
+    await page.click('#finRoot > .seg button:text-is("Spending")');
+    if ((await second()) !== 'Transactions|Reports*') throw new Error(`Spending again ${await second()}`);
+    await page.click('#finRoot > .seg button:text-is("Plan")');
+    if ((await second()) !== 'Calendar|Recurring|Paychecks*') throw new Error(`Plan again ${await second()}`);
     // Back on the Dashboard, a card that opens Recurring picks Plan and Recurring.
     await page.click('#finRoot > .seg button:text-is("Dashboard")');
     await page.click('.fx-flow button[aria-label^="Open Recurring"]', { timeout: 5000 });

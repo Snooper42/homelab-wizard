@@ -75,6 +75,9 @@ const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calen
 const groups: [string, string, string[]][] = [['overview', 'Dashboard', ['overview']], ['spending', 'Spending', ['transactions', 'reports']],
   ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth']]];
 const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(tab)) || groups[0];
+/** The page each tab was left on, so it opens there again (Plan on Paychecks); its first until one is. */
+const leftOn: Record<string, string> = {};
+const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === group)![2][0];
 const adds: Record<string, [What, string]> = { overview: ['payment', 'Add a payment'], calendar: ['payment', 'Add a payment'], transactions: ['transaction', 'Add a transaction'], reports: ['transaction', 'Add a transaction'], recurring: ['payment', 'Add a payment'], pay: ['person', 'Add a paycheck'], worth: ['account', 'Add an account'] };
 
 /**
@@ -118,6 +121,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   const [from, setFrom] = useState('');
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
   const pickTab = (t: string) => { setFrom(''); setTab(t); };
+  if (groupOf(tab)[2].includes(tab)) leftOn[groupOf(tab)[0]] = tab;
   const back = from && from !== 'transactions' ? { label: tabs.find(([k]) => k === from)?.[1] || from, go: () => pickTab(from) } : undefined;
   const ro = !!v?.readOnly;
   // Every number reads from the balances typed in (the oldest of checking's
@@ -138,7 +142,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           {!ro && <div class="toolbar">{toggleHidden && v && <HideAmounts hidden={!!v.plan.hideAmounts} toggle={toggleHidden} />}{!!v?.plan.accounts?.length && <button class="btn" onClick={() => edit('balances')}>Update balances</button>}<button class="btn fx-primary" onClick={() => edit(what)} disabled={!v}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{label}</button></div>}
         </div>
       </div>
-      <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(groups.find(([k]) => k === g)![2][0])} options={groups.map(([k, label]) => [k, label] as [string, string])} />
+      <Segmented label="View" value={groupOf(tab)[0]} pick={(g) => pickTab(pageOf(g))} options={groups.map(([k, label]) => [k, label] as [string, string])} />
       {groupOf(tab)[2].length > 1 && <div class="fx-subtabs"><Segmented label={groupOf(tab)[1]} value={tab} pick={pickTab} options={tabs.filter(([k]) => groupOf(tab)[2].includes(k))} /></div>}
       <div class="finbody">
         {!v && error ? <Empty>The finances file could not be read: {error} <button class="small" onClick={retry}>Try again</button></Empty>
