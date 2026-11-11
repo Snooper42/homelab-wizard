@@ -6326,7 +6326,7 @@ const smokes = [
     await page.click('.finpost thead button:has-text("Nov 20")');
     await page.waitForSelector('.finpost thead button[aria-pressed=true]:has-text("Nov 20")', { timeout: 5000 });
     await finTab(page, 'Dashboard');
-    await page.waitForSelector('.fx-paycheck h2:has-text("Nov 20")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod h2:has-text("Nov 20")', { timeout: 5000 });
   } },
   { name: 'Finances: a payment with each of someone\'s paychecks', screen: 'finances', run: async (page) => {
     await page.click('#finRoot .toolbar button:text-is("Add a payment")', { timeout: 5000 });
@@ -7247,7 +7247,7 @@ const smokes = [
     const want = (day) => page.evaluate((d) => '$' + window.__MOCK.finances.days.find((x) => x.date === d).balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), day);
     const said = () => page.textContent('.fx-paycheck .fx-onpayday', { timeout: 5000 }).then((t) => t.replace(/\s+/g, ' ').trim());
     if ((await said()) !== `On payday, Nov 6, once its own payments are out: ${await want('2026-11-06')}`) throw new Error(await said());
-    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.click('#finPeriod button[aria-label="The pay period after"]');
     await page.waitForFunction(() => document.querySelector('.fx-paycheck .fx-onpayday')?.textContent.includes('Nov 20'), null, { timeout: 5000 });
     if ((await said()) !== `On payday, Nov 20, once its own payments are out: ${await want('2026-11-20')}`) throw new Error(await said());
   } },
@@ -7381,7 +7381,7 @@ const smokes = [
   // One pay period card: whose paycheck and its days, each account after its bills with money in lit, ‹ › and Today;
   // the grid of every account by paycheck is Net worth's, not the dashboard's.
   { name: 'Finances: one pay period card steps through the paychecks, its accounts side by side', screen: 'finances', run: async (page) => {
-    await page.waitForSelector('.fx-paycheck h2:text-is("Alex\'s paycheck · Fri, Nov 6")', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod h2:text-is("Alex\'s paycheck · Fri, Nov 6")', { timeout: 5000 });
     // The paycheck's row (a person) and its payments' rows (logos) start their titles at one place.
     const lefts = await page.$$eval('.fx-paycheck .fx-rows > li .grow', (gs) => [...new Set(gs.map((g) => Math.round(g.getBoundingClientRect().left)))]);
     if (lefts.length !== 1) throw new Error(`titles start at ${lefts}`);
@@ -7395,13 +7395,13 @@ const smokes = [
     await page.waitForSelector(`${tile('Roth IRA')}:not(.fx-gets)`, { timeout: 5000 });
     await page.waitForSelector(`${tile('Cards')}`, { timeout: 5000 });
     if (await page.$(`${tile('Mortgage')}, ${tile('Home')}`)) throw new Error('a loan or the home is in the row');
-    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
-    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
-    await page.waitForSelector('.fx-paycheck h2:text-is("Jordan\'s paycheck · Wed, Nov 25")', { timeout: 5000 });
+    await page.click('#finPeriod button[aria-label="The pay period after"]');
+    await page.click('#finPeriod button[aria-label="The pay period after"]');
+    await page.waitForSelector('#finPeriod h2:text-is("Jordan\'s paycheck · Wed, Nov 25")', { timeout: 5000 });
     await page.waitForSelector(`${tile('Roth IRA')}.fx-gets .fx-gotin:text-is("$250 in")`, { timeout: 5000 });
-    await page.click('.fx-paycheck button:text-is("Today")');
-    await page.waitForSelector('.fx-paycheck h2:text-is("Now · until Thu, Nov 5")', { timeout: 5000 });
-    if (!(await page.isDisabled('.fx-paycheck button[aria-label="The pay period before"]'))) throw new Error('a period before now can be picked');
+    await page.click('#finPeriod button:text-is("Today")');
+    await page.waitForSelector('#finPeriod h2:text-is("Now · until Thu, Nov 5")', { timeout: 5000 });
+    if (!(await page.isDisabled('#finPeriod button[aria-label="The pay period before"]'))) throw new Error('a period before now can be picked');
     await finTab(page, 'Net worth');
     await page.waitForSelector('.finpost tbody tr:has(th:has-text("Roth IRA"))', { timeout: 5000 });
   } },
@@ -7411,7 +7411,7 @@ const smokes = [
     await page.waitForSelector('.fx-paycheck li:has-text("Chase Freedom"):has-text("Nov 6 · Cards"):has-text("−$1,324.65")', { timeout: 5000 });
     await page.waitForSelector('.fx-paycheck li:has-text("Amex Gold"):has-text("−$386.20")', { timeout: 5000 });
     await page.waitForSelector('.fx-paycheck .fx-figure:has-text("−$584")', { timeout: 5000 });
-    await page.click('.fx-paycheck button[aria-label="The pay period after"]');
+    await page.click('#finPeriod button[aria-label="The pay period after"]');
     await page.waitForSelector('.fx-paycheck li:has-text("Chase Freedom"):has-text("−$450.00")', { timeout: 5000 });
     await finTab(page, 'Recurring');
     // Alex's 26 checks a year and Jordan's 12 into checking: $600 of card spending each, $1,900 a month, not the $1,200 of card payments.
