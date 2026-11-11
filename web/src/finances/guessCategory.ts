@@ -2,7 +2,9 @@
 // plain: the category its payee had last (the household's own choice,
 // first), the one of the planned payment it pays (Xfinity paying
 // Internet), a known company's usual one (Costco is Groceries, Netflix
-// Streaming and music), or its words (a payroll deposit is a Paycheck).
+// Streaming and music), its words (a payroll deposit is a Paycheck), or
+// what the bank's file calls it (American Express's Restaurant-Restaurant
+// is Eating out).
 // Money between the household's own accounts (paying a card off,
 // moving to savings) is a move to that account, not spending, when one
 // account plainly fits. Anything else is left for the household to
@@ -36,6 +38,43 @@ const hintCategory: Record<string, string> = {
 
 /** A category a household may call by another name: Gaming is its Games or Video games just as well. */
 const alsoCalled: Record<string, string[]> = { gaming: ['Gaming', 'Games', 'Video games', 'Video gaming'] };
+
+/**
+ * What a bank's own word for a row (a file's Category column) is, in the
+ * household's: the word itself first (a household that keeps
+ * "Entertainment" takes American Express's Entertainment), then what it
+ * means. American Express writes a group and what in it, "Merchandise &
+ * Supplies-Groceries" (what in it first); Chase a word, "Food & Drink".
+ */
+const bankWords: [RegExp, string[]][] = [
+  [/grocer|supermarket/, ['Groceries']],
+  [/restaurant|food & drink|food and drink|dining|bar & caf|fast food|coffee/, ['Eating out']],
+  [/\bfuel|gas station|^gas\b|gas\/automotive/, ['Gas']],
+  [/airline|lodging|hotel|travel|vehicle rental|car rental|rail|cruise/, ['Travel']],
+  [/pharmac|drug store|health|medical|dental|doctor|hospital/, ['Health']],
+  [/fitness|gym|sporting club/, ['Fitness']],
+  [/cable|internet/, ['Internet']],
+  [/wireless|telephone|telecom|phone/, ['Phone']],
+  [/hardware|home improvement|building supplies|home & garden|home and garden/, ['Repairs']],
+  [/education|school|tuition|child care/, ['Kids and school']],
+  [/gift|donation|charit/, ['Gifts and giving', 'Gifts']],
+  [/fees? & adjust|fees and adjust|interest charge|^fees?\b/, ['Fees and interest']],
+  [/insurance/, ['Insurance']],
+  [/utilit/, ['Utilities', 'Electric']],
+  [/entertainment/, ['Entertainment']],
+  [/retail|department store|clothing|merchandise|shopping|electronics|sporting goods|book store|internet purchase|wholesale/, ['Shopping']],
+  [/automotive|auto service|auto parts|parking|tolls?\b/, ['Car']],
+];
+
+/** The household's names a bank's word for a row may be, likeliest first (bankWords). */
+export function bankKinds(word: string | undefined): string[] {
+  const w = (word || '').toLowerCase().trim();
+  if (!w) return [];
+  // What in its group first, then the group: "Merchandise & Supplies-Groceries" is Groceries before Shopping. Other and
+  // Miscellaneous say nothing, so they're left for the household to pick.
+  const parts = w.split(/\s*-\s*/).filter((p) => p && !/^(?:other|misc|miscellaneous|general)$/.test(p)).reverse();
+  return parts.flatMap((part) => [part, ...bankWords.filter(([re]) => re.test(part)).flatMap(([, names]) => names)]);
+}
 
 /** What a guess says: a category, or the household's own account the money moved to or came from. */
 export interface Guess { category?: string; account?: string }
@@ -94,7 +133,7 @@ export function ownAccount(payee: string, into: string, accounts: finance.Accoun
  * the household's own account it moved to or from. Only a category in
  * the household's list is given.
  */
-export function guessFor(t: { payee?: string; amount: number; raw?: string }, into: string, plan: finance.Plan, categories: finance.Category[], last?: string, pays?: finance.Payment): Guess {
+export function guessFor(t: { payee?: string; amount: number; raw?: string; kind?: string }, into: string, plan: finance.Plan, categories: finance.Category[], last?: string, pays?: finance.Payment): Guess {
   const payee = t.payee || '';
   const moved = payee && ownAccount(payee, into, plan.accounts || [], t.amount < 0 ? t.raw : undefined);
   if (moved) return { account: moved };
@@ -117,7 +156,8 @@ export function guessFor(t: { payee?: string; amount: number; raw?: string }, in
   const hint = hintOf(undefined, payee);
   // A game store bought from, with no Gaming category kept, is Shopping.
   const otherwise = brand && brandCategory[brand] === 'Gaming' ? 'Shopping' : undefined;
-  return { category: pick(...(pays ? paymentCategory(pays) : []), fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : undefined, hint && hintCategory[hint], otherwise) };
+  // The file's own word for it (its Category column) when nothing about the payee says.
+  return { category: pick(...(pays ? paymentCategory(pays) : []), fromWords, brand && brandCategory[brand], sub ? subTypeName(sub) : undefined, hint && hintCategory[hint], otherwise, ...bankKinds(t.kind)) };
 }
 
 /** The kinds of planned payment a payee may pay by what it is: bills, never a spending or saving envelope. */

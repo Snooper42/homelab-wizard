@@ -1376,7 +1376,7 @@ function ImportForm(props: EditProps) {
     const q = have.find((q) => !recat.has(q.id) && q.account === account && !q.to && !q.category && !q.splits?.length && q.date === t.date && Math.abs(q.amount - t.amount) < 0.005
       && ((t.raw && (q.note || '').includes(t.raw)) || (!!q.payee && !!t.payee && alike(q.payee, t.payee))));
     if (!q) return;
-    const g = guessFor({ payee: named(i) || q.payee, amount: q.amount }, account, plan, cats, (named(i) || q.payee) ? lastCat(named(i) || q.payee!) : undefined, payments.find((x) => x.id === q.payment));
+    const g = guessFor({ payee: named(i) || q.payee, amount: q.amount, kind: t.kind }, account, plan, cats, (named(i) || q.payee) ? lastCat(named(i) || q.payee!) : undefined, payments.find((x) => x.id === q.payment));
     if (g.category) recat.set(q.id, g.category);
   });
   const nameOf = (id: string) => (plan.accounts || []).find((a) => a.id === id)?.name || 'another account';
