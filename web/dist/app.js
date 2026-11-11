@@ -3174,10 +3174,10 @@
   }
   function clearFilter() {
     setFilter({ text: "", on: false });
-    const back2 = before;
+    const back3 = before;
     before = null;
     requestAnimationFrame(() => {
-      if (back2?.isConnected && back2.checkVisibility()) back2.focus();
+      if (back3?.isConnected && back3.checkVisibility()) back3.focus();
       else document.getElementById("statusAll")?.focus();
     });
   }
@@ -6695,15 +6695,15 @@
     const parts3 = [];
     const updated = n3.apps.filter((a3) => within(a3.updatedAt));
     if (updated.length) parts3.push(updated.length === 1 ? `${updated[0].name} updated` : `${updated.length} apps updated`);
-    const back2 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
-    if (back2.length) parts3.push(`${back2.length} rolled back`);
+    const back3 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
+    if (back3.length) parts3.push(`${back3.length} rolled back`);
     if (n3.copies) {
       const made2 = n3.copies.filter((c4) => within(c4.newest));
       const size2 = made2.reduce((t3, c4) => t3 + (c4.size || 0), 0);
       if (made2.length) parts3.push(size2 > 0 ? `a backup of ${bytes(size2)}` : "the backup ran");
     }
     const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
-    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back2.includes(e3));
+    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back3.includes(e3));
     if (down.length) {
       const name = n3.apps.find((a3) => a3.id === down[0][0])?.name || down[0][0];
       parts3.push(down.length === 1 ? `${name} was down for a while` : `${down.length} apps were down for a while`);
@@ -8689,6 +8689,7 @@
   }
   var icons2 = {};
   var shown3 = () => !!id && $2("app").classList.contains("active");
+  var openedApp = () => id;
   function openApp(appId) {
     if (appId !== id) {
       usage = void 0;
@@ -9187,7 +9188,7 @@
   }
   var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
-  function worthByMonth(v3, back2 = 3, ahead = 3) {
+  function worthByMonth(v3, back3 = 3, ahead2 = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf2 = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
     const against = new Set(accounts.filter((a3) => groupOf2(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
@@ -9206,12 +9207,12 @@
     };
     const out = [];
     const today2 = parseDay(v3.today);
-    for (let i3 = back2; i3 >= 1; i3--) {
+    for (let i3 = back3; i3 >= 1; i3--) {
       const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
       out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
     out.push({ date: v3.today, ahead: false, ...split2((a3) => todayOf(v3, a3)) });
-    for (let i3 = 1; i3 <= ahead; i3++) {
+    for (let i3 = 1; i3 <= ahead2; i3++) {
       const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() + i3 + 1, 0));
       if (!v3.periods.some((q2) => q2.last >= end)) break;
       const p3 = [...v3.periods].reverse().find((q2) => q2.last <= end && q2.accounts);
@@ -9639,7 +9640,7 @@
   var showTransactions = (f4) => {
     opening = f4;
   };
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos, back: back2 }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos, back: back3 }) {
     const [first] = d2(() => {
       const f4 = opening;
       opening = {};
@@ -9751,8 +9752,8 @@
       showUndo(words5, () => {
         const now2 = latest2.current;
         if (!now2 || !saveLedger2) return;
-        const back3 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
-        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back3.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
+        const back4 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
+        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back4.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
       });
     };
     const removePicked = () => {
@@ -9897,10 +9898,10 @@
                 setWay("");
                 setTag("");
               }, children: "Show all" }),
-              back2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back2.go, children: [
+              back3 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back3.go, children: [
                 /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "← " }),
                 "Back to ",
-                back2.label
+                back3.label
               ] })
             ] }),
             picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
@@ -11865,12 +11866,12 @@ ${pays}
     }
     for (const d3 of v3.days || []) out[d3.date] = { date: d3.date, balance: d3.balance, events: d3.events || [], charges: d3.charges || [], holiday: v3.holidays?.[d3.date], moved: moved[d3.date] || [], low: !!cushion && d3.balance < cushion, ...d3.date <= v3.today ? recorded(d3.date) : { spent: [], net: 0 } };
     const later2 = v3.later || [];
-    const ahead = Object.fromEntries(later2.map((d3) => [d3.date, d3]));
+    const ahead2 = Object.fromEntries(later2.map((d3) => [d3.date, d3]));
     const lastDay = (v3.days || []).at(-1)?.date;
     if (lastDay) {
       const end = isoDay(new Date(parseDay(v3.today).getFullYear() + 1, parseDay(v3.today).getMonth(), parseDay(v3.today).getDate() - 1));
       for (let d3 = addDays(lastDay, 1); d3 <= end; d3 = addDays(d3, 1)) {
-        out[d3] = { date: d3, balance: 0, events: ahead[d3]?.events || [], charges: ahead[d3]?.charges || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true, spent: [], net: 0 };
+        out[d3] = { date: d3, balance: 0, events: ahead2[d3]?.events || [], charges: ahead2[d3]?.charges || [], holiday: v3.holidays?.[d3], moved: [], low: false, later: true, spent: [], net: 0 };
       }
     }
     return out;
@@ -12785,19 +12786,19 @@ ${pays}
       const x3 = { ...had || { id: "", name: setAsideName, kind: "savings", schedule: { every: "paycheck", start: todayISO() } }, amount: total, to: had?.to || savings.id };
       keep2({ ...v3.plan, payments: had ? (v3.plan.payments || []).map((q2) => q2.id === had.id ? x3 : q2) : [...v3.plan.payments || [], x3] });
     };
-    const current = had && Math.abs(had.amount - total) < 5e-3;
+    const current2 = had && Math.abs(had.amount - total) < 5e-3;
     return /* @__PURE__ */ u3(
       Widget,
       {
         title: "Set aside for bills that come less often",
         span: "all",
         kind: "fx-setaside",
-        actions: keep2 && savings && !current && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: keepIt, children: had ? `Make it ${money(total)} a paycheck` : "Set it aside with each paycheck" }),
+        actions: keep2 && savings && !current2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: keepIt, children: had ? `Make it ${money(total)} a paycheck` : "Set it aside with each paycheck" }),
         children: [
           /* @__PURE__ */ u3("p", { class: "fx-sub fx-setasidesays", children: [
             money(total),
             " from each paycheck covers them as they come",
-            had ? current ? `; “${setAsideName}” moves it into ${v3.plan.accounts?.find((a3) => a3.id === had.to)?.name || "savings"}.` : `; “${setAsideName}” moves ${money(had.amount)} now.` : "."
+            had ? current2 ? `; “${setAsideName}” moves it into ${v3.plan.accounts?.find((a3) => a3.id === had.to)?.name || "savings"}.` : `; “${setAsideName}” moves ${money(had.amount)} now.` : "."
           ] }),
           /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: bills.map((x3) => /* @__PURE__ */ u3(
             Row,
@@ -15626,8 +15627,8 @@ ${pays}
       ] }) }) }) });
     }
     const kept4 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
-    const back2 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
-    const months = worthByMonth(v3, back2, 3);
+    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
+    const months = worthByMonth(v3, back3, 3);
     const start = months[0];
     const now = netWorth(v3);
     const focus = group2 ? grouped(v3).find((g2) => g2.key === group2) : void 0;
@@ -16206,7 +16207,7 @@ ${pays}
       setFrom("");
       setTab(t3);
     };
-    const back2 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
+    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
@@ -16236,7 +16237,7 @@ ${pays}
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back2, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -16245,7 +16246,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep2, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep2, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: sel2, pick, update: () => edit("balances"), keep: keep2, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep2, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -16257,8 +16258,8 @@ ${pays}
       }, phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back2, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back2 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: sel2, pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
@@ -17935,6 +17936,7 @@ ${pays}
     const lines = [
       [["?"], "These shortcuts"],
       [[mod + "K"], "The command palette: an app, a screen or a command by name"],
+      [isMac ? ["⌘[", "⌘]"] : ["Alt+←", "Alt+→"], "Back to the screen before, or Forward again; a two-finger swipe right or left on a trackpad does the same"],
       [isMac ? ["⌘R"] : ["Ctrl+R", "F5"], "Check the screen again"],
       [[mod + "+", mod + "−", mod + "0"], "Bigger text, smaller, or the usual size"],
       [[isMac ? "⌘⇧H" : "Ctrl+Shift+H"], "Hide every amount, or show them again"],
@@ -18493,8 +18495,8 @@ ${pays}
     } else if (!onPhone()) financesData.fresh(5 * minute);
   }
   function reloadScreen() {
-    const current = document.querySelector(".screen.active")?.id;
-    if (current) reload(current);
+    const current2 = document.querySelector(".screen.active")?.id;
+    if (current2) reload(current2);
   }
   function reload(name) {
     if (name === "status") {
@@ -18530,11 +18532,94 @@ ${pays}
       navigated = true;
       show2("status");
       updateFromMenu();
+      remember();
       return;
     }
     navigated = true;
     show2(name);
+    remember();
   }
+  var back2 = [];
+  var ahead = [];
+  var current;
+  var moving = false;
+  function remember() {
+    const screen = document.querySelector(".screen.active")?.id;
+    if (!screen) return;
+    const next = { screen, app: screen === "app" ? openedApp() : void 0 };
+    if (!moving && current && (current.screen !== next.screen || current.app !== next.app)) {
+      back2.push(current);
+      if (back2.length > 50) back2.shift();
+      ahead.length = 0;
+    }
+    current = next;
+  }
+  function visit(p3) {
+    moving = true;
+    try {
+      if (p3.screen === "app" && p3.app) openApp(p3.app);
+      else {
+        navigate(p3.screen);
+        focusScreen(p3.screen);
+      }
+    } finally {
+      moving = false;
+    }
+  }
+  function goBack() {
+    const p3 = back2.pop();
+    if (!p3) return false;
+    if (current) ahead.push(current);
+    visit(p3);
+    swipeHint("back");
+    return true;
+  }
+  function goForward() {
+    const p3 = ahead.pop();
+    if (!p3) return false;
+    if (current) back2.push(current);
+    visit(p3);
+    swipeHint("forward");
+    return true;
+  }
+  var hintGone;
+  function swipeHint(way) {
+    const box = document.getElementById("swipeHint");
+    if (!box) return;
+    window.clearTimeout(hintGone);
+    R(k("div", { key: Date.now(), class: "swipehint " + way }, way === "back" ? "‹" : "›"), box);
+    hintGone = window.setTimeout(() => R(null, box), 500);
+  }
+  var swipeSum = 0;
+  var swipeAt = 0;
+  var swiped = false;
+  function scrollsSideways(t3, dx) {
+    for (let el3 = t3 instanceof Element ? t3 : null; el3 && el3 !== document.body; el3 = el3.parentElement) {
+      if (!/(auto|scroll)/.test(getComputedStyle(el3).overflowX) || el3.scrollWidth <= el3.clientWidth + 1) continue;
+      if (dx < 0 ? el3.scrollLeft > 0 : el3.scrollLeft + el3.clientWidth < el3.scrollWidth - 1) return true;
+    }
+    return false;
+  }
+  addEventListener("wheel", (e3) => {
+    if (onPhone() || e3.ctrlKey || Math.abs(e3.deltaX) <= Math.abs(e3.deltaY)) return;
+    const now = performance.now();
+    if (now - swipeAt > 300) {
+      swipeSum = 0;
+      swiped = false;
+    }
+    swipeAt = now;
+    if (swiped || scrollsSideways(e3.target, e3.deltaX)) return;
+    swipeSum += e3.deltaX;
+    if (Math.abs(swipeSum) > 150) {
+      swiped = true;
+      if (swipeSum < 0) goBack();
+      else goForward();
+    }
+  }, { passive: true });
+  addEventListener("mouseup", (e3) => {
+    if (e3.button === 3 && goBack()) e3.preventDefault();
+    if (e3.button === 4 && goForward()) e3.preventDefault();
+  });
   var screens2 = ["choose", "status", "backups", "setup", "settings", "finances", "tidy"];
   addEventListener("pagehide", () => leavePlace(document.querySelector(".screen.active")?.id));
   {
@@ -18544,6 +18629,7 @@ ${pays}
       placed = true;
     }
   }
+  remember();
   addEventListener("pagehide", () => {
     const on2 = document.querySelector(".screen.active")?.id;
     if (on2 === "status" || on2 === "app") leftStatus();
@@ -18571,8 +18657,14 @@ ${pays}
   } catch {
   }
   document.addEventListener("keydown", (e3) => {
-    const current = document.querySelector(".screen.active")?.id;
+    const current2 = document.querySelector(".screen.active")?.id;
     const target = e3.target;
+    const typing = target.matches?.('input, textarea, select, [contenteditable="true"]');
+    if (isMac ? e3.metaKey && !e3.shiftKey && !e3.altKey && (e3.key === "[" || e3.key === "]") : e3.altKey && !e3.ctrlKey && !typing && (e3.key === "ArrowLeft" || e3.key === "ArrowRight")) {
+      const isBack = e3.key === "[" || e3.key === "ArrowLeft";
+      if (isBack ? goBack() : goForward()) e3.preventDefault();
+      return;
+    }
     if (e3.key === "Escape" && target.matches?.("input[type=search]") && target.value) {
       target.value = "";
       target.dispatchEvent(new Event("input"));
@@ -18585,7 +18677,7 @@ ${pays}
     }
     if (e3.key === "F5" && !isMac && !e3.ctrlKey && !e3.altKey && !e3.metaKey) {
       e3.preventDefault();
-      if (current) reload(current);
+      if (current2) reload(current2);
       return;
     }
     if (e3.key === "?" && !e3.metaKey && !e3.ctrlKey && !e3.altKey && !target.closest?.("input, textarea, select, [contenteditable], [role=menu]")) {
@@ -18622,15 +18714,15 @@ ${pays}
       navigate(screens2[n3 - 1]);
     } else if (e3.key.toLowerCase() === "r") {
       e3.preventDefault();
-      if (current) reload(current);
+      if (current2) reload(current2);
     } else if (e3.key.toLowerCase() === "f") {
-      const search = { choose: "search", settings: "settingsSearch" }[current];
+      const search = { choose: "search", settings: "settingsSearch" }[current2];
       if (search) {
         e3.preventDefault();
         $2(search).focus();
         $2(search).select();
       }
-      const box = current === "finances" ? document.querySelector("#finances .fx-txsearch") : null;
+      const box = current2 === "finances" ? document.querySelector("#finances .fx-txsearch") : null;
       if (box) {
         e3.preventDefault();
         box.focus();

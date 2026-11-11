@@ -11,7 +11,7 @@ import { healthData, hostData, loadAppearance, loadHost, loadSetup, setupNav, st
 import { changed, loadSettings, settingsData } from './screens/settings';
 import { loadCatalog } from './screens/choose';
 import { backupsData, jobsData, loadBackups } from './screens/backups';
-import { openApp, refreshApp } from './screens/apppage';
+import { openApp, openedApp, refreshApp } from './screens/apppage';
 import { updateFromMenu } from './screens/updates';
 import { financesData, ledgerData, loadFinances, toggleHideAmounts } from './screens/finances';
 import { loadTidy, tidyData } from './screens/tidy';
@@ -22,6 +22,7 @@ import { undoShown } from './status/UndoNote';
 import { arrivePlace, leavePlace } from './place';
 import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
+import { h as vnode, render } from 'preact';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
@@ -83,10 +84,86 @@ let navigated = false; // the user picked a screen; never switch away from it
 /** Picks a screen as the user would: the app never switches away from it after. */
 export function navigate(name) {
   // The menu bar item's Update to …: Status, with the update going in place.
-  if (name === 'update') { navigated = true; show('status'); updateFromMenu(); return; }
+  if (name === 'update') { navigated = true; show('status'); updateFromMenu(); remember(); return; }
   navigated = true;
   show(name);
+  remember();
 }
+
+// Back and Forward between screens, as a browser has them (the owner, Nov 11): an app's page with its app, at most
+// 50 back. ⌘[ and ⌘] (Alt+← and Alt+→ elsewhere), the mouse's back and forward buttons, and a two-finger swipe on a
+// trackpad: fingers to the right is Back, to the left Forward.
+type Place = { screen: string; app?: string };
+const back: Place[] = [], ahead: Place[] = [];
+let current: Place | undefined;
+let moving = false;
+function remember() {
+  const screen = document.querySelector('.screen.active')?.id;
+  if (!screen) return;
+  const next = { screen, app: screen === 'app' ? openedApp() : undefined };
+  if (!moving && current && (current.screen !== next.screen || current.app !== next.app)) {
+    back.push(current);
+    if (back.length > 50) back.shift();
+    ahead.length = 0;
+  }
+  current = next;
+}
+function visit(p: Place) {
+  moving = true;
+  try {
+    if (p.screen === 'app' && p.app) openApp(p.app);
+    else { navigate(p.screen); focusScreen(p.screen); }
+  } finally { moving = false; }
+}
+/** Back to the screen before (false when there is none). */
+export function goBack(): boolean {
+  const p = back.pop();
+  if (!p) return false;
+  if (current) ahead.push(current);
+  visit(p);
+  swipeHint('back');
+  return true;
+}
+/** Forward to the screen Back left (false when there is none). */
+export function goForward(): boolean {
+  const p = ahead.pop();
+  if (!p) return false;
+  if (current) back.push(current);
+  visit(p);
+  swipeHint('forward');
+  return true;
+}
+/** A small arrow at that edge for a moment: where Back or Forward went. */
+let hintGone: number | undefined;
+function swipeHint(way: 'back' | 'forward') {
+  const box = document.getElementById('swipeHint');
+  if (!box) return;
+  window.clearTimeout(hintGone);
+  render(vnode('div', { key: Date.now(), class: 'swipehint ' + way }, way === 'back' ? '‹' : '›'), box);
+  hintGone = window.setTimeout(() => render(null, box), 500);
+}
+// A two-finger swipe on a trackpad is a sideways wheel: its distance added up while it lasts (a pause ends it), and
+// once past a threshold, Back or Forward, once a swipe. Not over something that still scrolls that way (a wide table,
+// a chart), and not on a phone, whose screens are a bar of tabs.
+let swipeSum = 0, swipeAt = 0, swiped = false;
+function scrollsSideways(t: EventTarget | null, dx: number): boolean {
+  for (let el = t instanceof Element ? t : null; el && el !== document.body; el = el.parentElement) {
+    if (!/(auto|scroll)/.test(getComputedStyle(el).overflowX) || el.scrollWidth <= el.clientWidth + 1) continue;
+    if (dx < 0 ? el.scrollLeft > 0 : el.scrollLeft + el.clientWidth < el.scrollWidth - 1) return true;
+  }
+  return false;
+}
+addEventListener('wheel', (e) => {
+  if (onPhone() || e.ctrlKey || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+  const now = performance.now();
+  if (now - swipeAt > 300) { swipeSum = 0; swiped = false; }
+  swipeAt = now;
+  if (swiped || scrollsSideways(e.target, e.deltaX)) return;
+  swipeSum += e.deltaX;
+  if (Math.abs(swipeSum) > 150) { swiped = true; if (swipeSum < 0) goBack(); else goForward(); }
+}, { passive: true });
+// The mouse's own back and forward buttons.
+addEventListener('mouseup', (e) => { if (e.button === 3 && goBack()) e.preventDefault(); if (e.button === 4 && goForward()) e.preventDefault(); });
 // Cmd (Ctrl elsewhere) with a number picks a screen: the first five as they
 // always were, Finances after them, then Tidy Up.
 const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances', 'tidy'];
@@ -94,6 +171,7 @@ const screens = ['choose', 'status', 'backups', 'setup', 'settings', 'finances',
 // not only once the app picks it.
 addEventListener('pagehide', () => leavePlace(document.querySelector('.screen.active')?.id));
 { const first = document.querySelector('.screen.active')?.id; if (first) { arrivePlace(first); placed = true; } }
+remember();
 // Closing the app on Status: what it showed is what was seen.
 addEventListener('pagehide', () => { const on = document.querySelector('.screen.active')?.id; if (on === 'status' || on === 'app') leftStatus(); });
 $$('nav button').forEach((b) => {
@@ -119,6 +197,13 @@ try { const z = Number(localStorage.getItem('homelab.textSize')); if (z) setText
 document.addEventListener('keydown', (e) => {
   const current = document.querySelector('.screen.active')?.id;
   const target = e.target as any;
+  // Back and Forward: ⌘[ ⌘] on the Mac; Alt+← Alt+→ elsewhere (not while typing, where they move the cursor).
+  const typing = target.matches?.('input, textarea, select, [contenteditable="true"]');
+  if (isMac ? e.metaKey && !e.shiftKey && !e.altKey && (e.key === '[' || e.key === ']') : e.altKey && !e.ctrlKey && !typing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+    const isBack = e.key === '[' || e.key === 'ArrowLeft';
+    if (isBack ? goBack() : goForward()) e.preventDefault();
+    return;
+  }
   if (e.key === 'Escape' && target.matches?.('input[type=search]') && target.value) {
     target.value = '';
     target.dispatchEvent(new Event('input'));

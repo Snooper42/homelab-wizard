@@ -47,6 +47,7 @@ function everywhere(): Line[] {
   const lines: Line[] = [
     [['?'], 'These shortcuts'],
     [[mod + 'K'], 'The command palette: an app, a screen or a command by name'],
+    [isMac ? ['⌘[', '⌘]'] : ['Alt+←', 'Alt+→'], 'Back to the screen before, or Forward again; a two-finger swipe right or left on a trackpad does the same'],
     [isMac ? ['⌘R'] : ['Ctrl+R', 'F5'], 'Check the screen again'],
     [[mod + '+', mod + '−', mod + '0'], 'Bigger text, smaller, or the usual size'],
     [[isMac ? '⌘⇧H' : 'Ctrl+Shift+H'], 'Hide every amount, or show them again'],
