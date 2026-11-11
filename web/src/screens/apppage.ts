@@ -41,6 +41,9 @@ const icons: Record<string, string> = {};
 
 const shown = () => !!id && $('app').classList.contains('active');
 
+/** The app whose page this is (Back and Forward keep it with the page). */
+export const openedApp = () => id;
+
 /** Opens an app's page, from its row or the app's --screen app:<id>. */
 export function openApp(appId: string) {
   if (appId !== id) { usage = undefined; disk = undefined; household = null; stopped = 'reading'; }

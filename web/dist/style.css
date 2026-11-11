@@ -2755,3 +2755,8 @@ button.fx-symbol small { color:var(--muted); }
 .rulelist li { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
 .rulelist .rulefields { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
 .rulelist .rulefields input:not([type]) { width:12em; }
+/* Back or Forward (a swipe, ⌘[ ⌘]): an arrow at that edge for a moment. */
+.swipehint { position:fixed; top:50%; z-index:50; width:40px; height:40px; margin-top:-20px; border-radius:50%; display:grid; place-items:center; font-size:26px; line-height:1; color:var(--text); background:var(--panel); border:1px solid var(--line); box-shadow:var(--shadow); pointer-events:none; animation:swipehint .5s ease-out forwards; }
+.swipehint.back { left:16px; } .swipehint.forward { right:16px; }
+@keyframes swipehint { from { opacity:1; } to { opacity:0; } }
+@media (prefers-reduced-motion: reduce) { .swipehint { animation:none; opacity:.8; } }

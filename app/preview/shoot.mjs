@@ -2501,6 +2501,33 @@ const smokes = [
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
+  // Back and Forward between screens, as a browser has them (the owner, Nov 11): ⌘[ and ⌘], an app's page coming back
+  // with its app, and a two-finger swipe on a trackpad (sideways wheel), right for Back, left for Forward.
+  { name: 'Back and Forward between screens: ⌘[ and ⌘], and a two-finger swipe', screen: 'status', run: async (page) => {
+    const on = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
+    await page.click('nav button[data-screen="backups"]');
+    await page.click('nav button[data-screen="finances"]');
+    await page.keyboard.press('Meta+BracketLeft');
+    if ((await on()) !== 'backups') throw new Error(`Back went to ${await on()}`);
+    await page.keyboard.press('Meta+BracketLeft');
+    if ((await on()) !== 'status') throw new Error(`Back again went to ${await on()}`);
+    await page.keyboard.press('Meta+BracketRight');
+    if ((await on()) !== 'backups') throw new Error(`Forward went to ${await on()}`);
+    // An app's page comes back with its own app.
+    await page.click('nav button[data-screen="status"]');
+    await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.appname a, #statusRows tr:has(strong:text-is("Vikunja")) strong', { timeout: 5000 });
+    await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 5000 });
+    await page.click('nav button[data-screen="settings"]');
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 5000 });
+    // A two-finger swipe: fingers to the right (the page moves left) is Back; to the left, Forward.
+    await page.mouse.move(640, 400);
+    for (let i = 0; i < 6; i++) await page.mouse.wheel(-60, 0);
+    await page.waitForFunction(() => document.querySelector('.screen.active')?.id === 'status', null, { timeout: 3000 });
+    await page.waitForTimeout(400);
+    for (let i = 0; i < 6; i++) await page.mouse.wheel(60, 0);
+    await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 3000 });
+  } },
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("running ✓")', { timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');
