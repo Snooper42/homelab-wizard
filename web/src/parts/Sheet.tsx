@@ -63,8 +63,12 @@ export function Sheet({ id, titleId, onClose, children }: { id: string; titleId:
       if (!panel.hidden) {
         if (!panel.contains(document.activeElement)) before = document.activeElement;
         // A form's cursor in its first field, the sheet at its top; a
-        // command's on its first button.
+        // command's on its first button. Not once it is in one of the
+        // sheet's own controls already (a click into another field as it
+        // opened): what is typed there stays there.
         requestAnimationFrame(() => {
+          const now = document.activeElement;
+          if (panel.hidden || (now && now !== panel && panel.contains(now))) return;
           panel.scrollTop = 0;
           (panel.querySelector<HTMLElement>(field) || panel.querySelector<HTMLElement>('button:not([disabled])') || panel).focus();
         });

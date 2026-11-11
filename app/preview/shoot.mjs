@@ -8129,6 +8129,25 @@ const smokes = [
     const txs = await page.evaluate(() => window.__MOCK.ledgerSaved?.at(-1)?.transactions);
     if (txs.find((t) => t.id === 'c2')?.category) throw new Error('a name starting the same was changed');
   } },
+  // A sheet puts its cursor in its first field a frame after it opens, but not once the cursor is already in one of its
+  // fields: a click into Category as it opens stays there, and what is typed goes into Category, not onto Paid to.
+  { name: 'A sheet leaves the cursor in the field it was put in as it opened', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
+    { id: 'c1', date: '2026-10-20', account: 'chk', amount: -12, payee: 'Corner Cafe' },
+  ] } }, run: async (page) => {
+    await finTab(page, 'Transactions', { timeout: 5000 });
+    const where = await page.evaluate(async () => {
+      document.querySelector('.fx-txday li button').click();
+      const cat = [...document.querySelectorAll('#finSheet label.field')].find((l) => /^Category/.test(l.textContent.trim()))?.querySelector('input');
+      if (!cat) return 'no Category field';
+      cat.focus();
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      return document.activeElement === cat ? 'Category' : document.activeElement?.closest('label')?.textContent.trim() || document.activeElement?.tagName;
+    });
+    if (where !== 'Category') throw new Error(`the cursor moved to ${where}`);
+    await page.keyboard.type('Eating out');
+    const payee = await page.locator('#finSheet label.field').filter({ hasText: /^Paid to/ }).locator('input').inputValue();
+    if (payee !== 'Corner Cafe') throw new Error(`Paid to became ${payee}`);
+  } },
   // A payee renamed by hand renames the others by its old name (unless unticked), and the next import of that wording comes in by the new one.
   { name: 'Finances: a payee renamed renames its other transactions, and the next import comes in by that name', screen: 'finances', mock: { ledger: { rev: 'r1', transactions: [
     { id: 'h1', date: '2026-09-28', account: 'chk', amount: -310, payee: 'Sunset Palms Eas Sunset Pal', note: 'SUNSET PALMS EAS SUNSET PAL FT446739428 WEB ID: 2HOA' },

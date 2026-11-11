@@ -3535,6 +3535,8 @@
         if (!panel.hidden) {
           if (!panel.contains(document.activeElement)) before3 = document.activeElement;
           requestAnimationFrame(() => {
+            const now = document.activeElement;
+            if (panel.hidden || now && now !== panel && panel.contains(now)) return;
             panel.scrollTop = 0;
             (panel.querySelector(field) || panel.querySelector("button:not([disabled])") || panel).focus();
           });
