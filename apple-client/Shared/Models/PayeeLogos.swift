@@ -190,13 +190,14 @@ final class PayeeLogos: @unchecked Sendable {
         static let townColumn = #"^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$"#
         static let lastWord = #"^(.+)\s(\S+)$"#
         static let glued = #"^(.*[A-Za-z].*\d)([A-Z][A-Z .'-]{1,12}) ([A-Z]{2})$"#
+        static let gluedTown = #"^(.*[A-Za-z].*\d)[A-Z][A-Z .'-]{1,12}$"#
         static let lastTwoWords = #"^(.+) (\S+) (\S+)$"#
         static let site = #"\.(?:com|net|org|co|io|tv|us)\b"#
         static let letter = #"[A-Za-z]"#
         static let caseless: Set<String> = [www, domain, cardDigits, store, zelle, cardPayment, achId, achTail, bankCode, site]
         static let all = [spaces, star, starReference, www, domain, date, phone, cardDigits, store, number, terminal, trailing, wordStart, apostropheS,
                           zelle, cardPayment, achId, underscored, longReference, achTail, longNumber, bankCode, memoAndWording,
-                          gap, townColumn, lastWord, glued, lastTwoWords, site, letter]
+                          gap, townColumn, lastWord, glued, gluedTown, lastTwoWords, site, letter]
     }
 
     private static func compile() -> [String: NSRegularExpression] {
@@ -391,7 +392,7 @@ final class PayeeLogos: @unchecked Sendable {
             parts.removeLast()
         }
         s = replace(parts.joined(separator: " "), P.trailing, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if s.isEmpty { return raw.trimmingCharacters(in: .whitespacesAndNewlines) }
+        if s.isEmpty { return replace(raw, P.spaces, with: " ").trimmingCharacters(in: .whitespacesAndNewlines) }
         if let chain = chainOf(Self.flat(s)) { return chain.name }
         return ordinary(s)
     }
@@ -425,8 +426,10 @@ final class PayeeLogos: @unchecked Sendable {
         if cols.count > 1 {
             let last = cols[cols.count - 1]
             if isState(last) {
-                let keep = cols.count > 2 && matches(cols[cols.count - 2], P.townColumn) ? cols.dropLast(2) : cols.dropLast()
-                return keeps(keep.joined(separator: " "))
+                // With no town column of its own, the town may have run into the shop's full column ("#100SUNRISE").
+                let town = cols.count > 2 && matches(cols[cols.count - 2], P.townColumn)
+                let shop = (town ? cols.dropLast(2) : cols.dropLast()).joined(separator: " ")
+                return keeps(town ? shop : (groups(shop, P.gluedTown)?[0] ?? shop))
             }
             if let two = groups(last, P.lastWord), isState(two[1]), matches(two[0], P.townColumn) {
                 return keeps(cols.dropLast().joined(separator: " "))

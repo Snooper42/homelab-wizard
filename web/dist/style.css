@@ -2266,6 +2266,7 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 .importlist li .importlink small { color:var(--text); }
 .importlist li .importlink select { max-width:100%; font-size:12px; }
 .importnote { margin:0 0 6px; font-size:13px; }
+.importnote.importwarn { color:var(--warn); }
 /* A payment's form: which way the money goes, above its fields. */
 .finform .finway { margin:0 0 12px; }
 /* Transactions that look like planned payments: Link and Not it at the row's end; what a typed one looks like, under its pick. */

@@ -41,6 +41,8 @@ const chains: [string, string][] = ([
   ['fpl', 'FPL'], ['florida power light', 'FPL'], ['duke energy', 'Duke Energy'], ['american express', 'American Express'], ['amex epayment', 'American Express'],
   ['applecard gsbank', 'Apple Card'], ['applecard', 'Apple Card'], ['apple card', 'Apple Card'], ['apple cash', 'Apple Cash'], ['fid bkg svc', 'Fidelity'], ['fidelity investments', 'Fidelity'],
   ['royal caribbean', 'Royal Caribbean'],
+  // American Express's own spelling and cuts: AMAZON MARKEPLACE NA; ANTHROPIC CLAUDE SUS, then SAN FRANCISCO run into it.
+  ['amazon markeplace', 'Amazon'], ['amazon marketplace', 'Amazon'], ['anthropic claude', 'Claude'],
   // Game stores, by their brand (WL *STEAM PURCHASE is Steam; MICROSOFT*XBOX, Xbox).
   ['steam purchase', 'Steam'], ['steamgames', 'Steam'], ['steam games', 'Steam'], ['steampowered', 'Steam'], ['steam store', 'Steam'],
   ['playstation network', 'PlayStation'], ['sony playstation', 'PlayStation'], ['playstation', 'PlayStation'], ['playstation plus', 'PlayStation Plus'],
@@ -70,6 +72,9 @@ const isState = (w: string) => w.length === 2 && w === w.toUpperCase() && states
 /** A town in a column of its own, or what stands in for one: the merchant's website or phone number. */
 const townColumn = /^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$/;
 
+/** A shop's full column with its town run into the end of its store number ("PET SUPERMARKET #100SUNRISE"): the shop's part. */
+const unglued = (s: string) => s.match(/^(.*[A-Za-z].*\d)[A-Z][A-Z .'-]{1,12}$/)?.[1] ?? s;
+
 /** A website in a line. */
 const site = /\.(?:com|net|org|co|io|tv|us)\b/i;
 
@@ -88,7 +93,12 @@ function shopOf(line: string): string {
   const cols = s.split(/\s{2,}/);
   if (cols.length > 1) {
     const last = cols[cols.length - 1], two = last.match(/^(.+)\s(\S+)$/);
-    if (isState(last)) return keeps((cols.length > 2 && townColumn.test(cols[cols.length - 2]) ? cols.slice(0, -2) : cols.slice(0, -1)).join(' '));
+    if (isState(last)) {
+      // With no town column of its own, the town may have run into the shop's full column ("#100SUNRISE").
+      const town = cols.length > 2 && townColumn.test(cols[cols.length - 2]);
+      const shop = cols.slice(0, town ? -2 : -1).join(' ');
+      return keeps(town ? shop : unglued(shop));
+    }
     if (two && isState(two[2]) && townColumn.test(two[1])) return keeps(cols.slice(0, -1).join(' '));
     return s;
   }
@@ -155,7 +165,7 @@ export function cleanPayee(raw: string | undefined): string {
   const parts = s.split(' ');
   if (parts.length > 1 && states.has(parts.at(-1)!.toLowerCase()) && parts.at(-1) === parts.at(-1)!.toUpperCase()) parts.pop();
   s = parts.join(' ').replace(/[\s,.;:-]+$/, '').trim();
-  if (!s) return (raw || '').trim();
+  if (!s) return (raw || '').replace(/\s+/g, ' ').trim();
   const chain = chainOf(flat(s));
   return chain ? chain[1] : ordinary(s);
 }

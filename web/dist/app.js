@@ -981,6 +981,10 @@
     ["fid bkg svc", "Fidelity"],
     ["fidelity investments", "Fidelity"],
     ["royal caribbean", "Royal Caribbean"],
+    // American Express's own spelling and cuts: AMAZON MARKEPLACE NA; ANTHROPIC CLAUDE SUS, then SAN FRANCISCO run into it.
+    ["amazon markeplace", "Amazon"],
+    ["amazon marketplace", "Amazon"],
+    ["anthropic claude", "Claude"],
     // Game stores, by their brand (WL *STEAM PURCHASE is Steam; MICROSOFT*XBOX, Xbox).
     ["steam purchase", "Steam"],
     ["steamgames", "Steam"],
@@ -1032,6 +1036,7 @@
   }
   var isState = (w3) => w3.length === 2 && w3 === w3.toUpperCase() && states.has(w3.toLowerCase());
   var townColumn = /^(?:[A-Za-z][A-Za-z .'/-]*|\d{3}[-. ]\d{3}[-. ]\d{4})$/;
+  var unglued = (s3) => s3.match(/^(.*[A-Za-z].*\d)[A-Z][A-Z .'-]{1,12}$/)?.[1] ?? s3;
   var site = /\.(?:com|net|org|co|io|tv|us)\b/i;
   function shopOf(line) {
     const s3 = line.trim();
@@ -1039,7 +1044,11 @@
     const cols = s3.split(/\s{2,}/);
     if (cols.length > 1) {
       const last2 = cols[cols.length - 1], two = last2.match(/^(.+)\s(\S+)$/);
-      if (isState(last2)) return keeps((cols.length > 2 && townColumn.test(cols[cols.length - 2]) ? cols.slice(0, -2) : cols.slice(0, -1)).join(" "));
+      if (isState(last2)) {
+        const town = cols.length > 2 && townColumn.test(cols[cols.length - 2]);
+        const shop = cols.slice(0, town ? -2 : -1).join(" ");
+        return keeps(town ? shop : unglued(shop));
+      }
       if (two && isState(two[2]) && townColumn.test(two[1])) return keeps(cols.slice(0, -1).join(" "));
       return s3;
     }
@@ -1079,7 +1088,7 @@
     const parts3 = s3.split(" ");
     if (parts3.length > 1 && states.has(parts3.at(-1).toLowerCase()) && parts3.at(-1) === parts3.at(-1).toUpperCase()) parts3.pop();
     s3 = parts3.join(" ").replace(/[\s,.;:-]+$/, "").trim();
-    if (!s3) return (raw || "").trim();
+    if (!s3) return (raw || "").replace(/\s+/g, " ").trim();
     const chain = chainOf(flat(s3));
     return chain ? chain[1] : ordinary(s3);
   }
@@ -11346,6 +11355,12 @@
     const guessFlip = signed2 && card && chargesPlus(asRead);
     const flipped = signed2 && (flip ?? guessFlip);
     const read_ = flipped ? asRead.map((t3) => ({ ...t3, amount: -t3.amount })) : asRead;
+    const cards = accounts.filter((a3) => a3.kind === "card");
+    const amexCards = cards.filter((a3) => brandOf(a3.institution, a3.name) === "americanexpress");
+    const toCard = amexCards.length === 1 ? amexCards[0] : cards.length === 1 ? cards[0] : void 0;
+    const plusRead = signed2 && !flipped && chargesPlus(asRead);
+    const here2 = accounts.find((a3) => a3.id === account);
+    const cardHere = card || !!here2 && brandOf(here2.institution, here2.name) === "americanexpress";
     const have = ledger?.transactions || [];
     const memory3 = renameMemory(have, cleanPayee);
     const found2 = read_.map((t3) => {
@@ -11448,6 +11463,38 @@
           found2.find((t3) => t3.payee)?.payee ? `“${found2.find((t3) => t3.payee).payee}”` : "empty",
           ": pick the column with the names under Payee."
         ] }),
+        plusRead && cardHere && /* @__PURE__ */ u3("p", { class: "importnote importwarn", role: "alert", children: [
+          "Most of these rows are read as money coming in, which on ",
+          here2?.name || "this card",
+          " lowers what it owes. A card's file writes its charges as plus amounts (American Express does).",
+          " ",
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setFlip(true), children: "Read them as charges" })
+        ] }),
+        plusRead && !cardHere && /* @__PURE__ */ u3("p", { class: "importnote importwarn", role: "alert", children: [
+          "Most of these rows are money coming in, which is how a card's file writes its charges (American Express does).",
+          " ",
+          toCard ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+            setAccount(toCard.id);
+            setPicked({});
+            setFlip(null);
+          }, children: [
+            "Bring it into ",
+            toCard.name
+          ] }) : "If it's a card's file, pick the card above."
+        ] }),
+        fresh.length > 0 && (() => {
+          const out = fresh.filter((t3) => t3.amount < 0), inn = fresh.filter((t3) => t3.amount > 0);
+          const sum = (l3) => money(Math.round(l3.reduce((a3, t3) => a3 + Math.abs(t3.amount), 0) * 100) / 100);
+          return /* @__PURE__ */ u3("p", { class: "muted importnote importsum", children: [
+            out.length,
+            " out, ",
+            sum(out),
+            " · ",
+            inn.length,
+            " in, ",
+            sum(inn)
+          ] });
+        })(),
         guessed.some(Boolean) && /* @__PURE__ */ u3("p", { class: "muted importnote", children: "A row that looks like a planned payment pays it, so the plan doesn't take it out again on its day. Change it below if it's wrong." }),
         /* @__PURE__ */ u3("ul", { class: "importlist", children: found2.slice(0, 60).map((t3, i3) => {
           const k3 = fresh.indexOf(t3), fixing = fixes.has(i3), renaming = renames.has(i3), dup = k3 < 0 && !fixing && !renaming;

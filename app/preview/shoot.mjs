@@ -5861,6 +5861,54 @@ const smokes = [
     const steam = txs.find((t) => t.payee === 'Steam');
     if (!(steam?.note || '').includes('WL *STEAM PURCHASE 425-555-0100 WA')) throw new Error(`Steam's note ${JSON.stringify(steam?.note)}`);
   } },
+  // A card's file brought into checking (left on the sheet's first account): most rows are money in, which a card's file
+  // writes its charges as. The sheet says so before anything comes in, and moves it to the American Express card in one
+  // tap, read as charges; a line says what comes in, out and in, before Bring in.
+  { name: 'Finances: an American Express file left on checking says so, and moves to the card in one tap', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n'
+      + '11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n'
+      + '11/04/2026,BLUE BOTTLE COFFEE  OAKLAND   CA,30.34\n'
+      + '11/02/2026,SUNNY DAYS SCHOOL  MIAMI   FL,402.00\n'
+      + '11/01/2026,AUTOPAY PAYMENT RECEIVED - THANK YOU,-500.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.waitForSelector('#finSheet .importnote:has-text("Most of these rows are money coming in")', { timeout: 5000 });
+    await page.waitForSelector('#finSheet .importsum:text-is("1 out, $500.00 · 3 in, $488.95")', { timeout: 2000 });
+    await page.click('#finSheet button:text-is("Bring it into Amex Gold")');
+    if ((await page.$eval('#finSheet label:has-text("Into the ledger of") select', (e) => e.value)) !== 'amex') throw new Error('not moved to the card');
+    await page.waitForSelector('#finSheet .importnote:has-text("read as charges")', { timeout: 2000 });
+    await page.waitForSelector('#finSheet .importsum:text-is("3 out, $488.95 · 1 in, $500.00")', { timeout: 2000 });
+    if (await page.isVisible('#finSheet .importnote:has-text("Most of these rows are money coming in")')) throw new Error('still warns on the card');
+  } },
+  // The card picked, but Charges are plus amounts unticked: the same warning, with Read them as charges.
+  { name: 'Finances: an American Express file read as money in on the card says so, and reads them as charges in one tap', screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n11/05/2026,AMAZON.COM AMZN.COM/BILL WA,56.61\n11/04/2026,BLUE BOTTLE COFFEE  OAKLAND   CA,30.34\n11/02/2026,SUNNY DAYS SCHOOL  MIAMI   FL,402.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.click('#finSheet label:has-text("Charges are plus amounts") input');
+    await page.waitForSelector('#finSheet .importnote:has-text("on Amex Gold lowers what it owes")', { timeout: 5000 });
+    await page.click('#finSheet button:text-is("Read them as charges")');
+    if (!(await page.isChecked('#finSheet label:has-text("Charges are plus amounts") input'))) throw new Error('not read as charges');
+    await page.waitForSelector('#finSheet .importsum:text-is("3 out, $488.95 · 0 in, $0.00")', { timeout: 2000 });
+  } },
+  // American Express's own cuts: a padded file whose town runs into a store number, its spelling of the marketplace, and a
+  // name cut at its column with the town run into it. Each reads as the shop.
+  { name: "Finances: an American Express name cut short or run into its town reads as the shop", screen: 'finances', run: async (page) => {
+    await page.click('#finRoot > .seg button:text-is("Spending")', { timeout: 5000 });
+    await page.click('.fx-transactions button:text-is("Import a file")');
+    const csv = 'Date,Description,Amount\n'
+      + '11/04/2026,PET SUPERMARKET #100SUNRISE           FL,30.34\n'
+      + '11/03/2026,AMAZON MARKEPLACE NA PA,4.98\n'
+      + '11/02/2026,ANTHROPIC CLAUDE SUSAN FRANCISCO CA,20.00\n';
+    await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'activity.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.selectOption('#finSheet label:has-text("Into the ledger of") select', 'amex');
+    await page.waitForSelector('#finSheet .formsub:has-text("3 to bring in")', { timeout: 5000 });
+    const names = await page.$$eval('#finSheet .importlist li strong', (s) => s.map((x) => x.textContent));
+    if (names.join('|') !== 'Pet Supermarket|Amazon|Claude') throw new Error(`names ${names.join('|')}`);
+  } },
   // A game store's wording is its brand, with its logo (Steam, PlayStation, Xbox, Nintendo, Epic Games, GameStop, Roblox),
   // and its row goes into the household's own Gaming category; with none, Shopping.
   ...[[true, 'Gaming'], [false, 'Shopping']].map(([own, cat]) => ({ name: `Finances: a game store comes in as its brand, with its logo, into ${own ? 'your Gaming category' : 'Shopping without one'}`, screen: 'finances',
