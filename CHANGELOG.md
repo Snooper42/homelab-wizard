@@ -104,6 +104,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Rules that reach further:** a rule can be for every payee starting with some words (*Truly Nolen* for *Truly Nolen 80*, *81* and *112*): rename a payee to the start of its name and tick **Always do this for…**, and that's picked for you, or pick **Only** that name. **Also change the N already in** gives every matching transaction the name and category, replacing a category picked before. And in **Rules** each rule's words, *starts with*, name and category can be changed, not only removed.
 - **Tidy Up's Undo holds up:** Recently done finds the music swap's and the books' Undo by what was done, not by the words of its line, so rewording a line in a later update can't quietly take its Undo away.
 - **Stop a Tidy Up job you didn't start here:** a job the overnight agent or a Terminal started (say, collecting Tdarr's work) used to hold every button on Tidy Up until it ended. Its card now has **Stop**, which stops it at its next safe point, as Stop does for a job you started, and says *Stopping…* until it has.
 - **Finances in four tabs:** Dashboard, **Spending** (Transactions and Reports), **Plan** (Calendar, Recurring and Paychecks, which was Pay) and Net worth, instead of seven side by side. Spending and Plan show their pages in a second row and open on the first; everything that opened a page before (a Dashboard card, a report, the sidebar) still opens it.

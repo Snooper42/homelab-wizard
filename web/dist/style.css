@@ -2748,3 +2748,10 @@ button.fx-symbol small { color:var(--muted); }
   #finances { --panel:var(--fin-night-card); --sunken:var(--fin-night-sunken); --line:var(--fin-night-line); --line-strong:var(--fin-night-line-strong); }
   #finances .card { box-shadow:none; border-color:var(--fin-night-line); }
 }
+/* Rules: a rule's choices on a transaction, and each rule's fields in the Rules sheet. */
+.finform .ruleopts { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; margin:-4px 0 8px 26px; }
+.finform .ruleopts input:not([type]) { width:14em; }
+.rulelist { list-style:none; margin:0; padding:0; }
+.rulelist li { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); }
+.rulelist .rulefields { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.rulelist .rulefields input:not([type]) { width:12em; }

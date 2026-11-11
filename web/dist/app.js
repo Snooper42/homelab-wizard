@@ -1386,9 +1386,14 @@
     }
     return out;
   }
+  function ruleMatches(r3, name) {
+    const want = (name || "").trim().toLowerCase(), m3 = r3.match.trim().toLowerCase();
+    return !!m3 && (want === m3 || !!r3.prefix && want.startsWith(m3 + " "));
+  }
   function ruleFor(rules, name) {
-    const want = (name || "").trim().toLowerCase();
-    return want ? (rules || []).find((r3) => r3.match.trim().toLowerCase() === want) : void 0;
+    if (!(name || "").trim()) return void 0;
+    const all = rules || [];
+    return all.find((r3) => !r3.prefix && ruleMatches(r3, name)) ?? all.filter((r3) => r3.prefix && ruleMatches(r3, name)).sort((a3, b2) => b2.match.trim().length - a3.match.trim().length)[0];
   }
   function noted(t3, account, ledger) {
     const said2 = t3.raw || t3.payee;
@@ -10970,6 +10975,15 @@
     const [renameAll, setRenameAll] = d2(true);
     const [always, setAlways] = d2(false);
     const canAlways = !!t3 && !!oldPayee && way !== "move" && !parts3.length && (payee.trim().toLowerCase() !== oldPayee.toLowerCase() || !!category.trim());
+    const startsOld = (n3) => !!n3 && oldPayee.toLowerCase().startsWith(n3.toLowerCase() + " ");
+    const [scope, setScope] = d2("");
+    const [start, setStart] = d2(null);
+    const scopeNow = scope || (startsOld(payee.trim()) ? "start" : "only");
+    const startNow = start ?? (startsOld(payee.trim()) ? payee.trim() : oldPayee);
+    const ruleNow = { match: scopeNow === "start" ? startNow.trim() : oldPayee, prefix: scopeNow === "start" || void 0 };
+    const [applyIn, setApplyIn] = d2(true);
+    const ruled = (q2) => !q2.to && q2.id !== t3?.id && !!q2.payee && ruleMatches(ruleNow, q2.payee);
+    const inCount = always && canAlways ? (ledger?.transactions || []).filter(ruled).length : 0;
     const others2 = (ledger?.transactions || []).filter((q2) => q2.id !== t3?.id);
     const guess = !paymentPicked && way !== "move" && num(amount) > 0 ? plannedFor({ date, amount: way === "in" ? num(amount) : -num(amount), payee: payee.trim() }, account, payments.filter((x3) => !x3.card), props.dues || {}, checking, paidDays(others2, props.dues || {}), withLearned(paysBill, others2)) : void 0;
     const linked = paymentPicked ? payment : guess?.payment || "";
@@ -11024,12 +11038,18 @@
       if (used.length > 1) next.category = void 0;
       if (!next.tags.length) next.tags = void 0;
       const same2 = (q2) => !q2.to && !!q2.payee && q2.payee.toLowerCase() === (next.payee || "").toLowerCase();
-      const rule = always && canAlways ? { match: oldPayee, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : void 0, category: next.category || void 0 } : void 0;
-      const list = (ledger?.transactions || []).map((q2) => (rule || renameAll) && renamesToo && next.payee && byOld(q2) ? { ...q2, payee: next.payee } : q2).map((q2) => rule?.category && !q2.category && !q2.splits?.length && q2.id !== t3?.id && (byOld(q2) || same2(q2)) ? { ...q2, category: rule.category } : q2).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
+      if (always && canAlways && !ruleNow.match) {
+        setProblem("Type the words the names start with.");
+        return;
+      }
+      const rule = always && canAlways ? { ...ruleNow, payee: next.payee && next.payee.toLowerCase() !== oldPayee.toLowerCase() ? next.payee : void 0, category: next.category || void 0 } : void 0;
+      if (rule && !rule.prefix) delete rule.prefix;
+      const list = (ledger?.transactions || []).map((q2) => rule && applyIn && ruled(q2) ? { ...q2, payee: rule.payee || q2.payee, category: q2.splits?.length ? q2.category : rule.category || q2.category } : q2).map((q2) => !(rule && applyIn) && renameAll && renamesToo && next.payee && byOld(q2) ? { ...q2, payee: next.payee } : q2).map((q2) => logoPicked.current && next.payee && same2(q2) ? { ...q2, institution: next.institution } : q2);
       const at2 = list.findIndex((q2) => q2.id === t3?.id);
       if (at2 >= 0) list[at2] = next;
       else list.push(next);
-      keepLedger(list, rule ? [...(plan.rules || []).filter((r3) => r3.match.trim().toLowerCase() !== oldPayee.toLowerCase()), rule] : void 0);
+      const kind = (r3) => r3.match.trim().toLowerCase() + (r3.prefix ? " …" : "");
+      keepLedger(list, rule ? [...(plan.rules || []).filter((r3) => kind(r3) !== kind(rule)), rule] : void 0);
     };
     const remove = () => keepLedger((ledger?.transactions || []).filter((q2) => q2.id !== t3?.id));
     return /* @__PURE__ */ u3("form", { class: "finform", onSubmit: submit, ...watch2, children: [
@@ -11070,9 +11090,31 @@
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: always, onClick: tick2(setAlways) }),
         " Always do this for “",
         oldPayee,
-        "”: its other transactions, and every import from now on"
+        "”, and for every import from now on"
       ] }),
-      renamesToo > 0 && /* @__PURE__ */ u3("label", { class: "fcheckbox renameall", children: [
+      canAlways && always && /* @__PURE__ */ u3("div", { class: "ruleopts wide", children: [
+        /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "rulescope", checked: scopeNow === "only", onClick: () => setScope("only") }),
+          " Only “",
+          oldPayee,
+          "”"
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "radio", name: "rulescope", checked: scopeNow === "start", onClick: () => setScope("start") }),
+          " Any name starting with"
+        ] }),
+        /* @__PURE__ */ u3("input", { "aria-label": "Names starting with", value: startNow, disabled: scopeNow !== "start", onInput: (e3) => {
+          setStart(e3.target.value);
+          setScope("start");
+        } }),
+        inCount > 0 && /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+          /* @__PURE__ */ u3("input", { type: "checkbox", checked: applyIn, onClick: tick2(setApplyIn) }),
+          " Also change the ",
+          inCount === 1 ? "one" : inCount,
+          " already in"
+        ] })
+      ] }),
+      renamesToo > 0 && !(always && canAlways) && /* @__PURE__ */ u3("label", { class: "fcheckbox renameall", children: [
         /* @__PURE__ */ u3("input", { type: "checkbox", checked: renameAll, onClick: tick2(setRenameAll) }),
         " Rename ",
         renamesToo === 1 ? "the other transaction" : `the ${renamesToo} other transactions`,
@@ -11195,10 +11237,24 @@
   function RulesForm(props) {
     const { plan } = props;
     const { busy: busy2, keep: keep2, touched, watch: watch2 } = useSaving(props);
-    const [rules, setRules] = d2(plan.rules || []);
+    const [rules, setRulesState] = d2(plan.rules || []);
+    const latest2 = A2(rules);
+    const setRules = (next) => {
+      latest2.current = next;
+      setRulesState(next);
+    };
+    const [problem, setProblem] = d2("");
+    const set2 = (i3, change) => setRules(latest2.current.map((r3, j3) => j3 === i3 ? { ...r3, ...change } : r3));
+    const named6 = (props.categories || []).map((c4) => c4.name);
     const submit = (e3) => {
       e3.preventDefault();
-      keep2({ ...plan, rules: rules.length ? rules : void 0 });
+      const kept4 = latest2.current.map((r3) => ({ match: r3.match.trim(), prefix: r3.prefix || void 0, payee: (r3.payee || "").trim() || void 0, category: (r3.category || "").trim() || void 0 }));
+      const bad = kept4.find((r3) => !r3.match || !r3.payee && !r3.category);
+      if (bad) {
+        setProblem(bad.match ? `The rule for ${bad.match} does nothing: give it a name or a category.` : "Each rule needs the name it is for.");
+        return;
+      }
+      keep2({ ...plan, rules: kept4.length ? kept4 : void 0 });
     };
     return /* @__PURE__ */ u3("form", { class: "finform finrules", onSubmit: submit, ...watch2, children: [
       /* @__PURE__ */ u3("div", { class: "formhead", children: /* @__PURE__ */ u3("h2", { id: "finSheetTitle", children: "Rules" }) }),
@@ -11207,20 +11263,27 @@
         /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
         " on a transaction. Every import follows them, before anything is guessed."
       ] }),
+      /* @__PURE__ */ u3("datalist", { id: "finRuleCategories", children: named6.map((n3) => /* @__PURE__ */ u3("option", { value: n3 }, n3)) }),
       /* @__PURE__ */ u3("ul", { class: "rulelist", children: rules.map((r3, i3) => /* @__PURE__ */ u3("li", { children: [
-        /* @__PURE__ */ u3("span", { class: "grow", children: [
-          /* @__PURE__ */ u3("strong", { children: r3.match }),
-          /* @__PURE__ */ u3("small", { children: [r3.payee, r3.category].filter(Boolean).join(" · ") })
+        /* @__PURE__ */ u3("span", { class: "grow rulefields", children: [
+          /* @__PURE__ */ u3("input", { "aria-label": `Name to match for ${r3.match}`, value: r3.match, onInput: (e3) => set2(i3, { match: e3.target.value }) }),
+          /* @__PURE__ */ u3("label", { class: "fcheckbox", children: [
+            /* @__PURE__ */ u3("input", { type: "checkbox", checked: !!r3.prefix, onClick: (e3) => set2(i3, { prefix: e3.target.checked || void 0 }) }),
+            " and names starting so"
+          ] }),
+          /* @__PURE__ */ u3("input", { "aria-label": `Name to give for ${r3.match}`, value: r3.payee || "", placeholder: "Its name as it comes in", onInput: (e3) => set2(i3, { payee: e3.target.value }) }),
+          /* @__PURE__ */ u3("input", { "aria-label": `Category for ${r3.match}`, value: r3.category || "", placeholder: "No category", list: "finRuleCategories", onInput: (e3) => set2(i3, { category: e3.target.value }) })
         ] }),
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove the rule for ${r3.match}`, onClick: () => setRules(rules.filter((_3, j3) => j3 !== i3)), children: "Remove" })
-      ] }, r3.match)) }),
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", "aria-label": `Remove the rule for ${r3.match}`, onClick: () => setRules(latest2.current.filter((_3, j3) => j3 !== i3)), children: "Remove" })
+      ] }, i3)) }),
       !rules.length && /* @__PURE__ */ u3("p", { class: "muted", children: [
         "No rules yet. On a transaction, give its payee a name or a category and tick ",
         /* @__PURE__ */ u3("strong", { children: "Always do this for…" }),
         "."
       ] }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
       /* @__PURE__ */ u3(Actions3, { busy: busy2, exists: false, remove: () => {
-      }, close: props.close, touched: touched || rules.length !== (plan.rules || []).length })
+      }, close: props.close, touched: touched || JSON.stringify(rules) !== JSON.stringify(plan.rules || []) })
     ] });
   }
   var categoryIcons = [

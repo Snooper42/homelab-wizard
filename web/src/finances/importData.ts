@@ -199,10 +199,18 @@ export function renameMemory(ledger: finance.Transaction[], clean: (raw: string)
   return out;
 }
 
-/** The rule for a payee as it comes in ("Always do this for <payee>"): by its name, in any capitals. */
+/** Whether a rule is for a payee: its name in any capitals, or for a "starts with" rule, a name starting with its words. */
+export function ruleMatches(r: Pick<finance.Rule, 'match' | 'prefix'>, name: string | undefined): boolean {
+  const want = (name || '').trim().toLowerCase(), m = r.match.trim().toLowerCase();
+  return !!m && (want === m || (!!r.prefix && want.startsWith(m + ' ')));
+}
+
+/** The rule for a payee as it comes in ("Always do this for <payee>"): one for its name first, else the longest start. */
 export function ruleFor(rules: finance.Rule[] | undefined, name: string | undefined): finance.Rule | undefined {
-  const want = (name || '').trim().toLowerCase();
-  return want ? (rules || []).find((r) => r.match.trim().toLowerCase() === want) : undefined;
+  if (!(name || '').trim()) return undefined;
+  const all = rules || [];
+  return all.find((r) => !r.prefix && ruleMatches(r, name))
+    ?? all.filter((r) => r.prefix && ruleMatches(r, name)).sort((a, b) => b.match.trim().length - a.match.trim().length)[0];
 }
 
 /** One already in by the bank's wording kept in its note, on the account, day, and amount: whatever it was renamed since. */

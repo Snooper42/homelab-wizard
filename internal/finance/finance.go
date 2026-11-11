@@ -218,10 +218,14 @@ type Account struct {
 }
 
 // Rule is one "Always do this for <payee>": the payee's name as it comes
-// in (as the import makes it from the bank's wording, any capitals), and
-// the name and the category to give it. At least one of the two.
+// in (as the import makes it from the bank's wording, any capitals), or
+// its first words, and the name and the category to give it. At least one
+// of the two.
 type Rule struct {
-	Match    string `json:"match"`
+	Match string `json:"match"`
+	// Prefix: every payee whose name starts with Match's words (Truly
+	// Nolen for Truly Nolen 80), not only the one by that name.
+	Prefix   bool   `json:"prefix,omitempty"`
 	Payee    string `json:"payee,omitempty"`
 	Category string `json:"category,omitempty"`
 }
@@ -481,7 +485,7 @@ func Clean(p Plan) (Plan, error) {
 			p.Quiet = append(p.Quiet, k)
 		}
 	}
-	// Each payee's name once: a newer rule replaces the older, whatever its capitals.
+	// Each payee's name once (and once as a start): a newer rule replaces the older, whatever its capitals.
 	if len(p.Rules) > maxRules {
 		return p, fmt.Errorf("%d rules: at most %d", len(p.Rules), maxRules)
 	}
@@ -496,6 +500,9 @@ func Clean(p Plan) (Plan, error) {
 			return p, fmt.Errorf("the rule for %s does nothing: give it a name or a category", r.Match)
 		}
 		k := strings.ToLower(r.Match)
+		if r.Prefix {
+			k += "\x00…"
+		}
 		if i, ok := at[k]; ok {
 			rules = append(rules[:i], rules[i+1:]...)
 			for m, j := range at {

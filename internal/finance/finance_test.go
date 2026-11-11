@@ -1097,3 +1097,21 @@ func TestRulesAreCleaned(t *testing.T) {
 		t.Errorf("an old plan writes rules: %s", data)
 	}
 }
+
+// A rule can match every payee starting with its words (Truly Nolen for Truly Nolen 80, 81 and 112): an exact rule and
+// a "starts with" rule of the same words are two rules; two of the same kind, the newer wins.
+func TestRulesStartingWith(t *testing.T) {
+	p := household()
+	p.Rules = []Rule{
+		{Match: "Pine Pest", Prefix: true, Category: "Home"},
+		{Match: "Pine Pest", Payee: "Pine"},
+		{Match: "pine pest", Prefix: true, Category: "Repairs"},
+	}
+	got, err := Clean(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Rules) != 2 || got.Rules[0] != (Rule{Match: "Pine Pest", Payee: "Pine"}) || got.Rules[1] != (Rule{Match: "pine pest", Prefix: true, Category: "Repairs"}) {
+		t.Errorf("rules: %+v", got.Rules)
+	}
+}
