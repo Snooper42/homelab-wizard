@@ -67,7 +67,7 @@ The **one open pull request of yours at a time** rule still holds, so these go o
   - Engine results: a music check that finds songs missing says whose, with Put it back and Check again; an applied books review isn't offered again.
 - **Open:**
   - The sidebar's Tidy Up badge counts only something wrong, not the screen's *N things need your OK*: the owner's call, asked Nov 6.
-  - Recently done on Books stays empty after a review.
+  - ~~Recently done on Books stays empty after a review.~~ Fixed Nov 10 (tidy-loop.md queue item 5).
   - docs/Testing.md's new Tidy Up rows want a try on the owner's Mac.
 - **Account 2's `claude/fix-tidy-first-run`** (the owner's new Mac: Needs your OK starts with two rows, not nine) is stacked on #476 and opens after it. It is Account 2's PR: read it, don't push to it.
 - **For Account 2** (shared parts):

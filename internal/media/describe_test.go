@@ -164,3 +164,20 @@ func TestNeedsLook(t *testing.T) {
 		t.Errorf("leave's line: %q", text)
 	}
 }
+
+// A books review leaves a line in Books' Recently done (tidy-loop.md's queue, item 5): how many it read and how many
+// could look tidier, or that none could. It puts nothing in the Trash, so it offers no Undo.
+func TestDescribeBooksReview(t *testing.T) {
+	text, sub := Describe("books", Run{Action: "review", OK: true, Result: map[string]any{"books": float64(412), "changes": float64(3)}})
+	if text != "Books looked over" || sub != "412 books · 3 could look tidier" {
+		t.Errorf("got %q, %q", text, sub)
+	}
+	if text, sub := Describe("books", Run{Action: "review", OK: true, Result: map[string]any{"books": float64(1), "changes": float64(0)}}); text != "Books looked over" || sub != "1 book · nothing to change" {
+		t.Errorf("nothing to change: %q, %q", text, sub)
+	}
+	var r Record
+	r.Note("books", Run{Action: "review", OK: true, At: time.Now(), ID: "b", Result: map[string]any{"books": float64(412), "changes": float64(3)}})
+	if len(r.Activity) != 1 || r.Activity[0].Kind != "books" || r.Activity[0].Undo != "" {
+		t.Errorf("its line: %+v", r.Activity)
+	}
+}
