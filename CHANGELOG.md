@@ -212,6 +212,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tidy Up keeps following a job it didn't start:** one failed look at a job the agent or a Terminal was running made Tidy Up stop following it, so its card and the waiting buttons stayed until something else redrew the screen. It now looks again a few seconds later.
 - **Books' Recently done says when you looked them over:** after **Look over your books**, Recently done on Books stayed empty. It now says *Books looked over*, with how many it read and how many could look tidier (or *nothing to change*).
 - **Tidy Up carries on the job that stopped, not another:** a **Tidy lyrics** that stopped part-way came back as *Adding lyrics* and its **Carry on** asked LRCLIB about every song, and a **Set up Tdarr** or **Check Downloads** carried on as a preview that changed nothing, so its *stopped part-way* card never went away. A job now keeps how it was run, and Carry on runs it that way. One that stopped before this update, where that can't be told, says to start it again from Music.
 - **A mortgage split with someone else falls as its papers say:** with only your half of the payment in the plan, Net worth's paycheck-by-paycheck table had the mortgage falling by that half a month, while the Loans card used the papers' whole payment. A loan read from its papers now owes, after each payment day, what the papers say, on both. Checking still pays only your half.

@@ -17637,7 +17637,7 @@ ${pays}
         try {
           running4 = await go().TidyLock();
         } catch {
-          running4 = null;
+          follow2();
           return;
         }
         if (!running4.lock) {
