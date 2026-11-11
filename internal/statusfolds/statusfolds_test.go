@@ -30,8 +30,10 @@ func TestFoldsAreKeptWhole(t *testing.T) {
 	if got := Load(root); len(got) != 0 {
 		t.Errorf("cleared: %v", got)
 	}
+	if err := Save(root, map[string]bool{"Media": false}); err != nil {
+		t.Fatal(err)
+	}
 	if runtime.GOOS != "windows" {
-		_ = Save(root, map[string]bool{"Media": false})
 		if fi, err := os.Stat(Path(root)); err != nil || fi.Mode().Perm() != 0o600 {
 			t.Errorf("mode: %v %v", fi.Mode(), err)
 		}
