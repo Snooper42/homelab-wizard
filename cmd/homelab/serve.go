@@ -292,7 +292,7 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			}
 			return list, err
 		}),
-		"Protection":    read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Protection(ctx, root) }),
+		"Protection": read(func(ctx context.Context, _ []json.RawMessage) (any, error) { return core.Protection(ctx, root) }),
 		"Watchdog": read(func(context.Context, []json.RawMessage) (any, error) {
 			return health.LoadState(health.StatePath(root)).Summary(), nil
 		}),
