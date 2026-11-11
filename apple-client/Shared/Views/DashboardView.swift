@@ -89,6 +89,8 @@ struct DashboardView: View {
         .environment(model.icons)
         .task { await model.loadCatalog() }
         .task { await model.loadForMorning() }
+        // Alerts from this app (Settings › Alerts From), while it runs.
+        .task { await LocalAlerts.watch(read: { try await model.alertLog() }, computerKeeps: { actions.computerAnswers("AlertLog") }) }
         // Kept as it arrives, so leaving (a lock clears the status first) still saves what was seen.
         .onChange(of: model.liveEvents.status) { _, status in
             guard let status else { return }
