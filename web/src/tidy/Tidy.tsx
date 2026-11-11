@@ -7,7 +7,7 @@
 import { createContext, render, type ComponentChildren } from 'preact';
 import { useContext, useEffect, useState } from 'preact/hooks';
 import { errorText, osName, thisMachine } from '../core';
-import { ago } from '../format';
+import { ago, never, startedText } from '../format';
 import { Card, CardHead } from '../parts/Card';
 import { Empty } from '../parts/Empty';
 import { Row, Rows, type Tone } from '../parts/Row';
@@ -242,7 +242,6 @@ export function JobPanel({ job, stop, done, fix, again }: { job: TidyJob; stop: 
 function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] & {}; now?: app.TidyRunning['now']; stop?: () => void; stopping?: boolean }) {
   const title = jobTitle(lock.kind, lock.action, lock.flags || []);
   const p = now?.progress && now.progress.total ? { done: now.progress.done || 0, total: now.progress.total, label: now.progress.label || '', note: now.progress.note, eta: now.progress.eta } : undefined;
-  const since = new Date(lock.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   return (
     <Card kind="tidyjob" id="tidyRunning">
       <p class="sr" role="status">{title}: {stopping ? 'stopping' : now?.step ? `step ${now.step.n} of ${now.step.total}, ${now.step.text}` : 'running'}</p>
@@ -254,7 +253,7 @@ function RunningCard({ lock, now, stop, stopping }: { lock: app.TidyUp['lock'] &
       <Bar title={title} p={p} idle="Working…" />
       {stopping ? <p class="muted tidynow">Stopping at the next safe point, so nothing is left half done. Run it again to carry on from there.</p>
         : p?.note && <p class="muted tidynow">Now: {p.note}</p>}
-      <p class="muted">Started at {since}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
+      <p class="muted">Started {startedText(lock.start)}, outside this window, and carries on with it closed. The buttons below wait until it's done.</p>
     </Card>
   );
 }
@@ -1232,7 +1231,7 @@ export function TidyScreen(p: TidyProps) {
       {other && <RunningCard lock={other} now={p.running?.lock ? p.running.now : undefined} stop={() => p.act.stopElsewhere(other)} stopping={p.stoppingElsewhere === other.start} />}
       {d?.stale && !other && !job && (() => {
         const c = carryOn(d.stale, d, act, p.pick);
-        return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action, staleFlags(d.stale))}: stopped part-way</strong><span class="muted">{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;
+        return <Card kind="notice" id="tidyStale"><strong>{jobTitle(d.stale.kind, d.stale.action, staleFlags(d.stale))}: stopped part-way</strong><span class="muted">{!never(d.stale.start) && <>Started {startedText(d.stale.start)}. </>}{'say' in c ? c.say : <>It can pick up where it left off. <button class="small" onClick={c.run}>{c.label}</button></>}</span></Card>;
       })()}
       {job && <JobPanel job={job} stop={act.stop} done={p.closeJob} fix={installFix(job, p.d, act)}
         // A job that asked first (a swap, an apply) is tried again from its own button, which asks again.

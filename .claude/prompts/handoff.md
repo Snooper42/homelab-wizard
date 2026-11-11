@@ -31,7 +31,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 11, 5:00 PM Eastern)
+## 1. Where it stands (Nov 11, 6:40 PM Eastern)
 
 **Merged Nov 10 and 11** (each green):
 
@@ -53,9 +53,12 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #591 | Alerts PR 1: **the computer keeps every alert** (`internal/history`'s `alerts`, 90 days), when it cleared and who snoozed it, never an amount; `AlertLog`; **Every alert…** on Status's Recent alerts, on the computer and the phone's page |
 | #592 | Alerts PR 2: **the iPhone's Every Alert page** (`AlertLogView`, `KeptAlert`; the contract's `alertLog` sample) |
 | #593 | Alerts PR 3: **Alerts From** on the iPhone (the ntfy app or this app, per phone; this app notifies while it's open) |
-| #594, #595 | The hand-off after Alerts in the app; this one (the feature check, then the rest) |
+| #594, #595 | The hand-off after Alerts in the app; the one for the feature check, then the rest |
+| #596 | **The feature map:** `docs/Parity.md` (every feature on the computer, the phone's page, the iPhone, the iPad and the Mac app), `TestParityNamesEveryPhoneCall`; `apple-client/README.md` no longer claims a Mac menu bar item and Dock count the code never had |
 
-**In flight:** nothing open. **Alerts in the app is done.** Background refresh was **dropped by the owner (Nov 11: "I'm okay with no backgrounds")**: the pairing stays readable only while the phone is unlocked (`KeychainManager.swift`), and a locked phone hears from the ntfy app until push (APNs, behind `HOMELAB_SIGNED`). Don't offer it again.
+**In flight:** #597 (branch `claude/stoic-goodall-0vg2bm`): Tidy Up's queue item 7, *Started yesterday at 3:04 AM* on the job-elsewhere card and a start time on the stopped-part-way card (`startedText` in `web/src/format.ts`), with this hand-off. *Done:* merged green. Then nothing is open; the next step waits on the owner (section 4) except 2B step 3's look items.
+
+**Alerts in the app is done.** Background refresh was **dropped by the owner (Nov 11: "I'm okay with no backgrounds")**: the pairing stays readable only while the phone is unlocked (`KeychainManager.swift`), and a locked phone hears from the ntfy app until push (APNs, behind `HOMELAB_SIGNED`). Don't offer it again.
 
 **Dropped, with the owner told:** ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 
@@ -73,15 +76,15 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
    - *Test that fails today:* `cmd/homelab` `TestParityNamesEveryPhoneCall`: every key of `phoneMethods` is named in `docs/Parity.md`, so a new phone call can't go unmapped. Mention the map in `CONTRIBUTING.md`'s every-PR list.
    - *Fixed looks like:* the owner can read one page and see what each device can and can't do, and why.
    - *Done:* merged green, with the test.
-2. **Show the owner the gaps and ask which to close.** A short list in chat (or a private Artifact page): each gap in a line, what closing it takes (S, M, L), and one recommended order. Gaps already known: the iPad lacks **What was done** and **links into the app** (README says "Not yet"); **Snooze…** on an open row of Every Alert (the watchdog card has it); whether **Every Alert**'s link opens from the iPad and Mac split view's list; Tidy Up and Choose apps are the computer's only (on purpose for now; Tidy Up's questions on the phone are `unison-handoff.md` item 9).
+2. **Show the owner the gaps and ask which to close.** **Asked Nov 11, 6 PM** (the list is `docs/Parity.md`'s *Gaps*; section 4 has the recommendation). Waiting on their pick. A short list in chat (or a private Artifact page): each gap in a line, what closing it takes (S, M, L), and one recommended order. Gaps already known: the iPad lacks **What was done** and **links into the app** (README says "Not yet"); **Snooze…** on an open row of Every Alert (the watchdog card has it); whether **Every Alert**'s link opens from the iPad and Mac split view's list; Tidy Up and Choose apps are the computer's only (on purpose for now; Tidy Up's questions on the phone are `unison-handoff.md` item 9).
    *Done:* the owner has the list and has picked (or said none).
 3. **Each gap the owner picks: its own PR**, a failing test first (Swift Testing for the iPhone and iPad, smoke for the phone's page), and its row in `docs/Parity.md` changed to *yes* in the same PR. *Done:* every picked gap merged with its row *yes*; then give the owner 2B step 6's launcher line (the security review), and go on to 2B step 1.
 
-### 2B. Then the rest, in this order: not started
+### 2B. Then the rest, in this order: started while 2A waits on the owner
 
-1. **Finances imports, round 3.** Ask the owner for a screenshot of rows that still look wrong (they said "closer to being correct", Nov 11). Describe them in shapes, never commit their merchants (section 0, rule 1). No screenshot: go to 2, and ask again when 2 is done. *Done:* the rows in the screenshot import right, with a test of each shape.
-2. **Finances Steps 4 to 6** (`finances-handoff.md` section 3): one period picker the Dashboard follows, Dashboard cards that click through, the Transactions table. Mock each first (a private Artifact page with made-up numbers) and show the owner before building; build only what they say yes to. *Done:* each step's PR merged, or the owner said no to it.
-3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM"), then the look, L3 to L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked.
+1. **Finances imports, round 3.** **Screenshot asked for Nov 11, 6 PM.** Ask the owner for a screenshot of rows that still look wrong (they said "closer to being correct", Nov 11). Describe them in shapes, never commit their merchants (section 0, rule 1). No screenshot: go to 2, and ask again when 2 is done. *Done:* the rows in the screenshot import right, with a test of each shape.
+2. **Finances Steps 4 to 6** (`finances-handoff.md` section 3): **mocked Nov 11, 7 PM, made-up numbers:** the private canvas https://claude.ai/artifact/2sogwZGydVNULUWaPBNMMu (Step 4: the picker *By paycheck / By month* with ‹ › and Today over the Dashboard, every card following it, past periods from transactions and future ones from the plan, a Dark switch for the near-black theme; Step 5: Balance trend looking back 30/90/365 days, per account, a point opening its day; Step 6: the table with sortable Date, Payee, Category, Account, Amount, *Balance after* when one account is picked, and the list again under 860px). Waiting on the owner's yes for each. Today's Dashboard already has a pay-period picker inside the Paycheck card (`widgets/Paycheck.tsx`, forward only) and the 30-day checking chart already opens a day (`widgets/Checking.tsx` `onPick`): one period picker the Dashboard follows, Dashboard cards that click through, the Transactions table. Mock each first (a private Artifact page with made-up numbers) and show the owner before building; build only what they say yes to. *Done:* each step's PR merged, or the owner said no to it.
+3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM", **built in #597**), then the look, L3 to L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked.
 4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. *Done:* each item merged and `unison-handoff.md` marks it.
 5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. *Done:* built, or the owner said no.
 6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. Tell the owner when 2A is done that it's a good moment to start it, with the launcher line; never in this session. *Done:* the owner has the line.
@@ -100,6 +103,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
+- **The Finances mocks (2B step 2):** yes or no to each of Steps 4, 5 and 6 on the canvas (link in section 2). Build only what they say yes to.
 - **Which gaps to close (2A step 2),** asked Nov 11 at 6 PM Eastern from `docs/Parity.md`'s *Gaps* list. Recommended: 1 (links into the app on the iPad and Mac app), then 2 and 4 together (What was done and Every alert from the split view), then 3 (Snooze on an open alert), then 6 (Settings on the phone's page); the iPhone Finances pieces (5) after 2B. If they say "continue", take that order.
 - **Trying on the phone:** #576, #588, #590, #592 and #593 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
@@ -135,6 +139,8 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **GitHub can lag:** a job's log can end while its check still says in progress for half an hour, and `upload-artifact` can fail on GitHub's own HTML error pages (#593). Read the job's log before deciding it's stuck or red; re-run an upload that failed that way once.
 - **A flaky smoke case is a bug until shown otherwise:** the one on Nov 11 was a real race in `Sheet.tsx` (typing right as a sheet opened), fixed at its source in #590 with a case that reproduced it every time.
 - **A smoke click aimed while a panel is still filling in can land on what moved into its place:** wait for the panel's content (the Tidy places panel's drives, #595) before clicking a button below it. A case that passes alone but fails in CI's shards is usually this or a focus race (#590).
+- **A README's table can claim what the code never had:** `apple-client/README.md` said the Mac app had a menu bar item and a Dock count; no `MenuBarExtra` or Dock badge was ever in `apple-client` (`git log -S`). Grep for the API before trusting a feature list, and keep `docs/Parity.md` the place that's checked.
+- **Mocks for the owner:** the Artifact tool's Design type makes a private canvas of `.dc.html` artboards (start with `action: quickstart`, `intent: design`); write the files in the scratchpad, never in the repo, and use made-up numbers and payees only.
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 
 ## When a check is red or stuck (the playbook)

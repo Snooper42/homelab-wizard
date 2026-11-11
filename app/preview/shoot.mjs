@@ -331,6 +331,8 @@ const cliSteps = { 'update-all': ['Updating navidrome', 'Updating vikunja', 'Upd
 // Tidy Up: a music library swapped in and checked, films waiting to shrink,
 // and what the last weeks did (app/tidy.go's TidyUp).
 const tidyAt = (h) => new Date(Date.now() - h * 3600e3).toISOString();
+/** Yesterday at 3:04 AM, this machine's time: a job that started before last midnight. */
+const tidyYesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); d.setHours(3, 4, 0, 0); return d.toISOString(); };
 const tidyRun = (action, h, result, ok = true) => ({ action, ok, exit: ok ? 0 : 1, at: tidyAt(h), result });
 const tidy = {
   libraries: [
@@ -1355,6 +1357,17 @@ const smokes = [
     await page.waitForSelector('#tidyRunning', { state: 'detached', timeout: 8000 });
     await page.waitForSelector(`${shrink}:enabled`, { timeout: 5000 });
   } },
+  // A job started yesterday says so (tidy-loop.md's queue, item 7): "Started yesterday at 3:04 AM", never a bare "Started
+  // at 3:04 AM" that reads as this morning; and one that stopped part-way says when it started, which it never did.
+  ...[
+    ['a job started elsewhere yesterday says yesterday', { lock: { pid: 4242, kind: 'movies', action: 'collect', start: tidyYesterday(), flags: [] } }, '#tidyRunning', 'Movies'],
+    ['a job that stopped part-way says when it started', { stale: { pid: 4242, kind: 'music', action: 'finalize', start: tidyYesterday() } }, '#tidyStale', ''],
+  ].map(([what, extra, card, tab]) => ({ name: `Tidy Up: ${what}`, screen: 'tidy', mock: { tidy: { ...tidy, ...extra } }, run: async (page) => {
+    if (tab) await page.click(`#tidy .seg button:text-is("${tab}")`, { timeout: 5000 });
+    await page.waitForSelector(card, { timeout: 5000 });
+    const text = await page.textContent(card);
+    if (!/Started yesterday at 3:04(\s| )?AM/i.test(text) && !/Started yesterday at 03:04/.test(text)) throw new Error(`it says: ${text}`);
+  } })),
   // A swap that stopped part-way asked for an OK when it started: Carry on asks again, then runs with it (never without, which fails).
   { name: 'Tidy Up: a swap that stopped part-way asks again, then carries on with its OK', screen: 'tidy', mock: { tidy: { ...tidy, stale: { pid: 4242, kind: 'music', action: 'finalize', start: tidyAt(3) } } }, run: async (page) => {
     await page.waitForSelector('#tidyStale strong:text-is("Swapping in your cleaned library: stopped part-way")', { timeout: 5000 });
