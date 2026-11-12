@@ -2145,6 +2145,24 @@ class InboxToday(Base):
         with self.assertRaises(SystemExit):
             inbox.undo("nope")
 
+    def test_a_crafted_record_moves_only_library_files_into_an_inbox_folder(self):
+        # The record is under data/, which a homelab moved in from someone else's file brings. A line
+        # naming any file of the account, or any place to put one, must move nothing: Undo takes only
+        # files in a library and puts them only into an inbox folder (links and .. resolved).
+        key = self.touch(self.home / ".ssh" / "id_ed25519")
+        film = self.touch(self.lib["movies"] / "Heat (1995)" / "Heat (1995).mkv")
+        autostart = self.home / ".config" / "autostart" / "evil.mkv"
+        lines = [{"id": "a", "title": "A", "undo": True, "files": [str(key)], "from": str(self.d / "key")},
+                 {"id": "b", "title": "B", "undo": True, "files": [str(film)], "from": str(autostart)},
+                 {"id": "c", "title": "C", "undo": True, "files": [str(film)],
+                  "from": str(self.d / ".." / "home" / ".profile.mkv")}]
+        self.log.write_text("".join(json.dumps(l) + "\n" for l in lines))
+        for i in ("a", "b", "c"):
+            with self.assertRaises(SystemExit):
+                inbox.undo(i)
+        self.assertTrue(key.exists() and film.exists(), "nothing moved")
+        self.assertFalse(autostart.exists() or (self.d / "key").exists() or (self.home / ".profile.mkv").exists())
+
     def test_no_log_no_record(self):
         os.environ.pop("HOMELAB_MEDIA_FILED_LOG")
         inbox.sweep(apply=True)

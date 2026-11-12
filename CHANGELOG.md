@@ -245,6 +245,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The Inbox's Undo moves only what it filed:** Undo under What I did today takes back only files in a library, and puts them only into a Downloads folder Tidy Up watches, so a changed record of what was filed can't have it move any other file, or put one anywhere else.
 - **Undo in Tidy Up puts back only into its own folders:** a thing goes back only into a library, a Downloads folder Tidy Up watches, or its reports folder, so a changed list of what went to the Trash can't have Undo put a file anywhere else in your account. Anything else stays in the Trash, and Undo says so.
 - **A ticker stays a ticker:** adding an investment, following a ticker in the Watchlist, and looking up a price now refuse a ticker or source of `.` or `..`, which could reach another of Ghostfolio's admin addresses, and a followed ticker's name is kept short.
 - **A picture for an account can't be too large to show:** Finances keeps a picture of your own only when it is at most 1,024 pixels on a side (the screen makes each 96), so one can't be small in the file but too large for a phone to open.
