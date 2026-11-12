@@ -52,6 +52,14 @@ struct KeptAlert: Decodable, Sendable, Identifiable, Equatable {
         snoozedBy = try c.decodeIfPresent(String.self, forKey: .snoozedBy) ?? ""
     }
 
+    /// The checks Snooze… is for: not cleared, and still failing at the
+    /// watchdog's last run. None for an alert about no check.
+    func snoozable(in watchdog: WatchdogSummary?) -> [String] {
+        guard clearedAt == nil, let watchdog else { return [] }
+        let failing = Set(watchdog.failing.map(\.name))
+        return checks.filter { failing.contains($0) }
+    }
+
     /// Serious enough to sound overnight, as the computer's alerts are.
     var isUrgent: Bool { priority >= 4 }
 

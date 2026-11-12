@@ -154,6 +154,10 @@ export interface AlertsProps {
   openSetup: () => void;
   /** Reads them again now, less those whose problem has cleared. */
   refresh: () => Promise<void>;
+  /** The watchdog's last run, for Snooze… on an alert whose check still fails. */
+  watch?: () => health.Summary | null;
+  /** Snoozes a failing check's alerts for hours (0: alerts again now), as the Watchdog card's. */
+  snooze?: (check: string, hours: number) => Promise<void>;
 }
 
 /** An alert's message, one line each: a long list (eleven apps that came back) shows its first 3 lines and Show the N more. */
@@ -175,11 +179,11 @@ function Lines({ text }: { text: string }) {
  * cleared since (a later watchdog run passed, the apps a backup skipped run
  * again). Check again reads them now rather than at the next minute's poll.
  */
-export function Alerts({ events, problem, openSetup, refresh, log }: AlertsProps) {
+export function Alerts({ events, problem, openSetup, refresh, log, watch, snooze }: AlertsProps) {
   const [checking, setChecking] = useState(false);
   const again = () => { setChecking(true); refresh().finally(() => setChecking(false)); };
   const check = <button id="alertsCheck" class="small" disabled={checking} title="Reads the alerts again and leaves out those whose problem has cleared" onClick={again}>{checking ? 'Checking…' : 'Check again'}</button>;
-  const every = <AlertLog log={log} />;
+  const every = <AlertLog log={log} watch={watch} snooze={snooze} />;
   if (!events) {
     return (
       <Head title="Recent alerts">
@@ -214,21 +218,40 @@ export function alertFate(a: history.Alert, now = Date.now()): string {
 }
 
 /**
+ * The checks of a kept alert that Snooze… is for: not cleared, and still
+ * failing at the watchdog's last run. None for an alert about no check.
+ */
+export function snoozable(a: history.Alert, w: health.Summary | null | undefined): string[] {
+  if (a.clearedAt || !w) return [];
+  const failing = new Set((w.failing || []).map((f) => f.name));
+  return (a.checks || []).filter((c) => failing.has(c));
+}
+
+/**
  * Every alert…: the computer's record of the alerts it sent (the last 90
  * days, internal/history), long after ntfy has let them go, each with when
- * its problem cleared or who snoozed it.
+ * its problem cleared or who snoozed it, and Snooze… on one whose check
+ * still fails (hidden on a phone that only looks, as the Watchdog card's).
  */
-function AlertLog({ log }: { log: () => Promise<history.Alert[]> }) {
+function AlertLog({ log, watch, snooze }: { log: () => Promise<history.Alert[]>; watch?: () => health.Summary | null; snooze?: (check: string, hours: number) => Promise<void> }) {
   const [all, setAll] = useState<history.Alert[] | null>(null);
   const [problem, setProblem] = useState('');
+  // The watchdog's run as it was when the sheet opened or a snooze ended.
+  const [w, setW] = useState<health.Summary | null>(null);
   const sheet = () => document.getElementById('alertLogSheet');
   const open = () => {
     setProblem('');
+    setW(watch?.() || null);
     log().then(setAll, (e) => setProblem(String(e?.message || e)));
     const s = sheet();
     if (s) s.hidden = false;
   };
   const close = () => { const s = sheet(); if (s) s.hidden = true; };
+  // A snooze, then the watchdog's run and the record read again, so the pick says until when.
+  const pick = (check: string, hours: number) => {
+    if (!snooze) return;
+    snooze(check, hours).then(() => { setW(watch?.() || null); return log().then(setAll); }, (e) => setProblem(String(e?.message || e)));
+  };
   const tone = (a: history.Alert): Tone => (a.clearedAt ? 'ok' : (a.priority || 0) >= 4 ? 'bad' : '');
   return (
     <>
@@ -242,10 +265,11 @@ function AlertLog({ log }: { log: () => Promise<history.Alert[]> }) {
               <Rows>
                 {all.map((a) => {
                   const fate = alertFate(a);
+                  const open = snooze ? snoozable(a, w) : [];
                   return (
                     <Row key={a.id} dot={tone(a)} title={a.title}
                       sub={<>{a.body && <Lines text={a.body} />}{fate && <div class="fate">{fate}</div>}</>}
-                      end={<span class="badge">{topicName[a.topic] || a.topic}</span>} when={ago(a.at)} />
+                      end={<>{open.map((c) => <SnoozePick key={c} check={c} until={w?.snoozed?.[c]} snooze={pick} />)}<span class="badge">{topicName[a.topic] || a.topic}</span></>} when={ago(a.at)} />
                   );
                 })}
               </Rows>

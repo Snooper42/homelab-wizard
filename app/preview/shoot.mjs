@@ -3564,6 +3564,27 @@ const smokes = [
     await sheet.getByRole('button', { name: 'Close' }).click();
     await sheet.waitFor({ state: 'hidden', timeout: 3000 });
   } })),
+  // Snooze… on an alert whose watchdog check still fails, as the Watchdog card has it (#596's gap 3); none on
+  // one that cleared, one about no check, or one whose check passes now. A phone that only looks has none.
+  ...[[], ['companion', 'can-change'], ['companion']].map((phone) => ({ name: `Every alert: Snooze on an alert whose check still fails${phone.length ? (phone.includes('can-change') ? ', on a phone that may change things' : ', none on a phone that only looks') : ''}`, screen: 'status', phone: phone.length ? phone : undefined,
+    mock: { watchdog: { ...watchdog, failing: [{ name: 'immich', problem: 'not answering', since: hoursAgo(0.3) }] }, alertLog: [{ id: 5, at: hoursAgo(0.3), topic: 'tunnel-watchdog', title: 'Homelab: something is down', body: 'immich: not answering', priority: 4, checks: ['immich'] }, ...alertLog] }, run: async (page) => {
+      await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
+      const sheet = page.locator('#alertLogSheet');
+      await sheet.locator('li').nth(4).waitFor({ timeout: 5000 });
+      const picks = sheet.locator('select.snoozepick');
+      if (phone.length && !phone.includes('can-change')) {
+        if (await picks.first().isVisible().catch(() => false)) throw new Error('Snooze on a phone that only looks');
+        return;
+      }
+      // Only the open one: crowdsec bouncer passes now, vikunja cleared, the reminder is about no check.
+      const pick = sheet.locator('li').first().locator('select[aria-label="Snooze the alerts about immich"]');
+      await pick.waitFor({ state: 'visible', timeout: 3000 });
+      if ((await picks.count()) !== 1) throw new Error(`one Snooze: ${await picks.count()}`);
+      await pick.selectOption('1');
+      await sheet.locator('li').first().locator('select.snoozepick option:first-child:has-text("Snoozed until")').waitFor({ state: 'attached', timeout: 5000 });
+      const calls = await page.evaluate(() => window.__MOCK.calls.SnoozeCheck);
+      if (!calls) throw new Error('not snoozed');
+    } })),
   { name: 'Every alert with none kept says so', screen: 'status', mock: { alertLog: [] }, run: async (page) => {
     await page.locator('#alertsCard').getByRole('button', { name: 'Every alert…' }).click();
     await page.locator('#alertLogSheet').getByText('No alerts kept yet.', { exact: false }).waitFor({ timeout: 5000 });

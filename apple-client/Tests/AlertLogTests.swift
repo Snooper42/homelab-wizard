@@ -32,6 +32,22 @@ struct AlertLogTests {
         #expect(alert(checks: []).fate(now: now) == nil)
     }
 
+    /// Snooze… on an alert whose check still fails (#596's gap 3): not on
+    /// one that cleared, one about no check, or one whose check passes now.
+    @Test func snoozeOnlyWhereItsCheckStillFails() throws {
+        let watchdog = try JSONDecoder.homelab().decode(WatchdogSummary.self, from: Data(#"""
+        {"lastRun":"2026-11-11T13:50:00Z","checks":3,"pending":0,"week":{},
+         "failing":[{"name":"vikunja","problem":"not answering","since":"2026-11-11T13:00:00Z"}]}
+        """#.utf8))
+        #expect(alert().snoozable(in: watchdog) == ["vikunja"])
+        #expect(alert(checks: ["vikunja", "immich"]).snoozable(in: watchdog) == ["vikunja"])
+        #expect(alert(cleared: now).snoozable(in: watchdog).isEmpty)
+        #expect(alert(checks: []).snoozable(in: watchdog).isEmpty)
+        #expect(alert(checks: ["immich"]).snoozable(in: watchdog).isEmpty)
+        // Cards not read yet: nothing to offer.
+        #expect(alert().snoozable(in: nil).isEmpty)
+    }
+
     @Test func topicsByTheirNames() {
         #expect(alert().topicName == "Watchdog")
         #expect(KeptAlert(id: 2, at: now, topic: "duplicati-alerts", title: "x", body: "", priority: 0, checks: [], clearedAt: nil, snoozedUntil: nil, snoozedBy: "").topicName == "Backups")

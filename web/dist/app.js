@@ -2452,14 +2452,14 @@
       lines.length > 4 && /* @__PURE__ */ u3("button", { type: "button", class: "linkbtn morelines", "aria-expanded": all, onClick: () => setAll(!all), children: all ? "Show less" : `Show ${lines.length - 3} more` })
     ] });
   }
-  function Alerts({ events, problem, openSetup, refresh, log: log2 }) {
+  function Alerts({ events, problem, openSetup, refresh, log: log2, watch: watch2, snooze }) {
     const [checking, setChecking] = d2(false);
     const again = () => {
       setChecking(true);
       refresh().finally(() => setChecking(false));
     };
     const check = /* @__PURE__ */ u3("button", { id: "alertsCheck", class: "small", disabled: checking, title: "Reads the alerts again and leaves out those whose problem has cleared", onClick: again, children: checking ? "Checking…" : "Check again" });
-    const every = /* @__PURE__ */ u3(AlertLog, { log: log2 });
+    const every = /* @__PURE__ */ u3(AlertLog, { log: log2, watch: watch2, snooze });
     if (!events) {
       return /* @__PURE__ */ u3(CardHead, { title: "Recent alerts", children: /NTFY_READ_TOKEN/.test(problem || "") ? /* @__PURE__ */ u3("span", { class: "muted", children: [
         "They appear here once the alert token is set up. ",
@@ -2515,12 +2515,19 @@
     if (a3.snoozedUntil && new Date(a3.snoozedUntil).getTime() > now) return a3.snoozedBy ? `Snoozed by ${a3.snoozedBy} until ${wakeText(a3.snoozedUntil)}` : `Snoozed until ${wakeText(a3.snoozedUntil)}`;
     return a3.checks?.length ? "Not cleared yet" : "";
   }
-  function AlertLog({ log: log2 }) {
+  function snoozable(a3, w3) {
+    if (a3.clearedAt || !w3) return [];
+    const failing = new Set((w3.failing || []).map((f4) => f4.name));
+    return (a3.checks || []).filter((c4) => failing.has(c4));
+  }
+  function AlertLog({ log: log2, watch: watch2, snooze }) {
     const [all, setAll] = d2(null);
     const [problem, setProblem] = d2("");
+    const [w3, setW] = d2(null);
     const sheet2 = () => document.getElementById("alertLogSheet");
     const open4 = () => {
       setProblem("");
+      setW(watch2?.() || null);
       log2().then(setAll, (e3) => setProblem(String(e3?.message || e3)));
       const s3 = sheet2();
       if (s3) s3.hidden = false;
@@ -2528,6 +2535,13 @@
     const close3 = () => {
       const s3 = sheet2();
       if (s3) s3.hidden = true;
+    };
+    const pick = (check, hours) => {
+      if (!snooze) return;
+      snooze(check, hours).then(() => {
+        setW(watch2?.() || null);
+        return log2().then(setAll);
+      }, (e3) => setProblem(String(e3?.message || e3)));
     };
     const tone = (a3) => a3.clearedAt ? "ok" : (a3.priority || 0) >= 4 ? "bad" : "";
     return /* @__PURE__ */ u3(S, { children: [
@@ -2537,6 +2551,7 @@
         /* @__PURE__ */ u3("p", { class: "muted", children: "What the homelab alerted about in the last 90 days, kept on this computer: when each problem cleared, and who snoozed one." }),
         problem ? /* @__PURE__ */ u3("p", { class: "muted", children: problem }) : all === null ? /* @__PURE__ */ u3("p", { class: "muted", children: "Reading…" }) : all.length ? /* @__PURE__ */ u3(Rows, { children: all.map((a3) => {
           const fate = alertFate(a3);
+          const open5 = snooze ? snoozable(a3, w3) : [];
           return /* @__PURE__ */ u3(
             Row,
             {
@@ -2546,7 +2561,10 @@
                 a3.body && /* @__PURE__ */ u3(Lines, { text: a3.body }),
                 fate && /* @__PURE__ */ u3("div", { class: "fate", children: fate })
               ] }),
-              end: /* @__PURE__ */ u3("span", { class: "badge", children: topicName[a3.topic] || a3.topic }),
+              end: /* @__PURE__ */ u3(S, { children: [
+                open5.map((c4) => /* @__PURE__ */ u3(SnoozePick, { check: c4, until: w3?.snoozed?.[c4], snooze: pick }, c4)),
+                /* @__PURE__ */ u3("span", { class: "badge", children: topicName[a3.topic] || a3.topic })
+              ] }),
               when: ago(a3.at)
             },
             a3.id
@@ -7673,8 +7691,13 @@
     lastEvents = events || [];
     drawOvernight();
     const log2 = () => go().AlertLog();
-    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log: log2 });
-    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log: log2 });
+    const watch2 = () => lastWatch;
+    const snooze = async (check, hours) => {
+      await go().SnoozeCheck(check, hours);
+      showWatchdog(await go().Watchdog());
+    };
+    if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log: log2, watch: watch2, snooze });
+    else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log: log2, watch: watch2, snooze });
   }
   var appListActions = {
     act: (a3, action) => action === "update" ? showUpdate(a3) : runAppAction(a3, action),
