@@ -174,6 +174,22 @@ func savePhoneSettings(root string, values map[string]string) (phoneSettings, er
 	return listPhoneSettings(root)
 }
 
+// watchdogHas reports whether check is one the watchdog has now: failing,
+// failed once and checked again on its next run, or snoozed already (to
+// wake it). A phone snoozes only these, so one allowed changes can't fill
+// the snoozes with names the watchdog never gave (N42).
+func watchdogHas(root, check string) bool {
+	st := health.LoadState(health.StatePath(root))
+	if _, ok := st.Failing[check]; ok {
+		return true
+	}
+	if _, ok := st.Pending[check]; ok {
+		return true
+	}
+	_, ok := notify.LoadSnoozes(root)[check]
+	return ok
+}
+
 // phoneMethods are the desktop app's methods a phone may call: reading
 // for every paired phone; starting, stopping, restarting, and backing up
 // for one allowed to make changes.
@@ -669,6 +685,9 @@ func (h *homelab) phoneMethods() map[string]companion.Method {
 			var hours int
 			if len(args) < 2 || json.Unmarshal(args[0], &check) != nil || json.Unmarshal(args[1], &hours) != nil {
 				return nil, nil, errors.New("SnoozeCheck takes a check and how many hours")
+			}
+			if !watchdogHas(root, check) {
+				return nil, nil, fmt.Errorf("%q isn't failing: a phone snoozes a check the watchdog has found down", check)
 			}
 			return nil, nil, notify.SnoozeHoursBy(root, check, hours, whoAsked(ctx))
 		}},

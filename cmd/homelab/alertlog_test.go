@@ -103,6 +103,7 @@ func TestAlertLogFromAPhone(t *testing.T) {
 		t.Fatalf("AlertLog is a read, the owner's phones' only: %+v", m)
 	}
 	phone := companion.WithCaller(context.Background(), companion.Device{ID: "a1", Name: "Sam's iPhone", CanChange: true})
+	failing(t, root, "jellyfin")
 	if _, _, err := h.phoneMethods()["SnoozeCheck"].Call(phone, []json.RawMessage{json.RawMessage(`"jellyfin"`), json.RawMessage(`1`)}); err != nil {
 		t.Fatal(err)
 	}
