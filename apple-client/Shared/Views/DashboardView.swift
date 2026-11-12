@@ -71,6 +71,8 @@ struct DashboardView: View {
             SplitDashboard(model: model, computer: computer, finances: finances)
             #endif
         }
+        // The household's own pictures for a logo, wherever one is drawn.
+        .environment(\.ownLogos, finances.ownLogos)
         // A haptic when something new needs attention, not when it clears.
         .sensoryFeedback(.warning, trigger: model.attentionCount) { old, new in new > old }
         .modifier(AppActionsPresenter(actions: actions))

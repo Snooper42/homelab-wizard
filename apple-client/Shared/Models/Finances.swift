@@ -216,8 +216,12 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     let hideAmounts: Bool
     /// When the investments were last read from Ghostfolio (main #489).
     let holdingsRead: Date?
+    /// The household's own pictures for a logo (finance.Plan's Logos): a
+    /// small PNG, JPEG or WebP as a data URL, by a brand's key ("chase") or
+    /// "name:" and a name. They're drawn before any other mark (OwnLogos).
+    let logos: [String: String]
 
-    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead }
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -228,6 +232,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         currency = MoneyCard.currencyCode(try c.decodeIfPresent(String.self, forKey: .currency))
         hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
         holdingsRead = ((try? c.decodeIfPresent(String.self, forKey: .holdingsRead)) ?? nil).flatMap(GoTime.parse)
+        logos = (try? c.decodeIfPresent([String: String].self, forKey: .logos)) ?? [:]
     }
 }
 

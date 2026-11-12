@@ -42,6 +42,46 @@ enum LogoContent: Equatable, Sendable {
     case icon(String, hue: Int?)
     /// The first letter of its name, in its category's colour when it has one.
     case letter(String, hue: Int?)
+    /// The household's own picture for it (OwnLogos): PNG, JPEG or WebP.
+    case picture(Data)
+}
+
+/// The household's own pictures for a logo, from the plan (Mark.tsx's
+/// `own`): drawn before any other mark, as on the computer and the phone's
+/// page. LogoCircle reads them from the environment (`ownLogos`), which the
+/// dashboard sets each time the plan is read. Before, the iPhone and iPad
+/// drew a letter or an icon where the household had picked a picture.
+struct OwnLogos: Equatable, Sendable {
+    let pictures: [String: Data]
+
+    /// The plan's pictures (finance.Plan's Logos), each a data URL; one
+    /// that isn't a PNG, JPEG or WebP is left out, as the computer does.
+    init(_ logos: [String: String] = [:]) {
+        var out: [String: Data] = [:]
+        for (key, url) in logos {
+            if let data = Self.picture(url) { out[key] = data }
+        }
+        pictures = out
+    }
+
+    /// The picture kept under a key (`key(brand:name:)`), if any.
+    func picture(_ key: String?) -> Data? { key.flatMap { pictures[$0] } }
+
+    /// Where a picture is kept: under its brand, else under "name:" and its
+    /// name in words (Mark.tsx's `ownKey`).
+    static func key(brand: String?, name: String) -> String {
+        if let brand, !brand.isEmpty, brand != "none" { return brand }
+        return "name:" + PayeeLogos.words(name).trimmingCharacters(in: .whitespaces)
+    }
+
+    /// A data URL's bytes, for a PNG, JPEG or WebP only (finance.go's `ownLogo`).
+    static func picture(_ url: String) -> Data? {
+        for type in ["png", "jpeg", "webp"] {
+            let prefix = "data:image/\(type);base64,"
+            if url.hasPrefix(prefix) { return Data(base64Encoded: String(url.dropFirst(prefix.count))) }
+        }
+        return nil
+    }
 }
 
 /// One segment of a brand's mark, in its 24 by 24 box.
@@ -607,9 +647,10 @@ final class PayeeLogos: @unchecked Sendable {
         return hints.first { hint in hint.words.contains { word in w.contains(" " + word + " ") } }?.glyph
     }
 
-    /// What stands before an account or payment (Mark.tsx's `Mark`, without
-    /// the household's own pictures): its brand, else its own initials when
-    /// `auto`, else an icon for its type, its name, or its kind, else its first letter.
+    /// What stands before an account or payment (Mark.tsx's `Mark`, but for
+    /// the household's own pictures, which LogoCircle draws first: OwnLogos):
+    /// its brand, else its own initials when `auto`, else an icon for its
+    /// type, its name, or its kind, else its first letter.
     func mark(brand: String?, kind: String?, name: String, type: String? = nil, auto: Bool = false, hue: Int? = nil) -> LogoContent {
         let hue = (hue ?? 0) > 0 ? hue : nil
         if let brand, let b = brandsByKey[brand] { return .brand(b) }
@@ -668,6 +709,13 @@ final class PayeeLogos: @unchecked Sendable {
                     type: brand == nil ? icon : nil,
                     auto: !transfer && icon == nil && t.institution != "none" && !payee.isEmpty,
                     hue: transfer ? nil : categoryHue(category, in: categories))
+    }
+
+    /// Where a transaction's own picture is kept: its payee's brand, else its
+    /// payee's name (TxMark's `Mark`; a transfer has no brand).
+    func ownKey(for t: FinanceTransaction) -> String {
+        let brand = t.to != nil ? nil : payeeBrand(institution: t.institution, payee: t.payee)
+        return OwnLogos.key(brand: brand, name: t.payee.isEmpty ? "?" : t.payee)
     }
 
     /// Two payees for the same: the same words, or a word of three letters or
