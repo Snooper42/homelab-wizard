@@ -447,6 +447,42 @@ struct BackupsTests {
         #expect(o.upToDate.fresh == 1 && o.upToDate.of == 3)
     }
 
+    /// Backups as the owner picked it (Nov 12): what needs a look first, the
+    /// fresh ones folded, and the three tiles under the top card.
+    @Test func backupsLeadWithWhatNeedsALook() throws {
+        let o = try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(#"""
+        {"copies":[{"id":"a","name":"Immich","state":"fresh"},{"id":"b","name":"Plex","state":"paused","waitingFor":"/Volumes/Media"},
+                   {"id":"c","name":"Paperless","state":"fresh","shrank":true,"size":10,"before":100},{"id":"d","name":"Mealie","state":"none"},
+                   {"id":"e","name":"Jellyfin","state":"stale"},{"id":"f","name":"Radarr","state":"fresh"}]}
+        """#.utf8))
+        #expect(o.needingALook.map(\.name) == ["Paperless", "Jellyfin"])
+        #expect(o.freshCopies.map(\.name) == ["Immich", "Radarr"])
+        #expect(o.waitingGroups.map(\.state) == ["paused", "none"])
+    }
+
+    @Test func backupsTilesSayHowEachIs() throws {
+        let now = Date(timeIntervalSince1970: 1_794_405_600) // 2026-11-11 14:00 UTC
+        func overview(_ json: String) throws -> BackupOverview {
+            try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8))
+        }
+        func tiles(_ json: String) throws -> [String] {
+            try overview(json).tiles(now: now).map { "\($0.kind.rawValue): \($0.value) \($0.tone)" }
+        }
+        // All well: passed, exported, Kopia fine.
+        #expect(try tiles(#"{"restoreTest":{"lastTest":"2026-11-08T14:00:00Z"},"vaultExport":"2026-11-01T10:00:00Z","kopia":{"repository":"/k","lastTest":"2026-11-09T10:00:00Z"}}"#)
+            == ["restore: Passed good", "vault: Exported good", "second: Kopia good"])
+        // Due, never exported, no Kopia: the settings file takes the third tile.
+        #expect(try tiles(#"{"restoreDue":true,"envCopied":"2026-11-11T03:30:00Z"}"#)
+            == ["restore: Due warn", "vault: Never exported warn", "settingsFile: Copied good"])
+        // A failed drill, a plain export lying around, Kopia's test failed.
+        #expect(try tiles(#"{"restoreTest":{"lastTest":"2026-10-01T10:00:00Z","history":[{"when":"2026-11-10T10:00:00Z","seconds":60,"passed":false,"summary":"x","engine":""}]},"plainExports":["a.json"],"vaultExport":"2026-11-01T10:00:00Z","kopia":{"repository":"/k","failed":"bad"}}"#)
+            == ["restore: Failed bad", "vault: Delete exports bad", "second: Test failed bad"])
+        // Nothing yet at all.
+        #expect(try tiles("{}") == ["restore: None yet warn", "vault: Never exported warn", "settingsFile: Not copied warn"])
+        // The detail is in words, relative to now.
+        #expect(try overview(#"{"restoreTest":{"lastTest":"2026-11-08T14:00:00Z"}}"#).tiles(now: now)[0].detail == "3 days ago")
+    }
+
     @Test func theVaultExportReadsAsTheComputerSaysIt() throws {
         func o(_ json: String) throws -> BackupOverview { try JSONDecoder.homelab().decode(BackupOverview.self, from: Data(json.utf8)) }
         #expect(try o(#"{"vaultExport":"0001-01-01T00:00:00Z"}"#).vaultState == .neverMade)

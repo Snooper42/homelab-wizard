@@ -115,6 +115,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Backups on the iPhone, tidier:** the top card is followed by three tiles (the restore test, the password export, and the second copy), then only the copies that need a look; the ones up to date fold to a row of their logos until you tap them, and Duplicati's jobs, the restore tests and where the backups go are one tap down, under More.
 - **Tidy Up's Music and Books tabs say their space once:** the Space card that only repeated the header's *On the drive* figure is gone, and Genres takes its row instead of sitting beside half an empty one.
 - **One period picker for the Dashboard:** the paycheck's ‹ ›, and Today, now sit in a bar at the top of Finances' Dashboard, with the period's name and days, and the cards under it follow what you pick.
 - **Snooze from the phone:** a phone allowed to make changes can now snooze a failing check's alerts on the phone's page (**Snooze…** on the watchdog's card, for an hour or a day), as on the computer, and so can the iPhone app (**Snooze…** under the check, behind Face ID). A phone that can only look still has no Snooze.

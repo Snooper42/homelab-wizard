@@ -125,6 +125,75 @@ extension BackupOverview {
         return parts.last ?? destination
     }
 
+    // MARK: Backups as the owner picked it (Nov 12)
+
+    /// The copies that need a look first: out of date, or less than half
+    /// the night before's.
+    var needingALook: [BackupCopy] { copies.filter { $0.shrank || $0.state == "stale" } }
+
+    /// Up to date and whole: folded to a row of logos until opened.
+    var freshCopies: [BackupCopy] { copies.filter { $0.state == "fresh" && !$0.shrank } }
+
+    /// Paused and not copied yet, each with its note (copyGroups').
+    var waitingGroups: [CopyGroup] { copyGroups.filter { $0.state == "paused" || $0.state == "none" } }
+
+    /// One of the three tiles under the top card: the restore test, the
+    /// password export, and the second copy (Kopia), or the settings file
+    /// where there's no Kopia. Each says how it is in a word or two.
+    struct Tile: Equatable, Sendable, Identifiable {
+        enum Kind: String, Sendable { case restore, vault, second, settingsFile }
+        enum Tone: Sendable { case good, warn, bad }
+        let kind: Kind
+        let title: String
+        let value: String
+        let detail: String?
+        let tone: Tone
+        var id: String { kind.rawValue }
+    }
+
+    func tiles(now: Date = Date()) -> [Tile] {
+        let words = RelativeDateTimeFormatter()
+        words.dateTimeStyle = .named
+        words.unitsStyle = .full
+        func ago(_ date: Date) -> String { words.localizedString(for: date, relativeTo: now) }
+
+        let restore: Tile = if let failed = restoreTest.failedSince {
+            Tile(kind: .restore, title: "Restore test", value: "Failed", detail: ago(failed.when), tone: .bad)
+        } else if restoreDue {
+            Tile(kind: .restore, title: "Restore test", value: "Due", detail: restoreTest.lastTest.map { "Last \(ago($0))" } ?? "None yet", tone: .warn)
+        } else if let tested = restoreTest.lastTest {
+            Tile(kind: .restore, title: "Restore test", value: "Passed", detail: ago(tested), tone: .good)
+        } else {
+            Tile(kind: .restore, title: "Restore test", value: "None yet", detail: nil, tone: .warn)
+        }
+
+        let vault: Tile = switch vaultState {
+        case .plainExportLyingAround:
+            Tile(kind: .vault, title: "Passwords", value: "Delete exports", detail: plainExports.count == 1 ? "1 unencrypted" : "\(plainExports.count) unencrypted", tone: .bad)
+        case .neverMade:
+            Tile(kind: .vault, title: "Passwords", value: "Never exported", detail: "Once a month", tone: .warn)
+        case .due(let exported):
+            Tile(kind: .vault, title: "Passwords", value: "Export due", detail: "Last \(ago(exported))", tone: .warn)
+        case .fine(let exported):
+            Tile(kind: .vault, title: "Passwords", value: "Exported", detail: ago(exported), tone: .good)
+        }
+
+        let third: Tile = if let kopia {
+            if let failed = kopia.failed, !failed.isEmpty {
+                Tile(kind: .second, title: "Second copy", value: "Test failed", detail: "Kopia", tone: .bad)
+            } else if kopia.due {
+                Tile(kind: .second, title: "Second copy", value: "Test due", detail: "Kopia", tone: .warn)
+            } else {
+                Tile(kind: .second, title: "Second copy", value: "Kopia", detail: kopia.lastTest.map { "Tested \(ago($0))" }, tone: .good)
+            }
+        } else if let copied = envCopied {
+            Tile(kind: .settingsFile, title: "Settings file", value: "Copied", detail: ago(copied), tone: .good)
+        } else {
+            Tile(kind: .settingsFile, title: "Settings file", value: "Not copied", detail: nil, tone: .warn)
+        }
+        return [restore, vault, third]
+    }
+
     /// This app's copy, by its id.
     func copy(for appID: String) -> BackupCopy? { copies.first { $0.id == appID } }
 
