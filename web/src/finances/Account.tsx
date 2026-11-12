@@ -65,7 +65,7 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
     <div class="fin fx-account">
       <div class="fx-accthead">
         <button type="button" class="link" onClick={done}>‹ Net worth</button>
-        <div class="fx-acctname">
+        <div class="fx-accttitle">
           <AcctMark a={a} size="lg" />
           <div class="grow"><h2>{a.name}</h2><p class="muted">{sub}</p></div>
           {(edit || update) && <span class="actions">{edit && <button class="btn" onClick={edit}>Edit</button>}{update && <button class="btn fx-primary" onClick={update}>Update balance</button>}</span>}

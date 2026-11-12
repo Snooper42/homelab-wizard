@@ -14126,7 +14126,7 @@ ${pays}
     return /* @__PURE__ */ u3("div", { class: "fin fx-account", children: [
       /* @__PURE__ */ u3("div", { class: "fx-accthead", children: [
         /* @__PURE__ */ u3("button", { type: "button", class: "link", onClick: done, children: "‹ Net worth" }),
-        /* @__PURE__ */ u3("div", { class: "fx-acctname", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-accttitle", children: [
           /* @__PURE__ */ u3(AcctMark, { a: a3, size: "lg" }),
           /* @__PURE__ */ u3("div", { class: "grow", children: [
             /* @__PURE__ */ u3("h2", { children: a3.name }),
@@ -16611,7 +16611,7 @@ ${pays}
     setCurrency(v3?.plan.currency);
     setOwnLogos(v3?.plan.logos);
     setCategories(v3?.categories);
-    const [what2, label] = adds[tab3] || adds.overview;
+    const [what2, label] = adds[tab3.startsWith("account:") ? "worth" : tab3] || adds.overview;
     const [from2, setFrom] = d2("");
     const toTx = (f4) => {
       showTransactions(f4);

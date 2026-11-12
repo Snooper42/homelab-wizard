@@ -118,7 +118,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
   setCurrency(v?.plan.currency);
   setOwnLogos(v?.plan.logos);
   setCategories(v?.categories);
-  const [what, label] = adds[tab] || adds.overview;
+  // An account's own page is under Net worth: its button adds an account too.
+  const [what, label] = adds[tab.startsWith('account:') ? 'worth' : tab] || adds.overview;
   // Where Transactions was opened from, filtered (a report's row, a Dashboard card), for its Back; a tab picked forgets it.
   const [from, setFrom] = useState('');
   const toTx = (f: Parameters<typeof showTransactions>[0]) => { showTransactions(f); setFrom(tab); setTab('transactions'); };
