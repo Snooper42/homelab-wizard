@@ -9,7 +9,7 @@ import { Empty } from '../../parts/Empty';
 import { Rows } from '../../parts/Row';
 import { Amount, Delta, Stat } from '../ui/Amount';
 import { Widget } from '../ui/Widget';
-import { inHome, type PastPeriod } from '../model';
+import { inHome } from '../model';
 import { totals } from '../reportData';
 import { dayShort, type Lookup } from '../money';
 import { latest, TxRow } from './Latest';
@@ -17,14 +17,15 @@ import { latest, TxRow } from './Latest';
 /** How many transactions show before Show all. */
 const shown = 6;
 
-export function PastWidget({ v, L, past, ledger, edit }: { v: finance.View; L: Lookup; past: PastPeriod; ledger?: finance.Ledger | null; edit?: (what: 'transaction', id: string) => void }) {
+/** What happened in the days given (a pay period before now, or a month, or this month so far). */
+export function PastWidget({ v, L, past, title = 'What happened', ledger, edit }: { v: finance.View; L: Lookup; past: { start: string; last: string }; title?: string; ledger?: finance.Ledger | null; edit?: (what: 'transaction', id: string) => void }) {
   const [all, setAll] = useState(false);
   const range = { key: 'period', label: '', from: past.start, to: past.last };
   const txs = inHome(v.plan, ledger?.transactions || []).filter((t) => t.date >= past.start && t.date <= past.last);
   const sum = totals(txs, range);
   const list = latest(txs, all ? txs.length : shown);
   return (
-    <Widget title="What happened" kind="fx-past" span="all">
+    <Widget title={title} kind="fx-past" span="all">
       <p class="fx-sub fx-lead fx-dates">{dayShort(past.start)} – {dayShort(past.last)}, from your transactions</p>
       {txs.length ? <>
         <div class="fx-pastsums">

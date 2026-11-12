@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **The Dashboard by month:** **By month** on the bar at the top of Finances' Dashboard steps through calendar months instead of paychecks. A month before this one shows what happened, from your transactions; this month shows what happened so far and what's still to come; a month ahead shows the plan: its paychecks and payments, what comes in and goes out, and checking at its end. Each device remembers which you picked.
 - **Look back at a paycheck:** on Finances' Dashboard, ‹ in the bar at the top now steps back before today, to the paychecks of the last half year. For each, **What happened** says what came in and went out, from your transactions (money moved between your own accounts counts as neither), and lists them, and **Where it went** shows that paycheck's spending by category.
 - **Alerts from the Homelab app:** Settings › **Alerts From** on the iPhone picks who notifies that phone: the ntfy app, as before, or the Homelab app, which shows new alerts as its own notifications while it's open. Each phone picks for itself. A locked phone still hears only from the ntfy app until the paid Apple program, so turn the ntfy app's notifications off only if you keep the Homelab app open.
 - **Every alert on the iPhone:** in the Homelab app, **Every Alert** under Recent Alerts lists the alerts your computer kept over the last 90 days, each with when its problem cleared or which phone snoozed it, until when.
@@ -111,7 +112,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
-- **One period picker for the Dashboard:** the paycheck's ‹ ›, and Today, now sit in a bar at the top of Finances' Dashboard, with the period's name and days, and the cards under it follow what you pick. Months come next.
+- **One period picker for the Dashboard:** the paycheck's ‹ ›, and Today, now sit in a bar at the top of Finances' Dashboard, with the period's name and days, and the cards under it follow what you pick.
 - **Snooze from the phone:** a phone allowed to make changes can now snooze a failing check's alerts on the phone's page (**Snooze…** on the watchdog's card, for an hour or a day), as on the computer, and so can the iPhone app (**Snooze…** under the check, behind Face ID). A phone that can only look still has no Snooze.
 - **Finances tabs open where you left them:** Spending and Plan now open again on the page you were last on (Reports, Recurring, Paychecks…), not always their first.
 - **A bank's own categories on import:** an American Express or Chase file's Category column ("Restaurant-Restaurant", "Merchandise & Supplies-Groceries", "Food & Drink") now gives a shop the matching category of yours (Eating out, Groceries, Travel, Gas…) when nothing better says. Your own choice for a payee, a rule, the bill it pays and a known brand still come first, and one the file calls Other is left for you to pick. A company's ending goes from a payee's name too: SUNSHINE DENTAL, INC. comes in as Sunshine Dental.
