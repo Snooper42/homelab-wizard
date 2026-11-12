@@ -17319,7 +17319,7 @@ ${pays}
     const top = g2 ? g2.genres.slice(0, 6) : [];
     const rest = g2 ? g2.genres.slice(6).reduce((t3, [, v3]) => t3 + v3, 0) : 0;
     const slices = [...top.map(([label, value], i3) => ({ label, value, color: hues2[i3] })), ...rest ? [{ label: `${g2.genres.length - 6} more`, value: rest, color: "muted" }] : []];
-    const picker = kinds2.length > 1 && /* @__PURE__ */ u3("select", { class: "tidypick", "aria-label": "Genres of", value: k3, onChange: (e3) => setPicked(e3.target.value), children: kinds2.map((x3) => /* @__PURE__ */ u3("option", { value: x3, children: names3[x3] }, x3)) });
+    const picker = kinds2.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Genres of", value: k3, pick: setPicked, options: kinds2.map((x3) => [x3, names3[x3]]) });
     if (!g2) {
       const ask = only || GENRED.find((x3) => lib(d3, x3)?.found);
       if (!ask || !genreAsk[ask] || !lib(d3, ask)?.found) return null;

@@ -1958,7 +1958,10 @@ html.os-mac .fx-balance { padding:4px 8px; }
    have the card's width (beside the ring they broke mid-word, "Utilitie / s", Nov 12). */
 .fx-widget:has(.fx-donutrow) { container:donutcard / inline-size; }
 @container donutcard (max-width: 420px) { .fx-donutrow { flex-direction:column; align-items:stretch; } .fx-donutrow .fx-donut { align-self:center; } }
-.fx-checking .fx-actions .seg { font-size:12px; }
+.fx-checking .fx-actions .seg, .tidygenres .fx-actions .seg { font-size:12px; }
+/* Genres' library switch sits in its card's heading without pushing the title down (every heading at one height). */
+#tidyRoot .tidygenres .fx-actions .seg { margin:-4px 0; }
+.tidygenres .fx-actions .seg button { padding:3px 10px; }
 .alertlist.fx-rows li { align-items:center; gap:12px; padding:9px 0; }
 .alertlist.fx-rows li.opens { padding:0; }
 .alertlist.fx-rows li.opens > .rowopen { gap:12px; padding:9px 6px; }
@@ -2512,7 +2515,6 @@ tr.menued > td { background:var(--accent-soft); }
 .tidydone .tidywhen { font-size:12px; white-space:nowrap; margin-right:4px; }
 .tidyclear { display:flex; align-items:center; gap:14px; padding:6px 0 2px; }
 .tidyclear strong { font-size:15px; }
-select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8px; }
 #tidy .seg { margin:0 0 16px; flex-wrap:wrap; }
 .tidycols { display:grid; grid-template-columns:minmax(0, 3fr) minmax(0, 2fr); gap:14px; align-items:start; }
 .tidycols > div > .card { margin-bottom:14px; }
@@ -2592,8 +2594,8 @@ select.tidypick { font:inherit; font-size:13px; padding:3px 8px; border-radius:8
 /* A library's tab opens on it: its mark, its colour, what it holds, and (music) its steps. */
 #tidyRoot .card.fx-widget.tidyhero { background:color-mix(in srgb, var(--fx-hue) 10%, var(--panel)); }
 #tidyRoot .card.fx-widget.tidyhero > h2, #tidyRoot .card.fx-widget.tidyhero > .row h2 { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
-/* A card keeps its own height: a short one beside a tall one (Space beside Genres) no longer stretches half empty. */
-#tidyRoot .tidybody .fx-board { align-items:start; }
+/* Cards in a row are one height, as Finances' are (L4): since L3 none is a lone figure beside a tall card, so
+   stretching leaves no half-empty card. */
 .tidyhero h2 .tidyicon { width:36px; height:36px; border-radius:10px; }
 .tidyherorow { display:flex; justify-content:space-between; align-items:flex-end; gap:12px 24px; flex-wrap:wrap; }
 .tidyhero .tidyfolder { color:var(--text); font-size:13px; }

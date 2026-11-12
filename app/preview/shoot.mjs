@@ -438,6 +438,10 @@ const shots = [
   } },
   // Tidy Up: what to do next beside the drive, the shelf of libraries, and Music's own tab with its steps.
   { name: 'tidy', screen: 'tidy' },
+  // Movies' tab: its Space card beside Genres, the two-up row Tidy Up's look lines up with Finances' (L4).
+  { name: 'tidy-movies', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidyspace', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
+  // Overview's Genres, its library picked with Finances' switch (L4).
+  { name: 'tidy-genres', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidybottom .tidygenres', { timeout: 5000 }); await page.evaluate(() => document.querySelector('#tidy .tidygenres').scrollIntoView({ block: 'center' })); } },
   { name: 'tidy-music', screen: 'tidy', before: async (page) => { await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 }); await page.waitForSelector('#tidy .tidytrack', { timeout: 5000 }); } },
 ];
 
@@ -685,15 +689,33 @@ const smokes = [
     const runs = await page.evaluate(() => window.__MOCK.tidyRuns);
     if (JSON.stringify(runs[0]) !== JSON.stringify(['music', 'genre-counts', [], false])) throw new Error(JSON.stringify(runs));
   } },
-  // With more than one library counted, a dropdown picks whose genres the chart shows.
-  { name: 'Tidy Up: the genre chart’s dropdown picks the library', screen: 'tidy', run: async (page) => {
+  // With more than one library counted, a switch picks whose genres the chart shows, as Finances' cards switch
+  // (Tidy Up's look, L4: not a system select box).
+  { name: 'Tidy Up: the genre chart’s switch picks the library', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("Inbox")', { timeout: 5000 });
-    const options = await page.$$eval('#tidy .tidygenres select[aria-label="Genres of"] option', (os) => os.map((o) => o.textContent));
+    const pick = '#tidy .tidygenres [role="radiogroup"][aria-label="Genres of"]';
+    await page.waitForSelector(pick, { timeout: 5000 });
+    if (await page.$('#tidy .tidygenres select')) throw new Error('a system select box');
+    const options = await page.$$eval(`${pick} [role="radio"]`, (os) => os.map((o) => o.textContent));
     if (JSON.stringify(options) !== JSON.stringify(['Music', 'Movies'])) throw new Error('options: ' + JSON.stringify(options));
-    await page.selectOption('#tidy .tidygenres select', 'movies');
+    if ((await page.getAttribute(`${pick} [role="radio"]:text-is("Music")`, 'aria-checked')) !== 'true') throw new Error('Music not picked first');
+    await page.click(`${pick} [role="radio"]:text-is("Movies")`);
     await page.waitForSelector('#tidy .tidygenres:has-text("One genre each, from Jellyfin")', { timeout: 3000 });
     const t = await page.textContent('#tidy .tidygenres');
     for (const w of ['352', 'films', 'Drama', '25%', '2 more']) if (!t.includes(w)) throw new Error(`no “${w}”: ${t}`);
+  } },
+  // Two cards in a row line up as Finances' do (L4): the same height, the same padding, the figure on the same line.
+  { name: 'Tidy Up: Movies’ Genres and Space line up, as Finances’ cards do', screen: 'tidy', run: async (page) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.click('#tidy .seg button:text-is("Movies")', { timeout: 5000 });
+    await page.waitForSelector('#tidy .tidyspace', { timeout: 5000 });
+    const [a, b] = await page.$$eval('#tidy .tidygenres, #tidy .tidyspace', (els) => els.map((e) => {
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e), f = e.querySelector('.fx-stat');
+      return { top: Math.round(r.top), h: Math.round(r.height), pad: cs.padding, fig: f ? Math.round(f.getBoundingClientRect().top - r.top) : -1 };
+    }));
+    if (a.top !== b.top) throw new Error(`not in one row: ${a.top}, ${b.top}`);
+    if (Math.abs(a.h - b.h) > 1) throw new Error(`heights ${a.h} and ${b.h}`);
+    if (a.pad !== b.pad || a.fig !== b.fig) throw new Error(`padding ${a.pad} / ${b.pad}, figure at ${a.fig} / ${b.fig}`);
   } },
   // A library not counted yet offers it on its own tab, and runs its own count.
   { name: 'Tidy Up: TV’s genres are counted from its tab', screen: 'tidy', run: async (page) => {
@@ -859,7 +881,8 @@ const smokes = [
     await page.waitForSelector('#tidyJob .tidynow:text-is("Now: Dune")', { timeout: 5000 });
     if (!(await page.isDisabled('#tidy .tidyneeds button:text-is("Scan")'))) throw new Error('a second job could start');
     await page.click('#tidy .seg button:text-is("Inbox")');
-    if (await page.$('#tidy .fx-board button:enabled')) throw new Error('a button on Overview could start a second job');
+    // Every button that does something waits; a switch's choices (Genres' library) only pick what a card shows.
+    if (await page.$('#tidy .fx-board button:enabled:not([role="radio"])')) throw new Error('a button on Overview could start a second job');
     await page.click('#tidyJob button:text-is("Stop")');
     await page.waitForFunction(() => window.__MOCK.tidyStopped === true, null, { timeout: 5000 });
     await page.waitForSelector('#tidyJob button:text-is("Close")', { timeout: 5000 });

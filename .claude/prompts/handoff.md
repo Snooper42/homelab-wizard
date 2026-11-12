@@ -67,8 +67,10 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #609 | The owner's screenshots (Nov 12): a ring card measures itself (`.fx-widget:has(.fx-donutrow)`), so category names don't break mid-word; Setup's count says *· 1 can wait* |
 | #610 | **The iPhone's Backups as the owner picked it:** the card, three tiles (`tiles(now:)`), Needs a Look, the fresh folded to logos, More one tap down |
 | #612 | **The iPhone's Settings as the owner picked it:** *The Homelab* (`firstSettings`, in plain words), *This iPhone* (the lock, the widget, Alerts From), *Everything Else*; `SettingRow` shared with the form |
+| #613 | The security session's N49 |
+| #614 | **Gap 6:** Settings on the phone's page (`phoneSettings`; read-only where it only looks, none on a wall screen); the hand-off after 2A |
 
-**In flight:** #614, gap 6, Settings on the phone's page (`phoneSettings`: the settings a phone may change, read-only where it only looks, none on a wall screen; the computer's own pages hidden), with this hand-off, on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **That finishes 2A.** Next: section 2B from its first step not marked Done (Tidy Up L4, step 3, since steps 1 and 2 wait on the owner).
+**In flight:** Tidy Up's look, L4 (2B step 3): cards in a row one height, as Finances' (the `#tidyRoot .tidybody .fx-board { align-items:start }` rule from #485 is gone, since L3 left no lone figure), and Genres' library picked with Finances' `Segmented`; on branch `claude/focused-gates-d35kz0`. *Done:* merged green, `tidy-loop.md` ticked. Then L5 (rows as Finances lists them).
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
