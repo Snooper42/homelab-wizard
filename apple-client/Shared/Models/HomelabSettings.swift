@@ -65,6 +65,15 @@ struct HomelabSettingsForm: Decodable, Sendable, Equatable {
 
     /// The sections in the computer's order, each with its settings.
     var sections: [SettingGroup] { SettingGroup.grouping(settings) }
+
+    /// The homelab's settings people change most, atop the iPhone's
+    /// Settings in plain words (the owner's redesign, Nov 12), in this
+    /// order, where the computer has them; the rest are a tap down.
+    static let firstKeys = ["QUIET_HOURS", "AUTO_HEAL", "AUTO_ROLLBACK", "DESKTOP_ALERTS"]
+
+    var firstSettings: [HomelabSetting] {
+        Self.firstKeys.compactMap { key in settings.first { $0.key == key } }
+    }
 }
 
 /// A section of the form with its settings, in the computer's order.

@@ -23,6 +23,8 @@ struct ComputerView: View {
     /// Who notifies this device of alerts (AlertNotifications).
     @State private var alertSource = AlertNotifications().source
     @State private var alertSourceProblem: String?
+    /// A switch's own page, opened from its ⓘ (the everyday ones atop Settings).
+    @State private var about: String?
 
     var body: some View {
         @Bindable var computer = computer
@@ -33,7 +35,13 @@ struct ComputerView: View {
                 hostSection
                 fixSection
             case .settings:
+                // As the owner picked it (Nov 12): the homelab's everyday
+                // settings first, in plain words; then this device's; then
+                // the rest a tap down.
                 homelabCard
+                homelabFirstSection
+                thisDeviceSection
+                everythingElseSection
                 // What used to be Status's Saved tile, one line here now.
                 if let savings = dashboard.yearlySavings {
                     Section {
@@ -45,16 +53,13 @@ struct ComputerView: View {
                         }
                     }
                 }
-                switchesSection
-                if actions.computerAnswers("AlertLog") {
-                    alertsSection
-                }
-                homelabSettingsSection
-                helpSection
             }
         }
         .formStyle(.grouped)
         .themedCanvas()
+        .navigationDestination(item: $about) { key in
+            SettingDetailView(computer: computer, key: key, label: SettingWords.label(key, apps: dashboard.catalog?.apps ?? []))
+        }
         .task {
             await computer.load()
             if page == .settings { await computer.loadForm() }
@@ -167,8 +172,10 @@ struct ComputerView: View {
         #endif
     }
 
-    /// Nightly updates, the lock, and the widget.
-    private var switchesSection: some View {
+    /// The homelab's everyday settings: nightly updates, then quiet hours,
+    /// healing, rolling back and alerts on the computer's screen, where the
+    /// computer has them (`firstSettings`). The rest are under Everything Else.
+    private var homelabFirstSection: some View {
         Section {
             if let updates = computer.updates {
                 Toggle(isOn: Binding(
@@ -183,6 +190,28 @@ struct ComputerView: View {
                     Text(error).font(.callout).foregroundStyle(Theme.danger)
                 }
             }
+            if let form = computer.form {
+                ForEach(form.firstSettings) { setting in
+                    SettingRow(computer: computer, setting: setting, form: form,
+                               label: SettingWords.label(setting.key, apps: dashboard.catalog?.apps ?? []), about: $about)
+                }
+            }
+        } header: {
+            Text("The Homelab")
+        } footer: {
+            if computer.updates != nil, !computer.canChange {
+                Text("This device can only look.")
+            } else if computer.updates?.paused == true {
+                Text("Apps keep their versions until this is back on.")
+            } else if computer.canChange {
+                Text("A change asks for \(lockName.replacingOccurrences(of: " lock", with: "")) first.")
+            }
+        }
+    }
+
+    /// This device's own: the lock, the widget, and who notifies it.
+    private var thisDeviceSection: some View {
+        Section {
             LabeledContent {
                 Text("On")
             } label: {
@@ -194,35 +223,68 @@ struct ComputerView: View {
                     IconTileLabel(title: widgetName, systemImage: "square.grid.2x2", tint: TileColour.blue)
                 }
             }
+            if actions.computerAnswers("AlertLog") {
+                Picker(selection: Binding(get: { alertSource }, set: { source in Task { await setAlertSource(source) } })) {
+                    ForEach(AlertSource.allCases) { source in
+                        Text(source.label).tag(source)
+                    }
+                } label: {
+                    IconTileLabel(title: "Alerts From", systemImage: "bell.badge", tint: TileColour.red)
+                }
+                if let alertSourceProblem {
+                    Text(alertSourceProblem).font(.callout).foregroundStyle(Theme.danger)
+                }
+            }
+        } header: {
+            Text("This \(deviceWord)")
         } footer: {
-            if computer.updates != nil, !computer.canChange {
-                Text("This device can only look.")
-            } else if computer.updates?.paused == true {
-                Text("Apps keep their versions until this is back on.")
+            if actions.computerAnswers("AlertLog") {
+                switch alertSource {
+                case .ntfy:
+                    Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
+                case .thisApp:
+                    Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
+                }
             }
         }
     }
 
-    /// Alerts From: the ntfy app, or this app, on this device only.
-    private var alertsSection: some View {
+    /// Every homelab setting by section, a report for your helper, and About.
+    private var everythingElseSection: some View {
         Section {
-            Picker(selection: Binding(get: { alertSource }, set: { source in Task { await setAlertSource(source) } })) {
-                ForEach(AlertSource.allCases) { source in
-                    Text(source.label).tag(source)
-                }
+            NavigationLink {
+                Form { homelabSettingsSection }
+                    .formStyle(.grouped)
+                    .themedCanvas()
+                    .navigationTitle("Homelab Settings")
             } label: {
-                IconTileLabel(title: "Alerts From", systemImage: "bell.badge", tint: TileColour.red)
+                IconTileLabel(title: "All homelab settings", systemImage: "gearshape.2.fill", tint: TileColour.grey,
+                              subtitle: "Domain, storage, each app's own") {
+                    if let form = computer.form { Text("\(form.settings.count)") }
+                }
             }
-            if let alertSourceProblem {
-                Text(alertSourceProblem).font(.callout).foregroundStyle(Theme.danger)
+            Button {
+                Task { await computer.makeReport() }
+            } label: {
+                IconTileLabel(title: "Get help", systemImage: "doc.text.fill", tint: TileColour.teal,
+                              subtitle: "A report for your helper, passwords removed") {
+                    if computer.isMakingReport { ProgressView().controlSize(.small) }
+                }
             }
+            .foregroundStyle(Theme.ink)
+            .disabled(computer.isMakingReport)
+            if let error = computer.reportError {
+                Text(error).font(.callout).foregroundStyle(Theme.danger)
+            }
+            NavigationLink {
+                AboutPage()
+            } label: {
+                IconTileLabel(title: "About", systemImage: "info", tint: TileColour.grey)
+            }
+        } header: {
+            Text("Everything Else")
         } footer: {
-            switch alertSource {
-            case .ntfy:
-                Text("The ntfy app notifies this device of the homelab's alerts. Every Alert, under Recent Alerts, lists them here.")
-            case .thisApp:
-                Text("This app notifies while it's open. Turn off the ntfy app's notifications on this device so nothing arrives twice. A locked phone hears only from the ntfy app until the paid Apple program.")
-            }
+            Text("You see the report before it's shared.")
         }
     }
 
@@ -303,31 +365,6 @@ struct ComputerView: View {
         if name.contains("port") { return ("number", TileColour.indigo) }
         if name.contains("secret") || name.hasPrefix("app settings") { return ("key.fill", TileColour.indigo) }
         return ("gearshape.fill", TileColour.grey)
-    }
-
-    /// A diagnostics report, and where the logos come from.
-    private var helpSection: some View {
-        Section {
-            Button {
-                Task { await computer.makeReport() }
-            } label: {
-                IconTileLabel(title: "Send a report", systemImage: "doc.text.fill", tint: TileColour.teal) {
-                    if computer.isMakingReport { ProgressView().controlSize(.small) }
-                }
-            }
-            .foregroundStyle(Theme.ink)
-            .disabled(computer.isMakingReport)
-            if let error = computer.reportError {
-                Text(error).font(.callout).foregroundStyle(Theme.danger)
-            }
-            NavigationLink {
-                AboutPage()
-            } label: {
-                IconTileLabel(title: "About", systemImage: "info", tint: TileColour.grey)
-            }
-        } footer: {
-            Text("Passwords and keys are removed first, and you see it before it's shared.")
-        }
     }
 }
 

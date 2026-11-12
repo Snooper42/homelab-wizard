@@ -901,6 +901,21 @@ struct HomelabSettingsTests {
      "computerOnly":["NPM_API_PASSWORD","PHONE_COMPANION"]}
     """#
 
+    /// The iPhone's Settings leads with the everyday ones, in plain words,
+    /// in their order, where the computer has them (the owner's redesign, Nov 12).
+    @Test func theEverydaySettingsComeFirst() throws {
+        let form = try JSONDecoder.homelab().decode(HomelabSettingsForm.self, from: Data(#"""
+        {"settings":[
+          {"key":"DESKTOP_ALERTS","section":"Notifications","secret":false,"set":true,"value":"true"},
+          {"key":"TZ","section":"This Mac","secret":false,"set":true,"value":"Europe/Lisbon"},
+          {"key":"QUIET_HOURS","section":"Notifications","secret":false,"set":true,"value":"22-7"},
+          {"key":"AUTO_HEAL","section":"Updates","secret":false,"set":true,"value":"true"}]}
+        """#.utf8))
+        #expect(form.firstSettings.map(\.key) == ["QUIET_HOURS", "AUTO_HEAL", "DESKTOP_ALERTS"])
+        #expect(form.firstSettings.map { SettingWords.label($0.key, apps: []) }
+            == ["Quiet hours (no sound at night)", "Restart an app that stops answering", "Alerts on the computer's screen"])
+    }
+
     @Test func readsTheFormAndNeverKeepsASecretsValue() throws {
         let form = try JSONDecoder.homelab().decode(HomelabSettingsForm.self, from: Data(json.utf8))
         #expect(form.settings.count == 4)
