@@ -12,7 +12,7 @@ import { lastSteps, renderAppearance, stepsData } from './setup';
 import { catalog, renderApps, replan, selected } from './choose';
 import { statusById } from './status';
 import { navigate, show } from '../app';
-import { $, $1, errorText, go, showError, thisMachine } from '../core';
+import { $, $1, errorText, go, onPhone, showError, thisMachine } from '../core';
 
 // Settings: .env as a form. Secrets are never sent to the page; an empty
 // secret field keeps the stored value. Logins, tokens, and folders have a
@@ -110,6 +110,15 @@ mountUninstall($('uninstallCard'), { machine: thisMachine, on: uninstallActions 
 // The settings marked (focus) are a Setup step's, asked for from there.
 let settingsFocus: string[] = [];
 export const settingsData = store(async () => {
+  // The phone's page (#596's gap 6): the settings this phone may change, as
+  // the computer lists them for a phone (serve.go's listPhoneSettings), and
+  // none of its secrets nor what it connects through; no Phones, People or
+  // Tests, which are the computer's.
+  if (onPhone()) {
+    const r = (await go().Settings()) as unknown as { settings?: settings.Setting[]; computerOnly?: string[] } | settings.Setting[];
+    testable = new Set();
+    return phoneSettings(r);
+  }
   loadPhones();
   loadTailnet();
   loadPeople();
@@ -123,6 +132,13 @@ settingsData.watch(() => {
   if (settingsData.error) { form = null; formProblem($('settingsForm'), String(settingsData.error)); return; }
   drawSettings(true, true);
 });
+/** What a phone's page lists: not a secret, and not one the computer keeps to itself. */
+export function phoneSettings(r: { settings?: settings.Setting[]; computerOnly?: string[] } | settings.Setting[]): settings.Setting[] {
+  const list = Array.isArray(r) ? r : r.settings || [];
+  const keep = new Set(Array.isArray(r) ? [] : r.computerOnly || []);
+  return list.filter((s) => !s.secret && !keep.has(s.key));
+}
+
 export function loadSettings(focus: string[] = []) {
   settingsFocus = focus;
   return settingsData.load();
@@ -151,7 +167,8 @@ export function drawSettings(afresh: boolean, scroll: boolean) {
   moreCount = list.length - everydayCount;
   if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s) => s.key === focus[0]))?.name || settingsPage;
   if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || '';
-  form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions };
+  form = { pages, wanted, focus, checks, testable: testable!, label: settingLabel, view: settingsView(), on: formActions,
+    phone: onPhone(), readOnly: onPhone() && !document.documentElement.classList.contains('can-change') };
   renderSettingsNav(pages);
   filterSettings();
   if (scroll && focus.length) document.getElementById('setting-' + focus[0])?.scrollIntoView({ block: 'center' });
@@ -274,7 +291,8 @@ const pageGroups: [string, string[]][] = [
 let navGroups: NavGroup[] = [];
 function renderSettingsNav(pages) {
   const installed = (name) => Object.values(statusById || {}).some((a) => a.name === name && a.state !== 'missing');
-  const general = [...pages.filter((p) => p.kind === 'general').map((p) => p.name), ...extraPages];
+  // Appearance, People and Phones are the computer's own: none on a phone.
+  const general = [...pages.filter((p) => p.kind === 'general').map((p) => p.name), ...(onPhone() ? [] : extraPages)];
   const apps = pages.filter((p) => p.kind === 'app');
   const known = Object.keys(statusById || {}).length > 0;
   const mine = known ? apps.filter((p) => installed(p.name) || p.name === 'Other apps') : apps;
@@ -406,7 +424,7 @@ $('saveSettings').onclick = async () => {
   }
   try {
     await go().SaveSettings(values);
-    stepsData.set(await go().Setup()); // check the new values
+    if (!onPhone()) stepsData.set(await go().Setup()); // check the new values (Setup is the computer's)
     await loadSettings(Object.keys(values));
   } catch (e) { showError(e); }
 };
