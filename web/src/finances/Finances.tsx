@@ -153,7 +153,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
-          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={sel} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
+          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
           : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} phone={phone} />}
       </div>
     </>
@@ -167,7 +167,7 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
     : tab === 'pay' ? <Pay v={v} L={L} />
-    : tab === 'worth' ? <NetWorth v={v} L={L} sel={sel} pick={pick} group={group} setGroup={setGroup} />
+    : tab === 'worth' ? <NetWorth v={v} L={L} sel={Math.max(0, sel)} pick={pick} group={group} setGroup={setGroup} />
     : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} phone={phone} />;
 }
 

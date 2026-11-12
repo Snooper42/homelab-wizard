@@ -2309,6 +2309,119 @@
    "total": 4550
   }
  ],
+ "before": [
+  {
+   "date": "2026-10-26",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400
+  },
+  {
+   "date": "2026-10-23",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-10-09",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-09-25",
+   "people": [
+    "alex",
+    "jordan"
+   ],
+   "amount": 4550,
+   "total": 4550,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-09-26",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-09-11",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-08-28",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-08-26",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400
+  },
+  {
+   "date": "2026-08-14",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-07-31",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-07-24",
+   "people": [
+    "jordan"
+   ],
+   "amount": 2400,
+   "total": 2400,
+   "moved": [
+    {
+     "person": "jordan",
+     "from": "2026-07-26",
+     "why": "the weekend"
+    }
+   ]
+  },
+  {
+   "date": "2026-07-17",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  },
+  {
+   "date": "2026-07-03",
+   "people": [
+    "alex"
+   ],
+   "amount": 2150,
+   "total": 2150
+  }
+ ],
  "days": [
   {
    "date": "2026-10-30",

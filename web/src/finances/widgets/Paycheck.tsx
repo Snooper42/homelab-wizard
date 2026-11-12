@@ -24,8 +24,11 @@ const ownTile = ['checking', 'savings', 'investment', 'retirement'];
 
 const names = (ids: string[], L: Lookup) => ids.map((id) => L.person[id]?.name || id).join(' and ');
 
+/** A payday's title: whose paycheck and its day. */
+export const paydayTitle = (pd: finance.Payday, L: Lookup): string => `${names(pd.people, L)}'s paycheck · ${dayLong(pd.date)}`;
+
 /** The period's title: whose paycheck and its day, or now, until the next one. */
-export const periodTitle = (p: finance.Period, L: Lookup): string => (p.now ? `Now · until ${dayLong(p.last)}` : `${names(p.pay!.people, L)}'s paycheck · ${dayLong(p.pay!.date)}`);
+export const periodTitle = (p: finance.Period, L: Lookup): string => (p.now ? `Now · until ${dayLong(p.last)}` : paydayTitle(p.pay!, L));
 
 /** What goes into each account in a period: payments to it, and pay put there (a check into savings, a 401(k) taken from the pay). */
 function into(v: finance.View, L: Lookup, p: finance.Period): Record<string, number> {

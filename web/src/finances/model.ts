@@ -191,3 +191,13 @@ export function carFromPrice(a: Pick<finance.Account, 'bought' | 'boughtOn' | 'h
   const years = (parseDay(day).getTime() - parseDay(a.boughtOn).getTime()) / 864e5 / 365.25;
   return Math.round(a.bought * carFactor(a.holds, years) * 100) / 100;
 }
+
+/** A pay period before now: from a payday the computer kept (View.before) to the day before the next, read from the ledger. */
+export interface PastPeriod { start: string; last: string; pay: finance.Payday }
+
+/** The pay periods before now, the newest first: the last runs to the day before now's starts. */
+export function pastPeriods(v: finance.View): PastPeriod[] {
+  const nowStart = v.periods[0]?.start || v.today;
+  const before = (s: string) => { const d = parseDay(s); d.setDate(d.getDate() - 1); return isoDay(d); };
+  return (v.before || []).map((pay, k, all) => ({ start: pay.date, last: before(k === 0 ? nowStart : all[k - 1].date), pay }));
+}
