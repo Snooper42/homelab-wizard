@@ -1,4 +1,4 @@
-# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, morning)
+# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, evening)
 
 The owner has one Claude account for this repository. This file is the hub: where the work stands, what to do first, and how to hand on. It sits above the files it points to (section 5); each keeps its detail and its own rules.
 
@@ -32,7 +32,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 12, 9 AM Eastern)
+## 1. Where it stands (Nov 12, 5:15 PM Eastern)
 
 **Merged Nov 10 to 12** (each green):
 
@@ -74,6 +74,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #616, #617 | The security session's N50, N51 |
 | #618 | Tidy Up's look, **L5's first half**: captions on one line at 860px |
 | #619 | The security session's N52 |
+| #637 | **2C step 5's first piece: Arrange the Dashboard** (`Arrange.tsx`; per device, `homelab.finances.layout`; not on the phone) |
 | #636 | **2C step 4, PR 4c:** a loan's page on the iPhone and iPad (`LoanLinks.swift`, `LedgerEdit.settingLink`). **2C step 4 is done: all four mockups built** |
 | #634 | **2C step 4, PR 4b:** the Watchlist on the iPhone and iPad, no share bar there (`WatchlistCard.swift`) |
 | #635 | The security session's N57 (a followed ticker's address and size) |
@@ -92,7 +93,12 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #622 | Tidy Up's look, **L7**: in the dark, Finances' night (`--fin-night` on `#tidy`); every tab compared at three widths in both themes |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** #637, **2C step 5's first piece: Arrange the Dashboard** (`web/src/finances/Arrange.tsx`: `ArrangedBoard`, `readLayout`/`keepLayout` in `homelab.finances.layout`, `ordered`; Overview's cards as slots with an id, a name and a usual width; smoke *the Dashboard is arranged, kept on this device, and Reset* and *The phone: the Dashboard has no Arrange…*); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green. **Next: nothing this session can build without the owner** (section 4): the count from the Mac for the phone's page logos (2C step 1), the words after *Couldn't read Ghostfolio:* (step 2), a screenshot of the Dashboard's wrapping (step 5), and section 4's older asks. Offer next (my suggestion, not yet asked): each Dashboard card opening what it sums up (Spent → Spending for that period, Cash flow → its transactions).
+**In flight: nothing.** No PR open, no local work left: every commit of the Nov 12 session is merged (#627 to #637, with the security session's #625, #626 and #635 between).
+
+**Start the next session with the owner, before building (each with the pop-up, section 0 rule 8):**
+1. **The three things only they can give** (2C): the line the Mac check prints for the phone's page logos (step 1; the command is in the Nov 12 chat: counts only, never names); the words after *Couldn't read Ghostfolio:* when Read now fails on the phone (step 2); a screenshot of the Dashboard's text that wraps or doesn't line up (step 5).
+2. **Offer, recommended first:** each Dashboard card opens what it sums up (Spent this month → Spending for that period; Cash flow → its transactions; Renewing soon → Recurring). Not asked yet.
+3. **Then section 4's older asks**, most of which the owner hasn't answered (L6, the iPhone plan's next item, Finances Steps 5 and 6).
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
@@ -129,7 +135,7 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
    Today's Dashboard already had a pay-period picker inside the Paycheck card (`widgets/Paycheck.tsx`, forward only) and the 30-day checking chart already opens a day (`widgets/Checking.tsx` `onPick`): one period picker the Dashboard follows, Dashboard cards that click through, the Transactions table. Mock each first (a private Artifact page with made-up numbers) and show the owner before building; build only what they say yes to. *Done:* each step's PR merged, or the owner said no to it.
 3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM", **done, #597**), L3 (**#601**), L4 (**#615**), L5 (**#618**, **#620**), then L6 (**asked Nov 12**: the owner's call, build nothing until they say) and L7 (**#622**: done, every tab compared). **Done except L6, asked Nov 12**; L8 (the books review's rows) is to offer. *Done:* each merged, `tidy-loop.md` ticked, and L6 answered.
 4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. **Asked Nov 12, 7 AM** (section 4). *Done:* each item merged and `unison-handoff.md` marks it.
-5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. **Asked Nov 12, 8 AM** (section 4), recommending the payee-to-bill link first. *Done:* built, or the owner said no.
+5. **Rules, deeper:** a rule that links a payee to a planned bill (**done as a loan's linked payments, #630 and #636: the owner's yes, Nov 12**; a bill other than a loan isn't offered yet); rules by amount or direction (**still waits on a yes**). Each needs the owner's yes first; no yes, no build. **Asked Nov 12, 8 AM** (section 4), recommending the payee-to-bill link first. *Done:* built, or the owner said no.
 6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. **Done (Nov 12):** the owner started it on their other account before 2A ended; it runs on its own branch (`audit-loop.md`). Leave its PRs ("Security N…") and `audit-loop.md` to it, and carry on with your own while one is open.
 
 ### 2C. The owner's list (Nov 12, 8:30 AM): before what's left of 2A and 2B
@@ -145,7 +151,7 @@ The owner, Nov 12: what doesn't work as they expect, and what they'd like next. 
    - **An account's own page: done, #629** (the computer and the phone's page; the iPhone's is with PR 4). tapping an account (Net worth, the sidebar, the phone) opens its page, not the balance form: its balance and a chart of it over time, its latest transactions, **Update balance** and **Edit** (name, logo, type) as buttons.
    - **A loan's page: done, #630.** Built as: links are a transaction's `payment` (the plan's payments into the loan); the same payee's next ones offered (`alike`), not linked on import; Link a payment… lists money out not linked to anything; one over the plan's payment asks *count all of it?* (Count it: `extra`; Not this one: unlinked, `notPlanned`). The original plan: builds on the account page (`Account.tsx`: a loan section above Latest transactions). A link is a rule (`finance.Rule`, #584/#585: Always do this for "…") that names a loan account and the owner's share; a linked transaction is counted towards the loan at the share, and one over the share is asked about (Count it / Not this one), as the mockup draws. *Where to read first:* `internal/finance` rules and the split (#575, `Share`), Worth.tsx's loans (`LoansWidget`). the payment, rate, months left, payoff date and **your share** (the split, #575), then **the payments linked to it**: link a transfer once (theirs is a Zelle payment to the person they share the mortgage with) and every one after counts towards the loan, at their share. This is 2B step 5's "a rule that links a payee to a planned bill": **the owner's yes (Nov 12)**. Rules by amount or direction still wait.
    - **Investments: PR 3a the list (done, #631); PR 3b the Watchlist (done, #632):** `finance.Plan` keeps followed tickers (symbol, name, data source, the day and price followed, a point a day); `ghostfolio.ReadInto` quotes each (`Session.quote`) as it reads; an app method and a phone call (Finances edit level, `Change: true`, Face ID on the iPhone) follow one found by `FindSymbol`; Unfollow saves the plan without it. The original plan: no horizontal ratio bar (the owner doesn't like it; they like the holdings separated); each holding with its price, today's change, its gain and a small chart; the total and a chart on top; a **Watchlist** of tickers followed without owning, priced through Ghostfolio's lookup.
-5. **Later:** the Dashboard's cards moved, hidden and sized (**the owner's yes, Nov 12, as artboard 5 draws it, kept per device; built locally, see In flight**) (Edit layout: drag, and Move up/down for the keyboard; Hide; Reset; kept per device; then a third, half or full width); text that wraps or doesn't line up (ask for a screenshot; seen with made-up data: *This paycheck*'s account tiles, one name on two lines; four then two tiles at 860px; the sidebar cutting account names short).
+5. **The Dashboard's cards moved, hidden and sized: done, #637** (the owner's yes, Nov 12, as artboard 5 draws it, kept per device). **Still waiting on a screenshot:** the text that wraps or doesn't line up. (Edit layout: drag, and Move up/down for the keyboard; Hide; Reset; kept per device; then a third, half or full width); text that wraps or doesn't line up (ask for a screenshot; seen with made-up data: *This paycheck*'s account tiles, one name on two lines; four then two tiles at 860px; the sidebar cutting account names short).
 
 ## 3. Once the owner picks: hand on before you build
 
@@ -163,11 +169,12 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 - **Tidy Up's L6 (asked Nov 12, 7 AM):** should Tidy Up's main button (*Next up*'s: Scan, Build, Shrink…) also sit in the screen's header, as Finances has **+ Add a payment** there, or stay in the list with **Settings…** alone in the header? Recommended: **leave it in the list** (it changes with what's next, and the header's button would then be a second copy of it; a step that throws things away never gets it, P2). Build nothing until they say.
 - **What's next for the iPhone (2B step 4), asked Nov 12:** recommended `unison-handoff.md` item 7 first (Send to my phone / Open on the computer).
-- **Rules, deeper (2B step 5), asked Nov 12, 8 AM:** yes or no to a rule that links a payee to a planned bill, and to rules by amount or direction. Recommended: the payee-to-bill link first.
+- **Rules by amount or direction (2B step 5):** still waits on a yes (the payee-to-bill link was built for loans, #630, #636).
+- **Dashboard cards that open what they sum up:** offer (section 1's start list).
 
 - **Also from the owner's screenshots (Nov 12), to mock before changing (the next UI work to offer; recommend the Setup error first, the smallest):** Setup shows a failed step's error twice (the log and the step) with a raw API path; the Dashboard's Cash flow card has a lot of empty space; Spent this month sits alone on its row and repeats Where it goes.
 - **The Finances mocks (2B step 2):** Step 4 is a yes (Nov 11). Yes or no to Step 5 (redrawn as *Checking, last 90 days*) and Step 6 on the canvas (link in section 2). Build only what they say yes to.
-- **Trying on the phone:** #576, #588, #590, #592, #593, and now #604, #606, #607, #610 and #612 (the iPad's links, What was done and Every Alert; Snooze in Every Alert; the new Backups and Settings) need the cable re-install, on the iPhone and the iPad (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
+- **Trying on the phone:** #576, #588, #590, #592, #593, #604, #606, #607, #610, #612, and from Nov 12 #627 (their own logos), #633 (an account's page), #634 (the Watchlist, no share bar) and #636 (a loan's page) (the iPad's links, What was done and Every Alert; Snooze in Every Alert; the new Backups and Settings) need the cable re-install, on the iPhone and the iPad (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
 - **Imports:** a screenshot of what still looks off (2B, step 1).
 - **"After <name>'s paycheck"** against their spreadsheet (`finances-handoff.md` section 2, item 1): which row still differs.
@@ -246,9 +253,9 @@ Rewrite this file so the next session starts from GitHub alone: section 1 (what 
 
 ## Launchers (paste one into a new session)
 
-The work, in this file's order (2A is done; 2B from its first step not marked Done):
+The work, in this file's order (2A is done; 2C is done but for what waits on the owner; section 1 says what to ask first):
 
-    Read .claude/prompts/handoff.md and follow it from "Start here": land anything open, then do section 2 in order from the first step not marked Done, asking me only where it says to. Merge each PR as soon as it's green, and rewrite the hand-off before you stop. A security session on my other account may be running at the same time (.claude/prompts/audit-loop.md): leave its "Security N…" PRs and audit-loop.md to it, and carry on with your own while one is open.
+    Read .claude/prompts/handoff.md and follow it from "Start here": land anything open, ask me what section 1 lists first (with the pop-up), then do section 2 in order from the first step not marked Done, asking me only where it says to. Merge each PR as soon as it's green, and rewrite the hand-off before you stop. A security session on my other account may be running at the same time (.claude/prompts/audit-loop.md): leave its "Security N…" PRs and audit-loop.md to it, and carry on with your own while one is open.
 
 The independent security review, in a session of its own (it was started Nov 12; when it next runs, add what this session merged: the iPad's links into the app (#604), Snooze from Every alert (#607), Settings on the phone's page (#614), the iPhone's Settings rows (#612)):
 
