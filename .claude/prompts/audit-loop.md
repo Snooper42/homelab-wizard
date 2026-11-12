@@ -745,7 +745,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the
     catalog, not by hand.
-79. **The git checkout's upgrade trusts the branch tip alone**
+79. (decided by the owner, Nov 12: move only to releases whose build provenance verifies, as the desktop app does; to build) **The git checkout's upgrade trusts the branch tip alone**
     (`internal/upgrade`, `homelab upgrade`): `git pull --ff-only` from
     origin over HTTPS, then the new version's `up` runs. N29 made release
     downloads prove where they were built; a source checkout has no such
@@ -780,17 +780,17 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     item 57 covered privileges): `network_mode: host`, `pid: host`, a
     published port on `0.0.0.0` ignoring `BIND_IP`, `extra_hosts`. Does
     `validate` warn for each, as it does for the socket?
-86. (looked at Nov 10, left a decision: one Access service token, made `duration: forever`, is given to every phone at pairing; a lost phone keeps it, so lock 1 lets it through, but its device key is revoked at Remove and lock 3 refuses it. Rotating the token at Remove would bring lock 1 back too, at the cost of every other phone pairing again at home to go out: a choice for the owner; `homelab phone away --new-token` would be the shape) **The away API's Cloudflare Access credential**: how the phones'
+86. (decided by the owner, Nov 12: keep as is; Remove revokes the phone's own key, lock 3; looked at Nov 10, left a decision: one Access service token, made `duration: forever`, is given to every phone at pairing; a lost phone keeps it, so lock 1 lets it through, but its device key is revoked at Remove and lock 3 refuses it. Rotating the token at Remove would bring lock 1 back too, at the cost of every other phone pairing again at home to go out: a choice for the owner; `homelab phone away --new-token` would be the shape) **The away API's Cloudflare Access credential**: how the phones'
     credential is made, where it is kept (on the phone and the computer),
     what it opens beyond `homelab-away`, and how a lost phone's is taken
     back.
-87. **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
+87. (decided by the owner, Nov 12: a short hold, a new release installed only after it has been out a few days, its notes shown in Status; to build) **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
     `pocket-id:v2`): the nightly update takes each new image, and these
     hold every password and every sign-in. The socket holders are pinned
     (M6). This is a decision: pinning delays their own security fixes. A
     digest check against the release, or a short hold with the release
     notes shown, may sit between the two.
-88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
+88. (decided by the owner, Nov 12: as item 87, the same short hold; to build) **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
 89. (done: N44 for Pocket ID, N45 for Home Assistant, both on `homelab-front` trusting only the proxy and Tailscale Serve) **Pocket ID and Home Assistant trust a forwarded address from
@@ -804,6 +804,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 
 - **Round 14 (Nov 12): every package has now been read.** Item 128 holds. From here a round reads what merges (the other account's PRs as they land, by their diff) and goes back over the riskiest surfaces when they change: the phone companion's calls and permissions, the tunnel, what is published, `.env` from a phone (N52's list), the updates. Open: items 79, 87, 88 (the owner's decisions), 98, 105, 113 (left, with reasons).
 
