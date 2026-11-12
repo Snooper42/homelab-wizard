@@ -151,8 +151,7 @@ private struct PhoneDashboard: View {
         Binding(
             get: {
                 let screen = (Screen(storageKey: savedTab) ?? .status(.all)).row
-                if isMember, screen == .backups || screen == .setup { return .status(.all) }
-                return screen == .finances && !finances.canSeePlan ? .status(.all) : screen
+                return IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
             },
             set: { savedTab = $0.storageKey }
         )
@@ -373,13 +372,73 @@ private struct PhoneStatus: View {
                 }
             }
         }
-        // A link's action, on a device allowed changes: one tap here, then
-        // as its button would (Face ID, and Stop asks first).
-        .confirmationDialog(
-            linkAsk.map { "\($0.action.title) \($0.app.name)?" } ?? "",
-            isPresented: Binding(get: { linkAsk != nil }, set: { if !$0 { linkAsk = nil } }),
+        .linkAskDialog($linkAsk)
+    }
+
+    /// Does what Siri, a shortcut or a link asked (IntentInbox.outcome):
+    /// opens the app's page, then what waits on it. An app it can't tell is
+    /// searched for instead, so the list shows what matches.
+    private func takeRequest() {
+        let inbox = IntentInbox.shared
+        guard let request = inbox.pending, model.hasLoaded else { return }
+        inbox.pending = nil
+        switch IntentInbox.outcome(of: request, in: model.apps(for: .all), available: { actions.available(for: $0) }) {
+        case .search(let said):
+            model.search = said
+        case .open(let id, let then):
+            path = NavigationPath([id])
+            if let then, let app = model.app(id: id) {
+                follow(then, on: app, model: model, actions: actions) { linkAsk = $0 }
+            }
+        }
+    }
+}
+
+/// A link's action, waiting for its tap.
+private struct LinkAsk: Equatable {
+    let app: AppStatus
+    let action: AppAction
+}
+
+/// What waits on an app's page once it's open: its logs, a link's action
+/// for one tap, or Siri's action as its button would (Face ID, and Stop
+/// asks first). After the page is up, so the spinner and the result show there.
+@MainActor
+private func follow(
+    _ then: IntentInbox.Then,
+    on app: AppStatus,
+    model: DashboardViewModel,
+    actions: AppActionsViewModel,
+    ask: @escaping @MainActor (LinkAsk) -> Void
+) {
+    Task { @MainActor in
+        try? await Task.sleep(for: .milliseconds(600))
+        switch then {
+        case .logs: model.logsApp = app
+        case .ask(let action): ask(LinkAsk(app: app, action: action))
+        case .run(let action): actions.request(action, on: app)
+        }
+    }
+}
+
+private extension View {
+    /// A link's action, on a device allowed changes: one tap here, then as
+    /// its button would (Face ID, and Stop asks first).
+    func linkAskDialog(_ ask: Binding<LinkAsk?>) -> some View {
+        modifier(LinkAskDialog(ask: ask))
+    }
+}
+
+private struct LinkAskDialog: ViewModifier {
+    @Binding var ask: LinkAsk?
+    @Environment(AppActionsViewModel.self) private var actions
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(
+            ask.map { "\($0.action.title) \($0.app.name)?" } ?? "",
+            isPresented: Binding(get: { ask != nil }, set: { if !$0 { ask = nil } }),
             titleVisibility: .visible,
-            presenting: linkAsk
+            presenting: ask
         ) { ask in
             Button(ask.action.title, role: ask.action == .stop ? .destructive : nil) {
                 actions.request(ask.action, on: ask.app)
@@ -387,55 +446,6 @@ private struct PhoneStatus: View {
             Button("Not Now", role: .cancel) {}
         } message: { _ in
             Text("A link asked for this. Nothing happens unless you tap it.")
-        }
-    }
-
-    /// A link's action, waiting for its tap.
-    struct LinkAsk: Equatable {
-        let app: AppStatus
-        let action: AppAction
-    }
-
-    /// Does what Siri, a shortcut or a link asked: opens the app's page and
-    /// asks as its button would (Face ID, and Stop asks first); a link's
-    /// action waits for one more tap, as anyone can send a link. An app it
-    /// can't tell is searched for instead, so the list shows what matches.
-    private func takeRequest() {
-        let inbox = IntentInbox.shared
-        guard let request = inbox.pending, model.hasLoaded else { return }
-        inbox.pending = nil
-        let apps = model.apps(for: .all)
-        // A link names an app by its id, exactly.
-        let found = request.fromLink
-            ? apps.first { $0.id.lowercased() == request.app.lowercased() }
-            : IntentInbox.match(request.app, in: apps)
-        guard let app = found else {
-            model.search = request.app
-            return
-        }
-        path = NavigationPath([app.id])
-        if request.logs {
-            Task {
-                try? await Task.sleep(for: .milliseconds(600))
-                model.logsApp = app
-            }
-            return
-        }
-        if request.fromLink {
-            if let action = request.action, actions.available(for: app).contains(action) {
-                Task {
-                    try? await Task.sleep(for: .milliseconds(600))
-                    linkAsk = LinkAsk(app: app, action: action)
-                }
-            }
-            return
-        }
-        if let action = request.action, actions.available(for: app).contains(action) {
-            // Once its page is up, so the spinner and the result show there.
-            Task {
-                try? await Task.sleep(for: .milliseconds(600))
-                actions.request(action, on: app)
-            }
         }
     }
 }
@@ -498,6 +508,8 @@ private struct SplitDashboard: View {
     let computer: ComputerViewModel
     let finances: FinancesViewModel
     @State private var columns: NavigationSplitViewVisibility = .all
+    /// A link's action, waiting for its one tap.
+    @State private var linkAsk: LinkAsk?
 
     /// The computer's screens a phone can reach, in its sidebar's order.
     /// A household member's iPad: their apps, their Finances, and Settings.
@@ -533,7 +545,20 @@ private struct SplitDashboard: View {
                 }
             }
             .navigationTitle("Homelab Wizard")
-            .onAppear { model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all) }
+            // Where it was left, then what a link, Siri or a shortcut asked
+            // for while it was locked (after, so the place kept doesn't undo it).
+            .onAppear {
+                model.sidebar = Screen(storageKey: savedSidebar) ?? .status(.all)
+                takeScreen()
+                takeRequest()
+            }
+            // A link asked for a screen (homelab://backups): that row, where
+            // this device has it.
+            .onChange(of: IntentInbox.shared.screen) { takeScreen() }
+            // Siri, a shortcut or a link asked for an app: its page in the
+            // full list, once Status is read, and what waits on it.
+            .onChange(of: IntentInbox.shared.pending) { takeRequest() }
+            .onChange(of: model.hasLoaded) { takeRequest() }
             .onChange(of: model.sidebar) { _, item in
                 if let item { savedSidebar = item.storageKey }
             }
@@ -570,6 +595,13 @@ private struct SplitDashboard: View {
                     .toolbar { toolbarItems }
             case .finances?:
                 FinancesView(finances: finances)
+                    // A link to one of its pages (homelab://finances/budgets).
+                    .navigationDestination(item: Binding(
+                        get: { IntentInbox.shared.financePage },
+                        set: { IntentInbox.shared.financePage = $0 }
+                    )) { page in
+                        FinancesView.linkedPage(page, finances: finances)
+                    }
                     .safeAreaInset(edge: .top) { healthLine }
                     .navigationSplitViewColumnWidth(min: 320, ideal: 420)
                     .toolbar { toolbarItems }
@@ -605,6 +637,39 @@ private struct SplitDashboard: View {
         .focusedSceneValue(\.screenChoice, ScreenChoice(canSeeFinances: finances.canSeePlan) { screen in
             model.sidebar = screen
         })
+        .linkAskDialog($linkAsk)
+    }
+
+    /// The screen a link asked for, where this device has it (else Status).
+    private func takeScreen() {
+        let inbox = IntentInbox.shared
+        guard let screen = inbox.screen else { return }
+        inbox.screen = nil
+        let landing = IntentInbox.landing(screen, isMember: isMember, canSeeFinances: finances.canSeePlan)
+        model.sidebar = landing
+        // No Finances here: no page of it waits either.
+        if landing != .finances { inbox.financePage = nil }
+    }
+
+    /// Does what Siri, a shortcut or a link asked (IntentInbox.outcome), as
+    /// the iPhone does: the app's page in the full list, then what waits on
+    /// it. An app it can't tell is searched for, so the list shows what matches.
+    private func takeRequest() {
+        let inbox = IntentInbox.shared
+        guard let request = inbox.pending, model.hasLoaded else { return }
+        inbox.pending = nil
+        let outcome = IntentInbox.outcome(of: request, in: model.apps(for: .all), available: { actions.available(for: $0) })
+        model.sidebar = .status(.all)
+        switch outcome {
+        case .search(let said):
+            model.search = said
+        case .open(let id, let then):
+            model.search = ""
+            model.selectedAppID = id
+            if let then, let app = model.app(id: id) {
+                follow(then, on: app, model: model, actions: actions) { linkAsk = $0 }
+            }
+        }
     }
 
     private func badge(for screen: Screen) -> Int {
