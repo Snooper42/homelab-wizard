@@ -1,4 +1,4 @@
-# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, early morning)
+# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, morning)
 
 The owner has one Claude account for this repository. This file is the hub: where the work stands, what to do first, and how to hand on. It sits above the files it points to (section 5); each keeps its detail and its own rules.
 
@@ -31,7 +31,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 12, 12:45 AM Eastern)
+## 1. Where it stands (Nov 12, 7 AM Eastern)
 
 **Merged Nov 10 to 12** (each green):
 
@@ -69,10 +69,11 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #612 | **The iPhone's Settings as the owner picked it:** *The Homelab* (`firstSettings`, in plain words), *This iPhone* (the lock, the widget, Alerts From), *Everything Else*; `SettingRow` shared with the form |
 | #613 | The security session's N49 |
 | #614 | **Gap 6:** Settings on the phone's page (`phoneSettings`; read-only where it only looks, none on a wall screen); the hand-off after 2A |
-
 | #615 | Tidy Up's look, **L4**: cards in a row one height, as Finances'; Genres' library with Finances' switch |
+| #616, #617 | The security session's N50, N51 |
+| #618 | Tidy Up's look, **L5's first half**: captions on one line at 860px |
 
-**In flight:** #618, Tidy Up's look, **L5's first half**: captions on one line at 860px (`Tidy Up: rows say their caption on one line at 860px`); on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **Next:** L5's second half, a figure on the right of each row that has one, as Finances' amounts (read what the record keeps per row first: only films' and shows' *Shrink* rows have `gain` today); then L6 and L7 (`tidy-loop.md`).
+**In flight:** #620, Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done, as Finances' amounts (`media.Activity.Freed`, `Activity.Said()` for the command line, the smoke case *Recently done puts what a job freed on the right…*), and Audiobooks' Merge says what it wins back (*Merge says what it wins back, as Shrink does*); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green. **Next:** L6 waits on the owner (asked Nov 12, section 4); so **L7** (`tidy-loop.md`): compare every look item, L2 to L5, at 1280, 860 and the phone, light and dark, beside Finances, and fix what differs, each in its own PR.
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
@@ -107,7 +108,7 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
    - **PR 3, By month (#600, merged):** built: the bar is drawn from props Overview works out (`PeriodBarProps`); `readBy`/`keepBy` keep the choice per device (`homelab.finances.periodBy`, in try); months from `monthsBack` (6) before this one to the last the plan's days reach; a past month is `PastWidget`, this month `PastWidget` (*So far this month*, to today) and `PlannedWidget` (*Still to come*, from tomorrow), a month ahead `PlannedWidget` (*The plan*: comes in, goes out, checking at its end, each paycheck and payment). The original plan: a *By paycheck / By month* switch on the bar; months from the ledger behind, from the plan ahead (`v.days` summed by month). Kept per device (`localStorage`, wrapped in try). *Test:* smoke *By month steps months, and the cards follow*.
    - **PR 4, the dark theme: already done** (found Nov 11: `--fin-night`, `--fin-night-card`, `--fin-night-line` in `style.css`, applied to `#finances` in the dark unless more contrast is asked, since #545). Nothing to build. The original plan: near-black ground, cards a step lighter, thin borders (`style.css` tokens only, `lint.mjs`), as the mock's Dark switch. *Test:* the axe and contrast smoke cases in dark, and screenshots.
    Today's Dashboard already had a pay-period picker inside the Paycheck card (`widgets/Paycheck.tsx`, forward only) and the 30-day checking chart already opens a day (`widgets/Checking.tsx` `onPick`): one period picker the Dashboard follows, Dashboard cards that click through, the Transactions table. Mock each first (a private Artifact page with made-up numbers) and show the owner before building; build only what they say yes to. *Done:* each step's PR merged, or the owner said no to it.
-3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM", **done, #597**), L3 (**#601**), then the look, L3 to L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked.
+3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM", **done, #597**), L3 (**#601**), L4 (**#615**), L5 (**#618**, **#620**), then L6 (**asked Nov 12**: the owner's call, build nothing until they say) and L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked, and L6 answered.
 4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. *Done:* each item merged and `unison-handoff.md` marks it.
 5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. *Done:* built, or the owner said no.
 6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. **Done (Nov 12):** the owner started it on their other account before 2A ended; it runs on its own branch (`audit-loop.md`). Leave its PRs ("Security N…") and `audit-loop.md` to it, and carry on with your own while one is open.
@@ -125,6 +126,9 @@ Before the first line of the chosen work, rewrite **this file** for it, in the s
 Keep it the hub: detail belongs in the loop file for that area (`finances-handoff.md`, `tidy-loop.md`, `unison-handoff.md`); link to it. Rewrite this file again whenever the session nears its end, so the next one starts from GitHub alone.
 
 ## 4. Waiting on the owner
+
+- **Tidy Up's L6 (asked Nov 12, 7 AM):** should Tidy Up's main button (*Next up*'s: Scan, Build, Shrink…) also sit in the screen's header, as Finances has **+ Add a payment** there, or stay in the list with **Settings…** alone in the header? Recommended: **leave it in the list** (it changes with what's next, and the header's button would then be a second copy of it; a step that throws things away never gets it, P2). Build nothing until they say.
+- **What's next for the iPhone (2B step 4), asked Nov 12:** recommended `unison-handoff.md` item 7 first (Send to my phone / Open on the computer).
 
 - **Also from the owner's screenshots (Nov 12), to mock before changing (the next UI work to offer; recommend the Setup error first, the smallest):** Setup shows a failed step's error twice (the log and the step) with a raw API path; the Dashboard's Cash flow card has a lot of empty space; Spent this month sits alone on its row and repeats Where it goes.
 - **The Finances mocks (2B step 2):** Step 4 is a yes (Nov 11). Yes or no to Step 5 (redrawn as *Checking, last 90 days*) and Step 6 on the canvas (link in section 2). Build only what they say yes to.

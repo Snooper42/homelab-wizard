@@ -534,7 +534,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     else if (many && !reviewApplied(l)) out.push({ kind: k, title: `${things(k, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(', ') + (changing.length > 2 ? `, and ${changing.length - 2} more` : '') : 'Titles, series, and covers, from the last review', go: { label: 'Look…', run: () => act.review() } });
   } else if (k === 'audiobooks') {
     if (!scan) out.push({ kind: k, title: 'Look at your audiobooks first', sub: 'A scan finds books split into many files and changes nothing', go: { label: 'Scan', run: () => act.run('audiobooks', 'scan') } });
-    else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
+    else if (n(scan.books)) out.push({ kind: k, title: `Merge ${things(k, n(scan.books))}`, sub: `${count(n(scan.files), 'file')} into one .m4b each, with chapters and one cover`, gain: n(scan.saving), go: { label: 'Merge', run: () => act.run('audiobooks', 'run') } });
     // Nothing split: said with how many are whole, rather than a bare nought.
     else if (n(scan.whole)) out.push({ kind: k, title: `All ${things(k, n(scan.whole))} are one file each`, sub: 'Nothing to merge. One that comes in split into many files shows up here after the next scan' });
   }
@@ -694,7 +694,7 @@ function DoneWidget({ d, job, act, kind, span = 'all' }: { d: app.TidyUp; job: T
           {items.map(({ a, i }) => {
             const u = undo(i);
             return <Row key={i} lead={<LibIcon kind={a.kind === 'inbox' || a.kind === 'scrubber' ? 'inbox' : a.kind} />} title={a.text} sub={a.sub} subTone={worrying(a.text) ? 'warn' : undefined}
-              end={<><span class="muted tidywhen">{ago(a.at)}</span>{u && <Go label="Undo" job={job} onClick={u} />}</>} />;
+              end={<>{!!a.freed && <><span class="fx-amount fx-in tidygain">{size(a.freed)}</span><span class="sr"> freed</span></>}<span class="muted tidywhen">{ago(a.at)}</span>{u && <Go label="Undo" job={job} onClick={u} />}</>} />;
           })}
         </Rows>
       ) : <Empty>Nothing yet. What Tidy Up does shows here, with Undo where it can be undone.</Empty>}

@@ -187,7 +187,7 @@ func TestRecordAndWords(t *testing.T) {
 	r.Note("music", Run{Action: "verify", OK: false, Exit: 2, At: now, Result: map[string]any{"missing": 3.0}})
 	got := []string{}
 	for _, a := range r.Activity {
-		got = append(got, a.Text+" · "+a.Sub)
+		got = append(got, a.Text+" · "+a.Said())
 	}
 	want := []string{
 		"Nothing went missing · 14,000 songs before = 13,932 songs + 68 songs set aside",

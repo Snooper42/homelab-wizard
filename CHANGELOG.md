@@ -116,6 +116,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up lists sizes as Finances lists amounts:** what a job freed is now on the right of its line in **Recently done** (*Movies shrunk · 12 files replaced*, and *412 GB* on the right), in the same place and type as Finances' amounts, instead of at the end of its words; and **Merge** on Audiobooks says what it wins back, as **Shrink** does for films.
 - **Tidy Up's rows say it shorter:** the lyrics, Tdarr, Radarr and Sonarr rows, and Music's Lyrics row, now fit on one line in a window half your screen wide.
 - **Tidy Up's cards line up as Finances' do:** two cards side by side are the same height, and Genres picks which library it shows with the same switch Finances' cards use, not a drop-down.
 - **Settings on the iPhone, plainer:** the homelab's everyday settings come first, in plain words (nightly updates, quiet hours, restarting an app that stops answering, undoing an update that breaks one, alerts on the computer's screen), then this iPhone's own (Face ID, the widget, who sends alerts), and every other homelab setting is one tap down, under **All homelab settings**.

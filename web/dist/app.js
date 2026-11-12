@@ -17263,7 +17263,7 @@ ${pays}
       else if (many && !reviewApplied(l3)) out.push({ kind: k3, title: `${things(k3, many)} could look tidier`, sub: changing.length ? changing.slice(0, 2).join(", ") + (changing.length > 2 ? `, and ${changing.length - 2} more` : "") : "Titles, series, and covers, from the last review", go: { label: "Look…", run: () => act.review() } });
     } else if (k3 === "audiobooks") {
       if (!scan) out.push({ kind: k3, title: "Look at your audiobooks first", sub: "A scan finds books split into many files and changes nothing", go: { label: "Scan", run: () => act.run("audiobooks", "scan") } });
-      else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
+      else if (n2(scan.books)) out.push({ kind: k3, title: `Merge ${things(k3, n2(scan.books))}`, sub: `${count(n2(scan.files), "file")} into one .m4b each, with chapters and one cover`, gain: n2(scan.saving), go: { label: "Merge", run: () => act.run("audiobooks", "run") } });
       else if (n2(scan.whole)) out.push({ kind: k3, title: `All ${things(k3, n2(scan.whole))} are one file each`, sub: "Nothing to merge. One that comes in split into many files shows up here after the next scan" });
     }
     return out;
@@ -17427,6 +17427,10 @@ ${pays}
           sub: a3.sub,
           subTone: worrying(a3.text) ? "warn" : void 0,
           end: /* @__PURE__ */ u3(S, { children: [
+            !!a3.freed && /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3("span", { class: "fx-amount fx-in tidygain", children: size(a3.freed) }),
+              /* @__PURE__ */ u3("span", { class: "sr", children: " freed" })
+            ] }),
             /* @__PURE__ */ u3("span", { class: "muted tidywhen", children: ago(a3.at) }),
             u4 && /* @__PURE__ */ u3(Go, { label: "Undo", job: job2, onClick: u4 })
           ] })

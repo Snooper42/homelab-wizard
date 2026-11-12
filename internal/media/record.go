@@ -77,6 +77,23 @@ type Activity struct {
 	// what it set out to; none for a run that stopped. Recently done finds
 	// an Undo by it, never by Text's words.
 	Action string `json:"action,omitempty"`
+	// Freed is what the run freed, in bytes, when it did what it set out to
+	// and freed something: the figure on the right of its row in Recently
+	// done. Sub no longer says it; a line from before has none, and its Sub
+	// still says it.
+	Freed int64 `json:"freed,omitempty"`
+}
+
+// Said is the line's words after its title, with what it freed: the
+// command line's Recent, which has no column for a figure.
+func (a Activity) Said() string {
+	if a.Freed <= 0 {
+		return a.Sub
+	}
+	if a.Sub == "" {
+		return Bytes(a.Freed) + " freed"
+	}
+	return a.Sub + " · " + Bytes(a.Freed) + " freed"
 }
 
 // RecordPath is where the record lives.
@@ -130,6 +147,7 @@ func (r *Record) Note(kind string, run Run) {
 		a := Activity{At: run.At, Kind: kind, Text: text, Sub: sub}
 		if run.OK {
 			a.Action = run.Action
+			a.Freed = max(num(run.Result["freed"]), 0)
 		}
 		if run.Back > 0 && run.OK && undoable(kind, run.Action) {
 			a.Undo = run.ID
@@ -177,7 +195,7 @@ func Describe(kind string, run Run) (text, sub string) {
 	case "music verify":
 		return "Nothing went missing", plural(num(res["original"]), "song") + " before = " + plural(num(res["new"]), "song") + " + " + plural(num(res["set_aside"]), "song") + " set aside"
 	case "music free-space":
-		return "Old library in the Trash", Bytes(num(res["freed"])) + " freed"
+		return "Old library in the Trash", ""
 	case "music navidrome-cleanup":
 		return "Navidrome tidied", plural(num(res["removed"]), "missing entry") + " removed, full scan"
 	case "music playlists":
@@ -212,12 +230,12 @@ func Describe(kind string, run Run) (text, sub string) {
 		if num(res["replaced"]) == 0 && len(anyList(res["filed"])) == 0 {
 			return "", ""
 		}
-		return title(kind) + " shrunk", plural(num(res["replaced"]), "file") + " replaced · " + Bytes(num(res["freed"])) + " freed"
+		return title(kind) + " shrunk", plural(num(res["replaced"]), "file") + " replaced"
 	case "movies dedupe", "tv dedupe":
 		if num(res["removed"]) == 0 {
 			return "", ""
 		}
-		return "Extra copies in the Trash", plural(num(res["removed"]), "copy") + " · " + Bytes(num(res["freed"])) + " freed"
+		return "Extra copies in the Trash", plural(num(res["removed"]), "copy")
 	case "movies posters", "tv posters":
 		if num(res["asked"]) == 0 {
 			return "", ""
@@ -229,7 +247,7 @@ func Describe(kind string, run Run) (text, sub string) {
 		}
 		return "Put back from the Trash", plural(num(res["restored"]), "thing") + " where they were"
 	case "audiobooks run":
-		return "Audiobooks merged", plural(num(res["merged"]), "book") + " into one .m4b each · " + Bytes(num(res["freed"])) + " freed"
+		return "Audiobooks merged", plural(num(res["merged"]), "book") + " into one .m4b each"
 	case "scrubber scan":
 		if b, _ := res["applied"].(bool); !b || num(res["files"])+num(res["folders"]) == 0 {
 			return "", ""

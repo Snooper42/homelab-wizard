@@ -353,7 +353,7 @@ const tidy = {
     { at: tidyAt(30), kind: 'music', text: 'Cleaned library swapped in', sub: 'Navidrome paused and backed up' },
     { at: tidyAt(28), kind: 'music', text: 'Navidrome tidied', sub: '558 missing entries removed, full scan' },
     { at: tidyAt(2), kind: 'music', text: 'Nothing went missing', sub: '14,000 songs before = 13,932 songs + 68 songs set aside' },
-    { at: tidyAt(1), kind: 'movies', text: 'Movies shrunk', sub: '12 files replaced · 412 GB freed' },
+    { at: tidyAt(1), kind: 'movies', text: 'Movies shrunk', sub: '12 files replaced', action: 'collect', freed: 412e9 },
   ],
   freed: 412e9,
   checks: [
@@ -733,6 +733,33 @@ const smokes = [
     }
     if (wraps.length) throw new Error(wraps.join('; '));
   } },
+  // Rows as Finances lists them (L5): what a job freed is on the right of its line in Recently done, where Finances puts an
+  // amount, and its words no longer repeat it; a line from before, its size in its words, reads as it did.
+  { name: 'Tidy Up: Recently done puts what a job freed on the right, as Finances does an amount', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity,
+    { at: tidyAt(0.5), kind: 'tv', text: 'Extra copies in the Trash', sub: '3 copies · 13 GB freed' }] } }, run: async (page) => {
+    const row = page.locator('#tidy .tidydone .fx-rows li:has-text("Movies shrunk")');
+    await row.waitFor({ timeout: 5000 });
+    const got = await row.evaluate((li) => {
+      const fig = li.querySelector('.tidygain'), sub = li.querySelector('.grow > .muted, .grow > .line'), when = li.querySelector('.tidywhen');
+      if (!fig) return { none: true, text: li.textContent };
+      const f = fig.getBoundingClientRect(), w = when.getBoundingClientRect(), r = li.getBoundingClientRect();
+      return { fig: fig.textContent, also: fig.nextElementSibling?.textContent, sub: sub?.textContent, cls: fig.className, weight: getComputedStyle(fig).fontWeight, right: f.right <= w.left + 1 && f.left > r.left + r.width / 2 };
+    });
+    if (got.none) throw new Error(`no figure on the right: ${got.text}`);
+    if (got.fig !== '412 GB' || got.also !== ' freed' || got.sub !== '12 files replaced') throw new Error(JSON.stringify(got));
+    if (!got.cls.includes('fx-amount') || Number(got.weight) < 600 || !got.right) throw new Error(`not as Finances' amounts: ${JSON.stringify(got)}`);
+    const old = page.locator('#tidy .tidydone .fx-rows li:has-text("Extra copies in the Trash")');
+    if (await old.locator('.tidygain').count() || !(await old.textContent()).includes('3 copies · 13 GB freed')) throw new Error(`a line from before: ${await old.textContent()}`);
+  } },
+  // Merging audiobooks wins space back too: its row says how much, as films' Shrink does, and Needs your OK counts it.
+  { name: 'Tidy Up: Merge says what it wins back, as Shrink does', screen: 'tidy', mock: { tidy: { ...tidy, libraries: tidy.libraries.map((l) => (l.kind === 'audiobooks' ? { ...l, found: true, last: { scan: tidyRun('scan', 1, { books: 4, files: 96, bytes: 20e9, saving: 7e9, whole: 170 }) } } : l)) } }, run: async (page) => {
+    await page.waitForSelector('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")', { timeout: 5000 });
+    const said = await page.textContent('#tidy .tidyneeds .muted');
+    if (!said.includes('387 GB to win back')) throw new Error(`Needs your OK: ${said} (380 GB from Shrink and 7 GB from Merge)`);
+    await page.click('#tidy .seg button:text-is("Audiobooks")');
+    const row = page.locator('#tidy .tidyneeds li:has-text("Merge 4 audiobooks")');
+    if ((await row.locator('.tidygain').textContent({ timeout: 5000 })) !== '7 GB') throw new Error(`Merge: ${await row.textContent()}`);
+  } },
   // A library not counted yet offers it on its own tab, and runs its own count.
   { name: 'Tidy Up: TV’s genres are counted from its tab', screen: 'tidy', run: async (page) => {
     await page.click('#tidy .seg button:text-is("TV")', { timeout: 5000 });
@@ -934,7 +961,8 @@ const smokes = [
   { name: 'Tidy Up: a size reads the same on the first line, the drive, and Recently done', screen: 'tidy', run: async (page) => {
     const lead = await page.textContent('#tidy .header .lead', { timeout: 5000 });
     if (!lead.startsWith('412 GB won back so far')) throw new Error(`the first line: ${lead}`);
-    await page.waitForSelector('#tidy .tidydone .fx-rows :text("12 files replaced · 412 GB freed")', { timeout: 5000 });
+    const done = page.locator('#tidy .tidydone .fx-rows li:has-text("12 files replaced")');
+    if ((await done.locator('.tidygain').textContent({ timeout: 5000 })) !== '412 GB') throw new Error(`Recently done: ${await done.textContent()}`);
     const drive = await page.textContent('#tidy .tidydrive');
     if (!drive.includes('Of 4 TB · 412 GB won back so far')) throw new Error(`the drive: ${drive}`);
     const gain = await page.textContent('#tidy .tidyneeds .tidygain');
