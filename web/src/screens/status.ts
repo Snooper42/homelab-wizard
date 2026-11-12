@@ -403,8 +403,11 @@ function showAlerts(events: notify.Event[] | null, err: Error | null) {
   lastEvents = events || [];
   drawOvernight();
   const log = () => go().AlertLog();
-  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log });
-  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log });
+  // Snooze… on an alert whose check still fails, as the Watchdog card's: its card drawn again with it.
+  const watch = () => lastWatch;
+  const snooze = async (check: string, hours: number) => { await go().SnoozeCheck(check, hours); showWatchdog(await go().Watchdog()); };
+  if (err) mountAlerts(card, { events: null, problem: err.message, openSetup, refresh: loadStatus, log, watch, snooze });
+  else mountAlerts(card, { events: events || [], openSetup, refresh: loadStatus, log, watch, snooze });
 }
 
 // What the app list's rows do.

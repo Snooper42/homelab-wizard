@@ -5,6 +5,7 @@ import SwiftUI
 /// as the computer's Every alert… lists them.
 struct AlertLogView: View {
     @Environment(DashboardViewModel.self) private var dashboard
+    @Environment(AppActionsViewModel.self) private var actions
     @State private var alerts: [KeptAlert]?
     @State private var problem: String?
 
@@ -19,6 +20,19 @@ struct AlertLogView: View {
                 } else {
                     ForEach(alerts) { alert in
                         KeptAlertRow(alert: alert)
+                        // Snooze… on one whose check still fails, as the Watchdog
+                        // card has it, where this device may change things.
+                        if actions.canSnooze {
+                            let watchdog = dashboard.cards.watchdog
+                            ForEach(alert.snoozable(in: watchdog), id: \.self) { check in
+                                SnoozeMenu(check: check, snoozed: watchdog?.snoozedUntil(check) != nil) { await load() }
+                            }
+                        }
+                    }
+                    if let error = actions.snoozeError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(Theme.danger)
                     }
                 }
             } else {

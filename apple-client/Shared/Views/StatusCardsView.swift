@@ -238,18 +238,23 @@ private struct WatchdogCard: View {
 /// Snooze… on a failing check: no alerts about it for an hour or a day, for
 /// a failure already known of; the watchdog goes on checking it. The card
 /// is read again after, so it says until when.
-private struct SnoozeMenu: View {
+struct SnoozeMenu: View {
     @Environment(AppActionsViewModel.self) private var actions
     @Environment(DashboardViewModel.self) private var dashboard
     let check: String
     let snoozed: Bool
+    /// What to read again after, besides the cards (Every Alert's list).
+    var then: (@MainActor () async -> Void)?
 
     var body: some View {
         Menu {
             ForEach(WatchdogSummary.snoozeChoices(snoozed: snoozed)) { choice in
                 Button(choice.label) {
                     Task {
-                        if await actions.snooze(check, hours: choice.hours) { await dashboard.cards.load() }
+                        if await actions.snooze(check, hours: choice.hours) {
+                            await dashboard.cards.load()
+                            await then?()
+                        }
                     }
                 }
             }
