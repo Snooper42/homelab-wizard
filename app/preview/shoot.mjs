@@ -2686,6 +2686,41 @@ const smokes = [
     await page.keyboard.press('Meta+BracketLeft');
     await page.waitForSelector('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 3000 });
   } },
+  // The owner, Nov 12: their share of the mortgage goes as a Zelle payment to the person they share it with, and the
+  // loan's page should say what's left, and link those payments to it. A loan's page: its share still owed, its
+  // payment each month, rate and payoff; the payments linked to it; one over the plan's payment asked about each
+  // time (the owner's pick); Link a payment… links another, and the same payee's next ones are offered by themselves.
+  { name: 'Finances: a loan’s page lists the payments linked to it, and links another', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'z1', date: '2026-10-01', account: 'chk', amount: -1845, payee: 'Zelle to Sam', category: 'Housing', payment: 'mortgagepay' },
+    { id: 'z2', date: '2026-09-01', account: 'chk', amount: -1945, payee: 'Zelle to Sam', category: 'Housing', payment: 'mortgagepay' },
+    { id: 'z3', date: '2026-10-29', account: 'chk', amount: -1845, payee: 'Zelle to Sam', category: 'Housing' }] } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Mortgage"))', { timeout: 5000 });
+    const loan = page.locator('#finRoot .fx-account .fx-loan');
+    await loan.waitFor({ timeout: 5000 });
+    const facts = await loan.locator('.fx-loanfacts').textContent();
+    for (const w of ['$1,845.00', 'Paid off']) if (!facts.includes(w)) throw new Error(`the loan's facts: ${facts}`);
+    const linked = page.locator('#finRoot .fx-loanlinked');
+    await linked.locator('li:has-text("Oct 1")').waitFor({ timeout: 5000 });
+    // $100 over the plan's payment: asked about, with Count it and Not this one.
+    const over = linked.locator('li:has-text("Sep 1")');
+    if (!(await over.textContent()).includes('$100.00 more')) throw new Error(`the one over: ${await over.textContent()}`);
+    await over.locator('button:text-is("Count it")').click();
+    await page.waitForFunction(() => (window.__MOCK.ledgerSaved || []).length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions.find((t) => t.id === 'z2'));
+    if (!saved.extra || saved.payment !== 'mortgagepay') throw new Error(`Count it saved ${JSON.stringify(saved)}`);
+    await page.waitForFunction(() => !document.querySelector('#finRoot .fx-loanlinked li button[aria-label*="Count it"], #finRoot .fx-loanlinked li:has(button) .fx-loanask'), null, { timeout: 5000 }).catch(() => {});
+    // The Zelle on Oct 29 isn't linked: offered, from the same payee as the linked ones; Link links it.
+    const offer = page.locator('#finRoot .fx-loanoffer li:has-text("Oct 29")');
+    await offer.waitFor({ timeout: 5000 });
+    await offer.locator('button:text-is("Link")').click();
+    await page.waitForFunction(() => (window.__MOCK.ledgerSaved || []).length === 2, null, { timeout: 5000 });
+    const z3 = await page.evaluate(() => window.__MOCK.ledgerSaved[1].transactions.find((t) => t.id === 'z3'));
+    if (z3.payment !== 'mortgagepay') throw new Error(`Link saved ${JSON.stringify(z3)}`);
+    // Link a payment…: the outgoing ones not linked to anything, each with Link.
+    await page.click('#finRoot .fx-loanlinked button:text-is("Link a payment…")');
+    await page.waitForSelector('#finRoot .fx-loanpick li:has-text("Trader Joe")', { timeout: 5000 });
+  } },
   { name: 'The phone, view only: an account’s page has nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
     await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });

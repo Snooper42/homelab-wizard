@@ -856,6 +856,7 @@ declare namespace finance {
     note?: string;
     payment?: string;
     notPlanned?: boolean;
+    extra?: boolean;
     toBank?: string;
     apart?: boolean;
     to?: string;
