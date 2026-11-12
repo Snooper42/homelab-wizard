@@ -13,7 +13,7 @@ import (
 // Removing the extra copies leaves a line in Recently done; finding none leaves none.
 func TestDescribeDedupe(t *testing.T) {
 	text, sub := Describe("movies", Run{Action: "dedupe", OK: true, Result: map[string]any{"removed": float64(3), "freed": float64(13e9)}})
-	if text != "Extra copies in the Trash" || sub != "3 copies · 13 GB freed" {
+	if text != "Extra copies in the Trash" || sub != "3 copies" { // what it freed is the line's Freed (TestActivityKeepsWhatItFreed)
 		t.Errorf("got %q, %q", text, sub)
 	}
 	if text, _ := Describe("tv", Run{Action: "dedupe", OK: true, Result: map[string]any{"removed": float64(0)}}); text != "" {
@@ -179,5 +179,47 @@ func TestDescribeBooksReview(t *testing.T) {
 	r.Note("books", Run{Action: "review", OK: true, At: time.Now(), ID: "b", Result: map[string]any{"books": float64(412), "changes": float64(3)}})
 	if len(r.Activity) != 1 || r.Activity[0].Kind != "books" || r.Activity[0].Undo != "" {
 		t.Errorf("its line: %+v", r.Activity)
+	}
+}
+
+// L5: Recently done's rows put what a run freed on the right, as Finances
+// puts an amount, so the line keeps it as a number of its own (Freed), and
+// its words no longer repeat it. A run that freed nothing, or failed, keeps
+// none; the command line still says it after the words.
+func TestActivityKeepsWhatItFreed(t *testing.T) {
+	var r Record
+	now := time.Now()
+	r.Note("movies", Run{Action: "collect", OK: true, At: now, Result: map[string]any{"replaced": 12.0, "freed": 412e9}})
+	r.Note("tv", Run{Action: "dedupe", OK: true, At: now, Result: map[string]any{"removed": 3.0, "freed": 13e9}})
+	r.Note("audiobooks", Run{Action: "run", OK: true, At: now, Result: map[string]any{"merged": 4.0, "freed": 2e9}})
+	r.Note("music", Run{Action: "free-space", OK: true, At: now, Result: map[string]any{"freed": 100e9}})
+	r.Note("music", Run{Action: "navidrome-cleanup", OK: true, At: now, Result: map[string]any{"removed": 558.0}})
+	r.Note("music", Run{Action: "free-space", OK: false, Exit: 2, At: now, Result: map[string]any{"freed": 5e9}})
+	type line struct {
+		text, sub string
+		freed     int64
+		said      string
+	}
+	want := []line{
+		{"Movies shrunk", "12 files replaced", 412e9, "12 files replaced · 412 GB freed"},
+		{"Extra copies in the Trash", "3 copies", 13e9, "3 copies · 13 GB freed"},
+		{"Audiobooks merged", "4 books into one .m4b each", 2e9, "4 books into one .m4b each · 2 GB freed"},
+		{"Old library in the Trash", "", 100e9, "100 GB freed"},
+		{"Navidrome tidied", "558 missing entries removed, full scan", 0, "558 missing entries removed, full scan"},
+		{"The old library was kept", "Not every song is accounted for", 0, "Not every song is accounted for"},
+	}
+	if len(r.Activity) != len(want) {
+		t.Fatalf("%d lines: %+v", len(r.Activity), r.Activity)
+	}
+	for i, w := range want {
+		a := r.Activity[i]
+		if a.Text != w.text || a.Sub != w.sub || a.Freed != w.freed || a.Said() != w.said {
+			t.Errorf("line %d: %q, %q, freed %d, said %q; want %+v", i, a.Text, a.Sub, a.Freed, a.Said(), w)
+		}
+	}
+	// A line from before kept its size in its words, and no Freed: it reads as it did.
+	old := Activity{Text: "Movies shrunk", Sub: "12 files replaced · 412 GB freed"}
+	if old.Said() != "12 files replaced · 412 GB freed" {
+		t.Errorf("an old line: %q", old.Said())
 	}
 }

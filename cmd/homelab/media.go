@@ -450,7 +450,7 @@ func (h *homelab) mediaStatus(ctx context.Context, args []string) error {
 	if n := len(rec.Activity); n > 0 {
 		u.Printf("\n  Recent:\n")
 		for _, a := range rec.Activity[max(0, n-8):] {
-			u.Printf("    %s  %s%s\n", a.At.Local().Format("Jan 2 15:04"), a.Text, u.Dim(prefix(" · ", a.Sub)))
+			u.Printf("    %s  %s%s\n", a.At.Local().Format("Jan 2 15:04"), a.Text, u.Dim(prefix(" · ", a.Said())))
 		}
 	}
 	return nil

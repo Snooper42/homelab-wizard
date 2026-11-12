@@ -2511,7 +2511,7 @@ tr.menued > td { background:var(--accent-soft); }
 .fmark.tidyicon { background:var(--fx-hue); color:var(--white); box-shadow:none; }
 .fmark.tidyicon svg { width:54%; height:54%; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
 #tidyRoot > .seg { margin:0 0 16px; }
-.tidytodo .tidygain { font-weight:700; font-size:15px; white-space:nowrap; margin-right:6px; }
+.tidytodo .tidygain, .tidydone .tidygain { font-weight:700; font-size:15px; white-space:nowrap; margin-right:6px; }
 .tidydone .tidywhen { font-size:12px; white-space:nowrap; margin-right:4px; }
 .tidyclear { display:flex; align-items:center; gap:14px; padding:6px 0 2px; }
 .tidyclear strong { font-size:15px; }
