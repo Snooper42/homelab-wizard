@@ -278,6 +278,20 @@ func TestPhoneSettings(t *testing.T) {
 		{map[string]string{"TAILSCALE_HOST": "elsewhere"}, "changed on the computer"},
 		{map[string]string{"TZ": "Asia/Tokyo", "LAN_BIND_IP": "10.9.9.9"}, "changed on the computer"},
 		{map[string]string{"NOT_A_SETTING": "1"}, "not a homelab setting"},
+		// N52: what an app is, where it reaches, and whose files it sees.
+		{map[string]string{"MEDIA_ROOT": "/"}, "changed on the computer"},
+		{map[string]string{"PUID": "0"}, "changed on the computer"},
+		{map[string]string{"DOCKER_API": "tcp://203.0.113.9:2375"}, "changed on the computer"},
+		{map[string]string{"MONEYMATTER_FRONTEND_IMAGE": "evil/image:latest"}, "changed on the computer"},
+		{map[string]string{"IMMICH_VERSION": "v1.0.0"}, "changed on the computer"},
+		{map[string]string{"VAULTWARDEN_SIGNUPS_ALLOWED": "true"}, "changed on the computer"},
+		{map[string]string{"SSO_HOST": "id.elsewhere.example"}, "changed on the computer"},
+		{map[string]string{"POCKET_ID_URL": "https://id.elsewhere.example"}, "changed on the computer"},
+		{map[string]string{"COMPANION_ACCESS_TEAM": "someone-else"}, "changed on the computer"},
+		{map[string]string{"KOPIA_REPOSITORY": "/"}, "changed on the computer"},
+		{map[string]string{"TIDY_INBOX_FOLDERS": "/"}, "changed on the computer"},
+		{map[string]string{"JELLYFIN_PORT": "80"}, "changed on the computer"},
+		{map[string]string{"HELPER_EMAIL": "someone@elsewhere.example"}, "changed on the computer"},
 		{map[string]string{"TZ": "Asia/Tokyo\nPHONE_COMPANION=false"}, "cannot span lines"},
 		{map[string]string{"TZ": strings.Repeat("a", 2000)}, "longer than"},
 		{map[string]string{}, "takes the settings"},
@@ -414,6 +428,30 @@ func TestPhoneInvestments(t *testing.T) {
 	} {
 		if code, out := call(editor, c.name, c.body); code != 500 || !strings.Contains(string(out["error"]), c.want) {
 			t.Errorf("%s %s: %d %s, want %q", c.name, c.body, code, out["error"], c.want)
+		}
+	}
+}
+
+// N52: each everyday setting a phone may change is one .env.example has,
+// and none is a secret, so the list can't name a key that isn't there.
+func TestThePhonesEverydaySettingsAreReal(t *testing.T) {
+	root, _ := repoCopy(t)
+	list, err := settings.List(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	known := map[string]settings.Setting{}
+	for _, s := range list {
+		known[s.Key] = s
+	}
+	for k := range phoneEveryday {
+		s, ok := known[k]
+		if !ok {
+			t.Errorf("%s is not in .env.example", k)
+			continue
+		}
+		if s.Secret || !phoneMayChange(s) {
+			t.Errorf("%s: a secret, or one a phone connects through", k)
 		}
 	}
 }

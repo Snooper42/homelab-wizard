@@ -143,7 +143,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Mac app | Phone calls |
 |---|---|---|---|---|---|---|
-| The homelab's settings (`.env`), by section, searchable | yes | yes: the ones a phone may change (no secrets, nothing it connects through), saved with allowed changes; none on a wall screen | yes; the everyday ones change with allowed changes, behind Face ID | yes | — | `Settings`, `SaveSettings` |
+| The homelab's settings (`.env`), by section, searchable | yes | yes: the everyday ones a phone may change (its clock, quiet hours, alerts, updates, Tidy Up's choices; never a secret, an app's folders, image or sign-in, or what it connects through: N52), saved with allowed changes; none on a wall screen | yes; the everyday ones change with allowed changes, behind Face ID | yes | — | `Settings`, `SaveSettings` |
 | Secrets and the settings a phone connects through | yes | on purpose: changed on the computer only | on purpose | on purpose | — | |
 | Phones: pair, look only or changes, Finances level, For a day/week/month, remove | yes | on purpose: a phone can't give itself more | partly: This Device (how it paired, Unpair here) | partly | — | |
 | People in the household, and what's shared with them | yes | on purpose | on purpose | on purpose | — | |
