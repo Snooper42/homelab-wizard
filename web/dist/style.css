@@ -2127,8 +2127,9 @@ html .fx-month td { padding:0; vertical-align:top; height:92px; border-radius:va
 #finRoot .fx-periodbar h2 { margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em; }
 #finRoot .fx-periodbar .fx-dates { margin:2px 0 0; }
 #finRoot .fx-periodbar > button.small { margin-left:auto; }
-/* What happened in a period before now (Past.tsx): what came in and went out side by side, then its transactions. */
-.fx-past .fx-pastsums { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap:var(--fin-gap); }
+#finRoot .fx-periodbar > .seg { margin-right:6px; }
+/* What happened in a period (Past.tsx), or what the plan says for one (Planned.tsx): the sums side by side, then the rows. */
+.fx-pastsums { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap:var(--fin-gap); }
 .fx-acctrow { list-style:none; margin:0 0 16px; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(128px, 1fr)); gap:8px; }
 .fx-accttile { display:flex; flex-direction:column; gap:4px; min-width:0; padding:10px 12px; border-radius:var(--fin-radius-sm); box-shadow:inset 0 0 0 1px var(--line); }
 .fx-accttile.fx-gets { box-shadow:inset 0 0 0 2px var(--fin-accent); }

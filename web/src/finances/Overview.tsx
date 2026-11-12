@@ -18,10 +18,14 @@ import { PricesWidget } from './widgets/Prices';
 import { MissingWidget } from './widgets/Missing';
 import { AveragesWidget } from './widgets/Averages';
 import { CashFlowWidget, MoneyFlowWidget, SpendingWidget } from './widgets/Flow';
-import { PaycheckWidget } from './widgets/Paycheck';
-import { PeriodBar, pickedOf } from './widgets/Period';
+import { PaycheckWidget, paydayTitle, periodTitle } from './widgets/Paycheck';
+import { keepBy, PeriodBar, type PeriodBarProps, type PeriodBy, pickedOf, readBy } from './widgets/Period';
 import { PastWidget } from './widgets/Past';
-import { pastPeriods } from './model';
+import { PlannedWidget } from './widgets/Planned';
+import { monthPeriods, pastPeriods } from './model';
+import { dayShort, isoDay, parseDay } from './money';
+import { dayText } from '../format';
+import { useState } from 'preact/hooks';
 import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
 import { NetWorthWidget } from './widgets/Worth';
@@ -65,10 +69,29 @@ export interface OverviewProps {
 }
 
 export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, showIn, phone }: OverviewProps) {
-  // The period bar's pick: now and the paychecks ahead (the plan's), or a period before now (what happened, from the ledger).
+  // The period bar: by paycheck (now and the paychecks ahead, the plan's; before now, what happened, from the ledger)
+  // or by month (before this one from the ledger, this one so far and then the plan, after it the plan).
+  const [by, setByState] = useState<PeriodBy>(readBy);
+  const { months, now: thisMonth } = monthPeriods(v);
+  const [monthAt, setMonthAt] = useState(thisMonth);
+  const setBy = (b: PeriodBy) => { keepBy(b); setByState(b); };
   const past = pastPeriods(v);
   const picked = pickedOf(v, past, sel);
-  const was = picked < 0 ? past[-picked - 1] : undefined;
+  const month = by === 'month' ? months[Math.max(0, Math.min(monthAt, months.length - 1))] : undefined;
+  const was = by === 'pay' && picked < 0 ? past[-picked - 1] : undefined;
+  const p = by === 'pay' && picked >= 0 ? v.periods[picked] : undefined;
+  const bar: PeriodBarProps | null = month
+    ? { by, setBy, title: dayText(parseDay(month.start), { month: 'long', year: 'numeric' }),
+      dates: `${dayShort(month.start)} – ${dayShort(month.last)}, ${month.when === 'past' ? 'what happened' : month.when === 'now' ? 'so far, then the plan' : 'the plan'}`,
+      step: (d) => setMonthAt(Math.max(0, Math.min(months.length - 1, monthAt + d))), canBack: monthAt > 0, canOn: monthAt < months.length - 1,
+      today: () => setMonthAt(thisMonth), atToday: monthAt === thisMonth }
+    : p || was ? { by, setBy, title: p ? periodTitle(p, L) : paydayTitle(was!.pay, L),
+      dates: p ? `${dayShort(p.start)} – ${dayShort(p.last)}${p.now ? ', from today' : ''}` : `${dayShort(was!.start)} – ${dayShort(was!.last)}, what happened`,
+      step: (d) => pick(picked + d), canBack: picked > -past.length, canOn: picked < v.periods.length - 1, today: () => pick(0), atToday: picked === 0 }
+    : null;
+  // The cards the period picked puts in the paycheck card's place, and the days the spending ring reads.
+  const read = month ? (month.when === 'ahead' ? undefined : { start: month.start, last: month.when === 'now' ? v.today : month.last }) : was;
+  const spentDays = month ? (month.when === 'past' ? { from: month.start, to: month.last } : undefined) : was && { from: was.start, to: was.last };
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
@@ -90,7 +113,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
           {add && <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button>}
         </Card>
       )}
-      <PeriodBar v={v} L={L} past={past} sel={picked} pick={pick} />
+      {bar && <PeriodBar {...bar} />}
       <div class="fx-board">
         {!phone && <NowWidget v={v} L={L} />}
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
@@ -100,14 +123,20 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}
-        {was ? <PastWidget v={v} L={L} past={was} ledger={ledger} edit={edit} /> : <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />}
-        <CheckingWidget v={v} L={L} sel={was ? -1 : picked} openDay={openCalendar} />
+        {read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} />}
+        {month && month.when !== 'past' && (() => {
+          // The plan's days, from tomorrow for this month (today's are in So far), or the whole month after it.
+          const from = month.when === 'now' ? isoDay(new Date(parseDay(v.today).getTime() + 864e5)) : month.start;
+          return from <= month.last && <PlannedWidget v={v} L={L} title={month.when === 'now' ? 'Still to come' : 'The plan'} start={from} last={month.last} edit={edit} />;
+        })()}
+        {p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />}
+        <CheckingWidget v={v} L={L} sel={p ? picked : -1} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} />
         <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} />
         <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} />
-        {!was && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />}
-        <SpentWidget v={v} ledger={ledger} open={showIn} days={was && { from: was.start, to: was.last }} />
+        {!read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />}
+        {!(month?.when === 'ahead') && <SpentWidget v={v} ledger={ledger} open={showIn} days={spentDays} />}
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>

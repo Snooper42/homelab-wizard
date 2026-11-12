@@ -5226,6 +5226,40 @@ const smokes = [
     await finTab(page, 'Net worth');
     await page.waitForSelector('.finpost tbody tr', { timeout: 5000 });
   } },
+  // Step 4, PR 3: By month on the period bar. The example's today is Oct 30: October is so far (from the ledger) and
+  // still to come (the plan's Oct 31); November is the plan; September is what happened (nothing kept that month).
+  // Back to By paycheck, the paycheck card again.
+  { name: 'Finances: By month steps months, and the cards follow', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
+    await page.click('#finPeriod .seg button:text-is("By month")');
+    await page.waitForSelector('#finPeriod h2:text-is("October 2026")', { timeout: 5000 });
+    if ((await page.textContent('#finPeriod .fx-dates')) !== 'Oct 1 – Oct 31, so far, then the plan') throw new Error(`the days: ${await page.textContent('#finPeriod .fx-dates')}`);
+    if (await page.$('.fx-paycheck')) throw new Error('the paycheck card shows by month');
+    await page.waitForSelector('.fx-past h2:text-is("So far this month")', { timeout: 5000 });
+    // October's seven, the newest six first: Costco on the 30th, then Show all for Verizon on the 22nd.
+    await page.waitForSelector('.fx-past li:has-text("Costco")', { timeout: 5000 });
+    await page.click('.fx-past button:text-is("Show all 7 transactions")');
+    await page.waitForSelector('.fx-past li:has-text("Verizon")', { timeout: 5000 });
+    await page.waitForSelector('.fx-planned h2:text-is("Still to come")', { timeout: 5000 });
+    await page.waitForSelector('.fx-planned li:has-text("Groceries and gas")', { timeout: 5000 });
+    // November: the plan, its paychecks and payments; nothing spent yet, so no spending ring.
+    await page.click('#finPeriod button[aria-label="The month after"]');
+    await page.waitForSelector('#finPeriod h2:text-is("November 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-planned h2:text-is("The plan")', { timeout: 5000 });
+    await page.waitForSelector('.fx-planned li:has-text("Alex\'s paycheck")', { timeout: 5000 });
+    if (await page.$('.fx-past, .fx-spentmonth')) throw new Error('what happened, or the spending ring, shows for a month ahead');
+    // September: what happened, from the ledger, which kept nothing then.
+    await page.click('#finPeriod button:text-is("Today")');
+    await page.waitForSelector('#finPeriod h2:text-is("October 2026")', { timeout: 5000 });
+    await page.click('#finPeriod button[aria-label="The month before"]');
+    await page.waitForSelector('#finPeriod h2:text-is("September 2026")', { timeout: 5000 });
+    await page.waitForSelector('.fx-past :text("No transactions kept for these days.")', { timeout: 5000 });
+    if (await page.$('.fx-planned')) throw new Error('the plan shows for a month before now');
+    // By paycheck again: the paycheck card, and the bar's paycheck.
+    await page.click('#finPeriod .seg button:text-is("By paycheck")');
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    await page.waitForSelector('#finPeriod h2:text-matches("paycheck|^Now")', { timeout: 5000 });
+  } },
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');

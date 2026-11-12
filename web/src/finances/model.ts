@@ -201,3 +201,24 @@ export function pastPeriods(v: finance.View): PastPeriod[] {
   const before = (s: string) => { const d = parseDay(s); d.setDate(d.getDate() - 1); return isoDay(d); };
   return (v.before || []).map((pay, k, all) => ({ start: pay.date, last: before(k === 0 ? nowStart : all[k - 1].date), pay }));
 }
+
+/** A calendar month for the Dashboard's period bar, by month: before this one read from the ledger, this one so far and then the plan, after it the plan. */
+export interface MonthPeriod { start: string; last: string; when: 'past' | 'now' | 'ahead' }
+
+/** How many months before this one the bar steps back to. */
+export const monthsBack = 6;
+
+/** The months the bar steps through, oldest first: monthsBack before this one, this one, and the months the plan's days reach (View.days). */
+export function monthPeriods(v: finance.View): { months: MonthPeriod[]; now: number } {
+  const today = parseDay(v.today);
+  const reach = (v.days || []).at(-1)?.date || v.today;
+  const months: MonthPeriod[] = [];
+  for (let k = -monthsBack; ; k++) {
+    const first = new Date(today.getFullYear(), today.getMonth() + k, 1);
+    const start = isoDay(first);
+    if (k > 0 && start > reach) break;
+    const last = isoDay(new Date(first.getFullYear(), first.getMonth() + 1, 0));
+    months.push({ start, last, when: k < 0 ? 'past' : k === 0 ? 'now' : 'ahead' });
+  }
+  return { months, now: monthsBack };
+}
