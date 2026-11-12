@@ -105,7 +105,11 @@ func SaveLedger(path string, l Ledger, p Plan) (Ledger, error) {
 	}
 	was := l.Rev
 	l.Rev = ""
-	data, _ := json.MarshalIndent(l, "", "  ")
+	data, err := encode(l)
+	if err != nil {
+		l.Rev = was
+		return l, err
+	}
 	l.Rev, err = write(path, was, data)
 	if err != nil {
 		l.Rev = was

@@ -227,6 +227,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **An impossible amount can't empty your transactions:** a bank file (or a phone) with an amount of a trillion or more is now refused with a plain message. Before, one such number could save an empty list over every transaction.
 - **Tidy Up says which day a job started:** a job that started before midnight (the agent's overnight Collect, say) now says *Started yesterday at 3:04 AM*, not just *Started at 3:04 AM*, which read as this morning; and a job that stopped part-way says when it started too.
 - **Typing in a form as it opens stays where you typed:** a click into a field (Category, say) the moment a form opened could have its first letters land at the end of the first field (*Paid to*), because the form put the cursor there a moment later. Now it leaves the cursor alone once it's in one of the form's fields.
 - **A card's file can't slip into checking unnoticed:** an American Express file imported with the sheet left on checking came in as money in: every charge a deposit, no categories guessed (Shopping and Gaming are for money out), and a bill matched to money you're owed. The sheet now says so whenever most rows would come in as money in: on a card (or an American Express account not set up as a card) with **Read them as charges**, and on another account with **Bring it into** your American Express card (or your only card), in one tap. Before **Bring in**, a line says how many rows go out and come in, and how much.
