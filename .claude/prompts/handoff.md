@@ -72,7 +72,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 | #615 | Tidy Up's look, **L4**: cards in a row one height, as Finances'; Genres' library with Finances' switch |
 
-**In flight:** #616, Tidy Up's look, **L5's first half**: captions on one line at 860px (`Tidy Up: rows say their caption on one line at 860px`); on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **Next:** L5's second half, a figure on the right of each row that has one, as Finances' amounts (read what the record keeps per row first: only films' and shows' *Shrink* rows have `gain` today); then L6 and L7 (`tidy-loop.md`).
+**In flight:** #618, Tidy Up's look, **L5's first half**: captions on one line at 860px (`Tidy Up: rows say their caption on one line at 860px`); on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **Next:** L5's second half, a figure on the right of each row that has one, as Finances' amounts (read what the record keeps per row first: only films' and shows' *Shrink* rows have `gain` today); then L6 and L7 (`tidy-loop.md`).
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
