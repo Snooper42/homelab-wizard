@@ -331,6 +331,15 @@ actor APIClient {
         return try Self.investmentsRead(from: try await send(request, to: endpoint, using: actionSession))
     }
 
+    /// Follows a ticker Ghostfolio found (the Watchlist): priced now, kept in
+    /// the plan. It needs the edit level, and it's never retried.
+    func financesFollow(_ symbol: InvestmentSymbol) async throws -> FinancesRead {
+        let arg: JSONValue = .object(["symbol": .string(symbol.symbol), "name": .string(symbol.name), "currency": .string(symbol.currency), "dataSource": .string(symbol.dataSource)])
+        let (request, endpoint) = try callRequest("FinancesFollow", [arg])
+        Log.network.notice("FinancesFollow")
+        return try Self.financesRead(from: try await send(request, to: endpoint, using: actionSession))
+    }
+
     /// Ghostfolio's matches for a ticker or a name, up to 8. Only what's
     /// typed leaves the homelab, when Ghostfolio looks it up.
     func financesFindSymbol(_ query: String) async throws -> [InvestmentSymbol] {

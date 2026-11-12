@@ -1421,8 +1421,9 @@ private struct FinanceInvestmentsPage: View {
                         if finances.canEdit { actions }
                     }
                     readNote
-                    AllocationCard(investments: investments, view: view, finances: finances)
+                    // The owner, Nov 12: no bar of each holding's share; the holdings separate, and a Watchlist.
                     HoldingsCard(investments: investments, view: view, finances: finances)
+                    WatchlistCard(view: view, finances: finances)
                     Text(Self.readWhen(view).map { "From Ghostfolio, \($0)." } ?? "From Ghostfolio.")
                         .font(.footnote)
                         .foregroundStyle(Theme.secondaryInk)
@@ -1680,77 +1681,6 @@ private struct InvestmentsHero<Actions: View>: View {
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
         .background((value < 0 ? Theme.danger : Theme.success).opacity(0.12), in: Capsule())
-    }
-}
-
-/// How the money is split: one bar of the largest holdings, each with its share.
-private struct AllocationCard: View {
-    let investments: FinanceInvestments
-    let view: FinancesPlanView
-    let finances: FinancesViewModel
-
-    struct Slice: Identifiable {
-        let name: String
-        let value: Double
-        let tint: Color
-        var id: String { name }
-    }
-
-    /// The six largest holdings, then the rest (cash and smaller ones) together.
-    private var slices: [Slice] {
-        var byName: [String: Double] = [:]
-        for line in investments.lines {
-            let name = line.holding?.symbol ?? "Cash"
-            byName[name, default: 0] += max(line.holding?.value ?? line.cash, 0)
-        }
-        let sorted = byName.sorted { $0.value > $1.value }.filter { $0.value > 0 }
-        var out = sorted.prefix(6).enumerated().map { i, kv in
-            Slice(name: kv.key, value: kv.value, tint: Design.category(i + 1)?.base ?? Theme.accent)
-        }
-        let rest = sorted.dropFirst(6).reduce(0) { $0 + $1.value }
-        if rest > 0 { out.append(Slice(name: "Other", value: rest, tint: Design.plainCircle)) }
-        return out
-    }
-
-    var body: some View {
-        let slices = self.slices
-        let total = slices.reduce(0) { $0 + $1.value }
-        if total > 0, slices.count > 1 {
-            VStack(alignment: .leading, spacing: 12) {
-                CardHeading("Allocation")
-                GeometryReader { geo in
-                    HStack(spacing: 2) {
-                        ForEach(slices) { slice in
-                            Rectangle()
-                                .fill(slice.tint)
-                                .frame(width: max(3, (geo.size.width - CGFloat(slices.count - 1) * 2) * slice.value / total))
-                        }
-                    }
-                    .clipShape(Capsule())
-                }
-                .frame(height: 12)
-                .accessibilityHidden(true)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], alignment: .leading, spacing: 8) {
-                    ForEach(slices) { slice in
-                        HStack(spacing: 6) {
-                            Circle().fill(slice.tint).frame(width: 9, height: 9)
-                            Text(verbatim: slice.name)
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(Theme.ink)
-                                .lineLimit(1)
-                            Spacer(minLength: 4)
-                            Text(slice.value / total, format: .percent.precision(.fractionLength(0)))
-                                .font(.subheadline)
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.secondaryInk)
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-            }
-            .padding(16)
-            .card(radius: 24)
-        }
     }
 }
 
