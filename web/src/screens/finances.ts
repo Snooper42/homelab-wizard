@@ -17,6 +17,7 @@ import { catalog } from './choose';
 import { statusData } from './status';
 import { $, errorText, go, showError } from '../core';
 import { navigate } from '../app';
+import { keepsTabs, tabChanged } from '../tabs';
 
 export const financesData = store(() => go().Finances());
 financesData.watch(draw);
@@ -113,6 +114,8 @@ export function loadFinances() { statusData.fresh(5 * 60000); return Promise.all
 let tab = 'overview';
 // The group of accounts Net worth opens on (a sidebar balance), "" for all of them.
 let group = '';
+// Back and Forward step through the tabs (and a Net worth group) as through screens.
+keepsTabs('finances', () => tab + (group ? ':' + group : ''), (t) => { const [page, g] = t.split(':'); tab = page; group = g || ''; draw(); });
 let sel: number | null = null;
 let opened = 0;
 // The form open in the sheet, drawn again over each plan read while it is.
@@ -129,9 +132,9 @@ function draw() {
     v, ledger: ledgerData.value || null, tab, sel: sel ?? (v && !v.periods[0]?.now ? 0 : 1),
     error: financesData.error ? errorText(financesData.error) : undefined,
     retry: () => { financesData.load(); },
-    setTab: (t) => { tab = t; group = ''; draw(); },
+    setTab: (t) => { tab = t; group = ''; draw(); tabChanged(); },
     group,
-    setGroup: (g) => { group = g; draw(); },
+    setGroup: (g) => { group = g; draw(); tabChanged(); },
     pick: (i) => { sel = i; draw(); },
     edit: open,
     setSince,
