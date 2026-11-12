@@ -7651,6 +7651,51 @@ const smokes = [
     const bars = await page.$$eval('.fx-budgets .fx-budgetbar', (b) => b.map((x) => Math.round(x.getBoundingClientRect().width)), { timeout: 5000 });
     if (bars.length !== 3 || Math.min(...bars) < 150 || Math.max(...bars) - Math.min(...bars) > 1) throw new Error(`bars ${bars}`);
   } },
+  // Budgets with long names, at half width on the Dashboard and on a phone: a line under a name breaks only between its
+  // parts (the period, what is spent of what it may take, what came from last time), never inside an amount or "of";
+  // what is left and its day's allowance keep one line each; and every bar is as wide as the others, so they line up.
+  ...[['the Dashboard at 1100px', undefined], ['a phone', ['companion', 'finances']]].map(([where, phone]) => ({ name: `Finances: budgets with long names keep their figures whole and their bars in line, ${where}`, screen: 'finances', phone, mock: { finances: { ...finances, budgets: [
+    { category: 'Restaurants and takeout', per: 'month', start: '2026-10-01', last: '2026-10-31', amount: 600, spent: 570, left: 30, pace: 580.65 },
+    { category: 'Streaming and subscriptions', per: 'month', start: '2026-10-01', last: '2026-10-31', amount: 150, spent: 200, left: -50, pace: 145.16 },
+    { category: 'Groceries', per: 'month', start: '2026-10-01', last: '2026-10-31', amount: 1200, spent: 1150.5, left: 49.5, pace: 1100, rolled: 125.4 },
+    { category: "Kids' activities and school", per: 'paycheck', start: '2026-10-23', last: '2026-11-05', amount: 250, spent: 240, left: 10, pace: 200 },
+  ] } }, run: async (page) => {
+    if (!phone) await page.setViewportSize({ width: 1100, height: 900 });
+    await page.waitForSelector('.fx-budgets .fx-budgetbar', { timeout: 5000 });
+    const bad = await page.$$eval('.fx-budgets li', (rows) => {
+      const lines = (range) => new Set([...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+      const out = [];
+      for (const li of rows) {
+        const name = li.querySelector('.grow > strong')?.textContent;
+        const sub = li.querySelector('.grow > .muted');
+        // Each amount with the words that join it to the next ("$200.00 of $150.00", "with $125.40 from last time").
+        const text = [];
+        const walk = document.createTreeWalker(sub, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) text.push(n);
+        const all = text.map((n) => n.data).join('');
+        for (const m of all.matchAll(/\$[\d,.]+ of \$[\d,.]+|\(with \$[\d,.]+ from last time\)|This (month|pay period), to \w+ \d+/g)) {
+          const r = document.createRange();
+          let at = 0;
+          for (const n of text) {
+            const end = at + n.data.length;
+            if (m.index >= at && m.index < end) r.setStart(n, m.index - at);
+            if (m.index + m[0].length > at && m.index + m[0].length <= end) r.setEnd(n, m.index + m[0].length - at);
+            at = end;
+          }
+          if (lines(r) > 1) out.push(`${name}: "${m[0]}" breaks`);
+        }
+        for (const part of li.querySelectorAll('.fx-budgetday')) {
+          const r = document.createRange();
+          r.selectNodeContents(part);
+          if (lines(r) > 1) out.push(`${name}: "${part.textContent}" breaks`);
+        }
+      }
+      const bars = [...document.querySelectorAll('.fx-budgets .fx-budgetbar')].map((b) => Math.round(b.getBoundingClientRect().width));
+      if (Math.max(...bars) - Math.min(...bars) > 1) out.push(`bars ${bars}`);
+      return out;
+    });
+    if (bad.length) throw new Error(bad.join('; '));
+  } })),
   // On a phone, Reports' twelve months label every other month, this one always: no two labels touch.
   { name: 'The phone: a twelve-month chart\'s labels do not run together', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
     await finTab(page, 'Reports', { timeout: 5000 });
@@ -8410,8 +8455,9 @@ const smokes = [
   { name: 'Finances: budgets say what is left, and over in red', screen: 'finances', run: async (page) => {
     await finTab(page, 'Transactions', { timeout: 5000 });
     const left = (cat) => page.textContent(`.fx-budgets li:has(.grow > strong:text-is("${cat}")) .fx-budgetleft`, { timeout: 5000 });
-    // What is left, and under it how much a day keeps it on budget to the month's end (Oct 30 and 31: two days).
-    for (const [cat, want] of [['Food', '$450.15 left$225.08 a day for 2 days'], ['Car', '$251.80 left$125.90 a day for 2 days'], ['Subscriptions', '$50.00 over']]) {
+    // What is left, and under it how much a day keeps it on budget to the month's end (Oct 30 and 31: two days; the
+    // end is in the line under the name).
+    for (const [cat, want] of [['Food', '$450.15 left$225.08 a day'], ['Car', '$251.80 left$125.90 a day'], ['Subscriptions', '$50.00 over']]) {
       if ((await left(cat)).replace(/\s+/g, ' ').trim() !== want) throw new Error(`${cat}: ${await left(cat)}`);
     }
     await page.waitForSelector('.fx-budgets li:has-text("Subscriptions") .fx-budgetleft.fx-out', { timeout: 5000 });
