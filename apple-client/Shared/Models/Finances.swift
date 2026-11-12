@@ -312,8 +312,11 @@ struct FinanceAccount: Decodable, Sendable, Equatable, Identifiable {
     let history: [FinancePoint]
     /// What an investment account holds, as Ghostfolio last read it (main #489).
     let holdings: [FinanceHolding]
+    /// The day its balance was typed in (local midnight), for its page's
+    /// balance after each day (AccountBalance).
+    let updated: Date?
 
-    enum CodingKeys: String, CodingKey { case id, name, kind, institution, currency, balance, history, holdings }
+    enum CodingKeys: String, CodingKey { case id, name, kind, institution, currency, balance, history, holdings, updated }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -326,6 +329,7 @@ struct FinanceAccount: Decodable, Sendable, Equatable, Identifiable {
         balance = (try? c.decodeIfPresent(Double.self, forKey: .balance)) ?? nil
         history = ((try? c.decodeIfPresent([FinancePoint].self, forKey: .history)) ?? nil) ?? []
         holdings = Array((((try? c.decodeIfPresent([FinanceHolding].self, forKey: .holdings)) ?? nil) ?? []).prefix(500))
+        updated = LocalDay.parse(((try? c.decodeIfPresent(String.self, forKey: .updated)) ?? nil))
     }
 
     /// A card or a loan: its balance is what it owes.
