@@ -50,7 +50,7 @@ func New(base, password string) *Client {
 // The names Kopia gives its session and token (internal/server, apiclient).
 const (
 	SessionCookie = "Kopia-Session-Cookie"
-	TokenHeader   = "X-Kopia-Csrf-Token"
+	TokenHeader   = "X-Kopia-Csrf-Token" // #nosec G101 -- a header's name, not a credential
 )
 
 var tokenMeta = regexp.MustCompile(`<meta name="kopia-csrf-token" content="([0-9a-f]+)"`)
@@ -107,6 +107,7 @@ func (c *Client) send(ctx context.Context, method, p string, data []byte) (int, 
 	session, token := c.session, c.token
 	c.mu.Unlock()
 	if session != "" {
+		// #nosec G124 -- a cookie sent back on a request: only its name and value go
 		req.AddCookie(&http.Cookie{Name: SessionCookie, Value: session})
 	}
 	if token != "" {
