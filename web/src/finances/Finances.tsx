@@ -156,7 +156,7 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
-          : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} />
+          : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} saveLedger={saveLedger} />
           : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
           : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} phone={phone} />}
       </div>

@@ -44,6 +44,10 @@ type Transaction struct {
 	// NotPlanned is one the household said pays no planned payment, though
 	// it looked like one: it is not offered as one again.
 	NotPlanned bool `json:"notPlanned,omitempty"`
+	// Extra is one that pays more than its planned payment (a loan's share,
+	// paid over), which the household said to count all of: a loan's page
+	// asks about it no more.
+	Extra bool `json:"extra,omitempty"`
 	// ToBank is the bank's own ID for a transfer's arriving half, when it
 	// was joined from a row on each account: that statement brought in
 	// again does not bring it back.
@@ -182,6 +186,8 @@ func CleanLedger(l Ledger, p Plan) (Ledger, error) {
 		}
 		// Linked, it pays one.
 		t.NotPlanned = t.NotPlanned && t.Payment == ""
+		// Counted in full only says something of one that pays a planned payment.
+		t.Extra = t.Extra && t.Payment != ""
 		// A transfer's arriving half is its To's; one that is no transfer is apart.
 		t.ToBank = strings.TrimSpace(t.ToBank)
 		if t.To == "" {

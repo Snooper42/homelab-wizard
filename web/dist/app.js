@@ -14075,7 +14075,7 @@ ${pays}
   function latest(txs, n3 = latestCount) {
     return txs.map((t3, i3) => ({ t: t3, i: i3 })).sort((a3, b2) => b2.t.date.localeCompare(a3.t.date) || b2.i - a3.i).slice(0, n3).map((x3) => x3.t);
   }
-  function TxRow({ t: t3, v: v3, L: L2, edit }) {
+  function TxRow({ t: t3, v: v3, L: L2, edit, end }) {
     const a3 = L2.account[t3.account];
     const what2 = t3.splits?.length ? t3.splits.map((sp) => sp.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
     return /* @__PURE__ */ u3(
@@ -14084,6 +14084,7 @@ ${pays}
         lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
         title: txTitle(t3, L2),
         sub: `${t3.date === v3.today ? "Today" : dayShort(t3.date)} · ${what2} · ${t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account}`,
+        end,
         when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
         whenPlain: true,
         onOpen: edit ? () => edit("transaction", t3.id) : void 0,
@@ -14097,6 +14098,117 @@ ${pays}
     return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", kind: "fx-latest", actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }) });
   }
 
+  // web/src/finances/Loan.tsx
+  var overOf = (t3, x3) => x3 ? Math.max(0, Math.round((Math.abs(t3.amount) - x3.amount) * 100) / 100) : 0;
+  function LoanSection({ v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2 }) {
+    const [busy2, setBusy] = d2(false);
+    const [picking, setPicking] = d2(false);
+    const p3 = (v3.loans || []).find((x3) => x3.account === a3.id);
+    const into2 = allPayments(v3.plan).filter((x3) => x3.to === a3.id && !x3.card);
+    const byId = Object.fromEntries(into2.map((x3) => [x3.id, x3]));
+    const txs = ledger?.transactions || [];
+    const newest2 = (list) => [...list].sort((x3, y3) => x3.date < y3.date ? 1 : x3.date > y3.date ? -1 : 0);
+    const linked = newest2(txs.filter((t3) => t3.payment && byId[t3.payment]));
+    const free = newest2(txs.filter((t3) => !t3.payment && !t3.notPlanned && !t3.to && t3.amount < 0));
+    const payees = [...new Set(linked.map((t3) => t3.payee || ""))].filter(Boolean);
+    const offers = into2.length ? free.filter((t3) => payees.some((n3) => alike(n3, t3.payee || ""))).slice(0, 6) : [];
+    const pick = free.filter((t3) => !offers.includes(t3)).slice(0, 12);
+    const keep3 = async (change) => {
+      if (!saveLedger2 || !ledger || busy2) return;
+      setBusy(true);
+      await saveLedger2({ ...ledger, transactions: ledger.transactions.map(change) });
+      setBusy(false);
+    };
+    const link = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, payment: into2[0].id, notPlanned: void 0 } : t3);
+    const unlink = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, payment: void 0, extra: void 0, notPlanned: true } : t3);
+    const count2 = (id2) => keep3((t3) => t3.id === id2 ? { ...t3, extra: true } : t3);
+    const whole2 = p3?.rows?.[p3.made || 0]?.payment;
+    const next = p3?.rows?.[p3.made || 0];
+    const monthly = into2.reduce((s3, x3) => s3 + x3.amount, 0);
+    return /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3(Widget, { title: "The loan", span: "all", kind: "fx-loan", children: [
+        /* @__PURE__ */ u3("dl", { class: "fx-loanfacts", children: [
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Each month" }),
+            /* @__PURE__ */ u3("dd", { children: [
+              monthly ? /* @__PURE__ */ u3(Amount, { value: monthly, form: "full" }) : "—",
+              whole2 && monthly && Math.abs(whole2 - monthly) > 0.5 ? /* @__PURE__ */ u3("span", { class: "muted", children: [
+                " of ",
+                money(whole2),
+                ", the whole payment"
+              ] }) : null
+            ] })
+          ] }),
+          p3?.rate !== void 0 && /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Rate" }),
+            /* @__PURE__ */ u3("dd", { children: [
+              p3.rate,
+              "%"
+            ] })
+          ] }),
+          p3?.months !== void 0 && /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: "Months left" }),
+            /* @__PURE__ */ u3("dd", { children: p3.months })
+          ] }),
+          /* @__PURE__ */ u3("div", { children: [
+            /* @__PURE__ */ u3("dt", { children: p3 && p3.balance > 5e-3 && p3.date && !p3.never ? "Paid off" : "Payoff" }),
+            /* @__PURE__ */ u3("dd", { children: p3 && p3.date && !p3.never && p3.balance > 5e-3 ? `${monthName(p3.date + "-01").slice(0, 3)} ${p3.date.slice(0, 4)}` : p3 ? payoffWords(p3) : "Add a payment that goes to it" })
+          ] })
+        ] }),
+        next && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+          "Its next payment, ",
+          dayShort(next.date),
+          ": ",
+          money(next.interest),
+          " interest, ",
+          money(next.principal),
+          " off what's owed."
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: "Payments linked to this loan",
+          span: "all",
+          kind: "fx-loanlinked",
+          actions: saveLedger2 && into2.length ? /* @__PURE__ */ u3("button", { class: "small", "aria-expanded": picking, onClick: () => setPicking(!picking), children: "Link a payment…" }) : void 0,
+          children: [
+            /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: into2.length ? `Each one counts as paying ${into2[0].name}. Link one, and the same payee's next ones are offered here.` : "No payment in the plan goes to this loan: add one in Plan › Recurring, then link what pays it." }),
+            picking && /* @__PURE__ */ u3("div", { class: "fx-loanpick", children: [
+              /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Money out not linked to anything yet, newest first:" }),
+              pick.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: pick.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => link(t3.id), children: "Link" }) }, t3.id)) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing to link." })
+            ] }),
+            !!offers.length && /* @__PURE__ */ u3("div", { class: "fx-loanoffer", children: [
+              /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+                /* @__PURE__ */ u3("strong", { children: "These look like it:" }),
+                " the same payee as the ones linked."
+              ] }),
+              /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: offers.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: saveLedger2 && /* @__PURE__ */ u3("span", { class: "actions", children: [
+                /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => unlink(t3.id), children: "Not this one" }),
+                /* @__PURE__ */ u3("button", { class: "small fx-primary", disabled: busy2, onClick: () => link(t3.id), children: "Link" })
+              ] }) }, t3.id)) })
+            ] }),
+            linked.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: linked.map((t3) => {
+              const over = overOf(t3, byId[t3.payment]);
+              return /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, end: over > 0 && !t3.extra ? /* @__PURE__ */ u3("span", { class: "fx-loanask", children: [
+                /* @__PURE__ */ u3("span", { class: "warn", children: [
+                  money(over),
+                  " more than its ",
+                  money(byId[t3.payment].amount),
+                  ": count all of it?"
+                ] }),
+                saveLedger2 && /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3("button", { class: "small", disabled: busy2, onClick: () => unlink(t3.id), children: "Not this one" }),
+                  /* @__PURE__ */ u3("button", { class: "small fx-primary", disabled: busy2, onClick: () => count2(t3.id), children: "Count it" })
+                ] })
+              ] }) : /* @__PURE__ */ u3("span", { class: "pill ok", children: t3.extra ? "Counted in full" : "Counted" }) }, t3.id);
+            }) }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: "None linked yet." })
+          ]
+        }
+      )
+    ] });
+  }
+
   // web/src/finances/Account.tsx
   var kindName2 = { checking: "Checking", savings: "Savings", card: "Credit card", investment: "Investments", retirement: "Retirement", loan: "Loan", home: "Home", car: "Car", collectible: "Collectible" };
   var spans = [["30", "30 days", 30], ["90", "90 days", 90], ["365", "A year", 365]];
@@ -14104,7 +14216,7 @@ ${pays}
     const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1, +day3.slice(8, 10) - n3);
     return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
   };
-  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx }) {
+  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx, saveLedger: saveLedger2 }) {
     const [span, setSpan] = d2("90");
     const a3 = (v3.plan.accounts || []).find((x3) => x3.id === id2);
     if (!a3) return /* @__PURE__ */ u3(Empty, { children: [
@@ -14184,7 +14296,8 @@ ${pays}
             ]
           }
         ),
-        /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", actions: mine.length ? /* @__PURE__ */ u3("button", { class: "small", onClick: () => toTx({ account: a3.id }), children: "All of them in Transactions" }) : void 0, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions in or out of it yet. An import or one typed in shows here." }) })
+        a3.kind === "loan" && /* @__PURE__ */ u3(LoanSection, { v: v3, L: L2, ledger, a: a3, saveLedger: saveLedger2 }),
+        (a3.kind !== "loan" || !!mine.length) && /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", actions: mine.length ? /* @__PURE__ */ u3("button", { class: "small", onClick: () => toTx({ account: a3.id }), children: "All of them in Transactions" }) : void 0, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions in or out of it yet. An import or one typed in shows here." }) })
       ] })
     ] });
   }
@@ -16662,7 +16775,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back4 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2) }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back4 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {

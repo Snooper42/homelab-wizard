@@ -103,6 +103,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 |---|---|---|---|---|---|---|
 | The plan: Dashboard, Spending, Plan, Net worth | yes, four tabs | yes, the same four | partly: its own home with a page each (Transactions, Budgets, Bills, Investments, Accounts, Goals, Loans, Spending, Cash Flow, Month in Review, Recurring, To Review) | yes, as the iPhone | — | `Finances` |
 | An account's own page: its balance and chart (30 or 90 days, a year), this month's in and out, its latest transactions, Update balance and Edit | yes | yes; a look-only phone has no Update balance or Edit | gap (its Accounts page; the owner's yes, Nov 12: next after the computer's) | gap | — | `Finances`, `FinancesLedger` |
+| A loan's page: its payment, rate, months left and payoff; the payments linked to it (one over the plan's asked about), the same payee's next ones offered, Link a payment… | yes | yes; a look-only phone only sees them | gap (2C step 4, PR 4) | gap | — | `Finances`, `FinancesLedger`, `SaveFinancesLedger` |
 | Checking now and after the next paycheck, how it adds up | yes | yes | yes | yes | — | |
 | Change balances, budgets, goals, a payment's amount, Hide amounts | yes | yes (Finances to change) | yes, Face ID | yes, ⇧⌘H hides amounts | — | `SaveFinances` |
 | Add a payment, an account, a goal; money that comes in from someone | yes | yes (Finances to change) | partly: an account, not a payment or a goal | partly | — | `SaveFinances` |

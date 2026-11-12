@@ -14,6 +14,7 @@ import { Widget } from './ui/Widget';
 import { AcctMark } from './Mark';
 import { ago } from './Worth';
 import { TxRow } from './widgets/Latest';
+import { LoanSection } from './Loan';
 import { balanceAfter, runsFrom, todayOf, worthOn } from './model';
 import { compact, dayShort, type Lookup, money, owed } from './money';
 
@@ -42,9 +43,11 @@ export interface AccountProps {
   toTx: (f: { account: string }) => void;
   /** A transaction's form; none on a phone allowed only to look. */
   editTx?: (what: 'transaction', id: string) => void;
+  /** Saves the ledger (a loan's links); none on a phone allowed only to look. */
+  saveLedger?: (l: finance.Ledger) => Promise<boolean>;
 }
 
-export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx }: AccountProps) {
+export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx, saveLedger }: AccountProps) {
   const [span, setSpan] = useState('90');
   const a = (v.plan.accounts || []).find((x) => x.id === id);
   if (!a) return <Empty>This account isn't in the plan any more. <button class="small" onClick={done}>Net worth</button></Empty>;
@@ -81,10 +84,11 @@ export function AccountPage({ v, L, ledger, id, done, edit, update, toTx, editTx
             tip={(i) => <><strong>{dayShort(steps[i])}</strong><br />{money(values[i])}</>} />
           <p class="fx-sub">{runs ? `Lowest ${money(values[low])}, ${dayShort(steps[low])}. Worked from the balance typed in ${dayShort(a.updated!)} through its transactions.` : 'From the balances typed in over time.'}</p>
         </Widget>
-        <Widget title="Latest transactions" span="all" kind="fx-acctlatest" actions={mine.length ? <button class="small" onClick={() => toTx({ account: a.id })}>All of them in Transactions</button> : undefined}>
+        {a.kind === 'loan' && <LoanSection v={v} L={L} ledger={ledger} a={a} saveLedger={saveLedger} />}
+        {(a.kind !== 'loan' || !!mine.length) && <Widget title="Latest transactions" span="all" kind="fx-acctlatest" actions={mine.length ? <button class="small" onClick={() => toTx({ account: a.id })}>All of them in Transactions</button> : undefined}>
           {mine.length ? <Rows kind="fx-rows">{mine.slice(0, 8).map((t) => <TxRow key={t.id} t={t} v={v} L={L} edit={editTx} />)}</Rows>
             : <Empty>No transactions in or out of it yet. An import or one typed in shows here.</Empty>}
-        </Widget>
+        </Widget>}
       </div>
     </div>
   );
