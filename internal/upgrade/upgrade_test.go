@@ -2,6 +2,8 @@ package upgrade
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,6 +28,47 @@ func write(t *testing.T, path, data string) {
 	}
 }
 
+// testWeb is the GitHub page the tests' checkouts say they come from.
+const testWeb = "https://github.com/owner/homelab"
+
+// releasedFrom makes ReleaseCommit answer as GitHub would for releases
+// whose build provenance names the commits their tags point at in origin.
+func releasedFrom(t *testing.T, origin string) {
+	t.Helper()
+	saved := ReleaseCommit
+	ReleaseCommit = func(_ context.Context, repo, tag string) (string, error) {
+		if repo != "owner/homelab" {
+			return "", errors.New("another repository")
+		}
+		out, err := exec.Command("git", "-C", origin, "rev-parse", "--verify", "-q", tag+"^{commit}").Output()
+		if err != nil {
+			return "", fmt.Errorf("GitHub has no release %s", tag)
+		}
+		return strings.TrimSpace(string(out)), nil
+	}
+	t.Cleanup(func() { ReleaseCommit = saved })
+}
+
+// onGitHub points the checkout's origin at testWeb, which git fetches from
+// the local origin instead.
+func onGitHub(t *testing.T, home, origin string) {
+	t.Helper()
+	run(t, home, "remote", "set-url", "origin", testWeb)
+	run(t, home, "config", "url."+origin+".insteadOf", testWeb)
+}
+
+func head(t *testing.T, dir string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", dir, "rev-parse", "HEAD").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// Item 79: a checkout moves only to a release tag on its upstream branch,
+// and only once the tag's build provenance names the very commit the tag
+// points at; commits past the newest release wait for the next one.
 func TestInspectAndPull(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not installed")
@@ -41,15 +84,24 @@ func TestInspectAndPull(t *testing.T) {
 	run(t, dev, "push", "origin", "main")
 	run(t, base, "clone", origin, home)
 	ctx := context.Background()
+	releasedFrom(t, origin)
+	onGitHub(t, home, origin)
 
+	// Before the first release there is nothing to move to.
 	c, err := Inspect(ctx, home, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.Branch != "main" || c.Upstream != "origin/main" || c.Behind != 0 || c.FetchError != "" || c.Version != "0.1.0-alpha" {
+	if c.Branch != "main" || c.Upstream != "origin/main" || c.Web != testWeb || c.Target != "" || c.Behind != 0 || c.FetchError != "" || c.Version != "0.1.0-alpha" {
 		t.Fatalf("fresh clone: %+v", c)
 	}
+	if _, err := PullTo(ctx, home, c); err == nil || !strings.Contains(err.Error(), "no release") {
+		t.Errorf("no release: %v", err)
+	}
+	run(t, dev, "tag", "v0.1.0")
+	run(t, dev, "push", "origin", "--tags")
 
+	// New commits on main wait for their release.
 	write(t, filepath.Join(dev, "web", "dist", "app.js"), "// new\n")
 	run(t, dev, "add", ".")
 	run(t, dev, "commit", "-m", "App: a new screen")
@@ -58,13 +110,26 @@ func TestInspectAndPull(t *testing.T) {
 	run(t, dev, "add", ".")
 	run(t, dev, "commit", "-m", "A new setting")
 	run(t, dev, "push", "origin", "main")
-
-	write(t, filepath.Join(home, "compose.yaml"), "services: {} # edited here\n")
-	c, err = Inspect(ctx, home, true)
-	if err != nil {
+	// A tag on another branch is never a release to move to.
+	run(t, dev, "checkout", "-q", "-b", "side")
+	run(t, dev, "commit", "-q", "--allow-empty", "-m", "Elsewhere")
+	run(t, dev, "tag", "v9.0.0")
+	run(t, dev, "push", "origin", "side", "--tags")
+	run(t, dev, "checkout", "-q", "main")
+	if c, err = Inspect(ctx, home, true); err != nil {
 		t.Fatal(err)
 	}
-	if c.Behind != 2 || len(c.Changes) != 2 || c.Changes[0].Subject != "A new setting" || !c.AppChanged || !c.SettingsChanged || c.NewVersion != "0.2.0-alpha" {
+	if c.Target != "v0.1.0" || c.Behind != 0 || c.Unreleased != 2 {
+		t.Fatalf("unreleased commits: %+v", c)
+	}
+
+	run(t, dev, "tag", "v0.2.0")
+	run(t, dev, "push", "origin", "--tags")
+	write(t, filepath.Join(home, "compose.yaml"), "services: {} # edited here\n")
+	if c, err = Inspect(ctx, home, true); err != nil {
+		t.Fatal(err)
+	}
+	if c.Target != "v0.2.0" || c.Behind != 2 || c.Unreleased != 0 || len(c.Changes) != 2 || c.Changes[0].Subject != "A new setting" || !c.AppChanged || !c.SettingsChanged || c.NewVersion != "0.2.0-alpha" {
 		t.Fatalf("behind: %+v", c)
 	}
 	if len(c.Dirty) != 1 || c.Dirty[0] != "compose.yaml" {
@@ -74,26 +139,60 @@ func TestInspectAndPull(t *testing.T) {
 		t.Errorf("changes: %+v", c.Changes)
 	}
 
+	// A checkout from somewhere other than GitHub has no releases to check.
+	before := head(t, home)
+	elsewhere := c
+	elsewhere.Web = ""
+	if _, err := PullTo(ctx, home, elsewhere); err == nil || !strings.Contains(err.Error(), "not a GitHub repository") {
+		t.Errorf("not GitHub: %v", err)
+	}
+
 	// An edit to a file the update does not touch is kept.
-	if _, err := Pull(ctx, home); err != nil {
+	if _, err := PullTo(ctx, home, c); err != nil {
 		t.Fatal(err)
 	}
-	if c, _ = Inspect(ctx, home, false); c.Behind != 0 || c.Version != "0.2.0-alpha" || len(c.Dirty) != 1 {
+	if c, _ = Inspect(ctx, home, false); c.Behind != 0 || c.Version != "0.2.0-alpha" || len(c.Dirty) != 1 || head(t, home) == before {
 		t.Fatalf("after pull: %+v", c)
 	}
 
-	// An edit to a file the update changes makes git refuse; nothing is lost.
+	// A release whose provenance names another commit, or none, is not
+	// taken: the tag moved after the build, or the build never ran.
 	write(t, filepath.Join(dev, "compose.yaml"), "services: {a: {}}\n")
 	run(t, dev, "commit", "-am", "Compose change")
-	run(t, dev, "push", "origin", "main")
-	if _, err := Inspect(ctx, home, true); err != nil {
-		t.Fatal(err)
+	run(t, dev, "tag", "v0.2.1")
+	run(t, dev, "push", "origin", "main", "--tags")
+	if c, err = Inspect(ctx, home, true); err != nil || c.Target != "v0.2.1" || c.Behind != 1 {
+		t.Fatalf("v0.2.1: %+v %v", c, err)
 	}
-	if _, err := Pull(ctx, home); err == nil || !strings.Contains(err.Error(), "git pull") {
+	before = head(t, home)
+	built := ReleaseCommit
+	ReleaseCommit = func(context.Context, string, string) (string, error) { return before, nil }
+	if _, err := PullTo(ctx, home, c); err == nil || !strings.Contains(err.Error(), "points at") {
+		t.Errorf("another commit's provenance: %v", err)
+	}
+	ReleaseCommit = func(context.Context, string, string) (string, error) {
+		return "", errors.New("GitHub has no build provenance for its files")
+	}
+	if _, err := PullTo(ctx, home, c); err == nil || !strings.Contains(err.Error(), "no build provenance") {
+		t.Errorf("no provenance: %v", err)
+	}
+	if head(t, home) != before {
+		t.Fatal("a refused release moved the checkout")
+	}
+	ReleaseCommit = built
+
+	// An edit to a file the update changes makes git refuse; nothing is lost.
+	if _, err := PullTo(ctx, home, c); err == nil || !strings.Contains(err.Error(), "git merge") {
 		t.Fatalf("pull over a local edit: %v", err)
 	}
 	if data, _ := os.ReadFile(filepath.Join(home, "compose.yaml")); !strings.Contains(string(data), "edited here") {
 		t.Error("the local edit was lost")
+	}
+
+	// The stable channel takes only a new minor or major version.
+	write(t, filepath.Join(home, ".env"), "UPDATE_CHANNEL=stable\n")
+	if c, err = Inspect(ctx, home, false); err != nil || c.Channel != Stable || c.Target != "v0.2.0" || c.Behind != 0 || c.Unreleased != 1 {
+		t.Fatalf("stable: %+v %v", c, err)
 	}
 
 	// A branch that follows nothing, and a folder that is not a checkout.

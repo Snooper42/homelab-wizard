@@ -50,8 +50,11 @@ func TestBackInAGitCheckout(t *testing.T) {
 	write(t, filepath.Join(dev, "VERSION"), "0.2.0\n")
 	write(t, filepath.Join(dev, "CHANGELOG.md"), "# Changelog\n\n- Second thing: new. More.\n- First. Detail.\n")
 	run(t, dev, "commit", "-am", "Second")
-	run(t, dev, "push", "origin", "main")
+	run(t, dev, "tag", "v0.2.0")
+	run(t, dev, "push", "origin", "main", "--tags")
 	ctx := context.Background()
+	releasedFrom(t, origin)
+	onGitHub(t, home, origin)
 
 	c, err := Inspect(ctx, home, true)
 	if err != nil || len(c.Notes) != 1 || c.Notes[0] != "Second thing: new." {
@@ -63,7 +66,7 @@ func TestBackInAGitCheckout(t *testing.T) {
 	if _, err := Mark(ctx, home, c); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Pull(ctx, home); err != nil {
+	if _, err := PullTo(ctx, home, c); err != nil {
 		t.Fatal(err)
 	}
 	p, ok := LoadPoint(home)
@@ -146,6 +149,8 @@ func TestStableChannel(t *testing.T) {
 	run(t, base, "clone", "-q", origin, home)
 	write(t, filepath.Join(home, ".env"), "UPDATE_CHANNEL=stable\n")
 	ctx := context.Background()
+	releasedFrom(t, origin)
+	onGitHub(t, home, origin)
 
 	commit("0.2.0")
 	run(t, dev, "push", "-q", "origin", "main")
@@ -169,7 +174,8 @@ func TestStableChannel(t *testing.T) {
 		t.Fatalf("stable moved to %q, not the release", v)
 	}
 	write(t, filepath.Join(home, ".env"), "UPDATE_CHANNEL=testing\n")
-	if c, _ = Inspect(ctx, home, false); c.Channel != Testing || c.Behind != 1 || c.NewVersion != "0.3.0-dev" {
+	// Testing takes every release of main, v0.2.1 here.
+	if c, _ = Inspect(ctx, home, false); c.Channel != Testing || c.Target != "v0.2.1" || c.Behind != 1 || c.NewVersion != "0.3.0-dev" {
 		t.Fatalf("testing: %+v", c)
 	}
 }

@@ -745,7 +745,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the
     catalog, not by hand.
-79. (decided by the owner, Nov 12: move only to releases whose build provenance verifies, as the desktop app does; to build) **The git checkout's upgrade trusts the branch tip alone**
+79. (done: N55, Nov 12, round 16: both channels move only to a release tag on the upstream branch whose verified build provenance names the commit the tag points at; anything else is refused) **The git checkout's upgrade trusts the branch tip alone**
     (`internal/upgrade`, `homelab upgrade`): `git pull --ff-only` from
     origin over HTTPS, then the new version's `up` runs. N29 made release
     downloads prove where they were built; a source checkout has no such
@@ -806,6 +806,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 ### Security done
 
 - **N54 (Nov 12, round 15):** items 87 and 88 built as the owner chose: Vaultwarden, Pocket ID and CrowdSec take a new image only once it has been out 3 days (from when first seen, 14 at most), read from the registry without pulling. Next: item 79, a git checkout moving only to releases whose provenance verifies.
+- **N55 (Nov 12, round 16):** item 79 built as the owner chose: `homelab upgrade` on a git checkout moves only to a release tag (testing: every release of main; stable: `vX.Y.0`), once the release's attestation verifies and its certificate names the very commit the tag points at. Commits past the newest release wait for the next one. Next: back to reading the other account's new merges, riskiest surfaces first.
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 

@@ -237,6 +237,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A git checkout updates only to checked releases:** `homelab upgrade` moves the homelab folder only to a release whose files the project's own release workflow is shown to have built, from the very commit the release's tag points at, as the app's own update is checked. Changes on `main` newer than the latest release come with the next one.
 - **Passwords, sign-in and bans wait a few days for new releases:** the nightly update installs a new Vaultwarden, Pocket ID or CrowdSec only once it has been out 3 days, so a release pulled for a fault in its first days never arrives. `homelab update <app>` still takes it at once.
 - **Your own logos on the iPhone and iPad:** a picture you set for an account, a payment or a payee on the computer (one you picked, or the real logo got from its website) now shows in the Homelab app too, where it showed a letter or an icon.
 - **A username is a username:** `homelab person add --username` takes small letters, digits and `. - _` only, so a person's own folder is always theirs.

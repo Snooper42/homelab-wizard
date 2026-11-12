@@ -42,16 +42,25 @@ func TestUpgradePreview(t *testing.T) {
 	git(dev, "add", ".")
 	git(dev, "commit", "-q", "-m", "Docs: a new page")
 	git(dev, "push", "-q", "origin", "main")
+	released(t, root)
 
+	// Before its release, the commit waits for it.
 	out := &bytes.Buffer{}
 	h, err := newHomelab(&ui.UI{Out: out}, root)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := h.upgradeCmd(context.Background(), nil); err != nil || !strings.Contains(out.String(), "no release of origin/main yet") || !strings.Contains(out.String(), "1 newer change(s) on origin/main come with the next release") {
+		t.Fatalf("before a release (%v):\n%s", err, out)
+	}
+	git(dev, "tag", "v0.17.1")
+	git(dev, "push", "-q", "origin", "--tags")
+	out.Reset()
+
 	if err := h.upgradeCmd(context.Background(), nil); !errors.Is(err, errPreview) {
 		t.Fatalf("without --apply and a terminal it is a preview: %v", err)
 	}
-	if !strings.Contains(out.String(), "1 change(s) on origin/main") || !strings.Contains(out.String(), "Docs: a new page") {
+	if !strings.Contains(out.String(), "1 change(s) on v0.17.1") || !strings.Contains(out.String(), "Docs: a new page") {
 		t.Fatalf("preview:\n%s", out)
 	}
 
