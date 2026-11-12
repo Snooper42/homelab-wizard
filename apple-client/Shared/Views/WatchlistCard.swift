@@ -89,13 +89,13 @@ struct WatchlistCard: View {
     }
 
     /// "followed since Oct 2", or "followed today".
-    static func sinceWords(_ w: FinanceWatched) -> String {
+    nonisolated static func sinceWords(_ w: FinanceWatched) -> String {
         guard let since = w.since else { return "followed today" }
         return "followed since " + since.formatted(.dateTime.month(.abbreviated).day())
     }
 
     /// "+6.0%" or "−3.2%": how far it has moved since it was followed.
-    static func changeWords(_ change: Double) -> String {
+    nonisolated static func changeWords(_ change: Double) -> String {
         (change < 0 ? "−" : "+") + String(format: "%.1f%%", abs(change * 100))
     }
 }
