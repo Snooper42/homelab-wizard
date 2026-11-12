@@ -357,6 +357,11 @@ behaviour, and the screenshots retaken where they changed.
 118. (done: holds, Nov 12, round 11) **The companion's server against a slow client**: `ReadHeaderTimeout` 10 s, every body capped before it is read (`MaxCall`, `MaxTunnel`, pairing 4 KB); no write timeout, for the event stream.
 119. (done: N53, Nov 12, round 11) **A member's folder from their username** (cmd/homelab member.go `memberRoot`).
 
+120. (done: holds, Nov 12, round 12) **The Finances calendar feed's key** (`/finances.ics?key=`): served only over the https (Tailscale) link, a key of 32 to 128 letters and digits (`CalendarKeyOK`), compared in constant time, `no-store`; a member's phone has no feed of its own.
+121. (done: holds, Nov 12, round 12) **Adopting an older setup's containers** (internal/adopt): the owner runs it on the computer; what it copies is another container's mounts, made by someone with Docker already (root, in effect); the secrets it carries into `.env` go through its quoting (item 101).
+122. (done: holds, Nov 12, round 12) **Claiming a public app's first account** (internal/claim): it only asks each app whether its first account exists, and handles no credential; Reach it away from home waits on it (N38).
+123. (done: holds, Nov 12, round 12) **What the desktop app starts** (app.go's native apps, tray_other.go): a service or program named by the catalog under Program Files or systemd, never a value from a page; `APPIMAGE` is the account's own environment.
+
 ## The security team
 
 You audit every way into the homelab's own code: what can reach it, what
@@ -792,6 +797,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **Round 12 (Nov 12):** N53 merged. Items 120 to 123 hold (the calendar feed's key, adopting, claiming, what the desktop app starts). The other account's latest (#618, #620) are Tidy Up's look only. Next: ten new items, from what is left unread and what lands next.
 
 - **N53 (Nov 12, round 11):** a username typed with `--username` was taken as typed and named a member's folder (`data/members/<username>`): `../../elsewhere` led outside. Now it must be one `people.Username` could make, where it is typed and where the folder is made. Items 116 to 118 hold. Next: what the other account merges, read as it lands, and ten new items.
 
