@@ -112,10 +112,32 @@ var phoneConnects = map[string]bool{
 	"ADGUARD_DNS_BIND_IP": true, "TAILSCALE_HOST": true, "TAILSCALE_ROUTES": true, "TAILSCALE_EXTRA_ARGS": true,
 }
 
+// phoneEveryday are the settings a phone allowed to make changes may change
+// (N52): how the computer behaves day to day (its clock, staying awake,
+// quiet hours, alerts, when updates run and whether they put themselves
+// back, Tidy Up's choices, a model or a language), never what an app is or
+// where it reaches. Everything else is the computer's: the folders mounted
+// into apps and whose files they are (MEDIA_ROOT=/, PUID=0), which Docker
+// it talks to, an app's image or version, who may sign up (Vaultwarden's
+// sign-ups), where the household signs in (SSO_HOST, POCKET_ID_URL) and
+// what the away tunnel checks (COMPANION_ACCESS_*), the addresses and
+// ports, and every secret. A list of what may change, not of what may not,
+// so a setting added later is the computer's until it is put here.
+var phoneEveryday = map[string]bool{
+	"TZ": true, "KEEP_AWAKE": true, "BATTERY_SAVER": true,
+	"DESKTOP_ALERTS": true, "QUIET_HOURS": true, "WATCHTOWER_SCHEDULE": true, "UPDATE_COPY_LIMIT": true,
+	"AUTO_ROLLBACK": true, "AUTO_HEAL": true, "UPDATES_HELD": true, "OLLAMA_MODEL": true, "SPEEDTEST_SCHEDULE": true,
+	"TIDY_UP": true, "TIDY_INBOX": true, "TIDY_INBOX_WHEN": true, "TIDY_SCRUB": true, "TIDY_TDARR_REST": true,
+	"TIDY_ARR_REST": true, "TIDY_KEEP_LANGUAGES": true, "TIDY_VIDEO_CODEC": true, "TIDY_SHRINK_LOSSLESS": true,
+	"TIDY_LYRICS": true, "TIDY_MUSIC_ENGINE": true,
+	"PAPERLESS_OCR_LANGUAGE": true, "PROTONVPN_SERVER_COUNTRIES": true,
+}
+
 // phoneMayChange reports whether a phone allowed to make changes may change
-// a setting: an everyday one, not a secret nor one it connects through.
+// a setting: an everyday one (phoneEveryday), never a secret nor one it
+// connects through.
 func phoneMayChange(s settings.Setting) bool {
-	return !s.Secret && !phoneConnects[s.Key] && !strings.HasPrefix(s.Key, "TAILSCALE_")
+	return phoneEveryday[s.Key] && !s.Secret && !phoneConnects[s.Key] && !strings.HasPrefix(s.Key, "TAILSCALE_")
 }
 
 // listPhoneSettings is the Settings form as a phone gets it.
