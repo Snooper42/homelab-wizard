@@ -34,6 +34,7 @@ import { ComingUpWidget } from './widgets/ComingUp';
 import { GoalsWidget } from './widgets/Goals';
 import { LatestWidget } from './widgets/Latest';
 import { SpentWidget } from './widgets/Spent';
+import { ArrangedBoard } from './Arrange';
 import type { showTransactions } from './Transactions';
 
 /** What the dashboard draws; add, edit, and setSince are left out on a phone allowed only to look, so it offers no way to change anything. */
@@ -114,32 +115,32 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         </Card>
       )}
       {bar && <PeriodBar {...bar} />}
-      <div class="fx-board">
-        {!phone && <NowWidget v={v} L={L} />}
-        {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
-        <MissingWidget v={v} L={L} open={openTransactions} />
-        <PricesWidget v={v} L={L} keep={keep} />
-        <AveragesWidget v={v} L={L} keep={keep} />
-        {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
-        {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
-        {phone && <NowWidget v={v} L={L} />}
-        {read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} />}
-        {month && month.when !== 'past' && (() => {
+      <ArrangedBoard phone={phone} slots={[
+        { id: 'now', title: 'Checking now', width: 'full', node: !phone && <NowWidget v={v} L={L} /> },
+        { id: 'since', title: 'Since the balances', width: 'full', node: !!v.since?.length && <SinceWidget v={v} L={L} set={setSince} /> },
+        { id: 'missing', title: 'Bills not seen', width: 'full', node: <MissingWidget v={v} L={L} open={openTransactions} /> },
+        { id: 'prices', title: 'New prices', width: 'full', node: <PricesWidget v={v} L={L} keep={keep} /> },
+        { id: 'averages', title: "Bills' averages", width: 'full', node: <AveragesWidget v={v} L={L} keep={keep} /> },
+        { id: 'comingup', title: 'Coming up', width: 'full', node: phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} /> },
+        { id: 'goals', title: 'Goals', width: 'full', node: phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} /> },
+        { id: 'nowphone', title: 'Checking now', width: 'full', node: phone && <NowWidget v={v} L={L} /> },
+        { id: 'past', title: 'What happened', width: 'full', node: read && <PastWidget v={v} L={L} past={read} title={month?.when === 'now' ? 'So far this month' : undefined} ledger={ledger} edit={edit} /> },
+        { id: 'planned', title: 'The plan', width: 'full', node: month && month.when !== 'past' && (() => {
           // The plan's days, from tomorrow for this month (today's are in So far), or the whole month after it.
           const from = month.when === 'now' ? isoDay(new Date(parseDay(v.today).getTime() + 864e5)) : month.start;
           return from <= month.last && <PlannedWidget v={v} L={L} title={month.when === 'now' ? 'Still to come' : 'The plan'} start={from} last={month.last} edit={edit} />;
-        })()}
-        {p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />}
-        <CheckingWidget v={v} L={L} sel={p ? picked : -1} openDay={openCalendar} />
-        <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
-        <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} />
-        <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} />
-        <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} />
-        {!read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />}
-        {!(month?.when === 'ahead') && <SpentWidget v={v} ledger={ledger} open={showIn} days={spentDays} />}
-        <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
-        <NetWorthWidget v={v} open={openWorth} />
-      </div>
+        })() },
+        { id: 'paycheck', title: 'This paycheck', width: 'full', node: p && <PaycheckWidget v={v} L={L} sel={picked} edit={edit} /> },
+        { id: 'checking', title: 'Checking ahead', width: 'half', node: <CheckingWidget v={v} L={L} sel={p ? picked : -1} openDay={openCalendar} /> },
+        { id: 'renewing', title: 'Renewing soon', width: 'half', node: <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} /> },
+        { id: 'budgets', title: 'Budgets to watch', width: 'half', node: <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} /> },
+        { id: 'cashflow', title: 'Cash flow', width: 'half', node: <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} /> },
+        { id: 'spending', title: 'Where it goes', width: 'half', node: <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} /> },
+        { id: 'latest', title: 'Latest transactions', width: 'half', node: !read && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} /> },
+        { id: 'spent', title: 'Spent this month', width: 'half', node: !(month?.when === 'ahead') && <SpentWidget v={v} ledger={ledger} open={showIn} days={spentDays} /> },
+        { id: 'moneyflow', title: 'Money flow', width: 'full', node: <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} /> },
+        { id: 'networth', title: 'Net worth', width: 'full', node: <NetWorthWidget v={v} open={openWorth} /> },
+      ]} />
     </div>
   );
 }

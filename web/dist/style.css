@@ -2793,6 +2793,26 @@ button.fx-symbol small { color:var(--muted); }
 .fx-watchadd { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 10px; margin:10px 0; padding:10px 12px; border-radius:12px; background:var(--fin-accent-soft); }
 .fx-watchadd .fx-rows { flex-basis:100%; }
 .fx-watch .fx-change { font-size:12px; white-space:nowrap; margin:0 6px; }
+/* Arrange the Dashboard (Arrange.tsx): the button over the board; arranged, the board is six columns, each card a
+   third, half or the whole row, stacked under 860px; editing, each card has its bar (handle, ▲ ▼, its width, Hide)
+   and the hidden wait below. A card that draws nothing now takes no place. */
+.fx-arrange { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px 10px; margin:0 0 10px; }
+.fx-arrangehint { flex:1 1 280px; font-size:13px; color:var(--fin-accent-ink); background:var(--fin-accent-soft); padding:8px 12px; border-radius:10px; }
+.fx-board.arranged { grid-template-columns:repeat(6, minmax(0, 1fr)); }
+.fx-board.arranged > .fx-slot { display:flex; flex-direction:column; gap:8px; min-width:0; grid-column:span 3; }
+.fx-board.arranged > .fx-slot.w-third { grid-column:span 2; }
+.fx-board.arranged > .fx-slot.w-full { grid-column:1 / -1; }
+.fx-board.arranged > .fx-slot > .card { flex:1; margin:0; }
+.fx-board.arranged > .fx-slot:not(:has(.card)) { display:none; }
+@container (max-width: 860px) { .fx-board.arranged > .fx-slot { grid-column:1 / -1; } }
+.fx-board.editing > .fx-slot > .card { outline:2px dashed var(--fin-accent); outline-offset:2px; }
+.fx-board.editing > .fx-slot.dragging { opacity:.5; }
+.fx-slotbar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.fx-slotbar .grow { flex:1; }
+.fx-handle { cursor:grab; color:var(--muted); font-size:16px; letter-spacing:-2px; padding:2px 6px; user-select:none; }
+.fx-widths { display:inline-flex; gap:4px; }
+.fx-slotbar .fx-widths button.small.on { background:var(--fin-accent-soft); color:var(--fin-accent-ink); border-color:var(--fin-accent); font-weight:700; }
+.fx-hiddencards { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:var(--fin-gap); padding:12px 14px; border:1px dashed var(--line-strong); border-radius:12px; }
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Tidy Up too, which takes Finances' look (tidy-loop.md, L7). Only these screens, and not when the
    system asks for more contrast (that keeps its own colours). */

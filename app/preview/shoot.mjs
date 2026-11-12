@@ -2656,6 +2656,40 @@ const smokes = [
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
+  // The owner, Nov 12: Dashboard cards they can move and size ("maybe resize them"); the mockup's artboard 5 was a yes,
+  // kept per device. Arrange the Dashboard: ▲ ▼ move a card, ⅓ ½ Full set its width, Hide puts it below; kept after a
+  // reload; Reset puts the usual board back.
+  { name: 'Finances: the Dashboard is arranged, kept on this device, and Reset', screen: 'finances', run: async (page) => {
+    const ids = () => page.$$eval('#finRoot .fx-board.arranged > .fx-slot', (l) => l.filter((x) => x.querySelector('.card')).map((x) => x.dataset.card));
+    await page.click('#finRoot button:text-is("Arrange the Dashboard")', { timeout: 5000 });
+    await page.waitForSelector('#finRoot .fx-board.arranged.editing .fx-slot[data-card="networth"] .fx-slotbar', { timeout: 5000 });
+    const before = await ids();
+    await page.click('#finRoot .fx-slot[data-card="networth"] button[aria-label="Move Net worth up"]');
+    const moved = await ids();
+    if (moved.indexOf('networth') !== before.indexOf('networth') - 1) throw new Error(`Net worth didn't move up: ${before.join(' ')} → ${moved.join(' ')}`);
+    await page.click('#finRoot .fx-slot[data-card="cashflow"] .fx-widths button:has-text("Full")');
+    const wide = await page.evaluate(() => { const s = document.querySelector('#finRoot .fx-slot[data-card="cashflow"]'), b = document.querySelector('#finRoot .fx-board.arranged'); return s.className.includes('w-full') && s.getBoundingClientRect().width > b.getBoundingClientRect().width - 2; });
+    if (!wide) throw new Error('Cash flow is not the whole row');
+    await page.click('#finRoot .fx-slot[data-card="spent"] button:has-text("Hide")');
+    await page.waitForSelector('#finRoot .fx-hiddencards button:has-text("+ Spent this month")', { timeout: 3000 });
+    if ((await ids()).includes('spent')) throw new Error('Spent this month still shows');
+    await page.click('#finRoot button:text-is("Done")');
+    if (await page.locator('#finRoot .fx-slotbar').count()) throw new Error('the bars stayed after Done');
+    // Kept on this device: after a reload, as it was left.
+    await page.reload();
+    await page.waitForSelector('#finRoot .fx-board.arranged .fx-slot[data-card="networth"] .card', { timeout: 5000 });
+    const kept = await ids();
+    if (kept.includes('spent') || kept.join(' ') !== moved.filter((id) => id !== 'spent').join(' ')) throw new Error(`not kept: ${kept.join(' ')}, was ${moved.join(' ')}`);
+    await page.click('#finRoot button:text-is("Arrange the Dashboard")');
+    await page.click('#finRoot button:text-is("Reset to the usual")');
+    await page.click('#finRoot button:text-is("Done")');
+    await page.waitForSelector('#finRoot .fx-board:not(.arranged) .fx-widget', { timeout: 3000 });
+    if (await page.evaluate(() => localStorage.getItem('homelab.finances.layout'))) throw new Error('Reset kept the layout');
+  } },
+  { name: 'The phone: the Dashboard has no Arrange, and stacks as before', screen: 'finances', phone: ['companion', 'finances'], run: async (page) => {
+    await page.waitForSelector('#finances.active .fx-board .fx-widget', { timeout: 5000 });
+    if (await page.locator('#finRoot button:text-is("Arrange the Dashboard"), #finRoot .fx-board.arranged').count()) throw new Error('the phone offers Arrange');
+  } },
   // The owner, Nov 12: clicking an account on Net worth opened the form to update its balance and logo. It opens the
   // account's own page: its balance and a chart of it, its latest transactions, and Update balance and Edit as buttons;
   // Back goes back to Net worth.
