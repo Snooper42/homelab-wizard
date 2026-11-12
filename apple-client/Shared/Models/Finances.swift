@@ -707,6 +707,10 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let institution: String?
     /// The planned payment it paid, by id.
     let payment: String?
+    /// Said to pay no planned payment, though it looked like one.
+    let notPlanned: Bool
+    /// Paid more than its planned payment, and said to count all of it (a loan's extra).
+    let extra: Bool
     let category: String
     let note: String
     /// For a transfer, the account the money went into.
@@ -723,7 +727,7 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
     let splits: [FinanceSplit]
     var hasReceipt: Bool { receipt != nil }
 
-    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, institution, payment, category, note, to, tags, receipt, splits }
+    enum CodingKeys: String, CodingKey { case id, date, account, amount, payee, institution, payment, notPlanned, extra, category, note, to, tags, receipt, splits }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -734,6 +738,8 @@ struct FinanceTransaction: Decodable, Sendable, Equatable, Identifiable {
         payee = try c.decodeIfPresent(String.self, forKey: .payee) ?? ""
         institution = try c.decodeIfPresent(String.self, forKey: .institution)
         payment = try c.decodeIfPresent(String.self, forKey: .payment).flatMap { $0.isEmpty ? nil : $0 }
+        notPlanned = ((try? c.decodeIfPresent(Bool.self, forKey: .notPlanned)) ?? nil) ?? false
+        extra = ((try? c.decodeIfPresent(Bool.self, forKey: .extra)) ?? nil) ?? false
         category = try c.decodeIfPresent(String.self, forKey: .category) ?? ""
         note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
         to = try c.decodeIfPresent(String.self, forKey: .to)

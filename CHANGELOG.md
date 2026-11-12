@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A loan's page on the iPhone and iPad:** in the Homelab app, a loan's page says what it costs each month, the months left and when it's paid off, and lists the payments linked to it. **Link a Payment** links one, the same payee's next ones are offered with **Link** and **Not This One**, and one that paid more than the plan's payment asks whether to count all of it. Each asks Face ID first.
 - **The Watchlist on the iPhone and iPad:** the Homelab app's Investments page lists the tickers you follow, with their price and how much they've moved since you followed them; **Follow a Ticker** looks one up and follows it (after Face ID), and its menu unfollows it. The bar of each holding's share is gone there too.
 - **A Watchlist in Investments:** follow a ticker you don't own (**Follow a ticker** under your holdings), and it's listed with its price, a line of it, and how much it's moved since you followed it. Ghostfolio prices it each time it reads your investments. It never counts in your worth. **Unfollow** takes it off.
 - **An account's page on the iPhone and iPad:** in the Homelab app, tapping an account on Finances' Accounts page opens its page: what it holds (or owes) today, a chart of it over the last 30 or 90 days or a year, and its latest transactions, with **Update Balance** at the top. It typed the balance in before.
