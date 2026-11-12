@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 // investing is a household with a 401(k), a Roth IRA kept by hand under
@@ -299,5 +300,28 @@ func TestWatchedKeepsAPointADay(t *testing.T) {
 	got := cleanWatch(p.Watch)
 	if len(got) != 2 || got[0].Symbol != "GLBX" || got[1].Symbol != "INIT" || len(got[1].History) != maxWatchedHistory {
 		t.Errorf("cleaned: %d %+v", len(got), got)
+	}
+}
+
+// N57: a followed ticker's words are no longer than a real one's: a phone
+// allowed to edit Finances sends them, and each read carries them. One
+// that is no symbol ("." or "..", or too long) is dropped.
+func TestAFollowedTickerIsSmall(t *testing.T) {
+	long := strings.Repeat("é", 300) // two bytes each
+	got := cleanWatch([]Watched{
+		{Symbol: "GLBX", Name: long, DataSource: "YAHOO", Currency: strings.Repeat("U", 100)},
+		{Symbol: ".."}, {Symbol: "."}, {Symbol: "INIT", DataSource: ".."},
+		{Symbol: strings.Repeat("A", maxWatchSymbol+1)},
+		{Symbol: "BIG", DataSource: strings.Repeat("Y", maxWatchSource+1)},
+		{Symbol: "brk-b", Name: "Berkshire", DataSource: "YAHOO", Currency: "USD"},
+	})
+	if len(got) != 2 || got[0].Symbol != "GLBX" || got[1].Symbol != "BRK-B" {
+		t.Fatalf("kept %+v", got)
+	}
+	if n := len(got[0].Name); n > maxWatchName || n < maxWatchName-1 || !utf8.ValidString(got[0].Name) {
+		t.Errorf("name of %d bytes, valid %v", n, utf8.ValidString(got[0].Name))
+	}
+	if got[0].Currency != "" || got[1].Currency != "USD" || got[1].Name != "Berkshire" {
+		t.Errorf("kept %+v", got)
 	}
 }

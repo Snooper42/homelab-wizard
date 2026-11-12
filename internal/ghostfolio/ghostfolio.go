@@ -328,7 +328,9 @@ func Investments(ctx context.Context, env map[string]string) ([]finance.Invested
 					if price, code, ok := g.quote(ctx, src, sym); ok && (code == "" || inv.Currency == "" || strings.EqualFold(code, inv.Currency)) {
 						worthNow, quoted = cents(shares*price), true
 					}
-					_ = g.Call(ctx, http.MethodPost, "/admin/gather/"+url.PathEscape(src)+"/"+url.PathEscape(sym), nil, nil)
+					if path, ok := symbolPath(src, sym); ok {
+						_ = g.Call(ctx, http.MethodPost, "/admin/gather"+path, nil, nil)
+					}
 				}
 			}
 			inv.Holdings = append(inv.Holdings, finance.Holding{
@@ -612,7 +614,9 @@ func AddInvestment(ctx context.Context, root string, add Add) error {
 	}
 	// Ghostfolio prices a symbol new to it only once it has gathered its
 	// prices: asked now (an admin's token may), it need not wait a day.
-	_ = g.Call(ctx, http.MethodPost, "/admin/gather/"+url.PathEscape(add.DataSource)+"/"+url.PathEscape(strings.ToUpper(strings.TrimSpace(add.Symbol))), nil, nil)
+	if path, ok := symbolPath(add.DataSource, strings.ToUpper(strings.TrimSpace(add.Symbol))); ok {
+		_ = g.Call(ctx, http.MethodPost, "/admin/gather"+path, nil, nil)
+	}
 	if add.NewName != "" {
 		p.Accounts = append(p.Accounts, acct)
 		if _, err := finance.Save(path, p); err != nil {
@@ -744,7 +748,10 @@ func (g Session) quote(ctx context.Context, dataSource, symbol string) (price fl
 		Currency    string `json:"currency"`
 		MarketPrice num    `json:"marketPrice"`
 	}
-	path := "/" + url.PathEscape(dataSource) + "/" + url.PathEscape(symbol)
+	path, ok := symbolPath(dataSource, symbol)
+	if !ok {
+		return 0, "", false
+	}
 	err := g.Read(ctx, "/symbols"+path, &got)
 	if errors.As(err, new(missing)) {
 		err = g.Read(ctx, "/symbol"+path, &got)
@@ -753,6 +760,21 @@ func (g Session) quote(ctx context.Context, dataSource, symbol string) (price fl
 		return 0, "", false
 	}
 	return float64(got.MarketPrice), strings.ToUpper(strings.TrimSpace(got.Currency)), true
+}
+
+// symbolPath is "/<dataSource>/<symbol>" for Ghostfolio's addresses of a
+// symbol (N57). Escaping keeps a "/", "?" or "#" in either from changing
+// the address, but leaves "." and "..", which would step out of it: from
+// /admin/gather/<source>/<symbol> to another of Ghostfolio's admin
+// addresses, with the homelab's sign-in. Either, or an empty one, is no
+// symbol, and ok is false.
+func symbolPath(dataSource, symbol string) (string, bool) {
+	for _, part := range []string{dataSource, symbol} {
+		if part == "" || part == "." || part == ".." {
+			return "", false
+		}
+	}
+	return "/" + url.PathEscape(dataSource) + "/" + url.PathEscape(symbol), true
 }
 
 // sourceOf is the data source Ghostfolio prices a symbol by, from its buys

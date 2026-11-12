@@ -456,3 +456,31 @@ func TestFollowATickerAndReadItsPrice(t *testing.T) {
 		t.Errorf("no price on a read: %+v, %v", r.Plan.Watch, err)
 	}
 }
+
+// N57: a data source or symbol of "." or ".." would step out of
+// Ghostfolio's address for a symbol, to another of its admin addresses
+// with the homelab's sign-in. Following one is refused, and adding a buy of
+// one asks nothing to be gathered for it.
+func TestASymbolStaysInItsAddress(t *testing.T) {
+	f := ghostfoliotest.New(map[string]any{"id": "gf-rh", "name": "Robinhood", "currency": "USD", "balance": 0})
+	defer f.Close()
+	root := homelab(t, f, "GHOSTFOLIO_SECURITY_TOKEN="+ghostfoliotest.Token+"\n")
+	ctx := context.Background()
+	f.Quotes = map[string]float64{"GLBX": 48.12, "..": 1}
+	for _, s := range []ghostfolio.Symbol{{Symbol: "GLBX", DataSource: ".."}, {Symbol: "GLBX", DataSource: "."}, {Symbol: "..", DataSource: "YAHOO"}, {Symbol: "GLBX"}} {
+		if p, err := ghostfolio.FollowInto(ctx, root, s); err == nil {
+			t.Errorf("followed %+v: %+v", s, p.Watch)
+		}
+	}
+	day := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	for _, src := range []string{"..", "."} {
+		_ = ghostfolio.AddInvestment(ctx, root, ghostfolio.Add{Account: "brk", Symbol: "VTI", DataSource: src, Currency: "USD", Shares: 1, Total: 90, Date: day})
+	}
+	if len(f.Gathered) != 0 {
+		t.Errorf("asked Ghostfolio to gather %v", f.Gathered)
+	}
+	// A real one still is.
+	if _, err := ghostfolio.FollowInto(ctx, root, ghostfolio.Symbol{Symbol: "GLBX", DataSource: "YAHOO"}); err != nil {
+		t.Errorf("a real ticker: %v", err)
+	}
+}
