@@ -117,6 +117,11 @@ func TestAMembersFinancesAreTheirOwn(t *testing.T) {
 	if info, err := os.Stat(filepath.Join(want, "data")); err != nil || !info.IsDir() || (runtime.GOOS != "windows" && info.Mode().Perm() != 0o700) {
 		t.Errorf("their folder: %v %v", info, err)
 	}
+	// N53: a person whose username was edited into a path gets no folder at all.
+	bad := memberHomelab(t, []people.Person{{Username: "../../elsewhere", Name: "Elsewhere", Apps: []string{"immich"}}})
+	if froot, err := bad.financeRoot(companion.WithCaller(context.Background(), companion.Device{Person: "../../elsewhere", Finances: companion.FinancesEdit})); err == nil {
+		t.Errorf("a username edited into a path got a folder: %s", froot)
+	}
 	owner := companion.WithCaller(context.Background(), companion.Device{})
 	if froot, _ := h.financeRoot(owner); froot != h.root {
 		t.Errorf("owner's root %s", froot)

@@ -56,6 +56,12 @@ func TestPersonAddAndRemove(t *testing.T) {
 	if out, code := homelabCmd(t, root, "", "person", "add", "Anna Jones", "--apply"); code == 0 || !strings.Contains(out, "already") {
 		t.Errorf("the same username twice (exit %d):\n%s", code, out)
 	}
+	// N53: a typed username names the person's own folder and nothing else.
+	for _, u := range []string{"../../elsewhere", "a/b", ".hidden", "Anna"} {
+		if out, code := homelabCmd(t, root, "", "person", "add", "Bo Lee", "--username", u, "--apply"); code == 0 || !strings.Contains(out, "is not a username") {
+			t.Errorf("--username %q was taken (exit %d):\n%s", u, code, out)
+		}
+	}
 	if out, _ := homelabCmd(t, root, "", "person"); !strings.Contains(out, "anna@example.com") {
 		t.Errorf("list:\n%s", out)
 	}

@@ -90,6 +90,9 @@ func (h *homelab) personCmd(ctx context.Context, args []string) error {
 		if user == "" {
 			return fmt.Errorf("give a name, such as \"Anna Smith\"")
 		}
+		if !people.Valid(user) {
+			return fmt.Errorf("%q is not a username: use small letters and digits, with . - or _ between them, such as anna or anna.smith", user)
+		}
 		if _, ok := people.Find(list, user); ok {
 			return fmt.Errorf("%s is in the household already (homelab person welcome %s makes a new sign-in link)", user, user)
 		}

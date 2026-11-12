@@ -100,6 +100,18 @@ func Find(list []Person, who string) (int, bool) {
 
 var notUsername = regexp.MustCompile(`[^a-z0-9._-]+`)
 
+// usernameShape is a username as Username makes them: letters, digits,
+// dots, dashes and underscores, starting and ending with a letter or a
+// digit, at most 64.
+var usernameShape = regexp.MustCompile(`^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$`)
+
+// Valid reports whether a username is one Username could have made, so a
+// typed one can't name a folder outside a member's own (N53): no slash,
+// no "..", nothing hidden.
+func Valid(username string) bool {
+	return usernameShape.MatchString(username) && !strings.Contains(username, "..")
+}
+
 // plain turns common accented letters into their plain ones, for usernames.
 var plain = strings.NewReplacer("à", "a", "á", "a", "â", "a", "ä", "a", "å", "a", "ã", "a", "æ", "ae", "ç", "c", "è", "e", "é", "e", "ê", "e", "ë", "e",
 	"ì", "i", "í", "i", "î", "i", "ï", "i", "ñ", "n", "ò", "o", "ó", "o", "ô", "o", "ö", "o", "ø", "o", "õ", "o", "ß", "ss", "ù", "u", "ú", "u", "û", "u", "ü", "u", "ý", "y", "ÿ", "y")

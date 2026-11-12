@@ -187,3 +187,18 @@ func TestSheetEdges(t *testing.T) {
 type failWriter struct{}
 
 func (failWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }
+
+// N53: a username typed for a person names their own folder and nothing
+// else; every one Username makes is valid.
+func TestValidUsernames(t *testing.T) {
+	for _, u := range []string{"anna", "anna.smith", "a", "bo-2", "x_y", Username("Ánna Smith"), Username("Jean-Luc Picard")} {
+		if !Valid(u) {
+			t.Errorf("%q is a username", u)
+		}
+	}
+	for _, u := range []string{"", "..", "../../elsewhere", "a/b", "/etc", ".hidden", "anna.", "-x", "a..b", "Anna", "a b", strings.Repeat("a", 65)} {
+		if Valid(u) {
+			t.Errorf("%q was taken for a username", u)
+		}
+	}
+}

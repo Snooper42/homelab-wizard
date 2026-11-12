@@ -77,6 +77,9 @@ func (h *homelab) financeRoot(ctx context.Context) (string, error) {
 	if err != nil || !isMember {
 		return h.root, err
 	}
+	if !people.Valid(p.Username) {
+		return "", fmt.Errorf("%q is not a username the homelab makes: fix it in Settings › People", p.Username)
+	}
 	dir := memberRoot(h.root, p.Username)
 	if err := os.MkdirAll(filepath.Join(dir, "data"), 0o700); err != nil {
 		return "", err
