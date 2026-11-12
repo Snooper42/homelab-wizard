@@ -230,6 +230,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Kopia's password stays out of the process list:** Kopia's server now reads its password from its settings instead of its command line, which any account on a Linux computer could see.
 - **Get the real logo asks only real websites:** Finances' logo lookup now also refuses the addresses the homelab's own networks use, and other ranges that are never a company's website, even when a site sends it there.
 - **A device at home can't pick the address Home Assistant sees:** Home Assistant now trusts only the proxy and Tailscale to say who a visitor is, so each password guess at its own port counts against the guesser. The homelab updates the starter `configuration.yaml` for you before Home Assistant next starts; anything you added there yourself stays. Home Assistant now finds Frigate, but no other app, by name inside Docker: for another app, use its https address.
 - **Finances: category names no longer break mid-word** ("Utilitie / s") on Where it goes and Spent this month when the window is a medium width: a narrow card puts its ring above the names.

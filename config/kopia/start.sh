@@ -43,6 +43,9 @@ fi
 for source in /source/appdata /source/homelab-appdata /source/stacks /source/immich /source/jellyfin /source/calibre /staging/databases /staging/secrets; do
   [ -d "$source" ] && kopia policy set "$source" --snapshot-time=03:45 --compression=zstd >/dev/null
 done
+# The server's password is read from KOPIA_SERVER_PASSWORD in the
+# environment, never put on the command line: on Linux every account on the
+# computer sees a container's command lines in ps (N48).
 exec kopia server start --insecure --address=0.0.0.0:51515 \
-  --server-username=admin --server-password="$KOPIA_SERVER_PASSWORD" \
+  --server-username=admin \
   --disable-csrf-token-checks
