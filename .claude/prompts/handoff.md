@@ -69,7 +69,9 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 | #609 | The owner's screenshots (Nov 12): a ring card measures itself (`.fx-widget:has(.fx-donutrow)`), so category names don't break mid-word; Setup's count says *· 1 can wait* |
 
-**In flight:** the iPhone's Backups as the owner picked it (section 4), on branch `claude/focused-gates-d35kz0`. *Done:* merged green, with CI's iPhone screenshot of Backups. Then its Settings (the everyday ones first: `firstSettings`, `SettingRow` shared with the form; *The Homelab*, *This iPhone*, *Everything Else*), then gap 6 (2A step 3). Tidy Up L4 (`tidy-loop.md`, **The look**) after 2A.
+| #610 | **The iPhone's Backups as the owner picked it:** the card, three tiles (`tiles(now:)`), Needs a Look, the fresh folded to logos, More one tap down |
+
+**In flight:** the iPhone's Settings as the owner picked it: *The Homelab* (the everyday ones, `firstSettings`, in plain words), *This iPhone* (the lock, the widget, Alerts From), *Everything Else* (all settings by section, Get help, About); `SettingRow` shared with the form. On branch `claude/focused-gates-d35kz0`. *Done:* merged green. Then gap 6 (2A step 3: Settings on the phone's page). Tidy Up L4 (`tidy-loop.md`, **The look**) after 2A.
 
 **Mockups of the gaps (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page). The owner asked that mocks match the iPhone app more closely (section 6).
 

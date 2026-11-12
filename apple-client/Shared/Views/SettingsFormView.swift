@@ -105,7 +105,28 @@ struct SettingsFormView: View {
 
     @ViewBuilder
     private func row(_ setting: HomelabSetting, in form: HomelabSettingsForm) -> some View {
-        let label = SettingWords.label(setting.key, apps: apps)
+        SettingRow(computer: computer, setting: setting, form: form, label: SettingWords.label(setting.key, apps: apps), about: $about)
+    }
+
+    /// A value as its row shows it: "Set" or "Not set" for a secret, "None" when empty.
+    nonisolated static func shownValue(_ setting: HomelabSetting) -> String {
+        if setting.secret { return setting.set ? "Set" : "Not set" }
+        let value = setting.value.trimmingCharacters(in: .whitespaces)
+        return value.isEmpty ? "None" : value
+    }
+}
+
+/// One setting's row, as iPhone Settings has them: a switch flipped in
+/// place (its ⓘ opens what it does), or its value, opening its own page.
+/// On the form, and atop the iPhone's Settings for the everyday ones.
+struct SettingRow: View {
+    let computer: ComputerViewModel
+    let setting: HomelabSetting
+    let form: HomelabSettingsForm
+    let label: String
+    @Binding var about: String?
+
+    var body: some View {
         let editable = computer.canChange && form.phoneMayChange(setting)
         if setting.isToggle {
             // A switch, flipped in place, as iPhone Settings has them; its ⓘ opens what it does.
@@ -135,7 +156,7 @@ struct SettingsFormView: View {
             } label: {
                 LabeledContent {
                     HStack(spacing: 6) {
-                        Text(verbatim: Self.shownValue(setting))
+                        Text(verbatim: SettingsFormView.shownValue(setting))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -152,19 +173,12 @@ struct SettingsFormView: View {
             }
         }
     }
-
-    /// A value as its row shows it: "Set" or "Not set" for a secret, "None" when empty.
-    nonisolated static func shownValue(_ setting: HomelabSetting) -> String {
-        if setting.secret { return setting.set ? "Set" : "Not set" }
-        let value = setting.value.trimmingCharacters(in: .whitespaces)
-        return value.isEmpty ? "None" : value
-    }
 }
 
 /// One setting on a page of its own, as iPhone Settings opens one: the
 /// field to change it, then what it does, its key, and why it can't be
 /// changed here when it can't.
-private struct SettingDetailView: View {
+struct SettingDetailView: View {
     let computer: ComputerViewModel
     let key: String
     let label: String
