@@ -102,7 +102,8 @@ services:
       - ./recovery-staging:/staging
       - ${KOPIA_REPOSITORY:-./backups-kopia}:/repository
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -o /dev/null -u admin:$$KOPIA_SERVER_PASSWORD http://localhost:51515/api/v1/repo/status"]
+      # Its page, signed in: the API wants the page's session (N49).
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null -u admin:$$KOPIA_SERVER_PASSWORD http://localhost:51515/"]
       interval: 60s
       timeout: 10s
       retries: 3

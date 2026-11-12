@@ -46,6 +46,8 @@ done
 # The server's password is read from KOPIA_SERVER_PASSWORD in the
 # environment, never put on the command line: on Linux every account on the
 # computer sees a container's command lines in ps (N48).
+# Its page and API check each call against the page's session (N49): a web
+# page elsewhere can't post to Kopia with the password a browser keeps. The
+# homelab signs in as the page does (internal/kopia).
 exec kopia server start --insecure --address=0.0.0.0:51515 \
-  --server-username=admin \
-  --disable-csrf-token-checks
+  --server-username=admin

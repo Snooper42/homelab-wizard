@@ -13,7 +13,9 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -22,10 +24,22 @@ import (
 const Owner, Host = "homelab", "homelab"
 
 // Client is a signed-in Kopia server.
+//
+// Kopia's page and its API check each call against a session (N49, item
+// 112): the page carries a token (`<meta name="kopia-csrf-token">`) made
+// for its session cookie, and every call to the API sends both, so a web
+// page elsewhere can't post to Kopia with the household's password their
+// browser keeps. The client signs in as the page does: it reads `/` once,
+// keeps the cookie and the token, and reads them again when Kopia, started
+// again since, no longer knows them.
 type Client struct {
 	Base     string // http://127.0.0.1:51515
 	Password string // KOPIA_SERVER_PASSWORD
 	HTTP     *http.Client
+
+	mu      sync.Mutex
+	session string // Kopia-Session-Cookie
+	token   string // its X-Kopia-Csrf-Token
 }
 
 // New is a client for the server at base.
@@ -33,38 +47,138 @@ func New(base, password string) *Client {
 	return &Client{Base: strings.TrimRight(base, "/"), Password: password, HTTP: &http.Client{Timeout: 30 * time.Second}}
 }
 
-func (c *Client) do(ctx context.Context, method, p string, body, out any) error {
-	var r io.Reader
-	if body != nil {
-		data, err := json.Marshal(body)
-		if err != nil {
-			return err
-		}
-		r = bytes.NewReader(data)
-	}
-	req, err := http.NewRequestWithContext(ctx, method, c.Base+"/api/v1/"+p, r)
+// The names Kopia gives its session and token (internal/server, apiclient).
+const (
+	SessionCookie = "Kopia-Session-Cookie"
+	TokenHeader   = "X-Kopia-Csrf-Token"
+)
+
+var tokenMeta = regexp.MustCompile(`<meta name="kopia-csrf-token" content="([0-9a-f]+)"`)
+
+var errPassword = errors.New("Kopia refused KOPIA_SERVER_PASSWORD")
+
+// signIn reads Kopia's page for a session and its token. A page with no
+// token (a Kopia that checks none) leaves the calls without one.
+func (c *Client) signIn(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Base+"/", nil)
 	if err != nil {
 		return err
 	}
 	req.SetBasicAuth("admin", c.Password)
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return fmt.Errorf("Kopia does not answer: %w", err)
 	}
 	defer resp.Body.Close()
-	data, _ := io.ReadAll(resp.Body)
-	switch {
-	case resp.StatusCode == http.StatusUnauthorized:
-		return errors.New("Kopia refused KOPIA_SERVER_PASSWORD")
-	case resp.StatusCode >= 300:
-		return fmt.Errorf("Kopia: %s %s", resp.Status, strings.TrimSpace(string(data)))
-	case out != nil:
-		return json.Unmarshal(data, out)
+	page, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if resp.StatusCode == http.StatusUnauthorized {
+		return errPassword
 	}
+	session, token := "", ""
+	for _, ck := range resp.Cookies() {
+		if ck.Name == SessionCookie {
+			session = ck.Value
+		}
+	}
+	if m := tokenMeta.FindSubmatch(page); m != nil {
+		token = string(m[1])
+	}
+	c.mu.Lock()
+	c.session, c.token = session, token
+	c.mu.Unlock()
 	return nil
+}
+
+// send makes one call to the API with the session, and answers its status and body.
+func (c *Client) send(ctx context.Context, method, p string, data []byte) (int, string, []byte, error) {
+	var r io.Reader
+	if data != nil {
+		r = bytes.NewReader(data)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, c.Base+"/api/v1/"+p, r)
+	if err != nil {
+		return 0, "", nil, err
+	}
+	req.SetBasicAuth("admin", c.Password)
+	if data != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	c.mu.Lock()
+	session, token := c.session, c.token
+	c.mu.Unlock()
+	if session != "" {
+		req.AddCookie(&http.Cookie{Name: SessionCookie, Value: session})
+	}
+	if token != "" {
+		req.Header.Set(TokenHeader, token)
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return 0, "", nil, fmt.Errorf("Kopia does not answer: %w", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	return resp.StatusCode, resp.Status, body, nil
+}
+
+// Get is a call's answer as it came: a file's contents for objects/<id>.
+func (c *Client) Get(ctx context.Context, p string) ([]byte, error) {
+	return c.call(ctx, http.MethodGet, p, nil)
+}
+
+// Call makes a call to Kopia's API (p after /api/v1/), with body as JSON,
+// and reads its JSON answer into out.
+func (c *Client) Call(ctx context.Context, method, p string, body, out any) error {
+	return c.do(ctx, method, p, body, out)
+}
+
+func (c *Client) do(ctx context.Context, method, p string, body, out any) error {
+	var data []byte
+	if body != nil {
+		var err error
+		if data, err = json.Marshal(body); err != nil {
+			return err
+		}
+	}
+	answer, err := c.call(ctx, method, p, data)
+	if err != nil || out == nil {
+		return err
+	}
+	return json.Unmarshal(answer, out)
+}
+
+// call signs in first if it hasn't, and once again when Kopia turns the
+// session down (started again since, it knows it no more).
+func (c *Client) call(ctx context.Context, method, p string, data []byte) ([]byte, error) {
+	c.mu.Lock()
+	fresh := c.session == "" && c.token == ""
+	c.mu.Unlock()
+	if fresh {
+		if err := c.signIn(ctx); err != nil {
+			return nil, err
+		}
+	}
+	code, status, answer, err := c.send(ctx, method, p, data)
+	if err != nil {
+		return nil, err
+	}
+	if code == http.StatusUnauthorized && strings.Contains(string(answer), "CSRF") && !fresh {
+		if err := c.signIn(ctx); err != nil {
+			return nil, err
+		}
+		if code, status, answer, err = c.send(ctx, method, p, data); err != nil {
+			return nil, err
+		}
+	}
+	switch {
+	case code == http.StatusUnauthorized && strings.Contains(string(answer), "CSRF"):
+		return nil, fmt.Errorf("Kopia turned down its own session: %s", strings.TrimSpace(string(answer)))
+	case code == http.StatusUnauthorized:
+		return nil, errPassword
+	case code >= 300:
+		return nil, fmt.Errorf("Kopia: %s %s", status, strings.TrimSpace(string(answer)))
+	}
+	return answer, nil
 }
 
 // Snapshot is one snapshot of a folder.
