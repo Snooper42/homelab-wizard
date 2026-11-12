@@ -622,9 +622,25 @@ private struct SplitDashboard: View {
                 appList
             }
         } detail: {
-            if let app = model.app(id: model.selectedAppID) {
-                AppDetailView(app: app)
-                    .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
+            if showsAppList, model.showsAlertLog {
+                // Every Alert, from Status's Recent Alerts card in the list.
+                NavigationStack {
+                    AlertLogView()
+                }
+            } else if let app = model.app(id: model.selectedAppID) {
+                // Beside Status's list, the page has a stack of its own, so
+                // More About and Everything That Was Done open in it (a split
+                // view's last column has none); another app starts at its page.
+                // Beside another screen (Finances), that screen's links open here.
+                Group {
+                    if showsAppList {
+                        NavigationStack { AppDetailView(app: app) }
+                            .id(app.id)
+                    } else {
+                        AppDetailView(app: app)
+                    }
+                }
+                .focusedSceneValue(\.selectedApp, SelectedAppFocus(app: app, actions: actions, showLogs: { model.logsApp = app }))
             } else {
                 ContentUnavailableView(
                     "No App Selected",
@@ -672,6 +688,16 @@ private struct SplitDashboard: View {
         }
     }
 
+    /// Whether the list beside the detail is Status's apps (the content
+    /// column's default: Status, or a place kept that this device lacks).
+    private var showsAppList: Bool {
+        switch model.sidebar {
+        case .backups?, .setup?: isMember
+        case .finances?, .settings?: false
+        default: true
+        }
+    }
+
     private func badge(for screen: Screen) -> Int {
         switch screen {
         case .status: model.attentionCount
@@ -712,9 +738,11 @@ private struct SplitDashboard: View {
             }
             // The cards, below the apps as on the computer's Status.
             if filter == .all, !model.isSearching, model.hasLoaded {
-                // Not rows to select: the selection is an app.
+                // Not rows to select: the selection is an app. Every Alert
+                // opens beside the list, in the app's place.
                 StatusCards(cards: model.cards, finances: finances)
                     .selectionDisabled()
+                    .environment(\.openAlertLog, { model.openAlertLog() })
             }
         }
         // Again once the device's level is known: right after unlock it may not be yet.

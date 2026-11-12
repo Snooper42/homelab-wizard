@@ -57,7 +57,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Protection (what CrowdSec stopped today) | yes | yes | yes | yes | — | `Protection` |
 | Savings, and what the apps have saved month by month | yes | yes | yes | yes | — | `SavingsHistory` |
 | Recent alerts | yes | yes | yes | yes | — | `Alerts` |
-| **Every alert…**: the 90 days the computer kept | yes | yes | yes | yes, if the link opens from the split view's list (to check on an iPad) | — | `AlertLog` |
+| **Every alert…**: the 90 days the computer kept | yes | yes | yes | yes: **Every Alert** on Recent Alerts opens beside the list, in the app's place | — | `AlertLog` |
 | **Snooze…** on an open alert of Every alert | gap | gap | gap | gap | — | |
 | Storage card (the disk and each app's share) | yes | on purpose for now: not a phone card | on purpose for now | on purpose for now | — | |
 | Memory and processor per app | yes | gap: `Usage` isn't a phone call | gap | gap | — | |
@@ -81,7 +81,7 @@ What a phone may do also depends on how it was paired, on every phone (the phone
 | Dozzle's live logs | yes | on purpose: kept to the computer (docs/Security.md, L1) | on purpose | on purpose | — | |
 | Its settings: nightly updates (and Only on Sundays), alerts, pin | yes | yes (allowed changes) | yes, Face ID | yes | — | `SetAppSetting` |
 | **Reach it away from home** (a public app) | yes | yes (allowed changes) | yes, Face ID | yes | — | `SetAppSetting` |
-| **Recently done**, and **Everything that was done** (90 days) | yes | yes | yes, on More About | gap to check: More About opens from the split view's detail column, which has no navigation stack of its own, and the README says *Not yet* | as the iPad | `History` |
+| **Recently done**, and **Everything that was done** (90 days) | yes | yes | yes, on More About | yes, on More About: an app's page beside Status's list has a navigation stack of its own | as the iPad | `History` |
 | Its own menu and shortcuts (⌥⌘S, R, ., L) | yes | on purpose: no keyboard | on purpose | yes | yes | |
 
 ## Backups
@@ -194,9 +194,9 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 The cells marked *gap*, gathered, each with what closing it takes (S a few hours, M a day or two, L more):
 
 1. ~~**iPad and Mac app: links into the app** (and with them, buttons on alerts).~~ **Closed (#604):** the split view reads `IntentInbox` as the iPhone's tabs do, through the same `IntentInbox.outcome` and `landing`.
-2. **iPad and Mac app: What was done.** Check More About on an iPad; if it doesn't open, give the detail column a navigation stack. S.
+2. ~~**iPad and Mac app: What was done.**~~ **Closed (#606):** an app's page beside Status's list has its own navigation stack, so More About, Recently Done and Everything That Was Done open in it.
 3. **Every alert: Snooze… on an open alert**, everywhere, for one whose check still fails. S to M.
-4. **iPad and Mac app: Every alert from the split view's list.** Check it opens; fix as item 2 if it doesn't. S.
+4. ~~**iPad and Mac app: Every alert from the split view's list.**~~ **Closed (#606):** **Every Alert** opens in the detail column, in the app's place (`DashboardViewModel.openAlertLog`), until an app or another screen is picked.
 5. **iPhone Finances: Select together, a running balance, Change or Delete a buy, Export, import and Rules, add a payment or a goal.** Each its own piece; import and Rules are the largest. M each, L for import.
 6. **The phone's page: Settings and Setup's facts**, which the iPhone app already has (`Settings`, `SaveSettings`, `Host` are phone calls). M.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.

@@ -115,10 +115,24 @@ final class DashboardViewModel {
         }
     }
 
-    /// The selection in the sidebar (Mac and iPad).
-    var sidebar: SidebarItem? = .status(.all)
-    /// The selected app (Mac and iPad). Stored by id, so the detail follows live updates.
-    var selectedAppID: AppStatus.ID?
+    /// The selection in the sidebar (Mac and iPad). Another screen closes Every Alert.
+    var sidebar: SidebarItem? = .status(.all) {
+        didSet { if sidebar != oldValue { showsAlertLog = false } }
+    }
+    /// The selected app (Mac and iPad). Stored by id, so the detail follows
+    /// live updates. Picking one closes Every Alert.
+    var selectedAppID: AppStatus.ID? {
+        didSet { if selectedAppID != nil { showsAlertLog = false } }
+    }
+    /// Every Alert in the detail column (Mac and iPad), opened from Status's
+    /// Recent Alerts card in the list beside it.
+    private(set) var showsAlertLog = false
+
+    /// Every Alert beside the list, in the app's place (Mac and iPad).
+    func openAlertLog() {
+        selectedAppID = nil
+        showsAlertLog = true
+    }
     /// The app whose log is open in a sheet.
     var logsApp: AppStatus?
     /// What's typed in the app list's search field. It goes with the

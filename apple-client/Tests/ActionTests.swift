@@ -276,6 +276,32 @@ struct PinnedTests {
 
 @Suite("The sidebar's place")
 struct SidebarPlaceTests {
+    /// Every Alert beside the list on the Mac and iPad (#596's gap 4): it
+    /// takes the app's place, and picking an app or another screen closes it.
+    @Test @MainActor func everyAlertTakesTheAppsPlaceUntilAnotherIsPicked() {
+        let live = LiveEventManager(api: APIClient(keychain: FakeCredentialStore(), protocolClasses: [StubProtocol.self]))
+        let model = DashboardViewModel(api: APIClient(keychain: FakeCredentialStore()), liveEvents: live)
+        model.selectedAppID = "radarr"
+        #expect(!model.showsAlertLog)
+
+        model.openAlertLog()
+        #expect(model.showsAlertLog && model.selectedAppID == nil)
+        // An app picked in the list: its page again.
+        model.selectedAppID = "immich"
+        #expect(!model.showsAlertLog)
+
+        model.openAlertLog()
+        // Another Status filter, or another screen: closed.
+        model.sidebar = .status(.attention)
+        #expect(!model.showsAlertLog)
+        model.openAlertLog()
+        model.sidebar = .status(.attention)
+        // The same row picked again leaves it open.
+        #expect(model.showsAlertLog)
+        model.sidebar = .finances
+        #expect(!model.showsAlertLog)
+    }
+
     @Test func roundTrips() {
         let all: [DashboardViewModel.SidebarItem] = [.backups, .finances, .setup, .settings] + DashboardViewModel.Filter.allCases.map { .status($0) }
         for item in all {
