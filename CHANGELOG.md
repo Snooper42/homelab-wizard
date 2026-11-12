@@ -235,6 +235,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A username is a username:** `homelab person add --username` takes small letters, digits and `. - _` only, so a person's own folder is always theirs.
 - **A phone changes only everyday settings:** a phone allowed to make changes can change the computer's clock, quiet hours, alerts, update times and Tidy Up's choices, but no longer an app's folders, image, version or sign-in, which change on the computer.
 - **The Mac app's updates are checked as Windows' and Linux's are:** before the app on a Mac takes an update, it checks the download was built by this project's own release workflow, as on the other systems.
 - **Tailscale's sign-in opens only a web page:** the link Tailscale gives for signing in is opened only when it is an https address, never a file or a program.

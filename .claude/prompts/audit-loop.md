@@ -352,6 +352,11 @@ behaviour, and the screenshots retaken where they changed.
 
 115. (done: holds, Nov 12, round 10) **Homepage's config from names typed** (internal/homepage): every value is written as a JSON string, which YAML reads as one double-quoted scalar, so a name with a line break can't add a key.
 
+116. (done: holds, Nov 12, round 11) **Every phone call that changes something, after N52**: `AppAction` and `StopUntil` take only the homelab's own container apps and fixed actions (the stop time goes as a flag's value), `Homelab` runs only backup, restore-test and fix, `SetStatusFolds` and `SnoozeCheck` are capped (N42), `SetAppSetting` is public apps only, and Finances' saves are data (Ghostfolio's address comes from `GHOSTFOLIO_PORT`, now the computer's).
+117. (done: holds, Nov 12, round 11) **Duplicati's passphrases**: jobs are made through its API (JSON); `rebuild` hands the passphrase to `duplicati-cli` in the container's environment (`-e PASSPHRASE`), never as an argument.
+118. (done: holds, Nov 12, round 11) **The companion's server against a slow client**: `ReadHeaderTimeout` 10 s, every body capped before it is read (`MaxCall`, `MaxTunnel`, pairing 4 KB); no write timeout, for the event stream.
+119. (done: N53, Nov 12, round 11) **A member's folder from their username** (cmd/homelab member.go `memberRoot`).
+
 ## The security team
 
 You audit every way into the homelab's own code: what can reach it, what
@@ -787,6 +792,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **N53 (Nov 12, round 11):** a username typed with `--username` was taken as typed and named a member's folder (`data/members/<username>`): `../../elsewhere` led outside. Now it must be one `people.Username` could make, where it is typed and where the folder is made. Items 116 to 118 hold. Next: what the other account merges, read as it lands, and ten new items.
 
 - **N52 (Nov 12, round 10):** a phone allowed changes could save any setting but secrets and the ones it connects through: an app's image or version, open sign-ups, where the household signs in, what the away tunnel checks, which Docker, the folders mounted into apps and their owner. Now a list of everyday settings only (`phoneEveryday`). Found reading #614 (Settings on the phone's page), whose own change was the page; the calls were older. Items 114 and 115 hold. Next: ten new items.
 
