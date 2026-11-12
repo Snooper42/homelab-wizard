@@ -475,7 +475,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const notOn = n(lyr?.not_found) ? ` · ${count(n(lyr!.not_found), 'song')} not on LRCLIB yet` : '';
     // Setting lyrics right is done on this computer (--tidy): it never waits for LRCLIB, which thousands of songs would.
     if (lyr && apart > 0) out.push({ kind: 'lyrics', title: `${count(apart, 'song')} show two languages on one line`, sub: 'Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes', go: { label: 'Tidy lyrics', run: () => act.run('music', 'lyrics', ['--tidy']) } });
-    if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
+    if (lyr && none > 0) out.push({ kind: 'lyrics', title: `${count(none, 'song')} could get lyrics`, sub: `Synced from LRCLIB, so they scroll along in Navidrome${notOn}`, go: { label: 'Add lyrics', run: () => act.run('music', 'lyrics') } });
     // A check from before Tidy Up counted those: one more, which changes nothing, finds them.
     // Never checked: say so on Overview too (it was on the Music tab only, so lyrics seemed to have no option at all).
     if (!lyr) out.push({ kind: 'lyrics', title: 'See how many songs have lyrics', sub: 'Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones', go: { label: 'Check lyrics', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
@@ -512,7 +512,7 @@ export function todosFor(l: app.TidyLibrary, d: app.TidyUp, act: TidyActions, re
     const away = !!looked && !looked.ok && /answering|reach/i.test(looked.why || '');
     if (withTdarr) out.push({ kind: k, title: `Tdarr is shrinking ${things(k, withTdarr)}`, warn: away,
       sub: away ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)"
-        : 'One at a time, on this computer\'s processor: a big library takes days. Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect',
+        : 'Swapped in one by one as each is ready; a big library takes days',
       go: { label: 'Collect', run: () => act.run(k, 'collect'), quiet: true } });
   } else if (k === 'books') {
     const rv = last(l, 'review');
@@ -1116,8 +1116,9 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
     // nothing to tidy or add left no lyrics option anywhere.
     const lr = last(l, 'lyrics'), ly = lr?.result;
     if (lr && ly) {
+      // Said short, to fit one line (L5): "songs" once, then the counts.
       const parts = [['synced', 'time-synced'], ['plain', 'plain'], ['none', 'without lyrics'], ['not_found', 'not on LRCLIB yet']]
-        .filter(([key]) => n(ly[key]) > 0).map(([key, words]) => `${count(n(ly[key]), 'song')} ${words}`);
+        .filter(([key]) => n(ly[key]) > 0).map(([key, words], i) => `${i ? n(ly[key]).toLocaleString() : count(n(ly[key]), 'song')} ${words}`);
       const found = n(ly.to_clean) ? `${count(n(ly.to_clean), 'song')} with two languages on one line` : 'none with two languages on one line';
       extra.push({ kind: 'lyrics', title: 'Lyrics', sub: `${parts.join(' · ') || 'No songs read yet'} · ${found} · checked ${ago(lr.at)}`,
         go: { label: 'Check again', run: () => act.run('music', 'lyrics', ['--check']), quiet: true } });
@@ -1132,7 +1133,7 @@ function LibraryTab({ kind, d, job, act, review, reviewError, reloadReview, skip
   }
   // Until the download apps are handed over (that leaves a line in what was done), it's offered here.
   if ((kind === 'movies' || kind === 'tv') && l.found && !d.activity.some((a) => a.kind === 'arr')) {
-    extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Tidy Up file what Sonarr downloads' : 'Let Tidy Up file what Radarr downloads', sub: 'They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Tidy Up file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });
+    extra.push({ kind: 'inbox', title: kind === 'tv' ? 'Let Tidy Up file what Sonarr downloads' : 'Let Tidy Up file what Radarr downloads', sub: 'They find and download; Tidy Up renames and files', go: { label: 'Hand over…', quiet: true, run: () => act.ask({ title: 'Let Tidy Up file the downloads?', action: 'Hand over', lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run('arr', 'apply') }) } });
   }
   // The tools this library needs and hasn't got (Calibre's for books, ffmpeg for films and TV), as one row.
   const tools = l.found ? toolsRow(d, act, (needs) => needs === 'all' || (toolFor[needs] || []).includes(kind)) : [];

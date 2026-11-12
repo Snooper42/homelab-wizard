@@ -17191,7 +17191,7 @@ ${pays}
       const none2 = n2(lyr?.none), apart = n2(lyr?.to_clean);
       const notOn = n2(lyr?.not_found) ? ` · ${count(n2(lyr.not_found), "song")} not on LRCLIB yet` : "";
       if (lyr && apart > 0) out.push({ kind: "lyrics", title: `${count(apart, "song")} show two languages on one line`, sub: "Each translation goes on a line of its own under its original, so both scroll along in Navidrome. Done on this computer, in minutes", go: { label: "Tidy lyrics", run: () => act.run("music", "lyrics", ["--tidy"]) } });
-      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB where it has them, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
+      if (lyr && none2 > 0) out.push({ kind: "lyrics", title: `${count(none2, "song")} could get lyrics`, sub: `Synced from LRCLIB, so they scroll along in Navidrome${notOn}`, go: { label: "Add lyrics", run: () => act.run("music", "lyrics") } });
       if (!lyr) out.push({ kind: "lyrics", title: "See how many songs have lyrics", sub: "Reads every song; changes nothing. Then Tidy Up offers to tidy them or add the missing ones", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
       if (lyr && lyr.to_clean === void 0 && none2 === 0) out.push({ kind: "lyrics", title: "Look over the lyrics again", sub: "Finds songs that show two languages on one line; changes nothing", go: { label: "Check lyrics", run: () => act.run("music", "lyrics", ["--check"]), quiet: true } });
     } else if (k3 === "movies" || k3 === "tv") {
@@ -17235,7 +17235,7 @@ ${pays}
         kind: k3,
         title: `Tdarr is shrinking ${things(k3, withTdarr)}`,
         warn: away2,
-        sub: away2 ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)" : "One at a time, on this computer's processor: a big library takes days. Each smaller copy is swapped in once it is ready: Tidy Up looks every few minutes, or now with Collect",
+        sub: away2 ? "Tdarr isn't answering, so nothing is shrinking: it's paused on battery until this computer is plugged in, or stopped (start it from Status)" : "Swapped in one by one as each is ready; a big library takes days",
         go: { label: "Collect", run: () => act.run(k3, "collect"), quiet: true }
       });
     } else if (k3 === "books") {
@@ -17840,7 +17840,7 @@ ${pays}
       if (!last(l3, "playlists")?.ok) extra.push({ kind: "music", title: "A smart playlist for each of your genres", sub: "Navidrome fills them by itself as music is added", go: { label: "Make playlists", run: () => act.run("music", "playlists"), quiet: true } });
       const lr = last(l3, "lyrics"), ly = lr?.result;
       if (lr && ly) {
-        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key5]) => n2(ly[key5]) > 0).map(([key5, words5]) => `${count(n2(ly[key5]), "song")} ${words5}`);
+        const parts3 = [["synced", "time-synced"], ["plain", "plain"], ["none", "without lyrics"], ["not_found", "not on LRCLIB yet"]].filter(([key5]) => n2(ly[key5]) > 0).map(([key5, words5], i3) => `${i3 ? n2(ly[key5]).toLocaleString() : count(n2(ly[key5]), "song")} ${words5}`);
         const found2 = n2(ly.to_clean) ? `${count(n2(ly.to_clean), "song")} with two languages on one line` : "none with two languages on one line";
         extra.push({
           kind: "lyrics",
@@ -17857,7 +17857,7 @@ ${pays}
       extra.push({ kind: "tv", title: `${count(gaps, "episode")} ${gaps === 1 ? "is" : "are"} missing from ${count(new Set(list.map((g2) => g2.show)).size, "show")}`, sub: where + (list.length > 3 ? ` · and ${count(list.length - 3, "season")} more` : "") });
     }
     if ((kind === "movies" || kind === "tv") && l3.found && !d3.activity.some((a3) => a3.kind === "arr")) {
-      extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They keep finding and downloading; Tidy Up renames and files, so the two never trip over each other", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
+      extra.push({ kind: "inbox", title: kind === "tv" ? "Let Tidy Up file what Sonarr downloads" : "Let Tidy Up file what Radarr downloads", sub: "They find and download; Tidy Up renames and files", go: { label: "Hand over…", quiet: true, run: () => act.ask({ title: "Let Tidy Up file the downloads?", action: "Hand over", lead: "Sonarr, Radarr, and Lidarr keep finding and downloading; they stop renaming files and stop moving finished downloads into the libraries. Tidy Up files them instead, so the two never rename each other's files.", go: () => act.run("arr", "apply") }) } });
     }
     const tools = l3.found ? toolsRow(d3, act, (needs) => needs === "all" || (toolFor[needs] || []).includes(kind)) : [];
     const rows = [...tools, ...todos, ...extra];
