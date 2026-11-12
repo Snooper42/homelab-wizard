@@ -12,6 +12,7 @@ import { Empty } from '../parts/Empty';
 import type { What } from './Edit';
 import { Calendar, showDay } from './Calendar';
 import { setOwnLogos } from './Mark';
+import { AccountPage } from './Account';
 import { setCategories } from './hues';
 import { type Running } from './homelab';
 import { Reports } from './Reports';
@@ -74,7 +75,8 @@ const tabs: [string, string][] = [['overview', 'Dashboard'], ['calendar', 'Calen
  */
 const groups: [string, string, string[]][] = [['overview', 'Dashboard', ['overview']], ['spending', 'Spending', ['transactions', 'reports']],
   ['plan', 'Plan', ['calendar', 'recurring', 'pay']], ['worth', 'Net worth', ['worth']]];
-const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(tab)) || groups[0];
+// An account's own page ("account:<id>") is under Net worth.
+const groupOf = (tab: string) => groups.find(([, , pages]) => pages.includes(tab.startsWith('account:') ? 'worth' : tab)) || groups[0];
 /** The page each tab was left on, so it opens there again (Plan on Paychecks); its first until one is. */
 const leftOn: Record<string, string> = {};
 const pageOf = (group: string) => leftOn[group] || groups.find(([k]) => k === group)![2][0];
@@ -153,7 +155,8 @@ function FinancesScreen({ v, ledger, error, retry, tab, setTab, sel, pick, setSi
           : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
           : tab === 'recurring' ? <Recurring v={v} L={L} edit={edit} keep={keep} running={running} fromWallos={fromWallos} />
           : tab === 'pay' ? <Pay v={v} L={L} edit={edit} saveSettings={saveSettings} keep={keep} calendar={calendar} />
-          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
+          : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} edit={() => edit('account', tab.slice(8))} update={() => edit('balances')} toTx={toTx} editTx={(w, id) => edit(w, id)} />
+          : tab === 'worth' ? <NetWorth v={v} L={L} edit={edit} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} update={() => edit('balances')} keep={keep} group={group} setGroup={setGroup} invest={investments} />
           : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} setSince={ro ? undefined : setSince} keep={ro ? undefined : keep} add={(w, k) => edit(w, undefined, k)} edit={(w, id) => edit(w, id)} openWorth={() => setTab('worth')} openSubscriptions={() => { openOn('subscriptions'); setTab('recurring'); }} openRecurring={(f?: string) => { if (f) openOn(f); setTab('recurring'); }} openTransactions={() => toTx({})} showIn={toTx} openCalendar={(day?: string) => { if (day) showDay(day); setTab('calendar'); }} phone={phone} />}
       </div>
     </>
@@ -167,7 +170,8 @@ function View({ v, L, phone, ledger, setTab, toTx, back, tab, sel, pick, openWor
     : tab === 'reports' ? <Reports v={v} ledger={ledger} exportFile={exportFile} open={toTx} />
     : tab === 'recurring' ? <Recurring v={v} L={L} running={running} />
     : tab === 'pay' ? <Pay v={v} L={L} />
-    : tab === 'worth' ? <NetWorth v={v} L={L} sel={Math.max(0, sel)} pick={pick} group={group} setGroup={setGroup} />
+    : tab.startsWith('account:') ? <AccountPage v={v} L={L} ledger={ledger} id={tab.slice(8)} done={() => setTab('worth')} toTx={toTx} />
+    : tab === 'worth' ? <NetWorth v={v} L={L} open={(id) => setTab('account:' + id)} sel={Math.max(0, sel)} pick={pick} group={group} setGroup={setGroup} />
     : <Overview v={v} L={L} ledger={ledger} sel={sel} pick={pick} openWorth={openWorth} openSubscriptions={openSubscriptions} openRecurring={openRecurring} openTransactions={openTransactions} showIn={showIn} openCalendar={openCalendar} phone={phone} />;
 }
 

@@ -3344,10 +3344,10 @@
   }
   function clearFilter() {
     setFilter({ text: "", on: false });
-    const back3 = before;
+    const back4 = before;
     before = null;
     requestAnimationFrame(() => {
-      if (back3?.isConnected && back3.checkVisibility()) back3.focus();
+      if (back4?.isConnected && back4.checkVisibility()) back4.focus();
       else document.getElementById("statusAll")?.focus();
     });
   }
@@ -6817,15 +6817,15 @@
     const parts3 = [];
     const updated = n3.apps.filter((a3) => within(a3.updatedAt));
     if (updated.length) parts3.push(updated.length === 1 ? `${updated[0].name} updated` : `${updated.length} apps updated`);
-    const back3 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
-    if (back3.length) parts3.push(`${back3.length} rolled back`);
+    const back4 = n3.events.filter((e3) => within(e3.time) && (e3.tags?.includes("rewind") || /rolled back/i.test(e3.title || "")));
+    if (back4.length) parts3.push(`${back4.length} rolled back`);
     if (n3.copies) {
       const made2 = n3.copies.filter((c4) => within(c4.newest));
       const size2 = made2.reduce((t3, c4) => t3 + (c4.size || 0), 0);
       if (made2.length) parts3.push(size2 > 0 ? `a backup of ${bytes(size2)}` : "the backup ran");
     }
     const down = Object.entries(n3.outages).filter(([, list]) => list.some((o3) => (o3.to ? new Date(o3.to).getTime() : to) >= from2 && new Date(o3.from).getTime() <= to));
-    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back3.includes(e3));
+    const loud = n3.events.filter((e3) => within(e3.time) && (e3.priority || 3) >= 4 && !back4.includes(e3));
     if (down.length) {
       const name = n3.apps.find((a3) => a3.id === down[0][0])?.name || down[0][0];
       parts3.push(down.length === 1 ? `${name} was down for a while` : `${down.length} apps were down for a while`);
@@ -9352,9 +9352,15 @@
     const kept4 = at2 ?? h3[0]?.amount;
     return kept4 !== void 0 ? kept4 * rateOf(v3.plan, a3) : todayOf(v3, a3);
   }
+  function balanceAfter(acct, all, day3) {
+    const effect = (t3) => (t3.account === acct.id ? t3.amount : t3.to === acct.id ? -t3.amount : 0) * (owed(acct.kind) ? -1 : 1);
+    const at2 = acct.updated;
+    return all.reduce((n3, t3) => n3 + (day3 < at2 ? t3.date > day3 && t3.date <= at2 ? -effect(t3) : 0 : t3.date > at2 && t3.date <= day3 ? effect(t3) : 0), acct.balance);
+  }
+  var runsFrom = (acct) => !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
   var worthOn = (v3, a3, day3) => owed(a3.kind) ? -balanceOn(v3, a3, day3) : balanceOn(v3, a3, day3);
   var firstKept = (v3) => (v3.plan.accounts || []).flatMap((a3) => (a3.history || []).map((p3) => p3.date)).sort()[0] || v3.today;
-  function worthByMonth(v3, back3 = 3, ahead2 = 3) {
+  function worthByMonth(v3, back4 = 3, ahead2 = 3) {
     const accounts = v3.plan.accounts || [];
     const groupOf2 = (kind) => groups.find((g2) => g2.kinds.includes(kind))?.key || "other";
     const against = new Set(accounts.filter((a3) => groupOf2(a3.kind) === "property" && a3.loan).map((a3) => a3.loan));
@@ -9373,7 +9379,7 @@
     };
     const out = [];
     const today2 = parseDay(v3.today);
-    for (let i3 = back3; i3 >= 1; i3--) {
+    for (let i3 = back4; i3 >= 1; i3--) {
       const end = isoDay(new Date(today2.getFullYear(), today2.getMonth() - i3 + 1, 0));
       out.push({ date: end, ahead: false, ...split2((a3) => balanceOn(v3, a3, end)) });
     }
@@ -9829,7 +9835,7 @@
   var showTransactions = (f4) => {
     opening = f4;
   };
-  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos, back: back3 }) {
+  function Transactions({ v: v3, L: L2, ledger, edit, readReceipt, saveLedger: saveLedger2, logos, back: back4 }) {
     const [first] = d2(() => {
       const f4 = opening;
       opening = {};
@@ -9850,7 +9856,7 @@
       }
     };
     const [q2, setQ] = d2(first.q || "");
-    const [accountPick, setAccount] = d2("");
+    const [accountPick, setAccount] = d2(first.account || "");
     const [categoryPick, setCategory] = d2(first.category || "");
     const [monthPick, setMonthPick] = d2(first.month || "");
     const [way, setWay] = d2("");
@@ -9941,8 +9947,8 @@
       showUndo(words5, () => {
         const now2 = latest2.current;
         if (!now2 || !saveLedger2) return;
-        const back4 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
-        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back4.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
+        const back5 = new Map(was.map((t3) => [t3.id, t3])), there = new Set(now2.transactions.map((t3) => t3.id));
+        saveLedger2({ ...now2, transactions: [...now2.transactions.map((t3) => back5.get(t3.id) || t3), ...was.filter((t3) => !there.has(t3.id))] });
       });
     };
     const removePicked = () => {
@@ -9986,13 +9992,8 @@
     const outBefore = -before3.filter((t3) => t3.amount < 0).reduce((s3, t3) => s3 + amt(t3), 0);
     const outNow = -sum((t3) => t3.amount < 0);
     const acct = account ? L2.account[account] : void 0;
-    const runs2 = !!acct?.updated && !["home", "car", "collectible"].includes(acct.kind);
-    const after2 = (day3) => {
-      if (!acct) return 0;
-      const effect = (t3) => (t3.account === acct.id ? t3.amount : t3.to === acct.id ? -t3.amount : 0) * (owed(acct.kind) ? -1 : 1);
-      const at2 = acct.updated;
-      return all.reduce((n3, t3) => n3 + (day3 < at2 ? t3.date > day3 && t3.date <= at2 ? -effect(t3) : 0 : t3.date > at2 && t3.date <= day3 ? effect(t3) : 0), acct.balance);
-    };
+    const runs2 = runsFrom(acct);
+    const after2 = (day3) => acct ? balanceAfter(acct, all, day3) : 0;
     const days = [];
     for (const t3 of list.slice(0, upTo)) {
       if (days.at(-1)?.date !== t3.date) days.push({ date: t3.date, list: [] });
@@ -10087,10 +10088,10 @@
                 setWay("");
                 setTag("");
               }, children: "Show all" }),
-              back3 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back3.go, children: [
+              back4 && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: back4.go, children: [
                 /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: "← " }),
                 "Back to ",
-                back3.label
+                back4.label
               ] })
             ] }),
             picking && /* @__PURE__ */ u3("div", { class: "fx-txpick", role: "group", "aria-label": "The selected transactions", children: [
@@ -12599,6 +12600,1595 @@ ${pays}
     ] });
   }
 
+  // web/src/finances/widgets/Ledger.tsx
+  var typedBill = (s3) => !!s3.payment && !!s3.typed;
+  function SinceWidget({ v: v3, L: L2, set: set2 }) {
+    const [busy2, setBusy] = d2("");
+    const [all, setAll] = d2(false);
+    const list = v3.since || [];
+    const stateOf2 = (s3) => s3.waiting ? "waiting" : s3.inBalance ? "inBalance" : "counted";
+    const pick = async (s3, choice) => {
+      const want = choice === "not" ? "waiting" : choice === "held" ? "inBalance" : "counted";
+      if (want === stateOf2(s3) || busy2) return;
+      setBusy(s3.key);
+      await set2(s3.key, want);
+      setBusy("");
+    };
+    const sub = (s3) => dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : typedBill(s3) ? s3.inBalance ? " · already in the balance" : " · due the day the balance was typed" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in");
+    const name = (s3) => s3.person ? `${L2.person[s3.person]?.name || s3.person}'s paycheck` : L2.payment[s3.payment]?.name || s3.payment;
+    const shown8 = all ? list : list.slice(0, 5);
+    return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
+        "Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out",
+        set2 ? ": mark it Already in if the balance has it. Mark any that hasn't happened yet: it comes today." : "."
+      ] }),
+      /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown8.map((s3) => {
+        const x3 = s3.payment ? L2.payment[s3.payment] : void 0;
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(PayMark, { x: x3 }),
+            title: name(s3),
+            sub: sub(s3),
+            end: set2 && (typedBill(s3) ? /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.inBalance ? "held" : "in", pick: (c4) => pick(s3, c4), options: [["in", "Comes out"], ["held", "Already in"]] }) : /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c4) => pick(s3, c4), options: [["in", "In"], ["not", "Not yet"]] })),
+            when: /* @__PURE__ */ u3("span", { class: s3.in ? "fx-amount fx-in" : "fx-amount", children: [
+              s3.in ? "+" : s3.outside ? "" : "−",
+              money(s3.amount)
+            ] }),
+            whenPlain: true
+          },
+          s3.key
+        );
+      }) }),
+      list.length > 5 && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${list.length}` }) })
+    ] });
+  }
+  var shown4 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
+  var postCols = 7;
+  function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, update }) {
+    const accounts = (v3.plan.accounts || []).filter(shown4);
+    const cols = v3.periods.slice(0, postCols);
+    const today2 = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
+    const at2 = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? todayOf(v3, a3);
+    const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
+    const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
+    const head = (p3) => p3.now ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: [
+        "Until ",
+        dayShort(p3.last)
+      ] }),
+      /* @__PURE__ */ u3("small", { children: "Now" })
+    ] }) : /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("span", { children: dayShort(p3.pay.date) }),
+      /* @__PURE__ */ u3("small", { children: p3.pay.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") })
+    ] });
+    if (!accounts.length) return null;
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        span: "all",
+        kind: "finpost",
+        title: /* @__PURE__ */ u3(S, { children: [
+          "Accounts, paycheck by paycheck ",
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: "after the bills" })
+        ] }),
+        actions: update && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: update, children: "Update balances" }),
+        children: /* @__PURE__ */ u3("div", { class: "finpostscroll", children: /* @__PURE__ */ u3("table", { class: "finpost", children: [
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Account" }),
+            /* @__PURE__ */ u3("th", { scope: "col", class: "today", children: [
+              /* @__PURE__ */ u3("span", { children: "Today" }),
+              /* @__PURE__ */ u3("small", { children: dayShort(v3.today) })
+            ] }),
+            cols.map((p3, i3) => /* @__PURE__ */ u3("th", { scope: "col", class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("button", { type: "button", "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: head(p3) }) }, p3.start))
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: accounts.map((a3) => /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
+              /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
+              /* @__PURE__ */ u3("span", { children: [
+                /* @__PURE__ */ u3("strong", { children: a3.name }),
+                (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
+              ] })
+            ] }) }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today2(a3)) }) }),
+            cols.map((p3, i3) => {
+              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now = at2(a3, p3);
+              return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
+                /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
+                change(now - was)
+              ] }, p3.start);
+            })
+          ] }, a3.id)) }),
+          /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
+            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today2)) }) }),
+            cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at2(a3, p3))) }) }, p3.start))
+          ] }) })
+        ] }) })
+      }
+    );
+  }
+
+  // web/src/finances/fire.ts
+  var maxMonths2 = 1200;
+  function monthsTo(have, monthly, target, growth) {
+    const r3 = Math.pow(1 + growth / 100, 1 / 12) - 1;
+    let b2 = have;
+    for (let n3 = 0; n3 <= maxMonths2; n3++) {
+      if (b2 >= target) return n3;
+      b2 = b2 * (1 + r3) + monthly;
+    }
+    return null;
+  }
+  function fire(yearSpending, have, monthly, withdraw, growth) {
+    const target = withdraw > 0 ? yearSpending / (withdraw / 100) : Infinity;
+    return { target, have, months: monthsTo(have, monthly, target, growth), sooner: monthsTo(have, monthly, target, growth + 2), later: monthsTo(have, monthly, target, growth - 2) };
+  }
+
+  // web/src/finances/widgets/Fire.tsx
+  var when2 = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
+    return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
+  };
+  function FireWidget({ v: v3, L: L2, keep: keep3 }) {
+    const m3 = month(v3, L2);
+    const withdraw = v3.plan.withdraw || 4, growth = v3.plan.growth || 5;
+    const [problem, setProblem] = d2("");
+    const invested = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
+    const have = invested.reduce((t3, a3) => t3 + todayOf(v3, a3), 0);
+    const monthly = m3.saved + m3.viaPay;
+    if (m3.spent <= 0) return null;
+    const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
+    const share3 = Math.min(100, have / f4.target * 100);
+    const set2 = (key5, text2, lo, hi) => {
+      const n3 = parseAmount(text2);
+      if (isNaN(n3) || n3 < lo || n3 > hi || key5 === "withdraw" && n3 === 0) {
+        setProblem(key5 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
+        return;
+      }
+      setProblem("");
+      keep3({ ...v3.plan, [key5]: n3 });
+    };
+    const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
+    return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-firenote", children: "An estimate from two assumptions below, not advice." }),
+      /* @__PURE__ */ u3("p", { class: "fx-firesays", children: [
+        /* @__PURE__ */ u3(Amount, { value: f4.target, form: "whole" }),
+        " would be enough: a year's spending of ",
+        whole(m3.spent * 12),
+        ", drawing ",
+        withdraw,
+        "% of it a year.",
+        " ",
+        "The investment and retirement accounts hold ",
+        whole(have),
+        ", ",
+        Math.round(share3),
+        "% of it."
+      ] }),
+      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, have > 0 ? 1 : 0)}%` } }) }),
+      /* @__PURE__ */ u3("p", { class: "fx-firewhen", role: "status", children: f4.months === 0 ? "There already, at this estimate." : f4.months === null ? `Not within a hundred years at ${whole(monthly)} a month put by and ${growth}% growth a year.` : /* @__PURE__ */ u3(S, { children: [
+        "At ",
+        whole(monthly),
+        " a month put by and ",
+        growth,
+        "% growth a year after rising prices, about ",
+        when2(v3.today, f4.months),
+        range,
+        "."
+      ] }) }),
+      keep3 && /* @__PURE__ */ u3("div", { class: "fx-fireset", children: [
+        /* @__PURE__ */ u3("label", { children: [
+          "Draw ",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Share to spend a year, %", value: String(withdraw), onChange: (e3) => set2("withdraw", e3.target.value, 0, 20) }),
+          "% a year"
+        ] }),
+        /* @__PURE__ */ u3("label", { children: [
+          "Growth ",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Growth a year after rising prices, %", value: String(growth), onChange: (e3) => set2("growth", e3.target.value, -10, 20) }),
+          "% a year"
+        ] }),
+        problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
+      ] })
+    ] });
+  }
+
+  // web/src/finances/widgets/Goals.tsx
+  var monthOf2 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
+  var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
+  function goalWords(g2) {
+    if (g2.left <= 0) return "Reached";
+    if (g2.needsPaycheck && g2.needsMonth) return `${money(g2.needsPaycheck)} a paycheck (${money(g2.needsMonth)} a month) to be there by ${byDay(g2.date)}`;
+    if (g2.needsMonth) return `${money(g2.needsMonth)} a month to be there by ${byDay(g2.date)}`;
+    return g2.date ? `Wanted by ${byDay(g2.date)}` : "No day set";
+  }
+  function goalPace(g2) {
+    if (g2.left <= 0 || !g2.paced) return "";
+    return g2.pace > 0 ? `${money(g2.pace)} a month lately: there by ${monthOf2(g2.reaches)}` : "Not growing lately";
+  }
+  function goalBrief(g2) {
+    if (g2.left <= 0) return "Reached";
+    if (g2.needsPaycheck) return `${money(g2.needsPaycheck)} a paycheck, by ${byDay(g2.date)}`;
+    if (g2.needsMonth) return `${money(g2.needsMonth)} a month, by ${byDay(g2.date)}`;
+    return g2.date ? `Wanted by ${byDay(g2.date)}` : g2.paced && g2.pace > 0 ? `There by ${monthOf2(g2.reaches)} at this pace` : "No day set";
+  }
+  function paydaysAMonth(v3) {
+    const last2 = v3.paydays.at(-1)?.date;
+    const days = last2 ? daysBetween(v3.today, last2) : 0;
+    return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
+  }
+  var monthsOn = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+  };
+  function WhatIf({ v: v3, goals }) {
+    const open4 = goals.filter((g3) => g3.left > 0);
+    const [id2, setId] = d2("");
+    const [amount, setAmount] = d2("");
+    const [day3, setDay] = d2("");
+    const g2 = open4.find((x3) => x3.id === id2) || open4[0];
+    if (!g2) return null;
+    const per = paydaysAMonth(v3);
+    const n3 = parseAmount(amount);
+    const months = n3 > 0 && per > 0 ? Math.ceil(g2.left / (n3 * per)) : 0;
+    const reaches = months ? monthsOn(v3.today, months) : "";
+    const due = g2.date?.slice(0, 7);
+    const gap2 = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
+    const paychecks = day3 && day3 > v3.today ? Math.max(1, Math.floor(daysBetween(v3.today, day3) / 30.44 * per)) : 0;
+    return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
+      /* @__PURE__ */ u3("h3", { children: "What if" }),
+      /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
+        open4.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open4.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
+        open4.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
+        /* @__PURE__ */ u3("label", { children: [
+          "I put by ",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Put by a paycheck", value: amount, placeholder: g2.needsPaycheck ? String(Math.round(g2.needsPaycheck)) : "100", onInput: (e3) => setAmount(e3.target.value) })
+          ] }),
+          " a paycheck"
+        ] }),
+        /* @__PURE__ */ u3("label", { children: [
+          "or want it by ",
+          /* @__PURE__ */ u3("input", { type: "date", "aria-label": "Want it by", value: day3, onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
+        months > 0 && /* @__PURE__ */ u3(S, { children: [
+          "At ",
+          money(n3),
+          " a paycheck (about ",
+          money(n3 * per),
+          " a month), ",
+          g2.name,
+          " gets there by ",
+          monthOf2(reaches),
+          due ? gap2 > 0 ? `, ${gap2} month${gap2 === 1 ? "" : "s"} after its day` : gap2 < 0 ? `, ${-gap2} month${gap2 === -1 ? "" : "s"} before its day` : ", the month of its day" : "",
+          ". "
+        ] }),
+        paychecks > 0 && /* @__PURE__ */ u3(S, { children: [
+          "By ",
+          byDay(day3),
+          ", it needs ",
+          money(g2.left / paychecks),
+          " a paycheck (",
+          paychecks,
+          " paychecks)."
+        ] }),
+        !months && !paychecks && "Type an amount a paycheck, or a day, to see what it changes. Nothing is saved."
+      ] })
+    ] });
+  }
+  function GoalsWidget({ v: v3, L: L2, edit, all }) {
+    const goals = v3.goals || [];
+    if (all && !goals.length) return null;
+    const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
+    const saved = goals.length ? month(v3, L2).saved : 0;
+    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: all ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }) : edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
+      !all && need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
+        "Together the goals need ",
+        money(need),
+        " a month to be there in time; the plan puts by ",
+        money(saved),
+        " a month, ",
+        money(need - saved),
+        " short."
+      ] }),
+      goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
+        const share3 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
+        const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
+        return /* @__PURE__ */ u3(
+          Row,
+          {
+            title: g2.name,
+            sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
+              all ? goalBrief(g2) : goalWords(g2),
+              tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
+            ] }),
+            when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
+              " left"
+            ] }) }),
+            whenPlain: true,
+            onOpen: edit ? () => edit("goal", g2.id) : void 0,
+            openLabel: edit ? "edit" : void 0,
+            children: [
+              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, g2.saved > 0 ? 1 : 0)}%` } }) }),
+              /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
+                money(g2.saved),
+                " of ",
+                money(g2.target),
+                !all && goalPace(g2) && /* @__PURE__ */ u3(S, { children: [
+                  " · ",
+                  /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: goalPace(g2) })
+                ] })
+              ] })
+            ]
+          },
+          g2.id
+        );
+      }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
+      edit && !all && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
+    ] });
+  }
+
+  // web/src/finances/widgets/Loans.tsx
+  var monthOf3 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
+  var monthsOn2 = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
+  };
+  function payoffWords(p3) {
+    if (p3.balance <= 5e-3) return "Paid off";
+    if (!p3.monthly) return "Nothing is paid to it: add a payment that goes to it";
+    if (p3.never) return `${money(p3.monthly)} a month does not keep up with its interest`;
+    return `${money(p3.monthly)} a month: paid off ${monthOf3(p3.date)}${p3.interest ? `, ${money(p3.interest)} interest still to pay` : ""}`;
+  }
+  var dayYear = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
+  function Ring({ made: made2, of }) {
+    const r3 = 52, round = 2 * Math.PI * r3, part = of ? Math.min(1, made2 / of) : 0;
+    return /* @__PURE__ */ u3("div", { class: "fx-ring", role: "img", "aria-label": `${made2} of ${of} payments made`, children: [
+      /* @__PURE__ */ u3("svg", { viewBox: "0 0 120 120", "aria-hidden": "true", children: [
+        /* @__PURE__ */ u3("circle", { class: "fx-ringtrack", cx: "60", cy: "60", r: r3 }),
+        /* @__PURE__ */ u3("circle", { class: "fx-ringfill", cx: "60", cy: "60", r: r3, "stroke-dasharray": `${(part * round).toFixed(2)} ${round.toFixed(2)}`, transform: "rotate(-90 60 60)" })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-ringtext", "aria-hidden": "true", children: [
+        /* @__PURE__ */ u3("strong", { children: made2 }),
+        /* @__PURE__ */ u3("span", { children: [
+          "of ",
+          of
+        ] }),
+        /* @__PURE__ */ u3("small", { children: "payments" })
+      ] })
+    ] });
+  }
+  function Papers({ v: v3, L: L2, p: p3 }) {
+    const a3 = L2.account[p3.account], rows = p3.rows, made2 = p3.made || 0;
+    const original = rows.reduce((t3, x3) => t3 + x3.principal, 0);
+    const down = Math.max(0, original - p3.balance), share3 = original ? down / original : 0;
+    const next = rows[made2];
+    const half = rows.findIndex((x3) => x3.after <= original / 2 + 5e-3);
+    const last2 = rows[rows.length - 1];
+    const paidIn = rows.slice(0, made2).reduce((t3, x3) => t3 + x3.interest, 0);
+    const into2 = (v3.plan.payments || []).filter((x3) => x3.to === p3.account).map((x3) => ({ name: x3.name, amount: x3.amount * perMonth(x3.schedule, v3.plan.people, v3.checking) }));
+    const planned2 = into2.reduce((t3, x3) => t3 + x3.amount, 0), rest = p3.monthly - planned2;
+    return /* @__PURE__ */ u3("div", { class: "fx-papers", children: [
+      /* @__PURE__ */ u3(Ring, { made: made2, of: rows.length }),
+      /* @__PURE__ */ u3("div", { class: "fx-papersfacts", children: [
+        /* @__PURE__ */ u3("p", { class: "fx-papersdown", children: [
+          /* @__PURE__ */ u3("strong", { children: money(down) }),
+          " of ",
+          money(original),
+          " paid down, ",
+          Math.round(share3 * 100),
+          "%"
+        ] }),
+        /* @__PURE__ */ u3("div", { class: "fx-papersbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share3 * 100).toFixed(1)}%` } }) }),
+        next && /* @__PURE__ */ u3("p", { children: [
+          /* @__PURE__ */ u3("strong", { children: [
+            "Next, ",
+            dayYear(next.date),
+            ":"
+          ] }),
+          " ",
+          money(next.payment),
+          next.interest > 5e-3 ? /* @__PURE__ */ u3(S, { children: [
+            " (",
+            money(next.principal),
+            " pays it down, ",
+            money(next.interest),
+            " is interest)"
+          ] }) : ", all of it paying it down",
+          "."
+        ] }),
+        (into2.length > 1 || into2.length && rest > 5e-3) && /* @__PURE__ */ u3("p", { children: [
+          /* @__PURE__ */ u3("strong", { children: "Each month:" }),
+          " ",
+          into2.map((x3) => `${x3.name} ${money(x3.amount)}`).join(", "),
+          rest > 5e-3 ? `, and ${money(rest)} paid another way` : "",
+          "."
+        ] }),
+        /* @__PURE__ */ u3("p", { children: [
+          half > 0 && /* @__PURE__ */ u3(S, { children: [
+            half < made2 ? "Half paid off" : "Half paid off on",
+            " ",
+            dayYear(rows[half].date),
+            ". "
+          ] }),
+          "Paid off ",
+          dayYear(last2.date),
+          ", after ",
+          plural(rows.length - made2, "more payment"),
+          p3.interest ? `, ${money(p3.interest)} of interest still to pay` : "",
+          paidIn > 5e-3 ? ` (${money(paidIn)} paid so far)` : "",
+          "."
+        ] }),
+        /* @__PURE__ */ u3("details", { class: "fx-papersrows", children: [
+          /* @__PURE__ */ u3("summary", { children: "Every payment" }),
+          /* @__PURE__ */ u3("div", { class: "fx-paperstable", children: /* @__PURE__ */ u3("table", { children: [
+            /* @__PURE__ */ u3("caption", { class: "sr", children: [
+              a3.name,
+              ": each payment, what pays it down, its interest, and what is owed after"
+            ] }),
+            /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+              /* @__PURE__ */ u3("th", { scope: "col", children: "#" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Due" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Payment" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Paid down" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Interest" }),
+              /* @__PURE__ */ u3("th", { scope: "col", children: "Owed after" })
+            ] }) }),
+            /* @__PURE__ */ u3("tbody", { children: rows.map((x3, i3) => /* @__PURE__ */ u3("tr", { class: i3 < made2 ? "fx-made" : i3 === made2 ? "fx-nextrow" : void 0, children: [
+              /* @__PURE__ */ u3("td", { children: i3 + 1 }),
+              /* @__PURE__ */ u3("th", { scope: "row", children: dayYear(x3.date) }),
+              /* @__PURE__ */ u3("td", { children: money(x3.payment) }),
+              /* @__PURE__ */ u3("td", { children: money(x3.principal) }),
+              /* @__PURE__ */ u3("td", { children: money(x3.interest) }),
+              /* @__PURE__ */ u3("td", { children: money(x3.after) })
+            ] }, x3.date)) })
+          ] }) })
+        ] })
+      ] })
+    ] });
+  }
+  function PayMore({ v: v3, L: L2, shown: shown8, owing }) {
+    const [text2, setText] = d2("");
+    const extra = Math.max(0, parseAmount(text2) || 0) * paydaysAMonth(v3);
+    const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
+    const one = shown8 && extra > 0 ? amortize(shown8.balance, shown8.rate || 0, shown8.monthly + extra) : null;
+    const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
+    const when3 = (n3) => {
+      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n3, 1);
+      return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
+    };
+    const name = (id2) => L2.account[id2]?.name || id2;
+    return /* @__PURE__ */ u3("section", { class: "fx-paymore", "aria-label": "Pay more", children: [
+      /* @__PURE__ */ u3("h3", { children: "Pay more" }),
+      /* @__PURE__ */ u3("label", { class: "fx-paymorefield", children: [
+        /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "More a paycheck", value: text2, placeholder: "100", onInput: (e3) => setText(e3.target.value) })
+        ] }),
+        " more a paycheck",
+        extra > 0 && ` (about ${money(extra)} a month)`
+      ] }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
+        !one && "Type an amount to see what it saves. Nothing is saved.",
+        one && shown8 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
+          name(shown8.account),
+          " paid off ",
+          when3(one.months),
+          shown8.months ? `, ${plural(shown8.months - one.months, "month")} sooner` : "",
+          shown8.interest ? `, ${money(Math.max(0, shown8.interest - one.interest))} less interest` : "",
+          "."
+        ] }) : /* @__PURE__ */ u3(S, { children: [
+          name(shown8.account),
+          " is still never paid off at that."
+        ] }))
+      ] }),
+      !!ways.length && /* @__PURE__ */ u3("ul", { class: "fx-ways", children: ways.map(({ w: w3, s: s3 }) => /* @__PURE__ */ u3("li", { children: [
+        /* @__PURE__ */ u3("strong", { children: [
+          w3 === "avalanche" ? "Highest rate first" : "Smallest balance first",
+          ":"
+        ] }),
+        " ",
+        s3.ok ? /* @__PURE__ */ u3(S, { children: [
+          "all paid off ",
+          when3(s3.months),
+          ", ",
+          money(s3.interest),
+          " interest. In turn: ",
+          s3.order.map((o3) => `${name(o3.id)} ${when3(o3.month)}`).join(", "),
+          "."
+        ] }) : "never all paid off at that."
+      ] }, w3)) })
+    ] });
+  }
+  function LoansWidget({ v: v3, L: L2, edit }) {
+    const loans = (v3.loans || []).filter((p3) => L2.account[p3.account]);
+    const owing = loans.filter((p3) => p3.balance > 5e-3), done = loans.filter((p3) => p3.balance <= 5e-3);
+    const charted = owing.filter((p3) => p3.path?.length);
+    const [pick, setPick] = d2("");
+    if (!loans.length) return null;
+    const shown8 = charted.find((p3) => p3.account === pick) || charted[0];
+    const row = (p3) => {
+      const a3 = L2.account[p3.account];
+      const bad = p3.balance > 5e-3 && (p3.never || !p3.monthly);
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
+          title: a3.name,
+          sub: /* @__PURE__ */ u3("span", { class: bad ? "fx-warn" : "", children: [
+            p3.rows?.length ? `${p3.made || 0} of ${p3.rows.length} payments made · ` : "",
+            payoffWords(p3),
+            p3.rate ? ` · ${p3.rate}% a year` : ""
+          ] }),
+          when: /* @__PURE__ */ u3(Amount, { value: p3.balance, form: "full" }),
+          whenPlain: true,
+          onOpen: edit ? () => edit("account", p3.account) : void 0,
+          openLabel: edit ? "edit" : void 0
+        },
+        p3.account
+      );
+    };
+    const path = shown8?.path || [];
+    const every = path.length > 120 ? 60 : 12;
+    const xLabels = path.map((_3, i3) => ({ i: i3, label: monthsOn2(v3.today, i3 + 1) })).filter((x3) => x3.label.endsWith("-01") && +x3.label.slice(0, 4) % (every / 12) === 0).map((x3) => ({ i: x3.i, label: x3.label.slice(0, 4) }));
+    return /* @__PURE__ */ u3(Widget, { title: loans.some((p3) => L2.account[p3.account]?.kind === "card") ? "Loans and cards carrying a balance" : "Loans", span: "all", kind: "fx-loans", children: [
+      !!owing.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: owing.map(row) }),
+      shown8 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
+        /* @__PURE__ */ u3("div", { class: "fx-loanhead", children: [
+          /* @__PURE__ */ u3("h3", { children: [
+            L2.account[shown8.account].name,
+            ", to zero"
+          ] }),
+          charted.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Which loan", value: shown8.account, pick: setPick, options: charted.map((p3) => [p3.account, L2.account[p3.account].name]) })
+        ] }),
+        !!shown8.rows?.length && /* @__PURE__ */ u3(Papers, { v: v3, L: L2, p: shown8 }),
+        /* @__PURE__ */ u3(
+          AreaChart,
+          {
+            values: [shown8.balance, ...path],
+            xLabels: xLabels.map((x3) => ({ i: x3.i + 1, label: x3.label })),
+            height: 160,
+            format: tick,
+            label: `${L2.account[shown8.account].name}: what it owes each month until it is paid off in ${monthOf3(shown8.date)}. The table under it has the balance each year.`,
+            tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+              /* @__PURE__ */ u3("div", { class: "fx-caption", children: i3 === 0 ? "Today" : monthOf3(monthsOn2(v3.today, i3)) }),
+              /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                /* @__PURE__ */ u3("span", { children: "Owed" }),
+                /* @__PURE__ */ u3(Amount, { value: i3 === 0 ? shown8.balance : path[i3 - 1], form: "full" })
+              ] })
+            ] })
+          }
+        ),
+        /* @__PURE__ */ u3("table", { class: "sr", children: [
+          /* @__PURE__ */ u3("caption", { children: [
+            L2.account[shown8.account].name,
+            " owed, each year"
+          ] }),
+          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Month" }),
+            /* @__PURE__ */ u3("th", { scope: "col", children: "Owed" })
+          ] }) }),
+          /* @__PURE__ */ u3("tbody", { children: path.map((b2, i3) => ({ b: b2, m: monthsOn2(v3.today, i3 + 1) })).filter((x3, i3) => x3.m.endsWith("-12") || i3 === path.length - 1).map((x3) => /* @__PURE__ */ u3("tr", { children: [
+            /* @__PURE__ */ u3("th", { scope: "row", children: monthOf3(x3.m) }),
+            /* @__PURE__ */ u3("td", { children: money(x3.b) })
+          ] }, x3.m)) })
+        ] })
+      ] }),
+      edit && !!owing.length && /* @__PURE__ */ u3(PayMore, { v: v3, L: L2, shown: shown8, owing }),
+      !!done.length && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3("h3", { class: "fx-loansdone", children: "Paid off" }),
+        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: done.map(row) })
+      ] })
+    ] });
+  }
+
+  // web/src/finances/tickers.ts
+  var funds = {
+    vanguard: ["VTI", "VOO", "VXUS", "BND", "BNDX", "VT", "VUG", "VTV", "VIG", "VYM", "VNQ", "VGT", "VB", "VO", "VEA", "VWO", "VTEB", "VGIT", "VGSH", "VTSAX", "VFIAX", "VTIAX", "VBTLX", "VTWAX", "VFFVX", "VTTSX", "VTHRX", "VTTVX", "VTIVX", "VFIFX"],
+    fidelity: ["FXAIX", "FZROX", "FZILX", "FSKAX", "FTIHX", "FXNAX", "FBALX", "FDVV", "FSPSX", "FNILX", "FCNTX", "FBGRX", "FDGRX", "FSMDX", "FSSNX"],
+    schwab: ["SCHW", "SCHB", "SCHD", "SCHX", "SCHF", "SCHG", "SCHA", "SCHE", "SCHZ", "SCHP", "SWTSX", "SWPPX", "SWISX", "SWAGX"],
+    troweprice: ["TROW", "PRGFX", "TRBCX", "PRWCX"]
+  };
+  var companies = {
+    AAPL: "apple",
+    AMZN: "amazon",
+    GOOGL: "google",
+    GOOG: "google",
+    TSLA: "tesla",
+    NFLX: "netflix",
+    SPOT: "spotify",
+    COST: "costco",
+    WMT: "walmart",
+    TGT: "target",
+    SBUX: "starbucks",
+    NKE: "nike",
+    MCD: "mcdonalds",
+    CMG: "chipotle",
+    HOOD: "robinhood",
+    COIN: "coinbase",
+    PYPL: "paypal",
+    MA: "mastercard",
+    V: "visa",
+    AXP: "americanexpress",
+    JPM: "chase",
+    BAC: "bankofamerica",
+    WFC: "wellsfargo",
+    GS: "goldmansachs",
+    C: "citi",
+    MS: "morganstanley",
+    COF: "capitalone",
+    SOFI: "sofi",
+    ALLY: "ally",
+    PNC: "pnc",
+    USB: "usbank",
+    TFC: "truist",
+    SYF: "synchrony",
+    HD: "thehomedepot",
+    LOW: "lowes",
+    BBY: "bestbuy",
+    KR: "kroger",
+    CVS: "cvs",
+    WBA: "walgreens",
+    GME: "gamestop",
+    XOM: "exxon",
+    CVX: "chevron",
+    BP: "bp",
+    SHEL: "shell",
+    SHOP: "shopify",
+    ABNB: "airbnb",
+    UBER: "uber",
+    LYFT: "lyft",
+    DASH: "doordash",
+    EBAY: "ebay",
+    ETSY: "etsy",
+    ADBE: "adobe",
+    ZM: "zoom",
+    NET: "cloudflare",
+    DOCN: "digitalocean",
+    F: "ford",
+    TM: "toyota",
+    HMC: "honda",
+    MAR: "marriott",
+    HLT: "hilton",
+    DAL: "delta",
+    UAL: "unitedairlines",
+    AAL: "americanairlines",
+    LUV: "southwestairlines",
+    JBLU: "jetblue",
+    EA: "ea",
+    RBLX: "roblox",
+    SIRI: "siriusxm",
+    AMP: "ameriprise",
+    MET: "metlife",
+    PRU: "prudential",
+    ALL: "allstate",
+    CI: "cigna",
+    HUM: "humana",
+    UNH: "unitedhealthcare",
+    DIS: "disneyplus",
+    DPZ: "dominos",
+    DG: "dollargeneral",
+    DLTR: "dollartree",
+    W: "wayfair",
+    CHWY: "chewy",
+    GRMN: "garmin",
+    DUK: "dukeenergy",
+    PCG: "pge",
+    ED: "coned",
+    T: "atandt",
+    VZ: "verizon",
+    TMUS: "tmobile",
+    LMND: "lemonade",
+    AFRM: "affirm",
+    SQ: "square"
+  };
+  var bySymbol = Object.fromEntries([
+    ...Object.entries(funds).flatMap(([brand, list]) => list.map((s3) => [s3, brand])),
+    ...Object.entries(companies).filter(([, b2]) => b2)
+  ]);
+  function tickerBrand(symbol) {
+    const b2 = bySymbol[symbol.toUpperCase().replace(/\..*$/, "")];
+    return b2 && brands[b2] ? b2 : void 0;
+  }
+
+  // web/src/finances/widgets/Investments.tsx
+  function readWhen(at2, today2) {
+    if (!at2) return "";
+    const d3 = new Date(at2);
+    if (isNaN(d3.getTime())) return "";
+    const day3 = isoDay(d3);
+    const time = d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    const y3 = /* @__PURE__ */ new Date(today2 + "T12:00:00");
+    y3.setDate(y3.getDate() - 1);
+    const yesterday = isoDay(y3);
+    return day3 === today2 ? `read ${time} today` : day3 === yesterday ? `read yesterday at ${time}` : `read ${dayShort(day3)}`;
+  }
+  var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
+  var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
+  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep3, add, find, trades }) {
+    const [open4, setOpen] = d2("");
+    const [adding2, setAdding] = d2(false);
+    const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
+    const ever = !!v3.plan.holdingsRead;
+    if (!accounts.length && !read) return null;
+    const when3 = readWhen(v3.plan.holdingsRead, v3.today);
+    const canAdd = !!(add && find);
+    const button = /* @__PURE__ */ u3(S, { children: [
+      canAdd && !adding2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: () => setAdding(true), children: "Add a holding" }),
+      read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" })
+    ] });
+    const form2 = adding2 && add && find && /* @__PURE__ */ u3(AddForm, { v: v3, add, find, close: () => setAdding(false) });
+    const said2 = /* @__PURE__ */ u3(S, { children: [
+      state2.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state2.said }),
+      state2.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state2.problem })
+    ] });
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
+        form2,
+        !form2 && !(ever && state2.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
+        said2,
+        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read })
+      ] });
+    }
+    const own2 = (a3) => worthOf(v3, a3);
+    accounts.sort((a3, b2) => own2(b2) - own2(a3));
+    const lines = accounts.flatMap((a3, i3) => {
+      const hue2 = i3 % 7 + 1;
+      const held3 = [...a3.holdings].sort((x3, y3) => y3.value - x3.value);
+      const cash = Math.round((a3.balance - held3.reduce((t3, h3) => t3 + h3.value, 0)) * 100) / 100;
+      return [...held3.map((h3) => ({ key: a3.id + ":" + h3.symbol, account: a3, hue: hue2, h: h3 })), ...cash >= 0.01 ? [{ key: a3.id + ":cash", account: a3, hue: hue2, cash }] : []];
+    });
+    const inHome2 = (l3, n4) => n4 * rateOf(v3.plan, l3.account);
+    const total = accounts.reduce((t3, a3) => t3 + own2(a3), 0);
+    const paid = lines.reduce((t3, l3) => t3 + inHome2(l3, l3.h ? l3.h.paid : l3.cash), 0);
+    const gain = total - paid;
+    const first = v3.today.slice(0, 8) + "01";
+    const month3 = accounts.reduce((t3, a3) => t3 + own2(a3) - worthOn(v3, a3, first), 0);
+    const before3 = total - month3;
+    const holdings = lines.filter((l3) => l3.h).length;
+    const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
+    return /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+      "Investments ",
+      /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+        "from Ghostfolio",
+        when3 ? `, ${when3}` : ""
+      ] })
+    ] }), span: "all", kind: "fx-invest", actions: button, children: [
+      form2,
+      said2,
+      /* @__PURE__ */ u3("div", { class: "fx-investfigs", children: [
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Total value" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: total, form: "full" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+            n3(holdings, "holding", "holdings"),
+            " in ",
+            n3(accounts.length, "account", "accounts")
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "You paid" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: paid, form: "full" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: "what went in" })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Gain" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: amountsHidden() ? "on what you paid" : `${share2(gain, paid)} on what you paid` })
+        ] }),
+        /* @__PURE__ */ u3("div", { children: [
+          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "This month" }),
+          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: month3, form: "full", sign: true, tone: "auto" }) }),
+          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
+            amountsHidden() ? "" : share2(month3, before3) + " ",
+            "since ",
+            dayShort(first)
+          ] })
+        ] })
+      ] }),
+      accounts.length > 1 && /* @__PURE__ */ u3(S, { children: [
+        /* @__PURE__ */ u3(SplitBar, { label: "What each account holds", parts: accounts.map((a3, i3) => ({ label: a3.name, value: own2(a3), color: i3 % 7 + 1 })) }),
+        /* @__PURE__ */ u3(Legend, { layout: "inline", items: accounts.map((a3, i3) => ({ label: a3.name, color: i3 % 7 + 1, value: /* @__PURE__ */ u3(Amount, { value: own2(a3), form: "whole" }) })) })
+      ] }),
+      /* @__PURE__ */ u3("table", { class: "fx-holdings", children: [
+        /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
+          /* @__PURE__ */ u3("th", { scope: "col", children: "Holding" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Shares" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "You paid" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Worth now" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" })
+        ] }) }),
+        lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key), trades }, l3.key))
+      ] }),
+      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read }),
+      keep3 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
+        /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep3({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
+        "Read Ghostfolio once a day when Finances opens"
+      ] })
+    ] });
+  }
+  function HoldingRow({ v: v3, l: l3, open: open4, toggle, trades }) {
+    const a3 = l3.account, cur = a3.currency;
+    const symbol = l3.h ? l3.h.symbol : "Cash";
+    const name = l3.h ? l3.h.name || l3.h.symbol : "Not in a holding";
+    const paid = l3.h ? l3.h.paid : l3.cash, worth = l3.h ? l3.h.value : l3.cash;
+    const gain = worth - paid;
+    const id2 = "hold-" + l3.key.replace(/[^A-Za-z0-9]+/g, "-");
+    const mark = l3.h ? /* @__PURE__ */ u3(Mark, { brand: tickerBrand(l3.h.symbol), name: l3.h.symbol, auto: true, size: "sm" }) : /* @__PURE__ */ u3(Mark, { name: "Cash", auto: true, size: "sm" });
+    const who = /* @__PURE__ */ u3("span", { class: "fx-holdwho", children: [
+      /* @__PURE__ */ u3("strong", { children: symbol }),
+      /* @__PURE__ */ u3("small", { children: [
+        l3.h ? `${name} · ` : "",
+        a3.name
+      ] })
+    ] });
+    return /* @__PURE__ */ u3("tbody", { class: "fx-hold" + (open4 ? " open" : ""), children: [
+      /* @__PURE__ */ u3("tr", { onClick: l3.h ? toggle : void 0, children: [
+        /* @__PURE__ */ u3("th", { scope: "row", children: l3.h ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-holdbtn", "aria-expanded": open4, "aria-controls": id2, onClick: (e3) => {
+          e3.stopPropagation();
+          toggle();
+        }, children: [
+          mark,
+          who
+        ] }) : /* @__PURE__ */ u3("span", { class: "fx-holdbtn", children: [
+          mark,
+          who
+        ] }) }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdshares", children: l3.h ? shares(l3.h.shares) : "" }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdpaid", children: [
+          /* @__PURE__ */ u3("span", { class: "fx-holdunit", children: [
+            l3.h ? `${shares(l3.h.shares)} shares · ` : "",
+            "paid "
+          ] }),
+          /* @__PURE__ */ u3(Amount, { value: paid, form: "full", currency: cur })
+        ] }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdworth", children: /* @__PURE__ */ u3(Amount, { value: worth, form: "full", currency: cur }) }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdgain", children: l3.h && /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto", currency: cur }),
+          !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+            " ",
+            share2(gain, paid)
+          ] })
+        ] }) })
+      ] }),
+      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 5, children: [
+        /* @__PURE__ */ u3(HoldingHistory, { v: v3, h: l3.h, cur }),
+        trades && /* @__PURE__ */ u3(Trades, { account: a3, h: l3.h, ops: trades })
+      ] }) })
+    ] });
+  }
+  function HoldingHistory({ v: v3, h: h3, cur }) {
+    const pts = h3.history || [];
+    const each = (n3) => h3.shares > 0 ? amountsHidden() ? money(0) : moneyIn(n3 / h3.shares, cur) : "";
+    const facts2 = h3.shares > 0 ? /* @__PURE__ */ u3(S, { children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "A share is worth ",
+        each(h3.value),
+        " now; they cost ",
+        each(h3.paid),
+        " each on average."
+      ] }),
+      h3.recounted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-recounted", children: "Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales." }),
+      h3.doubtful && /* @__PURE__ */ u3("p", { class: "fx-sub fx-doubtful", children: [
+        "This looks wrong: check ",
+        h3.symbol,
+        " in Ghostfolio. It's worth over a hundred times what was paid, and its buys and sales couldn't be read."
+      ] }),
+      h3.quoted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-quoted", children: [
+        "Ghostfolio has no prices of its own for ",
+        h3.symbol,
+        " yet, so its worth is today's price Ghostfolio looked up. Ghostfolio was asked to gather its prices; once it has, they're its own."
+      ] })
+    ] }) : null;
+    if (pts.length < 2) {
+      return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
+        facts2,
+        /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+          pts.length ? `Read once so far, on ${dayShort(pts[0].date)}.` : "Not read yet.",
+          " Each read from now on adds its day here."
+        ] })
+      ] });
+    }
+    return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
+      facts2,
+      /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values: pts.map((p3) => p3.amount),
+          xLabels: [{ i: 0, label: dayShort(pts[0].date) }, { i: pts.length - 1, label: dayShort(pts[pts.length - 1].date) }],
+          format: tick,
+          height: 140,
+          zero: false,
+          label: `${h3.symbol} at each read: ${pts.map((p3) => `${dayShort(p3.date)} ${moneyIn(p3.amount, cur)}`).join(", ")}.`,
+          tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+            /* @__PURE__ */ u3("div", { class: "fx-caption", children: pts[i3].date === v3.today ? "Today" : dayShort(pts[i3].date) }),
+            /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+              /* @__PURE__ */ u3("span", { children: h3.symbol }),
+              /* @__PURE__ */ u3(Amount, { value: pts[i3].amount, form: "full", currency: cur })
+            ] })
+          ] })
+        }
+      )
+    ] });
+  }
+  var dayYear2 = (s3) => (/* @__PURE__ */ new Date(s3 + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  function Trades({ account, h: h3, ops }) {
+    const [list, setList] = d2(null);
+    const [problem, setProblem] = d2("");
+    const [editing2, setEditing] = d2("");
+    const [asking, setAsking] = d2("");
+    const [busy2, setBusy] = d2(false);
+    const live = A2(true);
+    const why = (e3) => String(e3?.message || e3);
+    const load = async () => {
+      try {
+        const r3 = await ops.list(account.id, h3.symbol);
+        if (live.current) {
+          setList(r3);
+          setProblem("");
+        }
+      } catch (e3) {
+        if (live.current) setProblem(`Could not read its buys and sales from Ghostfolio: ${why(e3)}`);
+      }
+    };
+    h2(() => {
+      live.current = true;
+      load();
+      return () => {
+        live.current = false;
+      };
+    }, [account.id, h3.symbol]);
+    const drop = async (t3) => {
+      setBusy(true);
+      setProblem("");
+      try {
+        await ops.remove(t3);
+        setAsking("");
+        await load();
+      } catch (e3) {
+        if (live.current) setProblem(why(e3));
+      } finally {
+        if (live.current) setBusy(false);
+      }
+    };
+    const what2 = (t3) => `${t3.sold ? "sale" : "buy"} of ${shares(t3.shares)} ${h3.symbol} on ${dayYear2(t3.date)}`;
+    return /* @__PURE__ */ u3("div", { class: "fx-trades", children: [
+      /* @__PURE__ */ u3("h4", { class: "fx-caption", children: "Buys and sales in Ghostfolio" }),
+      list === null && !problem && /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Reading them from Ghostfolio…" }),
+      list && !list.length && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "Ghostfolio has none for ",
+        h3.symbol,
+        " in ",
+        account.name,
+        "."
+      ] }),
+      list && list.length > 0 && /* @__PURE__ */ u3("ul", { children: list.map((t3) => editing2 === t3.id ? /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(TradeForm, { t: t3, symbol: h3.symbol, change: ops.change, done: async (saved) => {
+        setEditing("");
+        if (saved) await load();
+      } }) }, t3.id) : /* @__PURE__ */ u3("li", { class: "fx-trade", children: [
+        /* @__PURE__ */ u3("span", { class: "fx-tradewhat", children: [
+          /* @__PURE__ */ u3("strong", { children: t3.sold ? "Sold" : "Bought" }),
+          " ",
+          shares(t3.shares),
+          " shares · ",
+          t3.sold ? "got" : "paid",
+          " ",
+          /* @__PURE__ */ u3(Amount, { value: t3.total, form: "full", currency: t3.currency }),
+          " ",
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+            "· ",
+            dayYear2(t3.date)
+          ] })
+        ] }),
+        asking === t3.id ? /* @__PURE__ */ u3("span", { class: "fx-tradeask", role: "group", "aria-label": `Delete the ${what2(t3)}?`, children: [
+          /* @__PURE__ */ u3("span", { children: "Delete it from Ghostfolio?" }),
+          /* @__PURE__ */ u3("span", { class: "fx-tradeacts", children: [
+            /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: () => drop(t3), children: busy2 ? "Deleting…" : "Delete" }),
+            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => setAsking(""), children: "Keep it" })
+          ] })
+        ] }) : /* @__PURE__ */ u3("span", { class: "fx-tradeacts", children: [
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || !!editing2, "aria-label": `Change the ${what2(t3)}`, onClick: () => {
+            setProblem("");
+            setEditing(t3.id);
+          }, children: "Change" }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || !!editing2, "aria-label": `Delete the ${what2(t3)}`, onClick: () => {
+            setProblem("");
+            setAsking(t3.id);
+          }, children: "Delete" })
+        ] })
+      ] }, t3.id)) }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem })
+    ] });
+  }
+  function EachShare({ shares: shares2, total, currency, sold }) {
+    const n3 = parseCount(shares2), t3 = parseAmount(total);
+    if (!(n3 > 0) || !(t3 > 0)) return null;
+    const count2 = n3.toLocaleString("en-US", { maximumFractionDigits: 8 });
+    return /* @__PURE__ */ u3("p", { class: "fx-sub fx-eachshare", role: "status", children: [
+      count2,
+      " ",
+      n3 === 1 ? "share" : "shares",
+      " at ",
+      moneyIn(t3 / n3, currency),
+      " each",
+      sold ? " sold" : "",
+      "."
+    ] });
+  }
+  function TradeForm({ t: t3, symbol, change, done }) {
+    const [way, setWay] = d2(t3.sold ? "sold" : "bought");
+    const [count2, setCount] = d2(String(t3.shares));
+    const [total, setTotal] = d2(t3.total.toFixed(2));
+    const [day3, setDay] = d2(t3.date);
+    const [busy2, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
+    const sold = way === "sold";
+    const id2 = "trade-" + t3.id.replace(/[^A-Za-z0-9]+/g, "-");
+    const submit = async (e3) => {
+      e3.preventDefault();
+      const n3 = parseCount(count2), m3 = parseAmount(total);
+      const wrong = !(n3 > 0) ? "How many shares: more than 0." : isNaN(m3) || m3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
+      setProblem(wrong);
+      if (wrong) return;
+      setBusy(true);
+      try {
+        await change({ ...t3, shares: n3, total: m3, date: day3, sold: sold || void 0 });
+        done(true);
+      } catch (err) {
+        setProblem(String(err?.message || err));
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform fx-investadd fx-tradeform", onSubmit: submit, "aria-labelledby": id2, children: [
+      /* @__PURE__ */ u3("div", { class: "fx-investaddhead", children: [
+        /* @__PURE__ */ u3("h3", { id: id2, children: [
+          "Change this ",
+          t3.sold ? "sale" : "buy",
+          " of ",
+          symbol
+        ] }),
+        /* @__PURE__ */ u3(Segmented, { label: "Bought or sold", value: way, pick: setWay, options: [["bought", "Bought"], ["sold", "Sold"]] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Shares",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: count2, onInput: (e3) => setCount(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          sold ? "What you got in all" : "What you paid in all",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(t3.currency) }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: total, onInput: (e3) => setTotal(e3.target.value) })
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Day",
+          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(EachShare, { shares: count2, total, currency: t3.currency, sold }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => done(false), children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "small primary", disabled: busy2, children: busy2 ? "Saving…" : "Save in Ghostfolio" })
+      ] })
+    ] });
+  }
+  function Unmatched({ v: v3, state: state2, keep: keep3, read }) {
+    const left = state2.unmatched || [];
+    if (!left.length || !keep3 || !read) return null;
+    const free = (v3.plan.accounts || []).filter((a3) => (a3.kind === "investment" || a3.kind === "retirement") && !a3.ghostfolio);
+    const pick = async (name, to) => {
+      if (!to) return;
+      const plan = v3.plan;
+      const accounts = to === "new" ? [...plan.accounts || [], { id: "", name, kind: "investment", balance: 0, ghostfolio: name }] : (plan.accounts || []).map((a3) => a3.id === to ? { ...a3, ghostfolio: name } : a3);
+      if (await keep3({ ...plan, accounts })) read();
+    };
+    return /* @__PURE__ */ u3("div", { class: "fx-investleft", children: [
+      /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account here yet, so not shown: pick which account each is." }),
+      /* @__PURE__ */ u3("ul", { children: left.map((name) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("label", { children: [
+        /* @__PURE__ */ u3("strong", { children: name }),
+        " in Ghostfolio is",
+        /* @__PURE__ */ u3("select", { disabled: state2.busy, onChange: (e3) => pick(name, e3.target.value), children: [
+          /* @__PURE__ */ u3("option", { value: "", children: "Pick an account…" }),
+          free.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
+          /* @__PURE__ */ u3("option", { value: "new", children: [
+            "A new account, “",
+            name,
+            "”"
+          ] })
+        ] })
+      ] }) }, name)) })
+    ] });
+  }
+  function AddForm({ v: v3, add, find, close: close3 }) {
+    const invest2 = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
+    const [way, setWay] = d2("bought");
+    const [account, setAccount] = d2(invest2[0]?.id || "new");
+    const [newName, setNewName] = d2("");
+    const [query3, setQuery] = d2("");
+    const [found2, setFound2] = d2([]);
+    const [looking2, setLooking] = d2(false);
+    const [picked, setPicked] = d2(null);
+    const [shares2, setShares] = d2("");
+    const [total, setTotal] = d2("");
+    const [day3, setDay] = d2(todayISO());
+    const [busy2, setBusy] = d2(false);
+    const [problem, setProblem] = d2("");
+    const timer = A2(0);
+    const asked = A2(0);
+    const why = (e3) => String(e3?.message || e3);
+    const type = (q2) => {
+      setQuery(q2);
+      setPicked(null);
+      clearTimeout(timer.current);
+      if (!q2.trim()) {
+        setFound2([]);
+        return;
+      }
+      timer.current = window.setTimeout(async () => {
+        const n3 = ++asked.current;
+        setLooking(true);
+        try {
+          const r3 = await find(q2);
+          if (n3 === asked.current) {
+            setFound2(r3);
+            setProblem("");
+          }
+        } catch (e3) {
+          if (n3 === asked.current) setProblem(why(e3));
+        } finally {
+          if (n3 === asked.current) setLooking(false);
+        }
+      }, 350);
+    };
+    const sold = way === "sold";
+    const submit = async (e3) => {
+      e3.preventDefault();
+      const n3 = parseCount(shares2), t3 = parseAmount(total);
+      const wrong = account === "new" && !newName.trim() ? "Name the new account." : !picked ? "Type a ticker or a name, then pick it from the list." : !(n3 > 0) ? "How many shares: more than 0." : isNaN(t3) || t3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
+      setProblem(wrong);
+      if (wrong || !picked) return;
+      setBusy(true);
+      try {
+        await add({ account: account === "new" ? void 0 : account, newName: account === "new" ? newName.trim() : void 0, symbol: picked.symbol, dataSource: picked.dataSource, currency: picked.currency, shares: n3, total: t3, date: day3, sold: sold || void 0 });
+        close3();
+      } catch (err) {
+        setProblem(why(err));
+        setBusy(false);
+      }
+    };
+    return /* @__PURE__ */ u3("form", { class: "finform fx-investadd", onSubmit: submit, "aria-labelledby": "investAddTitle", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-investaddhead", children: [
+        /* @__PURE__ */ u3("h3", { id: "investAddTitle", children: "Add a holding" }),
+        /* @__PURE__ */ u3(Segmented, { label: "Bought or sold", value: way, pick: setWay, options: [["bought", "Bought"], ["sold", "Sold"]] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Account",
+          /* @__PURE__ */ u3("select", { value: account, onChange: (e3) => setAccount(e3.target.value), children: [
+            invest2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
+            /* @__PURE__ */ u3("option", { value: "new", children: "A new account…" })
+          ] })
+        ] }),
+        account === "new" && /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Its name",
+          /* @__PURE__ */ u3("input", { value: newName, placeholder: "Roth IRA", onInput: (e3) => setNewName(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field wide", children: [
+          "What you ",
+          sold ? "sold" : "bought",
+          /* @__PURE__ */ u3("input", { value: query3, placeholder: "A ticker, like VTI, or a name", autocomplete: "off", "aria-describedby": "investFound", onInput: (e3) => type(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { id: "investFound", class: "fx-symbols", "aria-live": "polite", children: picked ? /* @__PURE__ */ u3("p", { class: "fx-symbolpicked", children: [
+        /* @__PURE__ */ u3("strong", { children: picked.symbol }),
+        " ",
+        picked.name,
+        " ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+          "· ",
+          picked.currency
+        ] }),
+        " ",
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
+          setPicked(null);
+        }, children: "Change" })
+      ] }) : looking2 ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Looking it up in Ghostfolio…" }) : query3.trim() && !found2.length ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
+        "Ghostfolio found nothing for “",
+        query3.trim(),
+        "”."
+      ] }) : found2.map((s3) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-symbol", onClick: () => {
+        setPicked(s3);
+        setQuery(s3.symbol);
+        setFound2([]);
+      }, children: [
+        /* @__PURE__ */ u3("strong", { children: s3.symbol }),
+        /* @__PURE__ */ u3("span", { children: s3.name }),
+        /* @__PURE__ */ u3("small", { children: s3.currency })
+      ] }, s3.dataSource + s3.symbol)) }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Shares",
+          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: shares2, placeholder: "10", onInput: (e3) => setShares(e3.target.value) })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          sold ? "What you got in all" : "What you paid in all",
+          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(picked?.currency) }),
+            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: total, placeholder: "0.00", onInput: (e3) => setTotal(e3.target.value) })
+          ] })
+        ] }),
+        /* @__PURE__ */ u3("label", { class: "field", children: [
+          "Day",
+          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3(EachShare, { shares: shares2, total, currency: picked?.currency, sold }),
+      /* @__PURE__ */ u3("p", { class: "fx-sub fx-investaddnote", children: [
+        "It goes into Ghostfolio on this computer",
+        account === "new" ? ", and the new account into Finances too, by the same name" : "",
+        ". Only the ticker leaves the homelab, when Ghostfolio looks it up."
+      ] }),
+      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
+      /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: close3, children: "Cancel" }),
+        /* @__PURE__ */ u3("button", { type: "submit", class: "small primary", disabled: busy2, children: busy2 ? "Adding…" : "Add to Ghostfolio" })
+      ] })
+    ] });
+  }
+
+  // web/src/finances/Worth.tsx
+  var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
+  function ago2(day3, today2) {
+    if (!day3) return "not typed in yet";
+    const n3 = daysBetween(day3, today2);
+    return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
+  }
+  var month2 = (day3) => monthName(day3).slice(0, 3);
+  function NetWorth({ v: v3, L: L2, edit, open: open4, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
+    const [range, setRange] = d2("3");
+    const [counted, setCounted] = d2("all");
+    const accounts = v3.plan.accounts || [];
+    if (!accounts.length && !edit) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) }) });
+    if (!accounts.length) {
+      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Nothing here yet", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
+        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
+      ] }) }) }) });
+    }
+    const kept4 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
+    const back4 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
+    const months = worthByMonth(v3, back4, 3);
+    const start = months[0];
+    const now = netWorth(v3);
+    const focus = group2 ? grouped(v3).find((g2) => g2.key === group2) : void 0;
+    const inFocus = (a3) => !focus || focus.accounts.includes(a3);
+    const owned = accounts.filter((a3) => !owed(a3.kind));
+    const debts = accounts.filter((a3) => owed(a3.kind));
+    const owes = debts.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
+    const loans = debts.filter((a3) => a3.kind === "loan");
+    const onLoans = loans.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
+    const loanDrop = loans.reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
+    const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
+    const netted = months.some((m3) => m3.secured > 0);
+    const hasHome = ownedKeys.some((g2) => g2.key === "property");
+    const homeToo = counted === "all" || !hasHome;
+    const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
+    const named6 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
+    const bars = (m3) => {
+      const equity = (m3.owned.property || 0) - m3.secured;
+      const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
+      return { up, down: m3.owes - m3.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m3.net : m3.net - equity };
+    };
+    const owedName = netted ? "Other debts" : "Owed";
+    const netName = homeToo ? "Net worth" : "Net worth without Home & Car";
+    const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
+    const row = (a3) => {
+      const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
+      const loan = a3.loan ? accounts.find((x3) => x3.id === a3.loan) : void 0;
+      const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - todayOf(v3, a3) / rateOf(v3.plan, a3)) / a3.original)) : -1;
+      const own2 = a3.currency ? `${moneyIn(Math.abs(todayOf(v3, a3)) / rateOf(v3.plan, a3), a3.currency)} · ` : "";
+      const sub = own2 + (loan ? `${money(todayOf(v3, a3) - todayOf(v3, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a3.currency ? moneyIn(a3.original, a3.currency).replace(/\.\d\d$/, "") : whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${moneyIn(a3.pending, a3.currency)} pending` : ago2(a3.updated, v3.today));
+      const car = a3.kind === "car" && a3.bought && a3.boughtOn ? ` · bought for ${a3.currency ? moneyIn(a3.bought, a3.currency) : whole(a3.bought)}, ${monthName(a3.boughtOn).slice(0, 3)} ${a3.boughtOn.slice(0, 4)}` : "";
+      return /* @__PURE__ */ u3(
+        Row,
+        {
+          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
+          title: a3.name,
+          sub: sub + car,
+          end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [
+            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: d3 > 0 === w3 >= 0 ? "↑ " : "↓ " }),
+            compact(Math.abs(d3)),
+            /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
+              " ",
+              w3 >= 0 ? d3 > 0 ? "more" : "less" : d3 > 0 ? "less owed" : "more owed",
+              " since ",
+              dayShort(start.date)
+            ] })
+          ] }) : void 0,
+          when: /* @__PURE__ */ u3(Amount, { value: Math.abs(w3), form: "full" }),
+          whenPlain: true,
+          onOpen: open4 ? () => open4(a3.id) : edit ? () => edit("account", a3.id) : void 0,
+          openLabel: open4 ? "open" : "edit"
+        },
+        a3.id
+      );
+    };
+    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+      /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
+      /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
+      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
+        "You owe ",
+        /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
+        loans.length ? /* @__PURE__ */ u3(S, { children: [
+          onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
+          " ",
+          /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
+          " ",
+          loanDrop >= 0 ? "smaller" : "larger",
+          " than on ",
+          dayShort(start.date),
+          "."
+        ] }) : "."
+      ] }) }),
+      focus && /* @__PURE__ */ u3(GroupCard, { v: v3, focus, months, range, setRange, clear: () => setGroup?.("") }),
+      /* @__PURE__ */ u3(
+        Widget,
+        {
+          title: "Net worth by month",
+          span: "all",
+          kind: "fx-worthchart",
+          actions: /* @__PURE__ */ u3(S, { children: [
+            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without Home & Car"]] }),
+            /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges2.map(([k3, t3]) => [k3, t3]) })
+          ] }),
+          children: [
+            /* @__PURE__ */ u3(
+              StackedBars,
+              {
+                format: tick,
+                height: 280,
+                label: `${netName} at each month's end, what is owned stacked above zero${homeToo && netted ? " (a home and car less their loans)" : ""} and what is owed below: ${months.map((m3) => `${month2(m3.date)} ${money(bars(m3).net)}${m3.ahead ? " ahead" : ""}`).join(", ")}.`,
+                columns: months.map((m3) => ({
+                  label: m3.date === v3.today ? "Now" : month2(m3.date),
+                  up: bars(m3).up.map(({ value, color }) => ({ value, color })),
+                  down: [{ value: bars(m3).down, color: 8 }],
+                  line: bars(m3).net,
+                  ahead: m3.ahead
+                })),
+                tip: (i3) => {
+                  const m3 = months[i3], b2 = bars(m3);
+                  return /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
+                      /* @__PURE__ */ u3("span", { children: "Owned" }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.up.reduce((t3, p3) => t3 + p3.value, 0), form: "full", tone: "in" })
+                    ] }),
+                    keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                      /* @__PURE__ */ u3(Dot, { color: g2.color }),
+                      /* @__PURE__ */ u3("span", { children: named6(g2) }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
+                    ] }, g2.key)),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
+                      /* @__PURE__ */ u3("span", { children: owedName }),
+                      /* @__PURE__ */ u3(Amount, { value: -b2.down, form: "full", tone: "out" })
+                    ] }),
+                    /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                      /* @__PURE__ */ u3("span", { children: netName }),
+                      /* @__PURE__ */ u3(Amount, { value: b2.net, form: "full" })
+                    ] })
+                  ] });
+                }
+              }
+            ),
+            /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
+              ...keys2.map((g2) => ({ label: named6(g2), color: g2.color })),
+              { label: owedName, color: 8 },
+              { label: netName, color: "muted", shape: "line" },
+              ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
+            ] })
+          ]
+        }
+      ),
+      (!focus || focus.key === "investments") && /* @__PURE__ */ u3(InvestmentsWidget, { v: v3, keep: keep3, ...invest2 }),
+      (!focus || focus.accounts.some((a3) => !owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+        "What you own ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owned.filter(inFocus).reduce((t3, a3) => t3 + worthOf(v3, a3), 0), form: "whole" }) })
+      ] }), kind: "fx-ownlist", span: focus && !focus.accounts.some((a3) => owed(a3.kind)) ? "all" : 2, children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(owned.filter(inFocus)).map(row) }) }),
+      (!focus || focus.accounts.some((a3) => owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
+        "What you owe ",
+        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: focus ? debts.filter(inFocus).reduce((t3, a3) => t3 - worthOf(v3, a3), 0) : owes, form: "whole" }) })
+      ] }), kind: "fx-owelist", span: focus ? "all" : void 0, children: debts.filter(inFocus).length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts.filter(inFocus)).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
+      /* @__PURE__ */ u3(LoansWidget, { v: v3, L: L2, edit }),
+      /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
+      /* @__PURE__ */ u3(FireWidget, { v: v3, L: L2, keep: keep3 }),
+      /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
+    ] }) });
+  }
+  function GroupCard({ v: v3, focus, months, range, setRange, clear }) {
+    const list = [...focus.accounts].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
+    const debt = list.every((a3) => owed(a3.kind));
+    const color = (i3) => i3 % 7 + 1;
+    const at2 = (a3, m3) => Math.abs(m3.date === v3.today ? worthOf(v3, a3) : worthOn(v3, a3, m3.date));
+    return /* @__PURE__ */ u3(
+      Widget,
+      {
+        title: /* @__PURE__ */ u3(S, { children: [
+          focus.name,
+          " ",
+          /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
+            /* @__PURE__ */ u3(Amount, { value: Math.abs(focus.total), form: "whole" }),
+            debt ? " owed" : ""
+          ] })
+        ] }),
+        span: "all",
+        kind: "fx-groupcard",
+        actions: /* @__PURE__ */ u3(S, { children: [
+          /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges2.map(([k3, t3]) => [k3, t3]) }),
+          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: clear, children: "Show everything" })
+        ] }),
+        children: [
+          /* @__PURE__ */ u3(
+            StackedBars,
+            {
+              format: tick,
+              height: 220,
+              lineless: true,
+              label: `${focus.name} at each month's end, each account a band of its own: ${months.map((m3) => `${month2(m3.date)} ${list.map((a3) => `${a3.name} ${money(at2(a3, m3))}`).join(", ")}`).join("; ")}.`,
+              columns: months.map((m3) => ({
+                label: m3.date === v3.today ? "Now" : month2(m3.date),
+                up: list.map((a3, i3) => ({ value: at2(a3, m3), color: color(i3) })),
+                down: [],
+                line: list.reduce((t3, a3) => t3 + at2(a3, m3), 0),
+                ahead: m3.ahead
+              })),
+              tip: (i3) => {
+                const m3 = months[i3];
+                return /* @__PURE__ */ u3(S, { children: [
+                  /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
+                  list.map((a3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
+                    /* @__PURE__ */ u3(Dot, { color: color(k3) }),
+                    /* @__PURE__ */ u3("span", { children: a3.name }),
+                    /* @__PURE__ */ u3(Amount, { value: at2(a3, m3), form: "full" })
+                  ] }, a3.id)),
+                  /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
+                    /* @__PURE__ */ u3("span", { children: focus.name }),
+                    /* @__PURE__ */ u3(Amount, { value: list.reduce((t3, a3) => t3 + at2(a3, m3), 0), form: "full" })
+                  ] })
+                ] });
+              }
+            }
+          ),
+          /* @__PURE__ */ u3(Legend, { layout: "inline", items: list.map((a3, i3) => ({ label: a3.name, color: color(i3) })) })
+        ]
+      }
+    );
+  }
+
+  // web/src/finances/widgets/Latest.tsx
+  var latestCount = 5;
+  function latest(txs, n3 = latestCount) {
+    return txs.map((t3, i3) => ({ t: t3, i: i3 })).sort((a3, b2) => b2.t.date.localeCompare(a3.t.date) || b2.i - a3.i).slice(0, n3).map((x3) => x3.t);
+  }
+  function TxRow({ t: t3, v: v3, L: L2, edit }) {
+    const a3 = L2.account[t3.account];
+    const what2 = t3.splits?.length ? t3.splits.map((sp) => sp.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
+    return /* @__PURE__ */ u3(
+      Row,
+      {
+        lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
+        title: txTitle(t3, L2),
+        sub: `${t3.date === v3.today ? "Today" : dayShort(t3.date)} · ${what2} · ${t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account}`,
+        when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
+        whenPlain: true,
+        onOpen: edit ? () => edit("transaction", t3.id) : void 0,
+        openLabel: edit ? "edit" : void 0
+      }
+    );
+  }
+  function LatestWidget({ v: v3, L: L2, ledger, edit, all }) {
+    const list = latest(ledger?.transactions || []);
+    if (!list.length) return null;
+    return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", kind: "fx-latest", actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }) });
+  }
+
+  // web/src/finances/Account.tsx
+  var kindName2 = { checking: "Checking", savings: "Savings", card: "Credit card", investment: "Investments", retirement: "Retirement", loan: "Loan", home: "Home", car: "Car", collectible: "Collectible" };
+  var spans = [["30", "30 days", 30], ["90", "90 days", 90], ["365", "A year", 365]];
+  var back = (day3, n3) => {
+    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1, +day3.slice(8, 10) - n3);
+    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-${String(d3.getDate()).padStart(2, "0")}`;
+  };
+  function AccountPage({ v: v3, L: L2, ledger, id: id2, done, edit, update, toTx, editTx }) {
+    const [span, setSpan] = d2("90");
+    const a3 = (v3.plan.accounts || []).find((x3) => x3.id === id2);
+    if (!a3) return /* @__PURE__ */ u3(Empty, { children: [
+      "This account isn't in the plan any more. ",
+      /* @__PURE__ */ u3("button", { class: "small", onClick: done, children: "Net worth" })
+    ] });
+    const owes = owed(a3.kind);
+    const all = ledger?.transactions || [];
+    const mine = all.filter((t3) => t3.account === a3.id || t3.to === a3.id).sort((x3, y3) => x3.date < y3.date ? 1 : x3.date > y3.date ? -1 : 0);
+    const runs2 = runsFrom(a3) && !!mine.length;
+    const days = spans.find(([k3]) => k3 === span)[2];
+    const steps = Array.from({ length: days + 1 }, (_3, i3) => back(v3.today, days - i3));
+    const values = steps.map((d3) => runs2 ? balanceAfter(a3, all, d3) : Math.abs(worthOn(v3, a3, d3)));
+    const low = values.reduce((m3, x3, i3) => x3 < values[m3] ? i3 : m3, 0);
+    const thisMonth = mine.filter((t3) => t3.date.startsWith(v3.today.slice(0, 7)));
+    const into2 = (t3) => t3.to === a3.id ? -t3.amount : t3.amount;
+    const cameIn = thisMonth.reduce((s3, t3) => s3 + Math.max(0, into2(t3)), 0), wentOut = thisMonth.reduce((s3, t3) => s3 + Math.min(0, into2(t3)), 0);
+    const sub = [kindName2[a3.kind] || a3.kind, ago2(a3.updated, v3.today)].join(" · ");
+    return /* @__PURE__ */ u3("div", { class: "fin fx-account", children: [
+      /* @__PURE__ */ u3("div", { class: "fx-accthead", children: [
+        /* @__PURE__ */ u3("button", { type: "button", class: "link", onClick: done, children: "‹ Net worth" }),
+        /* @__PURE__ */ u3("div", { class: "fx-acctname", children: [
+          /* @__PURE__ */ u3(AcctMark, { a: a3, size: "lg" }),
+          /* @__PURE__ */ u3("div", { class: "grow", children: [
+            /* @__PURE__ */ u3("h2", { children: a3.name }),
+            /* @__PURE__ */ u3("p", { class: "muted", children: sub })
+          ] }),
+          (edit || update) && /* @__PURE__ */ u3("span", { class: "actions", children: [
+            edit && /* @__PURE__ */ u3("button", { class: "btn", onClick: edit, children: "Edit" }),
+            update && /* @__PURE__ */ u3("button", { class: "btn fx-primary", onClick: update, children: "Update balance" })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ u3("div", { class: "fx-board", children: [
+        /* @__PURE__ */ u3(
+          Widget,
+          {
+            title: owes ? "Owed today" : a3.kind === "home" || a3.kind === "car" || a3.kind === "collectible" ? "Worth today" : "Balance today",
+            span: "all",
+            kind: "fx-acctbalance",
+            actions: /* @__PURE__ */ u3(Segmented, { label: "How far back", value: span, pick: setSpan, options: spans.map(([k3, t3]) => [k3, t3]) }),
+            children: [
+              /* @__PURE__ */ u3(
+                Stat,
+                {
+                  size: "lg",
+                  value: /* @__PURE__ */ u3(Amount, { value: Math.abs(todayOf(v3, a3)) }),
+                  aside: thisMonth.length ? /* @__PURE__ */ u3("dl", { class: "fx-acctmonth", children: [
+                    /* @__PURE__ */ u3("div", { children: [
+                      /* @__PURE__ */ u3("dt", { children: "Came in this month" }),
+                      /* @__PURE__ */ u3("dd", { children: /* @__PURE__ */ u3(Amount, { value: cameIn, sign: true, tone: "in", form: "full" }) })
+                    ] }),
+                    /* @__PURE__ */ u3("div", { children: [
+                      /* @__PURE__ */ u3("dt", { children: "Went out" }),
+                      /* @__PURE__ */ u3("dd", { children: /* @__PURE__ */ u3(Amount, { value: wentOut, form: "full" }) })
+                    ] })
+                  ] }) : void 0
+                }
+              ),
+              /* @__PURE__ */ u3(
+                AreaChart,
+                {
+                  values,
+                  xLabels: [0, Math.round(days / 2), days].map((i3) => ({ i: i3, label: i3 === days ? "Today" : dayShort(steps[i3]) })),
+                  zero: false,
+                  height: 180,
+                  format: compact,
+                  label: `${a3.name}, ${owes ? "owed" : "held"} at the end of each day over the last ${spans.find(([k3]) => k3 === span)[1].toLowerCase()}: lowest ${money(values[low])} on ${dayShort(steps[low])}, ${money(values[values.length - 1])} today`,
+                  tip: (i3) => /* @__PURE__ */ u3(S, { children: [
+                    /* @__PURE__ */ u3("strong", { children: dayShort(steps[i3]) }),
+                    /* @__PURE__ */ u3("br", {}),
+                    money(values[i3])
+                  ] })
+                }
+              ),
+              /* @__PURE__ */ u3("p", { class: "fx-sub", children: runs2 ? `Lowest ${money(values[low])}, ${dayShort(steps[low])}. Worked from the balance typed in ${dayShort(a3.updated)} through its transactions.` : "From the balances typed in over time." })
+            ]
+          }
+        ),
+        /* @__PURE__ */ u3(Widget, { title: "Latest transactions", span: "all", kind: "fx-acctlatest", actions: mine.length ? /* @__PURE__ */ u3("button", { class: "small", onClick: () => toTx({ account: a3.id }), children: "All of them in Transactions" }) : void 0, children: mine.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: mine.slice(0, 8).map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit: editTx }, t3.id)) }) : /* @__PURE__ */ u3(Empty, { children: "No transactions in or out of it yet. An import or one typed in shows here." }) })
+      ] })
+    ] });
+  }
+
   // web/src/finances/Reports.tsx
   function Reports({ v: v3, ledger, exportFile: exportFile2, open: open4 }) {
     const [key5, setKey] = d2("month");
@@ -12819,145 +14409,6 @@ ${pays}
         ]
       }
     );
-  }
-
-  // web/src/finances/widgets/Goals.tsx
-  var monthOf2 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
-  var byDay = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
-  function goalWords(g2) {
-    if (g2.left <= 0) return "Reached";
-    if (g2.needsPaycheck && g2.needsMonth) return `${money(g2.needsPaycheck)} a paycheck (${money(g2.needsMonth)} a month) to be there by ${byDay(g2.date)}`;
-    if (g2.needsMonth) return `${money(g2.needsMonth)} a month to be there by ${byDay(g2.date)}`;
-    return g2.date ? `Wanted by ${byDay(g2.date)}` : "No day set";
-  }
-  function goalPace(g2) {
-    if (g2.left <= 0 || !g2.paced) return "";
-    return g2.pace > 0 ? `${money(g2.pace)} a month lately: there by ${monthOf2(g2.reaches)}` : "Not growing lately";
-  }
-  function goalBrief(g2) {
-    if (g2.left <= 0) return "Reached";
-    if (g2.needsPaycheck) return `${money(g2.needsPaycheck)} a paycheck, by ${byDay(g2.date)}`;
-    if (g2.needsMonth) return `${money(g2.needsMonth)} a month, by ${byDay(g2.date)}`;
-    return g2.date ? `Wanted by ${byDay(g2.date)}` : g2.paced && g2.pace > 0 ? `There by ${monthOf2(g2.reaches)} at this pace` : "No day set";
-  }
-  function paydaysAMonth(v3) {
-    const last2 = v3.paydays.at(-1)?.date;
-    const days = last2 ? daysBetween(v3.today, last2) : 0;
-    return days > 0 ? v3.paydays.length / (days / 30.44) : 0;
-  }
-  var monthsOn = (day3, n3) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
-    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
-  };
-  function WhatIf({ v: v3, goals }) {
-    const open4 = goals.filter((g3) => g3.left > 0);
-    const [id2, setId] = d2("");
-    const [amount, setAmount] = d2("");
-    const [day3, setDay] = d2("");
-    const g2 = open4.find((x3) => x3.id === id2) || open4[0];
-    if (!g2) return null;
-    const per = paydaysAMonth(v3);
-    const n3 = parseAmount(amount);
-    const months = n3 > 0 && per > 0 ? Math.ceil(g2.left / (n3 * per)) : 0;
-    const reaches = months ? monthsOn(v3.today, months) : "";
-    const due = g2.date?.slice(0, 7);
-    const gap2 = reaches && due ? (+reaches.slice(0, 4) - +due.slice(0, 4)) * 12 + (+reaches.slice(5) - +due.slice(5)) : 0;
-    const paychecks = day3 && day3 > v3.today ? Math.max(1, Math.floor(daysBetween(v3.today, day3) / 30.44 * per)) : 0;
-    return /* @__PURE__ */ u3("section", { class: "fx-whatif", "aria-label": "What if", children: [
-      /* @__PURE__ */ u3("h3", { children: "What if" }),
-      /* @__PURE__ */ u3("div", { class: "fx-whatifrow", children: [
-        open4.length > 1 && /* @__PURE__ */ u3("select", { "aria-label": "Which goal", value: g2.id, onChange: (e3) => setId(e3.target.value), children: open4.map((x3) => /* @__PURE__ */ u3("option", { value: x3.id, children: x3.name }, x3.id)) }),
-        open4.length === 1 && /* @__PURE__ */ u3("strong", { children: g2.name }),
-        /* @__PURE__ */ u3("label", { children: [
-          "I put by ",
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Put by a paycheck", value: amount, placeholder: g2.needsPaycheck ? String(Math.round(g2.needsPaycheck)) : "100", onInput: (e3) => setAmount(e3.target.value) })
-          ] }),
-          " a paycheck"
-        ] }),
-        /* @__PURE__ */ u3("label", { children: [
-          "or want it by ",
-          /* @__PURE__ */ u3("input", { type: "date", "aria-label": "Want it by", value: day3, onInput: (e3) => setDay(e3.target.value) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
-        months > 0 && /* @__PURE__ */ u3(S, { children: [
-          "At ",
-          money(n3),
-          " a paycheck (about ",
-          money(n3 * per),
-          " a month), ",
-          g2.name,
-          " gets there by ",
-          monthOf2(reaches),
-          due ? gap2 > 0 ? `, ${gap2} month${gap2 === 1 ? "" : "s"} after its day` : gap2 < 0 ? `, ${-gap2} month${gap2 === -1 ? "" : "s"} before its day` : ", the month of its day" : "",
-          ". "
-        ] }),
-        paychecks > 0 && /* @__PURE__ */ u3(S, { children: [
-          "By ",
-          byDay(day3),
-          ", it needs ",
-          money(g2.left / paychecks),
-          " a paycheck (",
-          paychecks,
-          " paychecks)."
-        ] }),
-        !months && !paychecks && "Type an amount a paycheck, or a day, to see what it changes. Nothing is saved."
-      ] })
-    ] });
-  }
-  function GoalsWidget({ v: v3, L: L2, edit, all }) {
-    const goals = v3.goals || [];
-    if (all && !goals.length) return null;
-    const need = goals.reduce((t3, g2) => t3 + (g2.needsMonth || 0), 0);
-    const saved = goals.length ? month(v3, L2).saved : 0;
-    return /* @__PURE__ */ u3(Widget, { title: "Goals", span: "all", kind: "fx-goals", actions: all ? /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }) : edit && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => edit("goal"), children: "Add a goal" }), children: [
-      !all && need > saved + 5e-3 && /* @__PURE__ */ u3("p", { class: "fx-goalsshort fx-warn", role: "note", children: [
-        "Together the goals need ",
-        money(need),
-        " a month to be there in time; the plan puts by ",
-        money(saved),
-        " a month, ",
-        money(need - saved),
-        " short."
-      ] }),
-      goals.length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: goals.map((g2) => {
-        const share3 = g2.target > 0 ? Math.min(100, g2.saved / g2.target * 100) : 0;
-        const tone = g2.left <= 0 ? "done" : g2.behind ? "warn" : "";
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            title: g2.name,
-            sub: /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: [
-              all ? goalBrief(g2) : goalWords(g2),
-              tone === "warn" && /* @__PURE__ */ u3("span", { class: "sr", children: " (behind)" })
-            ] }),
-            when: /* @__PURE__ */ u3("span", { class: "fx-goalleft", children: g2.left <= 0 ? /* @__PURE__ */ u3(Amount, { value: g2.target, form: "full" }) : /* @__PURE__ */ u3(S, { children: [
-              /* @__PURE__ */ u3(Amount, { value: g2.left, form: "full" }),
-              " left"
-            ] }) }),
-            whenPlain: true,
-            onOpen: edit ? () => edit("goal", g2.id) : void 0,
-            openLabel: edit ? "edit" : void 0,
-            children: [
-              /* @__PURE__ */ u3("span", { class: "fx-budgetbar" + (tone === "warn" ? " warn" : ""), role: "img", "aria-label": `${g2.name}: ${money(g2.saved)} of ${money(g2.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, g2.saved > 0 ? 1 : 0)}%` } }) }),
-              /* @__PURE__ */ u3("span", { class: "fx-sub fx-goalsaved", children: [
-                money(g2.saved),
-                " of ",
-                money(g2.target),
-                !all && goalPace(g2) && /* @__PURE__ */ u3(S, { children: [
-                  " · ",
-                  /* @__PURE__ */ u3("span", { class: tone === "warn" ? "fx-warn" : "", children: goalPace(g2) })
-                ] })
-              ] })
-            ]
-          },
-          g2.id
-        );
-      }) }) : /* @__PURE__ */ u3(Empty, { children: edit ? "No goals yet: an emergency fund, a trip, a car. Say how much, by when, and which accounts count toward it, and see what it needs each paycheck." : "No goals yet." }),
-      edit && !all && /* @__PURE__ */ u3(WhatIf, { v: v3, goals })
-    ] });
   }
 
   // web/src/finances/widgets/SetAside.tsx
@@ -14463,14 +15914,14 @@ ${pays}
   }
 
   // web/src/finances/widgets/Averages.tsx
-  var back = 183;
+  var back2 = 183;
   var least = 3;
   var off = 0.03;
   function averages(v3) {
     const out = [];
     for (const x3 of v3.plan.payments || []) {
       if (!x3.estimate || x3.card || x3.payer || !(x3.amount > 0)) continue;
-      const paid = (v3.paid || []).filter((p3) => p3.payment === x3.id && daysBetween(p3.due, v3.today) <= back);
+      const paid = (v3.paid || []).filter((p3) => p3.payment === x3.id && daysBetween(p3.due, v3.today) <= back2);
       if (paid.length < least) continue;
       const average = Math.round(paid.reduce((t3, p3) => t3 + p3.amount, 0) / paid.length * 100) / 100;
       if (Math.abs(average - x3.amount) < x3.amount * off) continue;
@@ -14530,7 +15981,7 @@ ${pays}
   }
 
   // web/src/finances/widgets/Paycheck.tsx
-  var shown4 = 5;
+  var shown5 = 5;
   var ownTile = ["checking", "savings", "investment", "retirement"];
   var names2 = (ids, L2) => ids.map((id2) => L2.person[id2]?.name || id2).join(" and ");
   var paydayTitle = (pd, L2) => `${names2(pd.people, L2)}'s paycheck · ${dayLong(pd.date)}`;
@@ -14592,7 +16043,7 @@ ${pays}
     const i3 = Math.min(sel2, v3.periods.length - 1);
     const p3 = v3.periods[i3];
     if (!p3) return null;
-    const rows = all ? p3.rows : p3.rows.slice(0, shown4);
+    const rows = all ? p3.rows : p3.rows.slice(0, shown5);
     const cushion = v3.plan.cushion || 0;
     const row = tiles(v3, L2, i3);
     return /* @__PURE__ */ u3(Widget, { title: p3.now ? "Until the next paycheck" : "This paycheck", kind: "fx-paycheck", span: "all", children: [
@@ -14677,7 +16128,7 @@ ${pays}
         }),
         !p3.rows.length && /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(Empty, { children: "Nothing to pay before the next paycheck." }) })
       ] }),
-      p3.rows.length > shown4 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
+      p3.rows.length > shown5 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${p3.rows.length} payments` }) })
     ] });
   }
 
@@ -14711,41 +16162,14 @@ ${pays}
     ] });
   }
 
-  // web/src/finances/widgets/Latest.tsx
-  var latestCount = 5;
-  function latest(txs, n3 = latestCount) {
-    return txs.map((t3, i3) => ({ t: t3, i: i3 })).sort((a3, b2) => b2.t.date.localeCompare(a3.t.date) || b2.i - a3.i).slice(0, n3).map((x3) => x3.t);
-  }
-  function TxRow({ t: t3, v: v3, L: L2, edit }) {
-    const a3 = L2.account[t3.account];
-    const what2 = t3.splits?.length ? t3.splits.map((sp) => sp.category).join(", ") : t3.category || (t3.to ? "Transfer" : "No category");
-    return /* @__PURE__ */ u3(
-      Row,
-      {
-        lead: /* @__PURE__ */ u3(TxMark, { t: t3, categories: v3.categories }),
-        title: txTitle(t3, L2),
-        sub: `${t3.date === v3.today ? "Today" : dayShort(t3.date)} · ${what2} · ${t3.to ? `${a3?.name || t3.account} → ${L2.account[t3.to]?.name || t3.to}` : a3?.name || t3.account}`,
-        when: /* @__PURE__ */ u3(Amount, { value: t3.amount, sign: t3.amount > 0, tone: t3.amount > 0 && !t3.to ? "in" : "", form: "full", currency: a3?.currency }),
-        whenPlain: true,
-        onOpen: edit ? () => edit("transaction", t3.id) : void 0,
-        openLabel: edit ? "edit" : void 0
-      }
-    );
-  }
-  function LatestWidget({ v: v3, L: L2, ledger, edit, all }) {
-    const list = latest(ledger?.transactions || []);
-    if (!list.length) return null;
-    return /* @__PURE__ */ u3(Widget, { title: "Latest transactions", kind: "fx-latest", actions: all && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: all, children: "See all" }), children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }) });
-  }
-
   // web/src/finances/widgets/Past.tsx
-  var shown5 = 6;
+  var shown6 = 6;
   function PastWidget({ v: v3, L: L2, past, title = "What happened", ledger, edit }) {
     const [all, setAll] = d2(false);
     const range = { key: "period", label: "", from: past.start, to: past.last };
     const txs = inHome(v3.plan, ledger?.transactions || []).filter((t3) => t3.date >= past.start && t3.date <= past.last);
     const sum = totals(txs, range);
-    const list = latest(txs, all ? txs.length : shown5);
+    const list = latest(txs, all ? txs.length : shown6);
     return /* @__PURE__ */ u3(Widget, { title, kind: "fx-past", span: "all", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(past.start),
@@ -14759,13 +16183,13 @@ ${pays}
           /* @__PURE__ */ u3(Stat, { value: /* @__PURE__ */ u3(Amount, { value: sum.out }), caption: "Went out", aside: /* @__PURE__ */ u3(Delta, { value: sum.in - sum.out, label: "left over" }) })
         ] }),
         /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: list.map((t3) => /* @__PURE__ */ u3(TxRow, { t: t3, v: v3, L: L2, edit }, t3.id)) }),
-        txs.length > shown5 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${txs.length} transactions` }) })
+        txs.length > shown6 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${txs.length} transactions` }) })
       ] }) : /* @__PURE__ */ u3(Empty, { children: ledger?.transactions.length ? "No transactions kept for these days." : "What happened shows here once you import or add your transactions." })
     ] });
   }
 
   // web/src/finances/widgets/Planned.tsx
-  var shown6 = 6;
+  var shown7 = 6;
   function PlannedWidget({ v: v3, L: L2, title, start, last: last2, edit }) {
     const [all, setAll] = d2(false);
     const days = (v3.days || []).filter((d3) => d3.date >= start && d3.date <= last2);
@@ -14774,7 +16198,7 @@ ${pays}
     const goesOut = -rows.filter((r3) => r3.e.amount < 0).reduce((t3, r3) => t3 + r3.e.amount, 0);
     const end = days.at(-1);
     const cushion = v3.plan.cushion || 0;
-    const list = all ? rows : rows.slice(0, shown6);
+    const list = all ? rows : rows.slice(0, shown7);
     return /* @__PURE__ */ u3(Widget, { title, kind: "fx-planned", span: "all", children: [
       /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead fx-dates", children: [
         dayShort(start),
@@ -14805,1340 +16229,9 @@ ${pays}
             k3
           );
         }) }),
-        rows.length > shown6 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` }) })
+        rows.length > shown7 && /* @__PURE__ */ u3("p", { class: "actions fx-more", children: /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${rows.length}` }) })
       ] }) : /* @__PURE__ */ u3(Empty, { children: "Nothing planned for these days." })
     ] });
-  }
-
-  // web/src/finances/widgets/Ledger.tsx
-  var typedBill = (s3) => !!s3.payment && !!s3.typed;
-  function SinceWidget({ v: v3, L: L2, set: set2 }) {
-    const [busy2, setBusy] = d2("");
-    const [all, setAll] = d2(false);
-    const list = v3.since || [];
-    const stateOf2 = (s3) => s3.waiting ? "waiting" : s3.inBalance ? "inBalance" : "counted";
-    const pick = async (s3, choice) => {
-      const want = choice === "not" ? "waiting" : choice === "held" ? "inBalance" : "counted";
-      if (want === stateOf2(s3) || busy2) return;
-      setBusy(s3.key);
-      await set2(s3.key, want);
-      setBusy("");
-    };
-    const sub = (s3) => dayLong(s3.date) + (s3.waiting ? " · not yet: it comes today" : typedBill(s3) ? s3.inBalance ? " · already in the balance" : " · due the day the balance was typed" : s3.typed ? " · the day its balance was typed in" : " · since the balance was typed in");
-    const name = (s3) => s3.person ? `${L2.person[s3.person]?.name || s3.person}'s paycheck` : L2.payment[s3.payment]?.name || s3.payment;
-    const shown8 = all ? list : list.slice(0, 5);
-    return /* @__PURE__ */ u3(Widget, { title: "Taken as done", span: "all", kind: "fx-since", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub fx-lead", children: [
-        "Dated on or after the day you typed in the balances, so counted in them. A bill due that day still comes out",
-        set2 ? ": mark it Already in if the balance has it. Mark any that hasn't happened yet: it comes today." : "."
-      ] }),
-      /* @__PURE__ */ u3(Rows, { kind: "finrows fx-rows", children: shown8.map((s3) => {
-        const x3 = s3.payment ? L2.payment[s3.payment] : void 0;
-        return /* @__PURE__ */ u3(
-          Row,
-          {
-            lead: s3.person ? /* @__PURE__ */ u3(Who, { name: L2.person[s3.person]?.name, n: L2.order[s3.person] ?? 0 }) : /* @__PURE__ */ u3(PayMark, { x: x3 }),
-            title: name(s3),
-            sub: sub(s3),
-            end: set2 && (typedBill(s3) ? /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.inBalance ? "held" : "in", pick: (c4) => pick(s3, c4), options: [["in", "Comes out"], ["held", "Already in"]] }) : /* @__PURE__ */ u3(Segmented, { label: `${name(s3)}, ${dayLong(s3.date)}`, value: s3.waiting ? "not" : "in", pick: (c4) => pick(s3, c4), options: [["in", "In"], ["not", "Not yet"]] })),
-            when: /* @__PURE__ */ u3("span", { class: s3.in ? "fx-amount fx-in" : "fx-amount", children: [
-              s3.in ? "+" : s3.outside ? "" : "−",
-              money(s3.amount)
-            ] }),
-            whenPlain: true
-          },
-          s3.key
-        );
-      }) }),
-      list.length > 5 && /* @__PURE__ */ u3("p", { class: "actions", children: /* @__PURE__ */ u3("button", { class: "small", onClick: () => setAll(!all), children: all ? "Show fewer" : `Show all ${list.length}` }) })
-    ] });
-  }
-  var shown7 = (a3) => ["checking", "savings", "investment", "retirement", "card"].includes(a3.kind);
-  var postCols = 7;
-  function PostPayWidget({ v: v3, L: L2, sel: sel2, pick, update }) {
-    const accounts = (v3.plan.accounts || []).filter(shown7);
-    const cols = v3.periods.slice(0, postCols);
-    const today2 = (a3) => owed(a3.kind) ? -todayOf(v3, a3) : todayOf(v3, a3);
-    const at2 = (a3, p3) => owed(a3.kind) ? -(p3.accounts?.[a3.id] ?? 0) : p3.accounts?.[a3.id] ?? todayOf(v3, a3);
-    const total = (f4) => accounts.reduce((t3, a3) => t3 + f4(a3), 0);
-    const change = (d3) => Math.abs(d3) >= 5e-3 && /* @__PURE__ */ u3("span", { class: "delta " + (d3 < 0 ? "bad" : "ok"), children: signed(d3) });
-    const head = (p3) => p3.now ? /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { children: [
-        "Until ",
-        dayShort(p3.last)
-      ] }),
-      /* @__PURE__ */ u3("small", { children: "Now" })
-    ] }) : /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("span", { children: dayShort(p3.pay.date) }),
-      /* @__PURE__ */ u3("small", { children: p3.pay.people.map((id2) => L2.person[id2]?.name || id2).join(" and ") })
-    ] });
-    if (!accounts.length) return null;
-    return /* @__PURE__ */ u3(
-      Widget,
-      {
-        span: "all",
-        kind: "finpost",
-        title: /* @__PURE__ */ u3(S, { children: [
-          "Accounts, paycheck by paycheck ",
-          /* @__PURE__ */ u3("span", { class: "fx-sub", children: "after the bills" })
-        ] }),
-        actions: update && /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: update, children: "Update balances" }),
-        children: /* @__PURE__ */ u3("div", { class: "finpostscroll", children: /* @__PURE__ */ u3("table", { class: "finpost", children: [
-          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
-            /* @__PURE__ */ u3("th", { scope: "col", children: "Account" }),
-            /* @__PURE__ */ u3("th", { scope: "col", class: "today", children: [
-              /* @__PURE__ */ u3("span", { children: "Today" }),
-              /* @__PURE__ */ u3("small", { children: dayShort(v3.today) })
-            ] }),
-            cols.map((p3, i3) => /* @__PURE__ */ u3("th", { scope: "col", class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("button", { type: "button", "aria-pressed": i3 === sel2, onClick: () => pick(i3), children: head(p3) }) }, p3.start))
-          ] }) }),
-          /* @__PURE__ */ u3("tbody", { children: accounts.map((a3) => /* @__PURE__ */ u3("tr", { children: [
-            /* @__PURE__ */ u3("th", { scope: "row", children: /* @__PURE__ */ u3("span", { class: "acct", children: [
-              /* @__PURE__ */ u3(AcctMark, { a: a3, size: "sm" }),
-              /* @__PURE__ */ u3("span", { children: [
-                /* @__PURE__ */ u3("strong", { children: a3.name }),
-                (a3.kind === "card" ? a3.pending ? `${money(a3.pending)} pending` : "" : a3.detail) && /* @__PURE__ */ u3("small", { children: a3.kind === "card" ? `${money(a3.pending)} pending` : a3.detail })
-              ] })
-            ] }) }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(today2(a3)) }) }),
-            cols.map((p3, i3) => {
-              const was = i3 ? at2(a3, cols[i3 - 1]) : today2(a3), now = at2(a3, p3);
-              return /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: [
-                /* @__PURE__ */ u3("span", { class: "num" + (a3.id === v3.checking && p3.left < (v3.plan.cushion || 0) ? p3.left < 0 ? " bad" : " warn" : ""), children: money(now) }),
-                change(now - was)
-              ] }, p3.start);
-            })
-          ] }, a3.id)) }),
-          /* @__PURE__ */ u3("tfoot", { children: /* @__PURE__ */ u3("tr", { children: [
-            /* @__PURE__ */ u3("th", { scope: "row", children: "Total" }),
-            /* @__PURE__ */ u3("td", { class: "today", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total(today2)) }) }),
-            cols.map((p3, i3) => /* @__PURE__ */ u3("td", { class: i3 === sel2 ? "on" : "", children: /* @__PURE__ */ u3("span", { class: "num", children: money(total((a3) => at2(a3, p3))) }) }, p3.start))
-          ] }) })
-        ] }) })
-      }
-    );
-  }
-
-  // web/src/finances/fire.ts
-  var maxMonths2 = 1200;
-  function monthsTo(have, monthly, target, growth) {
-    const r3 = Math.pow(1 + growth / 100, 1 / 12) - 1;
-    let b2 = have;
-    for (let n3 = 0; n3 <= maxMonths2; n3++) {
-      if (b2 >= target) return n3;
-      b2 = b2 * (1 + r3) + monthly;
-    }
-    return null;
-  }
-  function fire(yearSpending, have, monthly, withdraw, growth) {
-    const target = withdraw > 0 ? yearSpending / (withdraw / 100) : Infinity;
-    return { target, have, months: monthsTo(have, monthly, target, growth), sooner: monthsTo(have, monthly, target, growth + 2), later: monthsTo(have, monthly, target, growth - 2) };
-  }
-
-  // web/src/finances/widgets/Fire.tsx
-  var when2 = (day3, n3) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
-    return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
-  };
-  function FireWidget({ v: v3, L: L2, keep: keep3 }) {
-    const m3 = month(v3, L2);
-    const withdraw = v3.plan.withdraw || 4, growth = v3.plan.growth || 5;
-    const [problem, setProblem] = d2("");
-    const invested = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
-    const have = invested.reduce((t3, a3) => t3 + todayOf(v3, a3), 0);
-    const monthly = m3.saved + m3.viaPay;
-    if (m3.spent <= 0) return null;
-    const f4 = fire(m3.spent * 12, have, monthly, withdraw, growth);
-    const share3 = Math.min(100, have / f4.target * 100);
-    const set2 = (key5, text2, lo, hi) => {
-      const n3 = parseAmount(text2);
-      if (isNaN(n3) || n3 < lo || n3 > hi || key5 === "withdraw" && n3 === 0) {
-        setProblem(key5 === "withdraw" ? "A share to spend a year is more than 0 and at most 20%." : "Growth a year is between -10% and 20%.");
-        return;
-      }
-      setProblem("");
-      keep3({ ...v3.plan, [key5]: n3 });
-    };
-    const range = f4.sooner !== null && f4.later !== null && f4.sooner !== f4.later ? ` (${when2(v3.today, f4.sooner)} at ${growth + 2}%, ${when2(v3.today, f4.later)} at ${growth - 2}%)` : "";
-    return /* @__PURE__ */ u3(Widget, { title: "Financial independence", span: "all", kind: "fx-fire", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub fx-firenote", children: "An estimate from two assumptions below, not advice." }),
-      /* @__PURE__ */ u3("p", { class: "fx-firesays", children: [
-        /* @__PURE__ */ u3(Amount, { value: f4.target, form: "whole" }),
-        " would be enough: a year's spending of ",
-        whole(m3.spent * 12),
-        ", drawing ",
-        withdraw,
-        "% of it a year.",
-        " ",
-        "The investment and retirement accounts hold ",
-        whole(have),
-        ", ",
-        Math.round(share3),
-        "% of it."
-      ] }),
-      /* @__PURE__ */ u3("span", { class: "fx-budgetbar", role: "img", "aria-label": `${money(have)} of ${money(f4.target)}`, children: /* @__PURE__ */ u3("span", { style: { width: `${Math.max(share3, have > 0 ? 1 : 0)}%` } }) }),
-      /* @__PURE__ */ u3("p", { class: "fx-firewhen", role: "status", children: f4.months === 0 ? "There already, at this estimate." : f4.months === null ? `Not within a hundred years at ${whole(monthly)} a month put by and ${growth}% growth a year.` : /* @__PURE__ */ u3(S, { children: [
-        "At ",
-        whole(monthly),
-        " a month put by and ",
-        growth,
-        "% growth a year after rising prices, about ",
-        when2(v3.today, f4.months),
-        range,
-        "."
-      ] }) }),
-      keep3 && /* @__PURE__ */ u3("div", { class: "fx-fireset", children: [
-        /* @__PURE__ */ u3("label", { children: [
-          "Draw ",
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Share to spend a year, %", value: String(withdraw), onChange: (e3) => set2("withdraw", e3.target.value, 0, 20) }),
-          "% a year"
-        ] }),
-        /* @__PURE__ */ u3("label", { children: [
-          "Growth ",
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "Growth a year after rising prices, %", value: String(growth), onChange: (e3) => set2("growth", e3.target.value, -10, 20) }),
-          "% a year"
-        ] }),
-        problem && /* @__PURE__ */ u3("span", { class: "formerr bad", role: "alert", children: problem })
-      ] })
-    ] });
-  }
-
-  // web/src/finances/widgets/Loans.tsx
-  var monthOf3 = (ym) => `${monthName(ym + "-01").slice(0, 3)} ${ym.slice(0, 4)}`;
-  var monthsOn2 = (day3, n3) => {
-    const d3 = new Date(+day3.slice(0, 4), +day3.slice(5, 7) - 1 + n3, 1);
-    return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}`;
-  };
-  function payoffWords(p3) {
-    if (p3.balance <= 5e-3) return "Paid off";
-    if (!p3.monthly) return "Nothing is paid to it: add a payment that goes to it";
-    if (p3.never) return `${money(p3.monthly)} a month does not keep up with its interest`;
-    return `${money(p3.monthly)} a month: paid off ${monthOf3(p3.date)}${p3.interest ? `, ${money(p3.interest)} interest still to pay` : ""}`;
-  }
-  var dayYear = (d3) => `${dayShort(d3)}, ${d3.slice(0, 4)}`;
-  function Ring({ made: made2, of }) {
-    const r3 = 52, round = 2 * Math.PI * r3, part = of ? Math.min(1, made2 / of) : 0;
-    return /* @__PURE__ */ u3("div", { class: "fx-ring", role: "img", "aria-label": `${made2} of ${of} payments made`, children: [
-      /* @__PURE__ */ u3("svg", { viewBox: "0 0 120 120", "aria-hidden": "true", children: [
-        /* @__PURE__ */ u3("circle", { class: "fx-ringtrack", cx: "60", cy: "60", r: r3 }),
-        /* @__PURE__ */ u3("circle", { class: "fx-ringfill", cx: "60", cy: "60", r: r3, "stroke-dasharray": `${(part * round).toFixed(2)} ${round.toFixed(2)}`, transform: "rotate(-90 60 60)" })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-ringtext", "aria-hidden": "true", children: [
-        /* @__PURE__ */ u3("strong", { children: made2 }),
-        /* @__PURE__ */ u3("span", { children: [
-          "of ",
-          of
-        ] }),
-        /* @__PURE__ */ u3("small", { children: "payments" })
-      ] })
-    ] });
-  }
-  function Papers({ v: v3, L: L2, p: p3 }) {
-    const a3 = L2.account[p3.account], rows = p3.rows, made2 = p3.made || 0;
-    const original = rows.reduce((t3, x3) => t3 + x3.principal, 0);
-    const down = Math.max(0, original - p3.balance), share3 = original ? down / original : 0;
-    const next = rows[made2];
-    const half = rows.findIndex((x3) => x3.after <= original / 2 + 5e-3);
-    const last2 = rows[rows.length - 1];
-    const paidIn = rows.slice(0, made2).reduce((t3, x3) => t3 + x3.interest, 0);
-    const into2 = (v3.plan.payments || []).filter((x3) => x3.to === p3.account).map((x3) => ({ name: x3.name, amount: x3.amount * perMonth(x3.schedule, v3.plan.people, v3.checking) }));
-    const planned2 = into2.reduce((t3, x3) => t3 + x3.amount, 0), rest = p3.monthly - planned2;
-    return /* @__PURE__ */ u3("div", { class: "fx-papers", children: [
-      /* @__PURE__ */ u3(Ring, { made: made2, of: rows.length }),
-      /* @__PURE__ */ u3("div", { class: "fx-papersfacts", children: [
-        /* @__PURE__ */ u3("p", { class: "fx-papersdown", children: [
-          /* @__PURE__ */ u3("strong", { children: money(down) }),
-          " of ",
-          money(original),
-          " paid down, ",
-          Math.round(share3 * 100),
-          "%"
-        ] }),
-        /* @__PURE__ */ u3("div", { class: "fx-papersbar", "aria-hidden": "true", children: /* @__PURE__ */ u3("span", { style: { width: `${(share3 * 100).toFixed(1)}%` } }) }),
-        next && /* @__PURE__ */ u3("p", { children: [
-          /* @__PURE__ */ u3("strong", { children: [
-            "Next, ",
-            dayYear(next.date),
-            ":"
-          ] }),
-          " ",
-          money(next.payment),
-          next.interest > 5e-3 ? /* @__PURE__ */ u3(S, { children: [
-            " (",
-            money(next.principal),
-            " pays it down, ",
-            money(next.interest),
-            " is interest)"
-          ] }) : ", all of it paying it down",
-          "."
-        ] }),
-        (into2.length > 1 || into2.length && rest > 5e-3) && /* @__PURE__ */ u3("p", { children: [
-          /* @__PURE__ */ u3("strong", { children: "Each month:" }),
-          " ",
-          into2.map((x3) => `${x3.name} ${money(x3.amount)}`).join(", "),
-          rest > 5e-3 ? `, and ${money(rest)} paid another way` : "",
-          "."
-        ] }),
-        /* @__PURE__ */ u3("p", { children: [
-          half > 0 && /* @__PURE__ */ u3(S, { children: [
-            half < made2 ? "Half paid off" : "Half paid off on",
-            " ",
-            dayYear(rows[half].date),
-            ". "
-          ] }),
-          "Paid off ",
-          dayYear(last2.date),
-          ", after ",
-          plural(rows.length - made2, "more payment"),
-          p3.interest ? `, ${money(p3.interest)} of interest still to pay` : "",
-          paidIn > 5e-3 ? ` (${money(paidIn)} paid so far)` : "",
-          "."
-        ] }),
-        /* @__PURE__ */ u3("details", { class: "fx-papersrows", children: [
-          /* @__PURE__ */ u3("summary", { children: "Every payment" }),
-          /* @__PURE__ */ u3("div", { class: "fx-paperstable", children: /* @__PURE__ */ u3("table", { children: [
-            /* @__PURE__ */ u3("caption", { class: "sr", children: [
-              a3.name,
-              ": each payment, what pays it down, its interest, and what is owed after"
-            ] }),
-            /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
-              /* @__PURE__ */ u3("th", { scope: "col", children: "#" }),
-              /* @__PURE__ */ u3("th", { scope: "col", children: "Due" }),
-              /* @__PURE__ */ u3("th", { scope: "col", children: "Payment" }),
-              /* @__PURE__ */ u3("th", { scope: "col", children: "Paid down" }),
-              /* @__PURE__ */ u3("th", { scope: "col", children: "Interest" }),
-              /* @__PURE__ */ u3("th", { scope: "col", children: "Owed after" })
-            ] }) }),
-            /* @__PURE__ */ u3("tbody", { children: rows.map((x3, i3) => /* @__PURE__ */ u3("tr", { class: i3 < made2 ? "fx-made" : i3 === made2 ? "fx-nextrow" : void 0, children: [
-              /* @__PURE__ */ u3("td", { children: i3 + 1 }),
-              /* @__PURE__ */ u3("th", { scope: "row", children: dayYear(x3.date) }),
-              /* @__PURE__ */ u3("td", { children: money(x3.payment) }),
-              /* @__PURE__ */ u3("td", { children: money(x3.principal) }),
-              /* @__PURE__ */ u3("td", { children: money(x3.interest) }),
-              /* @__PURE__ */ u3("td", { children: money(x3.after) })
-            ] }, x3.date)) })
-          ] }) })
-        ] })
-      ] })
-    ] });
-  }
-  function PayMore({ v: v3, L: L2, shown: shown8, owing }) {
-    const [text2, setText] = d2("");
-    const extra = Math.max(0, parseAmount(text2) || 0) * paydaysAMonth(v3);
-    const debts = owing.filter((p3) => p3.monthly > 0).map((p3) => ({ id: p3.account, balance: p3.balance, rate: p3.rate || 0, monthly: p3.monthly }));
-    const one = shown8 && extra > 0 ? amortize(shown8.balance, shown8.rate || 0, shown8.monthly + extra) : null;
-    const ways = debts.length > 1 && extra > 0 ? ["avalanche", "snowball"].map((w3) => ({ w: w3, s: payDown(debts, extra, w3) })) : [];
-    const when3 = (n3) => {
-      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 1 + n3, 1);
-      return `${monthName(`${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`).slice(0, 3)} ${d3.getFullYear()}`;
-    };
-    const name = (id2) => L2.account[id2]?.name || id2;
-    return /* @__PURE__ */ u3("section", { class: "fx-paymore", "aria-label": "Pay more", children: [
-      /* @__PURE__ */ u3("h3", { children: "Pay more" }),
-      /* @__PURE__ */ u3("label", { class: "fx-paymorefield", children: [
-        /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-          /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: currencySign() }),
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", "aria-label": "More a paycheck", value: text2, placeholder: "100", onInput: (e3) => setText(e3.target.value) })
-        ] }),
-        " more a paycheck",
-        extra > 0 && ` (about ${money(extra)} a month)`
-      ] }),
-      /* @__PURE__ */ u3("p", { class: "fx-sub", role: "status", children: [
-        !one && "Type an amount to see what it saves. Nothing is saved.",
-        one && shown8 && (one.ok ? /* @__PURE__ */ u3(S, { children: [
-          name(shown8.account),
-          " paid off ",
-          when3(one.months),
-          shown8.months ? `, ${plural(shown8.months - one.months, "month")} sooner` : "",
-          shown8.interest ? `, ${money(Math.max(0, shown8.interest - one.interest))} less interest` : "",
-          "."
-        ] }) : /* @__PURE__ */ u3(S, { children: [
-          name(shown8.account),
-          " is still never paid off at that."
-        ] }))
-      ] }),
-      !!ways.length && /* @__PURE__ */ u3("ul", { class: "fx-ways", children: ways.map(({ w: w3, s: s3 }) => /* @__PURE__ */ u3("li", { children: [
-        /* @__PURE__ */ u3("strong", { children: [
-          w3 === "avalanche" ? "Highest rate first" : "Smallest balance first",
-          ":"
-        ] }),
-        " ",
-        s3.ok ? /* @__PURE__ */ u3(S, { children: [
-          "all paid off ",
-          when3(s3.months),
-          ", ",
-          money(s3.interest),
-          " interest. In turn: ",
-          s3.order.map((o3) => `${name(o3.id)} ${when3(o3.month)}`).join(", "),
-          "."
-        ] }) : "never all paid off at that."
-      ] }, w3)) })
-    ] });
-  }
-  function LoansWidget({ v: v3, L: L2, edit }) {
-    const loans = (v3.loans || []).filter((p3) => L2.account[p3.account]);
-    const owing = loans.filter((p3) => p3.balance > 5e-3), done = loans.filter((p3) => p3.balance <= 5e-3);
-    const charted = owing.filter((p3) => p3.path?.length);
-    const [pick, setPick] = d2("");
-    if (!loans.length) return null;
-    const shown8 = charted.find((p3) => p3.account === pick) || charted[0];
-    const row = (p3) => {
-      const a3 = L2.account[p3.account];
-      const bad = p3.balance > 5e-3 && (p3.never || !p3.monthly);
-      return /* @__PURE__ */ u3(
-        Row,
-        {
-          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
-          title: a3.name,
-          sub: /* @__PURE__ */ u3("span", { class: bad ? "fx-warn" : "", children: [
-            p3.rows?.length ? `${p3.made || 0} of ${p3.rows.length} payments made · ` : "",
-            payoffWords(p3),
-            p3.rate ? ` · ${p3.rate}% a year` : ""
-          ] }),
-          when: /* @__PURE__ */ u3(Amount, { value: p3.balance, form: "full" }),
-          whenPlain: true,
-          onOpen: edit ? () => edit("account", p3.account) : void 0,
-          openLabel: edit ? "edit" : void 0
-        },
-        p3.account
-      );
-    };
-    const path = shown8?.path || [];
-    const every = path.length > 120 ? 60 : 12;
-    const xLabels = path.map((_3, i3) => ({ i: i3, label: monthsOn2(v3.today, i3 + 1) })).filter((x3) => x3.label.endsWith("-01") && +x3.label.slice(0, 4) % (every / 12) === 0).map((x3) => ({ i: x3.i, label: x3.label.slice(0, 4) }));
-    return /* @__PURE__ */ u3(Widget, { title: loans.some((p3) => L2.account[p3.account]?.kind === "card") ? "Loans and cards carrying a balance" : "Loans", span: "all", kind: "fx-loans", children: [
-      !!owing.length && /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: owing.map(row) }),
-      shown8 && /* @__PURE__ */ u3("div", { class: "fx-loanchart", children: [
-        /* @__PURE__ */ u3("div", { class: "fx-loanhead", children: [
-          /* @__PURE__ */ u3("h3", { children: [
-            L2.account[shown8.account].name,
-            ", to zero"
-          ] }),
-          charted.length > 1 && /* @__PURE__ */ u3(Segmented, { label: "Which loan", value: shown8.account, pick: setPick, options: charted.map((p3) => [p3.account, L2.account[p3.account].name]) })
-        ] }),
-        !!shown8.rows?.length && /* @__PURE__ */ u3(Papers, { v: v3, L: L2, p: shown8 }),
-        /* @__PURE__ */ u3(
-          AreaChart,
-          {
-            values: [shown8.balance, ...path],
-            xLabels: xLabels.map((x3) => ({ i: x3.i + 1, label: x3.label })),
-            height: 160,
-            format: tick,
-            label: `${L2.account[shown8.account].name}: what it owes each month until it is paid off in ${monthOf3(shown8.date)}. The table under it has the balance each year.`,
-            tip: (i3) => /* @__PURE__ */ u3(S, { children: [
-              /* @__PURE__ */ u3("div", { class: "fx-caption", children: i3 === 0 ? "Today" : monthOf3(monthsOn2(v3.today, i3)) }),
-              /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
-                /* @__PURE__ */ u3("span", { children: "Owed" }),
-                /* @__PURE__ */ u3(Amount, { value: i3 === 0 ? shown8.balance : path[i3 - 1], form: "full" })
-              ] })
-            ] })
-          }
-        ),
-        /* @__PURE__ */ u3("table", { class: "sr", children: [
-          /* @__PURE__ */ u3("caption", { children: [
-            L2.account[shown8.account].name,
-            " owed, each year"
-          ] }),
-          /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
-            /* @__PURE__ */ u3("th", { scope: "col", children: "Month" }),
-            /* @__PURE__ */ u3("th", { scope: "col", children: "Owed" })
-          ] }) }),
-          /* @__PURE__ */ u3("tbody", { children: path.map((b2, i3) => ({ b: b2, m: monthsOn2(v3.today, i3 + 1) })).filter((x3, i3) => x3.m.endsWith("-12") || i3 === path.length - 1).map((x3) => /* @__PURE__ */ u3("tr", { children: [
-            /* @__PURE__ */ u3("th", { scope: "row", children: monthOf3(x3.m) }),
-            /* @__PURE__ */ u3("td", { children: money(x3.b) })
-          ] }, x3.m)) })
-        ] })
-      ] }),
-      edit && !!owing.length && /* @__PURE__ */ u3(PayMore, { v: v3, L: L2, shown: shown8, owing }),
-      !!done.length && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3("h3", { class: "fx-loansdone", children: "Paid off" }),
-        /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: done.map(row) })
-      ] })
-    ] });
-  }
-
-  // web/src/finances/tickers.ts
-  var funds = {
-    vanguard: ["VTI", "VOO", "VXUS", "BND", "BNDX", "VT", "VUG", "VTV", "VIG", "VYM", "VNQ", "VGT", "VB", "VO", "VEA", "VWO", "VTEB", "VGIT", "VGSH", "VTSAX", "VFIAX", "VTIAX", "VBTLX", "VTWAX", "VFFVX", "VTTSX", "VTHRX", "VTTVX", "VTIVX", "VFIFX"],
-    fidelity: ["FXAIX", "FZROX", "FZILX", "FSKAX", "FTIHX", "FXNAX", "FBALX", "FDVV", "FSPSX", "FNILX", "FCNTX", "FBGRX", "FDGRX", "FSMDX", "FSSNX"],
-    schwab: ["SCHW", "SCHB", "SCHD", "SCHX", "SCHF", "SCHG", "SCHA", "SCHE", "SCHZ", "SCHP", "SWTSX", "SWPPX", "SWISX", "SWAGX"],
-    troweprice: ["TROW", "PRGFX", "TRBCX", "PRWCX"]
-  };
-  var companies = {
-    AAPL: "apple",
-    AMZN: "amazon",
-    GOOGL: "google",
-    GOOG: "google",
-    TSLA: "tesla",
-    NFLX: "netflix",
-    SPOT: "spotify",
-    COST: "costco",
-    WMT: "walmart",
-    TGT: "target",
-    SBUX: "starbucks",
-    NKE: "nike",
-    MCD: "mcdonalds",
-    CMG: "chipotle",
-    HOOD: "robinhood",
-    COIN: "coinbase",
-    PYPL: "paypal",
-    MA: "mastercard",
-    V: "visa",
-    AXP: "americanexpress",
-    JPM: "chase",
-    BAC: "bankofamerica",
-    WFC: "wellsfargo",
-    GS: "goldmansachs",
-    C: "citi",
-    MS: "morganstanley",
-    COF: "capitalone",
-    SOFI: "sofi",
-    ALLY: "ally",
-    PNC: "pnc",
-    USB: "usbank",
-    TFC: "truist",
-    SYF: "synchrony",
-    HD: "thehomedepot",
-    LOW: "lowes",
-    BBY: "bestbuy",
-    KR: "kroger",
-    CVS: "cvs",
-    WBA: "walgreens",
-    GME: "gamestop",
-    XOM: "exxon",
-    CVX: "chevron",
-    BP: "bp",
-    SHEL: "shell",
-    SHOP: "shopify",
-    ABNB: "airbnb",
-    UBER: "uber",
-    LYFT: "lyft",
-    DASH: "doordash",
-    EBAY: "ebay",
-    ETSY: "etsy",
-    ADBE: "adobe",
-    ZM: "zoom",
-    NET: "cloudflare",
-    DOCN: "digitalocean",
-    F: "ford",
-    TM: "toyota",
-    HMC: "honda",
-    MAR: "marriott",
-    HLT: "hilton",
-    DAL: "delta",
-    UAL: "unitedairlines",
-    AAL: "americanairlines",
-    LUV: "southwestairlines",
-    JBLU: "jetblue",
-    EA: "ea",
-    RBLX: "roblox",
-    SIRI: "siriusxm",
-    AMP: "ameriprise",
-    MET: "metlife",
-    PRU: "prudential",
-    ALL: "allstate",
-    CI: "cigna",
-    HUM: "humana",
-    UNH: "unitedhealthcare",
-    DIS: "disneyplus",
-    DPZ: "dominos",
-    DG: "dollargeneral",
-    DLTR: "dollartree",
-    W: "wayfair",
-    CHWY: "chewy",
-    GRMN: "garmin",
-    DUK: "dukeenergy",
-    PCG: "pge",
-    ED: "coned",
-    T: "atandt",
-    VZ: "verizon",
-    TMUS: "tmobile",
-    LMND: "lemonade",
-    AFRM: "affirm",
-    SQ: "square"
-  };
-  var bySymbol = Object.fromEntries([
-    ...Object.entries(funds).flatMap(([brand, list]) => list.map((s3) => [s3, brand])),
-    ...Object.entries(companies).filter(([, b2]) => b2)
-  ]);
-  function tickerBrand(symbol) {
-    const b2 = bySymbol[symbol.toUpperCase().replace(/\..*$/, "")];
-    return b2 && brands[b2] ? b2 : void 0;
-  }
-
-  // web/src/finances/widgets/Investments.tsx
-  function readWhen(at2, today2) {
-    if (!at2) return "";
-    const d3 = new Date(at2);
-    if (isNaN(d3.getTime())) return "";
-    const day3 = isoDay(d3);
-    const time = d3.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const y3 = /* @__PURE__ */ new Date(today2 + "T12:00:00");
-    y3.setDate(y3.getDate() - 1);
-    const yesterday = isoDay(y3);
-    return day3 === today2 ? `read ${time} today` : day3 === yesterday ? `read yesterday at ${time}` : `read ${dayShort(day3)}`;
-  }
-  var share2 = (gain, paid) => Math.abs(paid) < 5e-3 ? "" : `${gain < 0 ? "−" : "+"}${Math.abs(gain / Math.abs(paid) * 100).toFixed(1)}%`;
-  var shares = (n3) => amountsHidden() ? "•••" : n3.toLocaleString("en-US", { maximumFractionDigits: n3 < 1 ? 4 : 3 });
-  function InvestmentsWidget({ v: v3, read, state: state2 = {}, keep: keep3, add, find, trades }) {
-    const [open4, setOpen] = d2("");
-    const [adding2, setAdding] = d2(false);
-    const accounts = (v3.plan.accounts || []).filter((a3) => a3.holdings?.length);
-    const ever = !!v3.plan.holdingsRead;
-    if (!accounts.length && !read) return null;
-    const when3 = readWhen(v3.plan.holdingsRead, v3.today);
-    const canAdd = !!(add && find);
-    const button = /* @__PURE__ */ u3(S, { children: [
-      canAdd && !adding2 && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: () => setAdding(true), children: "Add a holding" }),
-      read && /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: state2.busy, onClick: read, children: state2.busy ? "Reading…" : "Read now" })
-    ] });
-    const form2 = adding2 && add && find && /* @__PURE__ */ u3(AddForm, { v: v3, add, find, close: () => setAdding(false) });
-    const said2 = /* @__PURE__ */ u3(S, { children: [
-      state2.said && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investsaid", role: "status", children: state2.said }),
-      state2.problem && /* @__PURE__ */ u3("p", { class: "formerr bad fx-investsaid", role: "alert", children: state2.problem })
-    ] });
-    if (!accounts.length) {
-      return /* @__PURE__ */ u3(Widget, { title: "Investments", span: "all", kind: "fx-invest", actions: button, children: [
-        form2,
-        !form2 && !(ever && state2.said) && /* @__PURE__ */ u3("p", { class: "fx-sub fx-investintro", children: ever ? canAdd ? "Nothing in Ghostfolio matched an investment or retirement account here yet. Add a holding to put one there." : "Nothing in Ghostfolio matched an investment or retirement account here yet." : "Read what each of your investment accounts holds from Ghostfolio, the investment tracker on your homelab: each fund and share, what went in, and what it is worth now. Only ticker symbols leave the homelab, when Ghostfolio looks prices up; amounts and accounts stay here." }),
-        said2,
-        /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read })
-      ] });
-    }
-    const own2 = (a3) => worthOf(v3, a3);
-    accounts.sort((a3, b2) => own2(b2) - own2(a3));
-    const lines = accounts.flatMap((a3, i3) => {
-      const hue2 = i3 % 7 + 1;
-      const held3 = [...a3.holdings].sort((x3, y3) => y3.value - x3.value);
-      const cash = Math.round((a3.balance - held3.reduce((t3, h3) => t3 + h3.value, 0)) * 100) / 100;
-      return [...held3.map((h3) => ({ key: a3.id + ":" + h3.symbol, account: a3, hue: hue2, h: h3 })), ...cash >= 0.01 ? [{ key: a3.id + ":cash", account: a3, hue: hue2, cash }] : []];
-    });
-    const inHome2 = (l3, n4) => n4 * rateOf(v3.plan, l3.account);
-    const total = accounts.reduce((t3, a3) => t3 + own2(a3), 0);
-    const paid = lines.reduce((t3, l3) => t3 + inHome2(l3, l3.h ? l3.h.paid : l3.cash), 0);
-    const gain = total - paid;
-    const first = v3.today.slice(0, 8) + "01";
-    const month3 = accounts.reduce((t3, a3) => t3 + own2(a3) - worthOn(v3, a3, first), 0);
-    const before3 = total - month3;
-    const holdings = lines.filter((l3) => l3.h).length;
-    const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
-    return /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
-      "Investments ",
-      /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-        "from Ghostfolio",
-        when3 ? `, ${when3}` : ""
-      ] })
-    ] }), span: "all", kind: "fx-invest", actions: button, children: [
-      form2,
-      said2,
-      /* @__PURE__ */ u3("div", { class: "fx-investfigs", children: [
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Total value" }),
-          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: total, form: "full" }) }),
-          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
-            n3(holdings, "holding", "holdings"),
-            " in ",
-            n3(accounts.length, "account", "accounts")
-          ] })
-        ] }),
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "You paid" }),
-          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: paid, form: "full" }) }),
-          /* @__PURE__ */ u3("div", { class: "fx-sub", children: "what went in" })
-        ] }),
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "Gain" }),
-          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto" }) }),
-          /* @__PURE__ */ u3("div", { class: "fx-sub", children: amountsHidden() ? "on what you paid" : `${share2(gain, paid)} on what you paid` })
-        ] }),
-        /* @__PURE__ */ u3("div", { children: [
-          /* @__PURE__ */ u3("div", { class: "fx-caption", children: "This month" }),
-          /* @__PURE__ */ u3("div", { class: "fx-investfig", children: /* @__PURE__ */ u3(Amount, { value: month3, form: "full", sign: true, tone: "auto" }) }),
-          /* @__PURE__ */ u3("div", { class: "fx-sub", children: [
-            amountsHidden() ? "" : share2(month3, before3) + " ",
-            "since ",
-            dayShort(first)
-          ] })
-        ] })
-      ] }),
-      accounts.length > 1 && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(SplitBar, { label: "What each account holds", parts: accounts.map((a3, i3) => ({ label: a3.name, value: own2(a3), color: i3 % 7 + 1 })) }),
-        /* @__PURE__ */ u3(Legend, { layout: "inline", items: accounts.map((a3, i3) => ({ label: a3.name, color: i3 % 7 + 1, value: /* @__PURE__ */ u3(Amount, { value: own2(a3), form: "whole" }) })) })
-      ] }),
-      /* @__PURE__ */ u3("table", { class: "fx-holdings", children: [
-        /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
-          /* @__PURE__ */ u3("th", { scope: "col", children: "Holding" }),
-          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Shares" }),
-          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "You paid" }),
-          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Worth now" }),
-          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" })
-        ] }) }),
-        lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key), trades }, l3.key))
-      ] }),
-      /* @__PURE__ */ u3(Unmatched, { v: v3, state: state2, keep: keep3, read }),
-      keep3 && read && /* @__PURE__ */ u3("label", { class: "fx-investauto", children: [
-        /* @__PURE__ */ u3("input", { type: "checkbox", checked: !v3.plan.readByHand, onChange: (e3) => keep3({ ...v3.plan, readByHand: e3.target.checked ? void 0 : true }) }),
-        "Read Ghostfolio once a day when Finances opens"
-      ] })
-    ] });
-  }
-  function HoldingRow({ v: v3, l: l3, open: open4, toggle, trades }) {
-    const a3 = l3.account, cur = a3.currency;
-    const symbol = l3.h ? l3.h.symbol : "Cash";
-    const name = l3.h ? l3.h.name || l3.h.symbol : "Not in a holding";
-    const paid = l3.h ? l3.h.paid : l3.cash, worth = l3.h ? l3.h.value : l3.cash;
-    const gain = worth - paid;
-    const id2 = "hold-" + l3.key.replace(/[^A-Za-z0-9]+/g, "-");
-    const mark = l3.h ? /* @__PURE__ */ u3(Mark, { brand: tickerBrand(l3.h.symbol), name: l3.h.symbol, auto: true, size: "sm" }) : /* @__PURE__ */ u3(Mark, { name: "Cash", auto: true, size: "sm" });
-    const who = /* @__PURE__ */ u3("span", { class: "fx-holdwho", children: [
-      /* @__PURE__ */ u3("strong", { children: symbol }),
-      /* @__PURE__ */ u3("small", { children: [
-        l3.h ? `${name} · ` : "",
-        a3.name
-      ] })
-    ] });
-    return /* @__PURE__ */ u3("tbody", { class: "fx-hold" + (open4 ? " open" : ""), children: [
-      /* @__PURE__ */ u3("tr", { onClick: l3.h ? toggle : void 0, children: [
-        /* @__PURE__ */ u3("th", { scope: "row", children: l3.h ? /* @__PURE__ */ u3("button", { type: "button", class: "fx-holdbtn", "aria-expanded": open4, "aria-controls": id2, onClick: (e3) => {
-          e3.stopPropagation();
-          toggle();
-        }, children: [
-          mark,
-          who
-        ] }) : /* @__PURE__ */ u3("span", { class: "fx-holdbtn", children: [
-          mark,
-          who
-        ] }) }),
-        /* @__PURE__ */ u3("td", { class: "n fx-holdshares", children: l3.h ? shares(l3.h.shares) : "" }),
-        /* @__PURE__ */ u3("td", { class: "n fx-holdpaid", children: [
-          /* @__PURE__ */ u3("span", { class: "fx-holdunit", children: [
-            l3.h ? `${shares(l3.h.shares)} shares · ` : "",
-            "paid "
-          ] }),
-          /* @__PURE__ */ u3(Amount, { value: paid, form: "full", currency: cur })
-        ] }),
-        /* @__PURE__ */ u3("td", { class: "n fx-holdworth", children: /* @__PURE__ */ u3(Amount, { value: worth, form: "full", currency: cur }) }),
-        /* @__PURE__ */ u3("td", { class: "n fx-holdgain", children: l3.h && /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Amount, { value: gain, form: "full", sign: true, tone: "auto", currency: cur }),
-          !amountsHidden() && /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-            " ",
-            share2(gain, paid)
-          ] })
-        ] }) })
-      ] }),
-      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 5, children: [
-        /* @__PURE__ */ u3(HoldingHistory, { v: v3, h: l3.h, cur }),
-        trades && /* @__PURE__ */ u3(Trades, { account: a3, h: l3.h, ops: trades })
-      ] }) })
-    ] });
-  }
-  function HoldingHistory({ v: v3, h: h3, cur }) {
-    const pts = h3.history || [];
-    const each = (n3) => h3.shares > 0 ? amountsHidden() ? money(0) : moneyIn(n3 / h3.shares, cur) : "";
-    const facts2 = h3.shares > 0 ? /* @__PURE__ */ u3(S, { children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-        "A share is worth ",
-        each(h3.value),
-        " now; they cost ",
-        each(h3.paid),
-        " each on average."
-      ] }),
-      h3.recounted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-recounted", children: "Ghostfolio's holdings count disagreed with its buys and sales; this uses the buys and sales." }),
-      h3.doubtful && /* @__PURE__ */ u3("p", { class: "fx-sub fx-doubtful", children: [
-        "This looks wrong: check ",
-        h3.symbol,
-        " in Ghostfolio. It's worth over a hundred times what was paid, and its buys and sales couldn't be read."
-      ] }),
-      h3.quoted && /* @__PURE__ */ u3("p", { class: "fx-sub fx-quoted", children: [
-        "Ghostfolio has no prices of its own for ",
-        h3.symbol,
-        " yet, so its worth is today's price Ghostfolio looked up. Ghostfolio was asked to gather its prices; once it has, they're its own."
-      ] })
-    ] }) : null;
-    if (pts.length < 2) {
-      return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
-        facts2,
-        /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-          pts.length ? `Read once so far, on ${dayShort(pts[0].date)}.` : "Not read yet.",
-          " Each read from now on adds its day here."
-        ] })
-      ] });
-    }
-    return /* @__PURE__ */ u3("div", { class: "fx-holdhist", children: [
-      facts2,
-      /* @__PURE__ */ u3(
-        AreaChart,
-        {
-          values: pts.map((p3) => p3.amount),
-          xLabels: [{ i: 0, label: dayShort(pts[0].date) }, { i: pts.length - 1, label: dayShort(pts[pts.length - 1].date) }],
-          format: tick,
-          height: 140,
-          zero: false,
-          label: `${h3.symbol} at each read: ${pts.map((p3) => `${dayShort(p3.date)} ${moneyIn(p3.amount, cur)}`).join(", ")}.`,
-          tip: (i3) => /* @__PURE__ */ u3(S, { children: [
-            /* @__PURE__ */ u3("div", { class: "fx-caption", children: pts[i3].date === v3.today ? "Today" : dayShort(pts[i3].date) }),
-            /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
-              /* @__PURE__ */ u3("span", { children: h3.symbol }),
-              /* @__PURE__ */ u3(Amount, { value: pts[i3].amount, form: "full", currency: cur })
-            ] })
-          ] })
-        }
-      )
-    ] });
-  }
-  var dayYear2 = (s3) => (/* @__PURE__ */ new Date(s3 + "T12:00:00")).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  function Trades({ account, h: h3, ops }) {
-    const [list, setList] = d2(null);
-    const [problem, setProblem] = d2("");
-    const [editing2, setEditing] = d2("");
-    const [asking, setAsking] = d2("");
-    const [busy2, setBusy] = d2(false);
-    const live = A2(true);
-    const why = (e3) => String(e3?.message || e3);
-    const load = async () => {
-      try {
-        const r3 = await ops.list(account.id, h3.symbol);
-        if (live.current) {
-          setList(r3);
-          setProblem("");
-        }
-      } catch (e3) {
-        if (live.current) setProblem(`Could not read its buys and sales from Ghostfolio: ${why(e3)}`);
-      }
-    };
-    h2(() => {
-      live.current = true;
-      load();
-      return () => {
-        live.current = false;
-      };
-    }, [account.id, h3.symbol]);
-    const drop = async (t3) => {
-      setBusy(true);
-      setProblem("");
-      try {
-        await ops.remove(t3);
-        setAsking("");
-        await load();
-      } catch (e3) {
-        if (live.current) setProblem(why(e3));
-      } finally {
-        if (live.current) setBusy(false);
-      }
-    };
-    const what2 = (t3) => `${t3.sold ? "sale" : "buy"} of ${shares(t3.shares)} ${h3.symbol} on ${dayYear2(t3.date)}`;
-    return /* @__PURE__ */ u3("div", { class: "fx-trades", children: [
-      /* @__PURE__ */ u3("h4", { class: "fx-caption", children: "Buys and sales in Ghostfolio" }),
-      list === null && !problem && /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Reading them from Ghostfolio…" }),
-      list && !list.length && /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-        "Ghostfolio has none for ",
-        h3.symbol,
-        " in ",
-        account.name,
-        "."
-      ] }),
-      list && list.length > 0 && /* @__PURE__ */ u3("ul", { children: list.map((t3) => editing2 === t3.id ? /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3(TradeForm, { t: t3, symbol: h3.symbol, change: ops.change, done: async (saved) => {
-        setEditing("");
-        if (saved) await load();
-      } }) }, t3.id) : /* @__PURE__ */ u3("li", { class: "fx-trade", children: [
-        /* @__PURE__ */ u3("span", { class: "fx-tradewhat", children: [
-          /* @__PURE__ */ u3("strong", { children: t3.sold ? "Sold" : "Bought" }),
-          " ",
-          shares(t3.shares),
-          " shares · ",
-          t3.sold ? "got" : "paid",
-          " ",
-          /* @__PURE__ */ u3(Amount, { value: t3.total, form: "full", currency: t3.currency }),
-          " ",
-          /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-            "· ",
-            dayYear2(t3.date)
-          ] })
-        ] }),
-        asking === t3.id ? /* @__PURE__ */ u3("span", { class: "fx-tradeask", role: "group", "aria-label": `Delete the ${what2(t3)}?`, children: [
-          /* @__PURE__ */ u3("span", { children: "Delete it from Ghostfolio?" }),
-          /* @__PURE__ */ u3("span", { class: "fx-tradeacts", children: [
-            /* @__PURE__ */ u3("button", { type: "button", class: "small danger", disabled: busy2, onClick: () => drop(t3), children: busy2 ? "Deleting…" : "Delete" }),
-            /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => setAsking(""), children: "Keep it" })
-          ] })
-        ] }) : /* @__PURE__ */ u3("span", { class: "fx-tradeacts", children: [
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || !!editing2, "aria-label": `Change the ${what2(t3)}`, onClick: () => {
-            setProblem("");
-            setEditing(t3.id);
-          }, children: "Change" }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2 || !!editing2, "aria-label": `Delete the ${what2(t3)}`, onClick: () => {
-            setProblem("");
-            setAsking(t3.id);
-          }, children: "Delete" })
-        ] })
-      ] }, t3.id)) }),
-      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem })
-    ] });
-  }
-  function EachShare({ shares: shares2, total, currency, sold }) {
-    const n3 = parseCount(shares2), t3 = parseAmount(total);
-    if (!(n3 > 0) || !(t3 > 0)) return null;
-    const count2 = n3.toLocaleString("en-US", { maximumFractionDigits: 8 });
-    return /* @__PURE__ */ u3("p", { class: "fx-sub fx-eachshare", role: "status", children: [
-      count2,
-      " ",
-      n3 === 1 ? "share" : "shares",
-      " at ",
-      moneyIn(t3 / n3, currency),
-      " each",
-      sold ? " sold" : "",
-      "."
-    ] });
-  }
-  function TradeForm({ t: t3, symbol, change, done }) {
-    const [way, setWay] = d2(t3.sold ? "sold" : "bought");
-    const [count2, setCount] = d2(String(t3.shares));
-    const [total, setTotal] = d2(t3.total.toFixed(2));
-    const [day3, setDay] = d2(t3.date);
-    const [busy2, setBusy] = d2(false);
-    const [problem, setProblem] = d2("");
-    const sold = way === "sold";
-    const id2 = "trade-" + t3.id.replace(/[^A-Za-z0-9]+/g, "-");
-    const submit = async (e3) => {
-      e3.preventDefault();
-      const n3 = parseCount(count2), m3 = parseAmount(total);
-      const wrong = !(n3 > 0) ? "How many shares: more than 0." : isNaN(m3) || m3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
-      setProblem(wrong);
-      if (wrong) return;
-      setBusy(true);
-      try {
-        await change({ ...t3, shares: n3, total: m3, date: day3, sold: sold || void 0 });
-        done(true);
-      } catch (err) {
-        setProblem(String(err?.message || err));
-        setBusy(false);
-      }
-    };
-    return /* @__PURE__ */ u3("form", { class: "finform fx-investadd fx-tradeform", onSubmit: submit, "aria-labelledby": id2, children: [
-      /* @__PURE__ */ u3("div", { class: "fx-investaddhead", children: [
-        /* @__PURE__ */ u3("h3", { id: id2, children: [
-          "Change this ",
-          t3.sold ? "sale" : "buy",
-          " of ",
-          symbol
-        ] }),
-        /* @__PURE__ */ u3(Segmented, { label: "Bought or sold", value: way, pick: setWay, options: [["bought", "Bought"], ["sold", "Sold"]] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Shares",
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: count2, onInput: (e3) => setCount(e3.target.value) })
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          sold ? "What you got in all" : "What you paid in all",
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(t3.currency) }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: total, onInput: (e3) => setTotal(e3.target.value) })
-          ] })
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Day",
-          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3(EachShare, { shares: count2, total, currency: t3.currency, sold }),
-      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
-      /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: () => done(false), children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "small primary", disabled: busy2, children: busy2 ? "Saving…" : "Save in Ghostfolio" })
-      ] })
-    ] });
-  }
-  function Unmatched({ v: v3, state: state2, keep: keep3, read }) {
-    const left = state2.unmatched || [];
-    if (!left.length || !keep3 || !read) return null;
-    const free = (v3.plan.accounts || []).filter((a3) => (a3.kind === "investment" || a3.kind === "retirement") && !a3.ghostfolio);
-    const pick = async (name, to) => {
-      if (!to) return;
-      const plan = v3.plan;
-      const accounts = to === "new" ? [...plan.accounts || [], { id: "", name, kind: "investment", balance: 0, ghostfolio: name }] : (plan.accounts || []).map((a3) => a3.id === to ? { ...a3, ghostfolio: name } : a3);
-      if (await keep3({ ...plan, accounts })) read();
-    };
-    return /* @__PURE__ */ u3("div", { class: "fx-investleft", children: [
-      /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Not matched to an account here yet, so not shown: pick which account each is." }),
-      /* @__PURE__ */ u3("ul", { children: left.map((name) => /* @__PURE__ */ u3("li", { children: /* @__PURE__ */ u3("label", { children: [
-        /* @__PURE__ */ u3("strong", { children: name }),
-        " in Ghostfolio is",
-        /* @__PURE__ */ u3("select", { disabled: state2.busy, onChange: (e3) => pick(name, e3.target.value), children: [
-          /* @__PURE__ */ u3("option", { value: "", children: "Pick an account…" }),
-          free.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
-          /* @__PURE__ */ u3("option", { value: "new", children: [
-            "A new account, “",
-            name,
-            "”"
-          ] })
-        ] })
-      ] }) }, name)) })
-    ] });
-  }
-  function AddForm({ v: v3, add, find, close: close3 }) {
-    const invest2 = (v3.plan.accounts || []).filter((a3) => a3.kind === "investment" || a3.kind === "retirement");
-    const [way, setWay] = d2("bought");
-    const [account, setAccount] = d2(invest2[0]?.id || "new");
-    const [newName, setNewName] = d2("");
-    const [query3, setQuery] = d2("");
-    const [found2, setFound2] = d2([]);
-    const [looking2, setLooking] = d2(false);
-    const [picked, setPicked] = d2(null);
-    const [shares2, setShares] = d2("");
-    const [total, setTotal] = d2("");
-    const [day3, setDay] = d2(todayISO());
-    const [busy2, setBusy] = d2(false);
-    const [problem, setProblem] = d2("");
-    const timer = A2(0);
-    const asked = A2(0);
-    const why = (e3) => String(e3?.message || e3);
-    const type = (q2) => {
-      setQuery(q2);
-      setPicked(null);
-      clearTimeout(timer.current);
-      if (!q2.trim()) {
-        setFound2([]);
-        return;
-      }
-      timer.current = window.setTimeout(async () => {
-        const n3 = ++asked.current;
-        setLooking(true);
-        try {
-          const r3 = await find(q2);
-          if (n3 === asked.current) {
-            setFound2(r3);
-            setProblem("");
-          }
-        } catch (e3) {
-          if (n3 === asked.current) setProblem(why(e3));
-        } finally {
-          if (n3 === asked.current) setLooking(false);
-        }
-      }, 350);
-    };
-    const sold = way === "sold";
-    const submit = async (e3) => {
-      e3.preventDefault();
-      const n3 = parseCount(shares2), t3 = parseAmount(total);
-      const wrong = account === "new" && !newName.trim() ? "Name the new account." : !picked ? "Type a ticker or a name, then pick it from the list." : !(n3 > 0) ? "How many shares: more than 0." : isNaN(t3) || t3 < 0 ? `What you ${sold ? "got" : "paid"} in all: type it without a minus.` : !day3 || day3 > todayISO() ? "Pick the day it happened, today or before." : "";
-      setProblem(wrong);
-      if (wrong || !picked) return;
-      setBusy(true);
-      try {
-        await add({ account: account === "new" ? void 0 : account, newName: account === "new" ? newName.trim() : void 0, symbol: picked.symbol, dataSource: picked.dataSource, currency: picked.currency, shares: n3, total: t3, date: day3, sold: sold || void 0 });
-        close3();
-      } catch (err) {
-        setProblem(why(err));
-        setBusy(false);
-      }
-    };
-    return /* @__PURE__ */ u3("form", { class: "finform fx-investadd", onSubmit: submit, "aria-labelledby": "investAddTitle", children: [
-      /* @__PURE__ */ u3("div", { class: "fx-investaddhead", children: [
-        /* @__PURE__ */ u3("h3", { id: "investAddTitle", children: "Add a holding" }),
-        /* @__PURE__ */ u3(Segmented, { label: "Bought or sold", value: way, pick: setWay, options: [["bought", "Bought"], ["sold", "Sold"]] })
-      ] }),
-      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Account",
-          /* @__PURE__ */ u3("select", { value: account, onChange: (e3) => setAccount(e3.target.value), children: [
-            invest2.map((a3) => /* @__PURE__ */ u3("option", { value: a3.id, children: a3.name }, a3.id)),
-            /* @__PURE__ */ u3("option", { value: "new", children: "A new account…" })
-          ] })
-        ] }),
-        account === "new" && /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Its name",
-          /* @__PURE__ */ u3("input", { value: newName, placeholder: "Roth IRA", onInput: (e3) => setNewName(e3.target.value) })
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field wide", children: [
-          "What you ",
-          sold ? "sold" : "bought",
-          /* @__PURE__ */ u3("input", { value: query3, placeholder: "A ticker, like VTI, or a name", autocomplete: "off", "aria-describedby": "investFound", onInput: (e3) => type(e3.target.value) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3("div", { id: "investFound", class: "fx-symbols", "aria-live": "polite", children: picked ? /* @__PURE__ */ u3("p", { class: "fx-symbolpicked", children: [
-        /* @__PURE__ */ u3("strong", { children: picked.symbol }),
-        " ",
-        picked.name,
-        " ",
-        /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-          "· ",
-          picked.currency
-        ] }),
-        " ",
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: () => {
-          setPicked(null);
-        }, children: "Change" })
-      ] }) : looking2 ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: "Looking it up in Ghostfolio…" }) : query3.trim() && !found2.length ? /* @__PURE__ */ u3("p", { class: "fx-sub", children: [
-        "Ghostfolio found nothing for “",
-        query3.trim(),
-        "”."
-      ] }) : found2.map((s3) => /* @__PURE__ */ u3("button", { type: "button", class: "fx-symbol", onClick: () => {
-        setPicked(s3);
-        setQuery(s3.symbol);
-        setFound2([]);
-      }, children: [
-        /* @__PURE__ */ u3("strong", { children: s3.symbol }),
-        /* @__PURE__ */ u3("span", { children: s3.name }),
-        /* @__PURE__ */ u3("small", { children: s3.currency })
-      ] }, s3.dataSource + s3.symbol)) }),
-      /* @__PURE__ */ u3("div", { class: "fx-investaddgrid", children: [
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Shares",
-          /* @__PURE__ */ u3("input", { inputmode: "decimal", value: shares2, placeholder: "10", onInput: (e3) => setShares(e3.target.value) })
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          sold ? "What you got in all" : "What you paid in all",
-          /* @__PURE__ */ u3("span", { class: "moneyfield", children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: signOf(picked?.currency) }),
-            /* @__PURE__ */ u3("input", { inputmode: "decimal", value: total, placeholder: "0.00", onInput: (e3) => setTotal(e3.target.value) })
-          ] })
-        ] }),
-        /* @__PURE__ */ u3("label", { class: "field", children: [
-          "Day",
-          /* @__PURE__ */ u3("input", { type: "date", value: day3, max: todayISO(), onInput: (e3) => setDay(e3.target.value) })
-        ] })
-      ] }),
-      /* @__PURE__ */ u3(EachShare, { shares: shares2, total, currency: picked?.currency, sold }),
-      /* @__PURE__ */ u3("p", { class: "fx-sub fx-investaddnote", children: [
-        "It goes into Ghostfolio on this computer",
-        account === "new" ? ", and the new account into Finances too, by the same name" : "",
-        ". Only the ticker leaves the homelab, when Ghostfolio looks it up."
-      ] }),
-      problem && /* @__PURE__ */ u3("p", { class: "formerr bad", role: "alert", children: problem }),
-      /* @__PURE__ */ u3("div", { class: "fx-investaddactions", children: [
-        /* @__PURE__ */ u3("button", { type: "button", class: "small", disabled: busy2, onClick: close3, children: "Cancel" }),
-        /* @__PURE__ */ u3("button", { type: "submit", class: "small primary", disabled: busy2, children: busy2 ? "Adding…" : "Add to Ghostfolio" })
-      ] })
-    ] });
-  }
-
-  // web/src/finances/Worth.tsx
-  var ranges2 = [["3", "3 months", 3], ["6", "6 months", 6], ["12", "1 year", 12], ["all", "All", 600]];
-  function ago2(day3, today2) {
-    if (!day3) return "not typed in yet";
-    const n3 = daysBetween(day3, today2);
-    return n3 <= 0 ? "updated today" : n3 === 1 ? "updated yesterday" : n3 < 14 ? `updated ${n3} days ago` : `updated ${dayShort(day3)}`;
-  }
-  var month2 = (day3) => monthName(day3).slice(0, 3);
-  function NetWorth({ v: v3, L: L2, edit, sel: sel2, pick, update, keep: keep3, group: group2, setGroup, invest: invest2 }) {
-    const [range, setRange] = d2("3");
-    const [counted, setCounted] = d2("all");
-    const accounts = v3.plan.accounts || [];
-    if (!accounts.length && !edit) return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3(Card, { kind: "finstart", children: /* @__PURE__ */ u3(Empty, { children: "No accounts typed in yet." }) }) });
-    if (!accounts.length) {
-      return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: /* @__PURE__ */ u3(Widget, { title: "Nothing here yet", span: "all", kind: "finstart", children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: [
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "checking", name: "Accounts" }), title: "Bank accounts, cards, and investments", sub: "What each holds, typed in", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add an account" }) }),
-        /* @__PURE__ */ u3(Row, { lead: /* @__PURE__ */ u3(Mark, { kind: "home", name: "Home" }), title: "A home or a car", sub: "What it is worth, and the loan against it: its equity", end: /* @__PURE__ */ u3("button", { class: "small", onClick: () => edit("account"), children: "Add property" }) })
-      ] }) }) }) });
-    }
-    const kept4 = parseDay(firstKept(v3)), today2 = parseDay(v3.today);
-    const back3 = Math.max(1, Math.min(ranges2.find(([k3]) => k3 === range)?.[2] ?? 3, (today2.getFullYear() - kept4.getFullYear()) * 12 + today2.getMonth() - kept4.getMonth()));
-    const months = worthByMonth(v3, back3, 3);
-    const start = months[0];
-    const now = netWorth(v3);
-    const focus = group2 ? grouped(v3).find((g2) => g2.key === group2) : void 0;
-    const inFocus = (a3) => !focus || focus.accounts.includes(a3);
-    const owned = accounts.filter((a3) => !owed(a3.kind));
-    const debts = accounts.filter((a3) => owed(a3.kind));
-    const owes = debts.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
-    const loans = debts.filter((a3) => a3.kind === "loan");
-    const onLoans = loans.reduce((t3, a3) => t3 - worthOf(v3, a3), 0);
-    const loanDrop = loans.reduce((t3, a3) => t3 + (worthOf(v3, a3) - worthOn(v3, a3, start.date)), 0);
-    const ownedKeys = groups.filter((g2) => g2.key !== "cards" && g2.key !== "loans" && months.some((m3) => (m3.owned[g2.key] || 0) > 0));
-    const netted = months.some((m3) => m3.secured > 0);
-    const hasHome = ownedKeys.some((g2) => g2.key === "property");
-    const homeToo = counted === "all" || !hasHome;
-    const keys2 = ownedKeys.filter((g2) => homeToo || g2.key !== "property");
-    const named6 = (g2) => netted && g2.key === "property" ? `${g2.name}, less their loans` : g2.name;
-    const bars = (m3) => {
-      const equity = (m3.owned.property || 0) - m3.secured;
-      const up = keys2.map((g2) => ({ key: g2.key, value: g2.key === "property" ? Math.max(equity, 0) : m3.owned[g2.key] || 0, color: g2.color }));
-      return { up, down: m3.owes - m3.secured + (homeToo ? Math.max(-equity, 0) : 0), net: homeToo ? m3.net : m3.net - equity };
-    };
-    const owedName = netted ? "Other debts" : "Owed";
-    const netName = homeToo ? "Net worth" : "Net worth without Home & Car";
-    const sorted = (list) => [...list].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
-    const row = (a3) => {
-      const w3 = worthOf(v3, a3), d3 = w3 - worthOn(v3, a3, start.date);
-      const loan = a3.loan ? accounts.find((x3) => x3.id === a3.loan) : void 0;
-      const paid = a3.original ? Math.max(0, Math.min(1, (a3.original - todayOf(v3, a3) / rateOf(v3.plan, a3)) / a3.original)) : -1;
-      const own2 = a3.currency ? `${moneyIn(Math.abs(todayOf(v3, a3)) / rateOf(v3.plan, a3), a3.currency)} · ` : "";
-      const sub = own2 + (loan ? `${money(todayOf(v3, a3) - todayOf(v3, loan))} equity` : paid >= 0 ? `${Math.round(paid * 100)}% of ${a3.currency ? moneyIn(a3.original, a3.currency).replace(/\.\d\d$/, "") : whole(a3.original)} paid` : a3.kind === "card" && a3.pending ? `${moneyIn(a3.pending, a3.currency)} pending` : ago2(a3.updated, v3.today));
-      const car = a3.kind === "car" && a3.bought && a3.boughtOn ? ` · bought for ${a3.currency ? moneyIn(a3.bought, a3.currency) : whole(a3.bought)}, ${monthName(a3.boughtOn).slice(0, 3)} ${a3.boughtOn.slice(0, 4)}` : "";
-      return /* @__PURE__ */ u3(
-        Row,
-        {
-          lead: /* @__PURE__ */ u3(AcctMark, { a: a3 }),
-          title: a3.name,
-          sub: sub + car,
-          end: Math.abs(d3) >= 0.5 ? /* @__PURE__ */ u3("span", { class: "fx-change " + (d3 > 0 ? "fx-in" : "fx-out"), title: `Since ${dayShort(start.date)}`, children: [
-            /* @__PURE__ */ u3("span", { "aria-hidden": "true", children: d3 > 0 === w3 >= 0 ? "↑ " : "↓ " }),
-            compact(Math.abs(d3)),
-            /* @__PURE__ */ u3("span", { class: "fx-hidden", children: [
-              " ",
-              w3 >= 0 ? d3 > 0 ? "more" : "less" : d3 > 0 ? "less owed" : "more owed",
-              " since ",
-              dayShort(start.date)
-            ] })
-          ] }) : void 0,
-          when: /* @__PURE__ */ u3(Amount, { value: Math.abs(w3), form: "full" }),
-          whenPlain: true,
-          onOpen: edit ? () => edit("account", a3.id) : void 0,
-          openLabel: "edit"
-        },
-        a3.id
-      );
-    };
-    return /* @__PURE__ */ u3("div", { class: "fin", children: /* @__PURE__ */ u3("div", { class: "fx-board", children: [
-      /* @__PURE__ */ u3(Widget, { title: "Net worth", kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now }) }) }),
-      /* @__PURE__ */ u3(Widget, { title: `Since ${dayShort(start.date)}`, kind: "fx-figurecard", children: /* @__PURE__ */ u3(Stat, { size: "lg", value: /* @__PURE__ */ u3(Amount, { value: now - start.net, sign: true, tone: "auto" }), aside: /* @__PURE__ */ u3(Delta, { value: now - start.net, base: start.net, shareOnly: true }) }) }),
-      /* @__PURE__ */ u3(Widget, { title: "What's owed", kind: "fx-figurecard", children: owes < 5e-3 && !loans.length ? /* @__PURE__ */ u3("p", { class: "fx-say", children: "Nothing owed: no card balance, no loan." }) : /* @__PURE__ */ u3("p", { class: "fx-say", children: [
-        "You owe ",
-        /* @__PURE__ */ u3(Amount, { value: owes, form: "full", tone: "out" }),
-        loans.length ? /* @__PURE__ */ u3(S, { children: [
-          onLoans > owes / 2 ? ", most of it on loans. They are" : ". Your loans are",
-          " ",
-          /* @__PURE__ */ u3(Amount, { value: Math.abs(loanDrop), form: "whole" }),
-          " ",
-          loanDrop >= 0 ? "smaller" : "larger",
-          " than on ",
-          dayShort(start.date),
-          "."
-        ] }) : "."
-      ] }) }),
-      focus && /* @__PURE__ */ u3(GroupCard, { v: v3, focus, months, range, setRange, clear: () => setGroup?.("") }),
-      /* @__PURE__ */ u3(
-        Widget,
-        {
-          title: "Net worth by month",
-          span: "all",
-          kind: "fx-worthchart",
-          actions: /* @__PURE__ */ u3(S, { children: [
-            hasHome && /* @__PURE__ */ u3(Segmented, { label: "What it counts", value: counted, pick: setCounted, options: [["all", "Everything"], ["liquid", "Without Home & Car"]] }),
-            /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges2.map(([k3, t3]) => [k3, t3]) })
-          ] }),
-          children: [
-            /* @__PURE__ */ u3(
-              StackedBars,
-              {
-                format: tick,
-                height: 280,
-                label: `${netName} at each month's end, what is owned stacked above zero${homeToo && netted ? " (a home and car less their loans)" : ""} and what is owed below: ${months.map((m3) => `${month2(m3.date)} ${money(bars(m3).net)}${m3.ahead ? " ahead" : ""}`).join(", ")}.`,
-                columns: months.map((m3) => ({
-                  label: m3.date === v3.today ? "Now" : month2(m3.date),
-                  up: bars(m3).up.map(({ value, color }) => ({ value, color })),
-                  down: [{ value: bars(m3).down, color: 8 }],
-                  line: bars(m3).net,
-                  ahead: m3.ahead
-                })),
-                tip: (i3) => {
-                  const m3 = months[i3], b2 = bars(m3);
-                  return /* @__PURE__ */ u3(S, { children: [
-                    /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
-                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
-                      /* @__PURE__ */ u3("span", { children: "Owned" }),
-                      /* @__PURE__ */ u3(Amount, { value: b2.up.reduce((t3, p3) => t3 + p3.value, 0), form: "full", tone: "in" })
-                    ] }),
-                    keys2.map((g2, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
-                      /* @__PURE__ */ u3(Dot, { color: g2.color }),
-                      /* @__PURE__ */ u3("span", { children: named6(g2) }),
-                      /* @__PURE__ */ u3(Amount, { value: b2.up[k3].value, form: "full" })
-                    ] }, g2.key)),
-                    /* @__PURE__ */ u3("div", { class: "fx-tiphead fx-gap", children: [
-                      /* @__PURE__ */ u3("span", { children: owedName }),
-                      /* @__PURE__ */ u3(Amount, { value: -b2.down, form: "full", tone: "out" })
-                    ] }),
-                    /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
-                      /* @__PURE__ */ u3("span", { children: netName }),
-                      /* @__PURE__ */ u3(Amount, { value: b2.net, form: "full" })
-                    ] })
-                  ] });
-                }
-              }
-            ),
-            /* @__PURE__ */ u3(Legend, { layout: "inline", items: [
-              ...keys2.map((g2) => ({ label: named6(g2), color: g2.color })),
-              { label: owedName, color: 8 },
-              { label: netName, color: "muted", shape: "line" },
-              ...months.some((m3) => m3.ahead) ? [{ label: "Ahead, from your paychecks and bills", color: "muted", shape: "dash" }] : []
-            ] })
-          ]
-        }
-      ),
-      (!focus || focus.key === "investments") && /* @__PURE__ */ u3(InvestmentsWidget, { v: v3, keep: keep3, ...invest2 }),
-      (!focus || focus.accounts.some((a3) => !owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
-        "What you own ",
-        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: owned.filter(inFocus).reduce((t3, a3) => t3 + worthOf(v3, a3), 0), form: "whole" }) })
-      ] }), kind: "fx-ownlist", span: focus && !focus.accounts.some((a3) => owed(a3.kind)) ? "all" : 2, children: /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(owned.filter(inFocus)).map(row) }) }),
-      (!focus || focus.accounts.some((a3) => owed(a3.kind))) && /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
-        "What you owe ",
-        /* @__PURE__ */ u3("span", { class: "fx-sub", children: /* @__PURE__ */ u3(Amount, { value: focus ? debts.filter(inFocus).reduce((t3, a3) => t3 - worthOf(v3, a3), 0) : owes, form: "whole" }) })
-      ] }), kind: "fx-owelist", span: focus ? "all" : void 0, children: debts.filter(inFocus).length ? /* @__PURE__ */ u3(Rows, { kind: "fx-rows", children: sorted(debts.filter(inFocus)).map(row) }) : /* @__PURE__ */ u3(Empty, { children: "Nothing owed." }) }),
-      /* @__PURE__ */ u3(LoansWidget, { v: v3, L: L2, edit }),
-      /* @__PURE__ */ u3(GoalsWidget, { v: v3, L: L2, edit }),
-      /* @__PURE__ */ u3(FireWidget, { v: v3, L: L2, keep: keep3 }),
-      /* @__PURE__ */ u3(PostPayWidget, { v: v3, L: L2, sel: Math.min(sel2, v3.periods.length - 1), pick, update })
-    ] }) });
-  }
-  function GroupCard({ v: v3, focus, months, range, setRange, clear }) {
-    const list = [...focus.accounts].sort((a3, b2) => Math.abs(worthOf(v3, b2)) - Math.abs(worthOf(v3, a3)));
-    const debt = list.every((a3) => owed(a3.kind));
-    const color = (i3) => i3 % 7 + 1;
-    const at2 = (a3, m3) => Math.abs(m3.date === v3.today ? worthOf(v3, a3) : worthOn(v3, a3, m3.date));
-    return /* @__PURE__ */ u3(
-      Widget,
-      {
-        title: /* @__PURE__ */ u3(S, { children: [
-          focus.name,
-          " ",
-          /* @__PURE__ */ u3("span", { class: "fx-sub", children: [
-            /* @__PURE__ */ u3(Amount, { value: Math.abs(focus.total), form: "whole" }),
-            debt ? " owed" : ""
-          ] })
-        ] }),
-        span: "all",
-        kind: "fx-groupcard",
-        actions: /* @__PURE__ */ u3(S, { children: [
-          /* @__PURE__ */ u3(Segmented, { label: "How far back", value: range, pick: setRange, options: ranges2.map(([k3, t3]) => [k3, t3]) }),
-          /* @__PURE__ */ u3("button", { type: "button", class: "small", onClick: clear, children: "Show everything" })
-        ] }),
-        children: [
-          /* @__PURE__ */ u3(
-            StackedBars,
-            {
-              format: tick,
-              height: 220,
-              lineless: true,
-              label: `${focus.name} at each month's end, each account a band of its own: ${months.map((m3) => `${month2(m3.date)} ${list.map((a3) => `${a3.name} ${money(at2(a3, m3))}`).join(", ")}`).join("; ")}.`,
-              columns: months.map((m3) => ({
-                label: m3.date === v3.today ? "Now" : month2(m3.date),
-                up: list.map((a3, i3) => ({ value: at2(a3, m3), color: color(i3) })),
-                down: [],
-                line: list.reduce((t3, a3) => t3 + at2(a3, m3), 0),
-                ahead: m3.ahead
-              })),
-              tip: (i3) => {
-                const m3 = months[i3];
-                return /* @__PURE__ */ u3(S, { children: [
-                  /* @__PURE__ */ u3("div", { class: "fx-caption", children: m3.date === v3.today ? "Today" : `${dayShort(m3.date)}${m3.ahead ? ", ahead" : ""}` }),
-                  list.map((a3, k3) => /* @__PURE__ */ u3("div", { class: "fx-tiprow", children: [
-                    /* @__PURE__ */ u3(Dot, { color: color(k3) }),
-                    /* @__PURE__ */ u3("span", { children: a3.name }),
-                    /* @__PURE__ */ u3(Amount, { value: at2(a3, m3), form: "full" })
-                  ] }, a3.id)),
-                  /* @__PURE__ */ u3("div", { class: "fx-tiptotal", children: [
-                    /* @__PURE__ */ u3("span", { children: focus.name }),
-                    /* @__PURE__ */ u3(Amount, { value: list.reduce((t3, a3) => t3 + at2(a3, m3), 0), form: "full" })
-                  ] })
-                ] });
-              }
-            }
-          ),
-          /* @__PURE__ */ u3(Legend, { layout: "inline", items: list.map((a3, i3) => ({ label: a3.name, color: color(i3) })) })
-        ]
-      }
-    );
   }
 
   // web/src/finances/widgets/Worth.tsx
@@ -16472,7 +16565,7 @@ ${pays}
     ["plan", "Plan", ["calendar", "recurring", "pay"]],
     ["worth", "Net worth", ["worth"]]
   ];
-  var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(tab3)) || groups3[0];
+  var groupOf = (tab3) => groups3.find(([, , pages]) => pages.includes(tab3.startsWith("account:") ? "worth" : tab3)) || groups3[0];
   var leftOn = {};
   var pageOf = (group2) => leftOn[group2] || groups3.find(([k3]) => k3 === group2)[2][0];
   var adds = { overview: ["payment", "Add a payment"], calendar: ["payment", "Add a payment"], transactions: ["transaction", "Add a transaction"], reports: ["transaction", "Add a transaction"], recurring: ["payment", "Add a payment"], pay: ["person", "Add a paycheck"], worth: ["account", "Add an account"] };
@@ -16530,7 +16623,7 @@ ${pays}
       setTab(t3);
     };
     if (groupOf(tab3)[2].includes(tab3)) leftOn[groupOf(tab3)[0]] = tab3;
-    const back3 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
+    const back4 = from2 && from2 !== "transactions" ? { label: tabs.find(([k3]) => k3 === from2)?.[1] || from2, go: () => pickTab(from2) } : void 0;
     const ro = !!v3?.readOnly;
     const age = v3?.typed ? daysBetween(v3.typed, v3.today) : -1;
     const lead2 = (age < 0 ? phone2 ? "Typed in by you, kept on your homelab" : "Typed in by you, kept on this machine" : age === 0 ? "Balances from today" : `Balances from ${dayShort(v3.typed)}, with what's happened since` + (age >= 7 ? `: ${age} days ago${ro ? "" : ", bring them up to date with Update balances"}` : "")) + (ro ? " · view only" : "");
@@ -16560,7 +16653,7 @@ ${pays}
         error,
         " ",
         /* @__PURE__ */ u3("button", { class: "small", onClick: retry, children: "Try again" })
-      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
+      ] }) : !v3 ? /* @__PURE__ */ u3(Empty, { children: "Reading…" }) : ro ? /* @__PURE__ */ u3(View, { v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back4, exportFile: exportFile2, readReceipt, running: running5, tab: tab3, sel: sel2, pick, openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -16569,7 +16662,7 @@ ${pays}
       }, openTransactions: () => toTx({}), showIn: toTx, openCalendar: (day3) => {
         if (day3) showDay(day3);
         setTab("calendar");
-      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
+      }, group: group2, setGroup }) : tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2) }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, edit: (w3, id2) => edit(w3, id2), saveLedger: saveLedger2, logos: !phone2, back: back4 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, edit, keep: keep3, running: running5, fromWallos }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2, edit, saveSettings, keep: keep3, calendar }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), edit: () => edit("account", tab3.slice(8)), update: () => edit("balances"), toTx, editTx: (w3, id2) => edit(w3, id2) }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, edit, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, update: () => edit("balances"), keep: keep3, group: group2, setGroup, invest: investments }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, setSince: ro ? void 0 : setSince2, keep: ro ? void 0 : keep3, add: (w3, k3) => edit(w3, void 0, k3), edit: (w3, id2) => edit(w3, id2), openWorth: () => setTab("worth"), openSubscriptions: () => {
         openOn("subscriptions");
         setTab("recurring");
       }, openRecurring: (f4) => {
@@ -16581,8 +16674,8 @@ ${pays}
       }, phone: phone2 }) })
     ] });
   }
-  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back3, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
-    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back3 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, sel: Math.max(0, sel2), pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, phone: phone2 });
+  function View({ v: v3, L: L2, phone: phone2, ledger, setTab, toTx, back: back4, tab: tab3, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, exportFile: exportFile2, readReceipt, running: running5, group: group2, setGroup }) {
+    return tab3 === "calendar" ? /* @__PURE__ */ u3(Calendar, { v: v3, L: L2, ledger }) : tab3 === "transactions" ? /* @__PURE__ */ u3(Transactions, { v: v3, L: L2, ledger, readReceipt, back: back4 }) : tab3 === "reports" ? /* @__PURE__ */ u3(Reports, { v: v3, ledger, exportFile: exportFile2, open: toTx }) : tab3 === "recurring" ? /* @__PURE__ */ u3(Recurring, { v: v3, L: L2, running: running5 }) : tab3 === "pay" ? /* @__PURE__ */ u3(Pay, { v: v3, L: L2 }) : tab3.startsWith("account:") ? /* @__PURE__ */ u3(AccountPage, { v: v3, L: L2, ledger, id: tab3.slice(8), done: () => setTab("worth"), toTx }) : tab3 === "worth" ? /* @__PURE__ */ u3(NetWorth, { v: v3, L: L2, open: (id2) => setTab("account:" + id2), sel: Math.max(0, sel2), pick, group: group2, setGroup }) : /* @__PURE__ */ u3(Overview, { v: v3, L: L2, ledger, sel: sel2, pick, openWorth, openSubscriptions, openRecurring, openTransactions, showIn: showIn2, openCalendar, phone: phone2 });
   }
   function mountFinances(el3, props) {
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
@@ -16679,8 +16772,8 @@ ${pays}
   }
   var tab = "overview";
   var group = "";
-  keepsTabs("finances", () => tab + (group ? ":" + group : ""), (t3) => {
-    const [page, g2] = t3.split(":");
+  keepsTabs("finances", () => tab + (group ? "|" + group : ""), (t3) => {
+    const [page, g2] = t3.split("|");
     tab = page;
     group = g2 || "";
     draw4();
@@ -18904,7 +18997,7 @@ ${pays}
     show3(name);
     remember();
   }
-  var back2 = [];
+  var back3 = [];
   var ahead = [];
   var current;
   var moving = false;
@@ -18914,8 +19007,8 @@ ${pays}
     if (!screen) return;
     const next = { screen, app: screen === "app" ? openedApp() : void 0, tab: tabbed[screen]?.now() };
     if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
-      back2.push(current);
-      if (back2.length > 50) back2.shift();
+      back3.push(current);
+      if (back3.length > 50) back3.shift();
       ahead.length = 0;
     }
     current = next;
@@ -18934,7 +19027,7 @@ ${pays}
     }
   }
   function goBack() {
-    const p3 = back2.pop();
+    const p3 = back3.pop();
     if (!p3) return false;
     if (current) ahead.push(current);
     visit(p3);
@@ -18944,7 +19037,7 @@ ${pays}
   function goForward() {
     const p3 = ahead.pop();
     if (!p3) return false;
-    if (current) back2.push(current);
+    if (current) back3.push(current);
     visit(p3);
     swipeHint("forward");
     return true;

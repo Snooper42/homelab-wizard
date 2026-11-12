@@ -115,7 +115,7 @@ let tab = 'overview';
 // The group of accounts Net worth opens on (a sidebar balance), "" for all of them.
 let group = '';
 // Back and Forward step through the tabs (and a Net worth group) as through screens.
-keepsTabs('finances', () => tab + (group ? ':' + group : ''), (t) => { const [page, g] = t.split(':'); tab = page; group = g || ''; draw(); });
+keepsTabs('finances', () => tab + (group ? '|' + group : ''), (t) => { const [page, g] = t.split('|'); tab = page; group = g || ''; draw(); });
 let sel: number | null = null;
 let opened = 0;
 // The form open in the sheet, drawn again over each plan read while it is.

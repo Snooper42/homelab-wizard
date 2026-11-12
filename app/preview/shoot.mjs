@@ -2651,6 +2651,44 @@ const smokes = [
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
+  // The owner, Nov 12: clicking an account on Net worth opened the form to update its balance and logo. It opens the
+  // account's own page: its balance and a chart of it, its latest transactions, and Update balance and Edit as buttons;
+  // Back goes back to Net worth.
+  { name: 'Finances: an account opens its own page, with its chart and latest transactions', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
+    const acct = page.locator('#finRoot .fx-account');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 5000 });
+    if (await page.locator('#finSheet:not([hidden])').count()) throw new Error('the balance form opened instead of the page');
+    const seg = await page.textContent('#finRoot > .seg button[aria-checked="true"]');
+    if (seg !== 'Net worth') throw new Error(`the tab shown is ${seg}`);
+    for (const b of ['Update balance', 'Edit']) if (!(await acct.locator(`button:text-is("${b}")`).count())) throw new Error(`no ${b}`);
+    if (!(await acct.locator('figure.fx-area[aria-label*="Chase Checking"]').count())) throw new Error('no chart of its balance');
+    const rows = await acct.locator('.fx-acctlatest li').count();
+    if (rows < 3) throw new Error(`${rows} latest transactions`);
+    // Edit opens its form, as the row used to.
+    await acct.locator('button:text-is("Edit")').click();
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    // All of them: Transactions, that account picked.
+    await acct.locator('button:has-text("All of them")').click();
+    await page.waitForSelector('#finRoot .fx-subtabs .seg button[aria-checked="true"]:text-is("Transactions")', { timeout: 5000 });
+    const picked = await page.evaluate(() => [...document.querySelectorAll('#finRoot select')].map((s) => s.selectedOptions[0]?.textContent || '').join('|'));
+    if (!picked.includes('Chase Checking')) throw new Error(`Transactions opened on ${picked}`);
+    // Back: the account's page, then Net worth.
+    await page.keyboard.press('Meta+BracketLeft');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 3000 });
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 3000 });
+  } },
+  { name: 'The phone, view only: an account’s page has nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
+    const acct = page.locator('#finRoot .fx-account');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 5000 });
+    if (await acct.locator('button:text-is("Edit"), button:text-is("Update balance")').count()) throw new Error('a view-only phone can change it');
+    if (!(await acct.locator('.fx-acctlatest li').count())) throw new Error('no latest transactions');
+  } },
   // Back and Forward between screens, as a browser has them (the owner, Nov 11): ⌘[ and ⌘], an app's page coming back
   // with its app, and a two-finger swipe on a trackpad (sideways wheel), right for Back, left for Forward.
   { name: 'Back and Forward between screens: ⌘[ and ⌘], and a two-finger swipe', screen: 'status', run: async (page) => {

@@ -32,6 +32,8 @@ export interface NetWorthProps {
   /** The pay period picked, for every account paycheck by paycheck; its columns pick one. */
   sel: number;
   pick: (i: number) => void;
+  /** Opens an account's own page (its row's click; Edit is a button there). */
+  open?: (id: string) => void;
   /** Opens Update balances; none on a phone allowed only to look. */
   update?: () => void;
   /** Keeps the plan as it is given (the FIRE estimate's assumptions); none on a phone allowed only to look. */
@@ -55,7 +57,7 @@ export function ago(day: string | undefined, today: string): string {
 
 const month = (day: string) => monthName(day).slice(0, 3);
 
-export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup, invest }: NetWorthProps) {
+export function NetWorth({ v, L, edit, open, sel, pick, update, keep, group, setGroup, invest }: NetWorthProps) {
   const [range, setRange] = useState('3');
   const [counted, setCounted] = useState('all');
   const accounts = v.plan.accounts || [];
@@ -115,7 +117,7 @@ export function NetWorth({ v, L, edit, sel, pick, update, keep, group, setGroup,
     return <Row key={a.id} lead={<AcctMark a={a} />} title={a.name} sub={sub + car}
       end={Math.abs(d) >= 0.5 ? <span class={'fx-change ' + (d > 0 ? 'fx-in' : 'fx-out')} title={`Since ${dayShort(start.date)}`}><span aria-hidden="true">{(d > 0) === (w >= 0) ? '↑ ' : '↓ '}</span>{compact(Math.abs(d))}<span class="fx-hidden"> {w >= 0 ? (d > 0 ? 'more' : 'less') : d > 0 ? 'less owed' : 'more owed'} since {dayShort(start.date)}</span></span> : undefined}
       when={<Amount value={Math.abs(w)} form="full" />} whenPlain
-      onOpen={edit ? () => edit('account', a.id) : undefined} openLabel="edit" />;
+      onOpen={open ? () => open(a.id) : edit ? () => edit('account', a.id) : undefined} openLabel={open ? 'open' : 'edit'} />;
   };
   return (
     <div class="fin">

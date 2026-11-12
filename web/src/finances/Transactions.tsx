@@ -24,7 +24,7 @@ import { paysBill } from './guessCategory';
 import { joined, type Pair, pairs, suggestLinks, withLearned } from './importData';
 import { categoryHue } from './hues';
 import { BudgetsWidget } from './widgets/Budgets';
-import { inHome } from './model';
+import { balanceAfter, inHome, runsFrom } from './model';
 import { allPayments, dayLong, dayShort, type Lookup, money, moneyIn, monthName, owed, plural } from './money';
 import { tagsOf } from './reportData';
 import { showUndo } from '../status/UndoNote';
@@ -167,8 +167,8 @@ function PairsWidget({ L, ledger, save }: { L: Lookup; ledger: finance.Ledger; s
 export const txPage = 200;
 
 /** What Transactions opens filtered to next (a Reports row picked it): a category or group, a month, words. Then everything again. */
-let opening: { category?: string; month?: string; q?: string } = {};
-export const showTransactions = (f: { category?: string; month?: string; q?: string }) => { opening = f; };
+let opening: { category?: string; month?: string; q?: string; account?: string } = {};
+export const showTransactions = (f: { category?: string; month?: string; q?: string; account?: string }) => { opening = f; };
 
 export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logos, back }: TransactionsProps) {
   // Taken once, as it opens: a later visit opens on everything.
@@ -183,7 +183,7 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
     try { still({ id: t.id, url: await readReceipt!(t.receipt!) }); } catch (e) { still({ id: t.id, problem: String((e as Error)?.message || e) }); }
   };
   const [q, setQ] = useState(first.q || '');
-  const [accountPick, setAccount] = useState('');
+  const [accountPick, setAccount] = useState(first.account || '');
   const [categoryPick, setCategory] = useState(first.category || '');
   const [monthPick, setMonthPick] = useState(first.month || '');
   const [way, setWay] = useState('');
@@ -310,14 +310,8 @@ export function Transactions({ v, L, ledger, edit, readReceipt, saveLedger, logo
   // One account picked: what it held after each day, worked back (and on) from its balance as typed in on its day,
   // through every transaction in or out of it. Not for a home, a car, or a collectible, whose worth no transaction moves.
   const acct = account ? L.account[account] : undefined;
-  const runs = !!acct?.updated && !['home', 'car', 'collectible'].includes(acct.kind);
-  const after = (day: string): number => {
-    if (!acct) return 0;
-    // What a transaction did to the account: money out of it, or a transfer into it; a card or loan owes the more for a charge.
-    const effect = (t: finance.Transaction) => (t.account === acct.id ? t.amount : t.to === acct.id ? -t.amount : 0) * (owed(acct.kind) ? -1 : 1);
-    const at = acct.updated!;
-    return all.reduce((n, t) => n + (day < at ? (t.date > day && t.date <= at ? -effect(t) : 0) : (t.date > at && t.date <= day ? effect(t) : 0)), acct.balance);
-  };
+  const runs = runsFrom(acct);
+  const after = (day: string): number => (acct ? balanceAfter(acct, all, day) : 0);
   // By day, newest first, each day's transactions as they were entered, latest on top.
   const days: { date: string; list: finance.Transaction[] }[] = [];
   for (const t of list.slice(0, upTo)) {
