@@ -12,6 +12,9 @@ final class FinancesViewModel {
     private(set) var error: String?
     private(set) var isLoading = false
     private(set) var plan: FinancesPlanView?
+    /// The household's own pictures for a logo, from the plan, for every
+    /// LogoCircle (the dashboard puts them in the environment).
+    private(set) var ownLogos = OwnLogos()
     /// The plan as the computer sent it, for an edit to send back whole.
     @ObservationIgnored private var rawPlan: JSONValue?
     private(set) var isSaving = false
@@ -131,6 +134,7 @@ final class FinancesViewModel {
         guard await authorize(reason) else { return false }
         do {
             let read = try await api.saveFinances(edited)
+            ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
             rawPlan = read.rawPlan
             saveError = nil
@@ -197,6 +201,7 @@ final class FinancesViewModel {
     }
 
     private func apply(_ r: InvestmentsReadResult) {
+        ownLogos = OwnLogos(r.read.view.plan.logos)
         plan = r.read.view
         rawPlan = r.read.rawPlan
         investmentsSaid = r.words()
@@ -403,6 +408,7 @@ final class FinancesViewModel {
         defer { isLoadingPlan = false }
         do {
             let read = try await api.financesPlan()
+            ownLogos = OwnLogos(read.view.plan.logos)
             plan = read.view
             rawPlan = read.rawPlan
             planError = nil
@@ -410,6 +416,7 @@ final class FinancesViewModel {
             let apiError = APIError.from(error)
             if case .forbidden = apiError {
                 plan = nil
+                ownLogos = OwnLogos()
                 rawPlan = nil
             }
             Log.ui.error("Finances failed: \(apiError.logName, privacy: .public)")

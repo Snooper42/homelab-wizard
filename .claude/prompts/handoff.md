@@ -13,6 +13,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 5. **Waiting on CI:** `subscribe_pr_activity`, one `send_later` check-in about 50 minutes out, end the turn. Don't poll.
 6. **Every PR ends with "Try this tonight"** (what to click, and whether the iPhone needs the cable re-install). `CHANGELOG.md` under `## [Unreleased]` only.
 7. **Each new companion (phone) call** checks the device's permission: a read, or a change (`Change: true`) that a look-only phone and a wall screen can't make, and that a member's phone makes only for its own things. Changes ask Face ID on the iPhone, except a fold (it only changes what shows open).
+8. **Ask the owner with the pop-up** (AskUserQuestion: multiple choice, the recommendation first), never as a question in the text (the owner, Nov 12: "whenever you ask me questions do the pop up multiple choice thing").
 
 ## Start here (every session, in this order, before anything else)
 
@@ -31,7 +32,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 12, 8 AM Eastern)
+## 1. Where it stands (Nov 12, 9 AM Eastern)
 
 **Merged Nov 10 to 12** (each green):
 
@@ -73,11 +74,13 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #616, #617 | The security session's N50, N51 |
 | #618 | Tidy Up's look, **L5's first half**: captions on one line at 860px |
 | #619 | The security session's N52 |
+| #623 | The security session's round 12 |
+| #624 | The hand-off after L7 |
 | #621 | The security session's N53 |
 | #622 | Tidy Up's look, **L7**: in the dark, Finances' night (`--fin-night` on `#tidy`); every tab compared at three widths in both themes |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** this hand-off (docs only), on branch `claude/blissful-pascal-997omq`. *Done:* merged green. **Nothing else is open, and every next step waits on the owner** (section 4): L6 (Tidy Up's header button), Finances Steps 5 and 6, the iPhone's next item (2B step 4), Rules deeper (2B step 5). While none is answered, offer the next UI work in section 4 (recommend the Setup error shown twice, mocked first) and Tidy Up's L8 (`tidy-loop.md`).
+**In flight:** #627, **2C step 1, the iPhone half:** the household's own pictures for a logo on the iPhone, iPad and Mac app (`OwnLogos`, the plan's `logos`, put in the environment by `DashboardView`, drawn first by `LogoCircle`; Swift Testing `OwnLogoTests`); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green (the first compile is CI's `build-and-test`). **Next:** 2C, in order.
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
@@ -116,6 +119,21 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
 4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. **Asked Nov 12, 7 AM** (section 4). *Done:* each item merged and `unison-handoff.md` marks it.
 5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. **Asked Nov 12, 8 AM** (section 4), recommending the payee-to-bill link first. *Done:* built, or the owner said no.
 6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. **Done (Nov 12):** the owner started it on their other account before 2A ended; it runs on its own branch (`audit-loop.md`). Leave its PRs ("Security N…") and `audit-loop.md` to it, and carry on with your own while one is open.
+
+### 2C. The owner's list (Nov 12, 8:30 AM): before what's left of 2A and 2B
+
+The owner, Nov 12: what doesn't work as they expect, and what they'd like next. They picked this order (the pop-up). One PR each, a failing test first.
+
+1. **Their own logos don't show on the phone** (the iPhone app **and** the phone's page; pictures they set on the computer; a letter or an icon shows instead; on Net worth, the Dashboard, Transactions and Investments).
+   - *The iPhone half:* **#627**. The app never read the plan's `logos` (docs/Parity.md claimed it did).
+   - *The phone's page:* **not found yet.** It is the computer's own bundle, and the phone's `Finances` call sends the whole plan, `logos` included (`serve.go`; `img-src 'self' data:` in the companion's CSP). In the preview (`phone: ['companion', 'finances']`, a `chase` picture) the page draws them as the computer does. So look at what the real plan holds. Ask the owner (pop-up) to run, on the Mac, a line that prints only counts (how many pictures, how many over 64 KB, how many not PNG/JPEG/WebP, how many by name), never names. Then reproduce that shape in a smoke case.
+2. **Read now times out from the phone** ("Couldn't read Ghostfolio:" then a time-out). The phone's `FinancesReadInvestments` and the app's both give Ghostfolio 30 s; the phone's goes through the companion (and the tunnel when away, which the owner dropped Nov 10: they mean away from the computer, at home). Find where the phone's call stops first (the tunnel's or the companion's timeout, the iPhone's `actionSession`) and give it what the read needs, or make the read answer at once and finish behind (the card says *Reading…* until it's in).
+3. **Back and Forward remember tabs:** `web/src/app.ts`'s `remember()` keeps only the screen (and an app's page), so Back from Finances › Recurring or Spending skips every tab and lands on the screen before (Status). A `Place` keeps the screen's tab too (Finances' `tab` in `screens/finances.ts`, Tidy Up's, Settings' page); a tab change pushes a step; `visit` puts the tab back. Fold in Finances' own *← back* from Transactions. *Test:* smoke *Back from Recurring goes to Spending, then the Dashboard, then the screen before*.
+4. **One mockup (made-up numbers), then build what's picked:**
+   - **An account's own page:** tapping an account (Net worth, the sidebar, the phone) opens its page, not the balance form: its balance and a chart of it over time, its latest transactions, **Update balance** and **Edit** (name, logo, type) as buttons.
+   - **A loan's page:** the payment, rate, months left, payoff date and **your share** (the split, #575), then **the payments linked to it**: link a transfer once (theirs is a Zelle payment to the person they share the mortgage with) and every one after counts towards the loan, at their share. This is 2B step 5's "a rule that links a payee to a planned bill": **the owner's yes (Nov 12)**. Rules by amount or direction still wait.
+   - **Investments as a holdings list, and a Watchlist:** no horizontal ratio bar (the owner doesn't like it; they like the holdings separated); each holding with its price, today's change, its gain and a small chart; the total and a chart on top; a **Watchlist** of tickers followed without owning, priced through Ghostfolio's lookup.
+5. **Later:** the Dashboard's cards moved, hidden and sized (Edit layout: drag, and Move up/down for the keyboard; Hide; Reset; kept per device; then a third, half or full width); text that wraps or doesn't line up (ask for a screenshot; seen with made-up data: *This paycheck*'s account tiles, one name on two lines; four then two tiles at 860px; the sidebar cutting account names short).
 
 ## 3. Once the owner picks: hand on before you build
 
