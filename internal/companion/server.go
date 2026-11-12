@@ -97,6 +97,7 @@ const MaxFailures = 10
 
 // Handler serves everything.
 func (s *Server) Handler() http.Handler {
+	s.guardT.start(s.now())
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/pair", s.pair)
 	mux.HandleFunc("/api/me", s.me)

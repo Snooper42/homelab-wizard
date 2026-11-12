@@ -312,6 +312,21 @@ func TestTheTunnelNeedsThePhone(t *testing.T) {
 		t.Fatalf("first time: %d", w.Code)
 	}
 	refused("a replayed message", again)
+	// Taken, then the computer restarts: its memory of what was taken is
+	// gone, so a message sealed before this run began is refused, and one
+	// sealed after is taken.
+	before := phone.sealed(t, now, "Status")
+	if w := throughCF(h, TunnelPath, good, before); w.Code != http.StatusOK {
+		t.Fatalf("before the restart: %d", w.Code)
+	}
+	s.guardT.mu.Lock()
+	s.guardT.seen, s.guardT.wrong, s.guardT.since = nil, nil, time.Time{} // a new run's memory
+	s.guardT.mu.Unlock()
+	s.guardT.start(now.Add(time.Second))
+	refused("a message from before a restart, again", before)
+	if w := throughCF(h, TunnelPath, good, phone.sealed(t, now.Add(2*time.Second), "Status")); w.Code != http.StatusOK {
+		t.Errorf("a message sealed after the restart: %d %s", w.Code, w.Body)
+	}
 
 	// Unpaired on the computer: cut off at once.
 	if _, err := s.Store.Remove(other.id); err != nil {

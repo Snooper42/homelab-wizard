@@ -20,6 +20,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"sort"
@@ -42,15 +43,40 @@ const (
 	maxImage = 1 << 20
 )
 
+// notWebsites are the ranges set aside for something other than a public
+// website (N46): the tailnet's (100.64.0.0/10), the homelab's own tunnel
+// and front networks (198.18.0.0/15, internal/docker, which this machine
+// reaches directly on Linux), "this network" (0.0.0.0/8, which Linux
+// takes as this machine), the IETF's and documentation ranges, the
+// reserved 240.0.0.0/4 with the broadcast address, and the IPv6 prefixes
+// that carry an IPv4 address inside (NAT64, 6to4), which could be a
+// private one.
+var notWebsites = func() []netip.Prefix {
+	var out []netip.Prefix
+	for _, s := range []string{"0.0.0.0/8", "100.64.0.0/10", "192.0.0.0/24", "192.0.2.0/24", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "240.0.0.0/4",
+		"64:ff9b::/96", "64:ff9b:1::/48", "2002::/16", "2001:db8::/32", "100::/64"} {
+		out = append(out, netip.MustParsePrefix(s))
+	}
+	return out
+}()
+
 // Public reports whether an address may be asked: not this machine, a
-// private or link-local network, the tailnet's (100.64.0.0/10), or any
-// address that is not one. Tests set it to allow their own server.
+// private or link-local network, a range set aside for something else
+// (notWebsites), or any address that is not one. Tests set it to allow
+// their own server.
 var Public = func(ip net.IP) bool {
 	if ip == nil || ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast() || ip.IsInterfaceLocalMulticast() {
 		return false
 	}
-	if v4 := ip.To4(); v4 != nil && v4[0] == 100 && v4[1]&0xc0 == 64 {
-		return false // the tailnet's addresses (CGNAT)
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return false
+	}
+	addr = addr.Unmap()
+	for _, p := range notWebsites {
+		if p.Contains(addr) {
+			return false
+		}
 	}
 	return true
 }

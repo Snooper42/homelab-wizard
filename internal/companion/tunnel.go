@@ -167,6 +167,27 @@ type tunnelGuard struct {
 	seen   map[string]time.Time // device + nonce → when taken
 	wrong  map[string][]time.Time
 	access accessKeys
+	// since is when this run began taking messages: seen is empty before
+	// it, so one sealed earlier may have been taken by the run before
+	// (a restart within TunnelSkew) and is refused.
+	since time.Time
+}
+
+// start notes when this run began taking messages, once.
+func (g *tunnelGuard) start(now time.Time) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if g.since.IsZero() {
+		g.since = now
+	}
+}
+
+// sealedBefore is whether a message was sealed before this run began, so
+// before the memory of what was taken: an earlier run may have taken it.
+func (g *tunnelGuard) sealedBefore(at time.Time) bool {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return !g.since.IsZero() && at.Before(g.since)
 }
 
 func (g *tunnelGuard) init() {
@@ -293,7 +314,19 @@ func (s *Server) tunnel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	at := time.UnixMilli(req.At)
-	if at.Before(now.Add(-TunnelSkew)) || at.After(now.Add(TunnelSkew)) || !s.guardT.fresh(now, in.Device, in.Nonce) {
+	if at.Before(now.Add(-TunnelSkew)) || at.After(now.Add(TunnelSkew)) {
+		s.guardT.failed(now, addr, dev)
+		tunnelRefuse(w, http.StatusForbidden)
+		return
+	}
+	// Sealed before this run began (a restart a moment ago): it may have
+	// been taken already. Not a wrong attempt: a phone whose clock is a
+	// little behind is refused only until its clock passes the restart.
+	if s.guardT.sealedBefore(at) {
+		tunnelRefuse(w, http.StatusForbidden)
+		return
+	}
+	if !s.guardT.fresh(now, in.Device, in.Nonce) {
 		s.guardT.failed(now, addr, dev)
 		tunnelRefuse(w, http.StatusForbidden)
 		return
