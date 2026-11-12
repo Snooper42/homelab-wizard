@@ -784,13 +784,13 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     credential is made, where it is kept (on the phone and the computer),
     what it opens beyond `homelab-away`, and how a lost phone's is taken
     back.
-87. (decided by the owner, Nov 12: a short hold, a new release installed only after it has been out a few days, its notes shown in Status; to build) **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
+87. (done: N54, Nov 12, the owner's decision: `hold: 3`, counted from when the homelab first sees a digest, 14 days at most; the notes are `homelab updates notes <app>`) **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
     `pocket-id:v2`): the nightly update takes each new image, and these
     hold every password and every sign-in. The socket holders are pinned
     (M6). This is a decision: pinning delays their own security fixes. A
     digest check against the release, or a short hold with the release
     notes shown, may sit between the two.
-88. (decided by the owner, Nov 12: as item 87, the same short hold; to build) **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
+88. (done: N54, Nov 12, as item 87) **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
 89. (done: N44 for Pocket ID, N45 for Home Assistant, both on `homelab-front` trusting only the proxy and Tailscale Serve) **Pocket ID and Home Assistant trust a forwarded address from
@@ -804,6 +804,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **N54 (Nov 12, round 15):** items 87 and 88 built as the owner chose: Vaultwarden, Pocket ID and CrowdSec take a new image only once it has been out 3 days (from when first seen, 14 at most), read from the registry without pulling. Next: item 79, a git checkout moving only to releases whose provenance verifies.
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 

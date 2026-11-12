@@ -33,6 +33,9 @@ type FakeRunner struct {
 	Exec func(container string, args []string) (string, error)
 	// Calls records every command, joined with spaces.
 	Calls []string
+	// Registry answers buildx imagetools inspect: the digest each
+	// reference's registry gives now; a missing one is an error.
+	Registry map[string]string
 }
 
 // FakeContainer describes a container returned by `docker inspect`.
@@ -99,6 +102,12 @@ func (f *FakeRunner) Output(_ context.Context, _ string, args ...string) ([]byte
 		return f.inspect()
 	case len(args) > 1 && args[0] == "image" && (args[1] == "tag" || args[1] == "rm" || args[1] == "prune"):
 		return nil, nil
+	case len(args) > 2 && args[0] == "buildx" && args[1] == "imagetools":
+		d, ok := f.Registry[args[len(args)-1]]
+		if !ok {
+			return nil, fmt.Errorf("no such manifest: %s", args[len(args)-1])
+		}
+		return []byte(`{"mediaType":"application/vnd.oci.image.index.v1+json","digest":"` + d + `","size":1609}` + "\n"), nil
 	case len(args) > 0 && args[0] == "pull":
 		return nil, f.PullErr[args[len(args)-1]]
 	case len(args) > 1 && args[0] == "image" && args[1] == "inspect" && slices.Contains(args, "{{json .RepoDigests}}"):

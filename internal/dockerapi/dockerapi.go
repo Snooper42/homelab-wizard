@@ -166,6 +166,25 @@ type Error struct {
 
 func (e *Error) Error() string { return fmt.Sprintf("engine API %d: %s", e.Status, e.Message) }
 
+// Distribution is the digest a registry gives ref now, as the engine reads
+// it without pulling (GET /distribution/<ref>/json): what a pull would
+// fetch, to compare with the image here.
+func (c *Client) Distribution(ctx context.Context, ref string) (string, error) {
+	data, err := c.get(ctx, "/distribution/"+ref+"/json", nil)
+	if err != nil {
+		return "", err
+	}
+	var d struct {
+		Descriptor struct {
+			Digest string `json:"digest"`
+		} `json:"Descriptor"`
+	}
+	if err := json.Unmarshal(data, &d); err != nil || d.Descriptor.Digest == "" {
+		return "", fmt.Errorf("the engine gave no digest for %s", ref)
+	}
+	return d.Descriptor.Digest, nil
+}
+
 // Info is the engine's own description, as docker info --format json.
 func (c *Client) Info(ctx context.Context) ([]byte, error) { return c.get(ctx, "/info", nil) }
 

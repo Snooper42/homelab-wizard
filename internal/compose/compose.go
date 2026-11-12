@@ -140,6 +140,12 @@ type Meta struct {
 	// Pin says why an image is updated by hand rather than by the nightly
 	// updates (databases and locally built images have a reason already).
 	Pin string `yaml:"pin"`
+	// Hold is how many days a new image waits after it is first seen before
+	// the nightly updates take it (internal/updates Hold): for the apps that
+	// hold every password, every sign-in, and who is banned, a release
+	// pulled for a fault in its first days never reaches the household
+	// (backlog items 87, 88). An update asked for by name goes at once.
+	Hold int `yaml:"hold"`
 	// Seed is a repository folder of starter files copied into the app's
 	// first data folder when it is installed, never over existing files.
 	Seed string `yaml:"seed"`
