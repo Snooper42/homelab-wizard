@@ -3008,7 +3008,7 @@
     };
     const [cls, words5] = rowWords(a3, p3);
     const entry = p3.catalog?.apps.find((c4) => c4.id === a3.id);
-    const changed3 = changedSince(a3, p3.seen ?? null);
+    const changed4 = changedSince(a3, p3.seen ?? null);
     return (
       // A click anywhere on the row (not on its links and buttons), or Return
       // on it, opens the app's page.
@@ -3035,7 +3035,7 @@
           children: [
             /* @__PURE__ */ u3("td", { children: [
               /* @__PURE__ */ u3("strong", { children: a3.name }),
-              changed3 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed3, title: changed3 })
+              changed4 && /* @__PURE__ */ u3("span", { class: "changedot", role: "img", "aria-label": changed4, title: changed4 })
             ] }),
             /* @__PURE__ */ u3("td", { class: "state", children: [
               /* @__PURE__ */ u3("span", { class: "dot " + cls }),
@@ -3430,17 +3430,17 @@
   function sayChanges(p3) {
     const now = /* @__PURE__ */ new Map();
     for (const g2 of p3.groups) for (const a3 of g2.apps) now.set(a3.id, [a3.name, rowWords(a3, p3)[1]]);
-    const changed3 = /* @__PURE__ */ new Map();
+    const changed4 = /* @__PURE__ */ new Map();
     if (heardOnce) for (const [id2, [name, words5]] of now) {
       const was = heard.get(id2);
-      if (was !== void 0 && was !== words5) changed3.set(words5, [...changed3.get(words5) || [], name]);
+      if (was !== void 0 && was !== words5) changed4.set(words5, [...changed4.get(words5) || [], name]);
     }
     heard.clear();
     for (const [id2, [, words5]] of now) heard.set(id2, words5);
     heardOnce = true;
     const el3 = document.getElementById("statusAloud");
-    if (!changed3.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
-    const text2 = [...changed3].map(([words5, names5]) => `${listed(names5)}: ${words5}`).join(". ");
+    if (!changed4.size || !el3 || !document.getElementById("status")?.classList.contains("active")) return;
+    const text2 = [...changed4].map(([words5, names5]) => `${listed(names5)}: ${words5}`).join(". ");
     el3.textContent = "";
     requestAnimationFrame(() => {
       el3.textContent = text2;
@@ -7397,14 +7397,14 @@
   }
   function applyAnswers(st, why) {
     if (lastStatus !== st) return;
-    let changed3 = false;
+    let changed4 = false;
     for (const a3 of st.apps) {
       if (!(a3.id in why) || (a3.notAnswering || "") === why[a3.id]) continue;
       a3.notAnswering = why[a3.id] || void 0;
-      changed3 = true;
+      changed4 = true;
     }
     st.checking = false;
-    if (!changed3) return;
+    if (!changed4) return;
     renderTiles(st);
     renderAppList(st);
   }
@@ -11530,16 +11530,16 @@
         return gone.parent ? now(gone.parent) : void 0;
       };
       const categories2 = rows.map((r3) => ({ name: r3.name.trim(), parent: r3.parent && renamed.get(r3.parent) || r3.parent || void 0, icon: r3.icon || void 0, income: r3.income || void 0 }));
-      let changed3 = false;
+      let changed4 = false;
       const transactions = (ledger?.transactions || []).map((t3) => {
         const cat = now(t3.category), splits = t3.splits?.map((sp) => ({ ...sp, category: now(sp.category) || "Other" }));
         if (cat === t3.category && JSON.stringify(splits) === JSON.stringify(t3.splits)) return t3;
-        changed3 = true;
+        changed4 = true;
         return { ...t3, category: cat, splits };
       });
       setBusy(true);
       let ok = await props.save({ ...plan, categories: categories2 });
-      if (ok && changed3 && props.saveLedger) ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions });
+      if (ok && changed4 && props.saveLedger) ok = await props.saveLedger({ ...ledger || { transactions: [] }, transactions });
       setBusy(false);
       if (ok) props.close();
     };
@@ -16588,6 +16588,20 @@ ${pays}
     R(/* @__PURE__ */ u3(FinancesScreen, { ...props }), el3);
   }
 
+  // web/src/tabs.ts
+  var tabbed = {};
+  var changed3 = () => {
+  };
+  function keepsTabs(screen, now, put) {
+    tabbed[screen] = { now, put };
+  }
+  function tabChanged() {
+    changed3();
+  }
+  function onTabChange(f4) {
+    changed3 = f4;
+  }
+
   // web/src/screens/finances.ts
   var financesData = store(() => go().Finances());
   financesData.watch(draw4);
@@ -16665,6 +16679,12 @@ ${pays}
   }
   var tab = "overview";
   var group = "";
+  keepsTabs("finances", () => tab + (group ? ":" + group : ""), (t3) => {
+    const [page, g2] = t3.split(":");
+    tab = page;
+    group = g2 || "";
+    draw4();
+  });
   var sel = null;
   var opened = 0;
   var editing = null;
@@ -16686,11 +16706,13 @@ ${pays}
         tab = t3;
         group = "";
         draw4();
+        tabChanged();
       },
       group,
       setGroup: (g2) => {
         group = g2;
         draw4();
+        tabChanged();
       },
       pick: (i3) => {
         sel = i3;
@@ -17973,6 +17995,15 @@ ${pays}
     tab2 = tabNow(localStorage.getItem("homelab.tidyTab") || "overview");
   } catch {
   }
+  keepsTabs("tidy", () => tab2, (t3) => {
+    tab2 = tabNow(t3);
+    try {
+      localStorage.setItem("homelab.tidyTab", tab2);
+    } catch {
+    }
+    if (tab2 === "books" && !review) loadReview();
+    draw5();
+  });
   var job = null;
   var placing = false;
   var review = null;
@@ -18011,6 +18042,7 @@ ${pays}
         }
         if (t3 === "books" && !review) loadReview();
         draw5();
+        tabChanged();
       },
       // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
       closeJob: () => {
@@ -18059,6 +18091,7 @@ ${pays}
           showReview = true;
           draw5();
           if (!review) loadReview();
+          tabChanged();
         },
         cover: (id2, which) => go().TidyCover(id2, which),
         // Fetches ffmpeg; once it's in, the job that wanted it runs again.
@@ -18875,11 +18908,12 @@ ${pays}
   var ahead = [];
   var current;
   var moving = false;
+  onTabChange(() => remember());
   function remember() {
     const screen = document.querySelector(".screen.active")?.id;
     if (!screen) return;
-    const next = { screen, app: screen === "app" ? openedApp() : void 0 };
-    if (!moving && current && (current.screen !== next.screen || current.app !== next.app)) {
+    const next = { screen, app: screen === "app" ? openedApp() : void 0, tab: tabbed[screen]?.now() };
+    if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
       back2.push(current);
       if (back2.length > 50) back2.shift();
       ahead.length = 0;
@@ -18891,6 +18925,7 @@ ${pays}
     try {
       if (p3.screen === "app" && p3.app) openApp(p3.app);
       else {
+        if (p3.tab !== void 0 && tabbed[p3.screen]?.now() !== p3.tab) tabbed[p3.screen]?.put(p3.tab);
         navigate(p3.screen);
         focusScreen(p3.screen);
       }

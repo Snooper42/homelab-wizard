@@ -3,6 +3,7 @@
 import { jobTitle, mountTidy, mountTidySheet, tabNow, type TidyConfirm, type TidyJob, type TidyTab } from '../tidy/Tidy';
 import { store } from '../store';
 import { navigate } from '../app';
+import { keepsTabs, tabChanged } from '../tabs';
 import { showSettings } from './settings';
 import { cliFlow } from './status';
 import { $, errorText, go, showError } from '../core';
@@ -11,6 +12,8 @@ export const tidyData = store(() => go().TidyUp());
 let tab: TidyTab = 'overview';
 // A tab kept from before the tabs changed (New downloads, Lyrics) opens where those things are now.
 try { tab = tabNow(localStorage.getItem('homelab.tidyTab') || 'overview'); } catch { /* none */ }
+// Back and Forward step through the tabs as through screens.
+keepsTabs('tidy', () => tab, (t) => { tab = tabNow(t); try { localStorage.setItem('homelab.tidyTab', tab); } catch { /* none */ } if (tab === 'books' && !review) loadReview(); draw(); });
 let job: TidyJob | null = null;
 // Where should your libraries live? is open (Change where your libraries live…, or a drive's Choose another…).
 let placing = false;
@@ -35,7 +38,7 @@ function draw() {
     d, error: tidyData.error ? errorText(tidyData.error) : undefined, tab, job, review, reviewError, skip, running, placing, stoppingElsewhere,
     reload: () => { tidyData.load(); },
     reloadReview: () => { loadReview(); },
-    pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); },
+    pick: (t) => { tab = t; try { localStorage.setItem('homelab.tidyTab', t); } catch { /* none */ } if (t === 'books' && !review) loadReview(); draw(); tabChanged(); },
     // Closed from the keyboard, its place goes back to the tabs rather than the top of the window.
     closeJob: () => { job = null; draw(); (document.querySelector('#tidy .seg button[aria-checked="true"]') as HTMLElement | null)?.focus(); },
     toggle: (id) => { if (skip.has(id)) skip.delete(id); else skip.add(id); draw(); },
@@ -49,7 +52,7 @@ function draw() {
       ask: (c) => { confirm = c; drawSheet(); $('tidySheet').hidden = false; },
       reveal: (path) => { Promise.resolve(go().TidyReveal(path)).catch(showError); },
       settings: (keys) => (keys?.length ? showSettings(keys) : navigate('settings')),
-      review: () => { tab = 'books'; try { localStorage.setItem('homelab.tidyTab', tab); } catch { /* none */ } showReview = true; draw(); if (!review) loadReview(); },
+      review: () => { tab = 'books'; try { localStorage.setItem('homelab.tidyTab', tab); } catch { /* none */ } showReview = true; draw(); if (!review) loadReview(); tabChanged(); },
       cover: (id, which) => go().TidyCover(id, which),
       // Fetches ffmpeg; once it's in, the job that wanted it runs again.
       install: async (after) => {

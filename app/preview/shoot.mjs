@@ -2678,6 +2678,37 @@ const smokes = [
     for (let i = 0; i < 6; i++) await page.mouse.wheel(60, 0);
     await page.waitForSelector('#app.active h1:has-text("Vikunja")', { timeout: 3000 });
   } },
+  // The owner, Nov 12: Back from Finances' Recurring or Spending went straight to Status. Back steps through the tabs a
+  // screen was on (Finances' and Tidy Up's), then to the screen before it; Forward steps back through them again.
+  { name: 'Back and Forward step through a screen’s tabs before leaving it', screen: 'status', run: async (page) => {
+    const on = () => page.evaluate(() => document.querySelector('.screen.active')?.id);
+    const finOn = () => page.evaluate(() => [...document.querySelectorAll('#finRoot .seg button[aria-pressed="true"], #finRoot .seg button.on, #finRoot .seg button[aria-checked="true"]')].map((b) => b.textContent.trim()).join(' › '));
+    await page.click('nav button[data-screen="finances"]');
+    await page.waitForSelector('#finRoot > .seg', { timeout: 5000 });
+    await finTab(page, 'Transactions');
+    await finTab(page, 'Recurring');
+    const where = await finOn();
+    await page.keyboard.press('Meta+BracketLeft');
+    if ((await on()) !== 'finances') throw new Error(`Back from Recurring left Finances for ${await on()}`);
+    // Plan opened on its first page, Calendar: a step of its own, as a browser has it.
+    const back0 = await finOn();
+    if (!back0.includes('Calendar')) throw new Error(`Back from Recurring (${where}) went to ${back0}`);
+    await page.keyboard.press('Meta+BracketLeft');
+    const back1 = await finOn();
+    if (!back1.includes('Spending') || !back1.includes('Transactions')) throw new Error(`Back from Calendar went to ${back1}`);
+    await page.keyboard.press('Meta+BracketLeft');
+    if ((await on()) !== 'finances' || !(await finOn()).includes('Dashboard')) throw new Error(`Back again went to ${await on()}: ${await finOn()}`);
+    await page.keyboard.press('Meta+BracketLeft');
+    if ((await on()) !== 'status') throw new Error(`Back a third time went to ${await on()}`);
+    for (let i = 0; i < 4; i++) await page.keyboard.press('Meta+BracketRight');
+    if ((await on()) !== 'finances' || !(await finOn()).includes('Recurring')) throw new Error(`Forward four times: ${await on()}: ${await finOn()}`);
+    // Tidy Up's tabs too.
+    await page.click('nav button[data-screen="tidy"]');
+    await page.click('#tidy .seg button:text-is("Music")', { timeout: 5000 });
+    await page.click('#tidy .seg button:text-is("Books")');
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#tidy.active .seg button[aria-pressed="true"]:text-is("Music"), #tidy.active .seg button.on:text-is("Music"), #tidy.active .seg button[aria-checked="true"]:text-is("Music")', { timeout: 3000 });
+  } },
   { name: 'Healthy categories fold into their headings', screen: 'status', mock: { statusOpen: '' }, run: async (page) => {
     await page.waitForSelector('#statusRows tr.grouphead.fold:has-text("Security"):has-text("running ✓")', { timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Vaultwarden"))')) throw new Error('a healthy category is open');

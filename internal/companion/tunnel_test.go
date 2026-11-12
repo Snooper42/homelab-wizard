@@ -1,6 +1,7 @@
 package companion
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdh"
@@ -160,11 +161,16 @@ func (p tunnelPhone) opened(t *testing.T, w *httptest.ResponseRecorder, body str
 	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(w.Body.String(), "Sam") || strings.Contains(w.Body.String(), "result") {
-		t.Fatalf("the answer isn't sealed: %s", w.Body)
-	}
+	// Sealed: a nonce and a box, nothing else in the clear, and the box's bytes
+	// not the answer's. (The box's base64 was searched for "Sam" before, and a
+	// random box spells it now and then: CI failed so on Nov 12.)
+	var fields map[string]json.RawMessage
+	_ = json.Unmarshal(w.Body.Bytes(), &fields)
 	n, _ := base64.StdEncoding.DecodeString(out.Nonce)
 	b, _ := base64.StdEncoding.DecodeString(out.Box)
+	if len(fields) != 2 || fields["nonce"] == nil || fields["box"] == nil || bytes.Contains(b, []byte(`"result"`)) || bytes.Contains(b, []byte("Sam")) {
+		t.Fatalf("the answer isn't sealed: %s", w.Body)
+	}
 	plain, err := Open(p.key, tunnelAnswer+p.id+"\x00"+req.Nonce, n, b)
 	if err != nil {
 		t.Fatalf("the answer doesn't open with the phone's key: %v", err)
