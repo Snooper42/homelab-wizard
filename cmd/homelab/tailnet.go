@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -305,8 +306,21 @@ func loginLink(ctx context.Context, client *docker.Client, ctr string, self tail
 	return ""
 }
 
-// openLink opens a web page in the default browser, best effort.
+// browsable is whether link is a web page to hand the system's opener:
+// https with a host and nothing else (N50). The opener (open, xdg-open,
+// rundll32's FileProtocolHandler) would as readily start a program or open
+// a file, and Tailscale's sign-in link comes from its container's status.
+func browsable(link string) bool {
+	u, err := url.Parse(link)
+	return err == nil && u.Scheme == "https" && u.Host != "" && u.User == nil && !strings.HasPrefix(link, "-")
+}
+
+// openLink opens a web page in the default browser, best effort; anything
+// but one (browsable) is only shown, never opened.
 func openLink(url string) {
+	if !browsable(url) {
+		return
+	}
 	var c *exec.Cmd
 	switch runtime.GOOS {
 	case "darwin":
