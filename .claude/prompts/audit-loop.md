@@ -369,6 +369,7 @@ behaviour, and the screenshots retaken where they changed.
 
 128. (done: holds, Nov 12, round 14) **The last packages never read** (internal/savings, battery, storage, awake): their records are 0600 through `lockedfile`; battery reads `pmset -g batt` only; `homelab awake allow` writes one polkit rule granting this account `login1.inhibit-block-sleep` alone, its name held to `validUser`.
 129. (done: N56, Nov 12, round 16: kept only at most 1,024 pixels a side, checked on save and on load) **An image of one's own is unpacked whole on the phone** (#627, `apple-client` `LogoCircle.cgImage`; `internal/finance` `Clean`): the 64 KB cap is on the file, not the pixels, and a PNG of a few kilobytes can say 4,000 pixels square. Who can set one: anyone allowed to edit Finances.
+130. (done: N57, Nov 12, round 18) **A ticker's "." or ".." in Ghostfolio's address; the Watchlist's words unbounded** (#632, `internal/ghostfolio` `quote` and both `/admin/gather` calls; `internal/finance` `cleanWatch`): escaping left "." and "..", which step out of `/admin/gather/<source>/<symbol>` with the homelab's sign-in; a followed ticker's name and currency had no length. A phone allowed to edit Finances sends both.
 
 ## The security team
 
@@ -809,6 +810,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 - **N54 (Nov 12, round 15):** items 87 and 88 built as the owner chose: Vaultwarden, Pocket ID and CrowdSec take a new image only once it has been out 3 days (from when first seen, 14 at most), read from the registry without pulling. Next: item 79, a git checkout moving only to releases whose provenance verifies.
 - **N55 (Nov 12, round 16):** item 79 built as the owner chose: `homelab upgrade` on a git checkout moves only to a release tag (testing: every release of main; stable: `vX.Y.0`), once the release's attestation verifies and its certificate names the very commit the tag points at. Commits past the newest release wait for the next one. Next: back to reading the other account's new merges, riskiest surfaces first.
 - **N56 (Nov 12, round 16):** read #627 (the phone draws Finances' own logos): item 129, an image small in the file but enormous unpacked, built: Finances keeps one only at most 1,024 pixels a side, by its header, on save and on load.
+- **Round 17 (Nov 12):** #626 merged. Read #628 (Back steps through tabs: frontend, and `TestTheTunnel` now checks a sealed answer by its fields and the box's bytes, no weaker), #629 (an account's page: frontend only, no raw HTML or links from the plan) and #630 (a loan's page: `Transaction.Extra`, kept only with a payment, saved through the ledger's own save, which a look-only phone can't call). Nothing new.
+- **N57 (Nov 12, round 18):** read #631 (Investments as a list: frontend), #632 (the Watchlist: a phone method at Finances' edit level, Ghostfolio prices) and #633 (an account's page on the iPhone: display only). Item 130 from #632 built: every Ghostfolio address of a symbol refuses "." and "..", and a followed ticker's words are capped.
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 

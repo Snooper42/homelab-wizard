@@ -243,6 +243,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **A ticker stays a ticker:** adding an investment, following a ticker in the Watchlist, and looking up a price now refuse a ticker or source of `.` or `..`, which could reach another of Ghostfolio's admin addresses, and a followed ticker's name is kept short.
 - **A picture for an account can't be too large to show:** Finances keeps a picture of your own only when it is at most 1,024 pixels on a side (the screen makes each 96), so one can't be small in the file but too large for a phone to open.
 - **A git checkout updates only to checked releases:** `homelab upgrade` moves the homelab folder only to a release whose files the project's own release workflow is shown to have built, from the very commit the release's tag points at, as the app's own update is checked. Changes on `main` newer than the latest release come with the next one.
 - **Passwords, sign-in and bans wait a few days for new releases:** the nightly update installs a new Vaultwarden, Pocket ID or CrowdSec only once it has been out 3 days, so a release pulled for a fault in its first days never arrives. `homelab update <app>` still takes it at once.
