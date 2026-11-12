@@ -1,6 +1,6 @@
-// The pay period picked, the dashboard's one card for it: ‹ and › step
-// from paycheck to paycheck and Today comes back. Its title says whose
-// paycheck and when, with the days it covers. Under it, the accounts side
+// The pay period picked, the dashboard's one card for it. The period is
+// picked once, by the bar atop the Dashboard (Period.tsx), which says whose
+// paycheck and when; the card says the days it covers. Under it, the accounts side
 // by side, each as it stands once the paycheck is in and its bills are
 // paid, with the change since the period before; one money goes into in
 // that period is lit (the Roth the day its $625 lands). The cards are one
@@ -11,7 +11,7 @@ import { useState } from 'preact/hooks';
 import { Rows, Row } from '../../parts/Row';
 import { Empty } from '../../parts/Empty';
 import { Amount, Delta, Stat } from '../ui/Amount';
-import { IconButton, Widget } from '../ui/Widget';
+import { Widget } from '../ui/Widget';
 import { AcctMark, Mark, PayMark, Who } from '../Mark';
 import { kindName, todayOf } from '../model';
 import { compact, dayLong, dayShort, type Lookup, money, signed } from '../money';
@@ -74,7 +74,7 @@ function tiles(v: finance.View, L: Lookup, i: number): Tile[] {
   return out;
 }
 
-export function PaycheckWidget({ v, L, sel, pick, edit }: { v: finance.View; L: Lookup; sel: number; pick: (i: number) => void; edit?: (what: 'payment', id: string) => void }) {
+export function PaycheckWidget({ v, L, sel, edit }: { v: finance.View; L: Lookup; sel: number; edit?: (what: 'payment', id: string) => void }) {
   const [all, setAll] = useState(false);
   const i = Math.min(sel, v.periods.length - 1);
   const p = v.periods[i];
@@ -83,12 +83,7 @@ export function PaycheckWidget({ v, L, sel, pick, edit }: { v: finance.View; L: 
   const cushion = v.plan.cushion || 0;
   const row = tiles(v, L, i);
   return (
-    <Widget title={periodTitle(p, L)} kind="fx-paycheck" span="all"
-      actions={<>
-        <button type="button" class="small" disabled={i === 0} onClick={() => pick(0)}>Today</button>
-        <IconButton icon="prev" label="The pay period before" disabled={i === 0} onClick={() => pick(i - 1)} />
-        <IconButton icon="next" label="The pay period after" disabled={i >= v.periods.length - 1} onClick={() => pick(i + 1)} />
-      </>}>
+    <Widget title={p.now ? 'Until the next paycheck' : 'This paycheck'} kind="fx-paycheck" span="all">
       <p class="fx-sub fx-lead fx-dates">{dayShort(p.start)} – {dayShort(p.last)}{p.now ? ', from today' : ''}</p>
       {!!row.length && <ul class="fx-acctrow" aria-label="Each account after this paycheck's bills">
         {row.map((t) => {

@@ -19,6 +19,7 @@ import { MissingWidget } from './widgets/Missing';
 import { AveragesWidget } from './widgets/Averages';
 import { CashFlowWidget, MoneyFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
+import { PeriodBar } from './widgets/Period';
 import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
 import { NetWorthWidget } from './widgets/Worth';
@@ -84,6 +85,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
           {add && <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button>}
         </Card>
       )}
+      <PeriodBar v={v} L={L} sel={picked} pick={pick} />
       <div class="fx-board">
         {!phone && <NowWidget v={v} L={L} />}
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
@@ -93,7 +95,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}
-        <PaycheckWidget v={v} L={L} sel={picked} pick={pick} edit={edit} />
+        <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />
         <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} />

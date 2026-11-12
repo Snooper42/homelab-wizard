@@ -110,6 +110,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **One period picker for the Dashboard:** the paycheck's ‹ ›, and Today, now sit in a bar at the top of Finances' Dashboard, with the period's name and days, and the cards under it follow what you pick. Past paychecks and months come next.
 - **Snooze from the phone:** a phone allowed to make changes can now snooze a failing check's alerts on the phone's page (**Snooze…** on the watchdog's card, for an hour or a day), as on the computer, and so can the iPhone app (**Snooze…** under the check, behind Face ID). A phone that can only look still has no Snooze.
 - **Finances tabs open where you left them:** Spending and Plan now open again on the page you were last on (Reports, Recurring, Paychecks…), not always their first.
 - **A bank's own categories on import:** an American Express or Chase file's Category column ("Restaurant-Restaurant", "Merchandise & Supplies-Groceries", "Food & Drink") now gives a shop the matching category of yours (Eating out, Groceries, Travel, Gas…) when nothing better says. Your own choice for a payee, a rule, the bill it pays and a known brand still come first, and one the file calls Other is left for you to pick. A company's ending goes from a payee's name too: SUNSHINE DENTAL, INC. comes in as Sunshine Dental.
