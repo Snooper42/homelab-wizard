@@ -273,3 +273,21 @@ func TestTheTunnelsNetworkIsMadeBeforeAnythingStarts(t *testing.T) {
 		}
 	}
 }
+
+// Items 87, 88: the registry's newest digest is read without pulling,
+// through buildx's imagetools when the engine's API isn't there.
+func TestRegistryDigest(t *testing.T) {
+	f := &FakeRunner{Registry: map[string]string{"vaultwarden/server:latest": "sha256:abc"}}
+	c := &Client{Runner: f, Bin: "docker"}
+	if d, err := c.RegistryDigest(context.Background(), "vaultwarden/server:latest"); err != nil || d != "sha256:abc" {
+		t.Fatalf("digest: %q %v", d, err)
+	}
+	if _, err := c.RegistryDigest(context.Background(), "nowhere/image:1"); err == nil {
+		t.Error("an unknown image gave a digest")
+	}
+	for _, call := range f.Calls {
+		if strings.HasPrefix(call, "pull") {
+			t.Errorf("pulled to read a digest: %s", call)
+		}
+	}
+}

@@ -743,6 +743,28 @@ func (c *Client) RepoDigests(ctx context.Context, image string) ([]string, error
 	return digests, err
 }
 
+// RegistryDigest is the digest ref's registry gives now, read without
+// pulling: through the engine's API, else buildx's imagetools. It is the
+// digest a pull by tag would record among the image's RepoDigests.
+func (c *Client) RegistryDigest(ctx context.Context, ref string) (string, error) {
+	if c.API != nil {
+		if d, err := c.API.Distribution(ctx, ref); err == nil {
+			return d, nil
+		}
+	}
+	out, err := c.Runner.Output(ctx, c.Bin, "buildx", "imagetools", "inspect", "--format", "{{json .Manifest}}", ref)
+	if err != nil {
+		return "", fmt.Errorf("reading %s's newest digest: %w", ref, err)
+	}
+	var m struct {
+		Digest string `json:"digest"`
+	}
+	if json.Unmarshal(bytes.TrimSpace(out), &m) != nil || !strings.HasPrefix(m.Digest, "sha256:") {
+		return "", fmt.Errorf("reading %s's newest digest: no digest in the answer", ref)
+	}
+	return m.Digest, nil
+}
+
 // RemoveContainer stops and removes a container (docker rm --force).
 func (c *Client) RemoveContainer(ctx context.Context, id string) error {
 	_, err := c.Runner.Output(ctx, c.Bin, "rm", "--force", id)

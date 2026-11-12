@@ -361,7 +361,7 @@ func (g Generator) updates() string {
 		}
 		b.WriteString("\n")
 	}
-	table("Nightly", "The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.", []string{"App", "Image", "Note"}, nightly)
+	table("Nightly", "The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container. Vaultwarden, Pocket ID, and CrowdSec (`hold: 3`) take a new image only once it has been out 3 days, counted from when the homelab first saw it, or once they have waited 14 days; `./homelab update <app>` takes it at once.", []string{"App", "Image", "Note"}, nightly)
 	table("Built locally", "Built from a Dockerfile in this repository; `./homelab update <app>` rebuilds it on the latest base image.", []string{"App", "Built from", "Why"}, built)
 	table("By hand", "Left out of the nightly update, each for the reason given. Update with a backup first: `./homelab backup --apply`, then `./homelab update <app>` (or the steps in its note).", []string{"App", "Image", "Why"}, manual)
 	return strings.TrimRight(b.String(), "\n")

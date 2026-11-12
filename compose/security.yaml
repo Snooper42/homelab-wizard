@@ -50,6 +50,8 @@ services:
     x-homelab:
       memory: 150
       releases: crowdsecurity/crowdsec
+      # A new release waits 3 days before the nightly update takes it (items 87, 88).
+      hold: 3
       name: CrowdSec
       category: security
       description: Reads the proxy's logs, bans attackers, and pulls the community blocklist
@@ -68,6 +70,8 @@ services:
       - ./data/appdata/vaultwarden:/data
     x-homelab:
       releases: dani-garcia/vaultwarden
+      # A new release waits 3 days before the nightly update takes it (items 87, 88).
+      hold: 3
       phone: Bitwarden, with this server set under Self-hosted
       url: VAULTWARDEN_URL
       dump: sqlite:/data/db.sqlite3
@@ -157,6 +161,8 @@ services:
     x-homelab:
       url: POCKET_ID_URL
       name: Pocket ID
+      # A new release waits 3 days before the nightly update takes it (item 87).
+      hold: 3
       category: security
       description: One sign-in with passkeys for the household's apps (OpenID Connect)
       subdomain: id

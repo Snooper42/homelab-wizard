@@ -156,13 +156,14 @@ func TestUpgradeCheckInACheckout(t *testing.T) {
 	os.WriteFile(filepath.Join(dev, "NEWS.md"), []byte("news\n"), 0o644)
 	git(dev, "add", ".")
 	git(dev, "commit", "-q", "-m", "News")
-	git(dev, "push", "-q", "origin", "main")
+	git(dev, "tag", "v0.17.1") // a checkout moves only to a release (item 79)
+	git(dev, "push", "-q", "origin", "main", "--tags")
 
 	info, err := a.UpgradeCheck(true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Behind != 1 || !info.SelfUpdates || info.AppUpdate == nil || info.AppUpdate.Version != "v0.9.9-beta" || !info.AppUpdate.CanInstall {
+	if info.Behind != 1 || info.Target != "v0.17.1" || !info.SelfUpdates || info.AppUpdate == nil || info.AppUpdate.Version != "v0.9.9-beta" || !info.AppUpdate.CanInstall {
 		t.Fatalf("%+v", info)
 	}
 	if again, _ := a.UpgradeCheck(false); again.Checked != info.Checked {

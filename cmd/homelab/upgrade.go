@@ -46,16 +46,29 @@ func (h *homelab) upgradeCmd(ctx context.Context, args []string) error {
 	if c.Ahead > 0 {
 		u.Warn("%s has %d commit(s) of its own that are not on GitHub; a fast-forward is not possible until they are pushed or dropped", c.Branch, c.Ahead)
 	}
-	where := c.Upstream
-	if c.Channel == upgrade.Stable {
-		if c.Target == "" {
-			u.OK("no release on the stable channel yet (%s stays at %s); UPDATE_CHANNEL=testing follows %s", c.Branch, c.Version, c.Upstream)
-			return nil
+	// A checkout moves only to a release whose build provenance checks
+	// out (item 79): commits past the newest release wait for the next.
+	waiting := func() {
+		if c.Unreleased > 0 {
+			u.Info("%d newer change(s) on %s come with the next release, once the project's release build has made it", c.Unreleased, c.Upstream)
 		}
-		where = c.Target + " (stable)"
+	}
+	where := c.Target
+	if c.Target == "" {
+		if c.Channel == upgrade.Stable {
+			u.OK("no release on the stable channel yet (%s stays at %s); UPDATE_CHANNEL=testing takes every release of %s", c.Branch, c.Version, c.Upstream)
+		} else {
+			u.OK("no release of %s yet (%s stays at %s)", c.Upstream, c.Branch, c.Version)
+		}
+		waiting()
+		return nil
+	}
+	if c.Channel == upgrade.Stable {
+		where += " (stable)"
 	}
 	if c.Behind == 0 {
 		u.OK("up to date with %s (%s)", where, c.Version)
+		waiting()
 		return nil
 	}
 	u.Info("%d change(s) on %s:", c.Behind, where)
@@ -85,6 +98,7 @@ func (h *homelab) upgradeCmd(ctx context.Context, args []string) error {
 	} else if len(c.Dirty) > 0 {
 		u.Warn("edited here, kept unless the update changes them too (then git stops and nothing changes): %s", strings.Join(c.Dirty, ", "))
 	}
+	u.Info("before it moves, the release is checked to come from the project's own release build")
 	u.Info("docs/Upgrading.md says what each batch of changes asks of you")
 	if err := h.goAhead(*apply, "Get the update and restart what changed?"); err != nil {
 		return err

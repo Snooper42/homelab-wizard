@@ -31,6 +31,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -85,6 +87,11 @@ const (
 var (
 	oidIssuerV1 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 1}
 	oidIssuerV2 = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 8}
+	// The source the workflow ran on: the repository, the commit it was
+	// at, and the branch (item 79).
+	oidSourceRepo   = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 12}
+	oidSourceDigest = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 13}
+	oidSourceRef    = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 14}
 )
 
 // attestedSince is when the first release was published with build
@@ -129,11 +136,89 @@ func checkProvenance(ctx context.Context, repo, name, sha string) error {
 	}
 	last := errors.New("GitHub has no build provenance for it")
 	for _, a := range answer.Attestations {
-		if last = verifyBundle(a.Bundle, repo, name, sha); last == nil {
+		if _, last = verifyBundle(a.Bundle, repo, name, sha); last == nil {
 			return nil
 		}
 	}
 	return refuse(last.Error())
+}
+
+// ReleaseCommit is the commit repo's release workflow built the release
+// tagged tag from, read from the certificate of a verified attestation of
+// one of its files (item 79): a git checkout moves to a release tag only
+// when the tag points at that very commit, so a commit the workflow never
+// built, or a tag moved since, is not taken.
+func ReleaseCommit(ctx context.Context, repo, tag string) (string, error) {
+	if repo == "" || tag == "" {
+		return "", errors.New("no repository or release to check")
+	}
+	var b release
+	if err := get(ctx, "/repos/"+repo+"/releases/tags/"+url.PathEscape(tag), "", &b); err == errNotFound {
+		return "", fmt.Errorf("GitHub has no release %s", tag)
+	} else if err != nil {
+		return "", fmt.Errorf("release %s could not be read: %w", tag, err)
+	}
+	last, tried := fmt.Errorf("release %s has no files whose build provenance could be checked", tag), 0
+	for _, a := range b.Assets {
+		sha, ok := strings.CutPrefix(a.Digest, "sha256:")
+		if !ok || len(sha) != 64 {
+			continue
+		}
+		if tried++; tried > 3 { // every file is attested together; a few tries is plenty
+			break
+		}
+		var answer struct {
+			Attestations []struct {
+				Bundle json.RawMessage `json:"bundle"`
+			} `json:"attestations"`
+		}
+		if err := get(ctx, "/repos/"+repo+"/attestations/sha256:"+strings.ToLower(sha), "", &answer); err == errNotFound {
+			last = errors.New("GitHub has no build provenance for its files")
+			continue
+		} else if err != nil {
+			last = fmt.Errorf("its build provenance could not be read: %w", err)
+			continue
+		}
+		for _, at := range answer.Attestations {
+			leaf, err := verifyBundle(at.Bundle, repo, a.Name, sha)
+			if err == nil {
+				var commit string
+				if commit, err = sourceCommit(leaf, repo); err == nil {
+					return commit, nil
+				}
+			}
+			last = err
+		}
+	}
+	return "", last
+}
+
+var fullCommit = regexp.MustCompile(`^[0-9a-f]{40}$`)
+
+// sourceCommit is the commit a verified certificate says the workflow ran
+// on, in repo, on main.
+func sourceCommit(c *x509.Certificate, repo string) (string, error) {
+	if !strings.EqualFold(extString(c, oidSourceRepo), "https://github.com/"+repo) || extString(c, oidSourceRef) != "refs/heads/main" {
+		return "", errors.New("it was built from another repository or branch")
+	}
+	commit := extString(c, oidSourceDigest)
+	if !fullCommit.MatchString(commit) {
+		return "", errors.New("its certificate names no commit")
+	}
+	return commit, nil
+}
+
+// extString reads one of Fulcio's DER string extensions, "" when absent.
+func extString(c *x509.Certificate, oid asn1.ObjectIdentifier) string {
+	for _, e := range c.Extensions {
+		if e.Id.Equal(oid) {
+			var s string
+			if _, err := asn1.Unmarshal(e.Value, &s); err == nil {
+				return s
+			}
+		}
+	}
+	return ""
 }
 
 // sigstoreBundle is the part of a Sigstore bundle (v0.3) read here.
@@ -169,24 +254,24 @@ type sigstoreBundle struct {
 }
 
 // verifyBundle checks one attestation for the file name with SHA-256 sha,
-// built by repo's release workflow on main.
-func verifyBundle(raw []byte, repo, name, sha string) error {
+// built by repo's release workflow on main, and returns its certificate.
+func verifyBundle(raw []byte, repo, name, sha string) (*x509.Certificate, error) {
 	var b sigstoreBundle
 	if err := json.Unmarshal(raw, &b); err != nil {
-		return errors.New("its build provenance is not a Sigstore bundle")
+		return nil, errors.New("its build provenance is not a Sigstore bundle")
 	}
 	if b.MediaType != "application/vnd.dev.sigstore.bundle.v0.3+json" {
-		return fmt.Errorf("its build provenance is in a form this app doesn't know (%s)", b.MediaType)
+		return nil, fmt.Errorf("its build provenance is in a form this app doesn't know (%s)", b.MediaType)
 	}
 	env := b.DSSEEnvelope
 	if env.PayloadType != inTotoPayload || len(env.Signatures) != 1 || len(b.VerificationMaterial.TlogEntries) != 1 {
-		return errors.New("its build provenance is not one signed statement")
+		return nil, errors.New("its build provenance is not one signed statement")
 	}
 	sig := env.Signatures[0].Sig
 	tlog := b.VerificationMaterial.TlogEntries[0]
 	logged, err := strconv.ParseInt(tlog.IntegratedTime.String(), 10, 64)
 	if err != nil {
-		return errors.New("its build provenance has no time")
+		return nil, errors.New("its build provenance has no time")
 	}
 	at := time.Unix(logged, 0)
 
@@ -194,7 +279,7 @@ func verifyBundle(raw []byte, repo, name, sha string) error {
 	// repository's release workflow on main, issued for GitHub Actions.
 	leaf, err := x509.ParseCertificate(b.VerificationMaterial.Certificate.RawBytes)
 	if err != nil {
-		return errors.New("its build provenance has no certificate")
+		return nil, errors.New("its build provenance has no certificate")
 	}
 	roots, inter := x509.NewCertPool(), x509.NewCertPool()
 	for rest := []byte(sigstoreFulcio); ; {
@@ -204,7 +289,7 @@ func verifyBundle(raw []byte, repo, name, sha string) error {
 		}
 		c, err := x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if bytes.Equal(c.RawIssuer, c.RawSubject) {
 			roots.AddCert(c)
@@ -213,30 +298,36 @@ func verifyBundle(raw []byte, repo, name, sha string) error {
 		}
 	}
 	if _, err := leaf.Verify(x509.VerifyOptions{Roots: roots, Intermediates: inter, CurrentTime: at, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning}}); err != nil {
-		return errors.New("its certificate is not Sigstore's")
+		return nil, errors.New("its certificate is not Sigstore's")
 	}
-	want := "https://github.com/" + repo + "/.github/workflows/release.yml@refs/heads/main"
-	if len(leaf.URIs) != 1 || leaf.URIs[0].String() != want {
-		return errors.New("it was not built by this app's release workflow on main")
+	// GitHub's owner and repository names are the same in any case; the
+	// workflow's path and branch are not.
+	const workflow = "/.github/workflows/release.yml@refs/heads/main"
+	uri := ""
+	if len(leaf.URIs) == 1 {
+		uri = leaf.URIs[0].String()
+	}
+	if prefix, ok := strings.CutSuffix(uri, workflow); !ok || !strings.EqualFold(prefix, "https://github.com/"+repo) {
+		return nil, errors.New("it was not built by this app's release workflow on main")
 	}
 	if issuer(leaf) != githubIssuer {
-		return errors.New("it was not built on GitHub Actions")
+		return nil, errors.New("it was not built on GitHub Actions")
 	}
 	pub, ok := leaf.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
-		return errors.New("its certificate's key is not one Sigstore gives")
+		return nil, errors.New("its certificate's key is not one Sigstore gives")
 	}
 
 	// The statement's signature, over DSSE's pre-authentication encoding.
 	pae := fmt.Sprintf("DSSEv1 %d %s %d ", len(env.PayloadType), env.PayloadType, len(env.Payload))
 	digest := sha256.Sum256(append([]byte(pae), env.Payload...))
 	if !ecdsa.VerifyASN1(pub, digest[:], sig) {
-		return errors.New("its statement's signature is not its certificate's")
+		return nil, errors.New("its statement's signature is not its certificate's")
 	}
 
 	// Rekor's signed timestamp, for this very entry.
 	if err := verifyRekor(tlog.KindVersion.Kind, tlog.KindVersion.Version, tlog.CanonicalizedBody, tlog.LogID.KeyID, tlog.LogIndex.String(), logged, tlog.InclusionPromise.SignedEntryTimestamp); err != nil {
-		return err
+		return nil, err
 	}
 	var body struct {
 		Spec struct {
@@ -251,13 +342,13 @@ func verifyBundle(raw []byte, repo, name, sha string) error {
 		} `json:"spec"`
 	}
 	if json.Unmarshal(tlog.CanonicalizedBody, &body) != nil || len(body.Spec.Signatures) != 1 {
-		return errors.New("its log entry can't be read")
+		return nil, errors.New("its log entry can't be read")
 	}
 	payloadSum := sha256.Sum256(env.Payload)
 	logCert, _ := pem.Decode(body.Spec.Signatures[0].Verifier)
 	if body.Spec.PayloadHash.Algorithm != "sha256" || body.Spec.PayloadHash.Value != hex.EncodeToString(payloadSum[:]) ||
 		!bytes.Equal(body.Spec.Signatures[0].Signature, sig) || logCert == nil || !bytes.Equal(logCert.Bytes, leaf.Raw) {
-		return errors.New("its log entry is for something else")
+		return nil, errors.New("its log entry is for something else")
 	}
 
 	// The statement: SLSA provenance for this file.
@@ -270,25 +361,20 @@ func verifyBundle(raw []byte, repo, name, sha string) error {
 		} `json:"subject"`
 	}
 	if json.Unmarshal(env.Payload, &st) != nil || st.PredicateType != slsaProvenance {
-		return errors.New("its statement is not build provenance")
+		return nil, errors.New("its statement is not build provenance")
 	}
 	for _, s := range st.Subject {
 		if s.Name == name && strings.EqualFold(s.Digest["sha256"], sha) {
-			return nil
+			return leaf, nil
 		}
 	}
-	return errors.New("its build provenance is for other files")
+	return nil, errors.New("its build provenance is for other files")
 }
 
 // issuer is the OIDC issuer Fulcio wrote in a certificate.
 func issuer(c *x509.Certificate) string {
-	for _, e := range c.Extensions {
-		if e.Id.Equal(oidIssuerV2) {
-			var s string
-			if _, err := asn1.Unmarshal(e.Value, &s); err == nil {
-				return s
-			}
-		}
+	if s := extString(c, oidIssuerV2); s != "" {
+		return s
 	}
 	for _, e := range c.Extensions {
 		if e.Id.Equal(oidIssuerV1) {
