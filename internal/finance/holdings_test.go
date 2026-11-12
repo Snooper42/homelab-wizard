@@ -280,3 +280,24 @@ func TestHoldingsWithoutRecountedLoad(t *testing.T) {
 		t.Errorf("saved with the new fields unset: %s", b)
 	}
 }
+
+// A followed ticker keeps its latest price and one point a day, at most a
+// year and a month of them; a plan keeps each symbol once, at most 50.
+func TestWatchedKeepsAPointADay(t *testing.T) {
+	w := Watched{Symbol: "GLBX", Since: "2026-10-01", From: 40}.Priced("2026-10-01", 40)
+	w = w.Priced("2026-10-01", 41).Priced("2026-10-02", 42)
+	if w.Price != 42 || len(w.History) != 2 || w.History[0].Amount != 41 {
+		t.Errorf("%+v", w)
+	}
+	for i := 0; i < 500; i++ {
+		w = w.Priced(time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, i).Format("2006-01-02"), float64(i))
+	}
+	if len(w.History) != maxWatchedHistory {
+		t.Errorf("%d points", len(w.History))
+	}
+	p := Plan{Watch: []Watched{{Symbol: " glbx "}, {Symbol: "GLBX"}, {Symbol: ""}, {Symbol: "INIT", History: make([]Point, 900)}}}
+	got := cleanWatch(p.Watch)
+	if len(got) != 2 || got[0].Symbol != "GLBX" || got[1].Symbol != "INIT" || len(got[1].History) != maxWatchedHistory {
+		t.Errorf("cleaned: %d %+v", len(got), got)
+	}
+}

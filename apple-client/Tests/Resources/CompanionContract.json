@@ -19,6 +19,7 @@
         "FinancesChangeInvestment",
         "FinancesDeleteInvestment",
         "FinancesFindSymbol",
+        "FinancesFollow",
         "FinancesInvestmentTrades",
         "FinancesLedger",
         "FinancesReadInvestments",

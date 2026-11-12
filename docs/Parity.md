@@ -102,7 +102,8 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Feature | Computer | Phone's page | iPhone | iPad | Mac app | Phone calls |
 |---|---|---|---|---|---|---|
 | The plan: Dashboard, Spending, Plan, Net worth | yes, four tabs | yes, the same four | partly: its own home with a page each (Transactions, Budgets, Bills, Investments, Accounts, Goals, Loans, Spending, Cash Flow, Month in Review, Recurring, To Review) | yes, as the iPhone | — | `Finances` |
-| An account's own page: its balance and chart (30 or 90 days, a year), this month's in and out, its latest transactions, Update balance and Edit | yes | yes; a look-only phone has no Update balance or Edit | gap (its Accounts page; the owner's yes, Nov 12: next after the computer's) | gap | — | `Finances`, `FinancesLedger` |
+| An account's own page: its balance and chart (30 or 90 days, a year), this month's in and out, its latest transactions, Update balance and Edit | yes | yes; a look-only phone has no Update balance or Edit | yes: the Accounts page opens it; Update Balance at its top (Face ID) | yes | — | `Finances`, `FinancesLedger` |
+| A loan's page: its payment, rate, months left and payoff; the payments linked to it (one over the plan's asked about), the same payee's next ones offered, Link a payment… | yes | yes; a look-only phone only sees them | gap (2C step 4, PR 4) | gap | — | `Finances`, `FinancesLedger`, `SaveFinancesLedger` |
 | Checking now and after the next paycheck, how it adds up | yes | yes | yes | yes | — | |
 | Change balances, budgets, goals, a payment's amount, Hide amounts | yes | yes (Finances to change) | yes, Face ID | yes, ⇧⌘H hides amounts | — | `SaveFinances` |
 | Add a payment, an account, a goal; money that comes in from someone | yes | yes (Finances to change) | partly: an account, not a payment or a goal | partly | — | `SaveFinances` |
@@ -117,6 +118,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | The household's own pictures for a logo (picked, or got from a website), drawn first | yes | yes | yes (before Nov 12 a letter or an icon: the app never read them) | yes | — | `Finances` (the plan's `logos`) |
 | Investments: the card, Read now, Add a holding | yes | yes (Finances to change) | yes, Face ID | yes | — | `FinancesReadInvestments`, `FinancesFindSymbol`, `FinancesAddInvestment` |
 | Investments: a holding's buys and sales, Change, Delete | yes | yes (Finances to change) | gap | gap | — | `FinancesInvestmentTrades`, `FinancesChangeInvestment`, `FinancesDeleteInvestment` |
+| Investments' Watchlist: tickers followed without owning them, priced at each read, never in the worth; Follow a ticker, Unfollow | yes | yes (Finances to change); a look-only phone sees the list | gap (2C step 4, PR 4) | gap | — | `FinancesFollow`, `FinancesFindSymbol`, `SaveFinances` |
 | The money flow (Sankey), the Dashboard's prompts (a subscription's new price, a bill's average, a bill not seen) | yes | yes | partly: Cash Flow and Month in Review, not the flow or the prompts | partly | — | |
 | The calendar (the days ahead and behind, a month in all, add on a day) | yes | yes | partly: Recurring as a calendar | partly | — | |
 | The calendar feed for a phone's calendar | yes | on purpose: it's made on the computer | on purpose | on purpose | — | |

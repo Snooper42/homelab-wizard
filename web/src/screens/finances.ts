@@ -153,7 +153,7 @@ function draw() {
     phone,
     // Read now and Add a holding wherever Finances may be changed (the computer, a phone allowed to change it): never hidden
     // behind Status, which may not see the Ghostfolio that answers; when it does not answer, the card says so.
-    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q), trades: tradeOps },
+    investments: !v || v.readOnly ? undefined : { read: readInvestments, state: invest, add: addInvestment, find: (q: string) => go().FinancesFindSymbol(q), trades: tradeOps, follow: async (sym: app.AppSymbol) => { financesData.set(await go().FinancesFollow(sym)); } },
   });
   if (v) readEachMorning(v);
   // A form left open keeps what is typed in; its Save then builds on this plan.

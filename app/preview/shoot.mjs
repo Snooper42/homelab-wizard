@@ -2686,6 +2686,41 @@ const smokes = [
     await page.keyboard.press('Meta+BracketLeft');
     await page.waitForSelector('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 3000 });
   } },
+  // The owner, Nov 12: their share of the mortgage goes as a Zelle payment to the person they share it with, and the
+  // loan's page should say what's left, and link those payments to it. A loan's page: its share still owed, its
+  // payment each month, rate and payoff; the payments linked to it; one over the plan's payment asked about each
+  // time (the owner's pick); Link a payment… links another, and the same payee's next ones are offered by themselves.
+  { name: 'Finances: a loan’s page lists the payments linked to it, and links another', screen: 'finances', mock: { ledger: { ...ledger, transactions: [...ledger.transactions,
+    { id: 'z1', date: '2026-10-01', account: 'chk', amount: -1845, payee: 'Zelle to Sam', category: 'Housing', payment: 'mortgagepay' },
+    { id: 'z2', date: '2026-09-01', account: 'chk', amount: -1945, payee: 'Zelle to Sam', category: 'Housing', payment: 'mortgagepay' },
+    { id: 'z3', date: '2026-10-29', account: 'chk', amount: -1845, payee: 'Zelle to Sam', category: 'Housing' }] } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Mortgage"))', { timeout: 5000 });
+    const loan = page.locator('#finRoot .fx-account .fx-loan');
+    await loan.waitFor({ timeout: 5000 });
+    const facts = await loan.locator('.fx-loanfacts').textContent();
+    for (const w of ['$1,845.00', 'Paid off']) if (!facts.includes(w)) throw new Error(`the loan's facts: ${facts}`);
+    const linked = page.locator('#finRoot .fx-loanlinked');
+    await linked.locator('li:has-text("Oct 1")').waitFor({ timeout: 5000 });
+    // $100 over the plan's payment: asked about, with Count it and Not this one.
+    const over = linked.locator('li:has-text("Sep 1")');
+    if (!(await over.textContent()).includes('$100.00 more')) throw new Error(`the one over: ${await over.textContent()}`);
+    await over.locator('button:text-is("Count it")').click();
+    await page.waitForFunction(() => (window.__MOCK.ledgerSaved || []).length === 1, null, { timeout: 5000 });
+    const saved = await page.evaluate(() => window.__MOCK.ledgerSaved[0].transactions.find((t) => t.id === 'z2'));
+    if (!saved.extra || saved.payment !== 'mortgagepay') throw new Error(`Count it saved ${JSON.stringify(saved)}`);
+    await page.waitForFunction(() => !document.querySelector('#finRoot .fx-loanlinked li button[aria-label*="Count it"], #finRoot .fx-loanlinked li:has(button) .fx-loanask'), null, { timeout: 5000 }).catch(() => {});
+    // The Zelle on Oct 29 isn't linked: offered, from the same payee as the linked ones; Link links it.
+    const offer = page.locator('#finRoot .fx-loanoffer li:has-text("Oct 29")');
+    await offer.waitFor({ timeout: 5000 });
+    await offer.locator('button:text-is("Link")').click();
+    await page.waitForFunction(() => (window.__MOCK.ledgerSaved || []).length === 2, null, { timeout: 5000 });
+    const z3 = await page.evaluate(() => window.__MOCK.ledgerSaved[1].transactions.find((t) => t.id === 'z3'));
+    if (z3.payment !== 'mortgagepay') throw new Error(`Link saved ${JSON.stringify(z3)}`);
+    // Link a payment…: the outgoing ones not linked to anything, each with Link.
+    await page.click('#finRoot .fx-loanlinked button:text-is("Link a payment…")');
+    await page.waitForSelector('#finRoot .fx-loanpick li:has-text("Trader Joe")', { timeout: 5000 });
+  } },
   { name: 'The phone, view only: an account’s page has nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
     await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
@@ -4934,6 +4969,9 @@ const smokes = [
     await page.click('#updateAll');
     await page.waitForSelector('#cliActions button:has-text("Update them")', { timeout: 5000 });
     const top = () => page.evaluate(() => Math.round(document.getElementById('cliPanel').getBoundingClientRect().top));
+    // The window slides in (sheet-in, .18s): measured before it settled, a slow runner read it a pixel off (73px, then
+    // 72px; #631's CI, Nov 12). Its own animations finish first; then it must not move at all.
+    await page.evaluate(() => Promise.all(document.getElementById('cliPanel').getAnimations().map((a) => a.finished)));
     const before = await top();
     const calls = await backendCalls(page);
     await page.click('#cliActions button:has-text("Update them")');
@@ -5940,6 +5978,55 @@ const smokes = [
     if (await page.$(`${card} .fx-investleft`)) throw new Error('accounts to match with none left');
     // Add a holding is there whether or not Status reports Ghostfolio running: it may not see the one that answers.
     await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
+  } },
+  // The owner, Nov 12: no bar of what each account holds ("I like the look when they're all separated out"); a
+  // traditional list: each holding's price and its trend over the year beside its worth and gain, and the total's
+  // worth over time on top.
+  { name: 'Finances: Investments list each holding with its price and trend, and no share bar', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} tbody.fx-hold`, { timeout: 5000 });
+    if (await page.locator(`${card} .fx-splitbar, ${card} [aria-label*="What each account holds"]`).count()) throw new Error('the share bar is still there');
+    const head = await page.locator(`${card} .fx-holdings thead th`).allTextContents();
+    if (!head.includes('Price') || !head.includes('Year')) throw new Error(`columns: ${head.join(' | ')}`);
+    const vti = page.locator(`${card} tbody.fx-hold:has(strong:text-is("VTI"))`);
+    const price = await vti.locator('.fx-holdprice').textContent();
+    if (price.replace(/\s/g, '') !== '$285.93') throw new Error(`VTI's price: ${price} (26,420 for 92.4 shares)`);
+    if (!(await vti.locator('.fx-holdtrend svg').count())) throw new Error('no trend for VTI');
+    if (!(await page.locator(`${card} figure.fx-area[aria-label*="Investments"]`).count())) throw new Error("no chart of the investments' worth");
+  } },
+  // The Watchlist (the owner, Nov 12): tickers followed without owning them, priced at each read, never in the worth.
+  // Follow a ticker looks one up and follows it; Unfollow takes it off; one Ghostfolio has no price for says so.
+  { name: 'Finances: the Watchlist follows a ticker, says its change since, and unfollows', screen: 'finances', mock: { status: runningToo('ghostfolio'), quotes: { VOO: 556.25 },
+    finances: { ...finances, plan: { ...finances.plan, watch: [{ symbol: 'GLBX', name: 'Globex Energy', dataSource: 'YAHOO', currency: 'USD', since: '2026-10-02', from: 45.4, price: 48.12, history: [{ date: '2026-10-02', amount: 45.4 }, { date: '2026-10-20', amount: 46.9 }, { date: '2026-10-30', amount: 48.12 }] }] } } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const watch = page.locator('#finRoot .fx-invest .fx-watch');
+    const glbx = watch.locator('li:has(strong:text-is("GLBX"))');
+    await glbx.waitFor({ timeout: 5000 });
+    const said = await glbx.textContent();
+    for (const w of ['$48.12', '+6.0% since Oct 2', 'Globex Energy']) if (!said.includes(w)) throw new Error(`GLBX: ${said}`);
+    if (!(await glbx.locator('.spark').count())) throw new Error('no line for GLBX');
+    const before = await page.textContent('#finRoot .fx-investfigs');
+    await watch.locator('button:text-is("Follow a ticker")').click();
+    await watch.locator('input').fill('VOO');
+    await watch.locator('button:text-is("Look it up")').click();
+    await watch.locator('.fx-watchadd li:has(strong:text-is("VOO")) button:text-is("Follow")').click();
+    await watch.locator('li:has(strong:text-is("VOO")):has-text("$556.25")').waitFor({ timeout: 5000 });
+    if ((await page.textContent('#finRoot .fx-investfigs')) !== before) throw new Error('a followed ticker changed the worth');
+    // One Ghostfolio can't price is said, and nothing is added.
+    await watch.locator('button:text-is("Follow a ticker")').click();
+    await watch.locator('input').fill('AAPL');
+    await watch.locator('button:text-is("Look it up")').click();
+    await watch.locator('.fx-watchadd li:has(strong:text-is("AAPL")) button:text-is("Follow")').click();
+    await watch.locator('[role="alert"]:has-text("no price for AAPL")').waitFor({ timeout: 5000 });
+    await glbx.locator('button:text-is("Unfollow")').click();
+    await watch.locator('li:has(strong:text-is("GLBX"))').waitFor({ state: 'detached', timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the Watchlist shows, with nothing to follow or unfollow', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, plan: { ...finances.plan, watch: [{ symbol: 'GLBX', name: 'Globex Energy', since: '2026-10-02', from: 45.4, price: 48.12, history: [] }] } } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const watch = page.locator('#finRoot .fx-invest .fx-watch');
+    await watch.locator('li:has(strong:text-is("GLBX"))').waitFor({ timeout: 5000 });
+    if (await watch.locator('button').count()) throw new Error('a view-only phone can follow or unfollow');
   } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand

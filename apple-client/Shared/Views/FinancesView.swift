@@ -1528,7 +1528,7 @@ private struct FinanceInvestmentsPage: View {
 
 /// A line over time with a finger to read a day, and a range to pick:
 /// net worth's and the investments'.
-private struct TrendChart: View {
+struct TrendChart: View {
     let series: [NetWorthPoint]
     @Binding var picked: Date?
 
@@ -2021,7 +2021,6 @@ private struct AddHoldingView: View {
 private struct FinanceAccountsPage: View {
     @State private var adding = false
     @Bindable var finances: FinancesViewModel
-    @State private var editing: FinanceAccount?
     @State private var editingCushion = false
 
     var body: some View {
@@ -2034,9 +2033,7 @@ private struct FinanceAccountsPage: View {
                     }
                     if finances.canEdit || view.plan.cushion > 0 { cushionCard(view) }
                     VStack(alignment: .leading, spacing: 4) {
-                        if finances.canEdit {
-                            Text("Tap an account to type in its balance.")
-                        }
+                        Text("Tap an account for its page: its balance day by day and its latest transactions.")
                         if view.plan.accounts.contains(where: { $0.currency != nil && $0.currency != "" }) {
                             Text("Net worth counts each account in the plan's currency as it's typed, without exchange rates.")
                         }
@@ -2062,9 +2059,6 @@ private struct FinanceAccountsPage: View {
         }
         .sheet(isPresented: $adding) { AddAccountView(finances: finances) }
         .navigationTitle("Accounts")
-        .sheet(item: $editing) { account in
-            BalanceEditor(account: account, finances: finances)
-        }
         .sheet(isPresented: $editingCushion) {
             AmountEditor(
                 title: "Change Cushion", heading: "The least checking should hold",
@@ -2140,17 +2134,14 @@ private struct FinanceAccountsPage: View {
             .padding(.bottom, 6)
             ForEach(Array(group.accounts.enumerated()), id: \.element.id) { i, account in
                 if i > 0 { Divider().padding(.leading, 54) }
-                if finances.canEdit {
-                    Button {
-                        editing = account
-                    } label: {
-                        accountRow(account, view)
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityHint("Update its balance")
-                } else {
+                // Its own page (the owner, Nov 12), as on the computer: Update Balance is a button there.
+                NavigationLink {
+                    AccountDetailView(account: account, finances: finances)
+                } label: {
                     accountRow(account, view)
                 }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityHint("Opens its page")
             }
         }
         .padding(16)
@@ -2601,7 +2592,7 @@ private struct AmountEditor: View {
 }
 
 /// Types in one account's balance, as the computer's Edit screen does.
-private struct BalanceEditor: View {
+struct BalanceEditor: View {
     let account: FinanceAccount
     let finances: FinancesViewModel
     @State private var text = ""
@@ -3510,7 +3501,7 @@ private struct AddTransactionView: View {
 }
 
 /// An amount, or "••••" while amounts are hidden.
-private struct Money: View {
+struct Money: View {
     let value: Double
     let currency: String
     let finances: FinancesViewModel

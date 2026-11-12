@@ -8,6 +8,9 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **A Watchlist in Investments:** follow a ticker you don't own (**Follow a ticker** under your holdings), and it's listed with its price, a line of it, and how much it's moved since you followed it. Ghostfolio prices it each time it reads your investments. It never counts in your worth. **Unfollow** takes it off.
+- **An account's page on the iPhone and iPad:** in the Homelab app, tapping an account on Finances' Accounts page opens its page: what it holds (or owes) today, a chart of it over the last 30 or 90 days or a year, and its latest transactions, with **Update Balance** at the top. It typed the balance in before.
+- **A loan's page, with the payments that pay it:** a loan's page in Finances › Net worth says what it costs each month (and the whole payment, when only your share is in the plan), how many months are left and when it's paid off. Under it, **Payments linked to this loan**: link one with **Link a payment…** (a transfer to the person you share a mortgage with, say), and the same payee's next ones are offered to link by themselves. One that paid more than the plan's payment asks whether to count all of it.
 - **Each account has its own page:** in Finances › Net worth, clicking an account opens its page instead of the form to update it: what it holds (or owes) today with a chart over the last 30 or 90 days or a year, what came in and went out this month, and its latest transactions, with **All of them in Transactions**. **Update balance** and **Edit** are buttons there. The same on the phone's page.
 - **Settings on the phone's page:** the page your phone opens in a browser now has Settings too, as the Homelab app does: the settings a phone may change (never a password or token, nor what the phone connects through), saved from a phone allowed to make changes, and what the computer runs. A phone that only looks reads them; a wall screen doesn't show them.
 - **Snooze from Every alert:** an alert whose problem is still there now has **Snooze…** in Every alert, on the computer, the phone's page and the Homelab app, as the Watchdog card has: no alerts about it for an hour or a day, while the watchdog goes on checking. Phones snooze only where they're allowed changes.
@@ -117,6 +120,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Investments as a list:** Finances' Investments card no longer has the bar of what each account holds. Each holding has its price and a line of its worth over the year (green up, orange down) beside what you paid, its worth and its gain, and a chart of all your investments' worth over the year is on top.
 - **Tidy Up in the dark looks like Finances:** a near-black background, with cards a step lighter and a thin line round each, instead of the grey the rest of the app uses. With more contrast asked for, it keeps the app's own colours.
 - **Tidy Up lists sizes as Finances lists amounts:** what a job freed is now on the right of its line in **Recently done** (*Movies shrunk · 12 files replaced*, and *412 GB* on the right), in the same place and type as Finances' amounts, instead of at the end of its words; and **Merge** on Audiobooks says what it wins back, as **Shrink** does for films.
 - **Tidy Up's rows say it shorter:** the lyrics, Tdarr, Radarr and Sonarr rows, and Music's Lyrics row, now fit on one line in a window half your screen wide.

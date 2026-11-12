@@ -1579,6 +1579,8 @@ label.field.cushion input { width:7em; margin:0; }
 .fingroup .grouphead > .num { font-size:16px; }
 .fingroup .finrows { border-top:1px solid var(--line); padding:0 18px; }
 .fingroup .spark { width:80px; height:24px; color:var(--muted); margin-right:8px; }
+.fx-holdtrend .spark { width:72px; height:20px; color:var(--fin-in); }
+.fx-holdtrend.down .spark { color:var(--fin-out); }
 .worthval { display:inline-flex; flex-direction:column; align-items:flex-end; }
 .worthval .muted { font-size:12px; font-weight:400; }
 /* Assets and liabilities by kind: a bar in parts, 2 px apart, and each named with its amount. */
@@ -2774,6 +2776,23 @@ button.fx-symbol small { color:var(--muted); }
 .fx-acctmonth { display:flex; flex-wrap:wrap; gap:6px 28px; margin:0; }
 .fx-acctmonth dt { font-size:12px; color:var(--muted); }
 .fx-acctmonth dd { margin:2px 0 0; font-weight:700; font-size:16px; }
+/* A loan on its account's page (Loan.tsx): its facts in a row, then the payments linked to it, one paid over the
+   plan's asked about at its end, the same payee's next ones offered, and Link a payment…'s list. */
+.fx-loanfacts { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px 20px; margin:0 0 8px; }
+.fx-loanfacts dt { font-size:12px; color:var(--muted); }
+.fx-loanfacts dd { margin:2px 0 0; font-size:17px; font-weight:700; }
+.fx-loanfacts dd .muted { font-size:12px; font-weight:400; }
+.fx-loanask { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px 8px; font-size:12px; }
+.fx-loanoffer, .fx-loanpick { margin:4px 0 12px; padding:10px 12px; border-radius:12px; background:var(--fin-accent-soft); }
+.fx-loanoffer .fx-sub, .fx-loanpick .fx-sub { margin:0 0 4px; }
+/* Investments' Watchlist (Investments.tsx): tickers followed without owning them, under the holdings. */
+.fx-watch { margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.fx-watchhead { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px 16px; }
+.fx-watchhead h3 { margin:0; font-size:15px; }
+.fx-watchhead .fx-sub { margin:2px 0 0; }
+.fx-watchadd { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 10px; margin:10px 0; padding:10px 12px; border-radius:12px; background:var(--fin-accent-soft); }
+.fx-watchadd .fx-rows { flex-basis:100%; }
+.fx-watch .fx-change { font-size:12px; white-space:nowrap; margin:0 6px; }
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Tidy Up too, which takes Finances' look (tidy-loop.md, L7). Only these screens, and not when the
    system asks for more contrast (that keeps its own colours). */

@@ -212,3 +212,63 @@ func cleanHoldings(a *Account) error {
 	}
 	return nil
 }
+
+// Watched is a ticker the household follows without owning it (Investments'
+// Watchlist, the owner's ask, Nov 12): what Ghostfolio calls it and where
+// it prices it, the day it was followed and its price then, its latest
+// price, and a point a day since. It is in no account and in no worth.
+type Watched struct {
+	Symbol     string  `json:"symbol"`
+	Name       string  `json:"name,omitempty"`
+	DataSource string  `json:"dataSource,omitempty"`
+	Currency   string  `json:"currency,omitempty"`
+	Since      string  `json:"since,omitempty"`
+	From       float64 `json:"from,omitempty"`
+	Price      float64 `json:"price,omitempty"`
+	History    []Point `json:"history,omitempty"`
+}
+
+// maxWatched is as many tickers as a plan follows; maxWatchedHistory as
+// many days of each as it keeps (a year and a month).
+const (
+	maxWatched        = 50
+	maxWatchedHistory = 400
+)
+
+// Priced is w with a price read on day: its latest, and that day's point
+// (one a day: a second read that day replaces it), the oldest let go past
+// maxWatchedHistory.
+func (w Watched) Priced(day string, price float64) Watched {
+	w.Price = price
+	h := append([]Point(nil), w.History...)
+	if n := len(h); n > 0 && h[n-1].Date == day {
+		h[n-1].Amount = price
+	} else {
+		h = append(h, Point{Date: day, Amount: price})
+	}
+	if len(h) > maxWatchedHistory {
+		h = h[len(h)-maxWatchedHistory:]
+	}
+	w.History = h
+	return w
+}
+
+// cleanWatch keeps each followed symbol once (in capitals, the first kept),
+// none without one, at most maxWatched, each with at most
+// maxWatchedHistory points.
+func cleanWatch(list []Watched) []Watched {
+	var out []Watched
+	seen := map[string]bool{}
+	for _, w := range list {
+		w.Symbol = strings.ToUpper(strings.TrimSpace(w.Symbol))
+		if w.Symbol == "" || seen[w.Symbol] || len(out) >= maxWatched {
+			continue
+		}
+		seen[w.Symbol] = true
+		if len(w.History) > maxWatchedHistory {
+			w.History = w.History[len(w.History)-maxWatchedHistory:]
+		}
+		out = append(out, w)
+	}
+	return out
+}

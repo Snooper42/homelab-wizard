@@ -345,3 +345,23 @@ func TestFindRecurring(t *testing.T) {
 		t.Errorf("Hulu: %+v", h)
 	}
 }
+
+// A loan's page: a payment over its planned one that the household said to
+// count all of keeps saying so, through a save and a read.
+func TestATransactionKeepsThatItWasCountedInFull(t *testing.T) {
+	path := t.TempDir() + "/ledger.json"
+	p := Plan{Accounts: []Account{{ID: "chk", Name: "Checking", Kind: "checking"}, {ID: "mortgage", Name: "Mortgage", Kind: "loan"}},
+		Payments: []Payment{{ID: "mortgagepay", Name: "Mortgage", Amount: 1845, To: "mortgage"}}}
+	l := Ledger{Transactions: []Transaction{
+		{ID: "z2", Date: "2026-09-01", Account: "chk", Amount: -1945, Payee: "Zelle to Sam", Payment: "mortgagepay", Extra: true},
+		// Counted in full means nothing without a payment it pays.
+		{ID: "z9", Date: "2026-09-02", Account: "chk", Amount: -10, Payee: "Corner Grocer", Extra: true},
+	}}
+	if _, err := SaveLedger(path, l, p); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadLedger(path)
+	if err != nil || len(got.Transactions) != 2 || !got.Transactions[0].Extra || got.Transactions[0].Payment != "mortgagepay" || got.Transactions[1].Extra {
+		t.Fatalf("%+v %v", got.Transactions, err)
+	}
+}
