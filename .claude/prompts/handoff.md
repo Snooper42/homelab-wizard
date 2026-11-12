@@ -65,7 +65,9 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 | #606 | **Gaps 2 and 4:** What was done and Every Alert from the split view (the detail column's own stack; `DashboardViewModel.openAlertLog`) |
 
-**In flight:** gap 3, Snooze… on an alert in Every alert whose watchdog check still fails (`snoozable`, web and Swift), on branch `claude/focused-gates-d35kz0`. *Done:* merged green. Then the two fixes from the owner's screenshots (Nov 12), committed but not yet pushed in this session: a ring card measures itself (`.fx-widget:has(.fx-donutrow)`, so category names don't break mid-word) and Setup's count says *· 1 can wait*; redo them from the description if the commit is gone. Then gap 6 (2A step 3). Tidy Up L4 (`tidy-loop.md`, **The look**) after 2A.
+| #607 | **Gap 3:** Snooze… on an alert in Every alert whose watchdog check still fails (`snoozable`, web and Swift) |
+
+**In flight:** the two fixes from the owner's screenshots (Nov 12): a ring card measures itself (`.fx-widget:has(.fx-donutrow)`, so category names don't break mid-word) and Setup's count says *· 1 can wait*, on branch `claude/focused-gates-d35kz0`. *Done:* merged green. Then the iPhone's Backups (section 4), then its Settings, then gap 6 (2A step 3). Tidy Up L4 (`tidy-loop.md`, **The look**) after 2A.
 
 **Mockups of the gaps (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page). The owner asked that mocks match the iPhone app more closely (section 6).
 
@@ -119,7 +121,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
-- **The iPhone's Backups and Settings, redesigned (asked Nov 12):** the owner called Backups "ugly" and Settings "a bit obtuse"; mocks are on the gaps canvas (section 1), bottom row. Yes, no, or changes to each; build only a yes. Backups: one card with the ring and both buttons, three tiles (restore test, password export, second copy), what needs a look first, the fresh copies folded to icons, jobs and tests one tap down. Settings: the everyday homelab ones first in plain words, then this iPhone's, then **All homelab settings** (the `.env` sections) one row.
+- **The iPhone's Backups and Settings, redesigned:** the owner called Backups "ugly" and Settings "a bit obtuse" (Nov 12); mocks are on the gaps canvas (section 1), bottom row. **The owner, Nov 12: "yes to both, build Backups first".** Backups is the PR after this one (model: `needingALook`, `freshCopies`, `waitingGroups`, `tiles`; Swift tests); then Settings: the everyday homelab settings first in plain words, then this iPhone's, then **All homelab settings** as one row. Backups: one card with the ring and both buttons, three tiles (restore test, password export, second copy), what needs a look first, the fresh copies folded to icons, jobs and tests one tap down. Settings: the everyday homelab ones first in plain words, then this iPhone's, then **All homelab settings** (the `.env` sections) one row.
 - **Also from the owner's screenshots (Nov 12), to mock before changing:** Setup shows a failed step's error twice (the log and the step) with a raw API path; the Dashboard's Cash flow card has a lot of empty space; Spent this month sits alone on its row and repeats Where it goes.
 - **The Finances mocks (2B step 2):** Step 4 is a yes (Nov 11). Yes or no to Step 5 (redrawn as *Checking, last 90 days*) and Step 6 on the canvas (link in section 2). Build only what they say yes to.
 - **Which gaps to close (2A step 2):** taken as recommended when the owner said "continue" (Nov 12): 1, then 2 and 4, then 3, then 6. They can still change the order or drop one.
