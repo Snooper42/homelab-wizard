@@ -402,16 +402,36 @@ struct AttackRow: View {
 
 private struct AlertsCard: View {
     @Environment(AppActionsViewModel.self) private var actions
+    /// Set by the Mac's and iPad's split view: Every Alert opens beside
+    /// the list, in the app's place, as a link can't from a list that
+    /// selects apps.
+    @Environment(\.openAlertLog) private var openAlertLog
     let events: [AlertEvent]
 
     var body: some View {
         alerts
         // Every alert the computer kept, past ntfy's 12 hours, where it keeps them.
         if actions.computerAnswers("AlertLog") {
-            NavigationLink {
-                AlertLogView()
-            } label: {
-                Text("Every Alert")
+            if let openAlertLog {
+                Button {
+                    openAlertLog()
+                } label: {
+                    HStack {
+                        Text("Every Alert")
+                        Spacer()
+                        Image(systemName: "chevron.forward")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            } else {
+                NavigationLink {
+                    AlertLogView()
+                } label: {
+                    Text("Every Alert")
+                }
             }
         }
     }
@@ -517,4 +537,10 @@ private struct SavingsCard: View {
                 .foregroundStyle(.secondary)
         }
     }
+}
+
+extension EnvironmentValues {
+    /// Opens Every Alert beside the list (the Mac's and iPad's split view);
+    /// nil on the iPhone, where it's a link on the Status tab's stack.
+    @Entry var openAlertLog: (@MainActor @Sendable () -> Void)? = nil
 }
