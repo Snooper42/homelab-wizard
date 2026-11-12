@@ -85,6 +85,9 @@ type Plan struct {
 	// lower case: a small PNG, JPEG, or WebP as a data URL, made on the
 	// device from a file picked there, so no logo is ever fetched.
 	Logos map[string]string `json:"logos,omitempty"`
+	// Watch is the tickers followed without owning them (Investments'
+	// Watchlist): priced by Ghostfolio, in no account and no worth.
+	Watch []Watched `json:"watch,omitempty"`
 	// Categories are what transactions are sorted into, each named once,
 	// some under a group (Groceries under Food), each with an icon. None
 	// typed in, the screen offers DefaultCategories.
@@ -667,6 +670,7 @@ func Clean(p Plan) (Plan, error) {
 		p.Cushion = 0
 	}
 	p.Logos = keptLogos(p.Logos)
+	p.Watch = cleanWatch(p.Watch)
 	cats, err := cleanCategories(p.Categories)
 	if err != nil {
 		return p, err

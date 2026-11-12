@@ -788,6 +788,7 @@ declare namespace finance {
     notYet?: string;
     inBalance?: string[];
     logos?: Record<string, string>;
+    watch?: finance.Watched[];
     categories?: finance.Category[];
     budgets?: finance.Budget[];
     goals?: finance.Goal[];
@@ -905,6 +906,16 @@ declare namespace finance {
     institution?: string;
     date: string;
     amount: number;
+  }
+  interface Watched {
+    symbol: string;
+    name?: string;
+    dataSource?: string;
+    currency?: string;
+    since?: string;
+    from?: number;
+    price?: number;
+    history?: finance.Point[];
   }
   interface Working {
     date: string;
@@ -1290,6 +1301,7 @@ interface Backend {
     FinancesDeleteInvestment(arg1: string, arg2: string): Promise<app.InvestmentsRead>;
     FinancesFetchLogo(arg1: string): Promise<app.AppLogo>;
     FinancesFindSymbol(arg1: string): Promise<app.AppSymbol[]>;
+    FinancesFollow(arg1: app.AppSymbol): Promise<finance.View>;
     FinancesFromFirefly(): Promise<app.AppBalance[]>;
     FinancesFromGhostfolio(): Promise<app.AppBalance[]>;
     FinancesFromWallos(): Promise<app.AppSubscription[]>;

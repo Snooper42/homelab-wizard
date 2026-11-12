@@ -388,6 +388,14 @@ func ReadInto(ctx context.Context, root string) (Read, error) {
 		return Read{}, err
 	}
 	p, left := finance.TakeHoldings(p, found, time.Now())
+	// The Watchlist's tickers, priced again: one Ghostfolio has no price for
+	// now keeps its last. Ghostfolio answered just now, so a sign-in that
+	// fails here leaves them as they were rather than failing the read.
+	if len(p.Watch) > 0 {
+		if g, err := SignIn(ctx, core.Env(root)); err == nil {
+			p.Watch = g.priceWatched(ctx, p.Watch, time.Now().Format("2006-01-02"))
+		}
+	}
 	saved, err := finance.Save(path, p)
 	if err != nil {
 		return Read{}, err
@@ -400,6 +408,55 @@ func ReadInto(ctx context.Context, root string) (Read, error) {
 		held += len(f.Holdings)
 	}
 	return Read{Plan: saved, Unmatched: left, Accounts: len(found), Holdings: held}, nil
+}
+
+// priceWatched prices each followed ticker again on day; one Ghostfolio
+// has no price for keeps its last.
+func (g Session) priceWatched(ctx context.Context, list []finance.Watched, day string) []finance.Watched {
+	out := make([]finance.Watched, 0, len(list))
+	for _, w := range list {
+		if price, _, ok := g.quote(ctx, w.DataSource, w.Symbol); ok {
+			w = w.Priced(day, price)
+		}
+		out = append(out, w)
+	}
+	return out
+}
+
+// FollowInto follows a ticker FindSymbol found (the Watchlist): priced by
+// Ghostfolio now, kept in the plan at root with the day and that price.
+// One followed already is left as it is; one Ghostfolio has no price for
+// is refused, saying so.
+func FollowInto(ctx context.Context, root string, s Symbol) (finance.Plan, error) {
+	path := finance.Path(root)
+	p, err := finance.Load(path)
+	if err != nil {
+		return p, err
+	}
+	symbol := strings.ToUpper(strings.TrimSpace(s.Symbol))
+	if symbol == "" {
+		return p, errors.New("follow which ticker? None was given")
+	}
+	for _, w := range p.Watch {
+		if strings.EqualFold(w.Symbol, symbol) {
+			return p, nil
+		}
+	}
+	g, err := SignIn(ctx, core.Env(root))
+	if err != nil {
+		return p, err
+	}
+	price, currency, ok := g.quote(ctx, s.DataSource, symbol)
+	if !ok {
+		return p, fmt.Errorf("Ghostfolio has no price for %s right now: try again later, or another ticker", symbol)
+	}
+	if currency == "" {
+		currency = strings.ToUpper(strings.TrimSpace(s.Currency))
+	}
+	day := time.Now().Format("2006-01-02")
+	w := finance.Watched{Symbol: symbol, Name: strings.TrimSpace(s.Name), DataSource: s.DataSource, Currency: currency, Since: day, From: price}.Priced(day, price)
+	p.Watch = append(p.Watch, w)
+	return finance.Save(path, p)
 }
 
 // Symbol is a ticker Ghostfolio found: its symbol, name, the currency

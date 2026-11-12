@@ -282,6 +282,16 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
       const t = String(q).trim().toLowerCase();
       return later(t ? all.filter((s) => s.symbol.toLowerCase().startsWith(t) || s.name.toLowerCase().includes(t)) : []);
     },
+    // The Watchlist: a ticker found, followed at a made-up price (M.quotes), in the plan with today's point.
+    FinancesFollow: (sym) => {
+      (M.followed ??= []).push(sym.symbol);
+      const price = (M.quotes || {})[sym.symbol];
+      if (!price) return later(null).then(() => { throw new Error(`Ghostfolio has no price for ${sym.symbol} right now: try again later, or another ticker`); });
+      const day = M.finances.today;
+      const w = { symbol: sym.symbol, name: sym.name, dataSource: sym.dataSource, currency: sym.currency, since: day, from: price, price, history: [{ date: day, amount: price }] };
+      M.finances = { ...M.finances, plan: { ...M.finances.plan, watch: [...(M.finances.plan.watch || []), w] } };
+      return later(M.finances);
+    },
     FinancesAddInvestment: (x) => {
       if (M.investAddProblem) return later(null).then(() => { throw new Error(M.investAddProblem); });
       (M.investAdded ??= []).push(x);

@@ -5995,6 +5995,39 @@ const smokes = [
     if (!(await vti.locator('.fx-holdtrend svg').count())) throw new Error('no trend for VTI');
     if (!(await page.locator(`${card} figure.fx-area[aria-label*="Investments"]`).count())) throw new Error("no chart of the investments' worth");
   } },
+  // The Watchlist (the owner, Nov 12): tickers followed without owning them, priced at each read, never in the worth.
+  // Follow a ticker looks one up and follows it; Unfollow takes it off; one Ghostfolio has no price for says so.
+  { name: 'Finances: the Watchlist follows a ticker, says its change since, and unfollows', screen: 'finances', mock: { status: runningToo('ghostfolio'), quotes: { VOO: 556.25 },
+    finances: { ...finances, plan: { ...finances.plan, watch: [{ symbol: 'GLBX', name: 'Globex Energy', dataSource: 'YAHOO', currency: 'USD', since: '2026-10-02', from: 45.4, price: 48.12, history: [{ date: '2026-10-02', amount: 45.4 }, { date: '2026-10-20', amount: 46.9 }, { date: '2026-10-30', amount: 48.12 }] }] } } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const watch = page.locator('#finRoot .fx-invest .fx-watch');
+    const glbx = watch.locator('li:has(strong:text-is("GLBX"))');
+    await glbx.waitFor({ timeout: 5000 });
+    const said = await glbx.textContent();
+    for (const w of ['$48.12', '+6.0% since Oct 2', 'Globex Energy']) if (!said.includes(w)) throw new Error(`GLBX: ${said}`);
+    if (!(await glbx.locator('.spark').count())) throw new Error('no line for GLBX');
+    const before = await page.textContent('#finRoot .fx-investfigs');
+    await watch.locator('button:text-is("Follow a ticker")').click();
+    await watch.locator('input').fill('VOO');
+    await watch.locator('button:text-is("Look it up")').click();
+    await watch.locator('.fx-watchadd li:has(strong:text-is("VOO")) button:text-is("Follow")').click();
+    await watch.locator('li:has(strong:text-is("VOO")):has-text("$556.25")').waitFor({ timeout: 5000 });
+    if ((await page.textContent('#finRoot .fx-investfigs')) !== before) throw new Error('a followed ticker changed the worth');
+    // One Ghostfolio can't price is said, and nothing is added.
+    await watch.locator('button:text-is("Follow a ticker")').click();
+    await watch.locator('input').fill('AAPL');
+    await watch.locator('button:text-is("Look it up")').click();
+    await watch.locator('.fx-watchadd li:has(strong:text-is("AAPL")) button:text-is("Follow")').click();
+    await watch.locator('[role="alert"]:has-text("no price for AAPL")').waitFor({ timeout: 5000 });
+    await glbx.locator('button:text-is("Unfollow")').click();
+    await watch.locator('li:has(strong:text-is("GLBX"))').waitFor({ state: 'detached', timeout: 5000 });
+  } },
+  { name: 'The phone, view only: the Watchlist shows, with nothing to follow or unfollow', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true, plan: { ...finances.plan, watch: [{ symbol: 'GLBX', name: 'Globex Energy', since: '2026-10-02', from: 45.4, price: 48.12, history: [] }] } } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const watch = page.locator('#finRoot .fx-invest .fx-watch');
+    await watch.locator('li:has(strong:text-is("GLBX"))').waitFor({ timeout: 5000 });
+    if (await watch.locator('button').count()) throw new Error('a view-only phone can follow or unfollow');
+  } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
   // (here, as a new account), kept, and read again.
