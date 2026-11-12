@@ -23,6 +23,7 @@ import { arrivePlace, leavePlace } from './place';
 import { wireNavMenus } from './palette/navMenu';
 import { $, $$, $1, go, isMac, minute, mod, onPhone, showError } from './core';
 import { h as vnode, render } from 'preact';
+import { onTabChange, tabbed } from './tabs';
 
 let placed = false; // a screen was shown: the one the page starts on has no place of its own to keep yet
 export function show(name) {
@@ -93,15 +94,18 @@ export function navigate(name) {
 // Back and Forward between screens, as a browser has them (the owner, Nov 11): an app's page with its app, at most
 // 50 back. ⌘[ and ⌘] (Alt+← and Alt+→ elsewhere), the mouse's back and forward buttons, and a two-finger swipe on a
 // trackpad: fingers to the right is Back, to the left Forward.
-type Place = { screen: string; app?: string };
+// A screen with tabs (Finances, Tidy Up) is a step per tab (the owner, Nov 12: Back from Recurring or Spending went
+// straight to Status): it names the tab it is on, and puts one back.
+type Place = { screen: string; app?: string; tab?: string };
 const back: Place[] = [], ahead: Place[] = [];
 let current: Place | undefined;
 let moving = false;
+onTabChange(() => remember());
 function remember() {
   const screen = document.querySelector('.screen.active')?.id;
   if (!screen) return;
-  const next = { screen, app: screen === 'app' ? openedApp() : undefined };
-  if (!moving && current && (current.screen !== next.screen || current.app !== next.app)) {
+  const next = { screen, app: screen === 'app' ? openedApp() : undefined, tab: tabbed[screen]?.now() };
+  if (!moving && current && (current.screen !== next.screen || current.app !== next.app || current.tab !== next.tab)) {
     back.push(current);
     if (back.length > 50) back.shift();
     ahead.length = 0;
@@ -112,7 +116,11 @@ function visit(p: Place) {
   moving = true;
   try {
     if (p.screen === 'app' && p.app) openApp(p.app);
-    else { navigate(p.screen); focusScreen(p.screen); }
+    else {
+      if (p.tab !== undefined && tabbed[p.screen]?.now() !== p.tab) tabbed[p.screen]?.put(p.tab);
+      navigate(p.screen);
+      focusScreen(p.screen);
+    }
   } finally { moving = false; }
 }
 /** Back to the screen before (false when there is none). */
