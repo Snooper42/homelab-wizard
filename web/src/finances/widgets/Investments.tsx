@@ -11,12 +11,13 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { Segmented } from '../../parts/Segmented';
 import { AreaChart } from '../ui/charts';
 import { Amount } from '../ui/Amount';
-import { type Hue, Legend, SplitBar } from '../ui/Legend';
+import { type Hue } from '../ui/Legend';
+import { Spark } from '../../Spark';
 import { Widget } from '../ui/Widget';
 import { Mark } from '../Mark';
 import { tickerBrand } from '../tickers';
 import { rateOf, worthOf, worthOn } from '../model';
-import { amountsHidden, dayShort, isoDay, money, moneyIn, parseAmount, parseCount, signOf, tick, todayISO } from '../money';
+import { amountsHidden, compact, dayShort, isoDay, money, moneyIn, monthName, parseAmount, parseCount, signOf, tick, todayISO } from '../money';
 
 /** What Read now is doing, or last said. */
 export interface InvestState {
@@ -125,6 +126,8 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades
   const month = accounts.reduce((t, a) => t + own(a) - worthOn(v, a, first), 0);
   const before = total - month;
   const holdings = lines.filter((l) => l.h).length;
+  // The first of each of the last twelve months, then today.
+  const year = [...Array.from({ length: 12 }, (_, i) => { const d = new Date(+v.today.slice(0, 4), +v.today.slice(5, 7) - 13 + i + 1, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`; }), v.today];
   const n = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`;
   return (
     <Widget title={<>Investments <span class="fx-sub">from Ghostfolio{when ? `, ${when}` : ''}</span></>} span="all" kind="fx-invest" actions={button}>
@@ -136,12 +139,12 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades
         <div><div class="fx-caption">Gain</div><div class="fx-investfig"><Amount value={gain} form="full" sign tone="auto" /></div><div class="fx-sub">{amountsHidden() ? 'on what you paid' : `${share(gain, paid)} on what you paid`}</div></div>
         <div><div class="fx-caption">This month</div><div class="fx-investfig"><Amount value={month} form="full" sign tone="auto" /></div><div class="fx-sub">{amountsHidden() ? '' : share(month, before) + ' '}since {dayShort(first)}</div></div>
       </div>
-      {accounts.length > 1 && <>
-        <SplitBar label="What each account holds" parts={accounts.map((a, i) => ({ label: a.name, value: own(a), color: ((i % 7) + 1) as Hue }))} />
-        <Legend layout="inline" items={accounts.map((a, i) => ({ label: a.name, color: ((i % 7) + 1) as Hue, value: <Amount value={own(a)} form="whole" /> }))} />
-      </>}
+      {/* The owner, Nov 12: no bar of what each account holds; the total's worth over the year instead, each holding separate below. */}
+      <AreaChart values={year.map((d) => accounts.reduce((t, a) => t + worthOn(v, a, d), 0))} zero={false} height={140} format={compact}
+        xLabels={[{ i: 0, label: monthName(year[0]).slice(0, 3) }, { i: 6, label: monthName(year[6]).slice(0, 3) }, { i: 12, label: 'Today' }]}
+        label={`Investments' worth over the last year, month by month, to ${money(total)} today`} />
       <table class="fx-holdings">
-        <thead><tr><th scope="col">Holding</th><th scope="col" class="n">Shares</th><th scope="col" class="n">You paid</th><th scope="col" class="n">Worth now</th><th scope="col" class="n">Gain</th></tr></thead>
+        <thead><tr><th scope="col">Holding</th><th scope="col" class="n">Shares</th><th scope="col" class="n">Price</th><th scope="col" class="n">You paid</th><th scope="col" class="n">Worth now</th><th scope="col" class="n">Gain</th><th scope="col" class="n">Year</th></tr></thead>
         {lines.map((l) => <HoldingRow key={l.key} v={v} l={l} open={open === l.key} toggle={() => setOpen(open === l.key ? '' : l.key)} trades={trades} />)}
       </table>
       <Unmatched v={v} state={state} keep={keep} read={read} />
@@ -155,6 +158,9 @@ export function InvestmentsWidget({ v, read, state = {}, keep, add, find, trades
   );
 }
 
+/** The day a year before an ISO day. */
+const yearAgo = (day: string) => `${+day.slice(0, 4) - 1}${day.slice(4)}`;
+
 /** A holding's row (or an account's cash), and under it, when open, its worth at each read. */
 function HoldingRow({ v, l, open, toggle, trades }: { v: finance.View; l: Line; open: boolean; toggle: () => void; trades?: TradeOps }) {
   const a = l.account, cur = a.currency;
@@ -162,6 +168,8 @@ function HoldingRow({ v, l, open, toggle, trades }: { v: finance.View; l: Line; 
   const name = l.h ? l.h.name || l.h.symbol : 'Not in a holding';
   const paid = l.h ? l.h.paid : l.cash!, worth = l.h ? l.h.value : l.cash!;
   const gain = worth - paid;
+  // Its worth at each read over the last year, for the line in Year: green up, the out colour down.
+  const trend = l.h ? (l.h.history || []).filter((p) => p.date >= yearAgo(v.today)).map((p) => p.amount) : [];
   const id = 'hold-' + l.key.replace(/[^A-Za-z0-9]+/g, '-');
   const mark = l.h ? <Mark brand={tickerBrand(l.h.symbol)} name={l.h.symbol} auto size="sm" /> : <Mark name="Cash" auto size="sm" />;
   const who = <span class="fx-holdwho"><strong>{symbol}</strong><small>{l.h ? `${name} · ` : ''}{a.name}</small></span>;
@@ -173,11 +181,13 @@ function HoldingRow({ v, l, open, toggle, trades }: { v: finance.View; l: Line; 
           : <span class="fx-holdbtn">{mark}{who}</span>}
         </th>
         <td class="n fx-holdshares">{l.h ? shares(l.h.shares) : ''}</td>
+        <td class="n fx-holdprice">{l.h && l.h.shares > 0 ? <Amount value={l.h.value / l.h.shares} form="full" currency={cur} /> : ''}</td>
         <td class="n fx-holdpaid"><span class="fx-holdunit">{l.h ? `${shares(l.h.shares)} shares · ` : ''}paid </span><Amount value={paid} form="full" currency={cur} /></td>
         <td class="n fx-holdworth"><Amount value={worth} form="full" currency={cur} /></td>
         <td class="n fx-holdgain">{l.h && <><Amount value={gain} form="full" sign tone="auto" currency={cur} />{!amountsHidden() && <span class="fx-sub"> {share(gain, paid)}</span>}</>}</td>
+        <td class={'n fx-holdtrend' + (trend.length > 1 && trend[trend.length - 1] < trend[0] ? ' down' : '')}>{trend.length > 1 && <Spark values={trend} w={72} h={20} title={`${l.h!.symbol} over the year: ${trend[trend.length - 1] < trend[0] ? 'down' : 'up'}`} />}</td>
       </tr>
-      {l.h && open && <tr class="fx-holddetail" id={id}><td colSpan={5}><HoldingHistory v={v} h={l.h} cur={cur} />{trades && <Trades account={a} h={l.h} ops={trades} />}</td></tr>}
+      {l.h && open && <tr class="fx-holddetail" id={id}><td colSpan={7}><HoldingHistory v={v} h={l.h} cur={cur} />{trades && <Trades account={a} h={l.h} ops={trades} />}</td></tr>}
     </tbody>
   );
 }
