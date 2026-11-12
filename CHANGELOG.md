@@ -237,6 +237,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Your own logos on the iPhone and iPad:** a picture you set for an account, a payment or a payee on the computer (one you picked, or the real logo got from its website) now shows in the Homelab app too, where it showed a letter or an icon.
 - **A username is a username:** `homelab person add --username` takes small letters, digits and `. - _` only, so a person's own folder is always theirs.
 - **A phone changes only everyday settings:** a phone allowed to make changes can change the computer's clock, quiet hours, alerts, update times and Tidy Up's choices, but no longer an app's folders, image, version or sign-in, which change on the computer.
 - **The Mac app's updates are checked as Windows' and Linux's are:** before the app on a Mac takes an update, it checks the download was built by this project's own release workflow, as on the other systems.

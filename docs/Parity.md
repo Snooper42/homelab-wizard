@@ -112,7 +112,8 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 | Receipts: open one, add one | yes | yes; a look-only phone opens them | yes; a photo is stripped of its location | yes | — | `FinancesReceipt`, `SaveFinancesReceipt` |
 | Import a bank file, with its categories; Rules (**Always do this for "…"**) | yes | yes | gap | gap | — | |
 | Import from Firefly III, Ghostfolio or Wallos | yes | on purpose: the computer asks those apps | on purpose | on purpose | — | |
-| Real logos from each company's website | yes | on purpose: the computer asks the website, a phone has nothing to ask with | on purpose (the logos the computer kept do show) | on purpose | — | |
+| Real logos from each company's website | yes | on purpose: the computer asks the website, a phone has nothing to ask with | on purpose | on purpose | — | |
+| The household's own pictures for a logo (picked, or got from a website), drawn first | yes | yes | yes (before Nov 12 a letter or an icon: the app never read them) | yes | — | `Finances` (the plan's `logos`) |
 | Investments: the card, Read now, Add a holding | yes | yes (Finances to change) | yes, Face ID | yes | — | `FinancesReadInvestments`, `FinancesFindSymbol`, `FinancesAddInvestment` |
 | Investments: a holding's buys and sales, Change, Delete | yes | yes (Finances to change) | gap | gap | — | `FinancesInvestmentTrades`, `FinancesChangeInvestment`, `FinancesDeleteInvestment` |
 | The money flow (Sankey), the Dashboard's prompts (a subscription's new price, a bill's average, a bill not seen) | yes | yes | partly: Cash Flow and Month in Review, not the flow or the prompts | partly | — | |

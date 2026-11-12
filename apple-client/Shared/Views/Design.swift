@@ -1,3 +1,4 @@
+import ImageIO
 import SwiftUI
 
 // The pieces every screen is built from, as a plain iPhone app would have
@@ -274,6 +275,13 @@ struct LogoShape: Shape {
 struct LogoCircle: View {
     let content: LogoContent
     var size: CGFloat = Design.logoInList
+    /// Where the household's own picture for it would be kept (OwnLogos.key);
+    /// one kept there is drawn instead of `content`.
+    var ownKey: String?
+    @Environment(\.ownLogos) private var own
+
+    /// The household's picture when it has one, else the mark.
+    private var shown: LogoContent { own.picture(ownKey).map(LogoContent.picture) ?? content }
 
     var body: some View {
         ZStack {
@@ -286,15 +294,16 @@ struct LogoCircle: View {
     }
 
     private var background: Color {
-        switch content {
+        switch shown {
         case .brand(let b): Color(hex: b.bg)
         case .initials(_, let n): Design.auto(n)
         case .icon(_, let hue), .letter(_, let hue): hue.flatMap(Design.category)?.soft ?? Design.plainCircle
+        case .picture: .white
         }
     }
 
     @ViewBuilder private var foreground: some View {
-        switch content {
+        switch shown {
         case .brand(let b):
             if let mark = PayeeLogos.shared.marks[b.key] {
                 LogoShape(segments: mark)
@@ -311,7 +320,26 @@ struct LogoCircle: View {
                 .foregroundStyle(hue.flatMap(Design.category)?.ink ?? Theme.secondaryInk)
         case .letter(let text, let hue):
             letters(text, ink: hue.flatMap(Design.category)?.ink ?? Theme.secondaryInk)
+        case .picture(let data):
+            if let image = Self.cgImage(data) {
+                Image(decorative: image, scale: 1)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+            } else {
+                Image(systemName: "photo")
+                    .font(.system(size: size * 0.42, weight: .semibold))
+                    .foregroundStyle(Theme.secondaryInk)
+            }
         }
+    }
+
+    /// The household's picture, read with ImageIO (the same on the iPhone,
+    /// the iPad and the Mac); nil when it can't be read.
+    static func cgImage(_ data: Data) -> CGImage? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 
     private func letters(_ text: String, ink: Color) -> some View {
@@ -329,29 +357,38 @@ struct LogoCircle: View {
 extension LogoCircle {
     /// A transaction's logo: its payee's brand, a transfer's, its category's icon, or its payee's initials.
     init(transaction: FinanceTransaction, categories: [FinanceCategory], size: CGFloat = Design.logoInList) {
-        self.init(content: PayeeLogos.shared.mark(for: transaction, categories: categories), size: size)
+        self.init(content: PayeeLogos.shared.mark(for: transaction, categories: categories), size: size,
+                  ownKey: PayeeLogos.shared.ownKey(for: transaction))
     }
 
     /// A payee's logo, as a bank writes it or a person does: its brand, else its initials.
     init(payee: String, institution: String? = nil, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared
         let brand = logos.payeeBrand(institution: institution, payee: payee)
-        self.init(content: logos.mark(brand: brand, kind: nil, name: payee, auto: institution != "none"), size: size)
+        self.init(content: logos.mark(brand: brand, kind: nil, name: payee, auto: institution != "none"), size: size,
+                  ownKey: OwnLogos.key(brand: brand, name: payee))
     }
 
     /// A payment's logo: its brand's (picked, or in its name), else its kind's icon.
     init(payment: FinancePayment, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared
         let brand = logos.brandOf(institution: payment.institution, name: payment.name, kind: payment.kind)
-        self.init(content: logos.mark(brand: brand, kind: payment.kind, name: payment.name), size: size)
+        self.init(content: logos.mark(brand: brand, kind: payment.kind, name: payment.name), size: size,
+                  ownKey: OwnLogos.key(brand: brand, name: payment.name))
     }
 
     /// An account's logo: its bank's (picked, or in its name), else its kind's icon.
     init(account: FinanceAccount, size: CGFloat = Design.logoInList) {
         let logos = PayeeLogos.shared
         let brand = logos.brandOf(institution: account.institution, name: account.name, kind: account.kind)
-        self.init(content: logos.mark(brand: brand, kind: account.kind, name: account.name), size: size)
+        self.init(content: logos.mark(brand: brand, kind: account.kind, name: account.name), size: size,
+                  ownKey: OwnLogos.key(brand: brand, name: account.name))
     }
+}
+
+extension EnvironmentValues {
+    /// The household's own pictures for a logo (the plan's), for LogoCircle.
+    @Entry var ownLogos = OwnLogos()
 }
 
 // MARK: - Wallet cards
