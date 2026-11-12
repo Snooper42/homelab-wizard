@@ -59,6 +59,10 @@ func TestHomeAssistantTrustsOnlyTheProxyAfterAnUpdate(t *testing.T) {
 	if err := os.WriteFile(path, []byte(oldStarter), 0o640); err != nil {
 		t.Fatal(err)
 	}
+	before, err := os.Stat(path) // Windows has no 0640: compare with what the system kept
+	if err != nil {
+		t.Fatal(err)
+	}
 	f := &FakeRunner{}
 	c := &Client{Runner: f, Bin: "docker"}
 	if err := c.Compose(context.Background(), Project{Name: "homelab_household", Dir: root}, nil, "up", "--detach", "home-assistant"); err != nil {
@@ -68,8 +72,8 @@ func TestHomeAssistantTrustsOnlyTheProxyAfterAnUpdate(t *testing.T) {
 	if string(raw) != string(now) {
 		t.Errorf("starting Home Assistant left its configuration:\n%s", raw)
 	}
-	if info, _ := os.Stat(path); info.Mode().Perm() != 0o640 {
-		t.Errorf("the rewrite changed its permissions to %v", info.Mode().Perm())
+	if info, _ := os.Stat(path); info.Mode().Perm() != before.Mode().Perm() {
+		t.Errorf("the rewrite changed its permissions from %v to %v", before.Mode().Perm(), info.Mode().Perm())
 	}
 	// Starting with no Home Assistant at all writes nothing.
 	empty := t.TempDir()
