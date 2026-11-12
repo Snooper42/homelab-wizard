@@ -142,6 +142,39 @@ func TestOnlyTheProxyNamesAVisitorToTheApps(t *testing.T) {
 		t.Errorf("only %d apps set TRUSTED_PROXIES or TRUST_PROXY: the test no longer sees Nextcloud, Firefly III and its importer, and Pocket ID", trusting)
 	}
 
+	// Home Assistant reads its trusted proxies from the starter
+	// configuration.yaml it is given (backlog item 89, N45).
+	if ha, ok := c.Get("home-assistant"); !ok {
+		t.Error("the catalog no longer has Home Assistant")
+	} else {
+		if joins(ha, "homelab") || ha.NetworkMode != "" || !joins(ha, docker.FrontNetwork) {
+			t.Errorf("Home Assistant believes forwarded addresses, so it is on %s alone", docker.FrontNetwork)
+		}
+		raw, err := os.ReadFile(filepath.Join("..", "..", ha.Meta.Seed, "configuration.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var cfg struct {
+			HTTP struct {
+				Trusted []string `yaml:"trusted_proxies"`
+			} `yaml:"http"`
+		}
+		if err := yaml.Unmarshal(raw, &cfg); err != nil {
+			t.Fatal(err)
+		}
+		got := slices.Sorted(slices.Values(cfg.HTTP.Trusted))
+		if want := []string{docker.FrontProxyAddress, docker.FrontServeAddress}; !slices.Equal(got, want) {
+			t.Errorf("Home Assistant's starter trusts %v to name a visitor: only %v may", got, want)
+		}
+		// Its Frigate integration names Frigate and its broker, so they
+		// are where Home Assistant can find them (services/security/Frigate.md).
+		for _, id := range []string{"frigate", "frigate-mqtt"} {
+			if a, ok := c.Get(id); !ok || !joins(a, docker.FrontNetwork) {
+				t.Errorf("%s is not on %s, so Home Assistant cannot reach it by name", id, docker.FrontNetwork)
+			}
+		}
+	}
+
 	for id, addr := range map[string]string{"nginx-proxy-manager": docker.FrontProxyAddress, "tailscale": docker.FrontServeAddress} {
 		a, ok := c.Get(id)
 		if !ok || !joins(a, docker.FrontNetwork) {

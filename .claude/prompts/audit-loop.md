@@ -745,7 +745,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
-89. (half done: N44, Pocket ID on `homelab-front` trusting only the proxy and Tailscale Serve; Home Assistant still open) **Pocket ID and Home Assistant trust a forwarded address from
+89. (done: N44 for Pocket ID, N45 for Home Assistant, both on `homelab-front` trusting only the proxy and Tailscale Serve) **Pocket ID and Home Assistant trust a forwarded address from
     any hop** (after N41): Pocket ID has `TRUST_PROXY: "true"` and is on
     `homelab`; Home Assistant's starter `configuration.yaml` trusts every
     private range. With Settings › Apps listen on the home network, a
@@ -756,6 +756,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **N45 (Nov 12, round 4):** backlog item 89's Home Assistant half. It was on the Docker network, not the host network as the backlog guessed. It moved to `homelab-front` alone, the starter trusts the two front addresses, and an existing `configuration.yaml` is brought up to date before each start (Home Assistant refuses a forwarded request from a hop it doesn't trust, so moving it without that would break it). Frigate and its broker joined the front network for the Frigate integration. Left as a decision: Home Assistant no longer finds other apps by name. Next: the imports in the browser (`importData.ts`): what a crafted file can make the page do.
 
 - **N44 (Nov 11, round 3):** backlog item 89's Pocket ID half: `TRUST_PROXY: "true"` trusted every address (Pocket ID's own `TrustProxyConfig` reads true as `0.0.0.0/0`); now `homelab-front` only, trusting the proxy and Tailscale Serve. Next: item 89's Home Assistant half (it runs on the host network on Linux: see where its requests come from first), then the imports in the browser.
 

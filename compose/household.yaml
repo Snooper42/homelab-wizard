@@ -17,6 +17,12 @@ networks:
   default:
     name: homelab
     external: true
+  # The front network, for Home Assistant alone here: the proxy and
+  # Tailscale Serve have the fixed addresses its configuration.yaml trusts
+  # to name a visitor (backlog item 89, as N41; internal/docker FrontNetwork).
+  front:
+    name: homelab-front
+    external: true
 
 services:
   mealie:
@@ -100,6 +106,7 @@ services:
       TZ: ${TZ:-UTC}
     ports:
       - ${BIND_IP:-127.0.0.1}:${HOME_ASSISTANT_PORT:-8123}:8123
+    networks: [front]
     volumes:
       - ./data/appdata/home-assistant:/config
     x-homelab:
@@ -111,8 +118,10 @@ services:
       subdomain: home
       web: 8123
       warning: "in a container it cannot discover devices on its own (mDNS, Bluetooth, USB radios): add integrations by address, or run Home Assistant OS in a VM for discovery"
-      # A starter configuration.yaml that trusts the proxy, so
-      # https://home.<domain> works from the first start.
+      # A starter configuration.yaml that trusts the proxy's and Tailscale
+      # Serve's addresses on the front network, so https://home.<domain>
+      # works from the first start; an older one is brought up to date
+      # before each start (internal/docker TrustFront).
       seed: config/home-assistant
 
   grocy:

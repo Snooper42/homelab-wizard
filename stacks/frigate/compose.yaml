@@ -18,6 +18,11 @@ networks:
   homelab:
     name: homelab
     external: true
+  # Home Assistant is on the front network alone (backlog item 89, N45),
+  # so Frigate and its broker are there too, where it finds them by name.
+  front:
+    name: homelab-front
+    external: true
 
 services:
   frigate:
@@ -45,7 +50,7 @@ services:
       - ../../appdata/frigate:/config
       - ${FRIGATE_RECORDINGS:-${MEDIA_ROOT:-/Volumes/Media}/frigate}:/media/frigate
     depends_on: [frigate-mqtt]
-    networks: [default, homelab]
+    networks: [default, homelab, front]
     x-homelab:
       memory: 1000
       releases: blakeblackshear/frigate
@@ -78,7 +83,7 @@ services:
         mosquitto_passwd -b -c /mosquitto/passwd frigate "$$FRIGATE_MQTT_PASSWORD"
         chown mosquitto:mosquitto /mosquitto/passwd
         exec mosquitto -c /mosquitto/frigate.conf
-    networks: [default, homelab]
+    networks: [default, homelab, front]
     x-homelab:
       memory: 20
       name: Frigate events

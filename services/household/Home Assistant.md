@@ -26,15 +26,15 @@ The smart-home hub: lights, locks, thermostats, sensors, and the automations tha
 ## Setup
 
 1. `./homelab install home-assistant`, open it, and create the owner account.
-2. The install writes a starter `configuration.yaml` (from `config/home-assistant`) that already trusts the proxy, so `https://home.example.com` works from the first start. On an existing configuration it changes nothing; add this block yourself and restart it (`./homelab restart home-assistant`):
+2. The install writes a starter `configuration.yaml` (from `config/home-assistant`) that already trusts the proxy, so `https://home.example.com` works from the first start. On a configuration of your own it writes nothing new, but before each start it adds the two addresses below to a `trusted_proxies` list it finds there. If you have no such list, add this block yourself and restart it (`./homelab restart home-assistant`):
    ```yaml
    http:
      use_x_forwarded_for: true
      trusted_proxies:
-       - 172.16.0.0/12
-       - 192.168.0.0/16
-       - 10.0.0.0/8
+       - 198.18.89.18
+       - 198.18.89.19
    ```
+   Those are the proxy's and Tailscale Serve's fixed addresses on the `homelab-front` network, the only one Home Assistant is on. Trust nothing wider: a device on the Wi-Fi reaching Home Assistant's own port could then say it was anyone, and get a fresh address for each password guess.
 3. Add integrations. In a container on macOS, Home Assistant cannot discover devices on its own (no mDNS, Bluetooth, or USB radios such as Zigbee sticks), so add network devices by their address. For discovery and radios, run Home Assistant OS in a VM instead and point the proxy at it.
 
 ## How it works
@@ -42,8 +42,9 @@ The smart-home hub: lights, locks, thermostats, sensors, and the automations tha
 - A Python app (Home Assistant Core) on port 8123. This is the Container install: there is no Supervisor, so no add-on store and no OS updates from inside the app. Extra services such as an MQTT broker or Zigbee2MQTT run as containers of their own.
 - Integrations connect devices and services. Each one adds entities (a light, a sensor, a switch) whose state changes are written to the recorder database, a SQLite file in `/config`.
 - Automations, scripts, and scenes react to those states. Ones you build in the web editor are saved to `automations.yaml`, `scripts.yaml`, and `scenes.yaml`; integrations and dashboards set up in the web app live in `.storage`.
-- `configuration.yaml` is the starting point. The starter one the homelab wrote (`config/home-assistant`) loads `default_config` and trusts the proxy's private address ranges.
-- It runs on the homelab's Docker network, not the host network, so it sees devices only by address. That is why discovery, Bluetooth, and USB radios do not work here.
+- `configuration.yaml` is the starting point. The starter one the homelab wrote (`config/home-assistant`) loads `default_config` and trusts only the proxy and Tailscale Serve to name a visitor.
+- It runs on the homelab's front network (`homelab-front`), not the host network, so it sees devices only by address. That is why discovery, Bluetooth, and USB radios do not work here.
+- Inside Docker it finds Frigate and its broker by name (they are on the front network too), but not the other apps. For another app, such as Mealie or Baikal, use its https address.
 
 ## Where things live
 
