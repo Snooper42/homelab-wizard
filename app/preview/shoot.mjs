@@ -733,6 +733,20 @@ const smokes = [
     }
     if (wraps.length) throw new Error(wraps.join('; '));
   } },
+  // L7: Tidy Up in the dark is Finances' night (a near-black ground, cards a step lighter with a thin line and no
+  // shadow), not the rest of the app's grey; in the light, and with more contrast, both keep the app's own colours.
+  { name: 'Tidy Up: its ground and cards are the same as Finances’ in each theme', screen: 'tidy', run: async (page) => {
+    const look = () => page.evaluate(() => {
+      const main = getComputedStyle(document.querySelector('main')), card = getComputedStyle(document.querySelector('section.active .card'));
+      return { ground: main.backgroundColor, card: card.backgroundColor, line: card.borderTopColor, shadow: card.boxShadow };
+    });
+    await page.waitForSelector('#tidy .tidyneeds', { timeout: 5000 });
+    const tidyLook = await look();
+    await page.click('nav button[data-screen=finances]');
+    await page.waitForSelector('#finances.active .card', { timeout: 5000 });
+    const finLook = await look();
+    if (JSON.stringify(tidyLook) !== JSON.stringify(finLook)) throw new Error(`Tidy Up ${JSON.stringify(tidyLook)}, Finances ${JSON.stringify(finLook)}`);
+  } },
   // Rows as Finances lists them (L5): what a job freed is on the right of its line in Recently done, where Finances puts an
   // amount, and its words no longer repeat it; a line from before, its size in its words, reads as it did.
   { name: 'Tidy Up: Recently done puts what a job freed on the right, as Finances does an amount', screen: 'tidy', mock: { tidy: { ...tidy, activity: [...tidy.activity,

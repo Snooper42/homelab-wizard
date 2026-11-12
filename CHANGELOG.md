@@ -116,6 +116,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Improved
 
+- **Tidy Up in the dark looks like Finances:** a near-black background, with cards a step lighter and a thin line round each, instead of the grey the rest of the app uses. With more contrast asked for, it keeps the app's own colours.
 - **Tidy Up lists sizes as Finances lists amounts:** what a job freed is now on the right of its line in **Recently done** (*Movies shrunk · 12 files replaced*, and *412 GB* on the right), in the same place and type as Finances' amounts, instead of at the end of its words; and **Merge** on Audiobooks says what it wins back, as **Shrink** does for films.
 - **Tidy Up's rows say it shorter:** the lyrics, Tdarr, Radarr and Sonarr rows, and Music's Lyrics row, now fit on one line in a window half your screen wide.
 - **Tidy Up's cards line up as Finances' do:** two cards side by side are the same height, and Genres picks which library it shows with the same switch Finances' cards use, not a drop-down.
