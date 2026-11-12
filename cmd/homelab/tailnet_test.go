@@ -179,3 +179,26 @@ func TestHouseholdAddress(t *testing.T) {
 		}
 	}
 }
+
+// N50: Tailscale's sign-in link comes from its container's status, and the
+// system's opener would as readily start a program or open a file: only an
+// https page with a host is opened.
+func TestOnlyAWebPageIsOpenedForTailscale(t *testing.T) {
+	for link, want := range map[string]bool{
+		"https://login.tailscale.com/a/1a2b3c":   true,
+		"https://headscale.example.net/register": true,
+		"file:///etc/passwd":                     false,
+		"/Applications/Calculator.app":           false,
+		"C:\\Windows\\System32\\calc.exe":        false,
+		"http://login.tailscale.com/a/1a2b3c":    false,
+		"javascript:alert(1)":                    false,
+		"https://user:pw@login.tailscale.com/a":  false,
+		"https:///nohost":                        false,
+		"-a Calculator":                          false,
+		"":                                       false,
+	} {
+		if got := browsable(link); got != want {
+			t.Errorf("browsable(%q) = %v, want %v", link, got, want)
+		}
+	}
+}

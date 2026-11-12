@@ -234,6 +234,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **Tailscale's sign-in opens only a web page:** the link Tailscale gives for signing in is opened only when it is an https address, never a file or a program.
 - **Kopia's page can't be used by another website:** Kopia now checks each request comes from its own page, so a site you visit while signed in to Kopia can't send it commands such as deleting snapshots. The homelab signs in to it the same way.
 - **Kopia's password stays out of the process list:** Kopia's server now reads its password from its settings instead of its command line, which any account on a Linux computer could see.
 - **Get the real logo asks only real websites:** Finances' logo lookup now also refuses the addresses the homelab's own networks use, and other ranges that are never a company's website, even when a site sends it there.
