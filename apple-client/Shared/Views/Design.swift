@@ -337,7 +337,8 @@ struct LogoCircle: View {
 
     /// The household's picture, read with ImageIO (the same on the iPhone,
     /// the iPad and the Mac); nil when it can't be read.
-    static func cgImage(_ data: Data) -> CGImage? {
+    /// Nonisolated: it reads bytes only, and the tests call it off the main actor.
+    nonisolated static func cgImage(_ data: Data) -> CGImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
