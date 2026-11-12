@@ -51,7 +51,7 @@
     --cat-1-soft:#1b3255; --cat-1-ink:#64a1eb; --cat-2-soft:#3e282b; --cat-2-ink:#e17d55; --cat-3-soft:#14373b; --cat-3-ink:#43b08a; --cat-4-soft:#3a3222; --cat-4-ink:#cf931d; --cat-5-soft:#3d263f; --cat-5-ink:#de779c; --cat-6-soft:#0e3122; --cat-6-ink:#4ea94e; --cat-7-soft:#2e3256; --cat-7-ink:#9d93ec; --cat-8-soft:#412b39; --cat-8-ink:#ea7e7e;
     --fin-accent:#9c86f5; --fin-accent-ink:#b8a9ff; --fin-accent-soft:#251f3d; --fin-accent-text:#140c33;
     --fin-in:#5bd69c; --fin-in-soft:#12291e; --fin-out:#ff8a73; --fin-out-soft:#2f1a15;
-    /* Finances in the dark, as a money app: near-black behind, its cards a step lighter, thin lines (#finances only). */
+    /* Finances in the dark, as a money app: near-black behind, its cards a step lighter, thin lines (#finances and #tidy only). */
     --fin-night:#0d0d0f; --fin-night-card:#17171a; --fin-night-sunken:#121215; --fin-night-line:#26262b; --fin-night-line-strong:#3a3a42;
     --fin-tip:#26262e; --fin-tip-text:#f4f4f5; --fin-tip-muted:#a1a1aa;
     --fin-edge:var(--glow-18);
@@ -2761,11 +2761,12 @@ button.fx-symbol small { color:var(--muted); }
 .fx-tradeform { margin:4px 0; }
 
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
-   looks at night. Only this screen, and not when the system asks for more contrast (that keeps its own colours). */
+   looks at night. Tidy Up too, which takes Finances' look (tidy-loop.md, L7). Only these screens, and not when the
+   system asks for more contrast (that keeps its own colours). */
 @media (prefers-color-scheme: dark) and (prefers-contrast: no-preference) {
-  main:has(> #finances.active) { background:var(--fin-night); }
-  #finances { --panel:var(--fin-night-card); --sunken:var(--fin-night-sunken); --line:var(--fin-night-line); --line-strong:var(--fin-night-line-strong); }
-  #finances .card { box-shadow:none; border-color:var(--fin-night-line); }
+  main:has(> #finances.active), main:has(> #tidy.active) { background:var(--fin-night); }
+  #finances, #tidy { --panel:var(--fin-night-card); --sunken:var(--fin-night-sunken); --line:var(--fin-night-line); --line-strong:var(--fin-night-line-strong); }
+  #finances .card, #tidy .card { box-shadow:none; border-color:var(--fin-night-line); }
 }
 /* Rules: a rule's choices on a transaction, and each rule's fields in the Rules sheet. */
 .finform .ruleopts { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; margin:-4px 0 8px 26px; }
