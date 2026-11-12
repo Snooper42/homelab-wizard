@@ -8,10 +8,14 @@ package finance
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image/jpeg"
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
@@ -332,6 +336,8 @@ func Load(path string) (Plan, error) {
 	}
 	err = json.Unmarshal(data, &p)
 	p.Rev = rev(data)
+	// One kept before a check it fails (N56) is not handed on.
+	p.Logos = keptLogos(p.Logos)
 	return p, err
 }
 
@@ -660,18 +666,7 @@ func Clean(p Plan) (Plan, error) {
 	if p.Cushion < 0 {
 		p.Cushion = 0
 	}
-	// An image of one's own is a small picture as a data URL, or it is dropped
-	// (from a map of its own: the caller's plan stays as it was).
-	var logos map[string]string
-	for k, img := range p.Logos {
-		if strings.TrimSpace(k) != "" && len(img) <= MaxLogo && ownLogo.MatchString(img) {
-			if logos == nil {
-				logos = map[string]string{}
-			}
-			logos[k] = img
-		}
-	}
-	p.Logos = logos
+	p.Logos = keptLogos(p.Logos)
 	cats, err := cleanCategories(p.Categories)
 	if err != nil {
 		return p, err
@@ -728,6 +723,105 @@ const MaxLogo = 64 << 10
 
 // ownLogo is an image of one's own: a PNG, JPEG, or WebP data URL, nothing that can run.
 var ownLogo = regexp.MustCompile(`^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$`)
+
+// MaxLogoSide is the most pixels an image of one's own may be on a side
+// (N56). The screen draws each one into 96 pixels square before keeping it,
+// so a real one is far smaller; a few kilobytes can say 20,000 pixels
+// square, which a phone or a browser then sets out to unpack into
+// gigabytes.
+const MaxLogoSide = 1024
+
+// keptLogos are the images of one's own that are small pictures as data
+// URLs; the rest are dropped (in a map of its own: the caller's stays as it
+// was), and none kept is nil.
+func keptLogos(in map[string]string) map[string]string {
+	var logos map[string]string
+	for k, img := range in {
+		if strings.TrimSpace(k) != "" && len(img) <= MaxLogo && ownLogo.MatchString(img) && logoFits(img) {
+			if logos == nil {
+				logos = map[string]string{}
+			}
+			logos[k] = img
+		}
+	}
+	return logos
+}
+
+// logoFits reports whether a data URL ownLogo matched is an image of the
+// type it says, at most MaxLogoSide pixels on each side, read from its
+// header alone.
+func logoFits(url string) bool {
+	head, data, _ := strings.Cut(url, ",")
+	b, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return false
+	}
+	var w, h int
+	switch head {
+	case "data:image/png;base64":
+		c, err := png.DecodeConfig(bytes.NewReader(b))
+		if err != nil {
+			return false
+		}
+		w, h = c.Width, c.Height
+	case "data:image/jpeg;base64":
+		c, err := jpeg.DecodeConfig(bytes.NewReader(b))
+		if err != nil {
+			return false
+		}
+		w, h = c.Width, c.Height
+	case "data:image/webp;base64":
+		var ok bool
+		if w, h, ok = webpSize(b); !ok {
+			return false
+		}
+	default:
+		return false
+	}
+	return w > 0 && h > 0 && w <= MaxLogoSide && h <= MaxLogoSide
+}
+
+// webpSize reads a still WebP's size from its header: a lossy or lossless
+// image alone, or one with an alpha channel (VP8X), where the image inside
+// must be no larger than the canvas it names. An animation is refused.
+func webpSize(b []byte) (w, h int, ok bool) {
+	if len(b) < 30 || string(b[:4]) != "RIFF" || string(b[8:12]) != "WEBP" {
+		return 0, 0, false
+	}
+	if string(b[12:16]) != "VP8X" {
+		return webpFrame(string(b[12:16]), b[20:])
+	}
+	if b[20]&0x02 != 0 { // animated
+		return 0, 0, false
+	}
+	w = 1 + (int(b[24]) | int(b[25])<<8 | int(b[26])<<16)
+	h = 1 + (int(b[27]) | int(b[28])<<8 | int(b[29])<<16)
+	for pos := 30; pos+8 <= len(b); {
+		fourcc, size := string(b[pos:pos+4]), int(binary.LittleEndian.Uint32(b[pos+4:pos+8]))
+		if size < 0 || size > len(b)-pos-8 {
+			return 0, 0, false
+		}
+		if fourcc == "VP8 " || fourcc == "VP8L" {
+			fw, fh, ok := webpFrame(fourcc, b[pos+8:pos+8+size])
+			return w, h, ok && fw <= w && fh <= h
+		}
+		pos += 8 + size + size%2
+	}
+	return 0, 0, false
+}
+
+// webpFrame reads a lossy ("VP8 ") or lossless ("VP8L") image's size from
+// the start of its bitstream.
+func webpFrame(fourcc string, p []byte) (w, h int, ok bool) {
+	switch {
+	case fourcc == "VP8L" && len(p) >= 5 && p[0] == 0x2f:
+		bits := binary.LittleEndian.Uint32(p[1:5])
+		return 1 + int(bits&0x3fff), 1 + int(bits>>14&0x3fff), true
+	case fourcc == "VP8 " && len(p) >= 10 && p[3] == 0x9d && p[4] == 0x01 && p[5] == 0x2a:
+		return int(binary.LittleEndian.Uint16(p[6:8]) & 0x3fff), int(binary.LittleEndian.Uint16(p[8:10]) & 0x3fff), true
+	}
+	return 0, 0, false
+}
 
 // CardID is the ID of a card's payoff with each paycheck (Account.PaidEach).
 func CardID(card string) string { return "card:" + card }

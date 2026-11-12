@@ -1,6 +1,8 @@
 // Package upgrade checks the homelab folder's git checkout against GitHub
 // and brings it up to date, fast-forward only, so nothing local is ever
-// merged or overwritten.
+// merged or overwritten. A checkout moves only to a release tag whose
+// build provenance says this repository's release workflow built that very
+// commit (item 79), as the desktop app's own update does (N29).
 package upgrade
 
 import (
@@ -20,6 +22,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/envfile"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/procattr"
+	"github.com/Snooper42/homelab-wizard/internal/selfupdate"
 )
 
 // Change is one commit waiting on GitHub.
@@ -44,13 +47,17 @@ type Check struct {
 	FetchError      string   `json:"fetchError,omitempty"`
 	// Notes are the CHANGELOG entries the update brings (first sentences).
 	Notes []string `json:"notes,omitempty"`
-	// Channel is UPDATE_CHANNEL: stable (the newest release tag on the
-	// upstream branch) or testing (the upstream branch itself). Target is
-	// what an upgrade moves to: the tag, or the upstream branch.
-	Channel string    `json:"channel"`
-	Target  string    `json:"target"`
-	Web     string    `json:"web,omitempty"` // the repository's page, e.g. https://github.com/owner/repo
-	Checked time.Time `json:"checked"`
+	// Channel is UPDATE_CHANNEL: stable (the newest vX.Y.0 release tag on
+	// the upstream branch) or testing (its newest release tag, every build
+	// of main). Target is that tag, what an upgrade moves to; "" before the
+	// first release.
+	Channel string `json:"channel"`
+	Target  string `json:"target"`
+	// Unreleased counts the commits on the upstream branch past Target:
+	// they come with the next release, once the release workflow built it.
+	Unreleased int       `json:"unreleased,omitempty"`
+	Web        string    `json:"web,omitempty"` // the repository's page, e.g. https://github.com/owner/repo
+	Checked    time.Time `json:"checked"`
 	// Kit is a folder the desktop app made from the homelab files it
 	// carries (no git): updates come with new app builds, from KitPath.
 	Kit     bool   `json:"kit,omitempty"`
@@ -85,7 +92,10 @@ func Inspect(ctx context.Context, root string, fetch bool) (Check, error) {
 		return c, fmt.Errorf("the %s branch does not follow a branch on GitHub: git checkout main", branch)
 	}
 	c.Upstream = up
-	if url, err := git(ctx, root, "remote", "get-url", strings.SplitN(up, "/", 2)[0]); err == nil {
+	// The remote's address as set, before any url.insteadOf rewrite: the
+	// repository whose releases are checked (an SSH or mirror rewrite still
+	// fetches the same commits, which the check then holds to).
+	if url, err := git(ctx, root, "config", "--get", "remote."+strings.SplitN(up, "/", 2)[0]+".url"); err == nil {
 		c.Web = WebURL(url)
 	}
 	if fetch {
@@ -97,22 +107,24 @@ func Inspect(ctx context.Context, root string, fetch bool) (Check, error) {
 			c.FetchError = err.Error()
 		}
 	}
-	c.Channel, c.Target = Channel(root), "@{u}"
+	c.Channel = Channel(root)
 	counts, err := git(ctx, root, "rev-list", "--left-right", "--count", "HEAD...@{u}")
 	if err != nil {
 		return c, err
 	}
 	if f := strings.Fields(counts); len(f) == 2 {
 		c.Ahead, _ = strconv.Atoi(f[0])
-		c.Behind, _ = strconv.Atoi(f[1])
 	}
-	if c.Channel == Stable {
-		// The newest release on the upstream branch; nothing before the first.
-		c.Target, c.Behind = newestRelease(ctx, root), 0
-		if c.Target != "" {
-			n, _ := git(ctx, root, "rev-list", "--count", "HEAD.."+c.Target)
-			c.Behind, _ = strconv.Atoi(n)
-		}
+	// The newest release on the upstream branch; nothing before the first.
+	c.Target = newestRelease(ctx, root, c.Channel)
+	from := "HEAD"
+	if c.Target != "" {
+		n, _ := git(ctx, root, "rev-list", "--count", "HEAD.."+c.Target)
+		c.Behind, _ = strconv.Atoi(n)
+		from = c.Target
+	}
+	if n, err := git(ctx, root, "rev-list", "--count", from+"..@{u}"); err == nil {
+		c.Unreleased, _ = strconv.Atoi(n)
 	}
 	target := c.Target
 	if c.Behind > 0 {
@@ -213,23 +225,40 @@ func WebURL(remote string) string {
 	return ""
 }
 
-// Pull fast-forwards the checkout to its upstream. Git refuses, and Pull
-// returns its reason, when local commits or edits would be overwritten.
-func Pull(ctx context.Context, root string) (string, error) {
-	return git(ctx, root, "pull", "--ff-only", "--quiet")
-}
+// ReleaseCommit is the commit a release was built from, by its verified
+// build provenance; tests replace it.
+var ReleaseCommit = selfupdate.ReleaseCommit
 
-// PullTo fast-forwards the checkout to what the Check says: the upstream
-// branch or, on the stable channel, its newest release tag.
+// PullTo fast-forwards the checkout to the release tag the Check found,
+// once that tag's build provenance shows the repository's release workflow
+// built that very commit: a commit pushed past the workflow, or a tag moved
+// since its build, is refused and nothing changes. Git refuses too, and
+// PullTo returns its reason, when local commits or edits would be
+// overwritten.
 func PullTo(ctx context.Context, root string, c Check) (string, error) {
-	if c.Channel == Stable && c.Target != "" {
-		return git(ctx, root, "merge", "--ff-only", "--quiet", c.Target)
+	if c.Target == "" {
+		return "", errors.New("there is no release to move to yet")
 	}
-	return Pull(ctx, root)
+	repo := selfupdate.Repo(c.Web)
+	if c.Web == "" {
+		return "", fmt.Errorf("%s is not a GitHub repository, so its releases can't be checked; update the folder by hand with git", c.Upstream)
+	}
+	commit, err := git(ctx, root, "rev-parse", "--verify", "--quiet", c.Target+"^{commit}")
+	if err != nil {
+		return "", fmt.Errorf("release %s is not in the folder: %w", c.Target, err)
+	}
+	built, err := ReleaseCommit(ctx, repo, c.Target)
+	if err != nil {
+		return "", fmt.Errorf("release %s could not be shown to come from the project's own release build (%v), so nothing changed", c.Target, err)
+	}
+	if built != commit {
+		return "", fmt.Errorf("release %s points at %.7s, but the project's release build made it from %.7s, so nothing changed; ask on GitHub before updating by hand", c.Target, commit, built)
+	}
+	return git(ctx, root, "merge", "--ff-only", "--quiet", commit)
 }
 
 // The channels: Stable follows new minor and major versions (v1.2.0),
-// Testing the upstream branch (main), which is the default.
+// Testing every release of the upstream branch (main), which is the default.
 const (
 	Stable  = "stable"
 	Testing = "testing"
@@ -248,24 +277,32 @@ func Channel(root string) string {
 	return Testing
 }
 
-// newestRelease is the newest vX.Y.0 tag the upstream branch contains, ""
-// when there is none yet. Every build of main is tagged (v0.9.4-beta); the
-// stable channel moves only with a new minor or major version.
-func newestRelease(ctx context.Context, root string) string {
+// newestRelease is the newest release tag the upstream branch contains
+// that the channel takes, "" when there is none yet. Every build of main is
+// tagged (v0.32.4); the stable channel moves only with a new minor or major
+// version (v0.33.0).
+func newestRelease(ctx context.Context, root, channel string) string {
 	tags, err := git(ctx, root, "tag", "--list", "v*", "--merged", "@{u}", "--sort=-v:refname")
 	if err != nil {
 		return ""
 	}
+	takes := releaseTag
+	if channel == Stable {
+		takes = stableTag
+	}
 	for _, t := range strings.Fields(tags) {
-		if stableTag.MatchString(t) {
+		if takes.MatchString(t) {
 			return t
 		}
 	}
 	return ""
 }
 
-// stableTag is a release the stable channel takes.
-var stableTag = regexp.MustCompile(`^v\d+\.\d+\.0(-[0-9A-Za-z.]+)?$`)
+// stableTag is a release the stable channel takes; releaseTag any release.
+var (
+	stableTag  = regexp.MustCompile(`^v\d+\.\d+\.0(-[0-9A-Za-z.]+)?$`)
+	releaseTag = regexp.MustCompile(`^v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$`)
+)
 
 // git runs one git command in root and returns its trimmed output. It
 // never prompts: a missing credential is an error, not a hang.

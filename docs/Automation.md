@@ -43,7 +43,7 @@ Every container falls into one of three groups, generated from the compose files
 <!-- BEGIN homelab:generated (./homelab docs rewrites this block) -->
 ### Nightly (69)
 
-The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container.
+The background agent runs `./homelab update --all` at 4 AM (`WATCHTOWER_SCHEDULE`): for each app with a newer image it dumps its databases, copies its data, then pulls the image and recreates the container. Vaultwarden, Pocket ID, and CrowdSec (`hold: 3`) take a new image only once it has been out 3 days, counted from when the homelab first saw it, or once they have waited 14 days; `./homelab update <app>` takes it at once.
 
 | App | Image |
 |---|---|

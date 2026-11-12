@@ -24,9 +24,10 @@ cd ~/Homelab
 
 - A folder the app made with **Set it up for me** has no git: `upgrade` compares it with the homelab files inside the app instead, so a new app build brings the update. When the new app opens, it puts those files in place by itself (the line says *Finishing the update…*), so updating is one step. It keeps `.env`, data, and your own apps, and a file you edited that the update also changes is saved beside it as `.local`.
 - `upgrade` lists the changes waiting on GitHub and what is new in the CHANGELOG, says whether the desktop app or the settings changed, and asks before going ahead. It then moves the folder forward (fast-forward only: your own edits are never merged or overwritten; when the update changes a file you edited, git stops and nothing changes), rebuilds the CLI, and runs `up`.
+- It moves only to a release: a `v*` tag on `main` whose build provenance shows the project's own release workflow built that very commit, as the app's own update is checked. A tag that points elsewhere, or a release with no provenance, is refused and nothing changes. Changes on `main` newer than the latest release come with the next one, once its build is published; `upgrade` says how many are waiting.
 - `up` adds any new settings from `.env.example` to `.env` (generating new secrets), and recreates apps whose compose definition changed. It never touches values you already have.
 - `doctor` ends without ✗ lines.
-- Which changes you get is `UPDATE_CHANNEL` in Settings: `testing` (every change on `main`) or `stable` (tagged releases only, from the first release on).
+- Which changes you get is `UPDATE_CHANNEL` in Settings: `testing` (every release of `main`, one per change to the app or the engine) or `stable` (only a new minor or major version, `vX.Y.0`).
 - Something wrong after an upgrade: `./homelab upgrade --back` (or *go back to …* beside the version in Settings › This Mac) returns the homelab files to where they were before it, then runs `up`. Settings, data, and your own apps stay. Undo one app's nightly image update with `./homelab rollback <app>` instead.
 - Before `upgrade` existed (release run 5 and earlier), the same is `git pull`, then `./homelab up`.
 

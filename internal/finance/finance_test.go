@@ -1,8 +1,13 @@
 package finance
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
@@ -907,6 +912,92 @@ func TestOwnLogos(t *testing.T) {
 	}
 	if data, _ := json.Marshal(household()); strings.Contains(string(data), "logos") {
 		t.Error("a plan with no logos writes them")
+	}
+}
+
+// N56: an image of one's own is kept only when it is the type it says and
+// at most MaxLogoSide pixels on a side, by its header: a few kilobytes can
+// say 4,000 pixels square, which a phone would unpack into gigabytes. The
+// WebPs are Pillow's, as a browser makes them: lossy, with an alpha
+// channel (VP8X), and lossless.
+func TestOwnLogosHaveASmallSize(t *testing.T) {
+	encode := func(kind string, w, h int) string {
+		img := image.NewGray(image.Rect(0, 0, w, h))
+		var b bytes.Buffer
+		var err error
+		if kind == "png" {
+			err = (&png.Encoder{CompressionLevel: png.BestCompression}).Encode(&b, img)
+		} else {
+			err = jpeg.Encode(&b, img, nil)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		return "data:image/" + kind + ";base64," + base64.StdEncoding.EncodeToString(b.Bytes())
+	}
+	const (
+		lossy    = "UklGRl4AAABXRUJQVlA4IFIAAAAQBQCdASpgAGAAPlEokkajoqGhIOgAcAoJaQB2APwAAA7sqvl7jT3k306dOnTp06b4AP71WL//+FW4Yhmq//++gHvQD3oB/ha1mH1AAAAAAAAA"
+		alpha    = "UklGRooAAABXRUJQVlA4WAoAAAAQAAAAXwAAXwAAQUxQSBEAAAABB1DAiAgDkBD+75ci+p/6AQBWUDggUgAAABAFAJ0BKmAAYAA+USiSRqOioaEg6ABwCglpAHYA/AAADuyq+XuNPeTfTp06dOnTpvgA/vVYv//4VbhiGar//76Ae9APegH+FrWYfUAAAAAAAAA="
+		lossless = "UklGRiAAAABXRUJQVlA4TBQAAAAvX8AXEAcQEREGICH83y9F9D/1Aw=="
+	)
+	webp := func(b64 string, change func([]byte)) string {
+		b, err := base64.StdEncoding.DecodeString(b64)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if change != nil {
+			change(b)
+		}
+		return "data:image/webp;base64," + base64.StdEncoding.EncodeToString(b)
+	}
+	bomb := encode("png", 4000, 4000)
+	if len(bomb) > MaxLogo {
+		t.Fatalf("the 4,000-pixel PNG takes %d bytes, over MaxLogo: the test no longer shows what the size check is for", len(bomb))
+	}
+	for name, c := range map[string]struct {
+		img  string
+		kept bool
+	}{
+		"a 96-pixel PNG":     {encode("png", 96, 96), true},
+		"a 96-pixel JPEG":    {encode("jpeg", 96, 96), true},
+		"a lossy WebP":       {webp(lossy, nil), true},
+		"a WebP with alpha":  {webp(alpha, nil), true},
+		"a lossless WebP":    {webp(lossless, nil), true},
+		"the largest side":   {encode("png", MaxLogoSide, 1), true},
+		"a 4,000-pixel PNG":  {bomb, false},
+		"a wide JPEG":        {encode("jpeg", MaxLogoSide+1, 8), false},
+		"a PNG called JPEG":  {strings.Replace(encode("png", 8, 8), "image/png", "image/jpeg", 1), false},
+		"no image at all":    {"data:image/png;base64,AAAA", false},
+		"a large lossy WebP": {webp(lossy, func(b []byte) { b[26], b[27] = 0xff, 0x3f }), false},
+		// The canvas says 96, the image inside says 16,000.
+		"a WebP larger than its canvas": {webp(alpha, func(b []byte) {
+			i := bytes.Index(b, []byte("VP8 "))
+			b[i+14], b[i+15] = 0x80, 0x3e
+		}), false},
+		"a large lossless WebP": {webp(lossless, func(b []byte) { b[21], b[22] = 0xff, 0xff }), false},
+		"an animated WebP":      {webp(alpha, func(b []byte) { b[20] |= 0x02 }), false},
+		"a cut-off WebP":        {"data:image/webp;base64," + base64.StdEncoding.EncodeToString([]byte("RIFF\x00\x00\x00\x00WEBPVP8X")), false},
+	} {
+		p := household()
+		p.Logos = map[string]string{"chase": c.img}
+		p, err := Clean(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if kept := p.Logos["chase"] != ""; kept != c.kept {
+			t.Errorf("%s: kept %v, want %v", name, kept, c.kept)
+		}
+	}
+
+	// One kept in the file before the check is not handed on.
+	path := filepath.Join(t.TempDir(), "finance.json")
+	small := encode("png", 96, 96)
+	data, _ := json.Marshal(map[string]any{"logos": map[string]string{"chase": small, "big": bomb}})
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if p, err := Load(path); err != nil || len(p.Logos) != 1 || p.Logos["chase"] != small {
+		t.Errorf("loaded %v, %v", keys(p.Logos), err)
 	}
 }
 

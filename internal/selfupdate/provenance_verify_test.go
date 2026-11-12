@@ -2,11 +2,14 @@ package selfupdate
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/asn1"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -49,7 +52,7 @@ func bundleJSON(t *testing.T, b map[string]any) []byte {
 // app carries, for that file; anything changed, or asked of another file,
 // another repository or another workflow, is refused (N29).
 func TestBuildProvenance(t *testing.T) {
-	if err := verifyBundle(bundleJSON(t, attestedBundle(t)), attestedRepo, attestedName, attestedSHA); err != nil {
+	if _, err := verifyBundle(bundleJSON(t, attestedBundle(t)), attestedRepo, attestedName, attestedSHA); err != nil {
 		t.Fatalf("v0.28.10's own provenance: %v", err)
 	}
 	flip := func(s string) string {
@@ -94,7 +97,7 @@ func TestBuildProvenance(t *testing.T) {
 		if c.change != nil {
 			c.change(b)
 		}
-		if err := verifyBundle(bundleJSON(t, b), c.repo, c.name, c.sha); err == nil {
+		if _, err := verifyBundle(bundleJSON(t, b), c.repo, c.name, c.sha); err == nil {
 			t.Errorf("%s: verified", name)
 		}
 	}
@@ -140,6 +143,92 @@ func TestWhichReleasesNeedProvenance(t *testing.T) {
 	} {
 		if got := needsProvenance(when); got != want {
 			t.Errorf("published %q: needs provenance %v, want %v", when, got, want)
+		}
+	}
+}
+
+// Item 79: the commit a release was built from is read from a verified
+// attestation of one of its files, v0.28.10's own here; a release GitHub
+// has no attestation for, an attestation of another file, or no release,
+// gives none.
+func TestReleaseCommit(t *testing.T) {
+	const built = "4369eb1b3baea8cb9cdac45fc82075213efc51d6" // v0.28.10's tag
+	fixture, _ := os.ReadFile("testdata/attestation-v0.28.10.json")
+	asset := func(name, sha string) string {
+		return `{"name":"` + name + `","browser_download_url":"https://example.com/x","digest":"sha256:` + sha + `"}`
+	}
+	releases := map[string]string{
+		"v0.28.10": `{"tag_name":"v0.28.10","assets":[{"name":"notes.txt"},` + asset(attestedName, attestedSHA) + `]}`,
+		"v0.28.11": `{"tag_name":"v0.28.11","assets":[` + asset(attestedName, strings.Repeat("b", 64)) + `]}`,
+		"v0.28.12": `{"tag_name":"v0.28.12","assets":[` + asset("homelab-other.tar.gz", attestedSHA) + `]}`,
+		"v0.28.13": `{"tag_name":"v0.28.13","assets":[]}`,
+	}
+	// GitHub takes a repository's name in any case.
+	repo := "/repos/" + strings.ToLower(attestedRepo)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.ToLower(r.URL.Path)
+		if path == repo+"/attestations/sha256:"+attestedSHA {
+			_, _ = w.Write(fixture)
+			return
+		}
+		if tag, ok := strings.CutPrefix(path, repo+"/releases/tags/"); ok && releases[tag] != "" {
+			_, _ = w.Write([]byte(releases[tag]))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer srv.Close()
+	saved := API
+	API = srv.URL
+	defer func() { API = saved }()
+	ctx := context.Background()
+
+	for _, repo := range []string{attestedRepo, strings.ToLower(attestedRepo)} {
+		if got, err := ReleaseCommit(ctx, repo, "v0.28.10"); err != nil || got != built {
+			t.Errorf("v0.28.10 of %s: %q, %v; want %s", repo, got, err, built)
+		}
+	}
+	for tag, why := range map[string]string{
+		"v0.28.11": "no build provenance",
+		"v0.28.12": "other files",
+		"v0.28.13": "no files",
+		"v0.29.0":  "no release",
+	} {
+		if got, err := ReleaseCommit(ctx, attestedRepo, tag); err == nil || !strings.Contains(err.Error(), why) {
+			t.Errorf("%s: %q, %v; want an error saying %q", tag, got, err, why)
+		}
+	}
+	if _, err := ReleaseCommit(ctx, "someone/homelab-wizard", "v0.28.10"); err == nil {
+		t.Error("another repository's release: taken")
+	}
+	if _, err := ReleaseCommit(ctx, attestedRepo, ""); err == nil {
+		t.Error("no tag: taken")
+	}
+
+	// The certificate names the source; one from another branch or
+	// repository, or with no commit, gives none.
+	var b sigstoreBundle
+	if err := json.Unmarshal(bundleJSON(t, attestedBundle(t)), &b); err != nil {
+		t.Fatal(err)
+	}
+	leaf, err := x509.ParseCertificate(b.VerificationMaterial.Certificate.RawBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, err := sourceCommit(leaf, attestedRepo); err != nil || got != built {
+		t.Errorf("sourceCommit: %q, %v", got, err)
+	}
+	for oid, value := range map[string]string{"12": "https://github.com/someone/homelab-wizard", "14": "refs/heads/dev", "13": "not a commit"} {
+		c := *leaf
+		c.Extensions = slices.Clone(leaf.Extensions)
+		for i, e := range c.Extensions {
+			if e.Id.String() == "1.3.6.1.4.1.57264.1."+oid {
+				der, _ := asn1.Marshal(value)
+				c.Extensions[i].Value = der
+			}
+		}
+		if got, err := sourceCommit(&c, attestedRepo); err == nil {
+			t.Errorf("extension %s set to %q: %q taken", oid, value, got)
 		}
 	}
 }

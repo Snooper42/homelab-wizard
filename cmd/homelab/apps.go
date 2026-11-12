@@ -869,6 +869,14 @@ func (h *homelab) lifecycle(action string) func(context.Context, []string) error
 				return err
 			}
 		}
+		// The nightly updates (--all) wait out a new release's first days for
+		// the apps marked hold (items 87, 88); one asked for by name goes now.
+		if action == "update" && all {
+			apps = h.holdNew(ctx, client, apps)
+			if len(apps) == 0 {
+				return nil
+			}
+		}
 		// With --all, one project that fails to update leaves the others
 		// to go ahead; the failures are listed at the end.
 		var failed, updated, done []string

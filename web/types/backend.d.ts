@@ -384,6 +384,7 @@ declare namespace app {
     notes?: string[];
     channel: string;
     target: string;
+    unreleased?: number;
     web?: string;
     checked: string;
     kit?: boolean;

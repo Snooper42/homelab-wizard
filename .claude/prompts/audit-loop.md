@@ -367,6 +367,9 @@ behaviour, and the screenshots retaken where they changed.
 126. (done: holds, Nov 12, round 13) **Disk health** (internal/diskhealth): `smartctl` as this account, its arguments as a list, never elevated by the homelab.
 127. (done: holds, Nov 12, round 13) **Tidy Up and what a download names** (tools/media): names made from a download's metadata go through `safe_name` (no slash, no `..`, no device name); music is moved by beets, which cleans each part of a path itself; nothing runs a shell. The Inbox's zips unpack only inside their folder (an absolute path or one that resolves outside is refused) and Python's zipfile writes no links. Seen, not a finding: no limit on how much a zip unpacks to, so a download built to swell can fill the drive it lands on (only what the household downloads).
 
+128. (done: holds, Nov 12, round 14) **The last packages never read** (internal/savings, battery, storage, awake): their records are 0600 through `lockedfile`; battery reads `pmset -g batt` only; `homelab awake allow` writes one polkit rule granting this account `login1.inhibit-block-sleep` alone, its name held to `validUser`.
+129. (done: N56, Nov 12, round 16: kept only at most 1,024 pixels a side, checked on save and on load) **An image of one's own is unpacked whole on the phone** (#627, `apple-client` `LogoCircle.cgImage`; `internal/finance` `Clean`): the 64 KB cap is on the file, not the pixels, and a PNG of a few kilobytes can say 4,000 pixels square. Who can set one: anyone allowed to edit Finances.
+
 ## The security team
 
 You audit every way into the homelab's own code: what can reach it, what
@@ -743,7 +746,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     off `homelab`. Add a catalog-wide rule: an app with no sign-in is on no
     network another app's user can reach, and get the list from the
     catalog, not by hand.
-79. **The git checkout's upgrade trusts the branch tip alone**
+79. (done: N55, Nov 12, round 16: both channels move only to a release tag on the upstream branch whose verified build provenance names the commit the tag points at; anything else is refused) **The git checkout's upgrade trusts the branch tip alone**
     (`internal/upgrade`, `homelab upgrade`): `git pull --ff-only` from
     origin over HTTPS, then the new version's `up` runs. N29 made release
     downloads prove where they were built; a source checkout has no such
@@ -778,17 +781,17 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     item 57 covered privileges): `network_mode: host`, `pid: host`, a
     published port on `0.0.0.0` ignoring `BIND_IP`, `extra_hosts`. Does
     `validate` warn for each, as it does for the socket?
-86. (looked at Nov 10, left a decision: one Access service token, made `duration: forever`, is given to every phone at pairing; a lost phone keeps it, so lock 1 lets it through, but its device key is revoked at Remove and lock 3 refuses it. Rotating the token at Remove would bring lock 1 back too, at the cost of every other phone pairing again at home to go out: a choice for the owner; `homelab phone away --new-token` would be the shape) **The away API's Cloudflare Access credential**: how the phones'
+86. (decided by the owner, Nov 12: keep as is; Remove revokes the phone's own key, lock 3; looked at Nov 10, left a decision: one Access service token, made `duration: forever`, is given to every phone at pairing; a lost phone keeps it, so lock 1 lets it through, but its device key is revoked at Remove and lock 3 refuses it. Rotating the token at Remove would bring lock 1 back too, at the cost of every other phone pairing again at home to go out: a choice for the owner; `homelab phone away --new-token` would be the shape) **The away API's Cloudflare Access credential**: how the phones'
     credential is made, where it is kept (on the phone and the computer),
     what it opens beyond `homelab-away`, and how a lost phone's is taken
     back.
-87. **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
+87. (done: N54, Nov 12, the owner's decision: `hold: 3`, counted from when the homelab first sees a digest, 14 days at most; the notes are `homelab updates notes <app>`) **Vaultwarden and Pocket ID on moving tags** (`vaultwarden/server:latest`,
     `pocket-id:v2`): the nightly update takes each new image, and these
     hold every password and every sign-in. The socket holders are pinned
     (M6). This is a decision: pinning delays their own security fixes. A
     digest check against the release, or a short hold with the release
     notes shown, may sit between the two.
-88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
+88. (done: N54, Nov 12, as item 87) **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
 89. (done: N44 for Pocket ID, N45 for Home Assistant, both on `homelab-front` trusting only the proxy and Tailscale Serve) **Pocket ID and Home Assistant trust a forwarded address from
@@ -802,6 +805,14 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **N54 (Nov 12, round 15):** items 87 and 88 built as the owner chose: Vaultwarden, Pocket ID and CrowdSec take a new image only once it has been out 3 days (from when first seen, 14 at most), read from the registry without pulling. Next: item 79, a git checkout moving only to releases whose provenance verifies.
+- **N55 (Nov 12, round 16):** item 79 built as the owner chose: `homelab upgrade` on a git checkout moves only to a release tag (testing: every release of main; stable: `vX.Y.0`), once the release's attestation verifies and its certificate names the very commit the tag points at. Commits past the newest release wait for the next one. Next: back to reading the other account's new merges, riskiest surfaces first.
+- **N56 (Nov 12, round 16):** read #627 (the phone draws Finances' own logos): item 129, an image small in the file but enormous unpacked, built: Finances keeps one only at most 1,024 pixels a side, by its header, on save and on load.
+
+- **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
+
+- **Round 14 (Nov 12): every package has now been read.** Item 128 holds. From here a round reads what merges (the other account's PRs as they land, by their diff) and goes back over the riskiest surfaces when they change: the phone companion's calls and permissions, the tunnel, what is published, `.env` from a phone (N52's list), the updates. Open: items 79, 87, 88 (the owner's decisions), 98, 105, 113 (left, with reasons).
 
 - **Round 13 (Nov 12):** items 124 to 127 hold (crash notes, the digest, disk health, Tidy Up against what a download names, the Inbox's zips). The other account's latest (#622) is Tidy Up's dark look. Next: what lands next, and what is left (internal/savings, battery, awake, storage).
 

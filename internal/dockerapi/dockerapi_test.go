@@ -181,3 +181,29 @@ func TestFind(t *testing.T) {
 		t.Errorf("contextHost %q", c)
 	}
 }
+
+// Items 87, 88: the registry's digest for a reference, as the engine reads
+// it without pulling; an answer with none is an error.
+func TestDistribution(t *testing.T) {
+	sock := engine(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/distribution/vaultwarden/server:latest/json":
+			w.Write([]byte(`{"Descriptor":{"mediaType":"application/vnd.oci.image.index.v1+json","digest":"sha256:abc","size":1609},"Platforms":[]}`))
+		case "/distribution/empty/image:1/json":
+			w.Write([]byte(`{"Descriptor":{}}`))
+		default:
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"message":"no access"}`))
+		}
+	}))
+	c := New(sock)
+	if d, err := c.Distribution(context.Background(), "vaultwarden/server:latest"); err != nil || d != "sha256:abc" {
+		t.Fatalf("digest: %q %v", d, err)
+	}
+	if _, err := c.Distribution(context.Background(), "empty/image:1"); err == nil {
+		t.Error("an answer with no digest was taken")
+	}
+	if _, err := c.Distribution(context.Background(), "private/image:1"); err == nil {
+		t.Error("a refusal was taken")
+	}
+}

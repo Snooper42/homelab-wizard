@@ -23,6 +23,7 @@ import (
 	"github.com/Snooper42/homelab-wizard/internal/docker"
 	"github.com/Snooper42/homelab-wizard/internal/kit"
 	"github.com/Snooper42/homelab-wizard/internal/ui"
+	"github.com/Snooper42/homelab-wizard/internal/upgrade"
 )
 
 // gitRepo makes root a git checkout of origin (a bare repository) with one
@@ -50,6 +51,36 @@ func gitRepo(t *testing.T, root string) (git func(dir string, args ...string), d
 	return git, dev
 }
 
+// released makes the checkout at root fetch from a GitHub address (git
+// rewrites it to the local origin), and its releases' build provenance
+// name the commits their tags point at there (item 79).
+func released(t *testing.T, root string) {
+	t.Helper()
+	out, err := exec.Command("git", "-C", root, "config", "--get", "remote.origin.url").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	origin := strings.TrimSpace(string(out))
+	const web = "https://github.com/owner/homelab"
+	for _, args := range [][]string{{"remote", "set-url", "origin", web}, {"config", "url." + origin + ".insteadOf", web}} {
+		if out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	saved := upgrade.ReleaseCommit
+	upgrade.ReleaseCommit = func(_ context.Context, repo, tag string) (string, error) {
+		if repo != "owner/homelab" {
+			return "", fmt.Errorf("asked about %s", repo)
+		}
+		out, err := exec.Command("git", "-C", origin, "rev-parse", "--verify", "-q", tag+"^{commit}").Output()
+		if err != nil {
+			return "", fmt.Errorf("GitHub has no release %s", tag)
+		}
+		return strings.TrimSpace(string(out)), nil
+	}
+	t.Cleanup(func() { upgrade.ReleaseCommit = saved })
+}
+
 // An upgrade with --apply takes the new commit and runs the new version's
 // migrate and up; --back returns to where it was.
 func TestUpgradeAppliesThenGoesBack(t *testing.T) {
@@ -61,10 +92,12 @@ func TestUpgradeAppliesThenGoesBack(t *testing.T) {
 	os.WriteFile(filepath.Join(dev, "docs", "New.md"), []byte("# New\n"), 0o644)
 	git(dev, "add", ".")
 	git(dev, "commit", "-q", "-m", "Docs: a new page (#12)")
-	git(dev, "push", "-q", "origin", "main")
+	git(dev, "tag", "v0.17.1")
+	git(dev, "push", "-q", "origin", "main", "--tags")
+	released(t, root)
 
 	out, code := homelabCmd(t, root, "", "upgrade", "--apply")
-	if code != 0 || !strings.Contains(out, "now at origin/main") {
+	if code != 0 || !strings.Contains(out, "now at v0.17.1") || !strings.Contains(out, "checked to come from the project's own release build") {
 		t.Fatalf("upgrade --apply (exit %d):\n%s", code, out)
 	}
 	if _, err := os.Stat(filepath.Join(root, "docs", "New.md")); err != nil {
@@ -74,7 +107,7 @@ func TestUpgradeAppliesThenGoesBack(t *testing.T) {
 		t.Fatalf("the new version's up did not run:\n%s", log)
 	}
 	out, code = homelabCmd(t, root, "", "upgrade")
-	if code != 0 || !strings.Contains(out, "up to date with origin/main") {
+	if code != 0 || !strings.Contains(out, "up to date with v0.17.1") {
 		t.Fatalf("after the upgrade (exit %d):\n%s", code, out)
 	}
 
