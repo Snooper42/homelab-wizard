@@ -846,6 +846,11 @@ func (c *Client) Compose(ctx context.Context, p Project, profiles []string, args
 		if err := c.ensureFixedNetworks(ctx); err != nil {
 			return err
 		}
+		// Only Home Assistant's own project stops on it: anything else
+		// starts as it would have.
+		if _, err := TrustFront(HomeAssistantConfig(p.Dir)); err != nil && p.Name == "homelab_household" {
+			return fmt.Errorf("naming the proxy's addresses (%s, %s) in Home Assistant's configuration.yaml, without which it refuses the proxy: %w", FrontProxyAddress, FrontServeAddress, err)
+		}
 	}
 	all := p.ComposeArgs(profiles)
 	if c.Progress != "" {

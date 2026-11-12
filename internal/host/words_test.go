@@ -31,6 +31,7 @@ var macWordsAllowed = []struct{ file, text, why string }{
 	{"app/app.go", "Menu bar icon", "chosen per system"},
 	{"app/app.go", "OrbStack", "an example in a comment's field"},
 	{"internal/setup/setup.go", "this Mac", "the step's ID and its Mac-only form"},
+	{"internal/docker/front.go", "this Mac, so trusting the private ranges is safe", "the old starter configuration word for word, to recognise it"},
 	{"cmd/homelab/main.go", "macOS with OrbStack, Linux with Docker Engine", "names each system's runtime"},
 	{"internal/recovery/kit.go", "(OrbStack on a Mac)", "names the Mac's runtime among others"},
 }
