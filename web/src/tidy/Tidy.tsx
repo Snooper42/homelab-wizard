@@ -598,10 +598,9 @@ function GenresWidget({ d, job, act, only, span = 1 }: { d: app.TidyUp; job: Tid
   const top = g ? g.genres.slice(0, 6) : [];
   const rest = g ? g.genres.slice(6).reduce((t, [, v]) => t + v, 0) : 0;
   const slices = [...top.map(([label, value], i) => ({ label, value, color: hues[i] })), ...(rest ? [{ label: `${g!.genres.length - 6} more`, value: rest, color: 'muted' as Hue }] : [])];
+  // Whose genres: Finances' switch, as its cards pick what they show (L4); at most four libraries (GENRED).
   const picker = kinds.length > 1 && (
-    <select class="tidypick" aria-label="Genres of" value={k} onChange={(e) => setPicked((e.target as HTMLSelectElement).value)}>
-      {kinds.map((x) => <option key={x} value={x}>{names[x]}</option>)}
-    </select>
+    <Segmented label="Genres of" value={k} pick={setPicked} options={kinds.map((x) => [x, names[x]])} />
   );
   if (!g) {
     // None counted yet: on Overview, music's (or the first library there's to count); on a tab, its own.
