@@ -116,7 +116,11 @@ func TestOnlyTheProxyNamesAVisitorToTheApps(t *testing.T) {
 				env[k] = v
 			}
 		}
+		// Pocket ID names it TRUST_PROXY, where "true" trusts every address (backlog item 89).
 		value, ok := env["TRUSTED_PROXIES"]
+		if !ok {
+			value, ok = env["TRUST_PROXY"]
+		}
 		if !ok {
 			continue
 		}
@@ -134,8 +138,8 @@ func TestOnlyTheProxyNamesAVisitorToTheApps(t *testing.T) {
 			t.Errorf("%s believes forwarded addresses but is not on %s, so the proxy cannot reach it", a.ID, docker.FrontNetwork)
 		}
 	}
-	if trusting < 3 {
-		t.Errorf("only %d apps set TRUSTED_PROXIES: the test no longer sees Nextcloud, Firefly III and its importer", trusting)
+	if trusting < 4 {
+		t.Errorf("only %d apps set TRUSTED_PROXIES or TRUST_PROXY: the test no longer sees Nextcloud, Firefly III and its importer, and Pocket ID", trusting)
 	}
 
 	for id, addr := range map[string]string{"nginx-proxy-manager": docker.FrontProxyAddress, "tailscale": docker.FrontServeAddress} {

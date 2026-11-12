@@ -745,7 +745,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 88. **CrowdSec on `latest` with the proxy's logs and the bouncer key**: it
     reads every request and decides who is banned. Should it be pinned
     with the socket holders, or is its own hub update the trust anchor?
-89. (open) **Pocket ID and Home Assistant trust a forwarded address from
+89. (half done: N44, Pocket ID on `homelab-front` trusting only the proxy and Tailscale Serve; Home Assistant still open) **Pocket ID and Home Assistant trust a forwarded address from
     any hop** (after N41): Pocket ID has `TRUST_PROXY: "true"` and is on
     `homelab`; Home Assistant's starter `configuration.yaml` trusts every
     private range. With Settings › Apps listen on the home network, a
@@ -756,6 +756,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **N44 (Nov 11, round 3):** backlog item 89's Pocket ID half: `TRUST_PROXY: "true"` trusted every address (Pocket ID's own `TrustProxyConfig` reads true as `0.0.0.0/0`); now `homelab-front` only, trusting the proxy and Tailscale Serve. Next: item 89's Home Assistant half (it runs on the host network on Linux: see where its requests come from first), then the imports in the browser.
 
 - **N43 (Nov 11, round 2):** an amount of 1e308 (from a phone allowed to change Finances, or a bank's file) became infinity as cents and the ledger's save wrote an empty file over every transaction; the plan's save had the same unchecked encoding. Both now refuse a number of a trillion or more and write nothing (docs/Security.md). Read and found holding: Finances rules (500 at most, 100 letters each, a rule that does nothing refused, the matching a plain start of a name, no pattern), the ledger's other checks (accounts, transfers, splits, receipts by name). Next: backlog item 89, then the imports in the browser (`importData.ts`) for what a crafted file can make the page do.
 

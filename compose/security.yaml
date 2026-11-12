@@ -17,6 +17,12 @@ networks:
   default:
     name: homelab
     external: true
+  # The front network, for Pocket ID alone here: the proxy and Tailscale
+  # Serve have the fixed addresses it trusts to name a visitor (backlog
+  # item 89, as N41; internal/docker FrontNetwork).
+  front:
+    name: homelab-front
+    external: true
 
 volumes:
   # The proxy's logs, which CrowdSec reads; the same volume as in
@@ -135,13 +141,17 @@ services:
     profiles: [optional]
     environment:
       APP_URL: ${POCKET_ID_URL:-https://id.${HOMELAB_DOMAIN:-example.com}}
-      TRUST_PROXY: "true"
+      # Only the proxy's and Tailscale Serve's addresses on the front network
+      # name a visitor; a device on the Wi-Fi at its port is taken for who it
+      # is, so each password or passkey try counts against its own address.
+      TRUST_PROXY: "198.18.89.18,198.18.89.19"
       ENCRYPTION_KEY: ${POCKET_ID_ENCRYPTION_KEY}
       # homelab sso setup makes the apps' sign-in clients with it.
       STATIC_API_KEY: ${POCKET_ID_API_KEY}
       TZ: ${TZ:-UTC}
     ports:
       - ${BIND_IP:-127.0.0.1}:${POCKET_ID_PORT:-1411}:1411
+    networks: [front]
     volumes:
       - ./data/appdata/pocket-id:/app/data
     x-homelab:
