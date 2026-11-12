@@ -1579,6 +1579,8 @@ label.field.cushion input { width:7em; margin:0; }
 .fingroup .grouphead > .num { font-size:16px; }
 .fingroup .finrows { border-top:1px solid var(--line); padding:0 18px; }
 .fingroup .spark { width:80px; height:24px; color:var(--muted); margin-right:8px; }
+.fx-holdtrend .spark { width:72px; height:20px; color:var(--fin-in); }
+.fx-holdtrend.down .spark { color:var(--fin-out); }
 .worthval { display:inline-flex; flex-direction:column; align-items:flex-end; }
 .worthval .muted { font-size:12px; font-weight:400; }
 /* Assets and liabilities by kind: a bar in parts, 2 px apart, and each named with its amount. */

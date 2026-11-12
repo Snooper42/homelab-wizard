@@ -5976,6 +5976,22 @@ const smokes = [
     // Add a holding is there whether or not Status reports Ghostfolio running: it may not see the one that answers.
     await page.waitForSelector(`${card} button:text-is("Add a holding")`, { timeout: 2000 });
   } },
+  // The owner, Nov 12: no bar of what each account holds ("I like the look when they're all separated out"); a
+  // traditional list: each holding's price and its trend over the year beside its worth and gain, and the total's
+  // worth over time on top.
+  { name: 'Finances: Investments list each holding with its price and trend, and no share bar', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    const card = '#finRoot .fx-invest';
+    await page.waitForSelector(`${card} tbody.fx-hold`, { timeout: 5000 });
+    if (await page.locator(`${card} .fx-splitbar, ${card} [aria-label*="What each account holds"]`).count()) throw new Error('the share bar is still there');
+    const head = await page.locator(`${card} .fx-holdings thead th`).allTextContents();
+    if (!head.includes('Price') || !head.includes('Year')) throw new Error(`columns: ${head.join(' | ')}`);
+    const vti = page.locator(`${card} tbody.fx-hold:has(strong:text-is("VTI"))`);
+    const price = await vti.locator('.fx-holdprice').textContent();
+    if (price.replace(/\s/g, '') !== '$285.93') throw new Error(`VTI's price: ${price} (26,420 for 92.4 shares)`);
+    if (!(await vti.locator('.fx-holdtrend svg').count())) throw new Error('no trend for VTI');
+    if (!(await page.locator(`${card} figure.fx-area[aria-label*="Investments"]`).count())) throw new Error("no chart of the investments' worth");
+  } },
   // After the first read, Finances reads Ghostfolio once as it opens, the last read being from another day; not again on
   // coming back. Read now reads it again and says when; an account Ghostfolio has that nothing matched is matched by hand
   // (here, as a new account), kept, and read again.

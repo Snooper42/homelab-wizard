@@ -13350,6 +13350,10 @@ ${pays}
     const month3 = accounts.reduce((t3, a3) => t3 + own2(a3) - worthOn(v3, a3, first), 0);
     const before3 = total - month3;
     const holdings = lines.filter((l3) => l3.h).length;
+    const year = [...Array.from({ length: 12 }, (_3, i3) => {
+      const d3 = new Date(+v3.today.slice(0, 4), +v3.today.slice(5, 7) - 13 + i3 + 1, 1);
+      return `${d3.getFullYear()}-${String(d3.getMonth() + 1).padStart(2, "0")}-01`;
+    }), v3.today];
     const n3 = (k3, one, many) => `${k3} ${k3 === 1 ? one : many}`;
     return /* @__PURE__ */ u3(Widget, { title: /* @__PURE__ */ u3(S, { children: [
       "Investments ",
@@ -13390,17 +13394,26 @@ ${pays}
           ] })
         ] })
       ] }),
-      accounts.length > 1 && /* @__PURE__ */ u3(S, { children: [
-        /* @__PURE__ */ u3(SplitBar, { label: "What each account holds", parts: accounts.map((a3, i3) => ({ label: a3.name, value: own2(a3), color: i3 % 7 + 1 })) }),
-        /* @__PURE__ */ u3(Legend, { layout: "inline", items: accounts.map((a3, i3) => ({ label: a3.name, color: i3 % 7 + 1, value: /* @__PURE__ */ u3(Amount, { value: own2(a3), form: "whole" }) })) })
-      ] }),
+      /* @__PURE__ */ u3(
+        AreaChart,
+        {
+          values: year.map((d3) => accounts.reduce((t3, a3) => t3 + worthOn(v3, a3, d3), 0)),
+          zero: false,
+          height: 140,
+          format: compact,
+          xLabels: [{ i: 0, label: monthName(year[0]).slice(0, 3) }, { i: 6, label: monthName(year[6]).slice(0, 3) }, { i: 12, label: "Today" }],
+          label: `Investments' worth over the last year, month by month, to ${money(total)} today`
+        }
+      ),
       /* @__PURE__ */ u3("table", { class: "fx-holdings", children: [
         /* @__PURE__ */ u3("thead", { children: /* @__PURE__ */ u3("tr", { children: [
           /* @__PURE__ */ u3("th", { scope: "col", children: "Holding" }),
           /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Shares" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Price" }),
           /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "You paid" }),
           /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Worth now" }),
-          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" })
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Gain" }),
+          /* @__PURE__ */ u3("th", { scope: "col", class: "n", children: "Year" })
         ] }) }),
         lines.map((l3) => /* @__PURE__ */ u3(HoldingRow, { v: v3, l: l3, open: open4 === l3.key, toggle: () => setOpen(open4 === l3.key ? "" : l3.key), trades }, l3.key))
       ] }),
@@ -13411,12 +13424,14 @@ ${pays}
       ] })
     ] });
   }
+  var yearAgo = (day3) => `${+day3.slice(0, 4) - 1}${day3.slice(4)}`;
   function HoldingRow({ v: v3, l: l3, open: open4, toggle, trades }) {
     const a3 = l3.account, cur = a3.currency;
     const symbol = l3.h ? l3.h.symbol : "Cash";
     const name = l3.h ? l3.h.name || l3.h.symbol : "Not in a holding";
     const paid = l3.h ? l3.h.paid : l3.cash, worth = l3.h ? l3.h.value : l3.cash;
     const gain = worth - paid;
+    const trend = l3.h ? (l3.h.history || []).filter((p3) => p3.date >= yearAgo(v3.today)).map((p3) => p3.amount) : [];
     const id2 = "hold-" + l3.key.replace(/[^A-Za-z0-9]+/g, "-");
     const mark = l3.h ? /* @__PURE__ */ u3(Mark, { brand: tickerBrand(l3.h.symbol), name: l3.h.symbol, auto: true, size: "sm" }) : /* @__PURE__ */ u3(Mark, { name: "Cash", auto: true, size: "sm" });
     const who = /* @__PURE__ */ u3("span", { class: "fx-holdwho", children: [
@@ -13439,6 +13454,7 @@ ${pays}
           who
         ] }) }),
         /* @__PURE__ */ u3("td", { class: "n fx-holdshares", children: l3.h ? shares(l3.h.shares) : "" }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdprice", children: l3.h && l3.h.shares > 0 ? /* @__PURE__ */ u3(Amount, { value: l3.h.value / l3.h.shares, form: "full", currency: cur }) : "" }),
         /* @__PURE__ */ u3("td", { class: "n fx-holdpaid", children: [
           /* @__PURE__ */ u3("span", { class: "fx-holdunit", children: [
             l3.h ? `${shares(l3.h.shares)} shares · ` : "",
@@ -13453,9 +13469,10 @@ ${pays}
             " ",
             share2(gain, paid)
           ] })
-        ] }) })
+        ] }) }),
+        /* @__PURE__ */ u3("td", { class: "n fx-holdtrend" + (trend.length > 1 && trend[trend.length - 1] < trend[0] ? " down" : ""), children: trend.length > 1 && /* @__PURE__ */ u3(Spark, { values: trend, w: 72, h: 20, title: `${l3.h.symbol} over the year: ${trend[trend.length - 1] < trend[0] ? "down" : "up"}` }) })
       ] }),
-      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 5, children: [
+      l3.h && open4 && /* @__PURE__ */ u3("tr", { class: "fx-holddetail", id: id2, children: /* @__PURE__ */ u3("td", { colSpan: 7, children: [
         /* @__PURE__ */ u3(HoldingHistory, { v: v3, h: l3.h, cur }),
         trades && /* @__PURE__ */ u3(Trades, { account: a3, h: l3.h, ops: trades })
       ] }) })
