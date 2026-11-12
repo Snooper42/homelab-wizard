@@ -2,6 +2,7 @@ package selfupdate
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -54,7 +55,7 @@ exit 1
 		{"another team", "ABCDE12345", "ZZZZZ99999", "1", "signed by someone else"},
 		{"no team (ad-hoc)", "ABCDE12345", "not set", "1", "signed by someone else"},
 		{"a broken signature", "ABCDE12345", "ABCDE12345", "0", "signature does not hold"},
-		{"an ad-hoc app takes any", "not set", "ZZZZZ99999", "1", ""},
+		{"an ad-hoc app takes any signer", "not set", "ZZZZZ99999", "1", ""},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			t.Setenv("OLD_TEAM", c.old)
@@ -79,5 +80,49 @@ exit 1
 				t.Error("the refused app was left staged")
 			}
 		})
+	}
+}
+
+// N51: an ad-hoc Mac app has no signer to keep, so its update is held to
+// the build provenance, as Windows' and Linux's are (N29): a disk image
+// the release lists but this repository's workflow didn't build is refused.
+func TestAnAdHocMacUpdateNeedsItsProvenance(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("sh stand-ins for hdiutil, ditto, and codesign")
+	}
+	bin := t.TempDir()
+	for name, body := range map[string]string{
+		"hdiutil":  "[ \"$1\" = attach ] || exit 0\nmkdir -p \"$5/Homelab Wizard.app/Contents/MacOS\" && echo new >\"$5/Homelab Wizard.app/Contents/MacOS/homelab-wizard\"\n",
+		"ditto":    "cp -R \"$1\" \"$2\"\n",
+		"codesign": "[ \"$1\" = -dv ] && { echo 'TeamIdentifier=not set' >&2; exit 0; }\nexit 0\n",
+	} {
+		if err := os.WriteFile(filepath.Join(bin, name), []byte("#!/bin/sh\n"+body), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	installedAs(t, Installed{Kind: KindMac, Path: filepath.Join(t.TempDir(), "Homelab Wizard.app")})
+
+	rel := serve(t, map[string][]byte{MacAsset: []byte("a disk image")}, nil)
+	if _, err := Stage(context.Background(), rel, filepath.Join(t.TempDir(), "update"), nil); err != nil {
+		t.Fatalf("an attested disk image was refused: %v", err)
+	}
+	// The same download, with no attestation for it.
+	old := Provenance
+	Provenance = func(context.Context, string, string, string) error {
+		return errors.New("no build provenance for " + MacAsset)
+	}
+	t.Cleanup(func() { Provenance = old })
+	dir := filepath.Join(t.TempDir(), "update")
+	if staged, err := Stage(context.Background(), rel, dir, nil); err == nil || !strings.Contains(err.Error(), "no build provenance") {
+		t.Fatalf("an unattested disk image was taken: %q, %v", staged, err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "Homelab Wizard.app")); err == nil {
+		t.Error("the refused app was staged")
+	}
+	// A release from before builds were attested is taken as before.
+	rel.When = "2026-11-01T00:00:00Z"
+	if _, err := Stage(context.Background(), rel, filepath.Join(t.TempDir(), "update"), nil); err != nil {
+		t.Errorf("a release from before attestations: %v", err)
 	}
 }

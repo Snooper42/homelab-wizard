@@ -235,6 +235,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### Fixed
 
+- **The Mac app's updates are checked as Windows' and Linux's are:** before the app on a Mac takes an update, it checks the download was built by this project's own release workflow, as on the other systems.
 - **Tailscale's sign-in opens only a web page:** the link Tailscale gives for signing in is opened only when it is an https address, never a file or a program.
 - **Kopia's page can't be used by another website:** Kopia now checks each request comes from its own page, so a site you visit while signed in to Kopia can't send it commands such as deleting snapshots. The homelab signs in to it the same way.
 - **Kopia's password stays out of the process list:** Kopia's server now reads its password from its settings instead of its command line, which any account on a Linux computer could see.
