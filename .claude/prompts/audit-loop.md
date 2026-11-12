@@ -330,8 +330,8 @@ behaviour, and the screenshots retaken where they changed.
 96. (done: holds, Nov 12, round 6) **The kept alerts and the record of what was done** (internal/history, #555, #591): kept 90 days and at most `MaxEntries`, every text cleaned of control characters and cut to a length, the database's files this account's alone.
 97. (done: holds, Nov 12, round 6) **The ledger's size from a phone**: no limit on a payee's or note's length or on how many rows, but a phone's whole ledger arrives in one call, capped at `MaxCall` (4 MB) before it is read, and only a phone allowed to edit Finances can send it.
 98. **Undo puts things back only where Tidy Up works** (Low, hardening): `trash_restore.py` checks where a thing is in the Trash but not that its old place (`from`) is under a library Tidy Up looks after. Check `from` against the media roots, so a line in the log can only ever put a file back into a library.
-99. **What ntfy.sh learns** (`NTFY_UPSTREAM_BASE_URL: https://ntfy.sh`, for the iPhone's push): ntfy forwards a poll request to ntfy.sh for each message on a topic an iPhone follows. Check what it carries (the message's ID and a hash of the topic, not its words?) and say so in docs/Security.md's privacy part.
-100. **Make `make security` work from a cloud session, or say it can't** (process): `govulncheck` can't reach vuln.go.dev from here (refused), so every round here leans on CI's security job, which runs `make security` on each PR. Say so in this file's How to look, so a round doesn't count govulncheck as run.
+99. (done: holds, Nov 12, round 7: ntfy sends ntfy.sh only a poll request, the message's ID, to a topic that is the SHA-256 of this server's address and the topic; the words, title and buttons stay here. services/security/ntfy.md says so) **What ntfy.sh learns** (`NTFY_UPSTREAM_BASE_URL: https://ntfy.sh`, for the iPhone's push): ntfy forwards a poll request to ntfy.sh for each message on a topic an iPhone follows. Check what it carries (the message's ID and a hash of the topic, not its words?) and say so in docs/Security.md's privacy part.
+100. (done, Nov 12, round 7: How to look says so) **Make `make security` work from a cloud session, or say it can't** (process): `govulncheck` can't reach vuln.go.dev from here (refused), so every round here leans on CI's security job, which runs `make security` on each PR. Say so in this file's How to look, so a round doesn't count govulncheck as run.
 
 ## The security team
 
@@ -345,7 +345,7 @@ plain words, the fix), each ticked when its fix merges.
 **How to look.** Read the handler or function, then attack it with a test:
 a paired phone with the wrong permission, a crafted file, a value with a
 newline or `../`, a request from a public address, a body too large. Run
-`make security` (govulncheck, gosec, npm audit) every round. A finding
+`make security` (govulncheck, gosec, npm audit) every round. From a cloud session govulncheck can't reach vuln.go.dev (refused): run gosec and npm audit by hand there, and count on CI's security job, which runs all of `make security` on every PR, for govulncheck. Say which ran. A finding
 needs a test that shows the hole; a fix needs that test passing.
 
 **Risk**, as in docs/Security.md: **High** is reachable from outside the
@@ -768,6 +768,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
     network on Linux: check where its requests come from first).
 
 ### Security done
+
+- **Round 7 (Nov 12):** items 99 and 100. What ntfy.sh learns holds (a message's ID and a hashed topic, never its words); ntfy's page now says exactly what. How to look says govulncheck runs only in CI from a cloud session. Item 98 (Undo only into a library) is left: the tools have no one list of the libraries yet, and a forged line needs `data/` and the Trash already. Next: the decisions (79, 87, 88) are the owner's; then ten new items, from what merges next.
 
 - **N47 (Nov 12, round 6):** the backlog ran out after item 89, so eleven new items (90 to 100), from what merged since Nov 7: who can publish an alert, a `homelab://` link from anywhere, buys and sales from a phone, a sealed message replayed, Tidy Up's Undo, `/api/me`, the kept alerts and record, the ledger's size; all hold but one. Found: the tunnel's memory of what it had taken lived only in the running process, so a sealed message captured before a restart could be read again within `TunnelSkew`; now one sealed before this run began is refused, not counted as a wrong attempt. `make security`: gosec clean, npm audit 0; govulncheck can't reach its database from a cloud session (CI's security job runs it on each PR). Next: items 98 to 100, then 79, 87 and 88 (decisions).
 

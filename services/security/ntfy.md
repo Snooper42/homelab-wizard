@@ -50,7 +50,7 @@ A new alert topic must be added to the list in `internal/notify` and granted wit
 - One Go program. Publishing is an HTTP POST or PUT to `/<topic>`; subscribing is a long-lived HTTP, websocket, or JSON stream on the same topic.
 - Messages are kept in a SQLite cache (`cache.db`) for 12 hours, so a phone that was offline catches up.
 - Users, access grants, and tokens are in `user.db`. With `NTFY_AUTH_DEFAULT_ACCESS=deny-all`, a topic is closed to anyone without a grant.
-- The iPhone app can only be woken by Apple's push service, so ntfy sends a poll request (the message ID only) to ntfy.sh (`NTFY_UPSTREAM_BASE_URL`), which wakes the app; the app then fetches the message from this server.
+- The iPhone app can only be woken by Apple's push service, so ntfy sends a poll request (the message ID only) to ntfy.sh (`NTFY_UPSTREAM_BASE_URL`), which wakes the app; the app then fetches the message from this server. What ntfy.sh (and Apple) learn: that a message arrived and when, its ID, and a SHA-256 hash of this server's address and the topic, from this computer's internet address. Never the message's words, title, or buttons, and never the topic's name.
 - `NTFY_BEHIND_PROXY=true` takes the client's address from the proxy's headers.
 - Accounts made by `./homelab notify setup`: `homelab` publishes (write-only, `NTFY_PUBLISH_TOKEN`), `homelab-reader` reads for the desktop app (`NTFY_READ_TOKEN`), and `phone` reads for the phone app (`NTFY_PHONE_PASSWORD`).
 
