@@ -1,6 +1,7 @@
 package notify
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -109,5 +110,30 @@ func TestSnoozeHoursByMarksTheAlert(t *testing.T) {
 	_ = SnoozeHoursBy(root, "immich", 0, history.ThisComputer)
 	if got, _ := history.AlertsIn(root, 0); got[0].SnoozedBy != "" {
 		t.Fatalf("woken, still marked: %+v", got[0])
+	}
+}
+
+// The snoozes are a short list, not a store anything can fill (N42): a
+// phone allowed changes could send SnoozeCheck name after name, each kept
+// for up to a week. Past maxSnoozes a new name is refused; one already
+// there can still be changed or woken, and the record stays as it was.
+func TestSnoozesAreAShortList(t *testing.T) {
+	root := t.TempDir()
+	for i := range maxSnoozes {
+		if err := SnoozeHours(root, fmt.Sprintf("check %d", i), 2); err != nil {
+			t.Fatalf("snooze %d: %v", i, err)
+		}
+	}
+	if err := SnoozeHours(root, "one more", 2); err == nil {
+		t.Fatal("a snooze past the list's end was kept")
+	}
+	if got := len(LoadSnoozes(root)); got != maxSnoozes {
+		t.Fatalf("%d snoozes kept, want %d", got, maxSnoozes)
+	}
+	if err := SnoozeHours(root, "check 3", 24); err != nil {
+		t.Errorf("one already snoozed can't be changed: %v", err)
+	}
+	if err := SnoozeHours(root, "check 4", 0); err != nil {
+		t.Errorf("one already snoozed can't be woken: %v", err)
 	}
 }

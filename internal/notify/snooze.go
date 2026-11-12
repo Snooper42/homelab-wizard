@@ -17,6 +17,13 @@ import (
 // not alert about until a time (an hour, a day), for a failure you already
 // know of. Kept in data/alerts-snoozed.json, check name → until.
 
+// maxSnoozes is the most checks snoozed at once: the watchdog has a few
+// dozen checks, and the list is short so nothing can fill it (N42).
+const maxSnoozes = 256
+
+// ErrSnoozesFull is a snooze of a new check when maxSnoozes are snoozed.
+var ErrSnoozesFull = errors.New("too many checks snoozed already: wake one first")
+
 // SnoozePath is where the snoozes are kept.
 func SnoozePath(root string) string { return filepath.Join(root, "data", "alerts-snoozed.json") }
 
@@ -59,7 +66,19 @@ func Snooze(root, check string, until time.Time) error {
 	if until.IsZero() {
 		until = time.Now()
 	}
-	return change(root, func(s Snoozes) { s[check] = until.Truncate(time.Second) })
+	full := false
+	err := change(root, func(s Snoozes) bool {
+		if _, ok := s[check]; !ok && len(s) >= maxSnoozes {
+			full = true
+			return false
+		}
+		s[check] = until.Truncate(time.Second)
+		return true
+	})
+	if full {
+		return ErrSnoozesFull
+	}
+	return err
 }
 
 // SnoozeHours snoozes check for hours from now, as Snooze… on Status
@@ -104,18 +123,21 @@ func SnoozeHoursBy(root, check string, hours int, who string) error {
 // watchdog alerts about any of them that still fails.
 func Woken(root string, now time.Time) ([]string, error) {
 	var woken []string
-	err := change(root, func(s Snoozes) {
+	err := change(root, func(s Snoozes) bool {
 		for k, v := range s {
 			if !now.Before(v) {
 				woken = append(woken, k)
 				delete(s, k)
 			}
 		}
+		return true
 	})
 	return woken, err
 }
 
-func change(root string, fn func(Snoozes)) error {
+// change changes the snoozes under the record's lock; fn returns false to
+// leave the record as it was.
+func change(root string, fn func(Snoozes) bool) error {
 	path := SnoozePath(root)
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
@@ -123,7 +145,9 @@ func change(root string, fn func(Snoozes)) error {
 	return lockedfile.Update(path, 0o600, func(old []byte) ([]byte, bool) {
 		s := Snoozes{}
 		_ = json.Unmarshal(old, &s)
-		fn(s)
+		if !fn(s) {
+			return nil, false
+		}
 		data, err := json.MarshalIndent(s, "", "  ")
 		if err != nil {
 			return nil, false

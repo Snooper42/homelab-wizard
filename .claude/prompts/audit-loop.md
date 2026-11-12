@@ -757,6 +757,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ### Security done
 
+- **N42 (Nov 11, the security review of #556 onwards, round 1):** a phone's `SnoozeCheck` took any name into a file with no limit; now only the watchdog's checks, and 256 at most (docs/Security.md). Read and found holding this round: the companion's `allowed` (home and tunnel alike; a wall screen, a member's phone and an unencrypted one can never be given changes), `SetStatusFolds` (names and count capped, 0600, owner's phones only), `SetAppSetting` away (public catalog apps only, `mayPublish` before publishing, the tunnel refuses every change), `AlertLog` (phoneLog redaction, a wall screen not told who snoozed), the CSV export (formula cells guarded), the iPhone's local alerts (only the last seen id kept; what a notification shows stays in Notification Center, as the ntfy app's do). Next: Finances rules (#584, #585) and imports (#583, #589), then backlog item 89.
+
 - **Round 1 (item 1, the phone companion), in part:** every method in
   `phoneMethods` read against each permission. Changes all need `Change`
   and check their arguments against a fixed list; `AppIcon`'s ID is
