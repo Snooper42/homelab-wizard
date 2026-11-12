@@ -6104,7 +6104,7 @@
     const { done, total, left, wait } = progress(steps);
     const all = !left && !wait;
     $2("checkTitle").textContent = all ? "Everything is set up" : "Finish setting up";
-    $2("checkCount").textContent = all ? "" : `${done} of ${total} done`;
+    $2("checkCount").textContent = all ? "" : `${done} of ${total} done` + (wait ? ` · ${wait} can wait` : "");
     $2("setupMeter").parentElement.hidden = all;
     $2("setupMeter").style.width = total ? `${Math.round(100 * done / total)}%` : "0";
     setupBadge(noHomelab ? 0 : left);

@@ -1465,6 +1465,13 @@ const smokes = [
     await page.waitForSelector('#statusRows tr', { timeout: 5000 });
     if (await page.isVisible('#crashNote')) throw new Error('a note without a crash');
   } },
+  // Everything done but a step that can wait: the count says so, not just "18 of 18 done" under Finish setting up
+  // (the owner's screenshot, Nov 12).
+  { name: 'Setup: all done but one that can wait says it can wait', screen: 'setup', mock: { setup: setup.map((s) => (s.id === 'backups' ? { ...s, state: 'todo', later: true } : { ...s, state: 'done' })) }, run: async (page) => {
+    await page.waitForSelector('#checkCount:not(:empty)', { timeout: 5000 });
+    const count = (await page.textContent('#checkCount')).trim();
+    if (!/^\d+ of \d+ done · 1 can wait$/.test(count)) throw new Error(`the count: ${count}`);
+  } },
   { name: 'Backups: pick where they go', screen: 'setup', mock: { setup: setup.map((s) => (s.id === 'backups' ? { ...s, state: 'todo', run: undefined, choices: [{ label: 'Use Proton Drive', run: [['duplicati', 'destination', '/p', '--apply']] }, { label: 'Use the Backup drive', run: [['duplicati', 'destination', '/Volumes/Backup/Homelab Backups', '--apply']] }] } : s)) }, run: async (page) => {
     // Backups leave this machine can wait: its choices show under Can wait › Show.
     if (await page.isVisible('#toggleLater')) await page.click('#toggleLater');
@@ -7237,6 +7244,25 @@ const smokes = [
     const seen = new Map();
     for (const [label, hue] of hues) { if (seen.has(hue)) throw new Error(`${label} and ${seen.get(hue)} are both ${hue}`); seen.set(hue, label); }
   } },
+  // A narrow Dashboard card puts its ring above the names, so no name breaks mid-word ("Utilitie / s", the owner's
+  // screenshot, Nov 12): the ring and its list side by side only where the card, not the window, has the room.
+  ...[1000, 1180, 1440].map((w) => ({ name: `Finances: Where it goes and Spent this month break no name mid-word, at ${w}px`, screen: 'finances', run: async (page) => {
+    await page.setViewportSize({ width: w, height: 900 });
+    await page.waitForSelector('.fx-spend .fx-spentrows li', { timeout: 5000 });
+    const broken = await page.$$eval('.fx-spend .fx-spentrows .grow > strong, .fx-spentmonth .grow > strong, .fx-spentmonth .fx-legendlabel', (els) => els.flatMap((el) => {
+      const text = el.firstChild;
+      if (!text || text.nodeType !== 3) return [];
+      const out = [];
+      for (const m of text.data.matchAll(/\S+/g)) {
+        const r = document.createRange();
+        r.setStart(text, m.index);
+        r.setEnd(text, m.index + m[0].length);
+        if (new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size > 1) out.push(m[0]);
+      }
+      return out;
+    }));
+    if (broken.length) throw new Error(`broken mid-word: ${broken.join(', ')}`);
+  } })),
   // Where it goes: a kind opens Recurring on its payments (Cards on Cards; Home, a bill, on Bills).
   { name: 'Finances: a kind on Where it goes opens its payments', screen: 'finances', run: async (page) => {
     await page.click('.fx-spend li:has-text("Cards") button', { timeout: 5000 });

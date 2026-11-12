@@ -1951,7 +1951,10 @@ html.os-mac .fx-balance { padding:4px 8px; }
 .fx-donutrow .fx-legend { flex:1; min-width:0; }
 /* Genres across a whole row (a library's tab with no Space card beside it): the legend stays near its ring. */
 .tidygenres.spanall .fx-donutrow { max-width:600px; }
-@container (max-width: 420px) { .fx-donutrow { flex-direction:column; align-items:stretch; } .fx-donutrow .fx-donut { align-self:center; } }
+/* A card with a ring measures itself, so a narrow card in a wide window puts its ring above its names, which then
+   have the card's width (beside the ring they broke mid-word, "Utilitie / s", Nov 12). */
+.fx-widget:has(.fx-donutrow) { container:donutcard / inline-size; }
+@container donutcard (max-width: 420px) { .fx-donutrow { flex-direction:column; align-items:stretch; } .fx-donutrow .fx-donut { align-self:center; } }
 .fx-checking .fx-actions .seg { font-size:12px; }
 .alertlist.fx-rows li { align-items:center; gap:12px; padding:9px 0; }
 .alertlist.fx-rows li.opens { padding:0; }

@@ -256,7 +256,8 @@ function renderSetup(steps: setup.Step[]) {
   const { done, total, left, wait } = progress(steps);
   const all = !left && !wait;
   $('checkTitle').textContent = all ? 'Everything is set up' : 'Finish setting up';
-  $('checkCount').textContent = all ? '' : `${done} of ${total} done`;
+  // What can wait is said too, so all done but it doesn't read as finished (Nov 12).
+  $('checkCount').textContent = all ? '' : `${done} of ${total} done` + (wait ? ` · ${wait} can wait` : '');
   $('setupMeter').parentElement!.hidden = all;
   $('setupMeter').style.width = total ? `${Math.round((100 * done) / total)}%` : '0';
   setupBadge(noHomelab ? 0 : left);
