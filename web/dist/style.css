@@ -2760,6 +2760,20 @@ button.fx-symbol small { color:var(--muted); }
 .fx-trades .formerr { margin:8px 0 0; }
 .fx-tradeform { margin:4px 0; }
 
+/* An account's own page (Account.tsx): back to Net worth, its mark and name with Edit and Update balance, then its
+   balance (this month's in and out beside it) and chart, and its latest transactions. */
+.fx-accthead { display:flex; flex-direction:column; gap:12px; margin-bottom:var(--fin-gap); }
+.fx-accthead > button.link { align-self:flex-start; background:none; border:0; padding:0; color:var(--fin-accent-ink); font:inherit; font-size:13px; cursor:pointer; }
+.fx-accthead > button.link:hover { text-decoration:underline; }
+.fx-accttitle { display:flex; flex-wrap:wrap; align-items:center; gap:12px 14px; }
+.fx-accttitle .grow { flex:1 1 160px; min-width:0; }
+.fx-account .fx-accttitle h2 { margin:0; font-size:24px; font-weight:700; line-height:1.2; }
+.fx-accttitle p { margin:2px 0 0; font-size:13px; }
+.fx-accttitle .actions { display:flex; flex-wrap:wrap; gap:8px; }
+.fx-acctbalance .fx-statmain { flex-wrap:wrap; gap:10px 28px; }
+.fx-acctmonth { display:flex; flex-wrap:wrap; gap:6px 28px; margin:0; }
+.fx-acctmonth dt { font-size:12px; color:var(--muted); }
+.fx-acctmonth dd { margin:2px 0 0; font-weight:700; font-size:16px; }
 /* Finances in the dark: a near-black background, its cards a step lighter with a thin line and no shadow, as a money app
    looks at night. Tidy Up too, which takes Finances' look (tidy-loop.md, L7). Only these screens, and not when the
    system asks for more contrast (that keeps its own colours). */

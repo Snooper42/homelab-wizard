@@ -111,6 +111,21 @@ function balanceOn(v: finance.View, a: finance.Account, day: string): number {
   return kept !== undefined ? kept * rateOf(v.plan, a) : todayOf(v, a);
 }
 
+/**
+ * What an account held (or a card or loan owed) at the end of a day, worked back (and on) from its balance as typed
+ * in on its day, through every transaction in or out of it (Transactions' running balance, and an account's page).
+ * Not for a home, a car, or a collectible, whose worth no transaction moves: `runsFrom` says which do.
+ */
+export function balanceAfter(acct: finance.Account, all: finance.Transaction[], day: string): number {
+  // What a transaction did to the account: money out of it, or a transfer into it; a card or loan owes the more for a charge.
+  const effect = (t: finance.Transaction) => (t.account === acct.id ? t.amount : t.to === acct.id ? -t.amount : 0) * (owed(acct.kind) ? -1 : 1);
+  const at = acct.updated!;
+  return all.reduce((n, t) => n + (day < at ? (t.date > day && t.date <= at ? -effect(t) : 0) : (t.date > at && t.date <= day ? effect(t) : 0)), acct.balance);
+}
+
+/** Whether an account's balance can be worked through its transactions: typed in on a day, and not a thing whose worth none moves. */
+export const runsFrom = (acct: finance.Account | undefined): boolean => !!acct?.updated && !['home', 'car', 'collectible'].includes(acct.kind);
+
 /** An account's worth on a day (a plus, or a minus for what is owed), as balanceOn reads it. */
 export const worthOn = (v: finance.View, a: finance.Account, day: string): number => (owed(a.kind) ? -balanceOn(v, a, day) : balanceOn(v, a, day));
 

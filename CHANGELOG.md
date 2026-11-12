@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Each account has its own page:** in Finances › Net worth, clicking an account opens its page instead of the form to update it: what it holds (or owes) today with a chart over the last 30 or 90 days or a year, what came in and went out this month, and its latest transactions, with **All of them in Transactions**. **Update balance** and **Edit** are buttons there. The same on the phone's page.
 - **Settings on the phone's page:** the page your phone opens in a browser now has Settings too, as the Homelab app does: the settings a phone may change (never a password or token, nor what the phone connects through), saved from a phone allowed to make changes, and what the computer runs. A phone that only looks reads them; a wall screen doesn't show them.
 - **Snooze from Every alert:** an alert whose problem is still there now has **Snooze…** in Every alert, on the computer, the phone's page and the Homelab app, as the Watchdog card has: no alerts about it for an hour or a day, while the watchdog goes on checking. Phones snooze only where they're allowed changes.
 - **What was done and Every Alert on the iPad and the Mac:** in the iPad's and the Mac app's Homelab, an app's **More About** now opens beside the list, with **Recently Done** and **Everything That Was Done**, and **Every Alert** under Recent Alerts opens in the app's place until you pick an app again.

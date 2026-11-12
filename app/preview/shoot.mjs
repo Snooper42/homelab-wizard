@@ -403,6 +403,11 @@ async function finTab(page, name, opts = {}) {
   await page.click(`#finRoot > .seg button:text-is("${group}")`, opts);
   return page.click(`#finRoot .fx-subtabs .seg button:text-is("${name === 'Pay' ? 'Paychecks' : name}")`, opts);
 }
+/** An account's form, from Net worth: its row opens the account's own page, whose Edit opens the form. */
+async function acctForm(page, row, opts = {}) {
+  await page.click(row, opts);
+  await page.click('#finRoot .fx-account button:text-is("Edit")', { timeout: 5000 });
+}
 const shots = [
   { name: 'status', screen: 'status', mock: { statusOpen: '' } },
   // Below the apps: storage, and what is using power with each busy app's
@@ -2651,6 +2656,44 @@ const smokes = [
   { name: 'Watchdog not run yet', screen: 'status', mock: { watchdog: null }, run: async (page) => {
     await page.waitForSelector('#watchCard:has-text("once the jobs are installed")', { timeout: 5000 });
   } },
+  // The owner, Nov 12: clicking an account on Net worth opened the form to update its balance and logo. It opens the
+  // account's own page: its balance and a chart of it, its latest transactions, and Update balance and Edit as buttons;
+  // Back goes back to Net worth.
+  { name: 'Finances: an account opens its own page, with its chart and latest transactions', screen: 'finances', run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
+    const acct = page.locator('#finRoot .fx-account');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 5000 });
+    if (await page.locator('#finSheet:not([hidden])').count()) throw new Error('the balance form opened instead of the page');
+    const seg = await page.textContent('#finRoot > .seg button[aria-checked="true"]');
+    if (seg !== 'Net worth') throw new Error(`the tab shown is ${seg}`);
+    for (const b of ['Update balance', 'Edit']) if (!(await acct.locator(`button:text-is("${b}")`).count())) throw new Error(`no ${b}`);
+    if (!(await acct.locator('figure.fx-area[aria-label*="Chase Checking"]').count())) throw new Error('no chart of its balance');
+    const rows = await acct.locator('.fx-acctlatest li').count();
+    if (rows < 3) throw new Error(`${rows} latest transactions`);
+    // Edit opens its form, as the row used to.
+    await acct.locator('button:text-is("Edit")').click();
+    await page.waitForSelector('#finSheet:not([hidden])', { timeout: 5000 });
+    await page.keyboard.press('Escape');
+    // All of them: Transactions, that account picked.
+    await acct.locator('button:has-text("All of them")').click();
+    await page.waitForSelector('#finRoot .fx-subtabs .seg button[aria-checked="true"]:text-is("Transactions")', { timeout: 5000 });
+    const picked = await page.evaluate(() => [...document.querySelectorAll('#finRoot select')].map((s) => s.selectedOptions[0]?.textContent || '').join('|'));
+    if (!picked.includes('Chase Checking')) throw new Error(`Transactions opened on ${picked}`);
+    // Back: the account's page, then Net worth.
+    await page.keyboard.press('Meta+BracketLeft');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 3000 });
+    await page.keyboard.press('Meta+BracketLeft');
+    await page.waitForSelector('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 3000 });
+  } },
+  { name: 'The phone, view only: an account’s page has nothing to change', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, readOnly: true } }, run: async (page) => {
+    await finTab(page, 'Net worth', { timeout: 5000 });
+    await page.click('#finRoot .finbody li:has(strong:text-is("Chase Checking")) .rowopen', { timeout: 5000 });
+    const acct = page.locator('#finRoot .fx-account');
+    await acct.locator('h2:text-is("Chase Checking")').waitFor({ timeout: 5000 });
+    if (await acct.locator('button:text-is("Edit"), button:text-is("Update balance")').count()) throw new Error('a view-only phone can change it');
+    if (!(await acct.locator('.fx-acctlatest li').count())) throw new Error('no latest transactions');
+  } },
   // Back and Forward between screens, as a browser has them (the owner, Nov 11): ⌘[ and ⌘], an app's page coming back
   // with its app, and a two-finger swipe on a trackpad (sideways wheel), right for Back, left for Forward.
   { name: 'Back and Forward between screens: ⌘[ and ⌘], and a two-finger swipe', screen: 'status', run: async (page) => {
@@ -4679,8 +4722,9 @@ const smokes = [
     for (const view of ['Dashboard', 'Recurring', 'Pay', 'Net worth']) {
       await finTab(page, view);
       await page.waitForTimeout(150);
-      // What only looks may stay: the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), and the order Recurring's payments are listed in.
-      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, #finPeriod, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
+      // What only looks may stay: an account's row on Net worth (it opens the account's page, which only looks: its own case),
+      // the views and ranges, the pay period's ‹ › and Today, Renewing soon's, Budgets to watch's, and Goals' See all, Coming up's Calendar, a paycheck's column, Show all, Open Net worth, Export (which saves a copy and changes nothing), checking's two figures (each shows how it adds up), a holding on Investments (it opens its worth at each read), and what opens Transactions on what is behind it (Latest transactions' See all, a category of Spent this month, a month of Cash flow's six, a budget), and the order Recurring's payments are listed in.
+      const found = await page.evaluate(() => [...document.querySelectorAll('#finances button, #finances select, #finances input')].filter((e) => e.checkVisibility() && !e.closest('.seg, .finpost thead, .fx-clearfig, .fx-moneyflow, .fx-paycheck .fx-actions, #finPeriod, .fx-renewing .fx-actions, .fx-budgets .fx-actions, .fx-comingup .fx-actions, .fx-goals .fx-actions, .fx-more, .fx-export, .fx-holdings, .fx-latest .fx-actions, .fx-spentrows, .fx-monthbars, .fx-budgets .fx-rows, .fx-paytotal, .fx-ownlist .rowopen, .fx-owelist .rowopen') && !e.matches('button[aria-label^="Open "]')).map((e) => e.textContent.trim() || e.getAttribute('aria-label') || e.tagName));
       if (found.length) throw new Error(`${view}: ${found.join(', ')}`);
     }
     // Net worth's change shows on a phone that may not make changes (.change once hid it).
@@ -5512,7 +5556,7 @@ const smokes = [
   { name: "Finances: a car's worth read from what it cost and when", screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
     await page.waitForSelector('.fx-ownlist li:has-text("RAV4") .line:has-text("bought for $32,000, Mar 2022")', { timeout: 5000 });
-    await page.click('.fx-ownlist li:has-text("RAV4") button');
+    await acctForm(page, '.fx-ownlist li:has-text("RAV4") button');
     if ((await page.inputValue('#finSheet label:has-text("Bought for") input')) !== '32000' || (await page.inputValue('#finSheet label:has-text("Bought on") input')) !== '2022-03-15' || (await page.inputValue('#finSheet label:has-text("How it holds its value") select')) !== 'holds') throw new Error('the purchase is not in the form');
     await page.waitForSelector('#finSheet .formsub:has-text("At its age it is worth about $"):has-text("falls from the day you type it")', { timeout: 5000 });
     await page.selectOption('#finSheet label:has-text("How it holds its value") select', 'fast');
@@ -6685,7 +6729,7 @@ const smokes = [
   } },
   { name: 'Finances: a loan keeps its interest rate', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
+    await acctForm(page, '#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
     // The sheet puts its cursor in the first field a frame after it opens; typing before then can land there.
     await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
     await page.fill('#finSheet label:has-text("Interest (APR)") input', '4.9');
@@ -6716,7 +6760,7 @@ const smokes = [
   // Its form: the papers' fields, what it owes worked out as they are typed, no Owed to type, and all of it saved.
   { name: "Finances: a loan's papers in its form", screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
+    await acctForm(page, '#finRoot .fx-owelist .rowopen:has(strong:text-is("Toyota Financial"))');
     await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
     await page.waitForSelector('#finSheet .formsub:has-text("With the day its first payment was due")', { timeout: 5000 });
     // $24,000 at no interest, $400 a month from the first of this month a year ago: thirteen due before today (twelve on the 1st).
@@ -6737,7 +6781,7 @@ const smokes = [
   } },
   { name: 'Finances: deleting an account asks about the payments that use it', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .fx-ownlist .rowopen:has(strong:text-is("BofA Savings"))');
+    await acctForm(page, '#finRoot .fx-ownlist .rowopen:has(strong:text-is("BofA Savings"))');
     await page.click('#finSheet button:text-is("Delete")');
     await page.waitForSelector('#finSheet .formerr:has-text("“Savings” uses it")', { timeout: 5000 });
     await page.click('#finSheet button:text-is("Delete it and them")');
@@ -6827,7 +6871,7 @@ const smokes = [
   // A form opens with the logo picked in view, however far down the list it is.
   { name: 'Finances: a form opens with its logo picked in view', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .fx-owelist .rowopen:has(strong:text-is("Mortgage"))');
+    await acctForm(page, '#finRoot .fx-owelist .rowopen:has(strong:text-is("Mortgage"))');
     await page.waitForTimeout(300);
     const seen = await page.$eval('#finSheet .brandgrid', (g) => { const on = g.querySelector('.on').getBoundingClientRect(), r = g.getBoundingClientRect(); return on.top >= r.top - 1 && on.bottom <= r.bottom + 1; });
     if (!seen) throw new Error('Wells Fargo, picked, is scrolled out of sight');
@@ -6876,7 +6920,7 @@ const smokes = [
   } },
   { name: 'Finances: something typed in as Other can be made collectibles', screen: 'finances', mock: { finances: { ...finances, start: { ...finances.start, ring: 3000 }, plan: { ...finances.plan, accounts: [...finances.plan.accounts, { id: 'ring', name: 'Ring', kind: 'other', balance: 3000 }] } } }, run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('#finRoot .fx-ownlist .rowopen:has(strong:text-is("Ring"))');
+    await acctForm(page, '#finRoot .fx-ownlist .rowopen:has(strong:text-is("Ring"))');
     await page.waitForSelector('#finSheet:not([hidden]) input:focus', { timeout: 5000 });
     const picks = await page.$$eval('#finSheet .kindswap [role=radio]', (bs) => bs.map((b) => b.textContent));
     if (picks.join() !== 'Collectibles,Something else') throw new Error(`the kinds offered: ${picks}`);
@@ -7329,7 +7373,7 @@ const smokes = [
   // An account's form lists its last balances as kept, newest first, each with how it moved from the one before.
   { name: 'Finances: an account\'s form says its balances lately', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('.fx-ownlist li:has-text("Chase Checking") button');
+    await acctForm(page, '.fx-ownlist li:has-text("Chase Checking") button');
     await page.waitForSelector('#finSheet .paidlately h3:text-is("Balances lately")', { timeout: 5000 });
     const rows = await page.$$eval('#finSheet .paidlately li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
     if (rows.length !== 6 || rows[0] !== 'Fri, Oct 30+$55.50$2,512.40' || rows[5] !== 'Fri, Sep 25+$30.84$2,333.57') throw new Error(`rows: ${JSON.stringify(rows)}`);
@@ -7694,7 +7738,7 @@ const smokes = [
   } },
   { name: 'Finances: a card paid off by a payment cannot be paid off with each paycheck too', screen: 'finances', run: async (page) => {
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('.fx-owelist li:has-text("Chase Freedom") button');
+    await acctForm(page, '.fx-owelist li:has-text("Chase Freedom") button');
     await page.check('#finSheet label:has-text("I pay it off in full with each paycheck") input');
     await page.fill('#finSheet label:has-text("Spending on it between paychecks") input', '450');
     await page.click('#finSheet button:text-is("Save")');
@@ -7777,7 +7821,7 @@ const smokes = [
   { name: 'Finances: your own image for a logo, kept and shown wherever the brand is', screen: 'finances', run: async (page) => {
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAEklEQVR4nGM4IafxHx9mGBkKAJwVg0EdiZhbAAAAAElFTkSuQmCC', 'base64');
     await finTab(page, 'Net worth', { timeout: 5000 });
-    await page.click('.fx-ownlist li:has-text("Chase Checking") button');
+    await acctForm(page, '.fx-ownlist li:has-text("Chase Checking") button');
     await page.click('#finSheet .ownlogo button:text-is("Use your own image for Chase")');
     await page.setInputFiles('#finSheet .ownlogo input[type=file]', { name: 'chase.png', mimeType: 'image/png', buffer: png });
     await page.waitForSelector('#finSheet .formhead .fmark.own img', { timeout: 5000 });
@@ -7803,7 +7847,7 @@ const smokes = [
     await finTab(page, 'Recurring');
     await page.waitForSelector('.fx-payments li:has(.grow > strong:text-is("Chase Freedom")) .fmark.own img', { timeout: 5000 });
     await finTab(page, 'Net worth');
-    await page.click('.fx-owelist li:has-text("Chase Freedom") button');
+    await acctForm(page, '.fx-owelist li:has-text("Chase Freedom") button');
     await page.click('#finSheet .ownlogo button:text-is("Remove your image")');
     await page.click('#finSheet button:text-is("Save")');
     await page.waitForSelector('#finSheet', { state: 'hidden', timeout: 5000 });
@@ -9213,7 +9257,7 @@ const screens = [
   { name: 'The phone, Finances, goals, what if', screen: 'finances', phone: ['companion', 'finances'], before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.selectOption('.fx-whatif select[aria-label="Which goal"]', 'japan'); await page.fill('.fx-whatif input[aria-label="Put by a paycheck"]', '300'); await page.waitForSelector('.fx-whatif [role=status]:has-text("gets there by")', { timeout: 5000 }); } },
   { name: 'Finances, loans, pay more', screen: 'finances', mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
   { name: 'The phone, Finances, loans, pay more', screen: 'finances', phone: ['companion', 'finances'], mock: { finances: { ...finances, loans: ratedLoans } }, before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.fill('.fx-paymore input[aria-label="More a paycheck"]', '100'); await page.waitForSelector('.fx-ways li', { timeout: 5000 }); } },
-  { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await page.click('.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
+  { name: "Finances, a car's purchase", screen: 'finances', before: async (page) => { await finTab(page, 'Net worth', { timeout: 5000 }); await acctForm(page, '.fx-ownlist li:has-text("RAV4") button'); await page.waitForSelector('#finSheet .formsub:has-text("At its age")', { timeout: 5000 }); } },
   { name: 'Finances, Pay, a calendar link', screen: 'finances', mock: { finances: { ...finances, plan: { ...finances.plan, calendarKey: '3f9a1c07be52d84e6a0b19c7d2e8f45a10b6c3d97e2f8a41', calendarAmounts: true } } }, before: async (page) => { await finTab(page, 'Pay', { timeout: 5000 }); await page.waitForSelector('.fincalendar input[aria-label="Calendar link"]', { timeout: 5000 }); } },
   { name: "Finances, Import a bank's wording", screen: 'finances', before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.click('.fx-transactions button:text-is("Import a file")'); await page.setInputFiles('#finSheet .importfile input[type=file]', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/25/2026,SQ *BLUE BOTTLE,-5.75\n10/26/2026,AMZN MKTP US*2K4AB1,-42.10\n10/27/2026,WM SUPERCENTER #1234,-88.30\n10/28/2026,PAYPAL *SPOTIFY,-11.99\n10/29/2026,POS DEBIT SHELL OIL 57444 SAN JOSE CA,-48.00\n') }); await page.waitForSelector('#finSheet .formsub:has-text("5 to bring in")', { timeout: 5000 }); } },
   { name: "Finances, a transaction's logo picked", screen: 'finances', before: async (page) => { await finTab(page, 'Transactions', { timeout: 5000 }); await page.click('.fx-txday li:has-text("Trader Joe\'s") button'); await page.click('#finSheet button:text-is("Change logo")'); await page.fill('#finSheet .txlogo .brandsearch', 'kroger'); await page.click('#finSheet .txlogo .brandgrid button:has-text("Kroger")'); await page.waitForSelector('#finSheet .formhead .fmark.logo', { timeout: 5000 }); } },
