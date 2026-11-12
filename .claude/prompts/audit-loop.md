@@ -373,6 +373,23 @@ behaviour, and the screenshots retaken where they changed.
 
 ## The security team
 
+### Hand-off: where the security loop stands (Nov 12, 2026, 3:00 PM ET)
+
+The second account ran this loop all day and handed it to a fresh session here. Read this first.
+
+- **State:** no security PR is open; main has every finding through **N57** (`docs/Security.md`, "Threat review (November 2026)"). Every package has been read once (item 128). The backlog runs to item 130; all are done or decided except **98, 105, 113**, left open with their reasons in the backlog below.
+- **Last merges read:** everything through **#637** (round 18 and the hand-off check: #631–#637, nothing new beyond N57). Start the next round at the first merge after `0514ad3`.
+- **Each round from here:** `git fetch origin`; read every PR merged since the last one by its diff, riskiest first: a new `phoneMethods` entry in `cmd/homelab/serve.go` (which permission, what it writes), anything building a URL, path or command from input (escaping leaves `.` and `..`, as N57 found), anything a phone or another household member sends that is stored and later unpacked (sizes in bytes *and* pixels, as N56 found), and update and provenance code. Display-only changes (Swift views, TSX without raw HTML or links) get a quick scan. Record each round in the done log at the end of this section.
+- **Splitting the work (the owner, Nov 12):** this session does the security audit only; the other account does feature work. Never touch the other account's PRs or features. Fix security holes yourself, each with a test that fails first.
+- **Asking the owner:** always as a multiple-choice question (AskUserQuestion), never open-ended. Report briefly each round with the time in **Eastern** (UTC−5 in November: 19:00 UTC is 2:00 PM ET; check with `TZ=America/New_York date`).
+- **What the owner decided** (don't ask again): Vaultwarden, Pocket ID and CrowdSec hold a new release 3 days (N54); a git checkout moves only to verified releases (N55); a lost phone's token is kept as it is (item 86).
+- **CI and merging:**
+  - A PR touching `compose/**`, `stacks/**` or `test/realdocker/**` runs the real-Docker job, about 40 minutes; others take about 15.
+  - Main moves often and `CHANGELOG.md` conflicts each time: merge `origin/main` into the branch and keep both entries. Never rebase or force-push a pushed branch (the classifier refuses it): put a rebased branch back on the remote's commit and merge instead.
+  - A new field on a type the desktop app returns needs `cd app && go test -run TestBindings -update .` (it writes `web/types/backend.d.ts`).
+  - Merge only when every check on the current head is green, with `expectedHeadSha`, squash. After a merge, restart the branch from main.
+- **Running checks from a cloud session:** `go test ./...`, `make lint`, `bin/gosec -quiet -exclude=G104,G204,G301,G302,G304,G306,G702,G703 ./<pkg>/...`, `go run ./cmd/homelab validate` and `docs --check`, and the package's line in `coverage-floors.txt`. govulncheck can't reach its server here; CI's security job runs it.
+
 You audit every way into the homelab's own code: what can reach it, what
 guards it, and whether the guard holds. Start from docs/Security.md: its
 **Threat review of the app** was read against 0.6.0, and much has been
@@ -812,6 +829,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 - **N56 (Nov 12, round 16):** read #627 (the phone draws Finances' own logos): item 129, an image small in the file but enormous unpacked, built: Finances keeps one only at most 1,024 pixels a side, by its header, on save and on load.
 - **Round 17 (Nov 12):** #626 merged. Read #628 (Back steps through tabs: frontend, and `TestTheTunnel` now checks a sealed answer by its fields and the box's bytes, no weaker), #629 (an account's page: frontend only, no raw HTML or links from the plan) and #630 (a loan's page: `Transaction.Extra`, kept only with a payment, saved through the ledger's own save, which a look-only phone can't call). Nothing new.
 - **N57 (Nov 12, round 18):** read #631 (Investments as a list: frontend), #632 (the Watchlist: a phone method at Finances' edit level, Ghostfolio prices) and #633 (an account's page on the iPhone: display only). Item 130 from #632 built: every Ghostfolio address of a symbol refuses "." and "..", and a followed ticker's words are capped.
+- **Hand-off check (Nov 12):** #635 merged. Read #634 (the Watchlist on the iPhone: it calls `FinancesFollow`, which N57 guards), #636 (a loan's page on the iPhone: the ledger's own save) and #637 (arranging the Dashboard, kept in the browser). Nothing new. Handed to a fresh session (the hand-off at the top of this section).
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 
