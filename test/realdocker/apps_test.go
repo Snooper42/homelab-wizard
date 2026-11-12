@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/Snooper42/homelab-wizard/internal/duplicati"
+	"github.com/Snooper42/homelab-wizard/internal/kopia"
 )
 
 // ntfyOld is the ntfy release the run starts on, so that its update has a
@@ -1612,9 +1613,10 @@ const kopiaFolder, kopiaFile = "kopia-nightly", "note.txt"
 
 var kopiaText = "the nightly run's file for Kopia\n"
 
+// kopiaAPI calls Kopia's API as the homelab does, with its page's session
+// (N49: Kopia checks every call against it).
 func kopiaAPI(l *lab, method, path string, body, out any) error {
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte("admin:"+l.env("KOPIA_SERVER_PASSWORD")))
-	return request(method, l.url("kopia")+"/api/v1/"+path, body, out, "Authorization", auth)
+	return kopia.New(l.url("kopia"), l.env("KOPIA_SERVER_PASSWORD")).Call(context.Background(), method, path, body, out)
 }
 
 // kopiaEntry is one entry of a directory in a snapshot.
@@ -1741,19 +1743,9 @@ func seedKopia(l *lab) error {
 
 // kopiaRead is a file's contents, straight out of the repository.
 func kopiaRead(l *lab, obj string) (string, error) {
-	req, err := http.NewRequest("GET", l.url("kopia")+"/api/v1/objects/"+obj, nil)
+	data, err := kopia.New(l.url("kopia"), l.env("KOPIA_SERVER_PASSWORD")).Get(context.Background(), "objects/"+obj)
 	if err != nil {
-		return "", err
-	}
-	req.SetBasicAuth("admin", l.env("KOPIA_SERVER_PASSWORD"))
-	resp, err := web.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	data, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("reading %s: %s", obj, resp.Status)
+		return "", fmt.Errorf("reading %s: %w", obj, err)
 	}
 	return string(data), nil
 }
