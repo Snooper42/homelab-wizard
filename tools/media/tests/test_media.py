@@ -773,6 +773,42 @@ class UndoTrash(Base):
         self.assertTrue(planted.exists() and nested.exists(), "nothing moved")
         self.assertIn("com.evil.plist: not where Tidy Up puts what it throws away", res["stayed"])
 
+    def test_a_crafted_log_puts_back_only_into_a_folder_tidy_up_looks_after(self):
+        # A line can name a real thing in the Trash (the household's own, or one a crafted homelab
+        # brought there) and an old place anywhere: a login item, the shell's start file. Undo puts
+        # back only into a library, an inbox folder, a scrubber root or the reports folder.
+        trash = (self.home / ".Trash") if mc.IS_MAC else (self.home / ".local" / "share" / "Trash" / "files")
+        outside = self.touch(trash / "evil.desktop")
+        dotdot = self.touch(trash / "profile")
+        linked = self.touch(trash / "via-link.sh")
+        (self.lib["movies"] / "Elsewhere").symlink_to(self.home)
+        rc = self.home / ".config" / "autostart" / "evil.desktop"
+        profile = self.lib["movies"] / ".." / ".." / "home" / ".profile"
+        through = self.lib["movies"] / "Elsewhere" / "via-link.sh"
+        lines = [{"run": "scrubber-scan-1", "from": str(rc), "to": str(outside)},
+                 {"run": "scrubber-scan-1", "from": str(profile), "to": str(dotdot)},
+                 {"run": "scrubber-scan-1", "from": str(through), "to": str(linked)}]
+        self.log.parent.mkdir(parents=True, exist_ok=True)
+        self.log.write_text("".join(json.dumps(l) + "\n" for l in lines))
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        res = self.results()[-1]
+        self.assertEqual(res["restored"], 0)
+        self.assertFalse(rc.exists() or (self.home / ".profile").exists() or (self.home / "via-link.sh").exists(),
+                         "nothing put back outside the libraries")
+        self.assertTrue(outside.exists() and dotdot.exists() and linked.exists(), "each stays in the Trash")
+        self.assertIn("evil.desktop: not in a folder Tidy Up looks after", res["stayed"])
+
+    def test_the_inbox_and_the_reports_folder_are_put_back_too(self):
+        # A download thrown away from the inbox, and the duplicates a music cleanup set aside in
+        # the reports folder, are Tidy Up's own: Undo still puts them back.
+        dl = self.touch(self.tmp / "Downloads" / "Album" / "01.flac")
+        dupe = self.touch(self.tmp / "reports" / "Music - Needs Attention" / "duplicates" / "02.flac")
+        mc.trash(dl)
+        mc.trash(dupe)
+        trash_restore.restore("scrubber-scan-1", str(self.log))
+        self.assertEqual(self.results()[-1]["restored"], 2)
+        self.assertTrue(dl.exists() and dupe.exists())
+
     def test_without_a_run_nothing_is_noted(self):
         with mock.patch.dict(os.environ, {"HOMELAB_MEDIA_RUN": ""}):
             mc.trash(self.touch(self.lib["movies"] / "A.nfo"))
