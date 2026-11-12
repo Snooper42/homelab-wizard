@@ -5192,6 +5192,40 @@ const smokes = [
     await page.waitForSelector('#finPeriod h2:text-matches("^Now")', { timeout: 5000 });
     if (!(await page.isDisabled('#finPeriod button:text-is("Today")'))) throw new Error('Today is offered while today is picked');
   } },
+  // Step 4, PR 2: ‹ from now steps back to the paychecks that happened (View.before, from the plan's schedules run back),
+  // each read from the ledger, not the plan: what came in and went out (a transfer to the Roth is neither), its
+  // transactions in the paycheck card's place, and where it went; Latest transactions steps aside. The example's ledger:
+  // Jordan's paycheck on Oct 26 ($2,400) and Shell on the 28th ($48.20); Claude Pro and Trader Joe's on Alex's Oct 23.
+  { name: 'Finances: the period bar steps back to what happened, from the transactions', screen: 'finances', run: async (page) => {
+    await page.waitForSelector('#finances.active #finPeriod h2', { timeout: 5000 });
+    await page.click('#finPeriod button:text-is("Today")');
+    await page.waitForSelector('#finPeriod h2:text-matches("^Now")', { timeout: 5000 });
+    await page.click('#finPeriod button[aria-label="The pay period before"]');
+    await page.waitForSelector('#finPeriod h2:text-is("Jordan\'s paycheck · Mon, Oct 26")', { timeout: 5000 });
+    if ((await page.textContent('#finPeriod .fx-dates')) !== 'Oct 26 – Oct 29, what happened') throw new Error(`the days: ${await page.textContent('#finPeriod .fx-dates')}`);
+    await page.waitForSelector('.fx-past', { timeout: 5000 });
+    if (await page.$('.fx-paycheck, .fx-latest')) throw new Error('the plan\'s paycheck card, or Latest transactions, shows for a period before now');
+    const sum = async (caption) => (await page.textContent(`.fx-past .fx-stat:has(.fx-caption:text-is("${caption}")) .fx-figure`)).replace(/\s+/g, '');
+    if (!(await sum('Came in')).startsWith('$2,400')) throw new Error(`came in: ${await sum('Came in')}`);
+    if (!(await sum('Went out')).startsWith('$48')) throw new Error(`went out (the Roth is a transfer): ${await sum('Went out')}`);
+    await page.waitForSelector('.fx-past li:has-text("Shell")', { timeout: 5000 });
+    if (await page.$('.fx-past li:has-text("Trader Joe")')) throw new Error('a transaction from before the period');
+    await page.waitForSelector('.fx-spentmonth h2:text-is("Where it went")', { timeout: 5000 });
+    // A paycheck further back: Alex's, Oct 23 to 25.
+    await page.click('#finPeriod button[aria-label="The pay period before"]');
+    await page.waitForSelector('#finPeriod h2:text-is("Alex\'s paycheck · Fri, Oct 23")', { timeout: 5000 });
+    await page.waitForSelector('.fx-past li:has-text("Trader Joe")', { timeout: 5000 });
+    await page.waitForSelector('.fx-past li:has-text("Claude Pro")', { timeout: 5000 });
+    if (!(await sum('Went out')).startsWith('$263')) throw new Error(`went out: ${await sum('Went out')}`);
+    // Today: the plan's again.
+    await page.click('#finPeriod button:text-is("Today")');
+    await page.waitForSelector('.fx-paycheck', { timeout: 5000 });
+    await page.waitForSelector('.fx-latest', { timeout: 5000 });
+    // Net worth reads the plan's periods only: a pick before now leaves it on now.
+    await page.click('#finPeriod button[aria-label="The pay period before"]');
+    await finTab(page, 'Net worth');
+    await page.waitForSelector('.finpost tbody tr', { timeout: 5000 });
+  } },
   { name: 'Finances: the next paycheck, picking another, and every view', screen: 'finances', run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck .fx-figure', { timeout: 5000 });
     const first = await page.textContent('.fx-paycheck .fx-figure');
@@ -7401,7 +7435,8 @@ const smokes = [
     await page.waitForSelector(`${tile('Roth IRA')}.fx-gets .fx-gotin:text-is("$250 in")`, { timeout: 5000 });
     await page.click('#finPeriod button:text-is("Today")');
     await page.waitForSelector('#finPeriod h2:text-is("Now · until Thu, Nov 5")', { timeout: 5000 });
-    if (!(await page.isDisabled('#finPeriod button[aria-label="The pay period before"]'))) throw new Error('a period before now can be picked');
+    // Before now are the paychecks that happened (View.before): ‹ steps back into them.
+    if (await page.isDisabled('#finPeriod button[aria-label="The pay period before"]')) throw new Error('no period before now can be picked');
     await finTab(page, 'Net worth');
     await page.waitForSelector('.finpost tbody tr:has(th:has-text("Roth IRA"))', { timeout: 5000 });
   } },

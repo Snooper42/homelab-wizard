@@ -2,6 +2,7 @@ package finance
 
 import (
 	"math"
+	"slices"
 	"sort"
 	"time"
 )
@@ -29,6 +30,11 @@ type View struct {
 	// Paydays are the paychecks ahead, wherever they land: a check into
 	// savings is one too, though it starts no period.
 	Paydays []Payday `json:"paydays"`
+	// Before are checking's paydays before today, newest first, at most
+	// pastPaydays of them: the Dashboard's period bar steps back into
+	// them, a past period running from one to the day before the next,
+	// read from the ledger rather than the plan.
+	Before []Payday `json:"before,omitempty"`
 	// Days are checking at the end of each day from today, for the chart.
 	Days []Day `json:"days"`
 	// Later are the days after Days, up to a year from today, that a
@@ -755,6 +761,7 @@ func ProjectWith(p Plan, l Ledger, today time.Time, periods int) View {
 			}
 		}
 	}
+	v.Before = paydaysBefore(p, v.Checking, today)
 	// The goals, once today's balances and the paydays ahead are read.
 	v.Goals = goalsNow(p, v.Start, v.Paydays, today)
 	v.Loans = loansNow(p, v.Start, today)
@@ -802,6 +809,55 @@ func worth(p Plan, today time.Time) []Point {
 			total += n
 		}
 		out = append(out, Point{k, cents(total)})
+	}
+	return out
+}
+
+// pastPaydays is how many paydays before today View.Before holds: about
+// half a year of paychecks every two weeks.
+const pastPaydays = 12
+
+// paydaysBefore are the paydays into checking before today, newest first,
+// at most pastPaydays: each earner's schedule run back (Schedule.Back),
+// moved before a weekend or holiday as a paycheck ahead is, two people
+// paid on one day one payday. Someone paid into another account starts no
+// period, so isn't here (as Periods' paydays).
+func paydaysBefore(p Plan, checking string, today time.Time) []Payday {
+	from := today.AddDate(-1, 0, 0)
+	byDay := map[string]*Payday{}
+	for i := range p.People {
+		e := &p.People[i]
+		if e.Account != "" && e.Account != checking {
+			continue
+		}
+		for _, due := range e.Schedule.Back(from).Dates(from.AddDate(0, 0, -10), today) {
+			d, why := BankDayIn(due, p.Holidays)
+			if d.Before(from) || !d.Before(today) {
+				continue
+			}
+			k := dateOf(d)
+			pd := byDay[k]
+			if pd == nil {
+				pd = &Payday{Date: k}
+				byDay[k] = pd
+			}
+			if slices.Contains(pd.People, e.ID) {
+				continue
+			}
+			pd.People = append(pd.People, e.ID)
+			pd.Amount, pd.Total = cents(pd.Amount+e.Net), cents(pd.Total+e.Net)
+			if why != "" {
+				pd.Moved = append(pd.Moved, Moved{Person: e.ID, From: dateOf(due), Why: why})
+			}
+		}
+	}
+	out := make([]Payday, 0, len(byDay))
+	for _, pd := range byDay {
+		out = append(out, *pd)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Date > out[j].Date })
+	if len(out) > pastPaydays {
+		out = out[:pastPaydays]
 	}
 	return out
 }

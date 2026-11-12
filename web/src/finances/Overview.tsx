@@ -19,7 +19,9 @@ import { MissingWidget } from './widgets/Missing';
 import { AveragesWidget } from './widgets/Averages';
 import { CashFlowWidget, MoneyFlowWidget, SpendingWidget } from './widgets/Flow';
 import { PaycheckWidget } from './widgets/Paycheck';
-import { PeriodBar } from './widgets/Period';
+import { PeriodBar, pickedOf } from './widgets/Period';
+import { PastWidget } from './widgets/Past';
+import { pastPeriods } from './model';
 import { RenewingWidget } from './widgets/Subscriptions';
 import { BudgetsWidget, toWatch } from './widgets/Budgets';
 import { NetWorthWidget } from './widgets/Worth';
@@ -63,7 +65,10 @@ export interface OverviewProps {
 }
 
 export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, openWorth, openSubscriptions, openRecurring, openTransactions, openCalendar, showIn, phone }: OverviewProps) {
-  const picked = Math.min(sel, v.periods.length - 1);
+  // The period bar's pick: now and the paychecks ahead (the plan's), or a period before now (what happened, from the ledger).
+  const past = pastPeriods(v);
+  const picked = pickedOf(v, past, sel);
+  const was = picked < 0 ? past[-picked - 1] : undefined;
   if (!v.plan.accounts?.length && !v.plan.people?.length && !add) return <div class="fin"><Card kind="finstart"><Empty>Nothing typed in yet: Finances are filled in on the computer, or on a phone allowed to change them.</Empty></Card></div>;
   if (!v.plan.accounts?.length && !v.plan.people?.length) {
     return (
@@ -85,7 +90,7 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
           {add && <button class="small" onClick={() => add('account', 'checking')}>Add your checking account</button>}
         </Card>
       )}
-      <PeriodBar v={v} L={L} sel={picked} pick={pick} />
+      <PeriodBar v={v} L={L} past={past} sel={picked} pick={pick} />
       <div class="fx-board">
         {!phone && <NowWidget v={v} L={L} />}
         {!!v.since?.length && <SinceWidget v={v} L={L} set={setSince} />}
@@ -95,14 +100,14 @@ export function Overview({ v, L, sel, pick, add, edit, setSince, keep, ledger, o
         {phone && <ComingUpWidget v={v} L={L} calendar={openCalendar} />}
         {phone && <GoalsWidget v={v} L={L} edit={edit && ((w, id) => edit(w, id!))} all={openWorth} />}
         {phone && <NowWidget v={v} L={L} />}
-        <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />
-        <CheckingWidget v={v} L={L} sel={picked} openDay={openCalendar} />
+        {was ? <PastWidget v={v} L={L} past={was} ledger={ledger} edit={edit} /> : <PaycheckWidget v={v} L={L} sel={picked} edit={edit} />}
+        <CheckingWidget v={v} L={L} sel={was ? -1 : picked} openDay={openCalendar} />
         <RenewingWidget v={v} L={L} edit={edit} all={openSubscriptions} />
         <BudgetsWidget v={v} only={toWatch} title="Budgets to watch" span={1} open={openTransactions} show={showIn && ((category, month) => showIn({ category, month }))} />
         <CashFlowWidget v={v} L={L} open={openRecurring && (() => openRecurring())} ledger={ledger} showIn={showIn} />
         <SpendingWidget v={v} L={L} open={openRecurring && (() => openRecurring())} openKind={openRecurring} />
-        <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />
-        <SpentWidget v={v} ledger={ledger} open={showIn} />
+        {!was && <LatestWidget v={v} L={L} ledger={ledger} edit={edit} all={openTransactions} />}
+        <SpentWidget v={v} ledger={ledger} open={showIn} days={was && { from: was.start, to: was.last }} />
         <MoneyFlowWidget v={v} L={L} ledger={ledger} edit={edit} />
         <NetWorthWidget v={v} open={openWorth} />
       </div>
