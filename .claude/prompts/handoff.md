@@ -74,6 +74,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #616, #617 | The security session's N50, N51 |
 | #618 | Tidy Up's look, **L5's first half**: captions on one line at 860px |
 | #619 | The security session's N52 |
+| #633 | **2C step 4, PR 4a:** an account's page on the iPhone and iPad (`AccountBalance.swift`, `AccountDetailView.swift`) |
 | #632 | **2C step 4, PR 3b:** the Watchlist (`finance.Watched`, `ghostfolio.FollowInto`, `FinancesFollow` on the app and the phone) |
 | #631 | **2C step 4, PR 3a:** Investments as a list, no share bar; *Update apps holds still* measured once its window has slid in (a CI race) |
 | #630 | **2C step 4, PR 2:** a loan's page with the payments that pay it (`Loan.tsx`, `Transaction.Extra`) |
@@ -88,7 +89,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #622 | Tidy Up's look, **L7**: in the dark, Finances' night (`--fin-night` on `#tidy`); every tab compared at three widths in both themes |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** #633, **2C step 4, PR 4a: an account's page on the iPhone and iPad** (`AccountBalance.swift`, the computer's `balanceAfter` in Swift; `AccountDetailView.swift`; `FinanceAccount.updated`; the Accounts page's rows open it; `TrendChart`, `BalanceEditor`, `Money` no longer private; `AccountBalanceTests`); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green, `build-and-test` the first compile. **Next:** PR 4b, the loan's section and the Watchlist in the iPhone app (port `Loan.tsx`'s linked payments: a transaction's `payment`, `extra`; the Watchlist from `plan.watch`, Follow through a new `APIClient.financesFollow` behind Face ID, as `financesAddInvestment`).
+**In flight:** #PRNUM, **2C step 4, PR 4b: the Watchlist on the iPhone and iPad, and no share bar there** (`WatchlistCard.swift`, `FinanceWatched`, `FinancePlanEdit.removingWatched`, `APIClient.financesFollow`, `FinancesViewModel.follow`/`unfollow`; `AllocationCard` gone; `WatchlistTests`); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green, `build-and-test` the first compile. **Next:** PR 4c, the loan's section on the iPhone (port `Loan.tsx`: the loan's facts from `v.loans`, the linked payments by a transaction's `payment`, Link / Not this one / Count it through the ledger save, behind Face ID). Then 2C's later items (section 2C, step 5) and what section 4 waits on.
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
