@@ -368,6 +368,7 @@ behaviour, and the screenshots retaken where they changed.
 127. (done: holds, Nov 12, round 13) **Tidy Up and what a download names** (tools/media): names made from a download's metadata go through `safe_name` (no slash, no `..`, no device name); music is moved by beets, which cleans each part of a path itself; nothing runs a shell. The Inbox's zips unpack only inside their folder (an absolute path or one that resolves outside is refused) and Python's zipfile writes no links. Seen, not a finding: no limit on how much a zip unpacks to, so a download built to swell can fill the drive it lands on (only what the household downloads).
 
 128. (done: holds, Nov 12, round 14) **The last packages never read** (internal/savings, battery, storage, awake): their records are 0600 through `lockedfile`; battery reads `pmset -g batt` only; `homelab awake allow` writes one polkit rule granting this account `login1.inhibit-block-sleep` alone, its name held to `validUser`.
+129. (done: N56, Nov 12, round 16: kept only at most 1,024 pixels a side, checked on save and on load) **An image of one's own is unpacked whole on the phone** (#627, `apple-client` `LogoCircle.cgImage`; `internal/finance` `Clean`): the 64 KB cap is on the file, not the pixels, and a PNG of a few kilobytes can say 4,000 pixels square. Who can set one: anyone allowed to edit Finances.
 
 ## The security team
 
@@ -807,6 +808,7 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 - **N54 (Nov 12, round 15):** items 87 and 88 built as the owner chose: Vaultwarden, Pocket ID and CrowdSec take a new image only once it has been out 3 days (from when first seen, 14 at most), read from the registry without pulling. Next: item 79, a git checkout moving only to releases whose provenance verifies.
 - **N55 (Nov 12, round 16):** item 79 built as the owner chose: `homelab upgrade` on a git checkout moves only to a release tag (testing: every release of main; stable: `vX.Y.0`), once the release's attestation verifies and its certificate names the very commit the tag points at. Commits past the newest release wait for the next one. Next: back to reading the other account's new merges, riskiest surfaces first.
+- **N56 (Nov 12, round 16):** read #627 (the phone draws Finances' own logos): item 129, an image small in the file but enormous unpacked, built: Finances keeps one only at most 1,024 pixels a side, by its header, on save and on load.
 
 - **The owner's decisions (Nov 12):** items 87 and 88, a short hold before Vaultwarden, Pocket ID and CrowdSec take a new release; item 79, a git checkout moves only to releases whose provenance verifies; item 86, kept as is. Next: build 87 and 88, then 79.
 
