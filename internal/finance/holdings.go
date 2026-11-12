@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // Investments, read from Ghostfolio, the homelab's own investment tracker,
@@ -253,16 +254,33 @@ func (w Watched) Priced(day string, price float64) Watched {
 	return w
 }
 
+// The most a followed ticker's words may take (N57): a phone allowed to
+// edit Finances sends them, and each read of the plan carries them.
+const (
+	maxWatchSymbol = 64
+	maxWatchName   = 200
+	maxWatchSource = 40
+	maxWatchCode   = 8
+)
+
 // cleanWatch keeps each followed symbol once (in capitals, the first kept),
-// none without one, at most maxWatched, each with at most
-// maxWatchedHistory points.
+// none without one or with one that is no symbol ("." or "..", or too
+// long), at most maxWatched, each with at most maxWatchedHistory points
+// and its name, source and currency no longer than a real one's.
 func cleanWatch(list []Watched) []Watched {
 	var out []Watched
 	seen := map[string]bool{}
 	for _, w := range list {
 		w.Symbol = strings.ToUpper(strings.TrimSpace(w.Symbol))
-		if w.Symbol == "" || seen[w.Symbol] || len(out) >= maxWatched {
+		w.DataSource = strings.TrimSpace(w.DataSource)
+		if w.Symbol == "" || w.Symbol == "." || w.Symbol == ".." || len(w.Symbol) > maxWatchSymbol ||
+			w.DataSource == "." || w.DataSource == ".." || len(w.DataSource) > maxWatchSource ||
+			seen[w.Symbol] || len(out) >= maxWatched {
 			continue
+		}
+		w.Name = clip(strings.TrimSpace(w.Name), maxWatchName)
+		if w.Currency = strings.TrimSpace(w.Currency); len(w.Currency) > maxWatchCode {
+			w.Currency = ""
 		}
 		seen[w.Symbol] = true
 		if len(w.History) > maxWatchedHistory {
@@ -271,4 +289,15 @@ func cleanWatch(list []Watched) []Watched {
 		out = append(out, w)
 	}
 	return out
+}
+
+// clip is s cut to at most n bytes, at a character's edge.
+func clip(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
