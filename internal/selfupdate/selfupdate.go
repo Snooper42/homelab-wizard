@@ -299,6 +299,14 @@ func Stage(ctx context.Context, r Release, dir string, on func(done, total int64
 	if err := verify(dmg, a.SHA256); err != nil {
 		return "", err
 	}
+	// The build provenance, as off the Mac (N29): an ad-hoc app (no Team
+	// ID, so keepsSigner has nothing to hold it to) would otherwise take any
+	// disk image the release page lists (N51).
+	if needsProvenance(r.When) {
+		if err := Provenance(ctx, r.Repo, a.Name, a.SHA256); err != nil {
+			return "", err
+		}
+	}
 	mnt := filepath.Join(dir, "mnt")
 	if out, err := exec.CommandContext(ctx, "hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", mnt, dmg).CombinedOutput(); err != nil {
 		return "", fmt.Errorf("opening the download: %v %s", err, strings.TrimSpace(string(out)))

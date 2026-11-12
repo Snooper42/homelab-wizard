@@ -103,7 +103,7 @@ func needsProvenance(when string) bool {
 	return err != nil || !t.Before(attestedSince)
 }
 
-// Provenance checks a downloaded Windows or Linux release file against its
+// Provenance checks a downloaded release file (any system's) against its
 // attestation (repository, file name, SHA-256); tests replace it, as they
 // do API and StartHelper.
 var Provenance = checkProvenance
