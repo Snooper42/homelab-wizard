@@ -6321,7 +6321,6 @@ const smokes = [
   { name: 'Finances: money from someone shows as money in, everywhere it is planned', screen: 'finances', mock: { finances: moneyIn }, run: async (page) => {
     await page.waitForSelector('#finances.active .fx-paycheck', { timeout: 5000 });
     await page.click('#finPeriod button:text-is("Today")').catch(() => {});
-    await page.click('#finPeriod button[aria-label="The pay period before"]').catch(() => {});
     await page.waitForSelector('.fx-paycheck li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
     await finTab(page, 'Recurring');
     await page.waitForSelector('.fx-payments li:has-text("Mortgage share"):has-text("from Sam"):has-text("+$900.00")', { timeout: 5000 });
@@ -7223,7 +7222,10 @@ const smokes = [
     await page.click('#finSheet button:text-is("Cancel")');
     await page.click('#finRoot .toolbar button:has-text("Add a payment")');
     await page.waitForSelector('#finSheet:not([hidden]) h2:text-is("Add a payment")', { timeout: 5000 });
-    if ((await page.inputValue('#finSheet label:has-text("Next on") input')) === '2026-11-12') throw new Error('the day stuck to the next form');
+    // Today by this machine's clock, as the form's own default (todayISO): on Nov 12 itself the day picked and today are one.
+    const today = await page.evaluate(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; });
+    const next = await page.inputValue('#finSheet label:has-text("Next on") input');
+    if (next !== today) throw new Error(`the next form starts ${next}, not today (${today}): the day stuck to it`);
     await page.click('#finSheet button:text-is("Cancel")');
     await page.click('.fx-calendar button:text-is("Today")');
     await page.click('.fx-month button[data-day="2026-10-28"]');
