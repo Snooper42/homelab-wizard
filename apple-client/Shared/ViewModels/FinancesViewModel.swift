@@ -357,6 +357,28 @@ final class FinancesViewModel {
         return saved
     }
 
+    /// A loan's page: `t` linked to the planned payment `payment`, after
+    /// Face ID. Returns whether it saved.
+    func link(_ t: FinanceTransaction, to payment: String) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger,
+              let edited = LedgerEdit.settingLink(id: t.id, payment: payment, in: raw) else { return false }
+        return await saveLedger(edited, reason: "Link a payment to your loan.")
+    }
+
+    /// A loan's page: `t` pays none of the plan's payments (Not this one).
+    func notThisOne(_ t: FinanceTransaction) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger,
+              let edited = LedgerEdit.settingLink(id: t.id, payment: nil, in: raw) else { return false }
+        return await saveLedger(edited, reason: "Take a payment off your loan.")
+    }
+
+    /// A loan's page: all of `t`, paid over its planned payment, counted (Count it).
+    func countInFull(_ t: FinanceTransaction) async -> Bool {
+        guard canAddTransactions, !isSaving, let raw = rawLedger, let payment = t.payment,
+              let edited = LedgerEdit.settingLink(id: t.id, payment: payment, extra: true, in: raw) else { return false }
+        return await saveLedger(edited, reason: "Count all of a payment towards your loan.")
+    }
+
     /// Removes a transaction. Returns whether it saved.
     func delete(_ t: FinanceTransaction) async -> Bool {
         guard canAddTransactions, !isSaving, let raw = rawLedger else { return false }

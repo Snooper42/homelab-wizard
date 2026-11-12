@@ -224,6 +224,21 @@ enum LedgerEdit {
         return nil
     }
 
+    /// `ledger` with the transaction `id` linked to the planned payment
+    /// `payment` (nil: linked to none, and said to pay none), and counted in
+    /// full or not (`extra`, only with a payment), everything else it has
+    /// kept: a loan's Link, Not this one and Count it. Nil for an unknown id.
+    static func settingLink(id: String, payment: String?, extra: Bool = false, in ledger: JSONValue) -> JSONValue? {
+        guard !id.isEmpty, case .object(var root) = ledger, case .array(var all)? = root["transactions"],
+              let index = all.firstIndex(where: { $0["id"] == .string(id) }), case .object(var entry) = all[index] else { return nil }
+        entry["payment"] = payment.map { .string($0) }
+        entry["extra"] = payment != nil && extra ? .bool(true) : nil
+        entry["notPlanned"] = payment == nil ? .bool(true) : nil
+        all[index] = .object(entry)
+        root["transactions"] = .array(all)
+        return .object(root)
+    }
+
     /// `ledger` without the transaction `id`, or nil when it has none by that id.
     static func removing(id: String, from ledger: JSONValue) -> JSONValue? {
         guard !id.isEmpty, case .object(var root) = ledger, case .array(let all)? = root["transactions"] else { return nil }
