@@ -88,3 +88,56 @@ func TestTheClientSignsInAsKopiasPageDoes(t *testing.T) {
 		t.Errorf("a call with only the password was taken: %v %v", resp, err)
 	}
 }
+
+// Call and Get go through the same session; a Kopia that turns down even a
+// fresh one says so plainly, and one that doesn't answer says that.
+func TestCallGetAndATurnedDownSession(t *testing.T) {
+	k := &strictKopia{key: "first"}
+	srv := httptest.NewServer(k)
+	t.Cleanup(srv.Close)
+	ctx := context.Background()
+	c := New(srv.URL, "pw")
+	var out struct {
+		Snapshots []Snapshot `json:"snapshots"`
+	}
+	if err := c.Call(ctx, http.MethodGet, "snapshots", nil, &out); err != nil || len(out.Snapshots) != 1 {
+		t.Fatalf("Call: %+v %v", out, err)
+	}
+	if b, err := c.Get(ctx, "objects/k1"); err != nil || !strings.Contains(string(b), "snapshots") {
+		t.Fatalf("Get: %q %v", b, err)
+	}
+	if err := c.Call(ctx, http.MethodPost, "restore", map[string]any{"root": "k1"}, nil); err != nil {
+		t.Fatalf("a POST with a body: %v", err)
+	}
+
+	// A page whose token is never right: the client signs in once more,
+	// then says Kopia turned its session down.
+	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.SetCookie(w, &http.Cookie{Name: SessionCookie, Value: "s"})
+			w.Write([]byte(`<head><meta name="kopia-csrf-token" content="00ff" /></head>`))
+			return
+		}
+		http.Error(w, "Invalid or missing CSRF token.", http.StatusUnauthorized)
+	}))
+	t.Cleanup(bad.Close)
+	if _, err := New(bad.URL, "pw").Get(ctx, "snapshots"); err == nil || !strings.Contains(err.Error(), "turned down its own session") {
+		t.Errorf("a session never taken: %v", err)
+	}
+	stale := New(bad.URL, "pw")
+	stale.session, stale.token = "old", "00"
+	if _, err := stale.Get(ctx, "snapshots"); err == nil || !strings.Contains(err.Error(), "turned down its own session") {
+		t.Errorf("a stale session, then a fresh one turned down: %v", err)
+	}
+
+	// Nothing answering at all.
+	gone := httptest.NewServer(http.NotFoundHandler())
+	url := gone.URL
+	gone.Close()
+	if _, err := New(url, "pw").Get(ctx, "snapshots"); err == nil || !strings.Contains(err.Error(), "does not answer") {
+		t.Errorf("no Kopia: %v", err)
+	}
+	if err := New(url, "pw").Call(ctx, http.MethodPost, "restore", func() {}, nil); err == nil {
+		t.Error("a body that can't be JSON was sent")
+	}
+}
