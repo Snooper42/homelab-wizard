@@ -181,6 +181,33 @@ final class FinancesViewModel {
         return try await api.financesFindSymbol(query)
     }
 
+    /// Follows a ticker (the Watchlist), after Face ID. Returns why not, in
+    /// words, or nil when it was kept.
+    func follow(_ symbol: InvestmentSymbol) async -> String? {
+        guard canEdit, !isSaving else { return "This device can't change Finances." }
+        isSaving = true
+        defer { isSaving = false }
+        guard await authorize("Follow \(symbol.symbol) in the Watchlist.") else { return "Not confirmed, so nothing was kept." }
+        do {
+            let read = try await api.financesFollow(symbol)
+            ownLogos = OwnLogos(read.view.plan.logos)
+            plan = read.view
+            rawPlan = read.rawPlan
+            savedCount += 1
+            return nil
+        } catch {
+            let apiError = APIError.from(error)
+            Log.ui.error("FinancesFollow failed: \(apiError.logName, privacy: .public)")
+            return apiError.errorDescription ?? "Ghostfolio didn't take it."
+        }
+    }
+
+    /// Takes a ticker off the Watchlist. Returns whether it saved.
+    func unfollow(_ symbol: String) async -> Bool {
+        guard canEdit, !isSaving, let raw = rawPlan, let edited = FinancePlanEdit.removingWatched(symbol, in: raw) else { return false }
+        return await savePlan(edited, reason: "Take \(symbol) off the Watchlist.")
+    }
+
     /// Puts a buy or a sale into Ghostfolio and reads it again. Returns why
     /// not, in words, or nil when it was kept.
     func addInvestment(_ add: InvestmentAdd) async -> String? {

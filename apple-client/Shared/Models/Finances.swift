@@ -220,8 +220,11 @@ struct FinancePlan: Decodable, Sendable, Equatable {
     /// small PNG, JPEG or WebP as a data URL, by a brand's key ("chase") or
     /// "name:" and a name. They're drawn before any other mark (OwnLogos).
     let logos: [String: String]
+    /// The tickers followed without owning them (Investments' Watchlist):
+    /// priced by Ghostfolio at each read, never in the worth.
+    let watch: [FinanceWatched]
 
-    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos }
+    enum CodingKeys: String, CodingKey { case people, accounts, payments, cushion, currency, hideAmounts, holdingsRead, logos, watch }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -233,6 +236,7 @@ struct FinancePlan: Decodable, Sendable, Equatable {
         hideAmounts = try c.decodeIfPresent(Bool.self, forKey: .hideAmounts) ?? false
         holdingsRead = ((try? c.decodeIfPresent(String.self, forKey: .holdingsRead)) ?? nil).flatMap(GoTime.parse)
         logos = (try? c.decodeIfPresent([String: String].self, forKey: .logos)) ?? [:]
+        watch = Array((((try? c.decodeIfPresent([FinanceWatched].self, forKey: .watch)) ?? nil) ?? []).prefix(50))
     }
 }
 
@@ -893,6 +897,38 @@ struct InvestmentSymbol: Decodable, Sendable, Hashable, Identifiable {
     let dataSource: String
 
     var id: String { dataSource + ":" + symbol }
+}
+
+/// A ticker followed without owning it (finance.Watched): its price as last
+/// read, and the day and price it was followed at.
+struct FinanceWatched: Decodable, Sendable, Equatable, Identifiable {
+    let symbol: String
+    let name: String
+    let currency: String?
+    /// YYYY-MM-DD, as the computer wrote it.
+    let sinceText: String
+    let from: Double
+    let price: Double
+    let history: [FinancePoint]
+
+    var id: String { symbol }
+    var since: Date? { LocalDay.parse(sinceText) }
+
+    /// How far its price has moved since it was followed (0.06 is 6% up); nil without a price then.
+    var changeSince: Double? { from > 0 ? price / from - 1 : nil }
+
+    enum CodingKeys: String, CodingKey { case symbol, name, currency, since, from, price, history }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        symbol = try c.decode(String.self, forKey: .symbol)
+        name = ((try? c.decodeIfPresent(String.self, forKey: .name)) ?? nil) ?? ""
+        currency = (try? c.decodeIfPresent(String.self, forKey: .currency)) ?? nil
+        sinceText = ((try? c.decodeIfPresent(String.self, forKey: .since)) ?? nil) ?? ""
+        from = ((try? c.decodeIfPresent(Double.self, forKey: .from)) ?? nil) ?? 0
+        price = ((try? c.decodeIfPresent(Double.self, forKey: .price)) ?? nil) ?? 0
+        history = Array((((try? c.decodeIfPresent([FinancePoint].self, forKey: .history)) ?? nil) ?? []).suffix(400))
+    }
 }
 
 /// A buy or a sale to put into Ghostfolio (`ghostfolio.Add`).

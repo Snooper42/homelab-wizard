@@ -74,6 +74,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #616, #617 | The security session's N50, N51 |
 | #618 | Tidy Up's look, **L5's first half**: captions on one line at 860px |
 | #619 | The security session's N52 |
+| #633 | **2C step 4, PR 4a:** an account's page on the iPhone and iPad (`AccountBalance.swift`, `AccountDetailView.swift`) |
 | #632 | **2C step 4, PR 3b:** the Watchlist (`finance.Watched`, `ghostfolio.FollowInto`, `FinancesFollow` on the app and the phone) |
 | #631 | **2C step 4, PR 3a:** Investments as a list, no share bar; *Update apps holds still* measured once its window has slid in (a CI race) |
 | #630 | **2C step 4, PR 2:** a loan's page with the payments that pay it (`Loan.tsx`, `Transaction.Extra`) |
@@ -88,7 +89,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #622 | Tidy Up's look, **L7**: in the dark, Finances' night (`--fin-night` on `#tidy`); every tab compared at three widths in both themes |
 | #620 | Tidy Up's look, **L5's second half**: what a job freed on the right of its line in Recently done (`media.Activity.Freed`, `Activity.Said()`); Audiobooks' Merge says what it wins back |
 
-**In flight:** #633, **2C step 4, PR 4a: an account's page on the iPhone and iPad** (`AccountBalance.swift`, the computer's `balanceAfter` in Swift; `AccountDetailView.swift`; `FinanceAccount.updated`; the Accounts page's rows open it; `TrendChart`, `BalanceEditor`, `Money` no longer private; `AccountBalanceTests`); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green, `build-and-test` the first compile. **Next:** PR 4b, the loan's section and the Watchlist in the iPhone app (port `Loan.tsx`'s linked payments: a transaction's `payment`, `extra`; the Watchlist from `plan.watch`, Follow through a new `APIClient.financesFollow` behind Face ID, as `financesAddInvestment`).
+**In flight:** #634, **2C step 4, PR 4b: the Watchlist on the iPhone and iPad, and no share bar there** (`WatchlistCard.swift`, `FinanceWatched`, `FinancePlanEdit.removingWatched`, `APIClient.financesFollow`, `FinancesViewModel.follow`/`unfollow`; `AllocationCard` gone; `WatchlistTests`); on branch `claude/blissful-pascal-997omq`, with this hand-off. *Done:* merged green, `build-and-test` the first compile. **Next:** PR 4c, the loan's section on the iPhone (port `Loan.tsx`: the loan's facts from `v.loans`, the linked payments by a transaction's `payment`, Link / Not this one / Count it through the ledger save, behind Face ID). Then 2C's later items (section 2C, step 5) and what section 4 waits on.
 
 **Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
@@ -206,6 +207,7 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **A container query asks the nearest container:** `@container (max-width: …)` inside a Finances card measured the whole screen (`#finances`), so a narrow card never stacked (#609). Name the container you mean.
 - **Mocks for the owner:** the Artifact tool's Design type makes a private canvas of `.dc.html` artboards (start with `action: quickstart`, `intent: design`); write the files in the scratchpad, never in the repo, and use made-up numbers and payees only.
 - **Before and after pictures without touching the repo:** copy `app/preview` and `web/dist` (main's `app.js` and `style.css` from `git show origin/main:…` for the before) into the scratchpad, cut shoot.mjs down to everything up to `const mock = ` with `root` pointed at the repo and `export { mock, tidy }` added, then load `index.html` with `window.__MOCK = { ...mock, screen }` and `mock.js`, as `open()` in shoot.mjs does. `npm ci` first (`node_modules` isn't there in a fresh container; the smoke needs `axe-core`).
+- **A static helper on a SwiftUI `View` that a test calls must be `nonisolated`** (a View is main-actor isolated; the call from a test is a warning, and `build-and-test` fails on any warning): #627's `LogoCircle.cgImage`, #634's `WatchlistCard.sinceWords`/`changeWords`. Better still, keep such helpers on a model type.
 - **A macOS job *cancelled* at 15 minutes with no runner name and no steps** never got a Mac (GitHub's queue), Nov 12 on #630: main's ran in 5 minutes meanwhile. `gh api repos/Snooper42/homelab-wizard/actions/jobs/<id>` shows `runner_name` empty; re-run the failed jobs once.
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 

@@ -150,6 +150,19 @@ enum FinancePlanEdit {
         return .object(root)
     }
 
+    /// `plan` without the followed ticker `symbol` (the Watchlist's Unfollow).
+    /// Nil when it isn't followed.
+    static func removingWatched(_ symbol: String, in plan: JSONValue) -> JSONValue? {
+        guard case .object(var root) = plan, case .array(let list)? = root["watch"] else { return nil }
+        let kept = list.filter { item in
+            guard case .string(let s)? = item["symbol"] else { return true }
+            return s.caseInsensitiveCompare(symbol) != .orderedSame
+        }
+        guard kept.count < list.count else { return nil }
+        root["watch"] = kept.isEmpty ? nil : .array(kept)
+        return .object(root)
+    }
+
     /// `plan` with Hide amounts on or off, which every device follows (the
     /// computer's ⌘⇧H). Omitted when off, as the computer writes it.
     static func settingHideAmounts(_ hide: Bool, in plan: JSONValue) -> JSONValue? {
