@@ -757,6 +757,8 @@ Added after round 36 (four left, all waiting on other lanes; worst first):
 
 ### Security done
 
+- **N43 (Nov 11, round 2):** an amount of 1e308 (from a phone allowed to change Finances, or a bank's file) became infinity as cents and the ledger's save wrote an empty file over every transaction; the plan's save had the same unchecked encoding. Both now refuse a number of a trillion or more and write nothing (docs/Security.md). Read and found holding: Finances rules (500 at most, 100 letters each, a rule that does nothing refused, the matching a plain start of a name, no pattern), the ledger's other checks (accounts, transfers, splits, receipts by name). Next: backlog item 89, then the imports in the browser (`importData.ts`) for what a crafted file can make the page do.
+
 - **N42 (Nov 11, the security review of #556 onwards, round 1):** a phone's `SnoozeCheck` took any name into a file with no limit; now only the watchdog's checks, and 256 at most (docs/Security.md). Read and found holding this round: the companion's `allowed` (home and tunnel alike; a wall screen, a member's phone and an unencrypted one can never be given changes), `SetStatusFolds` (names and count capped, 0600, owner's phones only), `SetAppSetting` away (public catalog apps only, `mayPublish` before publishing, the tunnel refuses every change), `AlertLog` (phoneLog redaction, a wall screen not told who snoozed), the CSV export (formula cells guarded), the iPhone's local alerts (only the last seen id kept; what a notification shows stays in Notification Center, as the ntfy app's do). Next: Finances rules (#584, #585) and imports (#583, #589), then backlog item 89.
 
 - **Round 1 (item 1, the phone companion), in part:** every method in

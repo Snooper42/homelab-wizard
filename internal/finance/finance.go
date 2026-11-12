@@ -6,6 +6,7 @@
 package finance
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -359,12 +360,64 @@ func Save(path string, p Plan) (Plan, error) {
 	}
 	was := p.Rev
 	p.Rev = ""
-	data, _ := json.MarshalIndent(p, "", "  ")
+	data, err := encode(p)
+	if err != nil {
+		p.Rev = was
+		return p, err
+	}
 	p.Rev, err = write(path, was, data)
 	if err != nil {
 		p.Rev = was
 	}
 	return p, err
+}
+
+// maxMoney is where a number stops being money: nothing a household keeps
+// comes near a trillion, and kept as cents a number past it can become
+// infinity, which can't be written (N43).
+const maxMoney = 1e12
+
+// ErrTooLarge is a plan or ledger with a number too large to be money.
+var ErrTooLarge = errors.New("a number in it is too large to be money (a trillion or more): check what was typed or brought in")
+
+// encode is a Finances file's contents, or ErrTooLarge when a number in it
+// can't be money: one that can't be encoded, or a trillion or more. A save
+// never writes what this refused, so what was there stays (N43: an amount
+// of 1e308 once wrote an empty ledger over every transaction).
+func encode(v any) ([]byte, error) {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return nil, ErrTooLarge
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	var x any
+	if err := dec.Decode(&x); err != nil || !money(x) {
+		return nil, ErrTooLarge
+	}
+	return data, nil
+}
+
+// money reports whether every number in x, a decoded file, is under maxMoney.
+func money(x any) bool {
+	switch v := x.(type) {
+	case json.Number:
+		f, err := v.Float64()
+		return err == nil && math.Abs(f) < maxMoney
+	case map[string]any:
+		for _, e := range v {
+			if !money(e) {
+				return false
+			}
+		}
+	case []any:
+		for _, e := range v {
+			if !money(e) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // write replaces a Finances file with data, owner-only, when the file is
