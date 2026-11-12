@@ -3966,13 +3966,14 @@
     const step2 = p3.checks[s3.key];
     const toggle = !s3.secret && /^(true|false)$/i.test(s3.value || "");
     const label = p3.label(s3.key);
-    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, checked: /^true$/i.test(value ?? kept4 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
+    const input2 = toggle ? /* @__PURE__ */ u3("input", { type: "checkbox", class: "switch", role: "switch", "aria-label": label, disabled: p3.readOnly, checked: /^true$/i.test(value ?? kept4 ?? s3.value), onChange: (e3) => edit(s3.key, e3.currentTarget.checked ? "true" : "false") }) : /* @__PURE__ */ u3(
       "input",
       {
         type: s3.secret ? "password" : "text",
         autocomplete: "off",
         spellcheck: false,
         "aria-label": label,
+        disabled: p3.readOnly,
         value: value ?? kept4 ?? (s3.secret ? "" : s3.value || ""),
         placeholder: s3.secret ? s3.set ? "set · leave empty to keep" : "not set" : "",
         onInput: (e3) => edit(s3.key, e3.currentTarget.value)
@@ -3990,7 +3991,7 @@
       setTesting(false);
     };
     const buttons = [
-      !s3.secret && folderKey.test(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Pick the folder", onClick: async () => {
+      !s3.secret && !p3.phone && folderKey.test(s3.key) && /* @__PURE__ */ u3("button", { class: "small", title: "Pick the folder", onClick: async () => {
         const dir = await p3.on.choose(s3.key);
         if (dir) edit(s3.key, dir);
       }, children: "Choose…" }),
@@ -6430,6 +6431,11 @@
   mountUninstall($2("uninstallCard"), { machine: thisMachine, on: uninstallActions });
   var settingsFocus = [];
   var settingsData = store(async () => {
+    if (onPhone()) {
+      const r3 = await go().Settings();
+      testable = /* @__PURE__ */ new Set();
+      return phoneSettings(r3);
+    }
     loadPhones();
     loadTailnet();
     loadPeople();
@@ -6446,6 +6452,11 @@
     }
     drawSettings(true, true);
   });
+  function phoneSettings(r3) {
+    const list = Array.isArray(r3) ? r3 : r3.settings || [];
+    const keep3 = new Set(Array.isArray(r3) ? [] : r3.computerOnly || []);
+    return list.filter((s3) => !s3.secret && !keep3.has(s3.key));
+  }
   function loadSettings(focus = []) {
     settingsFocus = focus;
     return settingsData.load();
@@ -6466,7 +6477,18 @@
     moreCount = list.length - everydayCount;
     if (focus.length) settingsPage = pages.find((pg) => pg.items.some((s3) => s3.key === focus[0]))?.name || settingsPage;
     if (!pages.some((pg) => pg.name === settingsPage) && !extraPages.includes(settingsPage)) settingsPage = pages[0]?.name || "";
-    form = { pages, wanted, focus, checks: checks2, testable, label: settingLabel, view: settingsView(), on: formActions };
+    form = {
+      pages,
+      wanted,
+      focus,
+      checks: checks2,
+      testable,
+      label: settingLabel,
+      view: settingsView(),
+      on: formActions,
+      phone: onPhone(),
+      readOnly: onPhone() && !document.documentElement.classList.contains("can-change")
+    };
     renderSettingsNav(pages);
     filterSettings();
     if (scroll && focus.length) document.getElementById("setting-" + focus[0])?.scrollIntoView({ block: "center" });
@@ -6590,7 +6612,7 @@
   var navGroups = [];
   function renderSettingsNav(pages) {
     const installed2 = (name) => Object.values(statusById || {}).some((a3) => a3.name === name && a3.state !== "missing");
-    const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...extraPages];
+    const general = [...pages.filter((p3) => p3.kind === "general").map((p3) => p3.name), ...onPhone() ? [] : extraPages];
     const apps2 = pages.filter((p3) => p3.kind === "app");
     const known2 = Object.keys(statusById || {}).length > 0;
     const mine = known2 ? apps2.filter((p3) => installed2(p3.name) || p3.name === "Other apps") : apps2;
@@ -6770,7 +6792,7 @@
     }
     try {
       await go().SaveSettings(values);
-      stepsData.set(await go().Setup());
+      if (!onPhone()) stepsData.set(await go().Setup());
       await loadSettings(Object.keys(values));
     } catch (e3) {
       showError(e3);

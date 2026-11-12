@@ -493,6 +493,11 @@ try { if ((window.__MOCK || {}).tidyTab) localStorage.setItem('homelab.tidyTab',
   // for an older one) is refused as it refuses it (M.refused lists them).
   // Open stays the phone's own: companion.js opens the link itself.
   if (M.phoneMethods) {
+    // The form as a phone gets it (serve.go's listPhoneSettings): every setting, and the ones it may not change.
+    const desk = app.Settings, deskSave = app.SaveSettings;
+    const phoneForm = (list) => ({ settings: list, computerOnly: (list || []).filter((x) => x.secret || ['PHONE_COMPANION', 'BIND_IP'].includes(x.key) || x.key.startsWith('TAILSCALE_')).map((x) => x.key) });
+    app.Settings = () => desk().then(phoneForm);
+    app.SaveSettings = (values) => deskSave(values).then(phoneForm);
     const mark = () => document.documentElement.classList.add(...M.phone);
     if (document.documentElement) mark();
     else new MutationObserver((_, o) => { if (document.documentElement) { o.disconnect(); mark(); } }).observe(document, { childList: true });

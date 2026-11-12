@@ -1,4 +1,4 @@
-# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 11, 2026, evening)
+# One session for everything: Tidy Up, Finances, and the iPhone app (Nov 12, 2026, early morning)
 
 The owner has one Claude account for this repository. This file is the hub: where the work stands, what to do first, and how to hand on. It sits above the files it points to (section 5); each keeps its detail and its own rules.
 
@@ -31,9 +31,9 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 - **Dropped by the owner, never offer again:** the phone away from home (Nov 10); background refresh (Nov 11); ⌘1 to ⌘4 for Finances tabs; syncing the Finances sidebar's folds.
 - **Two ways to do something and no answer:** the one that changes less for the partner's phone and the household (as "per phone" did), and the one that can be undone.
 
-## 1. Where it stands (Nov 11, 9:45 PM Eastern)
+## 1. Where it stands (Nov 12, 12:45 AM Eastern)
 
-**Merged Nov 10 and 11** (each green):
+**Merged Nov 10 to 12** (each green):
 
 | PRs | What |
 |---|---|
@@ -59,21 +59,18 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 | #598 | **Finances Step 4, PR 1:** the period bar atop the Dashboard (`widgets/Period.tsx`, `#finPeriod`); the paycheck card follows it |
 | #597 | Tidy Up's queue item 7: *Started yesterday at 3:04 AM* (`startedText`), and the stopped-part-way card says when it started |
 | #596 | **The feature map:** `docs/Parity.md` (every feature on the computer, the phone's page, the iPhone, the iPad and the Mac app), `TestParityNamesEveryPhoneCall`; `apple-client/README.md` no longer claims a Mac menu bar item and Dock count the code never had |
-| #602, #603 | Security N42, N43 (the security session's, on its own branch) |
+| #602, #603, #605, #608, #611 | The security session's (its own branch, `audit-loop.md`): N42 to N48, round 7. Leave its PRs to it |
 | #601 | Tidy Up's look, L3 (no Space card that repeats the header; Genres takes the row) |
 | #604 | **Gap 1:** links into the app on the iPad and the Mac app (`IntentInbox.outcome`, `landing`, shared by the iPhone's tabs and the split view) |
-
 | #606 | **Gaps 2 and 4:** What was done and Every Alert from the split view (the detail column's own stack; `DashboardViewModel.openAlertLog`) |
-
 | #607 | **Gap 3:** Snooze… on an alert in Every alert whose watchdog check still fails (`snoozable`, web and Swift) |
-
 | #609 | The owner's screenshots (Nov 12): a ring card measures itself (`.fx-widget:has(.fx-donutrow)`), so category names don't break mid-word; Setup's count says *· 1 can wait* |
-
 | #610 | **The iPhone's Backups as the owner picked it:** the card, three tiles (`tiles(now:)`), Needs a Look, the fresh folded to logos, More one tap down |
+| #612 | **The iPhone's Settings as the owner picked it:** *The Homelab* (`firstSettings`, in plain words), *This iPhone* (the lock, the widget, Alerts From), *Everything Else*; `SettingRow` shared with the form |
 
-**In flight:** the iPhone's Settings as the owner picked it: *The Homelab* (the everyday ones, `firstSettings`, in plain words), *This iPhone* (the lock, the widget, Alerts From), *Everything Else* (all settings by section, Get help, About); `SettingRow` shared with the form. On branch `claude/focused-gates-d35kz0`. *Done:* merged green. Then gap 6 (2A step 3: Settings on the phone's page). Tidy Up L4 (`tidy-loop.md`, **The look**) after 2A.
+**In flight:** #614, gap 6, Settings on the phone's page (`phoneSettings`: the settings a phone may change, read-only where it only looks, none on a wall screen; the computer's own pages hidden), with this hand-off, on branch `claude/focused-gates-d35kz0`. *Done:* merged green. **That finishes 2A.** Next: section 2B from its first step not marked Done (Tidy Up L4, step 3, since steps 1 and 2 wait on the owner).
 
-**Mockups of the gaps (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page). The owner asked that mocks match the iPhone app more closely (section 6).
+**Mockups (Nov 12, made-up apps):** the private canvas https://claude.ai/artifact/V6EmaatcLbMwdXu3UAzWd3 (gaps 1, 2, 4 on the iPad; 3 on the iPhone; 6 on the phone's page; the iPhone's Backups and Settings, both built). The owner asked that mocks match the iPhone app more closely (section 6).
 
 **Alerts in the app is done.** Background refresh was **dropped by the owner (Nov 11: "I'm okay with no backgrounds")**: the pairing stays readable only while the phone is unlocked (`KeychainManager.swift`), and a locked phone hears from the ntfy app until push (APNs, behind `HOMELAB_SIGNED`). Don't offer it again.
 
@@ -83,7 +80,7 @@ You are working on homelab-wizard (github.com/Snooper42/homelab-wizard) with its
 
 The owner asked for "a handoff to do all this" (Nov 11): the feature check first (recommended), then the rest of the list. One PR at a time; ask where a step says so (*How to decide*, above). Mark each numbered step **Done (#PR)** in the PR that finishes it; the next session starts at the first step without the mark. What Alerts in the app built is in `unison-handoff.md` section 4, item 6, and #591 to #593.
 
-### 2A. The feature check: every feature, everywhere (first): step 1 done
+### 2A. The feature check: every feature, everywhere: done (#596 to #614)
 
 The owner asked (Nov 11) whether every version on each platform has the same features. The answer then was "mostly, not entirely", from `apple-client/README.md`'s table alone. This makes it definite.
 
@@ -95,7 +92,7 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
    - *Done:* merged green, with the test.
 2. **Show the owner the gaps and ask which to close.** **Done (Nov 12):** asked Nov 11, 6 PM; the owner said "continue", so the recommended order is taken (they can still change it): **1** (links into the app on the iPad and Mac app, **#604**, merged), then **2 and 4** together (What was done and Every alert from the split view, **#606**), then **3** (Snooze on an open alert), then **6** (Settings on the phone's page); the iPhone Finances pieces (5) after 2B. A short list in chat (or a private Artifact page): each gap in a line, what closing it takes (S, M, L), and one recommended order. Gaps already known: the iPad lacks **What was done** and **links into the app** (README says "Not yet"); **Snooze…** on an open row of Every Alert (the watchdog card has it); whether **Every Alert**'s link opens from the iPad and Mac split view's list; Tidy Up and Choose apps are the computer's only (on purpose for now; Tidy Up's questions on the phone are `unison-handoff.md` item 9).
    *Done:* the owner has the list and has picked (or said none).
-3. **Each gap the owner picks: its own PR**, a failing test first (Swift Testing for the iPhone and iPad, smoke for the phone's page), and its row in `docs/Parity.md` changed to *yes* in the same PR. *Done:* every picked gap merged with its row *yes*; then give the owner 2B step 6's launcher line (the security review), and go on to 2B step 1.
+3. **Each gap the owner picks: its own PR**, a failing test first (Swift Testing for the iPhone and iPad, smoke for the phone's page), and its row in `docs/Parity.md` changed to *yes* in the same PR. **Done:** gap 1 (#604), 2 and 4 (#606), 3 (#607), 6 (#614, with this hand-off). Gaps 5 (the iPhone's Finances pieces), 7, 8 and 9 stay on `docs/Parity.md`'s list to offer later; recommend 5's *Select together* first when the owner asks what's next for the iPhone. The security review (2B step 6) was already running in its own session (the owner, Nov 12), so no launcher was needed.
 
 ### 2B. Then the rest, in this order: started while 2A waits on the owner
 
@@ -109,7 +106,7 @@ The owner asked (Nov 11) whether every version on each platform has the same fea
 3. **Tidy Up:** queue item 7 ("Started yesterday at 3:04 AM", **done, #597**), L3 (**#601**), then the look, L3 to L7 (`tidy-loop.md`). *Done:* each merged, `tidy-loop.md` ticked.
 4. **The rest of the iPhone plan** (`unison-handoff.md` section 4, items 7 onward: Send to my phone / Open on the computer, files in without an extension, Tidy Up's questions on the phone, scan a receipt, Spotlight), each item a desktop PR first where the computer needs something new. Item 11 (widget extras) waits on the App Group test (section 4). Ask the owner which item first if they haven't said; recommend item 7. *Done:* each item merged and `unison-handoff.md` marks it.
 5. **Rules, deeper:** a rule that links a payee to a planned bill; rules by amount or direction. Each needs the owner's yes first; no yes, no build. *Done:* built, or the owner said no.
-6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. Tell the owner when 2A is done that it's a good moment to start it, with the launcher line; never in this session. *Done:* the owner has the line.
+6. **An independent security review**, in **a session of its own** (launcher below), of #556 onwards. **Done (Nov 12):** the owner started it on their other account before 2A ended; it runs on its own branch (`audit-loop.md`). Leave its PRs ("Security N…") and `audit-loop.md` to it, and carry on with your own while one is open.
 
 ## 3. Once the owner picks: hand on before you build
 
@@ -125,11 +122,9 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 
 ## 4. Waiting on the owner
 
-- **The iPhone's Backups and Settings, redesigned:** the owner called Backups "ugly" and Settings "a bit obtuse" (Nov 12); mocks are on the gaps canvas (section 1), bottom row. **The owner, Nov 12: "yes to both, build Backups first".** Backups is the PR after this one (model: `needingALook`, `freshCopies`, `waitingGroups`, `tiles`; Swift tests); then Settings: the everyday homelab settings first in plain words, then this iPhone's, then **All homelab settings** as one row. Backups: one card with the ring and both buttons, three tiles (restore test, password export, second copy), what needs a look first, the fresh copies folded to icons, jobs and tests one tap down. Settings: the everyday homelab ones first in plain words, then this iPhone's, then **All homelab settings** (the `.env` sections) one row.
-- **Also from the owner's screenshots (Nov 12), to mock before changing:** Setup shows a failed step's error twice (the log and the step) with a raw API path; the Dashboard's Cash flow card has a lot of empty space; Spent this month sits alone on its row and repeats Where it goes.
+- **Also from the owner's screenshots (Nov 12), to mock before changing (the next UI work to offer; recommend the Setup error first, the smallest):** Setup shows a failed step's error twice (the log and the step) with a raw API path; the Dashboard's Cash flow card has a lot of empty space; Spent this month sits alone on its row and repeats Where it goes.
 - **The Finances mocks (2B step 2):** Step 4 is a yes (Nov 11). Yes or no to Step 5 (redrawn as *Checking, last 90 days*) and Step 6 on the canvas (link in section 2). Build only what they say yes to.
-- **Which gaps to close (2A step 2):** taken as recommended when the owner said "continue" (Nov 12): 1, then 2 and 4, then 3, then 6. They can still change the order or drop one.
-- **Trying on the phone:** #576, #588, #590, #592 and #593 need the cable re-install (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
+- **Trying on the phone:** #576, #588, #590, #592, #593, and now #604, #606, #607, #610 and #612 (the iPad's links, What was done and Every Alert; Snooze in Every Alert; the new Backups and Settings) need the cable re-install, on the iPhone and the iPad (`git pull`, then `apple-client/scripts/run-on-iphone.sh <prefix>` after updating the computer): Every Alert under Recent Alerts, and Settings › **Alerts From**. **Who notifies** was taken as per phone (the recommendation) when they said "continue"; they can still say household. The App Group test: `HOMELAB_WIDGET=1` with the same script.
 - **Investments (#558):** they press **Read now** and confirm the share counts; then move its complaint in `complaints.md` to **Done**.
 - **Imports:** a screenshot of what still looks off (2B, step 1).
 - **"After <name>'s paycheck"** against their spreadsheet (`finances-handoff.md` section 2, item 1): which row still differs.
@@ -166,6 +161,10 @@ Keep it the hub: detail belongs in the loop file for that area (`finances-handof
 - **A smoke case can hold a date that comes round:** *a calendar day adds a payment* checked that a new payment's form didn't start on Nov 12, the day it had picked; the form starts on this machine's real today (`todayISO`), so on Nov 12, 2026 it failed on every branch. A test that compares with a fixed day must compare with the real today when the code reads the clock (fixed in #599). Look for these when a Finances case fails on main too.
 - **A README's table can claim what the code never had:** `apple-client/README.md` said the Mac app had a menu bar item and a Dock count; no `MenuBarExtra` or Dock badge was ever in `apple-client` (`git log -S`). Grep for the API before trusting a feature list, and keep `docs/Parity.md` the place that's checked.
 - **Mocks must look like the app, not a guess at it** (the owner, Nov 12: "every time it is less like the iPhone app"). Before drawing, read `apple-client/Shared/Views/Theme.swift` and `Design.swift` (warm canvas `#F5F4F2`, white grouped sections, violet `#6A4FF0`, state pills, 56 pt round buttons, app icons with a state badge) and the view you're extending, and use its exact words. The phone's page is the web bundle (`web/dist/style.css` tokens), so it keeps the computer's look. CI's `iphone-screenshots` artifact can't be downloaded here (its storage host is blocked).
+- **While a PR is open, the next ones wait as local commits** (`local/<name>` branches stacked on each other), each cherry-picked onto a fresh `origin/main` when the one before merges; a CHANGELOG conflict keeps both lines, and the bundle is rebuilt after (`node web/build.mjs`). Never push them to the open PR's branch. The Stop hook asks for a push when files are uncommitted: commit locally and say why it isn't pushed yet.
+- **A test of an old rule changes with the rule, never goes:** gap 6 put Settings on a look-only phone, so *A read-only phone has no restart…* no longer checks that Settings is hidden but that every field is locked and there's no Save.
+- **The phone's page at phone width shows Settings' pages as a list** (`#settingsNav select`), not buttons: `selectOption`, as the gap 6 cases do.
+- **A container query asks the nearest container:** `@container (max-width: …)` inside a Finances card measured the whole screen (`#finances`), so a narrow card never stacked (#609). Name the container you mean.
 - **Mocks for the owner:** the Artifact tool's Design type makes a private canvas of `.dc.html` artboards (start with `action: quickstart`, `intent: design`); write the files in the scratchpad, never in the repo, and use made-up numbers and payees only.
 - `go build ./cmd/homelab` fails in the repo root (a `homelab` script is there): use `-o /dev/null`. A merged PR's branch is deleted on GitHub: start the next from fresh `origin/main`.
 
@@ -201,10 +200,10 @@ Rewrite this file so the next session starts from GitHub alone: section 1 (what 
 
 ## Launchers (paste one into a new session)
 
-The work, in this file's order (the feature check, then the rest of section 2):
+The work, in this file's order (2A is done; 2B from its first step not marked Done):
 
-    Read .claude/prompts/handoff.md and follow it from "Start here": land anything open, then do section 2 in order from the first step not marked Done, asking me only where it says to. Merge each PR as soon as it's green, and rewrite the hand-off before you stop.
+    Read .claude/prompts/handoff.md and follow it from "Start here": land anything open, then do section 2 in order from the first step not marked Done, asking me only where it says to. Merge each PR as soon as it's green, and rewrite the hand-off before you stop. A security session on my other account may be running at the same time (.claude/prompts/audit-loop.md): leave its "Security N…" PRs and audit-loop.md to it, and carry on with your own while one is open.
 
-The independent security review, in a session of its own (after 2A is done, not at the same time as the other):
+The independent security review, in a session of its own (it was started Nov 12; when it next runs, add what this session merged: the iPad's links into the app (#604), Snooze from Every alert (#607), Settings on the phone's page (#614), the iPhone's Settings rows (#612)):
 
     Read .claude/prompts/audit-loop.md and follow it, against what merged from #556 onwards: the phone's change calls (SetStatusFolds, SnoozeCheck), home only (#559 to #562), Finances rules (#584, #585), imports, the alert record (internal/history's alerts table, AlertLog, #591) and the iPhone's local notifications (#593). Write each finding with a test that fails without its fix, and fix the real ones.

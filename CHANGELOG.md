@@ -8,6 +8,7 @@ Notes are grouped as **New**, **Improved**, and **Fixed**, one line each, in pla
 
 ### New
 
+- **Settings on the phone's page:** the page your phone opens in a browser now has Settings too, as the Homelab app does: the settings a phone may change (never a password or token, nor what the phone connects through), saved from a phone allowed to make changes, and what the computer runs. A phone that only looks reads them; a wall screen doesn't show them.
 - **Snooze from Every alert:** an alert whose problem is still there now has **Snooze…** in Every alert, on the computer, the phone's page and the Homelab app, as the Watchdog card has: no alerts about it for an hour or a day, while the watchdog goes on checking. Phones snooze only where they're allowed changes.
 - **What was done and Every Alert on the iPad and the Mac:** in the iPad's and the Mac app's Homelab, an app's **More About** now opens beside the list, with **Recently Done** and **Everything That Was Done**, and **Every Alert** under Recent Alerts opens in the app's place until you pick an app again.
 - **Links into the app on the iPad and the Mac:** a `homelab://` link, and with it a button on an alert (**Restart**, **Show Logs**, **Start**), now opens the iPad's and the Mac app's Homelab where it points, as it does on the iPhone: the screen it names in the sidebar, or the app's page beside the list with the action waiting for your tap. Siri's and Shortcuts' **Open an App's Page**, **Restart** and the rest do the same there. A link still never changes anything by itself.

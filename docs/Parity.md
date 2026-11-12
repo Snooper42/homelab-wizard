@@ -135,7 +135,7 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Mac app | Phone calls |
 |---|---|---|---|---|---|---|
-| What the machine runs (system, runtime, version) | yes | gap: Setup is hidden on the phone's page | yes | yes | — | `Host` |
+| What the machine runs (system, runtime, version) | yes | yes, on Settings' This machine card | yes | yes | — | `Host` |
 | The checklist, **Do the N I can do for you** | yes ([Host](<Host.md#setting-up>)) | on purpose: setup is the computer's | partly: Look for problems → Fix these | partly | — | `Homelab` |
 | Reach Finances away from home; the runtime, Ollama, Kopia's drive | yes | on purpose: the computer's | on purpose | on purpose | — | |
 
@@ -143,12 +143,12 @@ Each phone sees Finances at the level it was paired with: none, the money card, 
 
 | Feature | Computer | Phone's page | iPhone | iPad | Mac app | Phone calls |
 |---|---|---|---|---|---|---|
-| The homelab's settings (`.env`), by section, searchable | yes | gap: Settings is hidden on the phone's page | yes; the everyday ones change with allowed changes, behind Face ID | yes | — | `Settings`, `SaveSettings` |
+| The homelab's settings (`.env`), by section, searchable | yes | yes: the ones a phone may change (no secrets, nothing it connects through), saved with allowed changes; none on a wall screen | yes; the everyday ones change with allowed changes, behind Face ID | yes | — | `Settings`, `SaveSettings` |
 | Secrets and the settings a phone connects through | yes | on purpose: changed on the computer only | on purpose | on purpose | — | |
 | Phones: pair, look only or changes, Finances level, For a day/week/month, remove | yes | on purpose: a phone can't give itself more | partly: This Device (how it paired, Unpair here) | partly | — | |
 | People in the household, and what's shared with them | yes | on purpose | on purpose | on purpose | — | |
 | Devices on your tailnet | yes | on purpose | on purpose | on purpose | — | |
-| Quiet hours | yes | gap: Settings is hidden | yes, as a setting | yes | — | |
+| Quiet hours | yes | yes, as a setting | yes, as a setting | yes | — | |
 | The lock (Face ID), the widget's switch, **Alerts From** | — | — | yes | yes | yes; the widget is the Desktop widget | |
 | Appearance, start at login, the menu bar or tray | yes ([Host](<Host.md>)) | on purpose: the phone's own | on purpose | on purpose | — | |
 | Update Homelab Wizard | yes | on purpose: no release notes for a phone yet | on purpose | on purpose | — | |
@@ -198,7 +198,7 @@ The cells marked *gap*, gathered, each with what closing it takes (S a few hours
 3. ~~**Every alert: Snooze… on an open alert**~~ **Closed:** on every device, for an alert whose watchdog check still fails (`snoozable`), with the Watchdog card's own Snooze….
 4. ~~**iPad and Mac app: Every alert from the split view's list.**~~ **Closed (#606):** **Every Alert** opens in the detail column, in the app's place (`DashboardViewModel.openAlertLog`), until an app or another screen is picked.
 5. **iPhone Finances: Select together, a running balance, Change or Delete a buy, Export, import and Rules, add a payment or a goal.** Each its own piece; import and Rules are the largest. M each, L for import.
-6. **The phone's page: Settings and Setup's facts**, which the iPhone app already has (`Settings`, `SaveSettings`, `Host` are phone calls). M.
+6. ~~**The phone's page: Settings and Setup's facts**~~ **Closed:** Settings on the phone's page lists the settings a phone may change (`phoneSettings`), saved where it may make changes, with This machine's facts; none on a wall screen.
 7. **Memory and processor, disk per app, Explain these logs** on every phone: new phone calls first (`Usage`, `Storage`, `ExplainLogs`), each read-only. M.
 8. **The Mac app's Dock badge and menu bar item**, which `apple-client/README.md` described but the code never had. M.
 9. **A command palette on the iPad and Mac app.** M.

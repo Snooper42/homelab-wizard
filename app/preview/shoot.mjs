@@ -2274,6 +2274,35 @@ const smokes = [
     const saved = await page.evaluate(() => window.__MOCK.saved || {});
     if (saved.TZ !== 'Europe/Berlin') throw new Error('not saved: ' + JSON.stringify(saved));
   } },
+  // Settings on the phone's page (#596's gap 6), as the iPhone app has them: the settings this phone may change, none
+  // of its secrets nor what it connects through, Save on a phone allowed changes; nothing on a wall screen.
+  { name: 'Settings on a phone that may change things: the everyday ones, saved', screen: 'status', phone: ['companion', 'can-change'], run: async (page) => {
+    await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
+    // At a phone's width the pages are a list to pick from.
+    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
+    if ((await page.$$eval('#settingsNav option', (o) => o.map((x) => x.value))).some((v) => ['Appearance', 'People', 'Phones'].includes(v))) throw new Error("the computer's own pages on the phone");
+    await page.fill('#setting-QUIET_HOURS input', '23-6');
+    await page.click('#saveSettings:text-is("Save 1 change")', { timeout: 3000 });
+    await page.waitForSelector('#saveSettings', { state: 'hidden', timeout: 5000 });
+    if ((await page.evaluate(() => window.__MOCK.saved || {})).QUIET_HOURS !== '23-6') throw new Error('not saved');
+    // Nothing a phone can't change or use: no secret, no setting it connects through, no Phones, People or Uninstall.
+    for (const sel of ['#setting-CLOUDFLARE_API_TOKEN', '#setting-PHONE_COMPANION', '#phonesCard', '#peopleCard', '#uninstallCard', '#report']) {
+      if (await page.isVisible(sel)) throw new Error(`${sel} on the phone`);
+    }
+    const refused = await page.evaluate(() => window.__MOCK.refused);
+    if (refused.length) throw new Error('asked what a phone is refused: ' + refused.join(', '));
+  } },
+  { name: 'Settings on a phone that only looks: read, no Save', screen: 'status', phone: ['companion'], run: async (page) => {
+    await page.click('nav button[data-screen="settings"]', { timeout: 5000 });
+    await page.selectOption('#settingsNav select', 'Notifications', { timeout: 5000 });
+    await page.waitForSelector('#setting-QUIET_HOURS', { timeout: 3000 });
+    if (await page.isEnabled('#setting-QUIET_HOURS input')) throw new Error('a field to type in, on a phone that only looks');
+    if (await page.isVisible('#saveSettings')) throw new Error('Save on a phone that only looks');
+  } },
+  { name: 'Settings is not on a wall screen', screen: 'status', phone: ['companion', 'kiosk'], run: async (page) => {
+    await page.waitForSelector('#statusRows tr', { timeout: 5000 });
+    if (await page.isVisible('nav button[data-screen="settings"]')) throw new Error('Settings on a wall screen');
+  } },
   { name: 'Search settings', screen: 'settings', run: async (page) => {
     await page.click('#settingsNav .pagebtn[data-page="Storage"]', { timeout: 5000 }); 
     await page.fill('#settingsSearch', 'cloudflare token');
@@ -4385,7 +4414,12 @@ const smokes = [
   { name: 'A read-only phone has no restart, stop, start, or switches', screen: 'status', phone: ['companion'], run: async (page) => {
     await page.waitForSelector('#statusRows tr:has(strong:text-is("Vikunja")) button.rowmain:has-text("Open")', { state: 'visible', timeout: 5000 });
     if (await page.isVisible('#statusRows tr:has(strong:text-is("Mealie")) button:has-text("Start")')) throw new Error('Start shows on a read-only phone');
-    if (await page.isVisible('nav button[data-screen="settings"]')) throw new Error('Settings shows on the phone');
+    // Settings only to read (#596's gap 6): every field locked, no Save.
+    await page.click('nav button[data-screen="settings"]');
+    await page.waitForSelector('#settingsForm .setting', { timeout: 5000 });
+    if (await page.$$eval('#settingsForm input', (l) => l.some((i) => !i.disabled))) throw new Error('a setting to change on a read-only phone');
+    if (await page.isVisible('#saveSettings')) throw new Error('Save on a read-only phone');
+    await page.click('nav button[data-screen="status"]');
     await page.click('#statusRows tr:has(strong:text-is("Vikunja")) td.state');
     await page.waitForSelector('#app.screen.active h1:text-is("Vikunja")', { timeout: 5000 });
     for (const sel of ['button:text-is("Restart")', 'button:text-is("Stop")', 'input.switch', 'button:has-text("Remove")']) {

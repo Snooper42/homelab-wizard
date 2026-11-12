@@ -45,6 +45,10 @@ export interface FormProps {
   /** What is shown: the search, else the page (with the rarely changed settings when showAll). */
   view: View;
   on: FormActions;
+  /** The phone's page: no folder picker (the folders are the computer's). */
+  phone?: boolean;
+  /** A phone that only looks: every field shown, none to type in. */
+  readOnly?: boolean;
 }
 
 export interface View {
@@ -118,8 +122,8 @@ function Row({ s, p, value, hidden, edit }: RowProps) {
   const toggle = !s.secret && /^(true|false)$/i.test(s.value || '');
   const label = p.label(s.key);
   const input = toggle
-    ? <input type="checkbox" class="switch" role="switch" aria-label={label} checked={/^true$/i.test(value ?? kept ?? s.value)} onChange={(e) => edit(s.key, e.currentTarget.checked ? 'true' : 'false')} />
-    : <input type={s.secret ? 'password' : 'text'} autocomplete="off" spellcheck={false} aria-label={label}
+    ? <input type="checkbox" class="switch" role="switch" aria-label={label} disabled={p.readOnly} checked={/^true$/i.test(value ?? kept ?? s.value)} onChange={(e) => edit(s.key, e.currentTarget.checked ? 'true' : 'false')} />
+    : <input type={s.secret ? 'password' : 'text'} autocomplete="off" spellcheck={false} aria-label={label} disabled={p.readOnly}
         value={value ?? kept ?? (s.secret ? '' : s.value || '')} placeholder={s.secret ? (s.set ? 'set · leave empty to keep' : 'not set') : ''}
         onInput={(e) => edit(s.key, e.currentTarget.value)} />;
   const test = async () => {
@@ -134,7 +138,7 @@ function Row({ s, p, value, hidden, edit }: RowProps) {
     setTesting(false);
   };
   const buttons = [
-    !s.secret && folderKey.test(s.key) && <button class="small" title="Pick the folder" onClick={async () => { const dir = await p.on.choose(s.key); if (dir) edit(s.key, dir); }}>Choose…</button>,
+    !s.secret && !p.phone && folderKey.test(s.key) && <button class="small" title="Pick the folder" onClick={async () => { const dir = await p.on.choose(s.key); if (dir) edit(s.key, dir); }}>Choose…</button>,
     s.secret && s.set && <button class="small" title="Copy the saved value, to keep it in the password manager; the clipboard clears after 90 seconds" onClick={async () => setResult(await p.on.copy(s.key))}>Copy</button>,
     p.testable.has(s.key) && <button class="small" title="Check the saved value with the service it is for" disabled={testing} onClick={test}>Test</button>,
   ].filter(Boolean);
